@@ -17,21 +17,17 @@ limitations under the License.
 package converters
 
 import (
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
+	asonetworkv1 "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101"
 	"k8s.io/utils/ptr"
 )
 
-// GetSubnetAddresses returns the address prefixes contained in an SDK v2 subnet.
-func GetSubnetAddresses(subnet *armnetwork.Subnet) []string {
+// GetSubnetAddresses returns the address prefixes contained in an ASO subnet.
+func GetSubnetAddresses(subnet asonetworkv1.VirtualNetworksSubnet) []string {
 	var addresses []string
-	if subnet.Properties != nil && subnet.Properties.AddressPrefix != nil {
-		addresses = []string{ptr.Deref(subnet.Properties.AddressPrefix, "")}
-	} else if subnet.Properties != nil && subnet.Properties.AddressPrefixes != nil {
-		for _, address := range subnet.Properties.AddressPrefixes {
-			if address != nil {
-				addresses = append(addresses, *address)
-			}
-		}
+	if subnet.Status.AddressPrefix != nil {
+		addresses = []string{ptr.Deref(subnet.Status.AddressPrefix, "")}
+	} else if subnet.Status.AddressPrefixes != nil {
+		addresses = subnet.Status.AddressPrefixes
 	}
 	return addresses
 }

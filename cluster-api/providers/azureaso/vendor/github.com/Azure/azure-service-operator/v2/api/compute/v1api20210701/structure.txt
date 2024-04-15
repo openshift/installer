@@ -3,7 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/compute/v1api20210701
 ├── APIVersion: Enum (1 value)
 │   └── "2021-07-01"
 ├── Image: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (8 properties)
 │   │   ├── AzureName: string
 │   │   ├── ExtendedLocation: *Object (2 properties)

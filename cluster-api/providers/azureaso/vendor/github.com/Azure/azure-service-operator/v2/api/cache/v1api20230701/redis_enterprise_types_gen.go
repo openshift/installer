@@ -5,7 +5,7 @@ package v1api20230701
 
 import (
 	"fmt"
-	v20230701s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230701storage"
+	v20230701s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230701/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &RedisEnterprise{}
 func (enterprise *RedisEnterprise) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20230701s.RedisEnterprise)
 	if !ok {
-		return fmt.Errorf("expected cache/v1api20230701storage/RedisEnterprise but received %T instead", hub)
+		return fmt.Errorf("expected cache/v1api20230701/storage/RedisEnterprise but received %T instead", hub)
 	}
 
 	return enterprise.AssignProperties_From_RedisEnterprise(source)
@@ -61,7 +61,7 @@ func (enterprise *RedisEnterprise) ConvertFrom(hub conversion.Hub) error {
 func (enterprise *RedisEnterprise) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20230701s.RedisEnterprise)
 	if !ok {
-		return fmt.Errorf("expected cache/v1api20230701storage/RedisEnterprise but received %T instead", hub)
+		return fmt.Errorf("expected cache/v1api20230701/storage/RedisEnterprise but received %T instead", hub)
 	}
 
 	return enterprise.AssignProperties_To_RedisEnterprise(destination)
@@ -126,6 +126,15 @@ func (enterprise *RedisEnterprise) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (enterprise *RedisEnterprise) GetStatus() genruntime.ConvertibleStatus {
 	return &enterprise.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (enterprise *RedisEnterprise) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Cache/redisEnterprise"

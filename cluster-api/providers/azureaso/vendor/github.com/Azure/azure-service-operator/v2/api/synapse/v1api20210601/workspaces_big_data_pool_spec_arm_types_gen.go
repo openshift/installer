@@ -42,6 +42,9 @@ type BigDataPoolResourceProperties_ARM struct {
 	// AutoScale: Auto-scaling properties
 	AutoScale *AutoScaleProperties_ARM `json:"autoScale,omitempty"`
 
+	// CacheSize: The cache size
+	CacheSize *int `json:"cacheSize,omitempty"`
+
 	// CustomLibraries: List of custom libraries/packages associated with the spark pool.
 	CustomLibraries []LibraryInfo_ARM `json:"customLibraries,omitempty"`
 

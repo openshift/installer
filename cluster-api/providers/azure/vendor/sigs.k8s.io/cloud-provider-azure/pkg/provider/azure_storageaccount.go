@@ -18,8 +18,11 @@ package provider
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
+	"math/big"
 	"strings"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2022-07-01/network"
 	"github.com/Azure/azure-sdk-for-go/services/privatedns/mgmt/2018-09-01/privatedns"
@@ -28,6 +31,8 @@ import (
 	"k8s.io/klog/v2"
 	"k8s.io/utils/pointer"
 
+	"sigs.k8s.io/cloud-provider-azure/pkg/cache"
+	azcache "sigs.k8s.io/cloud-provider-azure/pkg/cache"
 	"sigs.k8s.io/cloud-provider-azure/pkg/consts"
 	"sigs.k8s.io/cloud-provider-azure/pkg/retry"
 )
@@ -72,9 +77,12 @@ type AccountOptions struct {
 	SubnetName                              string
 	AccessTier                              string
 	MatchTags                               bool
+	GetLatestAccountKey                     bool
 	EnableBlobVersioning                    *bool
 	SoftDeleteBlobs                         int32
 	SoftDeleteContainers                    int32
+	// indicate whether to get a random matching account, if false, will get the first matching account
+	PickRandomMatchingAccount bool
 }
 
 type accountWithLocation struct {
@@ -121,7 +129,8 @@ func (az *Cloud) getStorageAccounts(ctx context.Context, accountOptions *Account
 }
 
 // GetStorageAccesskey gets the storage account access key
-func (az *Cloud) GetStorageAccesskey(ctx context.Context, subsID, account, resourceGroup string) (string, error) {
+// getLatestAccountKey: get the latest account key per CreationTime if true, otherwise get the first account key
+func (az *Cloud) GetStorageAccesskey(ctx context.Context, subsID, account, resourceGroup string, getLatestAccountKey bool) (string, error) {
 	if az.StorageAccountClient == nil {
 		return "", fmt.Errorf("StorageAccountClient is nil")
 	}
@@ -134,16 +143,40 @@ func (az *Cloud) GetStorageAccesskey(ctx context.Context, subsID, account, resou
 		return "", fmt.Errorf("empty keys")
 	}
 
+	var key string
+	var creationTime time.Time
+
 	for _, k := range *result.Keys {
 		if k.Value != nil && *k.Value != "" {
 			v := *k.Value
 			if ind := strings.LastIndex(v, " "); ind >= 0 {
 				v = v[(ind + 1):]
 			}
-			return v, nil
+			if !getLatestAccountKey {
+				// get first key
+				return v, nil
+			}
+			// get account key with latest CreationTime
+			if key == "" {
+				key = v
+				if k.CreationTime != nil {
+					creationTime = k.CreationTime.ToTime()
+				}
+				klog.V(2).Infof("got storage account key with creation time: %v", creationTime)
+			} else {
+				if k.CreationTime != nil && creationTime.Before(k.CreationTime.ToTime()) {
+					key = v
+					creationTime = k.CreationTime.ToTime()
+					klog.V(2).Infof("got storage account key with latest creation time: %v", creationTime)
+				}
+			}
 		}
 	}
-	return "", fmt.Errorf("no valid keys")
+
+	if key == "" {
+		return "", fmt.Errorf("no valid keys")
+	}
+	return key, nil
 }
 
 // EnsureStorageAccount search storage account, create one storage account(with genAccountNamePrefix) if not found, return accountName, accountKey
@@ -212,9 +245,19 @@ func (az *Cloud) EnsureStorageAccount(ctx context.Context, accountOptions *Accou
 			}
 
 			if len(accounts) > 0 {
-				accountName = accounts[0].Name
+				index := 0
+				if accountOptions.PickRandomMatchingAccount {
+					// randomly pick one matching account
+					n, err := rand.Int(rand.Reader, big.NewInt(int64(len(accounts))))
+					if err != nil || n == nil {
+						return "", "", err
+					}
+					index = int(n.Int64())
+					klog.V(4).Infof("randomly pick one matching account, index: %d, matching accounts: %s", index, accounts)
+				}
+				accountName = accounts[index].Name
 				createNewAccount = false
-				klog.V(4).Infof("found a matching account %s type %s location %s", accounts[0].Name, accounts[0].StorageType, accounts[0].Location)
+				klog.V(4).Infof("found a matching account %s type %s location %s", accounts[index].Name, accounts[index].StorageType, accounts[index].Location)
 			}
 		}
 
@@ -225,7 +268,7 @@ func (az *Cloud) EnsureStorageAccount(ctx context.Context, accountOptions *Accou
 		createNewAccount = false
 		if accountOptions.CreateAccount {
 			// check whether account exists
-			if _, err := az.GetStorageAccesskey(ctx, subsID, accountName, resourceGroup); err != nil {
+			if _, err := az.GetStorageAccesskey(ctx, subsID, accountName, resourceGroup, accountOptions.GetLatestAccountKey); err != nil {
 				klog.V(2).Infof("get storage key for storage account %s returned with %v", accountName, err)
 				createNewAccount = true
 			}
@@ -455,7 +498,7 @@ func (az *Cloud) EnsureStorageAccount(ctx context.Context, accountOptions *Accou
 	}
 
 	// find the access key with this account
-	accountKey, err := az.GetStorageAccesskey(ctx, subsID, accountName, resourceGroup)
+	accountKey, err := az.GetStorageAccesskey(ctx, subsID, accountName, resourceGroup, accountOptions.GetLatestAccountKey)
 	if err != nil {
 		return "", "", fmt.Errorf("could not get storage key for storage account %s: %w", accountName, err)
 	}
@@ -545,12 +588,44 @@ func (az *Cloud) createPrivateDNSZoneGroup(ctx context.Context, dnsZoneGroupName
 	return az.privatednszonegroupclient.CreateOrUpdate(ctx, vnetResourceGroup, privateEndpointName, dnsZoneGroupName, privateDNSZoneGroup, "", false).Error()
 }
 
+func (az *Cloud) newStorageAccountCache() (azcache.Resource, error) {
+	getter := func(key string) (interface{}, error) { return nil, nil }
+	return azcache.NewTimedCache(time.Minute, getter, az.Config.DisableAPICallCache)
+}
+
+func (az *Cloud) getStorageAccountWithCache(ctx context.Context, subsID, resourceGroup, account string) (storage.Account, *retry.Error) {
+	if az.StorageAccountClient == nil {
+		return storage.Account{}, retry.NewError(false, fmt.Errorf("StorageAccountClient is nil"))
+	}
+
+	if az.storageAccountCache == nil {
+		return storage.Account{}, retry.NewError(false, fmt.Errorf("storageAccountCache is nil"))
+	}
+
+	// search in cache first
+	cache, err := az.storageAccountCache.Get(account, cache.CacheReadTypeDefault)
+	if err != nil {
+		return storage.Account{}, retry.NewError(false, err)
+	}
+	var result storage.Account
+	if cache != nil {
+		result = cache.(storage.Account)
+		klog.V(2).Infof("Get storage account(%s) from cache", account)
+	} else {
+		var rerr *retry.Error
+		result, rerr = az.StorageAccountClient.GetProperties(ctx, subsID, resourceGroup, account)
+		if rerr != nil {
+			return storage.Account{}, rerr
+		}
+		az.storageAccountCache.Set(account, result)
+	}
+
+	return result, nil
+}
+
 // AddStorageAccountTags add tags to storage account
 func (az *Cloud) AddStorageAccountTags(ctx context.Context, subsID, resourceGroup, account string, tags map[string]*string) *retry.Error {
-	if az.StorageAccountClient == nil {
-		return retry.NewError(false, fmt.Errorf("StorageAccountClient is nil"))
-	}
-	result, rerr := az.StorageAccountClient.GetProperties(ctx, subsID, resourceGroup, account)
+	result, rerr := az.getStorageAccountWithCache(ctx, subsID, resourceGroup, account)
 	if rerr != nil {
 		return rerr
 	}
@@ -565,16 +640,18 @@ func (az *Cloud) AddStorageAccountTags(ctx context.Context, subsID, resourceGrou
 		newTags[k] = v
 	}
 
-	updateParams := storage.AccountUpdateParameters{Tags: newTags}
-	return az.StorageAccountClient.Update(ctx, subsID, resourceGroup, account, updateParams)
+	if len(newTags) > len(result.Tags) {
+		// only update when newTags is different from old tags
+		_ = az.storageAccountCache.Delete(account) // clean cache
+		updateParams := storage.AccountUpdateParameters{Tags: newTags}
+		return az.StorageAccountClient.Update(ctx, subsID, resourceGroup, account, updateParams)
+	}
+	return nil
 }
 
 // RemoveStorageAccountTag remove tag from storage account
 func (az *Cloud) RemoveStorageAccountTag(ctx context.Context, subsID, resourceGroup, account, key string) *retry.Error {
-	if az.StorageAccountClient == nil {
-		return retry.NewError(false, fmt.Errorf("StorageAccountClient is nil"))
-	}
-	result, rerr := az.StorageAccountClient.GetProperties(ctx, subsID, resourceGroup, account)
+	result, rerr := az.getStorageAccountWithCache(ctx, subsID, resourceGroup, account)
 	if rerr != nil {
 		return rerr
 	}
@@ -586,6 +663,8 @@ func (az *Cloud) RemoveStorageAccountTag(ctx context.Context, subsID, resourceGr
 	originalLen := len(result.Tags)
 	delete(result.Tags, key)
 	if originalLen != len(result.Tags) {
+		// only update when newTags is different from old tags
+		_ = az.storageAccountCache.Delete(account) // clean cache
 		updateParams := storage.AccountUpdateParameters{Tags: result.Tags}
 		return az.StorageAccountClient.Update(ctx, subsID, resourceGroup, account, updateParams)
 	}
@@ -701,7 +780,7 @@ func isPrivateEndpointAsExpected(account storage.Account, accountOptions *Accoun
 }
 
 func isAllowBlobPublicAccessEqual(account storage.Account, accountOptions *AccountOptions) bool {
-	return pointer.BoolDeref(accountOptions.AllowBlobPublicAccess, false) == pointer.BoolDeref(account.AllowBlobPublicAccess, false)
+	return pointer.BoolDeref(accountOptions.AllowBlobPublicAccess, true) == pointer.BoolDeref(account.AllowBlobPublicAccess, true)
 }
 
 func isRequireInfrastructureEncryptionEqual(account storage.Account, accountOptions *AccountOptions) bool {
@@ -713,7 +792,7 @@ func isRequireInfrastructureEncryptionEqual(account storage.Account, accountOpti
 }
 
 func isAllowSharedKeyAccessEqual(account storage.Account, accountOptions *AccountOptions) bool {
-	return pointer.BoolDeref(accountOptions.AllowSharedKeyAccess, false) == pointer.BoolDeref(account.AllowSharedKeyAccess, false)
+	return pointer.BoolDeref(accountOptions.AllowSharedKeyAccess, true) == pointer.BoolDeref(account.AllowSharedKeyAccess, true)
 }
 
 func isAccessTierEqual(account storage.Account, accountOptions *AccountOptions) bool {

@@ -26,7 +26,6 @@ import (
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/scalesets"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/virtualmachines"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
@@ -57,11 +56,11 @@ func New(scope RoleAssignmentScope) (*Service, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create roleassignments service")
 	}
-	scaleSetsClient, err := scalesets.NewClient(scope)
+	scaleSetsClient, err := scalesets.NewClient(scope, scope.DefaultedAzureCallTimeout())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create scalesets service")
 	}
-	virtualMachinesClient, err := virtualmachines.NewClient(scope)
+	virtualMachinesClient, err := virtualmachines.NewClient(scope, scope.DefaultedAzureCallTimeout())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create virtualmachines service")
 	}
@@ -83,8 +82,10 @@ func (s *Service) Name() string {
 func (s *Service) Reconcile(ctx context.Context) error {
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "roleassignments.Service.Reconcile")
 	defer done()
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureServiceReconcileTimeout)
+
+	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
 	defer cancel()
+
 	log.V(2).Info("reconciling role assignment")
 
 	// Return early if the identity is not system assigned as there will be no

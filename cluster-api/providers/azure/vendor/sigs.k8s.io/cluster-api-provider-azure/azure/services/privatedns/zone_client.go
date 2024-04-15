@@ -18,23 +18,24 @@ package privatedns
 
 import (
 	"context"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 // azureZonesClient contains the Azure go-sdk Client for private dns zone.
 type azureZonesClient struct {
-	privatezones *armprivatedns.PrivateZonesClient
+	privatezones   *armprivatedns.PrivateZonesClient
+	apiCallTimeout time.Duration
 }
 
 // newPrivateZonesClient creates a private zones client from an authorizer.
-func newPrivateZonesClient(auth azure.Authorizer) (*azureZonesClient, error) {
+func newPrivateZonesClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureZonesClient, error) {
 	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create privatezones client options")
@@ -43,7 +44,7 @@ func newPrivateZonesClient(auth azure.Authorizer) (*azureZonesClient, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create armprivatedns client factory")
 	}
-	return &azureZonesClient{factory.NewPrivateZonesClient()}, nil
+	return &azureZonesClient{factory.NewPrivateZonesClient(), apiCallTimeout}, nil
 }
 
 // Get gets the specified private dns zone.
@@ -76,7 +77,7 @@ func (azc *azureZonesClient) CreateOrUpdateAsync(ctx context.Context, spec azure
 		return nil, nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureCallTimeout)
+	ctx, cancel := context.WithTimeout(ctx, azc.apiCallTimeout)
 	defer cancel()
 
 	pollOpts := &runtime.PollUntilDoneOptions{Frequency: async.DefaultPollerFrequency}
@@ -104,7 +105,7 @@ func (azc *azureZonesClient) DeleteAsync(ctx context.Context, spec azure.Resourc
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureCallTimeout)
+	ctx, cancel := context.WithTimeout(ctx, azc.apiCallTimeout)
 	defer cancel()
 
 	pollOpts := &runtime.PollUntilDoneOptions{Frequency: async.DefaultPollerFrequency}

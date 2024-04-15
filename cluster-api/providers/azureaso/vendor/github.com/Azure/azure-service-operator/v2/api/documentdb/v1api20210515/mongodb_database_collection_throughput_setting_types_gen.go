@@ -5,7 +5,7 @@ package v1api20210515
 
 import (
 	"fmt"
-	v20210515s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20210515storage"
+	v20210515s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20210515/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &MongodbDatabaseCollectionThroughputSetting{}
 func (setting *MongodbDatabaseCollectionThroughputSetting) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20210515s.MongodbDatabaseCollectionThroughputSetting)
 	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20210515storage/MongodbDatabaseCollectionThroughputSetting but received %T instead", hub)
+		return fmt.Errorf("expected documentdb/v1api20210515/storage/MongodbDatabaseCollectionThroughputSetting but received %T instead", hub)
 	}
 
 	return setting.AssignProperties_From_MongodbDatabaseCollectionThroughputSetting(source)
@@ -61,7 +61,7 @@ func (setting *MongodbDatabaseCollectionThroughputSetting) ConvertFrom(hub conve
 func (setting *MongodbDatabaseCollectionThroughputSetting) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20210515s.MongodbDatabaseCollectionThroughputSetting)
 	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20210515storage/MongodbDatabaseCollectionThroughputSetting but received %T instead", hub)
+		return fmt.Errorf("expected documentdb/v1api20210515/storage/MongodbDatabaseCollectionThroughputSetting but received %T instead", hub)
 	}
 
 	return setting.AssignProperties_To_MongodbDatabaseCollectionThroughputSetting(destination)
@@ -119,6 +119,14 @@ func (setting *MongodbDatabaseCollectionThroughputSetting) GetSpec() genruntime.
 // GetStatus returns the status of this resource
 func (setting *MongodbDatabaseCollectionThroughputSetting) GetStatus() genruntime.ConvertibleStatus {
 	return &setting.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (setting *MongodbDatabaseCollectionThroughputSetting) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DocumentDB/databaseAccounts/mongodbDatabases/collections/throughputSettings"

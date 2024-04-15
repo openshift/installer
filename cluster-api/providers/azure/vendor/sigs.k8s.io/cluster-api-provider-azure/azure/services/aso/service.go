@@ -19,19 +19,24 @@ package aso
 import (
 	"context"
 
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
-	reconcilerutil "sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Service provides operations on Azure resources.
-type Service[T deepCopier[T], S Scope] struct {
+type Service[T genruntime.MetaObject, S Scope] struct {
 	Reconciler[T]
 
 	Scope S
 	Specs []azure.ASOResourceSpecGetter[T]
+	// ListFunc is used to enumerate ASO existent resources. Currently this interface is designed only to aid
+	// discovery of ASO resources that no longer have a CAPZ reference, and can thus be deleted. This behavior
+	// may be skipped for a service by leaving this field nil.
+	ListFunc func(ctx context.Context, client client.Client, opts ...client.ListOption) (resources []T, err error)
 
 	ConditionType                  clusterv1.ConditionType
 	PostCreateOrUpdateResourceHook func(ctx context.Context, scope S, result T, err error) error
@@ -42,9 +47,9 @@ type Service[T deepCopier[T], S Scope] struct {
 }
 
 // NewService creates a new Service.
-func NewService[T deepCopier[T], S Scope](name string, scope S) *Service[T, S] {
+func NewService[T genruntime.MetaObject, S Scope](name string, scope S) *Service[T, S] {
 	return &Service[T, S]{
-		Reconciler: New[T](scope.GetClient(), scope.ClusterName()),
+		Reconciler: New[T](scope.GetClient(), scope.ClusterName(), scope.ASOOwner()),
 		Scope:      scope,
 		name:       name,
 	}
@@ -60,7 +65,7 @@ func (s *Service[T, S]) Reconcile(ctx context.Context) error {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "aso.Service.Reconcile")
 	defer done()
 
-	ctx, cancel := context.WithTimeout(ctx, reconcilerutil.DefaultAzureServiceReconcileTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
 	defer cancel()
 
 	// We go through the list of Specs to reconcile each one, independently of the result of the previous one.
@@ -70,6 +75,28 @@ func (s *Service[T, S]) Reconcile(ctx context.Context) error {
 	//   - operationNotDoneError (i.e. creating in progress)
 	//   - no error (i.e. created)
 	var resultErr error
+
+	if s.ListFunc != nil {
+		toReconcile := map[string]struct{}{}
+		for _, spec := range s.Specs {
+			toReconcile[spec.ResourceRef().GetName()] = struct{}{}
+		}
+		list, err := s.ListFunc(ctx, s.Scope.GetClient(), client.InNamespace(s.Scope.ASOOwner().GetNamespace()))
+		if err != nil {
+			resultErr = err
+		} else {
+			for _, existing := range list {
+				if _, exists := toReconcile[existing.GetName()]; exists {
+					continue
+				}
+				err := s.Reconciler.DeleteResource(ctx, existing, s.Name())
+				if err != nil && (!azure.IsOperationNotDoneError(err) || resultErr == nil) {
+					resultErr = err
+				}
+			}
+		}
+	}
+
 	for _, spec := range s.Specs {
 		result, err := s.CreateOrUpdateResource(ctx, spec, s.Name())
 		if s.PostCreateOrUpdateResourceHook != nil {
@@ -92,8 +119,12 @@ func (s *Service[T, S]) Delete(ctx context.Context) error {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "aso.Service.Delete")
 	defer done()
 
-	ctx, cancel := context.WithTimeout(ctx, reconcilerutil.DefaultAzureServiceReconcileTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
 	defer cancel()
+
+	if len(s.Specs) == 0 {
+		return nil
+	}
 
 	// We go through the list of Specs to delete each one, independently of the resultErr of the previous one.
 	// If multiple errors occur, we return the most pressing one.
@@ -103,7 +134,7 @@ func (s *Service[T, S]) Delete(ctx context.Context) error {
 	//   - no error (i.e. deleted)
 	var resultErr error
 	for _, spec := range s.Specs {
-		err := s.DeleteResource(ctx, spec, s.Name())
+		err := s.DeleteResource(ctx, spec.ResourceRef(), s.Name())
 		if err != nil && (!azure.IsOperationNotDoneError(err) || resultErr == nil) {
 			resultErr = err
 		}
@@ -124,9 +155,9 @@ func (s *Service[T, S]) Pause(ctx context.Context) error {
 	defer done()
 
 	for _, spec := range s.Specs {
-		if err := s.PauseResource(ctx, spec, s.Name()); err != nil {
-			ref := spec.ResourceRef()
-			return errors.Wrapf(err, "failed to pause ASO resource %s %s/%s", ref.GetObjectKind().GroupVersionKind(), ref.GetNamespace(), ref.GetName())
+		ref := spec.ResourceRef()
+		if err := s.PauseResource(ctx, ref, s.Name()); err != nil {
+			return errors.Wrapf(err, "failed to pause ASO resource %s %s/%s", ref.GetObjectKind().GroupVersionKind(), s.Scope.ASOOwner().GetNamespace(), ref.GetName())
 		}
 	}
 

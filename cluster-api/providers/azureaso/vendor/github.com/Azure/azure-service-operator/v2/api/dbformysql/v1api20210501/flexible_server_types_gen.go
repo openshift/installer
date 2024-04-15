@@ -5,7 +5,7 @@ package v1api20210501
 
 import (
 	"fmt"
-	v20210501s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20210501storage"
+	v20210501s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20210501/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -52,7 +52,7 @@ var _ conversion.Convertible = &FlexibleServer{}
 func (server *FlexibleServer) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20210501s.FlexibleServer)
 	if !ok {
-		return fmt.Errorf("expected dbformysql/v1api20210501storage/FlexibleServer but received %T instead", hub)
+		return fmt.Errorf("expected dbformysql/v1api20210501/storage/FlexibleServer but received %T instead", hub)
 	}
 
 	return server.AssignProperties_From_FlexibleServer(source)
@@ -62,7 +62,7 @@ func (server *FlexibleServer) ConvertFrom(hub conversion.Hub) error {
 func (server *FlexibleServer) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20210501s.FlexibleServer)
 	if !ok {
-		return fmt.Errorf("expected dbformysql/v1api20210501storage/FlexibleServer but received %T instead", hub)
+		return fmt.Errorf("expected dbformysql/v1api20210501/storage/FlexibleServer but received %T instead", hub)
 	}
 
 	return server.AssignProperties_To_FlexibleServer(destination)
@@ -127,6 +127,15 @@ func (server *FlexibleServer) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (server *FlexibleServer) GetStatus() genruntime.ConvertibleStatus {
 	return &server.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (server *FlexibleServer) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DBforMySQL/flexibleServers"

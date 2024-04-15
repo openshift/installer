@@ -3,8 +3,8 @@ github.com/Azure/azure-service-operator/v2/api/signalrservice/v1api20211001
 ├── APIVersion: Enum (1 value)
 │   └── "2021-10-01"
 ├── SignalR: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
-│   ├── Spec: Object (16 properties)
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
+│   ├── Spec: Object (17 properties)
 │   │   ├── AzureName: string
 │   │   ├── Cors: *Object (1 property)
 │   │   │   └── AllowedOrigins: string[]
@@ -58,6 +58,12 @@ github.com/Azure/azure-service-operator/v2/api/signalrservice/v1api20211001
 │   │   │           ├── "RESTAPI"
 │   │   │           ├── "ServerConnection"
 │   │   │           └── "Trace"
+│   │   ├── OperatorSpec: *Object (1 property)
+│   │   │   └── Secrets: *Object (4 properties)
+│   │   │       ├── PrimaryConnectionString: *genruntime.SecretDestination
+│   │   │       ├── PrimaryKey: *genruntime.SecretDestination
+│   │   │       ├── SecondaryConnectionString: *genruntime.SecretDestination
+│   │   │       └── SecondaryKey: *genruntime.SecretDestination
 │   │   ├── Owner: *genruntime.KnownResourceReference
 │   │   ├── PublicNetworkAccess: *string
 │   │   ├── ResourceLogConfiguration: *Object (1 property)

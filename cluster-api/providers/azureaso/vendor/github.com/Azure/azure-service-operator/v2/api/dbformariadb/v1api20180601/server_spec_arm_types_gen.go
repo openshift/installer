@@ -124,7 +124,7 @@ type ServerPropertiesForDefaultCreate_ARM struct {
 	AdministratorLogin *string `json:"administratorLogin,omitempty"`
 
 	// AdministratorLoginPassword: The password of the administrator login.
-	AdministratorLoginPassword string `json:"administratorLoginPassword,omitempty"`
+	AdministratorLoginPassword *string `json:"administratorLoginPassword,omitempty"`
 
 	// CreateMode: The mode to create a new server.
 	CreateMode ServerPropertiesForDefaultCreate_CreateMode `json:"createMode,omitempty"`

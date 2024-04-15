@@ -19,6 +19,8 @@ package azure
 import (
 	"fmt"
 	"net/http"
+	"regexp"
+	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
@@ -230,6 +232,11 @@ func PublicIPID(subscriptionID, resourceGroup, ipName string) string {
 	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/publicIPAddresses/%s", subscriptionID, resourceGroup, ipName)
 }
 
+// PublicIPPrefixID returns the azure resource ID for a given public IP prefix.
+func PublicIPPrefixID(subscriptionID, resourceGroup, ipName string) string {
+	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/publicipprefixes/%s", subscriptionID, resourceGroup, ipName)
+}
+
 // RouteTableID returns the azure resource ID for a given route table.
 func RouteTableID(subscriptionID, resourceGroup, routeTableName string) string {
 	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/routeTables/%s", subscriptionID, resourceGroup, routeTableName)
@@ -288,6 +295,11 @@ func VirtualNetworkLinkID(subscriptionID, resourceGroup, privateDNSZoneName, vir
 // ManagedClusterID returns the azure resource ID for a given managed cluster.
 func ManagedClusterID(subscriptionID, resourceGroup, managedClusterName string) string {
 	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.ContainerService/managedClusters/%s", subscriptionID, resourceGroup, managedClusterName)
+}
+
+// FleetID returns the azure resource ID for a given fleet manager.
+func FleetID(subscriptionID, resourceGroup, fleetName string) string {
+	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.ContainerService/fleets/%s", subscriptionID, resourceGroup, fleetName)
 }
 
 // GetBootstrappingVMExtension returns the CAPZ Bootstrapping VM extension.
@@ -401,4 +413,16 @@ func (p CustomPutPatchHeaderPolicy) Do(req *policy.Request) (*http.Response, err
 	}
 
 	return req.Next()
+}
+
+// GetNormalizedKubernetesName returns a normalized name for a Kubernetes resource.
+func GetNormalizedKubernetesName(name string) string {
+	// Remove non-alphanumeric characters, convert to lowercase, and replace underscores with hyphens
+	name = strings.ToLower(name)
+	re := regexp.MustCompile(`[^a-z0-9\-]+`)
+	name = re.ReplaceAllString(name, "-")
+
+	// Remove leading and trailing hyphens
+	name = strings.Trim(name, "-")
+	return name
 }

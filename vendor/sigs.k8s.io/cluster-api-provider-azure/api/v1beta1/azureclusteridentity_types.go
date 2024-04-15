@@ -77,7 +77,7 @@ type AzureClusterIdentityStatus struct {
 }
 
 // +kubebuilder:object:root=true
-// +kubebuilder:printcolumn:name="Type",type="string",JSONPath=".spec.type",description="Type of Azure Identity"
+// +kubebuilder:printcolumn:name="Type",type="string",JSONPath=".spec.type",description="Type of AzureClusterIdentity"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of this AzureClusterIdentity"
 // +kubebuilder:resource:path=azureclusteridentities,scope=Namespaced,categories=cluster-api
 // +kubebuilder:storageversion

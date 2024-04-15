@@ -5,7 +5,7 @@ package v1api20230401
 
 import (
 	"fmt"
-	v20230401s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230401storage"
+	v20230401s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230401/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &RedisPatchSchedule{}
 func (schedule *RedisPatchSchedule) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20230401s.RedisPatchSchedule)
 	if !ok {
-		return fmt.Errorf("expected cache/v1api20230401storage/RedisPatchSchedule but received %T instead", hub)
+		return fmt.Errorf("expected cache/v1api20230401/storage/RedisPatchSchedule but received %T instead", hub)
 	}
 
 	return schedule.AssignProperties_From_RedisPatchSchedule(source)
@@ -61,7 +61,7 @@ func (schedule *RedisPatchSchedule) ConvertFrom(hub conversion.Hub) error {
 func (schedule *RedisPatchSchedule) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20230401s.RedisPatchSchedule)
 	if !ok {
-		return fmt.Errorf("expected cache/v1api20230401storage/RedisPatchSchedule but received %T instead", hub)
+		return fmt.Errorf("expected cache/v1api20230401/storage/RedisPatchSchedule but received %T instead", hub)
 	}
 
 	return schedule.AssignProperties_To_RedisPatchSchedule(destination)
@@ -119,6 +119,15 @@ func (schedule *RedisPatchSchedule) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (schedule *RedisPatchSchedule) GetStatus() genruntime.ConvertibleStatus {
 	return &schedule.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (schedule *RedisPatchSchedule) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Cache/redis/patchSchedules"

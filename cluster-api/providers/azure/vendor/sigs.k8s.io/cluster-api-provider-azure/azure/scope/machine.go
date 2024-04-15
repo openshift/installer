@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -162,7 +163,7 @@ func (m *MachineScope) VMSpec() azure.ResourceSpecGetter {
 		Name:                   m.Name(),
 		Location:               m.Location(),
 		ExtendedLocation:       m.ExtendedLocation(),
-		ResourceGroup:          m.ResourceGroup(),
+		ResourceGroup:          m.NodeResourceGroup(),
 		ClusterName:            m.ClusterName(),
 		Role:                   m.Role(),
 		NICIDs:                 m.NICIDs(),
@@ -193,7 +194,7 @@ func (m *MachineScope) VMSpec() azure.ResourceSpecGetter {
 func (m *MachineScope) TagsSpecs() []azure.TagsSpec {
 	return []azure.TagsSpec{
 		{
-			Scope:      azure.VMID(m.SubscriptionID(), m.ResourceGroup(), m.Name()),
+			Scope:      azure.VMID(m.SubscriptionID(), m.NodeResourceGroup(), m.Name()),
 			Tags:       m.AdditionalTags(),
 			Annotation: azure.VMTagsLastAppliedAnnotation,
 		},
@@ -206,7 +207,7 @@ func (m *MachineScope) PublicIPSpecs() []azure.ResourceSpecGetter {
 	if m.AzureMachine.Spec.AllocatePublicIP {
 		specs = append(specs, &publicips.PublicIPSpec{
 			Name:             azure.GenerateNodePublicIPName(m.Name()),
-			ResourceGroup:    m.ResourceGroup(),
+			ResourceGroup:    m.NodeResourceGroup(),
 			ClusterName:      m.ClusterName(),
 			DNSName:          "",    // Set to default value
 			IsIPv6:           false, // Set to default value
@@ -225,13 +226,13 @@ func (m *MachineScope) InboundNatSpecs() []azure.ResourceSpecGetter {
 	if m.Role() == infrav1.ControlPlane {
 		spec := &inboundnatrules.InboundNatSpec{
 			Name:                      m.Name(),
-			ResourceGroup:             m.ResourceGroup(),
+			ResourceGroup:             m.NodeResourceGroup(),
 			LoadBalancerName:          m.APIServerLBName(),
 			FrontendIPConfigurationID: nil,
 		}
 		if frontEndIPs := m.APIServerLB().FrontendIPs; len(frontEndIPs) > 0 {
 			ipConfig := frontEndIPs[0].Name
-			id := azure.FrontendIPConfigID(m.SubscriptionID(), m.ResourceGroup(), m.APIServerLBName(), ipConfig)
+			id := azure.FrontendIPConfigID(m.SubscriptionID(), m.NodeResourceGroup(), m.APIServerLBName(), ipConfig)
 			spec.FrontendIPConfigurationID = ptr.To(id)
 		}
 
@@ -260,7 +261,7 @@ func (m *MachineScope) NICSpecs() []azure.ResourceSpecGetter {
 func (m *MachineScope) BuildNICSpec(nicName string, infrav1NetworkInterface infrav1.NetworkInterface, primaryNetworkInterface bool) *networkinterfaces.NICSpec {
 	spec := &networkinterfaces.NICSpec{
 		Name:                  nicName,
-		ResourceGroup:         m.ResourceGroup(),
+		ResourceGroup:         m.NodeResourceGroup(),
 		Location:              m.Location(),
 		ExtendedLocation:      m.ExtendedLocation(),
 		SubscriptionID:        m.SubscriptionID(),
@@ -328,13 +329,13 @@ func (m *MachineScope) DiskSpecs() []azure.ResourceSpecGetter {
 	diskSpecs := make([]azure.ResourceSpecGetter, 1+len(m.AzureMachine.Spec.DataDisks))
 	diskSpecs[0] = &disks.DiskSpec{
 		Name:          azure.GenerateOSDiskName(m.Name()),
-		ResourceGroup: m.ResourceGroup(),
+		ResourceGroup: m.NodeResourceGroup(),
 	}
 
 	for i, dd := range m.AzureMachine.Spec.DataDisks {
 		diskSpecs[i+1] = &disks.DiskSpec{
 			Name:          azure.GenerateDataDiskName(m.Name(), dd.NameSuffix),
-			ResourceGroup: m.ResourceGroup(),
+			ResourceGroup: m.NodeResourceGroup(),
 		}
 	}
 	return diskSpecs
@@ -348,10 +349,11 @@ func (m *MachineScope) RoleAssignmentSpecs(principalID *string) []azure.Resource
 			Name:             m.SystemAssignedIdentityName(),
 			MachineName:      m.Name(),
 			ResourceType:     azure.VirtualMachine,
-			ResourceGroup:    m.ResourceGroup(),
+			ResourceGroup:    m.NodeResourceGroup(),
 			Scope:            m.SystemAssignedIdentityScope(),
 			RoleDefinitionID: m.SystemAssignedIdentityDefinitionID(),
 			PrincipalID:      principalID,
+			PrincipalType:    armauthorization.PrincipalTypeServicePrincipal,
 		}
 		return roles
 	}
@@ -382,7 +384,7 @@ func (m *MachineScope) VMExtensionSpecs() []azure.ResourceSpecGetter {
 				Settings:          extension.Settings,
 				ProtectedSettings: extension.ProtectedSettings,
 			},
-			ResourceGroup: m.ResourceGroup(),
+			ResourceGroup: m.NodeResourceGroup(),
 			Location:      m.Location(),
 		})
 	}
@@ -393,7 +395,7 @@ func (m *MachineScope) VMExtensionSpecs() []azure.ResourceSpecGetter {
 	if bootstrapExtensionSpec != nil {
 		extensionSpecs = append(extensionSpecs, &vmextensions.VMExtensionSpec{
 			ExtensionSpec: *bootstrapExtensionSpec,
-			ResourceGroup: m.ResourceGroup(),
+			ResourceGroup: m.NodeResourceGroup(),
 			Location:      m.Location(),
 		})
 	}
@@ -482,7 +484,7 @@ func (m *MachineScope) AvailabilitySetSpec() azure.ResourceSpecGetter {
 
 	spec := &availabilitysets.AvailabilitySetSpec{
 		Name:           availabilitySetName,
-		ResourceGroup:  m.ResourceGroup(),
+		ResourceGroup:  m.NodeResourceGroup(),
 		ClusterName:    m.ClusterName(),
 		Location:       m.Location(),
 		SKU:            nil,
@@ -499,7 +501,8 @@ func (m *MachineScope) AvailabilitySetSpec() azure.ResourceSpecGetter {
 // AvailabilitySet returns the availability set for this machine if available.
 func (m *MachineScope) AvailabilitySet() (string, bool) {
 	// AvailabilitySet service is not supported on EdgeZone currently.
-	if !m.AvailabilitySetEnabled() || m.ExtendedLocation() != nil {
+	// AvailabilitySet cannot be used with Spot instances.
+	if !m.AvailabilitySetEnabled() || m.AzureMachine.Spec.SpotVMOptions != nil || m.ExtendedLocation() != nil {
 		return "", false
 	}
 
@@ -524,7 +527,7 @@ func (m *MachineScope) AvailabilitySet() (string, bool) {
 func (m *MachineScope) AvailabilitySetID() string {
 	var asID string
 	if asName, ok := m.AvailabilitySet(); ok {
-		asID = azure.AvailabilitySetID(m.SubscriptionID(), m.ResourceGroup(), asName)
+		asID = azure.AvailabilitySetID(m.SubscriptionID(), m.NodeResourceGroup(), asName)
 	}
 	return asID
 }
@@ -725,12 +728,22 @@ func (m *MachineScope) SetSubnetName() error {
 		subnetName := ""
 		subnets := m.Subnets()
 		var subnetCount int
+		clusterSubnetName := ""
 		for _, subnet := range subnets {
 			if string(subnet.Role) == m.Role() {
 				subnetCount++
 				subnetName = subnet.Name
 			}
+			if subnet.Role == infrav1.SubnetCluster {
+				clusterSubnetName = subnet.Name
+			}
 		}
+
+		if subnetName == "" && clusterSubnetName != "" {
+			subnetName = clusterSubnetName
+			subnetCount = 1
+		}
+
 		if subnetCount == 0 || subnetCount > 1 || subnetName == "" {
 			return errors.New("a subnet name must be specified when no subnets are specified or more than 1 subnet of the same role exist")
 		}

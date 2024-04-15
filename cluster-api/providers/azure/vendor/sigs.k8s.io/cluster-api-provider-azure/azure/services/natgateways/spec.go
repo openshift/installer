@@ -30,7 +30,6 @@ import (
 // NatGatewaySpec defines the specification for a NAT gateway.
 type NatGatewaySpec struct {
 	Name           string
-	Namespace      string
 	ResourceGroup  string
 	SubscriptionID string
 	Location       string
@@ -44,8 +43,7 @@ type NatGatewaySpec struct {
 func (s *NatGatewaySpec) ResourceRef() *asonetworkv1.NatGateway {
 	return &asonetworkv1.NatGateway{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      s.Name,
-			Namespace: s.Namespace,
+			Name: s.Name,
 		},
 	}
 }

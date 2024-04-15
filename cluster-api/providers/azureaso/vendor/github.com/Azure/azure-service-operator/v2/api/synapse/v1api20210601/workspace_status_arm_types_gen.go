@@ -197,7 +197,7 @@ type WorkspaceRepositoryConfiguration_STATUS_ARM struct {
 	// CollaborationBranch: Collaboration branch
 	CollaborationBranch *string `json:"collaborationBranch,omitempty"`
 
-	// HostName: GitHub Enterprise host name. For example: https://github.mydomain.com
+	// HostName: GitHub Enterprise host name. For example: `https://github.mydomain.com`
 	HostName *string `json:"hostName,omitempty"`
 
 	// LastCommitId: The last commit ID

@@ -18,13 +18,13 @@ package scalesets
 
 import (
 	"context"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
@@ -40,14 +40,15 @@ type Client interface {
 
 // AzureClient contains the Azure go-sdk Client.
 type AzureClient struct {
-	scalesetvms *armcompute.VirtualMachineScaleSetVMsClient
-	scalesets   *armcompute.VirtualMachineScaleSetsClient
+	scalesetvms    *armcompute.VirtualMachineScaleSetVMsClient
+	scalesets      *armcompute.VirtualMachineScaleSetsClient
+	apiCallTimeout time.Duration
 }
 
 var _ Client = &AzureClient{}
 
 // NewClient creates a new VMSS client from an authorizer.
-func NewClient(auth azure.Authorizer) (*AzureClient, error) {
+func NewClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*AzureClient, error) {
 	scaleSetVMsClient, err := newVirtualMachineScaleSetVMsClient(auth)
 	if err != nil {
 		return nil, err
@@ -57,8 +58,9 @@ func NewClient(auth azure.Authorizer) (*AzureClient, error) {
 		return nil, err
 	}
 	return &AzureClient{
-		scalesetvms: scaleSetVMsClient,
-		scalesets:   scaleSetsClient,
+		scalesetvms:    scaleSetVMsClient,
+		scalesets:      scaleSetsClient,
+		apiCallTimeout: apiCallTimeout,
 	}, nil
 }
 
@@ -158,7 +160,7 @@ func (ac *AzureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.Resou
 		return nil, nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureCallTimeout)
+	ctx, cancel := context.WithTimeout(ctx, ac.apiCallTimeout)
 	defer cancel()
 
 	pollOpts := &runtime.PollUntilDoneOptions{Frequency: async.DefaultPollerFrequency}
@@ -190,7 +192,7 @@ func (ac *AzureClient) DeleteAsync(ctx context.Context, spec azure.ResourceSpecG
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureCallTimeout)
+	ctx, cancel := context.WithTimeout(ctx, ac.apiCallTimeout)
 	defer cancel()
 
 	pollOpts := &runtime.PollUntilDoneOptions{Frequency: async.DefaultPollerFrequency}

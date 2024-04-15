@@ -3,7 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/eventhub/v1api20211101
 ├── APIVersion: Enum (1 value)
 │   └── "2021-11-01"
 ├── Namespace: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (14 properties)
 │   │   ├── AlternateName: *string
 │   │   ├── AzureName: Validated<string> (3 rules)

@@ -33,7 +33,7 @@ type SharedGalleriesClient struct {
 //   - credential - used to authorize requests. Usually a credential from azidentity.
 //   - options - pass nil to accept the default values.
 func NewSharedGalleriesClient(subscriptionID string, credential azcore.TokenCredential, options *arm.ClientOptions) (*SharedGalleriesClient, error) {
-	cl, err := arm.NewClient(moduleName+".SharedGalleriesClient", moduleVersion, credential, options)
+	cl, err := arm.NewClient(moduleName, moduleVersion, credential, options)
 	if err != nil {
 		return nil, err
 	}
@@ -47,12 +47,16 @@ func NewSharedGalleriesClient(subscriptionID string, credential azcore.TokenCred
 // Get - Get a shared gallery by subscription id or tenant id.
 // If the operation fails it returns an *azcore.ResponseError type.
 //
-// Generated from API version 2022-03-03
+// Generated from API version 2022-08-03
 //   - location - Resource location.
 //   - galleryUniqueName - The unique name of the Shared Gallery.
 //   - options - SharedGalleriesClientGetOptions contains the optional parameters for the SharedGalleriesClient.Get method.
 func (client *SharedGalleriesClient) Get(ctx context.Context, location string, galleryUniqueName string, options *SharedGalleriesClientGetOptions) (SharedGalleriesClientGetResponse, error) {
 	var err error
+	const operationName = "SharedGalleriesClient.Get"
+	ctx = context.WithValue(ctx, runtime.CtxAPINameKey{}, operationName)
+	ctx, endSpan := runtime.StartSpan(ctx, operationName, client.internal.Tracer(), nil)
+	defer func() { endSpan(err) }()
 	req, err := client.getCreateRequest(ctx, location, galleryUniqueName, options)
 	if err != nil {
 		return SharedGalleriesClientGetResponse{}, err
@@ -89,7 +93,7 @@ func (client *SharedGalleriesClient) getCreateRequest(ctx context.Context, locat
 		return nil, err
 	}
 	reqQP := req.Raw().URL.Query()
-	reqQP.Set("api-version", "2022-03-03")
+	reqQP.Set("api-version", "2022-08-03")
 	req.Raw().URL.RawQuery = reqQP.Encode()
 	req.Raw().Header["Accept"] = []string{"application/json"}
 	return req, nil
@@ -106,7 +110,7 @@ func (client *SharedGalleriesClient) getHandleResponse(resp *http.Response) (Sha
 
 // NewListPager - List shared galleries by subscription id or tenant id.
 //
-// Generated from API version 2022-03-03
+// Generated from API version 2022-08-03
 //   - location - Resource location.
 //   - options - SharedGalleriesClientListOptions contains the optional parameters for the SharedGalleriesClient.NewListPager
 //     method.
@@ -116,25 +120,20 @@ func (client *SharedGalleriesClient) NewListPager(location string, options *Shar
 			return page.NextLink != nil && len(*page.NextLink) > 0
 		},
 		Fetcher: func(ctx context.Context, page *SharedGalleriesClientListResponse) (SharedGalleriesClientListResponse, error) {
-			var req *policy.Request
-			var err error
-			if page == nil {
-				req, err = client.listCreateRequest(ctx, location, options)
-			} else {
-				req, err = runtime.NewRequest(ctx, http.MethodGet, *page.NextLink)
+			ctx = context.WithValue(ctx, runtime.CtxAPINameKey{}, "SharedGalleriesClient.NewListPager")
+			nextLink := ""
+			if page != nil {
+				nextLink = *page.NextLink
 			}
+			resp, err := runtime.FetcherForNextLink(ctx, client.internal.Pipeline(), nextLink, func(ctx context.Context) (*policy.Request, error) {
+				return client.listCreateRequest(ctx, location, options)
+			}, nil)
 			if err != nil {
 				return SharedGalleriesClientListResponse{}, err
-			}
-			resp, err := client.internal.Pipeline().Do(req)
-			if err != nil {
-				return SharedGalleriesClientListResponse{}, err
-			}
-			if !runtime.HasStatusCode(resp, http.StatusOK) {
-				return SharedGalleriesClientListResponse{}, runtime.NewResponseError(resp)
 			}
 			return client.listHandleResponse(resp)
 		},
+		Tracer: client.internal.Tracer(),
 	})
 }
 
@@ -154,7 +153,7 @@ func (client *SharedGalleriesClient) listCreateRequest(ctx context.Context, loca
 		return nil, err
 	}
 	reqQP := req.Raw().URL.Query()
-	reqQP.Set("api-version", "2022-03-03")
+	reqQP.Set("api-version", "2022-08-03")
 	if options != nil && options.SharedTo != nil {
 		reqQP.Set("sharedTo", string(*options.SharedTo))
 	}

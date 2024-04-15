@@ -18,23 +18,24 @@ package disks
 
 import (
 	"context"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 // azureClient contains the Azure go-sdk Client.
 type azureClient struct {
-	disks *armcompute.DisksClient
+	disks          *armcompute.DisksClient
+	apiCallTimeout time.Duration
 }
 
 // newClient creates a new disks client from an authorizer.
-func newClient(auth azure.Authorizer) (*azureClient, error) {
+func newClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureClient, error) {
 	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create disks client options")
@@ -43,7 +44,7 @@ func newClient(auth azure.Authorizer) (*azureClient, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create armcompute client factory")
 	}
-	return &azureClient{factory.NewDisksClient()}, nil
+	return &azureClient{factory.NewDisksClient(), apiCallTimeout}, nil
 }
 
 // DeleteAsync deletes a disk asynchronously. DeleteAsync sends a DELETE
@@ -59,7 +60,7 @@ func (ac *azureClient) DeleteAsync(ctx context.Context, spec azure.ResourceSpecG
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureCallTimeout)
+	ctx, cancel := context.WithTimeout(ctx, ac.apiCallTimeout)
 	defer cancel()
 
 	pollOpts := &runtime.PollUntilDoneOptions{Frequency: async.DefaultPollerFrequency}

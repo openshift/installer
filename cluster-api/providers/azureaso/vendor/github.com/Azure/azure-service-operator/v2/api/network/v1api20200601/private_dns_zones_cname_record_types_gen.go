@@ -5,7 +5,7 @@ package v1api20200601
 
 import (
 	"fmt"
-	v20200601s "github.com/Azure/azure-service-operator/v2/api/network/v1api20200601storage"
+	v20200601s "github.com/Azure/azure-service-operator/v2/api/network/v1api20200601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &PrivateDnsZonesCNAMERecord{}
 func (record *PrivateDnsZonesCNAMERecord) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20200601s.PrivateDnsZonesCNAMERecord)
 	if !ok {
-		return fmt.Errorf("expected network/v1api20200601storage/PrivateDnsZonesCNAMERecord but received %T instead", hub)
+		return fmt.Errorf("expected network/v1api20200601/storage/PrivateDnsZonesCNAMERecord but received %T instead", hub)
 	}
 
 	return record.AssignProperties_From_PrivateDnsZonesCNAMERecord(source)
@@ -61,7 +61,7 @@ func (record *PrivateDnsZonesCNAMERecord) ConvertFrom(hub conversion.Hub) error 
 func (record *PrivateDnsZonesCNAMERecord) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20200601s.PrivateDnsZonesCNAMERecord)
 	if !ok {
-		return fmt.Errorf("expected network/v1api20200601storage/PrivateDnsZonesCNAMERecord but received %T instead", hub)
+		return fmt.Errorf("expected network/v1api20200601/storage/PrivateDnsZonesCNAMERecord but received %T instead", hub)
 	}
 
 	return record.AssignProperties_To_PrivateDnsZonesCNAMERecord(destination)
@@ -126,6 +126,15 @@ func (record *PrivateDnsZonesCNAMERecord) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (record *PrivateDnsZonesCNAMERecord) GetStatus() genruntime.ConvertibleStatus {
 	return &record.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (record *PrivateDnsZonesCNAMERecord) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Network/privateDnsZones/CNAME"

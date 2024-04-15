@@ -5,7 +5,7 @@ package v1api20220901
 
 import (
 	"fmt"
-	v20220901s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901storage"
+	v20220901s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -49,22 +49,36 @@ var _ conversion.Convertible = &StorageAccountsQueueServicesQueue{}
 
 // ConvertFrom populates our StorageAccountsQueueServicesQueue from the provided hub StorageAccountsQueueServicesQueue
 func (queue *StorageAccountsQueueServicesQueue) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20220901s.StorageAccountsQueueServicesQueue)
-	if !ok {
-		return fmt.Errorf("expected storage/v1api20220901storage/StorageAccountsQueueServicesQueue but received %T instead", hub)
+	// intermediate variable for conversion
+	var source v20220901s.StorageAccountsQueueServicesQueue
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from hub to source")
 	}
 
-	return queue.AssignProperties_From_StorageAccountsQueueServicesQueue(source)
+	err = queue.AssignProperties_From_StorageAccountsQueueServicesQueue(&source)
+	if err != nil {
+		return errors.Wrap(err, "converting from source to queue")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub StorageAccountsQueueServicesQueue from our StorageAccountsQueueServicesQueue
 func (queue *StorageAccountsQueueServicesQueue) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20220901s.StorageAccountsQueueServicesQueue)
-	if !ok {
-		return fmt.Errorf("expected storage/v1api20220901storage/StorageAccountsQueueServicesQueue but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination v20220901s.StorageAccountsQueueServicesQueue
+	err := queue.AssignProperties_To_StorageAccountsQueueServicesQueue(&destination)
+	if err != nil {
+		return errors.Wrap(err, "converting to destination from queue")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from destination to hub")
 	}
 
-	return queue.AssignProperties_To_StorageAccountsQueueServicesQueue(destination)
+	return nil
 }
 
 // +kubebuilder:webhook:path=/mutate-storage-azure-com-v1api20220901-storageaccountsqueueservicesqueue,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=storage.azure.com,resources=storageaccountsqueueservicesqueues,verbs=create;update,versions=v1api20220901,name=default.v1api20220901.storageaccountsqueueservicesqueues.storage.azure.com,admissionReviewVersions=v1
@@ -89,17 +103,6 @@ func (queue *StorageAccountsQueueServicesQueue) defaultAzureName() {
 
 // defaultImpl applies the code generated defaults to the StorageAccountsQueueServicesQueue resource
 func (queue *StorageAccountsQueueServicesQueue) defaultImpl() { queue.defaultAzureName() }
-
-var _ genruntime.ImportableResource = &StorageAccountsQueueServicesQueue{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (queue *StorageAccountsQueueServicesQueue) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*StorageAccounts_QueueServices_Queue_STATUS); ok {
-		return queue.Spec.Initialize_From_StorageAccounts_QueueServices_Queue_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type StorageAccounts_QueueServices_Queue_STATUS but received %T instead", status)
-}
 
 var _ genruntime.KubernetesResource = &StorageAccountsQueueServicesQueue{}
 
@@ -126,6 +129,15 @@ func (queue *StorageAccountsQueueServicesQueue) GetSpec() genruntime.Convertible
 // GetStatus returns the status of this resource
 func (queue *StorageAccountsQueueServicesQueue) GetStatus() genruntime.ConvertibleStatus {
 	return &queue.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (queue *StorageAccountsQueueServicesQueue) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Storage/storageAccounts/queueServices/queues"
@@ -492,16 +504,6 @@ func (queue *StorageAccounts_QueueServices_Queue_Spec) AssignProperties_To_Stora
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_StorageAccounts_QueueServices_Queue_STATUS populates our StorageAccounts_QueueServices_Queue_Spec from the provided source StorageAccounts_QueueServices_Queue_STATUS
-func (queue *StorageAccounts_QueueServices_Queue_Spec) Initialize_From_StorageAccounts_QueueServices_Queue_STATUS(source *StorageAccounts_QueueServices_Queue_STATUS) error {
-
-	// Metadata
-	queue.Metadata = genruntime.CloneMapOfStringToString(source.Metadata)
 
 	// No error
 	return nil

@@ -5,11 +5,11 @@ package customizations
 
 import (
 	v20210401 "github.com/Azure/azure-service-operator/v2/api/storage/v1api20210401"
-	v20210401s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20210401storage"
+	v20210401s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20210401/storage"
 	v20220901 "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901"
-	v20220901s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901storage"
-	v1beta20210401 "github.com/Azure/azure-service-operator/v2/api/storage/v1beta20210401"
-	v1beta20210401s "github.com/Azure/azure-service-operator/v2/api/storage/v1beta20210401storage"
+	v20220901s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901/storage"
+	v20230101 "github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101"
+	v20230101s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -23,6 +23,6 @@ func (extension *StorageAccountsQueueServiceExtension) GetExtendedResources() []
 		&v20210401s.StorageAccountsQueueService{},
 		&v20220901.StorageAccountsQueueService{},
 		&v20220901s.StorageAccountsQueueService{},
-		&v1beta20210401.StorageAccountsQueueService{},
-		&v1beta20210401s.StorageAccountsQueueService{}}
+		&v20230101.StorageAccountsQueueService{},
+		&v20230101s.StorageAccountsQueueService{}}
 }

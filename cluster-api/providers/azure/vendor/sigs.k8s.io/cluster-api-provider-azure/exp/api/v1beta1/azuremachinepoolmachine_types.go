@@ -27,6 +27,9 @@ import (
 const (
 	// AzureMachinePoolMachineFinalizer is used to ensure deletion of dependencies (nodes, infra).
 	AzureMachinePoolMachineFinalizer = "azuremachinepoolmachine.infrastructure.cluster.x-k8s.io"
+
+	// AzureMachinePoolMachineKind indicates the kind of an AzureMachinePoolMachine.
+	AzureMachinePoolMachineKind = "AzureMachinePoolMachine"
 )
 
 type (

@@ -5,7 +5,7 @@ package v1api20220702
 
 import (
 	"fmt"
-	v20220702s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220702storage"
+	v20220702s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220702/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &DiskEncryptionSet{}
 func (encryptionSet *DiskEncryptionSet) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20220702s.DiskEncryptionSet)
 	if !ok {
-		return fmt.Errorf("expected compute/v1api20220702storage/DiskEncryptionSet but received %T instead", hub)
+		return fmt.Errorf("expected compute/v1api20220702/storage/DiskEncryptionSet but received %T instead", hub)
 	}
 
 	return encryptionSet.AssignProperties_From_DiskEncryptionSet(source)
@@ -61,7 +61,7 @@ func (encryptionSet *DiskEncryptionSet) ConvertFrom(hub conversion.Hub) error {
 func (encryptionSet *DiskEncryptionSet) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20220702s.DiskEncryptionSet)
 	if !ok {
-		return fmt.Errorf("expected compute/v1api20220702storage/DiskEncryptionSet but received %T instead", hub)
+		return fmt.Errorf("expected compute/v1api20220702/storage/DiskEncryptionSet but received %T instead", hub)
 	}
 
 	return encryptionSet.AssignProperties_To_DiskEncryptionSet(destination)
@@ -126,6 +126,15 @@ func (encryptionSet *DiskEncryptionSet) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (encryptionSet *DiskEncryptionSet) GetStatus() genruntime.ConvertibleStatus {
 	return &encryptionSet.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (encryptionSet *DiskEncryptionSet) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Compute/diskEncryptionSets"

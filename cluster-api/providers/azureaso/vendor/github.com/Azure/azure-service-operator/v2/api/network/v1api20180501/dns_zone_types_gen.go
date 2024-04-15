@@ -5,7 +5,7 @@ package v1api20180501
 
 import (
 	"fmt"
-	v20180501s "github.com/Azure/azure-service-operator/v2/api/network/v1api20180501storage"
+	v20180501s "github.com/Azure/azure-service-operator/v2/api/network/v1api20180501/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &DnsZone{}
 func (zone *DnsZone) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20180501s.DnsZone)
 	if !ok {
-		return fmt.Errorf("expected network/v1api20180501storage/DnsZone but received %T instead", hub)
+		return fmt.Errorf("expected network/v1api20180501/storage/DnsZone but received %T instead", hub)
 	}
 
 	return zone.AssignProperties_From_DnsZone(source)
@@ -61,7 +61,7 @@ func (zone *DnsZone) ConvertFrom(hub conversion.Hub) error {
 func (zone *DnsZone) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20180501s.DnsZone)
 	if !ok {
-		return fmt.Errorf("expected network/v1api20180501storage/DnsZone but received %T instead", hub)
+		return fmt.Errorf("expected network/v1api20180501/storage/DnsZone but received %T instead", hub)
 	}
 
 	return zone.AssignProperties_To_DnsZone(destination)
@@ -126,6 +126,15 @@ func (zone *DnsZone) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (zone *DnsZone) GetStatus() genruntime.ConvertibleStatus {
 	return &zone.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (zone *DnsZone) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Network/dnsZones"

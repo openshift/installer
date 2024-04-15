@@ -9,7 +9,7 @@ import (
 	"context"
 	"strings"
 
-	api "github.com/Azure/azure-service-operator/v2/api/authorization/v1api20200801preview"
+	api "github.com/Azure/azure-service-operator/v2/api/authorization/v1api20220401"
 
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/extensions"

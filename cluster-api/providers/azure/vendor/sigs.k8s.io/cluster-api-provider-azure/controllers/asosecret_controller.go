@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"time"
 
 	asoconfig "github.com/Azure/azure-service-operator/v2/pkg/common/config"
 	"github.com/pkg/errors"
@@ -50,7 +49,7 @@ import (
 type ASOSecretReconciler struct {
 	client.Client
 	Recorder         record.EventRecorder
-	ReconcileTimeout time.Duration
+	Timeouts         reconciler.Timeouts
 	WatchFilterValue string
 }
 
@@ -94,7 +93,7 @@ func (asos *ASOSecretReconciler) SetupWithManager(ctx context.Context, mgr ctrl.
 	// Add a watch on clusterv1.Cluster object for unpause notifications.
 	if err = c.Watch(
 		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1.GroupVersion.WithKind("AzureCluster"), mgr.GetClient(), &infrav1.AzureCluster{})),
+		handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1.GroupVersion.WithKind(infrav1.AzureClusterKind), mgr.GetClient(), &infrav1.AzureCluster{})),
 		predicates.ClusterUnpaused(log),
 		predicates.ResourceNotPausedAndHasFilterLabel(log, asos.WatchFilterValue),
 	); err != nil {
@@ -106,17 +105,17 @@ func (asos *ASOSecretReconciler) SetupWithManager(ctx context.Context, mgr ctrl.
 
 // Reconcile reconciles the ASO secrets associated with AzureCluster objects.
 func (asos *ASOSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultedLoopTimeout(asos.ReconcileTimeout))
+	ctx, cancel := context.WithTimeout(ctx, asos.Timeouts.DefaultedLoopTimeout())
 	defer cancel()
 
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "controllers.ASOSecret.Reconcile",
 		tele.KVP("namespace", req.Namespace),
 		tele.KVP("name", req.Name),
-		tele.KVP("kind", "AzureCluster"),
+		tele.KVP("kind", infrav1.AzureClusterKind),
 	)
 	defer done()
 
-	log = log.WithValues("namespace", req.Namespace, "AzureCluster", req.Name)
+	log = log.WithValues("namespace", req.Namespace)
 
 	// asoSecretOwner is the resource that created the identity. This could be either an AzureCluster or AzureManagedControlPlane (if AKS is enabled).
 	// check for AzureCluster first and if it is not found, check for AzureManagedControlPlane.
@@ -181,6 +180,7 @@ func (asos *ASOSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			Client:       asos.Client,
 			Cluster:      cluster,
 			AzureCluster: ownerType,
+			Timeouts:     asos.Timeouts,
 		})
 		if err != nil {
 			return reconcile.Result{}, errors.Wrap(err, "failed to create scope")
@@ -206,6 +206,7 @@ func (asos *ASOSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			Client:       asos.Client,
 			Cluster:      cluster,
 			ControlPlane: ownerType,
+			Timeouts:     asos.Timeouts,
 		})
 		if err != nil {
 			return reconcile.Result{}, errors.Wrap(err, "failed to create scope")

@@ -37,6 +37,10 @@ kubeconfig
 # Example and binary output directory
 /out
 
+# Mdbook build directory
+docs/book/bookout
+docs/book/src/reference/*.html
+
 # vscode
 .vscode
 *.code-workspace
@@ -75,9 +79,6 @@ hack/boilerplate/*.pyc
 
 # Helm chart caching
 .helm/
-
-# release notes
-_releasenotes
 
 # calico manifests archive
 release-*/manifests/calico-*.yaml

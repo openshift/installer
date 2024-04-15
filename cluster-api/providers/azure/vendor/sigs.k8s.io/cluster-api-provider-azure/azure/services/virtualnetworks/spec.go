@@ -19,10 +19,11 @@ package virtualnetworks
 import (
 	"context"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
+	asonetworkv1 "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
 )
 
@@ -37,41 +38,46 @@ type VNetSpec struct {
 	AdditionalTags   infrav1.Tags
 }
 
-// ResourceName returns the name of the vnet.
-func (s *VNetSpec) ResourceName() string {
-	return s.Name
-}
-
-// ResourceGroupName returns the name of the resource group.
-func (s *VNetSpec) ResourceGroupName() string {
-	return s.ResourceGroup
-}
-
-// OwnerResourceName is a no-op for vnets.
-func (s *VNetSpec) OwnerResourceName() string {
-	return ""
-}
-
-// Parameters returns the parameters for the vnet.
-func (s *VNetSpec) Parameters(ctx context.Context, existing interface{}) (interface{}, error) {
-	if existing != nil {
-		// vnet already exists, nothing to update.
-		return nil, nil
-	}
-	return armnetwork.VirtualNetwork{
-		Tags: converters.TagsToMap(infrav1.Build(infrav1.BuildParams{
-			ClusterName: s.ClusterName,
-			Lifecycle:   infrav1.ResourceLifecycleOwned,
-			Name:        ptr.To(s.Name),
-			Role:        ptr.To(infrav1.CommonRole),
-			Additional:  s.AdditionalTags,
-		})),
-		Location:         ptr.To(s.Location),
-		ExtendedLocation: converters.ExtendedLocationToNetworkSDK(s.ExtendedLocation),
-		Properties: &armnetwork.VirtualNetworkPropertiesFormat{
-			AddressSpace: &armnetwork.AddressSpace{
-				AddressPrefixes: azure.PtrSlice(&s.CIDRs),
-			},
+// ResourceRef implements azure.ASOResourceSpecGetter.
+func (s *VNetSpec) ResourceRef() *asonetworkv1.VirtualNetwork {
+	return &asonetworkv1.VirtualNetwork{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: s.Name,
 		},
-	}, nil
+	}
+}
+
+// Parameters implements azure.ASOResourceSpecGetter.
+func (s *VNetSpec) Parameters(ctx context.Context, existing *asonetworkv1.VirtualNetwork) (*asonetworkv1.VirtualNetwork, error) {
+	vnet := existing
+	if existing == nil {
+		vnet = &asonetworkv1.VirtualNetwork{
+			Spec: asonetworkv1.VirtualNetwork_Spec{
+				Tags: infrav1.Build(infrav1.BuildParams{
+					ClusterName: s.ClusterName,
+					Lifecycle:   infrav1.ResourceLifecycleOwned,
+					Name:        ptr.To(s.Name),
+					Role:        ptr.To(infrav1.CommonRole),
+					Additional:  s.AdditionalTags,
+				}),
+			},
+		}
+	}
+
+	vnet.Spec.AzureName = s.Name
+	vnet.Spec.Owner = &genruntime.KnownResourceReference{
+		Name: s.ResourceGroup,
+	}
+	vnet.Spec.Location = ptr.To(s.Location)
+	vnet.Spec.ExtendedLocation = converters.ExtendedLocationToNetworkASO(s.ExtendedLocation)
+	vnet.Spec.AddressSpace = &asonetworkv1.AddressSpace{
+		AddressPrefixes: s.CIDRs,
+	}
+
+	return vnet, nil
+}
+
+// WasManaged implements azure.ASOResourceSpecGetter.
+func (s *VNetSpec) WasManaged(resource *asonetworkv1.VirtualNetwork) bool {
+	return infrav1.Tags(resource.Status.Tags).HasOwned(s.ClusterName)
 }

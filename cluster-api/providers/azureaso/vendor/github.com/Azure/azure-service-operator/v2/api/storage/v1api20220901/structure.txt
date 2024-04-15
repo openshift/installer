@@ -3,7 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901
 ├── APIVersion: Enum (1 value)
 │   └── "2022-09-01"
 ├── StorageAccount: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (32 properties)
 │   │   ├── AccessTier: *Enum (3 values)
 │   │   │   ├── "Cool"

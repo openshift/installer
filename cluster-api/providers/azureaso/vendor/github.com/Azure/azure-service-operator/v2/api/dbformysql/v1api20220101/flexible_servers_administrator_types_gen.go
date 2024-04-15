@@ -5,7 +5,7 @@ package v1api20220101
 
 import (
 	"fmt"
-	v20220101s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20220101storage"
+	v20220101s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20220101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &FlexibleServersAdministrator{}
 func (administrator *FlexibleServersAdministrator) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20220101s.FlexibleServersAdministrator)
 	if !ok {
-		return fmt.Errorf("expected dbformysql/v1api20220101storage/FlexibleServersAdministrator but received %T instead", hub)
+		return fmt.Errorf("expected dbformysql/v1api20220101/storage/FlexibleServersAdministrator but received %T instead", hub)
 	}
 
 	return administrator.AssignProperties_From_FlexibleServersAdministrator(source)
@@ -61,7 +61,7 @@ func (administrator *FlexibleServersAdministrator) ConvertFrom(hub conversion.Hu
 func (administrator *FlexibleServersAdministrator) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20220101s.FlexibleServersAdministrator)
 	if !ok {
-		return fmt.Errorf("expected dbformysql/v1api20220101storage/FlexibleServersAdministrator but received %T instead", hub)
+		return fmt.Errorf("expected dbformysql/v1api20220101/storage/FlexibleServersAdministrator but received %T instead", hub)
 	}
 
 	return administrator.AssignProperties_To_FlexibleServersAdministrator(destination)
@@ -119,6 +119,15 @@ func (administrator *FlexibleServersAdministrator) GetSpec() genruntime.Converti
 // GetStatus returns the status of this resource
 func (administrator *FlexibleServersAdministrator) GetStatus() genruntime.ConvertibleStatus {
 	return &administrator.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (administrator *FlexibleServersAdministrator) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DBforMySQL/flexibleServers/administrators"

@@ -5,7 +5,7 @@ package customizations
 
 import (
 	v20220101 "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20220101"
-	v20220101s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20220101storage"
+	v20220101s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20220101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 

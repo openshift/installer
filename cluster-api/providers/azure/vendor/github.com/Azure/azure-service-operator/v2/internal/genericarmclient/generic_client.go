@@ -29,7 +29,7 @@ const DeletePollerID = "GenericClient.DeleteByID"
 
 // NOTE: All of these methods (and types) were adapted from
 // https://github.com/Azure/azure-sdk-for-go/blob/sdk/resources/armresources/v0.3.0/sdk/resources/armresources/zz_generated_resources_client.go
-// which was then moved to here: https://github.com/Azure/azure-sdk-for-go/blob/main/sdk/resourcemanager/resources/armresources/zz_generated_client.go
+// which was then moved to here: https://github.com/Azure/azure-sdk-for-go/blob/main/sdk/resourcemanager/resources/armresources/client.go
 
 type GenericClient struct {
 	endpoint string
@@ -84,13 +84,6 @@ func NewGenericClient(
 		DisableRPRegistration: true,
 	}
 
-	rpRegistrationPolicy, err := NewRPRegistrationPolicy(
-		creds,
-		&opts.ClientOptions)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create rp registration policy")
-	}
-
 	// We assign this HTTPClient like this because if we actually set it to nil, due to the way
 	// go interfaces wrap values, the subsequent if httpClient == nil check returns false (even though
 	// the value IN the interface IS nil).
@@ -98,6 +91,13 @@ func NewGenericClient(
 		opts.Transport = options.HttpClient
 	} else {
 		opts.Transport = defaultHttpClient
+	}
+
+	rpRegistrationPolicy, err := NewRPRegistrationPolicy(
+		creds,
+		&opts.ClientOptions)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create rp registration policy")
 	}
 
 	opts.PerCallPolicies = append([]policy.Policy{rpRegistrationPolicy}, opts.PerCallPolicies...)
@@ -262,6 +262,63 @@ func (client *GenericClient) getByIDHandleResponse(resp *http.Response, resource
 		return err
 	}
 	return nil
+}
+
+// CheckExistenceByID - Heads a resource by ID.
+// If the operation fails it returns the *CloudError error type.
+func (client *GenericClient) CheckExistenceByID(
+	ctx context.Context,
+	resourceID string,
+	apiVersion string,
+) (bool, time.Duration, error) {
+	retryAfter, err := client.checkExistenceByIDImpl(ctx, resourceID, apiVersion)
+	switch {
+	case IsNotFoundError(err):
+		return false, retryAfter, nil
+	case err != nil:
+		return false, retryAfter, err
+	default:
+		return true, retryAfter, nil
+	}
+}
+
+func (client *GenericClient) checkExistenceByIDImpl(
+	ctx context.Context,
+	resourceID string,
+	apiVersion string,
+) (time.Duration, error) {
+	req, err := client.checkExistenceByIDCreateRequest(ctx, resourceID, apiVersion)
+	if err != nil {
+		return zeroDuration, err
+	}
+	// The linter doesn't realize that the response is closed as part of the pipeline
+	// nolint:bodyclose
+	resp, err := client.pl.Do(req)
+	retryAfter := GetRetryAfter(resp)
+	if err != nil {
+		return retryAfter, err
+	}
+	if !runtime.HasStatusCode(resp, http.StatusNoContent, http.StatusNotFound) {
+		return retryAfter, runtime.NewResponseError(resp)
+	}
+	return zeroDuration, nil
+}
+
+func (client *GenericClient) checkExistenceByIDCreateRequest(ctx context.Context, resourceID string, apiVersion string) (*policy.Request, error) {
+	urlPath := "/{resourceId}"
+	if resourceID == "" {
+		return nil, errors.New("parameter resourceID cannot be empty")
+	}
+	urlPath = strings.ReplaceAll(urlPath, "{resourceId}", resourceID)
+	req, err := runtime.NewRequest(ctx, http.MethodHead, runtime.JoinPaths(client.endpoint, urlPath))
+	if err != nil {
+		return nil, err
+	}
+	reqQP := req.Raw().URL.Query()
+	reqQP.Set("api-version", apiVersion)
+	req.Raw().URL.RawQuery = reqQP.Encode()
+	req.Raw().Header.Set("Accept", "application/json")
+	return req, nil
 }
 
 type listPageResponse[T any] struct {
@@ -442,7 +499,7 @@ func (client *GenericClient) deleteByIDCreateRequest(ctx context.Context, resour
 	return req, nil
 }
 
-func (client *GenericClient) HeadByID(ctx context.Context, resourceID string, apiVersion string) (bool, time.Duration, error) {
+func (client *GenericClient) CheckExistenceWithGetByID(ctx context.Context, resourceID string, apiVersion string) (bool, time.Duration, error) {
 	if resourceID == "" {
 		return false, zeroDuration, errors.New("parameter resourceID cannot be empty")
 	}

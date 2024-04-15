@@ -5,7 +5,7 @@ package v1api20210101preview
 
 import (
 	"fmt"
-	v20210101ps "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20210101previewstorage"
+	v20210101ps "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20210101preview/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -129,6 +129,15 @@ func (queue *NamespacesQueue) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (queue *NamespacesQueue) GetStatus() genruntime.ConvertibleStatus {
 	return &queue.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (queue *NamespacesQueue) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.ServiceBus/namespaces/queues"

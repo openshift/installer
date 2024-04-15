@@ -5,7 +5,7 @@ package v1api20220120preview
 
 import (
 	"fmt"
-	v20220120ps "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20220120previewstorage"
+	v20220120ps "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20220120preview/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -129,6 +129,15 @@ func (rule *FlexibleServersFirewallRule) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (rule *FlexibleServersFirewallRule) GetStatus() genruntime.ConvertibleStatus {
 	return &rule.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (rule *FlexibleServersFirewallRule) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DBforPostgreSQL/flexibleServers/firewallRules"

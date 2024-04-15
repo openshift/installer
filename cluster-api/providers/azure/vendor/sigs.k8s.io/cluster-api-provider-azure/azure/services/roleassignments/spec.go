@@ -31,6 +31,7 @@ type RoleAssignmentSpec struct {
 	ResourceGroup    string
 	ResourceType     string
 	PrincipalID      *string
+	PrincipalType    armauthorization.PrincipalType
 	RoleDefinitionID string
 	Scope            string
 }
@@ -64,6 +65,7 @@ func (s *RoleAssignmentSpec) Parameters(ctx context.Context, existing interface{
 		Properties: &armauthorization.RoleAssignmentProperties{
 			PrincipalID:      s.PrincipalID,
 			RoleDefinitionID: ptr.To(s.RoleDefinitionID),
+			PrincipalType:    ptr.To(s.PrincipalType),
 		},
 	}, nil
 }

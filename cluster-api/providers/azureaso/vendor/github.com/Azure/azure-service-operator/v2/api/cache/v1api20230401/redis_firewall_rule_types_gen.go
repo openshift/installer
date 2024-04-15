@@ -5,7 +5,7 @@ package v1api20230401
 
 import (
 	"fmt"
-	v20230401s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230401storage"
+	v20230401s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230401/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &RedisFirewallRule{}
 func (rule *RedisFirewallRule) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20230401s.RedisFirewallRule)
 	if !ok {
-		return fmt.Errorf("expected cache/v1api20230401storage/RedisFirewallRule but received %T instead", hub)
+		return fmt.Errorf("expected cache/v1api20230401/storage/RedisFirewallRule but received %T instead", hub)
 	}
 
 	return rule.AssignProperties_From_RedisFirewallRule(source)
@@ -61,7 +61,7 @@ func (rule *RedisFirewallRule) ConvertFrom(hub conversion.Hub) error {
 func (rule *RedisFirewallRule) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20230401s.RedisFirewallRule)
 	if !ok {
-		return fmt.Errorf("expected cache/v1api20230401storage/RedisFirewallRule but received %T instead", hub)
+		return fmt.Errorf("expected cache/v1api20230401/storage/RedisFirewallRule but received %T instead", hub)
 	}
 
 	return rule.AssignProperties_To_RedisFirewallRule(destination)
@@ -126,6 +126,15 @@ func (rule *RedisFirewallRule) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (rule *RedisFirewallRule) GetStatus() genruntime.ConvertibleStatus {
 	return &rule.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (rule *RedisFirewallRule) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Cache/redis/firewallRules"

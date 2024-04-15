@@ -3,7 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/machinelearningservices/v1api2021
 ├── APIVersion: Enum (1 value)
 │   └── "2021-07-01"
 ├── Workspace: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (23 properties)
 │   │   ├── AllowPublicAccessWhenBehindVnet: *bool
 │   │   ├── ApplicationInsightsReference: *genruntime.ResourceReference

@@ -27,6 +27,7 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	infrav1exp "sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -141,6 +142,13 @@ func (rollingUpdateStrategy rollingUpdateStrategy) SelectMachinesToDelete(ctx co
 			return len(readyMachines) - int(desiredReplicaCount) + maxUnavailable
 		}()
 	)
+
+	// Order AzureMachinePoolMachines with the clutserv1.DeleteMachineAnnotation to the front so that they have delete priority.
+	// This allows MachinePool Machines to work with the autoscaler.
+	failedMachines = orderByDeleteMachineAnnotation(failedMachines)
+	deletingMachines = orderByDeleteMachineAnnotation(deletingMachines)
+	readyMachines = orderByDeleteMachineAnnotation(readyMachines)
+	machinesWithoutLatestModel = orderByDeleteMachineAnnotation(machinesWithoutLatestModel)
 
 	log.Info("selecting machines to delete",
 		"readyMachines", len(readyMachines),
@@ -293,6 +301,18 @@ func orderRandom(machines []infrav1exp.AzureMachinePoolMachine) []infrav1exp.Azu
 	//nolint:gosec // We don't need a cryptographically appropriate random number here
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	r.Shuffle(len(machines), func(i, j int) { machines[i], machines[j] = machines[j], machines[i] })
+	return machines
+}
+
+// orderByDeleteMachineAnnotation will sort AzureMachinePoolMachines with the clusterv1.DeleteMachineAnnotation to the front of the list.
+// It will preserve the existing order of the list otherwise so that it respects the existing delete priority otherwise.
+func orderByDeleteMachineAnnotation(machines []infrav1exp.AzureMachinePoolMachine) []infrav1exp.AzureMachinePoolMachine {
+	sort.SliceStable(machines, func(i, j int) bool {
+		_, iHasAnnotation := machines[i].Annotations[clusterv1.DeleteMachineAnnotation]
+
+		return iHasAnnotation
+	})
+
 	return machines
 }
 

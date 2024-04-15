@@ -5,7 +5,7 @@ package v1api20210515
 
 import (
 	"fmt"
-	v20210515s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20210515storage"
+	v20210515s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20210515/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &SqlDatabase{}
 func (database *SqlDatabase) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20210515s.SqlDatabase)
 	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20210515storage/SqlDatabase but received %T instead", hub)
+		return fmt.Errorf("expected documentdb/v1api20210515/storage/SqlDatabase but received %T instead", hub)
 	}
 
 	return database.AssignProperties_From_SqlDatabase(source)
@@ -61,7 +61,7 @@ func (database *SqlDatabase) ConvertFrom(hub conversion.Hub) error {
 func (database *SqlDatabase) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20210515s.SqlDatabase)
 	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20210515storage/SqlDatabase but received %T instead", hub)
+		return fmt.Errorf("expected documentdb/v1api20210515/storage/SqlDatabase but received %T instead", hub)
 	}
 
 	return database.AssignProperties_To_SqlDatabase(destination)
@@ -126,6 +126,15 @@ func (database *SqlDatabase) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (database *SqlDatabase) GetStatus() genruntime.ConvertibleStatus {
 	return &database.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (database *SqlDatabase) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DocumentDB/databaseAccounts/sqlDatabases"

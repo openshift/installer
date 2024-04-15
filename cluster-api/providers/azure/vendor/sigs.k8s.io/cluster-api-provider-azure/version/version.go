@@ -19,8 +19,6 @@ package version
 import (
 	"fmt"
 	"runtime"
-
-	azuresdkversion "github.com/Azure/azure-sdk-for-go/version"
 )
 
 var (
@@ -58,7 +56,7 @@ func Get() Info {
 		GoVersion:       runtime.Version(),
 		Compiler:        runtime.Compiler,
 		Platform:        fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
-		AzureSdkVersion: azuresdkversion.Number,
+		AzureSdkVersion: "SDK track2",
 	}
 }
 

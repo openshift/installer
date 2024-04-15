@@ -56,9 +56,10 @@ type RedisCreateProperties_ARM struct {
 	// '1.2')
 	MinimumTlsVersion *RedisCreateProperties_MinimumTlsVersion `json:"minimumTlsVersion,omitempty"`
 
-	// PublicNetworkAccess: Whether or not public endpoint access is allowed for this cache.  Value is optional but if passed
+	// PublicNetworkAccess: Whether or not public endpoint access is allowed for this cache.  Value is optional, but if passed
 	// in, must be 'Enabled' or 'Disabled'. If 'Disabled', private endpoints are the exclusive access method. Default value is
-	// 'Enabled'
+	// 'Enabled'. Note: This setting is important for caches with private endpoints. It has *no effect* on caches that are
+	// joined to, or injected into, a virtual network subnet.
 	PublicNetworkAccess *RedisCreateProperties_PublicNetworkAccess `json:"publicNetworkAccess,omitempty"`
 
 	// RedisConfiguration: All Redis Settings. Few possible keys:

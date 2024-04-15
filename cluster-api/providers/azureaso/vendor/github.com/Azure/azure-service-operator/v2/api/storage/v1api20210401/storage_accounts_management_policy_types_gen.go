@@ -5,7 +5,7 @@ package v1api20210401
 
 import (
 	"fmt"
-	v20210401s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20210401storage"
+	v20210401s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20210401/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -122,6 +122,15 @@ func (policy *StorageAccountsManagementPolicy) GetSpec() genruntime.ConvertibleS
 // GetStatus returns the status of this resource
 func (policy *StorageAccountsManagementPolicy) GetStatus() genruntime.ConvertibleStatus {
 	return &policy.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (policy *StorageAccountsManagementPolicy) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Storage/storageAccounts/managementPolicies"

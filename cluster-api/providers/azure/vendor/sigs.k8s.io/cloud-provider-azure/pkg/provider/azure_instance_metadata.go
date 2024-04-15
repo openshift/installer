@@ -102,7 +102,7 @@ type LoadBalancerMetadata struct {
 // InstanceMetadataService knows how to query the Azure instance metadata server.
 type InstanceMetadataService struct {
 	imdsServer string
-	imsCache   *azcache.TimedCache
+	imsCache   azcache.Resource
 }
 
 // NewInstanceMetadataService creates an instance of the InstanceMetadataService accessor object.
@@ -111,7 +111,7 @@ func NewInstanceMetadataService(imdsServer string) (*InstanceMetadataService, er
 		imdsServer: imdsServer,
 	}
 
-	imsCache, err := azcache.NewTimedcache(consts.MetadataCacheTTL, ims.getMetadata)
+	imsCache, err := azcache.NewTimedCache(consts.MetadataCacheTTL, ims.getMetadata, false)
 	if err != nil {
 		return nil, err
 	}

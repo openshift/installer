@@ -22,6 +22,8 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
+	asocontainerservicev1preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202preview"
+	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
 	"github.com/pkg/errors"
 	azprovider "sigs.k8s.io/cloud-provider-azure/pkg/provider"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
@@ -74,22 +76,18 @@ func (a *AgentPoolVMSSNotFoundError) Is(target error) bool {
 }
 
 // newAzureManagedMachinePoolService populates all the services based on input scope.
-func newAzureManagedMachinePoolService(scope *scope.ManagedMachinePoolScope) (*azureManagedMachinePoolService, error) {
-	agentPoolsSvc, err := agentpools.New(scope)
-	if err != nil {
-		return nil, err
-	}
+func newAzureManagedMachinePoolService(scope *scope.ManagedMachinePoolScope, apiCallTimeout time.Duration) (*azureManagedMachinePoolService, error) {
 	scaleSetAuthorizer, err := scaleSetAuthorizer(scope)
 	if err != nil {
 		return nil, err
 	}
-	scaleSetsClient, err := scalesets.NewClient(scaleSetAuthorizer)
+	scaleSetsClient, err := scalesets.NewClient(scaleSetAuthorizer, apiCallTimeout)
 	if err != nil {
 		return nil, err
 	}
 	return &azureManagedMachinePoolService{
 		scope:         scope,
-		agentPoolsSvc: agentPoolsSvc,
+		agentPoolsSvc: agentpools.New(scope),
 		scaleSetsSvc:  scaleSetsClient,
 	}, nil
 }
@@ -112,7 +110,18 @@ func (s *azureManagedMachinePoolService) Reconcile(ctx context.Context) error {
 	s.scope.SetSubnetName()
 
 	log.Info("reconciling managed machine pool")
-	agentPoolName := s.scope.AgentPoolSpec().ResourceName()
+	agentPool, err := s.scope.AgentPoolSpec().Parameters(ctx, nil)
+	if err != nil {
+		return errors.Wrap(err, "failed to get agent pool parameters")
+	}
+	var agentPoolName string
+	if s.scope.IsPreviewEnabled() {
+		agentPoolTyped := agentPool.(*asocontainerservicev1preview.ManagedClustersAgentPool)
+		agentPoolName = agentPoolTyped.AzureName()
+	} else {
+		agentPoolTyped := agentPool.(*asocontainerservicev1.ManagedClustersAgentPool)
+		agentPoolName = agentPoolTyped.AzureName()
+	}
 
 	if err := s.agentPoolsSvc.Reconcile(ctx); err != nil {
 		return errors.Wrapf(err, "failed to reconcile machine pool %s", agentPoolName)

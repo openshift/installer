@@ -28,7 +28,6 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	azureautorest "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
-	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
 )
 
 // AzureClients contains all the Azure clients used by the scopes.
@@ -78,36 +77,6 @@ func (c *AzureClients) HashKey() string {
 	hasher := sha256.New()
 	_, _ = hasher.Write([]byte(c.TenantID() + c.CloudEnvironment() + c.SubscriptionID() + c.ClientID()))
 	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-}
-
-func (c *AzureClients) setCredentials(subscriptionID, environmentName string) error {
-	settings, err := c.getSettingsFromEnvironment(environmentName)
-	if err != nil {
-		return err
-	}
-
-	if subscriptionID == "" {
-		subscriptionID = settings.GetSubscriptionID()
-		if subscriptionID == "" {
-			return fmt.Errorf("error creating azure services. subscriptionID is not set in cluster or AZURE_SUBSCRIPTION_ID env var")
-		}
-	}
-
-	c.EnvironmentSettings = settings
-	c.ResourceManagerEndpoint = settings.Environment.ResourceManagerEndpoint
-	c.ResourceManagerVMDNSSuffix = settings.Environment.ResourceManagerVMDNSSuffix
-	c.Values[auth.ClientID] = strings.TrimSuffix(c.Values[auth.ClientID], "\n")
-	c.Values[auth.ClientSecret] = strings.TrimSuffix(c.Values[auth.ClientSecret], "\n")
-	c.Values[auth.SubscriptionID] = strings.TrimSuffix(subscriptionID, "\n")
-	c.Values[auth.TenantID] = strings.TrimSuffix(c.Values[auth.TenantID], "\n")
-
-	if c.Authorizer == nil {
-		c.Authorizer, err = azureutil.GetAuthorizer(settings)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (c *AzureClients) setCredentialsWithProvider(ctx context.Context, subscriptionID, environmentName string, credentialsProvider CredentialsProvider) error {

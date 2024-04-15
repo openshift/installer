@@ -5,7 +5,7 @@ package v1api20210701
 
 import (
 	"fmt"
-	v20210701s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20210701storage"
+	v20210701s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20210701/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -129,6 +129,15 @@ func (image *Image) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (image *Image) GetStatus() genruntime.ConvertibleStatus {
 	return &image.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (image *Image) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Compute/images"

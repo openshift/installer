@@ -34,7 +34,7 @@ type ManagerDeploymentStatusClient struct {
 //   - credential - used to authorize requests. Usually a credential from azidentity.
 //   - options - pass nil to accept the default values.
 func NewManagerDeploymentStatusClient(subscriptionID string, credential azcore.TokenCredential, options *arm.ClientOptions) (*ManagerDeploymentStatusClient, error) {
-	cl, err := arm.NewClient(moduleName+".ManagerDeploymentStatusClient", moduleVersion, credential, options)
+	cl, err := arm.NewClient(moduleName, moduleVersion, credential, options)
 	if err != nil {
 		return nil, err
 	}
@@ -56,6 +56,10 @@ func NewManagerDeploymentStatusClient(subscriptionID string, credential azcore.T
 //     method.
 func (client *ManagerDeploymentStatusClient) List(ctx context.Context, resourceGroupName string, networkManagerName string, parameters ManagerDeploymentStatusParameter, options *ManagerDeploymentStatusClientListOptions) (ManagerDeploymentStatusClientListResponse, error) {
 	var err error
+	const operationName = "ManagerDeploymentStatusClient.List"
+	ctx = context.WithValue(ctx, runtime.CtxAPINameKey{}, operationName)
+	ctx, endSpan := runtime.StartSpan(ctx, operationName, client.internal.Tracer(), nil)
+	defer func() { endSpan(err) }()
 	req, err := client.listCreateRequest(ctx, resourceGroupName, networkManagerName, parameters, options)
 	if err != nil {
 		return ManagerDeploymentStatusClientListResponse{}, err

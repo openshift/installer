@@ -5,7 +5,7 @@ package v1api20220701
 
 import (
 	"fmt"
-	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701storage"
+	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &DnsForwardingRuleset{}
 func (ruleset *DnsForwardingRuleset) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20220701s.DnsForwardingRuleset)
 	if !ok {
-		return fmt.Errorf("expected network/v1api20220701storage/DnsForwardingRuleset but received %T instead", hub)
+		return fmt.Errorf("expected network/v1api20220701/storage/DnsForwardingRuleset but received %T instead", hub)
 	}
 
 	return ruleset.AssignProperties_From_DnsForwardingRuleset(source)
@@ -61,7 +61,7 @@ func (ruleset *DnsForwardingRuleset) ConvertFrom(hub conversion.Hub) error {
 func (ruleset *DnsForwardingRuleset) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20220701s.DnsForwardingRuleset)
 	if !ok {
-		return fmt.Errorf("expected network/v1api20220701storage/DnsForwardingRuleset but received %T instead", hub)
+		return fmt.Errorf("expected network/v1api20220701/storage/DnsForwardingRuleset but received %T instead", hub)
 	}
 
 	return ruleset.AssignProperties_To_DnsForwardingRuleset(destination)
@@ -126,6 +126,15 @@ func (ruleset *DnsForwardingRuleset) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (ruleset *DnsForwardingRuleset) GetStatus() genruntime.ConvertibleStatus {
 	return &ruleset.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (ruleset *DnsForwardingRuleset) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Network/dnsForwardingRulesets"

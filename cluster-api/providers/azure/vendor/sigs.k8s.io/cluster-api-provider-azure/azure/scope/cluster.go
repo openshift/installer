@@ -25,7 +25,8 @@ import (
 	"strconv"
 	"strings"
 
-	asonetworkv1 "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701"
+	asonetworkv1api20201101 "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101"
+	asonetworkv1api20220701 "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701"
 	asoresourcesv1 "github.com/Azure/azure-service-operator/v2/api/resources/v1api20200601"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -60,6 +61,7 @@ type ClusterScopeParams struct {
 	Cluster      *clusterv1.Cluster
 	AzureCluster *infrav1.AzureCluster
 	Cache        *ClusterCache
+	Timeouts     azure.AsyncReconciler
 }
 
 // NewClusterScope creates a new Scope from the supplied parameters.
@@ -75,20 +77,13 @@ func NewClusterScope(ctx context.Context, params ClusterScopeParams) (*ClusterSc
 		return nil, errors.New("failed to generate new scope from nil AzureCluster")
 	}
 
-	if params.AzureCluster.Spec.IdentityRef == nil {
-		err := params.AzureClients.setCredentials(params.AzureCluster.Spec.SubscriptionID, params.AzureCluster.Spec.AzureEnvironment)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to configure azure settings and credentials from environment")
-		}
-	} else {
-		credentialsProvider, err := NewAzureClusterCredentialsProvider(ctx, params.Client, params.AzureCluster)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to init credentials provider")
-		}
-		err = params.AzureClients.setCredentialsWithProvider(ctx, params.AzureCluster.Spec.SubscriptionID, params.AzureCluster.Spec.AzureEnvironment, credentialsProvider)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to configure azure settings and credentials for Identity")
-		}
+	credentialsProvider, err := NewAzureClusterCredentialsProvider(ctx, params.Client, params.AzureCluster)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to init credentials provider")
+	}
+	err = params.AzureClients.setCredentialsWithProvider(ctx, params.AzureCluster.Spec.SubscriptionID, params.AzureCluster.Spec.AzureEnvironment, credentialsProvider)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to configure azure settings and credentials for Identity")
 	}
 
 	if params.Cache == nil {
@@ -101,12 +96,13 @@ func NewClusterScope(ctx context.Context, params ClusterScopeParams) (*ClusterSc
 	}
 
 	return &ClusterScope{
-		Client:       params.Client,
-		AzureClients: params.AzureClients,
-		Cluster:      params.Cluster,
-		AzureCluster: params.AzureCluster,
-		patchHelper:  helper,
-		cache:        params.Cache,
+		Client:          params.Client,
+		AzureClients:    params.AzureClients,
+		Cluster:         params.Cluster,
+		AzureCluster:    params.AzureCluster,
+		patchHelper:     helper,
+		cache:           params.Cache,
+		AsyncReconciler: params.Timeouts,
 	}, nil
 }
 
@@ -119,6 +115,7 @@ type ClusterScope struct {
 	AzureClients
 	Cluster      *clusterv1.Cluster
 	AzureCluster *infrav1.AzureCluster
+	azure.AsyncReconciler
 }
 
 // ClusterCache stores ClusterCache data locally so we don't have to hit the API multiple times within the same reconcile loop.
@@ -134,6 +131,16 @@ func (s *ClusterScope) BaseURI() string {
 // GetClient returns the controller-runtime client.
 func (s *ClusterScope) GetClient() client.Client {
 	return s.Client
+}
+
+// GetDeletionTimestamp returns the deletion timestamp of the Cluster.
+func (s *ClusterScope) GetDeletionTimestamp() *metav1.Time {
+	return s.Cluster.DeletionTimestamp
+}
+
+// ASOOwner implements aso.Scope.
+func (s *ClusterScope) ASOOwner() client.Object {
+	return s.AzureCluster
 }
 
 // PublicIPSpecs returns the public IP specs.
@@ -310,7 +317,7 @@ func (s *ClusterScope) RouteTableSpecs() []azure.ResourceSpecGetter {
 			specs = append(specs, &routetables.RouteTableSpec{
 				Name:           subnet.RouteTable.Name,
 				Location:       s.Location(),
-				ResourceGroup:  s.ResourceGroup(),
+				ResourceGroup:  s.Vnet().ResourceGroup,
 				ClusterName:    s.ClusterName(),
 				AdditionalTags: s.AdditionalTags(),
 			})
@@ -321,9 +328,9 @@ func (s *ClusterScope) RouteTableSpecs() []azure.ResourceSpecGetter {
 }
 
 // NatGatewaySpecs returns the node NAT gateway.
-func (s *ClusterScope) NatGatewaySpecs() []azure.ASOResourceSpecGetter[*asonetworkv1.NatGateway] {
+func (s *ClusterScope) NatGatewaySpecs() []azure.ASOResourceSpecGetter[*asonetworkv1api20220701.NatGateway] {
 	natGatewaySet := make(map[string]struct{})
-	var natGateways []azure.ASOResourceSpecGetter[*asonetworkv1.NatGateway]
+	var natGateways []azure.ASOResourceSpecGetter[*asonetworkv1api20220701.NatGateway]
 
 	// We ignore the control plane NAT gateway, as we will always use a LB to enable egress on the control plane.
 	for _, subnet := range s.NodeSubnets() {
@@ -332,7 +339,6 @@ func (s *ClusterScope) NatGatewaySpecs() []azure.ASOResourceSpecGetter[*asonetwo
 				natGatewaySet[subnet.NatGateway.Name] = struct{}{} // empty struct to represent hash set
 				natGateways = append(natGateways, &natgateways.NatGatewaySpec{
 					Name:           subnet.NatGateway.Name,
-					Namespace:      s.Namespace(),
 					ResourceGroup:  s.ResourceGroup(),
 					SubscriptionID: s.SubscriptionID(),
 					Location:       s.Location(),
@@ -358,7 +364,7 @@ func (s *ClusterScope) NSGSpecs() []azure.ResourceSpecGetter {
 		nsgspecs[i] = &securitygroups.NSGSpec{
 			Name:                     subnet.SecurityGroup.Name,
 			SecurityRules:            subnet.SecurityGroup.SecurityRules,
-			ResourceGroup:            s.ResourceGroup(),
+			ResourceGroup:            s.Vnet().ResourceGroup,
 			Location:                 s.Location(),
 			ClusterName:              s.ClusterName(),
 			AdditionalTags:           s.AdditionalTags(),
@@ -370,13 +376,13 @@ func (s *ClusterScope) NSGSpecs() []azure.ResourceSpecGetter {
 }
 
 // SubnetSpecs returns the subnets specs.
-func (s *ClusterScope) SubnetSpecs() []azure.ResourceSpecGetter {
+func (s *ClusterScope) SubnetSpecs() []azure.ASOResourceSpecGetter[*asonetworkv1api20201101.VirtualNetworksSubnet] {
 	numberOfSubnets := len(s.AzureCluster.Spec.NetworkSpec.Subnets)
 	if s.IsAzureBastionEnabled() {
 		numberOfSubnets++
 	}
 
-	subnetSpecs := make([]azure.ResourceSpecGetter, 0, numberOfSubnets)
+	subnetSpecs := make([]azure.ASOResourceSpecGetter[*asonetworkv1api20201101.VirtualNetworksSubnet], 0, numberOfSubnets)
 
 	for _, subnet := range s.AzureCluster.Spec.NetworkSpec.Subnets {
 		subnetSpec := &subnets.SubnetSpec{
@@ -389,7 +395,6 @@ func (s *ClusterScope) SubnetSpecs() []azure.ResourceSpecGetter {
 			IsVNetManaged:     s.IsVnetManaged(),
 			RouteTableName:    subnet.RouteTable.Name,
 			SecurityGroupName: subnet.SecurityGroup.Name,
-			Role:              subnet.Role,
 			NatGatewayName:    subnet.NatGateway.Name,
 			ServiceEndpoints:  subnet.ServiceEndpoints,
 		}
@@ -408,7 +413,6 @@ func (s *ClusterScope) SubnetSpecs() []azure.ResourceSpecGetter {
 			IsVNetManaged:     s.IsVnetManaged(),
 			SecurityGroupName: azureBastionSubnet.SecurityGroup.Name,
 			RouteTableName:    azureBastionSubnet.RouteTable.Name,
-			Role:              azureBastionSubnet.Role,
 			ServiceEndpoints:  azureBastionSubnet.ServiceEndpoints,
 		})
 	}
@@ -418,16 +422,25 @@ func (s *ClusterScope) SubnetSpecs() []azure.ResourceSpecGetter {
 
 // GroupSpecs returns the resource group spec.
 func (s *ClusterScope) GroupSpecs() []azure.ASOResourceSpecGetter[*asoresourcesv1.ResourceGroup] {
-	return []azure.ASOResourceSpecGetter[*asoresourcesv1.ResourceGroup]{
+	specs := []azure.ASOResourceSpecGetter[*asoresourcesv1.ResourceGroup]{
 		&groups.GroupSpec{
 			Name:           s.ResourceGroup(),
-			Namespace:      s.Namespace(),
+			AzureName:      s.ResourceGroup(),
 			Location:       s.Location(),
 			ClusterName:    s.ClusterName(),
 			AdditionalTags: s.AdditionalTags(),
-			Owner:          *metav1.NewControllerRef(s.AzureCluster, infrav1.GroupVersion.WithKind("AzureCluster")),
 		},
 	}
+	if s.Vnet().ResourceGroup != "" && s.Vnet().ResourceGroup != s.ResourceGroup() {
+		specs = append(specs, &groups.GroupSpec{
+			Name:           azure.GetNormalizedKubernetesName(s.Vnet().ResourceGroup),
+			AzureName:      s.Vnet().ResourceGroup,
+			Location:       s.Location(),
+			ClusterName:    s.ClusterName(),
+			AdditionalTags: s.AdditionalTags(),
+		})
+	}
+	return specs
 }
 
 // VnetPeeringSpecs returns the virtual network peering specs.
@@ -466,7 +479,7 @@ func (s *ClusterScope) VnetPeeringSpecs() []azure.ResourceSpecGetter {
 }
 
 // VNetSpec returns the virtual network spec.
-func (s *ClusterScope) VNetSpec() azure.ResourceSpecGetter {
+func (s *ClusterScope) VNetSpec() azure.ASOResourceSpecGetter[*asonetworkv1api20201101.VirtualNetwork] {
 	return &virtualnetworks.VNetSpec{
 		ResourceGroup:    s.Vnet().ResourceGroup,
 		Name:             s.Vnet().Name,
@@ -539,7 +552,7 @@ func (s *ClusterScope) AzureBastion() *infrav1.AzureBastion {
 }
 
 // AzureBastionSpec returns the bastion spec.
-func (s *ClusterScope) AzureBastionSpec() azure.ResourceSpecGetter {
+func (s *ClusterScope) AzureBastionSpec() azure.ASOResourceSpecGetter[*asonetworkv1api20220701.BastionHost] {
 	if s.IsAzureBastionEnabled() {
 		subnetID := azure.SubnetID(s.SubscriptionID(), s.ResourceGroup(), s.Vnet().Name, s.AzureBastion().Subnet.Name)
 		publicIPID := azure.PublicIPID(s.SubscriptionID(), s.ResourceGroup(), s.AzureBastion().PublicIP.Name)
@@ -599,7 +612,7 @@ func (s *ClusterScope) ControlPlaneSubnet() infrav1.SubnetSpec {
 func (s *ClusterScope) NodeSubnets() []infrav1.SubnetSpec {
 	subnets := []infrav1.SubnetSpec{}
 	for _, subnet := range s.AzureCluster.Spec.NetworkSpec.Subnets {
-		if subnet.Role == infrav1.SubnetNode {
+		if subnet.Role == infrav1.SubnetNode || subnet.Role == infrav1.SubnetCluster {
 			subnets = append(subnets, subnet)
 		}
 	}
@@ -740,6 +753,12 @@ func (s *ClusterScope) ResourceGroup() string {
 	return s.AzureCluster.Spec.ResourceGroup
 }
 
+// NodeResourceGroup returns the resource group where nodes live.
+// For AzureClusters this is the same as the cluster RG.
+func (s *ClusterScope) NodeResourceGroup() string {
+	return s.ResourceGroup()
+}
+
 // ClusterName returns the cluster name.
 func (s *ClusterScope) ClusterName() string {
 	return s.Cluster.Name
@@ -875,11 +894,17 @@ func (s *ClusterScope) APIServerHost() string {
 	return s.APIServerPublicIP().DNSName
 }
 
-// SetFailureDomain will set the spec for a for a given key.
+// SetFailureDomain sets a failure domain in a cluster's status by its id.
+// The provided failure domain spec may be overridden to false by cluster's spec property.
 func (s *ClusterScope) SetFailureDomain(id string, spec clusterv1.FailureDomainSpec) {
 	if s.AzureCluster.Status.FailureDomains == nil {
 		s.AzureCluster.Status.FailureDomains = make(clusterv1.FailureDomains)
 	}
+
+	if fd, ok := s.AzureCluster.Spec.FailureDomains[id]; ok && !fd.ControlPlane {
+		spec.ControlPlane = false
+	}
+
 	s.AzureCluster.Status.FailureDomains[id] = spec
 }
 
@@ -1056,54 +1081,44 @@ func (s *ClusterScope) SetAnnotation(key, value string) {
 }
 
 // PrivateEndpointSpecs returns the private endpoint specs.
-func (s *ClusterScope) PrivateEndpointSpecs() []azure.ResourceSpecGetter {
-	numberOfSubnets := len(s.AzureCluster.Spec.NetworkSpec.Subnets)
+func (s *ClusterScope) PrivateEndpointSpecs() []azure.ASOResourceSpecGetter[*asonetworkv1api20220701.PrivateEndpoint] {
+	subnetsList := s.AzureCluster.Spec.NetworkSpec.Subnets
+	numberOfSubnets := len(subnetsList)
 	if s.IsAzureBastionEnabled() {
+		subnetsList = append(subnetsList, s.AzureCluster.Spec.BastionSpec.AzureBastion.Subnet)
 		numberOfSubnets++
 	}
 
-	privateEndpointSpecs := make([]azure.ResourceSpecGetter, 0, numberOfSubnets)
+	// privateEndpointSpecs will be an empty list if no private endpoints were found.
+	// We pre-allocate the list to avoid unnecessary allocations during append.
+	privateEndpointSpecs := make([]azure.ASOResourceSpecGetter[*asonetworkv1api20220701.PrivateEndpoint], 0, numberOfSubnets)
 
-	subnets := s.AzureCluster.Spec.NetworkSpec.Subnets
-	if s.IsAzureBastionEnabled() {
-		subnets = append(subnets, s.AzureCluster.Spec.BastionSpec.AzureBastion.Subnet)
-	}
-
-	for _, subnet := range subnets {
-		privateEndpointSpecs = append(privateEndpointSpecs, s.getPrivateEndpoints(subnet)...)
-	}
-
-	return privateEndpointSpecs
-}
-
-func (s *ClusterScope) getPrivateEndpoints(subnet infrav1.SubnetSpec) []azure.ResourceSpecGetter {
-	privateEndpointSpecs := make([]azure.ResourceSpecGetter, 0)
-
-	for _, privateEndpoint := range subnet.PrivateEndpoints {
-		privateEndpointSpec := &privateendpoints.PrivateEndpointSpec{
-			Name:                       privateEndpoint.Name,
-			ResourceGroup:              s.ResourceGroup(),
-			Location:                   privateEndpoint.Location,
-			CustomNetworkInterfaceName: privateEndpoint.CustomNetworkInterfaceName,
-			PrivateIPAddresses:         privateEndpoint.PrivateIPAddresses,
-			SubnetID:                   subnet.ID,
-			ApplicationSecurityGroups:  privateEndpoint.ApplicationSecurityGroups,
-			ManualApproval:             privateEndpoint.ManualApproval,
-			ClusterName:                s.ClusterName(),
-			AdditionalTags:             s.AdditionalTags(),
-		}
-
-		for _, privateLinkServiceConnection := range privateEndpoint.PrivateLinkServiceConnections {
-			pl := privateendpoints.PrivateLinkServiceConnection{
-				PrivateLinkServiceID: privateLinkServiceConnection.PrivateLinkServiceID,
-				Name:                 privateLinkServiceConnection.Name,
-				RequestMessage:       privateLinkServiceConnection.RequestMessage,
-				GroupIDs:             privateLinkServiceConnection.GroupIDs,
+	for _, subnet := range subnetsList {
+		for _, privateEndpoint := range subnet.PrivateEndpoints {
+			privateEndpointSpec := &privateendpoints.PrivateEndpointSpec{
+				Name:                       privateEndpoint.Name,
+				ResourceGroup:              s.ResourceGroup(),
+				Location:                   privateEndpoint.Location,
+				CustomNetworkInterfaceName: privateEndpoint.CustomNetworkInterfaceName,
+				PrivateIPAddresses:         privateEndpoint.PrivateIPAddresses,
+				SubnetID:                   subnet.ID,
+				ApplicationSecurityGroups:  privateEndpoint.ApplicationSecurityGroups,
+				ManualApproval:             privateEndpoint.ManualApproval,
+				ClusterName:                s.ClusterName(),
+				AdditionalTags:             s.AdditionalTags(),
 			}
-			privateEndpointSpec.PrivateLinkServiceConnections = append(privateEndpointSpec.PrivateLinkServiceConnections, pl)
-		}
 
-		privateEndpointSpecs = append(privateEndpointSpecs, privateEndpointSpec)
+			for _, privateLinkServiceConnection := range privateEndpoint.PrivateLinkServiceConnections {
+				pl := privateendpoints.PrivateLinkServiceConnection{
+					PrivateLinkServiceID: privateLinkServiceConnection.PrivateLinkServiceID,
+					Name:                 privateLinkServiceConnection.Name,
+					RequestMessage:       privateLinkServiceConnection.RequestMessage,
+					GroupIDs:             privateLinkServiceConnection.GroupIDs,
+				}
+				privateEndpointSpec.PrivateLinkServiceConnections = append(privateEndpointSpec.PrivateLinkServiceConnections, pl)
+			}
+			privateEndpointSpecs = append(privateEndpointSpecs, privateEndpointSpec)
+		}
 	}
 
 	return privateEndpointSpecs

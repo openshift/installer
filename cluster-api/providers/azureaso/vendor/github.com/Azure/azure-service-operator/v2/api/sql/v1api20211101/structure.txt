@@ -3,7 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101
 ├── APIVersion: Enum (1 value)
 │   └── "2021-11-01"
 ├── Server: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (16 properties)
 │   │   ├── AdministratorLogin: *string
 │   │   ├── AdministratorLoginPassword: *genruntime.SecretReference

@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/time/rate"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
@@ -75,11 +76,15 @@ func (gr *GenericReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	reconcilers.LogObj(log, Verbose, "Reconcile invoked", metaObj)
 
 	// Ensure the resource is tagged with the operator's namespace.
-	ownershipResult, err := gr.takeOwnership(ctx, metaObj)
+	ownershipResult, err := gr.takeOwnership(ctx, log, metaObj)
 	if err != nil {
-		return ctrl.Result{}, errors.Wrapf(err, "failed to take ownership of %s", metaObj.GetName())
+		err = errors.Wrapf(err, "failed to take ownership of %s", metaObj.GetName())
+		log.Error(err, "failed to take ownership of object")
+		return ctrl.Result{}, err
 	}
 	if ownershipResult != nil {
+		// Early return
+		log.V(Verbose).Info("Done with reconcile", "result", *ownershipResult)
 		return *ownershipResult, nil
 	}
 
@@ -120,7 +125,7 @@ func (gr *GenericReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	// Write the object
-	err = gr.CommitUpdate(ctx, log, originalObj, metaObj)
+	err = gr.CommitUpdate(ctx, log, originalObj, metaObj, kubeclient.SpecAndStatus)
 	if err != nil {
 		// NotFound is a superfluous error as per https://github.com/kubernetes-sigs/controller-runtime/issues/377
 		// The correct handling is just to ignore it and we will get an event shortly with the updated version to patch
@@ -130,12 +135,26 @@ func (gr *GenericReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		// but since we don't trigger updates on all changes (some annotations are ignored) we also MIGHT NOT get a fresh event
 		// and get stuck. The solution is to let the GET at the top of the controller check for the not-found case and requeue
 		// on everything else.
-		log.Error(err, "Failed to commit object to etcd")
+		// We avoid logging the "Failed to commit object to etcd" log if we're removing the finalizer and the error is a conflict
+		// as that means there's a VERY high probability that the error is expected (the Status write fails after the Spec
+		// write removes the finalizer). We still return the error to controller-runtime though to allow it to re-queue to us.
+		// The GET at the top of the controller will realize the object is deleted and discard the message.
+		if !wasFinalizerRemoved(originalObj, metaObj) || !apierrors.IsConflict(err) {
+			log.Error(err, "Failed to commit object to etcd")
+		}
 		return ctrl.Result{}, kubeclient.IgnoreNotFound(err)
 	}
 
 	log.V(Verbose).Info("Done with reconcile", "result", result)
 	return result, nil
+}
+
+// wasFinalizerRemoved returns true if the finalizer was removed from original.
+func wasFinalizerRemoved(original genruntime.MetaObject, updated genruntime.MetaObject) bool {
+	originalHasFinalizer := controllerutil.ContainsFinalizer(original, genruntime.ReconcilerFinalizer)
+	updatedHasFinalizer := controllerutil.ContainsFinalizer(updated, genruntime.ReconcilerFinalizer)
+
+	return originalHasFinalizer && !updatedHasFinalizer
 }
 
 func (gr *GenericReconciler) getObjectToReconcile(ctx context.Context, req ctrl.Request) (genruntime.MetaObject, error) {
@@ -190,7 +209,7 @@ func (gr *GenericReconciler) claimResource(ctx context.Context, log logr.Logger,
 	// Passing nil for original here as we know we've made a change and original is only used to determine if the obj
 	// has changed to avoid excess commits. In this case, we always need to commit at this stage as adding the finalizer
 	// must be persisted to etcd before proceeding.
-	err = gr.CommitUpdate(ctx, log, nil, metaObj)
+	err = gr.CommitUpdate(ctx, log, nil, metaObj, kubeclient.SpecOnly)
 	if err != nil {
 		log.Error(err, "Error adding finalizer")
 		return kubeclient.IgnoreNotFound(err)
@@ -282,7 +301,7 @@ func (gr *GenericReconciler) WriteReadyConditionError(ctx context.Context, log l
 		obj.GetGeneration(),
 		err.Reason,
 		err.Cause().Error())) // Don't use err.Error() here because it also includes details about Reason, Severity, which are getting displayed as part of the condition structure
-	commitErr := gr.CommitUpdate(ctx, log, nil, obj)
+	commitErr := gr.CommitUpdate(ctx, log, nil, obj, kubeclient.SpecAndStatus)
 	if commitErr != nil {
 		return errors.Wrap(commitErr, "updating resource error")
 	}
@@ -292,7 +311,7 @@ func (gr *GenericReconciler) WriteReadyConditionError(ctx context.Context, log l
 
 // takeOwnership marks this resource as owned by this operator. It returns a ctrl.Result ptr to indicate if the result
 // should be returned or not. If the result is nil, ownership does not need to be taken
-func (gr *GenericReconciler) takeOwnership(ctx context.Context, metaObj genruntime.MetaObject) (*ctrl.Result, error) {
+func (gr *GenericReconciler) takeOwnership(ctx context.Context, log logr.Logger, metaObj genruntime.MetaObject) (*ctrl.Result, error) {
 	// Ensure the resource is tagged with the operator's namespace.
 	annotations := metaObj.GetAnnotations()
 	reconcilerNamespace := annotations[NamespaceAnnotation]
@@ -307,26 +326,34 @@ func (gr *GenericReconciler) takeOwnership(ctx context.Context, metaObj genrunti
 		// be rare.
 		message := fmt.Sprintf("Operators in %q and %q are both configured to manage this resource", gr.Config.PodNamespace, reconcilerNamespace)
 		gr.Recorder.Event(metaObj, corev1.EventTypeWarning, "Overlap", message)
+		log.V(Info).Info(message)
+
 		return &ctrl.Result{}, nil
 	} else if reconcilerNamespace == "" && gr.Config.PodNamespace != "" {
 		genruntime.AddAnnotation(metaObj, NamespaceAnnotation, gr.Config.PodNamespace)
-		return &ctrl.Result{Requeue: true}, gr.KubeClient.Update(ctx, metaObj)
+		return &ctrl.Result{Requeue: true}, gr.CommitUpdate(ctx, log, nil, metaObj, kubeclient.SpecOnly)
 	}
 
 	return nil, nil
 }
 
-func (gr *GenericReconciler) CommitUpdate(ctx context.Context, log logr.Logger, original genruntime.MetaObject, obj genruntime.MetaObject) error {
+func (gr *GenericReconciler) CommitUpdate(
+	ctx context.Context,
+	log logr.Logger,
+	original genruntime.MetaObject,
+	obj genruntime.MetaObject,
+	commitType kubeclient.CommitType,
+) error {
 	if reflect.DeepEqual(original, obj) {
 		log.V(Debug).Info("Didn't commit obj as there was no change")
 		return nil
 	}
 
-	err := gr.KubeClient.CommitObject(ctx, obj)
+	err := gr.KubeClient.CommitObject(ctx, obj, commitType)
 	if err != nil {
 		return err
 	}
-	reconcilers.LogObj(log, Debug, "updated resource in etcd", obj)
+	reconcilers.LogObj(log, Verbose, "updated resource in etcd", obj)
 	return nil
 }
 

@@ -77,7 +77,7 @@ func (cache *ReconcileCache) Reconciled(key string) {
 
 // NewReconciler returns a reconcile wrapper that will delay new reconcile.Requests
 // after the cache expiry of the request string key.
-// A successful reconciliation is defined as as one where no error is returned.
+// A successful reconciliation is defined as one where no error is returned.
 func NewReconciler(upstream reconcile.Reconciler, cache ReconcileCacher, log logr.Logger) reconcile.Reconciler {
 	return &reconciler{
 		upstream: upstream,

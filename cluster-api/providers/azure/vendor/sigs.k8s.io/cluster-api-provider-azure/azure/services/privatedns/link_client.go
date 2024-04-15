@@ -18,23 +18,24 @@ package privatedns
 
 import (
 	"context"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 // azureVirtualNetworkLinksClient contains the Azure go-sdk Client for virtual network links.
 type azureVirtualNetworkLinksClient struct {
-	vnetlinks *armprivatedns.VirtualNetworkLinksClient
+	vnetlinks      *armprivatedns.VirtualNetworkLinksClient
+	apiCallTimeout time.Duration
 }
 
 // newVirtualNetworkLinksClient creates a virtual network links client from an authorizer.
-func newVirtualNetworkLinksClient(auth azure.Authorizer) (*azureVirtualNetworkLinksClient, error) {
+func newVirtualNetworkLinksClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureVirtualNetworkLinksClient, error) {
 	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create virtualnetworkslink client options")
@@ -43,7 +44,7 @@ func newVirtualNetworkLinksClient(auth azure.Authorizer) (*azureVirtualNetworkLi
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create armprivatedns client factory")
 	}
-	return &azureVirtualNetworkLinksClient{factory.NewVirtualNetworkLinksClient()}, nil
+	return &azureVirtualNetworkLinksClient{factory.NewVirtualNetworkLinksClient(), apiCallTimeout}, nil
 }
 
 // Get gets the specified virtual network link.
@@ -76,7 +77,7 @@ func (avc *azureVirtualNetworkLinksClient) CreateOrUpdateAsync(ctx context.Conte
 		return nil, nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureCallTimeout)
+	ctx, cancel := context.WithTimeout(ctx, avc.apiCallTimeout)
 	defer cancel()
 
 	pollOpts := &runtime.PollUntilDoneOptions{Frequency: async.DefaultPollerFrequency}
@@ -104,7 +105,7 @@ func (avc *azureVirtualNetworkLinksClient) DeleteAsync(ctx context.Context, spec
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureCallTimeout)
+	ctx, cancel := context.WithTimeout(ctx, avc.apiCallTimeout)
 	defer cancel()
 
 	pollOpts := &runtime.PollUntilDoneOptions{Frequency: async.DefaultPollerFrequency}

@@ -17,6 +17,7 @@ package gomock
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 )
 
@@ -168,6 +169,25 @@ func (n notMatcher) String() string {
 	return "not(" + n.m.String() + ")"
 }
 
+type regexMatcher struct {
+	regex *regexp.Regexp
+}
+
+func (m regexMatcher) Matches(x any) bool {
+	switch t := x.(type) {
+	case string:
+		return m.regex.MatchString(t)
+	case []byte:
+		return m.regex.Match(t)
+	default:
+		return false
+	}
+}
+
+func (m regexMatcher) String() string {
+	return "matches regex " + m.regex.String()
+}
+
 type assignableToTypeOfMatcher struct {
 	targetType reflect.Type
 }
@@ -178,6 +198,27 @@ func (m assignableToTypeOfMatcher) Matches(x any) bool {
 
 func (m assignableToTypeOfMatcher) String() string {
 	return "is assignable to " + m.targetType.Name()
+}
+
+type anyOfMatcher struct {
+	matchers []Matcher
+}
+
+func (am anyOfMatcher) Matches(x any) bool {
+	for _, m := range am.matchers {
+		if m.Matches(x) {
+			return true
+		}
+	}
+	return false
+}
+
+func (am anyOfMatcher) String() string {
+	ss := make([]string, 0, len(am.matchers))
+	for _, matcher := range am.matchers {
+		ss = append(ss, matcher.String())
+	}
+	return strings.Join(ss, " | ")
 }
 
 type allMatcher struct {
@@ -302,6 +343,28 @@ func Any() Matcher { return anyMatcher{} }
 //	Cond(func(x any){return x.(int) == 2}).Matches(1) // returns false
 func Cond(fn func(x any) bool) Matcher { return condMatcher{fn} }
 
+// AnyOf returns a composite Matcher that returns true if at least one of the
+// matchers returns true.
+//
+// Example usage:
+//
+//	AnyOf(1, 2, 3).Matches(2) // returns true
+//	AnyOf(1, 2, 3).Matches(10) // returns false
+//	AnyOf(Nil(), Len(2)).Matches(nil) // returns true
+//	AnyOf(Nil(), Len(2)).Matches("hi") // returns true
+//	AnyOf(Nil(), Len(2)).Matches("hello") // returns false
+func AnyOf(xs ...any) Matcher {
+	ms := make([]Matcher, 0, len(xs))
+	for _, x := range xs {
+		if m, ok := x.(Matcher); ok {
+			ms = append(ms, m)
+		} else {
+			ms = append(ms, Eq(x))
+		}
+	}
+	return anyOfMatcher{ms}
+}
+
 // Eq returns a matcher that matches on equality.
 //
 // Example usage:
@@ -337,6 +400,18 @@ func Not(x any) Matcher {
 		return notMatcher{m}
 	}
 	return notMatcher{Eq(x)}
+}
+
+// Regex checks whether parameter matches the associated regex.
+//
+// Example usage:
+//
+//	Regex("[0-9]{2}:[0-9]{2}").Matches("23:02") // returns true
+//	Regex("[0-9]{2}:[0-9]{2}").Matches([]byte{'2', '3', ':', '0', '2'}) // returns true
+//	Regex("[0-9]{2}:[0-9]{2}").Matches("hello world") // returns false
+//	Regex("[0-9]{2}").Matches(21) // returns false as it's not a valid type
+func Regex(regexStr string) Matcher {
+	return regexMatcher{regex: regexp.MustCompile(regexStr)}
 }
 
 // AssignableToTypeOf is a Matcher that matches if the parameter to the mock

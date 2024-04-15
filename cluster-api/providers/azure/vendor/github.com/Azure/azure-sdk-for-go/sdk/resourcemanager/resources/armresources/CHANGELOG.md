@@ -1,5 +1,29 @@
 # Release History
 
+## 1.2.0 (2023-11-24)
+### Features Added
+
+- Support for test fakes and OpenTelemetry trace spans.
+
+
+## 1.2.0-beta.3 (2023-10-09)
+
+### Other Changes
+
+- Updated to latest `azcore` beta.
+
+## 1.2.0-beta.2 (2023-07-19)
+
+### Bug Fixes
+
+- Fixed a potential panic in faked paged and long-running operations.
+
+## 1.2.0-beta.1 (2023-06-12)
+
+### Features Added
+
+- Support for test fakes and OpenTelemetry trace spans.
+
 ## 1.1.1 (2023-04-14)
 ### Bug Fixes
 

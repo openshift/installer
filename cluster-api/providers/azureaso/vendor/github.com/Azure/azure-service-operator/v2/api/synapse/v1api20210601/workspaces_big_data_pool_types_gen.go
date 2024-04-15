@@ -5,7 +5,7 @@ package v1api20210601
 
 import (
 	"fmt"
-	v20210601s "github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601storage"
+	v20210601s "github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &WorkspacesBigDataPool{}
 func (pool *WorkspacesBigDataPool) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20210601s.WorkspacesBigDataPool)
 	if !ok {
-		return fmt.Errorf("expected synapse/v1api20210601storage/WorkspacesBigDataPool but received %T instead", hub)
+		return fmt.Errorf("expected synapse/v1api20210601/storage/WorkspacesBigDataPool but received %T instead", hub)
 	}
 
 	return pool.AssignProperties_From_WorkspacesBigDataPool(source)
@@ -61,7 +61,7 @@ func (pool *WorkspacesBigDataPool) ConvertFrom(hub conversion.Hub) error {
 func (pool *WorkspacesBigDataPool) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20210601s.WorkspacesBigDataPool)
 	if !ok {
-		return fmt.Errorf("expected synapse/v1api20210601storage/WorkspacesBigDataPool but received %T instead", hub)
+		return fmt.Errorf("expected synapse/v1api20210601/storage/WorkspacesBigDataPool but received %T instead", hub)
 	}
 
 	return pool.AssignProperties_To_WorkspacesBigDataPool(destination)
@@ -126,6 +126,15 @@ func (pool *WorkspacesBigDataPool) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (pool *WorkspacesBigDataPool) GetStatus() genruntime.ConvertibleStatus {
 	return &pool.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (pool *WorkspacesBigDataPool) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Synapse/workspaces/bigDataPools"
@@ -326,6 +335,9 @@ type Workspaces_BigDataPool_Spec struct {
 	// doesn't have to be.
 	AzureName string `json:"azureName,omitempty"`
 
+	// CacheSize: The cache size
+	CacheSize *int `json:"cacheSize,omitempty"`
+
 	// CustomLibraries: List of custom libraries/packages associated with the spark pool.
 	CustomLibraries []LibraryInfo `json:"customLibraries,omitempty"`
 
@@ -403,6 +415,7 @@ func (pool *Workspaces_BigDataPool_Spec) ConvertToARM(resolved genruntime.Conver
 	// Set property "Properties":
 	if pool.AutoPause != nil ||
 		pool.AutoScale != nil ||
+		pool.CacheSize != nil ||
 		pool.CustomLibraries != nil ||
 		pool.DefaultSparkLogFolder != nil ||
 		pool.DynamicExecutorAllocation != nil ||
@@ -434,6 +447,10 @@ func (pool *Workspaces_BigDataPool_Spec) ConvertToARM(resolved genruntime.Conver
 		}
 		autoScale := *autoScale_ARM.(*AutoScaleProperties_ARM)
 		result.Properties.AutoScale = &autoScale
+	}
+	if pool.CacheSize != nil {
+		cacheSize := *pool.CacheSize
+		result.Properties.CacheSize = &cacheSize
 	}
 	for _, item := range pool.CustomLibraries {
 		item_ARM, err := item.ConvertToARM(resolved)
@@ -559,6 +576,15 @@ func (pool *Workspaces_BigDataPool_Spec) PopulateFromARM(owner genruntime.Arbitr
 
 	// Set property "AzureName":
 	pool.SetAzureName(genruntime.ExtractKubernetesResourceNameFromARMName(typedInput.Name))
+
+	// Set property "CacheSize":
+	// copying flattened property:
+	if typedInput.Properties != nil {
+		if typedInput.Properties.CacheSize != nil {
+			cacheSize := *typedInput.Properties.CacheSize
+			pool.CacheSize = &cacheSize
+		}
+	}
 
 	// Set property "CustomLibraries":
 	// copying flattened property:
@@ -809,6 +835,9 @@ func (pool *Workspaces_BigDataPool_Spec) AssignProperties_From_Workspaces_BigDat
 	// AzureName
 	pool.AzureName = source.AzureName
 
+	// CacheSize
+	pool.CacheSize = genruntime.ClonePointerToInt(source.CacheSize)
+
 	// CustomLibraries
 	if source.CustomLibraries != nil {
 		customLibraryList := make([]LibraryInfo, len(source.CustomLibraries))
@@ -967,6 +996,9 @@ func (pool *Workspaces_BigDataPool_Spec) AssignProperties_To_Workspaces_BigDataP
 
 	// AzureName
 	destination.AzureName = pool.AzureName
+
+	// CacheSize
+	destination.CacheSize = genruntime.ClonePointerToInt(pool.CacheSize)
 
 	// CustomLibraries
 	if pool.CustomLibraries != nil {
@@ -1131,6 +1163,9 @@ func (pool *Workspaces_BigDataPool_Spec) Initialize_From_Workspaces_BigDataPool_
 	} else {
 		pool.AutoScale = nil
 	}
+
+	// CacheSize
+	pool.CacheSize = genruntime.ClonePointerToInt(source.CacheSize)
 
 	// CustomLibraries
 	if source.CustomLibraries != nil {

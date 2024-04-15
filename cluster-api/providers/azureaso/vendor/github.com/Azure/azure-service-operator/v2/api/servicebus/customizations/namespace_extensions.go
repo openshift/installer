@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 
-	servicebus "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101storage"
+	servicebus "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101/storage"
 	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"

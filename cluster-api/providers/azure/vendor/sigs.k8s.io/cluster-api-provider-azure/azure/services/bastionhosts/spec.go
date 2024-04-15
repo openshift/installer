@@ -21,11 +21,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
-	"github.com/pkg/errors"
+	asonetworkv1 "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
 )
 
 // AzureBastionSpec defines the specification for azure bastion feature.
@@ -40,69 +40,61 @@ type AzureBastionSpec struct {
 	EnableTunneling bool
 }
 
-// AzureBastionSpecInput defines the required inputs to construct an azure bastion spec.
-type AzureBastionSpecInput struct {
-	SubnetName   string
-	PublicIPName string
-	VNetName     string
+// ResourceRef implements azure.ASOResourceSpecGetter.
+func (s *AzureBastionSpec) ResourceRef() *asonetworkv1.BastionHost {
+	return &asonetworkv1.BastionHost{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: s.Name,
+		},
+	}
 }
 
-// ResourceName returns the name of the bastion host.
-func (s *AzureBastionSpec) ResourceName() string {
-	return s.Name
-}
-
-// ResourceGroupName returns the name of the resource group.
-func (s *AzureBastionSpec) ResourceGroupName() string {
-	return s.ResourceGroup
-}
-
-// OwnerResourceName is a no-op for bastion hosts.
-func (s *AzureBastionSpec) OwnerResourceName() string {
-	return ""
-}
-
-// Parameters returns the parameters for the bastion host.
-func (s *AzureBastionSpec) Parameters(ctx context.Context, existing interface{}) (parameters interface{}, err error) {
-	if existing != nil {
-		if _, ok := existing.(armnetwork.BastionHost); !ok {
-			return nil, errors.Errorf("%T is not an armnetwork.BastionHost", existing)
-		}
-		// bastion host already exists
-		return nil, nil
+// Parameters implements azure.ASOResourceSpecGetter.
+func (s *AzureBastionSpec) Parameters(ctx context.Context, existingBastionHost *asonetworkv1.BastionHost) (parameters *asonetworkv1.BastionHost, err error) {
+	bastionHost := &asonetworkv1.BastionHost{}
+	if existingBastionHost != nil {
+		bastionHost = existingBastionHost
 	}
 
 	bastionHostIPConfigName := fmt.Sprintf("%s-%s", s.Name, "bastionIP")
-
-	return armnetwork.BastionHost{
-		Name:     ptr.To(s.Name),
-		Location: ptr.To(s.Location),
-		Tags: converters.TagsToMap(infrav1.Build(infrav1.BuildParams{
-			ClusterName: s.ClusterName,
-			Lifecycle:   infrav1.ResourceLifecycleOwned,
-			Name:        ptr.To(s.Name),
-			Role:        ptr.To("Bastion"),
-		})),
-		SKU: &armnetwork.SKU{
-			Name: ptr.To(armnetwork.BastionHostSKUName(s.Sku)),
-		},
-		Properties: &armnetwork.BastionHostPropertiesFormat{
-			EnableTunneling: ptr.To(s.EnableTunneling),
-			DNSName:         ptr.To(fmt.Sprintf("%s-bastion", strings.ToLower(s.Name))),
-			IPConfigurations: []*armnetwork.BastionHostIPConfiguration{
-				{
-					Name: ptr.To(bastionHostIPConfigName),
-					Properties: &armnetwork.BastionHostIPConfigurationPropertiesFormat{
-						Subnet: &armnetwork.SubResource{
-							ID: &s.SubnetID,
-						},
-						PublicIPAddress: &armnetwork.SubResource{
-							ID: &s.PublicIPID,
-						},
-						PrivateIPAllocationMethod: ptr.To(armnetwork.IPAllocationMethodDynamic),
-					},
+	bastionHost.Spec.AzureName = s.Name
+	bastionHost.Spec.Location = ptr.To(s.Location)
+	bastionHost.Spec.Owner = &genruntime.KnownResourceReference{
+		Name: s.ResourceGroup,
+	}
+	bastionHost.Spec.Tags = infrav1.Build(infrav1.BuildParams{
+		ClusterName: s.ClusterName,
+		Lifecycle:   infrav1.ResourceLifecycleOwned,
+		Name:        ptr.To(s.Name),
+		Role:        ptr.To("Bastion"),
+	})
+	bastionHost.Spec.Sku = &asonetworkv1.Sku{
+		Name: ptr.To(asonetworkv1.Sku_Name(s.Sku)),
+	}
+	bastionHost.Spec.EnableTunneling = ptr.To(s.EnableTunneling)
+	bastionHost.Spec.DnsName = ptr.To(fmt.Sprintf("%s-bastion", strings.ToLower(s.Name)))
+	bastionHost.Spec.IpConfigurations = []asonetworkv1.BastionHostIPConfiguration{
+		{
+			Name: ptr.To(bastionHostIPConfigName),
+			Subnet: &asonetworkv1.BastionHostSubResource{
+				Reference: &genruntime.ResourceReference{
+					ARMID: s.SubnetID,
 				},
 			},
+			PublicIPAddress: &asonetworkv1.BastionHostSubResource{
+				Reference: &genruntime.ResourceReference{
+					ARMID: s.PublicIPID,
+				},
+			},
+			PrivateIPAllocationMethod: ptr.To(asonetworkv1.IPAllocationMethod_Dynamic),
 		},
-	}, nil
+	}
+
+	return bastionHost, nil
+}
+
+// WasManaged implements azure.ASOResourceSpecGetter.
+func (s *AzureBastionSpec) WasManaged(resource *asonetworkv1.BastionHost) bool {
+	// returns always returns true as CAPZ does not support BYO bastion.
+	return true
 }

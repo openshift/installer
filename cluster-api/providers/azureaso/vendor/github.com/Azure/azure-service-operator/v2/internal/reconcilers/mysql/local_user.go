@@ -117,7 +117,7 @@ func (u *localUser) Exists(ctx context.Context) (bool, error) {
 	return exists, nil
 }
 
-func (u *localUser) connectToDB(ctx context.Context, secrets genruntime.Resolved[genruntime.SecretReference]) (*sql.DB, error) {
+func (u *localUser) connectToDB(ctx context.Context, secrets genruntime.Resolved[genruntime.SecretReference, string]) (*sql.DB, error) {
 	serverFQDN, err := getServerFQDN(ctx, u.resourceResolver, u.user)
 	if err != nil {
 		return nil, err

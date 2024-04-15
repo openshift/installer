@@ -5,7 +5,7 @@ package v1api20200601
 
 import (
 	"fmt"
-	v20200601s "github.com/Azure/azure-service-operator/v2/api/resources/v1api20200601storage"
+	v20200601s "github.com/Azure/azure-service-operator/v2/api/resources/v1api20200601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &ResourceGroup{}
 func (group *ResourceGroup) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20200601s.ResourceGroup)
 	if !ok {
-		return fmt.Errorf("expected resources/v1api20200601storage/ResourceGroup but received %T instead", hub)
+		return fmt.Errorf("expected resources/v1api20200601/storage/ResourceGroup but received %T instead", hub)
 	}
 
 	return group.AssignProperties_From_ResourceGroup(source)
@@ -61,7 +61,7 @@ func (group *ResourceGroup) ConvertFrom(hub conversion.Hub) error {
 func (group *ResourceGroup) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20200601s.ResourceGroup)
 	if !ok {
-		return fmt.Errorf("expected resources/v1api20200601storage/ResourceGroup but received %T instead", hub)
+		return fmt.Errorf("expected resources/v1api20200601/storage/ResourceGroup but received %T instead", hub)
 	}
 
 	return group.AssignProperties_To_ResourceGroup(destination)
@@ -126,6 +126,16 @@ func (group *ResourceGroup) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (group *ResourceGroup) GetStatus() genruntime.ConvertibleStatus {
 	return &group.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (group *ResourceGroup) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationHead,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Resources/resourceGroups"

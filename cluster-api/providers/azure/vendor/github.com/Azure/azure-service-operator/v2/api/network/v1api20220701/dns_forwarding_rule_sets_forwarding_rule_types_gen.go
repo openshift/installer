@@ -5,7 +5,7 @@ package v1api20220701
 
 import (
 	"fmt"
-	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701storage"
+	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &DnsForwardingRuleSetsForwardingRule{}
 func (rule *DnsForwardingRuleSetsForwardingRule) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20220701s.DnsForwardingRuleSetsForwardingRule)
 	if !ok {
-		return fmt.Errorf("expected network/v1api20220701storage/DnsForwardingRuleSetsForwardingRule but received %T instead", hub)
+		return fmt.Errorf("expected network/v1api20220701/storage/DnsForwardingRuleSetsForwardingRule but received %T instead", hub)
 	}
 
 	return rule.AssignProperties_From_DnsForwardingRuleSetsForwardingRule(source)
@@ -61,7 +61,7 @@ func (rule *DnsForwardingRuleSetsForwardingRule) ConvertFrom(hub conversion.Hub)
 func (rule *DnsForwardingRuleSetsForwardingRule) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20220701s.DnsForwardingRuleSetsForwardingRule)
 	if !ok {
-		return fmt.Errorf("expected network/v1api20220701storage/DnsForwardingRuleSetsForwardingRule but received %T instead", hub)
+		return fmt.Errorf("expected network/v1api20220701/storage/DnsForwardingRuleSetsForwardingRule but received %T instead", hub)
 	}
 
 	return rule.AssignProperties_To_DnsForwardingRuleSetsForwardingRule(destination)
@@ -126,6 +126,15 @@ func (rule *DnsForwardingRuleSetsForwardingRule) GetSpec() genruntime.Convertibl
 // GetStatus returns the status of this resource
 func (rule *DnsForwardingRuleSetsForwardingRule) GetStatus() genruntime.ConvertibleStatus {
 	return &rule.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (rule *DnsForwardingRuleSetsForwardingRule) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Network/dnsForwardingRulesets/forwardingRules"

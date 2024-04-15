@@ -26,6 +26,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/internal/reconcilers"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
+	"github.com/Azure/azure-service-operator/v2/pkg/common/labels"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
@@ -162,6 +163,8 @@ func (r *azureDeploymentReconcilerInstance) AddInitialResourceState(ctx context.
 		return err
 	}
 	genruntime.SetResourceID(r.Obj, armResource.GetID())
+	labels.SetOwnerNameLabel(r.Obj)
+	labels.SetOwnerGroupKindLabel(r.Obj)
 	return nil
 }
 
@@ -258,6 +261,9 @@ func (r *azureDeploymentReconcilerInstance) BeginCreateOrUpdateResource(
 				err, conditions.ConditionSeverityError, conditions.ReasonFailed)
 	}
 
+	// We want to set the latest reconciled generation annotation to keep a track of reconciles per generation.
+	SetLatestReconciledGeneration(r.Obj)
+
 	check, err := r.preReconciliationCheck(ctx)
 	if err != nil {
 		// Failed to do the pre-reconciliation check, this is a serious but non-fatal error
@@ -290,7 +296,7 @@ func (r *azureDeploymentReconcilerInstance) BeginCreateOrUpdateResource(
 
 	resourceID := genruntime.GetResourceIDOrDefault(r.Obj)
 	if resourceID != "" {
-		err = checkSubscription(resourceID, r.ARMConnection.SubscriptionID())
+		err = r.checkSubscription(resourceID)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
@@ -300,7 +306,6 @@ func (r *azureDeploymentReconcilerInstance) BeginCreateOrUpdateResource(
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-
 	// Use conditions.SetConditionReasonAware here to override any Warning conditions set earlier in the reconciliation process.
 	// Note that this call should be done after all validation has passed and all that is left to do is send the payload to ARM.
 	conditions.SetConditionReasonAware(r.Obj, r.PositiveConditions.Ready.Reconciling(r.Obj.GetGeneration()))
@@ -366,13 +371,15 @@ func (r *azureDeploymentReconcilerInstance) preReconciliationCheck(ctx context.C
 	return check, nil
 }
 
-func checkSubscription(resourceID string, clientSubID string) error {
+// checkSubscription checks if subscription on resource matches with credentials used while creating a resource.
+// Which prevents users to modify subscription in their credential.
+func (r *azureDeploymentReconcilerInstance) checkSubscription(resourceID string) error {
 	parsedRID, err := arm.ParseResourceID(resourceID)
 	// Some resources like '/providers/Microsoft.Subscription/aliases' do not have subscriptionID, so we need to make sure subscriptionID exists before we check.
 	// TODO: we need a better way?
 	if err == nil {
-		if parsedRID.ResourceGroupName != "" && parsedRID.SubscriptionID != clientSubID {
-			err = errors.Errorf("SubscriptionID %q for %q resource does not match with Client Credential: %q", parsedRID.SubscriptionID, resourceID, clientSubID)
+		if parsedRID.ResourceGroupName != "" && parsedRID.SubscriptionID != r.ARMConnection.SubscriptionID() {
+			err = errors.Errorf("SubscriptionID %q for %q resource does not match with Client Credential: %q", parsedRID.SubscriptionID, resourceID, r.ARMConnection.SubscriptionID())
 			return conditions.NewReadyConditionImpactingError(err, conditions.ConditionSeverityError, conditions.ReasonSubscriptionMismatch)
 		}
 	}
@@ -509,17 +516,33 @@ func (r *azureDeploymentReconcilerInstance) MonitorResourceCreation(ctx context.
 	poller := r.ARMConnection.Client().ResumeCreatePoller(pollerID)
 	err := poller.Resume(ctx, r.ARMConnection.Client(), pollerResumeToken)
 	if err != nil {
-		return ctrl.Result{}, r.handleCreateOrUpdateFailed(err)
+		return r.resultBasedOnGenerationCount(), r.handleCreateOrUpdateFailed(err)
 	}
 
 	if poller.Poller.Done() {
-		return ctrl.Result{}, r.handleCreateOrUpdateSuccess(ctx, ManageResource)
+		return r.resultBasedOnGenerationCount(), r.handleCreateOrUpdateSuccess(ctx, ManageResource)
 	}
 
 	// Requeue to check again later
 	retryAfter := genericarmclient.GetRetryAfter(poller.RawResponse)
 	r.Log.V(Debug).Info("Resource not created yet, will check again", "requeueAfter", retryAfter)
 	return ctrl.Result{Requeue: true, RequeueAfter: retryAfter}, nil
+}
+
+func (r *azureDeploymentReconcilerInstance) resultBasedOnGenerationCount() ctrl.Result {
+	// Once poller is done or run into error, we need to check if there was another event while resource had a ResumePollerToken.
+	// We do it here by checking the latest-reconciled-generation to make sure that we have sent the latest changes to the RP.
+	// If there's a mismatch in number of generations we reconciled and generations on spec, we requeue the resource to make sure its in sync.
+	generation, hasGenerationAnnotation := GetLatestReconciledGeneration(r.Obj)
+	if hasGenerationAnnotation && r.Obj.GetGeneration() != generation {
+		r.Log.V(Debug).Info(
+			"Generation mismatch detected, requeue-ing the resource",
+			"resourceID",
+			genruntime.GetResourceIDOrDefault(r.Obj))
+
+		return ctrl.Result{Requeue: true}
+	}
+	return ctrl.Result{}
 }
 
 //////////////////////////////////////////
@@ -540,18 +563,35 @@ func (r *azureDeploymentReconcilerInstance) getStatus(ctx context.Context, id st
 	}
 
 	// Get the resource
-	retryAfter, err := r.ARMConnection.Client().GetByID(ctx, id, apiVersion, armStatus)
-	if err != nil {
-		return nil, retryAfter, errors.Wrapf(err, "getting resource with ID: %q", id)
-	}
-
-	if r.Log.V(Debug).Enabled() {
-		statusBytes, marshalErr := json.Marshal(armStatus)
-		if marshalErr != nil {
-			return nil, zeroDuration, errors.Wrapf(marshalErr, "serializing ARM status to JSON for debugging")
+	if genruntime.ResourceOperationGet.IsSupportedBy(r.Obj) {
+		var retryAfter time.Duration
+		retryAfter, err = r.ARMConnection.Client().GetByID(ctx, id, apiVersion, armStatus)
+		if err != nil {
+			return nil, retryAfter, errors.Wrapf(err, "getting resource with ID: %q", id)
 		}
 
-		r.Log.V(Debug).Info("Got ARM status", "status", string(statusBytes))
+		if r.Log.V(Debug).Enabled() {
+			statusBytes, marshalErr := json.Marshal(armStatus)
+			if marshalErr != nil {
+				return nil, zeroDuration, errors.Wrapf(marshalErr, "serializing ARM status to JSON for debugging")
+			}
+
+			r.Log.V(Debug).Info("Got ARM status", "status", string(statusBytes))
+		}
+	} else if genruntime.ResourceOperationHead.IsSupportedBy(r.Obj) {
+		var retryAfter time.Duration
+		var exists bool
+		exists, retryAfter, err = r.ARMConnection.Client().CheckExistenceByID(ctx, id, apiVersion)
+		if err != nil {
+			return nil, retryAfter, errors.Wrapf(err, "getting resource with ID: %q", id)
+		}
+
+		// We expect the resource to exist
+		if !exists {
+			return nil, retryAfter, errors.Wrapf(err, "getting resource with ID: %q", id)
+		}
+	} else {
+		return nil, zeroDuration, errors.Errorf("resource must support one of GET or HEAD, but it supports neither")
 	}
 
 	// Convert the ARM shape to the Kube shape
@@ -790,7 +830,7 @@ func (r *azureDeploymentReconcilerInstance) deleteResource(
 		return ctrl.Result{}, nil
 	}
 
-	err := checkSubscription(resourceID, r.ARMConnection.SubscriptionID()) // TODO: Possibly we should pass this in as a parameter?
+	err := r.checkSubscription(resourceID)
 	if err != nil {
 		return ctrl.Result{}, err
 	}

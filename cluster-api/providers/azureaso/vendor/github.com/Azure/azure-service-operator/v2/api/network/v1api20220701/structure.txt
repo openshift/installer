@@ -2,8 +2,1209 @@
 github.com/Azure/azure-service-operator/v2/api/network/v1api20220701
 ├── APIVersion: Enum (1 value)
 │   └── "2022-07-01"
+├── ApplicationGateway: Resource
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
+│   ├── Spec: Object (37 properties)
+│   │   ├── AuthenticationCertificates: Object (2 properties)[]
+│   │   │   ├── Data: *genruntime.SecretReference
+│   │   │   └── Name: *string
+│   │   ├── AutoscaleConfiguration: *Object (2 properties)
+│   │   │   ├── MaxCapacity: Validated<*int> (1 rule)
+│   │   │   │   └── Rule 0: Minimum: 2
+│   │   │   └── MinCapacity: Validated<*int> (1 rule)
+│   │   │       └── Rule 0: Minimum: 0
+│   │   ├── AzureName: string
+│   │   ├── BackendAddressPools: Object (2 properties)[]
+│   │   │   ├── BackendAddresses: Object (2 properties)[]
+│   │   │   │   ├── Fqdn: *string
+│   │   │   │   └── IpAddress: *string
+│   │   │   └── Name: *string
+│   │   ├── BackendHttpSettingsCollection: Object (14 properties)[]
+│   │   │   ├── AffinityCookieName: *string
+│   │   │   ├── AuthenticationCertificates: Object (1 property)[]
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── ConnectionDraining: *Object (2 properties)
+│   │   │   │   ├── DrainTimeoutInSec: Validated<*int> (2 rules)
+│   │   │   │   │   ├── Rule 0: Maximum: 3600
+│   │   │   │   │   └── Rule 1: Minimum: 1
+│   │   │   │   └── Enabled: *bool
+│   │   │   ├── CookieBasedAffinity: *Enum (2 values)
+│   │   │   │   ├── "Disabled"
+│   │   │   │   └── "Enabled"
+│   │   │   ├── HostName: *string
+│   │   │   ├── Name: *string
+│   │   │   ├── Path: *string
+│   │   │   ├── PickHostNameFromBackendAddress: *bool
+│   │   │   ├── Port: *int
+│   │   │   ├── Probe: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── ProbeEnabled: *bool
+│   │   │   ├── Protocol: *Enum (4 values)
+│   │   │   │   ├── "Http"
+│   │   │   │   ├── "Https"
+│   │   │   │   ├── "Tcp"
+│   │   │   │   └── "Tls"
+│   │   │   ├── RequestTimeout: *int
+│   │   │   └── TrustedRootCertificates: Object (1 property)[]
+│   │   │       └── Reference: *genruntime.ResourceReference
+│   │   ├── BackendSettingsCollection: Object (8 properties)[]
+│   │   │   ├── HostName: *string
+│   │   │   ├── Name: *string
+│   │   │   ├── PickHostNameFromBackendAddress: *bool
+│   │   │   ├── Port: *int
+│   │   │   ├── Probe: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── Protocol: *Enum (4 values)
+│   │   │   │   ├── "Http"
+│   │   │   │   ├── "Https"
+│   │   │   │   ├── "Tcp"
+│   │   │   │   └── "Tls"
+│   │   │   ├── Timeout: *int
+│   │   │   └── TrustedRootCertificates: Object (1 property)[]
+│   │   │       └── Reference: *genruntime.ResourceReference
+│   │   ├── CustomErrorConfigurations: Object (2 properties)[]
+│   │   │   ├── CustomErrorPageUrl: *string
+│   │   │   └── StatusCode: *Enum (2 values)
+│   │   │       ├── "HttpStatus403"
+│   │   │       └── "HttpStatus502"
+│   │   ├── EnableFips: *bool
+│   │   ├── EnableHttp2: *bool
+│   │   ├── FirewallPolicy: *Object (1 property)
+│   │   │   └── Reference: *genruntime.ResourceReference
+│   │   ├── ForceFirewallPolicyAssociation: *bool
+│   │   ├── FrontendIPConfigurations: Object (6 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   ├── PrivateIPAddress: *string
+│   │   │   ├── PrivateIPAllocationMethod: *Enum (2 values)
+│   │   │   │   ├── "Dynamic"
+│   │   │   │   └── "Static"
+│   │   │   ├── PrivateLinkConfiguration: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── PublicIPAddress: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   └── Subnet: *Object (1 property)
+│   │   │       └── Reference: *genruntime.ResourceReference
+│   │   ├── FrontendPorts: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Port: *int
+│   │   ├── GatewayIPConfigurations: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Subnet: *Object (1 property)
+│   │   │       └── Reference: *genruntime.ResourceReference
+│   │   ├── GlobalConfiguration: *Object (2 properties)
+│   │   │   ├── EnableRequestBuffering: *bool
+│   │   │   └── EnableResponseBuffering: *bool
+│   │   ├── HttpListeners: Object (11 properties)[]
+│   │   │   ├── CustomErrorConfigurations: Object (2 properties)[]
+│   │   │   │   ├── CustomErrorPageUrl: *string
+│   │   │   │   └── StatusCode: *Enum (2 values)
+│   │   │   │       ├── "HttpStatus403"
+│   │   │   │       └── "HttpStatus502"
+│   │   │   ├── FirewallPolicy: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── FrontendIPConfiguration: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── FrontendPort: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── HostName: *string
+│   │   │   ├── HostNames: string[]
+│   │   │   ├── Name: *string
+│   │   │   ├── Protocol: *Enum (4 values)
+│   │   │   │   ├── "Http"
+│   │   │   │   ├── "Https"
+│   │   │   │   ├── "Tcp"
+│   │   │   │   └── "Tls"
+│   │   │   ├── RequireServerNameIndication: *bool
+│   │   │   ├── SslCertificate: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   └── SslProfile: *Object (1 property)
+│   │   │       └── Reference: *genruntime.ResourceReference
+│   │   ├── Identity: *Object (2 properties)
+│   │   │   ├── Type: *Enum (4 values)
+│   │   │   │   ├── "None"
+│   │   │   │   ├── "SystemAssigned"
+│   │   │   │   ├── "SystemAssigned, UserAssigned"
+│   │   │   │   └── "UserAssigned"
+│   │   │   └── UserAssignedIdentities: Object (1 property)[]
+│   │   │       └── Reference: genruntime.ResourceReference
+│   │   ├── Listeners: Object (6 properties)[]
+│   │   │   ├── FrontendIPConfiguration: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── FrontendPort: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── Name: *string
+│   │   │   ├── Protocol: *Enum (4 values)
+│   │   │   │   ├── "Http"
+│   │   │   │   ├── "Https"
+│   │   │   │   ├── "Tcp"
+│   │   │   │   └── "Tls"
+│   │   │   ├── SslCertificate: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   └── SslProfile: *Object (1 property)
+│   │   │       └── Reference: *genruntime.ResourceReference
+│   │   ├── LoadDistributionPolicies: Object (3 properties)[]
+│   │   │   ├── LoadDistributionAlgorithm: *Enum (3 values)
+│   │   │   │   ├── "IpHash"
+│   │   │   │   ├── "LeastConnections"
+│   │   │   │   └── "RoundRobin"
+│   │   │   ├── LoadDistributionTargets: Object (1 property)[]
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   └── Name: *string
+│   │   ├── Location: *string
+│   │   ├── Owner: *genruntime.KnownResourceReference
+│   │   ├── PrivateLinkConfigurations: Object (2 properties)[]
+│   │   │   ├── IpConfigurations: Object (1 property)[]
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   └── Name: *string
+│   │   ├── Probes: Object (12 properties)[]
+│   │   │   ├── Host: *string
+│   │   │   ├── Interval: *int
+│   │   │   ├── Match: *Object (2 properties)
+│   │   │   │   ├── Body: *string
+│   │   │   │   └── StatusCodes: string[]
+│   │   │   ├── MinServers: *int
+│   │   │   ├── Name: *string
+│   │   │   ├── Path: *string
+│   │   │   ├── PickHostNameFromBackendHttpSettings: *bool
+│   │   │   ├── PickHostNameFromBackendSettings: *bool
+│   │   │   ├── Port: Validated<*int> (2 rules)
+│   │   │   │   ├── Rule 0: Maximum: 65535
+│   │   │   │   └── Rule 1: Minimum: 1
+│   │   │   ├── Protocol: *Enum (4 values)
+│   │   │   │   ├── "Http"
+│   │   │   │   ├── "Https"
+│   │   │   │   ├── "Tcp"
+│   │   │   │   └── "Tls"
+│   │   │   ├── Timeout: *int
+│   │   │   └── UnhealthyThreshold: *int
+│   │   ├── RedirectConfigurations: Object (9 properties)[]
+│   │   │   ├── IncludePath: *bool
+│   │   │   ├── IncludeQueryString: *bool
+│   │   │   ├── Name: *string
+│   │   │   ├── PathRules: Object (1 property)[]
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── RedirectType: *Enum (4 values)
+│   │   │   │   ├── "Found"
+│   │   │   │   ├── "Permanent"
+│   │   │   │   ├── "SeeOther"
+│   │   │   │   └── "Temporary"
+│   │   │   ├── RequestRoutingRules: Object (1 property)[]
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── TargetListener: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── TargetUrl: *string
+│   │   │   └── UrlPathMaps: Object (1 property)[]
+│   │   │       └── Reference: *genruntime.ResourceReference
+│   │   ├── RequestRoutingRules: Object (10 properties)[]
+│   │   │   ├── BackendAddressPool: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── BackendHttpSettings: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── HttpListener: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── LoadDistributionPolicy: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── Name: *string
+│   │   │   ├── Priority: Validated<*int> (2 rules)
+│   │   │   │   ├── Rule 0: Maximum: 20000
+│   │   │   │   └── Rule 1: Minimum: 1
+│   │   │   ├── RedirectConfiguration: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── RewriteRuleSet: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── RuleType: *Enum (2 values)
+│   │   │   │   ├── "Basic"
+│   │   │   │   └── "PathBasedRouting"
+│   │   │   └── UrlPathMap: *Object (1 property)
+│   │   │       └── Reference: *genruntime.ResourceReference
+│   │   ├── RewriteRuleSets: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── RewriteRules: Object (4 properties)[]
+│   │   │       ├── ActionSet: *Object (3 properties)
+│   │   │       │   ├── RequestHeaderConfigurations: Object (2 properties)[]
+│   │   │       │   │   ├── HeaderName: *string
+│   │   │       │   │   └── HeaderValue: *string
+│   │   │       │   ├── ResponseHeaderConfigurations: Object (2 properties)[]
+│   │   │       │   │   ├── HeaderName: *string
+│   │   │       │   │   └── HeaderValue: *string
+│   │   │       │   └── UrlConfiguration: *Object (3 properties)
+│   │   │       │       ├── ModifiedPath: *string
+│   │   │       │       ├── ModifiedQueryString: *string
+│   │   │       │       └── Reroute: *bool
+│   │   │       ├── Conditions: Object (4 properties)[]
+│   │   │       │   ├── IgnoreCase: *bool
+│   │   │       │   ├── Negate: *bool
+│   │   │       │   ├── Pattern: *string
+│   │   │       │   └── Variable: *string
+│   │   │       ├── Name: *string
+│   │   │       └── RuleSequence: *int
+│   │   ├── RoutingRules: Object (6 properties)[]
+│   │   │   ├── BackendAddressPool: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── BackendSettings: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── Listener: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── Name: *string
+│   │   │   ├── Priority: Validated<*int> (2 rules)
+│   │   │   │   ├── Rule 0: Maximum: 20000
+│   │   │   │   └── Rule 1: Minimum: 1
+│   │   │   └── RuleType: *Enum (2 values)
+│   │   │       ├── "Basic"
+│   │   │       └── "PathBasedRouting"
+│   │   ├── Sku: *Object (3 properties)
+│   │   │   ├── Capacity: *int
+│   │   │   ├── Name: *Enum (7 values)
+│   │   │   │   ├── "Standard_Large"
+│   │   │   │   ├── "Standard_Medium"
+│   │   │   │   ├── "Standard_Small"
+│   │   │   │   ├── "Standard_v2"
+│   │   │   │   ├── "WAF_Large"
+│   │   │   │   ├── "WAF_Medium"
+│   │   │   │   └── "WAF_v2"
+│   │   │   └── Tier: *Enum (4 values)
+│   │   │       ├── "Standard"
+│   │   │       ├── "Standard_v2"
+│   │   │       ├── "WAF"
+│   │   │       └── "WAF_v2"
+│   │   ├── SslCertificates: Object (4 properties)[]
+│   │   │   ├── Data: *genruntime.SecretReference
+│   │   │   ├── KeyVaultSecretId: *string
+│   │   │   ├── Name: *string
+│   │   │   └── Password: *genruntime.SecretReference
+│   │   ├── SslPolicy: *Object (5 properties)
+│   │   │   ├── CipherSuites: Enum (28 values)[]
+│   │   │   │   ├── "TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA"
+│   │   │   │   ├── "TLS_DHE_DSS_WITH_AES_128_CBC_SHA"
+│   │   │   │   ├── "TLS_DHE_DSS_WITH_AES_128_CBC_SHA256"
+│   │   │   │   ├── "TLS_DHE_DSS_WITH_AES_256_CBC_SHA"
+│   │   │   │   ├── "TLS_DHE_DSS_WITH_AES_256_CBC_SHA256"
+│   │   │   │   ├── "TLS_DHE_RSA_WITH_AES_128_CBC_SHA"
+│   │   │   │   ├── "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256"
+│   │   │   │   ├── "TLS_DHE_RSA_WITH_AES_256_CBC_SHA"
+│   │   │   │   ├── "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384"
+│   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA"
+│   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256"
+│   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+│   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA"
+│   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384"
+│   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+│   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA"
+│   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
+│   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+│   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"
+│   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+│   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+│   │   │   │   ├── "TLS_RSA_WITH_3DES_EDE_CBC_SHA"
+│   │   │   │   ├── "TLS_RSA_WITH_AES_128_CBC_SHA"
+│   │   │   │   ├── "TLS_RSA_WITH_AES_128_CBC_SHA256"
+│   │   │   │   ├── "TLS_RSA_WITH_AES_128_GCM_SHA256"
+│   │   │   │   ├── "TLS_RSA_WITH_AES_256_CBC_SHA"
+│   │   │   │   ├── "TLS_RSA_WITH_AES_256_CBC_SHA256"
+│   │   │   │   └── "TLS_RSA_WITH_AES_256_GCM_SHA384"
+│   │   │   ├── DisabledSslProtocols: Enum (4 values)[]
+│   │   │   │   ├── "TLSv1_0"
+│   │   │   │   ├── "TLSv1_1"
+│   │   │   │   ├── "TLSv1_2"
+│   │   │   │   └── "TLSv1_3"
+│   │   │   ├── MinProtocolVersion: *Enum (4 values)
+│   │   │   │   ├── "TLSv1_0"
+│   │   │   │   ├── "TLSv1_1"
+│   │   │   │   ├── "TLSv1_2"
+│   │   │   │   └── "TLSv1_3"
+│   │   │   ├── PolicyName: *Enum (5 values)
+│   │   │   │   ├── "AppGwSslPolicy20150501"
+│   │   │   │   ├── "AppGwSslPolicy20170401"
+│   │   │   │   ├── "AppGwSslPolicy20170401S"
+│   │   │   │   ├── "AppGwSslPolicy20220101"
+│   │   │   │   └── "AppGwSslPolicy20220101S"
+│   │   │   └── PolicyType: *Enum (3 values)
+│   │   │       ├── "Custom"
+│   │   │       ├── "CustomV2"
+│   │   │       └── "Predefined"
+│   │   ├── SslProfiles: Object (4 properties)[]
+│   │   │   ├── ClientAuthConfiguration: *Object (2 properties)
+│   │   │   │   ├── VerifyClientCertIssuerDN: *bool
+│   │   │   │   └── VerifyClientRevocation: *Enum (2 values)
+│   │   │   │       ├── "None"
+│   │   │   │       └── "OCSP"
+│   │   │   ├── Name: *string
+│   │   │   ├── SslPolicy: *Object (5 properties)
+│   │   │   │   ├── CipherSuites: Enum (28 values)[]
+│   │   │   │   │   ├── "TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA"
+│   │   │   │   │   ├── "TLS_DHE_DSS_WITH_AES_128_CBC_SHA"
+│   │   │   │   │   ├── "TLS_DHE_DSS_WITH_AES_128_CBC_SHA256"
+│   │   │   │   │   ├── "TLS_DHE_DSS_WITH_AES_256_CBC_SHA"
+│   │   │   │   │   ├── "TLS_DHE_DSS_WITH_AES_256_CBC_SHA256"
+│   │   │   │   │   ├── "TLS_DHE_RSA_WITH_AES_128_CBC_SHA"
+│   │   │   │   │   ├── "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256"
+│   │   │   │   │   ├── "TLS_DHE_RSA_WITH_AES_256_CBC_SHA"
+│   │   │   │   │   ├── "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384"
+│   │   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA"
+│   │   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256"
+│   │   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+│   │   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA"
+│   │   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384"
+│   │   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+│   │   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA"
+│   │   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
+│   │   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+│   │   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"
+│   │   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+│   │   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+│   │   │   │   │   ├── "TLS_RSA_WITH_3DES_EDE_CBC_SHA"
+│   │   │   │   │   ├── "TLS_RSA_WITH_AES_128_CBC_SHA"
+│   │   │   │   │   ├── "TLS_RSA_WITH_AES_128_CBC_SHA256"
+│   │   │   │   │   ├── "TLS_RSA_WITH_AES_128_GCM_SHA256"
+│   │   │   │   │   ├── "TLS_RSA_WITH_AES_256_CBC_SHA"
+│   │   │   │   │   ├── "TLS_RSA_WITH_AES_256_CBC_SHA256"
+│   │   │   │   │   └── "TLS_RSA_WITH_AES_256_GCM_SHA384"
+│   │   │   │   ├── DisabledSslProtocols: Enum (4 values)[]
+│   │   │   │   │   ├── "TLSv1_0"
+│   │   │   │   │   ├── "TLSv1_1"
+│   │   │   │   │   ├── "TLSv1_2"
+│   │   │   │   │   └── "TLSv1_3"
+│   │   │   │   ├── MinProtocolVersion: *Enum (4 values)
+│   │   │   │   │   ├── "TLSv1_0"
+│   │   │   │   │   ├── "TLSv1_1"
+│   │   │   │   │   ├── "TLSv1_2"
+│   │   │   │   │   └── "TLSv1_3"
+│   │   │   │   ├── PolicyName: *Enum (5 values)
+│   │   │   │   │   ├── "AppGwSslPolicy20150501"
+│   │   │   │   │   ├── "AppGwSslPolicy20170401"
+│   │   │   │   │   ├── "AppGwSslPolicy20170401S"
+│   │   │   │   │   ├── "AppGwSslPolicy20220101"
+│   │   │   │   │   └── "AppGwSslPolicy20220101S"
+│   │   │   │   └── PolicyType: *Enum (3 values)
+│   │   │   │       ├── "Custom"
+│   │   │   │       ├── "CustomV2"
+│   │   │   │       └── "Predefined"
+│   │   │   └── TrustedClientCertificates: Object (1 property)[]
+│   │   │       └── Reference: *genruntime.ResourceReference
+│   │   ├── Tags: map[string]string
+│   │   ├── TrustedClientCertificates: Object (2 properties)[]
+│   │   │   ├── Data: *genruntime.SecretReference
+│   │   │   └── Name: *string
+│   │   ├── TrustedRootCertificates: Object (3 properties)[]
+│   │   │   ├── Data: *genruntime.SecretReference
+│   │   │   ├── KeyVaultSecretId: *string
+│   │   │   └── Name: *string
+│   │   ├── UrlPathMaps: Object (7 properties)[]
+│   │   │   ├── DefaultBackendAddressPool: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── DefaultBackendHttpSettings: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── DefaultLoadDistributionPolicy: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── DefaultRedirectConfiguration: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── DefaultRewriteRuleSet: *Object (1 property)
+│   │   │   │   └── Reference: *genruntime.ResourceReference
+│   │   │   ├── Name: *string
+│   │   │   └── PathRules: Object (1 property)[]
+│   │   │       └── Reference: *genruntime.ResourceReference
+│   │   ├── WebApplicationFirewallConfiguration: *Object (10 properties)
+│   │   │   ├── DisabledRuleGroups: Object (2 properties)[]
+│   │   │   │   ├── RuleGroupName: *string
+│   │   │   │   └── Rules: int[]
+│   │   │   ├── Enabled: *bool
+│   │   │   ├── Exclusions: Object (3 properties)[]
+│   │   │   │   ├── MatchVariable: *string
+│   │   │   │   ├── Selector: *string
+│   │   │   │   └── SelectorMatchOperator: *string
+│   │   │   ├── FileUploadLimitInMb: Validated<*int> (1 rule)
+│   │   │   │   └── Rule 0: Minimum: 0
+│   │   │   ├── FirewallMode: *Enum (2 values)
+│   │   │   │   ├── "Detection"
+│   │   │   │   └── "Prevention"
+│   │   │   ├── MaxRequestBodySize: Validated<*int> (2 rules)
+│   │   │   │   ├── Rule 0: Maximum: 128
+│   │   │   │   └── Rule 1: Minimum: 8
+│   │   │   ├── MaxRequestBodySizeInKb: Validated<*int> (2 rules)
+│   │   │   │   ├── Rule 0: Maximum: 128
+│   │   │   │   └── Rule 1: Minimum: 8
+│   │   │   ├── RequestBodyCheck: *bool
+│   │   │   ├── RuleSetType: *string
+│   │   │   └── RuleSetVersion: *string
+│   │   └── Zones: string[]
+│   └── Status: Object (44 properties)
+│       ├── AuthenticationCertificates: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── AutoscaleConfiguration: *Object (2 properties)
+│       │   ├── MaxCapacity: *int
+│       │   └── MinCapacity: *int
+│       ├── BackendAddressPools: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── BackendHttpSettingsCollection: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── BackendSettingsCollection: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── Conditions: conditions.Condition[]
+│       ├── CustomErrorConfigurations: Object (2 properties)[]
+│       │   ├── CustomErrorPageUrl: *string
+│       │   └── StatusCode: *Enum (2 values)
+│       │       ├── "HttpStatus403"
+│       │       └── "HttpStatus502"
+│       ├── EnableFips: *bool
+│       ├── EnableHttp2: *bool
+│       ├── Etag: *string
+│       ├── FirewallPolicy: *Object (1 property)
+│       │   └── Id: *string
+│       ├── ForceFirewallPolicyAssociation: *bool
+│       ├── FrontendIPConfigurations: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── FrontendPorts: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── GatewayIPConfigurations: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── GlobalConfiguration: *Object (2 properties)
+│       │   ├── EnableRequestBuffering: *bool
+│       │   └── EnableResponseBuffering: *bool
+│       ├── HttpListeners: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── Id: *string
+│       ├── Identity: *Object (4 properties)
+│       │   ├── PrincipalId: *string
+│       │   ├── TenantId: *string
+│       │   ├── Type: *Enum (4 values)
+│       │   │   ├── "None"
+│       │   │   ├── "SystemAssigned"
+│       │   │   ├── "SystemAssigned, UserAssigned"
+│       │   │   └── "UserAssigned"
+│       │   └── UserAssignedIdentities: map[string]Object (2 properties)
+│       │       ├── ClientId: *string
+│       │       └── PrincipalId: *string
+│       ├── Listeners: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── LoadDistributionPolicies: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── Location: *string
+│       ├── Name: *string
+│       ├── OperationalState: *Enum (4 values)
+│       │   ├── "Running"
+│       │   ├── "Starting"
+│       │   ├── "Stopped"
+│       │   └── "Stopping"
+│       ├── PrivateEndpointConnections: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── PrivateLinkConfigurations: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── Probes: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── ProvisioningState: *Enum (4 values)
+│       │   ├── "Deleting"
+│       │   ├── "Failed"
+│       │   ├── "Succeeded"
+│       │   └── "Updating"
+│       ├── RedirectConfigurations: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── RequestRoutingRules: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── ResourceGuid: *string
+│       ├── RewriteRuleSets: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── RoutingRules: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── Sku: *Object (3 properties)
+│       │   ├── Capacity: *int
+│       │   ├── Name: *Enum (7 values)
+│       │   │   ├── "Standard_Large"
+│       │   │   ├── "Standard_Medium"
+│       │   │   ├── "Standard_Small"
+│       │   │   ├── "Standard_v2"
+│       │   │   ├── "WAF_Large"
+│       │   │   ├── "WAF_Medium"
+│       │   │   └── "WAF_v2"
+│       │   └── Tier: *Enum (4 values)
+│       │       ├── "Standard"
+│       │       ├── "Standard_v2"
+│       │       ├── "WAF"
+│       │       └── "WAF_v2"
+│       ├── SslCertificates: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── SslPolicy: *Object (5 properties)
+│       │   ├── CipherSuites: Enum (28 values)[]
+│       │   │   ├── "TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA"
+│       │   │   ├── "TLS_DHE_DSS_WITH_AES_128_CBC_SHA"
+│       │   │   ├── "TLS_DHE_DSS_WITH_AES_128_CBC_SHA256"
+│       │   │   ├── "TLS_DHE_DSS_WITH_AES_256_CBC_SHA"
+│       │   │   ├── "TLS_DHE_DSS_WITH_AES_256_CBC_SHA256"
+│       │   │   ├── "TLS_DHE_RSA_WITH_AES_128_CBC_SHA"
+│       │   │   ├── "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256"
+│       │   │   ├── "TLS_DHE_RSA_WITH_AES_256_CBC_SHA"
+│       │   │   ├── "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384"
+│       │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA"
+│       │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256"
+│       │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+│       │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA"
+│       │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384"
+│       │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+│       │   │   ├── "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA"
+│       │   │   ├── "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
+│       │   │   ├── "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+│       │   │   ├── "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"
+│       │   │   ├── "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+│       │   │   ├── "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+│       │   │   ├── "TLS_RSA_WITH_3DES_EDE_CBC_SHA"
+│       │   │   ├── "TLS_RSA_WITH_AES_128_CBC_SHA"
+│       │   │   ├── "TLS_RSA_WITH_AES_128_CBC_SHA256"
+│       │   │   ├── "TLS_RSA_WITH_AES_128_GCM_SHA256"
+│       │   │   ├── "TLS_RSA_WITH_AES_256_CBC_SHA"
+│       │   │   ├── "TLS_RSA_WITH_AES_256_CBC_SHA256"
+│       │   │   └── "TLS_RSA_WITH_AES_256_GCM_SHA384"
+│       │   ├── DisabledSslProtocols: Enum (4 values)[]
+│       │   │   ├── "TLSv1_0"
+│       │   │   ├── "TLSv1_1"
+│       │   │   ├── "TLSv1_2"
+│       │   │   └── "TLSv1_3"
+│       │   ├── MinProtocolVersion: *Enum (4 values)
+│       │   │   ├── "TLSv1_0"
+│       │   │   ├── "TLSv1_1"
+│       │   │   ├── "TLSv1_2"
+│       │   │   └── "TLSv1_3"
+│       │   ├── PolicyName: *Enum (5 values)
+│       │   │   ├── "AppGwSslPolicy20150501"
+│       │   │   ├── "AppGwSslPolicy20170401"
+│       │   │   ├── "AppGwSslPolicy20170401S"
+│       │   │   ├── "AppGwSslPolicy20220101"
+│       │   │   └── "AppGwSslPolicy20220101S"
+│       │   └── PolicyType: *Enum (3 values)
+│       │       ├── "Custom"
+│       │       ├── "CustomV2"
+│       │       └── "Predefined"
+│       ├── SslProfiles: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── Tags: map[string]string
+│       ├── TrustedClientCertificates: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── TrustedRootCertificates: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── Type: *string
+│       ├── UrlPathMaps: Object (1 property)[]
+│       │   └── Id: *string
+│       ├── WebApplicationFirewallConfiguration: *Object (10 properties)
+│       │   ├── DisabledRuleGroups: Object (2 properties)[]
+│       │   │   ├── RuleGroupName: *string
+│       │   │   └── Rules: int[]
+│       │   ├── Enabled: *bool
+│       │   ├── Exclusions: Object (3 properties)[]
+│       │   │   ├── MatchVariable: *string
+│       │   │   ├── Selector: *string
+│       │   │   └── SelectorMatchOperator: *string
+│       │   ├── FileUploadLimitInMb: *int
+│       │   ├── FirewallMode: *Enum (2 values)
+│       │   │   ├── "Detection"
+│       │   │   └── "Prevention"
+│       │   ├── MaxRequestBodySize: *int
+│       │   ├── MaxRequestBodySizeInKb: *int
+│       │   ├── RequestBodyCheck: *bool
+│       │   ├── RuleSetType: *string
+│       │   └── RuleSetVersion: *string
+│       └── Zones: string[]
+├── ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded_ARM: Object (9 properties)
+│   ├── Etag: *string
+│   ├── Id: *string
+│   ├── Identity: *Object (4 properties)
+│   │   ├── PrincipalId: *string
+│   │   ├── TenantId: *string
+│   │   ├── Type: *Enum (4 values)
+│   │   │   ├── "None"
+│   │   │   ├── "SystemAssigned"
+│   │   │   ├── "SystemAssigned, UserAssigned"
+│   │   │   └── "UserAssigned"
+│   │   └── UserAssignedIdentities: map[string]Object (2 properties)
+│   │       ├── ClientId: *string
+│   │       └── PrincipalId: *string
+│   ├── Location: *string
+│   ├── Name: *string
+│   ├── Properties: *Object (35 properties)
+│   │   ├── AuthenticationCertificates: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── AutoscaleConfiguration: *Object (2 properties)
+│   │   │   ├── MaxCapacity: *int
+│   │   │   └── MinCapacity: *int
+│   │   ├── BackendAddressPools: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── BackendHttpSettingsCollection: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── BackendSettingsCollection: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── CustomErrorConfigurations: Object (2 properties)[]
+│   │   │   ├── CustomErrorPageUrl: *string
+│   │   │   └── StatusCode: *Enum (2 values)
+│   │   │       ├── "HttpStatus403"
+│   │   │       └── "HttpStatus502"
+│   │   ├── EnableFips: *bool
+│   │   ├── EnableHttp2: *bool
+│   │   ├── FirewallPolicy: *Object (1 property)
+│   │   │   └── Id: *string
+│   │   ├── ForceFirewallPolicyAssociation: *bool
+│   │   ├── FrontendIPConfigurations: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── FrontendPorts: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── GatewayIPConfigurations: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── GlobalConfiguration: *Object (2 properties)
+│   │   │   ├── EnableRequestBuffering: *bool
+│   │   │   └── EnableResponseBuffering: *bool
+│   │   ├── HttpListeners: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── Listeners: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── LoadDistributionPolicies: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── OperationalState: *Enum (4 values)
+│   │   │   ├── "Running"
+│   │   │   ├── "Starting"
+│   │   │   ├── "Stopped"
+│   │   │   └── "Stopping"
+│   │   ├── PrivateEndpointConnections: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── PrivateLinkConfigurations: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── Probes: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── ProvisioningState: *Enum (4 values)
+│   │   │   ├── "Deleting"
+│   │   │   ├── "Failed"
+│   │   │   ├── "Succeeded"
+│   │   │   └── "Updating"
+│   │   ├── RedirectConfigurations: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── RequestRoutingRules: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── ResourceGuid: *string
+│   │   ├── RewriteRuleSets: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── RoutingRules: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── Sku: *Object (3 properties)
+│   │   │   ├── Capacity: *int
+│   │   │   ├── Name: *Enum (7 values)
+│   │   │   │   ├── "Standard_Large"
+│   │   │   │   ├── "Standard_Medium"
+│   │   │   │   ├── "Standard_Small"
+│   │   │   │   ├── "Standard_v2"
+│   │   │   │   ├── "WAF_Large"
+│   │   │   │   ├── "WAF_Medium"
+│   │   │   │   └── "WAF_v2"
+│   │   │   └── Tier: *Enum (4 values)
+│   │   │       ├── "Standard"
+│   │   │       ├── "Standard_v2"
+│   │   │       ├── "WAF"
+│   │   │       └── "WAF_v2"
+│   │   ├── SslCertificates: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── SslPolicy: *Object (5 properties)
+│   │   │   ├── CipherSuites: Enum (28 values)[]
+│   │   │   │   ├── "TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA"
+│   │   │   │   ├── "TLS_DHE_DSS_WITH_AES_128_CBC_SHA"
+│   │   │   │   ├── "TLS_DHE_DSS_WITH_AES_128_CBC_SHA256"
+│   │   │   │   ├── "TLS_DHE_DSS_WITH_AES_256_CBC_SHA"
+│   │   │   │   ├── "TLS_DHE_DSS_WITH_AES_256_CBC_SHA256"
+│   │   │   │   ├── "TLS_DHE_RSA_WITH_AES_128_CBC_SHA"
+│   │   │   │   ├── "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256"
+│   │   │   │   ├── "TLS_DHE_RSA_WITH_AES_256_CBC_SHA"
+│   │   │   │   ├── "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384"
+│   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA"
+│   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256"
+│   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+│   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA"
+│   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384"
+│   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+│   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA"
+│   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
+│   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+│   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"
+│   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+│   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+│   │   │   │   ├── "TLS_RSA_WITH_3DES_EDE_CBC_SHA"
+│   │   │   │   ├── "TLS_RSA_WITH_AES_128_CBC_SHA"
+│   │   │   │   ├── "TLS_RSA_WITH_AES_128_CBC_SHA256"
+│   │   │   │   ├── "TLS_RSA_WITH_AES_128_GCM_SHA256"
+│   │   │   │   ├── "TLS_RSA_WITH_AES_256_CBC_SHA"
+│   │   │   │   ├── "TLS_RSA_WITH_AES_256_CBC_SHA256"
+│   │   │   │   └── "TLS_RSA_WITH_AES_256_GCM_SHA384"
+│   │   │   ├── DisabledSslProtocols: Enum (4 values)[]
+│   │   │   │   ├── "TLSv1_0"
+│   │   │   │   ├── "TLSv1_1"
+│   │   │   │   ├── "TLSv1_2"
+│   │   │   │   └── "TLSv1_3"
+│   │   │   ├── MinProtocolVersion: *Enum (4 values)
+│   │   │   │   ├── "TLSv1_0"
+│   │   │   │   ├── "TLSv1_1"
+│   │   │   │   ├── "TLSv1_2"
+│   │   │   │   └── "TLSv1_3"
+│   │   │   ├── PolicyName: *Enum (5 values)
+│   │   │   │   ├── "AppGwSslPolicy20150501"
+│   │   │   │   ├── "AppGwSslPolicy20170401"
+│   │   │   │   ├── "AppGwSslPolicy20170401S"
+│   │   │   │   ├── "AppGwSslPolicy20220101"
+│   │   │   │   └── "AppGwSslPolicy20220101S"
+│   │   │   └── PolicyType: *Enum (3 values)
+│   │   │       ├── "Custom"
+│   │   │       ├── "CustomV2"
+│   │   │       └── "Predefined"
+│   │   ├── SslProfiles: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── TrustedClientCertificates: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── TrustedRootCertificates: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   ├── UrlPathMaps: Object (1 property)[]
+│   │   │   └── Id: *string
+│   │   └── WebApplicationFirewallConfiguration: *Object (10 properties)
+│   │       ├── DisabledRuleGroups: Object (2 properties)[]
+│   │       │   ├── RuleGroupName: *string
+│   │       │   └── Rules: int[]
+│   │       ├── Enabled: *bool
+│   │       ├── Exclusions: Object (3 properties)[]
+│   │       │   ├── MatchVariable: *string
+│   │       │   ├── Selector: *string
+│   │       │   └── SelectorMatchOperator: *string
+│   │       ├── FileUploadLimitInMb: *int
+│   │       ├── FirewallMode: *Enum (2 values)
+│   │       │   ├── "Detection"
+│   │       │   └── "Prevention"
+│   │       ├── MaxRequestBodySize: *int
+│   │       ├── MaxRequestBodySizeInKb: *int
+│   │       ├── RequestBodyCheck: *bool
+│   │       ├── RuleSetType: *string
+│   │       └── RuleSetVersion: *string
+│   ├── Tags: map[string]string
+│   ├── Type: *string
+│   └── Zones: string[]
+├── ApplicationGateway_Spec_ARM: Object (6 properties)
+│   ├── Identity: *Object (2 properties)
+│   │   ├── Type: *Enum (4 values)
+│   │   │   ├── "None"
+│   │   │   ├── "SystemAssigned"
+│   │   │   ├── "SystemAssigned, UserAssigned"
+│   │   │   └── "UserAssigned"
+│   │   └── UserAssignedIdentities: map[string]Object (0 properties)
+│   ├── Location: *string
+│   ├── Name: string
+│   ├── Properties: *Object (31 properties)
+│   │   ├── AuthenticationCertificates: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (1 property)
+│   │   │       └── Data: *string
+│   │   ├── AutoscaleConfiguration: *Object (2 properties)
+│   │   │   ├── MaxCapacity: *int
+│   │   │   └── MinCapacity: *int
+│   │   ├── BackendAddressPools: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (1 property)
+│   │   │       └── BackendAddresses: Object (2 properties)[]
+│   │   │           ├── Fqdn: *string
+│   │   │           └── IpAddress: *string
+│   │   ├── BackendHttpSettingsCollection: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (13 properties)
+│   │   │       ├── AffinityCookieName: *string
+│   │   │       ├── AuthenticationCertificates: Object (1 property)[]
+│   │   │       │   └── Id: *string
+│   │   │       ├── ConnectionDraining: *Object (2 properties)
+│   │   │       │   ├── DrainTimeoutInSec: *int
+│   │   │       │   └── Enabled: *bool
+│   │   │       ├── CookieBasedAffinity: *Enum (2 values)
+│   │   │       │   ├── "Disabled"
+│   │   │       │   └── "Enabled"
+│   │   │       ├── HostName: *string
+│   │   │       ├── Path: *string
+│   │   │       ├── PickHostNameFromBackendAddress: *bool
+│   │   │       ├── Port: *int
+│   │   │       ├── Probe: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── ProbeEnabled: *bool
+│   │   │       ├── Protocol: *Enum (4 values)
+│   │   │       │   ├── "Http"
+│   │   │       │   ├── "Https"
+│   │   │       │   ├── "Tcp"
+│   │   │       │   └── "Tls"
+│   │   │       ├── RequestTimeout: *int
+│   │   │       └── TrustedRootCertificates: Object (1 property)[]
+│   │   │           └── Id: *string
+│   │   ├── BackendSettingsCollection: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (7 properties)
+│   │   │       ├── HostName: *string
+│   │   │       ├── PickHostNameFromBackendAddress: *bool
+│   │   │       ├── Port: *int
+│   │   │       ├── Probe: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── Protocol: *Enum (4 values)
+│   │   │       │   ├── "Http"
+│   │   │       │   ├── "Https"
+│   │   │       │   ├── "Tcp"
+│   │   │       │   └── "Tls"
+│   │   │       ├── Timeout: *int
+│   │   │       └── TrustedRootCertificates: Object (1 property)[]
+│   │   │           └── Id: *string
+│   │   ├── CustomErrorConfigurations: Object (2 properties)[]
+│   │   │   ├── CustomErrorPageUrl: *string
+│   │   │   └── StatusCode: *Enum (2 values)
+│   │   │       ├── "HttpStatus403"
+│   │   │       └── "HttpStatus502"
+│   │   ├── EnableFips: *bool
+│   │   ├── EnableHttp2: *bool
+│   │   ├── FirewallPolicy: *Object (1 property)
+│   │   │   └── Id: *string
+│   │   ├── ForceFirewallPolicyAssociation: *bool
+│   │   ├── FrontendIPConfigurations: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (5 properties)
+│   │   │       ├── PrivateIPAddress: *string
+│   │   │       ├── PrivateIPAllocationMethod: *Enum (2 values)
+│   │   │       │   ├── "Dynamic"
+│   │   │       │   └── "Static"
+│   │   │       ├── PrivateLinkConfiguration: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── PublicIPAddress: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       └── Subnet: *Object (1 property)
+│   │   │           └── Id: *string
+│   │   ├── FrontendPorts: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (1 property)
+│   │   │       └── Port: *int
+│   │   ├── GatewayIPConfigurations: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (1 property)
+│   │   │       └── Subnet: *Object (1 property)
+│   │   │           └── Id: *string
+│   │   ├── GlobalConfiguration: *Object (2 properties)
+│   │   │   ├── EnableRequestBuffering: *bool
+│   │   │   └── EnableResponseBuffering: *bool
+│   │   ├── HttpListeners: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (10 properties)
+│   │   │       ├── CustomErrorConfigurations: Object (2 properties)[]
+│   │   │       │   ├── CustomErrorPageUrl: *string
+│   │   │       │   └── StatusCode: *Enum (2 values)
+│   │   │       │       ├── "HttpStatus403"
+│   │   │       │       └── "HttpStatus502"
+│   │   │       ├── FirewallPolicy: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── FrontendIPConfiguration: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── FrontendPort: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── HostName: *string
+│   │   │       ├── HostNames: string[]
+│   │   │       ├── Protocol: *Enum (4 values)
+│   │   │       │   ├── "Http"
+│   │   │       │   ├── "Https"
+│   │   │       │   ├── "Tcp"
+│   │   │       │   └── "Tls"
+│   │   │       ├── RequireServerNameIndication: *bool
+│   │   │       ├── SslCertificate: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       └── SslProfile: *Object (1 property)
+│   │   │           └── Id: *string
+│   │   ├── Listeners: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (5 properties)
+│   │   │       ├── FrontendIPConfiguration: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── FrontendPort: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── Protocol: *Enum (4 values)
+│   │   │       │   ├── "Http"
+│   │   │       │   ├── "Https"
+│   │   │       │   ├── "Tcp"
+│   │   │       │   └── "Tls"
+│   │   │       ├── SslCertificate: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       └── SslProfile: *Object (1 property)
+│   │   │           └── Id: *string
+│   │   ├── LoadDistributionPolicies: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (2 properties)
+│   │   │       ├── LoadDistributionAlgorithm: *Enum (3 values)
+│   │   │       │   ├── "IpHash"
+│   │   │       │   ├── "LeastConnections"
+│   │   │       │   └── "RoundRobin"
+│   │   │       └── LoadDistributionTargets: Object (1 property)[]
+│   │   │           └── Id: *string
+│   │   ├── PrivateLinkConfigurations: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (1 property)
+│   │   │       └── IpConfigurations: Object (1 property)[]
+│   │   │           └── Id: *string
+│   │   ├── Probes: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (11 properties)
+│   │   │       ├── Host: *string
+│   │   │       ├── Interval: *int
+│   │   │       ├── Match: *Object (2 properties)
+│   │   │       │   ├── Body: *string
+│   │   │       │   └── StatusCodes: string[]
+│   │   │       ├── MinServers: *int
+│   │   │       ├── Path: *string
+│   │   │       ├── PickHostNameFromBackendHttpSettings: *bool
+│   │   │       ├── PickHostNameFromBackendSettings: *bool
+│   │   │       ├── Port: *int
+│   │   │       ├── Protocol: *Enum (4 values)
+│   │   │       │   ├── "Http"
+│   │   │       │   ├── "Https"
+│   │   │       │   ├── "Tcp"
+│   │   │       │   └── "Tls"
+│   │   │       ├── Timeout: *int
+│   │   │       └── UnhealthyThreshold: *int
+│   │   ├── RedirectConfigurations: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (8 properties)
+│   │   │       ├── IncludePath: *bool
+│   │   │       ├── IncludeQueryString: *bool
+│   │   │       ├── PathRules: Object (1 property)[]
+│   │   │       │   └── Id: *string
+│   │   │       ├── RedirectType: *Enum (4 values)
+│   │   │       │   ├── "Found"
+│   │   │       │   ├── "Permanent"
+│   │   │       │   ├── "SeeOther"
+│   │   │       │   └── "Temporary"
+│   │   │       ├── RequestRoutingRules: Object (1 property)[]
+│   │   │       │   └── Id: *string
+│   │   │       ├── TargetListener: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── TargetUrl: *string
+│   │   │       └── UrlPathMaps: Object (1 property)[]
+│   │   │           └── Id: *string
+│   │   ├── RequestRoutingRules: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (9 properties)
+│   │   │       ├── BackendAddressPool: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── BackendHttpSettings: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── HttpListener: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── LoadDistributionPolicy: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── Priority: *int
+│   │   │       ├── RedirectConfiguration: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── RewriteRuleSet: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── RuleType: *Enum (2 values)
+│   │   │       │   ├── "Basic"
+│   │   │       │   └── "PathBasedRouting"
+│   │   │       └── UrlPathMap: *Object (1 property)
+│   │   │           └── Id: *string
+│   │   ├── RewriteRuleSets: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (1 property)
+│   │   │       └── RewriteRules: Object (4 properties)[]
+│   │   │           ├── ActionSet: *Object (3 properties)
+│   │   │           │   ├── RequestHeaderConfigurations: Object (2 properties)[]
+│   │   │           │   │   ├── HeaderName: *string
+│   │   │           │   │   └── HeaderValue: *string
+│   │   │           │   ├── ResponseHeaderConfigurations: Object (2 properties)[]
+│   │   │           │   │   ├── HeaderName: *string
+│   │   │           │   │   └── HeaderValue: *string
+│   │   │           │   └── UrlConfiguration: *Object (3 properties)
+│   │   │           │       ├── ModifiedPath: *string
+│   │   │           │       ├── ModifiedQueryString: *string
+│   │   │           │       └── Reroute: *bool
+│   │   │           ├── Conditions: Object (4 properties)[]
+│   │   │           │   ├── IgnoreCase: *bool
+│   │   │           │   ├── Negate: *bool
+│   │   │           │   ├── Pattern: *string
+│   │   │           │   └── Variable: *string
+│   │   │           ├── Name: *string
+│   │   │           └── RuleSequence: *int
+│   │   ├── RoutingRules: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (5 properties)
+│   │   │       ├── BackendAddressPool: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── BackendSettings: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── Listener: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── Priority: *int
+│   │   │       └── RuleType: *Enum (2 values)
+│   │   │           ├── "Basic"
+│   │   │           └── "PathBasedRouting"
+│   │   ├── Sku: *Object (3 properties)
+│   │   │   ├── Capacity: *int
+│   │   │   ├── Name: *Enum (7 values)
+│   │   │   │   ├── "Standard_Large"
+│   │   │   │   ├── "Standard_Medium"
+│   │   │   │   ├── "Standard_Small"
+│   │   │   │   ├── "Standard_v2"
+│   │   │   │   ├── "WAF_Large"
+│   │   │   │   ├── "WAF_Medium"
+│   │   │   │   └── "WAF_v2"
+│   │   │   └── Tier: *Enum (4 values)
+│   │   │       ├── "Standard"
+│   │   │       ├── "Standard_v2"
+│   │   │       ├── "WAF"
+│   │   │       └── "WAF_v2"
+│   │   ├── SslCertificates: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (3 properties)
+│   │   │       ├── Data: *string
+│   │   │       ├── KeyVaultSecretId: *string
+│   │   │       └── Password: *string
+│   │   ├── SslPolicy: *Object (5 properties)
+│   │   │   ├── CipherSuites: Enum (28 values)[]
+│   │   │   │   ├── "TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA"
+│   │   │   │   ├── "TLS_DHE_DSS_WITH_AES_128_CBC_SHA"
+│   │   │   │   ├── "TLS_DHE_DSS_WITH_AES_128_CBC_SHA256"
+│   │   │   │   ├── "TLS_DHE_DSS_WITH_AES_256_CBC_SHA"
+│   │   │   │   ├── "TLS_DHE_DSS_WITH_AES_256_CBC_SHA256"
+│   │   │   │   ├── "TLS_DHE_RSA_WITH_AES_128_CBC_SHA"
+│   │   │   │   ├── "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256"
+│   │   │   │   ├── "TLS_DHE_RSA_WITH_AES_256_CBC_SHA"
+│   │   │   │   ├── "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384"
+│   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA"
+│   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256"
+│   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+│   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA"
+│   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384"
+│   │   │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+│   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA"
+│   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
+│   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+│   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"
+│   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+│   │   │   │   ├── "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+│   │   │   │   ├── "TLS_RSA_WITH_3DES_EDE_CBC_SHA"
+│   │   │   │   ├── "TLS_RSA_WITH_AES_128_CBC_SHA"
+│   │   │   │   ├── "TLS_RSA_WITH_AES_128_CBC_SHA256"
+│   │   │   │   ├── "TLS_RSA_WITH_AES_128_GCM_SHA256"
+│   │   │   │   ├── "TLS_RSA_WITH_AES_256_CBC_SHA"
+│   │   │   │   ├── "TLS_RSA_WITH_AES_256_CBC_SHA256"
+│   │   │   │   └── "TLS_RSA_WITH_AES_256_GCM_SHA384"
+│   │   │   ├── DisabledSslProtocols: Enum (4 values)[]
+│   │   │   │   ├── "TLSv1_0"
+│   │   │   │   ├── "TLSv1_1"
+│   │   │   │   ├── "TLSv1_2"
+│   │   │   │   └── "TLSv1_3"
+│   │   │   ├── MinProtocolVersion: *Enum (4 values)
+│   │   │   │   ├── "TLSv1_0"
+│   │   │   │   ├── "TLSv1_1"
+│   │   │   │   ├── "TLSv1_2"
+│   │   │   │   └── "TLSv1_3"
+│   │   │   ├── PolicyName: *Enum (5 values)
+│   │   │   │   ├── "AppGwSslPolicy20150501"
+│   │   │   │   ├── "AppGwSslPolicy20170401"
+│   │   │   │   ├── "AppGwSslPolicy20170401S"
+│   │   │   │   ├── "AppGwSslPolicy20220101"
+│   │   │   │   └── "AppGwSslPolicy20220101S"
+│   │   │   └── PolicyType: *Enum (3 values)
+│   │   │       ├── "Custom"
+│   │   │       ├── "CustomV2"
+│   │   │       └── "Predefined"
+│   │   ├── SslProfiles: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (3 properties)
+│   │   │       ├── ClientAuthConfiguration: *Object (2 properties)
+│   │   │       │   ├── VerifyClientCertIssuerDN: *bool
+│   │   │       │   └── VerifyClientRevocation: *Enum (2 values)
+│   │   │       │       ├── "None"
+│   │   │       │       └── "OCSP"
+│   │   │       ├── SslPolicy: *Object (5 properties)
+│   │   │       │   ├── CipherSuites: Enum (28 values)[]
+│   │   │       │   │   ├── "TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA"
+│   │   │       │   │   ├── "TLS_DHE_DSS_WITH_AES_128_CBC_SHA"
+│   │   │       │   │   ├── "TLS_DHE_DSS_WITH_AES_128_CBC_SHA256"
+│   │   │       │   │   ├── "TLS_DHE_DSS_WITH_AES_256_CBC_SHA"
+│   │   │       │   │   ├── "TLS_DHE_DSS_WITH_AES_256_CBC_SHA256"
+│   │   │       │   │   ├── "TLS_DHE_RSA_WITH_AES_128_CBC_SHA"
+│   │   │       │   │   ├── "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256"
+│   │   │       │   │   ├── "TLS_DHE_RSA_WITH_AES_256_CBC_SHA"
+│   │   │       │   │   ├── "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384"
+│   │   │       │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA"
+│   │   │       │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256"
+│   │   │       │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+│   │   │       │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA"
+│   │   │       │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384"
+│   │   │       │   │   ├── "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+│   │   │       │   │   ├── "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA"
+│   │   │       │   │   ├── "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
+│   │   │       │   │   ├── "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+│   │   │       │   │   ├── "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"
+│   │   │       │   │   ├── "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
+│   │   │       │   │   ├── "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+│   │   │       │   │   ├── "TLS_RSA_WITH_3DES_EDE_CBC_SHA"
+│   │   │       │   │   ├── "TLS_RSA_WITH_AES_128_CBC_SHA"
+│   │   │       │   │   ├── "TLS_RSA_WITH_AES_128_CBC_SHA256"
+│   │   │       │   │   ├── "TLS_RSA_WITH_AES_128_GCM_SHA256"
+│   │   │       │   │   ├── "TLS_RSA_WITH_AES_256_CBC_SHA"
+│   │   │       │   │   ├── "TLS_RSA_WITH_AES_256_CBC_SHA256"
+│   │   │       │   │   └── "TLS_RSA_WITH_AES_256_GCM_SHA384"
+│   │   │       │   ├── DisabledSslProtocols: Enum (4 values)[]
+│   │   │       │   │   ├── "TLSv1_0"
+│   │   │       │   │   ├── "TLSv1_1"
+│   │   │       │   │   ├── "TLSv1_2"
+│   │   │       │   │   └── "TLSv1_3"
+│   │   │       │   ├── MinProtocolVersion: *Enum (4 values)
+│   │   │       │   │   ├── "TLSv1_0"
+│   │   │       │   │   ├── "TLSv1_1"
+│   │   │       │   │   ├── "TLSv1_2"
+│   │   │       │   │   └── "TLSv1_3"
+│   │   │       │   ├── PolicyName: *Enum (5 values)
+│   │   │       │   │   ├── "AppGwSslPolicy20150501"
+│   │   │       │   │   ├── "AppGwSslPolicy20170401"
+│   │   │       │   │   ├── "AppGwSslPolicy20170401S"
+│   │   │       │   │   ├── "AppGwSslPolicy20220101"
+│   │   │       │   │   └── "AppGwSslPolicy20220101S"
+│   │   │       │   └── PolicyType: *Enum (3 values)
+│   │   │       │       ├── "Custom"
+│   │   │       │       ├── "CustomV2"
+│   │   │       │       └── "Predefined"
+│   │   │       └── TrustedClientCertificates: Object (1 property)[]
+│   │   │           └── Id: *string
+│   │   ├── TrustedClientCertificates: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (1 property)
+│   │   │       └── Data: *string
+│   │   ├── TrustedRootCertificates: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (2 properties)
+│   │   │       ├── Data: *string
+│   │   │       └── KeyVaultSecretId: *string
+│   │   ├── UrlPathMaps: Object (2 properties)[]
+│   │   │   ├── Name: *string
+│   │   │   └── Properties: *Object (6 properties)
+│   │   │       ├── DefaultBackendAddressPool: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── DefaultBackendHttpSettings: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── DefaultLoadDistributionPolicy: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── DefaultRedirectConfiguration: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       ├── DefaultRewriteRuleSet: *Object (1 property)
+│   │   │       │   └── Id: *string
+│   │   │       └── PathRules: Object (1 property)[]
+│   │   │           └── Id: *string
+│   │   └── WebApplicationFirewallConfiguration: *Object (10 properties)
+│   │       ├── DisabledRuleGroups: Object (2 properties)[]
+│   │       │   ├── RuleGroupName: *string
+│   │       │   └── Rules: int[]
+│   │       ├── Enabled: *bool
+│   │       ├── Exclusions: Object (3 properties)[]
+│   │       │   ├── MatchVariable: *string
+│   │       │   ├── Selector: *string
+│   │       │   └── SelectorMatchOperator: *string
+│   │       ├── FileUploadLimitInMb: *int
+│   │       ├── FirewallMode: *Enum (2 values)
+│   │       │   ├── "Detection"
+│   │       │   └── "Prevention"
+│   │       ├── MaxRequestBodySize: *int
+│   │       ├── MaxRequestBodySizeInKb: *int
+│   │       ├── RequestBodyCheck: *bool
+│   │       ├── RuleSetType: *string
+│   │       └── RuleSetVersion: *string
+│   ├── Tags: map[string]string
+│   └── Zones: string[]
 ├── BastionHost: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (13 properties)
 │   │   ├── AzureName: string
 │   │   ├── DisableCopyPaste: *bool
@@ -160,7 +1361,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20220701
 │       │   └── Port: *int
 │       └── Type: *string
 ├── DnsForwardingRuleset: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (5 properties)
 │   │   ├── AzureName: string
 │   │   ├── DnsResolverOutboundEndpoints: Object (1 property)[]
@@ -289,7 +1490,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20220701
 │           ├── IpAddress: *string
 │           └── Port: *int
 ├── DnsResolver: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (5 properties)
 │   │   ├── AzureName: string
 │   │   ├── Location: *string
@@ -561,7 +1762,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20220701
 │   │       └── Id: *string
 │   └── Tags: map[string]string
 ├── NatGateway: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (9 properties)
 │   │   ├── AzureName: string
 │   │   ├── IdleTimeoutInMinutes: *int
@@ -641,7 +1842,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20220701
 │   ├── Tags: map[string]string
 │   └── Zones: string[]
 ├── PrivateEndpoint: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (11 properties)
 │   │   ├── ApplicationSecurityGroups: Object (1 property)[]
 │   │   │   └── Reference: *genruntime.ResourceReference
@@ -923,7 +2124,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20220701
 │           └── Properties: *Object (1 property)
 │               └── PrivateDnsZoneId: *string
 ├── PrivateLinkService: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (12 properties)
 │   │   ├── AutoApproval: *Object (1 property)
 │   │   │   └── Subscriptions: string[]
@@ -1088,7 +2289,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20220701
 │   │       └── Subscriptions: string[]
 │   └── Tags: map[string]string
 ├── PublicIPPrefix: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (12 properties)
 │   │   ├── AzureName: string
 │   │   ├── CustomIPPrefix: *Object (1 property)

@@ -10,6 +10,7 @@ Licensed under the MIT license.
 // All object properties are optional by default, this will be overridden when needed:
 // +kubebuilder:validation:Optional
 // +groupName=cache.azure.com
+// +versionName=v1api20230701
 package v1api20230701
 
 import (

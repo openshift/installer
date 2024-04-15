@@ -3,7 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/keyvault/v1api20210401preview
 ├── APIVersion: Enum (1 value)
 │   └── "2021-04-01-preview"
 ├── Vault: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (5 properties)
 │   │   ├── AzureName: Validated<string> (1 rule)
 │   │   │   └── Rule 0: Pattern: "^[a-zA-Z0-9-]{3,24}$"
@@ -79,8 +79,10 @@ github.com/Azure/azure-service-operator/v2/api/keyvault/v1api20210401preview
 │   │   │   │   ├── TenantId: Validated<*string> (1 rule)
 │   │   │   │   │   └── Rule 0: Pattern: "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$"
 │   │   │   │   └── TenantIdFromConfig: *genruntime.ConfigMapReference
-│   │   │   ├── CreateMode: *Enum (2 values)
+│   │   │   ├── CreateMode: *Enum (4 values)
+│   │   │   │   ├── "createOrRecover"
 │   │   │   │   ├── "default"
+│   │   │   │   ├── "purgeThenCreate"
 │   │   │   │   └── "recover"
 │   │   │   ├── EnablePurgeProtection: *bool
 │   │   │   ├── EnableRbacAuthorization: *bool
@@ -185,8 +187,10 @@ github.com/Azure/azure-service-operator/v2/api/keyvault/v1api20210401preview
 │       │   │   │       ├── "setsas"
 │       │   │   │       └── "update"
 │       │   │   └── TenantId: *string
-│       │   ├── CreateMode: *Enum (2 values)
+│       │   ├── CreateMode: *Enum (4 values)
+│       │   │   ├── "createOrRecover"
 │       │   │   ├── "default"
+│       │   │   ├── "purgeThenCreate"
 │       │   │   └── "recover"
 │       │   ├── EnablePurgeProtection: *bool
 │       │   ├── EnableRbacAuthorization: *bool
@@ -326,8 +330,10 @@ github.com/Azure/azure-service-operator/v2/api/keyvault/v1api20210401preview
 │   │   │   │       ├── "setsas"
 │   │   │   │       └── "update"
 │   │   │   └── TenantId: *string
-│   │   ├── CreateMode: *Enum (2 values)
+│   │   ├── CreateMode: *Enum (4 values)
+│   │   │   ├── "createOrRecover"
 │   │   │   ├── "default"
+│   │   │   ├── "purgeThenCreate"
 │   │   │   └── "recover"
 │   │   ├── EnablePurgeProtection: *bool
 │   │   ├── EnableRbacAuthorization: *bool
@@ -467,8 +473,10 @@ github.com/Azure/azure-service-operator/v2/api/keyvault/v1api20210401preview
     │   │   │       ├── "setsas"
     │   │   │       └── "update"
     │   │   └── TenantId: *string
-    │   ├── CreateMode: *Enum (2 values)
+    │   ├── CreateMode: *Enum (4 values)
+    │   │   ├── "createOrRecover"
     │   │   ├── "default"
+    │   │   ├── "purgeThenCreate"
     │   │   └── "recover"
     │   ├── EnablePurgeProtection: *bool
     │   ├── EnableRbacAuthorization: *bool

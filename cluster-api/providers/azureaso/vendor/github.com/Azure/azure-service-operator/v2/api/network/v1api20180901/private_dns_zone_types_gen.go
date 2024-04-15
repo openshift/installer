@@ -5,7 +5,7 @@ package v1api20180901
 
 import (
 	"fmt"
-	v20180901s "github.com/Azure/azure-service-operator/v2/api/network/v1api20180901storage"
+	v20180901s "github.com/Azure/azure-service-operator/v2/api/network/v1api20180901/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &PrivateDnsZone{}
 func (zone *PrivateDnsZone) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20180901s.PrivateDnsZone)
 	if !ok {
-		return fmt.Errorf("expected network/v1api20180901storage/PrivateDnsZone but received %T instead", hub)
+		return fmt.Errorf("expected network/v1api20180901/storage/PrivateDnsZone but received %T instead", hub)
 	}
 
 	return zone.AssignProperties_From_PrivateDnsZone(source)
@@ -61,7 +61,7 @@ func (zone *PrivateDnsZone) ConvertFrom(hub conversion.Hub) error {
 func (zone *PrivateDnsZone) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20180901s.PrivateDnsZone)
 	if !ok {
-		return fmt.Errorf("expected network/v1api20180901storage/PrivateDnsZone but received %T instead", hub)
+		return fmt.Errorf("expected network/v1api20180901/storage/PrivateDnsZone but received %T instead", hub)
 	}
 
 	return zone.AssignProperties_To_PrivateDnsZone(destination)
@@ -126,6 +126,15 @@ func (zone *PrivateDnsZone) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (zone *PrivateDnsZone) GetStatus() genruntime.ConvertibleStatus {
 	return &zone.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (zone *PrivateDnsZone) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Network/privateDnsZones"

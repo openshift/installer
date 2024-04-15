@@ -24,7 +24,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2022-03-01/compute"
+	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2022-08-01/compute"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -76,6 +76,8 @@ type ManagedDiskOptions struct {
 	LogicalSectorSize int32
 	// SkipGetDiskOperation indicates whether skip GetDisk operation(mainly due to throttling)
 	SkipGetDiskOperation bool
+	// PublicNetworkAccess - Possible values include: 'Enabled', 'Disabled'
+	PublicNetworkAccess compute.PublicNetworkAccess
 	// NetworkAccessPolicy - Possible values include: 'AllowAll', 'AllowPrivate', 'DenyAll'
 	NetworkAccessPolicy compute.NetworkAccessPolicy
 	// DiskAccessID - ARM id of the DiskAccess resource for using private endpoints on disks.
@@ -86,6 +88,8 @@ type ManagedDiskOptions struct {
 	SubscriptionID string
 	// Location - specify a different location
 	Location string
+	// PerformancePlus - Set this flag to true to get a boost on the performance target of the disk deployed
+	PerformancePlus *bool
 }
 
 // CreateManagedDisk: create managed disk
@@ -129,7 +133,7 @@ func (c *ManagedDiskController) CreateManagedDisk(ctx context.Context, options *
 		subsID = options.SubscriptionID
 	}
 
-	creationData, err := getValidCreationData(subsID, rg, options.SourceResourceID, options.SourceType)
+	creationData, err := getValidCreationData(subsID, rg, options)
 	if err != nil {
 		return "", err
 	}
@@ -137,6 +141,10 @@ func (c *ManagedDiskController) CreateManagedDisk(ctx context.Context, options *
 		DiskSizeGB:      &diskSizeGB,
 		CreationData:    &creationData,
 		BurstingEnabled: options.BurstingEnabled,
+	}
+
+	if options.PublicNetworkAccess != "" {
+		diskProperties.PublicNetworkAccess = options.PublicNetworkAccess
 	}
 
 	if options.NetworkAccessPolicy != "" {
@@ -153,7 +161,7 @@ func (c *ManagedDiskController) CreateManagedDisk(ctx context.Context, options *
 		}
 	}
 
-	if diskSku == compute.UltraSSDLRS || diskSku == consts.PremiumV2LRS {
+	if diskSku == compute.UltraSSDLRS || diskSku == compute.PremiumV2LRS {
 		if options.DiskIOPSReadWrite == "" {
 			if diskSku == compute.UltraSSDLRS {
 				diskIOPSReadWrite := int64(consts.DefaultDiskIOPSReadWrite)

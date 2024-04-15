@@ -5,7 +5,7 @@ package v1api20210601
 
 import (
 	"fmt"
-	v20210601s "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20210601storage"
+	v20210601s "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20210601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &ProfilesEndpoint{}
 func (endpoint *ProfilesEndpoint) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20210601s.ProfilesEndpoint)
 	if !ok {
-		return fmt.Errorf("expected cdn/v1api20210601storage/ProfilesEndpoint but received %T instead", hub)
+		return fmt.Errorf("expected cdn/v1api20210601/storage/ProfilesEndpoint but received %T instead", hub)
 	}
 
 	return endpoint.AssignProperties_From_ProfilesEndpoint(source)
@@ -61,7 +61,7 @@ func (endpoint *ProfilesEndpoint) ConvertFrom(hub conversion.Hub) error {
 func (endpoint *ProfilesEndpoint) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20210601s.ProfilesEndpoint)
 	if !ok {
-		return fmt.Errorf("expected cdn/v1api20210601storage/ProfilesEndpoint but received %T instead", hub)
+		return fmt.Errorf("expected cdn/v1api20210601/storage/ProfilesEndpoint but received %T instead", hub)
 	}
 
 	return endpoint.AssignProperties_To_ProfilesEndpoint(destination)
@@ -126,6 +126,15 @@ func (endpoint *ProfilesEndpoint) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (endpoint *ProfilesEndpoint) GetStatus() genruntime.ConvertibleStatus {
 	return &endpoint.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (endpoint *ProfilesEndpoint) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Cdn/profiles/endpoints"

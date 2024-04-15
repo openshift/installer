@@ -5,7 +5,7 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101storage"
+	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &ServersDatabasesTransparentDataEncryption{}
 func (encryption *ServersDatabasesTransparentDataEncryption) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20211101s.ServersDatabasesTransparentDataEncryption)
 	if !ok {
-		return fmt.Errorf("expected sql/v1api20211101storage/ServersDatabasesTransparentDataEncryption but received %T instead", hub)
+		return fmt.Errorf("expected sql/v1api20211101/storage/ServersDatabasesTransparentDataEncryption but received %T instead", hub)
 	}
 
 	return encryption.AssignProperties_From_ServersDatabasesTransparentDataEncryption(source)
@@ -61,7 +61,7 @@ func (encryption *ServersDatabasesTransparentDataEncryption) ConvertFrom(hub con
 func (encryption *ServersDatabasesTransparentDataEncryption) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20211101s.ServersDatabasesTransparentDataEncryption)
 	if !ok {
-		return fmt.Errorf("expected sql/v1api20211101storage/ServersDatabasesTransparentDataEncryption but received %T instead", hub)
+		return fmt.Errorf("expected sql/v1api20211101/storage/ServersDatabasesTransparentDataEncryption but received %T instead", hub)
 	}
 
 	return encryption.AssignProperties_To_ServersDatabasesTransparentDataEncryption(destination)
@@ -119,6 +119,14 @@ func (encryption *ServersDatabasesTransparentDataEncryption) GetSpec() genruntim
 // GetStatus returns the status of this resource
 func (encryption *ServersDatabasesTransparentDataEncryption) GetStatus() genruntime.ConvertibleStatus {
 	return &encryption.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (encryption *ServersDatabasesTransparentDataEncryption) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Sql/servers/databases/transparentDataEncryption"

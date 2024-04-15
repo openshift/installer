@@ -5,9 +5,9 @@ package customizations
 
 import (
 	v20220131p "github.com/Azure/azure-service-operator/v2/api/managedidentity/v1api20220131preview"
-	v20220131ps "github.com/Azure/azure-service-operator/v2/api/managedidentity/v1api20220131previewstorage"
-	v1beta20220131p "github.com/Azure/azure-service-operator/v2/api/managedidentity/v1beta20220131preview"
-	v1beta20220131ps "github.com/Azure/azure-service-operator/v2/api/managedidentity/v1beta20220131previewstorage"
+	v20220131ps "github.com/Azure/azure-service-operator/v2/api/managedidentity/v1api20220131preview/storage"
+	v20230131 "github.com/Azure/azure-service-operator/v2/api/managedidentity/v1api20230131"
+	v20230131s "github.com/Azure/azure-service-operator/v2/api/managedidentity/v1api20230131/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -19,6 +19,6 @@ func (extension *FederatedIdentityCredentialExtension) GetExtendedResources() []
 	return []genruntime.KubernetesResource{
 		&v20220131p.FederatedIdentityCredential{},
 		&v20220131ps.FederatedIdentityCredential{},
-		&v1beta20220131p.FederatedIdentityCredential{},
-		&v1beta20220131ps.FederatedIdentityCredential{}}
+		&v20230131.FederatedIdentityCredential{},
+		&v20230131s.FederatedIdentityCredential{}}
 }

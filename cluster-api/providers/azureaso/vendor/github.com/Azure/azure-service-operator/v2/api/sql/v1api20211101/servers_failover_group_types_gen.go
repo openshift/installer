@@ -5,7 +5,7 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101storage"
+	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &ServersFailoverGroup{}
 func (group *ServersFailoverGroup) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20211101s.ServersFailoverGroup)
 	if !ok {
-		return fmt.Errorf("expected sql/v1api20211101storage/ServersFailoverGroup but received %T instead", hub)
+		return fmt.Errorf("expected sql/v1api20211101/storage/ServersFailoverGroup but received %T instead", hub)
 	}
 
 	return group.AssignProperties_From_ServersFailoverGroup(source)
@@ -61,7 +61,7 @@ func (group *ServersFailoverGroup) ConvertFrom(hub conversion.Hub) error {
 func (group *ServersFailoverGroup) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20211101s.ServersFailoverGroup)
 	if !ok {
-		return fmt.Errorf("expected sql/v1api20211101storage/ServersFailoverGroup but received %T instead", hub)
+		return fmt.Errorf("expected sql/v1api20211101/storage/ServersFailoverGroup but received %T instead", hub)
 	}
 
 	return group.AssignProperties_To_ServersFailoverGroup(destination)
@@ -126,6 +126,15 @@ func (group *ServersFailoverGroup) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (group *ServersFailoverGroup) GetStatus() genruntime.ConvertibleStatus {
 	return &group.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (group *ServersFailoverGroup) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Sql/servers/failoverGroups"

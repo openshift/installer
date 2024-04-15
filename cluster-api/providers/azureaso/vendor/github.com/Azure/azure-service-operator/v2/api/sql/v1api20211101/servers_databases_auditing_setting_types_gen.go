@@ -5,7 +5,7 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101storage"
+	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &ServersDatabasesAuditingSetting{}
 func (setting *ServersDatabasesAuditingSetting) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20211101s.ServersDatabasesAuditingSetting)
 	if !ok {
-		return fmt.Errorf("expected sql/v1api20211101storage/ServersDatabasesAuditingSetting but received %T instead", hub)
+		return fmt.Errorf("expected sql/v1api20211101/storage/ServersDatabasesAuditingSetting but received %T instead", hub)
 	}
 
 	return setting.AssignProperties_From_ServersDatabasesAuditingSetting(source)
@@ -61,7 +61,7 @@ func (setting *ServersDatabasesAuditingSetting) ConvertFrom(hub conversion.Hub) 
 func (setting *ServersDatabasesAuditingSetting) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20211101s.ServersDatabasesAuditingSetting)
 	if !ok {
-		return fmt.Errorf("expected sql/v1api20211101storage/ServersDatabasesAuditingSetting but received %T instead", hub)
+		return fmt.Errorf("expected sql/v1api20211101/storage/ServersDatabasesAuditingSetting but received %T instead", hub)
 	}
 
 	return setting.AssignProperties_To_ServersDatabasesAuditingSetting(destination)
@@ -119,6 +119,14 @@ func (setting *ServersDatabasesAuditingSetting) GetSpec() genruntime.Convertible
 // GetStatus returns the status of this resource
 func (setting *ServersDatabasesAuditingSetting) GetStatus() genruntime.ConvertibleStatus {
 	return &setting.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (setting *ServersDatabasesAuditingSetting) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Sql/servers/databases/auditingSettings"

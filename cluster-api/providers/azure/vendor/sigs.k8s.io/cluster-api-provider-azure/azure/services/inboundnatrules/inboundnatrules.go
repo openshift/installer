@@ -24,7 +24,6 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
@@ -47,7 +46,7 @@ type Service struct {
 
 // New creates a new service.
 func New(scope InboundNatScope) (*Service, error) {
-	client, err := newClient(scope)
+	client, err := newClient(scope, scope.DefaultedAzureCallTimeout())
 	if err != nil {
 		return nil, err
 	}
@@ -69,6 +68,9 @@ func (s *Service) Reconcile(ctx context.Context) error {
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "inboundnatrules.Service.Reconcile")
 	defer done()
 
+	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
+	defer cancel()
+
 	// Externally managed clusters might not have an LB
 	if s.Scope.APIServerLBName() == "" {
 		log.V(4).Info("Skipping InboundNatRule reconciliation as the cluster has no LB configured")
@@ -79,9 +81,6 @@ func (s *Service) Reconcile(ctx context.Context) error {
 	if len(specs) == 0 {
 		return nil
 	}
-
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureServiceReconcileTimeout)
-	defer cancel()
 
 	existingRules, err := s.client.List(ctx, s.Scope.ResourceGroup(), s.Scope.APIServerLBName())
 	if err != nil {
@@ -129,7 +128,7 @@ func (s *Service) Delete(ctx context.Context) error {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "inboundnatrules.Service.Delete")
 	defer done()
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureServiceReconcileTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
 	defer cancel()
 
 	specs := s.Scope.InboundNatSpecs()

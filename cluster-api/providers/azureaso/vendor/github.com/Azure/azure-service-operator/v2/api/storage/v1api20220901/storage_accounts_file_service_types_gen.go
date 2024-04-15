@@ -5,7 +5,7 @@ package v1api20220901
 
 import (
 	"fmt"
-	v20220901s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901storage"
+	v20220901s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -49,22 +49,36 @@ var _ conversion.Convertible = &StorageAccountsFileService{}
 
 // ConvertFrom populates our StorageAccountsFileService from the provided hub StorageAccountsFileService
 func (service *StorageAccountsFileService) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20220901s.StorageAccountsFileService)
-	if !ok {
-		return fmt.Errorf("expected storage/v1api20220901storage/StorageAccountsFileService but received %T instead", hub)
+	// intermediate variable for conversion
+	var source v20220901s.StorageAccountsFileService
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from hub to source")
 	}
 
-	return service.AssignProperties_From_StorageAccountsFileService(source)
+	err = service.AssignProperties_From_StorageAccountsFileService(&source)
+	if err != nil {
+		return errors.Wrap(err, "converting from source to service")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub StorageAccountsFileService from our StorageAccountsFileService
 func (service *StorageAccountsFileService) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20220901s.StorageAccountsFileService)
-	if !ok {
-		return fmt.Errorf("expected storage/v1api20220901storage/StorageAccountsFileService but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination v20220901s.StorageAccountsFileService
+	err := service.AssignProperties_To_StorageAccountsFileService(&destination)
+	if err != nil {
+		return errors.Wrap(err, "converting to destination from service")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from destination to hub")
 	}
 
-	return service.AssignProperties_To_StorageAccountsFileService(destination)
+	return nil
 }
 
 // +kubebuilder:webhook:path=/mutate-storage-azure-com-v1api20220901-storageaccountsfileservice,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=storage.azure.com,resources=storageaccountsfileservices,verbs=create;update,versions=v1api20220901,name=default.v1api20220901.storageaccountsfileservices.storage.azure.com,admissionReviewVersions=v1
@@ -82,17 +96,6 @@ func (service *StorageAccountsFileService) Default() {
 
 // defaultImpl applies the code generated defaults to the StorageAccountsFileService resource
 func (service *StorageAccountsFileService) defaultImpl() {}
-
-var _ genruntime.ImportableResource = &StorageAccountsFileService{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (service *StorageAccountsFileService) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*StorageAccounts_FileService_STATUS); ok {
-		return service.Spec.Initialize_From_StorageAccounts_FileService_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type StorageAccounts_FileService_STATUS but received %T instead", status)
-}
 
 var _ genruntime.KubernetesResource = &StorageAccountsFileService{}
 
@@ -119,6 +122,14 @@ func (service *StorageAccountsFileService) GetSpec() genruntime.ConvertibleSpec 
 // GetStatus returns the status of this resource
 func (service *StorageAccountsFileService) GetStatus() genruntime.ConvertibleStatus {
 	return &service.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (service *StorageAccountsFileService) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Storage/storageAccounts/fileServices"
@@ -600,49 +611,6 @@ func (service *StorageAccounts_FileService_Spec) AssignProperties_To_StorageAcco
 	return nil
 }
 
-// Initialize_From_StorageAccounts_FileService_STATUS populates our StorageAccounts_FileService_Spec from the provided source StorageAccounts_FileService_STATUS
-func (service *StorageAccounts_FileService_Spec) Initialize_From_StorageAccounts_FileService_STATUS(source *StorageAccounts_FileService_STATUS) error {
-
-	// Cors
-	if source.Cors != nil {
-		var cor CorsRules
-		err := cor.Initialize_From_CorsRules_STATUS(source.Cors)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_CorsRules_STATUS() to populate field Cors")
-		}
-		service.Cors = &cor
-	} else {
-		service.Cors = nil
-	}
-
-	// ProtocolSettings
-	if source.ProtocolSettings != nil {
-		var protocolSetting ProtocolSettings
-		err := protocolSetting.Initialize_From_ProtocolSettings_STATUS(source.ProtocolSettings)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ProtocolSettings_STATUS() to populate field ProtocolSettings")
-		}
-		service.ProtocolSettings = &protocolSetting
-	} else {
-		service.ProtocolSettings = nil
-	}
-
-	// ShareDeleteRetentionPolicy
-	if source.ShareDeleteRetentionPolicy != nil {
-		var shareDeleteRetentionPolicy DeleteRetentionPolicy
-		err := shareDeleteRetentionPolicy.Initialize_From_DeleteRetentionPolicy_STATUS(source.ShareDeleteRetentionPolicy)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DeleteRetentionPolicy_STATUS() to populate field ShareDeleteRetentionPolicy")
-		}
-		service.ShareDeleteRetentionPolicy = &shareDeleteRetentionPolicy
-	} else {
-		service.ShareDeleteRetentionPolicy = nil
-	}
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
 func (service *StorageAccounts_FileService_Spec) OriginalVersion() string {
 	return GroupVersion.Version
@@ -1062,25 +1030,6 @@ func (settings *ProtocolSettings) AssignProperties_To_ProtocolSettings(destinati
 	return nil
 }
 
-// Initialize_From_ProtocolSettings_STATUS populates our ProtocolSettings from the provided source ProtocolSettings_STATUS
-func (settings *ProtocolSettings) Initialize_From_ProtocolSettings_STATUS(source *ProtocolSettings_STATUS) error {
-
-	// Smb
-	if source.Smb != nil {
-		var smb SmbSetting
-		err := smb.Initialize_From_SmbSetting_STATUS(source.Smb)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SmbSetting_STATUS() to populate field Smb")
-		}
-		settings.Smb = &smb
-	} else {
-		settings.Smb = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Protocol settings for file service
 type ProtocolSettings_STATUS struct {
 	// Smb: Setting for SMB protocol
@@ -1352,37 +1301,6 @@ func (setting *SmbSetting) AssignProperties_To_SmbSetting(destination *v20220901
 	return nil
 }
 
-// Initialize_From_SmbSetting_STATUS populates our SmbSetting from the provided source SmbSetting_STATUS
-func (setting *SmbSetting) Initialize_From_SmbSetting_STATUS(source *SmbSetting_STATUS) error {
-
-	// AuthenticationMethods
-	setting.AuthenticationMethods = genruntime.ClonePointerToString(source.AuthenticationMethods)
-
-	// ChannelEncryption
-	setting.ChannelEncryption = genruntime.ClonePointerToString(source.ChannelEncryption)
-
-	// KerberosTicketEncryption
-	setting.KerberosTicketEncryption = genruntime.ClonePointerToString(source.KerberosTicketEncryption)
-
-	// Multichannel
-	if source.Multichannel != nil {
-		var multichannel Multichannel
-		err := multichannel.Initialize_From_Multichannel_STATUS(source.Multichannel)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_Multichannel_STATUS() to populate field Multichannel")
-		}
-		setting.Multichannel = &multichannel
-	} else {
-		setting.Multichannel = nil
-	}
-
-	// Versions
-	setting.Versions = genruntime.ClonePointerToString(source.Versions)
-
-	// No error
-	return nil
-}
-
 // Setting for SMB protocol
 type SmbSetting_STATUS struct {
 	// AuthenticationMethods: SMB authentication methods supported by server. Valid values are NTLMv2, Kerberos. Should be
@@ -1607,21 +1525,6 @@ func (multichannel *Multichannel) AssignProperties_To_Multichannel(destination *
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Multichannel_STATUS populates our Multichannel from the provided source Multichannel_STATUS
-func (multichannel *Multichannel) Initialize_From_Multichannel_STATUS(source *Multichannel_STATUS) error {
-
-	// Enabled
-	if source.Enabled != nil {
-		enabled := *source.Enabled
-		multichannel.Enabled = &enabled
-	} else {
-		multichannel.Enabled = nil
 	}
 
 	// No error

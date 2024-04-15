@@ -3,7 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/cache/v1api20201201
 ├── APIVersion: Enum (1 value)
 │   └── "2020-12-01"
 ├── Redis: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (18 properties)
 │   │   ├── AzureName: string
 │   │   ├── EnableNonSslPort: *bool

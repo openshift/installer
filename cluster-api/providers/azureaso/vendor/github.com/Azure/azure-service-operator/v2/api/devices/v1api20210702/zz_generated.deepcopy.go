@@ -4122,7 +4122,11 @@ func (in *StorageEndpointProperties) DeepCopyInto(out *StorageEndpointProperties
 		*out = new(StorageEndpointProperties_AuthenticationType)
 		**out = **in
 	}
-	out.ConnectionString = in.ConnectionString
+	if in.ConnectionString != nil {
+		in, out := &in.ConnectionString, &out.ConnectionString
+		*out = new(genruntime.SecretReference)
+		**out = **in
+	}
 	if in.ContainerName != nil {
 		in, out := &in.ContainerName, &out.ContainerName
 		*out = new(string)
@@ -4156,6 +4160,11 @@ func (in *StorageEndpointProperties_ARM) DeepCopyInto(out *StorageEndpointProper
 	if in.AuthenticationType != nil {
 		in, out := &in.AuthenticationType, &out.AuthenticationType
 		*out = new(StorageEndpointProperties_AuthenticationType)
+		**out = **in
+	}
+	if in.ConnectionString != nil {
+		in, out := &in.ConnectionString, &out.ConnectionString
+		*out = new(string)
 		**out = **in
 	}
 	if in.ContainerName != nil {

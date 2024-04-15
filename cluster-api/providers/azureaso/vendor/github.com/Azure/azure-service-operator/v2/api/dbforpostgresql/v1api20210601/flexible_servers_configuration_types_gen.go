@@ -5,7 +5,7 @@ package v1api20210601
 
 import (
 	"fmt"
-	v20210601s "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20210601storage"
+	v20210601s "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20210601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -49,22 +49,36 @@ var _ conversion.Convertible = &FlexibleServersConfiguration{}
 
 // ConvertFrom populates our FlexibleServersConfiguration from the provided hub FlexibleServersConfiguration
 func (configuration *FlexibleServersConfiguration) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20210601s.FlexibleServersConfiguration)
-	if !ok {
-		return fmt.Errorf("expected dbforpostgresql/v1api20210601storage/FlexibleServersConfiguration but received %T instead", hub)
+	// intermediate variable for conversion
+	var source v20210601s.FlexibleServersConfiguration
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from hub to source")
 	}
 
-	return configuration.AssignProperties_From_FlexibleServersConfiguration(source)
+	err = configuration.AssignProperties_From_FlexibleServersConfiguration(&source)
+	if err != nil {
+		return errors.Wrap(err, "converting from source to configuration")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub FlexibleServersConfiguration from our FlexibleServersConfiguration
 func (configuration *FlexibleServersConfiguration) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20210601s.FlexibleServersConfiguration)
-	if !ok {
-		return fmt.Errorf("expected dbforpostgresql/v1api20210601storage/FlexibleServersConfiguration but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination v20210601s.FlexibleServersConfiguration
+	err := configuration.AssignProperties_To_FlexibleServersConfiguration(&destination)
+	if err != nil {
+		return errors.Wrap(err, "converting to destination from configuration")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from destination to hub")
 	}
 
-	return configuration.AssignProperties_To_FlexibleServersConfiguration(destination)
+	return nil
 }
 
 // +kubebuilder:webhook:path=/mutate-dbforpostgresql-azure-com-v1api20210601-flexibleserversconfiguration,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=dbforpostgresql.azure.com,resources=flexibleserversconfigurations,verbs=create;update,versions=v1api20210601,name=default.v1api20210601.flexibleserversconfigurations.dbforpostgresql.azure.com,admissionReviewVersions=v1
@@ -89,17 +103,6 @@ func (configuration *FlexibleServersConfiguration) defaultAzureName() {
 
 // defaultImpl applies the code generated defaults to the FlexibleServersConfiguration resource
 func (configuration *FlexibleServersConfiguration) defaultImpl() { configuration.defaultAzureName() }
-
-var _ genruntime.ImportableResource = &FlexibleServersConfiguration{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (configuration *FlexibleServersConfiguration) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*FlexibleServers_Configuration_STATUS); ok {
-		return configuration.Spec.Initialize_From_FlexibleServers_Configuration_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type FlexibleServers_Configuration_STATUS but received %T instead", status)
-}
 
 var _ genruntime.KubernetesResource = &FlexibleServersConfiguration{}
 
@@ -126,6 +129,14 @@ func (configuration *FlexibleServersConfiguration) GetSpec() genruntime.Converti
 // GetStatus returns the status of this resource
 func (configuration *FlexibleServersConfiguration) GetStatus() genruntime.ConvertibleStatus {
 	return &configuration.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (configuration *FlexibleServersConfiguration) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DBforPostgreSQL/flexibleServers/configurations"
@@ -508,19 +519,6 @@ func (configuration *FlexibleServers_Configuration_Spec) AssignProperties_To_Fle
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_FlexibleServers_Configuration_STATUS populates our FlexibleServers_Configuration_Spec from the provided source FlexibleServers_Configuration_STATUS
-func (configuration *FlexibleServers_Configuration_Spec) Initialize_From_FlexibleServers_Configuration_STATUS(source *FlexibleServers_Configuration_STATUS) error {
-
-	// Source
-	configuration.Source = genruntime.ClonePointerToString(source.Source)
-
-	// Value
-	configuration.Value = genruntime.ClonePointerToString(source.Value)
 
 	// No error
 	return nil

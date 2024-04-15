@@ -34,12 +34,12 @@ import (
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/networkinterfaces"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/publicips"
 	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 const serviceName = "virtualmachine"
+const vmMissingUAI = "VM is missing expected user assigned identity with client ID: "
 
 // VMScope defines the scope interface for a virtual machines service.
 type VMScope interface {
@@ -64,7 +64,7 @@ type Service struct {
 
 // New creates a new service.
 func New(scope VMScope) (*Service, error) {
-	Client, err := NewClient(scope)
+	Client, err := NewClient(scope, scope.DefaultedAzureCallTimeout())
 	if err != nil {
 		return nil, err
 	}
@@ -72,11 +72,11 @@ func New(scope VMScope) (*Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	interfacesSvc, err := networkinterfaces.NewClient(scope)
+	interfacesSvc, err := networkinterfaces.NewClient(scope, scope.DefaultedAzureCallTimeout())
 	if err != nil {
 		return nil, err
 	}
-	publicIPsSvc, err := publicips.NewClient(scope)
+	publicIPsSvc, err := publicips.NewClient(scope, scope.DefaultedAzureCallTimeout())
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (s *Service) Reconcile(ctx context.Context) error {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "virtualmachines.Service.Reconcile")
 	defer done()
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureServiceReconcileTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
 	defer cancel()
 
 	vmSpec := s.Scope.VMSpec()
@@ -152,7 +152,7 @@ func (s *Service) Delete(ctx context.Context) error {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "virtualmachines.Service.Delete")
 	defer done()
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureServiceReconcileTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
 	defer cancel()
 
 	vmSpec := s.Scope.VMSpec()
@@ -176,7 +176,18 @@ func (s *Service) checkUserAssignedIdentities(ctx context.Context, specIdentitie
 
 	// Create a map of the expected identities. The ProviderID is converted to match the format of the VM identity.
 	for _, expectedIdentity := range specIdentities {
-		expectedClientID, err := s.identitiesGetter.GetClientID(ctx, expectedIdentity.ProviderID)
+		identitiesClient := s.identitiesGetter
+		parsed, err := azureutil.ParseResourceID(expectedIdentity.ProviderID)
+		if err != nil {
+			return err
+		}
+		if parsed.SubscriptionID != s.Scope.SubscriptionID() {
+			identitiesClient, err = identities.NewClientBySub(s.Scope, parsed.SubscriptionID)
+			if err != nil {
+				return errors.Wrapf(err, "failed to create identities client from subscription ID %s", parsed.SubscriptionID)
+			}
+		}
+		expectedClientID, err := identitiesClient.GetClientID(ctx, expectedIdentity.ProviderID)
 		if err != nil {
 			return errors.Wrap(err, "failed to get client ID")
 		}
@@ -192,7 +203,7 @@ func (s *Service) checkUserAssignedIdentities(ctx context.Context, specIdentitie
 	for expectedKey := range expectedMap {
 		_, exists := actualMap[expectedKey]
 		if !exists {
-			s.Scope.SetConditionFalse(infrav1.VMIdentitiesReadyCondition, infrav1.UserAssignedIdentityMissingReason, clusterv1.ConditionSeverityWarning, "VM is missing expected user assigned identity with client ID: "+expectedKey)
+			s.Scope.SetConditionFalse(infrav1.VMIdentitiesReadyCondition, infrav1.UserAssignedIdentityMissingReason, clusterv1.ConditionSeverityWarning, vmMissingUAI+expectedKey)
 			return nil
 		}
 	}

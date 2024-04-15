@@ -28,8 +28,6 @@ import (
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog/v2"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2022-03-01/compute"
-
 	azcache "sigs.k8s.io/cloud-provider-azure/pkg/cache"
 	"sigs.k8s.io/cloud-provider-azure/pkg/consts"
 )
@@ -39,6 +37,7 @@ const (
 	vmPowerStateStopped      = "stopped"
 	vmPowerStateDeallocated  = "deallocated"
 	vmPowerStateDeallocating = "deallocating"
+	vmPowerStateUnknown      = "unknown"
 
 	// nodeNameEnvironmentName is the environment variable name for getting node name.
 	// It is only used for out-of-tree cloud provider.
@@ -296,7 +295,7 @@ func (az *Cloud) InstanceShutdownByProviderID(ctx context.Context, providerID st
 	klog.V(3).Infof("InstanceShutdownByProviderID gets provisioning state %q for node %q", provisioningState, nodeName)
 
 	status := strings.ToLower(powerStatus)
-	provisioningSucceeded := strings.EqualFold(strings.ToLower(provisioningState), strings.ToLower(string(compute.ProvisioningStateSucceeded)))
+	provisioningSucceeded := strings.EqualFold(strings.ToLower(provisioningState), strings.ToLower(string(consts.ProvisioningStateSucceeded)))
 	return provisioningSucceeded && (status == vmPowerStateStopped || status == vmPowerStateDeallocated || status == vmPowerStateDeallocating), nil
 }
 

@@ -20,7 +20,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/Azure/go-autorest/tracing"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
@@ -30,7 +29,6 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	"sigs.k8s.io/cluster-api-provider-azure/version"
 )
 
@@ -41,7 +39,6 @@ func RegisterTracing(ctx context.Context, log logr.Logger) error {
 		return err
 	}
 	otel.SetTracerProvider(tp)
-	tracing.Register(NewOpenTelemetryAutorestTracer(tele.Tracer()))
 
 	// Give the tracer provider 5 seconds to shut down when the context closes.
 	go func() {

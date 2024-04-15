@@ -5,7 +5,7 @@ package v1api20230101
 
 import (
 	"fmt"
-	v20230101s "github.com/Azure/azure-service-operator/v2/api/dataprotection/v1api20230101storage"
+	v20230101s "github.com/Azure/azure-service-operator/v2/api/dataprotection/v1api20230101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &BackupVault{}
 func (vault *BackupVault) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20230101s.BackupVault)
 	if !ok {
-		return fmt.Errorf("expected dataprotection/v1api20230101storage/BackupVault but received %T instead", hub)
+		return fmt.Errorf("expected dataprotection/v1api20230101/storage/BackupVault but received %T instead", hub)
 	}
 
 	return vault.AssignProperties_From_BackupVault(source)
@@ -61,7 +61,7 @@ func (vault *BackupVault) ConvertFrom(hub conversion.Hub) error {
 func (vault *BackupVault) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20230101s.BackupVault)
 	if !ok {
-		return fmt.Errorf("expected dataprotection/v1api20230101storage/BackupVault but received %T instead", hub)
+		return fmt.Errorf("expected dataprotection/v1api20230101/storage/BackupVault but received %T instead", hub)
 	}
 
 	return vault.AssignProperties_To_BackupVault(destination)
@@ -126,6 +126,15 @@ func (vault *BackupVault) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (vault *BackupVault) GetStatus() genruntime.ConvertibleStatus {
 	return &vault.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (vault *BackupVault) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DataProtection/backupVaults"

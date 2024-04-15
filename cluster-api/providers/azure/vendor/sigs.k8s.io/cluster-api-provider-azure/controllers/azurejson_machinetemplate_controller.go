@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -31,6 +30,7 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/identities"
+	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -49,7 +49,7 @@ import (
 type AzureJSONTemplateReconciler struct {
 	client.Client
 	Recorder         record.EventRecorder
-	ReconcileTimeout time.Duration
+	Timeouts         reconciler.Timeouts
 	WatchFilterValue string
 }
 
@@ -92,7 +92,7 @@ func (r *AzureJSONTemplateReconciler) SetupWithManager(ctx context.Context, mgr 
 
 // Reconcile reconciles Azure json secrets for Azure machine templates.
 func (r *AzureJSONTemplateReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultedLoopTimeout(r.ReconcileTimeout))
+	ctx, cancel := context.WithTimeout(ctx, r.Timeouts.DefaultedLoopTimeout())
 	defer cancel()
 
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "controllers.AzureJSONTemplateReconciler.Reconcile",
@@ -136,7 +136,7 @@ func (r *AzureJSONTemplateReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		log.Info("infra ref is nil")
 		return ctrl.Result{}, nil
 	}
-	if cluster.Spec.InfrastructureRef.Kind != "AzureCluster" {
+	if cluster.Spec.InfrastructureRef.Kind != infrav1.AzureClusterKind {
 		log.WithValues("kind", cluster.Spec.InfrastructureRef.Kind).Info("infra ref was not an AzureCluster")
 		return ctrl.Result{}, nil
 	}
@@ -158,6 +158,7 @@ func (r *AzureJSONTemplateReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		Client:       r.Client,
 		Cluster:      cluster,
 		AzureCluster: azureCluster,
+		Timeouts:     r.Timeouts,
 	})
 	if err != nil {
 		return reconcile.Result{}, errors.Wrap(err, "failed to create scope")
@@ -175,11 +176,22 @@ func (r *AzureJSONTemplateReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	// Construct secret for this machine template
 	userAssignedIdentityIfExists := ""
 	if len(azureMachineTemplate.Spec.Template.Spec.UserAssignedIdentities) > 0 {
-		idsClient, err := identities.NewClient(clusterScope)
+		var identitiesClient identities.Client
+		identitiesClient, err := identities.NewClient(clusterScope)
 		if err != nil {
 			return reconcile.Result{}, errors.Wrap(err, "failed to create identities client")
 		}
-		userAssignedIdentityIfExists, err = idsClient.GetClientID(
+		parsed, err := azureutil.ParseResourceID(azureMachineTemplate.Spec.Template.Spec.UserAssignedIdentities[0].ProviderID)
+		if err != nil {
+			return reconcile.Result{}, errors.Wrapf(err, "failed to parse ProviderID %s", azureMachineTemplate.Spec.Template.Spec.UserAssignedIdentities[0].ProviderID)
+		}
+		if parsed.SubscriptionID != clusterScope.SubscriptionID() {
+			identitiesClient, err = identities.NewClientBySub(clusterScope, parsed.SubscriptionID)
+			if err != nil {
+				return reconcile.Result{}, errors.Wrapf(err, "failed to create identities client from subscription ID %s", parsed.SubscriptionID)
+			}
+		}
+		userAssignedIdentityIfExists, err = identitiesClient.GetClientID(
 			ctx, azureMachineTemplate.Spec.Template.Spec.UserAssignedIdentities[0].ProviderID)
 		if err != nil {
 			return reconcile.Result{}, errors.Wrap(err, "failed to get user-assigned identity ClientID")

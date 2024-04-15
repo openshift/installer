@@ -5,7 +5,7 @@ package customizations
 
 import (
 	v20210601 "github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601"
-	v20210601s "github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601storage"
+	v20210601s "github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 

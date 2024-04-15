@@ -17,9 +17,9 @@ limitations under the License.
 package consts
 
 import (
+	"strings"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2022-03-01/compute"
 	"github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2021-09-01/storage"
 )
 
@@ -128,8 +128,10 @@ const (
 	TagKeyValueDelimiter = "="
 	// VMSetNamesSharingPrimarySLBDelimiter is the delimiter of vmSet names sharing the primary SLB
 	VMSetNamesSharingPrimarySLBDelimiter = ","
-	// PremiumV2_LRS type for Azure Disk
-	PremiumV2LRS = compute.DiskStorageAccountTypes("PremiumV2_LRS")
+	// ProvisioningStateDeleting ...
+	ProvisioningStateDeleting = "Deleting"
+	// ProvisioningStateSucceeded ...
+	ProvisioningStateSucceeded = "Succeeded"
 )
 
 // cache
@@ -193,10 +195,16 @@ const (
 	BackoffJitterDefault = 1.0
 )
 
+// IP family variables
 const (
-	IPVersionIPv6 bool = true
-	IPVersionIPv4 bool = false
+	IPVersionIPv6            bool   = true
+	IPVersionIPv4            bool   = false
+	IPVersionIPv4String      string = "IPv4"
+	IPVersionIPv6String      string = "IPv6"
+	IPVersionDualStackString string = "DualStack"
 )
+
+var IPVersionIPv6StringLower = strings.ToLower(IPVersionIPv6String)
 
 // LB variables for dual-stack
 var (
@@ -245,7 +253,7 @@ const (
 
 	// ServiceAnnotationLoadBalancerMode is the annotation used on the service to specify
 	// which load balancer should be associated with the service. This is valid when using the basic
-	// load balancer or turn on the multiple standard load balancers mode, or it would be ignored.
+	// sku load balancer, or it would be ignored.
 	// 1. Default mode - service has no annotation ("service.beta.kubernetes.io/azure-load-balancer-mode")
 	//	  In this case the Loadbalancer of the primary VMSS/VMAS is selected.
 	// 2. "__auto__" mode - service is annotated with __auto__ value, this when loadbalancer from any VMSS/VMAS
@@ -319,10 +327,17 @@ const (
 	// If omitted, the default value is false
 	ServiceAnnotationDisableLoadBalancerFloatingIP = "service.beta.kubernetes.io/azure-disable-load-balancer-floating-ip"
 
-	// ServiceAnnotationAzurePIPTags sets the additional Public IPs (split by comma) besides the service's Public IP configured on LoadBalancer.
+	// ServiceAnnotationAdditionalPublicIPs sets the additional Public IPs (split by comma) besides the service's Public IP configured on LoadBalancer.
 	// These additional Public IPs would be consumed by kube-proxy to configure the iptables rules on each node. Note they would not be configured
 	// automatically on Azure LoadBalancer. Instead, they need to be configured manually (e.g. on Azure cross-region LoadBalancer by another operator).
 	ServiceAnnotationAdditionalPublicIPs = "service.beta.kubernetes.io/azure-additional-public-ips"
+
+	// ServiceAnnotationLoadBalancerConfigurations is the list of load balancer configurations the service can use.
+	// The list is separated by comma. It will be omitted if multi-slb is not used.
+	ServiceAnnotationLoadBalancerConfigurations = "service.beta.kubernetes.io/azure-load-balancer-configurations"
+
+	// ServiceAnnotationDisableTCPReset is the annotation used on the service to disable TCP reset on the load balancer.
+	ServiceAnnotationDisableTCPReset = "service.beta.kubernetes.io/azure-load-balancer-disable-tcp-reset"
 
 	// ServiceTagKey is the service key applied for public IP tags.
 	ServiceTagKey       = "k8s-azure-service"
@@ -422,8 +437,8 @@ const (
 	RouteNameFmt       = "%s____%s"
 	RouteNameSeparator = "____"
 
-	// routeUpdateInterval defines the route reconciling interval.
-	RouteUpdateInterval = 30 * time.Second
+	// DefaultRouteUpdateIntervalInSeconds defines the route reconciling interval.
+	DefaultRouteUpdateIntervalInSeconds = 30
 )
 
 // cloud provider config secret
@@ -485,6 +500,9 @@ const (
 	// ServiceAnnotationPLSCreation determines whether a PLS needs to be created.
 	ServiceAnnotationPLSCreation = "service.beta.kubernetes.io/azure-pls-create"
 
+	// ServiceAnnotationPLSResourceGroup determines the resource group to create the PLS in.
+	ServiceAnnotationPLSResourceGroup = "service.beta.kubernetes.io/azure-pls-resource-group"
+
 	// ServiceAnnotationPLSName determines name of the PLS resource to create.
 	ServiceAnnotationPLSName = "service.beta.kubernetes.io/azure-pls-name"
 
@@ -528,4 +546,15 @@ const (
 
 const (
 	VMSSTagForBatchOperation = "aks-managed-coordination"
+)
+
+type LoadBalancerBackendPoolUpdateOperation string
+
+const (
+	LoadBalancerBackendPoolUpdateOperationAdd    LoadBalancerBackendPoolUpdateOperation = "add"
+	LoadBalancerBackendPoolUpdateOperationRemove LoadBalancerBackendPoolUpdateOperation = "remove"
+
+	DefaultLoadBalancerBackendPoolUpdateIntervalInSeconds = 30
+
+	ServiceNameLabel = "kubernetes.io/service-name"
 )

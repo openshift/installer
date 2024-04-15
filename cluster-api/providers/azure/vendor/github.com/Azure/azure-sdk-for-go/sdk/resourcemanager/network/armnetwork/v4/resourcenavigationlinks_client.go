@@ -33,7 +33,7 @@ type ResourceNavigationLinksClient struct {
 //   - credential - used to authorize requests. Usually a credential from azidentity.
 //   - options - pass nil to accept the default values.
 func NewResourceNavigationLinksClient(subscriptionID string, credential azcore.TokenCredential, options *arm.ClientOptions) (*ResourceNavigationLinksClient, error) {
-	cl, err := arm.NewClient(moduleName+".ResourceNavigationLinksClient", moduleVersion, credential, options)
+	cl, err := arm.NewClient(moduleName, moduleVersion, credential, options)
 	if err != nil {
 		return nil, err
 	}
@@ -55,6 +55,10 @@ func NewResourceNavigationLinksClient(subscriptionID string, credential azcore.T
 //     method.
 func (client *ResourceNavigationLinksClient) List(ctx context.Context, resourceGroupName string, virtualNetworkName string, subnetName string, options *ResourceNavigationLinksClientListOptions) (ResourceNavigationLinksClientListResponse, error) {
 	var err error
+	const operationName = "ResourceNavigationLinksClient.List"
+	ctx = context.WithValue(ctx, runtime.CtxAPINameKey{}, operationName)
+	ctx, endSpan := runtime.StartSpan(ctx, operationName, client.internal.Tracer(), nil)
+	defer func() { endSpan(err) }()
 	req, err := client.listCreateRequest(ctx, resourceGroupName, virtualNetworkName, subnetName, options)
 	if err != nil {
 		return ResourceNavigationLinksClientListResponse{}, err

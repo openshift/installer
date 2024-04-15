@@ -126,6 +126,7 @@ func GetTestCloud(ctrl *gomock.Controller) (az *Cloud) {
 	az.pipCache, _ = az.newPIPCache()
 	az.plsCache, _ = az.newPLSCache()
 	az.LoadBalancerBackendPool = NewMockBackendPool(ctrl)
+	az.storageAccountCache, _ = az.newStorageAccountCache()
 
 	_ = initDiskControllers(az)
 

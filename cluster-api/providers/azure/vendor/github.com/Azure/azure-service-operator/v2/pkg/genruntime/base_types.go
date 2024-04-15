@@ -25,6 +25,25 @@ const (
 	ResourceScopeTenant = ResourceScope("tenant")
 )
 
+type ResourceOperation string
+
+const (
+	ResourceOperationGet    = ResourceOperation("GET")
+	ResourceOperationHead   = ResourceOperation("HEAD")
+	ResourceOperationPut    = ResourceOperation("PUT")
+	ResourceOperationDelete = ResourceOperation("DELETE")
+)
+
+func (o ResourceOperation) IsSupportedBy(obj SupportedResourceOperations) bool {
+	for _, op := range obj.GetSupportedOperations() {
+		if op == o {
+			return true
+		}
+	}
+
+	return false
+}
+
 // TODO: It's weird that this is isn't with the other annotations
 // TODO: Should we move them all here (so they're exported?) Or shold we move them
 // TODO: to serviceoperator-internal.azure.com to signify they are internal?
@@ -65,21 +84,40 @@ type ARMOwnedMetaObject interface {
 // of empty string will result in the removal of that annotation.
 func AddAnnotation(obj MetaObject, k string, v string) {
 	annotations := obj.GetAnnotations()
-	if annotations == nil {
-		annotations = map[string]string{}
-	}
-	// I think this is the behavior we want...
-	if v == "" {
-		delete(annotations, k)
-	} else {
-		annotations[k] = v
-	}
+	annotations = AddToMap(annotations, k, v)
 	obj.SetAnnotations(annotations)
 }
 
 // RemoveAnnotation removes the specified annotation from the object
 func RemoveAnnotation(obj MetaObject, k string) {
 	AddAnnotation(obj, k, "")
+}
+
+// AddLabel adds the specified label to the object.
+// Empty string labels are not allowed. Attempting to add a label with a value
+// of empty string will result in the removal of that label.
+func AddLabel(obj MetaObject, k string, v string) {
+	labels := obj.GetLabels()
+	labels = AddToMap(labels, k, v)
+	obj.SetLabels(labels)
+}
+
+func AddToMap(m map[string]string, k string, v string) map[string]string {
+	if m == nil {
+		m = map[string]string{}
+	}
+	// I think this is the behavior we want...
+	if v == "" {
+		delete(m, k)
+	} else {
+		m[k] = v
+	}
+	return m
+}
+
+// RemoveLabel removes the specified label from the object
+func RemoveLabel(obj MetaObject, k string) {
+	AddLabel(obj, k, "")
 }
 
 // ARMResourceSpec is an ARM resource specification. This interface contains

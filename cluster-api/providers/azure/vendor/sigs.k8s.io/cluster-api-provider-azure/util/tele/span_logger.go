@@ -128,7 +128,7 @@ func (c Config) teleKeyValues() []attribute.KeyValue {
 // built-in functions (like KVP) that create them.
 type Option func(*Config)
 
-// KVP returns a new Option function that adds a the given
+// KVP returns a new Option function that adds the given
 // key-value pair.
 func KVP(key, value string) Option {
 	return func(cfg *Config) {

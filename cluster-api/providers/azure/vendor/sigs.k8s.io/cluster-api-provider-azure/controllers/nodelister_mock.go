@@ -21,6 +21,7 @@ limitations under the License.
 //
 //	mockgen -destination nodelister_mock.go -package controllers -source azuremanagedmachinepool_reconciler.go Nodelister
 //
+
 // Package controllers is a generated GoMock package.
 package controllers
 

@@ -23,7 +23,6 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
@@ -44,7 +43,7 @@ type Service struct {
 
 // New creates a disks service.
 func New(scope DiskScope) (*Service, error) {
-	client, err := newClient(scope)
+	client, err := newClient(scope, scope.DefaultedAzureCallTimeout())
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +73,7 @@ func (s *Service) Delete(ctx context.Context) error {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "disks.Service.Delete")
 	defer done()
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureServiceReconcileTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
 	defer cancel()
 
 	specs := s.Scope.DiskSpecs()

@@ -19,10 +19,13 @@ package v1beta1
 import (
 	"encoding/base64"
 	"fmt"
+	"strings"
 
 	"golang.org/x/crypto/ssh"
 	"k8s.io/utils/ptr"
 	utilSSH "sigs.k8s.io/cluster-api-provider-azure/util/ssh"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 const (
@@ -35,6 +38,15 @@ const (
 	// defaultAKSNodeSubnetCIDRForOverlay is the default Node Subnet CIDR when Azure CNI overlay is enabled.
 	defaultAKSNodeSubnetCIDRForOverlay = "10.224.0.0/16"
 )
+
+// setDefaultResourceGroupName sets the default ResourceGroupName for an AzureManagedControlPlane.
+func (m *AzureManagedControlPlane) setDefaultResourceGroupName() {
+	if m.Spec.ResourceGroupName == "" {
+		if clusterName, ok := m.Labels[clusterv1.ClusterNameLabel]; ok {
+			m.Spec.ResourceGroupName = clusterName
+		}
+	}
+}
 
 // setDefaultSSHPublicKey sets the default SSHPublicKey for an AzureManagedControlPlane.
 func (m *AzureManagedControlPlane) setDefaultSSHPublicKey() error {
@@ -86,73 +98,98 @@ func (m *AzureManagedControlPlane) setDefaultSubnet() {
 	}
 }
 
-func (m *AzureManagedControlPlane) setDefaultSku() {
-	if m.Spec.SKU == nil {
-		m.Spec.SKU = &AKSSku{
-			Tier: FreeManagedControlPlaneTier,
-		}
+// setDefaultFleetsMember sets the default FleetsMember for an AzureManagedControlPlane.
+func setDefaultFleetsMember(fleetsMember *FleetsMember, labels map[string]string) *FleetsMember {
+	result := fleetsMember.DeepCopy()
+	if clusterName, ok := labels[clusterv1.ClusterNameLabel]; ok && fleetsMember != nil && fleetsMember.Name == "" {
+		result.Name = clusterName
 	}
+	return result
 }
 
-func (m *AzureManagedControlPlane) setDefaultAutoScalerProfile() {
-	if m.Spec.AutoScalerProfile == nil {
-		return
+func setDefaultSku(sku *AKSSku) *AKSSku {
+	result := sku.DeepCopy()
+	if sku == nil {
+		result = new(AKSSku)
+		result.Tier = FreeManagedControlPlaneTier
+	} else if sku.Tier == PaidManagedControlPlaneTier {
+		result.Tier = StandardManagedControlPlaneTier
+		ctrl.Log.WithName("AzureManagedControlPlaneWebHookLogger").Info("Paid SKU tier is deprecated and has been replaced by Standard")
 	}
+	return result
+}
+
+func setDefaultVersion(version string) string {
+	if version != "" && !strings.HasPrefix(version, "v") {
+		normalizedVersion := "v" + version
+		version = normalizedVersion
+	}
+	return version
+}
+
+func setDefaultAutoScalerProfile(autoScalerProfile *AutoScalerProfile) *AutoScalerProfile {
+	if autoScalerProfile == nil {
+		return nil
+	}
+
+	result := autoScalerProfile.DeepCopy()
 
 	// Default values are from https://learn.microsoft.com/en-us/azure/aks/cluster-autoscaler#using-the-autoscaler-profile
 	// If any values are set, they all need to be set.
-	if m.Spec.AutoScalerProfile.BalanceSimilarNodeGroups == nil {
-		m.Spec.AutoScalerProfile.BalanceSimilarNodeGroups = (*BalanceSimilarNodeGroups)(ptr.To(string(BalanceSimilarNodeGroupsFalse)))
+	if autoScalerProfile.BalanceSimilarNodeGroups == nil {
+		result.BalanceSimilarNodeGroups = (*BalanceSimilarNodeGroups)(ptr.To(string(BalanceSimilarNodeGroupsFalse)))
 	}
-	if m.Spec.AutoScalerProfile.Expander == nil {
-		m.Spec.AutoScalerProfile.Expander = (*Expander)(ptr.To(string(ExpanderRandom)))
+	if autoScalerProfile.Expander == nil {
+		result.Expander = (*Expander)(ptr.To(string(ExpanderRandom)))
 	}
-	if m.Spec.AutoScalerProfile.MaxEmptyBulkDelete == nil {
-		m.Spec.AutoScalerProfile.MaxEmptyBulkDelete = ptr.To("10")
+	if autoScalerProfile.MaxEmptyBulkDelete == nil {
+		result.MaxEmptyBulkDelete = ptr.To("10")
 	}
-	if m.Spec.AutoScalerProfile.MaxGracefulTerminationSec == nil {
-		m.Spec.AutoScalerProfile.MaxGracefulTerminationSec = ptr.To("600")
+	if autoScalerProfile.MaxGracefulTerminationSec == nil {
+		result.MaxGracefulTerminationSec = ptr.To("600")
 	}
-	if m.Spec.AutoScalerProfile.MaxNodeProvisionTime == nil {
-		m.Spec.AutoScalerProfile.MaxNodeProvisionTime = ptr.To("15m")
+	if autoScalerProfile.MaxNodeProvisionTime == nil {
+		result.MaxNodeProvisionTime = ptr.To("15m")
 	}
-	if m.Spec.AutoScalerProfile.MaxTotalUnreadyPercentage == nil {
-		m.Spec.AutoScalerProfile.MaxTotalUnreadyPercentage = ptr.To("45")
+	if autoScalerProfile.MaxTotalUnreadyPercentage == nil {
+		result.MaxTotalUnreadyPercentage = ptr.To("45")
 	}
-	if m.Spec.AutoScalerProfile.NewPodScaleUpDelay == nil {
-		m.Spec.AutoScalerProfile.NewPodScaleUpDelay = ptr.To("0s")
+	if autoScalerProfile.NewPodScaleUpDelay == nil {
+		result.NewPodScaleUpDelay = ptr.To("0s")
 	}
-	if m.Spec.AutoScalerProfile.OkTotalUnreadyCount == nil {
-		m.Spec.AutoScalerProfile.OkTotalUnreadyCount = ptr.To("3")
+	if autoScalerProfile.OkTotalUnreadyCount == nil {
+		result.OkTotalUnreadyCount = ptr.To("3")
 	}
-	if m.Spec.AutoScalerProfile.ScanInterval == nil {
-		m.Spec.AutoScalerProfile.ScanInterval = ptr.To("10s")
+	if autoScalerProfile.ScanInterval == nil {
+		result.ScanInterval = ptr.To("10s")
 	}
-	if m.Spec.AutoScalerProfile.ScaleDownDelayAfterAdd == nil {
-		m.Spec.AutoScalerProfile.ScaleDownDelayAfterAdd = ptr.To("10m")
+	if autoScalerProfile.ScaleDownDelayAfterAdd == nil {
+		result.ScaleDownDelayAfterAdd = ptr.To("10m")
 	}
-	if m.Spec.AutoScalerProfile.ScaleDownDelayAfterDelete == nil {
+	if autoScalerProfile.ScaleDownDelayAfterDelete == nil {
 		// Default is the same as the ScanInterval so default to that same value if it isn't set
-		m.Spec.AutoScalerProfile.ScaleDownDelayAfterDelete = m.Spec.AutoScalerProfile.ScanInterval
+		result.ScaleDownDelayAfterDelete = result.ScanInterval
 	}
-	if m.Spec.AutoScalerProfile.ScaleDownDelayAfterFailure == nil {
-		m.Spec.AutoScalerProfile.ScaleDownDelayAfterFailure = ptr.To("3m")
+	if autoScalerProfile.ScaleDownDelayAfterFailure == nil {
+		result.ScaleDownDelayAfterFailure = ptr.To("3m")
 	}
-	if m.Spec.AutoScalerProfile.ScaleDownUnneededTime == nil {
-		m.Spec.AutoScalerProfile.ScaleDownUnneededTime = ptr.To("10m")
+	if autoScalerProfile.ScaleDownUnneededTime == nil {
+		result.ScaleDownUnneededTime = ptr.To("10m")
 	}
-	if m.Spec.AutoScalerProfile.ScaleDownUnreadyTime == nil {
-		m.Spec.AutoScalerProfile.ScaleDownUnreadyTime = ptr.To("20m")
+	if autoScalerProfile.ScaleDownUnreadyTime == nil {
+		result.ScaleDownUnreadyTime = ptr.To("20m")
 	}
-	if m.Spec.AutoScalerProfile.ScaleDownUtilizationThreshold == nil {
-		m.Spec.AutoScalerProfile.ScaleDownUtilizationThreshold = ptr.To("0.5")
+	if autoScalerProfile.ScaleDownUtilizationThreshold == nil {
+		result.ScaleDownUtilizationThreshold = ptr.To("0.5")
 	}
-	if m.Spec.AutoScalerProfile.SkipNodesWithLocalStorage == nil {
-		m.Spec.AutoScalerProfile.SkipNodesWithLocalStorage = (*SkipNodesWithLocalStorage)(ptr.To(string(SkipNodesWithLocalStorageFalse)))
+	if autoScalerProfile.SkipNodesWithLocalStorage == nil {
+		result.SkipNodesWithLocalStorage = (*SkipNodesWithLocalStorage)(ptr.To(string(SkipNodesWithLocalStorageFalse)))
 	}
-	if m.Spec.AutoScalerProfile.SkipNodesWithSystemPods == nil {
-		m.Spec.AutoScalerProfile.SkipNodesWithSystemPods = (*SkipNodesWithSystemPods)(ptr.To(string(SkipNodesWithSystemPodsTrue)))
+	if autoScalerProfile.SkipNodesWithSystemPods == nil {
+		result.SkipNodesWithSystemPods = (*SkipNodesWithSystemPods)(ptr.To(string(SkipNodesWithSystemPodsTrue)))
 	}
+
+	return result
 }
 
 func (m *AzureManagedControlPlane) setDefaultOIDCIssuerProfile() {
@@ -168,5 +205,16 @@ func (m *AzureManagedControlPlane) setDefaultOIDCIssuerProfile() {
 func (m *AzureManagedControlPlane) setDefaultDNSPrefix() {
 	if m.Spec.DNSPrefix == nil {
 		m.Spec.DNSPrefix = ptr.To(m.Name)
+	}
+}
+
+func (m *AzureManagedControlPlane) setDefaultAKSExtensions() {
+	for _, extension := range m.Spec.Extensions {
+		if extension.Plan != nil && extension.Plan.Name == "" {
+			extension.Plan.Name = fmt.Sprintf("%s-%s", m.Name, extension.Plan.Product)
+		}
+		if extension.AutoUpgradeMinorVersion == nil {
+			extension.AutoUpgradeMinorVersion = ptr.To(true)
+		}
 	}
 }

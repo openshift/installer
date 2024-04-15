@@ -5,7 +5,7 @@ package v1api20180601
 
 import (
 	"fmt"
-	v20180601s "github.com/Azure/azure-service-operator/v2/api/dbformariadb/v1api20180601storage"
+	v20180601s "github.com/Azure/azure-service-operator/v2/api/dbformariadb/v1api20180601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &Server{}
 func (server *Server) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20180601s.Server)
 	if !ok {
-		return fmt.Errorf("expected dbformariadb/v1api20180601storage/Server but received %T instead", hub)
+		return fmt.Errorf("expected dbformariadb/v1api20180601/storage/Server but received %T instead", hub)
 	}
 
 	return server.AssignProperties_From_Server(source)
@@ -61,7 +61,7 @@ func (server *Server) ConvertFrom(hub conversion.Hub) error {
 func (server *Server) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20180601s.Server)
 	if !ok {
-		return fmt.Errorf("expected dbformariadb/v1api20180601storage/Server but received %T instead", hub)
+		return fmt.Errorf("expected dbformariadb/v1api20180601/storage/Server but received %T instead", hub)
 	}
 
 	return server.AssignProperties_To_Server(destination)
@@ -126,6 +126,15 @@ func (server *Server) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (server *Server) GetStatus() genruntime.ConvertibleStatus {
 	return &server.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (server *Server) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DBforMariaDB/servers"
@@ -2352,7 +2361,7 @@ type ServerPropertiesForDefaultCreate struct {
 
 	// +kubebuilder:validation:Required
 	// AdministratorLoginPassword: The password of the administrator login.
-	AdministratorLoginPassword genruntime.SecretReference `json:"administratorLoginPassword,omitempty"`
+	AdministratorLoginPassword *genruntime.SecretReference `json:"administratorLoginPassword,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// CreateMode: The mode to create a new server.
@@ -2391,11 +2400,14 @@ func (create *ServerPropertiesForDefaultCreate) ConvertToARM(resolved genruntime
 	}
 
 	// Set property "AdministratorLoginPassword":
-	administratorLoginPasswordSecret, err := resolved.ResolvedSecrets.Lookup(create.AdministratorLoginPassword)
-	if err != nil {
-		return nil, errors.Wrap(err, "looking up secret for property AdministratorLoginPassword")
+	if create.AdministratorLoginPassword != nil {
+		administratorLoginPasswordSecret, err := resolved.ResolvedSecrets.Lookup(*create.AdministratorLoginPassword)
+		if err != nil {
+			return nil, errors.Wrap(err, "looking up secret for property AdministratorLoginPassword")
+		}
+		administratorLoginPassword := administratorLoginPasswordSecret
+		result.AdministratorLoginPassword = &administratorLoginPassword
 	}
-	result.AdministratorLoginPassword = administratorLoginPasswordSecret
 
 	// Set property "CreateMode":
 	if create.CreateMode != nil {
@@ -2508,9 +2520,10 @@ func (create *ServerPropertiesForDefaultCreate) AssignProperties_From_ServerProp
 
 	// AdministratorLoginPassword
 	if source.AdministratorLoginPassword != nil {
-		create.AdministratorLoginPassword = source.AdministratorLoginPassword.Copy()
+		administratorLoginPassword := source.AdministratorLoginPassword.Copy()
+		create.AdministratorLoginPassword = &administratorLoginPassword
 	} else {
-		create.AdministratorLoginPassword = genruntime.SecretReference{}
+		create.AdministratorLoginPassword = nil
 	}
 
 	// CreateMode
@@ -2578,8 +2591,12 @@ func (create *ServerPropertiesForDefaultCreate) AssignProperties_To_ServerProper
 	destination.AdministratorLogin = genruntime.ClonePointerToString(create.AdministratorLogin)
 
 	// AdministratorLoginPassword
-	administratorLoginPassword := create.AdministratorLoginPassword.Copy()
-	destination.AdministratorLoginPassword = &administratorLoginPassword
+	if create.AdministratorLoginPassword != nil {
+		administratorLoginPassword := create.AdministratorLoginPassword.Copy()
+		destination.AdministratorLoginPassword = &administratorLoginPassword
+	} else {
+		destination.AdministratorLoginPassword = nil
+	}
 
 	// CreateMode
 	if create.CreateMode != nil {

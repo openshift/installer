@@ -5,7 +5,7 @@ package v1api20220301
 
 import (
 	"fmt"
-	v20220301s "github.com/Azure/azure-service-operator/v2/api/web/v1api20220301storage"
+	v20220301s "github.com/Azure/azure-service-operator/v2/api/web/v1api20220301/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &ServerFarm{}
 func (farm *ServerFarm) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20220301s.ServerFarm)
 	if !ok {
-		return fmt.Errorf("expected web/v1api20220301storage/ServerFarm but received %T instead", hub)
+		return fmt.Errorf("expected web/v1api20220301/storage/ServerFarm but received %T instead", hub)
 	}
 
 	return farm.AssignProperties_From_ServerFarm(source)
@@ -61,7 +61,7 @@ func (farm *ServerFarm) ConvertFrom(hub conversion.Hub) error {
 func (farm *ServerFarm) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20220301s.ServerFarm)
 	if !ok {
-		return fmt.Errorf("expected web/v1api20220301storage/ServerFarm but received %T instead", hub)
+		return fmt.Errorf("expected web/v1api20220301/storage/ServerFarm but received %T instead", hub)
 	}
 
 	return farm.AssignProperties_To_ServerFarm(destination)
@@ -126,6 +126,15 @@ func (farm *ServerFarm) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (farm *ServerFarm) GetStatus() genruntime.ConvertibleStatus {
 	return &farm.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (farm *ServerFarm) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Web/serverfarms"

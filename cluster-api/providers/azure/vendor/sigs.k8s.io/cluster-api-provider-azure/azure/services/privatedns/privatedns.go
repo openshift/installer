@@ -26,7 +26,6 @@ import (
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/tags"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
@@ -51,11 +50,11 @@ type Service struct {
 
 // New creates a new private dns service.
 func New(scope Scope) (*Service, error) {
-	zoneClient, err := newPrivateZonesClient(scope)
+	zoneClient, err := newPrivateZonesClient(scope, scope.DefaultedAzureCallTimeout())
 	if err != nil {
 		return nil, err
 	}
-	vnetLinkClient, err := newVirtualNetworkLinksClient(scope)
+	vnetLinkClient, err := newVirtualNetworkLinksClient(scope, scope.DefaultedAzureCallTimeout())
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +88,7 @@ func (s *Service) Reconcile(ctx context.Context) error {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "privatedns.Service.Reconcile")
 	defer done()
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureServiceReconcileTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
 	defer cancel()
 
 	zoneSpec, links, records := s.Scope.PrivateDNSSpec()
@@ -123,7 +122,7 @@ func (s *Service) Delete(ctx context.Context) error {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "privatedns.Service.Delete")
 	defer done()
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureServiceReconcileTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
 	defer cancel()
 
 	zoneSpec, links, _ := s.Scope.PrivateDNSSpec()

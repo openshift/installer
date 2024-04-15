@@ -5,7 +5,7 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/eventhub/v1api20211101storage"
+	v20211101s "github.com/Azure/azure-service-operator/v2/api/eventhub/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &Namespace{}
 func (namespace *Namespace) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20211101s.Namespace)
 	if !ok {
-		return fmt.Errorf("expected eventhub/v1api20211101storage/Namespace but received %T instead", hub)
+		return fmt.Errorf("expected eventhub/v1api20211101/storage/Namespace but received %T instead", hub)
 	}
 
 	return namespace.AssignProperties_From_Namespace(source)
@@ -61,7 +61,7 @@ func (namespace *Namespace) ConvertFrom(hub conversion.Hub) error {
 func (namespace *Namespace) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20211101s.Namespace)
 	if !ok {
-		return fmt.Errorf("expected eventhub/v1api20211101storage/Namespace but received %T instead", hub)
+		return fmt.Errorf("expected eventhub/v1api20211101/storage/Namespace but received %T instead", hub)
 	}
 
 	return namespace.AssignProperties_To_Namespace(destination)
@@ -126,6 +126,15 @@ func (namespace *Namespace) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (namespace *Namespace) GetStatus() genruntime.ConvertibleStatus {
 	return &namespace.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (namespace *Namespace) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.EventHub/namespaces"

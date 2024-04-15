@@ -5,13 +5,13 @@ package customizations
 
 import (
 	v20210601 "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20210601"
-	v20210601s "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20210601storage"
+	v20210601s "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20210601/storage"
 	v20220120p "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20220120preview"
-	v20220120ps "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20220120previewstorage"
-	v1beta20210601 "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1beta20210601"
-	v1beta20210601s "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1beta20210601storage"
-	v1beta20220120p "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1beta20220120preview"
-	v1beta20220120ps "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1beta20220120previewstorage"
+	v20220120ps "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20220120preview/storage"
+	v20221201 "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20221201"
+	v20221201s "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20221201/storage"
+	v20230601p "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20230601preview"
+	v20230601ps "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20230601preview/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -25,8 +25,8 @@ func (extension *FlexibleServersConfigurationExtension) GetExtendedResources() [
 		&v20210601s.FlexibleServersConfiguration{},
 		&v20220120p.FlexibleServersConfiguration{},
 		&v20220120ps.FlexibleServersConfiguration{},
-		&v1beta20210601.FlexibleServersConfiguration{},
-		&v1beta20210601s.FlexibleServersConfiguration{},
-		&v1beta20220120p.FlexibleServersConfiguration{},
-		&v1beta20220120ps.FlexibleServersConfiguration{}}
+		&v20221201.FlexibleServersConfiguration{},
+		&v20221201s.FlexibleServersConfiguration{},
+		&v20230601p.FlexibleServersConfiguration{},
+		&v20230601ps.FlexibleServersConfiguration{}}
 }

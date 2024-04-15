@@ -5,7 +5,7 @@ package v1api20230201
 
 import (
 	"fmt"
-	v20230201s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201storage"
+	v20230201s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -49,22 +49,36 @@ var _ conversion.Convertible = &ManagedClustersAgentPool{}
 
 // ConvertFrom populates our ManagedClustersAgentPool from the provided hub ManagedClustersAgentPool
 func (pool *ManagedClustersAgentPool) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20230201s.ManagedClustersAgentPool)
-	if !ok {
-		return fmt.Errorf("expected containerservice/v1api20230201storage/ManagedClustersAgentPool but received %T instead", hub)
+	// intermediate variable for conversion
+	var source v20230201s.ManagedClustersAgentPool
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from hub to source")
 	}
 
-	return pool.AssignProperties_From_ManagedClustersAgentPool(source)
+	err = pool.AssignProperties_From_ManagedClustersAgentPool(&source)
+	if err != nil {
+		return errors.Wrap(err, "converting from source to pool")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub ManagedClustersAgentPool from our ManagedClustersAgentPool
 func (pool *ManagedClustersAgentPool) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20230201s.ManagedClustersAgentPool)
-	if !ok {
-		return fmt.Errorf("expected containerservice/v1api20230201storage/ManagedClustersAgentPool but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination v20230201s.ManagedClustersAgentPool
+	err := pool.AssignProperties_To_ManagedClustersAgentPool(&destination)
+	if err != nil {
+		return errors.Wrap(err, "converting to destination from pool")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from destination to hub")
 	}
 
-	return pool.AssignProperties_To_ManagedClustersAgentPool(destination)
+	return nil
 }
 
 // +kubebuilder:webhook:path=/mutate-containerservice-azure-com-v1api20230201-managedclustersagentpool,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=containerservice.azure.com,resources=managedclustersagentpools,verbs=create;update,versions=v1api20230201,name=default.v1api20230201.managedclustersagentpools.containerservice.azure.com,admissionReviewVersions=v1
@@ -89,17 +103,6 @@ func (pool *ManagedClustersAgentPool) defaultAzureName() {
 
 // defaultImpl applies the code generated defaults to the ManagedClustersAgentPool resource
 func (pool *ManagedClustersAgentPool) defaultImpl() { pool.defaultAzureName() }
-
-var _ genruntime.ImportableResource = &ManagedClustersAgentPool{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (pool *ManagedClustersAgentPool) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*ManagedClusters_AgentPool_STATUS); ok {
-		return pool.Spec.Initialize_From_ManagedClusters_AgentPool_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type ManagedClusters_AgentPool_STATUS but received %T instead", status)
-}
 
 var _ genruntime.KubernetesResource = &ManagedClustersAgentPool{}
 
@@ -126,6 +129,15 @@ func (pool *ManagedClustersAgentPool) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (pool *ManagedClustersAgentPool) GetStatus() genruntime.ConvertibleStatus {
 	return &pool.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (pool *ManagedClustersAgentPool) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.ContainerService/managedClusters/agentPools"
@@ -386,14 +398,14 @@ type ManagedClusters_AgentPool_Spec struct {
 	Mode *AgentPoolMode `json:"mode,omitempty"`
 
 	// NodeLabels: The node labels to be persisted across all nodes in agent pool.
-	NodeLabels map[string]string `json:"nodeLabels,omitempty"`
+	NodeLabels map[string]string `json:"nodeLabels,omitempty" serializationType:"explicitEmptyCollection"`
 
 	// NodePublicIPPrefixReference: This is of the form:
 	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPPrefixes/{publicIPPrefixName}
 	NodePublicIPPrefixReference *genruntime.ResourceReference `armReference:"NodePublicIPPrefixID" json:"nodePublicIPPrefixReference,omitempty"`
 
 	// NodeTaints: The taints added to new nodes during node pool create and scale. For example, key=value:NoSchedule.
-	NodeTaints []string `json:"nodeTaints,omitempty"`
+	NodeTaints []string `json:"nodeTaints,omitempty" serializationType:"explicitEmptyCollection"`
 
 	// OrchestratorVersion: Both patch version <major.minor.patch> (e.g. 1.20.13) and <major.minor> (e.g. 1.20) are supported.
 	// When <major.minor> is specified, the latest supported GA patch version is chosen automatically. Updating the cluster
@@ -453,7 +465,7 @@ type ManagedClusters_AgentPool_Spec struct {
 	SpotMaxPrice *float64 `json:"spotMaxPrice,omitempty"`
 
 	// Tags: The tags to be persisted on the agent pool virtual machine scale set.
-	Tags map[string]string `json:"tags,omitempty"`
+	Tags map[string]string `json:"tags,omitempty" serializationType:"explicitEmptyCollection"`
 
 	// Type: The type of Agent Pool.
 	Type *AgentPoolType `json:"type,omitempty"`
@@ -616,6 +628,9 @@ func (pool *ManagedClusters_AgentPool_Spec) ConvertToARM(resolved genruntime.Con
 		for key, value := range pool.NodeLabels {
 			result.Properties.NodeLabels[key] = value
 		}
+	} else {
+		// Set property to empty map, as this resource is set to serialize all collections explicitly
+		result.Properties.NodeLabels = make(map[string]string)
 	}
 	if pool.NodePublicIPPrefixReference != nil {
 		nodePublicIPPrefixIDARMID, err := resolved.ResolvedReferences.Lookup(*pool.NodePublicIPPrefixReference)
@@ -627,6 +642,10 @@ func (pool *ManagedClusters_AgentPool_Spec) ConvertToARM(resolved genruntime.Con
 	}
 	for _, item := range pool.NodeTaints {
 		result.Properties.NodeTaints = append(result.Properties.NodeTaints, item)
+	}
+	if result.Properties.NodeTaints == nil {
+		// Set property to empty map, as this resource is set to serialize all collections explicitly
+		result.Properties.NodeTaints = []string{}
 	}
 	if pool.OrchestratorVersion != nil {
 		orchestratorVersion := *pool.OrchestratorVersion
@@ -693,6 +712,9 @@ func (pool *ManagedClusters_AgentPool_Spec) ConvertToARM(resolved genruntime.Con
 		for key, value := range pool.Tags {
 			result.Properties.Tags[key] = value
 		}
+	} else {
+		// Set property to empty map, as this resource is set to serialize all collections explicitly
+		result.Properties.Tags = make(map[string]string)
 	}
 	if pool.Type != nil {
 		typeVar := *pool.Type
@@ -1724,247 +1746,6 @@ func (pool *ManagedClusters_AgentPool_Spec) AssignProperties_To_ManagedClusters_
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagedClusters_AgentPool_STATUS populates our ManagedClusters_AgentPool_Spec from the provided source ManagedClusters_AgentPool_STATUS
-func (pool *ManagedClusters_AgentPool_Spec) Initialize_From_ManagedClusters_AgentPool_STATUS(source *ManagedClusters_AgentPool_STATUS) error {
-
-	// AvailabilityZones
-	pool.AvailabilityZones = genruntime.CloneSliceOfString(source.AvailabilityZones)
-
-	// Count
-	pool.Count = genruntime.ClonePointerToInt(source.Count)
-
-	// CreationData
-	if source.CreationData != nil {
-		var creationDatum CreationData
-		err := creationDatum.Initialize_From_CreationData_STATUS(source.CreationData)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_CreationData_STATUS() to populate field CreationData")
-		}
-		pool.CreationData = &creationDatum
-	} else {
-		pool.CreationData = nil
-	}
-
-	// EnableAutoScaling
-	if source.EnableAutoScaling != nil {
-		enableAutoScaling := *source.EnableAutoScaling
-		pool.EnableAutoScaling = &enableAutoScaling
-	} else {
-		pool.EnableAutoScaling = nil
-	}
-
-	// EnableEncryptionAtHost
-	if source.EnableEncryptionAtHost != nil {
-		enableEncryptionAtHost := *source.EnableEncryptionAtHost
-		pool.EnableEncryptionAtHost = &enableEncryptionAtHost
-	} else {
-		pool.EnableEncryptionAtHost = nil
-	}
-
-	// EnableFIPS
-	if source.EnableFIPS != nil {
-		enableFIPS := *source.EnableFIPS
-		pool.EnableFIPS = &enableFIPS
-	} else {
-		pool.EnableFIPS = nil
-	}
-
-	// EnableNodePublicIP
-	if source.EnableNodePublicIP != nil {
-		enableNodePublicIP := *source.EnableNodePublicIP
-		pool.EnableNodePublicIP = &enableNodePublicIP
-	} else {
-		pool.EnableNodePublicIP = nil
-	}
-
-	// EnableUltraSSD
-	if source.EnableUltraSSD != nil {
-		enableUltraSSD := *source.EnableUltraSSD
-		pool.EnableUltraSSD = &enableUltraSSD
-	} else {
-		pool.EnableUltraSSD = nil
-	}
-
-	// GpuInstanceProfile
-	if source.GpuInstanceProfile != nil {
-		gpuInstanceProfile := GPUInstanceProfile(*source.GpuInstanceProfile)
-		pool.GpuInstanceProfile = &gpuInstanceProfile
-	} else {
-		pool.GpuInstanceProfile = nil
-	}
-
-	// KubeletConfig
-	if source.KubeletConfig != nil {
-		var kubeletConfig KubeletConfig
-		err := kubeletConfig.Initialize_From_KubeletConfig_STATUS(source.KubeletConfig)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_KubeletConfig_STATUS() to populate field KubeletConfig")
-		}
-		pool.KubeletConfig = &kubeletConfig
-	} else {
-		pool.KubeletConfig = nil
-	}
-
-	// KubeletDiskType
-	if source.KubeletDiskType != nil {
-		kubeletDiskType := KubeletDiskType(*source.KubeletDiskType)
-		pool.KubeletDiskType = &kubeletDiskType
-	} else {
-		pool.KubeletDiskType = nil
-	}
-
-	// LinuxOSConfig
-	if source.LinuxOSConfig != nil {
-		var linuxOSConfig LinuxOSConfig
-		err := linuxOSConfig.Initialize_From_LinuxOSConfig_STATUS(source.LinuxOSConfig)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_LinuxOSConfig_STATUS() to populate field LinuxOSConfig")
-		}
-		pool.LinuxOSConfig = &linuxOSConfig
-	} else {
-		pool.LinuxOSConfig = nil
-	}
-
-	// MaxCount
-	pool.MaxCount = genruntime.ClonePointerToInt(source.MaxCount)
-
-	// MaxPods
-	pool.MaxPods = genruntime.ClonePointerToInt(source.MaxPods)
-
-	// MinCount
-	pool.MinCount = genruntime.ClonePointerToInt(source.MinCount)
-
-	// Mode
-	if source.Mode != nil {
-		mode := AgentPoolMode(*source.Mode)
-		pool.Mode = &mode
-	} else {
-		pool.Mode = nil
-	}
-
-	// NodeLabels
-	pool.NodeLabels = genruntime.CloneMapOfStringToString(source.NodeLabels)
-
-	// NodeTaints
-	pool.NodeTaints = genruntime.CloneSliceOfString(source.NodeTaints)
-
-	// OrchestratorVersion
-	pool.OrchestratorVersion = genruntime.ClonePointerToString(source.OrchestratorVersion)
-
-	// OsDiskSizeGB
-	if source.OsDiskSizeGB != nil {
-		osDiskSizeGB := ContainerServiceOSDisk(*source.OsDiskSizeGB)
-		pool.OsDiskSizeGB = &osDiskSizeGB
-	} else {
-		pool.OsDiskSizeGB = nil
-	}
-
-	// OsDiskType
-	if source.OsDiskType != nil {
-		osDiskType := OSDiskType(*source.OsDiskType)
-		pool.OsDiskType = &osDiskType
-	} else {
-		pool.OsDiskType = nil
-	}
-
-	// OsSKU
-	if source.OsSKU != nil {
-		osSKU := OSSKU(*source.OsSKU)
-		pool.OsSKU = &osSKU
-	} else {
-		pool.OsSKU = nil
-	}
-
-	// OsType
-	if source.OsType != nil {
-		osType := OSType(*source.OsType)
-		pool.OsType = &osType
-	} else {
-		pool.OsType = nil
-	}
-
-	// PowerState
-	if source.PowerState != nil {
-		var powerState PowerState
-		err := powerState.Initialize_From_PowerState_STATUS(source.PowerState)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_PowerState_STATUS() to populate field PowerState")
-		}
-		pool.PowerState = &powerState
-	} else {
-		pool.PowerState = nil
-	}
-
-	// ScaleDownMode
-	if source.ScaleDownMode != nil {
-		scaleDownMode := ScaleDownMode(*source.ScaleDownMode)
-		pool.ScaleDownMode = &scaleDownMode
-	} else {
-		pool.ScaleDownMode = nil
-	}
-
-	// ScaleSetEvictionPolicy
-	if source.ScaleSetEvictionPolicy != nil {
-		scaleSetEvictionPolicy := ScaleSetEvictionPolicy(*source.ScaleSetEvictionPolicy)
-		pool.ScaleSetEvictionPolicy = &scaleSetEvictionPolicy
-	} else {
-		pool.ScaleSetEvictionPolicy = nil
-	}
-
-	// ScaleSetPriority
-	if source.ScaleSetPriority != nil {
-		scaleSetPriority := ScaleSetPriority(*source.ScaleSetPriority)
-		pool.ScaleSetPriority = &scaleSetPriority
-	} else {
-		pool.ScaleSetPriority = nil
-	}
-
-	// SpotMaxPrice
-	if source.SpotMaxPrice != nil {
-		spotMaxPrice := *source.SpotMaxPrice
-		pool.SpotMaxPrice = &spotMaxPrice
-	} else {
-		pool.SpotMaxPrice = nil
-	}
-
-	// Tags
-	pool.Tags = genruntime.CloneMapOfStringToString(source.Tags)
-
-	// Type
-	if source.Type != nil {
-		typeVar := AgentPoolType(*source.Type)
-		pool.Type = &typeVar
-	} else {
-		pool.Type = nil
-	}
-
-	// UpgradeSettings
-	if source.UpgradeSettings != nil {
-		var upgradeSetting AgentPoolUpgradeSettings
-		err := upgradeSetting.Initialize_From_AgentPoolUpgradeSettings_STATUS(source.UpgradeSettings)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_AgentPoolUpgradeSettings_STATUS() to populate field UpgradeSettings")
-		}
-		pool.UpgradeSettings = &upgradeSetting
-	} else {
-		pool.UpgradeSettings = nil
-	}
-
-	// VmSize
-	pool.VmSize = genruntime.ClonePointerToString(source.VmSize)
-
-	// WorkloadRuntime
-	if source.WorkloadRuntime != nil {
-		workloadRuntime := WorkloadRuntime(*source.WorkloadRuntime)
-		pool.WorkloadRuntime = &workloadRuntime
-	} else {
-		pool.WorkloadRuntime = nil
 	}
 
 	// No error
@@ -3304,16 +3085,6 @@ func (settings *AgentPoolUpgradeSettings) AssignProperties_To_AgentPoolUpgradeSe
 	return nil
 }
 
-// Initialize_From_AgentPoolUpgradeSettings_STATUS populates our AgentPoolUpgradeSettings from the provided source AgentPoolUpgradeSettings_STATUS
-func (settings *AgentPoolUpgradeSettings) Initialize_From_AgentPoolUpgradeSettings_STATUS(source *AgentPoolUpgradeSettings_STATUS) error {
-
-	// MaxSurge
-	settings.MaxSurge = genruntime.ClonePointerToString(source.MaxSurge)
-
-	// No error
-	return nil
-}
-
 // Settings for upgrading an agentpool
 type AgentPoolUpgradeSettings_STATUS struct {
 	// MaxSurge: This can either be set to an integer (e.g. '5') or a percentage (e.g. '50%'). If a percentage is specified, it
@@ -3458,21 +3229,6 @@ func (data *CreationData) AssignProperties_To_CreationData(destination *v2023020
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_CreationData_STATUS populates our CreationData from the provided source CreationData_STATUS
-func (data *CreationData) Initialize_From_CreationData_STATUS(source *CreationData_STATUS) error {
-
-	// SourceResourceReference
-	if source.SourceResourceId != nil {
-		sourceResourceReference := genruntime.CreateResourceReferenceFromARMID(*source.SourceResourceId)
-		data.SourceResourceReference = &sourceResourceReference
-	} else {
-		data.SourceResourceReference = nil
 	}
 
 	// No error
@@ -3875,61 +3631,6 @@ func (config *KubeletConfig) AssignProperties_To_KubeletConfig(destination *v202
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_KubeletConfig_STATUS populates our KubeletConfig from the provided source KubeletConfig_STATUS
-func (config *KubeletConfig) Initialize_From_KubeletConfig_STATUS(source *KubeletConfig_STATUS) error {
-
-	// AllowedUnsafeSysctls
-	config.AllowedUnsafeSysctls = genruntime.CloneSliceOfString(source.AllowedUnsafeSysctls)
-
-	// ContainerLogMaxFiles
-	if source.ContainerLogMaxFiles != nil {
-		containerLogMaxFile := *source.ContainerLogMaxFiles
-		config.ContainerLogMaxFiles = &containerLogMaxFile
-	} else {
-		config.ContainerLogMaxFiles = nil
-	}
-
-	// ContainerLogMaxSizeMB
-	config.ContainerLogMaxSizeMB = genruntime.ClonePointerToInt(source.ContainerLogMaxSizeMB)
-
-	// CpuCfsQuota
-	if source.CpuCfsQuota != nil {
-		cpuCfsQuota := *source.CpuCfsQuota
-		config.CpuCfsQuota = &cpuCfsQuota
-	} else {
-		config.CpuCfsQuota = nil
-	}
-
-	// CpuCfsQuotaPeriod
-	config.CpuCfsQuotaPeriod = genruntime.ClonePointerToString(source.CpuCfsQuotaPeriod)
-
-	// CpuManagerPolicy
-	config.CpuManagerPolicy = genruntime.ClonePointerToString(source.CpuManagerPolicy)
-
-	// FailSwapOn
-	if source.FailSwapOn != nil {
-		failSwapOn := *source.FailSwapOn
-		config.FailSwapOn = &failSwapOn
-	} else {
-		config.FailSwapOn = nil
-	}
-
-	// ImageGcHighThreshold
-	config.ImageGcHighThreshold = genruntime.ClonePointerToInt(source.ImageGcHighThreshold)
-
-	// ImageGcLowThreshold
-	config.ImageGcLowThreshold = genruntime.ClonePointerToInt(source.ImageGcLowThreshold)
-
-	// PodMaxPids
-	config.PodMaxPids = genruntime.ClonePointerToInt(source.PodMaxPids)
-
-	// TopologyManagerPolicy
-	config.TopologyManagerPolicy = genruntime.ClonePointerToString(source.TopologyManagerPolicy)
 
 	// No error
 	return nil
@@ -4354,34 +4055,6 @@ func (config *LinuxOSConfig) AssignProperties_To_LinuxOSConfig(destination *v202
 	return nil
 }
 
-// Initialize_From_LinuxOSConfig_STATUS populates our LinuxOSConfig from the provided source LinuxOSConfig_STATUS
-func (config *LinuxOSConfig) Initialize_From_LinuxOSConfig_STATUS(source *LinuxOSConfig_STATUS) error {
-
-	// SwapFileSizeMB
-	config.SwapFileSizeMB = genruntime.ClonePointerToInt(source.SwapFileSizeMB)
-
-	// Sysctls
-	if source.Sysctls != nil {
-		var sysctl SysctlConfig
-		err := sysctl.Initialize_From_SysctlConfig_STATUS(source.Sysctls)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SysctlConfig_STATUS() to populate field Sysctls")
-		}
-		config.Sysctls = &sysctl
-	} else {
-		config.Sysctls = nil
-	}
-
-	// TransparentHugePageDefrag
-	config.TransparentHugePageDefrag = genruntime.ClonePointerToString(source.TransparentHugePageDefrag)
-
-	// TransparentHugePageEnabled
-	config.TransparentHugePageEnabled = genruntime.ClonePointerToString(source.TransparentHugePageEnabled)
-
-	// No error
-	return nil
-}
-
 // See [AKS custom node configuration](https://docs.microsoft.com/azure/aks/custom-node-configuration) for more details.
 type LinuxOSConfig_STATUS struct {
 	// SwapFileSizeMB: The size in MB of a swap file that will be created on each node.
@@ -4652,21 +4325,6 @@ func (state *PowerState) AssignProperties_To_PowerState(destination *v20230201s.
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_PowerState_STATUS populates our PowerState from the provided source PowerState_STATUS
-func (state *PowerState) Initialize_From_PowerState_STATUS(source *PowerState_STATUS) error {
-
-	// Code
-	if source.Code != nil {
-		code := PowerState_Code(*source.Code)
-		state.Code = &code
-	} else {
-		state.Code = nil
 	}
 
 	// No error
@@ -5399,102 +5057,6 @@ func (config *SysctlConfig) AssignProperties_To_SysctlConfig(destination *v20230
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_SysctlConfig_STATUS populates our SysctlConfig from the provided source SysctlConfig_STATUS
-func (config *SysctlConfig) Initialize_From_SysctlConfig_STATUS(source *SysctlConfig_STATUS) error {
-
-	// FsAioMaxNr
-	config.FsAioMaxNr = genruntime.ClonePointerToInt(source.FsAioMaxNr)
-
-	// FsFileMax
-	config.FsFileMax = genruntime.ClonePointerToInt(source.FsFileMax)
-
-	// FsInotifyMaxUserWatches
-	config.FsInotifyMaxUserWatches = genruntime.ClonePointerToInt(source.FsInotifyMaxUserWatches)
-
-	// FsNrOpen
-	config.FsNrOpen = genruntime.ClonePointerToInt(source.FsNrOpen)
-
-	// KernelThreadsMax
-	config.KernelThreadsMax = genruntime.ClonePointerToInt(source.KernelThreadsMax)
-
-	// NetCoreNetdevMaxBacklog
-	config.NetCoreNetdevMaxBacklog = genruntime.ClonePointerToInt(source.NetCoreNetdevMaxBacklog)
-
-	// NetCoreOptmemMax
-	config.NetCoreOptmemMax = genruntime.ClonePointerToInt(source.NetCoreOptmemMax)
-
-	// NetCoreRmemDefault
-	config.NetCoreRmemDefault = genruntime.ClonePointerToInt(source.NetCoreRmemDefault)
-
-	// NetCoreRmemMax
-	config.NetCoreRmemMax = genruntime.ClonePointerToInt(source.NetCoreRmemMax)
-
-	// NetCoreSomaxconn
-	config.NetCoreSomaxconn = genruntime.ClonePointerToInt(source.NetCoreSomaxconn)
-
-	// NetCoreWmemDefault
-	config.NetCoreWmemDefault = genruntime.ClonePointerToInt(source.NetCoreWmemDefault)
-
-	// NetCoreWmemMax
-	config.NetCoreWmemMax = genruntime.ClonePointerToInt(source.NetCoreWmemMax)
-
-	// NetIpv4IpLocalPortRange
-	config.NetIpv4IpLocalPortRange = genruntime.ClonePointerToString(source.NetIpv4IpLocalPortRange)
-
-	// NetIpv4NeighDefaultGcThresh1
-	config.NetIpv4NeighDefaultGcThresh1 = genruntime.ClonePointerToInt(source.NetIpv4NeighDefaultGcThresh1)
-
-	// NetIpv4NeighDefaultGcThresh2
-	config.NetIpv4NeighDefaultGcThresh2 = genruntime.ClonePointerToInt(source.NetIpv4NeighDefaultGcThresh2)
-
-	// NetIpv4NeighDefaultGcThresh3
-	config.NetIpv4NeighDefaultGcThresh3 = genruntime.ClonePointerToInt(source.NetIpv4NeighDefaultGcThresh3)
-
-	// NetIpv4TcpFinTimeout
-	config.NetIpv4TcpFinTimeout = genruntime.ClonePointerToInt(source.NetIpv4TcpFinTimeout)
-
-	// NetIpv4TcpKeepaliveProbes
-	config.NetIpv4TcpKeepaliveProbes = genruntime.ClonePointerToInt(source.NetIpv4TcpKeepaliveProbes)
-
-	// NetIpv4TcpKeepaliveTime
-	config.NetIpv4TcpKeepaliveTime = genruntime.ClonePointerToInt(source.NetIpv4TcpKeepaliveTime)
-
-	// NetIpv4TcpMaxSynBacklog
-	config.NetIpv4TcpMaxSynBacklog = genruntime.ClonePointerToInt(source.NetIpv4TcpMaxSynBacklog)
-
-	// NetIpv4TcpMaxTwBuckets
-	config.NetIpv4TcpMaxTwBuckets = genruntime.ClonePointerToInt(source.NetIpv4TcpMaxTwBuckets)
-
-	// NetIpv4TcpTwReuse
-	if source.NetIpv4TcpTwReuse != nil {
-		netIpv4TcpTwReuse := *source.NetIpv4TcpTwReuse
-		config.NetIpv4TcpTwReuse = &netIpv4TcpTwReuse
-	} else {
-		config.NetIpv4TcpTwReuse = nil
-	}
-
-	// NetIpv4TcpkeepaliveIntvl
-	config.NetIpv4TcpkeepaliveIntvl = genruntime.ClonePointerToInt(source.NetIpv4TcpkeepaliveIntvl)
-
-	// NetNetfilterNfConntrackBuckets
-	config.NetNetfilterNfConntrackBuckets = genruntime.ClonePointerToInt(source.NetNetfilterNfConntrackBuckets)
-
-	// NetNetfilterNfConntrackMax
-	config.NetNetfilterNfConntrackMax = genruntime.ClonePointerToInt(source.NetNetfilterNfConntrackMax)
-
-	// VmMaxMapCount
-	config.VmMaxMapCount = genruntime.ClonePointerToInt(source.VmMaxMapCount)
-
-	// VmSwappiness
-	config.VmSwappiness = genruntime.ClonePointerToInt(source.VmSwappiness)
-
-	// VmVfsCachePressure
-	config.VmVfsCachePressure = genruntime.ClonePointerToInt(source.VmVfsCachePressure)
 
 	// No error
 	return nil

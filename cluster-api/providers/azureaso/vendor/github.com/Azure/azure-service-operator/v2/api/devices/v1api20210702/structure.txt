@@ -3,7 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/devices/v1api20210702
 ├── APIVersion: Enum (1 value)
 │   └── "2021-07-02"
 ├── IotHub: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (8 properties)
 │   │   ├── AzureName: string
 │   │   ├── Identity: *Object (2 properties)
@@ -200,7 +200,7 @@ github.com/Azure/azure-service-operator/v2/api/devices/v1api20210702
 │   │   │       ├── AuthenticationType: *Enum (2 values)
 │   │   │       │   ├── "identityBased"
 │   │   │       │   └── "keyBased"
-│   │   │       ├── ConnectionString: genruntime.SecretReference
+│   │   │       ├── ConnectionString: *genruntime.SecretReference
 │   │   │       ├── ContainerName: *string
 │   │   │       ├── Identity: *Object (1 property)
 │   │   │       │   └── UserAssignedIdentity: *string
@@ -803,7 +803,7 @@ github.com/Azure/azure-service-operator/v2/api/devices/v1api20210702
     │       ├── AuthenticationType: *Enum (2 values)
     │       │   ├── "identityBased"
     │       │   └── "keyBased"
-    │       ├── ConnectionString: string
+    │       ├── ConnectionString: *string
     │       ├── ContainerName: *string
     │       ├── Identity: *Object (1 property)
     │       │   └── UserAssignedIdentity: *string

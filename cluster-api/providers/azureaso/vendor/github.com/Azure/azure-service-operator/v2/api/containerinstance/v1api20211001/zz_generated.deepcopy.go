@@ -3509,7 +3509,11 @@ func (in *LogAnalytics) DeepCopyInto(out *LogAnalytics) {
 		*out = new(string)
 		**out = **in
 	}
-	out.WorkspaceKey = in.WorkspaceKey
+	if in.WorkspaceKey != nil {
+		in, out := &in.WorkspaceKey, &out.WorkspaceKey
+		*out = new(genruntime.SecretReference)
+		**out = **in
+	}
 	if in.WorkspaceResourceReference != nil {
 		in, out := &in.WorkspaceResourceReference, &out.WorkspaceResourceReference
 		*out = new(genruntime.ResourceReference)
@@ -3544,6 +3548,11 @@ func (in *LogAnalytics_ARM) DeepCopyInto(out *LogAnalytics_ARM) {
 	}
 	if in.WorkspaceId != nil {
 		in, out := &in.WorkspaceId, &out.WorkspaceId
+		*out = new(string)
+		**out = **in
+	}
+	if in.WorkspaceKey != nil {
+		in, out := &in.WorkspaceKey, &out.WorkspaceKey
 		*out = new(string)
 		**out = **in
 	}

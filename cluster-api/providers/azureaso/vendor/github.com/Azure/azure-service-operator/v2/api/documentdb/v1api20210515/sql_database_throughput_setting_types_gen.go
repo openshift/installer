@@ -5,7 +5,7 @@ package v1api20210515
 
 import (
 	"fmt"
-	v20210515s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20210515storage"
+	v20210515s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20210515/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &SqlDatabaseThroughputSetting{}
 func (setting *SqlDatabaseThroughputSetting) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20210515s.SqlDatabaseThroughputSetting)
 	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20210515storage/SqlDatabaseThroughputSetting but received %T instead", hub)
+		return fmt.Errorf("expected documentdb/v1api20210515/storage/SqlDatabaseThroughputSetting but received %T instead", hub)
 	}
 
 	return setting.AssignProperties_From_SqlDatabaseThroughputSetting(source)
@@ -61,7 +61,7 @@ func (setting *SqlDatabaseThroughputSetting) ConvertFrom(hub conversion.Hub) err
 func (setting *SqlDatabaseThroughputSetting) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20210515s.SqlDatabaseThroughputSetting)
 	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20210515storage/SqlDatabaseThroughputSetting but received %T instead", hub)
+		return fmt.Errorf("expected documentdb/v1api20210515/storage/SqlDatabaseThroughputSetting but received %T instead", hub)
 	}
 
 	return setting.AssignProperties_To_SqlDatabaseThroughputSetting(destination)
@@ -119,6 +119,14 @@ func (setting *SqlDatabaseThroughputSetting) GetSpec() genruntime.ConvertibleSpe
 // GetStatus returns the status of this resource
 func (setting *SqlDatabaseThroughputSetting) GetStatus() genruntime.ConvertibleStatus {
 	return &setting.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (setting *SqlDatabaseThroughputSetting) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/throughputSettings"

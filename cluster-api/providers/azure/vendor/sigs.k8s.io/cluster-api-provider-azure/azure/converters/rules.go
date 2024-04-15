@@ -29,6 +29,7 @@ func SecurityRuleToSDK(rule infrav1.SecurityRule) *armnetwork.SecurityRule {
 		Properties: &armnetwork.SecurityRulePropertiesFormat{
 			Description:              ptr.To(rule.Description),
 			SourceAddressPrefix:      rule.Source,
+			SourceAddressPrefixes:    rule.Sources,
 			SourcePortRange:          rule.SourcePorts,
 			DestinationAddressPrefix: rule.Destination,
 			DestinationPortRange:     rule.DestinationPorts,

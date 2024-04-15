@@ -29,19 +29,17 @@ import (
 // GroupSpec defines the specification for a Resource Group.
 type GroupSpec struct {
 	Name           string
-	Namespace      string
+	AzureName      string
 	Location       string
 	ClusterName    string
 	AdditionalTags infrav1.Tags
-	Owner          metav1.OwnerReference
 }
 
 // ResourceRef implements aso.ResourceSpecGetter.
 func (s *GroupSpec) ResourceRef() *asoresourcesv1.ResourceGroup {
 	return &asoresourcesv1.ResourceGroup{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      s.Name,
-			Namespace: s.Namespace,
+			Name: s.Name,
 		},
 	}
 }
@@ -52,10 +50,7 @@ func (s *GroupSpec) Parameters(ctx context.Context, existing *asoresourcesv1.Res
 		return existing, nil
 	}
 
-	return &asoresourcesv1.ResourceGroup{
-		ObjectMeta: metav1.ObjectMeta{
-			OwnerReferences: []metav1.OwnerReference{s.Owner},
-		},
+	resourceGroup := &asoresourcesv1.ResourceGroup{
 		Spec: asoresourcesv1.ResourceGroup_Spec{
 			Location: ptr.To(s.Location),
 			Tags: infrav1.Build(infrav1.BuildParams{
@@ -66,7 +61,11 @@ func (s *GroupSpec) Parameters(ctx context.Context, existing *asoresourcesv1.Res
 				Additional:  s.AdditionalTags,
 			}),
 		},
-	}, nil
+	}
+	if s.AzureName != "" {
+		resourceGroup.Spec.AzureName = s.AzureName
+	}
+	return resourceGroup, nil
 }
 
 // WasManaged implements azure.ASOResourceSpecGetter.
@@ -84,11 +83,6 @@ func (s *GroupSpec) GetAdditionalTags() infrav1.Tags {
 // GetDesiredTags implements aso.TagsGetterSetter.
 func (*GroupSpec) GetDesiredTags(resource *asoresourcesv1.ResourceGroup) infrav1.Tags {
 	return resource.Spec.Tags
-}
-
-// GetActualTags implements aso.TagsGetterSetter.
-func (*GroupSpec) GetActualTags(resource *asoresourcesv1.ResourceGroup) infrav1.Tags {
-	return resource.Status.Tags
 }
 
 // SetTags implements aso.TagsGetterSetter.

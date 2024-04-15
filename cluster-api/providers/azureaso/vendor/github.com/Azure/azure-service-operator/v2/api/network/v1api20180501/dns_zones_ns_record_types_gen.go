@@ -5,7 +5,7 @@ package v1api20180501
 
 import (
 	"fmt"
-	v20180501s "github.com/Azure/azure-service-operator/v2/api/network/v1api20180501storage"
+	v20180501s "github.com/Azure/azure-service-operator/v2/api/network/v1api20180501/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &DnsZonesNSRecord{}
 func (record *DnsZonesNSRecord) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20180501s.DnsZonesNSRecord)
 	if !ok {
-		return fmt.Errorf("expected network/v1api20180501storage/DnsZonesNSRecord but received %T instead", hub)
+		return fmt.Errorf("expected network/v1api20180501/storage/DnsZonesNSRecord but received %T instead", hub)
 	}
 
 	return record.AssignProperties_From_DnsZonesNSRecord(source)
@@ -61,7 +61,7 @@ func (record *DnsZonesNSRecord) ConvertFrom(hub conversion.Hub) error {
 func (record *DnsZonesNSRecord) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20180501s.DnsZonesNSRecord)
 	if !ok {
-		return fmt.Errorf("expected network/v1api20180501storage/DnsZonesNSRecord but received %T instead", hub)
+		return fmt.Errorf("expected network/v1api20180501/storage/DnsZonesNSRecord but received %T instead", hub)
 	}
 
 	return record.AssignProperties_To_DnsZonesNSRecord(destination)
@@ -126,6 +126,15 @@ func (record *DnsZonesNSRecord) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (record *DnsZonesNSRecord) GetStatus() genruntime.ConvertibleStatus {
 	return &record.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (record *DnsZonesNSRecord) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Network/dnsZones/NS"

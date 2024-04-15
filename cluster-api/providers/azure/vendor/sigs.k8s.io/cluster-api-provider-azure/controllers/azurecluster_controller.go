@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -48,7 +47,7 @@ import (
 type AzureClusterReconciler struct {
 	client.Client
 	Recorder                  record.EventRecorder
-	ReconcileTimeout          time.Duration
+	Timeouts                  reconciler.Timeouts
 	WatchFilterValue          string
 	createAzureClusterService azureClusterServiceCreator
 }
@@ -56,11 +55,11 @@ type AzureClusterReconciler struct {
 type azureClusterServiceCreator func(clusterScope *scope.ClusterScope) (*azureClusterService, error)
 
 // NewAzureClusterReconciler returns a new AzureClusterReconciler instance.
-func NewAzureClusterReconciler(client client.Client, recorder record.EventRecorder, reconcileTimeout time.Duration, watchFilterValue string) *AzureClusterReconciler {
+func NewAzureClusterReconciler(client client.Client, recorder record.EventRecorder, timeouts reconciler.Timeouts, watchFilterValue string) *AzureClusterReconciler {
 	acr := &AzureClusterReconciler{
 		Client:           client,
 		Recorder:         recorder,
-		ReconcileTimeout: reconcileTimeout,
+		Timeouts:         timeouts,
 		WatchFilterValue: watchFilterValue,
 	}
 
@@ -95,7 +94,7 @@ func (acr *AzureClusterReconciler) SetupWithManager(ctx context.Context, mgr ctr
 	// Add a watch on clusterv1.Cluster object for pause/unpause notifications.
 	if err = c.Watch(
 		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1.GroupVersion.WithKind("AzureCluster"), mgr.GetClient(), &infrav1.AzureCluster{})),
+		handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1.GroupVersion.WithKind(infrav1.AzureClusterKind), mgr.GetClient(), &infrav1.AzureCluster{})),
 		ClusterUpdatePauseChange(log),
 		predicates.ResourceHasFilterLabel(log, acr.WatchFilterValue),
 	); err != nil {
@@ -113,12 +112,12 @@ func (acr *AzureClusterReconciler) SetupWithManager(ctx context.Context, mgr ctr
 // +kubebuilder:rbac:groups="",resources=namespaces,verbs=list;
 // +kubebuilder:rbac:groups=resources.azure.com,resources=resourcegroups,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=resources.azure.com,resources=resourcegroups/status,verbs=get;list;watch
-// +kubebuilder:rbac:groups=network.azure.com,resources=natgateways,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=network.azure.com,resources=natgateways/status,verbs=get;list;watch
+// +kubebuilder:rbac:groups=network.azure.com,resources=natgateways;bastionhosts;privateendpoints;virtualnetworks;virtualnetworkssubnets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=network.azure.com,resources=natgateways/status;bastionhosts/status;privateendpoints/status;virtualnetworks/status;virtualnetworkssubnets/status,verbs=get;list;watch
 
 // Reconcile idempotently gets, creates, and updates a cluster.
 func (acr *AzureClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultedLoopTimeout(acr.ReconcileTimeout))
+	ctx, cancel := context.WithTimeout(ctx, acr.Timeouts.DefaultedLoopTimeout())
 	defer cancel()
 
 	ctx, log, done := tele.StartSpanWithLogger(
@@ -126,7 +125,7 @@ func (acr *AzureClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		"controllers.AzureClusterReconciler.Reconcile",
 		tele.KVP("namespace", req.Namespace),
 		tele.KVP("name", req.Name),
-		tele.KVP("kind", "AzureCluster"),
+		tele.KVP("kind", infrav1.AzureClusterKind),
 	)
 	defer done()
 
@@ -160,6 +159,7 @@ func (acr *AzureClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		Client:       acr.Client,
 		Cluster:      cluster,
 		AzureCluster: azureCluster,
+		Timeouts:     acr.Timeouts,
 	})
 	if err != nil {
 		err = errors.Wrap(err, "failed to create scope")
@@ -207,9 +207,11 @@ func (acr *AzureClusterReconciler) reconcileNormal(ctx context.Context, clusterS
 	log.Info("Reconciling AzureCluster")
 	azureCluster := clusterScope.AzureCluster
 
-	// If the AzureCluster doesn't have our finalizer, add it.
-	if controllerutil.AddFinalizer(azureCluster, infrav1.ClusterFinalizer) {
-		// Register the finalizer immediately to avoid orphaning Azure resources on delete
+	// Register our finalizer immediately to avoid orphaning Azure resources on delete
+	needsPatch := controllerutil.AddFinalizer(azureCluster, infrav1.ClusterFinalizer)
+	// Register the block-move annotation immediately to avoid moving un-paused ASO resources
+	needsPatch = AddBlockMoveAnnotation(azureCluster) || needsPatch
+	if needsPatch {
 		if err := clusterScope.PatchObject(ctx); err != nil {
 			return reconcile.Result{}, err
 		}
@@ -261,6 +263,7 @@ func (acr *AzureClusterReconciler) reconcileNormal(ctx context.Context, clusterS
 	return reconcile.Result{}, nil
 }
 
+//nolint:unparam // Always returns an empty struct for reconcile.Result
 func (acr *AzureClusterReconciler) reconcilePause(ctx context.Context, clusterScope *scope.ClusterScope) (reconcile.Result, error) {
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "controllers.AzureClusterReconciler.reconcilePause")
 	defer done()
@@ -275,6 +278,7 @@ func (acr *AzureClusterReconciler) reconcilePause(ctx context.Context, clusterSc
 	if err := acs.Pause(ctx); err != nil {
 		return reconcile.Result{}, errors.Wrap(err, "failed to pause cluster services")
 	}
+	RemoveBlockMoveAnnotation(clusterScope.AzureCluster)
 
 	return reconcile.Result{}, nil
 }

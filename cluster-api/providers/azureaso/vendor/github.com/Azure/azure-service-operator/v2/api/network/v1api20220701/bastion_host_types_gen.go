@@ -5,7 +5,7 @@ package v1api20220701
 
 import (
 	"fmt"
-	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701storage"
+	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &BastionHost{}
 func (host *BastionHost) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20220701s.BastionHost)
 	if !ok {
-		return fmt.Errorf("expected network/v1api20220701storage/BastionHost but received %T instead", hub)
+		return fmt.Errorf("expected network/v1api20220701/storage/BastionHost but received %T instead", hub)
 	}
 
 	return host.AssignProperties_From_BastionHost(source)
@@ -61,7 +61,7 @@ func (host *BastionHost) ConvertFrom(hub conversion.Hub) error {
 func (host *BastionHost) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20220701s.BastionHost)
 	if !ok {
-		return fmt.Errorf("expected network/v1api20220701storage/BastionHost but received %T instead", hub)
+		return fmt.Errorf("expected network/v1api20220701/storage/BastionHost but received %T instead", hub)
 	}
 
 	return host.AssignProperties_To_BastionHost(destination)
@@ -126,6 +126,15 @@ func (host *BastionHost) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (host *BastionHost) GetStatus() genruntime.ConvertibleStatus {
 	return &host.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (host *BastionHost) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Network/bastionHosts"
@@ -314,11 +323,6 @@ type BastionHostList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []BastionHost `json:"items"`
 }
-
-// +kubebuilder:validation:Enum={"2022-07-01"}
-type APIVersion string
-
-const APIVersion_Value = APIVersion("2022-07-01")
 
 type BastionHost_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
@@ -1983,15 +1987,6 @@ func (resource *BastionHostSubResource) AssignProperties_To_BastionHostSubResour
 	// No error
 	return nil
 }
-
-// IP address allocation method.
-// +kubebuilder:validation:Enum={"Dynamic","Static"}
-type IPAllocationMethod string
-
-const (
-	IPAllocationMethod_Dynamic = IPAllocationMethod("Dynamic")
-	IPAllocationMethod_Static  = IPAllocationMethod("Static")
-)
 
 func init() {
 	SchemeBuilder.Register(&BastionHost{}, &BastionHostList{})

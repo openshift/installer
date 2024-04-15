@@ -5,7 +5,7 @@ package v1api20230101
 
 import (
 	"fmt"
-	v20230101s "github.com/Azure/azure-service-operator/v2/api/dataprotection/v1api20230101storage"
+	v20230101s "github.com/Azure/azure-service-operator/v2/api/dataprotection/v1api20230101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &BackupVaultsBackupPolicy{}
 func (policy *BackupVaultsBackupPolicy) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20230101s.BackupVaultsBackupPolicy)
 	if !ok {
-		return fmt.Errorf("expected dataprotection/v1api20230101storage/BackupVaultsBackupPolicy but received %T instead", hub)
+		return fmt.Errorf("expected dataprotection/v1api20230101/storage/BackupVaultsBackupPolicy but received %T instead", hub)
 	}
 
 	return policy.AssignProperties_From_BackupVaultsBackupPolicy(source)
@@ -61,7 +61,7 @@ func (policy *BackupVaultsBackupPolicy) ConvertFrom(hub conversion.Hub) error {
 func (policy *BackupVaultsBackupPolicy) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20230101s.BackupVaultsBackupPolicy)
 	if !ok {
-		return fmt.Errorf("expected dataprotection/v1api20230101storage/BackupVaultsBackupPolicy but received %T instead", hub)
+		return fmt.Errorf("expected dataprotection/v1api20230101/storage/BackupVaultsBackupPolicy but received %T instead", hub)
 	}
 
 	return policy.AssignProperties_To_BackupVaultsBackupPolicy(destination)
@@ -126,6 +126,15 @@ func (policy *BackupVaultsBackupPolicy) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (policy *BackupVaultsBackupPolicy) GetStatus() genruntime.ConvertibleStatus {
 	return &policy.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (policy *BackupVaultsBackupPolicy) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DataProtection/backupVaults/backupPolicies"

@@ -18,23 +18,24 @@ package vnetpeerings
 
 import (
 	"context"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 // AzureClient contains the Azure go-sdk Client.
 type AzureClient struct {
-	peerings *armnetwork.VirtualNetworkPeeringsClient
+	peerings       *armnetwork.VirtualNetworkPeeringsClient
+	apiCallTimeout time.Duration
 }
 
 // NewClient creates a new virtual network peerings client from an authorizer.
-func NewClient(auth azure.Authorizer) (*AzureClient, error) {
+func NewClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*AzureClient, error) {
 	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create vnetpeerings client options")
@@ -43,7 +44,7 @@ func NewClient(auth azure.Authorizer) (*AzureClient, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create armnetwork client factory")
 	}
-	return &AzureClient{factory.NewVirtualNetworkPeeringsClient()}, nil
+	return &AzureClient{factory.NewVirtualNetworkPeeringsClient(), apiCallTimeout}, nil
 }
 
 // Get gets the specified virtual network peering by the peering name, virtual network, and resource group.
@@ -76,7 +77,7 @@ func (ac *AzureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.Resou
 		return nil, nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureCallTimeout)
+	ctx, cancel := context.WithTimeout(ctx, ac.apiCallTimeout)
 	defer cancel()
 
 	pollOpts := &runtime.PollUntilDoneOptions{Frequency: async.DefaultPollerFrequency}
@@ -104,7 +105,7 @@ func (ac *AzureClient) DeleteAsync(ctx context.Context, spec azure.ResourceSpecG
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureCallTimeout)
+	ctx, cancel := context.WithTimeout(ctx, ac.apiCallTimeout)
 	defer cancel()
 
 	pollOpts := &runtime.PollUntilDoneOptions{Frequency: async.DefaultPollerFrequency}

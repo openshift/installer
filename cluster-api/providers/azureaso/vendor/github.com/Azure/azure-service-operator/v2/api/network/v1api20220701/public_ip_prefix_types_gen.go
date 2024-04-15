@@ -5,7 +5,7 @@ package v1api20220701
 
 import (
 	"fmt"
-	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701storage"
+	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &PublicIPPrefix{}
 func (prefix *PublicIPPrefix) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20220701s.PublicIPPrefix)
 	if !ok {
-		return fmt.Errorf("expected network/v1api20220701storage/PublicIPPrefix but received %T instead", hub)
+		return fmt.Errorf("expected network/v1api20220701/storage/PublicIPPrefix but received %T instead", hub)
 	}
 
 	return prefix.AssignProperties_From_PublicIPPrefix(source)
@@ -61,7 +61,7 @@ func (prefix *PublicIPPrefix) ConvertFrom(hub conversion.Hub) error {
 func (prefix *PublicIPPrefix) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20220701s.PublicIPPrefix)
 	if !ok {
-		return fmt.Errorf("expected network/v1api20220701storage/PublicIPPrefix but received %T instead", hub)
+		return fmt.Errorf("expected network/v1api20220701/storage/PublicIPPrefix but received %T instead", hub)
 	}
 
 	return prefix.AssignProperties_To_PublicIPPrefix(destination)
@@ -126,6 +126,15 @@ func (prefix *PublicIPPrefix) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (prefix *PublicIPPrefix) GetStatus() genruntime.ConvertibleStatus {
 	return &prefix.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (prefix *PublicIPPrefix) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Network/publicIPPrefixes"

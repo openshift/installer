@@ -24,7 +24,6 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
@@ -47,7 +46,7 @@ type Service struct {
 
 // New creates a new service.
 func New(scope NSGScope) (*Service, error) {
-	client, err := newClient(scope)
+	client, err := newClient(scope, scope.DefaultedAzureCallTimeout())
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +67,7 @@ func (s *Service) Reconcile(ctx context.Context) error {
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "securitygroups.Service.Reconcile")
 	defer done()
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureServiceReconcileTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
 	defer cancel()
 
 	// Only create the NSGs if their lifecycle is managed by this controller.
@@ -123,7 +122,7 @@ func (s *Service) Delete(ctx context.Context) error {
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "securitygroups.Service.Delete")
 	defer done()
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureServiceReconcileTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
 	defer cancel()
 
 	// Only delete the security groups if their lifecycle is managed by this controller.

@@ -5,7 +5,7 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101storage"
+	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &ServersElasticPool{}
 func (pool *ServersElasticPool) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20211101s.ServersElasticPool)
 	if !ok {
-		return fmt.Errorf("expected sql/v1api20211101storage/ServersElasticPool but received %T instead", hub)
+		return fmt.Errorf("expected sql/v1api20211101/storage/ServersElasticPool but received %T instead", hub)
 	}
 
 	return pool.AssignProperties_From_ServersElasticPool(source)
@@ -61,7 +61,7 @@ func (pool *ServersElasticPool) ConvertFrom(hub conversion.Hub) error {
 func (pool *ServersElasticPool) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20211101s.ServersElasticPool)
 	if !ok {
-		return fmt.Errorf("expected sql/v1api20211101storage/ServersElasticPool but received %T instead", hub)
+		return fmt.Errorf("expected sql/v1api20211101/storage/ServersElasticPool but received %T instead", hub)
 	}
 
 	return pool.AssignProperties_To_ServersElasticPool(destination)
@@ -126,6 +126,15 @@ func (pool *ServersElasticPool) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (pool *ServersElasticPool) GetStatus() genruntime.ConvertibleStatus {
 	return &pool.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (pool *ServersElasticPool) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Sql/servers/elasticPools"

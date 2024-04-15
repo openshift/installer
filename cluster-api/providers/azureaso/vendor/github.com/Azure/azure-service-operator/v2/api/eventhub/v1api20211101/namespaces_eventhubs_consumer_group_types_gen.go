@@ -5,7 +5,7 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/eventhub/v1api20211101storage"
+	v20211101s "github.com/Azure/azure-service-operator/v2/api/eventhub/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &NamespacesEventhubsConsumerGroup{}
 func (group *NamespacesEventhubsConsumerGroup) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20211101s.NamespacesEventhubsConsumerGroup)
 	if !ok {
-		return fmt.Errorf("expected eventhub/v1api20211101storage/NamespacesEventhubsConsumerGroup but received %T instead", hub)
+		return fmt.Errorf("expected eventhub/v1api20211101/storage/NamespacesEventhubsConsumerGroup but received %T instead", hub)
 	}
 
 	return group.AssignProperties_From_NamespacesEventhubsConsumerGroup(source)
@@ -61,7 +61,7 @@ func (group *NamespacesEventhubsConsumerGroup) ConvertFrom(hub conversion.Hub) e
 func (group *NamespacesEventhubsConsumerGroup) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20211101s.NamespacesEventhubsConsumerGroup)
 	if !ok {
-		return fmt.Errorf("expected eventhub/v1api20211101storage/NamespacesEventhubsConsumerGroup but received %T instead", hub)
+		return fmt.Errorf("expected eventhub/v1api20211101/storage/NamespacesEventhubsConsumerGroup but received %T instead", hub)
 	}
 
 	return group.AssignProperties_To_NamespacesEventhubsConsumerGroup(destination)
@@ -126,6 +126,15 @@ func (group *NamespacesEventhubsConsumerGroup) GetSpec() genruntime.ConvertibleS
 // GetStatus returns the status of this resource
 func (group *NamespacesEventhubsConsumerGroup) GetStatus() genruntime.ConvertibleStatus {
 	return &group.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (group *NamespacesEventhubsConsumerGroup) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.EventHub/namespaces/eventhubs/consumergroups"

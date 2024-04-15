@@ -264,7 +264,7 @@ type StorageEndpointProperties_ARM struct {
 	AuthenticationType *StorageEndpointProperties_AuthenticationType `json:"authenticationType,omitempty"`
 
 	// ConnectionString: The connection string for the Azure Storage account to which files are uploaded.
-	ConnectionString string `json:"connectionString,omitempty"`
+	ConnectionString *string `json:"connectionString,omitempty"`
 
 	// ContainerName: The name of the root container where you upload files. The container need not exist but should be
 	// creatable using the connectionString specified.

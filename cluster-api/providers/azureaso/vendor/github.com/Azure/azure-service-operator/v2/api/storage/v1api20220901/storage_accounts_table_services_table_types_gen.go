@@ -5,7 +5,7 @@ package v1api20220901
 
 import (
 	"fmt"
-	v20220901s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901storage"
+	v20220901s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -49,22 +49,36 @@ var _ conversion.Convertible = &StorageAccountsTableServicesTable{}
 
 // ConvertFrom populates our StorageAccountsTableServicesTable from the provided hub StorageAccountsTableServicesTable
 func (table *StorageAccountsTableServicesTable) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20220901s.StorageAccountsTableServicesTable)
-	if !ok {
-		return fmt.Errorf("expected storage/v1api20220901storage/StorageAccountsTableServicesTable but received %T instead", hub)
+	// intermediate variable for conversion
+	var source v20220901s.StorageAccountsTableServicesTable
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from hub to source")
 	}
 
-	return table.AssignProperties_From_StorageAccountsTableServicesTable(source)
+	err = table.AssignProperties_From_StorageAccountsTableServicesTable(&source)
+	if err != nil {
+		return errors.Wrap(err, "converting from source to table")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub StorageAccountsTableServicesTable from our StorageAccountsTableServicesTable
 func (table *StorageAccountsTableServicesTable) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20220901s.StorageAccountsTableServicesTable)
-	if !ok {
-		return fmt.Errorf("expected storage/v1api20220901storage/StorageAccountsTableServicesTable but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination v20220901s.StorageAccountsTableServicesTable
+	err := table.AssignProperties_To_StorageAccountsTableServicesTable(&destination)
+	if err != nil {
+		return errors.Wrap(err, "converting to destination from table")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from destination to hub")
 	}
 
-	return table.AssignProperties_To_StorageAccountsTableServicesTable(destination)
+	return nil
 }
 
 // +kubebuilder:webhook:path=/mutate-storage-azure-com-v1api20220901-storageaccountstableservicestable,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=storage.azure.com,resources=storageaccountstableservicestables,verbs=create;update,versions=v1api20220901,name=default.v1api20220901.storageaccountstableservicestables.storage.azure.com,admissionReviewVersions=v1
@@ -89,17 +103,6 @@ func (table *StorageAccountsTableServicesTable) defaultAzureName() {
 
 // defaultImpl applies the code generated defaults to the StorageAccountsTableServicesTable resource
 func (table *StorageAccountsTableServicesTable) defaultImpl() { table.defaultAzureName() }
-
-var _ genruntime.ImportableResource = &StorageAccountsTableServicesTable{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (table *StorageAccountsTableServicesTable) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*StorageAccounts_TableServices_Table_STATUS); ok {
-		return table.Spec.Initialize_From_StorageAccounts_TableServices_Table_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type StorageAccounts_TableServices_Table_STATUS but received %T instead", status)
-}
 
 var _ genruntime.KubernetesResource = &StorageAccountsTableServicesTable{}
 
@@ -126,6 +129,15 @@ func (table *StorageAccountsTableServicesTable) GetSpec() genruntime.Convertible
 // GetStatus returns the status of this resource
 func (table *StorageAccountsTableServicesTable) GetStatus() genruntime.ConvertibleStatus {
 	return &table.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (table *StorageAccountsTableServicesTable) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Storage/storageAccounts/tableServices/tables"
@@ -531,31 +543,6 @@ func (table *StorageAccounts_TableServices_Table_Spec) AssignProperties_To_Stora
 	return nil
 }
 
-// Initialize_From_StorageAccounts_TableServices_Table_STATUS populates our StorageAccounts_TableServices_Table_Spec from the provided source StorageAccounts_TableServices_Table_STATUS
-func (table *StorageAccounts_TableServices_Table_Spec) Initialize_From_StorageAccounts_TableServices_Table_STATUS(source *StorageAccounts_TableServices_Table_STATUS) error {
-
-	// SignedIdentifiers
-	if source.SignedIdentifiers != nil {
-		signedIdentifierList := make([]TableSignedIdentifier, len(source.SignedIdentifiers))
-		for signedIdentifierIndex, signedIdentifierItem := range source.SignedIdentifiers {
-			// Shadow the loop variable to avoid aliasing
-			signedIdentifierItem := signedIdentifierItem
-			var signedIdentifier TableSignedIdentifier
-			err := signedIdentifier.Initialize_From_TableSignedIdentifier_STATUS(&signedIdentifierItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_TableSignedIdentifier_STATUS() to populate field SignedIdentifiers")
-			}
-			signedIdentifierList[signedIdentifierIndex] = signedIdentifier
-		}
-		table.SignedIdentifiers = signedIdentifierList
-	} else {
-		table.SignedIdentifiers = nil
-	}
-
-	// No error
-	return nil
-}
-
 // OriginalVersion returns the original API version used to create the resource.
 func (table *StorageAccounts_TableServices_Table_Spec) OriginalVersion() string {
 	return GroupVersion.Version
@@ -919,33 +906,6 @@ func (identifier *TableSignedIdentifier) AssignProperties_To_TableSignedIdentifi
 	return nil
 }
 
-// Initialize_From_TableSignedIdentifier_STATUS populates our TableSignedIdentifier from the provided source TableSignedIdentifier_STATUS
-func (identifier *TableSignedIdentifier) Initialize_From_TableSignedIdentifier_STATUS(source *TableSignedIdentifier_STATUS) error {
-
-	// AccessPolicy
-	if source.AccessPolicy != nil {
-		var accessPolicy TableAccessPolicy
-		err := accessPolicy.Initialize_From_TableAccessPolicy_STATUS(source.AccessPolicy)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_TableAccessPolicy_STATUS() to populate field AccessPolicy")
-		}
-		identifier.AccessPolicy = &accessPolicy
-	} else {
-		identifier.AccessPolicy = nil
-	}
-
-	// Reference
-	if source.Id != nil {
-		reference := genruntime.CreateResourceReferenceFromARMID(*source.Id)
-		identifier.Reference = &reference
-	} else {
-		identifier.Reference = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Object to set Table Access Policy.
 type TableSignedIdentifier_STATUS struct {
 	// AccessPolicy: Access policy
@@ -1155,22 +1115,6 @@ func (policy *TableAccessPolicy) AssignProperties_To_TableAccessPolicy(destinati
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_TableAccessPolicy_STATUS populates our TableAccessPolicy from the provided source TableAccessPolicy_STATUS
-func (policy *TableAccessPolicy) Initialize_From_TableAccessPolicy_STATUS(source *TableAccessPolicy_STATUS) error {
-
-	// ExpiryTime
-	policy.ExpiryTime = genruntime.ClonePointerToString(source.ExpiryTime)
-
-	// Permission
-	policy.Permission = genruntime.ClonePointerToString(source.Permission)
-
-	// StartTime
-	policy.StartTime = genruntime.ClonePointerToString(source.StartTime)
 
 	// No error
 	return nil

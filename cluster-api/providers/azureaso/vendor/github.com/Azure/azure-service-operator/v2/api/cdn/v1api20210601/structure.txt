@@ -3,7 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/cdn/v1api20210601
 ├── APIVersion: Enum (1 value)
 │   └── "2021-06-01"
 ├── Profile: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (6 properties)
 │   │   ├── AzureName: string
 │   │   ├── Location: *string

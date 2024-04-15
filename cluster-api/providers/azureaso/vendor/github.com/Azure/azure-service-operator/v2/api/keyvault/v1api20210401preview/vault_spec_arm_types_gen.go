@@ -136,12 +136,14 @@ type Sku_ARM struct {
 	Name *Sku_Name `json:"name,omitempty"`
 }
 
-// +kubebuilder:validation:Enum={"default","recover"}
+// +kubebuilder:validation:Enum={"createOrRecover","default","purgeThenCreate","recover"}
 type VaultProperties_CreateMode string
 
 const (
-	VaultProperties_CreateMode_Default = VaultProperties_CreateMode("default")
-	VaultProperties_CreateMode_Recover = VaultProperties_CreateMode("recover")
+	VaultProperties_CreateMode_CreateOrRecover = VaultProperties_CreateMode("createOrRecover")
+	VaultProperties_CreateMode_Default         = VaultProperties_CreateMode("default")
+	VaultProperties_CreateMode_PurgeThenCreate = VaultProperties_CreateMode("purgeThenCreate")
+	VaultProperties_CreateMode_Recover         = VaultProperties_CreateMode("recover")
 )
 
 // +kubebuilder:validation:Enum={"RegisteringDns","Succeeded"}

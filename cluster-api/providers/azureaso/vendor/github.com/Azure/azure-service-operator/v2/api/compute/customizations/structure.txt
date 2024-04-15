@@ -5,4 +5,6 @@ github.com/Azure/azure-service-operator/v2/api/compute/customizations
 ├── ImageExtension: Object (0 properties)
 ├── SnapshotExtension: Object (0 properties)
 ├── VirtualMachineExtension: Object (0 properties)
-└── VirtualMachineScaleSetExtension: Object (0 properties)
+├── VirtualMachineScaleSetExtension: Object (0 properties)
+├── VirtualMachineScaleSetsExtensionExtension: Object (0 properties)
+└── VirtualMachinesExtensionExtension: Object (0 properties)

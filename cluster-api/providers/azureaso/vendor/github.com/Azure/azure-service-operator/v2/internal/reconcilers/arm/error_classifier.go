@@ -84,6 +84,7 @@ func classifyCloudError(err *genericarmclient.CloudError) core.ErrorClassificati
 		"PrivateIPAddressInReservedRange",
 		"PrivateIPAddressNotInSubnet",
 		"PropertyChangeNotAllowed",
+		"RegionIsOfferRestricted",
 		"RequestDisallowedByPolicy", // TODO: Technically could probably retry through this?
 		"ReservedResourceName",
 		"SkuNotAvailable",

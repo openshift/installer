@@ -18,6 +18,7 @@ package securitygroups
 
 import (
 	"context"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
@@ -25,7 +26,6 @@ import (
 	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
@@ -33,10 +33,11 @@ import (
 type azureClient struct {
 	securitygroups *armnetwork.SecurityGroupsClient
 	auth           azure.Authorizer
+	apiCallTimeout time.Duration
 }
 
 // newClient creates a new security groups client from an authorizer.
-func newClient(auth azure.Authorizer) (*azureClient, error) {
+func newClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureClient, error) {
 	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create securitygroups client options")
@@ -45,7 +46,7 @@ func newClient(auth azure.Authorizer) (*azureClient, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create armnetwork client factory")
 	}
-	return &azureClient{factory.NewSecurityGroupsClient(), auth}, nil
+	return &azureClient{factory.NewSecurityGroupsClient(), auth, apiCallTimeout}, nil
 }
 
 // Get gets the specified network security group.
@@ -98,7 +99,7 @@ func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.Resou
 		return nil, nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureCallTimeout)
+	ctx, cancel := context.WithTimeout(ctx, ac.apiCallTimeout)
 	defer cancel()
 
 	pollOpts := &runtime.PollUntilDoneOptions{Frequency: async.DefaultPollerFrequency}
@@ -126,7 +127,7 @@ func (ac *azureClient) DeleteAsync(ctx context.Context, spec azure.ResourceSpecG
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureCallTimeout)
+	ctx, cancel := context.WithTimeout(ctx, ac.apiCallTimeout)
 	defer cancel()
 
 	pollOpts := &runtime.PollUntilDoneOptions{Frequency: async.DefaultPollerFrequency}

@@ -3,7 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601
 ├── APIVersion: Enum (1 value)
 │   └── "2021-06-01"
 ├── Workspace: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (19 properties)
 │   │   ├── AzureADOnlyAuthentication: *bool
 │   │   ├── AzureName: string
@@ -251,7 +251,7 @@ github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601
 │   └── Tags: map[string]string
 ├── WorkspacesBigDataPool: Resource
 │   ├── Owner: Workspace
-│   ├── Spec: Object (20 properties)
+│   ├── Spec: Object (21 properties)
 │   │   ├── AutoPause: *Object (2 properties)
 │   │   │   ├── DelayInMinutes: *int
 │   │   │   └── Enabled: *bool
@@ -260,6 +260,7 @@ github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601
 │   │   │   ├── MaxNodeCount: *int
 │   │   │   └── MinNodeCount: *int
 │   │   ├── AzureName: string
+│   │   ├── CacheSize: *int
 │   │   ├── CustomLibraries: Object (4 properties)[]
 │   │   │   ├── ContainerName: *string
 │   │   │   ├── Name: *string
@@ -427,7 +428,7 @@ github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601
 └── Workspaces_BigDataPool_Spec_ARM: Object (4 properties)
     ├── Location: *string
     ├── Name: string
-    ├── Properties: *Object (16 properties)
+    ├── Properties: *Object (17 properties)
     │   ├── AutoPause: *Object (2 properties)
     │   │   ├── DelayInMinutes: *int
     │   │   └── Enabled: *bool
@@ -435,6 +436,7 @@ github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601
     │   │   ├── Enabled: *bool
     │   │   ├── MaxNodeCount: *int
     │   │   └── MinNodeCount: *int
+    │   ├── CacheSize: *int
     │   ├── CustomLibraries: Object (4 properties)[]
     │   │   ├── ContainerName: *string
     │   │   ├── Name: *string

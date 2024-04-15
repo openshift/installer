@@ -5,7 +5,7 @@ package v1api20201201
 
 import (
 	"fmt"
-	v20201201s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20201201storage"
+	v20201201s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20201201/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -129,6 +129,15 @@ func (rule *RedisFirewallRule) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (rule *RedisFirewallRule) GetStatus() genruntime.ConvertibleStatus {
 	return &rule.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (rule *RedisFirewallRule) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Cache/redis/firewallRules"

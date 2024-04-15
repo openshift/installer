@@ -5,7 +5,7 @@ package v1api20200930
 
 import (
 	"fmt"
-	v20200930s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20200930storage"
+	v20200930s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20200930/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &Snapshot{}
 func (snapshot *Snapshot) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20200930s.Snapshot)
 	if !ok {
-		return fmt.Errorf("expected compute/v1api20200930storage/Snapshot but received %T instead", hub)
+		return fmt.Errorf("expected compute/v1api20200930/storage/Snapshot but received %T instead", hub)
 	}
 
 	return snapshot.AssignProperties_From_Snapshot(source)
@@ -61,7 +61,7 @@ func (snapshot *Snapshot) ConvertFrom(hub conversion.Hub) error {
 func (snapshot *Snapshot) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20200930s.Snapshot)
 	if !ok {
-		return fmt.Errorf("expected compute/v1api20200930storage/Snapshot but received %T instead", hub)
+		return fmt.Errorf("expected compute/v1api20200930/storage/Snapshot but received %T instead", hub)
 	}
 
 	return snapshot.AssignProperties_To_Snapshot(destination)
@@ -126,6 +126,15 @@ func (snapshot *Snapshot) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (snapshot *Snapshot) GetStatus() genruntime.ConvertibleStatus {
 	return &snapshot.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (snapshot *Snapshot) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Compute/snapshots"

@@ -112,7 +112,7 @@ func (s *Service[C, D]) CreateOrUpdateResource(ctx context.Context, spec azure.R
 			return nil, errWrapped
 		}
 		s.Scope.SetLongRunningOperationState(future)
-		return nil, azure.WithTransientError(azure.NewOperationNotDoneError(future), requeueTime())
+		return nil, azure.WithTransientError(azure.NewOperationNotDoneError(future), requeueTime(s.Scope))
 	}
 
 	// Once the operation is done, delete the long-running operation state. Even if the operation ended with
@@ -156,7 +156,7 @@ func (s *Service[C, D]) DeleteResource(ctx context.Context, spec azure.ResourceS
 			return errors.Wrap(err, "failed to convert poller to future")
 		}
 		s.Scope.SetLongRunningOperationState(future)
-		return azure.WithTransientError(azure.NewOperationNotDoneError(future), requeueTime())
+		return azure.WithTransientError(azure.NewOperationNotDoneError(future), requeueTime(s.Scope))
 	}
 
 	// Once the operation is done, delete the long-running operation state. Even if the operation ended with
@@ -174,8 +174,8 @@ func (s *Service[C, D]) DeleteResource(ctx context.Context, spec azure.ResourceS
 // requeueTime returns the time to wait before requeuing a reconciliation.
 // It would be ideal to use the "retry-after" header from the API response, but
 // that is not readily accessible in the SDK v2 Poller framework.
-func requeueTime() time.Duration {
-	return reconciler.DefaultReconcilerRequeue
+func requeueTime(timeouts azure.AsyncReconciler) time.Duration {
+	return timeouts.DefaultedReconcilerRequeue()
 }
 
 // getRetryAfterFromError returns the time.Duration from the http.Response in the azcore.ResponseError.

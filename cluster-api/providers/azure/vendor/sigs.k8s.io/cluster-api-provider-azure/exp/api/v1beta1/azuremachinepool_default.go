@@ -37,22 +37,9 @@ func (amp *AzureMachinePool) SetDefaults(client client.Client) error {
 		errs = append(errs, errors.Wrap(err, "failed to set default SSH public key"))
 	}
 
-	machinePool, err := azureutil.FindParentMachinePoolWithRetry(amp.Name, client, 5)
-	if err != nil {
-		errs = append(errs, errors.Wrap(err, "failed to find parent machine pool"))
+	if err := amp.SetIdentityDefaults(client); err != nil {
+		errs = append(errs, errors.Wrap(err, "failed to set default managed identity defaults"))
 	}
-
-	ownerAzureClusterName, ownerAzureClusterNamespace, err := infrav1.GetOwnerAzureClusterNameAndNamespace(client, machinePool.Spec.ClusterName, machinePool.Namespace, 5)
-	if err != nil {
-		errs = append(errs, errors.Wrap(err, "failed to get owner cluster"))
-	}
-
-	subscriptionID, err := infrav1.GetSubscriptionID(client, ownerAzureClusterName, ownerAzureClusterNamespace, 5)
-	if err != nil {
-		errs = append(errs, errors.Wrap(err, "failed to get subscription ID"))
-	}
-
-	amp.SetIdentityDefaults(subscriptionID)
 	amp.SetDiagnosticsDefaults()
 	amp.SetNetworkInterfacesDefaults()
 
@@ -73,14 +60,29 @@ func (amp *AzureMachinePool) SetDefaultSSHPublicKey() error {
 }
 
 // SetIdentityDefaults sets the defaults for VMSS Identity.
-func (amp *AzureMachinePool) SetIdentityDefaults(subscriptionID string) {
+func (amp *AzureMachinePool) SetIdentityDefaults(client client.Client) error {
 	// Ensure the deprecated fields and new fields are not populated simultaneously
 	if amp.Spec.RoleAssignmentName != "" && amp.Spec.SystemAssignedIdentityRole != nil && amp.Spec.SystemAssignedIdentityRole.Name != "" {
 		// Both the deprecated and the new fields are both set, return without changes
 		// and reject the request in the validating webhook which runs later.
-		return
+		return nil
 	}
 	if amp.Spec.Identity == infrav1.VMIdentitySystemAssigned {
+		machinePool, err := azureutil.FindParentMachinePoolWithRetry(amp.Name, client, 5)
+		if err != nil {
+			return errors.Wrap(err, "failed to find parent machine pool")
+		}
+
+		ownerAzureClusterName, ownerAzureClusterNamespace, err := infrav1.GetOwnerAzureClusterNameAndNamespace(client, machinePool.Spec.ClusterName, machinePool.Namespace, 5)
+		if err != nil {
+			return errors.Wrap(err, "failed to get owner cluster")
+		}
+
+		subscriptionID, err := infrav1.GetSubscriptionID(client, ownerAzureClusterName, ownerAzureClusterNamespace, 5)
+		if err != nil {
+			return errors.Wrap(err, "failed to get subscription ID")
+		}
+
 		if amp.Spec.SystemAssignedIdentityRole == nil {
 			amp.Spec.SystemAssignedIdentityRole = &infrav1.SystemAssignedIdentityRole{}
 		}
@@ -99,6 +101,7 @@ func (amp *AzureMachinePool) SetIdentityDefaults(subscriptionID string) {
 			amp.Spec.SystemAssignedIdentityRole.DefinitionID = fmt.Sprintf("/subscriptions/%s/providers/Microsoft.Authorization/roleDefinitions/%s", subscriptionID, infrav1.ContributorRoleID)
 		}
 	}
+	return nil
 }
 
 // SetSpotEvictionPolicyDefaults sets the defaults for the spot VM eviction policy.

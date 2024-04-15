@@ -109,7 +109,7 @@ func validateSubnetTemplates(subnets SubnetTemplatesSpec, vnet VnetTemplateSpec,
 				rule,
 				fld.Index(i).Child("securityGroup").Child("securityGroup").Child("securityRules").Index(j),
 			); err != nil {
-				allErrs = append(allErrs, err)
+				allErrs = append(allErrs, err...)
 			}
 		}
 		allErrs = append(allErrs, validateSubnetCIDR(subnet.CIDRBlocks, vnet.CIDRBlocks, fld.Index(i).Child("cidrBlocks"))...)

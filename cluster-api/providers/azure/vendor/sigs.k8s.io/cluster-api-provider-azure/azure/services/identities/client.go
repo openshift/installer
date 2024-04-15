@@ -39,12 +39,25 @@ type AzureClient struct {
 }
 
 // NewClient creates a new MSI client from an authorizer.
-func NewClient(auth azure.Authorizer) (*AzureClient, error) {
+func NewClient(auth azure.Authorizer) (Client, error) {
 	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create identities client options")
 	}
 	factory, err := armmsi.NewClientFactory(auth.SubscriptionID(), auth.Token(), opts)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create armmsi client factory")
+	}
+	return &AzureClient{factory.NewUserAssignedIdentitiesClient()}, nil
+}
+
+// NewClientBySub creates a new MSI client with a given subscriptionID.
+func NewClientBySub(auth azure.Authorizer, subscriptionID string) (Client, error) {
+	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create identities client options")
+	}
+	factory, err := armmsi.NewClientFactory(subscriptionID, auth.Token(), opts)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create armmsi client factory")
 	}

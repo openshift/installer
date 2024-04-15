@@ -5,7 +5,7 @@ package v1api20180501
 
 import (
 	"fmt"
-	v20180501s "github.com/Azure/azure-service-operator/v2/api/network/v1api20180501storage"
+	v20180501s "github.com/Azure/azure-service-operator/v2/api/network/v1api20180501/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &DnsZonesSRVRecord{}
 func (record *DnsZonesSRVRecord) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20180501s.DnsZonesSRVRecord)
 	if !ok {
-		return fmt.Errorf("expected network/v1api20180501storage/DnsZonesSRVRecord but received %T instead", hub)
+		return fmt.Errorf("expected network/v1api20180501/storage/DnsZonesSRVRecord but received %T instead", hub)
 	}
 
 	return record.AssignProperties_From_DnsZonesSRVRecord(source)
@@ -61,7 +61,7 @@ func (record *DnsZonesSRVRecord) ConvertFrom(hub conversion.Hub) error {
 func (record *DnsZonesSRVRecord) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20180501s.DnsZonesSRVRecord)
 	if !ok {
-		return fmt.Errorf("expected network/v1api20180501storage/DnsZonesSRVRecord but received %T instead", hub)
+		return fmt.Errorf("expected network/v1api20180501/storage/DnsZonesSRVRecord but received %T instead", hub)
 	}
 
 	return record.AssignProperties_To_DnsZonesSRVRecord(destination)
@@ -126,6 +126,15 @@ func (record *DnsZonesSRVRecord) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (record *DnsZonesSRVRecord) GetStatus() genruntime.ConvertibleStatus {
 	return &record.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (record *DnsZonesSRVRecord) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Network/dnsZones/SRV"

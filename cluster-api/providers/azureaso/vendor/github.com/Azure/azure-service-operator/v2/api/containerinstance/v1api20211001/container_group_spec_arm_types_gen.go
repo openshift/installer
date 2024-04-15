@@ -306,7 +306,7 @@ type LogAnalytics_ARM struct {
 	WorkspaceId *string `json:"workspaceId,omitempty"`
 
 	// WorkspaceKey: The workspace key for log analytics
-	WorkspaceKey        string  `json:"workspaceKey,omitempty"`
+	WorkspaceKey        *string `json:"workspaceKey,omitempty"`
 	WorkspaceResourceId *string `json:"workspaceResourceId,omitempty"`
 }
 

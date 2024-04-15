@@ -17,13 +17,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	containerservice "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201storage"
+	containerservice "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
 	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/extensions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 )
@@ -180,4 +181,43 @@ func clusterProvisioningStateBlocksReconciliation(provisioningState *string) boo
 	}
 
 	return !nonBlockingManagedClusterProvisioningStates.Contains(strings.ToLower(*provisioningState))
+}
+
+var _ extensions.ErrorClassifier = &ManagedClusterExtension{}
+
+// ClassifyError evaluates the provided error, returning including whether it is fatal or can be retried.
+// cloudError is the error returned from ARM.
+// apiVersion is the ARM API version used for the request.
+// log is a logger than can be used for telemetry.
+// next is the next implementation to call.
+func (ext *ManagedClusterExtension) ClassifyError(
+	cloudError *genericarmclient.CloudError,
+	apiVersion string,
+	log logr.Logger,
+	next extensions.ErrorClassifierFunc,
+) (core.CloudErrorDetails, error) {
+	details, err := next(cloudError)
+	if err != nil {
+		return core.CloudErrorDetails{}, err
+	}
+
+	if isRetryableClusterError(cloudError) {
+		details.Classification = core.ErrorRetryable
+	}
+
+	return details, nil
+}
+
+func isRetryableClusterError(err *genericarmclient.CloudError) bool {
+	if err == nil {
+		return false
+	}
+
+	// A CustomKubeletIdentityMissingPermissionError can occur if the user-assigned identity required by the cluster
+	// hasn't yet been provisioned; we want to retry so that we finish provisioning the cluster once it is available.
+	if err.Code() == "CustomKubeletIdentityMissingPermissionError" {
+		return true
+	}
+
+	return false
 }

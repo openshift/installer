@@ -54,11 +54,11 @@ type (
 
 // NewService creates a new service.
 func NewService(scope ScaleSetVMScope) (*Service, error) {
-	client, err := newClient(scope)
+	client, err := newClient(scope, scope.DefaultedAzureCallTimeout())
 	if err != nil {
 		return nil, err
 	}
-	vmClient, err := virtualmachines.NewClient(scope)
+	vmClient, err := virtualmachines.NewClient(scope, scope.DefaultedAzureCallTimeout())
 	if err != nil {
 		return nil, err
 	}

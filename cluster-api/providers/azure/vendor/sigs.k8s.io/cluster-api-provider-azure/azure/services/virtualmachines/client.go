@@ -18,17 +18,14 @@ package virtualmachines
 
 import (
 	"context"
-	"fmt"
+	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
-	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
@@ -36,12 +33,12 @@ type (
 	// AzureClient contains the Azure go-sdk Client.
 	AzureClient struct {
 		virtualmachines *armcompute.VirtualMachinesClient
+		apiCallTimeout  time.Duration
 	}
 
 	// Client provides operations on Azure virtual machine resources.
 	Client interface {
 		Get(context.Context, azure.ResourceSpecGetter) (interface{}, error)
-		GetByID(context.Context, string) (armcompute.VirtualMachine, error)
 		CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters interface{}) (result interface{}, poller *runtime.Poller[armcompute.VirtualMachinesClientCreateOrUpdateResponse], err error)
 		DeleteAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string) (poller *runtime.Poller[armcompute.VirtualMachinesClientDeleteResponse], err error)
 	}
@@ -50,7 +47,7 @@ type (
 var _ Client = &AzureClient{}
 
 // NewClient creates a VMs client from an authorizer.
-func NewClient(auth azure.Authorizer) (*AzureClient, error) {
+func NewClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*AzureClient, error) {
 	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create virtualmachines client options")
@@ -59,7 +56,7 @@ func NewClient(auth azure.Authorizer) (*AzureClient, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create armcompute client factory")
 	}
-	return &AzureClient{factory.NewVirtualMachinesClient()}, nil
+	return &AzureClient{factory.NewVirtualMachinesClient(), apiCallTimeout}, nil
 }
 
 // Get retrieves information about the model view or the instance view of a virtual machine.
@@ -72,29 +69,6 @@ func (ac *AzureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (
 		return nil, err
 	}
 	return resp.VirtualMachine, nil
-}
-
-// GetByID retrieves information about the model or instance view of a virtual machine.
-func (ac *AzureClient) GetByID(ctx context.Context, resourceID string) (armcompute.VirtualMachine, error) {
-	ctx, log, done := tele.StartSpanWithLogger(ctx, "virtualmachines.AzureClient.GetByID")
-	defer done()
-
-	parsed, err := azureutil.ParseResourceID(resourceID)
-	if err != nil {
-		return armcompute.VirtualMachine{}, errors.Wrap(err, fmt.Sprintf("failed parsing the VM resource id %q", resourceID))
-	}
-
-	log.V(4).Info("parsed VM resourceID", "parsed", parsed)
-
-	result, err := ac.Get(ctx, newResourceAdaptor(parsed))
-	if err != nil {
-		return armcompute.VirtualMachine{}, err
-	}
-
-	if vm, ok := result.(armcompute.VirtualMachine); ok {
-		return vm, nil
-	}
-	return armcompute.VirtualMachine{}, errors.Errorf("expected VirtualMachine but got %T", result)
 }
 
 // CreateOrUpdateAsync creates or updates a virtual machine asynchronously.
@@ -115,7 +89,7 @@ func (ac *AzureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.Resou
 		return nil, nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureCallTimeout)
+	ctx, cancel := context.WithTimeout(ctx, ac.apiCallTimeout)
 	defer cancel()
 
 	pollOpts := &runtime.PollUntilDoneOptions{Frequency: async.DefaultPollerFrequency}
@@ -144,7 +118,7 @@ func (ac *AzureClient) DeleteAsync(ctx context.Context, spec azure.ResourceSpecG
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureCallTimeout)
+	ctx, cancel := context.WithTimeout(ctx, ac.apiCallTimeout)
 	defer cancel()
 
 	pollOpts := &runtime.PollUntilDoneOptions{Frequency: async.DefaultPollerFrequency}
@@ -158,21 +132,3 @@ func (ac *AzureClient) DeleteAsync(ctx context.Context, spec azure.ResourceSpecG
 	// if the operation completed, return a nil poller.
 	return nil, err
 }
-
-// resourceAdaptor implements the ResourceSpecGetter interface for an arm.ResourceID.
-type resourceAdaptor struct {
-	resource *arm.ResourceID
-}
-
-func newResourceAdaptor(resource *arm.ResourceID) *resourceAdaptor {
-	return &resourceAdaptor{resource: resource}
-}
-
-func (r *resourceAdaptor) OwnerResourceName() string { return r.resource.Parent.Name }
-
-func (r *resourceAdaptor) Parameters(ctx context.Context, existing interface{}) (interface{}, error) {
-	return nil, nil // Not implemented
-}
-func (r *resourceAdaptor) ResourceGroupName() string { return r.resource.ResourceGroupName }
-
-func (r *resourceAdaptor) ResourceName() string { return r.resource.Name }

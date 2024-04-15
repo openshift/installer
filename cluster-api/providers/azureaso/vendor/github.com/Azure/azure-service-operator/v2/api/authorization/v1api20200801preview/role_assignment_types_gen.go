@@ -5,7 +5,7 @@ package v1api20200801preview
 
 import (
 	"fmt"
-	v20200801ps "github.com/Azure/azure-service-operator/v2/api/authorization/v1api20200801previewstorage"
+	v20200801ps "github.com/Azure/azure-service-operator/v2/api/authorization/v1api20200801preview/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -49,22 +49,36 @@ var _ conversion.Convertible = &RoleAssignment{}
 
 // ConvertFrom populates our RoleAssignment from the provided hub RoleAssignment
 func (assignment *RoleAssignment) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20200801ps.RoleAssignment)
-	if !ok {
-		return fmt.Errorf("expected authorization/v1api20200801previewstorage/RoleAssignment but received %T instead", hub)
+	// intermediate variable for conversion
+	var source v20200801ps.RoleAssignment
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from hub to source")
 	}
 
-	return assignment.AssignProperties_From_RoleAssignment(source)
+	err = assignment.AssignProperties_From_RoleAssignment(&source)
+	if err != nil {
+		return errors.Wrap(err, "converting from source to assignment")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub RoleAssignment from our RoleAssignment
 func (assignment *RoleAssignment) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20200801ps.RoleAssignment)
-	if !ok {
-		return fmt.Errorf("expected authorization/v1api20200801previewstorage/RoleAssignment but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination v20200801ps.RoleAssignment
+	err := assignment.AssignProperties_To_RoleAssignment(&destination)
+	if err != nil {
+		return errors.Wrap(err, "converting to destination from assignment")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from destination to hub")
 	}
 
-	return assignment.AssignProperties_To_RoleAssignment(destination)
+	return nil
 }
 
 // +kubebuilder:webhook:path=/mutate-authorization-azure-com-v1api20200801preview-roleassignment,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=authorization.azure.com,resources=roleassignments,verbs=create;update,versions=v1api20200801preview,name=default.v1api20200801preview.roleassignments.authorization.azure.com,admissionReviewVersions=v1
@@ -82,17 +96,6 @@ func (assignment *RoleAssignment) Default() {
 
 // defaultImpl applies the code generated defaults to the RoleAssignment resource
 func (assignment *RoleAssignment) defaultImpl() {}
-
-var _ genruntime.ImportableResource = &RoleAssignment{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (assignment *RoleAssignment) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*RoleAssignment_STATUS); ok {
-		return assignment.Spec.Initialize_From_RoleAssignment_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type RoleAssignment_STATUS but received %T instead", status)
-}
 
 var _ genruntime.KubernetesResource = &RoleAssignment{}
 
@@ -119,6 +122,15 @@ func (assignment *RoleAssignment) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (assignment *RoleAssignment) GetStatus() genruntime.ConvertibleStatus {
 	return &assignment.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (assignment *RoleAssignment) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Authorization/roleAssignments"
@@ -671,44 +683,6 @@ func (assignment *RoleAssignment_Spec) AssignProperties_To_RoleAssignment_Spec(d
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_RoleAssignment_STATUS populates our RoleAssignment_Spec from the provided source RoleAssignment_STATUS
-func (assignment *RoleAssignment_Spec) Initialize_From_RoleAssignment_STATUS(source *RoleAssignment_STATUS) error {
-
-	// Condition
-	assignment.Condition = genruntime.ClonePointerToString(source.Condition)
-
-	// ConditionVersion
-	assignment.ConditionVersion = genruntime.ClonePointerToString(source.ConditionVersion)
-
-	// DelegatedManagedIdentityResourceId
-	assignment.DelegatedManagedIdentityResourceId = genruntime.ClonePointerToString(source.DelegatedManagedIdentityResourceId)
-
-	// Description
-	assignment.Description = genruntime.ClonePointerToString(source.Description)
-
-	// PrincipalId
-	assignment.PrincipalId = genruntime.ClonePointerToString(source.PrincipalId)
-
-	// PrincipalType
-	if source.PrincipalType != nil {
-		principalType := RoleAssignmentProperties_PrincipalType(*source.PrincipalType)
-		assignment.PrincipalType = &principalType
-	} else {
-		assignment.PrincipalType = nil
-	}
-
-	// RoleDefinitionReference
-	if source.RoleDefinitionId != nil {
-		roleDefinitionReference := genruntime.CreateResourceReferenceFromARMID(*source.RoleDefinitionId)
-		assignment.RoleDefinitionReference = &roleDefinitionReference
-	} else {
-		assignment.RoleDefinitionReference = nil
 	}
 
 	// No error

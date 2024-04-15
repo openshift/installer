@@ -3,10 +3,6 @@ repos:
   rev: v8.16.3
   hooks:
   - id: gitleaks
-- repo: https://github.com/golangci/golangci-lint
-  rev: v1.52.2
-  hooks:
-  - id: golangci-lint
 - repo: https://github.com/jumanjihouse/pre-commit-hooks
   rev: 3.0.0
   hooks:
@@ -17,41 +13,49 @@ repos:
   - id: end-of-file-fixer
   - id: trailing-whitespace
 - repo: https://github.com/pylint-dev/pylint
-  rev: v2.17.2
+  rev: v3.0.2
   hooks:
   - id: pylint
+    exclude: ^hack/boilerplate/boilerplate.py$
 - repo: local
   hooks:
   - id: make-verify-boilerplate
-    name: Run make verify-boilerplate
+    name: Verify boilerplate
     description: Runs `make verify-boilerplate` to check for boilerplate headers.
     entry: make verify-boilerplate
     language: system
 - repo: local
   hooks:
   - id: make-verify-modules
-    name: Run make verify-modules
+    name: Verify modules
     description: Runs `make verify-modules` to verify go.sum go.mod are the latest.
     entry: make verify-modules
     language: system
 - repo: local
   hooks:
   - id: make-verify-shellcheck
-    name: Run make verify-shellcheck
+    name: Verify shellcheck
     description: Runs `make verify-shellcheck` to verify shell files are passing lint.
     entry: make verify-shellcheck
     language: system
 - repo: local
   hooks:
   - id: make-verify-tiltfile
-    name: Run make verify-tiltfile
+    name: Verify tiltfile
     description: Runs `make verify-tiltfile` to verify Tiltfile format.
     entry: make verify-tiltfile
     language: system
 - repo: local
   hooks:
   - id: make-codespell
-    name: Run make verify-codespell
+    name: Verify codespell
     description: Runs `make verify-codespell` to verify codespell format.
     entry: make verify-codespell
+    language: system
+- repo: local
+  hooks:
+  - id: make-lint
+    name: Lint codebase
+    description: Runs `make lint` to check for linter errors.
+    entry: make lint
     language: system

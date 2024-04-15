@@ -5,7 +5,7 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101storage"
+	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &ServersFirewallRule{}
 func (rule *ServersFirewallRule) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20211101s.ServersFirewallRule)
 	if !ok {
-		return fmt.Errorf("expected sql/v1api20211101storage/ServersFirewallRule but received %T instead", hub)
+		return fmt.Errorf("expected sql/v1api20211101/storage/ServersFirewallRule but received %T instead", hub)
 	}
 
 	return rule.AssignProperties_From_ServersFirewallRule(source)
@@ -61,7 +61,7 @@ func (rule *ServersFirewallRule) ConvertFrom(hub conversion.Hub) error {
 func (rule *ServersFirewallRule) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20211101s.ServersFirewallRule)
 	if !ok {
-		return fmt.Errorf("expected sql/v1api20211101storage/ServersFirewallRule but received %T instead", hub)
+		return fmt.Errorf("expected sql/v1api20211101/storage/ServersFirewallRule but received %T instead", hub)
 	}
 
 	return rule.AssignProperties_To_ServersFirewallRule(destination)
@@ -126,6 +126,15 @@ func (rule *ServersFirewallRule) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (rule *ServersFirewallRule) GetStatus() genruntime.ConvertibleStatus {
 	return &rule.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (rule *ServersFirewallRule) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Sql/servers/firewallRules"

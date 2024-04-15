@@ -5,9 +5,7 @@ package customizations
 
 import (
 	v20210515 "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20210515"
-	v20210515s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20210515storage"
-	v1beta20210515 "github.com/Azure/azure-service-operator/v2/api/documentdb/v1beta20210515"
-	v1beta20210515s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1beta20210515storage"
+	v20210515s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20210515/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -18,7 +16,5 @@ type MongodbDatabaseCollectionThroughputSettingExtension struct {
 func (extension *MongodbDatabaseCollectionThroughputSettingExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20210515.MongodbDatabaseCollectionThroughputSetting{},
-		&v20210515s.MongodbDatabaseCollectionThroughputSetting{},
-		&v1beta20210515.MongodbDatabaseCollectionThroughputSetting{},
-		&v1beta20210515s.MongodbDatabaseCollectionThroughputSetting{}}
+		&v20210515s.MongodbDatabaseCollectionThroughputSetting{}}
 }

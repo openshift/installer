@@ -84,6 +84,9 @@ type Values struct {
 
 	// UseWorkloadIdentityAuth boolean is used to determine if we're using Workload Identity authentication for global credential
 	UseWorkloadIdentityAuth bool
+
+	// UserAgentSuffix is appended to the default User-Agent for Azure HTTP clients.
+	UserAgentSuffix string
 }
 
 var _ fmt.Stringer = Values{}
@@ -101,7 +104,8 @@ func (v Values) String() string {
 	builder.WriteString(fmt.Sprintf("ResourceManagerEndpoint:%s/", v.ResourceManagerEndpoint))
 	builder.WriteString(fmt.Sprintf("ResourceManagerAudience:%s/", v.ResourceManagerAudience))
 	builder.WriteString(fmt.Sprintf("AzureAuthorityHost:%s/", v.AzureAuthorityHost))
-	builder.WriteString(fmt.Sprintf("UseWorkloadIdentityAuth:%t", v.UseWorkloadIdentityAuth))
+	builder.WriteString(fmt.Sprintf("UseWorkloadIdentityAuth:%t/", v.UseWorkloadIdentityAuth))
+	builder.WriteString(fmt.Sprintf("UserAgentSuffix:%s", v.UserAgentSuffix))
 
 	return builder.String()
 }
@@ -173,6 +177,8 @@ func ReadFromEnvironment() (Values, error) {
 
 	// Ignoring error here, as any other value or empty value means we should default to false
 	result.UseWorkloadIdentityAuth, _ = strconv.ParseBool(os.Getenv(config.UseWorkloadIdentityAuth))
+
+	result.UserAgentSuffix = os.Getenv(config.UserAgentSuffix)
 
 	if err != nil {
 		return result, errors.Wrapf(err, "parsing %q", config.SyncPeriod)

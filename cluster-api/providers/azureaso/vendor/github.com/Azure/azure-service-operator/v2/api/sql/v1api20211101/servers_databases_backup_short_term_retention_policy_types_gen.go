@@ -5,7 +5,7 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101storage"
+	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &ServersDatabasesBackupShortTermRetentionPolicy{}
 func (policy *ServersDatabasesBackupShortTermRetentionPolicy) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20211101s.ServersDatabasesBackupShortTermRetentionPolicy)
 	if !ok {
-		return fmt.Errorf("expected sql/v1api20211101storage/ServersDatabasesBackupShortTermRetentionPolicy but received %T instead", hub)
+		return fmt.Errorf("expected sql/v1api20211101/storage/ServersDatabasesBackupShortTermRetentionPolicy but received %T instead", hub)
 	}
 
 	return policy.AssignProperties_From_ServersDatabasesBackupShortTermRetentionPolicy(source)
@@ -61,7 +61,7 @@ func (policy *ServersDatabasesBackupShortTermRetentionPolicy) ConvertFrom(hub co
 func (policy *ServersDatabasesBackupShortTermRetentionPolicy) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20211101s.ServersDatabasesBackupShortTermRetentionPolicy)
 	if !ok {
-		return fmt.Errorf("expected sql/v1api20211101storage/ServersDatabasesBackupShortTermRetentionPolicy but received %T instead", hub)
+		return fmt.Errorf("expected sql/v1api20211101/storage/ServersDatabasesBackupShortTermRetentionPolicy but received %T instead", hub)
 	}
 
 	return policy.AssignProperties_To_ServersDatabasesBackupShortTermRetentionPolicy(destination)
@@ -119,6 +119,14 @@ func (policy *ServersDatabasesBackupShortTermRetentionPolicy) GetSpec() genrunti
 // GetStatus returns the status of this resource
 func (policy *ServersDatabasesBackupShortTermRetentionPolicy) GetStatus() genruntime.ConvertibleStatus {
 	return &policy.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (policy *ServersDatabasesBackupShortTermRetentionPolicy) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Sql/servers/databases/backupShortTermRetentionPolicies"

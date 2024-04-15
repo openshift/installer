@@ -29,6 +29,8 @@ const (
 	DefaultControlPlaneSubnetCIDR = "10.0.0.0/16"
 	// DefaultNodeSubnetCIDR is the default Node Subnet CIDR.
 	DefaultNodeSubnetCIDR = "10.1.0.0/16"
+	// DefaultClusterSubnetCIDR is the default Cluster Subnet CIDR.
+	DefaultClusterSubnetCIDR = "10.0.0.0/16"
 	// DefaultNodeSubnetCIDRPattern is the pattern that will be used to generate the default subnets CIDRs.
 	DefaultNodeSubnetCIDRPattern = "10.%d.0.0/16"
 	// DefaultAzureBastionSubnetCIDR is the default Subnet CIDR for AzureBastion.
@@ -84,24 +86,24 @@ func (c *AzureCluster) setVnetDefaults() {
 }
 
 func (c *AzureCluster) setSubnetDefaults() {
-	cpSubnet, err := c.Spec.NetworkSpec.GetControlPlaneSubnet()
-	if err != nil {
+	clusterSubnet, err := c.Spec.NetworkSpec.GetSubnet(SubnetCluster)
+	clusterSubnetExists := err == nil
+	if clusterSubnetExists {
+		clusterSubnet.setClusterSubnetDefaults(c.ObjectMeta.Name)
+		c.Spec.NetworkSpec.UpdateSubnet(clusterSubnet, SubnetCluster)
+	}
+
+	/* if there is a cp subnet set defaults
+	   if no cp subnet and cluster subnet create a default cp subnet */
+	cpSubnet, errcp := c.Spec.NetworkSpec.GetSubnet(SubnetControlPlane)
+	if errcp == nil {
+		cpSubnet.setControlPlaneSubnetDefaults(c.ObjectMeta.Name)
+		c.Spec.NetworkSpec.UpdateSubnet(cpSubnet, SubnetControlPlane)
+	} else if !clusterSubnetExists {
 		cpSubnet = SubnetSpec{SubnetClassSpec: SubnetClassSpec{Role: SubnetControlPlane}}
+		cpSubnet.setControlPlaneSubnetDefaults(c.ObjectMeta.Name)
 		c.Spec.NetworkSpec.Subnets = append(c.Spec.NetworkSpec.Subnets, cpSubnet)
 	}
-
-	if cpSubnet.Name == "" {
-		cpSubnet.Name = generateControlPlaneSubnetName(c.ObjectMeta.Name)
-	}
-
-	cpSubnet.SubnetClassSpec.setDefaults(DefaultControlPlaneSubnetCIDR)
-
-	if cpSubnet.SecurityGroup.Name == "" {
-		cpSubnet.SecurityGroup.Name = generateControlPlaneSecurityGroupName(c.ObjectMeta.Name)
-	}
-	cpSubnet.SecurityGroup.SecurityGroupClass.setDefaults()
-
-	c.Spec.NetworkSpec.UpdateControlPlaneSubnet(cpSubnet)
 
 	var nodeSubnetFound bool
 	var nodeSubnetCounter int
@@ -111,36 +113,11 @@ func (c *AzureCluster) setSubnetDefaults() {
 		}
 		nodeSubnetCounter++
 		nodeSubnetFound = true
-		if subnet.Name == "" {
-			subnet.Name = withIndex(generateNodeSubnetName(c.ObjectMeta.Name), nodeSubnetCounter)
-		}
-		subnet.SubnetClassSpec.setDefaults(fmt.Sprintf(DefaultNodeSubnetCIDRPattern, nodeSubnetCounter))
-
-		if subnet.SecurityGroup.Name == "" {
-			subnet.SecurityGroup.Name = generateNodeSecurityGroupName(c.ObjectMeta.Name)
-		}
-		subnet.SecurityGroup.SecurityGroupClass.setDefaults()
-
-		if subnet.RouteTable.Name == "" {
-			subnet.RouteTable.Name = generateNodeRouteTableName(c.ObjectMeta.Name)
-		}
-
-		// NAT gateway only supports the use of IPv4 public IP addresses for outbound connectivity.
-		// So default use the NAT gateway for outbound traffic in IPv4 cluster instead of loadbalancer.
-		// We assume that if the ID is set, the subnet already exists so we shouldn't add a NAT gateway.
-		if !subnet.IsIPv6Enabled() && subnet.ID == "" {
-			if subnet.NatGateway.Name == "" {
-				subnet.NatGateway.Name = withIndex(generateNatGatewayName(c.ObjectMeta.Name), nodeSubnetCounter)
-			}
-			if subnet.NatGateway.NatGatewayIP.Name == "" {
-				subnet.NatGateway.NatGatewayIP.Name = generateNatGatewayIPName(subnet.NatGateway.Name)
-			}
-		}
-
+		subnet.setNodeSubnetDefaults(c.ObjectMeta.Name, nodeSubnetCounter)
 		c.Spec.NetworkSpec.Subnets[i] = subnet
 	}
 
-	if !nodeSubnetFound {
+	if !nodeSubnetFound && !clusterSubnetExists {
 		nodeSubnet := SubnetSpec{
 			SubnetClassSpec: SubnetClassSpec{
 				Role:       SubnetNode,
@@ -161,6 +138,67 @@ func (c *AzureCluster) setSubnetDefaults() {
 		}
 		c.Spec.NetworkSpec.Subnets = append(c.Spec.NetworkSpec.Subnets, nodeSubnet)
 	}
+}
+
+func (s *SubnetSpec) setNodeSubnetDefaults(clusterName string, index int) {
+	if s.Name == "" {
+		s.Name = withIndex(generateNodeSubnetName(clusterName), index)
+	}
+	s.SubnetClassSpec.setDefaults(fmt.Sprintf(DefaultNodeSubnetCIDRPattern, index))
+
+	if s.SecurityGroup.Name == "" {
+		s.SecurityGroup.Name = generateNodeSecurityGroupName(clusterName)
+	}
+	s.SecurityGroup.SecurityGroupClass.setDefaults()
+
+	if s.RouteTable.Name == "" {
+		s.RouteTable.Name = generateNodeRouteTableName(clusterName)
+	}
+
+	// NAT gateway only supports the use of IPv4 public IP addresses for outbound connectivity.
+	// So default use the NAT gateway for outbound traffic in IPv4 cluster instead of loadbalancer.
+	// We assume that if the ID is set, the subnet already exists so we shouldn't add a NAT gateway.
+	if !s.IsIPv6Enabled() && s.ID == "" {
+		if s.NatGateway.Name == "" {
+			s.NatGateway.Name = withIndex(generateNatGatewayName(clusterName), index)
+		}
+		if s.NatGateway.NatGatewayIP.Name == "" {
+			s.NatGateway.NatGatewayIP.Name = generateNatGatewayIPName(s.NatGateway.Name)
+		}
+	}
+}
+
+func (s *SubnetSpec) setControlPlaneSubnetDefaults(clusterName string) {
+	if s.Name == "" {
+		s.Name = generateControlPlaneSubnetName(clusterName)
+	}
+
+	s.SubnetClassSpec.setDefaults(DefaultControlPlaneSubnetCIDR)
+
+	if s.SecurityGroup.Name == "" {
+		s.SecurityGroup.Name = generateControlPlaneSecurityGroupName(clusterName)
+	}
+	s.SecurityGroup.SecurityGroupClass.setDefaults()
+}
+
+func (s *SubnetSpec) setClusterSubnetDefaults(clusterName string) {
+	if s.Name == "" {
+		s.Name = generateClusterSubnetSubnetName(clusterName)
+	}
+	if s.SecurityGroup.Name == "" {
+		s.SecurityGroup.Name = generateClusterSecurityGroupName(clusterName)
+	}
+	if s.RouteTable.Name == "" {
+		s.RouteTable.Name = generateClustereRouteTableName(clusterName)
+	}
+	if s.NatGateway.Name == "" {
+		s.NatGateway.Name = generateClusterNatGatewayName(clusterName)
+	}
+	if !s.IsIPv6Enabled() && s.ID == "" && s.NatGateway.NatGatewayIP.Name == "" {
+		s.NatGateway.NatGatewayIP.Name = generateNatGatewayIPName(s.NatGateway.Name)
+	}
+	s.setDefaults(DefaultClusterSubnetCIDR)
+	s.SecurityGroup.SecurityGroupClass.setDefaults()
 }
 
 func (c *AzureCluster) setVnetPeeringDefaults() {
@@ -217,7 +255,7 @@ func (c *AzureCluster) SetNodeOutboundLBDefaults() {
 
 		var needsOutboundLB bool
 		for _, subnet := range c.Spec.NetworkSpec.Subnets {
-			if subnet.Role == SubnetNode && subnet.IsIPv6Enabled() {
+			if (subnet.Role == SubnetNode || subnet.Role == SubnetCluster) && subnet.IsIPv6Enabled() {
 				needsOutboundLB = true
 				break
 			}
@@ -400,6 +438,11 @@ func generateVnetName(clusterName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, "vnet")
 }
 
+// generateClusterSubnetSubnetName generates a subnet name, based on the cluster name.
+func generateClusterSubnetSubnetName(clusterName string) string {
+	return fmt.Sprintf("%s-%s", clusterName, "subnet")
+}
+
 // generateControlPlaneSubnetName generates a node subnet name, based on the cluster name.
 func generateControlPlaneSubnetName(clusterName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, "controlplane-subnet")
@@ -420,6 +463,11 @@ func generateAzureBastionPublicIPName(clusterName string) string {
 	return fmt.Sprintf("%s-azure-bastion-pip", clusterName)
 }
 
+// generateClusterSecurityGroupName generates a security group name, based on the cluster name.
+func generateClusterSecurityGroupName(clusterName string) string {
+	return fmt.Sprintf("%s-%s", clusterName, "nsg")
+}
+
 // generateControlPlaneSecurityGroupName generates a control plane security group name, based on the cluster name.
 func generateControlPlaneSecurityGroupName(clusterName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, "controlplane-nsg")
@@ -428,6 +476,11 @@ func generateControlPlaneSecurityGroupName(clusterName string) string {
 // generateNodeSecurityGroupName generates a node security group name, based on the cluster name.
 func generateNodeSecurityGroupName(clusterName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, "node-nsg")
+}
+
+// generateClustereRouteTableName generates a route table name, based on the cluster name.
+func generateClustereRouteTableName(clusterName string) string {
+	return fmt.Sprintf("%s-%s", clusterName, "routetable")
 }
 
 // generateNodeRouteTableName generates a node route table name, based on the cluster name.
@@ -468,6 +521,11 @@ func generateNodeOutboundIPName(clusterName string) string {
 // generateControlPlaneOutboundIPName generates a public IP name, based on the cluster name.
 func generateControlPlaneOutboundIPName(clusterName string) string {
 	return fmt.Sprintf("pip-%s-controlplane-outbound", clusterName)
+}
+
+// generateClusterNatGatewayName generates a NAT gateway name.
+func generateClusterNatGatewayName(clusterName string) string {
+	return fmt.Sprintf("%s-%s", clusterName, "natgw")
 }
 
 // generateNatGatewayName generates a NAT gateway name.
