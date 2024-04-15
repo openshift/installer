@@ -2968,8 +2968,8 @@ sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240327041652-384c18
 sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240327041652-384c1894c61e/go.mod h1:y7Dj0vBUvq6PjNz5PYGEWyHSn5eOAULgMCfXiSzgKxY=
 sigs.k8s.io/cluster-api-provider-openstack v0.9.0 h1:ScwZIfT1kI88+qMzeO7ppMP9DvEzrfLHuYPg2p1mcho=
 sigs.k8s.io/cluster-api-provider-openstack v0.9.0/go.mod h1:ecR9lx4XbOr3Gg2CGNgM3wguuV6l31Nd5rUccE+xjKs=
-sigs.k8s.io/cluster-api-provider-vsphere v1.9.0 h1:tMGgDmUr2Q4/INM0cn1jZyxPxYGe8wWrk9l+8hrwPSw=
-sigs.k8s.io/cluster-api-provider-vsphere v1.9.0/go.mod h1:sovPL5JCGYBZdDiAKJNg2RTYp6SF+eLXhAqfUUf6mSY=
+sigs.k8s.io/cluster-api-provider-vsphere v1.9.3 h1:Kgo9XQYZyZVUYwzUWr351h1OJf8LYOIDPgsjt6Rqv2k=
+sigs.k8s.io/cluster-api-provider-vsphere v1.9.3/go.mod h1:t0z1hU7lR5olxrwNv9C3j5UJsjQ2KLdnQ1RaZiPkQ2A=
 sigs.k8s.io/controller-runtime v0.16.1-0.20231024080022-f1c5dd3851ce h1:zQZV2UuXjQgWF4m/fZRgvA/5lm9jqWl7cfxoNMMl4yA=
 sigs.k8s.io/controller-runtime v0.16.1-0.20231024080022-f1c5dd3851ce/go.mod h1:kDNDxdBG0vwQaukUg2+bsI/3/WMvaZaa3ZxP9VMVqNw=
 sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185 h1:wLsmaqTEgs3DIfNzr0u/AfPHSVJbWHj/eevcS4AFvFE=
