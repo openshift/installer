@@ -9,7 +9,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.12.1
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-vsphere
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -154,7 +154,7 @@ spec:
                 type: boolean
             type: object
         type: object
-    served: true
+    served: false
     storage: false
     subresources:
       status: {}
@@ -287,7 +287,7 @@ spec:
                 type: boolean
             type: object
         type: object
-    served: true
+    served: false
     storage: false
     subresources:
       status: {}
@@ -295,7 +295,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: VSphereClusterIdentity defines the account to be used for reconciling
-          clusters
+          clusters.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -310,6 +310,8 @@ spec:
           metadata:
             type: object
           spec:
+            description: VSphereClusterIdentitySpec contains a secret reference and
+              a group of allowed namespaces.
             properties:
               allowedNamespaces:
                 description: AllowedNamespaces is used to identify which namespaces
@@ -370,6 +372,7 @@ spec:
                 type: string
             type: object
           status:
+            description: VSphereClusterIdentityStatus contains the status of the VSphereClusterIdentity.
             properties:
               conditions:
                 description: Conditions defines current service state of the VSphereCluster.
@@ -430,7 +433,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capv-system/capv-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.1
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-vsphere
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -496,11 +499,12 @@ spec:
           metadata:
             type: object
           spec:
-            description: VSphereClusterSpec defines the desired state of VSphereCluster
+            description: VSphereClusterSpec defines the desired state of VSphereCluster.
             properties:
               cloudProviderConfiguration:
-                description: 'CloudProviderConfiguration holds the cluster-wide configuration
-                  for the DEPRECATED: will be removed in v1alpha4 vSphere cloud provider.'
+                description: "CloudProviderConfiguration holds the cluster-wide configuration
+                  for the vSphere cloud provider. \n Deprecated: will be removed in
+                  v1alpha4."
                 properties:
                   disk:
                     description: Disk is the vSphere cloud provider's disk configuration.
@@ -721,16 +725,16 @@ spec:
                 - name
                 type: object
               insecure:
-                description: 'Insecure is a flag that controls whether or not to validate
-                  the vSphere server''s certificate. DEPRECATED: will be removed in
-                  v1alpha4'
+                description: "Insecure is a flag that controls whether to validate
+                  the vSphere server's certificate. \n Deprecated: will be removed
+                  in v1alpha4."
                 type: boolean
               loadBalancerRef:
-                description: 'LoadBalancerRef may be used to enable a control plane
+                description: "LoadBalancerRef may be used to enable a control plane
                   load balancer for this cluster. When a LoadBalancerRef is provided,
                   the VSphereCluster.Status.Ready field will not be true until the
                   referenced resource is Status.Ready and has a non-empty Status.Address
-                  value. DEPRECATED: will be removed in v1alpha4'
+                  value. \n Deprecated: will be removed in v1alpha4."
                 properties:
                   apiVersion:
                     description: API version of the referent.
@@ -776,7 +780,7 @@ spec:
                 type: string
             type: object
           status:
-            description: VSphereClusterStatus defines the observed state of VSphereClusterSpec
+            description: VSphereClusterStatus defines the observed state of VSphereClusterSpec.
             properties:
               conditions:
                 description: Conditions defines current service state of the VSphereCluster.
@@ -846,7 +850,7 @@ spec:
                 type: boolean
             type: object
         type: object
-    served: true
+    served: false
     storage: false
     subresources:
       status: {}
@@ -1003,7 +1007,7 @@ spec:
                 type: boolean
             type: object
         type: object
-    served: true
+    served: false
     storage: false
     subresources:
       status: {}
@@ -1028,7 +1032,7 @@ spec:
     name: v1beta1
     schema:
       openAPIV3Schema:
-        description: VSphereCluster is the Schema for the vsphereclusters API
+        description: VSphereCluster is the Schema for the vsphereclusters API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -1043,7 +1047,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: VSphereClusterSpec defines the desired state of VSphereCluster
+            description: VSphereClusterSpec defines the desired state of VSphereCluster.
             properties:
               clusterModules:
                 description: ClusterModules hosts information regarding the anti-affinity
@@ -1167,7 +1171,7 @@ spec:
                 type: string
             type: object
           status:
-            description: VSphereClusterStatus defines the observed state of VSphereClusterSpec
+            description: VSphereClusterStatus defines the observed state of VSphereClusterSpec.
             properties:
               conditions:
                 description: Conditions defines current service state of the VSphereCluster.
@@ -1252,7 +1256,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capv-system/capv-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.1
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-vsphere
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -1357,13 +1361,13 @@ spec:
             - template
             type: object
         type: object
-    served: true
+    served: false
     storage: false
   - name: v1beta1
     schema:
       openAPIV3Schema:
         description: VSphereClusterTemplate is the Schema for the vsphereclustertemplates
-          API
+          API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -1378,12 +1382,14 @@ spec:
           metadata:
             type: object
           spec:
-            description: VSphereClusterTemplateSpec defines the desired state of VSphereClusterTemplate
+            description: VSphereClusterTemplateSpec defines the desired state of VSphereClusterTemplate.
             properties:
               template:
+                description: VSphereClusterTemplateResource describes the data for
+                  creating a VSphereCluster from a template.
                 properties:
                   spec:
-                    description: VSphereClusterSpec defines the desired state of VSphereCluster
+                    description: VSphereClusterSpec defines the desired state of VSphereCluster.
                     properties:
                       clusterModules:
                         description: ClusterModules hosts information regarding the
@@ -1526,7 +1532,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capv-system/capv-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.1
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-vsphere
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -1655,7 +1661,7 @@ spec:
                 type: boolean
             type: object
         type: object
-    served: true
+    served: false
     storage: false
     subresources:
       status: {}
@@ -1760,7 +1766,7 @@ spec:
                 type: boolean
             type: object
         type: object
-    served: true
+    served: false
     storage: false
     subresources:
       status: {}
@@ -1768,7 +1774,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: VSphereDeploymentZone is the Schema for the vspheredeploymentzones
-          API
+          API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -1783,7 +1789,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: VSphereDeploymentZoneSpec defines the desired state of VSphereDeploymentZone
+            description: VSphereDeploymentZoneSpec defines the desired state of VSphereDeploymentZone.
             properties:
               controlPlane:
                 description: ControlPlane determines if this failure domain is suitable
@@ -1813,6 +1819,7 @@ spec:
             - placementConstraint
             type: object
           status:
+            description: VSphereDeploymentZoneStatus contains the status for a VSphereDeploymentZone.
             properties:
               conditions:
                 description: Conditions defines current service state of the VSphereMachine.
@@ -1875,7 +1882,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capv-system/capv-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.1
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-vsphere
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -2023,7 +2030,7 @@ spec:
             - zone
             type: object
         type: object
-    served: true
+    served: false
     storage: false
   - deprecated: true
     name: v1alpha4
@@ -2145,13 +2152,13 @@ spec:
             - zone
             type: object
         type: object
-    served: true
+    served: false
     storage: false
   - name: v1beta1
     schema:
       openAPIV3Schema:
         description: VSphereFailureDomain is the Schema for the vspherefailuredomains
-          API
+          API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -2166,7 +2173,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: VSphereFailureDomainSpec defines the desired state of VSphereFailureDomain
+            description: VSphereFailureDomainSpec defines the desired state of VSphereFailureDomain.
             properties:
               region:
                 description: Region defines the name and type of a region
@@ -2275,7 +2282,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capv-system/capv-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.1
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-vsphere
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -2697,7 +2704,7 @@ spec:
                 type: boolean
             type: object
         type: object
-    served: true
+    served: false
     storage: false
     subresources:
       status: {}
@@ -3095,7 +3102,7 @@ spec:
                 type: boolean
             type: object
         type: object
-    served: true
+    served: false
     storage: false
     subresources:
       status: {}
@@ -3124,7 +3131,7 @@ spec:
     name: v1beta1
     schema:
       openAPIV3Schema:
-        description: VSphereMachine is the Schema for the vspheremachines API
+        description: VSphereMachine is the Schema for the vspheremachines API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -3139,7 +3146,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: VSphereMachineSpec defines the desired state of VSphereMachine
+            description: VSphereMachineSpec defines the desired state of VSphereMachine.
             properties:
               additionalDisksGiB:
                 description: AdditionalDisksGiB holds the sizes of additional disks
@@ -3490,7 +3497,7 @@ spec:
                 description: PciDevices is the list of pci devices used by the virtual
                   machine.
                 items:
-                  description: PCIDeviceSpec defines virtual machine's PCI configuration
+                  description: PCIDeviceSpec defines virtual machine's PCI configuration.
                   properties:
                     deviceId:
                       description: DeviceID is the device ID of a virtual machine's
@@ -3566,7 +3573,7 @@ spec:
             - template
             type: object
           status:
-            description: VSphereMachineStatus defines the observed state of VSphereMachine
+            description: VSphereMachineStatus defines the observed state of VSphereMachine.
             properties:
               addresses:
                 description: Addresses contains the VSphere instance associated addresses.
@@ -3703,7 +3710,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capv-system/capv-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.1
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-vsphere
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -4109,7 +4116,7 @@ spec:
             - template
             type: object
         type: object
-    served: true
+    served: false
     storage: false
   - deprecated: true
     name: v1alpha4
@@ -4400,13 +4407,13 @@ spec:
             - template
             type: object
         type: object
-    served: true
+    served: false
     storage: false
   - name: v1beta1
     schema:
       openAPIV3Schema:
         description: VSphereMachineTemplate is the Schema for the vspheremachinetemplates
-          API
+          API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -4421,11 +4428,11 @@ spec:
           metadata:
             type: object
           spec:
-            description: VSphereMachineTemplateSpec defines the desired state of VSphereMachineTemplate
+            description: VSphereMachineTemplateSpec defines the desired state of VSphereMachineTemplate.
             properties:
               template:
                 description: VSphereMachineTemplateResource describes the data needed
-                  to create a VSphereMachine from a template
+                  to create a VSphereMachine from a template.
                 properties:
                   metadata:
                     description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
@@ -4827,7 +4834,7 @@ spec:
                           the virtual machine.
                         items:
                           description: PCIDeviceSpec defines virtual machine's PCI
-                            configuration
+                            configuration.
                           properties:
                             deviceId:
                               description: DeviceID is the device ID of a virtual
@@ -4921,7 +4928,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capv-system/capv-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.1
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-vsphere
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -4972,10 +4979,9 @@ spec:
             description: VSphereVMSpec defines the desired state of VSphereVM.
             properties:
               biosUUID:
-                description: BiosUUID is the the VM's BIOS UUID that is assigned at
-                  runtime after the VM has been created. This field is required at
-                  runtime for other controllers that read this CRD as unstructured
-                  data.
+                description: BiosUUID is the VM's BIOS UUID that is assigned at runtime
+                  after the VM has been created. This field is required at runtime
+                  for other controllers that read this CRD as unstructured data.
                 type: string
               bootstrapRef:
                 description: BootstrapRef is a reference to a bootstrap provider-specific
@@ -5359,7 +5365,7 @@ spec:
                 type: string
             type: object
         type: object
-    served: true
+    served: false
     storage: false
     subresources:
       status: {}
@@ -5386,10 +5392,9 @@ spec:
             description: VSphereVMSpec defines the desired state of VSphereVM.
             properties:
               biosUUID:
-                description: BiosUUID is the the VM's BIOS UUID that is assigned at
-                  runtime after the VM has been created. This field is required at
-                  runtime for other controllers that read this CRD as unstructured
-                  data.
+                description: BiosUUID is the VM's BIOS UUID that is assigned at runtime
+                  after the VM has been created. This field is required at runtime
+                  for other controllers that read this CRD as unstructured data.
                 type: string
               bootstrapRef:
                 description: BootstrapRef is a reference to a bootstrap provider-specific
@@ -5773,14 +5778,14 @@ spec:
                 type: string
             type: object
         type: object
-    served: true
+    served: false
     storage: false
     subresources:
       status: {}
   - name: v1beta1
     schema:
       openAPIV3Schema:
-        description: VSphereVM is the Schema for the vspherevms API
+        description: VSphereVM is the Schema for the vspherevms API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -5806,10 +5811,9 @@ spec:
                   type: integer
                 type: array
               biosUUID:
-                description: BiosUUID is the the VM's BIOS UUID that is assigned at
-                  runtime after the VM has been created. This field is required at
-                  runtime for other controllers that read this CRD as unstructured
-                  data.
+                description: BiosUUID is the VM's BIOS UUID that is assigned at runtime
+                  after the VM has been created. This field is required at runtime
+                  for other controllers that read this CRD as unstructured data.
                 type: string
               bootstrapRef:
                 description: BootstrapRef is a reference to a bootstrap provider-specific
@@ -6185,7 +6189,7 @@ spec:
                 description: PciDevices is the list of pci devices used by the virtual
                   machine.
                 items:
-                  description: PCIDeviceSpec defines virtual machine's PCI configuration
+                  description: PCIDeviceSpec defines virtual machine's PCI configuration.
                   properties:
                     deviceId:
                       description: DeviceID is the device ID of a virtual machine's
@@ -6257,7 +6261,7 @@ spec:
             - template
             type: object
           status:
-            description: VSphereVMStatus defines the observed state of VSphereVM
+            description: VSphereVMStatus defines the observed state of VSphereVM.
             properties:
               addresses:
                 description: Addresses is a list of the VM's IP addresses. This field
@@ -6396,7 +6400,7 @@ spec:
                   not be set or modified by users.
                 type: string
               vmRef:
-                description: VMRef is the the VM's Managed Object Reference on vSphere.
+                description: VMRef is the VM's Managed Object Reference on vSphere.
                   It can be used by consumers to programatically get this VM representation
                   on vSphere in case of the need to retrieve informations. This field
                   is set once the machine is created and should not be changed
@@ -6569,6 +6573,18 @@ rules:
   - services/status
   verbs:
   - get
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
 - apiGroups:
   - cluster.x-k8s.io
   resources:
@@ -7058,10 +7074,12 @@ spec:
       containers:
       - args:
         - --leader-elect
+        - --diagnostics-address=${CAPI_DIAGNOSTICS_ADDRESS:=:8443}
+        - --insecure-diagnostics=${CAPI_INSECURE_DIAGNOSTICS:=false}
         - --v=4
         - --enable-keep-alive
         - --feature-gates=NodeAntiAffinity=${EXP_NODE_ANTI_AFFINITY:=false}
-        image: registry.k8s.io/cluster-api-vsphere/cluster-api-vsphere-controller:v1.8.7
+        image: registry.k8s.io/cluster-api-vsphere/cluster-api-vsphere-controller:v1.9.3
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -7074,6 +7092,9 @@ spec:
           protocol: TCP
         - containerPort: 9440
           name: healthz
+          protocol: TCP
+        - containerPort: 8443
+          name: metrics
           protocol: TCP
         readinessProbe:
           httpGet:
