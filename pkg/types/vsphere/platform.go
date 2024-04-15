@@ -214,7 +214,7 @@ type Topology struct {
 	Template string `json:"template,omitempty"`
 	// tagIDs is an optional set of tags to add to an instance. Specified tagIDs
 	// must use URN-notation instead of display names. A maximum of 10 tag IDs may be specified.
-	// +kubebuilder:example=urn:vmomi:InventoryServiceTag:5736bf56-49f5-4667-b38c-b97e09dc9578:GLOBAL
+	// +kubebuilder:example=`urn:vmomi:InventoryServiceTag:5736bf56-49f5-4667-b38c-b97e09dc9578:GLOBAL`
 	// +optional
 	TagIDs []string `json:"tagIDs,omitempty"`
 }
@@ -273,8 +273,8 @@ type NetworkDeviceSpec struct {
 	// intended to allow explicit assignment of a machine's IP address.
 	// +kubebuilder:validation:Format=ipv4
 	// +kubebuilder:validation:Format=ipv6
-	// +kubebuilder:example=192.168.1.100/24
-	// +kubebuilder:example=2001:DB8:0000:0000:244:17FF:FEB6:D37D/64
+	// +kubebuilder:example=`192.168.1.100/24`
+	// +kubebuilder:example=`2001:DB8:0000:0000:244:17FF:FEB6:D37D/64`
 	// +kubebuilder:validation:Required
 	IPAddrs []string `json:"ipAddrs"`
 
@@ -283,7 +283,7 @@ type NetworkDeviceSpec struct {
 	// source of IP addresses for this network device, nameservers should include a valid nameserver.
 	// +kubebuilder:validation:Format=ipv4
 	// +kubebuilder:validation:Format=ipv6
-	// +kubebuilder:example=8.8.8.8
+	// +kubebuilder:example=`8.8.8.8`
 	Nameservers []string `json:"nameservers,omitempty"`
 }
 
