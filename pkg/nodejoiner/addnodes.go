@@ -1,13 +1,18 @@
 package nodejoiner
 
 import (
-	"context"
+	"os"
+	"path/filepath"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/image"
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/store"
+)
+
+const (
+	addNodesResultFile = "exit_code"
 )
 
 // NewAddNodesCommand creates a new command for add nodes.
@@ -22,12 +27,20 @@ func NewAddNodesCommand(directory string, kubeConfig string) error {
 		return err
 	}
 
-	ctx := context.Background()
-
 	fetcher := store.NewAssetsFetcher(directory)
-	return fetcher.FetchAndPersist(ctx, []asset.WritableAsset{
+	err = fetcher.FetchAndPersist([]asset.WritableAsset{
 		&workflow.AgentWorkflowAddNodes{},
 		&image.AgentImage{},
-		// To be completed
 	})
+
+	// Save the exit code result
+	exitCode := "0"
+	if err != nil {
+		exitCode = "1"
+	}
+	if err2 := os.WriteFile(filepath.Join(directory, addNodesResultFile), []byte(exitCode), 0644); err2 != nil {
+		return err2
+	}
+
+	return err
 }

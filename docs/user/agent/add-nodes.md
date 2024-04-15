@@ -3,7 +3,6 @@
 ## Pre-requisites
 1. The `oc` tool must be available in the execution environment (the "user host").
 2. The user host has a valid network connection to the target OpenShift cluster to be expanded.
-3. The user host has a valid pull-secret.
 
 ## Setup
 1. Download the [node-joiner.sh](./node-joiner.sh) script in a working directory in
@@ -66,16 +65,24 @@ hosts:
           macAddress: 00:02:46:e3:9e:9c
 
 ## ISO generation
-Run the [node-joiner.sh](./node-joiner.sh) by specifying the location of the current pull secret:
+Run the [node-joiner.sh](./node-joiner.sh):
 ```bash
-$ ./node-joiner.sh ~/config/pull-secret
+$ ./node-joiner.sh
 ```
-The script will generate a temporary namespace `openshift-node-joiner` in the target cluster,
+The script will generate a temporary namespace prefixed with `openshift-node-joiner` in the target cluster,
 where a pod will be launched to execute the effective node-joiner workload.
 In case of success, the `agent-addnodes.x86_64.iso` ISO image will be downloaded in the assets folder.
 
+### Configuration file name
+By default the script looks for a configuration file named `nodes-config.yaml`. It's possible to specify a 
+different config file name, as the first parameter of the script:
+
+```bash
+$ ./node-joiner.sh config.yaml
+```
+
 ## Nodes joining
-Use the iso image to boot all the nodes listed in the `nodes-config.yaml` file, and wait for the related
+Use the iso image to boot all the nodes listed in the configuration file, and wait for the related
 certificate signing requests (CSRs) to appear. When adding a new node to the cluster, two pending CSRs will
 be generated, and they must be manually approved by the user.
 Use the following command to monitor the pending certificates:
