@@ -1,7 +1,10 @@
 #!/usr/bin/pwsh
 
+$MYINV = $MyInvocation
+$SCRIPTDIR = split-path $MYINV.MyCommand.Path
+
 . .\variables.ps1
-. .\upi-functions.ps1
+. ${SCRIPTDIR}\upi-functions.ps1
 
 $ErrorActionPreference = "Stop"
 
@@ -183,9 +186,9 @@ foreach ($fd in $fds)
         $ovfConfig.NetworkMapping.VM_Network.Value = $fd.network
         Write-Output "OVF: $($ovfConfig)"
         $jobs += Start-ThreadJob -n "upload-template-$($fd.cluster)" -ScriptBlock {
-            param($Version,$vm_template,$ovfConfig,$vmhost,$datastoreInfo,$folder,$tag)
+            param($Version,$vm_template,$ovfConfig,$vmhost,$datastoreInfo,$folder,$tag,$scriptdir)
             . .\variables.ps1
-            . .\upi-functions.ps1
+            . ${scriptdir}\upi-functions.ps1
             Write-Output "Version: $($Version)"
             Write-Output "VM Template: $($vm_template)"
             Write-Output "OVF Config: $($ovfConfig)"
@@ -209,7 +212,7 @@ foreach ($fd in $fds)
             New-AdvancedSetting -Entity $template -name "disk.EnableUUID" -value 'TRUE' -confirm:$false -Force > $null
             New-AdvancedSetting -Entity $template -name "guestinfo.ignition.config.data.encoding" -value "base64" -confirm:$false -Force > $null
             #$snapshot = New-Snapshot -VM $template -Name "linked-clone" -Description "linked-clone" -Memory -Quiesce
-        } -ArgumentList @($Version,$vm_template,$ovfConfig,$vmhost,$datastoreInfo,$folder,$tag)
+        } -ArgumentList @($Version,$vm_template,$ovfConfig,$vmhost,$datastoreInfo,$folder,$tag,$SCRIPTDIR)
     }
 }
 
@@ -248,84 +251,6 @@ Write-Progress -id 222 -Activity "Creating virtual machines" -PercentComplete 0
 New-OpenshiftVMs "bootstrap"
 New-OpenshiftVMs "master"
 New-OpenshiftVMs "worker"
-<#
-$jobs = @()
-$vmStep = (100 / $vmHash.virtualmachines.Count)
-$vmCount = 1
-foreach ($key in $vmHash.virtualmachines.Keys) {
-    $node = $vmHash.virtualmachines[$key]
-
-    $jobs += Start-ThreadJob -n "create-vm-$($metadata.infraID)-$($key)" -ScriptBlock {
-        param($key,$node,$vm_template,$metadata,$tag)
-        . .\variables.ps1
-        . .\upi-functions.ps1
-        Connect-VIServer -Server $vcenter -Credential (Import-Clixml $vcentercredpath)
-        
-        $name = "$($metadata.infraID)-$($key)"
-        Write-Output "Creating $($name)"
-
-        $rp = Get-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Name $($node.cluster)) -Server $vcenter
-        ##$datastore = Get-Datastore -Name $node.datastore -Server $node.server
-        $datastoreInfo = Get-Datastore -Name $node.datastore -Location $node.datacenter
-
-        # Pull network config for each node
-        if ($node.type -eq "master") {
-            $numCPU = $control_plane_num_cpus
-            $memory = $control_plane_memory
-        } elseif ($node.type -eq "worker") {
-            $numCPU = $compute_num_cpus
-            $memory = $compute_memory
-        } else {
-            # should only be bootstrap
-            $numCPU = $control_plane_num_cpus
-            $memory = $control_plane_memory
-        }
-        $ip = $node.ip
-        $network = New-VMNetworkConfig -Hostname $name -IPAddress $ip -Netmask $netmask -Gateway $gateway -DNS $dns
-
-        # Get the content of the ignition file per machine type (bootstrap, master, worker)
-        $bytes = Get-Content -Path "./$($node.type).ign" -AsByteStream
-        $ignition = [Convert]::ToBase64String($bytes)
-
-        # Get correct template / folder
-        $folder = Get-Folder -Name $metadata.infraID -Location $node.datacenter
-        $template = Get-VM -Name $vm_template -Location $($node.datacenter)
-
-        # Clone the virtual machine from the imported template
-        #$vm = New-OpenShiftVM -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -LinkedClone -ReferenceSnapshot $snapshot -IgnitionData $ignition -Tag $tag -Networking $network -NumCPU $numCPU -MemoryMB $memory
-        $vm = New-OpenShiftVM -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -IgnitionData $ignition -Tag $tag -Networking $network -Network $node.network -NumCPU $numCPU -MemoryMB $memory
-
-        # Assign tag so we can later clean up
-        # New-TagAssignment -Entity $vm -Tag $tag
-        # New-AdvancedSetting -Entity $vm -name "guestinfo.ignition.config.data" -value $ignition -confirm:$false -Force > $null
-        # New-AdvancedSetting -Entity $vm -name "guestinfo.hostname" -value $name -Confirm:$false -Force > $null
-
-        if ($node.type -eq "master" -And $delayVMStart) {
-            # To give bootstrap some time to start, lets wait 2 minutes
-            Start-ThreadJob -ThrottleLimit 5 -InputObject $vm {
-                Start-Sleep -Seconds 90
-                $input | Start-VM
-            }
-        } elseif ($node.type -eq "worker" -And $delayVMStart) {
-            # Workers are not needed right away, gotta wait till masters
-            # have started machine-server.  wait 7 minutes to start.
-            Start-ThreadJob -ThrottleLimit 5 -InputObject $vm {
-                Start-Sleep -Seconds 600
-                $input | Start-VM
-            }
-        }
-        else {
-            $vm | Start-VM
-        }
-    } -ArgumentList @($key,$node,$vm_template,$metadata,$tag)
-    Write-Progress -id 222 -Activity "Creating virtual machines" -PercentComplete ($vmStep * $vmCount)
-    $vmCount++
-}
-Wait-Job -Job $jobs
-foreach ($job in $jobs) {
-    Receive-Job -Job $job
-}
-#>
 Write-Progress -id 222 -Activity "Completed virtual machines" -PercentComplete 100 -Completed
 
 ## This is nice to have to clear screen when doing things manually.  Maybe i'll
