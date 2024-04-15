@@ -113,7 +113,7 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 			Components: []string{c.componentDir + "/core-components.yaml"},
 			Args: []string{
 				"-v=2",
-				"--metrics-bind-addr=0",
+				"--diagnostics-address=0",
 				"--health-addr={{suggestHealthHostPort}}",
 				"--webhook-port={{.WebhookPort}}",
 				"--webhook-cert-dir={{.WebhookCertDir}}",
@@ -130,7 +130,7 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 				&AWS,
 				[]string{
 					"-v=4",
-					"--metrics-bind-addr=0",
+					"--diagnostics-address=0",
 					"--health-addr={{suggestHealthHostPort}}",
 					"--webhook-port={{.WebhookPort}}",
 					"--webhook-cert-dir={{.WebhookCertDir}}",
@@ -150,7 +150,7 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 				&Azure,
 				[]string{
 					"-v=2",
-					"--metrics-bind-addr=0",
+					"--diagnostics-address=0",
 					"--health-addr={{suggestHealthHostPort}}",
 					"--webhook-port={{.WebhookPort}}",
 					"--webhook-cert-dir={{.WebhookCertDir}}",
@@ -199,7 +199,7 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 				&GCP,
 				[]string{
 					"-v=2",
-					"--metrics-bind-addr=0",
+					"--diagnostics-address=0",
 					"--health-addr={{suggestHealthHostPort}}",
 					"--webhook-port={{.WebhookPort}}",
 					"--webhook-cert-dir={{.WebhookCertDir}}",
@@ -217,7 +217,7 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 				&OpenStack,
 				[]string{
 					"-v=2",
-					"--metrics-bind-addr=0",
+					"--diagnostics-address=0",
 					"--health-addr={{suggestHealthHostPort}}",
 					"--webhook-port={{.WebhookPort}}",
 					"--webhook-cert-dir={{.WebhookCertDir}}",
@@ -233,7 +233,7 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 				&VSphere,
 				[]string{
 					"-v=2",
-					"--metrics-bind-addr=0",
+					"--diagnostics-address=0",
 					"--health-addr={{suggestHealthHostPort}}",
 					"--webhook-port={{.WebhookPort}}",
 					"--webhook-cert-dir={{.WebhookCertDir}}",
