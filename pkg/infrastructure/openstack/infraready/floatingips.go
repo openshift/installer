@@ -13,34 +13,77 @@ import (
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 )
 
-// FloatingIPs creates the API and Ingress ports and attaches the Floating IPs to them.
+// FloatingIPs creates or gets the API and Ingress ports and attaches the Floating IPs to them.
 func FloatingIPs(cluster *capo.OpenStackCluster, installConfig *installconfig.InstallConfig, infraID string) error {
 	networkClient, err := openstackdefaults.NewServiceClient("network", openstackdefaults.DefaultClientOpts(installConfig.Config.Platform.OpenStack.Cloud))
 	if err != nil {
 		return err
 	}
-
-	apiPort, err := createPort(networkClient, "api", infraID, cluster.Status.Network.ID, cluster.Status.Network.Subnets[0].ID, installConfig.Config.Platform.OpenStack.APIVIPs[0])
-	if err != nil {
-		return err
-	}
-	if installConfig.Config.OpenStack.APIFloatingIP != "" {
-		if err := assignFIP(networkClient, installConfig.Config.OpenStack.APIFloatingIP, apiPort); err != nil {
+	var apiPort, ingressPort *ports.Port
+	platformOpenstack := installConfig.Config.OpenStack
+	if platformOpenstack.ControlPlanePort != nil && len(platformOpenstack.ControlPlanePort.FixedIPs) == 2 {
+		// To avoid unnecessary calls to Neutron, let's fetch the Ports in case there is a need to attach FIPs
+		if platformOpenstack.APIFloatingIP != "" {
+			// Using the first VIP as both API VIPs must be allocated on the same Port
+			apiPort, err = getPort(networkClient, cluster.Status.Network.ID, platformOpenstack.APIVIPs[0])
+			if err != nil {
+				return err
+			}
+		}
+		if platformOpenstack.IngressFloatingIP != "" {
+			// Using the first VIP as both Ingress VIPs must be allocated on the same Port
+			ingressPort, err = getPort(networkClient, cluster.Status.Network.ID, platformOpenstack.IngressVIPs[0])
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		apiPort, err = createPort(networkClient, "api", infraID, cluster.Status.Network.ID, cluster.Status.Network.Subnets[0].ID, platformOpenstack.APIVIPs[0])
+		if err != nil {
+			return err
+		}
+		ingressPort, err = createPort(networkClient, "ingress", infraID, cluster.Status.Network.ID, cluster.Status.Network.Subnets[0].ID, platformOpenstack.IngressVIPs[0])
+		if err != nil {
 			return err
 		}
 	}
 
-	ingressPort, err := createPort(networkClient, "ingress", infraID, cluster.Status.Network.ID, cluster.Status.Network.Subnets[0].ID, installConfig.Config.Platform.OpenStack.IngressVIPs[0])
-	if err != nil {
-		return err
+	if platformOpenstack.APIFloatingIP != "" {
+		if err := assignFIP(networkClient, platformOpenstack.APIFloatingIP, apiPort); err != nil {
+			return err
+		}
 	}
-	if installConfig.Config.OpenStack.IngressFloatingIP != "" {
-		if err := assignFIP(networkClient, installConfig.Config.OpenStack.IngressFloatingIP, ingressPort); err != nil {
+
+	if platformOpenstack.IngressFloatingIP != "" {
+		if err := assignFIP(networkClient, platformOpenstack.IngressFloatingIP, ingressPort); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// getPort retrieves a Neutron Port based on a network ID and the Fixed IP.
+func getPort(client *gophercloud.ServiceClient, networkID, fixedIP string) (*ports.Port, error) {
+	listOpts := ports.ListOpts{
+		NetworkID: networkID,
+		FixedIPs: []ports.FixedIPOpts{
+			{
+				IPAddress: fixedIP,
+			}},
+	}
+	allPages, err := ports.List(client, listOpts).AllPages()
+	if err != nil {
+		return nil, fmt.Errorf("failed to list Ports: %w", err)
+	}
+	allPorts, err := ports.ExtractPorts(allPages)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract Ports: %w", err)
+	}
+	if len(allPorts) != 1 {
+		return nil, fmt.Errorf("could not find Port with IP: %s", fixedIP)
+	}
+	return &allPorts[0], nil
 }
 
 func createPort(client *gophercloud.ServiceClient, role, infraID, networkID, subnetID, fixedIP string) (*ports.Port, error) {
