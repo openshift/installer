@@ -8,7 +8,6 @@ import (
 	certificatesv1 "k8s.io/api/certificates/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	certificatesClient "k8s.io/client-go/kubernetes/typed/certificates/v1"
 	"k8s.io/client-go/rest"
@@ -68,7 +67,7 @@ func (kube *ClusterKubeAPIClient) DoesKubeConfigExist() (bool, error) {
 // IsBootstrapConfigMapComplete Detemine if the cluster's bootstrap configmap has the status complete.
 func (kube *ClusterKubeAPIClient) IsBootstrapConfigMapComplete() (bool, error) {
 	// Get latest version of bootstrap configmap
-	bootstrap, err := kube.Client.CoreV1().ConfigMaps("kube-system").Get(kube.ctx, "bootstrap", v1.GetOptions{})
+	bootstrap, err := kube.Client.CoreV1().ConfigMaps("kube-system").Get(kube.ctx, "bootstrap", metav1.GetOptions{})
 
 	if err != nil {
 		// bootstrap configmap not found

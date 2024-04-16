@@ -201,6 +201,8 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 	return false, false, nil
 }
 
+// LogAssistedServiceStatus logs validations and events from
+// Assisted Service.
 func (czero *Cluster) LogAssistedServiceStatus() (bool, bool, error) {
 	resource := "cluster"
 	logPrefix := ""
@@ -274,9 +276,9 @@ func (czero *Cluster) LogAssistedServiceStatus() (bool, bool, error) {
 	if !installing {
 		errored, _ := czero.HasErrored(*clusterMetadata.Status)
 		if errored {
-			return false, false, errors.New(fmt.Sprintf("%s has stopped installing... working to recover installation", resource))
+			return false, false, fmt.Errorf("%s has stopped installing... working to recover installation", resource)
 		} else if *clusterMetadata.Status == models.ClusterStatusCancelled {
-			return false, true, errors.New(fmt.Sprintf("%s installation was cancelled", resource))
+			return false, true, fmt.Errorf("%s installation was cancelled", resource)
 		}
 	}
 
@@ -461,15 +463,12 @@ func (czero *Cluster) PrintInstallationComplete() error {
 }
 
 // PrintInstallStatus Print a human friendly message using the models from the Agent Rest API.
-func (czero *Cluster) PrintInstallStatus(cluster *models.Cluster) error {
-
+func (czero *Cluster) PrintInstallStatus(cluster *models.Cluster) {
 	friendlyStatus := czero.humanFriendlyClusterInstallStatus(*cluster.Status)
 	// Don't print the same status message back to back
 	if *cluster.Status != czero.installHistory.RestAPIPreviousClusterStatus {
 		logrus.Info(friendlyStatus)
 	}
-
-	return nil
 }
 
 // CanSSHToNodeZero Checks if ssh to NodeZero succeeds.
