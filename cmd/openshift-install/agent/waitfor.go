@@ -10,6 +10,7 @@ import (
 
 	"github.com/openshift/installer/cmd/openshift-install/command"
 	agentpkg "github.com/openshift/installer/pkg/agent"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
 
 const (
@@ -71,7 +72,7 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 			}
 
 			ctx := context.Background()
-			cluster, err := agentpkg.NewCluster(ctx, kubeconfigPath, rendezvousIP, sshKey)
+			cluster, err := agentpkg.NewCluster(ctx, kubeconfigPath, rendezvousIP, sshKey, workflow.AgentWorkflowTypeInstall)
 			if err != nil {
 				logrus.Exit(exitCodeBootstrapFailed)
 			}
@@ -106,7 +107,7 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 			}
 
 			ctx := context.Background()
-			cluster, err := agentpkg.NewCluster(ctx, kubeconfigPath, rendezvousIP, sshKey)
+			cluster, err := agentpkg.NewCluster(ctx, kubeconfigPath, rendezvousIP, sshKey, workflow.AgentWorkflowTypeInstall)
 			if err != nil {
 				logrus.Exit(exitCodeBootstrapFailed)
 			}
