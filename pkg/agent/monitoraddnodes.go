@@ -252,10 +252,12 @@ func MonitorAddNodes(cluster *Cluster, nodeIPAddress string) error {
 	mon := newAddNodeMonitor(nodeIPAddress, cluster)
 
 	wait.Until(func() {
-
 		if mon.onOrAfter(AssistedServiceIsUp) &&
 			mon.onOrBefore(HostInstallationStarted) {
-			cluster.LogAssistedServiceStatus()
+			_, _, err := cluster.LogAssistedServiceStatus()
+			if err != nil {
+				logrus.Warnf("Node %s: %s", nodeIPAddress, err)
+			}
 		}
 
 		for _, checkFunc := range defaultChecks {

@@ -34,7 +34,6 @@ const (
 
 // NewClusterOpenShiftAPIClient Create a kube client with OCP understanding
 func NewClusterOpenShiftAPIClient(ctx context.Context, kubeconfigPath string) (*ClusterOpenShiftAPIClient, error) {
-
 	ocpClient := &ClusterOpenShiftAPIClient{}
 
 	kubeconfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
