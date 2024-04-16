@@ -9,18 +9,22 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
 	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 )
 
 // FloatingIPs creates or gets the API and Ingress ports and attaches the Floating IPs to them.
 func FloatingIPs(cluster *capo.OpenStackCluster, installConfig *installconfig.InstallConfig, infraID string) error {
+	platformOpenstack := installConfig.Config.OpenStack
+	if lb := platformOpenstack.LoadBalancer; lb != nil && lb.Type == configv1.LoadBalancerTypeUserManaged {
+		return nil
+	}
 	networkClient, err := openstackdefaults.NewServiceClient("network", openstackdefaults.DefaultClientOpts(installConfig.Config.Platform.OpenStack.Cloud))
 	if err != nil {
 		return err
 	}
 	var apiPort, ingressPort *ports.Port
-	platformOpenstack := installConfig.Config.OpenStack
 	if platformOpenstack.ControlPlanePort != nil && len(platformOpenstack.ControlPlanePort.FixedIPs) == 2 {
 		// To avoid unnecessary calls to Neutron, let's fetch the Ports in case there is a need to attach FIPs
 		if platformOpenstack.APIFloatingIP != "" {
