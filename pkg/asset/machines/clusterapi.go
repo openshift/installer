@@ -3,11 +3,14 @@ package machines
 import (
 	"context"
 	"fmt"
+	"net"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/vmware/govmomi/vim25/soap"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -301,10 +304,41 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		mpool.Set(pool.Platform.VSphere)
 
 		platform := ic.VSphere
+		resolver := &net.Resolver{
+			PreferGo: true,
+		}
 
 		for _, v := range platform.VCenters {
-			err := installConfig.VSphere.Networks(ctx, v, platform.FailureDomains)
+			// Defense against potential issues with assisted installer
+			// If the installer is unable to resolve vCenter there is a good possibility
+			// that the installer's install-config has been provided with bogus values.
+
+			// Timeout context for Lookup
+			ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+			defer cancel()
+
+			_, err := resolver.LookupHost(ctx, v.Server)
 			if err != nil {
+				logrus.Warnf("unable to resolve vSphere server %s", v.Server)
+				return nil
+			}
+
+			// Timeout context for Networks
+			// vCenter APIs can be unreliable in performance, extended this context
+			// timeout to 60 seconds.
+			ctx, cancel = context.WithTimeout(context.TODO(), 60*time.Second)
+			defer cancel()
+
+			err = installConfig.VSphere.Networks(ctx, v, platform.FailureDomains)
+			if err != nil {
+				// If we are receiving an error as a Soap Fault this is caused by
+				// incorrect credentials and in the scenario of assisted installer
+				// the credentials are never valid. Since vCenter hostname is
+				// incorrect as well we shouldn't get this far.
+				if soap.IsSoapFault(err) {
+					logrus.Warn("authentication failure to vCenter, Cluster API machine manifests not created, cluster may not install")
+					return nil
+				}
 				return err
 			}
 		}
