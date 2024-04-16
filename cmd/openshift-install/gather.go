@@ -140,6 +140,7 @@ func runGatherBootstrapCmd(ctx context.Context, directory string) (string, error
 
 func gatherBootstrap(bootstrap string, port int, masters []string, directory string) (string, error) {
 	gatherID := time.Now().Format("20060102150405")
+	archives := map[string]string{}
 
 	serialLogBundle := filepath.Join(directory, fmt.Sprintf("serial-log-bundle-%s.tar.gz", gatherID))
 	serialLogBundlePath, err := filepath.Abs(serialLogBundle)
@@ -154,9 +155,32 @@ func gatherBootstrap(bootstrap string, port int, masters []string, directory str
 		logrus.Info("Pulling VM console logs")
 		if err := consoleGather.Run(); err != nil {
 			logrus.Infof("Failed to gather VM console logs: %s", err.Error())
+		} else {
+			archives[serialLogBundlePath] = "serial"
 		}
 	}
 
+	clusterLogBundlePath, err := pullLogsFromBootstrap(gatherID, bootstrap, port, masters, directory)
+	if err != nil {
+		logrus.Infof("Failed to gather bootstrap logs: %s", err.Error())
+	} else {
+		archives[clusterLogBundlePath] = ""
+	}
+
+	if len(archives) == 0 {
+		return "", fmt.Errorf("failed to gather VM console and bootstrap logs")
+	}
+
+	logBundlePath := filepath.Join(directory, fmt.Sprintf("log-bundle-%s.tar.gz", gatherID))
+	err = serialgather.CombineArchives(logBundlePath, archives)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to combine archives")
+	}
+
+	return logBundlePath, nil
+}
+
+func pullLogsFromBootstrap(gatherID string, bootstrap string, port int, masters []string, directory string) (string, error) {
 	logrus.Info("Pulling debug logs from the bootstrap machine")
 	client, err := ssh.NewClient("core", net.JoinHostPort(bootstrap, strconv.Itoa(port)), gatherBootstrapOpts.sshKeys)
 	if err != nil {
@@ -180,14 +204,7 @@ func gatherBootstrap(bootstrap string, port int, masters []string, directory str
 		return "", errors.Wrap(err, "failed to stat log file")
 	}
 
-	logBundlePath := filepath.Join(filepath.Dir(clusterLogBundlePath), fmt.Sprintf("log-bundle-%s.tar.gz", gatherID))
-	archives := map[string]string{serialLogBundlePath: "serial", clusterLogBundlePath: ""}
-	err = serialgather.CombineArchives(logBundlePath, archives)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to combine archives")
-	}
-
-	return logBundlePath, nil
+	return clusterLogBundlePath, nil
 }
 
 func logClusterOperatorConditions(ctx context.Context, config *rest.Config) error {
