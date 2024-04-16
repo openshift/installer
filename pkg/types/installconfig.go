@@ -39,6 +39,7 @@ var (
 	PlatformNames = []string{
 		aws.Name,
 		azure.Name,
+		baremetal.Name,
 		gcp.Name,
 		ibmcloud.Name,
 		nutanix.Name,
@@ -50,7 +51,6 @@ var (
 	// hidden-but-supported platform names. This list isn't presented
 	// to the user in the interactive wizard.
 	HiddenPlatformNames = []string{
-		baremetal.Name,
 		external.Name,
 		none.Name,
 	}
