@@ -1,5 +1,5 @@
-//go:build !libvirt
-// +build !libvirt
+//go:build !fipscapable
+// +build !fipscapable
 
 package hostcrypt
 

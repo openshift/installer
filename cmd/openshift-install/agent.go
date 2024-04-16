@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/openshift/installer/cmd/openshift-install/agent"
@@ -14,7 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/password"
 )
 
-func newAgentCmd() *cobra.Command {
+func newAgentCmd(ctx context.Context) *cobra.Command {
 	agentCmd := &cobra.Command{
 		Use:   "agent",
 		Short: "Commands for supporting cluster installation using agent installer",
@@ -23,7 +25,7 @@ func newAgentCmd() *cobra.Command {
 		},
 	}
 
-	agentCmd.AddCommand(newAgentCreateCmd())
+	agentCmd.AddCommand(newAgentCreateCmd(ctx))
 	agentCmd.AddCommand(agent.NewWaitForCmd())
 	agentCmd.AddCommand(newAgentGraphCmd())
 	return agentCmd
@@ -115,8 +117,7 @@ var (
 	agentTargets = []target{agentConfigTarget, agentManifestsTarget, agentImageTarget, agentPXEFilesTarget, agentConfigImageTarget, agentUnconfiguredIgnitionTarget}
 )
 
-func newAgentCreateCmd() *cobra.Command {
-
+func newAgentCreateCmd(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Commands for generating agent installation artifacts",
@@ -127,7 +128,7 @@ func newAgentCreateCmd() *cobra.Command {
 
 	for _, t := range agentTargets {
 		t.command.Args = cobra.ExactArgs(0)
-		t.command.Run = runTargetCmd(t.assets...)
+		t.command.Run = runTargetCmd(ctx, t.assets...)
 		cmd.AddCommand(t.command)
 	}
 

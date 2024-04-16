@@ -17,7 +17,6 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	utilkubeconfig "sigs.k8s.io/cluster-api/util/kubeconfig"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster/metadata"
@@ -56,7 +55,7 @@ func InitializeProvider(platform Provider) infrastructure.Provider {
 // Provision creates cluster resources by applying CAPI manifests to a locally running control plane.
 //
 //nolint:gocyclo
-func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.File, error) {
+func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset.Parents) ([]*asset.File, error) {
 	manifestsAsset := &manifests.Manifests{}
 	workersAsset := &machines.Worker{}
 	capiManifestsAsset := &capimanifests.Cluster{}
@@ -95,15 +94,6 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 	for _, m := range capiMachinesAsset.RuntimeFiles() {
 		machineManifests = append(machineManifests, m.Object)
 	}
-
-	// TODO(vincepri): The context should be passed down from the caller,
-	// although today the Asset interface doesn't allow it, refactor once it does.
-	ctx, cancel := context.WithCancel(signals.SetupSignalHandler())
-	go func() {
-		<-ctx.Done()
-		cancel()
-		clusterapi.System().Teardown()
-	}()
 
 	if p, ok := i.impl.(PreProvider); ok {
 		preProvisionInput := PreProvisionInput{
@@ -317,6 +307,14 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 	}
 
 	logrus.Infof("Cluster API resources have been created. Waiting for cluster to become ready...")
+
+	// If we're skipping bootstrap destroy, shutdown the local control plane.
+	// Otherwise, we will shut it down after bootstrap destroy.
+	if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP"); ok && oi != "" {
+		logrus.Warn("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP is set, shutting down local control plane.")
+		clusterapi.System().Teardown()
+	}
+
 	return fileList, nil
 }
 

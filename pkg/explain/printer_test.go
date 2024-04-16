@@ -166,8 +166,7 @@ func Test_PrintFields(t *testing.T) {
       HostedZoneRole is the ARN of an IAM role to be assumed when performing operations on the provided HostedZone. HostedZoneRole can be used in a shared VPC scenario when the private hosted zone belongs to a different account than the rest of the cluster resources. If HostedZoneRole is set, HostedZone must also be set.
 
     lbType <string>
-      LBType is an optional field to specify a load balancer type. 
- When this field is specified, the default ingresscontroller will be created using the specified load-balancer type. 
+      LBType is an optional field to specify a load balancer type. When this field is specified, all ingresscontrollers (including the default ingresscontroller) will be created using the specified load-balancer type by default. 
  Following are the accepted values: 
  * "Classic": A Classic Load Balancer that makes routing decisions at either the transport layer (TCP/SSL) or the application layer (HTTP/HTTPS). See the following for additional details: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#clb 
  * "NLB": A Network Load Balancer that makes routing decisions at the transport layer (TCP/SSL). See the following for additional details: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#nlb 

@@ -1,5 +1,5 @@
 locals {
-  tcp_ports = [22623, 6443, 22]
+  tcp_ports = [22623, 10258, 6443, 22]
 }
 
 resource "ibm_is_security_group" "ocp_security_group" {

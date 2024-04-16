@@ -81,9 +81,9 @@ type Platform struct {
 	PropagateUserTag bool `json:"propagateUserTags,omitempty"`
 
 	// LBType is an optional field to specify a load balancer type.
-	//
-	// When this field is specified, the default ingresscontroller will be
-	// created using the specified load-balancer type.
+	// When this field is specified, all ingresscontrollers (including the
+	// default ingresscontroller) will be created using the specified load-balancer
+	// type by default.
 	//
 	// Following are the accepted values:
 	//

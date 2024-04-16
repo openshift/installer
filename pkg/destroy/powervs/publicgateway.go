@@ -36,7 +36,7 @@ func (o *ClusterUninstaller) listAttachedSubnets(publicGatewayID string) (cloudR
 				key:      *subnet.ID,
 				name:     *subnet.Name,
 				status:   *subnet.Status,
-				typeName: subnetTypeName,
+				typeName: cloudSubnetTypeName,
 				id:       *subnet.ID,
 			})
 		}
