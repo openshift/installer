@@ -252,6 +252,12 @@ func MonitorAddNodes(cluster *Cluster, nodeIPAddress string) error {
 	mon := newAddNodeMonitor(nodeIPAddress, cluster)
 
 	wait.Until(func() {
+
+		if mon.onOrAfter(AssistedServiceIsUp) &&
+			mon.onOrBefore(HostInstallationStarted) {
+			cluster.LogAssistedServiceStatus()
+		}
+
 		for _, checkFunc := range defaultChecks {
 			lastState := mon.currentState
 			checkFunc(mon)

@@ -34,7 +34,7 @@ type validationResultHistory struct {
 	previousMessage string
 }
 
-func checkValidations(cluster *models.Cluster, validationResults *validationResults, log *logrus.Logger) error {
+func checkValidations(cluster *models.Cluster, validationResults *validationResults, log *logrus.Logger, hostLogPrefix string) error {
 	clusterLogPrefix := "Cluster validation: "
 	updatedClusterValidationHistory, err := updateValidationResultHistory(clusterLogPrefix, cluster.ValidationsInfo, validationResults.ClusterValidationHistory, log)
 	if err != nil {
@@ -43,7 +43,9 @@ func checkValidations(cluster *models.Cluster, validationResults *validationResu
 	validationResults.ClusterValidationHistory = updatedClusterValidationHistory
 
 	for _, h := range cluster.Hosts {
-		hostLogPrefix := "Host " + h.RequestedHostname + " validation: "
+		if hostLogPrefix == "" {
+			hostLogPrefix = "Host " + h.RequestedHostname + " validation: "
+		}
 		if _, ok := validationResults.HostValidationHistory[h.RequestedHostname]; !ok {
 			validationResults.HostValidationHistory[h.RequestedHostname] = make(map[string]*validationResultHistory)
 		}

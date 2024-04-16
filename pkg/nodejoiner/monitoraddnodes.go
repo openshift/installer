@@ -6,11 +6,12 @@ import (
 	"github.com/sirupsen/logrus"
 
 	agentpkg "github.com/openshift/installer/pkg/agent"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
 
 // NewMonitorAddNodesCommand creates a new command for monitor add nodes.
 func NewMonitorAddNodesCommand(directory, kubeconfigPath string, ips []string) error {
-	cluster, err := agentpkg.NewCluster(context.Background(), kubeconfigPath, ips[0], "")
+	cluster, err := agentpkg.NewCluster(context.Background(), kubeconfigPath, ips[0], "", workflow.AgentWorkflowTypeAddNodes)
 	if err != nil {
 		// TODO exit code enumerate
 		logrus.Exit(1)
