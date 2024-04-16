@@ -10,6 +10,7 @@ import (
 	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	capi "sigs.k8s.io/cluster-api/api/v1beta1"
 
+	configv1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
@@ -112,13 +113,7 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 func generateMachineSpec(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role string, trunkSupport bool, failureDomain machinev1.OpenStackFailureDomain) (*capo.OpenStackMachineSpec, error) {
 	port := capo.PortOpts{}
 
-	addressPairs := []capo.AddressPair{}
-	for _, apiVIP := range platform.APIVIPs {
-		addressPairs = append(addressPairs, capo.AddressPair{IPAddress: apiVIP})
-	}
-	for _, ingressVIP := range platform.IngressVIPs {
-		addressPairs = append(addressPairs, capo.AddressPair{IPAddress: ingressVIP})
-	}
+	addressPairs := populateAllowedAddressPairs(platform)
 
 	if platform.ControlPlanePort != nil {
 		if networkID := platform.ControlPlanePort.Network.ID; networkID != "" {
@@ -222,4 +217,18 @@ func generateMachineSpec(clusterID string, platform *openstack.Platform, mpool *
 	}
 
 	return &spec, nil
+}
+
+func populateAllowedAddressPairs(platform *openstack.Platform) []capo.AddressPair {
+	if lb := platform.LoadBalancer; lb != nil && lb.Type == configv1.LoadBalancerTypeUserManaged {
+		return nil
+	}
+	addressPairs := []capo.AddressPair{}
+	for _, apiVIP := range platform.APIVIPs {
+		addressPairs = append(addressPairs, capo.AddressPair{IPAddress: apiVIP})
+	}
+	for _, ingressVIP := range platform.IngressVIPs {
+		addressPairs = append(addressPairs, capo.AddressPair{IPAddress: ingressVIP})
+	}
+	return addressPairs
 }
