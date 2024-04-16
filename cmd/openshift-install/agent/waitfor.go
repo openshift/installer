@@ -2,7 +2,6 @@ package agent
 
 import (
 	"context"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -64,15 +63,8 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 				logrus.Fatal("No cluster installation directory found")
 			}
 
-			kubeconfigPath := filepath.Join(assetDir, "auth", "kubeconfig")
-
-			rendezvousIP, sshKey, err := agentpkg.FindRendezvouIPAndSSHKeyFromAssetStore(assetDir)
-			if err != nil {
-				logrus.Exit(exitCodeBootstrapFailed)
-			}
-
 			ctx := context.Background()
-			cluster, err := agentpkg.NewCluster(ctx, kubeconfigPath, rendezvousIP, sshKey, workflow.AgentWorkflowTypeInstall)
+			cluster, err := agentpkg.NewCluster(ctx, assetDir, "", "", workflow.AgentWorkflowTypeInstall)
 			if err != nil {
 				logrus.Exit(exitCodeBootstrapFailed)
 			}
@@ -99,15 +91,8 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 				logrus.Fatal("No cluster installation directory found")
 			}
 
-			kubeconfigPath := filepath.Join(assetDir, "auth", "kubeconfig")
-
-			rendezvousIP, sshKey, err := agentpkg.FindRendezvouIPAndSSHKeyFromAssetStore(assetDir)
-			if err != nil {
-				logrus.Exit(exitCodeBootstrapFailed)
-			}
-
 			ctx := context.Background()
-			cluster, err := agentpkg.NewCluster(ctx, kubeconfigPath, rendezvousIP, sshKey, workflow.AgentWorkflowTypeInstall)
+			cluster, err := agentpkg.NewCluster(ctx, assetDir, "", "", workflow.AgentWorkflowTypeInstall)
 			if err != nil {
 				logrus.Exit(exitCodeBootstrapFailed)
 			}

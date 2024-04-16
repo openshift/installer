@@ -66,10 +66,23 @@ type clusterInstallStatusHistory struct {
 }
 
 // NewCluster initializes a Cluster object
-func NewCluster(ctx context.Context, kubeconfigPath, rendezvousIP, sshKey string, workflowType workflow.AgentWorkflowType) (*Cluster, error) {
-
+func NewCluster(ctx context.Context, assetDir, rendezvousIP, kubeconfigPath string, workflowType workflow.AgentWorkflowType) (*Cluster, error) {
 	czero := &Cluster{}
 	capi := &clientSet{}
+
+	var sshKey string
+	if workflowType == workflow.AgentWorkflowTypeInstall {
+		kubeconfigPath = filepath.Join(assetDir, "auth", "kubeconfig")
+
+		ip, key, err := FindRendezvouIPAndSSHKeyFromAssetStore(assetDir)
+		if err != nil {
+			logrus.Fatal(err)
+		}
+		rendezvousIP = ip
+		sshKey = key
+
+		czero.assetDir = assetDir
+	}
 
 	restclient, err := NewNodeZeroRestClient(ctx, rendezvousIP, sshKey)
 	if err != nil {
@@ -114,7 +127,6 @@ func NewCluster(ctx context.Context, kubeconfigPath, rendezvousIP, sshKey string
 	czero.workflow = workflowType
 	czero.clusterID = nil
 	czero.clusterInfraEnvID = nil
-	czero.assetDir = kubeconfigPath
 	czero.clusterConsoleRouteURL = ""
 	czero.installHistory = cinstallstatushistory
 	czero.installHistory.ValidationResults = cvalidationresults
