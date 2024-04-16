@@ -27,6 +27,7 @@ type VSphereMachineTemplateSpec struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:deprecatedversion
 // +kubebuilder:resource:path=vspheremachinetemplates,scope=Namespaced,categories=cluster-api
 
@@ -52,5 +53,5 @@ type VSphereMachineTemplateList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&VSphereMachineTemplate{}, &VSphereMachineTemplateList{})
+	objectTypes = append(objectTypes, &VSphereMachineTemplate{}, &VSphereMachineTemplateList{})
 }

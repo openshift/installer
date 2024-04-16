@@ -17,9 +17,9 @@ limitations under the License.
 package context
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/go-logr/logr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/patch"
@@ -29,11 +29,9 @@ import (
 
 // ClusterContext is a Go context used with a VSphereCluster.
 type ClusterContext struct {
-	*ControllerContext
 	Cluster        *clusterv1.Cluster
 	VSphereCluster *infrav1.VSphereCluster
 	PatchHelper    *patch.Helper
-	Logger         logr.Logger
 }
 
 // String returns VSphereClusterGroupVersionKind VSphereClusterNamespace/VSphereClusterName.
@@ -42,7 +40,7 @@ func (c *ClusterContext) String() string {
 }
 
 // Patch updates the object and its status on the API server.
-func (c *ClusterContext) Patch() error {
+func (c *ClusterContext) Patch(ctx context.Context) error {
 	// always update the readyCondition.
 	conditions.SetSummary(c.VSphereCluster,
 		conditions.WithConditions(
@@ -50,5 +48,5 @@ func (c *ClusterContext) Patch() error {
 		),
 	)
 
-	return c.PatchHelper.Patch(c, c.VSphereCluster)
+	return c.PatchHelper.Patch(ctx, c.VSphereCluster)
 }

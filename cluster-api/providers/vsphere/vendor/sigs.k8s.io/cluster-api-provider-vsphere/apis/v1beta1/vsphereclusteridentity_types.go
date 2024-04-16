@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//nolint:godot
 package v1beta1
 
 import (
@@ -23,10 +22,13 @@ import (
 )
 
 const (
-	SecretIdentitySetFinalizer      = "vspherecluster/infrastructure.cluster.x-k8s.io"
+	// SecretIdentitySetFinalizer is the finalizer for VSphereCluster credentials secrets .
+	SecretIdentitySetFinalizer = "vspherecluster/infrastructure.cluster.x-k8s.io"
+	// VSphereClusterIdentityFinalizer is the finalizer for VSphereClusterIdentity credentials secrets.
 	VSphereClusterIdentityFinalizer = "vsphereclusteridentity/infrastructure.cluster.x-k8s.io"
 )
 
+// VSphereClusterIdentitySpec contains a secret reference and a group of allowed namespaces.
 type VSphereClusterIdentitySpec struct {
 	// SecretName references a Secret inside the controller namespace with the credentials to use
 	// +kubebuilder:validation:MinLength=1
@@ -39,6 +41,7 @@ type VSphereClusterIdentitySpec struct {
 	AllowedNamespaces *AllowedNamespaces `json:"allowedNamespaces,omitempty"`
 }
 
+// VSphereClusterIdentityStatus contains the status of the VSphereClusterIdentity.
 type VSphereClusterIdentityStatus struct {
 	// +optional
 	Ready bool `json:"ready,omitempty"`
@@ -48,19 +51,24 @@ type VSphereClusterIdentityStatus struct {
 	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
 }
 
+// AllowedNamespaces restricts the namespaces this VSphereClusterIdentity can be used from.
 type AllowedNamespaces struct {
 	// Selector is a standard Kubernetes LabelSelector. A label query over a set of resources.
 	// +optional
 	Selector metav1.LabelSelector `json:"selector"`
 }
 
+// VSphereIdentityKind is the kind of mechanism used to handle credentials for the VCenter API.
 type VSphereIdentityKind string
 
 var (
+	// VSphereClusterIdentityKind is used when a VSphereClusterIdentity is referenced in a VSphereCluster.
 	VSphereClusterIdentityKind = VSphereIdentityKind("VSphereClusterIdentity")
-	SecretKind                 = VSphereIdentityKind("Secret")
+	// SecretKind is used when a secret is referenced directly in a VSphereCluster.
+	SecretKind = VSphereIdentityKind("Secret")
 )
 
+// VSphereIdentityReference is the mechanism used to handle credentials for the VCenter API.
 type VSphereIdentityReference struct {
 	// Kind of the identity. Can either be VSphereClusterIdentity or Secret
 	// +kubebuilder:validation:Enum=VSphereClusterIdentity;Secret
@@ -71,10 +79,12 @@ type VSphereIdentityReference struct {
 	Name string `json:"name"`
 }
 
+// GetConditions returns the conditions for the VSphereClusterIdentity.
 func (c *VSphereClusterIdentity) GetConditions() clusterv1.Conditions {
 	return c.Status.Conditions
 }
 
+// SetConditions sets the conditions on the VSphereClusterIdentity.
 func (c *VSphereClusterIdentity) SetConditions(conditions clusterv1.Conditions) {
 	c.Status.Conditions = conditions
 }
@@ -84,7 +94,7 @@ func (c *VSphereClusterIdentity) SetConditions(conditions clusterv1.Conditions) 
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
 
-// VSphereClusterIdentity defines the account to be used for reconciling clusters
+// VSphereClusterIdentity defines the account to be used for reconciling clusters.
 type VSphereClusterIdentity struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -94,7 +104,8 @@ type VSphereClusterIdentity struct {
 }
 
 // +kubebuilder:object:root=true
-// VSphereClusterIdentityList contains a list of VSphereClusterIdentity
+
+// VSphereClusterIdentityList contains a list of VSphereClusterIdentity.
 type VSphereClusterIdentityList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -102,5 +113,5 @@ type VSphereClusterIdentityList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&VSphereClusterIdentity{}, &VSphereClusterIdentityList{})
+	objectTypes = append(objectTypes, &VSphereClusterIdentity{}, &VSphereClusterIdentityList{})
 }

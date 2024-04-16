@@ -14,28 +14,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//nolint:forcetypeassert,golint,revive,stylecheck
 package v1alpha3
 
 import (
+	"unsafe"
+
 	apiconversion "k8s.io/apimachinery/pkg/conversion"
-	clusterv1a3 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	clusterv1b1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	utilconversion "sigs.k8s.io/cluster-api/util/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	infrav1beta1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 )
 
-// ConvertTo.
+// ConvertTo converts this VSphereMachineTemplate to the Hub version (v1beta1).
 func (src *VSphereMachineTemplate) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*infrav1beta1.VSphereMachineTemplate)
+	dst := dstRaw.(*infrav1.VSphereMachineTemplate)
 	if err := Convert_v1alpha3_VSphereMachineTemplate_To_v1beta1_VSphereMachineTemplate(src, dst, nil); err != nil {
 		return err
 	}
 
 	// Manually restore data.
-	restored := &infrav1beta1.VSphereMachineTemplate{}
+	restored := &infrav1.VSphereMachineTemplate{}
 	if ok, err := utilconversion.UnmarshalData(src, restored); err != nil || !ok {
 		return err
 	}
@@ -53,7 +53,7 @@ func (src *VSphereMachineTemplate) ConvertTo(dstRaw conversion.Hub) error {
 }
 
 func (dst *VSphereMachineTemplate) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*infrav1beta1.VSphereMachineTemplate)
+	src := srcRaw.(*infrav1.VSphereMachineTemplate)
 	if err := Convert_v1beta1_VSphereMachineTemplate_To_v1alpha3_VSphereMachineTemplate(src, dst, nil); err != nil {
 		return err
 	}
@@ -67,25 +67,41 @@ func (dst *VSphereMachineTemplate) ConvertFrom(srcRaw conversion.Hub) error {
 }
 
 func (src *VSphereMachineTemplateList) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*infrav1beta1.VSphereMachineTemplateList)
+	dst := dstRaw.(*infrav1.VSphereMachineTemplateList)
 	return Convert_v1alpha3_VSphereMachineTemplateList_To_v1beta1_VSphereMachineTemplateList(src, dst, nil)
 }
 
 func (dst *VSphereMachineTemplateList) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*infrav1beta1.VSphereMachineTemplateList)
+	src := srcRaw.(*infrav1.VSphereMachineTemplateList)
 	return Convert_v1beta1_VSphereMachineTemplateList_To_v1alpha3_VSphereMachineTemplateList(src, dst, nil)
 }
 
-// nolint
-func Convert_v1alpha3_ObjectMeta_To_v1beta1_ObjectMeta(in *clusterv1a3.ObjectMeta, out *clusterv1b1.ObjectMeta, s apiconversion.Scope) error {
+func Convert_v1alpha3_ObjectMeta_To_v1beta1_ObjectMeta(in *ObjectMeta, out *clusterv1.ObjectMeta, s apiconversion.Scope) error {
 	// wrapping the conversion func to avoid having compile errors due to compileErrorOnMissingConversion()
 	// more details at https://github.com/kubernetes/kubernetes/issues/98380
-	return clusterv1a3.Convert_v1alpha3_ObjectMeta_To_v1beta1_ObjectMeta(in, out, s)
+	return autoConvert_v1alpha3_ObjectMeta_To_v1beta1_ObjectMeta(in, out, s)
 }
 
-// nolint
-func Convert_v1beta1_ObjectMeta_To_v1alpha3_ObjectMeta(in *clusterv1b1.ObjectMeta, out *clusterv1a3.ObjectMeta, s apiconversion.Scope) error {
+// autoConvert_v1alpha3_ObjectMeta_To_v1beta1_ObjectMeta was copied over from CAPI because it is now internal there.
+func autoConvert_v1alpha3_ObjectMeta_To_v1beta1_ObjectMeta(in *ObjectMeta, out *clusterv1.ObjectMeta, s apiconversion.Scope) error {
+	// WARNING: in.Name requires manual conversion: does not exist in peer-type
+	// WARNING: in.GenerateName requires manual conversion: does not exist in peer-type
+	// WARNING: in.Namespace requires manual conversion: does not exist in peer-type
+	out.Labels = *(*map[string]string)(unsafe.Pointer(&in.Labels))
+	out.Annotations = *(*map[string]string)(unsafe.Pointer(&in.Annotations))
+	// WARNING: in.OwnerReferences requires manual conversion: does not exist in peer-type
+	return nil
+}
+
+func Convert_v1beta1_ObjectMeta_To_v1alpha3_ObjectMeta(in *clusterv1.ObjectMeta, out *ObjectMeta, s apiconversion.Scope) error {
 	// wrapping the conversion func to avoid having compile errors due to compileErrorOnMissingConversion()
 	// more details at https://github.com/kubernetes/kubernetes/issues/98380
-	return clusterv1a3.Convert_v1beta1_ObjectMeta_To_v1alpha3_ObjectMeta(in, out, s)
+	return autoConvert_v1beta1_ObjectMeta_To_v1alpha3_ObjectMeta(in, out, s)
+}
+
+// autoConvert_v1beta1_ObjectMeta_To_v1alpha3_ObjectMeta was copied over from CAPI because it is now internal there.
+func autoConvert_v1beta1_ObjectMeta_To_v1alpha3_ObjectMeta(in *clusterv1.ObjectMeta, out *ObjectMeta, s apiconversion.Scope) error {
+	out.Labels = *(*map[string]string)(unsafe.Pointer(&in.Labels))
+	out.Annotations = *(*map[string]string)(unsafe.Pointer(&in.Annotations))
+	return nil
 }

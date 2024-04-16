@@ -14,55 +14,53 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package template has tools for finding VM templates.
 package template
 
 import (
 	"context"
 
-	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/vmware/govmomi/object"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
 )
 
-type tplContext interface {
-	context.Context
-	GetLogger() logr.Logger
-	GetSession() *session.Session
-}
-
 // FindTemplate finds a template based either on a UUID or name.
-func FindTemplate(ctx tplContext, templateID string) (*object.VirtualMachine, error) {
-	tpl, err := findTemplateByInstanceUUID(ctx, templateID)
+func FindTemplate(ctx context.Context, session *session.Session, templateID string) (*object.VirtualMachine, error) {
+	tpl, err := findTemplateByInstanceUUID(ctx, session, templateID)
 	if err != nil {
 		return nil, err
 	}
 	if tpl != nil {
 		return tpl, nil
 	}
-	return findTemplateByName(ctx, templateID)
+	return findTemplateByName(ctx, session, templateID)
 }
 
-func findTemplateByInstanceUUID(ctx tplContext, templateID string) (*object.VirtualMachine, error) {
+func findTemplateByInstanceUUID(ctx context.Context, session *session.Session, templateID string) (*object.VirtualMachine, error) {
+	log := ctrl.LoggerFrom(ctx)
+
 	if !isValidUUID(templateID) {
 		return nil, nil
 	}
-	ctx.GetLogger().V(6).Info("find template by instance uuid", "instance-uuid", templateID)
-	ref, err := ctx.GetSession().FindByInstanceUUID(ctx, templateID)
+	log.V(5).Info("Find template by instanceUUID", "instanceUUID", templateID)
+	ref, err := session.FindByInstanceUUID(ctx, templateID)
 	if err != nil {
 		return nil, errors.Wrap(err, "error querying template by instance UUID")
 	}
 	if ref != nil {
-		return object.NewVirtualMachine(ctx.GetSession().Client.Client, ref.Reference()), nil
+		return object.NewVirtualMachine(session.Client.Client, ref.Reference()), nil
 	}
 	return nil, nil
 }
 
-func findTemplateByName(ctx tplContext, templateID string) (*object.VirtualMachine, error) {
-	ctx.GetLogger().V(6).Info("find template by name", "name", templateID)
-	tpl, err := ctx.GetSession().Finder.VirtualMachine(ctx, templateID)
+func findTemplateByName(ctx context.Context, session *session.Session, templateID string) (*object.VirtualMachine, error) {
+	log := ctrl.LoggerFrom(ctx)
+	log.V(5).Info("Find template by name", "name", templateID)
+	tpl, err := session.Finder.VirtualMachine(ctx, templateID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to find template by name %q", templateID)
 	}

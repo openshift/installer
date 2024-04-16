@@ -6,7 +6,7 @@
 package sysprep
 
 import (
-	corev1 "k8s.io/api/core/v1"
+	"github.com/vmware-tanzu/vm-operator/api/v1alpha2/common"
 )
 
 // Sysprep describes the object representation of a Windows sysprep.xml answer
@@ -49,7 +49,7 @@ type GUIRunOnce struct {
 	// customization.
 	//
 	// +optional
-	Commands []string `json:"commmands,omitempty"`
+	Commands []string `json:"commands,omitempty"`
 }
 
 // GUIUnattended maps to the GuiUnattended key in the sysprep.xml answer file.
@@ -91,7 +91,7 @@ type GUIUnattended struct {
 	// attempt to decrypt the string.
 	//
 	// +optional
-	Password corev1.SecretKeySelector `json:"password,omitempty"`
+	Password *common.SecretKeySelector `json:"password,omitempty"`
 
 	// TimeZone is the time zone index for the virtual machine.
 	//
@@ -118,7 +118,7 @@ type Identification struct {
 	// authentication if the virtual machine is joining a domain.
 	//
 	// +optional
-	DomainAdminPassword corev1.SecretKeySelector `json:"domainAdminPassword,omitempty"`
+	DomainAdminPassword *common.SecretKeySelector `json:"domainAdminPassword,omitempty"`
 
 	// JoinDomain is the domain that the virtual machine should join. If this
 	// value is supplied, then DomainAdmin and DomainAdminPassword must also be
@@ -189,5 +189,5 @@ type UserData struct {
 	// license key, ProductID must be set or guest customization will fail.
 	//
 	// +optional
-	ProductID corev1.SecretKeySelector `json:"productID,omitempty"`
+	ProductID *common.SecretKeySelector `json:"productID,omitempty"`
 }

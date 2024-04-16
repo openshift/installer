@@ -10,16 +10,6 @@ import (
 	"github.com/vmware-tanzu/vm-operator/api/v1alpha2"
 )
 
-func Convert_v1alpha2_VirtualMachineClassStatus_To_v1alpha1_VirtualMachineClassStatus(
-	in *v1alpha2.VirtualMachineClassStatus, out *VirtualMachineClassStatus, s apiconversion.Scope) error {
-
-	// in.Ready
-	// in.Conditions
-	// in.Capabilities
-
-	return autoConvert_v1alpha2_VirtualMachineClassStatus_To_v1alpha1_VirtualMachineClassStatus(in, out, s)
-}
-
 // ConvertTo converts this VirtualMachineClass to the Hub version.
 func (src *VirtualMachineClass) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*v1alpha2.VirtualMachineClass)
@@ -42,4 +32,10 @@ func (src *VirtualMachineClassList) ConvertTo(dstRaw conversion.Hub) error {
 func (dst *VirtualMachineClassList) ConvertFrom(srcRaw conversion.Hub) error {
 	src := srcRaw.(*v1alpha2.VirtualMachineClassList)
 	return Convert_v1alpha2_VirtualMachineClassList_To_v1alpha1_VirtualMachineClassList(src, dst, nil)
+}
+
+func Convert_v1alpha2_VirtualMachineClassStatus_To_v1alpha1_VirtualMachineClassStatus(
+	in *v1alpha2.VirtualMachineClassStatus, out *VirtualMachineClassStatus, s apiconversion.Scope) error {
+
+	return autoConvert_v1alpha2_VirtualMachineClassStatus_To_v1alpha1_VirtualMachineClassStatus(in, out, s)
 }

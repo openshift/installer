@@ -19,8 +19,6 @@ package v1alpha4
 
 import (
 	"fmt"
-
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha4"
 )
 
 const (
@@ -149,7 +147,7 @@ type VSphereMachineTemplateResource struct {
 	// Standard object's metadata.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
-	ObjectMeta clusterv1.ObjectMeta `json:"metadata,omitempty"`
+	ObjectMeta ObjectMeta `json:"metadata,omitempty"`
 
 	// Spec is the specification of the desired behavior of the machine.
 	Spec VSphereMachineSpec `json:"spec"`
@@ -342,7 +340,7 @@ type VirtualMachine struct {
 	// Network is the status of the VM's network devices.
 	Network []NetworkStatus `json:"network"`
 
-	// VMRef is the the VM's Managed Object Reference on vSphere.
+	// VMRef is the VM's Managed Object Reference on vSphere.
 	VMRef string `json:"vmRef"`
 }
 

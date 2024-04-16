@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//nolint:godot
 package v1beta1
 
 import (
@@ -29,7 +28,7 @@ const (
 	DeploymentZoneFinalizer = "vspheredeploymentzone.infrastructure.cluster.x-k8s.io"
 )
 
-// VSphereDeploymentZoneSpec defines the desired state of VSphereDeploymentZone
+// VSphereDeploymentZoneSpec defines the desired state of VSphereDeploymentZone.
 type VSphereDeploymentZoneSpec struct {
 
 	// Server is the address of the vSphere endpoint.
@@ -47,7 +46,7 @@ type VSphereDeploymentZoneSpec struct {
 	PlacementConstraint PlacementConstraint `json:"placementConstraint"`
 }
 
-// PlacementConstraint is the context information for VM placements within a failure domain
+// PlacementConstraint is the context information for VM placements within a failure domain.
 type PlacementConstraint struct {
 	// ResourcePool is the name or inventory path of the resource pool in which
 	// the virtual machine is created/located.
@@ -60,6 +59,7 @@ type PlacementConstraint struct {
 	Folder string `json:"folder,omitempty"`
 }
 
+// Network holds information about the network.
 type Network struct {
 	// Name is the network name for this machine's VM.
 	Name string `json:"name,omitempty"`
@@ -73,6 +73,7 @@ type Network struct {
 	DHCP6 *bool `json:"dhcp6,omitempty"`
 }
 
+// VSphereDeploymentZoneStatus contains the status for a VSphereDeploymentZone.
 type VSphereDeploymentZoneStatus struct {
 	// Ready is true when the VSphereDeploymentZone resource is ready.
 	// If set to false, it will be ignored by VSphereClusters
@@ -89,7 +90,7 @@ type VSphereDeploymentZoneStatus struct {
 // +kubebuilder:resource:path=vspheredeploymentzones,scope=Cluster,categories=cluster-api
 // +kubebuilder:subresource:status
 
-// VSphereDeploymentZone is the Schema for the vspheredeploymentzones API
+// VSphereDeploymentZone is the Schema for the vspheredeploymentzones API.
 type VSphereDeploymentZone struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -98,17 +99,19 @@ type VSphereDeploymentZone struct {
 	Status VSphereDeploymentZoneStatus `json:"status,omitempty"`
 }
 
+// GetConditions returns the conditions for the VSphereDeploymentZone.
 func (z *VSphereDeploymentZone) GetConditions() clusterv1.Conditions {
 	return z.Status.Conditions
 }
 
+// SetConditions sets the conditions on the VSphereDeploymentZone.
 func (z *VSphereDeploymentZone) SetConditions(conditions clusterv1.Conditions) {
 	z.Status.Conditions = conditions
 }
 
 // +kubebuilder:object:root=true
 
-// VSphereDeploymentZoneList contains a list of VSphereDeploymentZone
+// VSphereDeploymentZoneList contains a list of VSphereDeploymentZone.
 type VSphereDeploymentZoneList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -116,5 +119,5 @@ type VSphereDeploymentZoneList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&VSphereDeploymentZone{}, &VSphereDeploymentZoneList{})
+	objectTypes = append(objectTypes, &VSphereDeploymentZone{}, &VSphereDeploymentZoneList{})
 }

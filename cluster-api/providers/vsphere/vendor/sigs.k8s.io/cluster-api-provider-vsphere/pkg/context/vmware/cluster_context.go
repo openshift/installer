@@ -14,43 +14,41 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package vmware contains fake contexts used for testing.
 package vmware
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/go-logr/logr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/patch"
 
-	vmwarev1b1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
+	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
 )
 
 // ClusterContext is a Go context used with a CAPI cluster.
 type ClusterContext struct {
-	*context.ControllerContext
 	Cluster        *clusterv1.Cluster
-	VSphereCluster *vmwarev1b1.VSphereCluster
+	VSphereCluster *vmwarev1.VSphereCluster
 	PatchHelper    *patch.Helper
-	Logger         logr.Logger
 }
 
-// String returns ControllerManagerName/ControllerName/ClusterAPIVersion/ClusterNamespace/ClusterName.
+// String returns ClusterAPIVersion/ClusterNamespace/ClusterName.
 func (c *ClusterContext) String() string {
-	return fmt.Sprintf("%s/%s/%s/%s", c.ControllerContext.String(), c.VSphereCluster.APIVersion, c.VSphereCluster.Namespace, c.VSphereCluster.Name)
+	return fmt.Sprintf("%s %s/%s", c.VSphereCluster.GroupVersionKind(), c.VSphereCluster.Namespace, c.VSphereCluster.Name)
 }
 
 // Patch updates the object and its status on the API server.
-func (c *ClusterContext) Patch() error {
+func (c *ClusterContext) Patch(ctx context.Context) error {
 	// always update the readyCondition.
 	conditions.SetSummary(c.VSphereCluster,
 		conditions.WithConditions(
-			vmwarev1b1.ResourcePolicyReadyCondition,
-			vmwarev1b1.ClusterNetworkReadyCondition,
-			vmwarev1b1.LoadBalancerReadyCondition,
+			vmwarev1.ResourcePolicyReadyCondition,
+			vmwarev1.ClusterNetworkReadyCondition,
+			vmwarev1.LoadBalancerReadyCondition,
 		),
 	)
-	return c.PatchHelper.Patch(c, c.VSphereCluster)
+	return c.PatchHelper.Patch(ctx, c.VSphereCluster)
 }

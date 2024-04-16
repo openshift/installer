@@ -19,12 +19,16 @@ aliases:
     - randomvariable
     - srm09
     - yastij
+    - fabriziopandini
+    - killianmuldoon
+    - sbueringer
     - gab-satchi
     - chrischdi
   cluster-api-vsphere-reviewers:
     - maxrink
     - vrabbi
     - zhanggbj
+    - rvanderp3
   cluster-api-vsphere-emeritus-maintainers:
     - akutz
     - andrewsykim

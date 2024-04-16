@@ -14,25 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//nolint:forcetypeassert,golint,revive,stylecheck
 package v1alpha3
 
 import (
 	utilconversion "sigs.k8s.io/cluster-api/util/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	infrav1beta1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 )
 
 // ConvertTo converts this VSphereMachine to the Hub version (v1beta1).
 func (src *VSphereMachine) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*infrav1beta1.VSphereMachine)
+	dst := dstRaw.(*infrav1.VSphereMachine)
 	if err := Convert_v1alpha3_VSphereMachine_To_v1beta1_VSphereMachine(src, dst, nil); err != nil {
 		return err
 	}
 
 	// Manually restore data.
-	restored := &infrav1beta1.VSphereMachine{}
+	restored := &infrav1.VSphereMachine{}
 	if ok, err := utilconversion.UnmarshalData(src, restored); err != nil || !ok {
 		return err
 	}
@@ -52,7 +51,7 @@ func (src *VSphereMachine) ConvertTo(dstRaw conversion.Hub) error {
 
 // ConvertFrom converts from the Hub version (v1beta1) to this VSphereMachine.
 func (dst *VSphereMachine) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*infrav1beta1.VSphereMachine)
+	src := srcRaw.(*infrav1.VSphereMachine)
 	if err := Convert_v1beta1_VSphereMachine_To_v1alpha3_VSphereMachine(src, dst, nil); err != nil {
 		return err
 	}
@@ -67,12 +66,12 @@ func (dst *VSphereMachine) ConvertFrom(srcRaw conversion.Hub) error {
 
 // ConvertTo converts this VSphereMachineList to the Hub version (v1beta1).
 func (src *VSphereMachineList) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*infrav1beta1.VSphereMachineList)
+	dst := dstRaw.(*infrav1.VSphereMachineList)
 	return Convert_v1alpha3_VSphereMachineList_To_v1beta1_VSphereMachineList(src, dst, nil)
 }
 
 // ConvertFrom converts from the Hub version (v1beta1) to this VSphereMachineList.
 func (dst *VSphereMachineList) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*infrav1beta1.VSphereMachineList)
+	src := srcRaw.(*infrav1.VSphereMachineList)
 	return Convert_v1beta1_VSphereMachineList_To_v1alpha3_VSphereMachineList(src, dst, nil)
 }

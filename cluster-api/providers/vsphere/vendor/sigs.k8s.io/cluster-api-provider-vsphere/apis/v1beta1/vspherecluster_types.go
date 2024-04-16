@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//nolint:godot
 package v1beta1
 
 import (
@@ -32,11 +31,12 @@ const (
 // VCenterVersion conveys the API version of the vCenter instance.
 type VCenterVersion string
 
+// NewVCenterVersion returns a VCenterVersion for the passed string.
 func NewVCenterVersion(version string) VCenterVersion {
 	return VCenterVersion(version)
 }
 
-// VSphereClusterSpec defines the desired state of VSphereCluster
+// VSphereClusterSpec defines the desired state of VSphereCluster.
 type VSphereClusterSpec struct {
 	// Server is the address of the vSphere endpoint.
 	Server string `json:"server,omitempty"`
@@ -84,7 +84,7 @@ type ClusterModule struct {
 	ModuleUUID string `json:"moduleUUID"`
 }
 
-// VSphereClusterStatus defines the observed state of VSphereClusterSpec
+// VSphereClusterStatus defines the observed state of VSphereClusterSpec.
 type VSphereClusterStatus struct {
 	// +optional
 	Ready bool `json:"ready,omitempty"`
@@ -109,7 +109,7 @@ type VSphereClusterStatus struct {
 // +kubebuilder:printcolumn:name="ControlPlaneEndpoint",type="string",JSONPath=".spec.controlPlaneEndpoint[0]",description="API Endpoint",priority=1
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of Machine"
 
-// VSphereCluster is the Schema for the vsphereclusters API
+// VSphereCluster is the Schema for the vsphereclusters API.
 type VSphereCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -118,17 +118,19 @@ type VSphereCluster struct {
 	Status VSphereClusterStatus `json:"status,omitempty"`
 }
 
+// GetConditions returns the conditions for the VSphereCluster.
 func (c *VSphereCluster) GetConditions() clusterv1.Conditions {
 	return c.Status.Conditions
 }
 
+// SetConditions sets conditions on the VSphereCluster.
 func (c *VSphereCluster) SetConditions(conditions clusterv1.Conditions) {
 	c.Status.Conditions = conditions
 }
 
 // +kubebuilder:object:root=true
 
-// VSphereClusterList contains a list of VSphereCluster
+// VSphereClusterList contains a list of VSphereCluster.
 type VSphereClusterList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -136,5 +138,5 @@ type VSphereClusterList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&VSphereCluster{}, &VSphereClusterList{})
+	objectTypes = append(objectTypes, &VSphereCluster{}, &VSphereClusterList{})
 }

@@ -24,8 +24,9 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
-func FindVMGroup(ctx computeClusterContext, clusterName, vmGroupName string) (*VMGroup, error) {
-	ccr, err := ctx.GetSession().Finder.ClusterComputeResource(ctx, clusterName)
+// FindVMGroup returns the VSphereVMGroup object.
+func FindVMGroup(ctx context.Context, computeClusterCtx computeClusterContext, clusterName, vmGroupName string) (*VMGroup, error) {
+	ccr, err := computeClusterCtx.GetSession().Finder.ClusterComputeResource(ctx, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +54,7 @@ type VMGroup struct {
 // Add a VSphere VM object to the VM Group.
 func (vg VMGroup) Add(ctx context.Context, vmObj types.ManagedObjectReference) (*object.Task, error) {
 	vms := vg.listVMs()
-	vg.ClusterVmGroup.Vm = append(vms, vmObj) //nolint:gocritic
+	vg.ClusterVmGroup.Vm = append(vms, vmObj)
 
 	spec := &types.ClusterConfigSpecEx{
 		GroupSpec: []types.ClusterGroupSpec{

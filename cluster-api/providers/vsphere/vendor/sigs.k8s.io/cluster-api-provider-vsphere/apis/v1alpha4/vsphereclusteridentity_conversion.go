@@ -19,29 +19,29 @@ package v1alpha4
 import (
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	infrav1beta1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 )
 
 // ConvertTo converts this VSphereClusterIdentity to the Hub version (v1beta1).
 func (src *VSphereClusterIdentity) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*infrav1beta1.VSphereClusterIdentity)
+	dst := dstRaw.(*infrav1.VSphereClusterIdentity)
 	return Convert_v1alpha4_VSphereClusterIdentity_To_v1beta1_VSphereClusterIdentity(src, dst, nil)
 }
 
 // ConvertFrom converts from the Hub version (v1beta1) to this VSphereClusterIdentity.
-func (dst *VSphereClusterIdentity) ConvertFrom(srcRaw conversion.Hub) error { // nolint
-	src := srcRaw.(*infrav1beta1.VSphereClusterIdentity)
+func (dst *VSphereClusterIdentity) ConvertFrom(srcRaw conversion.Hub) error {
+	src := srcRaw.(*infrav1.VSphereClusterIdentity)
 	return Convert_v1beta1_VSphereClusterIdentity_To_v1alpha4_VSphereClusterIdentity(src, dst, nil)
 }
 
 // ConvertTo converts this VSphereClusterIdentityList to the Hub version (v1beta1).
 func (src *VSphereClusterIdentityList) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*infrav1beta1.VSphereClusterIdentityList)
+	dst := dstRaw.(*infrav1.VSphereClusterIdentityList)
 	return Convert_v1alpha4_VSphereClusterIdentityList_To_v1beta1_VSphereClusterIdentityList(src, dst, nil)
 }
 
 // ConvertFrom converts this VSphereClusterIdentityList to the Hub version (v1beta1).
-func (dst *VSphereClusterIdentityList) ConvertFrom(srcRaw conversion.Hub) error { // nolint
-	src := srcRaw.(*infrav1beta1.VSphereClusterIdentityList)
+func (dst *VSphereClusterIdentityList) ConvertFrom(srcRaw conversion.Hub) error {
+	src := srcRaw.(*infrav1.VSphereClusterIdentityList)
 	return Convert_v1beta1_VSphereClusterIdentityList_To_v1alpha4_VSphereClusterIdentityList(src, dst, nil)
 }

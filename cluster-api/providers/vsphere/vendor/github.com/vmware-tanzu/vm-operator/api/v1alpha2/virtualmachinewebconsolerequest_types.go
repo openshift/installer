@@ -13,11 +13,15 @@ type VirtualMachineWebConsoleRequestSpec struct {
 	// Name is the name of a VM in the same Namespace as this web console
 	// request.
 	Name string `json:"name"`
+	// PublicKey is used to encrypt the status.response. This is expected to be a RSA OAEP public key in X.509 PEM format.
+	PublicKey string `json:"publicKey"`
 }
 
 // VirtualMachineWebConsoleRequestStatus describes the observed state of the
 // request.
 type VirtualMachineWebConsoleRequestStatus struct {
+	// Response will be the authenticated ticket corresponding to this web console request.
+	Response string `json:"response,omitempty"`
 	// ExpiryTime is the time at which access via this request will expire.
 	ExpiryTime metav1.Time `json:"expiryTime,omitempty"`
 

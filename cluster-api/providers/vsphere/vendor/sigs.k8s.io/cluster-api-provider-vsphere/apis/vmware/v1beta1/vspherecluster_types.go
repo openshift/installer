@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//nolint:godot
 package v1beta1
 
 import (
@@ -27,14 +26,18 @@ const (
 	// resources associated with VSphereCluster before removing it from the
 	// API server.
 	ClusterFinalizer = "vspherecluster.vmware.infrastructure.cluster.x-k8s.io"
+
+	// ProviderServiceAccountFinalizer allows ServiceAccountReconciler to clean up service accounts
+	// resources associated with VSphereCluster from the SERVICE_ACCOUNTS_CM (service accounts ConfigMap).
+	ProviderServiceAccountFinalizer = "providerserviceaccount.vmware.infrastructure.cluster.x-k8s.io"
 )
 
-// VSphereClusterSpec defines the desired state of VSphereCluster
+// VSphereClusterSpec defines the desired state of VSphereCluster.
 type VSphereClusterSpec struct {
 	ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint"`
 }
 
-// VSphereClusterStatus defines the observed state of VSphereClusterSpec
+// VSphereClusterStatus defines the observed state of VSphereClusterSpec.
 type VSphereClusterStatus struct {
 	// Ready indicates the infrastructure required to deploy this cluster is
 	// ready.
@@ -60,7 +63,7 @@ type VSphereClusterStatus struct {
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
 
-// VSphereCluster is the Schema for the VSphereClusters API
+// VSphereCluster is the Schema for the VSphereClusters API.
 type VSphereCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -71,21 +74,23 @@ type VSphereCluster struct {
 
 // +kubebuilder:object:root=true
 
-// VSphereClusterList contains a list of VSphereCluster
+// VSphereClusterList contains a list of VSphereCluster.
 type VSphereClusterList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []VSphereCluster `json:"items"`
 }
 
+// GetConditions returns conditions for VSphereCluster.
 func (r *VSphereCluster) GetConditions() clusterv1.Conditions {
 	return r.Status.Conditions
 }
 
+// SetConditions sets conditions on the VSphereCluster.
 func (r *VSphereCluster) SetConditions(conditions clusterv1.Conditions) {
 	r.Status.Conditions = conditions
 }
 
 func init() {
-	SchemeBuilder.Register(&VSphereCluster{}, &VSphereClusterList{})
+	objectTypes = append(objectTypes, &VSphereCluster{}, &VSphereClusterList{})
 }

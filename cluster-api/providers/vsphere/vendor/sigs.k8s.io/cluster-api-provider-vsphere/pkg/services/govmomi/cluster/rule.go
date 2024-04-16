@@ -17,11 +17,14 @@ limitations under the License.
 package cluster
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"github.com/vmware/govmomi/vim25/types"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 )
 
+// Rule is a role for host affinity.
 type Rule interface {
 	Disabled() bool
 
@@ -33,7 +36,7 @@ type vmHostAffinityRule struct {
 }
 
 func (v vmHostAffinityRule) IsMandatory() bool {
-	return pointer.BoolDeref(v.Mandatory, false)
+	return ptr.Deref(v.Mandatory, false)
 }
 
 func (v vmHostAffinityRule) Disabled() bool {
@@ -47,8 +50,9 @@ func negate(input bool) bool {
 	return !input
 }
 
-func VerifyAffinityRule(ctx computeClusterContext, clusterName, hostGroupName, vmGroupName string) (Rule, error) {
-	rules, err := listRules(ctx, clusterName)
+// VerifyAffinityRule checks whether an affinity rule exists for a given hostGroup and vmGroup.
+func VerifyAffinityRule(ctx context.Context, computeClusterCtx computeClusterContext, clusterName, hostGroupName, vmGroupName string) (Rule, error) {
+	rules, err := listRules(ctx, computeClusterCtx, clusterName)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to list rules for compute cluster %s", clusterName)
 	}
@@ -64,8 +68,8 @@ func VerifyAffinityRule(ctx computeClusterContext, clusterName, hostGroupName, v
 	return nil, errors.New("no matching affinity rule found/exists")
 }
 
-func listRules(ctx computeClusterContext, clusterName string) ([]types.BaseClusterRuleInfo, error) {
-	ccr, err := ctx.GetSession().Finder.ClusterComputeResource(ctx, clusterName)
+func listRules(ctx context.Context, computeClusterCtx computeClusterContext, clusterName string) ([]types.BaseClusterRuleInfo, error) {
+	ccr, err := computeClusterCtx.GetSession().Finder.ClusterComputeResource(ctx, clusterName)
 	if err != nil {
 		return nil, err
 	}

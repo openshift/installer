@@ -17,9 +17,9 @@ limitations under the License.
 package context
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/go-logr/logr"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/patch"
 
@@ -27,16 +27,16 @@ import (
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
 )
 
+// VSphereDeploymentZoneContext contains information for the VSphereDeploymentZone reconciliation.
 type VSphereDeploymentZoneContext struct {
-	*ControllerContext
+	*ControllerManagerContext
 	VSphereDeploymentZone *infrav1.VSphereDeploymentZone
-	VSphereFailureDomain  *infrav1.VSphereFailureDomain
-	Logger                logr.Logger
 	PatchHelper           *patch.Helper
 	AuthSession           *session.Session
 }
 
-func (c *VSphereDeploymentZoneContext) Patch() error {
+// Patch patches the VSphereDeploymentZone.
+func (c *VSphereDeploymentZoneContext) Patch(ctx context.Context) error {
 	conditions.SetSummary(c.VSphereDeploymentZone,
 		conditions.WithConditions(
 			infrav1.VCenterAvailableCondition,
@@ -44,17 +44,15 @@ func (c *VSphereDeploymentZoneContext) Patch() error {
 			infrav1.PlacementConstraintMetCondition,
 		),
 	)
-	return c.PatchHelper.Patch(c, c.VSphereDeploymentZone)
+	return c.PatchHelper.Patch(ctx, c.VSphereDeploymentZone)
 }
 
+// String returns a string with the GroupVersionKind and name of the VSphereDeploymentZone.
 func (c *VSphereDeploymentZoneContext) String() string {
 	return fmt.Sprintf("%s %s", c.VSphereDeploymentZone.GroupVersionKind(), c.VSphereDeploymentZone.Name)
 }
 
+// GetSession returns the session for the VSphereDeploymentZoneContext.
 func (c *VSphereDeploymentZoneContext) GetSession() *session.Session {
 	return c.AuthSession
-}
-
-func (c *VSphereDeploymentZoneContext) GetVsphereFailureDomain() infrav1.VSphereFailureDomain {
-	return *c.VSphereFailureDomain
 }

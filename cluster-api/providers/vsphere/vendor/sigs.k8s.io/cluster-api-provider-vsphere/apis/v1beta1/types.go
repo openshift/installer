@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//nolint:godot
 package v1beta1
 
 import (
@@ -206,7 +205,7 @@ type VirtualMachineCloneSpec struct {
 	HardwareVersion string `json:"hardwareVersion,omitempty"`
 }
 
-// VSphereMachineTemplateResource describes the data needed to create a VSphereMachine from a template
+// VSphereMachineTemplateResource describes the data needed to create a VSphereMachine from a template.
 type VSphereMachineTemplateResource struct {
 
 	// Standard object's metadata.
@@ -218,10 +217,10 @@ type VSphereMachineTemplateResource struct {
 	Spec VSphereMachineSpec `json:"spec"`
 }
 
-// VSphereMachineProviderConditionType is a valid value for VSphereMachineProviderCondition.Type
+// VSphereMachineProviderConditionType is a valid value for VSphereMachineProviderCondition.Type.
 type VSphereMachineProviderConditionType string
 
-// Valid conditions for an VSphere machine instance
+// Valid conditions for an VSphere machine instance.
 const (
 	// MachineCreated indicates whether the machine has been created or not. If not,
 	// it should include a reason and message for the failure.
@@ -247,7 +246,7 @@ func (v APIEndpoint) String() string {
 	return fmt.Sprintf("%s:%d", v.Host, v.Port)
 }
 
-// PCIDeviceSpec defines virtual machine's PCI configuration
+// PCIDeviceSpec defines virtual machine's PCI configuration.
 type PCIDeviceSpec struct {
 	// DeviceID is the device ID of a virtual machine's PCI, in integer.
 	// Defaults to the eponymous property value in the template from which the
@@ -461,17 +460,17 @@ const (
 	VirtualMachineStateReady = "ready"
 )
 
-// VirtualMachinePowerState describe the power state of a VM
+// VirtualMachinePowerState describe the power state of a VM.
 type VirtualMachinePowerState string
 
 const (
-	// VirtualMachinePowerStatePoweredOn is the string representing a VM in powered on state
+	// VirtualMachinePowerStatePoweredOn is the string representing a VM in powered on state.
 	VirtualMachinePowerStatePoweredOn VirtualMachinePowerState = "poweredOn"
 
-	// VirtualMachinePowerStatePoweredOff is the string representing a VM in powered off state
+	// VirtualMachinePowerStatePoweredOff is the string representing a VM in powered off state.
 	VirtualMachinePowerStatePoweredOff = "poweredOff"
 
-	// VirtualMachinePowerStateSuspended is the string representing a VM in suspended state
+	// VirtualMachinePowerStateSuspended is the string representing a VM in suspended state.
 	VirtualMachinePowerStateSuspended = "suspended"
 )
 
@@ -489,7 +488,7 @@ type VirtualMachine struct {
 	// Network is the status of the VM's network devices.
 	Network []NetworkStatus `json:"network"`
 
-	// VMRef is the the VM's Managed Object Reference on vSphere.
+	// VMRef is the VM's Managed Object Reference on vSphere.
 	VMRef string `json:"vmRef"`
 }
 

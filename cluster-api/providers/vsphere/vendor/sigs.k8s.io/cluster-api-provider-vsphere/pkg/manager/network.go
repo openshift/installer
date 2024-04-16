@@ -17,33 +17,42 @@ limitations under the License.
 package manager
 
 import (
-	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
+	"context"
+
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/services"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/services/network"
 )
 
 const (
-	NSXNetworkProvider     = "NSX"
-	VDSNetworkProvider     = "vsphere-network"
+	// NSXNetworkProvider identifies the NSX network provider.
+	NSXNetworkProvider = "NSX"
+	// VDSNetworkProvider identifies the VDS network provider.
+	VDSNetworkProvider = "vsphere-network"
+	// DummyLBNetworkProvider identifies the Dummy network provider.
 	DummyLBNetworkProvider = "DummyLBNetworkProvider"
 )
 
 // GetNetworkProvider will return a network provider instance based on the environment
 // the cfg is used to initialize a client that talks directly to api-server without using the cache.
-func GetNetworkProvider(ctx *context.ControllerManagerContext) (services.NetworkProvider, error) {
-	switch ctx.NetworkProvider {
+func GetNetworkProvider(ctx context.Context, client client.Client, networkProvider string) (services.NetworkProvider, error) {
+	log := ctrl.LoggerFrom(ctx)
+
+	switch networkProvider {
 	case NSXNetworkProvider:
 		// TODO: disableFirewall not configurable
-		ctx.Logger.Info("Pick NSX-T network provider")
-		return network.NsxtNetworkProvider(ctx.Client, "false"), nil
+		log.Info("Pick NSX-T network provider")
+		return network.NsxtNetworkProvider(client, "false"), nil
 	case VDSNetworkProvider:
-		ctx.Logger.Info("Pick NetOp (VDS) network provider")
-		return network.NetOpNetworkProvider(ctx.Client), nil
+		log.Info("Pick NetOp (VDS) network provider")
+		return network.NetOpNetworkProvider(client), nil
 	case DummyLBNetworkProvider:
-		ctx.Logger.Info("Pick Dummy network provider")
+		log.Info("Pick Dummy network provider")
 		return network.DummyLBNetworkProvider(), nil
 	default:
-		ctx.Logger.Info("NetworkProvider not set. Pick Dummy network provider")
+		log.Info("NetworkProvider not set. Pick Dummy network provider")
 		return network.DummyNetworkProvider(), nil
 	}
 }

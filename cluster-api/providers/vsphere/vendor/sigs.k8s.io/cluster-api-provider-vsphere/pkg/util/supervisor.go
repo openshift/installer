@@ -18,28 +18,13 @@ package util
 
 import (
 	"fmt"
-	"reflect"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
 )
-
-func IsSupervisorType(input interface{}) (bool, error) {
-	switch input.(type) {
-	case *infrav1.VSphereCluster, *infrav1.VSphereMachine:
-		return false, nil
-	case *vmwarev1.VSphereCluster, *vmwarev1.VSphereMachine:
-		return true, nil
-	default:
-		return false, fmt.Errorf("unexpected type %s", reflect.TypeOf(input))
-	}
-}
 
 // SetControllerReferenceWithOverride sets owner as a Controller OwnerReference on controlled.
 // This is used for garbage collection of the controlled object and for

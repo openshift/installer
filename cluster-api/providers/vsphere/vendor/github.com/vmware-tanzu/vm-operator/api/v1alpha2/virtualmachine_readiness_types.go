@@ -104,7 +104,7 @@ type GuestHeartbeatAction struct {
 type GuestInfoAction struct {
 	// Key is the name of the GuestInfo key.
 	//
-	// Values are automatically prefixed with "guestinfo." before being
+	// The key is automatically prefixed with "guestinfo." before being
 	// evaluated. Thus if the key "guestinfo.mykey" is provided, it will be
 	// evaluated as "guestinfo.guestinfo.mykey".
 	Key string `json:"key"`
@@ -121,11 +121,4 @@ type GuestInfoAction struct {
 	//
 	// +optional
 	Value string `json:"value,omitempty"`
-}
-
-// VirtualMachineReadinessGate contains the reference to a VM condition.
-type VirtualMachineReadinessGate struct {
-	// ConditionType refers to a condition in the VM's condition list with
-	// matching type.
-	ConditionType string `json:"conditionType"`
 }

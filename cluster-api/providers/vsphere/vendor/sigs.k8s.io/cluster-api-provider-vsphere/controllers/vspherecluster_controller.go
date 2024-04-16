@@ -17,12 +17,11 @@ limitations under the License.
 package controllers
 
 import (
-	goctx "context"
-	"fmt"
+	"context"
 	"reflect"
-	"strings"
 
 	"github.com/pkg/errors"
+	"k8s.io/klog/v2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	clusterutilv1 "sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
@@ -39,11 +38,10 @@ import (
 	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-vsphere/controllers/vmware"
 	"sigs.k8s.io/cluster-api-provider-vsphere/feature"
-	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
+	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 	inframanager "sigs.k8s.io/cluster-api-provider-vsphere/pkg/manager"
-	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/record"
+	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/services"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/services/vmoperator"
-	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/util"
 )
 
 // +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;patch;update
@@ -57,81 +55,65 @@ import (
 
 // AddClusterControllerToManager adds the cluster controller to the provided
 // manager.
-func AddClusterControllerToManager(ctx *context.ControllerManagerContext, mgr manager.Manager, clusterControlledType client.Object, options controller.Options) error {
-	supervisorBased, err := util.IsSupervisorType(clusterControlledType)
-	if err != nil {
-		return err
-	}
-
-	var (
-		clusterControlledTypeName = reflect.TypeOf(clusterControlledType).Elem().Name()
-		clusterControlledTypeGVK  = infrav1.GroupVersion.WithKind(clusterControlledTypeName)
-		controllerNameShort       = fmt.Sprintf("%s-controller", strings.ToLower(clusterControlledTypeName))
-		controllerNameLong        = fmt.Sprintf("%s/%s/%s", ctx.Namespace, ctx.Name, controllerNameShort)
-	)
+func AddClusterControllerToManager(ctx context.Context, controllerManagerCtx *capvcontext.ControllerManagerContext, mgr manager.Manager, supervisorBased bool, options controller.Options) error {
 	if supervisorBased {
-		clusterControlledTypeGVK = vmwarev1.GroupVersion.WithKind(clusterControlledTypeName)
-		controllerNameShort = fmt.Sprintf("%s-supervisor-controller", strings.ToLower(clusterControlledTypeName))
-		controllerNameLong = fmt.Sprintf("%s/%s/%s", ctx.Namespace, ctx.Name, controllerNameShort)
-	}
-
-	// Build the controller context.
-	controllerContext := &context.ControllerContext{
-		ControllerManagerContext: ctx,
-		Name:                     controllerNameShort,
-		Recorder:                 record.New(mgr.GetEventRecorderFor(controllerNameLong)),
-		Logger:                   ctx.Logger.WithName(controllerNameShort),
-	}
-
-	if supervisorBased {
-		networkProvider, err := inframanager.GetNetworkProvider(ctx)
+		networkProvider, err := inframanager.GetNetworkProvider(ctx, controllerManagerCtx.Client, controllerManagerCtx.NetworkProvider)
 		if err != nil {
 			return errors.Wrap(err, "failed to create a network provider")
 		}
-		reconciler := vmware.ClusterReconciler{
-			ControllerContext:     controllerContext,
-			ResourcePolicyService: vmoperator.RPService{},
-			ControlPlaneService:   vmoperator.CPService{},
-			NetworkProvider:       networkProvider,
+		reconciler := &vmware.ClusterReconciler{
+			Client:   controllerManagerCtx.Client,
+			Recorder: mgr.GetEventRecorderFor("vspherecluster-controller"),
+			ResourcePolicyService: &vmoperator.RPService{
+				Client: controllerManagerCtx.Client,
+			},
+			ControlPlaneService: &vmoperator.CPService{
+				Client: controllerManagerCtx.Client,
+			},
+			NetworkProvider: networkProvider,
 		}
 		return ctrl.NewControllerManagedBy(mgr).
-			Named(controllerNameShort).
-			For(clusterControlledType).
+			For(&vmwarev1.VSphereCluster{}).
 			WithOptions(options).
 			Watches(
 				&vmwarev1.VSphereMachine{},
 				handler.EnqueueRequestsFromMapFunc(reconciler.VSphereMachineToCluster),
 			).
-			WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), ctx.WatchFilterValue)).
+			WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), controllerManagerCtx.WatchFilterValue)).
 			Complete(reconciler)
 	}
 
-	reconciler := clusterReconciler{
-		ControllerContext:       controllerContext,
-		clusterModuleReconciler: NewReconciler(controllerContext),
+	reconciler := &clusterReconciler{
+		ControllerManagerContext: controllerManagerCtx,
+		Client:                   controllerManagerCtx.Client,
+		clusterModuleReconciler:  NewReconciler(controllerManagerCtx),
+		vmService:                services.VimMachineService{Client: controllerManagerCtx.Client},
 	}
-	clusterToInfraFn := clusterToInfrastructureMapFunc(ctx)
+	clusterToInfraFn := clusterToInfrastructureMapFunc(ctx, controllerManagerCtx)
 	c, err := ctrl.NewControllerManagedBy(mgr).
 		// Watch the controlled, infrastructure resource.
-		For(clusterControlledType).
+		For(&infrav1.VSphereCluster{}).
 		WithOptions(options).
 		// Watch the CAPI resource that owns this infrastructure resource.
 		Watches(
 			&clusterv1.Cluster{},
-			handler.EnqueueRequestsFromMapFunc(func(ctx goctx.Context, o client.Object) []reconcile.Request {
+			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
 				requests := clusterToInfraFn(ctx, o)
-				if requests == nil {
+				if len(requests) == 0 {
 					return nil
 				}
 
+				log := ctrl.LoggerFrom(ctx, "Cluster", klog.KObj(o), "VSphereCluster", klog.KRef(requests[0].Namespace, requests[0].Name))
+				ctx = ctrl.LoggerInto(ctx, log)
+
 				c := &infrav1.VSphereCluster{}
 				if err := reconciler.Client.Get(ctx, requests[0].NamespacedName, c); err != nil {
-					reconciler.Logger.V(4).Error(err, "Failed to get VSphereCluster")
+					log.V(4).Error(err, "Failed to get VSphereCluster")
 					return nil
 				}
 
 				if annotations.IsExternallyManaged(c) {
-					reconciler.Logger.V(4).Info("VSphereCluster is externally managed, skipping mapping.")
+					log.V(6).Info("VSphereCluster is externally managed, will not attempt to map resource")
 					return nil
 				}
 				return requests
@@ -157,11 +139,11 @@ func AddClusterControllerToManager(ctx *context.ControllerManagerContext, mgr ma
 		// should cause a resource to be synchronized, such as a goroutine
 		// waiting on some asynchronous, external task to complete.
 		WatchesRawSource(
-			&source.Channel{Source: ctx.GetGenericEventChannelFor(clusterControlledTypeGVK)},
+			&source.Channel{Source: controllerManagerCtx.GetGenericEventChannelFor(infrav1.GroupVersion.WithKind("VSphereCluster"))},
 			&handler.EnqueueRequestForObject{},
 		).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), ctx.WatchFilterValue)).
-		WithEventFilter(predicates.ResourceIsNotExternallyManaged(reconciler.Logger)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), controllerManagerCtx.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceIsNotExternallyManaged(ctrl.LoggerFrom(ctx))).
 		Build(reconciler)
 	if err != nil {
 		return err
@@ -173,7 +155,12 @@ func AddClusterControllerToManager(ctx *context.ControllerManagerContext, mgr ma
 	return nil
 }
 
-func clusterToInfrastructureMapFunc(managerContext *context.ControllerManagerContext) handler.MapFunc {
+func clusterToInfrastructureMapFunc(ctx context.Context, controllerCtx *capvcontext.ControllerManagerContext) handler.MapFunc {
 	gvk := infrav1.GroupVersion.WithKind(reflect.TypeOf(&infrav1.VSphereCluster{}).Elem().Name())
-	return clusterutilv1.ClusterToInfrastructureMapFunc(managerContext, gvk, managerContext.Client, &infrav1.VSphereCluster{})
+	return clusterutilv1.ClusterToInfrastructureMapFunc(ctx, gvk, controllerCtx.Client, &infrav1.VSphereCluster{})
+}
+
+func clusterToVMwareInfrastructureMapFunc(ctx context.Context, controllerCtx *capvcontext.ControllerManagerContext) handler.MapFunc {
+	gvk := vmwarev1.GroupVersion.WithKind(reflect.TypeOf(&vmwarev1.VSphereCluster{}).Elem().Name())
+	return clusterutilv1.ClusterToInfrastructureMapFunc(ctx, gvk, controllerCtx.Client, &vmwarev1.VSphereCluster{})
 }

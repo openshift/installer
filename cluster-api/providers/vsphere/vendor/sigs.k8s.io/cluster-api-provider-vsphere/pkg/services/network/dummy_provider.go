@@ -14,11 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//nolint:revive
 package network
 
 import (
-	vmopv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha1"
+	"context"
+
+	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context/vmware"
@@ -37,23 +38,23 @@ func (np *dummyNetworkProvider) HasLoadBalancer() bool {
 	return false
 }
 
-func (np *dummyNetworkProvider) ProvisionClusterNetwork(ctx *vmware.ClusterContext) error {
+func (np *dummyNetworkProvider) ProvisionClusterNetwork(_ context.Context, _ *vmware.ClusterContext) error {
 	return nil
 }
 
-func (np *dummyNetworkProvider) GetClusterNetworkName(ctx *vmware.ClusterContext) (string, error) {
+func (np *dummyNetworkProvider) GetClusterNetworkName(_ context.Context, _ *vmware.ClusterContext) (string, error) {
 	return "", nil
 }
 
-func (np *dummyNetworkProvider) ConfigureVirtualMachine(ctx *vmware.ClusterContext, vm *vmopv1.VirtualMachine) error {
+func (np *dummyNetworkProvider) ConfigureVirtualMachine(_ context.Context, _ *vmware.ClusterContext, _ *vmoprv1.VirtualMachine) error {
 	return nil
 }
 
-func (np *dummyNetworkProvider) GetVMServiceAnnotations(ctx *vmware.ClusterContext) (map[string]string, error) {
+func (np *dummyNetworkProvider) GetVMServiceAnnotations(_ context.Context, _ *vmware.ClusterContext) (map[string]string, error) {
 	return map[string]string{}, nil
 }
 
-func (np *dummyNetworkProvider) VerifyNetworkStatus(ctx *vmware.ClusterContext, obj runtime.Object) error {
+func (np *dummyNetworkProvider) VerifyNetworkStatus(_ context.Context, _ *vmware.ClusterContext, _ runtime.Object) error {
 	return nil
 }
 

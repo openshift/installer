@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package net contains tools for handling VM networks.
 package net
 
 import (

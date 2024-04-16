@@ -34,6 +34,7 @@ func (e unidentifiedVCenterVersion) Error() string {
 	return fmt.Sprintf("%s: %s", errString, e.version)
 }
 
+// IsUnidentifiedVCenterVersion identies an error as an unidentifiedVCenterVersion error.
 func IsUnidentifiedVCenterVersion(err error) bool {
 	return strings.HasPrefix(err.Error(), errString)
 }

@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//nolint:godot
 package v1beta1
 
 import clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -34,7 +33,7 @@ const (
 	// Cluster Network.
 	ClusterNetworkReadyCondition clusterv1.ConditionType = "ClusterNetworkReady"
 
-	// ClusterNetworkProvisionStarted is used when waiting for Cluster
+	// ClusterNetworkProvisionStartedReason is used when waiting for Cluster
 	// Network to be Ready.
 	ClusterNetworkProvisionStartedReason = "ClusterNetworkProvisionStarted"
 	// ClusterNetworkProvisionFailedReason is used when any errors occur
@@ -64,34 +63,39 @@ const (
 	VMProvisionStartedReason = "VMProvisionStarted"
 	// PoweringOnReason documents (Severity=Info) a Virtual Machine currently executing the power on sequence.
 	PoweringOnReason = "PoweringOn"
-	// WaitingForNetworkAddressReason (Severity=Info) documents a VSphereMachine waiting for the the machine network
+	// WaitingForNetworkAddressReason (Severity=Info) documents a VSphereMachine waiting for the machine network
 	// settings to be reported after machine being powered on.
 	WaitingForNetworkAddressReason = "WaitingForNetworkAddress"
-	// WaitingForBIOSUUIDReason (Severity=Info) documents a VSphereMachine waiting for the the machine to have a BIOS UUID.
+	// WaitingForBIOSUUIDReason (Severity=Info) documents a VSphereMachine waiting for the machine to have a BIOS UUID.
 	WaitingForBIOSUUIDReason = "WaitingForBIOSUUID"
 )
 
 const (
 	// ProviderServiceAccountsReadyCondition documents the status of provider service accounts
-	// and related Roles, RoleBindings and Secrets are created
+	// and related Roles, RoleBindings and Secrets are created.
 	ProviderServiceAccountsReadyCondition clusterv1.ConditionType = "ProviderServiceAccountsReady"
 
-	// ProviderServiceAccountsReconciliationFailedReason reports that provider service accounts related resources reconciliation failed
+	// ProviderServiceAccountsReconciliationFailedReason reports that provider service accounts related resources reconciliation failed.
 	ProviderServiceAccountsReconciliationFailedReason = "ProviderServiceAccountsReconciliationFailed"
 )
 
 const (
+	// SupervisorLoadBalancerSvcNamespace is the namespace for the Supervisor load balancer service.
 	SupervisorLoadBalancerSvcNamespace = "kube-system"
-	SupervisorLoadBalancerSvcName      = "kube-apiserver-lb-svc"
-	SupervisorAPIServerPort            = 6443
-
+	// SupervisorLoadBalancerSvcName is the name for the Supervisor load balancer service.
+	SupervisorLoadBalancerSvcName = "kube-apiserver-lb-svc"
+	// SupervisorAPIServerPort is the port for the Supervisor apiserver when using the load balancer service.
+	SupervisorAPIServerPort = 6443
+	// SupervisorHeadlessSvcNamespace is the namespace for the Supervisor headless service.
 	SupervisorHeadlessSvcNamespace = "default"
-	SupervisorHeadlessSvcName      = "supervisor"
-	SupervisorHeadlessSvcPort      = 6443
+	// SupervisorHeadlessSvcName is the name for the Supervisor headless service.
+	SupervisorHeadlessSvcName = "supervisor"
+	// SupervisorHeadlessSvcPort is the port for the Supervisor apiserver when using the headless service.
+	SupervisorHeadlessSvcPort = 6443
 
-	// ServiceDiscoveryReadyCondition documents the status of service discoveries
+	// ServiceDiscoveryReadyCondition documents the status of service discoveries.
 	ServiceDiscoveryReadyCondition clusterv1.ConditionType = "ServiceDiscoveryReady"
 
-	// SupervisorHeadlessServiceSetupFailedReason documents the headless service setup for svc api server failed
+	// SupervisorHeadlessServiceSetupFailedReason documents the headless service setup for svc api server failed.
 	SupervisorHeadlessServiceSetupFailedReason = "SupervisorHeadlessServiceSetupFailed"
 )

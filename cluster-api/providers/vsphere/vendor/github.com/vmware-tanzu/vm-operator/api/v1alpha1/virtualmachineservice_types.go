@@ -132,7 +132,7 @@ type VirtualMachineServiceStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:shortName=vmservice
-// +kubebuilder:storageversion
+// +kubebuilder:storageversion:false
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Type",type="string",JSONPath=".spec.type"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"

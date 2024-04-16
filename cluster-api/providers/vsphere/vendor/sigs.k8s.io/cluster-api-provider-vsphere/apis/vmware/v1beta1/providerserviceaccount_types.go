@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//nolint:godot
 package v1beta1
 
 import (
@@ -65,7 +64,7 @@ type ProviderServiceAccount struct {
 
 // +kubebuilder:object:root=true
 
-// ProviderServiceAccountList contains a list of ProviderServiceAccount
+// ProviderServiceAccountList contains a list of ProviderServiceAccount.
 type ProviderServiceAccountList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -73,5 +72,5 @@ type ProviderServiceAccountList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&ProviderServiceAccount{}, &ProviderServiceAccountList{})
+	objectTypes = append(objectTypes, &ProviderServiceAccount{}, &ProviderServiceAccountList{})
 }

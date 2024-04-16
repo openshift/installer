@@ -14,9 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package ipam contains tools for to deal with CAPI IPAddress and related types.
 package ipam
 
 import (
+	"context"
 	"fmt"
 	"net/netip"
 	"strings"
@@ -25,10 +27,12 @@ import (
 	"golang.org/x/exp/slices"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apitypes "k8s.io/apimachinery/pkg/types"
+	"k8s.io/klog/v2"
 	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1alpha1"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
+	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/util"
 )
 
@@ -44,10 +48,11 @@ type ipamDeviceConfig struct {
 	IPAMConfigGateway6  string
 }
 
-func BuildState(ctx context.VMContext, networkStatus []infrav1.NetworkStatus) (map[string]infrav1.NetworkDeviceSpec, error) {
+// BuildState checks if IPAddressClaims are satisfied and returns a map of NetworkDeviceSpec.
+func BuildState(ctx context.Context, vmCtx capvcontext.VMContext, networkStatus []infrav1.NetworkStatus) (map[string]infrav1.NetworkDeviceSpec, error) {
 	state := map[string]infrav1.NetworkDeviceSpec{}
 
-	ipamDeviceConfigs, err := buildIPAMDeviceConfigs(ctx, networkStatus)
+	ipamDeviceConfigs, err := buildIPAMDeviceConfigs(ctx, vmCtx, networkStatus)
 	if err != nil {
 		return state, err
 	}
@@ -113,10 +118,12 @@ func BuildState(ctx context.VMContext, networkStatus []infrav1.NetworkStatus) (m
 // is returned, one for each device with addressesFromPools.
 // If any of the IPAddressClaims do not have an associated IPAddress yet,
 // a custom error is returned.
-func buildIPAMDeviceConfigs(ctx context.VMContext, networkStatus []infrav1.NetworkStatus) ([]ipamDeviceConfig, error) {
+func buildIPAMDeviceConfigs(ctx context.Context, vmCtx capvcontext.VMContext, networkStatus []infrav1.NetworkStatus) ([]ipamDeviceConfig, error) {
+	log := ctrl.LoggerFrom(ctx)
+
 	boundClaims, totalClaims := 0, 0
 	ipamDeviceConfigs := []ipamDeviceConfig{}
-	for devIdx, networkSpecDevice := range ctx.VSphereVM.Spec.Network.Devices {
+	for devIdx, networkSpecDevice := range vmCtx.VSphereVM.Spec.Network.Devices {
 		if len(networkStatus) == 0 ||
 			len(networkStatus) <= devIdx ||
 			networkStatus[devIdx].MACAddr == "" {
@@ -133,30 +140,33 @@ func buildIPAMDeviceConfigs(ctx context.VMContext, networkStatus []infrav1.Netwo
 
 		for poolRefIdx := range networkSpecDevice.AddressesFromPools {
 			totalClaims++
-			ipAddrClaimName := util.IPAddressClaimName(ctx.VSphereVM.Name, ipamDeviceConfig.DeviceIndex, poolRefIdx)
-			ipAddrClaim, err := getIPAddrClaim(ctx, ipAddrClaimName)
+			ipAddrClaimName := util.IPAddressClaimName(vmCtx.VSphereVM.Name, ipamDeviceConfig.DeviceIndex, poolRefIdx)
+
+			log := log.WithValues("IPAddressClaim", klog.KRef(vmCtx.VSphereVM.Namespace, ipAddrClaimName))
+			ctx := ctrl.LoggerInto(ctx, log)
+
+			ipAddrClaim, err := getIPAddrClaim(ctx, vmCtx, ipAddrClaimName)
 			if err != nil {
-				ctx.Logger.Error(err, "error fetching IPAddressClaim", "name", ipAddrClaimName)
 				if apierrors.IsNotFound(err) {
 					// it would be odd for this to occur, a findorcreate just happened in a previous step
 					continue
 				}
-				return nil, err
+				return nil, errors.Wrapf(err, "failed to get IPAddressClaim %s", klog.KRef(vmCtx.VSphereVM.Namespace, ipAddrClaimName))
 			}
 
-			ctx.Logger.V(5).Info("fetched IPAddressClaim", "name", ipAddrClaimName, "namespace", ctx.VSphereVM.Namespace)
+			log.V(5).Info("Fetched IPAddressClaim")
 			ipAddrName := ipAddrClaim.Status.AddressRef.Name
 			if ipAddrName == "" {
-				ctx.Logger.V(5).Info("IPAddress not yet bound to IPAddressClaim", "name", ipAddrClaimName, "namespace", ctx.VSphereVM.Namespace)
+				log.V(5).Info("IPAddress not yet bound to IPAddressClaim")
 				continue
 			}
 
 			ipAddr := &ipamv1.IPAddress{}
 			ipAddrKey := apitypes.NamespacedName{
-				Namespace: ctx.VSphereVM.Namespace,
+				Namespace: vmCtx.VSphereVM.Namespace,
 				Name:      ipAddrName,
 			}
-			if err := ctx.Client.Get(ctx, ipAddrKey, ipAddr); err != nil {
+			if err := vmCtx.Client.Get(ctx, ipAddrKey, ipAddr); err != nil {
 				// because the ref was set on the claim, it is expected this error should not occur
 				return nil, err
 			}
@@ -166,7 +176,7 @@ func buildIPAMDeviceConfigs(ctx context.VMContext, networkStatus []infrav1.Netwo
 		ipamDeviceConfigs = append(ipamDeviceConfigs, ipamDeviceConfig)
 	}
 	if boundClaims < totalClaims {
-		ctx.Logger.Info("waiting for ip address claims to be bound",
+		log.Info("Waiting for ip address claims to be bound",
 			"total claims", totalClaims,
 			"claims bound", boundClaims)
 		return nil, ErrWaitingForIPAddr
@@ -175,15 +185,17 @@ func buildIPAMDeviceConfigs(ctx context.VMContext, networkStatus []infrav1.Netwo
 }
 
 // getIPAddrClaim fetches an IPAddressClaim from the api with the given name.
-func getIPAddrClaim(ctx context.VMContext, ipAddrClaimName string) (*ipamv1.IPAddressClaim, error) {
+func getIPAddrClaim(ctx context.Context, vmCtx capvcontext.VMContext, ipAddrClaimName string) (*ipamv1.IPAddressClaim, error) {
+	log := ctrl.LoggerFrom(ctx)
+
 	ipAddrClaim := &ipamv1.IPAddressClaim{}
 	ipAddrClaimKey := apitypes.NamespacedName{
-		Namespace: ctx.VSphereVM.Namespace,
+		Namespace: vmCtx.VSphereVM.Namespace,
 		Name:      ipAddrClaimName,
 	}
 
-	ctx.Logger.V(5).Info("fetching IPAddressClaim", "name", ipAddrClaimKey.String())
-	if err := ctx.Client.Get(ctx, ipAddrClaimKey, ipAddrClaim); err != nil {
+	log.V(5).Info("Fetching IPAddressClaim", "IPAddressClaim", klog.KRef(ipAddrClaimKey.Namespace, ipAddrClaimKey.Name))
+	if err := vmCtx.Client.Get(ctx, ipAddrClaimKey, ipAddrClaim); err != nil {
 		return nil, err
 	}
 	return ipAddrClaim, nil

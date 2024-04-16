@@ -17,6 +17,7 @@ limitations under the License.
 package manager
 
 import (
+	"context"
 	"os"
 	"strings"
 	"time"
@@ -28,13 +29,13 @@ import (
 	ctrlmgr "sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/yaml"
 
-	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
+	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 )
 
 // AddToManagerFunc is a function that can be optionally specified with
 // the manager's Options in order to explicitly decide what controllers and
 // webhooks to add to the manager.
-type AddToManagerFunc func(*context.ControllerManagerContext, ctrlmgr.Manager) error
+type AddToManagerFunc func(context.Context, *capvcontext.ControllerManagerContext, ctrlmgr.Manager) error
 
 // Options describes the options used to create a new CAPV manager.
 type Options struct {

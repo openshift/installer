@@ -17,9 +17,8 @@ limitations under the License.
 package manager
 
 import (
-	goctx "context"
+	"context"
 	"fmt"
-	"os"
 
 	"github.com/pkg/errors"
 	netopv1 "github.com/vmware-tanzu/net-operator-api/api/v1alpha1"
@@ -34,46 +33,39 @@ import (
 	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	infrav1a3 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1alpha3"
-	infrav1a4 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1alpha4"
-	infrav1b1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	vmwarev1b1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
-	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/record"
+	infrav1alpha3 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1alpha3"
+	infrav1alpha4 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1alpha4"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
+	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 )
 
 // Manager is a CAPV controller manager.
 type Manager interface {
 	ctrl.Manager
 
-	// GetContext returns the controller manager's context.
-	GetContext() *context.ControllerManagerContext
+	// GetControllerManagerContext returns the controller manager's context.
+	GetControllerManagerContext() *capvcontext.ControllerManagerContext
 }
 
 // New returns a new CAPV controller manager.
-func New(opts Options) (Manager, error) {
+func New(ctx context.Context, opts Options) (Manager, error) {
 	// Ensure the default options are set.
 	opts.defaults()
 
 	_ = clientgoscheme.AddToScheme(opts.Scheme)
 	_ = clusterv1.AddToScheme(opts.Scheme)
-	_ = infrav1a3.AddToScheme(opts.Scheme)
-	_ = infrav1a4.AddToScheme(opts.Scheme)
-	_ = infrav1b1.AddToScheme(opts.Scheme)
+	_ = infrav1alpha3.AddToScheme(opts.Scheme)
+	_ = infrav1alpha4.AddToScheme(opts.Scheme)
+	_ = infrav1.AddToScheme(opts.Scheme)
 	_ = controlplanev1.AddToScheme(opts.Scheme)
 	_ = bootstrapv1.AddToScheme(opts.Scheme)
-	_ = vmwarev1b1.AddToScheme(opts.Scheme)
+	_ = vmwarev1.AddToScheme(opts.Scheme)
 	_ = vmoprv1.AddToScheme(opts.Scheme)
 	_ = ncpv1.AddToScheme(opts.Scheme)
 	_ = netopv1.AddToScheme(opts.Scheme)
 	_ = topologyv1.AddToScheme(opts.Scheme)
 	_ = ipamv1.AddToScheme(opts.Scheme)
-	// +kubebuilder:scaffold:scheme
-
-	podName, err := os.Hostname()
-	if err != nil {
-		podName = DefaultPodName
-	}
 
 	// Build the controller manager.
 	mgr, err := ctrl.NewManager(opts.KubeConfig, opts.Options)
@@ -82,16 +74,14 @@ func New(opts Options) (Manager, error) {
 	}
 
 	// Build the controller manager context.
-	controllerManagerContext := &context.ControllerManagerContext{
-		Context:                 goctx.Background(),
-		WatchNamespaces:         opts.Cache.Namespaces,
+	controllerManagerContext := &capvcontext.ControllerManagerContext{
+		WatchNamespaces:         opts.Cache.DefaultNamespaces,
 		Namespace:               opts.PodNamespace,
 		Name:                    opts.PodName,
 		LeaderElectionID:        opts.LeaderElectionID,
 		LeaderElectionNamespace: opts.LeaderElectionNamespace,
 		Client:                  mgr.GetClient(),
-		Logger:                  opts.Logger.WithName(opts.PodName),
-		Recorder:                record.New(mgr.GetEventRecorderFor(fmt.Sprintf("%s/%s", opts.PodNamespace, podName))),
+		Logger:                  opts.Logger,
 		Scheme:                  opts.Scheme,
 		Username:                opts.Username,
 		Password:                opts.Password,
@@ -102,34 +92,33 @@ func New(opts Options) (Manager, error) {
 	}
 
 	// Add the requested items to the manager.
-	if err := opts.AddToManager(controllerManagerContext, mgr); err != nil {
+	if err := opts.AddToManager(ctx, controllerManagerContext, mgr); err != nil {
 		return nil, errors.Wrap(err, "failed to add resources to the manager")
 	}
 
-	// +kubebuilder:scaffold:builder
-
 	return &manager{
-		Manager: mgr,
-		ctx:     controllerManagerContext,
+		Manager:              mgr,
+		controllerManagerCtx: controllerManagerContext,
 	}, nil
 }
 
 type manager struct {
 	ctrl.Manager
-	ctx *context.ControllerManagerContext
+	controllerManagerCtx *capvcontext.ControllerManagerContext
 }
 
-func (m *manager) GetContext() *context.ControllerManagerContext {
-	return m.ctx
+func (m *manager) GetControllerManagerContext() *capvcontext.ControllerManagerContext {
+	return m.controllerManagerCtx
 }
 
+// UpdateCredentials reads and updates credentials from the credentials file.
 func UpdateCredentials(opts *Options) {
 	opts.readAndSetCredentials()
 }
 
-// InitializeWatch adds a filesystem watcher for the capv credentials file
+// InitializeWatch adds a filesystem watcher for the capv credentials file.
 // In case of any update to the credentials file, the new credentials are passed to the capv manager context.
-func InitializeWatch(ctx *context.ControllerManagerContext, managerOpts *Options) (watch *fsnotify.Watcher, err error) {
+func InitializeWatch(controllerManagerContext *capvcontext.ControllerManagerContext, managerOpts *Options) (watch *fsnotify.Watcher, err error) {
 	capvCredentialsFile := managerOpts.CredentialsFile
 	updateEventCh := make(chan bool)
 	watch, err = fsnotify.NewWatcher()
@@ -143,9 +132,9 @@ func InitializeWatch(ctx *context.ControllerManagerContext, managerOpts *Options
 		for {
 			select {
 			case err := <-watch.Errors:
-				ctx.Logger.Error(err, "received error on CAPV credential watcher")
+				controllerManagerContext.Logger.Error(err, "Received error on CAPV credential watcher")
 			case event := <-watch.Events:
-				ctx.Logger.Info(fmt.Sprintf("received event %v on the credential file %s", event, capvCredentialsFile))
+				controllerManagerContext.Logger.Info(fmt.Sprintf("Received event %v on the credential file %s", event, capvCredentialsFile))
 				updateEventCh <- true
 			}
 		}
