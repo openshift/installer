@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/IBM-Cloud/bluemix-go/crn"
+	"github.com/IBM/vpc-go-sdk/vpcv1"
 
 	"github.com/openshift/installer/pkg/types"
 )
@@ -239,4 +240,44 @@ func (m *Metadata) IsVPCPermittedNetwork(ctx context.Context, vpcName string, ba
 	}
 
 	return false, nil
+}
+
+// GetSubnetID gets the ID of a VPC subnet by name and region.
+func (m *Metadata) GetSubnetID(ctx context.Context, subnetName string, vpcRegion string) (string, error) {
+	subnet, err := m.client.GetSubnetByName(ctx, subnetName, vpcRegion)
+	if err != nil {
+		return "", err
+	}
+	return *subnet.ID, err
+}
+
+// GetVPCSubnets gets a list of subnets in a VPC.
+func (m *Metadata) GetVPCSubnets(ctx context.Context, vpcName string) ([]vpcv1.Subnet, error) {
+	vpc, err := m.client.GetVPCByName(ctx, vpcName)
+	if err != nil {
+		return nil, err
+	}
+	subnets, err := m.client.GetVPCSubnets(ctx, *vpc.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get VPC subnets: %w", err)
+	}
+	return subnets, err
+}
+
+// GetDNSServerIP gets the IP of a custom resolver for DNS use.
+func (m *Metadata) GetDNSServerIP(ctx context.Context, vpcName string) (string, error) {
+	vpc, err := m.client.GetVPCByName(ctx, vpcName)
+	if err != nil {
+		return "", err
+	}
+
+	dnsCRN, err := crn.Parse(m.dnsInstanceCRN)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse DNSInstanceCRN: %w", err)
+	}
+	dnsServerIP, err := m.client.GetDNSCustomResolverIP(ctx, dnsCRN.ServiceInstance, *vpc.ID)
+	if err != nil {
+		return "", err
+	}
+	return dnsServerIP, nil
 }

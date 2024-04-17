@@ -139,6 +139,21 @@ func (mr *MockAPIMockRecorder) GetAuthenticatorAPIKeyDetails(ctx interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthenticatorAPIKeyDetails", reflect.TypeOf((*MockAPI)(nil).GetAuthenticatorAPIKeyDetails), ctx)
 }
 
+// GetDNSCustomResolverIP mocks base method.
+func (m *MockAPI) GetDNSCustomResolverIP(ctx context.Context, dnsID, vpcID string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDNSCustomResolverIP", ctx, dnsID, vpcID)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDNSCustomResolverIP indicates an expected call of GetDNSCustomResolverIP.
+func (mr *MockAPIMockRecorder) GetDNSCustomResolverIP(ctx, dnsID, vpcID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDNSCustomResolverIP", reflect.TypeOf((*MockAPI)(nil).GetDNSCustomResolverIP), ctx, dnsID, vpcID)
+}
+
 // GetDNSInstancePermittedNetworks mocks base method.
 func (m *MockAPI) GetDNSInstancePermittedNetworks(ctx context.Context, dnsID, dnsZone string) ([]string, error) {
 	m.ctrl.T.Helper()
@@ -272,6 +287,21 @@ func (m *MockAPI) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC,
 func (mr *MockAPIMockRecorder) GetVPCByName(ctx, vpcName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPCByName", reflect.TypeOf((*MockAPI)(nil).GetVPCByName), ctx, vpcName)
+}
+
+// GetVPCSubnets mocks base method.
+func (m *MockAPI) GetVPCSubnets(ctx context.Context, vpcID string) ([]vpcv1.Subnet, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVPCSubnets", ctx, vpcID)
+	ret0, _ := ret[0].([]vpcv1.Subnet)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVPCSubnets indicates an expected call of GetVPCSubnets.
+func (mr *MockAPIMockRecorder) GetVPCSubnets(ctx, vpcID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPCSubnets", reflect.TypeOf((*MockAPI)(nil).GetVPCSubnets), ctx, vpcID)
 }
 
 // GetVPCs mocks base method.

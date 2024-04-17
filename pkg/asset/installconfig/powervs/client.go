@@ -39,6 +39,7 @@ type API interface {
 	GetDNSZoneIDByName(ctx context.Context, name string, publish types.PublishingStrategy) (string, error)
 	GetDNSZones(ctx context.Context, publish types.PublishingStrategy) ([]DNSZoneResponse, error)
 	GetDNSInstancePermittedNetworks(ctx context.Context, dnsID string, dnsZone string) ([]string, error)
+	GetDNSCustomResolverIP(ctx context.Context, dnsID string, vpcID string) (string, error)
 	CreateDNSRecord(ctx context.Context, crnstr string, baseDomain string, hostname string, cname string) error
 
 	// VPC
@@ -46,6 +47,7 @@ type API interface {
 	GetPublicGatewayByVPC(ctx context.Context, vpcName string) (*vpcv1.PublicGateway, error)
 	SetVPCServiceURLForRegion(ctx context.Context, region string) error
 	GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error)
+	GetVPCSubnets(ctx context.Context, vpcID string) ([]vpcv1.Subnet, error)
 
 	// TG
 	GetTGConnectionVPC(ctx context.Context, gatewayID string, vpcSubnetID string) (string, error)
@@ -253,7 +255,6 @@ func (c *Client) GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID 
 
 // GetInstanceCRNByName finds the CRN of the instance with the specified name.
 func (c *Client) GetInstanceCRNByName(ctx context.Context, name string, publish types.PublishingStrategy) (string, error) {
-
 	zones, err := c.GetDNSZones(ctx, publish)
 	if err != nil {
 		return "", err
@@ -268,9 +269,33 @@ func (c *Client) GetInstanceCRNByName(ctx context.Context, name string, publish 
 	return "", fmt.Errorf("DNS zone %q not found", name)
 }
 
+// GetDNSCustomResolverIP gets the DNS Server IP of a custom resolver associated with the specified VPC subnet in the specified DNS zone.
+func (c *Client) GetDNSCustomResolverIP(ctx context.Context, dnsID string, vpcID string) (string, error) {
+	listCustomResolversOptions := c.dnsServicesAPI.NewListCustomResolversOptions(dnsID)
+	customResolvers, _, err := c.dnsServicesAPI.ListCustomResolversWithContext(ctx, listCustomResolversOptions)
+	if err != nil {
+		return "", err
+	}
+
+	subnets, err := c.GetVPCSubnets(ctx, vpcID)
+	if err != nil {
+		return "", err
+	}
+
+	for _, customResolver := range customResolvers.CustomResolvers {
+		for _, location := range customResolver.Locations {
+			for _, subnet := range subnets {
+				if *subnet.CRN == *location.SubnetCrn {
+					return *location.DnsServerIp, nil
+				}
+			}
+		}
+	}
+	return "", fmt.Errorf("DNS server IP of custom resolver for %q not found", dnsID)
+}
+
 // GetDNSZoneIDByName gets the CIS zone ID from its domain name.
 func (c *Client) GetDNSZoneIDByName(ctx context.Context, name string, publish types.PublishingStrategy) (string, error) {
-
 	zones, err := c.GetDNSZones(ctx, publish)
 	if err != nil {
 		return "", err
@@ -372,7 +397,7 @@ func (c *Client) GetDNSZones(ctx context.Context, publish types.PublishingStrate
 	return allZones, nil
 }
 
-// GetDNSInstancePermittedNetworks gets the permitted VPC networks for a DNS Services instance
+// GetDNSInstancePermittedNetworks gets the permitted VPC networks for a DNS Services instance.
 func (c *Client) GetDNSInstancePermittedNetworks(ctx context.Context, dnsID string, dnsZone string) ([]string, error) {
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
@@ -508,6 +533,18 @@ func (c *Client) GetPublicGatewayByVPC(ctx context.Context, vpcName string) (*vp
 	}
 
 	return nil, nil
+}
+
+// GetVPCSubnets retrieves all subnets in the given VPC.
+func (c *Client) GetVPCSubnets(ctx context.Context, vpcID string) ([]vpcv1.Subnet, error) {
+	listSubnetsOptions := c.vpcAPI.NewListSubnetsOptions()
+	listSubnetsOptions.VPCID = &vpcID
+	subnets, _, err := c.vpcAPI.ListSubnetsWithContext(ctx, listSubnetsOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	return subnets.Subnets, nil
 }
 
 // GetSubnetByName gets a VPC Subnet by its name and region.
