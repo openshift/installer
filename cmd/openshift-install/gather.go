@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -11,7 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -90,12 +90,12 @@ func newGatherBootstrapCmd(ctx context.Context) *cobra.Command {
 func runGatherBootstrapCmd(ctx context.Context, directory string) (string, error) {
 	assetStore, err := assetstore.NewStore(directory)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to create asset store")
+		return "", fmt.Errorf("failed to create asset store: %w", err)
 	}
 	// add the default bootstrap key pair to the sshKeys list
 	bootstrapSSHKeyPair := &tls.BootstrapSSHKeyPair{}
 	if err := assetStore.Fetch(ctx, bootstrapSSHKeyPair); err != nil {
-		return "", errors.Wrapf(err, "failed to fetch %s", bootstrapSSHKeyPair.Name())
+		return "", fmt.Errorf("failed to fetch %s: %w", bootstrapSSHKeyPair.Name(), err)
 	}
 	tmpfile, err := os.CreateTemp("", "bootstrap-ssh")
 	if err != nil {
@@ -119,7 +119,7 @@ func runGatherBootstrapCmd(ctx context.Context, directory string) (string, error
 	if ha.Bootstrap == "" && len(ha.Masters) == 0 {
 		config := &installconfig.InstallConfig{}
 		if err := assetStore.Fetch(ctx, config); err != nil {
-			return "", errors.Wrapf(err, "failed to fetch %s", config.Name())
+			return "", fmt.Errorf("failed to fetch %s: %w", config.Name(), err)
 		}
 
 		provider, err := infra.ProviderForPlatform(config.Config.Platform.Name(), config.Config.EnabledFeatureGates())
@@ -145,7 +145,7 @@ func gatherBootstrap(bootstrap string, port int, masters []string, directory str
 	serialLogBundle := filepath.Join(directory, fmt.Sprintf("serial-log-bundle-%s.tar.gz", gatherID))
 	serialLogBundlePath, err := filepath.Abs(serialLogBundle)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to stat log file")
+		return "", fmt.Errorf("failed to stat log file: %w", err)
 	}
 
 	consoleGather, err := serialgather.New(logrus.StandardLogger(), serialLogBundlePath, bootstrap, masters, directory)
@@ -174,7 +174,7 @@ func gatherBootstrap(bootstrap string, port int, masters []string, directory str
 	logBundlePath := filepath.Join(directory, fmt.Sprintf("log-bundle-%s.tar.gz", gatherID))
 	err = serialgather.CombineArchives(logBundlePath, archives)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to combine archives")
+		return "", fmt.Errorf("failed to combine archives: %w", err)
 	}
 
 	return logBundlePath, nil
@@ -185,23 +185,23 @@ func pullLogsFromBootstrap(gatherID string, bootstrap string, port int, masters 
 	client, err := ssh.NewClient("core", net.JoinHostPort(bootstrap, strconv.Itoa(port)), gatherBootstrapOpts.sshKeys)
 	if err != nil {
 		if errors.Is(err, syscall.ECONNREFUSED) || errors.Is(err, syscall.ETIMEDOUT) {
-			return "", errors.Wrap(err, "failed to connect to the bootstrap machine")
+			return "", fmt.Errorf("failed to connect to the bootstrap machine: %w", err)
 		}
-		return "", errors.Wrap(err, "failed to create SSH client")
+		return "", fmt.Errorf("failed to create SSH client: %w", err)
 	}
 
 	if err := ssh.Run(client, fmt.Sprintf("/usr/local/bin/installer-gather.sh --id %s %s", gatherID, strings.Join(masters, " "))); err != nil {
-		return "", errors.Wrap(err, "failed to run remote command")
+		return "", fmt.Errorf("failed to run remote command: %w", err)
 	}
 
 	file := filepath.Join(directory, fmt.Sprintf("cluster-log-bundle-%s.tar.gz", gatherID))
 	if err := ssh.PullFileTo(client, fmt.Sprintf("/home/core/log-bundle-%s.tar.gz", gatherID), file); err != nil {
-		return "", errors.Wrap(err, "failed to pull log file from remote")
+		return "", fmt.Errorf("failed to pull log file from remote: %w", err)
 	}
 
 	clusterLogBundlePath, err := filepath.Abs(file)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to stat log file")
+		return "", fmt.Errorf("failed to stat log file: %w", err)
 	}
 
 	return clusterLogBundlePath, nil
@@ -210,12 +210,12 @@ func pullLogsFromBootstrap(gatherID string, bootstrap string, port int, masters 
 func logClusterOperatorConditions(ctx context.Context, config *rest.Config) error {
 	client, err := configclient.NewForConfig(config)
 	if err != nil {
-		return errors.Wrap(err, "creating a config client")
+		return fmt.Errorf("creating a config client: %w", err)
 	}
 
 	operators, err := client.ConfigV1().ClusterOperators().List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return errors.Wrap(err, "listing ClusterOperator objects")
+		return fmt.Errorf("listing ClusterOperator objects: %w", err)
 	}
 
 	for _, operator := range operators.Items {
