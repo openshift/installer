@@ -4,13 +4,13 @@ set -eu
 
 # Config file
 nodesConfigFile=${1:-"nodes-config.yaml"}
-if [ ! -f $nodesConfigFile ]; then
+if [ ! -f "$nodesConfigFile" ]; then
   echo "Cannot find the config file $nodesConfigFile"
   exit 1
 fi
 
 # Generate a random namespace name
-namespace="openshift-node-joiner-$(cat /dev/urandom | tr -dc 'a-z' | head -c 10)"
+namespace="openshift-node-joiner-$(tr -dc '[:lower:]' < /dev/urandom | head -c 10)"
 
 # Extract the installer image pullspec and release version.
 nodeJoinerPullspec=$(oc get is installer -n openshift -o=jsonpath='{.spec.tags[0].from.name}')
@@ -67,7 +67,7 @@ EOF
 echo "$staticResources" | oc apply -f -
 
 # Generate a configMap to store the user configuration
-oc create configmap nodes-config --from-file=nodes-config.yaml=${nodesConfigFile} -n ${namespace} -o yaml --dry-run=client | oc apply -f -
+oc create configmap nodes-config --from-file=nodes-config.yaml="${nodesConfigFile}" -n "${namespace}" -o yaml --dry-run=client | oc apply -f -
 
 # Runt the node-joiner pod to generate the ISO
 nodeJoinerPod=$(cat <<EOF
@@ -109,7 +109,7 @@ EOF
 echo "$nodeJoinerPod" | oc apply -f -
 
 while true; do 
-  if oc exec node-joiner -n ${namespace} -- test -e /assets/exit_code >/dev/null 2>&1; then
+  if oc exec node-joiner -n "${namespace}" -- test -e /assets/exit_code >/dev/null 2>&1; then
     break
   else 
     echo "Waiting for node-joiner pod to complete..."
@@ -117,12 +117,12 @@ while true; do
   fi
 done
 
-res=$(oc exec node-joiner -n ${namespace} -- cat /assets/exit_code)
+res=$(oc exec node-joiner -n "${namespace}" -- cat /assets/exit_code)
 if [ "$res" = 0 ]; then
   echo "node-joiner successfully completed, extracting ISO image..."
-  oc cp -n ${namespace} node-joiner:/assets/agent-addnodes.x86_64.iso agent-addnodes.x86_64.iso
+  oc cp -n "${namespace}" node-joiner:/assets/agent-addnodes.x86_64.iso agent-addnodes.x86_64.iso
 else
-  oc logs node-joiner -n ${namespace}
+  oc logs node-joiner -n "${namespace}"
   echo "node-joiner failed"
 fi
 

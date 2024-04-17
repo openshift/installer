@@ -1,6 +1,7 @@
 package nodejoiner
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -28,7 +29,7 @@ func NewAddNodesCommand(directory string, kubeConfig string) error {
 	}
 
 	fetcher := store.NewAssetsFetcher(directory)
-	err = fetcher.FetchAndPersist([]asset.WritableAsset{
+	err = fetcher.FetchAndPersist(context.Background(), []asset.WritableAsset{
 		&workflow.AgentWorkflowAddNodes{},
 		&image.AgentImage{},
 	})

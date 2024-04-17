@@ -8,8 +8,7 @@
 1. Download the [node-joiner.sh](./node-joiner.sh) script in a working directory in
    the user host (the "assets folder").
 2. Create a `nodes-config.yaml` in the assets folder. This configuration file must contain the 
-   list of all the nodes that the user wants to add to the target cluster. For each node it must be
-   specified at least the name and the primary interface mac address, for example:
+   list of all the nodes that the user wants to add to the target cluster. At minimum, the name and primary interface MAC address must be specified. For example:
 ```
 hosts:
     - hostname: extra-worker-0
@@ -25,7 +24,7 @@ hosts:
         - name: eth0
           macAddress: 00:02:46:e3:9e:9c
 ```
-3. Optionally, it's possible to specify - for each node - an `NMState` configuration block
+3. Optionally, it's possible to specify - for each node - an `NMState` configuration block denoted below as `networkConfig`
    (it will be applied during the first boot), for example:
 ```
 hosts:
