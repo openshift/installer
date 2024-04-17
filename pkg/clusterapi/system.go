@@ -173,7 +173,6 @@ func (c *system) Run(ctx context.Context) error {
 				&Azure,
 				[]string{
 					"-v=2",
-					"--diagnostics-address=0",
 					"--health-addr={{suggestHealthHostPort}}",
 					"--webhook-port={{.WebhookPort}}",
 					"--webhook-cert-dir={{.WebhookCertDir}}",

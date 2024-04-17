@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -235,105 +236,107 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	logrus.Debugf("BlobContainer.ID=%s", *blobContainer.ID)
 
 	// Upload the image to the container
-	_, err = CreatePageBlob(ctx, &CreatePageBlobInput{
-		StorageURL:         storageURL,
-		BlobURL:            blobURL,
-		ImageURL:           imageURL,
-		ImageLength:        imageLength,
-		StorageAccountName: storageAccountName,
-		StorageAccountKeys: storageAccountKeys,
-		CloudConfiguration: cloudConfiguration,
-	})
-	if err != nil {
-		return err
-	}
+	if _, ok := os.LookupEnv("OPENSHIFT_INSTALL_SKIP_IMAGE_UPLOAD"); !ok {
+		_, err = CreatePageBlob(ctx, &CreatePageBlobInput{
+			StorageURL:         storageURL,
+			BlobURL:            blobURL,
+			ImageURL:           imageURL,
+			ImageLength:        imageLength,
+			StorageAccountName: storageAccountName,
+			StorageAccountKeys: storageAccountKeys,
+			CloudConfiguration: cloudConfiguration,
+		})
+		if err != nil {
+			return err
+		}
 
-	// Create image gallery
-	createImageGalleryOutput, err := CreateImageGallery(ctx, &CreateImageGalleryInput{
-		SubscriptionID:     subscriptionID,
-		ResourceGroupName:  resourceGroupName,
-		GalleryName:        galleryName,
-		Region:             platform.Region,
-		Tags:               tags,
-		TokenCredential:    tokenCredential,
-		CloudConfiguration: cloudConfiguration,
-	})
-	if err != nil {
-		return err
-	}
+		// Create image gallery
+		createImageGalleryOutput, err := CreateImageGallery(ctx, &CreateImageGalleryInput{
+			SubscriptionID:     subscriptionID,
+			ResourceGroupName:  resourceGroupName,
+			GalleryName:        galleryName,
+			Region:             platform.Region,
+			Tags:               tags,
+			TokenCredential:    tokenCredential,
+			CloudConfiguration: cloudConfiguration,
+		})
+		if err != nil {
+			return err
+		}
 
-	computeClientFactory := createImageGalleryOutput.ComputeClientFactory
+		computeClientFactory := createImageGalleryOutput.ComputeClientFactory
 
-	// Create gallery images
-	_, err = CreateGalleryImage(ctx, &CreateGalleryImageInput{
-		ResourceGroupName:    resourceGroupName,
-		GalleryName:          galleryName,
-		GalleryImageName:     galleryImageName,
-		Region:               platform.Region,
-		Tags:                 tags,
-		TokenCredential:      tokenCredential,
-		CloudConfiguration:   cloudConfiguration,
-		OSType:               armcompute.OperatingSystemTypesLinux,
-		OSState:              armcompute.OperatingSystemStateTypesGeneralized,
-		HyperVGeneration:     armcompute.HyperVGenerationV1,
-		Publisher:            "RedHat",
-		Offer:                "rhcos",
-		SKU:                  "basic",
-		ComputeClientFactory: computeClientFactory,
-	})
-	if err != nil {
-		return err
-	}
+		// Create gallery images
+		_, err = CreateGalleryImage(ctx, &CreateGalleryImageInput{
+			ResourceGroupName:    resourceGroupName,
+			GalleryName:          galleryName,
+			GalleryImageName:     galleryImageName,
+			Region:               platform.Region,
+			Tags:                 tags,
+			TokenCredential:      tokenCredential,
+			CloudConfiguration:   cloudConfiguration,
+			OSType:               armcompute.OperatingSystemTypesLinux,
+			OSState:              armcompute.OperatingSystemStateTypesGeneralized,
+			HyperVGeneration:     armcompute.HyperVGenerationV1,
+			Publisher:            "RedHat",
+			Offer:                "rhcos",
+			SKU:                  "basic",
+			ComputeClientFactory: computeClientFactory,
+		})
+		if err != nil {
+			return err
+		}
 
-	_, err = CreateGalleryImage(ctx, &CreateGalleryImageInput{
-		ResourceGroupName:    resourceGroupName,
-		GalleryName:          galleryName,
-		GalleryImageName:     galleryGen2ImageName,
-		Region:               platform.Region,
-		Tags:                 tags,
-		TokenCredential:      tokenCredential,
-		CloudConfiguration:   cloudConfiguration,
-		OSType:               armcompute.OperatingSystemTypesLinux,
-		OSState:              armcompute.OperatingSystemStateTypesGeneralized,
-		HyperVGeneration:     armcompute.HyperVGenerationV1,
-		Publisher:            "RedHat-gen2",
-		Offer:                "rhcos-gen2",
-		SKU:                  "gen2",
-		ComputeClientFactory: computeClientFactory,
-	})
-	if err != nil {
-		return err
-	}
+		_, err = CreateGalleryImage(ctx, &CreateGalleryImageInput{
+			ResourceGroupName:    resourceGroupName,
+			GalleryName:          galleryName,
+			GalleryImageName:     galleryGen2ImageName,
+			Region:               platform.Region,
+			Tags:                 tags,
+			TokenCredential:      tokenCredential,
+			CloudConfiguration:   cloudConfiguration,
+			OSType:               armcompute.OperatingSystemTypesLinux,
+			OSState:              armcompute.OperatingSystemStateTypesGeneralized,
+			HyperVGeneration:     armcompute.HyperVGenerationV1,
+			Publisher:            "RedHat-gen2",
+			Offer:                "rhcos-gen2",
+			SKU:                  "gen2",
+			ComputeClientFactory: computeClientFactory,
+		})
+		if err != nil {
+			return err
+		}
 
-	// Create gallery image versions
-	_, err = CreateGalleryImageVersion(ctx, &CreateGalleryImageVersionInput{
-		ResourceGroupName:       resourceGroupName,
-		StorageAccountID:        *storageAccount.ID,
-		GalleryName:             galleryName,
-		GalleryImageName:        galleryImageName,
-		GalleryImageVersionName: galleryImageVersionName,
-		Region:                  platform.Region,
-		BlobURL:                 blobURL,
-		RegionalReplicaCount:    int32(1),
-		ComputeClientFactory:    computeClientFactory,
-	})
-	if err != nil {
-		return err
-	}
+		// Create gallery image versions
+		_, err = CreateGalleryImageVersion(ctx, &CreateGalleryImageVersionInput{
+			ResourceGroupName:       resourceGroupName,
+			StorageAccountID:        *storageAccount.ID,
+			GalleryName:             galleryName,
+			GalleryImageName:        galleryImageName,
+			GalleryImageVersionName: galleryImageVersionName,
+			Region:                  platform.Region,
+			BlobURL:                 blobURL,
+			RegionalReplicaCount:    int32(1),
+			ComputeClientFactory:    computeClientFactory,
+		})
+		if err != nil {
+			return err
+		}
 
-	_, err = CreateGalleryImageVersion(ctx, &CreateGalleryImageVersionInput{
-		ResourceGroupName:       resourceGroupName,
-		StorageAccountID:        *storageAccount.ID,
-		GalleryName:             galleryName,
-		GalleryImageName:        galleryGen2ImageName,
-		GalleryImageVersionName: galleryGen2ImageVersionName,
-		Region:                  platform.Region,
-		BlobURL:                 blobURL,
-		RegionalReplicaCount:    int32(1),
-		ComputeClientFactory:    computeClientFactory,
-	})
-	if err != nil {
-		return err
+		_, err = CreateGalleryImageVersion(ctx, &CreateGalleryImageVersionInput{
+			ResourceGroupName:       resourceGroupName,
+			StorageAccountID:        *storageAccount.ID,
+			GalleryName:             galleryName,
+			GalleryImageName:        galleryGen2ImageName,
+			GalleryImageVersionName: galleryGen2ImageVersionName,
+			Region:                  platform.Region,
+			BlobURL:                 blobURL,
+			RegionalReplicaCount:    int32(1),
+			ComputeClientFactory:    computeClientFactory,
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, session.TokenCreds,
