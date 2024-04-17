@@ -62,9 +62,9 @@ require (
 	github.com/microsoft/kiota-authentication-azure-go v0.6.0
 	github.com/microsoftgraph/msgraph-sdk-go v0.59.0
 	github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64
-	github.com/onsi/gomega v1.31.1
+	github.com/onsi/gomega v1.32.0
 	github.com/openshift/api v0.0.0-20240313103236-5f1498accd5d
-	github.com/openshift/assisted-image-service v0.0.0-20231130154654-56d03d1503e2
+	github.com/openshift/assisted-image-service v0.0.0-20240408153851-f822399afa8a
 	github.com/openshift/assisted-service/api v0.0.0
 	github.com/openshift/assisted-service/client v0.0.0
 	github.com/openshift/assisted-service/models v0.0.0
@@ -83,8 +83,8 @@ require (
 	github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.6
-	github.com/prometheus/client_golang v1.18.0
-	github.com/prometheus/common v0.46.0
+	github.com/prometheus/client_golang v1.19.0
+	github.com/prometheus/common v0.48.0
 	github.com/rogpeppe/go-internal v1.11.0
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
 	github.com/sirupsen/logrus v1.9.3
@@ -96,7 +96,7 @@ require (
 	github.com/vmware/govmomi v0.34.2
 	golang.org/x/crypto v0.21.0
 	golang.org/x/oauth2 v0.18.0
-	golang.org/x/sync v0.6.0
+	golang.org/x/sync v0.7.0
 	golang.org/x/sys v0.18.0
 	golang.org/x/term v0.18.0
 	google.golang.org/api v0.169.0
@@ -142,7 +142,7 @@ require (
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.1.1 // indirect
-	github.com/BurntSushi/toml v1.2.1 // indirect
+	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/PaesslerAG/gval v1.0.0 // indirect
 	github.com/PaesslerAG/jsonpath v0.1.1 // indirect
@@ -330,9 +330,6 @@ replace gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
 
 // https://issues.redhat.com/browse/OCPBUGS-5667
 replace github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
-
-// https://bugzilla.redhat.com/show_bug.cgi?id=2045880
-replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.17.0
 
 // https://issues.redhat.com/browse/OCPBUGS-6422
 replace golang.org/x/net => golang.org/x/net v0.5.0
