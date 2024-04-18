@@ -75,6 +75,8 @@ const (
 	coStabilityThreshold float64 = 30
 )
 
+var skipPasswordPrintFlag bool
+
 // each target is a variable to preserve the order when creating subcommands and still
 // allow other functions to directly access each target individually.
 var (
@@ -110,6 +112,7 @@ var (
 		},
 		assets: targetassets.IgnitionConfigs,
 	}
+
 	singleNodeIgnitionConfigTarget = target{
 		name: "Single Node Ignition Config",
 		command: &cobra.Command{
@@ -288,6 +291,9 @@ func newCreateCmd(ctx context.Context) *cobra.Command {
 	for _, t := range targets {
 		t.command.Args = cobra.ExactArgs(0)
 		t.command.Run = runTargetCmd(ctx, t.assets...)
+		if t.name == "Cluster" {
+			cmd.PersistentFlags().BoolVar(&skipPasswordPrintFlag, "skip-password-print", false, "Do not print the generated user password.")
+		}
 		cmd.AddCommand(t.command)
 	}
 
@@ -328,7 +334,6 @@ func runTargetCmd(ctx context.Context, targets ...asset.WritableAsset) func(cmd 
 		default:
 			logrus.Infof(logging.LogCreatedFiles(cmd.Name(), command.RootOpts.Dir, targets))
 		}
-
 	}
 }
 
@@ -759,7 +764,11 @@ func logComplete(directory, consoleURL string) error {
 	logrus.Infof("To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=%s'", kubeconfig)
 	if consoleURL != "" {
 		logrus.Infof("Access the OpenShift web-console here: %s", consoleURL)
-		logrus.Infof("Login to the console with user: %q, and password: %q", "kubeadmin", pw)
+		if skipPasswordPrintFlag {
+			logrus.Infof("Credentials omitted, if necessary verify the ./auth/kubeadmin-password file")
+		} else {
+			logrus.Infof("Login to the console with user: %q, and password: %q", "kubeadmin", pw)
+		}
 	}
 	return nil
 }
