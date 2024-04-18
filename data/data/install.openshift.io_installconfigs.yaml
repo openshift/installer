@@ -4247,6 +4247,34 @@ spec:
                     description: Region specifies the IBM Cloud colo region where
                       the cluster will be created.
                     type: string
+                  serviceEndpoints:
+                    description: ServiceEndpoints is a list which contains custom
+                      endpoints to override default service endpoints of IBM Cloud
+                      Services. There must only be one ServiceEndpoint for a service
+                      (no duplicates).
+                    items:
+                      description: PowervsServiceEndpoint stores the configuration
+                        of a custom url to override existing defaults of PowerVS Services.
+                      properties:
+                        name:
+                          description: name is the name of the Power VS service. Few
+                            of the services are IAM - https://cloud.ibm.com/apidocs/iam-identity-token-api
+                            ResourceController - https://cloud.ibm.com/apidocs/resource-controller/resource-controller
+                            Power Cloud - https://cloud.ibm.com/apidocs/power-cloud
+                          pattern: ^[a-z0-9-]+$
+                          type: string
+                        url:
+                          description: url is fully qualified URI with scheme https,
+                            that overrides the default generated endpoint for a client.
+                            This must be provided and cannot be empty.
+                          format: uri
+                          pattern: ^https://
+                          type: string
+                      required:
+                      - name
+                      - url
+                      type: object
+                    type: array
                   serviceInstanceGUID:
                     description: ServiceInstanceGUID is the GUID of the Power IAAS
                       instance created from the IBM Cloud Catalog before the cluster
