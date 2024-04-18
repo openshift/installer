@@ -10,14 +10,16 @@ until oc get baremetalhosts -n openshift-machine-api; do
    sleep 20
 done
 
-while [ "$(oc get bmh -n openshift-machine-api -o name | wc -l)" -lt 1  ]; do
-    echo "Waiting for bmh"
+N="0"
+while [ "$N" -eq "0" ] ; do
+    echo "Waiting for control-plane bmh to appear..."
     sleep 20
+    N=$(oc get bmh -n openshift-machine-api -l installer.openshift.io/role=control-plane --no-headers=true | wc -l)
 done
-
-while [ "$(oc get bmh -n openshift-machine-api -l installer.openshift.io/role=control-plane -o json | jq '.items[].status.provisioning.state' | grep -v provisioned -c)" -gt 0  ]; do
-    echo "Waiting for masters to become provisioned"
-    oc get bmh -A
+echo "Waiting for $N masters to become provisioned"
+while [ "$(oc get bmh -n openshift-machine-api -l installer.openshift.io/role=control-plane -o json | jq '.items[].status.provisioning.state' | grep provisioned -c)" -lt "$N"  ]; do
+    echo "Waiting for $N masters to become provisioned"
+    oc get bmh -A || true
     sleep 20
 done
 
