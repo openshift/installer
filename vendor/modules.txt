@@ -950,9 +950,14 @@ github.com/munnerz/goautoneg
 # github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f
 ## explicit
 github.com/mxk/go-flowrate/flowrate
-# github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64
+# github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.3.3-0.20240416171357-98239ba02cb2
+## explicit; go 1.21
+github.com/nutanix-cloud-native/cluster-api-provider-nutanix/api/v1beta1
+# github.com/nutanix-cloud-native/prism-go-client v0.3.4
 ## explicit; go 1.16
 github.com/nutanix-cloud-native/prism-go-client
+github.com/nutanix-cloud-native/prism-go-client/environment/credentials
+github.com/nutanix-cloud-native/prism-go-client/environment/types
 github.com/nutanix-cloud-native/prism-go-client/internal
 github.com/nutanix-cloud-native/prism-go-client/utils
 github.com/nutanix-cloud-native/prism-go-client/v3
@@ -2077,7 +2082,7 @@ k8s.io/kubectl/pkg/util/openapi
 k8s.io/kubectl/pkg/util/templates
 k8s.io/kubectl/pkg/util/term
 k8s.io/kubectl/pkg/validation
-# k8s.io/utils v0.0.0-20240102154912-e7106e64919e
+# k8s.io/utils v0.0.0-20240310230437-4693a0247e57
 ## explicit; go 1.18
 k8s.io/utils/buffer
 k8s.io/utils/clock

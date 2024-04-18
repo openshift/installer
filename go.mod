@@ -61,7 +61,8 @@ require (
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.4.0
 	github.com/microsoft/kiota-authentication-azure-go v0.6.0
 	github.com/microsoftgraph/msgraph-sdk-go v0.59.0
-	github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64
+	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.3.3-0.20240416171357-98239ba02cb2
+	github.com/nutanix-cloud-native/prism-go-client v0.3.4
 	github.com/onsi/gomega v1.32.0
 	github.com/openshift/api v0.0.0-20240313103236-5f1498accd5d
 	github.com/openshift/assisted-image-service v0.0.0-20240408153851-f822399afa8a
@@ -111,7 +112,7 @@ require (
 	k8s.io/cloud-provider-vsphere v0.0.0
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.120.1
-	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
+	k8s.io/utils v0.0.0-20240310230437-4693a0247e57
 	sigs.k8s.io/cluster-api v1.6.3
 	sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.2-0.20240408095607-ad71a542f8b4
 	sigs.k8s.io/cluster-api-provider-azure v1.14.2

@@ -23,13 +23,14 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	infrav1 "github.com/nutanix-cloud-native/cluster-api-provider-nutanix/api/v1beta1"
-	nutanixClientHelper "github.com/nutanix-cloud-native/cluster-api-provider-nutanix/pkg/client"
 	"github.com/nutanix-cloud-native/prism-go-client/utils"
 	nutanixClientV3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 	"k8s.io/apimachinery/pkg/api/resource"
 	coreinformers "k8s.io/client-go/informers/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
+
+	infrav1 "github.com/nutanix-cloud-native/cluster-api-provider-nutanix/api/v1beta1"
+	nutanixClient "github.com/nutanix-cloud-native/cluster-api-provider-nutanix/pkg/client"
 )
 
 const (
@@ -47,12 +48,8 @@ const (
 func CreateNutanixClient(ctx context.Context, secretInformer coreinformers.SecretInformer, cmInformer coreinformers.ConfigMapInformer, nutanixCluster *infrav1.NutanixCluster) (*nutanixClientV3.Client, error) {
 	log := ctrl.LoggerFrom(ctx)
 	log.V(1).Info("creating nutanix client")
-	helper, err := nutanixClientHelper.NewNutanixClientHelper(secretInformer, cmInformer)
-	if err != nil {
-		log.Error(err, "error creating nutanix client helper")
-		return nil, err
-	}
-	return helper.GetClientFromEnvironment(ctx, nutanixCluster)
+	helper := nutanixClient.NewHelper(secretInformer, cmInformer)
+	return helper.BuildClientForNutanixClusterWithFallback(ctx, nutanixCluster)
 }
 
 // DeleteVM deletes a VM and is invoked by the NutanixMachineReconciler
@@ -185,8 +182,11 @@ func FindVMByName(ctx context.Context, client *nutanixClientV3.Client, vmName st
 
 // GetPEUUID returns the UUID of the Prism Element cluster with the given name
 func GetPEUUID(ctx context.Context, client *nutanixClientV3.Client, peName, peUUID *string) (string, error) {
+	if client == nil {
+		return "", fmt.Errorf("cannot retrieve Prism Element UUID if nutanix client is nil")
+	}
 	if peUUID == nil && peName == nil {
-		return "", fmt.Errorf("cluster name or uuid must be passed in order to retrieve the pe")
+		return "", fmt.Errorf("cluster name or uuid must be passed in order to retrieve the Prism Element UUID")
 	}
 	if peUUID != nil && *peUUID != "" {
 		peIntentResponse, err := client.V3.GetCluster(ctx, *peUUID)
@@ -343,7 +343,7 @@ func GetImageUUID(ctx context.Context, client *nutanixClientV3.Client, imageName
 // HasTaskInProgress returns true if the given task is in progress
 func HasTaskInProgress(ctx context.Context, client *nutanixClientV3.Client, taskUUID string) (bool, error) {
 	log := ctrl.LoggerFrom(ctx)
-	taskStatus, err := nutanixClientHelper.GetTaskState(ctx, client, taskUUID)
+	taskStatus, err := nutanixClient.GetTaskStatus(ctx, client, taskUUID)
 	if err != nil {
 		return false, err
 	}
@@ -743,4 +743,20 @@ func GetGPUsForPE(ctx context.Context, client *nutanixClientV3.Client, peUUID st
 		}
 	}
 	return gpus, nil
+}
+
+// GetFailureDomain gets the failure domain with a given name from a NutanixCluster object.
+func GetFailureDomain(failureDomainName string, nutanixCluster *infrav1.NutanixCluster) (*infrav1.NutanixFailureDomain, error) {
+	if failureDomainName == "" {
+		return nil, fmt.Errorf("failure domain name must be set when searching for failure domains on a Nutanix cluster object")
+	}
+	if nutanixCluster == nil {
+		return nil, fmt.Errorf("nutanixCluster cannot be nil when searching for failure domains")
+	}
+	for _, fd := range nutanixCluster.Spec.FailureDomains {
+		if fd.Name == failureDomainName {
+			return &fd, nil
+		}
+	}
+	return nil, fmt.Errorf("failed to find failure domain %s on nutanix cluster object", failureDomainName)
 }

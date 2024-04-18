@@ -31,24 +31,26 @@ func (src *NutanixCluster) ConvertTo(dstRaw conversion.Hub) error { // nolint
 }
 
 // ConvertFrom converts from the Hub version (v1beta1) to this NutanixCluster.
-func (dst *NutanixCluster) ConvertFrom(srcRaw conversion.Hub) error { // nolint
+func (dst *NutanixCluster) ConvertFrom(srcRaw conversion.Hub) error { //nolint
 	src := srcRaw.(*infrav1beta1.NutanixCluster)
 	return Convert_v1beta1_NutanixCluster_To_v1alpha4_NutanixCluster(src, dst, nil)
 }
 
 // ConvertTo converts this NutanixClusterList to the Hub version (v1beta1).
-func (src *NutanixClusterList) ConvertTo(dstRaw conversion.Hub) error { // nolint
+func (src *NutanixClusterList) ConvertTo(dstRaw conversion.Hub) error { //nolint
 	dst := dstRaw.(*infrav1beta1.NutanixClusterList)
 	return Convert_v1alpha4_NutanixClusterList_To_v1beta1_NutanixClusterList(src, dst, nil)
 }
 
 // ConvertFrom converts from the Hub version(v1beta1) to this NutanixClusterList.
-func (dst *NutanixClusterList) ConvertFrom(srcRaw conversion.Hub) error { // nolint
+func (dst *NutanixClusterList) ConvertFrom(srcRaw conversion.Hub) error { //nolint
 	src := srcRaw.(*infrav1beta1.NutanixClusterList)
 	return Convert_v1beta1_NutanixClusterList_To_v1alpha4_NutanixClusterList(src, dst, nil)
 }
 
 // Convert_v1alpha4_NutanixClusterSpec_To_v1beta1_NutanixClusterSpec converts NutanixClusterSpec in NutanixClusterResource from v1alpha4 to v1beta1 version.
+//
+//nolint:all
 func Convert_v1alpha4_NutanixClusterSpec_To_v1beta1_NutanixClusterSpec(in *NutanixClusterSpec, out *infrav1beta1.NutanixClusterSpec, s apiconversion.Scope) error {
 	// Wrapping the conversion function to avoid compilation errors due to compileErrorOnMissingConversion()
 	// Ref: https://github.com/kubernetes/kubernetes/issues/98380
@@ -56,6 +58,8 @@ func Convert_v1alpha4_NutanixClusterSpec_To_v1beta1_NutanixClusterSpec(in *Nutan
 }
 
 // Convert_v1alpha4_APIEndpoint_To_v1beta1_APIEndpoint converts APIEndpoint in NutanixClusterResource from v1alpha4 to v1beta1 version.
+//
+//nolint:all
 func Convert_v1alpha4_APIEndpoint_To_v1beta1_APIEndpoint(in *capiv1alpha4.APIEndpoint, out *capiv1beta1.APIEndpoint, s apiconversion.Scope) error {
 	// Wrapping the conversion function to avoid compilation errors due to compileErrorOnMissingConversion()
 	// Ref: https://github.com/kubernetes/kubernetes/issues/98380
@@ -63,6 +67,8 @@ func Convert_v1alpha4_APIEndpoint_To_v1beta1_APIEndpoint(in *capiv1alpha4.APIEnd
 }
 
 // Convert_v1beta1_APIEndpoint_To_v1alpha4_APIEndpoint converts APIEndpoint in NutanixClusterResource from v1alpha4 to v1beta1 version.
+//
+//nolint:all
 func Convert_v1beta1_APIEndpoint_To_v1alpha4_APIEndpoint(in *capiv1beta1.APIEndpoint, out *capiv1alpha4.APIEndpoint, s apiconversion.Scope) error {
 	// Wrapping the conversion function to avoid compilation errors due to compileErrorOnMissingConversion()
 	// Ref: https://github.com/kubernetes/kubernetes/issues/98380
@@ -70,6 +76,8 @@ func Convert_v1beta1_APIEndpoint_To_v1alpha4_APIEndpoint(in *capiv1beta1.APIEndp
 }
 
 // Convert_v1beta1_NutanixClusterSpec_To_v1alpha4_NutanixClusterSpec converts NutanixClusterSpec in NutanixClusterResource from v1beta1 to v1alpha4 version.
+//
+//nolint:all
 func Convert_v1beta1_NutanixClusterSpec_To_v1alpha4_NutanixClusterSpec(in *infrav1beta1.NutanixClusterSpec, out *NutanixClusterSpec, s apiconversion.Scope) error {
 	// Wrapping the conversion function to avoid compilation errors due to compileErrorOnMissingConversion()
 	// Ref: https://github.com/kubernetes/kubernetes/issues/98380
@@ -77,6 +85,8 @@ func Convert_v1beta1_NutanixClusterSpec_To_v1alpha4_NutanixClusterSpec(in *infra
 }
 
 // Convert_v1alpha4_NutanixClusterStatus_To_v1beta1_NutanixClusterStatus converts NutanixClusterStatus in NutanixClusterResource from v1alpha4 to v1beta1 version.
+//
+//nolint:all
 func Convert_v1alpha4_NutanixClusterStatus_To_v1beta1_NutanixClusterStatus(in *NutanixClusterStatus, out *infrav1beta1.NutanixClusterStatus, s apiconversion.Scope) error {
 	// Wrapping the conversion function to avoid compilation errors due to compileErrorOnMissingConversion()
 	// Ref: https://github.com/kubernetes/kubernetes/issues/98380
