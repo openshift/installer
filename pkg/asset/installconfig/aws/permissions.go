@@ -231,6 +231,8 @@ var permissions = map[PermissionGroup][]string{
 		"ec2:DeleteVpc",
 		"ec2:DeleteVpcEndpoints",
 		"ec2:DetachInternetGateway",
+		// Needed by terraform when EIPs are created
+		"ec2:DisassociateAddress",
 		"ec2:DisassociateRouteTable",
 		"ec2:ReleaseAddress",
 		"ec2:ReplaceRouteTableAssociation",
