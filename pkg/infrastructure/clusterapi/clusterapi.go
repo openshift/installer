@@ -20,6 +20,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster/metadata"
+	"github.com/openshift/installer/pkg/asset/cluster/tfvars"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -66,6 +67,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	rhcosImage := new(rhcos.Image)
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
 	masterIgnAsset := &machine.Master{}
+	tfvarsAsset := &tfvars.TerraformVariables{}
 	parents.Get(
 		manifestsAsset,
 		workersAsset,
@@ -77,6 +79,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		bootstrapIgnAsset,
 		masterIgnAsset,
 		capiMachinesAsset,
+		tfvarsAsset,
 	)
 
 	fileList := []*asset.File{}
@@ -207,6 +210,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 			BootstrapIgnData: bootstrapIgnData,
 			InfraID:          clusterID.InfraID,
 			InstallConfig:    installConfig,
+			TFVarsAsset:      tfvarsAsset,
 		}
 
 		if bootstrapIgnData, err = p.Ignition(ctx, ignInput); err != nil {

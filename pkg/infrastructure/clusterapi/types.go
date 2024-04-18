@@ -5,6 +5,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/openshift/installer/pkg/asset/cluster/tfvars"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
@@ -51,6 +52,7 @@ type IgnitionInput struct {
 	BootstrapIgnData []byte
 	InfraID          string
 	InstallConfig    *installconfig.InstallConfig
+	TFVarsAsset      *tfvars.TerraformVariables
 }
 
 // InfraReadyProvider defines the InfraReady hook, which is

@@ -519,22 +519,12 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 		defer cancel()
 
-		bucketName := gcpbootstrap.GetBootstrapStorageName(clusterID.InfraID)
-		bucketHandle, err := gcpbootstrap.CreateBucketHandle(ctx, bucketName)
-		if err != nil {
-			return fmt.Errorf("failed to create bucket handle %s: %w", bucketName, err)
-		}
-
-		bootstrapIgnURL, err := gcpbootstrap.ProvisionBootstrapStorage(ctx, installConfig, bucketHandle, clusterID.InfraID)
+		url, err := gcpbootstrap.CreateSignedURL(clusterID.InfraID)
 		if err != nil {
 			return fmt.Errorf("failed to provision gcp bootstrap storage resources: %w", err)
 		}
 
-		if err := gcpbootstrap.FillBucket(ctx, bucketHandle, bootstrapIgn); err != nil {
-			return fmt.Errorf("failed to fill bootstrap ignition bucket: %w", err)
-		}
-
-		shim, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(bootstrapIgnURL, installConfig.Config.AdditionalTrustBundle, installConfig.Config.Proxy)
+		shim, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(url, installConfig.Config.AdditionalTrustBundle, installConfig.Config.Proxy)
 		if err != nil {
 			return fmt.Errorf("failed to create gcp ignition shim: %w", err)
 		}
@@ -575,6 +565,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				UserProvisionedDNS:  installConfig.Config.GCP.UserProvisionedDNS == gcp.UserProvisionedDNSEnabled,
 				UserTags:            tags,
 				IgnitionShim:        string(shim),
+				PresignedURL:        url,
 			},
 		)
 		if err != nil {
