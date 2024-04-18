@@ -52,6 +52,7 @@ import (
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/vsphere"
+	baremetalutils "github.com/openshift/installer/pkg/utils/baremetal"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
 	"github.com/openshift/library-go/pkg/route/routeapihelpers"
 )
@@ -437,7 +438,37 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 		return newAPIError(err)
 	}
 
-	if err := waitForBootstrapConfigMap(ctx, client); err != nil {
+	var platformName string
+
+	if assetStore, err := assetstore.NewStore(command.RootOpts.Dir); err == nil {
+		if installConfig, err := assetStore.Load(&installconfig.InstallConfig{}); err == nil && installConfig != nil {
+			platformName = installConfig.(*installconfig.InstallConfig).Config.Platform.Name()
+		}
+	}
+
+	timeout := 30 * time.Minute
+
+	// Wait longer for baremetal, VSphere due to length of time it takes to boot
+	if platformName == baremetal.Name || platformName == vsphere.Name {
+		timeout = 60 * time.Minute
+	}
+
+	untilTime = time.Now().Add(timeout)
+	timezone, _ = untilTime.Zone()
+	logrus.Infof("Waiting up to %v (until %v %s) for bootstrapping to complete...",
+		timeout, untilTime.Format(time.Kitchen), timezone)
+
+	waitCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	if platformName == baremetal.Name {
+		if err := baremetalutils.WaitForBaremetalBootstrapControlPlane(waitCtx, config); err != nil {
+			return newBootstrapError(err)
+		}
+		logrus.Infof("  Baremetal control plane finished provisioning.")
+	}
+
+	if err := waitForBootstrapConfigMap(waitCtx, client); err != nil {
 		return err
 	}
 
@@ -452,27 +483,8 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 // and waits for the bootstrap configmap to report that bootstrapping has
 // completed.
 func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset) *clusterCreateError {
-	timeout := 30 * time.Minute
-
-	// Wait longer for baremetal, VSphere due to length of time it takes to boot
-	if assetStore, err := assetstore.NewStore(command.RootOpts.Dir); err == nil {
-		if installConfig, err := assetStore.Load(&installconfig.InstallConfig{}); err == nil && installConfig != nil {
-			if installConfig.(*installconfig.InstallConfig).Config.Platform.Name() == baremetal.Name || installConfig.(*installconfig.InstallConfig).Config.Platform.Name() == vsphere.Name {
-				timeout = 60 * time.Minute
-			}
-		}
-	}
-
-	untilTime := time.Now().Add(timeout)
-	timezone, _ := untilTime.Zone()
-	logrus.Infof("Waiting up to %v (until %v %s) for bootstrapping to complete...",
-		timeout, untilTime.Format(time.Kitchen), timezone)
-
-	waitCtx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
 	_, err := clientwatch.UntilWithSync(
-		waitCtx,
+		ctx,
 		cache.NewListWatchFromClient(client.CoreV1().RESTClient(), "configmaps", "kube-system", fields.OneTermEqualSelector("metadata.name", "bootstrap")),
 		&corev1.ConfigMap{},
 		nil,
