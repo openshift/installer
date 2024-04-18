@@ -9,6 +9,9 @@ WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
+FROM quay.io/multi-arch/yq:3.3.0 as yq3
+FROM quay.io/multi-arch/yq:4.30.5 as yq4
+
 FROM centos:7
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 COPY --from=builder /go/src/github.com/openshift/installer/images/libvirt/mock-nss.sh /bin/mock-nss.sh
@@ -25,12 +28,10 @@ RUN yum update -y && \
     openssh-clients && \
     yum clean all && rm -rf /var/cache/yum/*
 
-ARG YQ_URI=https://github.com/mikefarah/yq/releases/download/3.3.0/yq_linux_amd64
-ARG YQ_HASH=e70e482e7ddb9cf83b52f5e83b694a19e3aaf36acf6b82512cbe66e41d569201
-RUN echo "${YQ_HASH} -" > /tmp/sum.txt && \
-  curl -L --fail "${YQ_URI}" | tee /bin/yq | sha256sum -c /tmp/sum.txt >/dev/null && \
-  chmod +x /bin/yq && \
-  rm /tmp/sum.txt
+COPY --from=yq3 /yq /bin/yq-go
+COPY --from=yq4 /usr/bin/yq /bin/yq-v4
+# This symlink is provided for backwards compatibility
+RUN ln -s /bin/yq-go /bin/yq && chmod +x /bin/yq
 
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
