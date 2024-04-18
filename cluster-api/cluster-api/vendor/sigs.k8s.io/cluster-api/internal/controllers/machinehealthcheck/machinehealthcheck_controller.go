@@ -148,7 +148,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 	// Initialize the patch helper
 	patchHelper, err := patch.NewHelper(m, r.Client)
 	if err != nil {
-		log.Error(err, "Failed to build patch helper")
 		return ctrl.Result{}, err
 	}
 
@@ -176,7 +175,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 		// the current cluster because of concurrent access.
 		if errors.Is(err, remote.ErrClusterLocked) {
 			log.V(5).Info("Requeuing because another worker has the lock on the ClusterCacheTracker")
-			return ctrl.Result{Requeue: true}, nil
+			return ctrl.Result{RequeueAfter: time.Minute}, nil
 		}
 		log.Error(err, "Failed to reconcile MachineHealthCheck")
 		r.recorder.Eventf(m, corev1.EventTypeWarning, "ReconcileError", "%v", err)

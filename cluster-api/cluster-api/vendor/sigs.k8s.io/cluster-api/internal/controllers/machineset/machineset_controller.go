@@ -184,7 +184,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 		// the current cluster because of concurrent access.
 		if errors.Is(err, remote.ErrClusterLocked) {
 			log.V(5).Info("Requeuing because another worker has the lock on the ClusterCacheTracker")
-			return ctrl.Result{Requeue: true}, nil
+			return ctrl.Result{RequeueAfter: time.Minute}, nil
 		}
 		r.recorder.Eventf(machineSet, corev1.EventTypeWarning, "ReconcileError", "%v", err)
 	}
@@ -475,6 +475,7 @@ func (r *Reconciler) syncReplicas(ctx context.Context, cluster *clusterv1.Cluste
 					Client:      r.UnstructuredCachingClient,
 					TemplateRef: ms.Spec.Template.Spec.Bootstrap.ConfigRef,
 					Namespace:   machine.Namespace,
+					Name:        machine.Name,
 					ClusterName: machine.Spec.ClusterName,
 					Labels:      machine.Labels,
 					Annotations: machine.Annotations,
@@ -500,6 +501,7 @@ func (r *Reconciler) syncReplicas(ctx context.Context, cluster *clusterv1.Cluste
 				Client:      r.UnstructuredCachingClient,
 				TemplateRef: &ms.Spec.Template.Spec.InfrastructureRef,
 				Namespace:   machine.Namespace,
+				Name:        machine.Name,
 				ClusterName: machine.Spec.ClusterName,
 				Labels:      machine.Labels,
 				Annotations: machine.Annotations,
@@ -942,7 +944,7 @@ func (r *Reconciler) updateStatus(ctx context.Context, cluster *clusterv1.Cluste
 
 	// Aggregate the operational state of all the machines; while aggregating we are adding the
 	// source ref (reason@machine/name) so the problem can be easily tracked down to its source machine.
-	conditions.SetAggregate(ms, clusterv1.MachinesReadyCondition, collections.FromMachines(filteredMachines...).ConditionGetters(), conditions.AddSourceRef(), conditions.WithStepCounterIf(false))
+	conditions.SetAggregate(ms, clusterv1.MachinesReadyCondition, collections.FromMachines(filteredMachines...).ConditionGetters(), conditions.AddSourceRef())
 
 	return nil
 }
@@ -993,12 +995,12 @@ func (r *Reconciler) reconcileUnhealthyMachines(ctx context.Context, cluster *cl
 		for _, m := range machinesToRemediate {
 			patchHelper, err := patch.NewHelper(m, r.Client)
 			if err != nil {
-				errs = append(errs, errors.Wrapf(err, "failed to create patch helper for Machine %s", klog.KObj(m)))
+				errs = append(errs, err)
 				continue
 			}
 			conditions.MarkFalse(m, clusterv1.MachineOwnerRemediatedCondition, clusterv1.WaitingForRemediationReason, clusterv1.ConditionSeverityWarning, preflightCheckErrMessage)
 			if err := patchHelper.Patch(ctx, m); err != nil {
-				errs = append(errs, errors.Wrapf(err, "failed to patch Machine %s", klog.KObj(m)))
+				errs = append(errs, err)
 			}
 		}
 
