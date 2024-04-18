@@ -27,8 +27,6 @@ const (
 	DefaultMappingTimeout = 60 * time.Second
 	// DefaultAzureServiceReconcileTimeout is the default timeout for an Azure service reconcile.
 	DefaultAzureServiceReconcileTimeout = 12 * time.Second
-	// DefaultAKSServiceReconcileTimeout is the default timeout for an AKS service reconcile.
-	DefaultAKSServiceReconcileTimeout = 30 * time.Second
 	// DefaultAzureCallTimeout is the default timeout for an Azure request after which an Azure operation is considered long running.
 	DefaultAzureCallTimeout = 2 * time.Second
 	// DefaultReconcilerRequeue is the default value for the reconcile retry.
@@ -37,11 +35,50 @@ const (
 	DefaultHTTP429RetryAfter = 1 * time.Minute
 )
 
+// Timeouts defines the timeouts for a reconciler.
+type Timeouts struct {
+	// Loop is the timeout for a reconcile loop (defaulted to the max ARM template duration).
+	Loop time.Duration
+	// AzureServiceReconcile is the timeout for an Azure service reconcile.
+	AzureServiceReconcile time.Duration
+	// AzureCall is the timeout for an Azure request after which an Azure operation is considered long-running.
+	AzureCall time.Duration
+	// Requeue is the value for the reconcile retry.
+	Requeue time.Duration
+}
+
+// DefaultedAzureCallTimeout will default the timeout if it is zero-valued.
+func (t Timeouts) DefaultedAzureCallTimeout() time.Duration {
+	if t.AzureCall <= 0 {
+		return DefaultAzureCallTimeout
+	}
+
+	return t.AzureCall
+}
+
+// DefaultedAzureServiceReconcileTimeout will default the timeout if it is zero-valued.
+func (t Timeouts) DefaultedAzureServiceReconcileTimeout() time.Duration {
+	if t.AzureServiceReconcile <= 0 {
+		return DefaultAzureServiceReconcileTimeout
+	}
+
+	return t.AzureServiceReconcile
+}
+
+// DefaultedReconcilerRequeue will default the timeout if it is zero-valued.
+func (t Timeouts) DefaultedReconcilerRequeue() time.Duration {
+	if t.Requeue <= 0 {
+		return DefaultReconcilerRequeue
+	}
+
+	return t.Requeue
+}
+
 // DefaultedLoopTimeout will default the timeout if it is zero-valued.
-func DefaultedLoopTimeout(timeout time.Duration) time.Duration {
-	if timeout <= 0 {
+func (t Timeouts) DefaultedLoopTimeout() time.Duration {
+	if t.Loop <= 0 {
 		return DefaultLoopTimeout
 	}
 
-	return timeout
+	return t.Loop
 }

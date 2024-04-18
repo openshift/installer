@@ -44,8 +44,11 @@ type azureClusterService struct {
 	scope *scope.ClusterScope
 	// services is the list of services that are reconciled by this controller.
 	// The order of the services is important as it determines the order in which the services are reconciled.
-	services []azure.ServiceReconciler
-	skuCache *resourceskus.Cache
+	services  []azure.ServiceReconciler
+	skuCache  *resourceskus.Cache
+	Reconcile func(context.Context) error
+	Pause     func(context.Context) error
+	Delete    func(context.Context) error
 }
 
 // newAzureClusterService populates all the services based on input scope.
@@ -62,27 +65,11 @@ func newAzureClusterService(scope *scope.ClusterScope) (*azureClusterService, er
 	if err != nil {
 		return nil, err
 	}
-	bastionHostsSvc, err := bastionhosts.New(scope)
-	if err != nil {
-		return nil, err
-	}
-	privateEndpointsSvc, err := privateendpoints.New(scope)
-	if err != nil {
-		return nil, err
-	}
 	publicIPsSvc, err := publicips.New(scope)
 	if err != nil {
 		return nil, err
 	}
 	privateDNSSvc, err := privatedns.New(scope)
-	if err != nil {
-		return nil, err
-	}
-	subnetsSvc, err := subnets.New(scope)
-	if err != nil {
-		return nil, err
-	}
-	virtualNetworksSvc, err := virtualnetworks.New(scope)
 	if err != nil {
 		return nil, err
 	}
@@ -94,28 +81,33 @@ func newAzureClusterService(scope *scope.ClusterScope) (*azureClusterService, er
 	if err != nil {
 		return nil, err
 	}
-	return &azureClusterService{
+	acs := &azureClusterService{
 		scope: scope,
 		services: []azure.ServiceReconciler{
 			groups.New(scope),
-			virtualNetworksSvc,
+			virtualnetworks.New(scope),
 			securityGroupsSvc,
 			routeTablesSvc,
 			publicIPsSvc,
 			natgateways.New(scope),
-			subnetsSvc,
+			subnets.New(scope),
 			vnetPeeringsSvc,
 			loadbalancersSvc,
 			privateDNSSvc,
-			bastionHostsSvc,
-			privateEndpointsSvc,
+			privateendpoints.New(scope),
+			bastionhosts.New(scope),
 		},
 		skuCache: skuCache,
-	}, nil
+	}
+	acs.Reconcile = acs.reconcile
+	acs.Pause = acs.pause
+	acs.Delete = acs.delete
+
+	return acs, nil
 }
 
 // Reconcile reconciles all the services in a predetermined order.
-func (s *azureClusterService) Reconcile(ctx context.Context) error {
+func (s *azureClusterService) reconcile(ctx context.Context) error {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "controllers.azureClusterService.Reconcile")
 	defer done()
 
@@ -137,7 +129,7 @@ func (s *azureClusterService) Reconcile(ctx context.Context) error {
 }
 
 // Pause pauses all components making up the cluster.
-func (s *azureClusterService) Pause(ctx context.Context) error {
+func (s *azureClusterService) pause(ctx context.Context) error {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "controllers.azureClusterService.Pause")
 	defer done()
 
@@ -155,7 +147,7 @@ func (s *azureClusterService) Pause(ctx context.Context) error {
 }
 
 // Delete reconciles all the services in a predetermined order.
-func (s *azureClusterService) Delete(ctx context.Context) error {
+func (s *azureClusterService) delete(ctx context.Context) error {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "controllers.azureClusterService.Delete")
 	defer done()
 
@@ -174,6 +166,7 @@ func (s *azureClusterService) Delete(ctx context.Context) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to get group service")
 		}
+
 		// Delete the entire resource group directly.
 		if err := groupSvc.Delete(ctx); err != nil {
 			return errors.Wrap(err, "failed to delete resource group")
@@ -189,15 +182,6 @@ func (s *azureClusterService) Delete(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func (s *azureClusterService) getService(name string) (azure.ServiceReconciler, error) {
-	for _, service := range s.services {
-		if service.Name() == name {
-			return service, nil
-		}
-	}
-	return nil, errors.Errorf("service %s not found", name)
 }
 
 // setFailureDomainsForLocation sets the AzureCluster Status failure domains based on which Azure Availability Zones are available in the cluster location.
@@ -219,4 +203,13 @@ func (s *azureClusterService) setFailureDomainsForLocation(ctx context.Context) 
 	}
 
 	return nil
+}
+
+func (s *azureClusterService) getService(name string) (azure.ServiceReconciler, error) {
+	for _, service := range s.services {
+		if service.Name() == name {
+			return service, nil
+		}
+	}
+	return nil, errors.Errorf("service %s not found", name)
 }

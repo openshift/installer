@@ -18,23 +18,24 @@ package vmextensions
 
 import (
 	"context"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 // azureClient contains the Azure go-sdk Client.
 type azureClient struct {
-	vmextensions *armcompute.VirtualMachineExtensionsClient
+	vmextensions   *armcompute.VirtualMachineExtensionsClient
+	apiCallTimeout time.Duration
 }
 
 // newClient creates a new vm extensions client from an authorizer.
-func newClient(auth azure.Authorizer) (*azureClient, error) {
+func newClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureClient, error) {
 	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create virtualmachineextensions client options")
@@ -43,7 +44,7 @@ func newClient(auth azure.Authorizer) (*azureClient, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create armcompute client factory")
 	}
-	return &azureClient{factory.NewVirtualMachineExtensionsClient()}, nil
+	return &azureClient{factory.NewVirtualMachineExtensionsClient(), apiCallTimeout}, nil
 }
 
 // Get the specified virtual machine extension.
@@ -76,7 +77,7 @@ func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.Resou
 		return nil, nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureCallTimeout)
+	ctx, cancel := context.WithTimeout(ctx, ac.apiCallTimeout)
 	defer cancel()
 
 	pollOpts := &runtime.PollUntilDoneOptions{Frequency: async.DefaultPollerFrequency}
@@ -104,7 +105,7 @@ func (ac *azureClient) DeleteAsync(ctx context.Context, spec azure.ResourceSpecG
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureCallTimeout)
+	ctx, cancel := context.WithTimeout(ctx, ac.apiCallTimeout)
 	defer cancel()
 
 	pollOpts := &runtime.PollUntilDoneOptions{Frequency: async.DefaultPollerFrequency}

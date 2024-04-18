@@ -29,6 +29,8 @@ const (
 	Node string = "node"
 	// Bastion subnet label.
 	Bastion string = "bastion"
+	// Cluster subnet label.
+	Cluster string = "cluster"
 )
 
 // SecurityEncryptionType represents the Encryption Type when the virtual machine is a
@@ -305,6 +307,8 @@ type SecurityRule struct {
 	// Source specifies the CIDR or source IP range. Asterix '*' can also be used to match all source IPs. Default tags such as 'VirtualNetwork', 'AzureLoadBalancer' and 'Internet' can also be used. If this is an ingress rule, specifies where network traffic originates from.
 	// +optional
 	Source *string `json:"source,omitempty"`
+	// Sources specifies The CIDR or source IP ranges.
+	Sources []*string `json:"sources,omitempty"`
 	// Destination is the destination address prefix. CIDR or destination IP range. Asterix '*' can also be used to match all source IPs. Default tags such as 'VirtualNetwork', 'AzureLoadBalancer' and 'Internet' can also be used.
 	// +optional
 	Destination *string `json:"destination,omitempty"`
@@ -565,13 +569,6 @@ type UserAssignedIdentity struct {
 	ProviderID string `json:"providerID"`
 }
 
-const (
-	// AzureIdentityBindingSelector is the label used to match with the AzureIdentityBinding
-	// For the controller to match an identity binding, it needs a [label] with the key `aadpodidbinding`
-	// whose value is that of the `selector:` field in the `AzureIdentityBinding`.
-	AzureIdentityBindingSelector = "capz-controller-aadpodidentity-selector"
-)
-
 // IdentityType represents different types of identities.
 // +kubebuilder:validation:Enum=ServicePrincipal;UserAssignedMSI;ManualServicePrincipal;ServicePrincipalCertificate;WorkloadIdentity
 type IdentityType string
@@ -710,6 +707,9 @@ const (
 
 	// SubnetBastion defines a Bastion subnet role.
 	SubnetBastion = SubnetRole(Bastion)
+
+	// SubnetCluster defines a role that can be used for both Kubernetes control plane node and Kubernetes workload node.
+	SubnetCluster = SubnetRole(Cluster)
 )
 
 // SubnetSpec configures an Azure subnet.
@@ -801,29 +801,40 @@ type NetworkInterface struct {
 	AcceleratedNetworking *bool `json:"acceleratedNetworking,omitempty"`
 }
 
-// GetControlPlaneSubnet returns the cluster control plane subnet.
+// GetControlPlaneSubnet returns a subnet that has a role assigned to controlplane or all. Subnets with role controlplane are given higher priority.
 func (n *NetworkSpec) GetControlPlaneSubnet() (SubnetSpec, error) {
-	for _, sn := range n.Subnets {
-		if sn.Role == SubnetControlPlane {
-			return sn, nil
-		}
+	// Priority is given for subnet that have role assigned as controlplane
+	if subnet, err := n.GetSubnet(SubnetControlPlane); err == nil {
+		return subnet, nil
 	}
+
+	if subnet, err := n.GetSubnet(SubnetCluster); err == nil {
+		return subnet, nil
+	}
+
 	return SubnetSpec{}, errors.Errorf("no subnet found with role %s", SubnetControlPlane)
 }
 
-// UpdateControlPlaneSubnet updates the cluster control plane subnet.
-func (n *NetworkSpec) UpdateControlPlaneSubnet(subnet SubnetSpec) {
-	for i, sn := range n.Subnets {
-		if sn.Role == SubnetControlPlane {
-			n.Subnets[i] = subnet
+// GetSubnet returns a subnet based on the subnet role.
+func (n *NetworkSpec) GetSubnet(role SubnetRole) (SubnetSpec, error) {
+	for _, sn := range n.Subnets {
+		if sn.Role == role {
+			return sn, nil
 		}
 	}
+	return SubnetSpec{}, errors.Errorf("no subnet found with role %s", role)
 }
 
-// UpdateNodeSubnet updates the cluster node subnet.
-func (n *NetworkSpec) UpdateNodeSubnet(subnet SubnetSpec) {
+// UpdateControlPlaneSubnet updates the cluster control plane subnets.
+func (n *NetworkSpec) UpdateControlPlaneSubnet(subnet SubnetSpec) {
+	n.UpdateSubnet(subnet, SubnetControlPlane)
+	n.UpdateSubnet(subnet, SubnetCluster)
+}
+
+// UpdateSubnet updates the subnet based on the subnet role.
+func (n *NetworkSpec) UpdateSubnet(subnet SubnetSpec, role SubnetRole) {
 	for i, sn := range n.Subnets {
-		if sn.Role == SubnetNode {
+		if sn.Role == role {
 			n.Subnets[i] = subnet
 		}
 	}
@@ -1005,6 +1016,18 @@ type AzureBastion struct {
 	EnableTunneling bool `json:"enableTunneling,omitempty"`
 }
 
+// FleetsMember defines the fleets member configuration.
+// See also [AKS doc].
+//
+// [AKS doc]: https://learn.microsoft.com/en-us/azure/templates/microsoft.containerservice/2023-03-15-preview/fleets/members
+type FleetsMember struct {
+	// Name is the name of the member.
+	// +optional
+	Name string `json:"name,omitempty"`
+
+	FleetsMemberClassSpec `json:",inline"`
+}
+
 // BackendPool describes the backend pool of the load balancer.
 type BackendPool struct {
 	// Name specifies the name of backend pool for the load balancer. If not specified, the default name will
@@ -1087,4 +1110,75 @@ const (
 	FlexibleOrchestrationMode OrchestrationModeType = "Flexible"
 	// UniformOrchestrationMode treats VMs as identical instances accessible by the VMSS VM API.
 	UniformOrchestrationMode OrchestrationModeType = "Uniform"
+)
+
+// ExtensionPlan represents the plan for an AKS marketplace extension.
+type ExtensionPlan struct {
+	// Name is the user-defined name of the 3rd Party Artifact that is being procured.
+	// +optional
+	Name string `json:"name,omitempty"`
+
+	// Product is the name of the 3rd Party artifact that is being procured.
+	// +optional
+	Product string `json:"product,omitempty"`
+
+	// PromotionCode is a publisher-provided promotion code as provisioned in Data Market for the said product/artifact.
+	// +optional
+	PromotionCode string `json:"promotionCode,omitempty"`
+
+	// Publisher is the name of the publisher of the 3rd Party Artifact that is being bought.
+	// +optional
+	Publisher string `json:"publisher,omitempty"`
+
+	// Version is the version of the plan.
+	// +optional
+	Version string `json:"version,omitempty"`
+}
+
+// ExtensionScope defines the scope of the AKS marketplace extension, if configured.
+type ExtensionScope struct {
+	// ScopeType is the scope of the extension. It can be either Cluster or Namespace, but not both.
+	ScopeType ExtensionScopeType `json:"scopeType"`
+
+	// ReleaseNamespace is the namespace where the extension Release must be placed, for a Cluster-scoped extension.
+	// Required for Cluster-scoped extensions.
+	// +optional
+	ReleaseNamespace string `json:"releaseNamespace,omitempty"`
+
+	// TargetNamespace is the namespace where the extension will be created for a Namespace-scoped extension.
+	// Required for Namespace-scoped extensions.
+	// +optional
+	TargetNamespace string `json:"targetNamespace,omitempty"`
+}
+
+// ExtensionScopeType defines the scope type of the AKS marketplace extension, if configured.
+// +kubebuilder:validation:Enum=Cluster;Namespace
+type ExtensionScopeType string
+
+const (
+	// ExtensionScopeCluster ...
+	ExtensionScopeCluster ExtensionScopeType = "Cluster"
+	// ExtensionScopeNamespace ...
+	ExtensionScopeNamespace ExtensionScopeType = "Namespace"
+)
+
+// ExtensionIdentity defines the identity of the AKS marketplace extension, if configured.
+// +kubebuilder:validation:Enum=SystemAssigned
+type ExtensionIdentity string
+
+const (
+	// ExtensionIdentitySystemAssigned ...
+	ExtensionIdentitySystemAssigned ExtensionIdentity = "SystemAssigned"
+)
+
+// AKSAssignedIdentity defines the AKS assigned-identity of the aks marketplace extension, if configured.
+// +kubebuilder:validation:Enum=SystemAssigned;UserAssigned
+type AKSAssignedIdentity string
+
+const (
+	// AKSAssignedIdentitySystemAssigned ...
+	AKSAssignedIdentitySystemAssigned AKSAssignedIdentity = "SystemAssigned"
+
+	// AKSAssignedIdentityUserAssigned ...
+	AKSAssignedIdentityUserAssigned AKSAssignedIdentity = "UserAssigned"
 )

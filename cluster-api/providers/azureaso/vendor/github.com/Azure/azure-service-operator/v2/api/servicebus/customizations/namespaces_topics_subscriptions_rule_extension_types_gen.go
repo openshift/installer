@@ -5,13 +5,11 @@ package customizations
 
 import (
 	v20210101p "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20210101preview"
-	v20210101ps "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20210101previewstorage"
+	v20210101ps "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20210101preview/storage"
 	v20211101 "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101storage"
+	v20211101s "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101/storage"
 	v20221001p "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20221001preview"
-	v20221001ps "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20221001previewstorage"
-	v1beta20210101p "github.com/Azure/azure-service-operator/v2/api/servicebus/v1beta20210101preview"
-	v1beta20210101ps "github.com/Azure/azure-service-operator/v2/api/servicebus/v1beta20210101previewstorage"
+	v20221001ps "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20221001preview/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -26,7 +24,5 @@ func (extension *NamespacesTopicsSubscriptionsRuleExtension) GetExtendedResource
 		&v20211101.NamespacesTopicsSubscriptionsRule{},
 		&v20211101s.NamespacesTopicsSubscriptionsRule{},
 		&v20221001p.NamespacesTopicsSubscriptionsRule{},
-		&v20221001ps.NamespacesTopicsSubscriptionsRule{},
-		&v1beta20210101p.NamespacesTopicsSubscriptionsRule{},
-		&v1beta20210101ps.NamespacesTopicsSubscriptionsRule{}}
+		&v20221001ps.NamespacesTopicsSubscriptionsRule{}}
 }

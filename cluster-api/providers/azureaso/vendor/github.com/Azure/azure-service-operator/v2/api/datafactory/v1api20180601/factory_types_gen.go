@@ -5,7 +5,7 @@ package v1api20180601
 
 import (
 	"fmt"
-	v20180601s "github.com/Azure/azure-service-operator/v2/api/datafactory/v1api20180601storage"
+	v20180601s "github.com/Azure/azure-service-operator/v2/api/datafactory/v1api20180601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -52,7 +52,7 @@ var _ conversion.Convertible = &Factory{}
 func (factory *Factory) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20180601s.Factory)
 	if !ok {
-		return fmt.Errorf("expected datafactory/v1api20180601storage/Factory but received %T instead", hub)
+		return fmt.Errorf("expected datafactory/v1api20180601/storage/Factory but received %T instead", hub)
 	}
 
 	return factory.AssignProperties_From_Factory(source)
@@ -62,7 +62,7 @@ func (factory *Factory) ConvertFrom(hub conversion.Hub) error {
 func (factory *Factory) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20180601s.Factory)
 	if !ok {
-		return fmt.Errorf("expected datafactory/v1api20180601storage/Factory but received %T instead", hub)
+		return fmt.Errorf("expected datafactory/v1api20180601/storage/Factory but received %T instead", hub)
 	}
 
 	return factory.AssignProperties_To_Factory(destination)
@@ -127,6 +127,15 @@ func (factory *Factory) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (factory *Factory) GetStatus() genruntime.ConvertibleStatus {
 	return &factory.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (factory *Factory) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DataFactory/factories"

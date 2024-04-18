@@ -72,6 +72,8 @@ type ScaleSetSpec struct {
 	ShouldPatchCustomData        bool
 	HasReplicasExternallyManaged bool
 	AdditionalTags               infrav1.Tags
+	PlatformFaultDomainCount     *int32
+	ZoneBalance                  *bool
 }
 
 // ResourceName returns the name of the Scale Set.
@@ -213,9 +215,14 @@ func (s *ScaleSetSpec) Parameters(ctx context.Context, existing interface{}) (pa
 		vmss.Properties.VirtualMachineProfile.NetworkProfile.NetworkAPIVersion =
 			ptr.To(armcompute.NetworkAPIVersionTwoThousandTwenty1101)
 		vmss.Properties.PlatformFaultDomainCount = ptr.To[int32](1)
-		if len(s.FailureDomains) > 1 {
-			vmss.Properties.PlatformFaultDomainCount = ptr.To[int32](int32(len(s.FailureDomains)))
-		}
+	}
+
+	if s.PlatformFaultDomainCount != nil {
+		vmss.Properties.PlatformFaultDomainCount = ptr.To[int32](*s.PlatformFaultDomainCount)
+	}
+
+	if s.ZoneBalance != nil {
+		vmss.Properties.ZoneBalance = s.ZoneBalance
 	}
 
 	// Assign Identity to VMSS

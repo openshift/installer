@@ -249,6 +249,11 @@ func (in *BigDataPoolResourceProperties_ARM) DeepCopyInto(out *BigDataPoolResour
 		*out = new(AutoScaleProperties_ARM)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.CacheSize != nil {
+		in, out := &in.CacheSize, &out.CacheSize
+		*out = new(int)
+		**out = **in
+	}
 	if in.CustomLibraries != nil {
 		in, out := &in.CustomLibraries, &out.CustomLibraries
 		*out = make([]LibraryInfo_ARM, len(*in))
@@ -3256,6 +3261,11 @@ func (in *Workspaces_BigDataPool_Spec) DeepCopyInto(out *Workspaces_BigDataPool_
 		in, out := &in.AutoScale, &out.AutoScale
 		*out = new(AutoScaleProperties)
 		(*in).DeepCopyInto(*out)
+	}
+	if in.CacheSize != nil {
+		in, out := &in.CacheSize, &out.CacheSize
+		*out = new(int)
+		**out = **in
 	}
 	if in.CustomLibraries != nil {
 		in, out := &in.CustomLibraries, &out.CustomLibraries

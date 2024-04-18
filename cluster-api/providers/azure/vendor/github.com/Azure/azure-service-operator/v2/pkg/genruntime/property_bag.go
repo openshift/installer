@@ -6,6 +6,7 @@
 package genruntime
 
 import (
+	"bytes"
 	"encoding/json"
 
 	"github.com/pkg/errors"
@@ -84,7 +85,9 @@ func (bag PropertyBag) Pull(property string, destination interface{}) error {
 		*d = value
 	default:
 		data := []byte(value)
-		err := json.Unmarshal(data, destination)
+		decoder := json.NewDecoder(bytes.NewReader(data))
+		decoder.DisallowUnknownFields()
+		err := decoder.Decode(destination)
 		if err != nil {
 			return errors.Wrapf(err, "pulling %q from PropertyBag", property)
 		}

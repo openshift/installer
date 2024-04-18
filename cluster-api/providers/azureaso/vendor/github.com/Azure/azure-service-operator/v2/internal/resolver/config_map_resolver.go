@@ -8,7 +8,6 @@ package resolver
 import (
 	"context"
 
-	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -17,12 +16,13 @@ import (
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/kubeclient"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 )
 
 // ConfigMapResolver is a configmap resolver
 type ConfigMapResolver interface {
 	ResolveConfigMapReference(ctx context.Context, ref genruntime.NamespacedConfigMapReference) (string, error)
-	ResolveConfigMapReferences(ctx context.Context, refs set.Set[genruntime.NamespacedConfigMapReference]) (genruntime.Resolved[genruntime.ConfigMapReference], error)
+	ResolveConfigMapReferences(ctx context.Context, refs set.Set[genruntime.NamespacedConfigMapReference]) (genruntime.Resolved[genruntime.ConfigMapReference, string], error)
 }
 
 // kubeConfigMapResolver resolves Kubernetes config maps
@@ -66,16 +66,16 @@ func (r *kubeConfigMapResolver) ResolveConfigMapReference(ctx context.Context, r
 }
 
 // ResolveConfigMapReferences resolves all provided configmap references
-func (r *kubeConfigMapResolver) ResolveConfigMapReferences(ctx context.Context, refs set.Set[genruntime.NamespacedConfigMapReference]) (genruntime.Resolved[genruntime.ConfigMapReference], error) {
+func (r *kubeConfigMapResolver) ResolveConfigMapReferences(ctx context.Context, refs set.Set[genruntime.NamespacedConfigMapReference]) (genruntime.Resolved[genruntime.ConfigMapReference, string], error) {
 	result := make(map[genruntime.ConfigMapReference]string, len(refs))
 
 	for ref := range refs {
 		value, err := r.ResolveConfigMapReference(ctx, ref)
 		if err != nil {
-			return genruntime.MakeResolved[genruntime.ConfigMapReference](nil), err
+			return genruntime.MakeResolved[genruntime.ConfigMapReference, string](nil), err
 		}
 		result[ref.ConfigMapReference] = value
 	}
 
-	return genruntime.MakeResolved[genruntime.ConfigMapReference](result), nil
+	return genruntime.MakeResolved[genruntime.ConfigMapReference, string](result), nil
 }

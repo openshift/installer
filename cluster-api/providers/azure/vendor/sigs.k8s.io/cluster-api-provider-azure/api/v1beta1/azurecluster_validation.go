@@ -79,7 +79,7 @@ func (c *AzureCluster) validateCluster(old *AzureCluster) (admission.Warnings, e
 	}
 
 	return nil, apierrors.NewInvalid(
-		schema.GroupKind{Group: "infrastructure.cluster.x-k8s.io", Kind: "AzureCluster"},
+		schema.GroupKind{Group: "infrastructure.cluster.x-k8s.io", Kind: AzureClusterKind},
 		c.Name, allErrs)
 }
 
@@ -147,7 +147,7 @@ func validateIdentityRef(identityRef *corev1.ObjectReference, fldPath *field.Pat
 	if identityRef == nil {
 		return field.Required(fldPath, "identityRef is required")
 	}
-	if identityRef.Kind != "AzureClusterIdentity" {
+	if identityRef.Kind != AzureClusterIdentityKind {
 		return field.NotSupported(fldPath.Child("name"), identityRef.Name, []string{"AzureClusterIdentity"})
 	}
 	return nil
@@ -184,7 +184,7 @@ func validateNetworkSpec(networkSpec NetworkSpec, old NetworkSpec, fldPath *fiel
 
 	var needOutboundLB bool
 	for _, subnet := range networkSpec.Subnets {
-		if subnet.Role == SubnetNode && subnet.IsIPv6Enabled() {
+		if (subnet.Role == SubnetNode || subnet.Role == SubnetCluster) && subnet.IsIPv6Enabled() {
 			needOutboundLB = true
 			break
 		}
@@ -213,6 +213,7 @@ func validateResourceGroup(resourceGroup string, fldPath *field.Path) *field.Err
 }
 
 // validateSubnets validates a list of Subnets.
+// When configuring a cluster, it is essential to include either a control-plane subnet and a node subnet, or a user can configure a cluster subnet which will be used as a control-plane subnet and a node subnet.
 func validateSubnets(subnets Subnets, vnet VnetSpec, fldPath *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 	subnetNames := make(map[string]bool, len(subnets))
@@ -220,7 +221,8 @@ func validateSubnets(subnets Subnets, vnet VnetSpec, fldPath *field.Path) field.
 		"control-plane": false,
 		"node":          false,
 	}
-
+	clusterSubnet := false
+	numberofClusterSubnets := 0
 	for i, subnet := range subnets {
 		if err := validateSubnetName(subnet.Name, fldPath.Index(i).Child("name")); err != nil {
 			allErrs = append(allErrs, err)
@@ -229,17 +231,23 @@ func validateSubnets(subnets Subnets, vnet VnetSpec, fldPath *field.Path) field.
 			allErrs = append(allErrs, field.Duplicate(fldPath, subnet.Name))
 		}
 		subnetNames[subnet.Name] = true
-		for role := range requiredSubnetRoles {
-			if role == string(subnet.Role) {
-				requiredSubnetRoles[role] = true
+		if subnet.Role == SubnetCluster {
+			clusterSubnet = true
+			numberofClusterSubnets++
+		} else {
+			for role := range requiredSubnetRoles {
+				if role == string(subnet.Role) {
+					requiredSubnetRoles[role] = true
+				}
 			}
 		}
+
 		for _, rule := range subnet.SecurityGroup.SecurityRules {
 			if err := validateSecurityRule(
 				rule,
 				fldPath.Index(i).Child("securityGroup").Child("securityRules").Index(i),
 			); err != nil {
-				allErrs = append(allErrs, err)
+				allErrs = append(allErrs, err...)
 			}
 		}
 		allErrs = append(allErrs, validateSubnetCIDR(subnet.CIDRBlocks, vnet.CIDRBlocks, fldPath.Index(i).Child("cidrBlocks"))...)
@@ -252,6 +260,13 @@ func validateSubnets(subnets Subnets, vnet VnetSpec, fldPath *field.Path) field.
 			allErrs = append(allErrs, validatePrivateEndpoints(subnet.PrivateEndpoints, subnet.CIDRBlocks, fldPath.Index(i).Child("privateEndpoints"))...)
 		}
 	}
+
+	// The clusterSubnet is applicable to both the control-plane and node pools.
+	// Validation of requiredSubnetRoles is skipped since clusterSubnet is set to true.
+	if clusterSubnet {
+		return allErrs
+	}
+
 	for k, v := range requiredSubnetRoles {
 		if !v {
 			allErrs = append(allErrs, field.Required(fldPath,
@@ -356,12 +371,16 @@ func validateInternalLBIPAddress(address string, cidrs []string, fldPath *field.
 }
 
 // validateSecurityRule validates a SecurityRule.
-func validateSecurityRule(rule SecurityRule, fldPath *field.Path) *field.Error {
+func validateSecurityRule(rule SecurityRule, fldPath *field.Path) (allErrs field.ErrorList) {
 	if rule.Priority < minRulePriority || rule.Priority > maxRulePriority {
-		return field.Invalid(fldPath, rule.Priority, fmt.Sprintf("security rule priorities should be between %d and %d", minRulePriority, maxRulePriority))
+		allErrs = append(allErrs, field.Invalid(fldPath, rule.Priority, fmt.Sprintf("security rule priorities should be between %d and %d", minRulePriority, maxRulePriority)))
 	}
 
-	return nil
+	if rule.Source != nil && rule.Sources != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, rule.Source, "security rule cannot have both source and sources"))
+	}
+
+	return allErrs
 }
 
 func validateAPIServerLB(lb LoadBalancerSpec, old LoadBalancerSpec, cidrs []string, fldPath *field.Path) field.ErrorList {

@@ -5,7 +5,7 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101storage"
+	v20211101s "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &NamespacesTopic{}
 func (topic *NamespacesTopic) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20211101s.NamespacesTopic)
 	if !ok {
-		return fmt.Errorf("expected servicebus/v1api20211101storage/NamespacesTopic but received %T instead", hub)
+		return fmt.Errorf("expected servicebus/v1api20211101/storage/NamespacesTopic but received %T instead", hub)
 	}
 
 	return topic.AssignProperties_From_NamespacesTopic(source)
@@ -61,7 +61,7 @@ func (topic *NamespacesTopic) ConvertFrom(hub conversion.Hub) error {
 func (topic *NamespacesTopic) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20211101s.NamespacesTopic)
 	if !ok {
-		return fmt.Errorf("expected servicebus/v1api20211101storage/NamespacesTopic but received %T instead", hub)
+		return fmt.Errorf("expected servicebus/v1api20211101/storage/NamespacesTopic but received %T instead", hub)
 	}
 
 	return topic.AssignProperties_To_NamespacesTopic(destination)
@@ -126,6 +126,15 @@ func (topic *NamespacesTopic) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (topic *NamespacesTopic) GetStatus() genruntime.ConvertibleStatus {
 	return &topic.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (topic *NamespacesTopic) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.ServiceBus/namespaces/topics"

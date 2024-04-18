@@ -6,7 +6,7 @@ package v1api20181130
 import (
 	"context"
 	"fmt"
-	v20181130s "github.com/Azure/azure-service-operator/v2/api/managedidentity/v1api20181130storage"
+	v20181130s "github.com/Azure/azure-service-operator/v2/api/managedidentity/v1api20181130/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
@@ -54,22 +54,36 @@ var _ conversion.Convertible = &UserAssignedIdentity{}
 
 // ConvertFrom populates our UserAssignedIdentity from the provided hub UserAssignedIdentity
 func (identity *UserAssignedIdentity) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20181130s.UserAssignedIdentity)
-	if !ok {
-		return fmt.Errorf("expected managedidentity/v1api20181130storage/UserAssignedIdentity but received %T instead", hub)
+	// intermediate variable for conversion
+	var source v20181130s.UserAssignedIdentity
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from hub to source")
 	}
 
-	return identity.AssignProperties_From_UserAssignedIdentity(source)
+	err = identity.AssignProperties_From_UserAssignedIdentity(&source)
+	if err != nil {
+		return errors.Wrap(err, "converting from source to identity")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub UserAssignedIdentity from our UserAssignedIdentity
 func (identity *UserAssignedIdentity) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20181130s.UserAssignedIdentity)
-	if !ok {
-		return fmt.Errorf("expected managedidentity/v1api20181130storage/UserAssignedIdentity but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination v20181130s.UserAssignedIdentity
+	err := identity.AssignProperties_To_UserAssignedIdentity(&destination)
+	if err != nil {
+		return errors.Wrap(err, "converting to destination from identity")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from destination to hub")
 	}
 
-	return identity.AssignProperties_To_UserAssignedIdentity(destination)
+	return nil
 }
 
 // +kubebuilder:webhook:path=/mutate-managedidentity-azure-com-v1api20181130-userassignedidentity,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=managedidentity.azure.com,resources=userassignedidentities,verbs=create;update,versions=v1api20181130,name=default.v1api20181130.userassignedidentities.managedidentity.azure.com,admissionReviewVersions=v1
@@ -94,17 +108,6 @@ func (identity *UserAssignedIdentity) defaultAzureName() {
 
 // defaultImpl applies the code generated defaults to the UserAssignedIdentity resource
 func (identity *UserAssignedIdentity) defaultImpl() { identity.defaultAzureName() }
-
-var _ genruntime.ImportableResource = &UserAssignedIdentity{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (identity *UserAssignedIdentity) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*UserAssignedIdentity_STATUS); ok {
-		return identity.Spec.Initialize_From_UserAssignedIdentity_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type UserAssignedIdentity_STATUS but received %T instead", status)
-}
 
 var _ genruntime.KubernetesExporter = &UserAssignedIdentity{}
 
@@ -158,6 +161,15 @@ func (identity *UserAssignedIdentity) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (identity *UserAssignedIdentity) GetStatus() genruntime.ConvertibleStatus {
 	return &identity.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (identity *UserAssignedIdentity) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.ManagedIdentity/userAssignedIdentities"
@@ -255,7 +267,7 @@ func (identity *UserAssignedIdentity) updateValidations() []func(old runtime.Obj
 	}
 }
 
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations's
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
 func (identity *UserAssignedIdentity) validateConfigMapDestinations() (admission.Warnings, error) {
 	if identity.Spec.OperatorSpec == nil {
 		return nil, nil
@@ -592,19 +604,6 @@ func (identity *UserAssignedIdentity_Spec) AssignProperties_To_UserAssignedIdent
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_UserAssignedIdentity_STATUS populates our UserAssignedIdentity_Spec from the provided source UserAssignedIdentity_STATUS
-func (identity *UserAssignedIdentity_Spec) Initialize_From_UserAssignedIdentity_STATUS(source *UserAssignedIdentity_STATUS) error {
-
-	// Location
-	identity.Location = genruntime.ClonePointerToString(source.Location)
-
-	// Tags
-	identity.Tags = genruntime.CloneMapOfStringToString(source.Tags)
 
 	// No error
 	return nil

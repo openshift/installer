@@ -18,11 +18,14 @@ package azure
 
 import (
 	"context"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Reconciler is a generic interface for a controller reconciler which has Reconcile and Delete methods.
@@ -79,6 +82,7 @@ type NetworkDescriber interface {
 type ClusterDescriber interface {
 	Authorizer
 	ResourceGroup() string
+	NodeResourceGroup() string
 	ClusterName() string
 	Location() string
 	ExtendedLocation() *infrav1.ExtendedLocationSpec
@@ -98,18 +102,30 @@ type AsyncStatusUpdater interface {
 	UpdatePutStatus(clusterv1.ConditionType, string, error)
 	UpdateDeleteStatus(clusterv1.ConditionType, string, error)
 	UpdatePatchStatus(clusterv1.ConditionType, string, error)
+	AsyncReconciler
+}
+
+// AsyncReconciler is an interface used to get the default timeouts and requeue time for a reconciler that reconciles services asynchronously.
+type AsyncReconciler interface {
+	DefaultedAzureCallTimeout() time.Duration
+	DefaultedAzureServiceReconcileTimeout() time.Duration
+	DefaultedReconcilerRequeue() time.Duration
 }
 
 // ClusterScoper combines the ClusterDescriber and NetworkDescriber interfaces.
 type ClusterScoper interface {
 	ClusterDescriber
 	NetworkDescriber
+	AsyncStatusUpdater
+	GetClient() client.Client
+	GetDeletionTimestamp() *metav1.Time
 }
 
 // ManagedClusterScoper defines the interface for ManagedClusterScope.
 type ManagedClusterScoper interface {
 	ClusterDescriber
 	NodeResourceGroup() string
+	AsyncReconciler
 }
 
 // ResourceSpecGetter is an interface for getting all the required information to create/update/delete an Azure resource.
@@ -136,8 +152,9 @@ type ResourceSpecGetterWithHeaders interface {
 
 // ASOResourceSpecGetter is an interface for getting all the required information to create/update/delete an Azure resource.
 type ASOResourceSpecGetter[T genruntime.MetaObject] interface {
-	// ResourceRef returns a concrete, named (and namespaced if applicable) ASO
-	// resource type to facilitate a strongly-typed GET.
+	// ResourceRef returns a concrete, named ASO resource type to facilitate a
+	// strongly-typed GET. Namespace is not read if set here and is instead
+	// derived from OwnerReferences.
 	ResourceRef() T
 	// Parameters returns a modified object if it points to a non-nil resource.
 	// Otherwise it returns an unmodified object if no updates are needed.

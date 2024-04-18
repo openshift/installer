@@ -28,9 +28,17 @@ func LogObj(log logr.Logger, level int, note string, obj genruntime.MetaObject) 
 	if log.V(level).Enabled() {
 		ourAnnotations := make(map[string]string)
 		for key, value := range obj.GetAnnotations() {
-			if strings.HasPrefix(key, "serviceoperator.azure.com") {
-				ourAnnotations[key] = value
+			if !strings.HasPrefix(key, "serviceoperator.azure.com") {
+				// Skip annotations that aren't ours
+				continue
 			}
+
+			if strings.EqualFold(key, PollerResumeTokenAnnotation) {
+				// Redact annotations with sensitive values
+				value = "REDACTED"
+			}
+
+			ourAnnotations[key] = value
 		}
 
 		keysAndValues := []interface{}{

@@ -5,7 +5,7 @@ package v1api20230401
 
 import (
 	"fmt"
-	v20230401s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230401storage"
+	v20230401s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230401/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &RedisLinkedServer{}
 func (server *RedisLinkedServer) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20230401s.RedisLinkedServer)
 	if !ok {
-		return fmt.Errorf("expected cache/v1api20230401storage/RedisLinkedServer but received %T instead", hub)
+		return fmt.Errorf("expected cache/v1api20230401/storage/RedisLinkedServer but received %T instead", hub)
 	}
 
 	return server.AssignProperties_From_RedisLinkedServer(source)
@@ -61,7 +61,7 @@ func (server *RedisLinkedServer) ConvertFrom(hub conversion.Hub) error {
 func (server *RedisLinkedServer) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20230401s.RedisLinkedServer)
 	if !ok {
-		return fmt.Errorf("expected cache/v1api20230401storage/RedisLinkedServer but received %T instead", hub)
+		return fmt.Errorf("expected cache/v1api20230401/storage/RedisLinkedServer but received %T instead", hub)
 	}
 
 	return server.AssignProperties_To_RedisLinkedServer(destination)
@@ -126,6 +126,15 @@ func (server *RedisLinkedServer) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (server *RedisLinkedServer) GetStatus() genruntime.ConvertibleStatus {
 	return &server.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (server *RedisLinkedServer) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Cache/redis/linkedServers"

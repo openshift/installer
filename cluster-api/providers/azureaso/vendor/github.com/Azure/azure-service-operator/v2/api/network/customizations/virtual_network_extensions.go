@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	network "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101storage"
+	network "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
@@ -22,9 +22,8 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/extensions"
 )
 
-// Attention: A lot of code in this file is very similar to the logic in network_security_group_extension.go, load_balancer_extensions.go and route_table_extensions.go.
+// Attention: A lot of code in this file is very similar to the logic in network_security_group_extension.go, load_balancer_extensions.go, route_table_extensions.go and compute/vmss_extensions.go.
 // The two should be kept in sync as much as possible.
-// NOTE: This wouldn't work without adding indexes in 'getGeneratedStorageTypes' method in controller_resources.goould be kept in sync as much as possible.
 
 var _ extensions.ARMResourceModifier = &VirtualNetworkExtension{}
 

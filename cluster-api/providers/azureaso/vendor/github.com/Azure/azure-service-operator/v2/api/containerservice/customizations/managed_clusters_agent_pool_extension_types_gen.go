@@ -5,13 +5,15 @@ package customizations
 
 import (
 	v20210501 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20210501"
-	v20210501s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20210501storage"
+	v20210501s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20210501/storage"
 	v20230201 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201"
-	v20230201s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201storage"
+	v20230201s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201/storage"
 	v20230202p "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202preview"
-	v20230202ps "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202previewstorage"
-	v1beta20210501 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1beta20210501"
-	v1beta20210501s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1beta20210501storage"
+	v20230202ps "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202preview/storage"
+	v20231001 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
+	v20231001s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
+	v20231102p "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231102preview"
+	v20231102ps "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231102preview/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -27,6 +29,8 @@ func (extension *ManagedClustersAgentPoolExtension) GetExtendedResources() []gen
 		&v20230201s.ManagedClustersAgentPool{},
 		&v20230202p.ManagedClustersAgentPool{},
 		&v20230202ps.ManagedClustersAgentPool{},
-		&v1beta20210501.ManagedClustersAgentPool{},
-		&v1beta20210501s.ManagedClustersAgentPool{}}
+		&v20231001.ManagedClustersAgentPool{},
+		&v20231001s.ManagedClustersAgentPool{},
+		&v20231102p.ManagedClustersAgentPool{},
+		&v20231102ps.ManagedClustersAgentPool{}}
 }

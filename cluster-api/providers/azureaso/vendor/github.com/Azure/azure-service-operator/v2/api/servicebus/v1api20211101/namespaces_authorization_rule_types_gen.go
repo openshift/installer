@@ -5,7 +5,7 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101storage"
+	v20211101s "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &NamespacesAuthorizationRule{}
 func (rule *NamespacesAuthorizationRule) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20211101s.NamespacesAuthorizationRule)
 	if !ok {
-		return fmt.Errorf("expected servicebus/v1api20211101storage/NamespacesAuthorizationRule but received %T instead", hub)
+		return fmt.Errorf("expected servicebus/v1api20211101/storage/NamespacesAuthorizationRule but received %T instead", hub)
 	}
 
 	return rule.AssignProperties_From_NamespacesAuthorizationRule(source)
@@ -61,7 +61,7 @@ func (rule *NamespacesAuthorizationRule) ConvertFrom(hub conversion.Hub) error {
 func (rule *NamespacesAuthorizationRule) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20211101s.NamespacesAuthorizationRule)
 	if !ok {
-		return fmt.Errorf("expected servicebus/v1api20211101storage/NamespacesAuthorizationRule but received %T instead", hub)
+		return fmt.Errorf("expected servicebus/v1api20211101/storage/NamespacesAuthorizationRule but received %T instead", hub)
 	}
 
 	return rule.AssignProperties_To_NamespacesAuthorizationRule(destination)
@@ -126,6 +126,15 @@ func (rule *NamespacesAuthorizationRule) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (rule *NamespacesAuthorizationRule) GetStatus() genruntime.ConvertibleStatus {
 	return &rule.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (rule *NamespacesAuthorizationRule) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.ServiceBus/namespaces/AuthorizationRules"

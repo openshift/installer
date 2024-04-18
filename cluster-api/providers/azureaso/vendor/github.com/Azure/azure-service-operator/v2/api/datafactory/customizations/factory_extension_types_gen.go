@@ -5,7 +5,7 @@ package customizations
 
 import (
 	v20180601 "github.com/Azure/azure-service-operator/v2/api/datafactory/v1api20180601"
-	v20180601s "github.com/Azure/azure-service-operator/v2/api/datafactory/v1api20180601storage"
+	v20180601s "github.com/Azure/azure-service-operator/v2/api/datafactory/v1api20180601/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 

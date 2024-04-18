@@ -5,7 +5,7 @@ package v1api20220901
 
 import (
 	"fmt"
-	v20220901s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901storage"
+	v20220901s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -49,22 +49,36 @@ var _ conversion.Convertible = &StorageAccountsTableService{}
 
 // ConvertFrom populates our StorageAccountsTableService from the provided hub StorageAccountsTableService
 func (service *StorageAccountsTableService) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20220901s.StorageAccountsTableService)
-	if !ok {
-		return fmt.Errorf("expected storage/v1api20220901storage/StorageAccountsTableService but received %T instead", hub)
+	// intermediate variable for conversion
+	var source v20220901s.StorageAccountsTableService
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from hub to source")
 	}
 
-	return service.AssignProperties_From_StorageAccountsTableService(source)
+	err = service.AssignProperties_From_StorageAccountsTableService(&source)
+	if err != nil {
+		return errors.Wrap(err, "converting from source to service")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub StorageAccountsTableService from our StorageAccountsTableService
 func (service *StorageAccountsTableService) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20220901s.StorageAccountsTableService)
-	if !ok {
-		return fmt.Errorf("expected storage/v1api20220901storage/StorageAccountsTableService but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination v20220901s.StorageAccountsTableService
+	err := service.AssignProperties_To_StorageAccountsTableService(&destination)
+	if err != nil {
+		return errors.Wrap(err, "converting to destination from service")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from destination to hub")
 	}
 
-	return service.AssignProperties_To_StorageAccountsTableService(destination)
+	return nil
 }
 
 // +kubebuilder:webhook:path=/mutate-storage-azure-com-v1api20220901-storageaccountstableservice,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=storage.azure.com,resources=storageaccountstableservices,verbs=create;update,versions=v1api20220901,name=default.v1api20220901.storageaccountstableservices.storage.azure.com,admissionReviewVersions=v1
@@ -82,17 +96,6 @@ func (service *StorageAccountsTableService) Default() {
 
 // defaultImpl applies the code generated defaults to the StorageAccountsTableService resource
 func (service *StorageAccountsTableService) defaultImpl() {}
-
-var _ genruntime.ImportableResource = &StorageAccountsTableService{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (service *StorageAccountsTableService) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*StorageAccounts_TableService_STATUS); ok {
-		return service.Spec.Initialize_From_StorageAccounts_TableService_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type StorageAccounts_TableService_STATUS but received %T instead", status)
-}
 
 var _ genruntime.KubernetesResource = &StorageAccountsTableService{}
 
@@ -119,6 +122,14 @@ func (service *StorageAccountsTableService) GetSpec() genruntime.ConvertibleSpec
 // GetStatus returns the status of this resource
 func (service *StorageAccountsTableService) GetStatus() genruntime.ConvertibleStatus {
 	return &service.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (service *StorageAccountsTableService) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Storage/storageAccounts/tableServices"
@@ -494,25 +505,6 @@ func (service *StorageAccounts_TableService_Spec) AssignProperties_To_StorageAcc
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_StorageAccounts_TableService_STATUS populates our StorageAccounts_TableService_Spec from the provided source StorageAccounts_TableService_STATUS
-func (service *StorageAccounts_TableService_Spec) Initialize_From_StorageAccounts_TableService_STATUS(source *StorageAccounts_TableService_STATUS) error {
-
-	// Cors
-	if source.Cors != nil {
-		var cor CorsRules
-		err := cor.Initialize_From_CorsRules_STATUS(source.Cors)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_CorsRules_STATUS() to populate field Cors")
-		}
-		service.Cors = &cor
-	} else {
-		service.Cors = nil
 	}
 
 	// No error

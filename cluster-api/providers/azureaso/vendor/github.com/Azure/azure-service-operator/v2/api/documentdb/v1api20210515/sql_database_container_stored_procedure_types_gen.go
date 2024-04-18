@@ -5,7 +5,7 @@ package v1api20210515
 
 import (
 	"fmt"
-	v20210515s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20210515storage"
+	v20210515s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20210515/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &SqlDatabaseContainerStoredProcedure{}
 func (procedure *SqlDatabaseContainerStoredProcedure) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20210515s.SqlDatabaseContainerStoredProcedure)
 	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20210515storage/SqlDatabaseContainerStoredProcedure but received %T instead", hub)
+		return fmt.Errorf("expected documentdb/v1api20210515/storage/SqlDatabaseContainerStoredProcedure but received %T instead", hub)
 	}
 
 	return procedure.AssignProperties_From_SqlDatabaseContainerStoredProcedure(source)
@@ -61,7 +61,7 @@ func (procedure *SqlDatabaseContainerStoredProcedure) ConvertFrom(hub conversion
 func (procedure *SqlDatabaseContainerStoredProcedure) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20210515s.SqlDatabaseContainerStoredProcedure)
 	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20210515storage/SqlDatabaseContainerStoredProcedure but received %T instead", hub)
+		return fmt.Errorf("expected documentdb/v1api20210515/storage/SqlDatabaseContainerStoredProcedure but received %T instead", hub)
 	}
 
 	return procedure.AssignProperties_To_SqlDatabaseContainerStoredProcedure(destination)
@@ -126,6 +126,15 @@ func (procedure *SqlDatabaseContainerStoredProcedure) GetSpec() genruntime.Conve
 // GetStatus returns the status of this resource
 func (procedure *SqlDatabaseContainerStoredProcedure) GetStatus() genruntime.ConvertibleStatus {
 	return &procedure.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (procedure *SqlDatabaseContainerStoredProcedure) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/storedProcedures"

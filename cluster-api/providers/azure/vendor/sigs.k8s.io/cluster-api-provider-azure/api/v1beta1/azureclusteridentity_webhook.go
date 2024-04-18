@@ -55,7 +55,7 @@ func (c *AzureClusterIdentity) ValidateUpdate(oldRaw runtime.Object) (admission.
 	if len(allErrs) == 0 {
 		return c.validateClusterIdentity()
 	}
-	return nil, apierrors.NewInvalid(GroupVersion.WithKind("AzureClusterIdentity").GroupKind(), c.Name, allErrs)
+	return nil, apierrors.NewInvalid(GroupVersion.WithKind(AzureClusterIdentityKind).GroupKind(), c.Name, allErrs)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.

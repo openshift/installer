@@ -231,7 +231,7 @@ type HardwareProfile_ARM struct {
 	// resizing](https://docs.microsoft.com/rest/api/compute/virtualmachines/listavailablesizes). For more information about
 	// virtual machine sizes, see [Sizes for virtual machines](https://docs.microsoft.com/azure/virtual-machines/sizes).
 	// The available VM sizes depend on region and availability set.
-	VmSize *HardwareProfile_VmSize `json:"vmSize,omitempty"`
+	VmSize *string `json:"vmSize,omitempty"`
 
 	// VmSizeProperties: Specifies the properties for customizing the size of the virtual machine. Minimum api-version:
 	// 2021-07-01.
@@ -887,15 +887,6 @@ type KeyVaultKeyReference_ARM struct {
 	KeyUrl *string `json:"keyUrl,omitempty"`
 
 	// SourceVault: The relative URL of the Key Vault containing the key.
-	SourceVault *SubResource_ARM `json:"sourceVault,omitempty"`
-}
-
-// Describes a reference to Key Vault Secret
-type KeyVaultSecretReference_ARM struct {
-	// SecretUrl: The URL referencing a secret in a Key Vault.
-	SecretUrl *string `json:"secretUrl,omitempty"`
-
-	// SourceVault: The relative URL of the Key Vault containing the secret.
 	SourceVault *SubResource_ARM `json:"sourceVault,omitempty"`
 }
 

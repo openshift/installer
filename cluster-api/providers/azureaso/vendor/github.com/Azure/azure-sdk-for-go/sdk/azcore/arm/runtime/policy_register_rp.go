@@ -80,7 +80,6 @@ func (r *rpRegistrationPolicy) Do(req *azpolicy.Request) (*http.Response, error)
 		// policy is disabled
 		return req.Next()
 	}
-	const unregisteredRPCode = "MissingSubscriptionRegistration"
 	const registeredState = "Registered"
 	var rp string
 	var resp *http.Response
@@ -101,7 +100,7 @@ func (r *rpRegistrationPolicy) Do(req *azpolicy.Request) (*http.Response, error)
 			// to the caller so its error unmarshalling will kick in
 			return resp, err
 		}
-		if !strings.EqualFold(reqErr.ServiceError.Code, unregisteredRPCode) {
+		if !isUnregisteredRPCode(reqErr.ServiceError.Code) {
 			// not a 409 due to unregistered RP. just return the response
 			// to the caller so its error unmarshalling will kick in
 			return resp, err
@@ -127,12 +126,13 @@ func (r *rpRegistrationPolicy) Do(req *azpolicy.Request) (*http.Response, error)
 			u:     r.endpoint,
 			subID: subID,
 		}
-		if _, err = rpOps.Register(req.Raw().Context(), rp); err != nil {
+		if _, err = rpOps.Register(&shared.ContextWithDeniedValues{Context: req.Raw().Context()}, rp); err != nil {
 			logRegistrationExit(err)
 			return resp, err
 		}
+
 		// RP was registered, however we need to wait for the registration to complete
-		pollCtx, pollCancel := context.WithTimeout(req.Raw().Context(), r.options.PollingDuration)
+		pollCtx, pollCancel := context.WithTimeout(&shared.ContextWithDeniedValues{Context: req.Raw().Context()}, r.options.PollingDuration)
 		var lastRegState string
 		for {
 			// get the current registration state
@@ -171,6 +171,22 @@ func (r *rpRegistrationPolicy) Do(req *azpolicy.Request) (*http.Response, error)
 	}
 	// if we get here it means we exceeded the number of attempts
 	return resp, fmt.Errorf("exceeded attempts to register %s", rp)
+}
+
+var unregisteredRPCodes = []string{
+	"MissingSubscriptionRegistration",
+	"MissingRegistrationForResourceProvider",
+	"Subscription Not Registered",
+	"SubscriptionNotRegistered",
+}
+
+func isUnregisteredRPCode(errorCode string) bool {
+	for _, code := range unregisteredRPCodes {
+		if strings.EqualFold(errorCode, code) {
+			return true
+		}
+	}
+	return false
 }
 
 func getSubscription(path string) (string, error) {

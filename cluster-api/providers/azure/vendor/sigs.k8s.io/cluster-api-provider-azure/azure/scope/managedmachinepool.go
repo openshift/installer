@@ -21,14 +21,15 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/agentpools"
 	"sigs.k8s.io/cluster-api-provider-azure/util/futures"
-	"sigs.k8s.io/cluster-api-provider-azure/util/maps"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
+	"sigs.k8s.io/cluster-api-provider-azure/util/versions"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
@@ -124,9 +125,14 @@ func (s *ManagedMachinePoolScope) Close(ctx context.Context) error {
 	return s.PatchObject(ctx)
 }
 
-// AgentPoolAnnotations returns a map of annotations for the infra machine pool.
-func (s *ManagedMachinePoolScope) AgentPoolAnnotations() map[string]string {
-	return s.InfraMachinePool.Annotations
+// GetClient implements aso.Scope.
+func (s *ManagedMachinePoolScope) GetClient() client.Client {
+	return s.Client
+}
+
+// ASOOwner implements aso.Scope.
+func (s *ManagedMachinePoolScope) ASOOwner() client.Object {
+	return s.InfraMachinePool
 }
 
 // Name returns the name of the infra machine pool.
@@ -140,8 +146,8 @@ func (s *ManagedMachinePoolScope) SetSubnetName() {
 }
 
 // AgentPoolSpec returns an azure.ResourceSpecGetter for currently reconciled AzureManagedMachinePool.
-func (s *ManagedMachinePoolScope) AgentPoolSpec() azure.ResourceSpecGetter {
-	return buildAgentPoolSpec(s.ControlPlane, s.MachinePool, s.InfraMachinePool, s.AgentPoolAnnotations())
+func (s *ManagedMachinePoolScope) AgentPoolSpec() azure.ASOResourceSpecGetter[genruntime.MetaObject] {
+	return buildAgentPoolSpec(s.ControlPlane, s.MachinePool, s.InfraMachinePool)
 }
 
 func getAgentPoolSubnet(controlPlane *infrav1.AzureManagedControlPlane, infraMachinePool *infrav1.AzureManagedMachinePool) *string {
@@ -153,13 +159,8 @@ func getAgentPoolSubnet(controlPlane *infrav1.AzureManagedControlPlane, infraMac
 
 func buildAgentPoolSpec(managedControlPlane *infrav1.AzureManagedControlPlane,
 	machinePool *expv1.MachinePool,
-	managedMachinePool *infrav1.AzureManagedMachinePool,
-	agentPoolAnnotations map[string]string) azure.ResourceSpecGetter {
-	var normalizedVersion *string
-	if machinePool.Spec.Template.Spec.Version != nil {
-		v := strings.TrimPrefix(*machinePool.Spec.Template.Spec.Version, "v")
-		normalizedVersion = &v
-	}
+	managedMachinePool *infrav1.AzureManagedMachinePool) azure.ASOResourceSpecGetter[genruntime.MetaObject] {
+	normalizedVersion := getManagedMachinePoolVersion(managedControlPlane, machinePool)
 
 	replicas := int32(1)
 	if machinePool.Spec.Replicas != nil {
@@ -167,11 +168,12 @@ func buildAgentPoolSpec(managedControlPlane *infrav1.AzureManagedControlPlane,
 	}
 
 	agentPoolSpec := &agentpools.AgentPoolSpec{
-		Name:          ptr.Deref(managedMachinePool.Spec.Name, ""),
+		Name:          managedMachinePool.Name,
+		AzureName:     ptr.Deref(managedMachinePool.Spec.Name, ""),
 		ResourceGroup: managedControlPlane.Spec.ResourceGroupName,
 		Cluster:       managedControlPlane.Name,
 		SKU:           managedMachinePool.Spec.SKU,
-		Replicas:      replicas,
+		Replicas:      int(replicas),
 		Version:       normalizedVersion,
 		OSType:        managedMachinePool.Spec.OSType,
 		VnetSubnetID: azure.SubnetID(
@@ -180,21 +182,23 @@ func buildAgentPoolSpec(managedControlPlane *infrav1.AzureManagedControlPlane,
 			managedControlPlane.Spec.VirtualNetwork.Name,
 			ptr.Deref(getAgentPoolSubnet(managedControlPlane, managedMachinePool), ""),
 		),
-		Mode:                 managedMachinePool.Spec.Mode,
-		MaxPods:              managedMachinePool.Spec.MaxPods,
-		AvailabilityZones:    managedMachinePool.Spec.AvailabilityZones,
-		OsDiskType:           managedMachinePool.Spec.OsDiskType,
-		EnableUltraSSD:       managedMachinePool.Spec.EnableUltraSSD,
-		Headers:              maps.FilterByKeyPrefix(agentPoolAnnotations, infrav1.CustomHeaderPrefix),
-		EnableNodePublicIP:   managedMachinePool.Spec.EnableNodePublicIP,
-		NodePublicIPPrefixID: managedMachinePool.Spec.NodePublicIPPrefixID,
-		ScaleSetPriority:     managedMachinePool.Spec.ScaleSetPriority,
-		ScaleDownMode:        managedMachinePool.Spec.ScaleDownMode,
-		SpotMaxPrice:         managedMachinePool.Spec.SpotMaxPrice,
-		AdditionalTags:       managedMachinePool.Spec.AdditionalTags,
-		KubeletDiskType:      managedMachinePool.Spec.KubeletDiskType,
-		LinuxOSConfig:        managedMachinePool.Spec.LinuxOSConfig,
-		EnableFIPS:           managedMachinePool.Spec.EnableFIPS,
+		Mode:                   managedMachinePool.Spec.Mode,
+		MaxPods:                managedMachinePool.Spec.MaxPods,
+		AvailabilityZones:      managedMachinePool.Spec.AvailabilityZones,
+		OsDiskType:             managedMachinePool.Spec.OsDiskType,
+		EnableUltraSSD:         managedMachinePool.Spec.EnableUltraSSD,
+		EnableNodePublicIP:     managedMachinePool.Spec.EnableNodePublicIP,
+		NodePublicIPPrefixID:   ptr.Deref(managedMachinePool.Spec.NodePublicIPPrefixID, ""),
+		ScaleSetPriority:       managedMachinePool.Spec.ScaleSetPriority,
+		ScaleDownMode:          managedMachinePool.Spec.ScaleDownMode,
+		SpotMaxPrice:           managedMachinePool.Spec.SpotMaxPrice,
+		AdditionalTags:         managedMachinePool.Spec.AdditionalTags,
+		KubeletDiskType:        managedMachinePool.Spec.KubeletDiskType,
+		LinuxOSConfig:          managedMachinePool.Spec.LinuxOSConfig,
+		EnableFIPS:             managedMachinePool.Spec.EnableFIPS,
+		EnableEncryptionAtHost: managedMachinePool.Spec.EnableEncryptionAtHost,
+		Patches:                managedMachinePool.Spec.ASOManagedClustersAgentPoolPatches,
+		Preview:                ptr.Deref(managedControlPlane.Spec.EnablePreviewFeatures, false),
 	}
 
 	if managedMachinePool.Spec.OSDiskSizeGB != nil {
@@ -216,10 +220,7 @@ func buildAgentPoolSpec(managedControlPlane *infrav1.AzureManagedControlPlane,
 	}
 
 	if len(managedMachinePool.Spec.NodeLabels) > 0 {
-		agentPoolSpec.NodeLabels = make(map[string]*string, len(managedMachinePool.Spec.NodeLabels))
-		for k, v := range managedMachinePool.Spec.NodeLabels {
-			agentPoolSpec.NodeLabels[k] = ptr.To(v)
-		}
+		agentPoolSpec.NodeLabels = managedMachinePool.Spec.NodeLabels
 	}
 
 	if managedMachinePool.Spec.KubeletConfig != nil {
@@ -236,11 +237,16 @@ func buildAgentPoolSpec(managedControlPlane *infrav1.AzureManagedControlPlane,
 			PodMaxPids:            managedMachinePool.Spec.KubeletConfig.PodMaxPids,
 		}
 		if len(managedMachinePool.Spec.KubeletConfig.AllowedUnsafeSysctls) > 0 {
-			agentPoolSpec.KubeletConfig.AllowedUnsafeSysctls = &managedMachinePool.Spec.KubeletConfig.AllowedUnsafeSysctls
+			agentPoolSpec.KubeletConfig.AllowedUnsafeSysctls = managedMachinePool.Spec.KubeletConfig.AllowedUnsafeSysctls
 		}
 	}
 
 	return agentPoolSpec
+}
+
+// IsPreviewEnabled returns the value of the EnablePreviewFeatures field from the AzureManagedControlPlane.
+func (s *ManagedMachinePoolScope) IsPreviewEnabled() bool {
+	return ptr.Deref(s.ControlPlane.Spec.EnablePreviewFeatures, false)
 }
 
 // SetAgentPoolProviderIDList sets a list of agent pool's Azure VM IDs.
@@ -319,8 +325,12 @@ func (s *ManagedMachinePoolScope) PatchCAPIMachinePoolObject(ctx context.Context
 }
 
 // SetCAPIMachinePoolReplicas sets the associated MachinePool replica count.
-func (s *ManagedMachinePoolScope) SetCAPIMachinePoolReplicas(replicas *int32) {
-	s.MachinePool.Spec.Replicas = replicas
+func (s *ManagedMachinePoolScope) SetCAPIMachinePoolReplicas(replicas *int) {
+	var setReplicas *int32
+	if replicas != nil {
+		setReplicas = ptr.To(int32(*replicas))
+	}
+	s.MachinePool.Spec.Replicas = setReplicas
 }
 
 // SetCAPIMachinePoolAnnotation sets the specified annotation on the associated MachinePool.
@@ -340,4 +350,20 @@ func (s *ManagedMachinePoolScope) RemoveCAPIMachinePoolAnnotation(key string) {
 func (s *ManagedMachinePoolScope) GetCAPIMachinePoolAnnotation(key string) (success bool, value string) {
 	val, ok := s.MachinePool.Annotations[key]
 	return ok, val
+}
+
+func getManagedMachinePoolVersion(managedControlPlane *infrav1.AzureManagedControlPlane, machinePool *expv1.MachinePool) *string {
+	var v, av string
+	if machinePool != nil {
+		v = ptr.Deref(machinePool.Spec.Template.Spec.Version, "")
+	}
+	if managedControlPlane != nil {
+		av = managedControlPlane.Status.AutoUpgradeVersion
+	}
+	higherVersion := versions.GetHigherK8sVersion(v, av)
+	if higherVersion == "" {
+		// When both mp.Version and mcp.Status.AutoUpgradeVersion are not set we return nil
+		return nil
+	}
+	return ptr.To(strings.TrimPrefix(higherVersion, "v"))
 }

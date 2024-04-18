@@ -5,7 +5,7 @@ package v1api20210702
 
 import (
 	"fmt"
-	v20210702s "github.com/Azure/azure-service-operator/v2/api/devices/v1api20210702storage"
+	v20210702s "github.com/Azure/azure-service-operator/v2/api/devices/v1api20210702/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &IotHub{}
 func (iotHub *IotHub) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20210702s.IotHub)
 	if !ok {
-		return fmt.Errorf("expected devices/v1api20210702storage/IotHub but received %T instead", hub)
+		return fmt.Errorf("expected devices/v1api20210702/storage/IotHub but received %T instead", hub)
 	}
 
 	return iotHub.AssignProperties_From_IotHub(source)
@@ -61,7 +61,7 @@ func (iotHub *IotHub) ConvertFrom(hub conversion.Hub) error {
 func (iotHub *IotHub) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20210702s.IotHub)
 	if !ok {
-		return fmt.Errorf("expected devices/v1api20210702storage/IotHub but received %T instead", hub)
+		return fmt.Errorf("expected devices/v1api20210702/storage/IotHub but received %T instead", hub)
 	}
 
 	return iotHub.AssignProperties_To_IotHub(destination)
@@ -126,6 +126,15 @@ func (iotHub *IotHub) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (iotHub *IotHub) GetStatus() genruntime.ConvertibleStatus {
 	return &iotHub.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (iotHub *IotHub) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Devices/IotHubs"
@@ -6311,7 +6320,7 @@ type StorageEndpointProperties struct {
 
 	// +kubebuilder:validation:Required
 	// ConnectionString: The connection string for the Azure Storage account to which files are uploaded.
-	ConnectionString genruntime.SecretReference `json:"connectionString,omitempty"`
+	ConnectionString *genruntime.SecretReference `json:"connectionString,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// ContainerName: The name of the root container where you upload files. The container need not exist but should be
@@ -6342,11 +6351,14 @@ func (properties *StorageEndpointProperties) ConvertToARM(resolved genruntime.Co
 	}
 
 	// Set property "ConnectionString":
-	connectionStringSecret, err := resolved.ResolvedSecrets.Lookup(properties.ConnectionString)
-	if err != nil {
-		return nil, errors.Wrap(err, "looking up secret for property ConnectionString")
+	if properties.ConnectionString != nil {
+		connectionStringSecret, err := resolved.ResolvedSecrets.Lookup(*properties.ConnectionString)
+		if err != nil {
+			return nil, errors.Wrap(err, "looking up secret for property ConnectionString")
+		}
+		connectionString := connectionStringSecret
+		result.ConnectionString = &connectionString
 	}
-	result.ConnectionString = connectionStringSecret
 
 	// Set property "ContainerName":
 	if properties.ContainerName != nil {
@@ -6432,9 +6444,10 @@ func (properties *StorageEndpointProperties) AssignProperties_From_StorageEndpoi
 
 	// ConnectionString
 	if source.ConnectionString != nil {
-		properties.ConnectionString = source.ConnectionString.Copy()
+		connectionString := source.ConnectionString.Copy()
+		properties.ConnectionString = &connectionString
 	} else {
-		properties.ConnectionString = genruntime.SecretReference{}
+		properties.ConnectionString = nil
 	}
 
 	// ContainerName
@@ -6473,8 +6486,12 @@ func (properties *StorageEndpointProperties) AssignProperties_To_StorageEndpoint
 	}
 
 	// ConnectionString
-	connectionString := properties.ConnectionString.Copy()
-	destination.ConnectionString = &connectionString
+	if properties.ConnectionString != nil {
+		connectionString := properties.ConnectionString.Copy()
+		destination.ConnectionString = &connectionString
+	} else {
+		destination.ConnectionString = nil
+	}
 
 	// ContainerName
 	destination.ContainerName = genruntime.ClonePointerToString(properties.ContainerName)

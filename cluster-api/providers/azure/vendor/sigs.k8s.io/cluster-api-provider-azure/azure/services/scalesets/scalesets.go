@@ -29,7 +29,6 @@ import (
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/resourceskus"
 	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/slice"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
@@ -60,7 +59,7 @@ type (
 
 // New creates a new service.
 func New(scope ScaleSetScope, skuCache *resourceskus.Cache) (*Service, error) {
-	client, err := NewClient(scope)
+	client, err := NewClient(scope, scope.DefaultedAzureCallTimeout())
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +82,7 @@ func (s *Service) Reconcile(ctx context.Context) (retErr error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "scalesets.Service.Reconcile")
 	defer done()
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureServiceReconcileTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
 	defer cancel()
 
 	if err := s.validateSpec(ctx); err != nil {
@@ -142,7 +141,7 @@ func (s *Service) Delete(ctx context.Context) error {
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "scalesets.Service.Delete")
 	defer done()
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureServiceReconcileTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
 	defer cancel()
 
 	scaleSetSpec := s.Scope.ScaleSetSpec(ctx)

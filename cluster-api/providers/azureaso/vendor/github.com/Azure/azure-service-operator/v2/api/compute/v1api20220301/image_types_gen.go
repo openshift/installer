@@ -5,7 +5,7 @@ package v1api20220301
 
 import (
 	"fmt"
-	v20220301s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301storage"
+	v20220301s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &Image{}
 func (image *Image) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20220301s.Image)
 	if !ok {
-		return fmt.Errorf("expected compute/v1api20220301storage/Image but received %T instead", hub)
+		return fmt.Errorf("expected compute/v1api20220301/storage/Image but received %T instead", hub)
 	}
 
 	return image.AssignProperties_From_Image(source)
@@ -61,7 +61,7 @@ func (image *Image) ConvertFrom(hub conversion.Hub) error {
 func (image *Image) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20220301s.Image)
 	if !ok {
-		return fmt.Errorf("expected compute/v1api20220301storage/Image but received %T instead", hub)
+		return fmt.Errorf("expected compute/v1api20220301/storage/Image but received %T instead", hub)
 	}
 
 	return image.AssignProperties_To_Image(destination)
@@ -126,6 +126,15 @@ func (image *Image) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (image *Image) GetStatus() genruntime.ConvertibleStatus {
 	return &image.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (image *Image) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Compute/images"

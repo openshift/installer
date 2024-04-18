@@ -5,7 +5,7 @@ package v1api20210601
 
 import (
 	"fmt"
-	v20210601s "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20210601storage"
+	v20210601s "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20210601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -49,22 +49,36 @@ var _ conversion.Convertible = &FlexibleServersDatabase{}
 
 // ConvertFrom populates our FlexibleServersDatabase from the provided hub FlexibleServersDatabase
 func (database *FlexibleServersDatabase) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20210601s.FlexibleServersDatabase)
-	if !ok {
-		return fmt.Errorf("expected dbforpostgresql/v1api20210601storage/FlexibleServersDatabase but received %T instead", hub)
+	// intermediate variable for conversion
+	var source v20210601s.FlexibleServersDatabase
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from hub to source")
 	}
 
-	return database.AssignProperties_From_FlexibleServersDatabase(source)
+	err = database.AssignProperties_From_FlexibleServersDatabase(&source)
+	if err != nil {
+		return errors.Wrap(err, "converting from source to database")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub FlexibleServersDatabase from our FlexibleServersDatabase
 func (database *FlexibleServersDatabase) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20210601s.FlexibleServersDatabase)
-	if !ok {
-		return fmt.Errorf("expected dbforpostgresql/v1api20210601storage/FlexibleServersDatabase but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination v20210601s.FlexibleServersDatabase
+	err := database.AssignProperties_To_FlexibleServersDatabase(&destination)
+	if err != nil {
+		return errors.Wrap(err, "converting to destination from database")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from destination to hub")
 	}
 
-	return database.AssignProperties_To_FlexibleServersDatabase(destination)
+	return nil
 }
 
 // +kubebuilder:webhook:path=/mutate-dbforpostgresql-azure-com-v1api20210601-flexibleserversdatabase,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=dbforpostgresql.azure.com,resources=flexibleserversdatabases,verbs=create;update,versions=v1api20210601,name=default.v1api20210601.flexibleserversdatabases.dbforpostgresql.azure.com,admissionReviewVersions=v1
@@ -89,17 +103,6 @@ func (database *FlexibleServersDatabase) defaultAzureName() {
 
 // defaultImpl applies the code generated defaults to the FlexibleServersDatabase resource
 func (database *FlexibleServersDatabase) defaultImpl() { database.defaultAzureName() }
-
-var _ genruntime.ImportableResource = &FlexibleServersDatabase{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (database *FlexibleServersDatabase) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*FlexibleServers_Database_STATUS); ok {
-		return database.Spec.Initialize_From_FlexibleServers_Database_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type FlexibleServers_Database_STATUS but received %T instead", status)
-}
 
 var _ genruntime.KubernetesResource = &FlexibleServersDatabase{}
 
@@ -126,6 +129,15 @@ func (database *FlexibleServersDatabase) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (database *FlexibleServersDatabase) GetStatus() genruntime.ConvertibleStatus {
 	return &database.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (database *FlexibleServersDatabase) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DBforPostgreSQL/flexibleServers/databases"
@@ -508,19 +520,6 @@ func (database *FlexibleServers_Database_Spec) AssignProperties_To_FlexibleServe
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_FlexibleServers_Database_STATUS populates our FlexibleServers_Database_Spec from the provided source FlexibleServers_Database_STATUS
-func (database *FlexibleServers_Database_Spec) Initialize_From_FlexibleServers_Database_STATUS(source *FlexibleServers_Database_STATUS) error {
-
-	// Charset
-	database.Charset = genruntime.ClonePointerToString(source.Charset)
-
-	// Collation
-	database.Collation = genruntime.ClonePointerToString(source.Collation)
 
 	// No error
 	return nil

@@ -5,7 +5,7 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/eventhub/v1api20211101storage"
+	v20211101s "github.com/Azure/azure-service-operator/v2/api/eventhub/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &NamespacesEventhub{}
 func (eventhub *NamespacesEventhub) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20211101s.NamespacesEventhub)
 	if !ok {
-		return fmt.Errorf("expected eventhub/v1api20211101storage/NamespacesEventhub but received %T instead", hub)
+		return fmt.Errorf("expected eventhub/v1api20211101/storage/NamespacesEventhub but received %T instead", hub)
 	}
 
 	return eventhub.AssignProperties_From_NamespacesEventhub(source)
@@ -61,7 +61,7 @@ func (eventhub *NamespacesEventhub) ConvertFrom(hub conversion.Hub) error {
 func (eventhub *NamespacesEventhub) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20211101s.NamespacesEventhub)
 	if !ok {
-		return fmt.Errorf("expected eventhub/v1api20211101storage/NamespacesEventhub but received %T instead", hub)
+		return fmt.Errorf("expected eventhub/v1api20211101/storage/NamespacesEventhub but received %T instead", hub)
 	}
 
 	return eventhub.AssignProperties_To_NamespacesEventhub(destination)
@@ -126,6 +126,15 @@ func (eventhub *NamespacesEventhub) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (eventhub *NamespacesEventhub) GetStatus() genruntime.ConvertibleStatus {
 	return &eventhub.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (eventhub *NamespacesEventhub) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.EventHub/namespaces/eventhubs"

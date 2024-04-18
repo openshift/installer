@@ -5,7 +5,7 @@ package v1api20210501
 
 import (
 	"fmt"
-	v20210501s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20210501storage"
+	v20210501s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20210501/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &FlexibleServersFirewallRule{}
 func (rule *FlexibleServersFirewallRule) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20210501s.FlexibleServersFirewallRule)
 	if !ok {
-		return fmt.Errorf("expected dbformysql/v1api20210501storage/FlexibleServersFirewallRule but received %T instead", hub)
+		return fmt.Errorf("expected dbformysql/v1api20210501/storage/FlexibleServersFirewallRule but received %T instead", hub)
 	}
 
 	return rule.AssignProperties_From_FlexibleServersFirewallRule(source)
@@ -61,7 +61,7 @@ func (rule *FlexibleServersFirewallRule) ConvertFrom(hub conversion.Hub) error {
 func (rule *FlexibleServersFirewallRule) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20210501s.FlexibleServersFirewallRule)
 	if !ok {
-		return fmt.Errorf("expected dbformysql/v1api20210501storage/FlexibleServersFirewallRule but received %T instead", hub)
+		return fmt.Errorf("expected dbformysql/v1api20210501/storage/FlexibleServersFirewallRule but received %T instead", hub)
 	}
 
 	return rule.AssignProperties_To_FlexibleServersFirewallRule(destination)
@@ -126,6 +126,15 @@ func (rule *FlexibleServersFirewallRule) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (rule *FlexibleServersFirewallRule) GetStatus() genruntime.ConvertibleStatus {
 	return &rule.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (rule *FlexibleServersFirewallRule) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DBforMySQL/flexibleServers/firewallRules"

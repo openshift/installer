@@ -5,7 +5,7 @@ package v1api20220120preview
 
 import (
 	"fmt"
-	v20220120ps "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20220120previewstorage"
+	v20220120ps "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20220120preview/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -129,6 +129,14 @@ func (configuration *FlexibleServersConfiguration) GetSpec() genruntime.Converti
 // GetStatus returns the status of this resource
 func (configuration *FlexibleServersConfiguration) GetStatus() genruntime.ConvertibleStatus {
 	return &configuration.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (configuration *FlexibleServersConfiguration) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DBforPostgreSQL/flexibleServers/configurations"

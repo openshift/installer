@@ -6,7 +6,7 @@ package v1api20230202preview
 import (
 	"context"
 	"fmt"
-	v20230202ps "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202previewstorage"
+	v20230202ps "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202preview/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
@@ -155,6 +155,15 @@ func (cluster *ManagedCluster) GetStatus() genruntime.ConvertibleStatus {
 	return &cluster.Status
 }
 
+// GetSupportedOperations returns the operations supported by the resource
+func (cluster *ManagedCluster) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
+}
+
 // GetType returns the ARM Type of the resource. This is always "Microsoft.ContainerService/managedClusters"
 func (cluster *ManagedCluster) GetType() string {
 	return "Microsoft.ContainerService/managedClusters"
@@ -253,7 +262,7 @@ func (cluster *ManagedCluster) updateValidations() []func(old runtime.Object) (a
 	}
 }
 
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations's
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
 func (cluster *ManagedCluster) validateConfigMapDestinations() (admission.Warnings, error) {
 	if cluster.Spec.OperatorSpec == nil {
 		return nil, nil
@@ -523,7 +532,7 @@ type ManagedCluster_Spec struct {
 	StorageProfile *ManagedClusterStorageProfile `json:"storageProfile,omitempty"`
 
 	// Tags: Resource tags.
-	Tags map[string]string `json:"tags,omitempty"`
+	Tags map[string]string `json:"tags,omitempty" serializationType:"explicitEmptyCollection"`
 
 	// UpgradeSettings: Settings for upgrading a cluster.
 	UpgradeSettings *ClusterUpgradeSettings `json:"upgradeSettings,omitempty"`
@@ -874,6 +883,9 @@ func (cluster *ManagedCluster_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		for key, value := range cluster.Tags {
 			result.Tags[key] = value
 		}
+	} else {
+		// Set property to empty map, as this resource is set to serialize all collections explicitly
+		result.Tags = make(map[string]string)
 	}
 	return result, nil
 }
@@ -6967,14 +6979,14 @@ type ManagedClusterAgentPoolProfile struct {
 	NetworkProfile *AgentPoolNetworkProfile `json:"networkProfile,omitempty"`
 
 	// NodeLabels: The node labels to be persisted across all nodes in agent pool.
-	NodeLabels map[string]string `json:"nodeLabels,omitempty"`
+	NodeLabels map[string]string `json:"nodeLabels,omitempty" serializationType:"explicitEmptyCollection"`
 
 	// NodePublicIPPrefixReference: This is of the form:
 	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPPrefixes/{publicIPPrefixName}
 	NodePublicIPPrefixReference *genruntime.ResourceReference `armReference:"NodePublicIPPrefixID" json:"nodePublicIPPrefixReference,omitempty"`
 
 	// NodeTaints: The taints added to new nodes during node pool create and scale. For example, key=value:NoSchedule.
-	NodeTaints []string `json:"nodeTaints,omitempty"`
+	NodeTaints []string `json:"nodeTaints,omitempty" serializationType:"explicitEmptyCollection"`
 
 	// OrchestratorVersion: Both patch version <major.minor.patch> and <major.minor> are supported. When <major.minor> is
 	// specified, the latest supported patch version is chosen automatically. Updating the agent pool with the same
@@ -7028,7 +7040,7 @@ type ManagedClusterAgentPoolProfile struct {
 	SpotMaxPrice *float64 `json:"spotMaxPrice,omitempty"`
 
 	// Tags: The tags to be persisted on the agent pool virtual machine scale set.
-	Tags map[string]string `json:"tags,omitempty"`
+	Tags map[string]string `json:"tags,omitempty" serializationType:"explicitEmptyCollection"`
 
 	// Type: The type of Agent Pool.
 	Type *AgentPoolType `json:"type,omitempty"`
@@ -7219,6 +7231,9 @@ func (profile *ManagedClusterAgentPoolProfile) ConvertToARM(resolved genruntime.
 		for key, value := range profile.NodeLabels {
 			result.NodeLabels[key] = value
 		}
+	} else {
+		// Set property to empty map, as this resource is set to serialize all collections explicitly
+		result.NodeLabels = make(map[string]string)
 	}
 
 	// Set property "NodePublicIPPrefixID":
@@ -7234,6 +7249,10 @@ func (profile *ManagedClusterAgentPoolProfile) ConvertToARM(resolved genruntime.
 	// Set property "NodeTaints":
 	for _, item := range profile.NodeTaints {
 		result.NodeTaints = append(result.NodeTaints, item)
+	}
+	if result.NodeTaints == nil {
+		// Set property to empty map, as this resource is set to serialize all collections explicitly
+		result.NodeTaints = []string{}
 	}
 
 	// Set property "OrchestratorVersion":
@@ -7326,6 +7345,9 @@ func (profile *ManagedClusterAgentPoolProfile) ConvertToARM(resolved genruntime.
 		for key, value := range profile.Tags {
 			result.Tags[key] = value
 		}
+	} else {
+		// Set property to empty map, as this resource is set to serialize all collections explicitly
+		result.Tags = make(map[string]string)
 	}
 
 	// Set property "Type":

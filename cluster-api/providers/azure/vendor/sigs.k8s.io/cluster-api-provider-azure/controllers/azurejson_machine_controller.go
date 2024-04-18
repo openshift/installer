@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -32,6 +31,7 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/identities"
+	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -52,7 +52,7 @@ import (
 type AzureJSONMachineReconciler struct {
 	client.Client
 	Recorder         record.EventRecorder
-	ReconcileTimeout time.Duration
+	Timeouts         reconciler.Timeouts
 	WatchFilterValue string
 }
 
@@ -128,7 +128,7 @@ func (f filterUnclonedMachinesPredicate) Generic(e event.GenericEvent) bool {
 
 // Reconcile reconciles the Azure json for a specific machine not in a machine deployment.
 func (r *AzureJSONMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultedLoopTimeout(r.ReconcileTimeout))
+	ctx, cancel := context.WithTimeout(ctx, r.Timeouts.DefaultedLoopTimeout())
 	defer cancel()
 
 	ctx, log, done := tele.StartSpanWithLogger(
@@ -169,7 +169,7 @@ func (r *AzureJSONMachineReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, nil
 	}
 
-	_, kind := infrav1.GroupVersion.WithKind("AzureCluster").ToAPIVersionAndKind()
+	_, kind := infrav1.GroupVersion.WithKind(infrav1.AzureClusterKind).ToAPIVersionAndKind()
 
 	// only look at azure clusters
 	if cluster.Spec.InfrastructureRef == nil {
@@ -198,6 +198,7 @@ func (r *AzureJSONMachineReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		Client:       r.Client,
 		Cluster:      cluster,
 		AzureCluster: azureCluster,
+		Timeouts:     r.Timeouts,
 	})
 	if err != nil {
 		return reconcile.Result{}, errors.Wrap(err, "failed to create scope")
@@ -215,11 +216,22 @@ func (r *AzureJSONMachineReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	// Construct secret for this machine
 	userAssignedIdentityIfExists := ""
 	if len(azureMachine.Spec.UserAssignedIdentities) > 0 {
-		idsClient, err := identities.NewClient(clusterScope)
+		var identitiesClient identities.Client
+		identitiesClient, err := identities.NewClient(clusterScope)
 		if err != nil {
 			return reconcile.Result{}, errors.Wrap(err, "failed to create identities client")
 		}
-		userAssignedIdentityIfExists, err = idsClient.GetClientID(
+		parsed, err := azureutil.ParseResourceID(azureMachine.Spec.UserAssignedIdentities[0].ProviderID)
+		if err != nil {
+			return reconcile.Result{}, errors.Wrapf(err, "failed to parse ProviderID %s", azureMachine.Spec.UserAssignedIdentities[0].ProviderID)
+		}
+		if parsed.SubscriptionID != clusterScope.SubscriptionID() {
+			identitiesClient, err = identities.NewClientBySub(clusterScope, parsed.SubscriptionID)
+			if err != nil {
+				return reconcile.Result{}, errors.Wrapf(err, "failed to create identities client from subscription ID %s", parsed.SubscriptionID)
+			}
+		}
+		userAssignedIdentityIfExists, err = identitiesClient.GetClientID(
 			ctx, azureMachine.Spec.UserAssignedIdentities[0].ProviderID)
 		if err != nil {
 			return reconcile.Result{}, errors.Wrap(err, "failed to get user-assigned identity ClientID")

@@ -160,13 +160,13 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 			c.getInfrastructureController(
 				&AzureASO,
 				[]string{
-					"--v=0",
-					"--metrics-addr=0",
-					"--health-addr={{suggestHealthHostPort}}",
-					"--webhook-port={{.WebhookPort}}",
-					"--webhook-cert-dir={{.WebhookCertDir}}",
-					"--crd-pattern=",
-					"--enable-crd-management=false",
+					"-v=0",
+					"-metrics-addr=0",
+					"-health-addr={{suggestHealthHostPort}}",
+					"-webhook-port={{.WebhookPort}}",
+					"-webhook-cert-dir={{.WebhookCertDir}}",
+					"-crd-pattern=",
+					"-crd-management=none",
 				}, map[string]string{
 					"POD_NAMESPACE":                     "capz-system",
 					"AZURE_CLIENT_ID":                   session.Credentials.ClientID,

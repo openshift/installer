@@ -5,7 +5,7 @@ package v1api20230701
 
 import (
 	"fmt"
-	v20230701s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230701storage"
+	v20230701s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230701/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &RedisEnterpriseDatabase{}
 func (database *RedisEnterpriseDatabase) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20230701s.RedisEnterpriseDatabase)
 	if !ok {
-		return fmt.Errorf("expected cache/v1api20230701storage/RedisEnterpriseDatabase but received %T instead", hub)
+		return fmt.Errorf("expected cache/v1api20230701/storage/RedisEnterpriseDatabase but received %T instead", hub)
 	}
 
 	return database.AssignProperties_From_RedisEnterpriseDatabase(source)
@@ -61,7 +61,7 @@ func (database *RedisEnterpriseDatabase) ConvertFrom(hub conversion.Hub) error {
 func (database *RedisEnterpriseDatabase) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20230701s.RedisEnterpriseDatabase)
 	if !ok {
-		return fmt.Errorf("expected cache/v1api20230701storage/RedisEnterpriseDatabase but received %T instead", hub)
+		return fmt.Errorf("expected cache/v1api20230701/storage/RedisEnterpriseDatabase but received %T instead", hub)
 	}
 
 	return database.AssignProperties_To_RedisEnterpriseDatabase(destination)
@@ -126,6 +126,15 @@ func (database *RedisEnterpriseDatabase) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (database *RedisEnterpriseDatabase) GetStatus() genruntime.ConvertibleStatus {
 	return &database.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (database *RedisEnterpriseDatabase) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Cache/redisEnterprise/databases"

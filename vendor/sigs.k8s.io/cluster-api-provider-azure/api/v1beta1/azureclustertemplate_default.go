@@ -53,14 +53,25 @@ func (c *AzureClusterTemplate) setBastionTemplateDefaults() {
 }
 
 func (c *AzureClusterTemplate) setSubnetsTemplateDefaults() {
-	cpSubnet, err := c.Spec.Template.Spec.NetworkSpec.GetControlPlaneSubnetTemplate()
-	if err != nil {
+	clusterSubnet, err := c.Spec.Template.Spec.NetworkSpec.GetSubnetTemplate(SubnetCluster)
+	clusterSubnetExists := err == nil
+	if clusterSubnetExists {
+		clusterSubnet.SubnetClassSpec.setDefaults(DefaultClusterSubnetCIDR)
+		clusterSubnet.SecurityGroup.setDefaults()
+		c.Spec.Template.Spec.NetworkSpec.UpdateSubnetTemplate(clusterSubnet, SubnetCluster)
+	}
+
+	cpSubnet, errcp := c.Spec.Template.Spec.NetworkSpec.GetSubnetTemplate(SubnetControlPlane)
+	if errcp == nil {
+		cpSubnet.SubnetClassSpec.setDefaults(DefaultControlPlaneSubnetCIDR)
+		cpSubnet.SecurityGroup.setDefaults()
+		c.Spec.Template.Spec.NetworkSpec.UpdateSubnetTemplate(cpSubnet, SubnetControlPlane)
+	} else if errcp != nil && !clusterSubnetExists {
 		cpSubnet = SubnetTemplateSpec{SubnetClassSpec: SubnetClassSpec{Role: SubnetControlPlane}}
+		cpSubnet.SubnetClassSpec.setDefaults(DefaultControlPlaneSubnetCIDR)
+		cpSubnet.SecurityGroup.setDefaults()
 		c.Spec.Template.Spec.NetworkSpec.Subnets = append(c.Spec.Template.Spec.NetworkSpec.Subnets, cpSubnet)
 	}
-	cpSubnet.SubnetClassSpec.setDefaults(DefaultControlPlaneSubnetCIDR)
-	cpSubnet.SecurityGroup.setDefaults()
-	c.Spec.Template.Spec.NetworkSpec.UpdateControlPlaneSubnetTemplate(cpSubnet)
 
 	var nodeSubnetFound bool
 	var nodeSubnetCounter int
@@ -75,7 +86,7 @@ func (c *AzureClusterTemplate) setSubnetsTemplateDefaults() {
 		c.Spec.Template.Spec.NetworkSpec.Subnets[i] = subnet
 	}
 
-	if !nodeSubnetFound {
+	if !nodeSubnetFound && !clusterSubnetExists {
 		nodeSubnet := SubnetTemplateSpec{
 			SubnetClassSpec: SubnetClassSpec{
 				Role:       SubnetNode,
@@ -94,7 +105,7 @@ func (c *AzureClusterTemplate) setNodeOutboundLBDefaults() {
 
 		var needsOutboundLB bool
 		for _, subnet := range c.Spec.Template.Spec.NetworkSpec.Subnets {
-			if subnet.Role == SubnetNode && subnet.IsIPv6Enabled() {
+			if (subnet.Role == SubnetNode || subnet.Role == SubnetCluster) && subnet.IsIPv6Enabled() {
 				needsOutboundLB = true
 				break
 			}

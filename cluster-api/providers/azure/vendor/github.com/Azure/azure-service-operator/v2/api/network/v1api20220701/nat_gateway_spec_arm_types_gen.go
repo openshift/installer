@@ -58,11 +58,6 @@ type NatGatewaySku_ARM struct {
 	Name *NatGatewaySku_Name `json:"name,omitempty"`
 }
 
-// Reference to another subresource.
-type ApplicationGatewaySubResource_ARM struct {
-	Id *string `json:"id,omitempty"`
-}
-
 // +kubebuilder:validation:Enum={"Standard"}
 type NatGatewaySku_Name string
 

@@ -18,19 +18,23 @@ package managedclusters
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v4"
+	asocontainerservicev1preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202preview"
+	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
+	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
-	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
+	"sigs.k8s.io/cluster-api-provider-azure/azure/services/aso"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/token"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/secret"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -40,15 +44,17 @@ const (
 	// The aadResourceID is the application-id used by the server side. The access token accessing AKS clusters need to be issued for this app.
 	// Refer: https://azure.github.io/kubelogin/concepts/aks.html?highlight=6dae42f8-4368-4678-94ff-3960e28e3630#azure-kubernetes-service-aad-server
 	aadResourceID = "6dae42f8-4368-4678-94ff-3960e28e3630"
+
+	// oidcIssuerProfileUrl is a constant representing the key name for the oidc-issuer-profile-url config map.
+	oidcIssuerProfileURL = "oidc-issuer-profile-url"
 )
 
 // ManagedClusterScope defines the scope interface for a managed cluster.
 type ManagedClusterScope interface {
+	aso.Scope
 	azure.Authorizer
-	azure.AsyncStatusUpdater
-	ManagedClusterSpec() azure.ResourceSpecGetter
+	ManagedClusterSpec() azure.ASOResourceSpecGetter[genruntime.MetaObject]
 	SetControlPlaneEndpoint(clusterv1.APIEndpoint)
-	SetKubeletIdentity(string)
 	MakeEmptyKubeConfigSecret() corev1.Secret
 	GetAdminKubeconfigData() []byte
 	SetAdminKubeconfigData([]byte)
@@ -57,153 +63,150 @@ type ManagedClusterScope interface {
 	IsAADEnabled() bool
 	AreLocalAccountsDisabled() bool
 	SetOIDCIssuerProfileStatus(*infrav1.OIDCIssuerProfileStatus)
-}
-
-// Service provides operations on azure resources.
-type Service struct {
-	Scope ManagedClusterScope
-	async.Reconciler
-	CredentialGetter
+	MakeClusterCA() *corev1.Secret
+	StoreClusterInfo(context.Context, []byte) error
+	SetAutoUpgradeVersionStatus(version string)
+	SetVersionStatus(version string)
+	IsManagedVersionUpgrade() bool
+	IsPreviewEnabled() bool
 }
 
 // New creates a new service.
-func New(scope ManagedClusterScope) (*Service, error) {
-	client, err := newClient(scope)
+func New(scope ManagedClusterScope) *aso.Service[genruntime.MetaObject, ManagedClusterScope] {
+	// genruntime.MetaObject is used here instead of an *asocontainerservicev1.ManagedCluster to better
+	// facilitate returning different API versions.
+	svc := aso.NewService[genruntime.MetaObject](serviceName, scope)
+	svc.Specs = []azure.ASOResourceSpecGetter[genruntime.MetaObject]{scope.ManagedClusterSpec()}
+	svc.ConditionType = infrav1.ManagedClusterRunningCondition
+	svc.PostCreateOrUpdateResourceHook = postCreateOrUpdateResourceHook
+	return svc
+}
+
+func postCreateOrUpdateResourceHook(ctx context.Context, scope ManagedClusterScope, obj genruntime.MetaObject, err error) error {
 	if err != nil {
-		return nil, err
-	}
-	return &Service{
-		Scope: scope,
-		Reconciler: async.New[armcontainerservice.ManagedClustersClientCreateOrUpdateResponse,
-			armcontainerservice.ManagedClustersClientDeleteResponse](scope, client, client),
-		CredentialGetter: client,
-	}, nil
-}
-
-// Name returns the service name.
-func (s *Service) Name() string {
-	return serviceName
-}
-
-// Reconcile idempotently creates or updates a managed cluster.
-func (s *Service) Reconcile(ctx context.Context) error {
-	ctx, _, done := tele.StartSpanWithLogger(ctx, "managedclusters.Service.Reconcile")
-	defer done()
-
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAKSServiceReconcileTimeout)
-	defer cancel()
-
-	managedClusterSpec := s.Scope.ManagedClusterSpec()
-	if managedClusterSpec == nil {
-		return nil
+		return err
 	}
 
-	result, resultErr := s.CreateOrUpdateResource(ctx, managedClusterSpec, serviceName)
-	if resultErr == nil {
-		managedCluster, ok := result.(armcontainerservice.ManagedCluster)
-		if !ok {
-			return errors.Errorf("%T is not an armcontainerservice.ManagedCluster\n%v\n%v", result, result, managedCluster)
+	// If existing is preview, convert to stable for this function.
+	var existing *asocontainerservicev1.ManagedCluster
+	if scope.IsPreviewEnabled() {
+		existingPreview := obj.(*asocontainerservicev1preview.ManagedCluster)
+		hub := &asocontainerservicev1hub.ManagedCluster{}
+		if err := existingPreview.ConvertTo(hub); err != nil {
+			return err
 		}
-		// Update control plane endpoint.
-		endpoint := clusterv1.APIEndpoint{
-			Host: ptr.Deref(managedCluster.Properties.Fqdn, ""),
+		prev := &asocontainerservicev1.ManagedCluster{}
+		if err := prev.ConvertFrom(hub); err != nil {
+			return err
+		}
+		existing = prev
+	} else {
+		existing = obj.(*asocontainerservicev1.ManagedCluster)
+	}
+	managedCluster := existing
+
+	// Update control plane endpoint.
+	endpoint := clusterv1.APIEndpoint{
+		Host: ptr.Deref(managedCluster.Status.Fqdn, ""),
+		Port: 443,
+	}
+	if managedCluster.Status.ApiServerAccessProfile != nil &&
+		ptr.Deref(managedCluster.Status.ApiServerAccessProfile.EnablePrivateCluster, false) &&
+		!ptr.Deref(managedCluster.Status.ApiServerAccessProfile.EnablePrivateClusterPublicFQDN, false) {
+		endpoint = clusterv1.APIEndpoint{
+			Host: ptr.Deref(managedCluster.Status.PrivateFQDN, ""),
 			Port: 443,
 		}
-		s.Scope.SetControlPlaneEndpoint(endpoint)
+	}
+	scope.SetControlPlaneEndpoint(endpoint)
 
-		// Update kubeconfig data
-		// Always fetch credentials in case of rotation
-		adminKubeConfigData, userKubeConfigData, err := s.ReconcileKubeconfig(ctx, managedClusterSpec)
-		if err != nil {
-			return errors.Wrap(err, "error while reconciling adminKubeConfigData")
-		}
+	// Update kubeconfig data
+	// Always fetch credentials in case of rotation
+	adminKubeConfigData, userKubeConfigData, err := reconcileKubeconfig(ctx, scope, managedCluster.Namespace)
+	if err != nil {
+		return errors.Wrap(err, "error while reconciling kubeconfigs")
+	}
+	scope.SetAdminKubeconfigData(adminKubeConfigData)
+	scope.SetUserKubeconfigData(userKubeConfigData)
 
-		s.Scope.SetAdminKubeconfigData(adminKubeConfigData)
-		s.Scope.SetUserKubeconfigData(userKubeConfigData)
-
-		// This field gets populated by AKS when not set by the user. Persist AKS's value so for future diffs,
-		// the "before" reflects the correct value.
-		if id := managedCluster.Properties.IdentityProfile[kubeletIdentityKey]; id != nil && id.ResourceID != nil {
-			s.Scope.SetKubeletIdentity(*id.ResourceID)
-		}
-
-		s.Scope.SetOIDCIssuerProfileStatus(nil)
-		if managedCluster.Properties.OidcIssuerProfile != nil && managedCluster.Properties.OidcIssuerProfile.IssuerURL != nil {
-			s.Scope.SetOIDCIssuerProfileStatus(&infrav1.OIDCIssuerProfileStatus{
-				IssuerURL: managedCluster.Properties.OidcIssuerProfile.IssuerURL,
-			})
+	scope.SetOIDCIssuerProfileStatus(nil)
+	if managedCluster.Status.OidcIssuerProfile != nil && managedCluster.Status.OidcIssuerProfile.IssuerURL != nil {
+		scope.SetOIDCIssuerProfileStatus(&infrav1.OIDCIssuerProfileStatus{
+			IssuerURL: managedCluster.Status.OidcIssuerProfile.IssuerURL,
+		})
+	}
+	if managedCluster.Status.CurrentKubernetesVersion != nil {
+		currentKubernetesVersion := fmt.Sprintf("v%s", *managedCluster.Status.CurrentKubernetesVersion)
+		scope.SetVersionStatus(currentKubernetesVersion)
+		if scope.IsManagedVersionUpgrade() {
+			scope.SetAutoUpgradeVersionStatus(currentKubernetesVersion)
 		}
 	}
-	s.Scope.UpdatePutStatus(infrav1.ManagedClusterRunningCondition, serviceName, resultErr)
-	return resultErr
+
+	return nil
 }
 
-// Delete deletes the managed cluster.
-func (s *Service) Delete(ctx context.Context) error {
-	ctx, _, done := tele.StartSpanWithLogger(ctx, "managedclusters.Service.Delete")
-	defer done()
-
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureServiceReconcileTimeout)
-	defer cancel()
-
-	managedClusterSpec := s.Scope.ManagedClusterSpec()
-	if managedClusterSpec == nil {
-		return nil
-	}
-
-	err := s.DeleteResource(ctx, managedClusterSpec, serviceName)
-	s.Scope.UpdateDeleteStatus(infrav1.ManagedClusterRunningCondition, serviceName, err)
-	return err
-}
-
-// IsManaged returns always returns true as CAPZ does not support BYO managed cluster.
-func (s *Service) IsManaged(ctx context.Context) (bool, error) {
-	return true, nil
-}
-
-// ReconcileKubeconfig will reconcile admin kubeconfig and user kubeconfig.
+// reconcileKubeconfig will reconcile admin kubeconfig and user kubeconfig.
 /*
   Returns the admin kubeconfig and user kubeconfig
-  If aad is enabled a user kubeconfig will also get generated and stored in the secret <cluster-name>-kubeconfig-user
-  If we disable local accounts for aad clusters we do not have access to admin kubeconfig, hence we need to create
+  If AAD is enabled a user kubeconfig will also get generated and stored in the secret <cluster-name>-kubeconfig-user
+  If we disable local accounts for AAD clusters we do not have access to admin kubeconfig, hence we need to create
   the admin kubeconfig by authenticating with the user credentials and retrieving the token for kubeconfig.
   The token is used to create the admin kubeconfig.
-  The user needs to ensure to provide service principle with admin aad privileges.
+  The user needs to ensure to provide service principal with admin AAD privileges.
 */
-func (s *Service) ReconcileKubeconfig(ctx context.Context, managedClusterSpec azure.ResourceSpecGetter) (userKubeConfigData []byte, adminKubeConfigData []byte, err error) {
-	if s.Scope.IsAADEnabled() {
-		if userKubeConfigData, err = s.GetUserKubeconfigData(ctx, managedClusterSpec); err != nil {
+func reconcileKubeconfig(ctx context.Context, scope ManagedClusterScope, namespace string) (adminKubeConfigData []byte, userKubeConfigData []byte, err error) {
+	if scope.IsAADEnabled() {
+		if userKubeConfigData, err = getUserKubeconfigData(ctx, scope, namespace); err != nil {
 			return nil, nil, errors.Wrap(err, "error while trying to get user kubeconfig")
 		}
 	}
 
-	if s.Scope.AreLocalAccountsDisabled() {
-		userKubeconfigWithToken, err := s.GetUserKubeConfigWithToken(userKubeConfigData, ctx, managedClusterSpec)
+	if scope.AreLocalAccountsDisabled() {
+		userKubeconfigWithToken, err := getUserKubeConfigWithToken(userKubeConfigData, ctx, scope)
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "error while trying to get user kubeconfig with token")
 		}
 		return userKubeconfigWithToken, userKubeConfigData, nil
 	}
 
-	adminKubeConfigData, err = s.GetCredentials(ctx, managedClusterSpec.ResourceGroupName(), managedClusterSpec.ResourceName())
+	asoSecret := &corev1.Secret{}
+	err = scope.GetClient().Get(
+		ctx,
+		client.ObjectKey{
+			Namespace: namespace,
+			Name:      adminKubeconfigSecretName(scope.ClusterName()),
+		},
+		asoSecret,
+	)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to get credentials for managed cluster")
+		return nil, nil, errors.Wrap(err, "failed to get ASO admin kubeconfig secret")
 	}
+	adminKubeConfigData = asoSecret.Data[secret.KubeconfigDataName]
 	return adminKubeConfigData, userKubeConfigData, nil
 }
 
-// GetUserKubeconfigData gets user kubeconfig when aad is enabled for the aad clusters.
-func (s *Service) GetUserKubeconfigData(ctx context.Context, managedClusterSpec azure.ResourceSpecGetter) ([]byte, error) {
-	kubeConfigData, err := s.GetUserCredentials(ctx, managedClusterSpec.ResourceGroupName(), managedClusterSpec.ResourceName())
+// getUserKubeconfigData gets user kubeconfig when aad is enabled for the aad clusters.
+func getUserKubeconfigData(ctx context.Context, scope ManagedClusterScope, namespace string) ([]byte, error) {
+	asoSecret := &corev1.Secret{}
+	err := scope.GetClient().Get(
+		ctx,
+		client.ObjectKey{
+			Namespace: namespace,
+			Name:      userKubeconfigSecretName(scope.ClusterName()),
+		},
+		asoSecret,
+	)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get credentials for managed cluster")
+		return nil, errors.Wrap(err, "failed to get ASO user kubeconfig secret")
 	}
+	kubeConfigData := asoSecret.Data[secret.KubeconfigDataName]
 	return kubeConfigData, nil
 }
 
-// GetUserKubeConfigWithToken returns the kubeconfig with user token, for capz to create the target cluster.
-func (s *Service) GetUserKubeConfigWithToken(userKubeConfigData []byte, ctx context.Context, managedClusterSpec azure.ResourceSpecGetter) ([]byte, error) {
-	tokenClient, err := token.NewClient(s.Scope)
+// getUserKubeConfigWithToken returns the kubeconfig with user token, for capz to create the target cluster.
+func getUserKubeConfigWithToken(userKubeConfigData []byte, ctx context.Context, scope azure.Authorizer) ([]byte, error) {
+	tokenClient, err := token.NewClient(scope)
 	if err != nil {
 		return nil, errors.Wrap(err, "error while getting aad token client")
 	}
@@ -213,11 +216,11 @@ func (s *Service) GetUserKubeConfigWithToken(userKubeConfigData []byte, ctx cont
 		return nil, errors.Wrap(err, "error while getting aad token for user kubeconfig")
 	}
 
-	return s.CreateUserKubeconfigWithToken(token, userKubeConfigData)
+	return createUserKubeconfigWithToken(token, userKubeConfigData)
 }
 
-// CreateUserKubeconfigWithToken gets the kubeconfigdata for authenticating with target cluster.
-func (s *Service) CreateUserKubeconfigWithToken(token string, userKubeConfigData []byte) ([]byte, error) {
+// createUserKubeconfigWithToken gets the kubeconfig data for authenticating with target cluster.
+func createUserKubeconfigWithToken(token string, userKubeConfigData []byte) ([]byte, error) {
 	config, err := clientcmd.Load(userKubeConfigData)
 	if err != nil {
 		return nil, errors.Wrap(err, "error while trying to unmarshal new user kubeconfig with token")

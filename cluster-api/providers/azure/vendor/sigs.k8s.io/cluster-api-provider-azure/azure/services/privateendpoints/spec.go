@@ -19,16 +19,12 @@ package privateendpoints
 import (
 	"context"
 	"sort"
-	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
-	"github.com/google/go-cmp/cmp"
-	"github.com/pkg/errors"
+	asonetworkv1 "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/azure"
-	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 // PrivateLinkServiceConnection defines the specification for a private link service connection associated with a private endpoint.
@@ -54,209 +50,106 @@ type PrivateEndpointSpec struct {
 	ClusterName                   string
 }
 
-// ResourceName returns the name of the private endpoint.
-func (s *PrivateEndpointSpec) ResourceName() string {
-	return s.Name
-}
-
-// ResourceGroupName returns the name of the resource group.
-func (s *PrivateEndpointSpec) ResourceGroupName() string {
-	return s.ResourceGroup
-}
-
-// OwnerResourceName is a no-op for private endpoints.
-func (s *PrivateEndpointSpec) OwnerResourceName() string {
-	return ""
-}
-
-// Parameters returns the parameters for the PrivateEndpointSpec.
-func (s *PrivateEndpointSpec) Parameters(ctx context.Context, existing interface{}) (interface{}, error) {
-	_, log, done := tele.StartSpanWithLogger(ctx, "privateendpoints.Service.Parameters")
-	defer done()
-
-	privateEndpointProperties := armnetwork.PrivateEndpointProperties{
-		Subnet: &armnetwork.Subnet{
-			ID: &s.SubnetID,
-			Properties: &armnetwork.SubnetPropertiesFormat{
-				PrivateEndpointNetworkPolicies:    ptr.To(armnetwork.VirtualNetworkPrivateEndpointNetworkPoliciesDisabled),
-				PrivateLinkServiceNetworkPolicies: ptr.To(armnetwork.VirtualNetworkPrivateLinkServiceNetworkPoliciesEnabled),
-			},
+// ResourceRef implements azure.ASOResourceSpecGetter.
+func (s *PrivateEndpointSpec) ResourceRef() *asonetworkv1.PrivateEndpoint {
+	return &asonetworkv1.PrivateEndpoint{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: s.Name,
 		},
 	}
-
-	privateEndpointProperties.CustomNetworkInterfaceName = ptr.To(s.CustomNetworkInterfaceName)
-
-	privateIPAddresses := make([]*armnetwork.PrivateEndpointIPConfiguration, 0, len(s.PrivateIPAddresses))
-	for _, address := range s.PrivateIPAddresses {
-		ipConfig := &armnetwork.PrivateEndpointIPConfigurationProperties{PrivateIPAddress: ptr.To(address)}
-
-		privateIPAddresses = append(privateIPAddresses, &armnetwork.PrivateEndpointIPConfiguration{
-			Properties: ipConfig,
-		})
-	}
-	privateEndpointProperties.IPConfigurations = privateIPAddresses
-
-	privateLinkServiceConnections := make([]*armnetwork.PrivateLinkServiceConnection, 0, len(s.PrivateLinkServiceConnections))
-	for _, privateLinkServiceConnection := range s.PrivateLinkServiceConnections {
-		linkServiceConnection := &armnetwork.PrivateLinkServiceConnection{
-			Name: ptr.To(privateLinkServiceConnection.Name),
-			Properties: &armnetwork.PrivateLinkServiceConnectionProperties{
-				PrivateLinkServiceID: ptr.To(privateLinkServiceConnection.PrivateLinkServiceID),
-			},
-		}
-
-		if len(privateLinkServiceConnection.GroupIDs) > 0 {
-			linkServiceConnection.Properties.GroupIDs = azure.PtrSlice(&privateLinkServiceConnection.GroupIDs)
-		}
-
-		if privateLinkServiceConnection.RequestMessage != "" {
-			linkServiceConnection.Properties.RequestMessage = ptr.To(privateLinkServiceConnection.RequestMessage)
-		}
-		privateLinkServiceConnections = append(privateLinkServiceConnections, linkServiceConnection)
-	}
-
-	if s.ManualApproval {
-		privateEndpointProperties.ManualPrivateLinkServiceConnections = privateLinkServiceConnections
-		privateEndpointProperties.PrivateLinkServiceConnections = []*armnetwork.PrivateLinkServiceConnection{}
-	} else {
-		privateEndpointProperties.PrivateLinkServiceConnections = privateLinkServiceConnections
-		privateEndpointProperties.ManualPrivateLinkServiceConnections = []*armnetwork.PrivateLinkServiceConnection{}
-	}
-
-	applicationSecurityGroups := make([]armnetwork.ApplicationSecurityGroup, 0, len(s.ApplicationSecurityGroups))
-
-	for _, applicationSecurityGroup := range s.ApplicationSecurityGroups {
-		applicationSecurityGroups = append(applicationSecurityGroups, armnetwork.ApplicationSecurityGroup{
-			ID: ptr.To(applicationSecurityGroup),
-		})
-	}
-
-	privateEndpointProperties.ApplicationSecurityGroups = azure.PtrSlice(&applicationSecurityGroups)
-
-	newPrivateEndpoint := armnetwork.PrivateEndpoint{
-		Name:       ptr.To(s.Name),
-		Properties: &privateEndpointProperties,
-		Tags: converters.TagsToMap(infrav1.Build(infrav1.BuildParams{
-			ClusterName: s.ClusterName,
-			Lifecycle:   infrav1.ResourceLifecycleOwned,
-			Name:        ptr.To(s.Name),
-			Additional:  s.AdditionalTags,
-		})),
-	}
-
-	if s.Location != "" {
-		newPrivateEndpoint.Location = ptr.To(s.Location)
-	}
-
-	if existing != nil {
-		existingPE, ok := existing.(armnetwork.PrivateEndpoint)
-		if !ok {
-			return nil, errors.Errorf("%T is not a network.PrivateEndpoint", existing)
-		}
-
-		ps := ptr.Deref(existingPE.Properties.ProvisioningState, "")
-		if string(ps) != string(infrav1.Canceled) && string(ps) != string(infrav1.Failed) && string(ps) != string(infrav1.Succeeded) {
-			return nil, azure.WithTransientError(errors.Errorf("Unable to update existing private endpoint in non-terminal state. Service Endpoint must be in one of the following provisioning states: Canceled, Failed, or Succeeded. Actual state: %s", ps), 20*time.Second)
-		}
-
-		normalizedExistingPE := normalizePrivateEndpoint(existingPE, newPrivateEndpoint)
-		normalizedExistingPE = sortSlicesPrivateEndpoint(normalizedExistingPE)
-
-		newPrivateEndpoint = sortSlicesPrivateEndpoint(newPrivateEndpoint)
-
-		diff := cmp.Diff(&normalizedExistingPE, &newPrivateEndpoint)
-		if diff == "" {
-			// PrivateEndpoint is up-to-date, nothing to do
-			log.V(4).Info("no changes found between user-updated spec and existing spec")
-			return nil, nil
-		}
-		log.V(4).Info("found a diff between the desired spec and the existing privateendpoint", "difference", diff)
-	}
-
-	return newPrivateEndpoint, nil
 }
 
-func normalizePrivateEndpoint(existingPE, newPrivateEndpoint armnetwork.PrivateEndpoint) armnetwork.PrivateEndpoint {
-	normalizedExistingPE := armnetwork.PrivateEndpoint{
-		Name:     existingPE.Name,
-		Location: existingPE.Location,
-		Properties: &armnetwork.PrivateEndpointProperties{
-			Subnet: &armnetwork.Subnet{
-				ID: existingPE.Properties.Subnet.ID,
-				Properties: &armnetwork.SubnetPropertiesFormat{
-					PrivateEndpointNetworkPolicies:    newPrivateEndpoint.Properties.Subnet.Properties.PrivateEndpointNetworkPolicies,
-					PrivateLinkServiceNetworkPolicies: newPrivateEndpoint.Properties.Subnet.Properties.PrivateLinkServiceNetworkPolicies,
+// Parameters implements azure.ASOResourceSpecGetter.
+func (s *PrivateEndpointSpec) Parameters(ctx context.Context, existingPrivateEndpoint *asonetworkv1.PrivateEndpoint) (*asonetworkv1.PrivateEndpoint, error) {
+	privateEndpoint := &asonetworkv1.PrivateEndpoint{}
+	if existingPrivateEndpoint != nil {
+		privateEndpoint = existingPrivateEndpoint
+	}
+
+	if len(s.ApplicationSecurityGroups) > 0 {
+		applicationSecurityGroups := make([]asonetworkv1.ApplicationSecurityGroupSpec_PrivateEndpoint_SubResourceEmbedded, 0, len(s.ApplicationSecurityGroups))
+		for _, applicationSecurityGroup := range s.ApplicationSecurityGroups {
+			applicationSecurityGroups = append(applicationSecurityGroups, asonetworkv1.ApplicationSecurityGroupSpec_PrivateEndpoint_SubResourceEmbedded{
+				Reference: &genruntime.ResourceReference{
+					ARMID: applicationSecurityGroup,
 				},
-			},
-			ApplicationSecurityGroups:  existingPE.Properties.ApplicationSecurityGroups,
-			IPConfigurations:           existingPE.Properties.IPConfigurations,
-			CustomNetworkInterfaceName: existingPE.Properties.CustomNetworkInterfaceName,
+			})
+		}
+		// Sort the slices in order to get the same order of elements for both new and existing application Security Groups.
+		sort.SliceStable(applicationSecurityGroups, func(i, j int) bool {
+			return applicationSecurityGroups[i].Reference.ARMID < applicationSecurityGroups[j].Reference.ARMID
+		})
+		privateEndpoint.Spec.ApplicationSecurityGroups = applicationSecurityGroups
+	}
+
+	privateEndpoint.Spec.AzureName = s.Name
+	privateEndpoint.Spec.CustomNetworkInterfaceName = ptr.To(s.CustomNetworkInterfaceName)
+	privateEndpoint.Spec.Location = ptr.To(s.Location)
+
+	if len(s.PrivateIPAddresses) > 0 {
+		privateIPAddresses := make([]asonetworkv1.PrivateEndpointIPConfiguration, 0, len(s.PrivateIPAddresses))
+		for _, address := range s.PrivateIPAddresses {
+			ipConfig := asonetworkv1.PrivateEndpointIPConfiguration{PrivateIPAddress: ptr.To(address)}
+			privateIPAddresses = append(privateIPAddresses, ipConfig)
+		}
+		sort.SliceStable(privateIPAddresses, func(i, j int) bool {
+			return *privateIPAddresses[i].PrivateIPAddress < *privateIPAddresses[j].PrivateIPAddress
+		})
+		privateEndpoint.Spec.IpConfigurations = privateIPAddresses
+	}
+
+	if len(s.PrivateLinkServiceConnections) > 0 {
+		privateLinkServiceConnections := make([]asonetworkv1.PrivateLinkServiceConnection, 0, len(s.PrivateLinkServiceConnections))
+		for _, privateLinkServiceConnection := range s.PrivateLinkServiceConnections {
+			linkServiceConnection := asonetworkv1.PrivateLinkServiceConnection{
+				Name: ptr.To(privateLinkServiceConnection.Name),
+				PrivateLinkServiceReference: &genruntime.ResourceReference{
+					ARMID: privateLinkServiceConnection.PrivateLinkServiceID,
+				},
+			}
+
+			if len(privateLinkServiceConnection.GroupIDs) > 0 {
+				linkServiceConnection.GroupIds = privateLinkServiceConnection.GroupIDs
+			}
+
+			if privateLinkServiceConnection.RequestMessage != "" {
+				linkServiceConnection.RequestMessage = ptr.To(privateLinkServiceConnection.RequestMessage)
+			}
+			privateLinkServiceConnections = append(privateLinkServiceConnections, linkServiceConnection)
+		}
+		sort.SliceStable(privateLinkServiceConnections, func(i, j int) bool {
+			return *privateLinkServiceConnections[i].Name < *privateLinkServiceConnections[j].Name
+		})
+
+		if s.ManualApproval {
+			privateEndpoint.Spec.ManualPrivateLinkServiceConnections = privateLinkServiceConnections
+		} else {
+			privateEndpoint.Spec.PrivateLinkServiceConnections = privateLinkServiceConnections
+		}
+	}
+
+	privateEndpoint.Spec.Owner = &genruntime.KnownResourceReference{
+		Name: s.ResourceGroup,
+	}
+
+	privateEndpoint.Spec.Subnet = &asonetworkv1.Subnet_PrivateEndpoint_SubResourceEmbedded{
+		Reference: &genruntime.ResourceReference{
+			ARMID: s.SubnetID,
 		},
-		Tags: existingPE.Tags,
-	}
-	if existingPE.Properties != nil && existingPE.Properties.Subnet != nil && existingPE.Properties.Subnet.Properties != nil {
-		normalizedExistingPE.Properties.Subnet.Properties.PrivateEndpointNetworkPolicies = existingPE.Properties.Subnet.Properties.PrivateEndpointNetworkPolicies
-		normalizedExistingPE.Properties.Subnet.Properties.PrivateLinkServiceNetworkPolicies = existingPE.Properties.Subnet.Properties.PrivateLinkServiceNetworkPolicies
 	}
 
-	existingPrivateLinkServiceConnections := make([]*armnetwork.PrivateLinkServiceConnection, 0, len(existingPE.Properties.PrivateLinkServiceConnections))
-	for _, privateLinkServiceConnection := range existingPE.Properties.PrivateLinkServiceConnections {
-		existingPrivateLinkServiceConnections = append(existingPrivateLinkServiceConnections, &armnetwork.PrivateLinkServiceConnection{
-			Name: privateLinkServiceConnection.Name,
-			Properties: &armnetwork.PrivateLinkServiceConnectionProperties{
-				PrivateLinkServiceID: privateLinkServiceConnection.Properties.PrivateLinkServiceID,
-				RequestMessage:       privateLinkServiceConnection.Properties.RequestMessage,
-				GroupIDs:             privateLinkServiceConnection.Properties.GroupIDs,
-			},
-		})
-	}
-	normalizedExistingPE.Properties.PrivateLinkServiceConnections = existingPrivateLinkServiceConnections
+	privateEndpoint.Spec.Tags = infrav1.Build(infrav1.BuildParams{
+		ClusterName: s.ClusterName,
+		Lifecycle:   infrav1.ResourceLifecycleOwned,
+		Name:        ptr.To(s.Name),
+		Additional:  s.AdditionalTags,
+	})
 
-	existingManualPrivateLinkServiceConnections := make([]*armnetwork.PrivateLinkServiceConnection, 0, len(existingPE.Properties.ManualPrivateLinkServiceConnections))
-	for _, manualPrivateLinkServiceConnection := range existingPE.Properties.ManualPrivateLinkServiceConnections {
-		existingManualPrivateLinkServiceConnections = append(existingManualPrivateLinkServiceConnections, &armnetwork.PrivateLinkServiceConnection{
-			Name: manualPrivateLinkServiceConnection.Name,
-			Properties: &armnetwork.PrivateLinkServiceConnectionProperties{
-				PrivateLinkServiceID: manualPrivateLinkServiceConnection.Properties.PrivateLinkServiceID,
-				RequestMessage:       manualPrivateLinkServiceConnection.Properties.RequestMessage,
-				GroupIDs:             manualPrivateLinkServiceConnection.Properties.GroupIDs,
-			},
-		})
-	}
-	normalizedExistingPE.Properties.ManualPrivateLinkServiceConnections = existingManualPrivateLinkServiceConnections
-
-	return normalizedExistingPE
+	return privateEndpoint, nil
 }
 
-// Sort all slices in order to get the same order of elements for both new and existing private endpoints.
-func sortSlicesPrivateEndpoint(privateEndpoint armnetwork.PrivateEndpoint) armnetwork.PrivateEndpoint {
-	// Sort ManualPrivateLinkServiceConnections
-	if privateEndpoint.Properties.ManualPrivateLinkServiceConnections != nil {
-		sort.SliceStable(privateEndpoint.Properties.ManualPrivateLinkServiceConnections, func(i, j int) bool {
-			return *privateEndpoint.Properties.ManualPrivateLinkServiceConnections[i].Name < *privateEndpoint.Properties.ManualPrivateLinkServiceConnections[j].Name
-		})
-	}
-
-	// Sort PrivateLinkServiceConnections
-	if privateEndpoint.Properties.PrivateLinkServiceConnections != nil {
-		sort.SliceStable(privateEndpoint.Properties.PrivateLinkServiceConnections, func(i, j int) bool {
-			return *privateEndpoint.Properties.PrivateLinkServiceConnections[i].Name < *privateEndpoint.Properties.PrivateLinkServiceConnections[j].Name
-		})
-	}
-
-	// Sort IPConfigurations
-	if privateEndpoint.Properties.IPConfigurations != nil {
-		sort.SliceStable(privateEndpoint.Properties.IPConfigurations, func(i, j int) bool {
-			return *privateEndpoint.Properties.IPConfigurations[i].Properties.PrivateIPAddress < *privateEndpoint.Properties.IPConfigurations[j].Properties.PrivateIPAddress
-		})
-	}
-
-	// Sort ApplicationSecurityGroups
-	if privateEndpoint.Properties.ApplicationSecurityGroups != nil {
-		sort.SliceStable(privateEndpoint.Properties.ApplicationSecurityGroups, func(i, j int) bool {
-			return *privateEndpoint.Properties.ApplicationSecurityGroups[i].Name < *privateEndpoint.Properties.ApplicationSecurityGroups[j].Name
-		})
-	}
-
-	return privateEndpoint
+// WasManaged implements azure.ASOResourceSpecGetter.
+// It always returns true since CAPZ doesn't support BYO private endpoints.
+func (s *PrivateEndpointSpec) WasManaged(privateEndpoint *asonetworkv1.PrivateEndpoint) bool {
+	return true
 }

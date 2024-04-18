@@ -10,6 +10,7 @@ Licensed under the MIT license.
 // All object properties are optional by default, this will be overridden when needed:
 // +kubebuilder:validation:Optional
 // +groupName=dataprotection.azure.com
+// +versionName=v1api20230101
 package v1api20230101
 
 import (

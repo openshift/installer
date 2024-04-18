@@ -5,7 +5,7 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101storage"
+	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &ServersAdministrator{}
 func (administrator *ServersAdministrator) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20211101s.ServersAdministrator)
 	if !ok {
-		return fmt.Errorf("expected sql/v1api20211101storage/ServersAdministrator but received %T instead", hub)
+		return fmt.Errorf("expected sql/v1api20211101/storage/ServersAdministrator but received %T instead", hub)
 	}
 
 	return administrator.AssignProperties_From_ServersAdministrator(source)
@@ -61,7 +61,7 @@ func (administrator *ServersAdministrator) ConvertFrom(hub conversion.Hub) error
 func (administrator *ServersAdministrator) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20211101s.ServersAdministrator)
 	if !ok {
-		return fmt.Errorf("expected sql/v1api20211101storage/ServersAdministrator but received %T instead", hub)
+		return fmt.Errorf("expected sql/v1api20211101/storage/ServersAdministrator but received %T instead", hub)
 	}
 
 	return administrator.AssignProperties_To_ServersAdministrator(destination)
@@ -119,6 +119,15 @@ func (administrator *ServersAdministrator) GetSpec() genruntime.ConvertibleSpec 
 // GetStatus returns the status of this resource
 func (administrator *ServersAdministrator) GetStatus() genruntime.ConvertibleStatus {
 	return &administrator.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (administrator *ServersAdministrator) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Sql/servers/administrators"

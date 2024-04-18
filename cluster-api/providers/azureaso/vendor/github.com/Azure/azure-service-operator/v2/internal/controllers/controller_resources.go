@@ -26,12 +26,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	mysqlv1 "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1"
-	mysqlbeta "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1beta1"
 	postgresqlv1 "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1"
+	azuresqlv1 "github.com/Azure/azure-service-operator/v2/api/sql/v1"
 	"github.com/Azure/azure-service-operator/v2/internal/identity"
 	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/reconcilers"
 	"github.com/Azure/azure-service-operator/v2/internal/reconcilers/arm"
+	azuresqlreconciler "github.com/Azure/azure-service-operator/v2/internal/reconcilers/azuresql"
 	"github.com/Azure/azure-service-operator/v2/internal/reconcilers/generic"
 	mysqlreconciler "github.com/Azure/azure-service-operator/v2/internal/reconcilers/mysql"
 	postgresqlreconciler "github.com/Azure/azure-service-operator/v2/internal/reconcilers/postgresql"
@@ -105,7 +106,7 @@ func GetKnownStorageTypes(
 			Indexes: []registration.Index{
 				{
 					Key:  ".spec.localUser.password",
-					Func: indexPostgreSqlUserPassword,
+					Func: indexPostgreSQLUserPassword,
 				},
 			},
 			Watches: []registration.Watch{
@@ -115,6 +116,33 @@ func GetKnownStorageTypes(
 				},
 			},
 		})
+
+	knownStorageTypes = append(
+		knownStorageTypes,
+		&registration.StorageType{
+			Obj:  &azuresqlv1.User{},
+			Name: "UserController",
+			Reconciler: azuresqlreconciler.NewAzureSQLUserReconciler(
+				kubeClient,
+				resourceResolver,
+				positiveConditions,
+				credentialProvider,
+				options.Config),
+			Predicate: makeStandardPredicate(),
+			Indexes: []registration.Index{
+				{
+					Key:  ".spec.localUser.password",
+					Func: indexAzureSQLUserPassword,
+				},
+			},
+			Watches: []registration.Watch{
+				{
+					Type:             &corev1.Secret{},
+					MakeEventHandler: watchSecretsFactory([]string{".spec.localUser.password"}, &azuresqlv1.UserList{}),
+				},
+			},
+		})
+
 	return knownStorageTypes, nil
 }
 
@@ -217,19 +245,21 @@ func GetKnownTypes() []client.Object {
 
 	knownTypes = append(
 		knownTypes,
-		&mysqlbeta.User{},
 		&mysqlv1.User{})
 	knownTypes = append(
 		knownTypes,
 		&postgresqlv1.User{})
+	knownTypes = append(
+		knownTypes,
+		&azuresqlv1.User{})
 	return knownTypes
 }
 
 func CreateScheme() *runtime.Scheme {
 	scheme := createScheme()
-	_ = mysqlbeta.AddToScheme(scheme)
 	_ = mysqlv1.AddToScheme(scheme)
 	_ = postgresqlv1.AddToScheme(scheme)
+	_ = azuresqlv1.AddToScheme(scheme)
 	scheme.AllKnownTypes()
 	return scheme
 }

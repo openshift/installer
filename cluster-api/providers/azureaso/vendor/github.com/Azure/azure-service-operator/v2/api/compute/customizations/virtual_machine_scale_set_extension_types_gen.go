@@ -5,13 +5,9 @@ package customizations
 
 import (
 	v20201201 "github.com/Azure/azure-service-operator/v2/api/compute/v1api20201201"
-	v20201201s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20201201storage"
+	v20201201s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20201201/storage"
 	v20220301 "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301"
-	v20220301s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301storage"
-	v1beta20201201 "github.com/Azure/azure-service-operator/v2/api/compute/v1beta20201201"
-	v1beta20201201s "github.com/Azure/azure-service-operator/v2/api/compute/v1beta20201201storage"
-	v1beta20220301 "github.com/Azure/azure-service-operator/v2/api/compute/v1beta20220301"
-	v1beta20220301s "github.com/Azure/azure-service-operator/v2/api/compute/v1beta20220301storage"
+	v20220301s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -24,9 +20,5 @@ func (extension *VirtualMachineScaleSetExtension) GetExtendedResources() []genru
 		&v20201201.VirtualMachineScaleSet{},
 		&v20201201s.VirtualMachineScaleSet{},
 		&v20220301.VirtualMachineScaleSet{},
-		&v20220301s.VirtualMachineScaleSet{},
-		&v1beta20201201.VirtualMachineScaleSet{},
-		&v1beta20201201s.VirtualMachineScaleSet{},
-		&v1beta20220301.VirtualMachineScaleSet{},
-		&v1beta20220301s.VirtualMachineScaleSet{}}
+		&v20220301s.VirtualMachineScaleSet{}}
 }

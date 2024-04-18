@@ -5,7 +5,7 @@ package v1api20210601
 
 import (
 	"fmt"
-	v20210601s "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20210601storage"
+	v20210601s "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20210601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -49,22 +49,36 @@ var _ conversion.Convertible = &Profile{}
 
 // ConvertFrom populates our Profile from the provided hub Profile
 func (profile *Profile) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20210601s.Profile)
-	if !ok {
-		return fmt.Errorf("expected cdn/v1api20210601storage/Profile but received %T instead", hub)
+	// intermediate variable for conversion
+	var source v20210601s.Profile
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from hub to source")
 	}
 
-	return profile.AssignProperties_From_Profile(source)
+	err = profile.AssignProperties_From_Profile(&source)
+	if err != nil {
+		return errors.Wrap(err, "converting from source to profile")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub Profile from our Profile
 func (profile *Profile) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20210601s.Profile)
-	if !ok {
-		return fmt.Errorf("expected cdn/v1api20210601storage/Profile but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination v20210601s.Profile
+	err := profile.AssignProperties_To_Profile(&destination)
+	if err != nil {
+		return errors.Wrap(err, "converting to destination from profile")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from destination to hub")
 	}
 
-	return profile.AssignProperties_To_Profile(destination)
+	return nil
 }
 
 // +kubebuilder:webhook:path=/mutate-cdn-azure-com-v1api20210601-profile,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=cdn.azure.com,resources=profiles,verbs=create;update,versions=v1api20210601,name=default.v1api20210601.profiles.cdn.azure.com,admissionReviewVersions=v1
@@ -89,17 +103,6 @@ func (profile *Profile) defaultAzureName() {
 
 // defaultImpl applies the code generated defaults to the Profile resource
 func (profile *Profile) defaultImpl() { profile.defaultAzureName() }
-
-var _ genruntime.ImportableResource = &Profile{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (profile *Profile) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Profile_STATUS); ok {
-		return profile.Spec.Initialize_From_Profile_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type Profile_STATUS but received %T instead", status)
-}
 
 var _ genruntime.KubernetesResource = &Profile{}
 
@@ -126,6 +129,15 @@ func (profile *Profile) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (profile *Profile) GetStatus() genruntime.ConvertibleStatus {
 	return &profile.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (profile *Profile) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Cdn/profiles"
@@ -600,39 +612,6 @@ func (profile *Profile_Spec) AssignProperties_To_Profile_Spec(destination *v2021
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Profile_STATUS populates our Profile_Spec from the provided source Profile_STATUS
-func (profile *Profile_Spec) Initialize_From_Profile_STATUS(source *Profile_STATUS) error {
-
-	// Location
-	profile.Location = genruntime.ClonePointerToString(source.Location)
-
-	// OriginResponseTimeoutSeconds
-	if source.OriginResponseTimeoutSeconds != nil {
-		originResponseTimeoutSecond := *source.OriginResponseTimeoutSeconds
-		profile.OriginResponseTimeoutSeconds = &originResponseTimeoutSecond
-	} else {
-		profile.OriginResponseTimeoutSeconds = nil
-	}
-
-	// Sku
-	if source.Sku != nil {
-		var sku Sku
-		err := sku.Initialize_From_Sku_STATUS(source.Sku)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_Sku_STATUS() to populate field Sku")
-		}
-		profile.Sku = &sku
-	} else {
-		profile.Sku = nil
-	}
-
-	// Tags
-	profile.Tags = genruntime.CloneMapOfStringToString(source.Tags)
 
 	// No error
 	return nil
@@ -1133,21 +1112,6 @@ func (sku *Sku) AssignProperties_To_Sku(destination *v20210601s.Sku) error {
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Sku_STATUS populates our Sku from the provided source Sku_STATUS
-func (sku *Sku) Initialize_From_Sku_STATUS(source *Sku_STATUS) error {
-
-	// Name
-	if source.Name != nil {
-		name := Sku_Name(*source.Name)
-		sku.Name = &name
-	} else {
-		sku.Name = nil
 	}
 
 	// No error

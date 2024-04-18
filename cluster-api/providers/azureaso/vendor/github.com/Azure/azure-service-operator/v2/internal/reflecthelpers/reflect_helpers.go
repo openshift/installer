@@ -120,6 +120,11 @@ func FindSecretReferences(obj interface{}) (set.Set[genruntime.SecretReference],
 	return Find[genruntime.SecretReference](obj)
 }
 
+// FindSecretMaps finds all the genruntime.SecretMapReference's on the provided object
+func FindSecretMaps(obj interface{}) (set.Set[genruntime.SecretMapReference], error) {
+	return Find[genruntime.SecretMapReference](obj)
+}
+
 // FindConfigMapReferences finds all the genruntime.ConfigMapReference's on the provided object
 func FindConfigMapReferences(obj interface{}) (set.Set[genruntime.ConfigMapReference], error) {
 	return Find[genruntime.ConfigMapReference](obj)
@@ -281,4 +286,97 @@ func getItemsField(listPtr client.ObjectList) (reflect.Value, error) {
 	}
 
 	return itemsField, nil
+}
+
+// SetProperty sets the property on the provided object to the provided value.
+// obj is the object to modify.
+// propertyPath is a dot-separated path to the property to set.
+// value is the value to set the property to.
+// Returns an error if any of the properties in the path do not exist, if the property is not settable,
+// or if the value provided is incompatible.
+func SetProperty(obj any, propertyPath string, value any) error {
+	if obj == nil {
+		return errors.Errorf("provided object was nil")
+	}
+
+	if propertyPath == "" {
+		return errors.Errorf("property path was empty")
+	}
+
+	steps := strings.Split(propertyPath, ".")
+	return setPropertyCore(obj, steps, value)
+}
+
+func setPropertyCore(obj any, propertyPath []string, value any) (err error) {
+	// Catch any panic that occurs when setting the field and turn it into an error return
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			err = errors.Errorf("failed to set property %s: %s", propertyPath[0], recovered)
+		}
+	}()
+
+	// Get the underlying object we need to modify
+	subject := reflect.ValueOf(obj)
+
+	// Dereference pointers
+	if subject.Kind() == reflect.Ptr {
+		subject = subject.Elem()
+	}
+
+	// Check we have a struct
+	if subject.Kind() != reflect.Struct {
+		return errors.Errorf("provided object was not a struct, was %s", subject.Kind())
+	}
+
+	// Get the field we need to modify
+	field := subject.FieldByName(propertyPath[0])
+
+	// Check the field exists
+	if field == (reflect.Value{}) {
+		return errors.Errorf("provided object did not have a field named %s", propertyPath[0])
+	}
+
+	// If this is not the last property in the path, we need to recurse
+	if len(propertyPath) > 1 {
+		if field.Kind() == reflect.Ptr {
+			// Field is a pointer; initialize it if needed, then pass the pointer recursively
+			if field.IsNil() {
+				newValue := reflect.New(field.Type().Elem())
+				field.Set(newValue)
+			}
+
+			err = setPropertyCore(field.Interface(), propertyPath[1:], value)
+			if err != nil {
+				return errors.Wrapf(err, "failed to set property %s",
+					propertyPath[0])
+			}
+
+			return nil
+		}
+
+		// Field is not a pointer, so we need to pass the address of the field recursively
+		err = setPropertyCore(field.Addr().Interface(), propertyPath[1:], value)
+		if err != nil {
+			return errors.Wrapf(err, "failed to set property %s",
+				propertyPath[0])
+		}
+
+		return nil
+	}
+
+	// If this is the last property in the path, we need to set the value, if we can
+	if !field.CanSet() {
+		return errors.Errorf("field %s was not settable", propertyPath[0])
+	}
+
+	// Cast value to the type required by the field
+	valueKind := reflect.ValueOf(value)
+	if !valueKind.CanConvert(field.Type()) {
+		return errors.Errorf("value of kind %s was not compatible with field %s", valueKind, propertyPath[0])
+	}
+
+	value = valueKind.Convert(field.Type()).Interface()
+
+	field.Set(reflect.ValueOf(value))
+	return nil
 }

@@ -24,18 +24,25 @@ func GetOriginalGVK(obj ARMMetaObject) schema.GroupVersionKind {
 	aware, ok := obj.(GroupVersionKindAware)
 	if ok {
 		result := *aware.OriginalGVK()
-		result.Version = transformAlphaVersionToStable(result.Version)
+		result.Version = transformDeprecatedVersionToStable(result.Version)
 		return result
 	}
 
 	// The GVK of our current object
 	result := obj.GetObjectKind().GroupVersionKind()
-	result.Version = transformAlphaVersionToStable(result.Version)
+	result.Version = transformDeprecatedVersionToStable(result.Version)
 	return result
 }
 
-// TODO: Delete this function and its usages once we've reached v2.3.0 (or some version sufficiently far from v2.0.0)
-// transformAlphaVersionToStable ensures that we don't attempt to use a resource version that has been removed.
-func transformAlphaVersionToStable(version string) string {
-	return strings.Replace(version, "v1alpha1api", "v1api", 1)
+// TODO: Delete this function and its usages once we've reached a release sufficiently far from 2.4.0 (when beta versions were deprecated)
+// transformDeprecatedVersionToStable ensures that we don't attempt to use a resource version that has been removed.
+func transformDeprecatedVersionToStable(version string) string {
+	result := version
+	result = strings.Replace(result, "v1alpha1api", "v1api", 1)
+	if version == "v1beta1" { // For handcrafted resources
+		result = "v1"
+	}
+	result = strings.Replace(result, "v1beta", "v1api", 1)
+
+	return result
 }

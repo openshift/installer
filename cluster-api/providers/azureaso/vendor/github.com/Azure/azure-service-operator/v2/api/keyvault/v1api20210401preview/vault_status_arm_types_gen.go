@@ -181,8 +181,10 @@ type Sku_STATUS_ARM struct {
 type VaultProperties_CreateMode_STATUS string
 
 const (
-	VaultProperties_CreateMode_STATUS_Default = VaultProperties_CreateMode_STATUS("default")
-	VaultProperties_CreateMode_STATUS_Recover = VaultProperties_CreateMode_STATUS("recover")
+	VaultProperties_CreateMode_STATUS_CreateOrRecover = VaultProperties_CreateMode_STATUS("createOrRecover")
+	VaultProperties_CreateMode_STATUS_Default         = VaultProperties_CreateMode_STATUS("default")
+	VaultProperties_CreateMode_STATUS_PurgeThenCreate = VaultProperties_CreateMode_STATUS("purgeThenCreate")
+	VaultProperties_CreateMode_STATUS_Recover         = VaultProperties_CreateMode_STATUS("recover")
 )
 
 type VaultProperties_ProvisioningState_STATUS string

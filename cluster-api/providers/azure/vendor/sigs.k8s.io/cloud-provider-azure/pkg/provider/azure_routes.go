@@ -54,11 +54,11 @@ type delayedRouteOperation struct {
 	route          network.Route
 	routeTableTags map[string]*string
 	operation      routeOperation
-	result         chan error
+	result         chan batchOperationResult
 }
 
 // wait waits for the operation completion and returns the result.
-func (op *delayedRouteOperation) wait() error {
+func (op *delayedRouteOperation) wait() batchOperationResult {
 	return <-op.result
 }
 
@@ -72,27 +72,26 @@ type delayedRouteUpdater struct {
 	interval time.Duration
 
 	lock           sync.Mutex
-	routesToUpdate []*delayedRouteOperation
+	routesToUpdate []batchOperation
 }
 
 // newDelayedRouteUpdater creates a new delayedRouteUpdater.
-func newDelayedRouteUpdater(az *Cloud, interval time.Duration) *delayedRouteUpdater {
+func newDelayedRouteUpdater(az *Cloud, interval time.Duration) batchProcessor {
 	return &delayedRouteUpdater{
 		az:             az,
 		interval:       interval,
-		routesToUpdate: make([]*delayedRouteOperation, 0),
+		routesToUpdate: make([]batchOperation, 0),
 	}
 }
 
 // run starts the updater reconciling loop.
-func (d *delayedRouteUpdater) run() {
-	err := wait.PollImmediateInfinite(d.interval, func() (bool, error) {
+func (d *delayedRouteUpdater) run(ctx context.Context) {
+	klog.Info("delayedRouteUpdater: started")
+	err := wait.PollUntilContextCancel(ctx, d.interval, true, func(ctx context.Context) (bool, error) {
 		d.updateRoutes()
 		return false, nil
 	})
-	if err != nil { // this should never happen, if it does, panic
-		panic(err)
-	}
+	klog.Info("delayedRouteUpdater: stopped due to %s", err.Error())
 }
 
 // updateRoutes invokes route table client to update all routes.
@@ -109,11 +108,12 @@ func (d *delayedRouteUpdater) updateRoutes() {
 	var err error
 	defer func() {
 		// Notify all the goroutines.
-		for _, rt := range d.routesToUpdate {
-			rt.result <- err
+		for _, op := range d.routesToUpdate {
+			rt := op.(*delayedRouteOperation)
+			rt.result <- newBatchOperationResult("", false, err)
 		}
 		// Clear all the jobs.
-		d.routesToUpdate = make([]*delayedRouteOperation, 0)
+		d.routesToUpdate = make([]batchOperation, 0)
 	}()
 
 	var (
@@ -153,7 +153,8 @@ func (d *delayedRouteUpdater) updateRoutes() {
 		onlyUpdateTags = false
 	}
 
-	for _, rt := range d.routesToUpdate {
+	for _, op := range d.routesToUpdate {
+		rt := op.(*delayedRouteOperation)
 		if rt.operation == routeTableOperationUpdateTags {
 			routeTable.Tags = rt.routeTableTags
 			dirty = true
@@ -238,33 +239,40 @@ func (d *delayedRouteUpdater) cleanupOutdatedRoutes(existingRoutes []network.Rou
 	return existingRoutes, changed
 }
 
-// addRouteOperation adds the routeOperation to delayedRouteUpdater and returns a delayedRouteOperation.
-func (d *delayedRouteUpdater) addRouteOperation(operation routeOperation, route network.Route) (*delayedRouteOperation, error) {
-	d.lock.Lock()
-	defer d.lock.Unlock()
-
-	op := &delayedRouteOperation{
+func getAddRouteOperation(route network.Route) batchOperation {
+	return &delayedRouteOperation{
 		route:     route,
-		operation: operation,
-		result:    make(chan error),
+		operation: routeOperationAdd,
+		result:    make(chan batchOperationResult),
 	}
-	d.routesToUpdate = append(d.routesToUpdate, op)
-	return op, nil
 }
 
-// addUpdateRouteTableTagsOperation adds a update route table tags operation to delayedRouteUpdater and returns a delayedRouteOperation.
-func (d *delayedRouteUpdater) addUpdateRouteTableTagsOperation(operation routeOperation, tags map[string]*string) (*delayedRouteOperation, error) {
+func getDeleteRouteOperation(route network.Route) batchOperation {
+	return &delayedRouteOperation{
+		route:     route,
+		operation: routeOperationDelete,
+		result:    make(chan batchOperationResult),
+	}
+}
+
+func getUpdateRouteTableTagsOperation(tags map[string]*string) batchOperation {
+	return &delayedRouteOperation{
+		routeTableTags: tags,
+		operation:      routeTableOperationUpdateTags,
+		result:         make(chan batchOperationResult),
+	}
+}
+
+// addOperation adds the routeOperation to delayedRouteUpdater and returns a delayedRouteOperation.
+func (d *delayedRouteUpdater) addOperation(operation batchOperation) batchOperation {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 
-	op := &delayedRouteOperation{
-		routeTableTags: tags,
-		operation:      operation,
-		result:         make(chan error),
-	}
-	d.routesToUpdate = append(d.routesToUpdate, op)
-	return op, nil
+	d.routesToUpdate = append(d.routesToUpdate, operation)
+	return operation
 }
+
+func (d *delayedRouteUpdater) removeOperation(name string) {}
 
 // ListRoutes lists all managed routes that belong to the specified clusterName
 func (az *Cloud) ListRoutes(ctx context.Context, clusterName string) ([]*cloudprovider.Route, error) {
@@ -296,14 +304,10 @@ func (az *Cloud) ListRoutes(ctx context.Context, clusterName string) ([]*cloudpr
 	tags, changed := az.ensureRouteTableTagged(&routeTable)
 	if changed {
 		klog.V(2).Infof("ListRoutes: updating tags on route table %s", pointer.StringDeref(routeTable.Name, ""))
-		op, err := az.routeUpdater.addUpdateRouteTableTagsOperation(routeTableOperationUpdateTags, tags)
-		if err != nil {
-			klog.Errorf("ListRoutes: failed to add route table operation with error: %v", err)
-			return nil, err
-		}
+		op := az.routeUpdater.addOperation(getUpdateRouteTableTagsOperation(tags))
 
 		// Wait for operation complete.
-		err = op.wait()
+		err = op.wait().err
 		if err != nil {
 			klog.Errorf("ListRoutes: failed to update route table tags with error: %v", err)
 			return nil, err
@@ -421,14 +425,10 @@ func (az *Cloud) CreateRoute(ctx context.Context, clusterName string, nameHint s
 	}
 
 	klog.V(2).Infof("CreateRoute: creating route for clusterName=%q instance=%q cidr=%q", clusterName, kubeRoute.TargetNode, kubeRoute.DestinationCIDR)
-	op, err := az.routeUpdater.addRouteOperation(routeOperationAdd, route)
-	if err != nil {
-		klog.Errorf("CreateRoute failed for node %q with error: %v", kubeRoute.TargetNode, err)
-		return err
-	}
+	op := az.routeUpdater.addOperation(getAddRouteOperation(route))
 
 	// Wait for operation complete.
-	err = op.wait()
+	err = op.wait().err
 	if err != nil {
 		klog.Errorf("CreateRoute failed for node %q with error: %v", kubeRoute.TargetNode, err)
 		return err
@@ -469,14 +469,10 @@ func (az *Cloud) DeleteRoute(ctx context.Context, clusterName string, kubeRoute 
 		Name:                  pointer.String(routeName),
 		RoutePropertiesFormat: &network.RoutePropertiesFormat{},
 	}
-	op, err := az.routeUpdater.addRouteOperation(routeOperationDelete, route)
-	if err != nil {
-		klog.Errorf("DeleteRoute failed for node %q with error: %v", kubeRoute.TargetNode, err)
-		return err
-	}
+	op := az.routeUpdater.addOperation(getDeleteRouteOperation(route))
 
 	// Wait for operation complete.
-	err = op.wait()
+	err = op.wait().err
 	if err != nil {
 		klog.Errorf("DeleteRoute failed for node %q with error: %v", kubeRoute.TargetNode, err)
 		return err
@@ -490,14 +486,10 @@ func (az *Cloud) DeleteRoute(ctx context.Context, clusterName string, kubeRoute 
 			Name:                  pointer.String(routeNameWithoutIPV6Suffix),
 			RoutePropertiesFormat: &network.RoutePropertiesFormat{},
 		}
-		op, err := az.routeUpdater.addRouteOperation(routeOperationDelete, route)
-		if err != nil {
-			klog.Errorf("DeleteRoute failed for node %q with error: %v", kubeRoute.TargetNode, err)
-			return err
-		}
+		op := az.routeUpdater.addOperation(getDeleteRouteOperation(route))
 
 		// Wait for operation complete.
-		err = op.wait()
+		err = op.wait().err
 		if err != nil {
 			klog.Errorf("DeleteRoute failed for node %q with error: %v", kubeRoute.TargetNode, err)
 			return err
@@ -557,6 +549,10 @@ func cidrtoRfc1035(cidr string) string {
 
 // ensureRouteTableTagged ensures the route table is tagged as configured
 func (az *Cloud) ensureRouteTableTagged(rt *network.RouteTable) (map[string]*string, bool) {
+	if !strings.EqualFold(az.RouteTableResourceGroup, az.ResourceGroup) {
+		return nil, false
+	}
+
 	if az.Tags == "" && (az.TagsMap == nil || len(az.TagsMap) == 0) {
 		return nil, false
 	}

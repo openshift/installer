@@ -17,7 +17,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
@@ -32,6 +31,38 @@ const (
 
 	// PrivateDNSZoneModeNone represents mode None for azuremanagedcontrolplane.
 	PrivateDNSZoneModeNone string = "None"
+)
+
+// UpgradeChannel determines the type of upgrade channel for automatically upgrading the cluster.
+// See also [AKS doc].
+//
+// [AKS doc]: https://learn.microsoft.com/en-us/azure/aks/auto-upgrade-cluster
+type UpgradeChannel string
+
+const (
+	// UpgradeChannelNodeImage automatically upgrades the node image to the latest version available.
+	// Consider using nodeOSUpgradeChannel instead as that allows you to configure node OS patching separate from Kubernetes version patching.
+	UpgradeChannelNodeImage UpgradeChannel = "node-image"
+
+	// UpgradeChannelNone disables auto-upgrades and keeps the cluster at its current version of Kubernetes.
+	UpgradeChannelNone UpgradeChannel = "none"
+
+	// UpgradeChannelPatch automatically upgrades the cluster to the latest supported patch version when it becomes available
+	// while keeping the minor version the same. For example, if a cluster is running version 1.17.7 while versions 1.17.9, 1.18.4,
+	// 1.18.6, and 1.19.1 are available, the cluster will be upgraded to 1.17.9.
+	UpgradeChannelPatch UpgradeChannel = "patch"
+
+	// UpgradeChannelRapid automatically upgrades the cluster to the latest supported patch release on the latest supported minor
+	// version. In cases where the cluster is at a version of Kubernetes that is at an N-2 minor version where N is the latest
+	// supported minor version, the cluster first upgrades to the latest supported patch version on N-1 minor version. For example,
+	// if a cluster is running version 1.17.7 while versions 1.17.9, 1.18.4, 1.18.6, and 1.19.1 are available, the cluster
+	// will first be upgraded to 1.18.6 and then to 1.19.1.
+	UpgradeChannelRapid UpgradeChannel = "rapid"
+
+	// UpgradeChannelStable automatically upgrade the cluster to the latest supported patch release on minor version N-1, where
+	// N is the latest supported minor version. For example, if a cluster is running version 1.17.7 while versions 1.17.9, 1.18.4,
+	// 1.18.6, and 1.19.1 are available, the cluster will be upgraded to 1.18.6.
+	UpgradeChannelStable UpgradeChannel = "stable"
 )
 
 // ManagedControlPlaneOutboundType enumerates the values for the managed control plane OutboundType.
@@ -74,11 +105,39 @@ const (
 	NetworkPluginModeOverlay NetworkPluginMode = "overlay"
 )
 
+// NetworkDataplaneType is the type of network dataplane to use.
+type NetworkDataplaneType string
+
+const (
+	// NetworkDataplaneTypeAzure is the Azure network dataplane type.
+	NetworkDataplaneTypeAzure NetworkDataplaneType = "azure"
+	// NetworkDataplaneTypeCilium is the Cilium network dataplane type.
+	NetworkDataplaneTypeCilium NetworkDataplaneType = "cilium"
+)
+
+const (
+	// LoadBalancerSKUStandard is the Standard load balancer SKU.
+	LoadBalancerSKUStandard = "Standard"
+	// LoadBalancerSKUBasic is the Basic load balancer SKU.
+	LoadBalancerSKUBasic = "Basic"
+)
+
+// KeyVaultNetworkAccessTypes defines the types of network access of key vault.
+// The possible values are Public and Private.
+// The default value is Public.
+type KeyVaultNetworkAccessTypes string
+
+const (
+	// KeyVaultNetworkAccessTypesPrivate means the key vault disables public access and enables private link.
+	KeyVaultNetworkAccessTypesPrivate KeyVaultNetworkAccessTypes = "Private"
+
+	// KeyVaultNetworkAccessTypesPublic means the key vault allows public access from all networks.
+	KeyVaultNetworkAccessTypesPublic KeyVaultNetworkAccessTypes = "Public"
+)
+
 // AzureManagedControlPlaneSpec defines the desired state of AzureManagedControlPlane.
 type AzureManagedControlPlaneSpec struct {
-	// Version defines the desired Kubernetes version.
-	// +kubebuilder:validation:MinLength:=2
-	Version string `json:"version"`
+	AzureManagedControlPlaneClassSpec `json:",inline"`
 
 	// ResourceGroupName is the name of the Azure resource group for this AKS Cluster.
 	// Immutable.
@@ -91,55 +150,10 @@ type AzureManagedControlPlaneSpec struct {
 	// +optional
 	NodeResourceGroupName string `json:"nodeResourceGroupName,omitempty"`
 
-	// VirtualNetwork describes the vnet for the AKS cluster. Will be created if it does not exist.
-	// Immutable except for `subnet`.
-	// +optional
-	VirtualNetwork ManagedControlPlaneVirtualNetwork `json:"virtualNetwork,omitempty"`
-
-	// SubscriptionID is the GUID of the Azure subscription to hold this cluster.
-	// Immutable.
-	// +optional
-	SubscriptionID string `json:"subscriptionID,omitempty"`
-
-	// Location is a string matching one of the canonical Azure region names. Examples: "westus2", "eastus".
-	// Immutable.
-	Location string `json:"location"`
-
 	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
 	// Immutable, populated by the AKS API at create.
 	// +optional
 	ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint,omitempty"`
-
-	// AdditionalTags is an optional set of tags to add to Azure resources managed by the Azure provider, in addition to the
-	// ones added by default.
-	// +optional
-	AdditionalTags Tags `json:"additionalTags,omitempty"`
-
-	// NetworkPlugin used for building Kubernetes network.
-	// Allowed values are "azure", "kubenet".
-	// Immutable.
-	// +kubebuilder:validation:Enum=azure;kubenet
-	// +optional
-	NetworkPlugin *string `json:"networkPlugin,omitempty"`
-
-	// NetworkPluginMode is the mode the network plugin should use.
-	// Allowed value is "overlay".
-	// +kubebuilder:validation:Enum=overlay
-	// +optional
-	NetworkPluginMode *NetworkPluginMode `json:"networkPluginMode,omitempty"`
-
-	// NetworkPolicy used for building Kubernetes network.
-	// Allowed values are "azure", "calico".
-	// Immutable.
-	// +kubebuilder:validation:Enum=azure;calico
-	// +optional
-	NetworkPolicy *string `json:"networkPolicy,omitempty"`
-
-	// Outbound configuration used by Nodes.
-	// Immutable.
-	// +kubebuilder:validation:Enum=loadBalancer;managedNATGateway;userAssignedNATGateway;userDefinedRouting
-	// +optional
-	OutboundType *ManagedControlPlaneOutboundType `json:"outboundType,omitempty"`
 
 	// SSHPublicKey is a string literal containing an ssh public key base64 encoded.
 	// Use empty string to autogenerate new key. Use null value to not set key.
@@ -147,80 +161,111 @@ type AzureManagedControlPlaneSpec struct {
 	// +optional
 	SSHPublicKey *string `json:"sshPublicKey,omitempty"`
 
-	// DNSServiceIP is an IP address assigned to the Kubernetes DNS service.
-	// It must be within the Kubernetes service address range specified in serviceCidr.
-	// Immutable.
-	// +optional
-	DNSServiceIP *string `json:"dnsServiceIP,omitempty"`
-
-	// LoadBalancerSKU is the SKU of the loadBalancer to be provisioned.
-	// Immutable.
-	// +kubebuilder:validation:Enum=Basic;Standard
-	// +optional
-	LoadBalancerSKU *string `json:"loadBalancerSKU,omitempty"`
-
-	// IdentityRef is a reference to a AzureClusterIdentity to be used when reconciling this cluster
-	// +optional
-	IdentityRef *corev1.ObjectReference `json:"identityRef,omitempty"`
-
-	// AadProfile is Azure Active Directory configuration to integrate with AKS for aad authentication.
-	// +optional
-	AADProfile *AADProfile `json:"aadProfile,omitempty"`
-
-	// AddonProfiles are the profiles of managed cluster add-on.
-	// +optional
-	AddonProfiles []AddonProfile `json:"addonProfiles,omitempty"`
-
-	// SKU is the SKU of the AKS to be provisioned.
-	// +optional
-	SKU *AKSSku `json:"sku,omitempty"`
-
-	// LoadBalancerProfile is the profile of the cluster load balancer.
-	// +optional
-	LoadBalancerProfile *LoadBalancerProfile `json:"loadBalancerProfile,omitempty"`
-
-	// APIServerAccessProfile is the access profile for AKS API server.
-	// Immutable except for `authorizedIPRanges`.
-	// +optional
-	APIServerAccessProfile *APIServerAccessProfile `json:"apiServerAccessProfile,omitempty"`
-
-	// AutoscalerProfile is the parameters to be applied to the cluster-autoscaler when enabled
-	// +optional
-	AutoScalerProfile *AutoScalerProfile `json:"autoscalerProfile,omitempty"`
-
-	// AzureEnvironment is the name of the AzureCloud to be used.
-	// The default value that would be used by most users is "AzurePublicCloud", other values are:
-	// - ChinaCloud: "AzureChinaCloud"
-	// - PublicCloud: "AzurePublicCloud"
-	// - USGovernmentCloud: "AzureUSGovernmentCloud"
-	// +optional
-	AzureEnvironment string `json:"azureEnvironment,omitempty"`
-
-	// Identity configuration used by the AKS control plane.
-	// +optional
-	Identity *Identity `json:"identity,omitempty"`
-
-	// KubeletUserAssignedIdentity is the user-assigned identity for kubelet.
-	// For authentication with Azure Container Registry.
-	// +optional
-	KubeletUserAssignedIdentity string `json:"kubeletUserAssignedIdentity,omitempty"`
-
-	// HTTPProxyConfig is the HTTP proxy configuration for the cluster.
-	// Immutable.
-	// +optional
-	HTTPProxyConfig *HTTPProxyConfig `json:"httpProxyConfig,omitempty"`
-
-	// OIDCIssuerProfile is the OIDC issuer profile of the Managed Cluster.
-	// +optional
-	OIDCIssuerProfile *OIDCIssuerProfile `json:"oidcIssuerProfile,omitempty"`
-
 	// DNSPrefix allows the user to customize dns prefix.
 	// Immutable.
 	// +optional
 	DNSPrefix *string `json:"dnsPrefix,omitempty"`
-	// DisableLocalAccounts disables getting static credentials for this cluster when set. Expected to only be used for AAD clusters.
+
+	// FleetsMember is the spec for the fleet this cluster is a member of.
+	// See also [AKS doc].
+	//
+	// [AKS doc]: https://learn.microsoft.com/en-us/azure/templates/microsoft.containerservice/2023-03-15-preview/fleets/members
 	// +optional
-	DisableLocalAccounts *bool `json:"disableLocalAccounts,omitempty"`
+	FleetsMember *FleetsMember `json:"fleetsMember,omitempty"`
+}
+
+// ManagedClusterSecurityProfile defines the security profile for the cluster.
+type ManagedClusterSecurityProfile struct {
+	// AzureKeyVaultKms defines Azure Key Vault Management Services Profile for the security profile.
+	// +optional
+	AzureKeyVaultKms *AzureKeyVaultKms `json:"azureKeyVaultKms,omitempty"`
+
+	// Defender settings for the security profile.
+	// +optional
+	Defender *ManagedClusterSecurityProfileDefender `json:"defender,omitempty"`
+
+	// ImageCleaner settings for the security profile.
+	// +optional
+	ImageCleaner *ManagedClusterSecurityProfileImageCleaner `json:"imageCleaner,omitempty"`
+
+	// Workloadidentity enables Kubernetes applications to access Azure cloud resources securely with Azure AD. Ensure to enable OIDC issuer while enabling Workload Identity
+	// +optional
+	WorkloadIdentity *ManagedClusterSecurityProfileWorkloadIdentity `json:"workloadIdentity,omitempty"`
+}
+
+// ManagedClusterSecurityProfileDefender defines Microsoft Defender settings for the security profile.
+// See also [AKS doc].
+//
+// [AKS doc]: https://learn.microsoft.com/azure/defender-for-cloud/defender-for-containers-enable
+type ManagedClusterSecurityProfileDefender struct {
+	// LogAnalyticsWorkspaceResourceID is the ID of the Log Analytics workspace that has to be associated with Microsoft Defender.
+	// When Microsoft Defender is enabled, this field is required and must be a valid workspace resource ID.
+	// +kubebuilder:validation:Required
+	LogAnalyticsWorkspaceResourceID string `json:"logAnalyticsWorkspaceResourceID"`
+
+	// SecurityMonitoring profile defines the Microsoft Defender threat detection for Cloud settings for the security profile.
+	// +kubebuilder:validation:Required
+	SecurityMonitoring ManagedClusterSecurityProfileDefenderSecurityMonitoring `json:"securityMonitoring"`
+}
+
+// ManagedClusterSecurityProfileDefenderSecurityMonitoring settings for the security profile threat detection.
+type ManagedClusterSecurityProfileDefenderSecurityMonitoring struct {
+	// Enabled enables Defender threat detection
+	// +kubebuilder:validation:Required
+	Enabled bool `json:"enabled"`
+}
+
+// ManagedClusterSecurityProfileImageCleaner removes unused images from nodes, freeing up disk space and helping to reduce attack surface area.
+// See also [AKS doc].
+//
+// [AKS doc]: https://learn.microsoft.com/azure/aks/image-cleaner
+type ManagedClusterSecurityProfileImageCleaner struct {
+	// Enabled enables the Image Cleaner on AKS cluster.
+	// +kubebuilder:validation:Required
+	Enabled bool `json:"enabled"`
+
+	// IntervalHours defines Image Cleaner scanning interval in hours. Default value is 24 hours.
+	// +optional
+	// +kubebuilder:validation:Minimum=24
+	// +kubebuilder:validation:Maximum=2160
+	IntervalHours *int `json:"intervalHours,omitempty"`
+}
+
+// ManagedClusterSecurityProfileWorkloadIdentity settings for the security profile.
+// See also [AKS doc].
+//
+// [AKS doc]: https://learn.microsoft.com/azure/defender-for-cloud/defender-for-containers-enable
+type ManagedClusterSecurityProfileWorkloadIdentity struct {
+	// Enabled enables the workload identity.
+	// +kubebuilder:validation:Required
+	Enabled bool `json:"enabled"`
+}
+
+// AzureKeyVaultKms service settings for the security profile.
+// See also [AKS doc].
+//
+// [AKS doc]: https://learn.microsoft.com/azure/aks/use-kms-etcd-encryption#update-key-vault-mode
+type AzureKeyVaultKms struct {
+	// Enabled enables the Azure Key Vault key management service. The default is false.
+	// +kubebuilder:validation:Required
+	Enabled bool `json:"enabled"`
+
+	// KeyID defines the Identifier of Azure Key Vault key.
+	// When Azure Key Vault key management service is enabled, this field is required and must be a valid key identifier.
+	// +kubebuilder:validation:Required
+	KeyID string `json:"keyID"`
+
+	// KeyVaultNetworkAccess defines the network access of key vault.
+	// The possible values are Public and Private.
+	// Public means the key vault allows public access from all networks.
+	// Private means the key vault disables public access and enables private link. The default value is Public.
+	// +optional
+	// +kubebuilder:default:=Public
+	KeyVaultNetworkAccess *KeyVaultNetworkAccessTypes `json:"keyVaultNetworkAccess,omitempty"`
+
+	// KeyVaultResourceID is the Resource ID of key vault. When keyVaultNetworkAccess is Private, this field is required and must be a valid resource ID.
+	// +optional
+	KeyVaultResourceID *string `json:"keyVaultResourceID,omitempty"`
 }
 
 // HTTPProxyConfig is the HTTP proxy configuration for the cluster.
@@ -297,7 +342,7 @@ type AKSSku struct {
 type LoadBalancerProfile struct {
 	// ManagedOutboundIPs - Desired managed outbound IPs for the cluster load balancer.
 	// +optional
-	ManagedOutboundIPs *int32 `json:"managedOutboundIPs,omitempty"`
+	ManagedOutboundIPs *int `json:"managedOutboundIPs,omitempty"`
 
 	// OutboundIPPrefixes - Desired outbound IP Prefix resources for the cluster load balancer.
 	// +optional
@@ -309,11 +354,11 @@ type LoadBalancerProfile struct {
 
 	// AllocatedOutboundPorts - Desired number of allocated SNAT ports per VM. Allowed values must be in the range of 0 to 64000 (inclusive). The default value is 0 which results in Azure dynamically allocating ports.
 	// +optional
-	AllocatedOutboundPorts *int32 `json:"allocatedOutboundPorts,omitempty"`
+	AllocatedOutboundPorts *int `json:"allocatedOutboundPorts,omitempty"`
 
 	// IdleTimeoutInMinutes - Desired outbound flow idle timeout in minutes. Allowed values must be in the range of 4 to 120 (inclusive). The default value is 30 minutes.
 	// +optional
-	IdleTimeoutInMinutes *int32 `json:"idleTimeoutInMinutes,omitempty"`
+	IdleTimeoutInMinutes *int `json:"idleTimeoutInMinutes,omitempty"`
 }
 
 // APIServerAccessProfile tunes the accessibility of the cluster's control plane.
@@ -324,28 +369,17 @@ type APIServerAccessProfile struct {
 	// AuthorizedIPRanges - Authorized IP Ranges to kubernetes API server.
 	// +optional
 	AuthorizedIPRanges []string `json:"authorizedIPRanges,omitempty"`
-	// EnablePrivateCluster - Whether to create the cluster as a private cluster or not.
-	// +optional
-	EnablePrivateCluster *bool `json:"enablePrivateCluster,omitempty"`
-	// PrivateDNSZone - Private dns zone mode for private cluster.
-	// +kubebuilder:validation:Enum=System;None
-	// +optional
-	PrivateDNSZone *string `json:"privateDNSZone,omitempty"`
-	// EnablePrivateClusterPublicFQDN - Whether to create additional public FQDN for private cluster or not.
-	// +optional
-	EnablePrivateClusterPublicFQDN *bool `json:"enablePrivateClusterPublicFQDN,omitempty"`
+
+	APIServerAccessProfileClassSpec `json:",inline"`
 }
 
 // ManagedControlPlaneVirtualNetwork describes a virtual network required to provision AKS clusters.
 type ManagedControlPlaneVirtualNetwork struct {
-	Name      string `json:"name"`
-	CIDRBlock string `json:"cidrBlock"`
-	// Immutable except for `serviceEndpoints`.
-	// +optional
-	Subnet ManagedControlPlaneSubnet `json:"subnet,omitempty"`
 	// ResourceGroup is the name of the Azure resource group for the VNet and Subnet.
 	// +optional
 	ResourceGroup string `json:"resourceGroup,omitempty"`
+
+	ManagedControlPlaneVirtualNetworkClassSpec `json:",inline"`
 }
 
 // ManagedControlPlaneSubnet describes a subnet for an AKS cluster.
@@ -364,6 +398,11 @@ type ManagedControlPlaneSubnet struct {
 
 // AzureManagedControlPlaneStatus defines the observed state of AzureManagedControlPlane.
 type AzureManagedControlPlaneStatus struct {
+	// AutoUpgradeVersion is the Kubernetes version populated after auto-upgrade based on the upgrade channel.
+	// +kubebuilder:validation:MinLength=2
+	// +optional
+	AutoUpgradeVersion string `json:"autoUpgradeVersion,omitempty"`
+
 	// Ready is true when the provider resource is ready.
 	// +optional
 	Ready bool `json:"ready,omitempty"`
@@ -386,6 +425,10 @@ type AzureManagedControlPlaneStatus struct {
 	// OIDCIssuerProfile is the OIDC issuer profile of the Managed Cluster.
 	// +optional
 	OIDCIssuerProfile *OIDCIssuerProfileStatus `json:"oidcIssuerProfile,omitempty"`
+
+	// Version defines the Kubernetes version for the control plane instance.
+	// +optional
+	Version string `json:"version"`
 }
 
 // OIDCIssuerProfileStatus is the OIDC issuer profile of the Managed Cluster.
@@ -539,7 +582,60 @@ type OIDCIssuerProfile struct {
 	Enabled *bool `json:"enabled,omitempty"`
 }
 
+// AKSExtension represents the configuration for an AKS cluster extension.
+// See also [AKS doc].
+//
+// [AKS doc]: https://learn.microsoft.com/en-us/azure/aks/cluster-extensions
+type AKSExtension struct {
+	// Name is the name of the extension.
+	Name string `json:"name"`
+
+	// AKSAssignedIdentityType is the type of the AKS assigned identity.
+	// +optional
+	AKSAssignedIdentityType AKSAssignedIdentity `json:"aksAssignedIdentityType,omitempty"`
+
+	// AutoUpgradeMinorVersion is a flag to note if this extension participates in auto upgrade of minor version, or not.
+	// +kubebuilder:default=true
+	// +optional
+	AutoUpgradeMinorVersion *bool `json:"autoUpgradeMinorVersion,omitempty"`
+
+	// ConfigurationSettings are the name-value pairs for configuring this extension.
+	// +optional
+	ConfigurationSettings map[string]string `json:"configurationSettings,omitempty"`
+
+	// ExtensionType is the type of the Extension of which this resource is an instance.
+	// It must be one of the Extension Types registered with Microsoft.KubernetesConfiguration by the Extension publisher.
+	ExtensionType *string `json:"extensionType"`
+
+	// Plan is the plan of the extension.
+	// +optional
+	Plan *ExtensionPlan `json:"plan,omitempty"`
+
+	// ReleaseTrain is the release train this extension participates in for auto-upgrade (e.g. Stable, Preview, etc.)
+	// This is only used if autoUpgradeMinorVersion is ‘true’.
+	// +optional
+	ReleaseTrain *string `json:"releaseTrain,omitempty"`
+
+	// Scope is the scope at which this extension is enabled.
+	// +optional
+	Scope *ExtensionScope `json:"scope,omitempty"`
+
+	// Version is the version of the extension.
+	// +optional
+	Version *string `json:"version,omitempty"`
+
+	// Identity is the identity type of the Extension resource in an AKS cluster.
+	// +optional
+	Identity ExtensionIdentity `json:"identity,omitempty"`
+}
+
 // +kubebuilder:object:root=true
+// +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".metadata.labels.cluster\\.x-k8s\\.io/cluster-name",description="Cluster to which this AzureManagedControlPlane belongs"
+// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
+// +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
+// +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
+// +kubebuilder:printcolumn:name="Message",type="string",priority=1,JSONPath=".status.conditions[?(@.type=='Ready')].message"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of this AzureManagedControlPlane"
 // +kubebuilder:resource:path=azuremanagedcontrolplanes,scope=Namespaced,categories=cluster-api,shortName=amcp
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status

@@ -5,7 +5,7 @@ package v1api20210701
 
 import (
 	"fmt"
-	v20210701s "github.com/Azure/azure-service-operator/v2/api/machinelearningservices/v1api20210701storage"
+	v20210701s "github.com/Azure/azure-service-operator/v2/api/machinelearningservices/v1api20210701/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &WorkspacesConnection{}
 func (connection *WorkspacesConnection) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20210701s.WorkspacesConnection)
 	if !ok {
-		return fmt.Errorf("expected machinelearningservices/v1api20210701storage/WorkspacesConnection but received %T instead", hub)
+		return fmt.Errorf("expected machinelearningservices/v1api20210701/storage/WorkspacesConnection but received %T instead", hub)
 	}
 
 	return connection.AssignProperties_From_WorkspacesConnection(source)
@@ -61,7 +61,7 @@ func (connection *WorkspacesConnection) ConvertFrom(hub conversion.Hub) error {
 func (connection *WorkspacesConnection) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20210701s.WorkspacesConnection)
 	if !ok {
-		return fmt.Errorf("expected machinelearningservices/v1api20210701storage/WorkspacesConnection but received %T instead", hub)
+		return fmt.Errorf("expected machinelearningservices/v1api20210701/storage/WorkspacesConnection but received %T instead", hub)
 	}
 
 	return connection.AssignProperties_To_WorkspacesConnection(destination)
@@ -126,6 +126,15 @@ func (connection *WorkspacesConnection) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (connection *WorkspacesConnection) GetStatus() genruntime.ConvertibleStatus {
 	return &connection.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (connection *WorkspacesConnection) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.MachineLearningServices/workspaces/connections"

@@ -33,7 +33,7 @@ type ServiceTagsClient struct {
 //   - credential - used to authorize requests. Usually a credential from azidentity.
 //   - options - pass nil to accept the default values.
 func NewServiceTagsClient(subscriptionID string, credential azcore.TokenCredential, options *arm.ClientOptions) (*ServiceTagsClient, error) {
-	cl, err := arm.NewClient(moduleName+".ServiceTagsClient", moduleVersion, credential, options)
+	cl, err := arm.NewClient(moduleName, moduleVersion, credential, options)
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +54,10 @@ func NewServiceTagsClient(subscriptionID string, credential azcore.TokenCredenti
 //   - options - ServiceTagsClientListOptions contains the optional parameters for the ServiceTagsClient.List method.
 func (client *ServiceTagsClient) List(ctx context.Context, location string, options *ServiceTagsClientListOptions) (ServiceTagsClientListResponse, error) {
 	var err error
+	const operationName = "ServiceTagsClient.List"
+	ctx = context.WithValue(ctx, runtime.CtxAPINameKey{}, operationName)
+	ctx, endSpan := runtime.StartSpan(ctx, operationName, client.internal.Tracer(), nil)
+	defer func() { endSpan(err) }()
 	req, err := client.listCreateRequest(ctx, location, options)
 	if err != nil {
 		return ServiceTagsClientListResponse{}, err

@@ -5,7 +5,7 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101storage"
+	v20211101s "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &NamespacesTopicsSubscription{}
 func (subscription *NamespacesTopicsSubscription) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20211101s.NamespacesTopicsSubscription)
 	if !ok {
-		return fmt.Errorf("expected servicebus/v1api20211101storage/NamespacesTopicsSubscription but received %T instead", hub)
+		return fmt.Errorf("expected servicebus/v1api20211101/storage/NamespacesTopicsSubscription but received %T instead", hub)
 	}
 
 	return subscription.AssignProperties_From_NamespacesTopicsSubscription(source)
@@ -61,7 +61,7 @@ func (subscription *NamespacesTopicsSubscription) ConvertFrom(hub conversion.Hub
 func (subscription *NamespacesTopicsSubscription) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20211101s.NamespacesTopicsSubscription)
 	if !ok {
-		return fmt.Errorf("expected servicebus/v1api20211101storage/NamespacesTopicsSubscription but received %T instead", hub)
+		return fmt.Errorf("expected servicebus/v1api20211101/storage/NamespacesTopicsSubscription but received %T instead", hub)
 	}
 
 	return subscription.AssignProperties_To_NamespacesTopicsSubscription(destination)
@@ -126,6 +126,15 @@ func (subscription *NamespacesTopicsSubscription) GetSpec() genruntime.Convertib
 // GetStatus returns the status of this resource
 func (subscription *NamespacesTopicsSubscription) GetStatus() genruntime.ConvertibleStatus {
 	return &subscription.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (subscription *NamespacesTopicsSubscription) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.ServiceBus/namespaces/topics/subscriptions"

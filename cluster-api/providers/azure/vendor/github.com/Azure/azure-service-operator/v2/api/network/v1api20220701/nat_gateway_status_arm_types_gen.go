@@ -60,12 +60,6 @@ type NatGatewaySku_STATUS_ARM struct {
 	Name *NatGatewaySku_Name_STATUS `json:"name,omitempty"`
 }
 
-// Reference to another subresource.
-type ApplicationGatewaySubResource_STATUS_ARM struct {
-	// Id: Resource ID.
-	Id *string `json:"id,omitempty"`
-}
-
 type NatGatewaySku_Name_STATUS string
 
 const NatGatewaySku_Name_STATUS_Standard = NatGatewaySku_Name_STATUS("Standard")

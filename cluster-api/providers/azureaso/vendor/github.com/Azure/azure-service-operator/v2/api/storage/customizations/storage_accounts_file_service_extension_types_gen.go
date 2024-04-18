@@ -5,7 +5,9 @@ package customizations
 
 import (
 	v20220901 "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901"
-	v20220901s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901storage"
+	v20220901s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901/storage"
+	v20230101 "github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101"
+	v20230101s "github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +18,7 @@ type StorageAccountsFileServiceExtension struct {
 func (extension *StorageAccountsFileServiceExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20220901.StorageAccountsFileService{},
-		&v20220901s.StorageAccountsFileService{}}
+		&v20220901s.StorageAccountsFileService{},
+		&v20230101.StorageAccountsFileService{},
+		&v20230101s.StorageAccountsFileService{}}
 }

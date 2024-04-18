@@ -5,7 +5,7 @@ package v1api20210515
 
 import (
 	"fmt"
-	v20210515s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20210515storage"
+	v20210515s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20210515/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &DatabaseAccount{}
 func (account *DatabaseAccount) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20210515s.DatabaseAccount)
 	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20210515storage/DatabaseAccount but received %T instead", hub)
+		return fmt.Errorf("expected documentdb/v1api20210515/storage/DatabaseAccount but received %T instead", hub)
 	}
 
 	return account.AssignProperties_From_DatabaseAccount(source)
@@ -61,7 +61,7 @@ func (account *DatabaseAccount) ConvertFrom(hub conversion.Hub) error {
 func (account *DatabaseAccount) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20210515s.DatabaseAccount)
 	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20210515storage/DatabaseAccount but received %T instead", hub)
+		return fmt.Errorf("expected documentdb/v1api20210515/storage/DatabaseAccount but received %T instead", hub)
 	}
 
 	return account.AssignProperties_To_DatabaseAccount(destination)
@@ -126,6 +126,15 @@ func (account *DatabaseAccount) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (account *DatabaseAccount) GetStatus() genruntime.ConvertibleStatus {
 	return &account.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (account *DatabaseAccount) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DocumentDB/databaseAccounts"

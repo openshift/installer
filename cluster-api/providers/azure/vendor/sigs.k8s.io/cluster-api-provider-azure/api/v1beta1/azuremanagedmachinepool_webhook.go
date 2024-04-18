@@ -19,25 +19,22 @@ package v1beta1
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v4"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/cluster-api-provider-azure/feature"
 	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
-	"sigs.k8s.io/cluster-api-provider-azure/util/maps"
 	webhookutils "sigs.k8s.io/cluster-api-provider-azure/util/webhook"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterctlv1alpha3 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	capifeature "sigs.k8s.io/cluster-api/feature"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -82,10 +79,6 @@ func (mw *azureManagedMachinePoolWebhook) Default(ctx context.Context, obj runti
 		m.Spec.OSType = ptr.To(DefaultOSType)
 	}
 
-	if ptr.Deref(m.Spec.ScaleSetPriority, "") == string(armcontainerservice.ScaleSetPrioritySpot) && m.Spec.SpotMaxPrice == nil {
-		m.Spec.SpotMaxPrice = ptr.To(resource.MustParse("-1"))
-	}
-
 	return nil
 }
 
@@ -105,24 +98,49 @@ func (mw *azureManagedMachinePoolWebhook) ValidateCreate(ctx context.Context, ob
 			"can be set only if the Cluster API 'MachinePool' feature flag is enabled",
 		)
 	}
-	validators := []func() error{
-		m.validateMaxPods,
-		m.validateOSType,
-		m.validateName,
-		m.validateNodeLabels,
-		m.validateNodePublicIPPrefixID,
-		m.validateEnableNodePublicIP,
-		m.validateKubeletConfig,
-		m.validateLinuxOSConfig,
-		m.validateSubnetName,
-	}
 
 	var errs []error
-	for _, validator := range validators {
-		if err := validator(); err != nil {
-			errs = append(errs, err)
-		}
-	}
+
+	errs = append(errs, validateMaxPods(
+		m.Spec.MaxPods,
+		field.NewPath("Spec", "MaxPods")))
+
+	errs = append(errs, validateOSType(
+		m.Spec.Mode,
+		m.Spec.OSType,
+		field.NewPath("Spec", "OSType")))
+
+	errs = append(errs, validateMPName(
+		m.Name,
+		m.Spec.Name,
+		m.Spec.OSType,
+		field.NewPath("Spec", "Name")))
+
+	errs = append(errs, validateNodeLabels(
+		m.Spec.NodeLabels,
+		field.NewPath("Spec", "NodeLabels")))
+
+	errs = append(errs, validateNodePublicIPPrefixID(
+		m.Spec.NodePublicIPPrefixID,
+		field.NewPath("Spec", "NodePublicIPPrefixID")))
+
+	errs = append(errs, validateEnableNodePublicIP(
+		m.Spec.EnableNodePublicIP,
+		m.Spec.NodePublicIPPrefixID,
+		field.NewPath("Spec", "EnableNodePublicIP")))
+
+	errs = append(errs, validateKubeletConfig(
+		m.Spec.KubeletConfig,
+		field.NewPath("Spec", "KubeletConfig")))
+
+	errs = append(errs, validateLinuxOSConfig(
+		m.Spec.LinuxOSConfig,
+		m.Spec.KubeletConfig,
+		field.NewPath("Spec", "LinuxOSConfig")))
+
+	errs = append(errs, validateMPSubnetName(
+		m.Spec.SubnetName,
+		field.NewPath("Spec", "SubnetName")))
 
 	return nil, kerrors.NewAggregate(errs)
 }
@@ -146,7 +164,7 @@ func (mw *azureManagedMachinePoolWebhook) ValidateUpdate(ctx context.Context, ol
 		allErrs = append(allErrs, err)
 	}
 
-	if err := m.validateNodeLabels(); err != nil {
+	if err := validateNodeLabels(m.Spec.NodeLabels, field.NewPath("Spec", "NodeLabels")); err != nil {
 		allErrs = append(allErrs,
 			field.Invalid(
 				field.NewPath("Spec", "NodeLabels"),
@@ -189,15 +207,11 @@ func (mw *azureManagedMachinePoolWebhook) ValidateUpdate(ctx context.Context, ol
 		allErrs = append(allErrs, err)
 	}
 
-	// custom headers are immutable
-	oldCustomHeaders := maps.FilterByKeyPrefix(old.ObjectMeta.Annotations, CustomHeaderPrefix)
-	newCustomHeaders := maps.FilterByKeyPrefix(m.ObjectMeta.Annotations, CustomHeaderPrefix)
-	if !reflect.DeepEqual(oldCustomHeaders, newCustomHeaders) {
-		allErrs = append(allErrs,
-			field.Invalid(
-				field.NewPath("metadata", "annotations"),
-				m.ObjectMeta.Annotations,
-				fmt.Sprintf("annotations with '%s' prefix are immutable", CustomHeaderPrefix)))
+	if err := webhookutils.ValidateImmutable(
+		field.NewPath("Spec", "EnableEncryptionAtHost"),
+		old.Spec.EnableEncryptionAtHost,
+		m.Spec.EnableEncryptionAtHost); err != nil && old.Spec.EnableEncryptionAtHost != nil {
+		allErrs = append(allErrs, err)
 	}
 
 	if !webhookutils.EnsureStringSlicesAreEquivalent(m.Spec.AvailabilityZones, old.Spec.AvailabilityZones) {
@@ -210,7 +224,7 @@ func (mw *azureManagedMachinePoolWebhook) ValidateUpdate(ctx context.Context, ol
 
 	if m.Spec.Mode != string(NodePoolModeSystem) && old.Spec.Mode == string(NodePoolModeSystem) {
 		// validate for last system node pool
-		if err := m.validateLastSystemNodePool(mw.Client); err != nil {
+		if err := validateLastSystemNodePool(mw.Client, m.Labels, m.Namespace, m.Annotations); err != nil {
 			allErrs = append(allErrs, field.Forbidden(
 				field.NewPath("Spec", "Mode"),
 				"Cannot change node pool mode to User, you must have at least one System node pool in your cluster"))
@@ -279,7 +293,7 @@ func (mw *azureManagedMachinePoolWebhook) ValidateUpdate(ctx context.Context, ol
 	}
 
 	if len(allErrs) != 0 {
-		return nil, apierrors.NewInvalid(GroupVersion.WithKind("AzureManagedMachinePool").GroupKind(), m.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(AzureManagedMachinePoolKind).GroupKind(), m.Name, allErrs)
 	}
 
 	return nil, nil
@@ -295,23 +309,23 @@ func (mw *azureManagedMachinePoolWebhook) ValidateDelete(ctx context.Context, ob
 		return nil, nil
 	}
 
-	return nil, errors.Wrapf(m.validateLastSystemNodePool(mw.Client), "if the delete is triggered via owner MachinePool please refer to trouble shooting section in https://capz.sigs.k8s.io/topics/managedcluster.html")
+	return nil, errors.Wrapf(validateLastSystemNodePool(mw.Client, m.Labels, m.Namespace, m.Annotations), "if the delete is triggered via owner MachinePool please refer to trouble shooting section in https://capz.sigs.k8s.io/topics/managedcluster.html")
 }
 
 // validateLastSystemNodePool is used to check if the existing system node pool is the last system node pool.
 // If it is a last system node pool it cannot be deleted or mutated to user node pool as AKS expects min 1 system node pool.
-func (m *AzureManagedMachinePool) validateLastSystemNodePool(cli client.Client) error {
+func validateLastSystemNodePool(cli client.Client, labels map[string]string, namespace string, annotations map[string]string) error {
 	ctx := context.Background()
 
 	// Fetch the Cluster.
-	clusterName, ok := m.Labels[clusterv1.ClusterNameLabel]
+	clusterName, ok := labels[clusterv1.ClusterNameLabel]
 	if !ok {
 		return nil
 	}
 
 	ownerCluster := &clusterv1.Cluster{}
 	key := client.ObjectKey{
-		Namespace: m.Namespace,
+		Namespace: namespace,
 		Name:      clusterName,
 	}
 
@@ -323,11 +337,12 @@ func (m *AzureManagedMachinePool) validateLastSystemNodePool(cli client.Client) 
 		return nil
 	}
 
-	if ownerCluster.Spec.Paused {
+	// checking if this AzureManagedMachinePool is going to be deleted for clusterctl move operation
+	if _, ok := annotations[clusterctlv1alpha3.DeleteForMoveAnnotation]; ok {
 		return nil
 	}
 
-	opt1 := client.InNamespace(m.Namespace)
+	opt1 := client.InNamespace(namespace)
 	opt2 := client.MatchingLabels(map[string]string{
 		clusterv1.ClusterNameLabel: clusterName,
 		LabelAgentPoolMode:         string(NodePoolModeSystem),
@@ -344,12 +359,12 @@ func (m *AzureManagedMachinePool) validateLastSystemNodePool(cli client.Client) 
 	return nil
 }
 
-func (m *AzureManagedMachinePool) validateMaxPods() error {
-	if m.Spec.MaxPods != nil {
-		if ptr.Deref[int32](m.Spec.MaxPods, 0) < 10 || ptr.Deref[int32](m.Spec.MaxPods, 0) > 250 {
+func validateMaxPods(maxPods *int, fldPath *field.Path) error {
+	if maxPods != nil {
+		if ptr.Deref(maxPods, 0) < 10 || ptr.Deref(maxPods, 0) > 250 {
 			return field.Invalid(
-				field.NewPath("Spec", "MaxPods"),
-				m.Spec.MaxPods,
+				fldPath,
+				maxPods,
 				"MaxPods must be between 10 and 250")
 		}
 	}
@@ -357,11 +372,11 @@ func (m *AzureManagedMachinePool) validateMaxPods() error {
 	return nil
 }
 
-func (m *AzureManagedMachinePool) validateOSType() error {
-	if m.Spec.Mode == string(NodePoolModeSystem) {
-		if m.Spec.OSType != nil && *m.Spec.OSType != LinuxOS {
+func validateOSType(mode string, osType *string, fldPath *field.Path) error {
+	if mode == string(NodePoolModeSystem) {
+		if osType != nil && *osType != LinuxOS {
 			return field.Forbidden(
-				field.NewPath("Spec", "OSType"),
+				fldPath,
 				"System node pooll must have OSType 'Linux'")
 		}
 	}
@@ -369,48 +384,48 @@ func (m *AzureManagedMachinePool) validateOSType() error {
 	return nil
 }
 
-func (m *AzureManagedMachinePool) validateName() error {
+func validateMPName(mpName string, specName *string, osType *string, fldPath *field.Path) error {
 	var name *string
 	var fieldNameMessage string
-	if m.Spec.Name == nil || *m.Spec.Name == "" {
-		name = &m.Name
+	if specName == nil || *specName == "" {
+		name = &mpName
 		fieldNameMessage = "when spec.name is empty, metadata.name"
 	} else {
-		name = m.Spec.Name
+		name = specName
 		fieldNameMessage = "spec.name"
 	}
 
-	if err := validateNameLength(m.Spec.OSType, name, fieldNameMessage); err != nil {
+	if err := validateNameLength(osType, name, fieldNameMessage, fldPath); err != nil {
 		return err
 	}
-	return validateNamePattern(name, fieldNameMessage)
+	return validateNamePattern(name, fieldNameMessage, fldPath)
 }
 
-func validateNameLength(osType *string, name *string, fieldNameMessage string) error {
+func validateNameLength(osType *string, name *string, fieldNameMessage string, fldPath *field.Path) error {
 	if osType != nil && *osType == WindowsOS &&
 		name != nil && len(*name) > 6 {
 		return field.Invalid(
-			field.NewPath("Spec", "Name"),
+			fldPath,
 			name,
 			fmt.Sprintf("For OSType Windows, %s can not be longer than 6 characters.", fieldNameMessage))
 	} else if (osType == nil || *osType == LinuxOS) &&
 		(name != nil && len(*name) > 12) {
 		return field.Invalid(
-			field.NewPath("Spec", "Name"),
+			fldPath,
 			osType,
 			fmt.Sprintf("For OSType Linux, %s can not be longer than 12 characters.", fieldNameMessage))
 	}
 	return nil
 }
 
-func validateNamePattern(name *string, fieldNameMessage string) error {
+func validateNamePattern(name *string, fieldNameMessage string, fldPath *field.Path) error {
 	if name == nil || *name == "" {
 		return nil
 	}
 
 	if !unicode.IsLower(rune((*name)[0])) {
 		return field.Invalid(
-			field.NewPath("Spec", "Name"),
+			fldPath,
 			name,
 			fmt.Sprintf("%s must begin with a lowercase letter.", fieldNameMessage))
 	}
@@ -418,7 +433,7 @@ func validateNamePattern(name *string, fieldNameMessage string) error {
 	for _, char := range *name {
 		if !(unicode.IsLower(char) || unicode.IsNumber(char)) {
 			return field.Invalid(
-				field.NewPath("Spec", "Name"),
+				fldPath,
 				name,
 				fmt.Sprintf("%s may only contain lowercase alphanumeric characters.", fieldNameMessage))
 		}
@@ -426,11 +441,11 @@ func validateNamePattern(name *string, fieldNameMessage string) error {
 	return nil
 }
 
-func (m *AzureManagedMachinePool) validateNodeLabels() error {
-	for key := range m.Spec.NodeLabels {
+func validateNodeLabels(nodeLabels map[string]string, fldPath *field.Path) error {
+	for key := range nodeLabels {
 		if azureutil.IsAzureSystemNodeLabelKey(key) {
 			return field.Invalid(
-				field.NewPath("Spec", "NodeLabels"),
+				fldPath,
 				key,
 				fmt.Sprintf("Node pool label key must not start with %s", azureutil.AzureSystemNodeLabelPrefix))
 		}
@@ -439,33 +454,33 @@ func (m *AzureManagedMachinePool) validateNodeLabels() error {
 	return nil
 }
 
-func (m *AzureManagedMachinePool) validateNodePublicIPPrefixID() error {
-	if m.Spec.NodePublicIPPrefixID != nil && !validNodePublicPrefixID.MatchString(*m.Spec.NodePublicIPPrefixID) {
+func validateNodePublicIPPrefixID(nodePublicIPPrefixID *string, fldPath *field.Path) error {
+	if nodePublicIPPrefixID != nil && !validNodePublicPrefixID.MatchString(*nodePublicIPPrefixID) {
 		return field.Invalid(
-			field.NewPath("Spec", "NodePublicIPPrefixID"),
-			m.Spec.NodePublicIPPrefixID,
+			fldPath,
+			nodePublicIPPrefixID,
 			fmt.Sprintf("resource ID must match %q", validNodePublicPrefixID.String()))
 	}
 	return nil
 }
 
-func (m *AzureManagedMachinePool) validateEnableNodePublicIP() error {
-	if (m.Spec.EnableNodePublicIP == nil || !*m.Spec.EnableNodePublicIP) &&
-		m.Spec.NodePublicIPPrefixID != nil {
+func validateEnableNodePublicIP(enableNodePublicIP *bool, nodePublicIPPrefixID *string, fldPath *field.Path) error {
+	if (enableNodePublicIP == nil || !*enableNodePublicIP) &&
+		nodePublicIPPrefixID != nil {
 		return field.Invalid(
-			field.NewPath("Spec", "EnableNodePublicIP"),
-			m.Spec.EnableNodePublicIP,
+			fldPath,
+			enableNodePublicIP,
 			"must be set to true when NodePublicIPPrefixID is set")
 	}
 	return nil
 }
 
-func (m *AzureManagedMachinePool) validateSubnetName() error {
-	if m.Spec.SubnetName != nil {
-		subnetRegex := "^[a-zA-Z0-9][a-zA-Z0-9-]{0,78}[a-zA-Z0-9]$"
+func validateMPSubnetName(subnetName *string, fldPath *field.Path) error {
+	if subnetName != nil {
+		subnetRegex := "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,78}[a-zA-Z0-9]$"
 		regex := regexp.MustCompile(subnetRegex)
-		if success := regex.MatchString(ptr.Deref(m.Spec.SubnetName, "")); !success {
-			return field.Invalid(field.NewPath("Spec", "SubnetName"), m.Spec.SubnetName,
+		if success := regex.MatchString(ptr.Deref(subnetName, "")); !success {
+			return field.Invalid(fldPath, subnetName,
 				fmt.Sprintf("name of subnet doesn't match regex %s", subnetRegex))
 		}
 	}
@@ -474,7 +489,7 @@ func (m *AzureManagedMachinePool) validateSubnetName() error {
 
 // validateKubeletConfig enforces the AKS API configuration for KubeletConfig.
 // See:  https://learn.microsoft.com/en-us/azure/aks/custom-node-configuration.
-func (m *AzureManagedMachinePool) validateKubeletConfig() error {
+func validateKubeletConfig(kubeletConfig *KubeletConfig, fldPath *field.Path) error {
 	var allowedUnsafeSysctlsPatterns = []string{
 		`^kernel\.shm.+$`,
 		`^kernel\.msg.+$`,
@@ -482,25 +497,25 @@ func (m *AzureManagedMachinePool) validateKubeletConfig() error {
 		`^fs\.mqueue\..+$`,
 		`^net\..+$`,
 	}
-	if m.Spec.KubeletConfig != nil {
-		if m.Spec.KubeletConfig.CPUCfsQuotaPeriod != nil {
-			if !strings.HasSuffix(ptr.Deref(m.Spec.KubeletConfig.CPUCfsQuotaPeriod, ""), "ms") {
+	if kubeletConfig != nil {
+		if kubeletConfig.CPUCfsQuotaPeriod != nil {
+			if !strings.HasSuffix(ptr.Deref(kubeletConfig.CPUCfsQuotaPeriod, ""), "ms") {
 				return field.Invalid(
-					field.NewPath("Spec", "KubeletConfig", "CPUCfsQuotaPeriod"),
-					m.Spec.KubeletConfig.CPUCfsQuotaPeriod,
+					fldPath.Child("CPUfsQuotaPeriod"),
+					kubeletConfig.CPUCfsQuotaPeriod,
 					"must be a string value in milliseconds with a 'ms' suffix, e.g., '100ms'")
 			}
 		}
-		if m.Spec.KubeletConfig.ImageGcHighThreshold != nil && m.Spec.KubeletConfig.ImageGcLowThreshold != nil {
-			if ptr.Deref[int32](m.Spec.KubeletConfig.ImageGcLowThreshold, 0) > ptr.Deref[int32](m.Spec.KubeletConfig.ImageGcHighThreshold, 0) {
+		if kubeletConfig.ImageGcHighThreshold != nil && kubeletConfig.ImageGcLowThreshold != nil {
+			if ptr.Deref(kubeletConfig.ImageGcLowThreshold, 0) > ptr.Deref(kubeletConfig.ImageGcHighThreshold, 0) {
 				return field.Invalid(
-					field.NewPath("Spec", "KubeletConfig", "ImageGcLowThreshold"),
-					m.Spec.KubeletConfig.ImageGcLowThreshold,
+					fldPath.Child("ImageGcLowThreshold"),
+					kubeletConfig.ImageGcLowThreshold,
 					fmt.Sprintf("must not be greater than ImageGcHighThreshold, ImageGcLowThreshold=%d, ImageGcHighThreshold=%d",
-						ptr.Deref[int32](m.Spec.KubeletConfig.ImageGcLowThreshold, 0), ptr.Deref[int32](m.Spec.KubeletConfig.ImageGcHighThreshold, 0)))
+						ptr.Deref(kubeletConfig.ImageGcLowThreshold, 0), ptr.Deref(kubeletConfig.ImageGcHighThreshold, 0)))
 			}
 		}
-		for _, val := range m.Spec.KubeletConfig.AllowedUnsafeSysctls {
+		for _, val := range kubeletConfig.AllowedUnsafeSysctls {
 			var hasMatch bool
 			for _, p := range allowedUnsafeSysctlsPatterns {
 				if m, _ := regexp.MatchString(p, val); m {
@@ -510,8 +525,8 @@ func (m *AzureManagedMachinePool) validateKubeletConfig() error {
 			}
 			if !hasMatch {
 				return field.Invalid(
-					field.NewPath("Spec", "KubeletConfig", "AllowedUnsafeSysctls"),
-					m.Spec.KubeletConfig.AllowedUnsafeSysctls,
+					fldPath.Child("AllowedUnsafeSysctls"),
+					kubeletConfig.AllowedUnsafeSysctls,
 					fmt.Sprintf("%s is not a supported AllowedUnsafeSysctls configuration", val))
 			}
 		}
@@ -521,25 +536,25 @@ func (m *AzureManagedMachinePool) validateKubeletConfig() error {
 
 // validateLinuxOSConfig enforces AKS API configuration for Linux OS custom configuration
 // See: https://learn.microsoft.com/en-us/azure/aks/custom-node-configuration#linux-os-custom-configuration for detailed information.
-func (m *AzureManagedMachinePool) validateLinuxOSConfig() error {
+func validateLinuxOSConfig(linuxOSConfig *LinuxOSConfig, kubeletConfig *KubeletConfig, fldPath *field.Path) error {
 	var errs []error
-	if m.Spec.LinuxOSConfig == nil {
+	if linuxOSConfig == nil {
 		return nil
 	}
 
-	if m.Spec.LinuxOSConfig.SwapFileSizeMB != nil {
-		if m.Spec.KubeletConfig == nil || ptr.Deref(m.Spec.KubeletConfig.FailSwapOn, true) {
+	if linuxOSConfig.SwapFileSizeMB != nil {
+		if kubeletConfig == nil || ptr.Deref(kubeletConfig.FailSwapOn, true) {
 			errs = append(errs, field.Invalid(
-				field.NewPath("Spec", "LinuxOSConfig", "SwapFileSizeMB"),
-				m.Spec.LinuxOSConfig.SwapFileSizeMB,
+				fldPath.Child("SwapFileSizeMB"),
+				linuxOSConfig.SwapFileSizeMB,
 				"KubeletConfig.FailSwapOn must be set to false to enable swap file on nodes"))
 		}
 	}
 
-	if m.Spec.LinuxOSConfig.Sysctls != nil && m.Spec.LinuxOSConfig.Sysctls.NetIpv4IPLocalPortRange != nil {
+	if linuxOSConfig.Sysctls != nil && linuxOSConfig.Sysctls.NetIpv4IPLocalPortRange != nil {
 		// match numbers separated by a space
 		portRangeRegex := `^[0-9]+ [0-9]+$`
-		portRange := *m.Spec.LinuxOSConfig.Sysctls.NetIpv4IPLocalPortRange
+		portRange := *linuxOSConfig.Sysctls.NetIpv4IPLocalPortRange
 
 		match, matchErr := regexp.MatchString(portRangeRegex, portRange)
 		if matchErr != nil {
@@ -547,8 +562,8 @@ func (m *AzureManagedMachinePool) validateLinuxOSConfig() error {
 		}
 		if !match {
 			errs = append(errs, field.Invalid(
-				field.NewPath("Spec", "LinuxOSConfig", "Sysctls", "NetIpv4IpLocalPortRange"),
-				m.Spec.LinuxOSConfig.Sysctls.NetIpv4IPLocalPortRange,
+				fldPath.Child("NetIpv4IpLocalPortRange"),
+				linuxOSConfig.Sysctls.NetIpv4IPLocalPortRange,
 				"LinuxOSConfig.Sysctls.NetIpv4IpLocalPortRange must be of the format \"<int> <int>\""))
 		} else {
 			ports := strings.Split(portRange, " ")
@@ -557,22 +572,22 @@ func (m *AzureManagedMachinePool) validateLinuxOSConfig() error {
 
 			if firstPort < 1024 || firstPort > 60999 {
 				errs = append(errs, field.Invalid(
-					field.NewPath("Spec", "LinuxOSConfig", "Sysctls", "NetIpv4IpLocalPortRange", "First"),
-					m.Spec.LinuxOSConfig.Sysctls.NetIpv4IPLocalPortRange,
+					fldPath.Child("NetIpv4IpLocalPortRange", "First"),
+					linuxOSConfig.Sysctls.NetIpv4IPLocalPortRange,
 					fmt.Sprintf("first port of NetIpv4IpLocalPortRange=%d must be in between [1024 - 60999]", firstPort)))
 			}
 
 			if lastPort < 32768 || lastPort > 65000 {
 				errs = append(errs, field.Invalid(
-					field.NewPath("Spec", "LinuxOSConfig", "Sysctls", "NetIpv4IpLocalPortRange", "Last"),
-					m.Spec.LinuxOSConfig.Sysctls.NetIpv4IPLocalPortRange,
+					fldPath.Child("NetIpv4IpLocalPortRange", "Last"),
+					linuxOSConfig.Sysctls.NetIpv4IPLocalPortRange,
 					fmt.Sprintf("last port of NetIpv4IpLocalPortRange=%d must be in between [32768 -65000]", lastPort)))
 			}
 
 			if firstPort > lastPort {
 				errs = append(errs, field.Invalid(
-					field.NewPath("Spec", "LinuxOSConfig", "Sysctls", "NetIpv4IpLocalPortRange", "First"),
-					m.Spec.LinuxOSConfig.Sysctls.NetIpv4IPLocalPortRange,
+					fldPath.Child("NetIpv4IpLocalPortRange", "First"),
+					linuxOSConfig.Sysctls.NetIpv4IPLocalPortRange,
 					fmt.Sprintf("first port of NetIpv4IpLocalPortRange=%d cannot be greater than last port of NetIpv4IpLocalPortRange=%d", firstPort, lastPort)))
 			}
 		}

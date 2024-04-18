@@ -18,10 +18,11 @@ package subnets
 
 import (
 	"context"
+	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
-	"github.com/google/go-cmp/cmp"
-	"github.com/pkg/errors"
+	asonetworkv1 "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
@@ -38,112 +39,76 @@ type SubnetSpec struct {
 	IsVNetManaged     bool
 	RouteTableName    string
 	SecurityGroupName string
-	Role              infrav1.SubnetRole
 	NatGatewayName    string
 	ServiceEndpoints  infrav1.ServiceEndpoints
 }
 
-// ResourceName returns the name of the subnet.
-func (s *SubnetSpec) ResourceName() string {
-	return s.Name
+// ResourceRef implements azure.ASOResourceSpecGetter.
+func (s *SubnetSpec) ResourceRef() *asonetworkv1.VirtualNetworksSubnet {
+	return &asonetworkv1.VirtualNetworksSubnet{
+		ObjectMeta: metav1.ObjectMeta{
+			// s.Name isn't unique per-cluster, so combine with vnet name to avoid collisions.
+			// ToLower makes the name compatible with standard Kubernetes name requirements.
+			Name: s.VNetName + "-" + strings.ToLower(s.Name),
+		},
+	}
 }
 
-// ResourceGroupName returns the name of the resource group of the VNet that owns this subnet.
-func (s *SubnetSpec) ResourceGroupName() string {
-	return s.VNetResourceGroup
-}
-
-// OwnerResourceName returns the name of the VNet that owns this subnet.
-func (s *SubnetSpec) OwnerResourceName() string {
-	return s.VNetName
-}
-
-// Parameters returns the parameters for the subnet.
-func (s *SubnetSpec) Parameters(ctx context.Context, existing interface{}) (parameters interface{}, err error) {
-	if existing != nil {
-		existingSubnet, ok := existing.(armnetwork.Subnet)
-		if !ok {
-			return nil, errors.Errorf("%T is not an armnetwork.Subnet", existing)
-		}
-
-		if !s.shouldUpdate(existingSubnet) {
-			return nil, nil
-		}
+// Parameters implements azure.ASOResourceSpecGetter.
+func (s *SubnetSpec) Parameters(ctx context.Context, existing *asonetworkv1.VirtualNetworksSubnet) (parameters *asonetworkv1.VirtualNetworksSubnet, err error) {
+	subnet := existing
+	if subnet == nil {
+		subnet = &asonetworkv1.VirtualNetworksSubnet{}
 	}
 
-	if !s.IsVNetManaged {
-		// TODO: change this to terminal error once we add support for handling them
-		return nil, errors.Errorf("custom vnet was provided but subnet %s is missing", s.Name)
+	subnet.Spec = asonetworkv1.VirtualNetworks_Subnet_Spec{
+		AzureName: s.Name,
+		Owner: &genruntime.KnownResourceReference{
+			Name: s.VNetName,
+		},
+		AddressPrefixes: s.CIDRs,
 	}
-	subnetProperties := armnetwork.SubnetPropertiesFormat{
-		AddressPrefixes: azure.PtrSlice(&s.CIDRs),
-	}
-
 	// workaround needed to avoid SubscriptionNotRegisteredForFeature for feature Microsoft.Network/AllowMultipleAddressPrefixesOnSubnet.
 	if len(s.CIDRs) == 1 {
-		subnetProperties = armnetwork.SubnetPropertiesFormat{
-			AddressPrefix: &s.CIDRs[0],
-		}
+		subnet.Spec.AddressPrefix = &s.CIDRs[0]
 	}
 
 	if s.RouteTableName != "" {
-		subnetProperties.RouteTable = &armnetwork.RouteTable{
-			ID: ptr.To(azure.RouteTableID(s.SubscriptionID, s.ResourceGroup, s.RouteTableName)),
+		subnet.Spec.RouteTable = &asonetworkv1.RouteTableSpec_VirtualNetworks_Subnet_SubResourceEmbedded{
+			Reference: &genruntime.ResourceReference{
+				ARMID: azure.RouteTableID(s.SubscriptionID, s.VNetResourceGroup, s.RouteTableName),
+			},
 		}
 	}
 
 	if s.NatGatewayName != "" {
-		subnetProperties.NatGateway = &armnetwork.SubResource{
-			ID: ptr.To(azure.NatGatewayID(s.SubscriptionID, s.ResourceGroup, s.NatGatewayName)),
+		subnet.Spec.NatGateway = &asonetworkv1.SubResource{
+			Reference: &genruntime.ResourceReference{
+				ARMID: azure.NatGatewayID(s.SubscriptionID, s.ResourceGroup, s.NatGatewayName),
+			},
 		}
 	}
 
 	if s.SecurityGroupName != "" {
-		subnetProperties.NetworkSecurityGroup = &armnetwork.SecurityGroup{
-			ID: ptr.To(azure.SecurityGroupID(s.SubscriptionID, s.ResourceGroup, s.SecurityGroupName)),
+		subnet.Spec.NetworkSecurityGroup = &asonetworkv1.NetworkSecurityGroupSpec_VirtualNetworks_Subnet_SubResourceEmbedded{
+			Reference: &genruntime.ResourceReference{
+				ARMID: azure.SecurityGroupID(s.SubscriptionID, s.VNetResourceGroup, s.SecurityGroupName),
+			},
 		}
 	}
 
-	serviceEndpoints := make([]armnetwork.ServiceEndpointPropertiesFormat, 0, len(s.ServiceEndpoints))
+	//nolint:prealloc // pre-allocating this slice isn't going to make any meaningful performance difference
+	// and makes it harder to keep this value nil when s.ServiceEndpoints is empty as is necessary.
+	var serviceEndpoints []asonetworkv1.ServiceEndpointPropertiesFormat
 	for _, se := range s.ServiceEndpoints {
-		se := se
-		serviceEndpoints = append(serviceEndpoints, armnetwork.ServiceEndpointPropertiesFormat{Service: ptr.To(se.Service), Locations: azure.PtrSlice(&se.Locations)})
+		serviceEndpoints = append(serviceEndpoints, asonetworkv1.ServiceEndpointPropertiesFormat{Service: ptr.To(se.Service), Locations: se.Locations})
 	}
-	subnetProperties.ServiceEndpoints = azure.PtrSlice(&serviceEndpoints)
+	subnet.Spec.ServiceEndpoints = serviceEndpoints
 
-	return armnetwork.Subnet{
-		Properties: &subnetProperties,
-	}, nil
+	return subnet, nil
 }
 
-// shouldUpdate returns true if an existing subnet should be updated.
-func (s *SubnetSpec) shouldUpdate(existingSubnet armnetwork.Subnet) bool {
-	// No modifications for non-managed subnets
-	if !s.IsVNetManaged {
-		return false
-	}
-
-	// Update the subnet a NAT Gateway was added for backwards compatibility.
-	if s.NatGatewayName != "" && existingSubnet.Properties.NatGateway == nil {
-		return true
-	}
-
-	// Update the subnet if the service endpoints changed.
-	if existingSubnet.Properties.ServiceEndpoints != nil || len(s.ServiceEndpoints) > 0 {
-		var existingServiceEndpoints []armnetwork.ServiceEndpointPropertiesFormat
-		if existingSubnet.Properties.ServiceEndpoints != nil {
-			for _, se := range existingSubnet.Properties.ServiceEndpoints {
-				existingServiceEndpoints = append(existingServiceEndpoints, armnetwork.ServiceEndpointPropertiesFormat{Service: se.Service, Locations: se.Locations})
-			}
-		}
-		newServiceEndpoints := make([]armnetwork.ServiceEndpointPropertiesFormat, len(s.ServiceEndpoints))
-		for _, se := range s.ServiceEndpoints {
-			se := se
-			newServiceEndpoints = append(newServiceEndpoints, armnetwork.ServiceEndpointPropertiesFormat{Service: ptr.To(se.Service), Locations: azure.PtrSlice(&se.Locations)})
-		}
-
-		diff := cmp.Diff(newServiceEndpoints, existingServiceEndpoints)
-		return diff != ""
-	}
-	return false
+// WasManaged implements azure.ASOResourceSpecGetter.
+func (s *SubnetSpec) WasManaged(resource *asonetworkv1.VirtualNetworksSubnet) bool {
+	return s.IsVNetManaged
 }

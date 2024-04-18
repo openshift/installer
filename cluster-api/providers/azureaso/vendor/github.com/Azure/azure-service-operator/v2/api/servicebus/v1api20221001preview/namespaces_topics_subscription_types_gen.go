@@ -5,7 +5,7 @@ package v1api20221001preview
 
 import (
 	"fmt"
-	v20221001ps "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20221001previewstorage"
+	v20221001ps "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20221001preview/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -129,6 +129,15 @@ func (subscription *NamespacesTopicsSubscription) GetSpec() genruntime.Convertib
 // GetStatus returns the status of this resource
 func (subscription *NamespacesTopicsSubscription) GetStatus() genruntime.ConvertibleStatus {
 	return &subscription.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (subscription *NamespacesTopicsSubscription) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.ServiceBus/namespaces/topics/subscriptions"

@@ -46,7 +46,7 @@ func reconcileTags[T genruntime.MetaObject](t TagsGetterSetter[T], existing T, r
 			}
 		}
 
-		existingTags = t.GetActualTags(existing)
+		existingTags = t.GetDesiredTags(existing)
 	}
 
 	existingTagsMap := converters.TagsToMap(existingTags)

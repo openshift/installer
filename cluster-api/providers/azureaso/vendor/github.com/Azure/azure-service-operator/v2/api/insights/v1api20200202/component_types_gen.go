@@ -6,7 +6,7 @@ package v1api20200202
 import (
 	"context"
 	"fmt"
-	v20200202s "github.com/Azure/azure-service-operator/v2/api/insights/v1api20200202storage"
+	v20200202s "github.com/Azure/azure-service-operator/v2/api/insights/v1api20200202/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
@@ -56,7 +56,7 @@ var _ conversion.Convertible = &Component{}
 func (component *Component) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20200202s.Component)
 	if !ok {
-		return fmt.Errorf("expected insights/v1api20200202storage/Component but received %T instead", hub)
+		return fmt.Errorf("expected insights/v1api20200202/storage/Component but received %T instead", hub)
 	}
 
 	return component.AssignProperties_From_Component(source)
@@ -66,7 +66,7 @@ func (component *Component) ConvertFrom(hub conversion.Hub) error {
 func (component *Component) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20200202s.Component)
 	if !ok {
-		return fmt.Errorf("expected insights/v1api20200202storage/Component but received %T instead", hub)
+		return fmt.Errorf("expected insights/v1api20200202/storage/Component but received %T instead", hub)
 	}
 
 	return component.AssignProperties_To_Component(destination)
@@ -153,6 +153,15 @@ func (component *Component) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (component *Component) GetStatus() genruntime.ConvertibleStatus {
 	return &component.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (component *Component) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Insights/components"
@@ -250,7 +259,7 @@ func (component *Component) updateValidations() []func(old runtime.Object) (admi
 	}
 }
 
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations's
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
 func (component *Component) validateConfigMapDestinations() (admission.Warnings, error) {
 	if component.Spec.OperatorSpec == nil {
 		return nil, nil

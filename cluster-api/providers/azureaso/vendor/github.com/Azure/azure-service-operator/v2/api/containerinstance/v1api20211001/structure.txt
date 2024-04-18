@@ -3,7 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/containerinstance/v1api20211001
 ├── APIVersion: Enum (1 value)
 │   └── "2021-10-01"
 ├── ContainerGroup: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (18 properties)
 │   │   ├── AzureName: string
 │   │   ├── Containers: Object (9 properties)[]
@@ -83,7 +83,7 @@ github.com/Azure/azure-service-operator/v2/api/containerinstance/v1api20211001
 │   │   │       │   └── "ContainerInstanceLogs"
 │   │   │       ├── Metadata: map[string]string
 │   │   │       ├── WorkspaceId: *string
-│   │   │       ├── WorkspaceKey: genruntime.SecretReference
+│   │   │       ├── WorkspaceKey: *genruntime.SecretReference
 │   │   │       └── WorkspaceResourceReference: *genruntime.ResourceReference
 │   │   ├── DnsConfig: *Object (3 properties)
 │   │   │   ├── NameServers: string[]
@@ -687,7 +687,7 @@ github.com/Azure/azure-service-operator/v2/api/containerinstance/v1api20211001
     │   │       │   └── "ContainerInstanceLogs"
     │   │       ├── Metadata: map[string]string
     │   │       ├── WorkspaceId: *string
-    │   │       ├── WorkspaceKey: string
+    │   │       ├── WorkspaceKey: *string
     │   │       └── WorkspaceResourceId: *string
     │   ├── DnsConfig: *Object (3 properties)
     │   │   ├── NameServers: string[]

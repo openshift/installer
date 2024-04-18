@@ -19,13 +19,14 @@ package agentpools
 import (
 	"context"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v4"
-	"github.com/pkg/errors"
+	asocontainerservicev1preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202preview"
+	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
+	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
-	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
+	"sigs.k8s.io/cluster-api-provider-azure/azure/services/aso"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
@@ -33,89 +34,57 @@ const serviceName = "agentpools"
 
 // AgentPoolScope defines the scope interface for an agent pool.
 type AgentPoolScope interface {
-	azure.ClusterDescriber
-	azure.AsyncStatusUpdater
+	aso.Scope
 
 	Name() string
 	NodeResourceGroup() string
-	AgentPoolAnnotations() map[string]string
-	AgentPoolSpec() azure.ResourceSpecGetter
+	AgentPoolSpec() azure.ASOResourceSpecGetter[genruntime.MetaObject]
 	SetAgentPoolProviderIDList([]string)
 	SetAgentPoolReplicas(int32)
 	SetAgentPoolReady(bool)
-	SetCAPIMachinePoolReplicas(replicas *int32)
+	SetCAPIMachinePoolReplicas(replicas *int)
 	SetCAPIMachinePoolAnnotation(key, value string)
 	RemoveCAPIMachinePoolAnnotation(key string)
 	SetSubnetName()
-}
-
-// Service provides operations on Azure resources.
-type Service struct {
-	scope AgentPoolScope
-	async.Reconciler
+	IsPreviewEnabled() bool
 }
 
 // New creates a new service.
-func New(scope AgentPoolScope) (*Service, error) {
-	client, err := newClient(scope)
+func New(scope AgentPoolScope) *aso.Service[genruntime.MetaObject, AgentPoolScope] {
+	svc := aso.NewService[genruntime.MetaObject](serviceName, scope)
+	svc.Specs = []azure.ASOResourceSpecGetter[genruntime.MetaObject]{scope.AgentPoolSpec()}
+	svc.ConditionType = infrav1.AgentPoolsReadyCondition
+	svc.PostCreateOrUpdateResourceHook = postCreateOrUpdateResourceHook
+	return svc
+}
+
+func postCreateOrUpdateResourceHook(ctx context.Context, scope AgentPoolScope, obj genruntime.MetaObject, err error) error {
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &Service{
-		scope: scope,
-		Reconciler: async.New[armcontainerservice.AgentPoolsClientCreateOrUpdateResponse,
-			armcontainerservice.AgentPoolsClientDeleteResponse](scope, client, client),
-	}, nil
-}
-
-// Name returns the service name.
-func (s *Service) Name() string {
-	return serviceName
-}
-
-// Reconcile idempotently creates or updates an agent pool, if possible.
-func (s *Service) Reconcile(ctx context.Context) error {
-	ctx, _, done := tele.StartSpanWithLogger(ctx, "agentpools.Service.Reconcile")
-	defer done()
-
-	var resultingErr error
-	if agentPoolSpec := s.scope.AgentPoolSpec(); agentPoolSpec != nil {
-		result, err := s.CreateOrUpdateResource(ctx, agentPoolSpec, serviceName)
-		if err != nil {
-			resultingErr = err
-		} else {
-			agentPool, ok := result.(armcontainerservice.AgentPool)
-			if !ok {
-				return errors.Errorf("%T is not an armcontainerservice.AgentPool", result)
-			}
-			// When autoscaling is set, add the annotation to the machine pool and update the replica count.
-			if ptr.Deref(agentPool.Properties.EnableAutoScaling, false) {
-				s.scope.SetCAPIMachinePoolAnnotation(clusterv1.ReplicasManagedByAnnotation, "true")
-				s.scope.SetCAPIMachinePoolReplicas(agentPool.Properties.Count)
-			} else { // Otherwise, remove the annotation.
-				s.scope.RemoveCAPIMachinePoolAnnotation(clusterv1.ReplicasManagedByAnnotation)
-			}
+	var existing *asocontainerservicev1.ManagedClustersAgentPool
+	if scope.IsPreviewEnabled() {
+		existingPreview := obj.(*asocontainerservicev1preview.ManagedClustersAgentPool)
+		hub := &asocontainerservicev1hub.ManagedClustersAgentPool{}
+		if err := existingPreview.ConvertTo(hub); err != nil {
+			return err
 		}
+		stable := &asocontainerservicev1.ManagedClustersAgentPool{}
+		if err := stable.ConvertFrom(hub); err != nil {
+			return err
+		}
+		existing = stable
 	} else {
-		return nil
+		existing = obj.(*asocontainerservicev1.ManagedClustersAgentPool)
 	}
+	agentPool := existing
 
-	s.scope.UpdatePutStatus(infrav1.AgentPoolsReadyCondition, serviceName, resultingErr)
-	return resultingErr
-}
-
-// Delete deletes the virtual network with the provided name.
-func (s *Service) Delete(ctx context.Context) error {
-	ctx, _, done := tele.StartSpanWithLogger(ctx, "agentpools.Service.Delete")
-	defer done()
-
-	var resultingErr error
-	if agentPoolSpec := s.scope.AgentPoolSpec(); agentPoolSpec != nil {
-		resultingErr = s.DeleteResource(ctx, agentPoolSpec, serviceName)
-	} else {
-		return nil
+	// When autoscaling is set, add the annotation to the machine pool and update the replica count.
+	if ptr.Deref(agentPool.Status.EnableAutoScaling, false) {
+		scope.SetCAPIMachinePoolAnnotation(clusterv1.ReplicasManagedByAnnotation, "true")
+		scope.SetCAPIMachinePoolReplicas(agentPool.Status.Count)
+	} else { // Otherwise, remove the annotation.
+		scope.RemoveCAPIMachinePoolAnnotation(clusterv1.ReplicasManagedByAnnotation)
 	}
-
-	s.scope.UpdateDeleteStatus(infrav1.AgentPoolsReadyCondition, serviceName, resultingErr)
-	return resultingErr
+	return nil
 }

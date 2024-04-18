@@ -5,7 +5,7 @@ package v1api20180601
 
 import (
 	"fmt"
-	v20180601s "github.com/Azure/azure-service-operator/v2/api/dbformariadb/v1api20180601storage"
+	v20180601s "github.com/Azure/azure-service-operator/v2/api/dbformariadb/v1api20180601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &Database{}
 func (database *Database) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20180601s.Database)
 	if !ok {
-		return fmt.Errorf("expected dbformariadb/v1api20180601storage/Database but received %T instead", hub)
+		return fmt.Errorf("expected dbformariadb/v1api20180601/storage/Database but received %T instead", hub)
 	}
 
 	return database.AssignProperties_From_Database(source)
@@ -61,7 +61,7 @@ func (database *Database) ConvertFrom(hub conversion.Hub) error {
 func (database *Database) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20180601s.Database)
 	if !ok {
-		return fmt.Errorf("expected dbformariadb/v1api20180601storage/Database but received %T instead", hub)
+		return fmt.Errorf("expected dbformariadb/v1api20180601/storage/Database but received %T instead", hub)
 	}
 
 	return database.AssignProperties_To_Database(destination)
@@ -126,6 +126,15 @@ func (database *Database) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (database *Database) GetStatus() genruntime.ConvertibleStatus {
 	return &database.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (database *Database) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DBforMariaDB/servers/databases"

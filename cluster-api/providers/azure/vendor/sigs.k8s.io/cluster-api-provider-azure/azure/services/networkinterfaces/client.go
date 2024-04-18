@@ -18,23 +18,24 @@ package networkinterfaces
 
 import (
 	"context"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 // azureClient contains the Azure go-sdk Client.
 type azureClient struct {
-	interfaces *armnetwork.InterfacesClient
+	interfaces     *armnetwork.InterfacesClient
+	apiCallTimeout time.Duration
 }
 
 // NewClient creates a new network interfaces client from an authorizer.
-func NewClient(auth azure.Authorizer) (*azureClient, error) {
+func NewClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureClient, error) {
 	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create networkinterfaces client options")
@@ -43,7 +44,7 @@ func NewClient(auth azure.Authorizer) (*azureClient, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create armnetwork client factory")
 	}
-	return &azureClient{factory.NewInterfacesClient()}, nil
+	return &azureClient{factory.NewInterfacesClient(), apiCallTimeout}, nil
 }
 
 // Get gets the specified network interface.
@@ -76,7 +77,7 @@ func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.Resou
 		return nil, nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureCallTimeout)
+	ctx, cancel := context.WithTimeout(ctx, ac.apiCallTimeout)
 	defer cancel()
 
 	pollOpts := &runtime.PollUntilDoneOptions{Frequency: async.DefaultPollerFrequency}
@@ -104,7 +105,7 @@ func (ac *azureClient) DeleteAsync(ctx context.Context, spec azure.ResourceSpecG
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultAzureCallTimeout)
+	ctx, cancel := context.WithTimeout(ctx, ac.apiCallTimeout)
 	defer cancel()
 
 	pollOpts := &runtime.PollUntilDoneOptions{Frequency: async.DefaultPollerFrequency}

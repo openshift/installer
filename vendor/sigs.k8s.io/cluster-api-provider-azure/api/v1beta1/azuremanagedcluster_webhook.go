@@ -17,14 +17,9 @@ limitations under the License.
 package v1beta1
 
 import (
-	"fmt"
-	"reflect"
-
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/cluster-api-provider-azure/feature"
-	"sigs.k8s.io/cluster-api-provider-azure/util/maps"
 	capifeature "sigs.k8s.io/cluster-api/feature"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -57,24 +52,6 @@ func (r *AzureManagedCluster) ValidateCreate() (admission.Warnings, error) {
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *AzureManagedCluster) ValidateUpdate(oldRaw runtime.Object) (admission.Warnings, error) {
-	old := oldRaw.(*AzureManagedCluster)
-	var allErrs field.ErrorList
-
-	// custom headers are immutable
-	oldCustomHeaders := maps.FilterByKeyPrefix(old.ObjectMeta.Annotations, CustomHeaderPrefix)
-	newCustomHeaders := maps.FilterByKeyPrefix(r.ObjectMeta.Annotations, CustomHeaderPrefix)
-	if !reflect.DeepEqual(oldCustomHeaders, newCustomHeaders) {
-		allErrs = append(allErrs,
-			field.Invalid(
-				field.NewPath("metadata", "annotations"),
-				r.ObjectMeta.Annotations,
-				fmt.Sprintf("annotations with '%s' prefix are immutable", CustomHeaderPrefix)))
-	}
-
-	if len(allErrs) != 0 {
-		return nil, apierrors.NewInvalid(GroupVersion.WithKind("AzureManagedCluster").GroupKind(), r.Name, allErrs)
-	}
-
 	return nil, nil
 }
 

@@ -44,6 +44,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	capifeature "sigs.k8s.io/cluster-api/feature"
 	"sigs.k8s.io/cluster-api/util"
@@ -76,6 +77,12 @@ type (
 		controller.Options
 		Cache *coalescing.ReconcileCache
 	}
+
+	// ClusterScoper is a interface used by AzureMachinePools that can be owned by either an AzureManagedCluster or AzureCluster.
+	ClusterScoper interface {
+		azure.ClusterScoper
+		groups.GroupScope
+	}
 )
 
 // AzureClusterToAzureMachinesMapper creates a mapping handler to transform AzureClusters into AzureMachines. The transform
@@ -97,7 +104,7 @@ func AzureClusterToAzureMachinesMapper(ctx context.Context, c client.Client, obj
 			return nil
 		}
 
-		log = log.WithValues("AzureCluster", azCluster.Name, "Namespace", azCluster.Namespace)
+		log := log.WithValues("AzureCluster", azCluster.Name, "Namespace", azCluster.Namespace)
 
 		// Don't handle deleted AzureClusters
 		if !azCluster.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -311,7 +318,7 @@ func newCloudProviderConfig(d azure.ClusterScoper) (controlPlaneConfig *CloudPro
 // getOneNodeSubnet returns one of the subnets for the node role.
 func getOneNodeSubnet(d azure.ClusterScoper) infrav1.SubnetSpec {
 	for _, subnet := range d.Subnets() {
-		if subnet.Role == infrav1.SubnetNode {
+		if subnet.Role == infrav1.SubnetNode || subnet.Role == infrav1.SubnetCluster {
 			return subnet
 		}
 	}
@@ -555,7 +562,7 @@ func GetOwnerAzureMachinePool(ctx context.Context, c client.Client, obj metav1.O
 	defer done()
 
 	for _, ref := range obj.OwnerReferences {
-		if ref.Kind != "AzureMachinePool" {
+		if ref.Kind != infrav1.AzureMachinePoolKind {
 			continue
 		}
 
@@ -599,15 +606,18 @@ func GetAzureMachinePoolByName(ctx context.Context, c client.Client, namespace, 
 
 // ShouldDeleteIndividualResources returns false if the resource group is managed and the whole cluster is being deleted
 // meaning that we can rely on a single resource group delete operation as opposed to deleting every individual VM resource.
-func ShouldDeleteIndividualResources(ctx context.Context, clusterScope *scope.ClusterScope) bool {
+func ShouldDeleteIndividualResources(ctx context.Context, cluster ClusterScoper) bool {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "controllers.ShouldDeleteIndividualResources")
 	defer done()
 
-	if clusterScope.Cluster.DeletionTimestamp.IsZero() {
+	if cluster.GetDeletionTimestamp().IsZero() {
 		return true
 	}
 
-	return groups.New(clusterScope).ShouldDeleteIndividualResources(ctx)
+	managed, err := groups.New(cluster).IsManaged(ctx)
+	// Since this is a best effort attempt to speed up delete, we don't fail the delete if we can't get the RG status.
+	// Instead, take the long way and delete all resources one by one.
+	return err != nil || !managed
 }
 
 // GetClusterIdentityFromRef returns the AzureClusterIdentity referenced by the AzureCluster.
@@ -657,8 +667,9 @@ func EnsureClusterIdentity(ctx context.Context, c client.Client, object conditio
 	}
 
 	// Remove deprecated finalizer if it exists, Register the finalizer immediately to avoid orphaning Azure resources on delete.
-	if controllerutil.RemoveFinalizer(identity, deprecatedClusterIdentityFinalizer(finalizerPrefix, namespace, name)) ||
-		controllerutil.AddFinalizer(identity, clusterIdentityFinalizer(finalizerPrefix, namespace, name)) {
+	needsPatch := controllerutil.RemoveFinalizer(identity, deprecatedClusterIdentityFinalizer(finalizerPrefix, namespace, name))
+	needsPatch = controllerutil.AddFinalizer(identity, clusterIdentityFinalizer(finalizerPrefix, namespace, name)) || needsPatch
+	if needsPatch {
 		// finalizers are added/removed then patch the object
 		identityHelper, err := patch.NewHelper(identity, c)
 		if err != nil {
@@ -740,7 +751,7 @@ func AzureManagedClusterToAzureManagedMachinePoolsMapper(ctx context.Context, c 
 			return nil
 		}
 
-		log = log.WithValues("AzureManagedCluster", azCluster.Name, "Namespace", azCluster.Namespace)
+		log := log.WithValues("AzureManagedCluster", azCluster.Name, "Namespace", azCluster.Namespace)
 
 		// Don't handle deleted AzureManagedClusters
 		if !azCluster.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -793,7 +804,7 @@ func AzureManagedControlPlaneToAzureManagedMachinePoolsMapper(ctx context.Contex
 			return nil
 		}
 
-		log = log.WithValues("AzureManagedControlPlane", azControlPlane.Name, "Namespace", azControlPlane.Namespace)
+		log := log.WithValues("AzureManagedControlPlane", azControlPlane.Name, "Namespace", azControlPlane.Namespace)
 
 		// Don't handle deleted AzureManagedControlPlanes
 		if !azControlPlane.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -840,7 +851,7 @@ func AzureManagedClusterToAzureManagedControlPlaneMapper(ctx context.Context, c 
 			return nil
 		}
 
-		log = log.WithValues("AzureManagedCluster", azCluster.Name, "Namespace", azCluster.Namespace)
+		log := log.WithValues("AzureManagedCluster", azCluster.Name, "Namespace", azCluster.Namespace)
 
 		// Don't handle deleted AzureManagedClusters
 		if !azCluster.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -889,7 +900,7 @@ func AzureManagedControlPlaneToAzureManagedClusterMapper(ctx context.Context, c 
 			return nil
 		}
 
-		log = log.WithValues("AzureManagedControlPlane", azManagedControlPlane.Name, "Namespace", azManagedControlPlane.Namespace)
+		log := log.WithValues("AzureManagedControlPlane", azManagedControlPlane.Name, "Namespace", azManagedControlPlane.Namespace)
 
 		// Don't handle deleted AzureManagedControlPlanes
 		if !azManagedControlPlane.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -945,6 +956,10 @@ func MachinePoolToAzureManagedControlPlaneMapFunc(ctx context.Context, c client.
 
 		gk := gvk.GroupKind()
 		ref := cluster.Spec.ControlPlaneRef
+		if ref == nil || ref.Name == "" {
+			log.Info("control plane ref is nil or empty: control plane ref not found")
+			return nil
+		}
 		// Return early if the GroupKind doesn't match what we expect.
 		controlPlaneGK := ref.GroupVersionKind().GroupKind()
 		if gk != controlPlaneGK {
@@ -1059,4 +1074,78 @@ func ClusterUpdatePauseChange(logger logr.Logger) predicate.Funcs {
 // additionally accepts Cluster pause events.
 func ClusterPauseChangeAndInfrastructureReady(log logr.Logger) predicate.Funcs {
 	return predicates.Any(log, predicates.ClusterCreateInfraReady(log), predicates.ClusterUpdateInfraReady(log), ClusterUpdatePauseChange(log))
+}
+
+// GetClusterScoper returns a ClusterScoper for the given cluster using the infra ref pointing to either an AzureCluster or an AzureManagedCluster.
+func GetClusterScoper(ctx context.Context, logger logr.Logger, c client.Client, cluster *clusterv1.Cluster, timeouts reconciler.Timeouts) (ClusterScoper, error) {
+	infraRef := cluster.Spec.InfrastructureRef
+	switch infraRef.Kind {
+	case "AzureCluster":
+		logger = logger.WithValues("AzureCluster", infraRef.Name)
+		azureClusterName := client.ObjectKey{
+			Namespace: infraRef.Namespace,
+			Name:      infraRef.Name,
+		}
+		azureCluster := &infrav1.AzureCluster{}
+		if err := c.Get(ctx, azureClusterName, azureCluster); err != nil {
+			logger.V(2).Info("AzureCluster is not available yet")
+			return nil, err
+		}
+
+		// Create the cluster scope
+		return scope.NewClusterScope(ctx, scope.ClusterScopeParams{
+			Client:       c,
+			Cluster:      cluster,
+			AzureCluster: azureCluster,
+			Timeouts:     timeouts,
+		})
+
+	case "AzureManagedCluster":
+		logger = logger.WithValues("AzureManagedCluster", infraRef.Name)
+		azureManagedControlPlaneName := client.ObjectKey{
+			Namespace: infraRef.Namespace,
+			Name:      cluster.Spec.ControlPlaneRef.Name,
+		}
+		azureManagedControlPlane := &infrav1.AzureManagedControlPlane{}
+		if err := c.Get(ctx, azureManagedControlPlaneName, azureManagedControlPlane); err != nil {
+			logger.V(2).Info("AzureManagedControlPlane is not available yet")
+			return nil, err
+		}
+
+		// Create the control plane scope
+		return scope.NewManagedControlPlaneScope(ctx, scope.ManagedControlPlaneScopeParams{
+			Client:       c,
+			Cluster:      cluster,
+			ControlPlane: azureManagedControlPlane,
+			Timeouts:     timeouts,
+		})
+	}
+
+	return nil, errors.Errorf("unsupported infrastructure type %q, should be AzureCluster or AzureManagedCluster", cluster.Spec.InfrastructureRef.Kind)
+}
+
+// AddBlockMoveAnnotation adds CAPI's block-move annotation and returns whether or not the annotation was added.
+func AddBlockMoveAnnotation(obj metav1.Object) bool {
+	annotations := obj.GetAnnotations()
+
+	if _, exists := annotations[clusterctlv1.BlockMoveAnnotation]; exists {
+		return false
+	}
+
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+
+	// this value doesn't mean anything, only the presence of the annotation matters.
+	annotations[clusterctlv1.BlockMoveAnnotation] = "true"
+	obj.SetAnnotations(annotations)
+
+	return true
+}
+
+// RemoveBlockMoveAnnotation removes CAPI's block-move annotation from the object.
+func RemoveBlockMoveAnnotation(obj metav1.Object) {
+	azClusterAnnotations := obj.GetAnnotations()
+	delete(azClusterAnnotations, clusterctlv1.BlockMoveAnnotation)
+	obj.SetAnnotations(azClusterAnnotations)
 }

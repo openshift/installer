@@ -5,7 +5,7 @@ package v1api20180601
 
 import (
 	"fmt"
-	v20180601s "github.com/Azure/azure-service-operator/v2/api/dbformariadb/v1api20180601storage"
+	v20180601s "github.com/Azure/azure-service-operator/v2/api/dbformariadb/v1api20180601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &Configuration{}
 func (configuration *Configuration) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20180601s.Configuration)
 	if !ok {
-		return fmt.Errorf("expected dbformariadb/v1api20180601storage/Configuration but received %T instead", hub)
+		return fmt.Errorf("expected dbformariadb/v1api20180601/storage/Configuration but received %T instead", hub)
 	}
 
 	return configuration.AssignProperties_From_Configuration(source)
@@ -61,7 +61,7 @@ func (configuration *Configuration) ConvertFrom(hub conversion.Hub) error {
 func (configuration *Configuration) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20180601s.Configuration)
 	if !ok {
-		return fmt.Errorf("expected dbformariadb/v1api20180601storage/Configuration but received %T instead", hub)
+		return fmt.Errorf("expected dbformariadb/v1api20180601/storage/Configuration but received %T instead", hub)
 	}
 
 	return configuration.AssignProperties_To_Configuration(destination)
@@ -126,6 +126,14 @@ func (configuration *Configuration) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (configuration *Configuration) GetStatus() genruntime.ConvertibleStatus {
 	return &configuration.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (configuration *Configuration) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DBforMariaDB/servers/configurations"

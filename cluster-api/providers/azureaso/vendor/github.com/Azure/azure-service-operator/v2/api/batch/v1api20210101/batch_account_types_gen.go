@@ -5,7 +5,7 @@ package v1api20210101
 
 import (
 	"fmt"
-	v20210101s "github.com/Azure/azure-service-operator/v2/api/batch/v1api20210101storage"
+	v20210101s "github.com/Azure/azure-service-operator/v2/api/batch/v1api20210101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &BatchAccount{}
 func (account *BatchAccount) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20210101s.BatchAccount)
 	if !ok {
-		return fmt.Errorf("expected batch/v1api20210101storage/BatchAccount but received %T instead", hub)
+		return fmt.Errorf("expected batch/v1api20210101/storage/BatchAccount but received %T instead", hub)
 	}
 
 	return account.AssignProperties_From_BatchAccount(source)
@@ -61,7 +61,7 @@ func (account *BatchAccount) ConvertFrom(hub conversion.Hub) error {
 func (account *BatchAccount) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20210101s.BatchAccount)
 	if !ok {
-		return fmt.Errorf("expected batch/v1api20210101storage/BatchAccount but received %T instead", hub)
+		return fmt.Errorf("expected batch/v1api20210101/storage/BatchAccount but received %T instead", hub)
 	}
 
 	return account.AssignProperties_To_BatchAccount(destination)
@@ -126,6 +126,15 @@ func (account *BatchAccount) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (account *BatchAccount) GetStatus() genruntime.ConvertibleStatus {
 	return &account.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (account *BatchAccount) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Batch/batchAccounts"

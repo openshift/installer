@@ -5,7 +5,7 @@ package v1api20210515
 
 import (
 	"fmt"
-	v20210515s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20210515storage"
+	v20210515s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20210515/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &MongodbDatabaseCollection{}
 func (collection *MongodbDatabaseCollection) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20210515s.MongodbDatabaseCollection)
 	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20210515storage/MongodbDatabaseCollection but received %T instead", hub)
+		return fmt.Errorf("expected documentdb/v1api20210515/storage/MongodbDatabaseCollection but received %T instead", hub)
 	}
 
 	return collection.AssignProperties_From_MongodbDatabaseCollection(source)
@@ -61,7 +61,7 @@ func (collection *MongodbDatabaseCollection) ConvertFrom(hub conversion.Hub) err
 func (collection *MongodbDatabaseCollection) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20210515s.MongodbDatabaseCollection)
 	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20210515storage/MongodbDatabaseCollection but received %T instead", hub)
+		return fmt.Errorf("expected documentdb/v1api20210515/storage/MongodbDatabaseCollection but received %T instead", hub)
 	}
 
 	return collection.AssignProperties_To_MongodbDatabaseCollection(destination)
@@ -126,6 +126,15 @@ func (collection *MongodbDatabaseCollection) GetSpec() genruntime.ConvertibleSpe
 // GetStatus returns the status of this resource
 func (collection *MongodbDatabaseCollection) GetStatus() genruntime.ConvertibleStatus {
 	return &collection.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (collection *MongodbDatabaseCollection) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DocumentDB/databaseAccounts/mongodbDatabases/collections"

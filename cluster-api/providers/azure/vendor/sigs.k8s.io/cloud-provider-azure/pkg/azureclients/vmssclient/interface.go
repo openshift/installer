@@ -20,7 +20,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2022-03-01/compute"
+	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2022-08-01/compute"
 	"github.com/Azure/go-autorest/autorest/azure"
 
 	"sigs.k8s.io/cloud-provider-azure/pkg/retry"
@@ -56,7 +56,7 @@ type Interface interface {
 	// DeleteInstances deletes the instances for a VirtualMachineScaleSet.
 	DeleteInstances(ctx context.Context, resourceGroupName string, vmScaleSetName string, vmInstanceIDs compute.VirtualMachineScaleSetVMInstanceRequiredIDs) *retry.Error
 
-	// DeleteInstancesAsync sends the delete request to the ARM client and DOEST NOT wait on the future
+	// DeleteInstancesAsync sends the delete request to the ARM client and DOES NOT wait on the future
 	DeleteInstancesAsync(ctx context.Context, resourceGroupName string, vmScaleSetName string, vmInstanceIDs compute.VirtualMachineScaleSetVMInstanceRequiredIDs, forceDelete bool) (*azure.Future, *retry.Error)
 
 	// WaitForCreateOrUpdateResult waits for the response of the create or update request
@@ -65,7 +65,7 @@ type Interface interface {
 	// WaitForDeleteInstancesResult waits for the response of the delete instances request
 	WaitForDeleteInstancesResult(ctx context.Context, future *azure.Future, resourceGroupName string) (*http.Response, error)
 
-	// DeallocateInstances sends the deallocate request to the ARM client and DOEST NOT wait on the future
+	// DeallocateInstances sends the deallocate request to the ARM client and DOES NOT wait on the future
 	DeallocateInstancesAsync(ctx context.Context, resourceGroupName string, vmScaleSetName string, vmInstanceIDs compute.VirtualMachineScaleSetVMInstanceRequiredIDs) (*azure.Future, *retry.Error)
 
 	// WaitForDeallocateInstancesResult waits for the response of the deallocate instances request

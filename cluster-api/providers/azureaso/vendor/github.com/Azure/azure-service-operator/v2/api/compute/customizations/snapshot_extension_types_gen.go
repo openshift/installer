@@ -5,9 +5,7 @@ package customizations
 
 import (
 	v20200930 "github.com/Azure/azure-service-operator/v2/api/compute/v1api20200930"
-	v20200930s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20200930storage"
-	v1beta20200930 "github.com/Azure/azure-service-operator/v2/api/compute/v1beta20200930"
-	v1beta20200930s "github.com/Azure/azure-service-operator/v2/api/compute/v1beta20200930storage"
+	v20200930s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20200930/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -18,7 +16,5 @@ type SnapshotExtension struct {
 func (extension *SnapshotExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20200930.Snapshot{},
-		&v20200930s.Snapshot{},
-		&v1beta20200930.Snapshot{},
-		&v1beta20200930s.Snapshot{}}
+		&v20200930s.Snapshot{}}
 }

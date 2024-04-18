@@ -5,7 +5,7 @@ package v1api20210501
 
 import (
 	"fmt"
-	v20210501s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20210501storage"
+	v20210501s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20210501/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &FlexibleServersDatabase{}
 func (database *FlexibleServersDatabase) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20210501s.FlexibleServersDatabase)
 	if !ok {
-		return fmt.Errorf("expected dbformysql/v1api20210501storage/FlexibleServersDatabase but received %T instead", hub)
+		return fmt.Errorf("expected dbformysql/v1api20210501/storage/FlexibleServersDatabase but received %T instead", hub)
 	}
 
 	return database.AssignProperties_From_FlexibleServersDatabase(source)
@@ -61,7 +61,7 @@ func (database *FlexibleServersDatabase) ConvertFrom(hub conversion.Hub) error {
 func (database *FlexibleServersDatabase) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20210501s.FlexibleServersDatabase)
 	if !ok {
-		return fmt.Errorf("expected dbformysql/v1api20210501storage/FlexibleServersDatabase but received %T instead", hub)
+		return fmt.Errorf("expected dbformysql/v1api20210501/storage/FlexibleServersDatabase but received %T instead", hub)
 	}
 
 	return database.AssignProperties_To_FlexibleServersDatabase(destination)
@@ -126,6 +126,15 @@ func (database *FlexibleServersDatabase) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (database *FlexibleServersDatabase) GetStatus() genruntime.ConvertibleStatus {
 	return &database.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (database *FlexibleServersDatabase) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DBforMySQL/flexibleServers/databases"

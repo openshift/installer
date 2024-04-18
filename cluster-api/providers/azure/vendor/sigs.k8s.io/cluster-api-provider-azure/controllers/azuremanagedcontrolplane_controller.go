@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -48,9 +47,10 @@ import (
 // AzureManagedControlPlaneReconciler reconciles an AzureManagedControlPlane object.
 type AzureManagedControlPlaneReconciler struct {
 	client.Client
-	Recorder         record.EventRecorder
-	ReconcileTimeout time.Duration
-	WatchFilterValue string
+	Recorder                                 record.EventRecorder
+	Timeouts                                 reconciler.Timeouts
+	WatchFilterValue                         string
+	getNewAzureManagedControlPlaneReconciler func(scope *scope.ManagedControlPlaneScope) (*azureManagedControlPlaneService, error)
 }
 
 // SetupWithManager initializes this controller with a manager.
@@ -61,6 +61,7 @@ func (amcpr *AzureManagedControlPlaneReconciler) SetupWithManager(ctx context.Co
 	)
 	defer done()
 
+	amcpr.getNewAzureManagedControlPlaneReconciler = newAzureManagedControlPlaneReconciler
 	var r reconcile.Reconciler = amcpr
 	if options.Cache != nil {
 		r = coalescing.NewReconciler(amcpr, options.Cache, log)
@@ -74,7 +75,7 @@ func (amcpr *AzureManagedControlPlaneReconciler) SetupWithManager(ctx context.Co
 	}
 
 	// map requests for machine pools corresponding to AzureManagedControlPlane's defaultPool back to the corresponding AzureManagedControlPlane.
-	azureManagedMachinePoolMapper := MachinePoolToAzureManagedControlPlaneMapFunc(ctx, amcpr.Client, infrav1.GroupVersion.WithKind("AzureManagedControlPlane"), log)
+	azureManagedMachinePoolMapper := MachinePoolToAzureManagedControlPlaneMapFunc(ctx, amcpr.Client, infrav1.GroupVersion.WithKind(infrav1.AzureManagedControlPlaneKind), log)
 
 	c, err := ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options.Options).
@@ -113,16 +114,24 @@ func (amcpr *AzureManagedControlPlaneReconciler) SetupWithManager(ctx context.Co
 // +kubebuilder:rbac:groups=cluster.x-k8s.io,resources=clusters;clusters/status,verbs=get;list;watch
 // +kubebuilder:rbac:groups=resources.azure.com,resources=resourcegroups,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=resources.azure.com,resources=resourcegroups/status,verbs=get;list;watch
+// +kubebuilder:rbac:groups=containerservice.azure.com,resources=managedclusters,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=containerservice.azure.com,resources=managedclusters/status,verbs=get;list;watch
+// +kubebuilder:rbac:groups=network.azure.com,resources=privateendpoints;virtualnetworks;virtualnetworkssubnets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=network.azure.com,resources=privateendpoints/status;virtualnetworks/status;virtualnetworkssubnets/status,verbs=get;list;watch
+// +kubebuilder:rbac:groups=containerservice.azure.com,resources=fleetsmembers,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=containerservice.azure.com,resources=fleetsmembers/status,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kubernetesconfiguration.azure.com,resources=extensions,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kubernetesconfiguration.azure.com,resources=extensions/status,verbs=get;list;watch
 
 // Reconcile idempotently gets, creates, and updates a managed control plane.
 func (amcpr *AzureManagedControlPlaneReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
-	ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultedLoopTimeout(amcpr.ReconcileTimeout))
+	ctx, cancel := context.WithTimeout(ctx, amcpr.Timeouts.DefaultedLoopTimeout())
 	defer cancel()
 
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "controllers.AzureManagedControlPlaneReconciler.Reconcile",
 		tele.KVP("namespace", req.Namespace),
 		tele.KVP("name", req.Name),
-		tele.KVP("kind", "AzureManagedControlPlane"),
+		tele.KVP("kind", infrav1.AzureManagedControlPlaneKind),
 	)
 	defer done()
 
@@ -179,6 +188,7 @@ func (amcpr *AzureManagedControlPlaneReconciler) Reconcile(ctx context.Context, 
 		Cluster:             cluster,
 		ControlPlane:        azureControlPlane,
 		ManagedMachinePools: pools,
+		Timeouts:            amcpr.Timeouts,
 	})
 	if err != nil {
 		return reconcile.Result{}, errors.Wrap(err, "failed to create scope")
@@ -225,17 +235,20 @@ func (amcpr *AzureManagedControlPlaneReconciler) reconcileNormal(ctx context.Con
 
 	log.Info("Reconciling AzureManagedControlPlane")
 
-	// Remove deprecated Cluster finalizer if it exists, if the AzureManagedControlPlane doesn't have our finalizer, add it.
-	if controllerutil.RemoveFinalizer(scope.ControlPlane, infrav1.ClusterFinalizer) ||
-		controllerutil.AddFinalizer(scope.ControlPlane, infrav1.ManagedClusterFinalizer) {
-		// Register the finalizer immediately to avoid orphaning Azure resources on delete
+	// Remove deprecated Cluster finalizer if it exists
+	needsPatch := controllerutil.RemoveFinalizer(scope.ControlPlane, infrav1.ClusterFinalizer)
+	// Register our finalizer immediately to avoid orphaning Azure resources on delete
+	needsPatch = controllerutil.AddFinalizer(scope.ControlPlane, infrav1.ManagedClusterFinalizer) || needsPatch
+	// Register the block-move annotation immediately to avoid moving un-paused ASO resources
+	needsPatch = AddBlockMoveAnnotation(scope.ControlPlane) || needsPatch
+	if needsPatch {
 		if err := scope.PatchObject(ctx); err != nil {
 			amcpr.Recorder.Eventf(scope.ControlPlane, corev1.EventTypeWarning, "AzureManagedControlPlane unavailable", "failed to patch resource: %s", err)
 			return reconcile.Result{}, err
 		}
 	}
 
-	svc, err := newAzureManagedControlPlaneReconciler(scope)
+	svc, err := amcpr.getNewAzureManagedControlPlaneReconciler(scope)
 	if err != nil {
 		return reconcile.Result{}, errors.Wrap(err, "failed to create azureManagedControlPlane service")
 	}
@@ -263,25 +276,28 @@ func (amcpr *AzureManagedControlPlaneReconciler) reconcileNormal(ctx context.Con
 	// No errors, so mark us ready so the Cluster API Cluster Controller can pull it
 	scope.ControlPlane.Status.Ready = true
 	scope.ControlPlane.Status.Initialized = true
+	scope.ControlPlane.Status.Version = scope.ControlPlane.Spec.Version
 
 	log.Info("Successfully reconciled")
 
 	return reconcile.Result{}, nil
 }
 
+//nolint:unparam // Always returns an empty struct for reconcile.Result
 func (amcpr *AzureManagedControlPlaneReconciler) reconcilePause(ctx context.Context, scope *scope.ManagedControlPlaneScope) (reconcile.Result, error) {
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "controllers.AzureManagedControlPlane.reconcilePause")
 	defer done()
 
 	log.Info("Reconciling AzureManagedControlPlane pause")
 
-	svc, err := newAzureManagedControlPlaneReconciler(scope)
+	svc, err := amcpr.getNewAzureManagedControlPlaneReconciler(scope)
 	if err != nil {
 		return reconcile.Result{}, errors.Wrap(err, "failed to create azureManagedControlPlane service")
 	}
 	if err := svc.Pause(ctx); err != nil {
 		return reconcile.Result{}, errors.Wrap(err, "failed to pause control plane services")
 	}
+	RemoveBlockMoveAnnotation(scope.ControlPlane)
 
 	return reconcile.Result{}, nil
 }
@@ -292,7 +308,7 @@ func (amcpr *AzureManagedControlPlaneReconciler) reconcileDelete(ctx context.Con
 
 	log.Info("Reconciling AzureManagedControlPlane delete")
 
-	svc, err := newAzureManagedControlPlaneReconciler(scope)
+	svc, err := amcpr.getNewAzureManagedControlPlaneReconciler(scope)
 	if err != nil {
 		return reconcile.Result{}, errors.Wrap(err, "failed to create azureManagedControlPlane service")
 	}
@@ -332,7 +348,7 @@ func (amcpr *AzureManagedControlPlaneReconciler) ClusterToAzureManagedControlPla
 	}
 
 	controlPlaneRef := c.Spec.ControlPlaneRef
-	if controlPlaneRef != nil && controlPlaneRef.Kind == "AzureManagedControlPlane" {
+	if controlPlaneRef != nil && controlPlaneRef.Kind == infrav1.AzureManagedControlPlaneKind {
 		return []ctrl.Request{{NamespacedName: client.ObjectKey{Namespace: controlPlaneRef.Namespace, Name: controlPlaneRef.Name}}}
 	}
 

@@ -24,7 +24,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2022-03-01/compute"
+	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2022-08-01/compute"
 
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog/v2"
@@ -34,7 +34,7 @@ import (
 	"sigs.k8s.io/cloud-provider-azure/pkg/consts"
 )
 
-func (fs *FlexScaleSet) newVmssFlexCache(ctx context.Context) (*azcache.TimedCache, error) {
+func (fs *FlexScaleSet) newVmssFlexCache(ctx context.Context) (azcache.Resource, error) {
 	getter := func(key string) (interface{}, error) {
 		localCache := &sync.Map{}
 
@@ -73,10 +73,10 @@ func (fs *FlexScaleSet) newVmssFlexCache(ctx context.Context) (*azcache.TimedCac
 	if fs.Config.VmssFlexCacheTTLInSeconds == 0 {
 		fs.Config.VmssFlexCacheTTLInSeconds = consts.VmssFlexCacheTTLDefaultInSeconds
 	}
-	return azcache.NewTimedcache(time.Duration(fs.Config.VmssFlexCacheTTLInSeconds)*time.Second, getter)
+	return azcache.NewTimedCache(time.Duration(fs.Config.VmssFlexCacheTTLInSeconds)*time.Second, getter, fs.Cloud.Config.DisableAPICallCache)
 }
 
-func (fs *FlexScaleSet) newVmssFlexVMCache(ctx context.Context) (*azcache.TimedCache, error) {
+func (fs *FlexScaleSet) newVmssFlexVMCache(ctx context.Context) (azcache.Resource, error) {
 	getter := func(key string) (interface{}, error) {
 		localCache := &sync.Map{}
 
@@ -123,7 +123,7 @@ func (fs *FlexScaleSet) newVmssFlexVMCache(ctx context.Context) (*azcache.TimedC
 	if fs.Config.VmssFlexVMCacheTTLInSeconds == 0 {
 		fs.Config.VmssFlexVMCacheTTLInSeconds = consts.VmssFlexVMCacheTTLDefaultInSeconds
 	}
-	return azcache.NewTimedcache(time.Duration(fs.Config.VmssFlexVMCacheTTLInSeconds)*time.Second, getter)
+	return azcache.NewTimedCache(time.Duration(fs.Config.VmssFlexVMCacheTTLInSeconds)*time.Second, getter, fs.Cloud.Config.DisableAPICallCache)
 }
 
 func (fs *FlexScaleSet) getNodeNameByVMName(vmName string) (string, error) {
@@ -333,6 +333,9 @@ func (fs *FlexScaleSet) getVmssFlexByName(vmssFlexName string) (*compute.Virtual
 }
 
 func (fs *FlexScaleSet) DeleteCacheForNode(nodeName string) error {
+	if fs.Config.DisableAPICallCache {
+		return nil
+	}
 	vmssFlexID, err := fs.getNodeVmssFlexID(nodeName)
 	if err != nil {
 		klog.Errorf("getNodeVmssFlexID(%s) failed with %v", nodeName, err)

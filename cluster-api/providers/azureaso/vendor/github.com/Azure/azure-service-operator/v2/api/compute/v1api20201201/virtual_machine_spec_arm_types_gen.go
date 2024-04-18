@@ -202,7 +202,7 @@ type HardwareProfile_ARM struct {
 	// resizing](https://docs.microsoft.com/rest/api/compute/virtualmachines/listavailablesizes). For more information about
 	// virtual machine sizes, see [Sizes for virtual machines](https://docs.microsoft.com/en-us/azure/virtual-machines/sizes).
 	// The available VM sizes depend on region and availability set.
-	VmSize *HardwareProfile_VmSize `json:"vmSize,omitempty"`
+	VmSize *string `json:"vmSize,omitempty"`
 }
 
 // Specifies the network interfaces of the virtual machine.

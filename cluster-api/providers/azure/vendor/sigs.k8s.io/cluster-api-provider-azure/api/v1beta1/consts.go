@@ -130,6 +130,10 @@ const (
 	NetworkInterfaceReadyCondition clusterv1.ConditionType = "NetworkInterfacesReady"
 	// PrivateEndpointsReadyCondition means the private endpoints exist and are ready to be used.
 	PrivateEndpointsReadyCondition clusterv1.ConditionType = "PrivateEndpointsReady"
+	// FleetReadyCondition means the Fleet exists and is ready to be used.
+	FleetReadyCondition clusterv1.ConditionType = "FleetReady"
+	// AKSExtensionsReadyCondition means the AKS Extensions exist and are ready to be used.
+	AKSExtensionsReadyCondition clusterv1.ConditionType = "AKSExtensionsReady"
 
 	// CreatingReason means the resource is being created.
 	CreatingReason = "Creating"
@@ -146,14 +150,6 @@ const (
 )
 
 const (
-	// CustomHeaderPrefix is the prefix of annotations that enable additional cluster / node pool features.
-	// Whatever follows the prefix will be passed as a header to cluster/node pool creation/update requests.
-	// E.g. add `"infrastructure.cluster.x-k8s.io/custom-header-UseGPUDedicatedVHD": "true"` annotation to
-	// AzureManagedMachinePool CR to enable creating GPU nodes by the node pool.
-	CustomHeaderPrefix = "infrastructure.cluster.x-k8s.io/custom-header-"
-)
-
-const (
 	// LinuxOS is Linux OS value for OSDisk.OSType.
 	LinuxOS = "Linux"
 	// WindowsOS is Windows OS value for OSDisk.OSType.
@@ -164,5 +160,37 @@ const (
 	// OwnedByClusterLabelKey communicates CAPZ's ownership of an ASO resource
 	// independently of its ownership of the underlying Azure resource. The
 	// value for the label is the CAPI Cluster Name.
+	//
+	// Deprecated: OwnerReferences now determine ownership.
 	OwnedByClusterLabelKey = NameAzureProviderPrefix + string(ResourceLifecycleOwned)
+)
+
+const (
+	// AzureNetworkPluginName is the name of the Azure network plugin.
+	AzureNetworkPluginName = "azure"
+)
+
+const (
+	// AzureClusterKind indicates the kind of an AzureCluster.
+	AzureClusterKind = "AzureCluster"
+	// AzureClusterTemplateKind indicates the kind of an AzureClusterTemplate.
+	AzureClusterTemplateKind = "AzureClusterTemplate"
+	// AzureMachineKind indicates the kind of an AzureMachine.
+	AzureMachineKind = "AzureMachine"
+	// AzureMachineTemplateKind indicates the kind of an AzureMachineTemplate.
+	AzureMachineTemplateKind = "AzureMachineTemplate"
+	// AzureMachinePoolKind indicates the kind of an AzureMachinePool.
+	AzureMachinePoolKind = "AzureMachinePool"
+	// AzureManagedMachinePoolKind indicates the kind of an AzureManagedMachinePool.
+	AzureManagedMachinePoolKind = "AzureManagedMachinePool"
+	// AzureManagedClusterKind indicates the kind of an AzureManagedCluster.
+	AzureManagedClusterKind = "AzureManagedCluster"
+	// AzureManagedControlPlaneKind indicates the kind of an AzureManagedControlPlane.
+	AzureManagedControlPlaneKind = "AzureManagedControlPlane"
+	// AzureManagedControlPlaneTemplateKind indicates the kind of an AzureManagedControlPlaneTemplate.
+	AzureManagedControlPlaneTemplateKind = "AzureManagedControlPlaneTemplate"
+	// AzureManagedMachinePoolTemplateKind indicates the kind of an AzureManagedMachinePoolTemplate.
+	AzureManagedMachinePoolTemplateKind = "AzureManagedMachinePoolTemplate"
+	// AzureClusterIdentityKind indicates the kind of an AzureClusterIdentity.
+	AzureClusterIdentityKind = "AzureClusterIdentity"
 )

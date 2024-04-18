@@ -32,5 +32,5 @@ func (c *AzureClusterIdentity) validateClusterIdentity() (admission.Warnings, er
 	if len(allErrs) == 0 {
 		return nil, nil
 	}
-	return nil, apierrors.NewInvalid(GroupVersion.WithKind("AzureClusterIdentity").GroupKind(), c.Name, allErrs)
+	return nil, apierrors.NewInvalid(GroupVersion.WithKind(AzureClusterIdentityKind).GroupKind(), c.Name, allErrs)
 }

@@ -640,7 +640,11 @@ func (in *ServerPropertiesForDefaultCreate) DeepCopyInto(out *ServerPropertiesFo
 		*out = new(string)
 		**out = **in
 	}
-	out.AdministratorLoginPassword = in.AdministratorLoginPassword
+	if in.AdministratorLoginPassword != nil {
+		in, out := &in.AdministratorLoginPassword, &out.AdministratorLoginPassword
+		*out = new(genruntime.SecretReference)
+		**out = **in
+	}
 	if in.CreateMode != nil {
 		in, out := &in.CreateMode, &out.CreateMode
 		*out = new(ServerPropertiesForDefaultCreate_CreateMode)
@@ -688,6 +692,11 @@ func (in *ServerPropertiesForDefaultCreate_ARM) DeepCopyInto(out *ServerProperti
 	*out = *in
 	if in.AdministratorLogin != nil {
 		in, out := &in.AdministratorLogin, &out.AdministratorLogin
+		*out = new(string)
+		**out = **in
+	}
+	if in.AdministratorLoginPassword != nil {
+		in, out := &in.AdministratorLoginPassword, &out.AdministratorLoginPassword
 		*out = new(string)
 		**out = **in
 	}

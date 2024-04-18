@@ -3,7 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/insights/v1api20180501preview
 ├── APIVersion: Enum (1 value)
 │   └── "2018-05-01-preview"
 ├── Webtest: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (16 properties)
 │   │   ├── AzureName: string
 │   │   ├── Configuration: *Object (1 property)

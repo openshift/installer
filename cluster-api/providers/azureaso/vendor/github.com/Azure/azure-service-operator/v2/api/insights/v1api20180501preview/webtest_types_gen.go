@@ -5,7 +5,7 @@ package v1api20180501preview
 
 import (
 	"fmt"
-	v20180501ps "github.com/Azure/azure-service-operator/v2/api/insights/v1api20180501previewstorage"
+	v20180501ps "github.com/Azure/azure-service-operator/v2/api/insights/v1api20180501preview/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &Webtest{}
 func (webtest *Webtest) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20180501ps.Webtest)
 	if !ok {
-		return fmt.Errorf("expected insights/v1api20180501previewstorage/Webtest but received %T instead", hub)
+		return fmt.Errorf("expected insights/v1api20180501preview/storage/Webtest but received %T instead", hub)
 	}
 
 	return webtest.AssignProperties_From_Webtest(source)
@@ -61,7 +61,7 @@ func (webtest *Webtest) ConvertFrom(hub conversion.Hub) error {
 func (webtest *Webtest) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20180501ps.Webtest)
 	if !ok {
-		return fmt.Errorf("expected insights/v1api20180501previewstorage/Webtest but received %T instead", hub)
+		return fmt.Errorf("expected insights/v1api20180501preview/storage/Webtest but received %T instead", hub)
 	}
 
 	return webtest.AssignProperties_To_Webtest(destination)
@@ -126,6 +126,15 @@ func (webtest *Webtest) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (webtest *Webtest) GetStatus() genruntime.ConvertibleStatus {
 	return &webtest.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (webtest *Webtest) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Insights/webtests"

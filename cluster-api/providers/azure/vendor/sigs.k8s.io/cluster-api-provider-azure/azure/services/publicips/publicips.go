@@ -49,7 +49,7 @@ type Service struct {
 
 // New creates a new service.
 func New(scope PublicIPScope) (*Service, error) {
-	client, err := NewClient(scope)
+	client, err := NewClient(scope, scope.DefaultedAzureCallTimeout())
 	if err != nil {
 		return nil, err
 	}
@@ -74,6 +74,9 @@ func (s *Service) Name() string {
 func (s *Service) Reconcile(ctx context.Context) error {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "publicips.Service.Reconcile")
 	defer done()
+
+	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
+	defer cancel()
 
 	specs := s.Scope.PublicIPSpecs()
 	if len(specs) == 0 {
@@ -100,6 +103,9 @@ func (s *Service) Reconcile(ctx context.Context) error {
 func (s *Service) Delete(ctx context.Context) error {
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "publicips.Service.Delete")
 	defer done()
+
+	ctx, cancel := context.WithTimeout(ctx, s.Scope.DefaultedAzureServiceReconcileTimeout())
+	defer cancel()
 
 	specs := s.Scope.PublicIPSpecs()
 	if len(specs) == 0 {

@@ -126,7 +126,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			Namespace: capiutils.Namespace,
 		},
 		Spec: capz.AzureClusterIdentitySpec{
-			Type:              capz.ManualServicePrincipal,
+			Type:              capz.ServicePrincipal,
 			AllowedNamespaces: &capz.AllowedNamespaces{}, // Allow all namespaces.
 			ClientID:          session.Credentials.ClientID,
 			ClientSecret: corev1.SecretReference{

@@ -5,7 +5,7 @@ package v1api20220501
 
 import (
 	"fmt"
-	v20220501s "github.com/Azure/azure-service-operator/v2/api/appconfiguration/v1api20220501storage"
+	v20220501s "github.com/Azure/azure-service-operator/v2/api/appconfiguration/v1api20220501/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &ConfigurationStore{}
 func (store *ConfigurationStore) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20220501s.ConfigurationStore)
 	if !ok {
-		return fmt.Errorf("expected appconfiguration/v1api20220501storage/ConfigurationStore but received %T instead", hub)
+		return fmt.Errorf("expected appconfiguration/v1api20220501/storage/ConfigurationStore but received %T instead", hub)
 	}
 
 	return store.AssignProperties_From_ConfigurationStore(source)
@@ -61,7 +61,7 @@ func (store *ConfigurationStore) ConvertFrom(hub conversion.Hub) error {
 func (store *ConfigurationStore) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20220501s.ConfigurationStore)
 	if !ok {
-		return fmt.Errorf("expected appconfiguration/v1api20220501storage/ConfigurationStore but received %T instead", hub)
+		return fmt.Errorf("expected appconfiguration/v1api20220501/storage/ConfigurationStore but received %T instead", hub)
 	}
 
 	return store.AssignProperties_To_ConfigurationStore(destination)
@@ -126,6 +126,15 @@ func (store *ConfigurationStore) GetSpec() genruntime.ConvertibleSpec {
 // GetStatus returns the status of this resource
 func (store *ConfigurationStore) GetStatus() genruntime.ConvertibleStatus {
 	return &store.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (store *ConfigurationStore) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationDelete,
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.AppConfiguration/configurationStores"

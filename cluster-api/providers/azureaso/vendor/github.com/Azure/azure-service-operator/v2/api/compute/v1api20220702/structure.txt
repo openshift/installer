@@ -3,7 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/compute/v1api20220702
 ├── APIVersion: Enum (1 value)
 │   └── "2022-07-02"
 ├── DiskEncryptionSet: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (10 properties)
 │   │   ├── ActiveKey: *Object (3 properties)
 │   │   │   ├── KeyUrl: *string

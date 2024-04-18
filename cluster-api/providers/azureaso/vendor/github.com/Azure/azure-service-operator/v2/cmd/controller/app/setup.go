@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
@@ -38,6 +39,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/internal/config"
 	"github.com/Azure/azure-service-operator/v2/internal/controllers"
 	"github.com/Azure/azure-service-operator/v2/internal/crdmanagement"
+	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/identity"
 	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	asometrics "github.com/Azure/azure-service-operator/v2/internal/metrics"
@@ -112,18 +114,26 @@ func SetupControllerManager(ctx context.Context, setupLog logr.Logger, flgs Flag
 
 	var cacheFunc cache.NewCacheFunc
 	if cfg.TargetNamespaces != nil && cfg.OperatorMode.IncludesWatchers() {
-		cacheFunc = cache.MultiNamespacedCacheBuilder(cfg.TargetNamespaces)
+		cacheFunc = func(config *rest.Config, opts cache.Options) (cache.Cache, error) {
+			opts.DefaultNamespaces = make(map[string]cache.Config, len(cfg.TargetNamespaces))
+			for _, ns := range cfg.TargetNamespaces {
+				opts.DefaultNamespaces[ns] = cache.Config{}
+			}
+
+			return cache.New(config, opts)
+		}
 	}
 
 	k8sConfig := ctrl.GetConfigOrDie()
 	mgr, err := ctrl.NewManager(k8sConfig, ctrl.Options{
 		Scheme:                 scheme,
-		MetricsBindAddress:     flgs.MetricsAddr,
 		NewCache:               cacheFunc,
 		LeaderElection:         flgs.EnableLeaderElection,
 		LeaderElectionID:       "controllers-leader-election-azinfra-generated",
-		Port:                   9443,
 		HealthProbeBindAddress: flgs.HealthAddr,
+		Metrics: server.Options{
+			BindAddress: flgs.MetricsAddr,
+		},
 		WebhookServer: webhook.NewServer(webhook.Options{
 			Port:    flgs.WebhookPort,
 			CertDir: flgs.WebhookCertDir,
@@ -155,8 +165,8 @@ func SetupControllerManager(ctx context.Context, setupLog logr.Logger, flgs Flag
 	// By default, assume the existing CRDs are the goal CRDs. If CRD management is enabled, we will
 	// load the goal CRDs from disk and apply them.
 	goalCRDs := existingCRDs
-	if flgs.EnableCRDManagement {
-		var err error
+	switch flgs.CRDManagementMode {
+	case "auto":
 		goalCRDs, err = crdManager.LoadOperatorCRDs(crdmanagement.CRDLocation, cfg.PodNamespace)
 		if err != nil {
 			setupLog.Error(err, "failed to load CRDs from disk")
@@ -185,6 +195,11 @@ func SetupControllerManager(ctx context.Context, setupLog logr.Logger, flgs Flag
 				os.Exit(1)
 			}
 		}
+	case "none":
+		setupLog.Info("CRD management mode was set to 'none', the operator will not manage CRDs and assumes they are already installed and matching the operator version")
+	default:
+		setupLog.Error(fmt.Errorf("invalid CRD management mode: %s", flgs.CRDManagementMode), "failed to initialize CRD client")
+		os.Exit(1)
 	}
 
 	// Of all the resources we know of, find any that aren't ready. We will use this collection
@@ -320,6 +335,8 @@ func initializeClients(cfg config.Values, mgr ctrl.Manager) (*clients, error) {
 		cfg.Cloud(),
 		nil,
 		armMetrics)
+
+	genericarmclient.AddToUserAgent(cfg.UserAgentSuffix)
 
 	var connectionFactory armreconciler.ARMConnectionFactory = func(ctx context.Context, obj genruntime.ARMMetaObject) (armreconciler.Connection, error) {
 		return armClientCache.GetConnection(ctx, obj)

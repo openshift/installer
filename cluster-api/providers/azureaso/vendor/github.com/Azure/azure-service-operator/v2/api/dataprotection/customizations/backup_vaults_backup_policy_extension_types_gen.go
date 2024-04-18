@@ -5,7 +5,7 @@ package customizations
 
 import (
 	v20230101 "github.com/Azure/azure-service-operator/v2/api/dataprotection/v1api20230101"
-	v20230101s "github.com/Azure/azure-service-operator/v2/api/dataprotection/v1api20230101storage"
+	v20230101s "github.com/Azure/azure-service-operator/v2/api/dataprotection/v1api20230101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 

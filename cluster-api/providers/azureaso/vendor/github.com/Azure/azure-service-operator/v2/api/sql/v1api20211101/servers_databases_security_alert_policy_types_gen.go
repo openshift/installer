@@ -5,7 +5,7 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101storage"
+	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &ServersDatabasesSecurityAlertPolicy{}
 func (policy *ServersDatabasesSecurityAlertPolicy) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20211101s.ServersDatabasesSecurityAlertPolicy)
 	if !ok {
-		return fmt.Errorf("expected sql/v1api20211101storage/ServersDatabasesSecurityAlertPolicy but received %T instead", hub)
+		return fmt.Errorf("expected sql/v1api20211101/storage/ServersDatabasesSecurityAlertPolicy but received %T instead", hub)
 	}
 
 	return policy.AssignProperties_From_ServersDatabasesSecurityAlertPolicy(source)
@@ -61,7 +61,7 @@ func (policy *ServersDatabasesSecurityAlertPolicy) ConvertFrom(hub conversion.Hu
 func (policy *ServersDatabasesSecurityAlertPolicy) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20211101s.ServersDatabasesSecurityAlertPolicy)
 	if !ok {
-		return fmt.Errorf("expected sql/v1api20211101storage/ServersDatabasesSecurityAlertPolicy but received %T instead", hub)
+		return fmt.Errorf("expected sql/v1api20211101/storage/ServersDatabasesSecurityAlertPolicy but received %T instead", hub)
 	}
 
 	return policy.AssignProperties_To_ServersDatabasesSecurityAlertPolicy(destination)
@@ -119,6 +119,14 @@ func (policy *ServersDatabasesSecurityAlertPolicy) GetSpec() genruntime.Converti
 // GetStatus returns the status of this resource
 func (policy *ServersDatabasesSecurityAlertPolicy) GetStatus() genruntime.ConvertibleStatus {
 	return &policy.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (policy *ServersDatabasesSecurityAlertPolicy) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.Sql/servers/databases/securityAlertPolicies"

@@ -5,7 +5,7 @@ package v1api20220101
 
 import (
 	"fmt"
-	v20220101s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20220101storage"
+	v20220101s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20220101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -51,7 +51,7 @@ var _ conversion.Convertible = &FlexibleServersConfiguration{}
 func (configuration *FlexibleServersConfiguration) ConvertFrom(hub conversion.Hub) error {
 	source, ok := hub.(*v20220101s.FlexibleServersConfiguration)
 	if !ok {
-		return fmt.Errorf("expected dbformysql/v1api20220101storage/FlexibleServersConfiguration but received %T instead", hub)
+		return fmt.Errorf("expected dbformysql/v1api20220101/storage/FlexibleServersConfiguration but received %T instead", hub)
 	}
 
 	return configuration.AssignProperties_From_FlexibleServersConfiguration(source)
@@ -61,7 +61,7 @@ func (configuration *FlexibleServersConfiguration) ConvertFrom(hub conversion.Hu
 func (configuration *FlexibleServersConfiguration) ConvertTo(hub conversion.Hub) error {
 	destination, ok := hub.(*v20220101s.FlexibleServersConfiguration)
 	if !ok {
-		return fmt.Errorf("expected dbformysql/v1api20220101storage/FlexibleServersConfiguration but received %T instead", hub)
+		return fmt.Errorf("expected dbformysql/v1api20220101/storage/FlexibleServersConfiguration but received %T instead", hub)
 	}
 
 	return configuration.AssignProperties_To_FlexibleServersConfiguration(destination)
@@ -126,6 +126,14 @@ func (configuration *FlexibleServersConfiguration) GetSpec() genruntime.Converti
 // GetStatus returns the status of this resource
 func (configuration *FlexibleServersConfiguration) GetStatus() genruntime.ConvertibleStatus {
 	return &configuration.Status
+}
+
+// GetSupportedOperations returns the operations supported by the resource
+func (configuration *FlexibleServersConfiguration) GetSupportedOperations() []genruntime.ResourceOperation {
+	return []genruntime.ResourceOperation{
+		genruntime.ResourceOperationGet,
+		genruntime.ResourceOperationPut,
+	}
 }
 
 // GetType returns the ARM Type of the resource. This is always "Microsoft.DBforMySQL/flexibleServers/configurations"
