@@ -18,7 +18,6 @@ package context
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 
@@ -69,30 +68,6 @@ func IsControlPlaneMachine(nma *infrav1.NutanixMachine) bool {
 	}
 	_, ok := nma.GetLabels()[capiv1.MachineControlPlaneLabelName]
 	return ok
-}
-
-// ErrNoMachineIPAddr indicates that no valid IP addresses were found in a machine context
-var ErrNoMachineIPAddr = errors.New("no IP addresses found for machine")
-
-// GetMachinePreferredIPAddress returns the preferred IP address associated with the NutanixMachine
-func GetMachinePreferredIPAddress(nma *infrav1.NutanixMachine) (string, error) {
-	var internalIP, externalIP string
-	for _, addr := range nma.Status.Addresses {
-		if addr.Type == capiv1.MachineExternalIP {
-			externalIP = addr.Address
-		} else if addr.Type == capiv1.MachineInternalIP {
-			internalIP = addr.Address
-		}
-	}
-
-	if len(externalIP) > 0 {
-		return externalIP, nil
-	}
-	if len(internalIP) > 0 {
-		return internalIP, nil
-	}
-
-	return "", ErrNoMachineIPAddr
 }
 
 // GetNutanixMachinesInCluster gets a cluster's NutanixMachine resources.

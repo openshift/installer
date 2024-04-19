@@ -20,6 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/manifests/gcp"
+	"github.com/openshift/installer/pkg/asset/manifests/nutanix"
 	"github.com/openshift/installer/pkg/asset/manifests/openstack"
 	"github.com/openshift/installer/pkg/asset/manifests/powervs"
 	"github.com/openshift/installer/pkg/asset/manifests/vsphere"
@@ -29,6 +30,7 @@ import (
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vsphereplatform "github.com/openshift/installer/pkg/types/vsphere"
@@ -131,6 +133,12 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		out, err = powervs.GenerateClusterAssets(installConfig, clusterID, osImage[0], osImage[1])
 		if err != nil {
 			return fmt.Errorf("failed to generate PowerVS manifests %w", err)
+		}
+	case nutanixtypes.Name:
+		var err error
+		out, err = nutanix.GenerateClusterAssets(installConfig, clusterID)
+		if err != nil {
+			return errors.Wrap(err, "failed to generate Nutanix manifests")
 		}
 	default:
 		return fmt.Errorf("unsupported platform %q", platform)

@@ -107,3 +107,16 @@ out
 # github.com
 github.com
 profile.cov
+coverage.xml
+
+# env files that usually contain secrets or local config
+.env
+.envrc
+
+# local dev files
+clusterctl.yaml
+cluster.yaml
+*.workload.kubeconfig
+
+junit-report.xml
+

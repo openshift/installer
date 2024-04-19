@@ -210,7 +210,17 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 	case ibmcloud.Name:
 		// TODO
 	case nutanix.Name:
-		// TODO
+		controllers = append(controllers,
+			c.getInfrastructureController(
+				&Nutanix,
+				[]string{
+					"-metrics-bind-address=0",
+					"-health-probe-bind-address={{suggestHealthHostPort}}",
+					"-leader-elect=false",
+				},
+				map[string]string{},
+			),
+		)
 	case openstack.Name:
 		controllers = append(controllers,
 			c.getInfrastructureController(

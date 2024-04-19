@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	gcpcapi "github.com/openshift/installer/pkg/infrastructure/gcp/clusterapi"
 	ibmcloudcapi "github.com/openshift/installer/pkg/infrastructure/ibmcloud/clusterapi"
+	nutanixcapi "github.com/openshift/installer/pkg/infrastructure/nutanix/clusterapi"
 	openstackcapi "github.com/openshift/installer/pkg/infrastructure/openstack/clusterapi"
 	powervscapi "github.com/openshift/installer/pkg/infrastructure/powervs/clusterapi"
 	vspherecapi "github.com/openshift/installer/pkg/infrastructure/vsphere/clusterapi"
@@ -22,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/types/featuregates"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
+	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -62,6 +64,10 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 	case openstacktypes.Name:
 		if fg.Enabled(configv1.FeatureGateClusterAPIInstall) {
 			return clusterapi.InitializeProvider(openstackcapi.Provider{}), nil
+		}
+	case nutanixtypes.Name:
+		if fg.Enabled(configv1.FeatureGateClusterAPIInstall) {
+			return clusterapi.InitializeProvider(nutanixcapi.Provider{}), nil
 		}
 	}
 	return nil, fmt.Errorf("platform %q is not supported in the altinfra Installer build", platform)
