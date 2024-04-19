@@ -352,6 +352,7 @@ func TestEnsureVPC(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			state := vpcState{
 				input: &vpcInputOptions{
@@ -509,6 +510,7 @@ func TestEnsureIntergetGateway(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			state := vpcState{
 				input: &vpcInputOptions{
@@ -653,6 +655,7 @@ func TestEnsureDHCPOptions(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			state := vpcState{
 				input: &vpcInputOptions{
@@ -763,6 +766,7 @@ func TestEnsureRouteTable(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			state := vpcState{
 				input: &vpcInputOptions{
@@ -1024,6 +1028,7 @@ func TestEnsurePublicRouteTable(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			state := vpcState{
 				input: &vpcInputOptions{
@@ -1136,6 +1141,7 @@ func TestEnsureSubnet(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			state := vpcState{
 				input: &vpcInputOptions{
@@ -1291,6 +1297,7 @@ func TestEnsurePublicSubnets(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			state := vpcState{
 				input: &vpcInputOptions{
@@ -1414,6 +1421,7 @@ func TestEnsurePrivateSubnets(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			state := vpcState{
 				input: &vpcInputOptions{
@@ -1571,6 +1579,7 @@ func TestEnsureEIP(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			res, err := ensureEIP(context.TODO(), &test.mockSvc, map[string]string{})
 			if test.expectedErr == "" {
@@ -1695,6 +1704,7 @@ func TestEnsureNatGateway(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			state := vpcState{
 				input: &vpcInputOptions{
@@ -1855,6 +1865,7 @@ func TestEnsurePrivateRouteTable(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			state := vpcState{
 				input: &vpcInputOptions{
@@ -1953,6 +1964,7 @@ func TestEnsureS3VPCEndpoint(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			state := vpcState{
 				input: &vpcInputOptions{
@@ -2048,6 +2060,7 @@ func TestEnsureUserVpc(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			input := &vpcInputOptions{
 				infraID:          "infraID",
@@ -2241,6 +2254,7 @@ func TestEnsureSecurityGroup(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			res, err := ensureSecurityGroup(context.TODO(), logger, &test.mockSvc, "infraID", "vpc-1", "node-sg", map[string]string{"custom-tag": "custom-value"})
 			if test.expectedErr == "" {
@@ -2588,6 +2602,7 @@ func TestCreateSecurityGroups(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			input := sgInputOptions{
 				infraID:          "infraID",
@@ -2793,6 +2808,7 @@ func TestEnsureInstance(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			input := instanceInputOptions{
 				infraID:         "infraID",
@@ -3145,6 +3161,7 @@ func TestEnsureInstanceProfile(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			input := instanceProfileOptions{
 				namePrefix:       "name",
@@ -3274,6 +3291,7 @@ func TestEnsureTargetGroup(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			res, err := ensureTargetGroup(context.TODO(), logger, &test.mockSvc, "tgName", "vpc-1", readyzPath, apiPort, map[string]string{})
 			if test.expectedErr == "" {
@@ -3383,6 +3401,7 @@ func TestEnsureLoadBalancer(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			res, err := ensureLoadBalancer(context.TODO(), logger, &test.mockSvc, "lbName", []string{}, true, map[string]string{})
 			if test.expectedErr == "" {
@@ -3765,6 +3784,7 @@ func TestEnsureInternalLoadBalancer(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			state := lbState{
 				input: &lbInputOptions{
@@ -4001,6 +4021,7 @@ func TestEnsureExternalLoadBalancer(t *testing.T) {
 	logger.SetOutput(io.Discard)
 
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			state := lbState{
 				input: &lbInputOptions{
@@ -4311,6 +4332,7 @@ func TestEnsurePrivateHostedZone(t *testing.T) {
 		tags:          map[string]string{"custom-tag": "custom-value"},
 	}
 	for _, test := range tests {
+		test := test // TODO: remove with golang 1.22
 		t.Run(test.name, func(t *testing.T) {
 			res, err := ensurePrivateZone(context.TODO(), logger, &test.mockSvc, &input)
 			if test.expectedErr == "" {

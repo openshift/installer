@@ -423,6 +423,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 func (c *ClusterAPI) Files() []*asset.File {
 	files := []*asset.File{}
 	for _, f := range c.FileList {
+		f := f // TODO: remove with golang 1.22
 		files = append(files, &f.File)
 	}
 	return files
@@ -465,7 +466,8 @@ func (c *ClusterAPI) Load(f asset.FileFetcher) (bool, error) {
 		c.FileList = append(c.FileList, &asset.RuntimeFile{
 			File: asset.File{
 				Filename: file.Filename,
-				Data:     file.Data},
+				Data:     file.Data,
+			},
 			Object: obj.(client.Object),
 		})
 	}

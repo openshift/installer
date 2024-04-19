@@ -18,9 +18,7 @@ import (
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
 
-var (
-	stubDefaultCIDR = "10.0.0.0/16"
-)
+var stubDefaultCIDR = "10.0.0.0/16"
 
 func stubClusterID() *installconfig.ClusterID {
 	return &installconfig.ClusterID{
@@ -274,6 +272,7 @@ func Test_setSubnetsManagedVPC(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt // TODO: remove with golang 1.22
 		t.Run(tt.name, func(t *testing.T) {
 			err := setSubnetsManagedVPC(tt.args.in)
 			if (err != nil) != tt.wantErr {
@@ -487,6 +486,7 @@ func Test_setSubnetsBYOVPC(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt // TODO: remove with golang 1.22
 		t.Run(tt.name, func(t *testing.T) {
 			err := setSubnetsBYOVPC(tt.args.in)
 			if (err != nil) != tt.wantErr {
