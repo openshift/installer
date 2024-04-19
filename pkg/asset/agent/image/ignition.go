@@ -67,6 +67,7 @@ type agentTemplateData struct {
 	Proxy                     *v1beta1.Proxy
 	ConfigImageFiles          string
 	ImageTypeISO              string
+	CaBundleMount             string
 }
 
 // Name returns the human-friendly name of the asset.
@@ -158,6 +159,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	}
 	a.CPUArch = *osImage.CPUArchitecture
 
+	caBundleMount := defineCABundleMount(registriesConfig, registryCABundle)
+
 	clusterName := fmt.Sprintf("%s.%s",
 		agentManifests.ClusterDeployment.Spec.ClusterName,
 		agentManifests.ClusterDeployment.Spec.BaseDomain)
@@ -180,7 +183,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		infraEnvID,
 		osImage,
 		infraEnv.Spec.Proxy,
-		imageTypeISO)
+		imageTypeISO,
+		caBundleMount)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
 	if err != nil {
@@ -296,7 +300,8 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 	infraEnvID string,
 	osImage *models.OsImage,
 	proxy *v1beta1.Proxy,
-	imageTypeISO string) *agentTemplateData {
+	imageTypeISO string,
+	caBundleMount string) *agentTemplateData {
 	return &agentTemplateData{
 		ServiceProtocol:           "http",
 		PullSecret:                pullSecret,
@@ -312,6 +317,7 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 		OSImage:                   osImage,
 		Proxy:                     proxy,
 		ImageTypeISO:              imageTypeISO,
+		CaBundleMount:             caBundleMount,
 	}
 }
 
@@ -395,6 +401,19 @@ func addMirrorData(config *igntypes.Config, registriesConfig *mirror.RegistriesC
 			"root", 0600, registryCABundle.File.Data)
 		config.Storage.Files = append(config.Storage.Files, caFile)
 	}
+}
+
+func defineCABundleMount(registriesConfig *mirror.RegistriesConf, registryCABundle *mirror.CaBundle) string {
+	// By default, the current host CA bundle is used (it will also contain eventually a user CA bundle, if
+	// defined in the AdditionalTrustBundle field of install-config.yaml).
+	hostSourceCABundle := "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"
+
+	// If mirror registry is configured and the user provided a bundle, then let's mount just the user one.
+	if len(registriesConfig.MirrorConfig) > 0 && registryCABundle.File != nil && len(registryCABundle.File.Data) > 0 {
+		hostSourceCABundle = registryCABundlePath
+	}
+
+	return fmt.Sprintf("-v %s:/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem:z", hostSourceCABundle)
 }
 
 // Creates a file named with a host's MAC address. The desired hostname
