@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
 	mapov1alpha1 "github.com/openshift/api/machine/v1alpha1"

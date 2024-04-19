@@ -203,7 +203,7 @@ func SecurityGroups(ctx context.Context, installConfig *installconfig.InstallCon
 			addRules(ctx, r, masterGroup.ID, serviceOVNDB, ipVersion, CIDRs)
 			addRules(ctx, r, workerGroup.ID, serviceRouter, ipVersion, CIDRs)
 			if mastersSchedulable {
-				addRules(ctx, r, masterGroup.ID, serviceRouter, rules.EtherType4, machineV4CIDRs)
+				addRules(ctx, r, masterGroup.ID, serviceRouter, rules.EtherType4, CIDRs)
 			}
 		}
 
