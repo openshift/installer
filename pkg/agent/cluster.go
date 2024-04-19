@@ -497,21 +497,9 @@ func (czero *Cluster) humanFriendlyClusterInstallStatus(status string) string {
 		models.ClusterStatusPreparingForInstallation:    "Preparing cluster for installation",
 		models.ClusterStatusReady:                       "Cluster is ready for install",
 	}
-	hostStoppedInstallingStates := map[string]string{
-		models.ClusterStatusAddingHosts:                 "Cluster is adding host",
-		models.ClusterStatusCancelled:                   "Host installation cancelled",
-		models.ClusterStatusError:                       "Host has error(s)",
-		models.ClusterStatusFinalizing:                  "Finalizing host installation",
-		models.ClusterStatusInstalling:                  "Host installation in progress",
-		models.ClusterStatusInstallingPendingUserAction: "Host installation started but now requires user input",
-		models.ClusterStatusInsufficient:                "Host is not ready for install. Check validations",
-		models.ClusterStatusPendingForInput:             "User input is required to continue host installation",
-		models.ClusterStatusPreparingForInstallation:    "Preparing host for installation",
-		models.ClusterStatusReady:                       "Host is ready for install",
-	}
 	switch czero.workflow {
 	case workflow.AgentWorkflowTypeAddNodes:
-		return fmt.Sprintf("Node %s: %s", czero.API.Rest.NodeZeroIP, hostStoppedInstallingStates[status])
+		return fmt.Sprintf("Node %s: %s", czero.API.Rest.NodeZeroIP, clusterStoppedInstallingStates[status])
 	default:
 		return clusterStoppedInstallingStates[status]
 	}
