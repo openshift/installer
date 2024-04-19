@@ -40,7 +40,7 @@ type API interface {
 	GetDNSZones(ctx context.Context, publish types.PublishingStrategy) ([]DNSZoneResponse, error)
 	GetDNSInstancePermittedNetworks(ctx context.Context, dnsID string, dnsZone string) ([]string, error)
 	GetDNSCustomResolverIP(ctx context.Context, dnsID string, vpcID string) (string, error)
-	CreateDNSRecord(ctx context.Context, crnstr string, baseDomain string, hostname string, cname string) error
+	CreateDNSRecord(ctx context.Context, publish types.PublishingStrategy, crnstr string, baseDomain string, hostname string, cname string) error
 
 	// VPC
 	GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, error)
@@ -416,8 +416,19 @@ func (c *Client) GetDNSInstancePermittedNetworks(ctx context.Context, dnsID stri
 }
 
 // CreateDNSRecord Creates a DNS CNAME record in the given base domain and CRN.
-func (c *Client) CreateDNSRecord(ctx context.Context, crnstr string, baseDomain string, hostname string, cname string) error {
-	logrus.Debugf("CreateDNSRecord: crnstr = %s, hostname = %s, cname = %s", crnstr, hostname, cname)
+func (c *Client) CreateDNSRecord(ctx context.Context, publish types.PublishingStrategy, crnstr string, baseDomain string, hostname string, cname string) error {
+	switch publish {
+	case types.InternalPublishingStrategy:
+		return c.createPrivateDNSRecord(ctx, crnstr, baseDomain, hostname, cname)
+	case types.ExternalPublishingStrategy:
+		return c.createPublicDNSRecord(ctx, crnstr, baseDomain, hostname, cname)
+	default:
+		return fmt.Errorf("publish strategy %q not supported", publish)
+	}
+}
+
+func (c *Client) createPublicDNSRecord(ctx context.Context, crnstr string, baseDomain string, hostname string, cname string) error {
+	logrus.Debugf("createDNSRecord: crnstr = %s, hostname = %s, cname = %s", crnstr, hostname, cname)
 
 	var (
 		zoneID           string
@@ -433,7 +444,7 @@ func (c *Client) CreateDNSRecord(ctx context.Context, crnstr string, baseDomain 
 		logrus.Errorf("c.GetDNSZoneIDByName returns %v", err)
 		return err
 	}
-	logrus.Debugf("CreateDNSRecord: zoneID = %s", zoneID)
+	logrus.Debugf("CreatePublicDNSRecord: zoneID = %s", zoneID)
 
 	authenticator = &core.IamAuthenticator{
 		ApiKey: c.APIKey,
@@ -448,7 +459,7 @@ func (c *Client) CreateDNSRecord(ctx context.Context, crnstr string, baseDomain 
 		logrus.Errorf("dnsrecordsv1.NewDnsRecordsV1 returns %v", err)
 		return err
 	}
-	logrus.Debugf("CreateDNSRecord: dnsRecordService = %+v", dnsRecordService)
+	logrus.Debugf("CreatePublicDNSRecord: dnsRecordService = %+v", dnsRecordService)
 
 	createOptions := dnsRecordService.NewCreateDnsRecordOptions()
 	createOptions.SetName(hostname)
@@ -460,7 +471,41 @@ func (c *Client) CreateDNSRecord(ctx context.Context, crnstr string, baseDomain 
 		logrus.Errorf("dnsRecordService.CreateDnsRecord returns %v", err)
 		return err
 	}
-	logrus.Debugf("CreateDNSRecord: Result.ID = %v, RawResult = %v", *result.Result.ID, response.RawResult)
+	logrus.Debugf("createPublicDNSRecord: Result.ID = %v, RawResult = %v", *result.Result.ID, response.RawResult)
+
+	return nil
+}
+
+func (c *Client) createPrivateDNSRecord(ctx context.Context, crnstr string, baseDomain string, hostname string, cname string) error {
+	logrus.Debugf("createPrivateDNSRecord: crnstr = %s, hostname = %s, cname = %s", crnstr, hostname, cname)
+
+	zoneID, err := c.GetDNSZoneIDByName(ctx, baseDomain, types.InternalPublishingStrategy)
+	if err != nil {
+		logrus.Errorf("c.GetDNSZoneIDByName returns %v", err)
+		return err
+	}
+	logrus.Debugf("createPrivateDNSRecord: zoneID = %s", zoneID)
+
+	dnsCRN, err := crn.Parse(crnstr)
+	if err != nil {
+		return fmt.Errorf("failed to parse DNSInstanceCRN: %w", err)
+	}
+
+	rdataCnameRecord, err := c.dnsServicesAPI.NewResourceRecordInputRdataRdataCnameRecord(cname)
+	if err != nil {
+		return fmt.Errorf("NewResourceRecordInputRdataRdataCnameRecord failed: %w", err)
+	}
+	createOptions := c.dnsServicesAPI.NewCreateResourceRecordOptions(dnsCRN.ServiceInstance, zoneID)
+	createOptions.SetRdata(rdataCnameRecord)
+	createOptions.SetTTL(120)
+	createOptions.SetName(hostname)
+	createOptions.SetType("CNAME")
+	result, resp, err := c.dnsServicesAPI.CreateResourceRecord(createOptions)
+	if err != nil {
+		logrus.Errorf("dnsRecordService.CreateResourceRecord returns %v", err)
+		return err
+	}
+	logrus.Debugf("createPrivateDNSRecord: result.ID = %v, resp.RawResult = %v", *result.ID, resp.RawResult)
 
 	return nil
 }

@@ -178,6 +178,7 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 			Steps:    math.MaxInt32}
 		err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
 			err2 := client.CreateDNSRecord(ctx,
+				in.InstallConfig.Config.Publish,
 				instanceCRN,
 				in.InstallConfig.PowerVS.BaseDomain,
 				hostname,
