@@ -44,14 +44,20 @@ func main() {
 				return err
 			}
 
+			autoApproveCSRS, err := cmd.Flags().GetBool("auto-approve-csrs")
+			if err != nil {
+				return err
+			}
+
 			ips := args
 			logrus.Infof("Monitoring IPs: %v", ips)
 			if len(ips) == 0 {
 				logrus.Fatal("At least one IP address must be specified")
 			}
-			return nodejoiner.NewMonitorAddNodesCommand(wd, kubeConfig, ips)
+			return nodejoiner.NewMonitorAddNodesCommand(wd, kubeConfig, autoApproveCSRS, ips)
 		},
 	}
+	nodesMonitorCmd.PersistentFlags().Bool("auto-approve-csrs", false, "automatically approve CSRs")
 
 	rootCmd := &cobra.Command{
 		Use:              "node-joiner",

@@ -113,7 +113,7 @@ func (kube *ClusterKubeAPIClient) getCSRsPendingApproval(signerName string) []ce
 
 	var matchedCSRs []certificatesv1.CertificateSigningRequest
 	for _, csr := range csrs.Items {
-		if len(csr.Status.Conditions) == 0 {
+		if csr.Status.Certificate == nil {
 			// CSR is Pending and awaiting approval
 			if csr.Spec.SignerName == signerName {
 				matchedCSRs = append(matchedCSRs, csr)
@@ -121,4 +121,20 @@ func (kube *ClusterKubeAPIClient) getCSRsPendingApproval(signerName string) []ce
 		}
 	}
 	return matchedCSRs
+}
+
+// ApproveCSR approves the CSR with the specified approval message.
+func (kube *ClusterKubeAPIClient) ApproveCSR(csr *certificatesv1.CertificateSigningRequest, approvalMessage string) error {
+	csr.Status.Conditions = append(csr.Status.Conditions, certificatesv1.CertificateSigningRequestCondition{
+		Type:           certificatesv1.CertificateApproved,
+		Reason:         "NodeCSRApprove",
+		Message:        approvalMessage,
+		Status:         corev1.ConditionTrue,
+		LastUpdateTime: metav1.Now(),
+	})
+	logrus.Infof("Approving CSR %s signer %s", csr.Name, csr.Spec.SignerName)
+	if _, err := kube.csrClient.UpdateApproval(context.TODO(), csr.Name, csr, metav1.UpdateOptions{}); err != nil {
+		return err
+	}
+	return nil
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	certificatesv1 "k8s.io/api/certificates/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -88,7 +89,7 @@ var defaultChecks = checkFunctions{
 
 // MonitorAddNodes waits for the a node to be added to the cluster
 // and reports its status until it becomes Ready.
-func MonitorAddNodes(cluster *Cluster, nodeIPAddress string) error {
+func MonitorAddNodes(cluster *Cluster, autoApproveCSRs bool, nodeIPAddress string) error {
 	parsedIPAddress := net.ParseIP(nodeIPAddress)
 	if parsedIPAddress == nil {
 		return fmt.Errorf("%s is not valid IP Address", nodeIPAddress)
@@ -117,11 +118,29 @@ func MonitorAddNodes(cluster *Cluster, nodeIPAddress string) error {
 			}
 		}
 
-		if mon.clusterHasFirstCSRPending() || mon.clusterHasSecondCSRPending() {
+		if mon.clusterHasFirstCSRPending() {
 			// TODO? The CSRs have no IP address to identify for which
 			// node it is for, so it is possible to log CSRs pending for
 			// other nodes.
-			mon.logCSRsPendingApproval()
+			if autoApproveCSRs {
+				err := mon.ApproveCSRs(mon.cluster.API.Kube.getCSRsPendingApproval("kubernetes.io/kube-apiserver-client-kubelet"))
+				if err != nil {
+					logrus.Errorf("Failed to approve first CSR %v", err)
+				}
+			} else {
+				mon.logCSRsPendingApproval()
+			}
+		}
+
+		if mon.clusterHasSecondCSRPending() {
+			if autoApproveCSRs {
+				err := mon.ApproveCSRs(mon.cluster.API.Kube.getCSRsPendingApproval("kubernetes.io/kubelet-serving"))
+				if err != nil {
+					logrus.Errorf("Failed to approve second CSR %v", err)
+				}
+			} else {
+				mon.logCSRsPendingApproval()
+			}
 		}
 
 		if mon.in(Finish) {
@@ -243,6 +262,16 @@ func (mon *addNodeMonitor) clusterHasFirstCSRPending() bool {
 
 func (mon *addNodeMonitor) clusterHasSecondCSRPending() bool {
 	return len(mon.cluster.API.Kube.getCSRsPendingApproval("kubernetes.io/kubelet-serving")) > 0
+}
+
+func (mon *addNodeMonitor) ApproveCSRs(csrs []certificatesv1.CertificateSigningRequest) error {
+	for i := range csrs {
+		err := mon.cluster.API.Kube.ApproveCSR(&csrs[i], "This CSR was approved by the node-joiner monitor-add-nodes command")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // isKubeletRunningOnNode checks if kubelet responds
