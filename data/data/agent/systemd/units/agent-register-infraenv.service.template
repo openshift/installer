@@ -2,7 +2,7 @@
 Description=Service that registers the infraenv
 Wants=network-online.target assisted-service.service
 PartOf=assisted-service-pod.service
-After=network-online.target assisted-service.service {{ if eq .WorkflowType "install" }}agent-register-cluster.service{{ end }}{{ if eq .WorkflowType "addnodes" }}agent-import-cluster.service{{ end }}
+After=network-online.target assisted-service.service agent-register-cluster.service agent-import-cluster.service
 ConditionPathExists=/etc/assisted/node0
 
 [Service]
