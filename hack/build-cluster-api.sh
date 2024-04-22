@@ -20,7 +20,8 @@ copy_cluster_api_to_mirror() {
   # Clean the mirror, but preserve the README file.
   rm -rf "${CLUSTER_API_MIRROR_DIR:?}/*.zip"
 
-  sync_envtest
+  # Commented out due to testing extracting from release image
+  #sync_envtest
 
   # Zip every binary in the folder into a single zip file.
   zip -j1 "${CLUSTER_API_MIRROR_DIR}/cluster-api.zip" "${CLUSTER_API_BIN_DIR}"/*
