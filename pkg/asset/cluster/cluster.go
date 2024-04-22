@@ -3,6 +3,7 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -134,6 +135,18 @@ func (c *Cluster) GenerateWithContext(ctx context.Context, parents asset.Parents
 			return err
 		}
 	}
+
+	// We need to handle authentication for extracting binaries from the release image.
+	// The most straightforward way of doing this is writing a temporary file of the pull secret
+	// and setting REGISTRY_AUTH_FILE. Not sure if that is an acceptable solution per se.
+	// One installer consideration is that we may want to move this logic out of the cluster
+	// asset to make this functionality more accessible in the codebase.
+	fp := filepath.Join(InstallDir, ".auth.json")
+	if err := os.WriteFile(fp, []byte(installConfig.Config.PullSecret), 0666); err != nil {
+		return err
+	}
+	os.Setenv("REGISTRY_AUTH_FILE", fp)
+	defer os.Remove(fp)
 
 	provider, err := infra.ProviderForPlatform(platform, installConfig.Config.EnabledFeatureGates())
 	if err != nil {
