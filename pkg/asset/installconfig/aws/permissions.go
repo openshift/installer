@@ -174,7 +174,6 @@ var permissions = map[PermissionGroup][]string{
 		"s3:PutEncryptionConfiguration",
 
 		// More S3 (would be nice to limit 'Resource' to just the bucket we actually interact with...)
-		"s3:DeleteObject",
 		"s3:GetObject",
 		"s3:GetObjectAcl",
 		"s3:GetObjectTagging",
@@ -198,7 +197,6 @@ var permissions = map[PermissionGroup][]string{
 		"iam:ListInstanceProfiles",
 		"iam:ListRolePolicies",
 		"iam:ListUserPolicies",
-		"s3:DeleteObject",
 		"s3:ListBucketVersions",
 		"tag:GetResources",
 	},
