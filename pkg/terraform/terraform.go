@@ -83,25 +83,25 @@ func (p *Provider) Provision(_ context.Context, dir string, parents asset.Parent
 // DestroyBootstrap implements pkg/infrastructure/provider.DestroyBootstrap.
 // DestroyBootstrap iterates through each stage, and will run the destroy
 // command when defined on a stage.
-func (p *Provider) DestroyBootstrap(dir string) error {
+func (p *Provider) DestroyBootstrap(dir string, metadata *types.ClusterMetadata) error {
 	varFiles := []string{tfVarsFileName, tfPlatformVarsFileName}
 	for _, stage := range p.stages {
 		varFiles = append(varFiles, stage.OutputsFilename())
 	}
 
 	terraformDir := filepath.Join(dir, "terraform")
-	if err := os.Mkdir(terraformDir, 0777); err != nil {
-		return fmt.Errorf("could not create the terraform directory: %w", err)
-	}
-
 	terraformDirPath, err := filepath.Abs(terraformDir)
 	if err != nil {
 		return fmt.Errorf("could not get absolute path of terraform directory: %w", err)
 	}
 
-	defer os.RemoveAll(terraformDirPath)
-	if err = UnpackTerraform(terraformDirPath, p.stages); err != nil {
-		return fmt.Errorf("error unpacking terraform: %w", err)
+	if _, err := os.Stat(terraformDir); os.IsNotExist(err) {
+		if err := os.Mkdir(terraformDir, 0777); err != nil {
+			return errors.Wrap(err, "could not create the terraform directory")
+		}
+
+		defer os.RemoveAll(terraformDirPath)
+		UnpackTerraform(terraformDirPath, metadata.ReleaseImagePullSpec, p.stages)
 	}
 
 	for i := len(p.stages) - 1; i >= 0; i-- {

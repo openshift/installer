@@ -303,7 +303,7 @@ func (a InfraProvider) Provision(ctx context.Context, dir string, parents asset.
 }
 
 // DestroyBootstrap destroys the temporary bootstrap resources.
-func (a InfraProvider) DestroyBootstrap(dir string) error {
+func (a InfraProvider) DestroyBootstrap(dir string, _ *types.ClusterMetadata) error {
 	// Unmarshall input from tf variables, so we can use it along with
 	// installConfig and other assets as the contractual input regardless of
 	// the implementation.

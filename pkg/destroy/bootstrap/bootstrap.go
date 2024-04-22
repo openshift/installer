@@ -84,7 +84,7 @@ func Destroy(ctx context.Context, dir string) (err error) {
 		return fmt.Errorf("error getting infrastructure provider: %w", err)
 	}
 
-	if err := provider.DestroyBootstrap(dir); err != nil {
+	if err := provider.DestroyBootstrap(dir, metadata); err != nil {
 		return fmt.Errorf("error destroying bootstrap resources %w", err)
 	}
 

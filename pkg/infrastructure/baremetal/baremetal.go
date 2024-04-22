@@ -33,7 +33,7 @@ func (a Provider) Provision(ctx context.Context, dir string, parents asset.Paren
 }
 
 // DestroyBootstrap destroys the temporary bootstrap resources.
-func (a Provider) DestroyBootstrap(dir string) error {
+func (a Provider) DestroyBootstrap(dir string, _ *types.ClusterMetadata) error {
 	config, err := getConfig(dir)
 	if err != nil {
 		return fmt.Errorf("failed to get baremetal platform config: %w", err)

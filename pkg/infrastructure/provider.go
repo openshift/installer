@@ -18,7 +18,7 @@ type Provider interface {
 	Provision(ctx context.Context, dir string, parents asset.Parents) ([]*asset.File, error)
 
 	// DestroyBootstrap destroys the temporary bootstrap resources.
-	DestroyBootstrap(dir string) error
+	DestroyBootstrap(dir string, metadata *types.ClusterMetadata) error
 
 	// ExtractHostAddresses extracts the IPs of the bootstrap and control plane machines.
 	ExtractHostAddresses(dir string, config *types.InstallConfig, ha *HostAddresses) error
