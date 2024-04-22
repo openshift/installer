@@ -51,6 +51,9 @@ import (
 	"github.com/openshift/installer/pkg/validate"
 )
 
+// hostCryptBypassedAnnotation is set if the host crypt check was bypassed via environment variable.
+const hostCryptBypassedAnnotation = "install.openshift.io/hostcrypt-check-bypassed"
+
 // list of known plugins that require hostPrefix to be set
 var pluginsUsingHostPrefix = sets.NewString(string(operv1.NetworkTypeOVNKubernetes))
 
@@ -1171,7 +1174,15 @@ func validateFIPSconfig(c *types.InstallConfig) field.ErrorList {
 	}
 
 	if err := hostcrypt.VerifyHostTargetState(c.FIPS); err != nil {
-		logrus.Warnf("%v", err)
+		if skip, ok := os.LookupEnv("OPENSHIFT_INSTALL_SKIP_HOSTCRYPT_VALIDATION"); ok && skip != "" {
+			logrus.Warnf("%v", err)
+			if c.Annotations == nil {
+				c.Annotations = make(map[string]string)
+			}
+			c.Annotations[hostCryptBypassedAnnotation] = "true"
+		} else {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("fips"), err.Error()))
+		}
 	}
 	return allErrs
 }
