@@ -233,6 +233,14 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 		return nil, fmt.Errorf("failed to set cluster zones or subnets: %w", err)
 	}
 
+	// Enable BYO Public IPv4 when defined on install-config.yaml
+	if len(ic.Config.Platform.AWS.PublicIpv4Pool) > 0 {
+		awsCluster.Spec.NetworkSpec.VPC.ElasticIPPool = &capa.ElasticIPPool{
+			PublicIpv4Pool:              ptr.To(ic.Config.Platform.AWS.PublicIpv4Pool),
+			PublicIpv4PoolFallBackOrder: ptr.To(capa.PublicIpv4PoolFallbackOrderAmazonPool),
+		}
+	}
+
 	manifests = append(manifests, &asset.RuntimeFile{
 		Object: awsCluster,
 		File:   asset.File{Filename: "02_infra-cluster.yaml"},
