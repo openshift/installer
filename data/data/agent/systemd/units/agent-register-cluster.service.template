@@ -24,4 +24,4 @@ RestartSec=30
 RemainAfterExit=true
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=start-cluster-installation.service

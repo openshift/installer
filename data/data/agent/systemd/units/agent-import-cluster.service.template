@@ -25,4 +25,4 @@ RestartSec=30
 RemainAfterExit=true
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=agent-add-node.service
