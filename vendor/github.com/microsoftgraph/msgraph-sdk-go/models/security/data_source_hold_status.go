@@ -2,7 +2,7 @@ package security
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type DataSourceHoldStatus int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i DataSourceHoldStatus) String() string {
     return []string{"notApplied", "applied", "applying", "removing", "partial", "unknownFutureValue"}[i]
 }
-func ParseDataSourceHoldStatus(v string) (interface{}, error) {
+func ParseDataSourceHoldStatus(v string) (any, error) {
     result := NOTAPPLIED_DATASOURCEHOLDSTATUS
     switch v {
         case "notApplied":

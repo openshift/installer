@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type RecurrenceRangeType int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i RecurrenceRangeType) String() string {
     return []string{"endDate", "noEnd", "numbered"}[i]
 }
-func ParseRecurrenceRangeType(v string) (interface{}, error) {
+func ParseRecurrenceRangeType(v string) (any, error) {
     result := ENDDATE_RECURRENCERANGETYPE
     switch v {
         case "endDate":

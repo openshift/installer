@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type RegistryHive int
 
 const (
@@ -20,7 +20,7 @@ const (
 func (i RegistryHive) String() string {
     return []string{"unknown", "currentConfig", "currentUser", "localMachineSam", "localMachineSecurity", "localMachineSoftware", "localMachineSystem", "usersDefault", "unknownFutureValue"}[i]
 }
-func ParseRegistryHive(v string) (interface{}, error) {
+func ParseRegistryHive(v string) (any, error) {
     result := UNKNOWN_REGISTRYHIVE
     switch v {
         case "unknown":

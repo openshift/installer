@@ -82,11 +82,11 @@ type DescribeDnsGtmInstancesRequest struct {
 // DescribeDnsGtmInstancesResponse is the response struct for api DescribeDnsGtmInstances
 type DescribeDnsGtmInstancesResponse struct {
 	*responses.BaseResponse
+	PageSize     int           `json:"PageSize" xml:"PageSize"`
 	RequestId    string        `json:"RequestId" xml:"RequestId"`
 	PageNumber   int           `json:"PageNumber" xml:"PageNumber"`
-	PageSize     int           `json:"PageSize" xml:"PageSize"`
-	TotalItems   int           `json:"TotalItems" xml:"TotalItems"`
 	TotalPages   int           `json:"TotalPages" xml:"TotalPages"`
+	TotalItems   int           `json:"TotalItems" xml:"TotalItems"`
 	GtmInstances []GtmInstance `json:"GtmInstances" xml:"GtmInstances"`
 }
 

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Character set which is to be used for a user's app PIN
 type ManagedAppPinCharacterSet int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i ManagedAppPinCharacterSet) String() string {
     return []string{"numeric", "alphanumericAndSymbol"}[i]
 }
-func ParseManagedAppPinCharacterSet(v string) (interface{}, error) {
+func ParseManagedAppPinCharacterSet(v string) (any, error) {
     result := NUMERIC_MANAGEDAPPPINCHARACTERSET
     switch v {
         case "numeric":

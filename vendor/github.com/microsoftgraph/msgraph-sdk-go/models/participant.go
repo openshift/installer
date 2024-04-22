@@ -1,25 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// Participant provides operations to manage the cloudCommunications singleton.
+// Participant 
 type Participant struct {
     Entity
-    // The info property
-    info ParticipantInfoable
-    // true if the participant is in lobby.
-    isInLobby *bool
-    // true if the participant is muted (client or server muted).
-    isMuted *bool
-    // The list of media streams.
-    mediaStreams []MediaStreamable
-    // A blob of data provided by the participant in the roster.
-    metadata *string
-    // Information about whether the participant has recording capability.
-    recordingInfo RecordingInfoable
 }
 // NewParticipant instantiates a new participant and sets the default values.
 func NewParticipant()(*Participant) {
@@ -35,37 +22,137 @@ func CreateParticipantFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a
 // GetFieldDeserializers the deserialization information for the current model
 func (m *Participant) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["info"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateParticipantInfoFromDiscriminatorValue , m.SetInfo)
-    res["isInLobby"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsInLobby)
-    res["isMuted"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsMuted)
-    res["mediaStreams"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateMediaStreamFromDiscriminatorValue , m.SetMediaStreams)
-    res["metadata"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetMetadata)
-    res["recordingInfo"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateRecordingInfoFromDiscriminatorValue , m.SetRecordingInfo)
+    res["info"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateParticipantInfoFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetInfo(val.(ParticipantInfoable))
+        }
+        return nil
+    }
+    res["isInLobby"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsInLobby(val)
+        }
+        return nil
+    }
+    res["isMuted"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsMuted(val)
+        }
+        return nil
+    }
+    res["mediaStreams"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateMediaStreamFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]MediaStreamable, len(val))
+            for i, v := range val {
+                res[i] = v.(MediaStreamable)
+            }
+            m.SetMediaStreams(res)
+        }
+        return nil
+    }
+    res["metadata"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMetadata(val)
+        }
+        return nil
+    }
+    res["recordingInfo"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateRecordingInfoFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRecordingInfo(val.(RecordingInfoable))
+        }
+        return nil
+    }
     return res
 }
 // GetInfo gets the info property value. The info property
 func (m *Participant) GetInfo()(ParticipantInfoable) {
-    return m.info
+    val, err := m.GetBackingStore().Get("info")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ParticipantInfoable)
+    }
+    return nil
 }
 // GetIsInLobby gets the isInLobby property value. true if the participant is in lobby.
 func (m *Participant) GetIsInLobby()(*bool) {
-    return m.isInLobby
+    val, err := m.GetBackingStore().Get("isInLobby")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetIsMuted gets the isMuted property value. true if the participant is muted (client or server muted).
 func (m *Participant) GetIsMuted()(*bool) {
-    return m.isMuted
+    val, err := m.GetBackingStore().Get("isMuted")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetMediaStreams gets the mediaStreams property value. The list of media streams.
 func (m *Participant) GetMediaStreams()([]MediaStreamable) {
-    return m.mediaStreams
+    val, err := m.GetBackingStore().Get("mediaStreams")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]MediaStreamable)
+    }
+    return nil
 }
 // GetMetadata gets the metadata property value. A blob of data provided by the participant in the roster.
 func (m *Participant) GetMetadata()(*string) {
-    return m.metadata
+    val, err := m.GetBackingStore().Get("metadata")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetRecordingInfo gets the recordingInfo property value. Information about whether the participant has recording capability.
 func (m *Participant) GetRecordingInfo()(RecordingInfoable) {
-    return m.recordingInfo
+    val, err := m.GetBackingStore().Get("recordingInfo")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(RecordingInfoable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *Participant) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -92,7 +179,10 @@ func (m *Participant) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6
         }
     }
     if m.GetMediaStreams() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetMediaStreams())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetMediaStreams()))
+        for i, v := range m.GetMediaStreams() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("mediaStreams", cast)
         if err != nil {
             return err
@@ -114,25 +204,60 @@ func (m *Participant) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6
 }
 // SetInfo sets the info property value. The info property
 func (m *Participant) SetInfo(value ParticipantInfoable)() {
-    m.info = value
+    err := m.GetBackingStore().Set("info", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsInLobby sets the isInLobby property value. true if the participant is in lobby.
 func (m *Participant) SetIsInLobby(value *bool)() {
-    m.isInLobby = value
+    err := m.GetBackingStore().Set("isInLobby", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsMuted sets the isMuted property value. true if the participant is muted (client or server muted).
 func (m *Participant) SetIsMuted(value *bool)() {
-    m.isMuted = value
+    err := m.GetBackingStore().Set("isMuted", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMediaStreams sets the mediaStreams property value. The list of media streams.
 func (m *Participant) SetMediaStreams(value []MediaStreamable)() {
-    m.mediaStreams = value
+    err := m.GetBackingStore().Set("mediaStreams", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMetadata sets the metadata property value. A blob of data provided by the participant in the roster.
 func (m *Participant) SetMetadata(value *string)() {
-    m.metadata = value
+    err := m.GetBackingStore().Set("metadata", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRecordingInfo sets the recordingInfo property value. Information about whether the participant has recording capability.
 func (m *Participant) SetRecordingInfo(value RecordingInfoable)() {
-    m.recordingInfo = value
+    err := m.GetBackingStore().Set("recordingInfo", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// Participantable 
+type Participantable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetInfo()(ParticipantInfoable)
+    GetIsInLobby()(*bool)
+    GetIsMuted()(*bool)
+    GetMediaStreams()([]MediaStreamable)
+    GetMetadata()(*string)
+    GetRecordingInfo()(RecordingInfoable)
+    SetInfo(value ParticipantInfoable)()
+    SetIsInLobby(value *bool)()
+    SetIsMuted(value *bool)()
+    SetMediaStreams(value []MediaStreamable)()
+    SetMetadata(value *string)()
+    SetRecordingInfo(value RecordingInfoable)()
 }

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type RegistryValueType int
 
 const (
@@ -24,7 +24,7 @@ const (
 func (i RegistryValueType) String() string {
     return []string{"unknown", "binary", "dword", "dwordLittleEndian", "dwordBigEndian", "expandSz", "link", "multiSz", "none", "qword", "qwordlittleEndian", "sz", "unknownFutureValue"}[i]
 }
-func ParseRegistryValueType(v string) (interface{}, error) {
+func ParseRegistryValueType(v string) (any, error) {
     result := UNKNOWN_REGISTRYVALUETYPE
     switch v {
         case "unknown":

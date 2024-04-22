@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to call the query method.
+// 
 type SearchAlterationType int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i SearchAlterationType) String() string {
     return []string{"suggestion", "modification", "unknownFutureValue"}[i]
 }
-func ParseSearchAlterationType(v string) (interface{}, error) {
+func ParseSearchAlterationType(v string) (any, error) {
     result := SUGGESTION_SEARCHALTERATIONTYPE
     switch v {
         case "suggestion":

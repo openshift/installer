@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Indicates the type of execution context the app runs in.
 type RunAsAccountType int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i RunAsAccountType) String() string {
     return []string{"system", "user"}[i]
 }
-func ParseRunAsAccountType(v string) (interface{}, error) {
+func ParseRunAsAccountType(v string) (any, error) {
     result := SYSTEM_RUNASACCOUNTTYPE
     switch v {
         case "system":

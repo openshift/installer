@@ -2,7 +2,7 @@ package callrecords
 import (
     "errors"
 )
-// Provides operations to manage the cloudCommunications singleton.
+// 
 type MediaStreamDirection int
 
 const (
@@ -13,7 +13,7 @@ const (
 func (i MediaStreamDirection) String() string {
     return []string{"callerToCallee", "calleeToCaller"}[i]
 }
-func ParseMediaStreamDirection(v string) (interface{}, error) {
+func ParseMediaStreamDirection(v string) (any, error) {
     result := CALLERTOCALLEE_MEDIASTREAMDIRECTION
     switch v {
         case "callerToCallee":

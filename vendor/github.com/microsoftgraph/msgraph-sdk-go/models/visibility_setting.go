@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Generic visibility state.
 type VisibilitySetting int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i VisibilitySetting) String() string {
     return []string{"notConfigured", "hide", "show"}[i]
 }
-func ParseVisibilitySetting(v string) (interface{}, error) {
+func ParseVisibilitySetting(v string) (any, error) {
     result := NOTCONFIGURED_VISIBILITYSETTING
     switch v {
         case "notConfigured":

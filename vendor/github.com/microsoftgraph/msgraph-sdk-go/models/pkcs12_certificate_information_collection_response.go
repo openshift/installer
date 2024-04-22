@@ -1,15 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // Pkcs12CertificateInformationCollectionResponse 
 type Pkcs12CertificateInformationCollectionResponse struct {
     BaseCollectionPaginationCountResponse
-    // The value property
-    value []Pkcs12CertificateInformationable
 }
 // NewPkcs12CertificateInformationCollectionResponse instantiates a new Pkcs12CertificateInformationCollectionResponse and sets the default values.
 func NewPkcs12CertificateInformationCollectionResponse()(*Pkcs12CertificateInformationCollectionResponse) {
@@ -25,12 +22,32 @@ func CreatePkcs12CertificateInformationCollectionResponseFromDiscriminatorValue(
 // GetFieldDeserializers the deserialization information for the current model
 func (m *Pkcs12CertificateInformationCollectionResponse) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.BaseCollectionPaginationCountResponse.GetFieldDeserializers()
-    res["value"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreatePkcs12CertificateInformationFromDiscriminatorValue , m.SetValue)
+    res["value"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreatePkcs12CertificateInformationFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]Pkcs12CertificateInformationable, len(val))
+            for i, v := range val {
+                res[i] = v.(Pkcs12CertificateInformationable)
+            }
+            m.SetValue(res)
+        }
+        return nil
+    }
     return res
 }
 // GetValue gets the value property value. The value property
 func (m *Pkcs12CertificateInformationCollectionResponse) GetValue()([]Pkcs12CertificateInformationable) {
-    return m.value
+    val, err := m.GetBackingStore().Get("value")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]Pkcs12CertificateInformationable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *Pkcs12CertificateInformationCollectionResponse) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -39,7 +56,10 @@ func (m *Pkcs12CertificateInformationCollectionResponse) Serialize(writer i878a8
         return err
     }
     if m.GetValue() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetValue())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetValue()))
+        for i, v := range m.GetValue() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("value", cast)
         if err != nil {
             return err
@@ -49,5 +69,15 @@ func (m *Pkcs12CertificateInformationCollectionResponse) Serialize(writer i878a8
 }
 // SetValue sets the value property value. The value property
 func (m *Pkcs12CertificateInformationCollectionResponse) SetValue(value []Pkcs12CertificateInformationable)() {
-    m.value = value
+    err := m.GetBackingStore().Set("value", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// Pkcs12CertificateInformationCollectionResponseable 
+type Pkcs12CertificateInformationCollectionResponseable interface {
+    BaseCollectionPaginationCountResponseable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetValue()([]Pkcs12CertificateInformationable)
+    SetValue(value []Pkcs12CertificateInformationable)()
 }

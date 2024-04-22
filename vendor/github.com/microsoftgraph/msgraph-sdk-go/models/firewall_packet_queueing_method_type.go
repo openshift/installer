@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Possible values for firewallPacketQueueingMethod
 type FirewallPacketQueueingMethodType int
 
 const (
@@ -21,7 +21,7 @@ const (
 func (i FirewallPacketQueueingMethodType) String() string {
     return []string{"deviceDefault", "disabled", "queueInbound", "queueOutbound", "queueBoth"}[i]
 }
-func ParseFirewallPacketQueueingMethodType(v string) (interface{}, error) {
+func ParseFirewallPacketQueueingMethodType(v string) (any, error) {
     result := DEVICEDEFAULT_FIREWALLPACKETQUEUEINGMETHODTYPE
     switch v {
         case "deviceDefault":

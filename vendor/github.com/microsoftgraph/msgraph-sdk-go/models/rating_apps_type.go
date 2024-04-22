@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Apps rating as in media content
 type RatingAppsType int
 
 const (
@@ -23,7 +23,7 @@ const (
 func (i RatingAppsType) String() string {
     return []string{"allAllowed", "allBlocked", "agesAbove4", "agesAbove9", "agesAbove12", "agesAbove17"}[i]
 }
-func ParseRatingAppsType(v string) (interface{}, error) {
+func ParseRatingAppsType(v string) (any, error) {
     result := ALLALLOWED_RATINGAPPSTYPE
     switch v {
         case "allAllowed":

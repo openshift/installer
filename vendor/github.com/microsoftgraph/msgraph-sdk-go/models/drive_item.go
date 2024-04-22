@@ -1,85 +1,22 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// DriveItem provides operations to manage the collection of agreement entities.
+// DriveItem 
 type DriveItem struct {
     BaseItem
-    // Analytics about the view activities that took place on this item.
-    analytics ItemAnalyticsable
-    // Audio metadata, if the item is an audio file. Read-only. Read-only. Only on OneDrive Personal.
-    audio Audioable
-    // Bundle metadata, if the item is a bundle. Read-only.
-    bundle Bundleable
-    // Collection containing Item objects for the immediate children of Item. Only items representing folders have children. Read-only. Nullable.
-    children []DriveItemable
-    // The content stream, if the item represents a file.
-    content []byte
-    // An eTag for the content of the item. This eTag is not changed if only the metadata is changed. Note This property is not returned if the item is a folder. Read-only.
-    cTag *string
-    // Information about the deleted state of the item. Read-only.
-    deleted Deletedable
-    // File metadata, if the item is a file. Read-only.
-    file Fileable
-    // File system information on client. Read-write.
-    fileSystemInfo FileSystemInfoable
-    // Folder metadata, if the item is a folder. Read-only.
-    folder Folderable
-    // Image metadata, if the item is an image. Read-only.
-    image Imageable
-    // For drives in SharePoint, the associated document library list item. Read-only. Nullable.
-    listItem ListItemable
-    // Location metadata, if the item has location data. Read-only.
-    location GeoCoordinatesable
-    // Malware metadata, if the item was detected to contain malware. Read-only.
-    malware Malwareable
     // If present, indicates that this item is a package instead of a folder or file. Packages are treated like files in some contexts and folders in others. Read-only.
-    package_escaped Package_escapedable
-    // If present, indicates that one or more operations that might affect the state of the driveItem are pending completion. Read-only.
-    pendingOperations PendingOperationsable
-    // The set of permissions for the item. Read-only. Nullable.
-    permissions []Permissionable
-    // Photo metadata, if the item is a photo. Read-only.
-    photo Photoable
-    // Provides information about the published or checked-out state of an item, in locations that support such actions. This property is not returned by default. Read-only.
-    publication PublicationFacetable
-    // Remote item data, if the item is shared from a drive other than the one being accessed. Read-only.
-    remoteItem RemoteItemable
-    // If this property is non-null, it indicates that the driveItem is the top-most driveItem in the drive.
-    root Rootable
-    // Search metadata, if the item is from a search result. Read-only.
-    searchResult SearchResultable
-    // Indicates that the item has been shared with others and provides information about the shared state of the item. Read-only.
-    shared Sharedable
-    // Returns identifiers useful for SharePoint REST compatibility. Read-only.
-    sharepointIds SharepointIdsable
-    // Size of the item in bytes. Read-only.
-    size *int64
-    // If the current item is also available as a special folder, this facet is returned. Read-only.
-    specialFolder SpecialFolderable
-    // The set of subscriptions on the item. Only supported on the root of a drive.
-    subscriptions []Subscriptionable
-    // Collection containing [ThumbnailSet][] objects associated with the item. For more info, see [getting thumbnails][]. Read-only. Nullable.
-    thumbnails []ThumbnailSetable
-    // The list of previous versions of the item. For more info, see [getting previous versions][]. Read-only. Nullable.
-    versions []DriveItemVersionable
-    // Video metadata, if the item is a video. Read-only.
-    video Videoable
-    // WebDAV compatible URL for the item.
-    webDavUrl *string
-    // For files that are Excel spreadsheets, accesses the workbook API to work with the spreadsheet's contents. Nullable.
-    workbook Workbookable
+    PackageEscaped PackageEscapedable
 }
 // NewDriveItem instantiates a new driveItem and sets the default values.
 func NewDriveItem()(*DriveItem) {
     m := &DriveItem{
         BaseItem: *NewBaseItem(),
     }
-    odataTypeValue := "#microsoft.graph.driveItem";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.driveItem"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateDriveItemFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -88,168 +25,700 @@ func CreateDriveItemFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f
 }
 // GetAnalytics gets the analytics property value. Analytics about the view activities that took place on this item.
 func (m *DriveItem) GetAnalytics()(ItemAnalyticsable) {
-    return m.analytics
+    val, err := m.GetBackingStore().Get("analytics")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ItemAnalyticsable)
+    }
+    return nil
 }
 // GetAudio gets the audio property value. Audio metadata, if the item is an audio file. Read-only. Read-only. Only on OneDrive Personal.
 func (m *DriveItem) GetAudio()(Audioable) {
-    return m.audio
+    val, err := m.GetBackingStore().Get("audio")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Audioable)
+    }
+    return nil
 }
 // GetBundle gets the bundle property value. Bundle metadata, if the item is a bundle. Read-only.
 func (m *DriveItem) GetBundle()(Bundleable) {
-    return m.bundle
+    val, err := m.GetBackingStore().Get("bundle")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Bundleable)
+    }
+    return nil
 }
 // GetChildren gets the children property value. Collection containing Item objects for the immediate children of Item. Only items representing folders have children. Read-only. Nullable.
 func (m *DriveItem) GetChildren()([]DriveItemable) {
-    return m.children
+    val, err := m.GetBackingStore().Get("children")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]DriveItemable)
+    }
+    return nil
 }
 // GetContent gets the content property value. The content stream, if the item represents a file.
 func (m *DriveItem) GetContent()([]byte) {
-    return m.content
+    val, err := m.GetBackingStore().Get("content")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]byte)
+    }
+    return nil
 }
 // GetCTag gets the cTag property value. An eTag for the content of the item. This eTag is not changed if only the metadata is changed. Note This property is not returned if the item is a folder. Read-only.
 func (m *DriveItem) GetCTag()(*string) {
-    return m.cTag
+    val, err := m.GetBackingStore().Get("cTag")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDeleted gets the deleted property value. Information about the deleted state of the item. Read-only.
 func (m *DriveItem) GetDeleted()(Deletedable) {
-    return m.deleted
+    val, err := m.GetBackingStore().Get("deleted")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Deletedable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *DriveItem) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.BaseItem.GetFieldDeserializers()
-    res["analytics"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateItemAnalyticsFromDiscriminatorValue , m.SetAnalytics)
-    res["audio"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateAudioFromDiscriminatorValue , m.SetAudio)
-    res["bundle"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateBundleFromDiscriminatorValue , m.SetBundle)
-    res["children"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateDriveItemFromDiscriminatorValue , m.SetChildren)
-    res["content"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetByteArrayValue(m.SetContent)
-    res["cTag"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCTag)
-    res["deleted"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateDeletedFromDiscriminatorValue , m.SetDeleted)
-    res["file"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateFileFromDiscriminatorValue , m.SetFile)
-    res["fileSystemInfo"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateFileSystemInfoFromDiscriminatorValue , m.SetFileSystemInfo)
-    res["folder"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateFolderFromDiscriminatorValue , m.SetFolder)
-    res["image"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateImageFromDiscriminatorValue , m.SetImage)
-    res["listItem"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateListItemFromDiscriminatorValue , m.SetListItem)
-    res["location"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateGeoCoordinatesFromDiscriminatorValue , m.SetLocation)
-    res["malware"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateMalwareFromDiscriminatorValue , m.SetMalware)
-    res["package"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreatePackage_escapedFromDiscriminatorValue , m.SetPackage)
-    res["pendingOperations"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreatePendingOperationsFromDiscriminatorValue , m.SetPendingOperations)
-    res["permissions"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreatePermissionFromDiscriminatorValue , m.SetPermissions)
-    res["photo"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreatePhotoFromDiscriminatorValue , m.SetPhoto)
-    res["publication"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreatePublicationFacetFromDiscriminatorValue , m.SetPublication)
-    res["remoteItem"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateRemoteItemFromDiscriminatorValue , m.SetRemoteItem)
-    res["root"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateRootFromDiscriminatorValue , m.SetRoot)
-    res["searchResult"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateSearchResultFromDiscriminatorValue , m.SetSearchResult)
-    res["shared"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateSharedFromDiscriminatorValue , m.SetShared)
-    res["sharepointIds"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateSharepointIdsFromDiscriminatorValue , m.SetSharepointIds)
-    res["size"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt64Value(m.SetSize)
-    res["specialFolder"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateSpecialFolderFromDiscriminatorValue , m.SetSpecialFolder)
-    res["subscriptions"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateSubscriptionFromDiscriminatorValue , m.SetSubscriptions)
-    res["thumbnails"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateThumbnailSetFromDiscriminatorValue , m.SetThumbnails)
-    res["versions"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateDriveItemVersionFromDiscriminatorValue , m.SetVersions)
-    res["video"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateVideoFromDiscriminatorValue , m.SetVideo)
-    res["webDavUrl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetWebDavUrl)
-    res["workbook"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateWorkbookFromDiscriminatorValue , m.SetWorkbook)
+    res["analytics"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateItemAnalyticsFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAnalytics(val.(ItemAnalyticsable))
+        }
+        return nil
+    }
+    res["audio"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateAudioFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAudio(val.(Audioable))
+        }
+        return nil
+    }
+    res["bundle"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateBundleFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBundle(val.(Bundleable))
+        }
+        return nil
+    }
+    res["children"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateDriveItemFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]DriveItemable, len(val))
+            for i, v := range val {
+                res[i] = v.(DriveItemable)
+            }
+            m.SetChildren(res)
+        }
+        return nil
+    }
+    res["content"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetByteArrayValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetContent(val)
+        }
+        return nil
+    }
+    res["cTag"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCTag(val)
+        }
+        return nil
+    }
+    res["deleted"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateDeletedFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeleted(val.(Deletedable))
+        }
+        return nil
+    }
+    res["file"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateFileFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFile(val.(Fileable))
+        }
+        return nil
+    }
+    res["fileSystemInfo"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateFileSystemInfoFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFileSystemInfo(val.(FileSystemInfoable))
+        }
+        return nil
+    }
+    res["folder"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateFolderFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFolder(val.(Folderable))
+        }
+        return nil
+    }
+    res["image"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateImageFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetImage(val.(Imageable))
+        }
+        return nil
+    }
+    res["listItem"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateListItemFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetListItem(val.(ListItemable))
+        }
+        return nil
+    }
+    res["location"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateGeoCoordinatesFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLocation(val.(GeoCoordinatesable))
+        }
+        return nil
+    }
+    res["malware"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateMalwareFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMalware(val.(Malwareable))
+        }
+        return nil
+    }
+    res["package"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreatePackageEscapedFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPackage(val.(PackageEscapedable))
+        }
+        return nil
+    }
+    res["pendingOperations"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreatePendingOperationsFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPendingOperations(val.(PendingOperationsable))
+        }
+        return nil
+    }
+    res["permissions"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreatePermissionFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]Permissionable, len(val))
+            for i, v := range val {
+                res[i] = v.(Permissionable)
+            }
+            m.SetPermissions(res)
+        }
+        return nil
+    }
+    res["photo"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreatePhotoFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPhoto(val.(Photoable))
+        }
+        return nil
+    }
+    res["publication"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreatePublicationFacetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPublication(val.(PublicationFacetable))
+        }
+        return nil
+    }
+    res["remoteItem"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateRemoteItemFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRemoteItem(val.(RemoteItemable))
+        }
+        return nil
+    }
+    res["root"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateRootFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRoot(val.(Rootable))
+        }
+        return nil
+    }
+    res["searchResult"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateSearchResultFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSearchResult(val.(SearchResultable))
+        }
+        return nil
+    }
+    res["shared"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateSharedFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetShared(val.(Sharedable))
+        }
+        return nil
+    }
+    res["sharepointIds"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateSharepointIdsFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSharepointIds(val.(SharepointIdsable))
+        }
+        return nil
+    }
+    res["size"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSize(val)
+        }
+        return nil
+    }
+    res["specialFolder"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateSpecialFolderFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSpecialFolder(val.(SpecialFolderable))
+        }
+        return nil
+    }
+    res["subscriptions"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateSubscriptionFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]Subscriptionable, len(val))
+            for i, v := range val {
+                res[i] = v.(Subscriptionable)
+            }
+            m.SetSubscriptions(res)
+        }
+        return nil
+    }
+    res["thumbnails"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateThumbnailSetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]ThumbnailSetable, len(val))
+            for i, v := range val {
+                res[i] = v.(ThumbnailSetable)
+            }
+            m.SetThumbnails(res)
+        }
+        return nil
+    }
+    res["versions"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateDriveItemVersionFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]DriveItemVersionable, len(val))
+            for i, v := range val {
+                res[i] = v.(DriveItemVersionable)
+            }
+            m.SetVersions(res)
+        }
+        return nil
+    }
+    res["video"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateVideoFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetVideo(val.(Videoable))
+        }
+        return nil
+    }
+    res["webDavUrl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWebDavUrl(val)
+        }
+        return nil
+    }
+    res["workbook"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateWorkbookFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWorkbook(val.(Workbookable))
+        }
+        return nil
+    }
     return res
 }
 // GetFile gets the file property value. File metadata, if the item is a file. Read-only.
 func (m *DriveItem) GetFile()(Fileable) {
-    return m.file
+    val, err := m.GetBackingStore().Get("file")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Fileable)
+    }
+    return nil
 }
 // GetFileSystemInfo gets the fileSystemInfo property value. File system information on client. Read-write.
 func (m *DriveItem) GetFileSystemInfo()(FileSystemInfoable) {
-    return m.fileSystemInfo
+    val, err := m.GetBackingStore().Get("fileSystemInfo")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(FileSystemInfoable)
+    }
+    return nil
 }
 // GetFolder gets the folder property value. Folder metadata, if the item is a folder. Read-only.
 func (m *DriveItem) GetFolder()(Folderable) {
-    return m.folder
+    val, err := m.GetBackingStore().Get("folder")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Folderable)
+    }
+    return nil
 }
 // GetImage gets the image property value. Image metadata, if the item is an image. Read-only.
 func (m *DriveItem) GetImage()(Imageable) {
-    return m.image
+    val, err := m.GetBackingStore().Get("image")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Imageable)
+    }
+    return nil
 }
 // GetListItem gets the listItem property value. For drives in SharePoint, the associated document library list item. Read-only. Nullable.
 func (m *DriveItem) GetListItem()(ListItemable) {
-    return m.listItem
+    val, err := m.GetBackingStore().Get("listItem")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ListItemable)
+    }
+    return nil
 }
 // GetLocation gets the location property value. Location metadata, if the item has location data. Read-only.
 func (m *DriveItem) GetLocation()(GeoCoordinatesable) {
-    return m.location
+    val, err := m.GetBackingStore().Get("location")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(GeoCoordinatesable)
+    }
+    return nil
 }
 // GetMalware gets the malware property value. Malware metadata, if the item was detected to contain malware. Read-only.
 func (m *DriveItem) GetMalware()(Malwareable) {
-    return m.malware
+    val, err := m.GetBackingStore().Get("malware")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Malwareable)
+    }
+    return nil
 }
 // GetPackage gets the package property value. If present, indicates that this item is a package instead of a folder or file. Packages are treated like files in some contexts and folders in others. Read-only.
-func (m *DriveItem) GetPackage()(Package_escapedable) {
-    return m.package_escaped
+func (m *DriveItem) GetPackage()(PackageEscapedable) {
+    val, err := m.GetBackingStore().Get("packageEscaped")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(PackageEscapedable)
+    }
+    return nil
 }
 // GetPendingOperations gets the pendingOperations property value. If present, indicates that one or more operations that might affect the state of the driveItem are pending completion. Read-only.
 func (m *DriveItem) GetPendingOperations()(PendingOperationsable) {
-    return m.pendingOperations
+    val, err := m.GetBackingStore().Get("pendingOperations")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(PendingOperationsable)
+    }
+    return nil
 }
 // GetPermissions gets the permissions property value. The set of permissions for the item. Read-only. Nullable.
 func (m *DriveItem) GetPermissions()([]Permissionable) {
-    return m.permissions
+    val, err := m.GetBackingStore().Get("permissions")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]Permissionable)
+    }
+    return nil
 }
 // GetPhoto gets the photo property value. Photo metadata, if the item is a photo. Read-only.
 func (m *DriveItem) GetPhoto()(Photoable) {
-    return m.photo
+    val, err := m.GetBackingStore().Get("photo")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Photoable)
+    }
+    return nil
 }
 // GetPublication gets the publication property value. Provides information about the published or checked-out state of an item, in locations that support such actions. This property is not returned by default. Read-only.
 func (m *DriveItem) GetPublication()(PublicationFacetable) {
-    return m.publication
+    val, err := m.GetBackingStore().Get("publication")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(PublicationFacetable)
+    }
+    return nil
 }
 // GetRemoteItem gets the remoteItem property value. Remote item data, if the item is shared from a drive other than the one being accessed. Read-only.
 func (m *DriveItem) GetRemoteItem()(RemoteItemable) {
-    return m.remoteItem
+    val, err := m.GetBackingStore().Get("remoteItem")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(RemoteItemable)
+    }
+    return nil
 }
 // GetRoot gets the root property value. If this property is non-null, it indicates that the driveItem is the top-most driveItem in the drive.
 func (m *DriveItem) GetRoot()(Rootable) {
-    return m.root
+    val, err := m.GetBackingStore().Get("root")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Rootable)
+    }
+    return nil
 }
 // GetSearchResult gets the searchResult property value. Search metadata, if the item is from a search result. Read-only.
 func (m *DriveItem) GetSearchResult()(SearchResultable) {
-    return m.searchResult
+    val, err := m.GetBackingStore().Get("searchResult")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(SearchResultable)
+    }
+    return nil
 }
 // GetShared gets the shared property value. Indicates that the item has been shared with others and provides information about the shared state of the item. Read-only.
 func (m *DriveItem) GetShared()(Sharedable) {
-    return m.shared
+    val, err := m.GetBackingStore().Get("shared")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Sharedable)
+    }
+    return nil
 }
 // GetSharepointIds gets the sharepointIds property value. Returns identifiers useful for SharePoint REST compatibility. Read-only.
 func (m *DriveItem) GetSharepointIds()(SharepointIdsable) {
-    return m.sharepointIds
+    val, err := m.GetBackingStore().Get("sharepointIds")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(SharepointIdsable)
+    }
+    return nil
 }
 // GetSize gets the size property value. Size of the item in bytes. Read-only.
 func (m *DriveItem) GetSize()(*int64) {
-    return m.size
+    val, err := m.GetBackingStore().Get("size")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int64)
+    }
+    return nil
 }
 // GetSpecialFolder gets the specialFolder property value. If the current item is also available as a special folder, this facet is returned. Read-only.
 func (m *DriveItem) GetSpecialFolder()(SpecialFolderable) {
-    return m.specialFolder
+    val, err := m.GetBackingStore().Get("specialFolder")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(SpecialFolderable)
+    }
+    return nil
 }
 // GetSubscriptions gets the subscriptions property value. The set of subscriptions on the item. Only supported on the root of a drive.
 func (m *DriveItem) GetSubscriptions()([]Subscriptionable) {
-    return m.subscriptions
+    val, err := m.GetBackingStore().Get("subscriptions")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]Subscriptionable)
+    }
+    return nil
 }
 // GetThumbnails gets the thumbnails property value. Collection containing [ThumbnailSet][] objects associated with the item. For more info, see [getting thumbnails][]. Read-only. Nullable.
 func (m *DriveItem) GetThumbnails()([]ThumbnailSetable) {
-    return m.thumbnails
+    val, err := m.GetBackingStore().Get("thumbnails")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]ThumbnailSetable)
+    }
+    return nil
 }
 // GetVersions gets the versions property value. The list of previous versions of the item. For more info, see [getting previous versions][]. Read-only. Nullable.
 func (m *DriveItem) GetVersions()([]DriveItemVersionable) {
-    return m.versions
+    val, err := m.GetBackingStore().Get("versions")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]DriveItemVersionable)
+    }
+    return nil
 }
 // GetVideo gets the video property value. Video metadata, if the item is a video. Read-only.
 func (m *DriveItem) GetVideo()(Videoable) {
-    return m.video
+    val, err := m.GetBackingStore().Get("video")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Videoable)
+    }
+    return nil
 }
 // GetWebDavUrl gets the webDavUrl property value. WebDAV compatible URL for the item.
 func (m *DriveItem) GetWebDavUrl()(*string) {
-    return m.webDavUrl
+    val, err := m.GetBackingStore().Get("webDavUrl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetWorkbook gets the workbook property value. For files that are Excel spreadsheets, accesses the workbook API to work with the spreadsheet's contents. Nullable.
 func (m *DriveItem) GetWorkbook()(Workbookable) {
-    return m.workbook
+    val, err := m.GetBackingStore().Get("workbook")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Workbookable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *DriveItem) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -276,7 +745,10 @@ func (m *DriveItem) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c0
         }
     }
     if m.GetChildren() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetChildren())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetChildren()))
+        for i, v := range m.GetChildren() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("children", cast)
         if err != nil {
             return err
@@ -355,7 +827,10 @@ func (m *DriveItem) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c0
         }
     }
     if m.GetPermissions() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetPermissions())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetPermissions()))
+        for i, v := range m.GetPermissions() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("permissions", cast)
         if err != nil {
             return err
@@ -416,21 +891,30 @@ func (m *DriveItem) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c0
         }
     }
     if m.GetSubscriptions() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetSubscriptions())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetSubscriptions()))
+        for i, v := range m.GetSubscriptions() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("subscriptions", cast)
         if err != nil {
             return err
         }
     }
     if m.GetThumbnails() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetThumbnails())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetThumbnails()))
+        for i, v := range m.GetThumbnails() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("thumbnails", cast)
         if err != nil {
             return err
         }
     }
     if m.GetVersions() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetVersions())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetVersions()))
+        for i, v := range m.GetVersions() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("versions", cast)
         if err != nil {
             return err
@@ -458,129 +942,294 @@ func (m *DriveItem) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c0
 }
 // SetAnalytics sets the analytics property value. Analytics about the view activities that took place on this item.
 func (m *DriveItem) SetAnalytics(value ItemAnalyticsable)() {
-    m.analytics = value
+    err := m.GetBackingStore().Set("analytics", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAudio sets the audio property value. Audio metadata, if the item is an audio file. Read-only. Read-only. Only on OneDrive Personal.
 func (m *DriveItem) SetAudio(value Audioable)() {
-    m.audio = value
+    err := m.GetBackingStore().Set("audio", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBundle sets the bundle property value. Bundle metadata, if the item is a bundle. Read-only.
 func (m *DriveItem) SetBundle(value Bundleable)() {
-    m.bundle = value
+    err := m.GetBackingStore().Set("bundle", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetChildren sets the children property value. Collection containing Item objects for the immediate children of Item. Only items representing folders have children. Read-only. Nullable.
 func (m *DriveItem) SetChildren(value []DriveItemable)() {
-    m.children = value
+    err := m.GetBackingStore().Set("children", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetContent sets the content property value. The content stream, if the item represents a file.
 func (m *DriveItem) SetContent(value []byte)() {
-    m.content = value
+    err := m.GetBackingStore().Set("content", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCTag sets the cTag property value. An eTag for the content of the item. This eTag is not changed if only the metadata is changed. Note This property is not returned if the item is a folder. Read-only.
 func (m *DriveItem) SetCTag(value *string)() {
-    m.cTag = value
+    err := m.GetBackingStore().Set("cTag", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeleted sets the deleted property value. Information about the deleted state of the item. Read-only.
 func (m *DriveItem) SetDeleted(value Deletedable)() {
-    m.deleted = value
+    err := m.GetBackingStore().Set("deleted", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFile sets the file property value. File metadata, if the item is a file. Read-only.
 func (m *DriveItem) SetFile(value Fileable)() {
-    m.file = value
+    err := m.GetBackingStore().Set("file", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFileSystemInfo sets the fileSystemInfo property value. File system information on client. Read-write.
 func (m *DriveItem) SetFileSystemInfo(value FileSystemInfoable)() {
-    m.fileSystemInfo = value
+    err := m.GetBackingStore().Set("fileSystemInfo", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFolder sets the folder property value. Folder metadata, if the item is a folder. Read-only.
 func (m *DriveItem) SetFolder(value Folderable)() {
-    m.folder = value
+    err := m.GetBackingStore().Set("folder", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetImage sets the image property value. Image metadata, if the item is an image. Read-only.
 func (m *DriveItem) SetImage(value Imageable)() {
-    m.image = value
+    err := m.GetBackingStore().Set("image", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetListItem sets the listItem property value. For drives in SharePoint, the associated document library list item. Read-only. Nullable.
 func (m *DriveItem) SetListItem(value ListItemable)() {
-    m.listItem = value
+    err := m.GetBackingStore().Set("listItem", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLocation sets the location property value. Location metadata, if the item has location data. Read-only.
 func (m *DriveItem) SetLocation(value GeoCoordinatesable)() {
-    m.location = value
+    err := m.GetBackingStore().Set("location", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMalware sets the malware property value. Malware metadata, if the item was detected to contain malware. Read-only.
 func (m *DriveItem) SetMalware(value Malwareable)() {
-    m.malware = value
+    err := m.GetBackingStore().Set("malware", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPackage sets the package property value. If present, indicates that this item is a package instead of a folder or file. Packages are treated like files in some contexts and folders in others. Read-only.
-func (m *DriveItem) SetPackage(value Package_escapedable)() {
-    m.package_escaped = value
+func (m *DriveItem) SetPackage(value PackageEscapedable)() {
+    err := m.GetBackingStore().Set("packageEscaped", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPendingOperations sets the pendingOperations property value. If present, indicates that one or more operations that might affect the state of the driveItem are pending completion. Read-only.
 func (m *DriveItem) SetPendingOperations(value PendingOperationsable)() {
-    m.pendingOperations = value
+    err := m.GetBackingStore().Set("pendingOperations", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPermissions sets the permissions property value. The set of permissions for the item. Read-only. Nullable.
 func (m *DriveItem) SetPermissions(value []Permissionable)() {
-    m.permissions = value
+    err := m.GetBackingStore().Set("permissions", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPhoto sets the photo property value. Photo metadata, if the item is a photo. Read-only.
 func (m *DriveItem) SetPhoto(value Photoable)() {
-    m.photo = value
+    err := m.GetBackingStore().Set("photo", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPublication sets the publication property value. Provides information about the published or checked-out state of an item, in locations that support such actions. This property is not returned by default. Read-only.
 func (m *DriveItem) SetPublication(value PublicationFacetable)() {
-    m.publication = value
+    err := m.GetBackingStore().Set("publication", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRemoteItem sets the remoteItem property value. Remote item data, if the item is shared from a drive other than the one being accessed. Read-only.
 func (m *DriveItem) SetRemoteItem(value RemoteItemable)() {
-    m.remoteItem = value
+    err := m.GetBackingStore().Set("remoteItem", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRoot sets the root property value. If this property is non-null, it indicates that the driveItem is the top-most driveItem in the drive.
 func (m *DriveItem) SetRoot(value Rootable)() {
-    m.root = value
+    err := m.GetBackingStore().Set("root", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSearchResult sets the searchResult property value. Search metadata, if the item is from a search result. Read-only.
 func (m *DriveItem) SetSearchResult(value SearchResultable)() {
-    m.searchResult = value
+    err := m.GetBackingStore().Set("searchResult", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetShared sets the shared property value. Indicates that the item has been shared with others and provides information about the shared state of the item. Read-only.
 func (m *DriveItem) SetShared(value Sharedable)() {
-    m.shared = value
+    err := m.GetBackingStore().Set("shared", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSharepointIds sets the sharepointIds property value. Returns identifiers useful for SharePoint REST compatibility. Read-only.
 func (m *DriveItem) SetSharepointIds(value SharepointIdsable)() {
-    m.sharepointIds = value
+    err := m.GetBackingStore().Set("sharepointIds", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSize sets the size property value. Size of the item in bytes. Read-only.
 func (m *DriveItem) SetSize(value *int64)() {
-    m.size = value
+    err := m.GetBackingStore().Set("size", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSpecialFolder sets the specialFolder property value. If the current item is also available as a special folder, this facet is returned. Read-only.
 func (m *DriveItem) SetSpecialFolder(value SpecialFolderable)() {
-    m.specialFolder = value
+    err := m.GetBackingStore().Set("specialFolder", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSubscriptions sets the subscriptions property value. The set of subscriptions on the item. Only supported on the root of a drive.
 func (m *DriveItem) SetSubscriptions(value []Subscriptionable)() {
-    m.subscriptions = value
+    err := m.GetBackingStore().Set("subscriptions", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetThumbnails sets the thumbnails property value. Collection containing [ThumbnailSet][] objects associated with the item. For more info, see [getting thumbnails][]. Read-only. Nullable.
 func (m *DriveItem) SetThumbnails(value []ThumbnailSetable)() {
-    m.thumbnails = value
+    err := m.GetBackingStore().Set("thumbnails", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetVersions sets the versions property value. The list of previous versions of the item. For more info, see [getting previous versions][]. Read-only. Nullable.
 func (m *DriveItem) SetVersions(value []DriveItemVersionable)() {
-    m.versions = value
+    err := m.GetBackingStore().Set("versions", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetVideo sets the video property value. Video metadata, if the item is a video. Read-only.
 func (m *DriveItem) SetVideo(value Videoable)() {
-    m.video = value
+    err := m.GetBackingStore().Set("video", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWebDavUrl sets the webDavUrl property value. WebDAV compatible URL for the item.
 func (m *DriveItem) SetWebDavUrl(value *string)() {
-    m.webDavUrl = value
+    err := m.GetBackingStore().Set("webDavUrl", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWorkbook sets the workbook property value. For files that are Excel spreadsheets, accesses the workbook API to work with the spreadsheet's contents. Nullable.
 func (m *DriveItem) SetWorkbook(value Workbookable)() {
-    m.workbook = value
+    err := m.GetBackingStore().Set("workbook", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// DriveItemable 
+type DriveItemable interface {
+    BaseItemable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAnalytics()(ItemAnalyticsable)
+    GetAudio()(Audioable)
+    GetBundle()(Bundleable)
+    GetChildren()([]DriveItemable)
+    GetContent()([]byte)
+    GetCTag()(*string)
+    GetDeleted()(Deletedable)
+    GetFile()(Fileable)
+    GetFileSystemInfo()(FileSystemInfoable)
+    GetFolder()(Folderable)
+    GetImage()(Imageable)
+    GetListItem()(ListItemable)
+    GetLocation()(GeoCoordinatesable)
+    GetMalware()(Malwareable)
+    GetPackage()(PackageEscapedable)
+    GetPendingOperations()(PendingOperationsable)
+    GetPermissions()([]Permissionable)
+    GetPhoto()(Photoable)
+    GetPublication()(PublicationFacetable)
+    GetRemoteItem()(RemoteItemable)
+    GetRoot()(Rootable)
+    GetSearchResult()(SearchResultable)
+    GetShared()(Sharedable)
+    GetSharepointIds()(SharepointIdsable)
+    GetSize()(*int64)
+    GetSpecialFolder()(SpecialFolderable)
+    GetSubscriptions()([]Subscriptionable)
+    GetThumbnails()([]ThumbnailSetable)
+    GetVersions()([]DriveItemVersionable)
+    GetVideo()(Videoable)
+    GetWebDavUrl()(*string)
+    GetWorkbook()(Workbookable)
+    SetAnalytics(value ItemAnalyticsable)()
+    SetAudio(value Audioable)()
+    SetBundle(value Bundleable)()
+    SetChildren(value []DriveItemable)()
+    SetContent(value []byte)()
+    SetCTag(value *string)()
+    SetDeleted(value Deletedable)()
+    SetFile(value Fileable)()
+    SetFileSystemInfo(value FileSystemInfoable)()
+    SetFolder(value Folderable)()
+    SetImage(value Imageable)()
+    SetListItem(value ListItemable)()
+    SetLocation(value GeoCoordinatesable)()
+    SetMalware(value Malwareable)()
+    SetPackage(value PackageEscapedable)()
+    SetPendingOperations(value PendingOperationsable)()
+    SetPermissions(value []Permissionable)()
+    SetPhoto(value Photoable)()
+    SetPublication(value PublicationFacetable)()
+    SetRemoteItem(value RemoteItemable)()
+    SetRoot(value Rootable)()
+    SetSearchResult(value SearchResultable)()
+    SetShared(value Sharedable)()
+    SetSharepointIds(value SharepointIdsable)()
+    SetSize(value *int64)()
+    SetSpecialFolder(value SpecialFolderable)()
+    SetSubscriptions(value []Subscriptionable)()
+    SetThumbnails(value []ThumbnailSetable)()
+    SetVersions(value []DriveItemVersionable)()
+    SetVideo(value Videoable)()
+    SetWebDavUrl(value *string)()
+    SetWorkbook(value Workbookable)()
 }

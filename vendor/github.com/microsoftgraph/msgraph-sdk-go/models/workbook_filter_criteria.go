@@ -1,38 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // WorkbookFilterCriteria 
 type WorkbookFilterCriteria struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // The color property
-    color *string
-    // The criterion1 property
-    criterion1 *string
-    // The criterion2 property
-    criterion2 *string
-    // The dynamicCriteria property
-    dynamicCriteria *string
-    // The filterOn property
-    filterOn *string
-    // The icon property
-    icon WorkbookIconable
-    // The OdataType property
-    odataType *string
-    // The operator property
-    operator *string
-    // The values property
-    values Jsonable
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewWorkbookFilterCriteria instantiates a new workbookFilterCriteria and sets the default values.
 func NewWorkbookFilterCriteria()(*WorkbookFilterCriteria) {
     m := &WorkbookFilterCriteria{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateWorkbookFilterCriteriaFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -40,58 +23,214 @@ func CreateWorkbookFilterCriteriaFromDiscriminatorValue(parseNode i878a80d2330e8
     return NewWorkbookFilterCriteria(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *WorkbookFilterCriteria) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *WorkbookFilterCriteria) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *WorkbookFilterCriteria) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetColor gets the color property value. The color property
 func (m *WorkbookFilterCriteria) GetColor()(*string) {
-    return m.color
+    val, err := m.GetBackingStore().Get("color")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCriterion1 gets the criterion1 property value. The criterion1 property
 func (m *WorkbookFilterCriteria) GetCriterion1()(*string) {
-    return m.criterion1
+    val, err := m.GetBackingStore().Get("criterion1")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCriterion2 gets the criterion2 property value. The criterion2 property
 func (m *WorkbookFilterCriteria) GetCriterion2()(*string) {
-    return m.criterion2
+    val, err := m.GetBackingStore().Get("criterion2")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDynamicCriteria gets the dynamicCriteria property value. The dynamicCriteria property
 func (m *WorkbookFilterCriteria) GetDynamicCriteria()(*string) {
-    return m.dynamicCriteria
+    val, err := m.GetBackingStore().Get("dynamicCriteria")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *WorkbookFilterCriteria) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["color"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetColor)
-    res["criterion1"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCriterion1)
-    res["criterion2"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCriterion2)
-    res["dynamicCriteria"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDynamicCriteria)
-    res["filterOn"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetFilterOn)
-    res["icon"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateWorkbookIconFromDiscriminatorValue , m.SetIcon)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["operator"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOperator)
-    res["values"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateJsonFromDiscriminatorValue , m.SetValues)
+    res["color"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetColor(val)
+        }
+        return nil
+    }
+    res["criterion1"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCriterion1(val)
+        }
+        return nil
+    }
+    res["criterion2"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCriterion2(val)
+        }
+        return nil
+    }
+    res["dynamicCriteria"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDynamicCriteria(val)
+        }
+        return nil
+    }
+    res["filterOn"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFilterOn(val)
+        }
+        return nil
+    }
+    res["icon"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateWorkbookIconFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIcon(val.(WorkbookIconable))
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["operator"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOperator(val)
+        }
+        return nil
+    }
+    res["values"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateJsonFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetValues(val.(Jsonable))
+        }
+        return nil
+    }
     return res
 }
 // GetFilterOn gets the filterOn property value. The filterOn property
 func (m *WorkbookFilterCriteria) GetFilterOn()(*string) {
-    return m.filterOn
+    val, err := m.GetBackingStore().Get("filterOn")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetIcon gets the icon property value. The icon property
 func (m *WorkbookFilterCriteria) GetIcon()(WorkbookIconable) {
-    return m.icon
+    val, err := m.GetBackingStore().Get("icon")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(WorkbookIconable)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *WorkbookFilterCriteria) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOperator gets the operator property value. The operator property
 func (m *WorkbookFilterCriteria) GetOperator()(*string) {
-    return m.operator
+    val, err := m.GetBackingStore().Get("operator")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetValues gets the values property value. The values property
 func (m *WorkbookFilterCriteria) GetValues()(Jsonable) {
-    return m.values
+    val, err := m.GetBackingStore().Get("values")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Jsonable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *WorkbookFilterCriteria) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -158,42 +297,102 @@ func (m *WorkbookFilterCriteria) Serialize(writer i878a80d2330e89d26896388a3f487
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *WorkbookFilterCriteria) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *WorkbookFilterCriteria) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *WorkbookFilterCriteria) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetColor sets the color property value. The color property
 func (m *WorkbookFilterCriteria) SetColor(value *string)() {
-    m.color = value
+    err := m.GetBackingStore().Set("color", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCriterion1 sets the criterion1 property value. The criterion1 property
 func (m *WorkbookFilterCriteria) SetCriterion1(value *string)() {
-    m.criterion1 = value
+    err := m.GetBackingStore().Set("criterion1", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCriterion2 sets the criterion2 property value. The criterion2 property
 func (m *WorkbookFilterCriteria) SetCriterion2(value *string)() {
-    m.criterion2 = value
+    err := m.GetBackingStore().Set("criterion2", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDynamicCriteria sets the dynamicCriteria property value. The dynamicCriteria property
 func (m *WorkbookFilterCriteria) SetDynamicCriteria(value *string)() {
-    m.dynamicCriteria = value
+    err := m.GetBackingStore().Set("dynamicCriteria", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFilterOn sets the filterOn property value. The filterOn property
 func (m *WorkbookFilterCriteria) SetFilterOn(value *string)() {
-    m.filterOn = value
+    err := m.GetBackingStore().Set("filterOn", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIcon sets the icon property value. The icon property
 func (m *WorkbookFilterCriteria) SetIcon(value WorkbookIconable)() {
-    m.icon = value
+    err := m.GetBackingStore().Set("icon", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *WorkbookFilterCriteria) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOperator sets the operator property value. The operator property
 func (m *WorkbookFilterCriteria) SetOperator(value *string)() {
-    m.operator = value
+    err := m.GetBackingStore().Set("operator", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetValues sets the values property value. The values property
 func (m *WorkbookFilterCriteria) SetValues(value Jsonable)() {
-    m.values = value
+    err := m.GetBackingStore().Set("values", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// WorkbookFilterCriteriaable 
+type WorkbookFilterCriteriaable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetColor()(*string)
+    GetCriterion1()(*string)
+    GetCriterion2()(*string)
+    GetDynamicCriteria()(*string)
+    GetFilterOn()(*string)
+    GetIcon()(WorkbookIconable)
+    GetOdataType()(*string)
+    GetOperator()(*string)
+    GetValues()(Jsonable)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetColor(value *string)()
+    SetCriterion1(value *string)()
+    SetCriterion2(value *string)()
+    SetDynamicCriteria(value *string)()
+    SetFilterOn(value *string)()
+    SetIcon(value WorkbookIconable)()
+    SetOdataType(value *string)()
+    SetOperator(value *string)()
+    SetValues(value Jsonable)()
 }

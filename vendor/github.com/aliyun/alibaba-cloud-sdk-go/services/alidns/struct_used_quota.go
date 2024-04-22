@@ -17,7 +17,8 @@ package alidns
 
 // UsedQuota is a nested struct in alidns response
 type UsedQuota struct {
-	SmsUsedCount   int `json:"SmsUsedCount" xml:"SmsUsedCount"`
-	TaskUsedCount  int `json:"TaskUsedCount" xml:"TaskUsedCount"`
-	EmailUsedCount int `json:"EmailUsedCount" xml:"EmailUsedCount"`
+	SmsUsedCount      int `json:"SmsUsedCount" xml:"SmsUsedCount"`
+	TaskUsedCount     int `json:"TaskUsedCount" xml:"TaskUsedCount"`
+	EmailUsedCount    int `json:"EmailUsedCount" xml:"EmailUsedCount"`
+	DingtalkUsedCount int `json:"DingtalkUsedCount" xml:"DingtalkUsedCount"`
 }

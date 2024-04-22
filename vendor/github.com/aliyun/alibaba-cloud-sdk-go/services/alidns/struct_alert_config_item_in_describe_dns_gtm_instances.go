@@ -17,7 +17,8 @@ package alidns
 
 // AlertConfigItemInDescribeDnsGtmInstances is a nested struct in alidns response
 type AlertConfigItemInDescribeDnsGtmInstances struct {
-	NoticeType  string `json:"NoticeType" xml:"NoticeType"`
-	SmsNotice   string `json:"SmsNotice" xml:"SmsNotice"`
-	EmailNotice string `json:"EmailNotice" xml:"EmailNotice"`
+	SmsNotice      string `json:"SmsNotice" xml:"SmsNotice"`
+	NoticeType     string `json:"NoticeType" xml:"NoticeType"`
+	EmailNotice    string `json:"EmailNotice" xml:"EmailNotice"`
+	DingtalkNotice string `json:"DingtalkNotice" xml:"DingtalkNotice"`
 }

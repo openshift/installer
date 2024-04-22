@@ -2,23 +2,12 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// Trending provides operations to manage the collection of agreement entities.
+// Trending 
 type Trending struct {
     Entity
-    // The lastModifiedDateTime property
-    lastModifiedDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Used for navigating to the trending document.
-    resource Entityable
-    // Reference properties of the trending document, such as the url and type of the document.
-    resourceReference ResourceReferenceable
-    // Properties that you can use to visualize the document in your experience.
-    resourceVisualization ResourceVisualizationable
-    // Value indicating how much the document is currently trending. The larger the number, the more the document is currently trending around the user (the more relevant it is). Returned documents are sorted by this value.
-    weight *float64
 }
 // NewTrending instantiates a new trending and sets the default values.
 func NewTrending()(*Trending) {
@@ -34,32 +23,112 @@ func CreateTrendingFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f4
 // GetFieldDeserializers the deserialization information for the current model
 func (m *Trending) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["lastModifiedDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetLastModifiedDateTime)
-    res["resource"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateEntityFromDiscriminatorValue , m.SetResource)
-    res["resourceReference"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateResourceReferenceFromDiscriminatorValue , m.SetResourceReference)
-    res["resourceVisualization"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateResourceVisualizationFromDiscriminatorValue , m.SetResourceVisualization)
-    res["weight"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetWeight)
+    res["lastModifiedDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastModifiedDateTime(val)
+        }
+        return nil
+    }
+    res["resource"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateEntityFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetResource(val.(Entityable))
+        }
+        return nil
+    }
+    res["resourceReference"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateResourceReferenceFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetResourceReference(val.(ResourceReferenceable))
+        }
+        return nil
+    }
+    res["resourceVisualization"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateResourceVisualizationFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetResourceVisualization(val.(ResourceVisualizationable))
+        }
+        return nil
+    }
+    res["weight"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWeight(val)
+        }
+        return nil
+    }
     return res
 }
 // GetLastModifiedDateTime gets the lastModifiedDateTime property value. The lastModifiedDateTime property
 func (m *Trending) GetLastModifiedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.lastModifiedDateTime
+    val, err := m.GetBackingStore().Get("lastModifiedDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetResource gets the resource property value. Used for navigating to the trending document.
 func (m *Trending) GetResource()(Entityable) {
-    return m.resource
+    val, err := m.GetBackingStore().Get("resource")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Entityable)
+    }
+    return nil
 }
 // GetResourceReference gets the resourceReference property value. Reference properties of the trending document, such as the url and type of the document.
 func (m *Trending) GetResourceReference()(ResourceReferenceable) {
-    return m.resourceReference
+    val, err := m.GetBackingStore().Get("resourceReference")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ResourceReferenceable)
+    }
+    return nil
 }
 // GetResourceVisualization gets the resourceVisualization property value. Properties that you can use to visualize the document in your experience.
 func (m *Trending) GetResourceVisualization()(ResourceVisualizationable) {
-    return m.resourceVisualization
+    val, err := m.GetBackingStore().Get("resourceVisualization")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ResourceVisualizationable)
+    }
+    return nil
 }
 // GetWeight gets the weight property value. Value indicating how much the document is currently trending. The larger the number, the more the document is currently trending around the user (the more relevant it is). Returned documents are sorted by this value.
 func (m *Trending) GetWeight()(*float64) {
-    return m.weight
+    val, err := m.GetBackingStore().Get("weight")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *Trending) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -89,21 +158,51 @@ func (m *Trending) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c01
 }
 // SetLastModifiedDateTime sets the lastModifiedDateTime property value. The lastModifiedDateTime property
 func (m *Trending) SetLastModifiedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.lastModifiedDateTime = value
+    err := m.GetBackingStore().Set("lastModifiedDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetResource sets the resource property value. Used for navigating to the trending document.
 func (m *Trending) SetResource(value Entityable)() {
-    m.resource = value
+    err := m.GetBackingStore().Set("resource", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetResourceReference sets the resourceReference property value. Reference properties of the trending document, such as the url and type of the document.
 func (m *Trending) SetResourceReference(value ResourceReferenceable)() {
-    m.resourceReference = value
+    err := m.GetBackingStore().Set("resourceReference", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetResourceVisualization sets the resourceVisualization property value. Properties that you can use to visualize the document in your experience.
 func (m *Trending) SetResourceVisualization(value ResourceVisualizationable)() {
-    m.resourceVisualization = value
+    err := m.GetBackingStore().Set("resourceVisualization", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWeight sets the weight property value. Value indicating how much the document is currently trending. The larger the number, the more the document is currently trending around the user (the more relevant it is). Returned documents are sorted by this value.
 func (m *Trending) SetWeight(value *float64)() {
-    m.weight = value
+    err := m.GetBackingStore().Set("weight", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// Trendingable 
+type Trendingable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetLastModifiedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetResource()(Entityable)
+    GetResourceReference()(ResourceReferenceable)
+    GetResourceVisualization()(ResourceVisualizationable)
+    GetWeight()(*float64)
+    SetLastModifiedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetResource(value Entityable)()
+    SetResourceReference(value ResourceReferenceable)()
+    SetResourceVisualization(value ResourceVisualizationable)()
+    SetWeight(value *float64)()
 }

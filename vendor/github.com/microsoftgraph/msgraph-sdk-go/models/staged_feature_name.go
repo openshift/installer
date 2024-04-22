@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type StagedFeatureName int
 
 const (
@@ -18,7 +18,7 @@ const (
 func (i StagedFeatureName) String() string {
     return []string{"passthroughAuthentication", "seamlessSso", "passwordHashSync", "emailAsAlternateId", "unknownFutureValue", "certificateBasedAuthentication", "multiFactorAuthentication"}[i]
 }
-func ParseStagedFeatureName(v string) (interface{}, error) {
+func ParseStagedFeatureName(v string) (any, error) {
     result := PASSTHROUGHAUTHENTICATION_STAGEDFEATURENAME
     switch v {
         case "passthroughAuthentication":

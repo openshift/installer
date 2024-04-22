@@ -1,25 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // SingleServicePrincipal 
 type SingleServicePrincipal struct {
     SubjectSet
-    // Description of this service principal.
-    description *string
-    // ID of the servicePrincipal.
-    servicePrincipalId *string
 }
 // NewSingleServicePrincipal instantiates a new SingleServicePrincipal and sets the default values.
 func NewSingleServicePrincipal()(*SingleServicePrincipal) {
     m := &SingleServicePrincipal{
         SubjectSet: *NewSubjectSet(),
     }
-    odataTypeValue := "#microsoft.graph.singleServicePrincipal";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.singleServicePrincipal"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateSingleServicePrincipalFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -28,18 +23,50 @@ func CreateSingleServicePrincipalFromDiscriminatorValue(parseNode i878a80d2330e8
 }
 // GetDescription gets the description property value. Description of this service principal.
 func (m *SingleServicePrincipal) GetDescription()(*string) {
-    return m.description
+    val, err := m.GetBackingStore().Get("description")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *SingleServicePrincipal) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.SubjectSet.GetFieldDeserializers()
-    res["description"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDescription)
-    res["servicePrincipalId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetServicePrincipalId)
+    res["description"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDescription(val)
+        }
+        return nil
+    }
+    res["servicePrincipalId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetServicePrincipalId(val)
+        }
+        return nil
+    }
     return res
 }
 // GetServicePrincipalId gets the servicePrincipalId property value. ID of the servicePrincipal.
 func (m *SingleServicePrincipal) GetServicePrincipalId()(*string) {
-    return m.servicePrincipalId
+    val, err := m.GetBackingStore().Get("servicePrincipalId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *SingleServicePrincipal) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -63,9 +90,24 @@ func (m *SingleServicePrincipal) Serialize(writer i878a80d2330e89d26896388a3f487
 }
 // SetDescription sets the description property value. Description of this service principal.
 func (m *SingleServicePrincipal) SetDescription(value *string)() {
-    m.description = value
+    err := m.GetBackingStore().Set("description", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetServicePrincipalId sets the servicePrincipalId property value. ID of the servicePrincipal.
 func (m *SingleServicePrincipal) SetServicePrincipalId(value *string)() {
-    m.servicePrincipalId = value
+    err := m.GetBackingStore().Set("servicePrincipalId", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SingleServicePrincipalable 
+type SingleServicePrincipalable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    SubjectSetable
+    GetDescription()(*string)
+    GetServicePrincipalId()(*string)
+    SetDescription(value *string)()
+    SetServicePrincipalId(value *string)()
 }

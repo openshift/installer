@@ -1,23 +1,14 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // Place 
 type Place struct {
     Entity
-    // The street address of the place.
-    address PhysicalAddressable
-    // The name associated with the place.
-    displayName *string
-    // Specifies the place location in latitude, longitude and (optionally) altitude coordinates.
-    geoCoordinates OutlookGeoCoordinatesable
-    // The phone number of the place.
-    phone *string
 }
-// NewPlace instantiates a new Place and sets the default values.
+// NewPlace instantiates a new place and sets the default values.
 func NewPlace()(*Place) {
     m := &Place{
         Entity: *NewEntity(),
@@ -50,28 +41,92 @@ func CreatePlaceFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487e
 }
 // GetAddress gets the address property value. The street address of the place.
 func (m *Place) GetAddress()(PhysicalAddressable) {
-    return m.address
+    val, err := m.GetBackingStore().Get("address")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(PhysicalAddressable)
+    }
+    return nil
 }
 // GetDisplayName gets the displayName property value. The name associated with the place.
 func (m *Place) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *Place) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["address"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreatePhysicalAddressFromDiscriminatorValue , m.SetAddress)
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["geoCoordinates"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateOutlookGeoCoordinatesFromDiscriminatorValue , m.SetGeoCoordinates)
-    res["phone"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetPhone)
+    res["address"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreatePhysicalAddressFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAddress(val.(PhysicalAddressable))
+        }
+        return nil
+    }
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["geoCoordinates"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateOutlookGeoCoordinatesFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetGeoCoordinates(val.(OutlookGeoCoordinatesable))
+        }
+        return nil
+    }
+    res["phone"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPhone(val)
+        }
+        return nil
+    }
     return res
 }
 // GetGeoCoordinates gets the geoCoordinates property value. Specifies the place location in latitude, longitude and (optionally) altitude coordinates.
 func (m *Place) GetGeoCoordinates()(OutlookGeoCoordinatesable) {
-    return m.geoCoordinates
+    val, err := m.GetBackingStore().Get("geoCoordinates")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(OutlookGeoCoordinatesable)
+    }
+    return nil
 }
 // GetPhone gets the phone property value. The phone number of the place.
 func (m *Place) GetPhone()(*string) {
-    return m.phone
+    val, err := m.GetBackingStore().Get("phone")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *Place) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -107,17 +162,42 @@ func (m *Place) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c4
 }
 // SetAddress sets the address property value. The street address of the place.
 func (m *Place) SetAddress(value PhysicalAddressable)() {
-    m.address = value
+    err := m.GetBackingStore().Set("address", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDisplayName sets the displayName property value. The name associated with the place.
 func (m *Place) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetGeoCoordinates sets the geoCoordinates property value. Specifies the place location in latitude, longitude and (optionally) altitude coordinates.
 func (m *Place) SetGeoCoordinates(value OutlookGeoCoordinatesable)() {
-    m.geoCoordinates = value
+    err := m.GetBackingStore().Set("geoCoordinates", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPhone sets the phone property value. The phone number of the place.
 func (m *Place) SetPhone(value *string)() {
-    m.phone = value
+    err := m.GetBackingStore().Set("phone", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// Placeable 
+type Placeable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAddress()(PhysicalAddressable)
+    GetDisplayName()(*string)
+    GetGeoCoordinates()(OutlookGeoCoordinatesable)
+    GetPhone()(*string)
+    SetAddress(value PhysicalAddressable)()
+    SetDisplayName(value *string)()
+    SetGeoCoordinates(value OutlookGeoCoordinatesable)()
+    SetPhone(value *string)()
 }

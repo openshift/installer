@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type WorkforceIntegrationEncryptionProtocol int
 
 const (
@@ -13,7 +13,7 @@ const (
 func (i WorkforceIntegrationEncryptionProtocol) String() string {
     return []string{"sharedSecret", "unknownFutureValue"}[i]
 }
-func ParseWorkforceIntegrationEncryptionProtocol(v string) (interface{}, error) {
+func ParseWorkforceIntegrationEncryptionProtocol(v string) (any, error) {
     result := SHAREDSECRET_WORKFORCEINTEGRATIONENCRYPTIONPROTOCOL
     switch v {
         case "sharedSecret":

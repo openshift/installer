@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// The reason for which a user has been flagged
 type ManagedAppFlaggedReason int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i ManagedAppFlaggedReason) String() string {
     return []string{"none", "rootedDevice"}[i]
 }
-func ParseManagedAppFlaggedReason(v string) (interface{}, error) {
+func ParseManagedAppFlaggedReason(v string) (any, error) {
     result := NONE_MANAGEDAPPFLAGGEDREASON
     switch v {
         case "none":

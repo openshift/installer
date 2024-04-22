@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type Importance int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i Importance) String() string {
     return []string{"low", "normal", "high"}[i]
 }
-func ParseImportance(v string) (interface{}, error) {
+func ParseImportance(v string) (any, error) {
     result := LOW_IMPORTANCE
     switch v {
         case "low":

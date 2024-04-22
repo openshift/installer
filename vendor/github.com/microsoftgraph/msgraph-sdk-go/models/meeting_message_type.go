@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type MeetingMessageType int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i MeetingMessageType) String() string {
     return []string{"none", "meetingRequest", "meetingCancelled", "meetingAccepted", "meetingTenativelyAccepted", "meetingDeclined"}[i]
 }
-func ParseMeetingMessageType(v string) (interface{}, error) {
+func ParseMeetingMessageType(v string) (any, error) {
     result := NONE_MEETINGMESSAGETYPE
     switch v {
         case "none":

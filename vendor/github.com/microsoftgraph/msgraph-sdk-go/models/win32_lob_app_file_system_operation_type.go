@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Contains all supported file system detection type.
 type Win32LobAppFileSystemOperationType int
 
 const (
@@ -23,7 +23,7 @@ const (
 func (i Win32LobAppFileSystemOperationType) String() string {
     return []string{"notConfigured", "exists", "modifiedDate", "createdDate", "version", "sizeInMB"}[i]
 }
-func ParseWin32LobAppFileSystemOperationType(v string) (interface{}, error) {
+func ParseWin32LobAppFileSystemOperationType(v string) (any, error) {
     result := NOTCONFIGURED_WIN32LOBAPPFILESYSTEMOPERATIONTYPE
     switch v {
         case "notConfigured":

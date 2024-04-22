@@ -1,30 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // TeamFunSettings 
 type TeamFunSettings struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // If set to true, enables users to include custom memes.
-    allowCustomMemes *bool
-    // If set to true, enables Giphy use.
-    allowGiphy *bool
-    // If set to true, enables users to include stickers and memes.
-    allowStickersAndMemes *bool
-    // Giphy content rating. Possible values are: moderate, strict.
-    giphyContentRating *GiphyRatingType
-    // The OdataType property
-    odataType *string
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewTeamFunSettings instantiates a new teamFunSettings and sets the default values.
 func NewTeamFunSettings()(*TeamFunSettings) {
     m := &TeamFunSettings{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateTeamFunSettingsFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -32,38 +23,130 @@ func CreateTeamFunSettingsFromDiscriminatorValue(parseNode i878a80d2330e89d26896
     return NewTeamFunSettings(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *TeamFunSettings) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *TeamFunSettings) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
 }
 // GetAllowCustomMemes gets the allowCustomMemes property value. If set to true, enables users to include custom memes.
 func (m *TeamFunSettings) GetAllowCustomMemes()(*bool) {
-    return m.allowCustomMemes
+    val, err := m.GetBackingStore().Get("allowCustomMemes")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetAllowGiphy gets the allowGiphy property value. If set to true, enables Giphy use.
 func (m *TeamFunSettings) GetAllowGiphy()(*bool) {
-    return m.allowGiphy
+    val, err := m.GetBackingStore().Get("allowGiphy")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetAllowStickersAndMemes gets the allowStickersAndMemes property value. If set to true, enables users to include stickers and memes.
 func (m *TeamFunSettings) GetAllowStickersAndMemes()(*bool) {
-    return m.allowStickersAndMemes
+    val, err := m.GetBackingStore().Get("allowStickersAndMemes")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *TeamFunSettings) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *TeamFunSettings) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["allowCustomMemes"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetAllowCustomMemes)
-    res["allowGiphy"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetAllowGiphy)
-    res["allowStickersAndMemes"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetAllowStickersAndMemes)
-    res["giphyContentRating"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseGiphyRatingType , m.SetGiphyContentRating)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
+    res["allowCustomMemes"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAllowCustomMemes(val)
+        }
+        return nil
+    }
+    res["allowGiphy"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAllowGiphy(val)
+        }
+        return nil
+    }
+    res["allowStickersAndMemes"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAllowStickersAndMemes(val)
+        }
+        return nil
+    }
+    res["giphyContentRating"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseGiphyRatingType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetGiphyContentRating(val.(*GiphyRatingType))
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
     return res
 }
 // GetGiphyContentRating gets the giphyContentRating property value. Giphy content rating. Possible values are: moderate, strict.
 func (m *TeamFunSettings) GetGiphyContentRating()(*GiphyRatingType) {
-    return m.giphyContentRating
+    val, err := m.GetBackingStore().Get("giphyContentRating")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*GiphyRatingType)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *TeamFunSettings) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *TeamFunSettings) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -107,26 +190,66 @@ func (m *TeamFunSettings) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *TeamFunSettings) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *TeamFunSettings) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAllowCustomMemes sets the allowCustomMemes property value. If set to true, enables users to include custom memes.
 func (m *TeamFunSettings) SetAllowCustomMemes(value *bool)() {
-    m.allowCustomMemes = value
+    err := m.GetBackingStore().Set("allowCustomMemes", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAllowGiphy sets the allowGiphy property value. If set to true, enables Giphy use.
 func (m *TeamFunSettings) SetAllowGiphy(value *bool)() {
-    m.allowGiphy = value
+    err := m.GetBackingStore().Set("allowGiphy", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAllowStickersAndMemes sets the allowStickersAndMemes property value. If set to true, enables users to include stickers and memes.
 func (m *TeamFunSettings) SetAllowStickersAndMemes(value *bool)() {
-    m.allowStickersAndMemes = value
+    err := m.GetBackingStore().Set("allowStickersAndMemes", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *TeamFunSettings) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetGiphyContentRating sets the giphyContentRating property value. Giphy content rating. Possible values are: moderate, strict.
 func (m *TeamFunSettings) SetGiphyContentRating(value *GiphyRatingType)() {
-    m.giphyContentRating = value
+    err := m.GetBackingStore().Set("giphyContentRating", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *TeamFunSettings) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// TeamFunSettingsable 
+type TeamFunSettingsable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAllowCustomMemes()(*bool)
+    GetAllowGiphy()(*bool)
+    GetAllowStickersAndMemes()(*bool)
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetGiphyContentRating()(*GiphyRatingType)
+    GetOdataType()(*string)
+    SetAllowCustomMemes(value *bool)()
+    SetAllowGiphy(value *bool)()
+    SetAllowStickersAndMemes(value *bool)()
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetGiphyContentRating(value *GiphyRatingType)()
+    SetOdataType(value *string)()
 }

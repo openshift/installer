@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Auto restart required notification dismissal method
 type AutoRestartNotificationDismissalMethod int
 
 const (
@@ -19,7 +19,7 @@ const (
 func (i AutoRestartNotificationDismissalMethod) String() string {
     return []string{"notConfigured", "automatic", "user", "unknownFutureValue"}[i]
 }
-func ParseAutoRestartNotificationDismissalMethod(v string) (interface{}, error) {
+func ParseAutoRestartNotificationDismissalMethod(v string) (any, error) {
     result := NOTCONFIGURED_AUTORESTARTNOTIFICATIONDISMISSALMETHOD
     switch v {
         case "notConfigured":

@@ -1,21 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// WorkbookTableColumn provides operations to manage the collection of agreement entities.
+// WorkbookTableColumn 
 type WorkbookTableColumn struct {
     Entity
-    // Retrieve the filter applied to the column. Read-only.
-    filter WorkbookFilterable
-    // Returns the index number of the column within the columns collection of the table. Zero-indexed. Read-only.
-    index *int32
-    // Returns the name of the table column.
-    name *string
-    // Represents the raw values of the specified range. The data returned could be of type string, number, or a boolean. Cell that contain an error will return the error string.
-    values Jsonable
 }
 // NewWorkbookTableColumn instantiates a new workbookTableColumn and sets the default values.
 func NewWorkbookTableColumn()(*WorkbookTableColumn) {
@@ -31,27 +22,91 @@ func CreateWorkbookTableColumnFromDiscriminatorValue(parseNode i878a80d2330e89d2
 // GetFieldDeserializers the deserialization information for the current model
 func (m *WorkbookTableColumn) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["filter"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateWorkbookFilterFromDiscriminatorValue , m.SetFilter)
-    res["index"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetIndex)
-    res["name"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetName)
-    res["values"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateJsonFromDiscriminatorValue , m.SetValues)
+    res["filter"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateWorkbookFilterFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFilter(val.(WorkbookFilterable))
+        }
+        return nil
+    }
+    res["index"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIndex(val)
+        }
+        return nil
+    }
+    res["name"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetName(val)
+        }
+        return nil
+    }
+    res["values"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateJsonFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetValues(val.(Jsonable))
+        }
+        return nil
+    }
     return res
 }
 // GetFilter gets the filter property value. Retrieve the filter applied to the column. Read-only.
 func (m *WorkbookTableColumn) GetFilter()(WorkbookFilterable) {
-    return m.filter
+    val, err := m.GetBackingStore().Get("filter")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(WorkbookFilterable)
+    }
+    return nil
 }
 // GetIndex gets the index property value. Returns the index number of the column within the columns collection of the table. Zero-indexed. Read-only.
 func (m *WorkbookTableColumn) GetIndex()(*int32) {
-    return m.index
+    val, err := m.GetBackingStore().Get("index")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetName gets the name property value. Returns the name of the table column.
 func (m *WorkbookTableColumn) GetName()(*string) {
-    return m.name
+    val, err := m.GetBackingStore().Get("name")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetValues gets the values property value. Represents the raw values of the specified range. The data returned could be of type string, number, or a boolean. Cell that contain an error will return the error string.
 func (m *WorkbookTableColumn) GetValues()(Jsonable) {
-    return m.values
+    val, err := m.GetBackingStore().Get("values")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Jsonable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *WorkbookTableColumn) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -87,17 +142,42 @@ func (m *WorkbookTableColumn) Serialize(writer i878a80d2330e89d26896388a3f487eef
 }
 // SetFilter sets the filter property value. Retrieve the filter applied to the column. Read-only.
 func (m *WorkbookTableColumn) SetFilter(value WorkbookFilterable)() {
-    m.filter = value
+    err := m.GetBackingStore().Set("filter", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIndex sets the index property value. Returns the index number of the column within the columns collection of the table. Zero-indexed. Read-only.
 func (m *WorkbookTableColumn) SetIndex(value *int32)() {
-    m.index = value
+    err := m.GetBackingStore().Set("index", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetName sets the name property value. Returns the name of the table column.
 func (m *WorkbookTableColumn) SetName(value *string)() {
-    m.name = value
+    err := m.GetBackingStore().Set("name", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetValues sets the values property value. Represents the raw values of the specified range. The data returned could be of type string, number, or a boolean. Cell that contain an error will return the error string.
 func (m *WorkbookTableColumn) SetValues(value Jsonable)() {
-    m.values = value
+    err := m.GetBackingStore().Set("values", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// WorkbookTableColumnable 
+type WorkbookTableColumnable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetFilter()(WorkbookFilterable)
+    GetIndex()(*int32)
+    GetName()(*string)
+    GetValues()(Jsonable)
+    SetFilter(value WorkbookFilterable)()
+    SetIndex(value *int32)()
+    SetName(value *string)()
+    SetValues(value Jsonable)()
 }

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the admin singleton.
+// 
 type BodyType int
 
 const (
@@ -13,7 +13,7 @@ const (
 func (i BodyType) String() string {
     return []string{"text", "html"}[i]
 }
-func ParseBodyType(v string) (interface{}, error) {
+func ParseBodyType(v string) (any, error) {
     result := TEXT_BODYTYPE
     switch v {
         case "text":

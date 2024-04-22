@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Possible values of required passwords.
 type RequiredPasswordType int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i RequiredPasswordType) String() string {
     return []string{"deviceDefault", "alphanumeric", "numeric"}[i]
 }
-func ParseRequiredPasswordType(v string) (interface{}, error) {
+func ParseRequiredPasswordType(v string) (any, error) {
     result := DEVICEDEFAULT_REQUIREDPASSWORDTYPE
     switch v {
         case "deviceDefault":

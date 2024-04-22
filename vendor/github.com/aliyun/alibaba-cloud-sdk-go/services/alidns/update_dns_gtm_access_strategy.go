@@ -88,6 +88,7 @@ type UpdateDnsGtmAccessStrategyRequest struct {
 	UserClientIp                string                                        `position:"Query" name:"UserClientIp"`
 	StrategyId                  string                                        `position:"Query" name:"StrategyId"`
 	FailoverAddrPool            *[]UpdateDnsGtmAccessStrategyFailoverAddrPool `position:"Query" name:"FailoverAddrPool"  type:"Repeated"`
+	AccessMode                  string                                        `position:"Query" name:"AccessMode"`
 }
 
 // UpdateDnsGtmAccessStrategyDefaultAddrPool is a repeated param struct in UpdateDnsGtmAccessStrategyRequest

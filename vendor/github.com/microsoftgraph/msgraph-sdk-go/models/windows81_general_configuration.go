@@ -1,87 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // Windows81GeneralConfiguration 
 type Windows81GeneralConfiguration struct {
     DeviceConfiguration
-    // Indicates whether or not to Block the user from adding email accounts to the device that are not associated with a Microsoft account.
-    accountsBlockAddingNonMicrosoftAccountEmail *bool
-    // Value indicating whether this policy only applies to Windows 8.1. This property is read-only.
-    applyOnlyToWindows81 *bool
-    // Indicates whether or not to block auto fill.
-    browserBlockAutofill *bool
-    // Indicates whether or not to block automatic detection of Intranet sites.
-    browserBlockAutomaticDetectionOfIntranetSites *bool
-    // Indicates whether or not to block enterprise mode access.
-    browserBlockEnterpriseModeAccess *bool
-    // Indicates whether or not to Block the user from using JavaScript.
-    browserBlockJavaScript *bool
-    // Indicates whether or not to block plug-ins.
-    browserBlockPlugins *bool
-    // Indicates whether or not to block popups.
-    browserBlockPopups *bool
-    // Indicates whether or not to Block the user from sending the do not track header.
-    browserBlockSendingDoNotTrackHeader *bool
-    // Indicates whether or not to block a single word entry on Intranet sites.
-    browserBlockSingleWordEntryOnIntranetSites *bool
-    // The enterprise mode site list location. Could be a local file, local network or http location.
-    browserEnterpriseModeSiteListLocation *string
-    // Possible values for internet site security level.
-    browserInternetSecurityLevel *InternetSiteSecurityLevel
-    // Possible values for site security level.
-    browserIntranetSecurityLevel *SiteSecurityLevel
-    // The logging report location.
-    browserLoggingReportLocation *string
-    // Indicates whether or not to require a firewall.
-    browserRequireFirewall *bool
-    // Indicates whether or not to require fraud warning.
-    browserRequireFraudWarning *bool
-    // Indicates whether or not to require high security for restricted sites.
-    browserRequireHighSecurityForRestrictedSites *bool
-    // Indicates whether or not to require the user to use the smart screen filter.
-    browserRequireSmartScreen *bool
-    // Possible values for site security level.
-    browserTrustedSitesSecurityLevel *SiteSecurityLevel
-    // Indicates whether or not to block data roaming.
-    cellularBlockDataRoaming *bool
-    // Indicates whether or not to block diagnostic data submission.
-    diagnosticsBlockDataSubmission *bool
-    // Indicates whether or not to Block the user from using a pictures password and pin.
-    passwordBlockPicturePasswordAndPin *bool
-    // Password expiration in days.
-    passwordExpirationDays *int32
-    // The number of character sets required in the password.
-    passwordMinimumCharacterSetCount *int32
-    // The minimum password length.
-    passwordMinimumLength *int32
-    // The minutes of inactivity before the screen times out.
-    passwordMinutesOfInactivityBeforeScreenTimeout *int32
-    // The number of previous passwords to prevent re-use of. Valid values 0 to 24
-    passwordPreviousPasswordBlockCount *int32
-    // Possible values of required passwords.
-    passwordRequiredType *RequiredPasswordType
-    // The number of sign in failures before factory reset.
-    passwordSignInFailureCountBeforeFactoryReset *int32
-    // Indicates whether or not to require encryption on a mobile device.
-    storageRequireDeviceEncryption *bool
-    // Indicates whether or not to require automatic updates.
-    updatesRequireAutomaticUpdates *bool
-    // Possible values for Windows user account control settings.
-    userAccountControlSettings *WindowsUserAccountControlSettings
-    // The work folders url.
-    workFoldersUrl *string
 }
 // NewWindows81GeneralConfiguration instantiates a new Windows81GeneralConfiguration and sets the default values.
 func NewWindows81GeneralConfiguration()(*Windows81GeneralConfiguration) {
     m := &Windows81GeneralConfiguration{
         DeviceConfiguration: *NewDeviceConfiguration(),
     }
-    odataTypeValue := "#microsoft.graph.windows81GeneralConfiguration";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.windows81GeneralConfiguration"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateWindows81GeneralConfigurationFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -90,173 +23,701 @@ func CreateWindows81GeneralConfigurationFromDiscriminatorValue(parseNode i878a80
 }
 // GetAccountsBlockAddingNonMicrosoftAccountEmail gets the accountsBlockAddingNonMicrosoftAccountEmail property value. Indicates whether or not to Block the user from adding email accounts to the device that are not associated with a Microsoft account.
 func (m *Windows81GeneralConfiguration) GetAccountsBlockAddingNonMicrosoftAccountEmail()(*bool) {
-    return m.accountsBlockAddingNonMicrosoftAccountEmail
+    val, err := m.GetBackingStore().Get("accountsBlockAddingNonMicrosoftAccountEmail")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetApplyOnlyToWindows81 gets the applyOnlyToWindows81 property value. Value indicating whether this policy only applies to Windows 8.1. This property is read-only.
 func (m *Windows81GeneralConfiguration) GetApplyOnlyToWindows81()(*bool) {
-    return m.applyOnlyToWindows81
+    val, err := m.GetBackingStore().Get("applyOnlyToWindows81")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetBrowserBlockAutofill gets the browserBlockAutofill property value. Indicates whether or not to block auto fill.
 func (m *Windows81GeneralConfiguration) GetBrowserBlockAutofill()(*bool) {
-    return m.browserBlockAutofill
+    val, err := m.GetBackingStore().Get("browserBlockAutofill")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetBrowserBlockAutomaticDetectionOfIntranetSites gets the browserBlockAutomaticDetectionOfIntranetSites property value. Indicates whether or not to block automatic detection of Intranet sites.
 func (m *Windows81GeneralConfiguration) GetBrowserBlockAutomaticDetectionOfIntranetSites()(*bool) {
-    return m.browserBlockAutomaticDetectionOfIntranetSites
+    val, err := m.GetBackingStore().Get("browserBlockAutomaticDetectionOfIntranetSites")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetBrowserBlockEnterpriseModeAccess gets the browserBlockEnterpriseModeAccess property value. Indicates whether or not to block enterprise mode access.
 func (m *Windows81GeneralConfiguration) GetBrowserBlockEnterpriseModeAccess()(*bool) {
-    return m.browserBlockEnterpriseModeAccess
+    val, err := m.GetBackingStore().Get("browserBlockEnterpriseModeAccess")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetBrowserBlockJavaScript gets the browserBlockJavaScript property value. Indicates whether or not to Block the user from using JavaScript.
 func (m *Windows81GeneralConfiguration) GetBrowserBlockJavaScript()(*bool) {
-    return m.browserBlockJavaScript
+    val, err := m.GetBackingStore().Get("browserBlockJavaScript")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetBrowserBlockPlugins gets the browserBlockPlugins property value. Indicates whether or not to block plug-ins.
 func (m *Windows81GeneralConfiguration) GetBrowserBlockPlugins()(*bool) {
-    return m.browserBlockPlugins
+    val, err := m.GetBackingStore().Get("browserBlockPlugins")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetBrowserBlockPopups gets the browserBlockPopups property value. Indicates whether or not to block popups.
 func (m *Windows81GeneralConfiguration) GetBrowserBlockPopups()(*bool) {
-    return m.browserBlockPopups
+    val, err := m.GetBackingStore().Get("browserBlockPopups")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetBrowserBlockSendingDoNotTrackHeader gets the browserBlockSendingDoNotTrackHeader property value. Indicates whether or not to Block the user from sending the do not track header.
 func (m *Windows81GeneralConfiguration) GetBrowserBlockSendingDoNotTrackHeader()(*bool) {
-    return m.browserBlockSendingDoNotTrackHeader
+    val, err := m.GetBackingStore().Get("browserBlockSendingDoNotTrackHeader")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetBrowserBlockSingleWordEntryOnIntranetSites gets the browserBlockSingleWordEntryOnIntranetSites property value. Indicates whether or not to block a single word entry on Intranet sites.
 func (m *Windows81GeneralConfiguration) GetBrowserBlockSingleWordEntryOnIntranetSites()(*bool) {
-    return m.browserBlockSingleWordEntryOnIntranetSites
+    val, err := m.GetBackingStore().Get("browserBlockSingleWordEntryOnIntranetSites")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetBrowserEnterpriseModeSiteListLocation gets the browserEnterpriseModeSiteListLocation property value. The enterprise mode site list location. Could be a local file, local network or http location.
 func (m *Windows81GeneralConfiguration) GetBrowserEnterpriseModeSiteListLocation()(*string) {
-    return m.browserEnterpriseModeSiteListLocation
+    val, err := m.GetBackingStore().Get("browserEnterpriseModeSiteListLocation")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetBrowserInternetSecurityLevel gets the browserInternetSecurityLevel property value. Possible values for internet site security level.
 func (m *Windows81GeneralConfiguration) GetBrowserInternetSecurityLevel()(*InternetSiteSecurityLevel) {
-    return m.browserInternetSecurityLevel
+    val, err := m.GetBackingStore().Get("browserInternetSecurityLevel")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*InternetSiteSecurityLevel)
+    }
+    return nil
 }
 // GetBrowserIntranetSecurityLevel gets the browserIntranetSecurityLevel property value. Possible values for site security level.
 func (m *Windows81GeneralConfiguration) GetBrowserIntranetSecurityLevel()(*SiteSecurityLevel) {
-    return m.browserIntranetSecurityLevel
+    val, err := m.GetBackingStore().Get("browserIntranetSecurityLevel")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*SiteSecurityLevel)
+    }
+    return nil
 }
 // GetBrowserLoggingReportLocation gets the browserLoggingReportLocation property value. The logging report location.
 func (m *Windows81GeneralConfiguration) GetBrowserLoggingReportLocation()(*string) {
-    return m.browserLoggingReportLocation
+    val, err := m.GetBackingStore().Get("browserLoggingReportLocation")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetBrowserRequireFirewall gets the browserRequireFirewall property value. Indicates whether or not to require a firewall.
 func (m *Windows81GeneralConfiguration) GetBrowserRequireFirewall()(*bool) {
-    return m.browserRequireFirewall
+    val, err := m.GetBackingStore().Get("browserRequireFirewall")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetBrowserRequireFraudWarning gets the browserRequireFraudWarning property value. Indicates whether or not to require fraud warning.
 func (m *Windows81GeneralConfiguration) GetBrowserRequireFraudWarning()(*bool) {
-    return m.browserRequireFraudWarning
+    val, err := m.GetBackingStore().Get("browserRequireFraudWarning")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetBrowserRequireHighSecurityForRestrictedSites gets the browserRequireHighSecurityForRestrictedSites property value. Indicates whether or not to require high security for restricted sites.
 func (m *Windows81GeneralConfiguration) GetBrowserRequireHighSecurityForRestrictedSites()(*bool) {
-    return m.browserRequireHighSecurityForRestrictedSites
+    val, err := m.GetBackingStore().Get("browserRequireHighSecurityForRestrictedSites")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetBrowserRequireSmartScreen gets the browserRequireSmartScreen property value. Indicates whether or not to require the user to use the smart screen filter.
 func (m *Windows81GeneralConfiguration) GetBrowserRequireSmartScreen()(*bool) {
-    return m.browserRequireSmartScreen
+    val, err := m.GetBackingStore().Get("browserRequireSmartScreen")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetBrowserTrustedSitesSecurityLevel gets the browserTrustedSitesSecurityLevel property value. Possible values for site security level.
 func (m *Windows81GeneralConfiguration) GetBrowserTrustedSitesSecurityLevel()(*SiteSecurityLevel) {
-    return m.browserTrustedSitesSecurityLevel
+    val, err := m.GetBackingStore().Get("browserTrustedSitesSecurityLevel")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*SiteSecurityLevel)
+    }
+    return nil
 }
 // GetCellularBlockDataRoaming gets the cellularBlockDataRoaming property value. Indicates whether or not to block data roaming.
 func (m *Windows81GeneralConfiguration) GetCellularBlockDataRoaming()(*bool) {
-    return m.cellularBlockDataRoaming
+    val, err := m.GetBackingStore().Get("cellularBlockDataRoaming")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetDiagnosticsBlockDataSubmission gets the diagnosticsBlockDataSubmission property value. Indicates whether or not to block diagnostic data submission.
 func (m *Windows81GeneralConfiguration) GetDiagnosticsBlockDataSubmission()(*bool) {
-    return m.diagnosticsBlockDataSubmission
+    val, err := m.GetBackingStore().Get("diagnosticsBlockDataSubmission")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *Windows81GeneralConfiguration) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.DeviceConfiguration.GetFieldDeserializers()
-    res["accountsBlockAddingNonMicrosoftAccountEmail"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetAccountsBlockAddingNonMicrosoftAccountEmail)
-    res["applyOnlyToWindows81"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetApplyOnlyToWindows81)
-    res["browserBlockAutofill"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetBrowserBlockAutofill)
-    res["browserBlockAutomaticDetectionOfIntranetSites"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetBrowserBlockAutomaticDetectionOfIntranetSites)
-    res["browserBlockEnterpriseModeAccess"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetBrowserBlockEnterpriseModeAccess)
-    res["browserBlockJavaScript"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetBrowserBlockJavaScript)
-    res["browserBlockPlugins"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetBrowserBlockPlugins)
-    res["browserBlockPopups"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetBrowserBlockPopups)
-    res["browserBlockSendingDoNotTrackHeader"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetBrowserBlockSendingDoNotTrackHeader)
-    res["browserBlockSingleWordEntryOnIntranetSites"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetBrowserBlockSingleWordEntryOnIntranetSites)
-    res["browserEnterpriseModeSiteListLocation"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetBrowserEnterpriseModeSiteListLocation)
-    res["browserInternetSecurityLevel"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseInternetSiteSecurityLevel , m.SetBrowserInternetSecurityLevel)
-    res["browserIntranetSecurityLevel"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseSiteSecurityLevel , m.SetBrowserIntranetSecurityLevel)
-    res["browserLoggingReportLocation"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetBrowserLoggingReportLocation)
-    res["browserRequireFirewall"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetBrowserRequireFirewall)
-    res["browserRequireFraudWarning"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetBrowserRequireFraudWarning)
-    res["browserRequireHighSecurityForRestrictedSites"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetBrowserRequireHighSecurityForRestrictedSites)
-    res["browserRequireSmartScreen"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetBrowserRequireSmartScreen)
-    res["browserTrustedSitesSecurityLevel"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseSiteSecurityLevel , m.SetBrowserTrustedSitesSecurityLevel)
-    res["cellularBlockDataRoaming"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetCellularBlockDataRoaming)
-    res["diagnosticsBlockDataSubmission"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetDiagnosticsBlockDataSubmission)
-    res["passwordBlockPicturePasswordAndPin"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetPasswordBlockPicturePasswordAndPin)
-    res["passwordExpirationDays"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetPasswordExpirationDays)
-    res["passwordMinimumCharacterSetCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetPasswordMinimumCharacterSetCount)
-    res["passwordMinimumLength"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetPasswordMinimumLength)
-    res["passwordMinutesOfInactivityBeforeScreenTimeout"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetPasswordMinutesOfInactivityBeforeScreenTimeout)
-    res["passwordPreviousPasswordBlockCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetPasswordPreviousPasswordBlockCount)
-    res["passwordRequiredType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseRequiredPasswordType , m.SetPasswordRequiredType)
-    res["passwordSignInFailureCountBeforeFactoryReset"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetPasswordSignInFailureCountBeforeFactoryReset)
-    res["storageRequireDeviceEncryption"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetStorageRequireDeviceEncryption)
-    res["updatesRequireAutomaticUpdates"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetUpdatesRequireAutomaticUpdates)
-    res["userAccountControlSettings"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseWindowsUserAccountControlSettings , m.SetUserAccountControlSettings)
-    res["workFoldersUrl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetWorkFoldersUrl)
+    res["accountsBlockAddingNonMicrosoftAccountEmail"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAccountsBlockAddingNonMicrosoftAccountEmail(val)
+        }
+        return nil
+    }
+    res["applyOnlyToWindows81"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetApplyOnlyToWindows81(val)
+        }
+        return nil
+    }
+    res["browserBlockAutofill"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBrowserBlockAutofill(val)
+        }
+        return nil
+    }
+    res["browserBlockAutomaticDetectionOfIntranetSites"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBrowserBlockAutomaticDetectionOfIntranetSites(val)
+        }
+        return nil
+    }
+    res["browserBlockEnterpriseModeAccess"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBrowserBlockEnterpriseModeAccess(val)
+        }
+        return nil
+    }
+    res["browserBlockJavaScript"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBrowserBlockJavaScript(val)
+        }
+        return nil
+    }
+    res["browserBlockPlugins"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBrowserBlockPlugins(val)
+        }
+        return nil
+    }
+    res["browserBlockPopups"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBrowserBlockPopups(val)
+        }
+        return nil
+    }
+    res["browserBlockSendingDoNotTrackHeader"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBrowserBlockSendingDoNotTrackHeader(val)
+        }
+        return nil
+    }
+    res["browserBlockSingleWordEntryOnIntranetSites"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBrowserBlockSingleWordEntryOnIntranetSites(val)
+        }
+        return nil
+    }
+    res["browserEnterpriseModeSiteListLocation"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBrowserEnterpriseModeSiteListLocation(val)
+        }
+        return nil
+    }
+    res["browserInternetSecurityLevel"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseInternetSiteSecurityLevel)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBrowserInternetSecurityLevel(val.(*InternetSiteSecurityLevel))
+        }
+        return nil
+    }
+    res["browserIntranetSecurityLevel"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseSiteSecurityLevel)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBrowserIntranetSecurityLevel(val.(*SiteSecurityLevel))
+        }
+        return nil
+    }
+    res["browserLoggingReportLocation"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBrowserLoggingReportLocation(val)
+        }
+        return nil
+    }
+    res["browserRequireFirewall"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBrowserRequireFirewall(val)
+        }
+        return nil
+    }
+    res["browserRequireFraudWarning"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBrowserRequireFraudWarning(val)
+        }
+        return nil
+    }
+    res["browserRequireHighSecurityForRestrictedSites"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBrowserRequireHighSecurityForRestrictedSites(val)
+        }
+        return nil
+    }
+    res["browserRequireSmartScreen"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBrowserRequireSmartScreen(val)
+        }
+        return nil
+    }
+    res["browserTrustedSitesSecurityLevel"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseSiteSecurityLevel)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBrowserTrustedSitesSecurityLevel(val.(*SiteSecurityLevel))
+        }
+        return nil
+    }
+    res["cellularBlockDataRoaming"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCellularBlockDataRoaming(val)
+        }
+        return nil
+    }
+    res["diagnosticsBlockDataSubmission"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDiagnosticsBlockDataSubmission(val)
+        }
+        return nil
+    }
+    res["passwordBlockPicturePasswordAndPin"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPasswordBlockPicturePasswordAndPin(val)
+        }
+        return nil
+    }
+    res["passwordExpirationDays"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPasswordExpirationDays(val)
+        }
+        return nil
+    }
+    res["passwordMinimumCharacterSetCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPasswordMinimumCharacterSetCount(val)
+        }
+        return nil
+    }
+    res["passwordMinimumLength"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPasswordMinimumLength(val)
+        }
+        return nil
+    }
+    res["passwordMinutesOfInactivityBeforeScreenTimeout"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPasswordMinutesOfInactivityBeforeScreenTimeout(val)
+        }
+        return nil
+    }
+    res["passwordPreviousPasswordBlockCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPasswordPreviousPasswordBlockCount(val)
+        }
+        return nil
+    }
+    res["passwordRequiredType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseRequiredPasswordType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPasswordRequiredType(val.(*RequiredPasswordType))
+        }
+        return nil
+    }
+    res["passwordSignInFailureCountBeforeFactoryReset"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPasswordSignInFailureCountBeforeFactoryReset(val)
+        }
+        return nil
+    }
+    res["storageRequireDeviceEncryption"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetStorageRequireDeviceEncryption(val)
+        }
+        return nil
+    }
+    res["updatesRequireAutomaticUpdates"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUpdatesRequireAutomaticUpdates(val)
+        }
+        return nil
+    }
+    res["userAccountControlSettings"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseWindowsUserAccountControlSettings)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUserAccountControlSettings(val.(*WindowsUserAccountControlSettings))
+        }
+        return nil
+    }
+    res["workFoldersUrl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWorkFoldersUrl(val)
+        }
+        return nil
+    }
     return res
 }
 // GetPasswordBlockPicturePasswordAndPin gets the passwordBlockPicturePasswordAndPin property value. Indicates whether or not to Block the user from using a pictures password and pin.
 func (m *Windows81GeneralConfiguration) GetPasswordBlockPicturePasswordAndPin()(*bool) {
-    return m.passwordBlockPicturePasswordAndPin
+    val, err := m.GetBackingStore().Get("passwordBlockPicturePasswordAndPin")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetPasswordExpirationDays gets the passwordExpirationDays property value. Password expiration in days.
 func (m *Windows81GeneralConfiguration) GetPasswordExpirationDays()(*int32) {
-    return m.passwordExpirationDays
+    val, err := m.GetBackingStore().Get("passwordExpirationDays")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetPasswordMinimumCharacterSetCount gets the passwordMinimumCharacterSetCount property value. The number of character sets required in the password.
 func (m *Windows81GeneralConfiguration) GetPasswordMinimumCharacterSetCount()(*int32) {
-    return m.passwordMinimumCharacterSetCount
+    val, err := m.GetBackingStore().Get("passwordMinimumCharacterSetCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetPasswordMinimumLength gets the passwordMinimumLength property value. The minimum password length.
 func (m *Windows81GeneralConfiguration) GetPasswordMinimumLength()(*int32) {
-    return m.passwordMinimumLength
+    val, err := m.GetBackingStore().Get("passwordMinimumLength")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetPasswordMinutesOfInactivityBeforeScreenTimeout gets the passwordMinutesOfInactivityBeforeScreenTimeout property value. The minutes of inactivity before the screen times out.
 func (m *Windows81GeneralConfiguration) GetPasswordMinutesOfInactivityBeforeScreenTimeout()(*int32) {
-    return m.passwordMinutesOfInactivityBeforeScreenTimeout
+    val, err := m.GetBackingStore().Get("passwordMinutesOfInactivityBeforeScreenTimeout")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetPasswordPreviousPasswordBlockCount gets the passwordPreviousPasswordBlockCount property value. The number of previous passwords to prevent re-use of. Valid values 0 to 24
 func (m *Windows81GeneralConfiguration) GetPasswordPreviousPasswordBlockCount()(*int32) {
-    return m.passwordPreviousPasswordBlockCount
+    val, err := m.GetBackingStore().Get("passwordPreviousPasswordBlockCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetPasswordRequiredType gets the passwordRequiredType property value. Possible values of required passwords.
 func (m *Windows81GeneralConfiguration) GetPasswordRequiredType()(*RequiredPasswordType) {
-    return m.passwordRequiredType
+    val, err := m.GetBackingStore().Get("passwordRequiredType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*RequiredPasswordType)
+    }
+    return nil
 }
 // GetPasswordSignInFailureCountBeforeFactoryReset gets the passwordSignInFailureCountBeforeFactoryReset property value. The number of sign in failures before factory reset.
 func (m *Windows81GeneralConfiguration) GetPasswordSignInFailureCountBeforeFactoryReset()(*int32) {
-    return m.passwordSignInFailureCountBeforeFactoryReset
+    val, err := m.GetBackingStore().Get("passwordSignInFailureCountBeforeFactoryReset")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetStorageRequireDeviceEncryption gets the storageRequireDeviceEncryption property value. Indicates whether or not to require encryption on a mobile device.
 func (m *Windows81GeneralConfiguration) GetStorageRequireDeviceEncryption()(*bool) {
-    return m.storageRequireDeviceEncryption
+    val, err := m.GetBackingStore().Get("storageRequireDeviceEncryption")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetUpdatesRequireAutomaticUpdates gets the updatesRequireAutomaticUpdates property value. Indicates whether or not to require automatic updates.
 func (m *Windows81GeneralConfiguration) GetUpdatesRequireAutomaticUpdates()(*bool) {
-    return m.updatesRequireAutomaticUpdates
+    val, err := m.GetBackingStore().Get("updatesRequireAutomaticUpdates")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetUserAccountControlSettings gets the userAccountControlSettings property value. Possible values for Windows user account control settings.
 func (m *Windows81GeneralConfiguration) GetUserAccountControlSettings()(*WindowsUserAccountControlSettings) {
-    return m.userAccountControlSettings
+    val, err := m.GetBackingStore().Get("userAccountControlSettings")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*WindowsUserAccountControlSettings)
+    }
+    return nil
 }
 // GetWorkFoldersUrl gets the workFoldersUrl property value. The work folders url.
 func (m *Windows81GeneralConfiguration) GetWorkFoldersUrl()(*string) {
-    return m.workFoldersUrl
+    val, err := m.GetBackingStore().Get("workFoldersUrl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *Windows81GeneralConfiguration) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -465,133 +926,303 @@ func (m *Windows81GeneralConfiguration) Serialize(writer i878a80d2330e89d2689638
 }
 // SetAccountsBlockAddingNonMicrosoftAccountEmail sets the accountsBlockAddingNonMicrosoftAccountEmail property value. Indicates whether or not to Block the user from adding email accounts to the device that are not associated with a Microsoft account.
 func (m *Windows81GeneralConfiguration) SetAccountsBlockAddingNonMicrosoftAccountEmail(value *bool)() {
-    m.accountsBlockAddingNonMicrosoftAccountEmail = value
+    err := m.GetBackingStore().Set("accountsBlockAddingNonMicrosoftAccountEmail", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetApplyOnlyToWindows81 sets the applyOnlyToWindows81 property value. Value indicating whether this policy only applies to Windows 8.1. This property is read-only.
 func (m *Windows81GeneralConfiguration) SetApplyOnlyToWindows81(value *bool)() {
-    m.applyOnlyToWindows81 = value
+    err := m.GetBackingStore().Set("applyOnlyToWindows81", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBrowserBlockAutofill sets the browserBlockAutofill property value. Indicates whether or not to block auto fill.
 func (m *Windows81GeneralConfiguration) SetBrowserBlockAutofill(value *bool)() {
-    m.browserBlockAutofill = value
+    err := m.GetBackingStore().Set("browserBlockAutofill", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBrowserBlockAutomaticDetectionOfIntranetSites sets the browserBlockAutomaticDetectionOfIntranetSites property value. Indicates whether or not to block automatic detection of Intranet sites.
 func (m *Windows81GeneralConfiguration) SetBrowserBlockAutomaticDetectionOfIntranetSites(value *bool)() {
-    m.browserBlockAutomaticDetectionOfIntranetSites = value
+    err := m.GetBackingStore().Set("browserBlockAutomaticDetectionOfIntranetSites", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBrowserBlockEnterpriseModeAccess sets the browserBlockEnterpriseModeAccess property value. Indicates whether or not to block enterprise mode access.
 func (m *Windows81GeneralConfiguration) SetBrowserBlockEnterpriseModeAccess(value *bool)() {
-    m.browserBlockEnterpriseModeAccess = value
+    err := m.GetBackingStore().Set("browserBlockEnterpriseModeAccess", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBrowserBlockJavaScript sets the browserBlockJavaScript property value. Indicates whether or not to Block the user from using JavaScript.
 func (m *Windows81GeneralConfiguration) SetBrowserBlockJavaScript(value *bool)() {
-    m.browserBlockJavaScript = value
+    err := m.GetBackingStore().Set("browserBlockJavaScript", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBrowserBlockPlugins sets the browserBlockPlugins property value. Indicates whether or not to block plug-ins.
 func (m *Windows81GeneralConfiguration) SetBrowserBlockPlugins(value *bool)() {
-    m.browserBlockPlugins = value
+    err := m.GetBackingStore().Set("browserBlockPlugins", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBrowserBlockPopups sets the browserBlockPopups property value. Indicates whether or not to block popups.
 func (m *Windows81GeneralConfiguration) SetBrowserBlockPopups(value *bool)() {
-    m.browserBlockPopups = value
+    err := m.GetBackingStore().Set("browserBlockPopups", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBrowserBlockSendingDoNotTrackHeader sets the browserBlockSendingDoNotTrackHeader property value. Indicates whether or not to Block the user from sending the do not track header.
 func (m *Windows81GeneralConfiguration) SetBrowserBlockSendingDoNotTrackHeader(value *bool)() {
-    m.browserBlockSendingDoNotTrackHeader = value
+    err := m.GetBackingStore().Set("browserBlockSendingDoNotTrackHeader", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBrowserBlockSingleWordEntryOnIntranetSites sets the browserBlockSingleWordEntryOnIntranetSites property value. Indicates whether or not to block a single word entry on Intranet sites.
 func (m *Windows81GeneralConfiguration) SetBrowserBlockSingleWordEntryOnIntranetSites(value *bool)() {
-    m.browserBlockSingleWordEntryOnIntranetSites = value
+    err := m.GetBackingStore().Set("browserBlockSingleWordEntryOnIntranetSites", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBrowserEnterpriseModeSiteListLocation sets the browserEnterpriseModeSiteListLocation property value. The enterprise mode site list location. Could be a local file, local network or http location.
 func (m *Windows81GeneralConfiguration) SetBrowserEnterpriseModeSiteListLocation(value *string)() {
-    m.browserEnterpriseModeSiteListLocation = value
+    err := m.GetBackingStore().Set("browserEnterpriseModeSiteListLocation", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBrowserInternetSecurityLevel sets the browserInternetSecurityLevel property value. Possible values for internet site security level.
 func (m *Windows81GeneralConfiguration) SetBrowserInternetSecurityLevel(value *InternetSiteSecurityLevel)() {
-    m.browserInternetSecurityLevel = value
+    err := m.GetBackingStore().Set("browserInternetSecurityLevel", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBrowserIntranetSecurityLevel sets the browserIntranetSecurityLevel property value. Possible values for site security level.
 func (m *Windows81GeneralConfiguration) SetBrowserIntranetSecurityLevel(value *SiteSecurityLevel)() {
-    m.browserIntranetSecurityLevel = value
+    err := m.GetBackingStore().Set("browserIntranetSecurityLevel", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBrowserLoggingReportLocation sets the browserLoggingReportLocation property value. The logging report location.
 func (m *Windows81GeneralConfiguration) SetBrowserLoggingReportLocation(value *string)() {
-    m.browserLoggingReportLocation = value
+    err := m.GetBackingStore().Set("browserLoggingReportLocation", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBrowserRequireFirewall sets the browserRequireFirewall property value. Indicates whether or not to require a firewall.
 func (m *Windows81GeneralConfiguration) SetBrowserRequireFirewall(value *bool)() {
-    m.browserRequireFirewall = value
+    err := m.GetBackingStore().Set("browserRequireFirewall", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBrowserRequireFraudWarning sets the browserRequireFraudWarning property value. Indicates whether or not to require fraud warning.
 func (m *Windows81GeneralConfiguration) SetBrowserRequireFraudWarning(value *bool)() {
-    m.browserRequireFraudWarning = value
+    err := m.GetBackingStore().Set("browserRequireFraudWarning", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBrowserRequireHighSecurityForRestrictedSites sets the browserRequireHighSecurityForRestrictedSites property value. Indicates whether or not to require high security for restricted sites.
 func (m *Windows81GeneralConfiguration) SetBrowserRequireHighSecurityForRestrictedSites(value *bool)() {
-    m.browserRequireHighSecurityForRestrictedSites = value
+    err := m.GetBackingStore().Set("browserRequireHighSecurityForRestrictedSites", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBrowserRequireSmartScreen sets the browserRequireSmartScreen property value. Indicates whether or not to require the user to use the smart screen filter.
 func (m *Windows81GeneralConfiguration) SetBrowserRequireSmartScreen(value *bool)() {
-    m.browserRequireSmartScreen = value
+    err := m.GetBackingStore().Set("browserRequireSmartScreen", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBrowserTrustedSitesSecurityLevel sets the browserTrustedSitesSecurityLevel property value. Possible values for site security level.
 func (m *Windows81GeneralConfiguration) SetBrowserTrustedSitesSecurityLevel(value *SiteSecurityLevel)() {
-    m.browserTrustedSitesSecurityLevel = value
+    err := m.GetBackingStore().Set("browserTrustedSitesSecurityLevel", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCellularBlockDataRoaming sets the cellularBlockDataRoaming property value. Indicates whether or not to block data roaming.
 func (m *Windows81GeneralConfiguration) SetCellularBlockDataRoaming(value *bool)() {
-    m.cellularBlockDataRoaming = value
+    err := m.GetBackingStore().Set("cellularBlockDataRoaming", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDiagnosticsBlockDataSubmission sets the diagnosticsBlockDataSubmission property value. Indicates whether or not to block diagnostic data submission.
 func (m *Windows81GeneralConfiguration) SetDiagnosticsBlockDataSubmission(value *bool)() {
-    m.diagnosticsBlockDataSubmission = value
+    err := m.GetBackingStore().Set("diagnosticsBlockDataSubmission", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPasswordBlockPicturePasswordAndPin sets the passwordBlockPicturePasswordAndPin property value. Indicates whether or not to Block the user from using a pictures password and pin.
 func (m *Windows81GeneralConfiguration) SetPasswordBlockPicturePasswordAndPin(value *bool)() {
-    m.passwordBlockPicturePasswordAndPin = value
+    err := m.GetBackingStore().Set("passwordBlockPicturePasswordAndPin", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPasswordExpirationDays sets the passwordExpirationDays property value. Password expiration in days.
 func (m *Windows81GeneralConfiguration) SetPasswordExpirationDays(value *int32)() {
-    m.passwordExpirationDays = value
+    err := m.GetBackingStore().Set("passwordExpirationDays", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPasswordMinimumCharacterSetCount sets the passwordMinimumCharacterSetCount property value. The number of character sets required in the password.
 func (m *Windows81GeneralConfiguration) SetPasswordMinimumCharacterSetCount(value *int32)() {
-    m.passwordMinimumCharacterSetCount = value
+    err := m.GetBackingStore().Set("passwordMinimumCharacterSetCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPasswordMinimumLength sets the passwordMinimumLength property value. The minimum password length.
 func (m *Windows81GeneralConfiguration) SetPasswordMinimumLength(value *int32)() {
-    m.passwordMinimumLength = value
+    err := m.GetBackingStore().Set("passwordMinimumLength", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPasswordMinutesOfInactivityBeforeScreenTimeout sets the passwordMinutesOfInactivityBeforeScreenTimeout property value. The minutes of inactivity before the screen times out.
 func (m *Windows81GeneralConfiguration) SetPasswordMinutesOfInactivityBeforeScreenTimeout(value *int32)() {
-    m.passwordMinutesOfInactivityBeforeScreenTimeout = value
+    err := m.GetBackingStore().Set("passwordMinutesOfInactivityBeforeScreenTimeout", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPasswordPreviousPasswordBlockCount sets the passwordPreviousPasswordBlockCount property value. The number of previous passwords to prevent re-use of. Valid values 0 to 24
 func (m *Windows81GeneralConfiguration) SetPasswordPreviousPasswordBlockCount(value *int32)() {
-    m.passwordPreviousPasswordBlockCount = value
+    err := m.GetBackingStore().Set("passwordPreviousPasswordBlockCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPasswordRequiredType sets the passwordRequiredType property value. Possible values of required passwords.
 func (m *Windows81GeneralConfiguration) SetPasswordRequiredType(value *RequiredPasswordType)() {
-    m.passwordRequiredType = value
+    err := m.GetBackingStore().Set("passwordRequiredType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPasswordSignInFailureCountBeforeFactoryReset sets the passwordSignInFailureCountBeforeFactoryReset property value. The number of sign in failures before factory reset.
 func (m *Windows81GeneralConfiguration) SetPasswordSignInFailureCountBeforeFactoryReset(value *int32)() {
-    m.passwordSignInFailureCountBeforeFactoryReset = value
+    err := m.GetBackingStore().Set("passwordSignInFailureCountBeforeFactoryReset", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetStorageRequireDeviceEncryption sets the storageRequireDeviceEncryption property value. Indicates whether or not to require encryption on a mobile device.
 func (m *Windows81GeneralConfiguration) SetStorageRequireDeviceEncryption(value *bool)() {
-    m.storageRequireDeviceEncryption = value
+    err := m.GetBackingStore().Set("storageRequireDeviceEncryption", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUpdatesRequireAutomaticUpdates sets the updatesRequireAutomaticUpdates property value. Indicates whether or not to require automatic updates.
 func (m *Windows81GeneralConfiguration) SetUpdatesRequireAutomaticUpdates(value *bool)() {
-    m.updatesRequireAutomaticUpdates = value
+    err := m.GetBackingStore().Set("updatesRequireAutomaticUpdates", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUserAccountControlSettings sets the userAccountControlSettings property value. Possible values for Windows user account control settings.
 func (m *Windows81GeneralConfiguration) SetUserAccountControlSettings(value *WindowsUserAccountControlSettings)() {
-    m.userAccountControlSettings = value
+    err := m.GetBackingStore().Set("userAccountControlSettings", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWorkFoldersUrl sets the workFoldersUrl property value. The work folders url.
 func (m *Windows81GeneralConfiguration) SetWorkFoldersUrl(value *string)() {
-    m.workFoldersUrl = value
+    err := m.GetBackingStore().Set("workFoldersUrl", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// Windows81GeneralConfigurationable 
+type Windows81GeneralConfigurationable interface {
+    DeviceConfigurationable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAccountsBlockAddingNonMicrosoftAccountEmail()(*bool)
+    GetApplyOnlyToWindows81()(*bool)
+    GetBrowserBlockAutofill()(*bool)
+    GetBrowserBlockAutomaticDetectionOfIntranetSites()(*bool)
+    GetBrowserBlockEnterpriseModeAccess()(*bool)
+    GetBrowserBlockJavaScript()(*bool)
+    GetBrowserBlockPlugins()(*bool)
+    GetBrowserBlockPopups()(*bool)
+    GetBrowserBlockSendingDoNotTrackHeader()(*bool)
+    GetBrowserBlockSingleWordEntryOnIntranetSites()(*bool)
+    GetBrowserEnterpriseModeSiteListLocation()(*string)
+    GetBrowserInternetSecurityLevel()(*InternetSiteSecurityLevel)
+    GetBrowserIntranetSecurityLevel()(*SiteSecurityLevel)
+    GetBrowserLoggingReportLocation()(*string)
+    GetBrowserRequireFirewall()(*bool)
+    GetBrowserRequireFraudWarning()(*bool)
+    GetBrowserRequireHighSecurityForRestrictedSites()(*bool)
+    GetBrowserRequireSmartScreen()(*bool)
+    GetBrowserTrustedSitesSecurityLevel()(*SiteSecurityLevel)
+    GetCellularBlockDataRoaming()(*bool)
+    GetDiagnosticsBlockDataSubmission()(*bool)
+    GetPasswordBlockPicturePasswordAndPin()(*bool)
+    GetPasswordExpirationDays()(*int32)
+    GetPasswordMinimumCharacterSetCount()(*int32)
+    GetPasswordMinimumLength()(*int32)
+    GetPasswordMinutesOfInactivityBeforeScreenTimeout()(*int32)
+    GetPasswordPreviousPasswordBlockCount()(*int32)
+    GetPasswordRequiredType()(*RequiredPasswordType)
+    GetPasswordSignInFailureCountBeforeFactoryReset()(*int32)
+    GetStorageRequireDeviceEncryption()(*bool)
+    GetUpdatesRequireAutomaticUpdates()(*bool)
+    GetUserAccountControlSettings()(*WindowsUserAccountControlSettings)
+    GetWorkFoldersUrl()(*string)
+    SetAccountsBlockAddingNonMicrosoftAccountEmail(value *bool)()
+    SetApplyOnlyToWindows81(value *bool)()
+    SetBrowserBlockAutofill(value *bool)()
+    SetBrowserBlockAutomaticDetectionOfIntranetSites(value *bool)()
+    SetBrowserBlockEnterpriseModeAccess(value *bool)()
+    SetBrowserBlockJavaScript(value *bool)()
+    SetBrowserBlockPlugins(value *bool)()
+    SetBrowserBlockPopups(value *bool)()
+    SetBrowserBlockSendingDoNotTrackHeader(value *bool)()
+    SetBrowserBlockSingleWordEntryOnIntranetSites(value *bool)()
+    SetBrowserEnterpriseModeSiteListLocation(value *string)()
+    SetBrowserInternetSecurityLevel(value *InternetSiteSecurityLevel)()
+    SetBrowserIntranetSecurityLevel(value *SiteSecurityLevel)()
+    SetBrowserLoggingReportLocation(value *string)()
+    SetBrowserRequireFirewall(value *bool)()
+    SetBrowserRequireFraudWarning(value *bool)()
+    SetBrowserRequireHighSecurityForRestrictedSites(value *bool)()
+    SetBrowserRequireSmartScreen(value *bool)()
+    SetBrowserTrustedSitesSecurityLevel(value *SiteSecurityLevel)()
+    SetCellularBlockDataRoaming(value *bool)()
+    SetDiagnosticsBlockDataSubmission(value *bool)()
+    SetPasswordBlockPicturePasswordAndPin(value *bool)()
+    SetPasswordExpirationDays(value *int32)()
+    SetPasswordMinimumCharacterSetCount(value *int32)()
+    SetPasswordMinimumLength(value *int32)()
+    SetPasswordMinutesOfInactivityBeforeScreenTimeout(value *int32)()
+    SetPasswordPreviousPasswordBlockCount(value *int32)()
+    SetPasswordRequiredType(value *RequiredPasswordType)()
+    SetPasswordSignInFailureCountBeforeFactoryReset(value *int32)()
+    SetStorageRequireDeviceEncryption(value *bool)()
+    SetUpdatesRequireAutomaticUpdates(value *bool)()
+    SetUserAccountControlSettings(value *WindowsUserAccountControlSettings)()
+    SetWorkFoldersUrl(value *string)()
 }

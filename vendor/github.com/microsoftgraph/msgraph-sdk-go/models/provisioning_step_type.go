@@ -2,11 +2,11 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ProvisioningStepType int
 
 const (
-    IMPORT_ESCAPED_PROVISIONINGSTEPTYPE ProvisioningStepType = iota
+    IMPORTESCAPED_PROVISIONINGSTEPTYPE ProvisioningStepType = iota
     SCOPING_PROVISIONINGSTEPTYPE
     MATCHING_PROVISIONINGSTEPTYPE
     PROCESSING_PROVISIONINGSTEPTYPE
@@ -18,11 +18,11 @@ const (
 func (i ProvisioningStepType) String() string {
     return []string{"import", "scoping", "matching", "processing", "referenceResolution", "export", "unknownFutureValue"}[i]
 }
-func ParseProvisioningStepType(v string) (interface{}, error) {
-    result := IMPORT_ESCAPED_PROVISIONINGSTEPTYPE
+func ParseProvisioningStepType(v string) (any, error) {
+    result := IMPORTESCAPED_PROVISIONINGSTEPTYPE
     switch v {
         case "import":
-            result = IMPORT_ESCAPED_PROVISIONINGSTEPTYPE
+            result = IMPORTESCAPED_PROVISIONINGSTEPTYPE
         case "scoping":
             result = SCOPING_PROVISIONINGSTEPTYPE
         case "matching":

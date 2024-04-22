@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type Sensitivity int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i Sensitivity) String() string {
     return []string{"normal", "personal", "private", "confidential"}[i]
 }
-func ParseSensitivity(v string) (interface{}, error) {
+func ParseSensitivity(v string) (any, error) {
     result := NORMAL_SENSITIVITY
     switch v {
         case "normal":

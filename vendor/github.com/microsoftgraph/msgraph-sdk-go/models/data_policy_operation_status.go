@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of dataPolicyOperation entities.
+// 
 type DataPolicyOperationStatus int
 
 const (
@@ -16,7 +16,7 @@ const (
 func (i DataPolicyOperationStatus) String() string {
     return []string{"notStarted", "running", "complete", "failed", "unknownFutureValue"}[i]
 }
-func ParseDataPolicyOperationStatus(v string) (interface{}, error) {
+func ParseDataPolicyOperationStatus(v string) (any, error) {
     result := NOTSTARTED_DATAPOLICYOPERATIONSTATUS
     switch v {
         case "notStarted":

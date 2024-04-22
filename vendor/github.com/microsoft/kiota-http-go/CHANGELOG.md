@@ -9,7 +9,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+## [0.16.0] - 2023-03-01
+
+### Added
+
+- Adds ResponseStatusCode to the ApiError returned on Api requests errors.
+
+## [0.15.0] - 2023-02-23
+
+### Added
+
+- Added UrlReplaceHandler that replaces segments of the URL.
+
+## [0.14.0] - 2023-01-25
+
+### Added
+
+- Added implementation methods for backing store.
+
+## [0.13.0] - 2023-01-10
+
+### Added
+
+- Added a method to convert abstract requests to native requests in the request adapter interface.
+
+## [0.12.0] - 2023-01-05
+
+### Added
+
+- Added User Agent handler to add the library information as a product to the header.
+
+## [0.11.0] - 2022-12-20
+
 ### Changed
+
+- Fixed a bug where retry handling wouldn't rewind the request body before retrying.
+
+## [0.10.0] - 2022-12-15
+
+### Added
+
+- Added support for multi-valued request headers.
+
+### Changed
+
+- Fixed http.request_content_length attribute name for tracing
 
 ## [0.9.0] - 2022-09-27
 

@@ -80,22 +80,23 @@ type DescribeGtmInstanceRequest struct {
 // DescribeGtmInstanceResponse is the response struct for api DescribeGtmInstance
 type DescribeGtmInstanceResponse struct {
 	*responses.BaseResponse
+	ExpireTimestamp   int64  `json:"ExpireTimestamp" xml:"ExpireTimestamp"`
+	UserDomainName    string `json:"UserDomainName" xml:"UserDomainName"`
 	RequestId         string `json:"RequestId" xml:"RequestId"`
+	LbaStrategy       string `json:"LbaStrategy" xml:"LbaStrategy"`
 	InstanceId        string `json:"InstanceId" xml:"InstanceId"`
+	CreateTime        string `json:"CreateTime" xml:"CreateTime"`
+	CnameMode         string `json:"CnameMode" xml:"CnameMode"`
+	Ttl               int    `json:"Ttl" xml:"Ttl"`
+	Cname             string `json:"Cname" xml:"Cname"`
 	InstanceName      string `json:"InstanceName" xml:"InstanceName"`
 	VersionCode       string `json:"VersionCode" xml:"VersionCode"`
-	ExpireTime        string `json:"ExpireTime" xml:"ExpireTime"`
-	ExpireTimestamp   int64  `json:"ExpireTimestamp" xml:"ExpireTimestamp"`
-	Cname             string `json:"Cname" xml:"Cname"`
-	UserDomainName    string `json:"UserDomainName" xml:"UserDomainName"`
-	Ttl               int    `json:"Ttl" xml:"Ttl"`
-	LbaStrategy       string `json:"LbaStrategy" xml:"LbaStrategy"`
-	CreateTime        string `json:"CreateTime" xml:"CreateTime"`
-	CreateTimestamp   int64  `json:"CreateTimestamp" xml:"CreateTimestamp"`
 	AlertGroup        string `json:"AlertGroup" xml:"AlertGroup"`
-	CnameMode         string `json:"CnameMode" xml:"CnameMode"`
-	AccessStrategyNum int    `json:"AccessStrategyNum" xml:"AccessStrategyNum"`
 	AddressPoolNum    int    `json:"AddressPoolNum" xml:"AddressPoolNum"`
+	AccessStrategyNum int    `json:"AccessStrategyNum" xml:"AccessStrategyNum"`
+	ExpireTime        string `json:"ExpireTime" xml:"ExpireTime"`
+	CreateTimestamp   int64  `json:"CreateTimestamp" xml:"CreateTimestamp"`
+	ResourceGroupId   string `json:"ResourceGroupId" xml:"ResourceGroupId"`
 }
 
 // CreateDescribeGtmInstanceRequest creates a request to invoke DescribeGtmInstance API

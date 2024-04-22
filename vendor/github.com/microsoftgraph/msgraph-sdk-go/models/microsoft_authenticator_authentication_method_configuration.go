@@ -1,25 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // MicrosoftAuthenticatorAuthenticationMethodConfiguration 
 type MicrosoftAuthenticatorAuthenticationMethodConfiguration struct {
     AuthenticationMethodConfiguration
-    // A collection of Microsoft Authenticator settings such as application context and location context, and whether they are enabled for all users or specific users only.
-    featureSettings MicrosoftAuthenticatorFeatureSettingsable
-    // A collection of users or groups who are enabled to use the authentication method. Expanded by default.
-    includeTargets []MicrosoftAuthenticatorAuthenticationMethodTargetable
 }
 // NewMicrosoftAuthenticatorAuthenticationMethodConfiguration instantiates a new MicrosoftAuthenticatorAuthenticationMethodConfiguration and sets the default values.
 func NewMicrosoftAuthenticatorAuthenticationMethodConfiguration()(*MicrosoftAuthenticatorAuthenticationMethodConfiguration) {
     m := &MicrosoftAuthenticatorAuthenticationMethodConfiguration{
         AuthenticationMethodConfiguration: *NewAuthenticationMethodConfiguration(),
     }
-    odataTypeValue := "#microsoft.graph.microsoftAuthenticatorAuthenticationMethodConfiguration";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.microsoftAuthenticatorAuthenticationMethodConfiguration"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateMicrosoftAuthenticatorAuthenticationMethodConfigurationFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -28,18 +23,54 @@ func CreateMicrosoftAuthenticatorAuthenticationMethodConfigurationFromDiscrimina
 }
 // GetFeatureSettings gets the featureSettings property value. A collection of Microsoft Authenticator settings such as application context and location context, and whether they are enabled for all users or specific users only.
 func (m *MicrosoftAuthenticatorAuthenticationMethodConfiguration) GetFeatureSettings()(MicrosoftAuthenticatorFeatureSettingsable) {
-    return m.featureSettings
+    val, err := m.GetBackingStore().Get("featureSettings")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(MicrosoftAuthenticatorFeatureSettingsable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *MicrosoftAuthenticatorAuthenticationMethodConfiguration) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.AuthenticationMethodConfiguration.GetFieldDeserializers()
-    res["featureSettings"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateMicrosoftAuthenticatorFeatureSettingsFromDiscriminatorValue , m.SetFeatureSettings)
-    res["includeTargets"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateMicrosoftAuthenticatorAuthenticationMethodTargetFromDiscriminatorValue , m.SetIncludeTargets)
+    res["featureSettings"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateMicrosoftAuthenticatorFeatureSettingsFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFeatureSettings(val.(MicrosoftAuthenticatorFeatureSettingsable))
+        }
+        return nil
+    }
+    res["includeTargets"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateMicrosoftAuthenticatorAuthenticationMethodTargetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]MicrosoftAuthenticatorAuthenticationMethodTargetable, len(val))
+            for i, v := range val {
+                res[i] = v.(MicrosoftAuthenticatorAuthenticationMethodTargetable)
+            }
+            m.SetIncludeTargets(res)
+        }
+        return nil
+    }
     return res
 }
-// GetIncludeTargets gets the includeTargets property value. A collection of users or groups who are enabled to use the authentication method. Expanded by default.
+// GetIncludeTargets gets the includeTargets property value. A collection of groups that are enabled to use the authentication method. Expanded by default.
 func (m *MicrosoftAuthenticatorAuthenticationMethodConfiguration) GetIncludeTargets()([]MicrosoftAuthenticatorAuthenticationMethodTargetable) {
-    return m.includeTargets
+    val, err := m.GetBackingStore().Get("includeTargets")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]MicrosoftAuthenticatorAuthenticationMethodTargetable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *MicrosoftAuthenticatorAuthenticationMethodConfiguration) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -54,7 +85,10 @@ func (m *MicrosoftAuthenticatorAuthenticationMethodConfiguration) Serialize(writ
         }
     }
     if m.GetIncludeTargets() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetIncludeTargets())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetIncludeTargets()))
+        for i, v := range m.GetIncludeTargets() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("includeTargets", cast)
         if err != nil {
             return err
@@ -64,9 +98,24 @@ func (m *MicrosoftAuthenticatorAuthenticationMethodConfiguration) Serialize(writ
 }
 // SetFeatureSettings sets the featureSettings property value. A collection of Microsoft Authenticator settings such as application context and location context, and whether they are enabled for all users or specific users only.
 func (m *MicrosoftAuthenticatorAuthenticationMethodConfiguration) SetFeatureSettings(value MicrosoftAuthenticatorFeatureSettingsable)() {
-    m.featureSettings = value
+    err := m.GetBackingStore().Set("featureSettings", value)
+    if err != nil {
+        panic(err)
+    }
 }
-// SetIncludeTargets sets the includeTargets property value. A collection of users or groups who are enabled to use the authentication method. Expanded by default.
+// SetIncludeTargets sets the includeTargets property value. A collection of groups that are enabled to use the authentication method. Expanded by default.
 func (m *MicrosoftAuthenticatorAuthenticationMethodConfiguration) SetIncludeTargets(value []MicrosoftAuthenticatorAuthenticationMethodTargetable)() {
-    m.includeTargets = value
+    err := m.GetBackingStore().Set("includeTargets", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// MicrosoftAuthenticatorAuthenticationMethodConfigurationable 
+type MicrosoftAuthenticatorAuthenticationMethodConfigurationable interface {
+    AuthenticationMethodConfigurationable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetFeatureSettings()(MicrosoftAuthenticatorFeatureSettingsable)
+    GetIncludeTargets()([]MicrosoftAuthenticatorAuthenticationMethodTargetable)
+    SetFeatureSettings(value MicrosoftAuthenticatorFeatureSettingsable)()
+    SetIncludeTargets(value []MicrosoftAuthenticatorAuthenticationMethodTargetable)()
 }

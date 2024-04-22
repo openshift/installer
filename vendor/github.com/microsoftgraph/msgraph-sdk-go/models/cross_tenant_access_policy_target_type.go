@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of application entities.
+// 
 type CrossTenantAccessPolicyTargetType int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i CrossTenantAccessPolicyTargetType) String() string {
     return []string{"user", "group", "application", "unknownFutureValue"}[i]
 }
-func ParseCrossTenantAccessPolicyTargetType(v string) (interface{}, error) {
+func ParseCrossTenantAccessPolicyTargetType(v string) (any, error) {
     result := USER_CROSSTENANTACCESSPOLICYTARGETTYPE
     switch v {
         case "user":

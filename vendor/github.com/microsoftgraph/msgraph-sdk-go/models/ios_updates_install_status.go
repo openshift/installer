@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type IosUpdatesInstallStatus int
 
 const (
@@ -29,7 +29,7 @@ const (
 func (i IosUpdatesInstallStatus) String() string {
     return []string{"deviceOsHigherThanDesiredOsVersion", "sharedDeviceUserLoggedInError", "notSupportedOperation", "installFailed", "installPhoneCallInProgress", "installInsufficientPower", "installInsufficientSpace", "installing", "downloadInsufficientNetwork", "downloadInsufficientPower", "downloadInsufficientSpace", "downloadRequiresComputer", "downloadFailed", "downloading", "success", "available", "idle", "unknown"}[i]
 }
-func ParseIosUpdatesInstallStatus(v string) (interface{}, error) {
+func ParseIosUpdatesInstallStatus(v string) (any, error) {
     result := DEVICEOSHIGHERTHANDESIREDOSVERSION_IOSUPDATESINSTALLSTATUS
     switch v {
         case "deviceOsHigherThanDesiredOsVersion":

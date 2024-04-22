@@ -2,7 +2,7 @@ package security
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type CaseAction int
 
 const (
@@ -20,7 +20,7 @@ const (
 func (i CaseAction) String() string {
     return []string{"contentExport", "applyTags", "convertToPdf", "index", "estimateStatistics", "addToReviewSet", "holdUpdate", "unknownFutureValue", "purgeData"}[i]
 }
-func ParseCaseAction(v string) (interface{}, error) {
+func ParseCaseAction(v string) (any, error) {
     result := CONTENTEXPORT_CASEACTION
     switch v {
         case "contentExport":

@@ -1,17 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// TeamsAppInstallation provides operations to manage the collection of chat entities.
+// TeamsAppInstallation 
 type TeamsAppInstallation struct {
     Entity
-    // The app that is installed.
-    teamsApp TeamsAppable
-    // The details of this version of the app.
-    teamsAppDefinition TeamsAppDefinitionable
 }
 // NewTeamsAppInstallation instantiates a new teamsAppInstallation and sets the default values.
 func NewTeamsAppInstallation()(*TeamsAppInstallation) {
@@ -45,17 +40,49 @@ func CreateTeamsAppInstallationFromDiscriminatorValue(parseNode i878a80d2330e89d
 // GetFieldDeserializers the deserialization information for the current model
 func (m *TeamsAppInstallation) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["teamsApp"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateTeamsAppFromDiscriminatorValue , m.SetTeamsApp)
-    res["teamsAppDefinition"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateTeamsAppDefinitionFromDiscriminatorValue , m.SetTeamsAppDefinition)
+    res["teamsApp"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateTeamsAppFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTeamsApp(val.(TeamsAppable))
+        }
+        return nil
+    }
+    res["teamsAppDefinition"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateTeamsAppDefinitionFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTeamsAppDefinition(val.(TeamsAppDefinitionable))
+        }
+        return nil
+    }
     return res
 }
 // GetTeamsApp gets the teamsApp property value. The app that is installed.
 func (m *TeamsAppInstallation) GetTeamsApp()(TeamsAppable) {
-    return m.teamsApp
+    val, err := m.GetBackingStore().Get("teamsApp")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(TeamsAppable)
+    }
+    return nil
 }
 // GetTeamsAppDefinition gets the teamsAppDefinition property value. The details of this version of the app.
 func (m *TeamsAppInstallation) GetTeamsAppDefinition()(TeamsAppDefinitionable) {
-    return m.teamsAppDefinition
+    val, err := m.GetBackingStore().Get("teamsAppDefinition")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(TeamsAppDefinitionable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *TeamsAppInstallation) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -79,9 +106,24 @@ func (m *TeamsAppInstallation) Serialize(writer i878a80d2330e89d26896388a3f487ee
 }
 // SetTeamsApp sets the teamsApp property value. The app that is installed.
 func (m *TeamsAppInstallation) SetTeamsApp(value TeamsAppable)() {
-    m.teamsApp = value
+    err := m.GetBackingStore().Set("teamsApp", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTeamsAppDefinition sets the teamsAppDefinition property value. The details of this version of the app.
 func (m *TeamsAppInstallation) SetTeamsAppDefinition(value TeamsAppDefinitionable)() {
-    m.teamsAppDefinition = value
+    err := m.GetBackingStore().Set("teamsAppDefinition", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// TeamsAppInstallationable 
+type TeamsAppInstallationable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetTeamsApp()(TeamsAppable)
+    GetTeamsAppDefinition()(TeamsAppDefinitionable)
+    SetTeamsApp(value TeamsAppable)()
+    SetTeamsAppDefinition(value TeamsAppDefinitionable)()
 }

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type TimeOffReasonIconType int
 
 const (
@@ -33,7 +33,7 @@ const (
 func (i TimeOffReasonIconType) String() string {
     return []string{"none", "car", "calendar", "running", "plane", "firstAid", "doctor", "notWorking", "clock", "juryDuty", "globe", "cup", "phone", "weather", "umbrella", "piggyBank", "dog", "cake", "trafficCone", "pin", "sunny", "unknownFutureValue"}[i]
 }
-func ParseTimeOffReasonIconType(v string) (interface{}, error) {
+func ParseTimeOffReasonIconType(v string) (any, error) {
     result := NONE_TIMEOFFREASONICONTYPE
     switch v {
         case "none":

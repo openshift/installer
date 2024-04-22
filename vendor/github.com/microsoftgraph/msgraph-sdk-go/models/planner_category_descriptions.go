@@ -1,72 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // PlannerCategoryDescriptions 
 type PlannerCategoryDescriptions struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // The label associated with Category 1
-    category1 *string
-    // The label associated with Category 10
-    category10 *string
-    // The label associated with Category 11
-    category11 *string
-    // The label associated with Category 12
-    category12 *string
-    // The label associated with Category 13
-    category13 *string
-    // The label associated with Category 14
-    category14 *string
-    // The label associated with Category 15
-    category15 *string
-    // The label associated with Category 16
-    category16 *string
-    // The label associated with Category 17
-    category17 *string
-    // The label associated with Category 18
-    category18 *string
-    // The label associated with Category 19
-    category19 *string
-    // The label associated with Category 2
-    category2 *string
-    // The label associated with Category 20
-    category20 *string
-    // The label associated with Category 21
-    category21 *string
-    // The label associated with Category 22
-    category22 *string
-    // The label associated with Category 23
-    category23 *string
-    // The label associated with Category 24
-    category24 *string
-    // The label associated with Category 25
-    category25 *string
-    // The label associated with Category 3
-    category3 *string
-    // The label associated with Category 4
-    category4 *string
-    // The label associated with Category 5
-    category5 *string
-    // The label associated with Category 6
-    category6 *string
-    // The label associated with Category 7
-    category7 *string
-    // The label associated with Category 8
-    category8 *string
-    // The label associated with Category 9
-    category9 *string
-    // The OdataType property
-    odataType *string
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewPlannerCategoryDescriptions instantiates a new plannerCategoryDescriptions and sets the default values.
 func NewPlannerCategoryDescriptions()(*PlannerCategoryDescriptions) {
     m := &PlannerCategoryDescriptions{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreatePlannerCategoryDescriptionsFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -74,143 +23,571 @@ func CreatePlannerCategoryDescriptionsFromDiscriminatorValue(parseNode i878a80d2
     return NewPlannerCategoryDescriptions(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *PlannerCategoryDescriptions) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *PlannerCategoryDescriptions) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *PlannerCategoryDescriptions) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetCategory1 gets the category1 property value. The label associated with Category 1
 func (m *PlannerCategoryDescriptions) GetCategory1()(*string) {
-    return m.category1
+    val, err := m.GetBackingStore().Get("category1")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory10 gets the category10 property value. The label associated with Category 10
 func (m *PlannerCategoryDescriptions) GetCategory10()(*string) {
-    return m.category10
+    val, err := m.GetBackingStore().Get("category10")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory11 gets the category11 property value. The label associated with Category 11
 func (m *PlannerCategoryDescriptions) GetCategory11()(*string) {
-    return m.category11
+    val, err := m.GetBackingStore().Get("category11")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory12 gets the category12 property value. The label associated with Category 12
 func (m *PlannerCategoryDescriptions) GetCategory12()(*string) {
-    return m.category12
+    val, err := m.GetBackingStore().Get("category12")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory13 gets the category13 property value. The label associated with Category 13
 func (m *PlannerCategoryDescriptions) GetCategory13()(*string) {
-    return m.category13
+    val, err := m.GetBackingStore().Get("category13")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory14 gets the category14 property value. The label associated with Category 14
 func (m *PlannerCategoryDescriptions) GetCategory14()(*string) {
-    return m.category14
+    val, err := m.GetBackingStore().Get("category14")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory15 gets the category15 property value. The label associated with Category 15
 func (m *PlannerCategoryDescriptions) GetCategory15()(*string) {
-    return m.category15
+    val, err := m.GetBackingStore().Get("category15")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory16 gets the category16 property value. The label associated with Category 16
 func (m *PlannerCategoryDescriptions) GetCategory16()(*string) {
-    return m.category16
+    val, err := m.GetBackingStore().Get("category16")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory17 gets the category17 property value. The label associated with Category 17
 func (m *PlannerCategoryDescriptions) GetCategory17()(*string) {
-    return m.category17
+    val, err := m.GetBackingStore().Get("category17")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory18 gets the category18 property value. The label associated with Category 18
 func (m *PlannerCategoryDescriptions) GetCategory18()(*string) {
-    return m.category18
+    val, err := m.GetBackingStore().Get("category18")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory19 gets the category19 property value. The label associated with Category 19
 func (m *PlannerCategoryDescriptions) GetCategory19()(*string) {
-    return m.category19
+    val, err := m.GetBackingStore().Get("category19")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory2 gets the category2 property value. The label associated with Category 2
 func (m *PlannerCategoryDescriptions) GetCategory2()(*string) {
-    return m.category2
+    val, err := m.GetBackingStore().Get("category2")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory20 gets the category20 property value. The label associated with Category 20
 func (m *PlannerCategoryDescriptions) GetCategory20()(*string) {
-    return m.category20
+    val, err := m.GetBackingStore().Get("category20")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory21 gets the category21 property value. The label associated with Category 21
 func (m *PlannerCategoryDescriptions) GetCategory21()(*string) {
-    return m.category21
+    val, err := m.GetBackingStore().Get("category21")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory22 gets the category22 property value. The label associated with Category 22
 func (m *PlannerCategoryDescriptions) GetCategory22()(*string) {
-    return m.category22
+    val, err := m.GetBackingStore().Get("category22")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory23 gets the category23 property value. The label associated with Category 23
 func (m *PlannerCategoryDescriptions) GetCategory23()(*string) {
-    return m.category23
+    val, err := m.GetBackingStore().Get("category23")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory24 gets the category24 property value. The label associated with Category 24
 func (m *PlannerCategoryDescriptions) GetCategory24()(*string) {
-    return m.category24
+    val, err := m.GetBackingStore().Get("category24")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory25 gets the category25 property value. The label associated with Category 25
 func (m *PlannerCategoryDescriptions) GetCategory25()(*string) {
-    return m.category25
+    val, err := m.GetBackingStore().Get("category25")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory3 gets the category3 property value. The label associated with Category 3
 func (m *PlannerCategoryDescriptions) GetCategory3()(*string) {
-    return m.category3
+    val, err := m.GetBackingStore().Get("category3")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory4 gets the category4 property value. The label associated with Category 4
 func (m *PlannerCategoryDescriptions) GetCategory4()(*string) {
-    return m.category4
+    val, err := m.GetBackingStore().Get("category4")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory5 gets the category5 property value. The label associated with Category 5
 func (m *PlannerCategoryDescriptions) GetCategory5()(*string) {
-    return m.category5
+    val, err := m.GetBackingStore().Get("category5")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory6 gets the category6 property value. The label associated with Category 6
 func (m *PlannerCategoryDescriptions) GetCategory6()(*string) {
-    return m.category6
+    val, err := m.GetBackingStore().Get("category6")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory7 gets the category7 property value. The label associated with Category 7
 func (m *PlannerCategoryDescriptions) GetCategory7()(*string) {
-    return m.category7
+    val, err := m.GetBackingStore().Get("category7")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory8 gets the category8 property value. The label associated with Category 8
 func (m *PlannerCategoryDescriptions) GetCategory8()(*string) {
-    return m.category8
+    val, err := m.GetBackingStore().Get("category8")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCategory9 gets the category9 property value. The label associated with Category 9
 func (m *PlannerCategoryDescriptions) GetCategory9()(*string) {
-    return m.category9
+    val, err := m.GetBackingStore().Get("category9")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *PlannerCategoryDescriptions) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["category1"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory1)
-    res["category10"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory10)
-    res["category11"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory11)
-    res["category12"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory12)
-    res["category13"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory13)
-    res["category14"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory14)
-    res["category15"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory15)
-    res["category16"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory16)
-    res["category17"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory17)
-    res["category18"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory18)
-    res["category19"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory19)
-    res["category2"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory2)
-    res["category20"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory20)
-    res["category21"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory21)
-    res["category22"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory22)
-    res["category23"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory23)
-    res["category24"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory24)
-    res["category25"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory25)
-    res["category3"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory3)
-    res["category4"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory4)
-    res["category5"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory5)
-    res["category6"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory6)
-    res["category7"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory7)
-    res["category8"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory8)
-    res["category9"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCategory9)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
+    res["category1"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory1(val)
+        }
+        return nil
+    }
+    res["category10"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory10(val)
+        }
+        return nil
+    }
+    res["category11"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory11(val)
+        }
+        return nil
+    }
+    res["category12"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory12(val)
+        }
+        return nil
+    }
+    res["category13"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory13(val)
+        }
+        return nil
+    }
+    res["category14"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory14(val)
+        }
+        return nil
+    }
+    res["category15"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory15(val)
+        }
+        return nil
+    }
+    res["category16"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory16(val)
+        }
+        return nil
+    }
+    res["category17"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory17(val)
+        }
+        return nil
+    }
+    res["category18"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory18(val)
+        }
+        return nil
+    }
+    res["category19"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory19(val)
+        }
+        return nil
+    }
+    res["category2"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory2(val)
+        }
+        return nil
+    }
+    res["category20"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory20(val)
+        }
+        return nil
+    }
+    res["category21"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory21(val)
+        }
+        return nil
+    }
+    res["category22"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory22(val)
+        }
+        return nil
+    }
+    res["category23"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory23(val)
+        }
+        return nil
+    }
+    res["category24"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory24(val)
+        }
+        return nil
+    }
+    res["category25"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory25(val)
+        }
+        return nil
+    }
+    res["category3"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory3(val)
+        }
+        return nil
+    }
+    res["category4"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory4(val)
+        }
+        return nil
+    }
+    res["category5"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory5(val)
+        }
+        return nil
+    }
+    res["category6"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory6(val)
+        }
+        return nil
+    }
+    res["category7"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory7(val)
+        }
+        return nil
+    }
+    res["category8"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory8(val)
+        }
+        return nil
+    }
+    res["category9"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCategory9(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
     return res
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *PlannerCategoryDescriptions) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *PlannerCategoryDescriptions) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -379,110 +756,255 @@ func (m *PlannerCategoryDescriptions) Serialize(writer i878a80d2330e89d26896388a
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *PlannerCategoryDescriptions) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *PlannerCategoryDescriptions) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *PlannerCategoryDescriptions) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetCategory1 sets the category1 property value. The label associated with Category 1
 func (m *PlannerCategoryDescriptions) SetCategory1(value *string)() {
-    m.category1 = value
+    err := m.GetBackingStore().Set("category1", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory10 sets the category10 property value. The label associated with Category 10
 func (m *PlannerCategoryDescriptions) SetCategory10(value *string)() {
-    m.category10 = value
+    err := m.GetBackingStore().Set("category10", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory11 sets the category11 property value. The label associated with Category 11
 func (m *PlannerCategoryDescriptions) SetCategory11(value *string)() {
-    m.category11 = value
+    err := m.GetBackingStore().Set("category11", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory12 sets the category12 property value. The label associated with Category 12
 func (m *PlannerCategoryDescriptions) SetCategory12(value *string)() {
-    m.category12 = value
+    err := m.GetBackingStore().Set("category12", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory13 sets the category13 property value. The label associated with Category 13
 func (m *PlannerCategoryDescriptions) SetCategory13(value *string)() {
-    m.category13 = value
+    err := m.GetBackingStore().Set("category13", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory14 sets the category14 property value. The label associated with Category 14
 func (m *PlannerCategoryDescriptions) SetCategory14(value *string)() {
-    m.category14 = value
+    err := m.GetBackingStore().Set("category14", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory15 sets the category15 property value. The label associated with Category 15
 func (m *PlannerCategoryDescriptions) SetCategory15(value *string)() {
-    m.category15 = value
+    err := m.GetBackingStore().Set("category15", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory16 sets the category16 property value. The label associated with Category 16
 func (m *PlannerCategoryDescriptions) SetCategory16(value *string)() {
-    m.category16 = value
+    err := m.GetBackingStore().Set("category16", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory17 sets the category17 property value. The label associated with Category 17
 func (m *PlannerCategoryDescriptions) SetCategory17(value *string)() {
-    m.category17 = value
+    err := m.GetBackingStore().Set("category17", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory18 sets the category18 property value. The label associated with Category 18
 func (m *PlannerCategoryDescriptions) SetCategory18(value *string)() {
-    m.category18 = value
+    err := m.GetBackingStore().Set("category18", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory19 sets the category19 property value. The label associated with Category 19
 func (m *PlannerCategoryDescriptions) SetCategory19(value *string)() {
-    m.category19 = value
+    err := m.GetBackingStore().Set("category19", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory2 sets the category2 property value. The label associated with Category 2
 func (m *PlannerCategoryDescriptions) SetCategory2(value *string)() {
-    m.category2 = value
+    err := m.GetBackingStore().Set("category2", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory20 sets the category20 property value. The label associated with Category 20
 func (m *PlannerCategoryDescriptions) SetCategory20(value *string)() {
-    m.category20 = value
+    err := m.GetBackingStore().Set("category20", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory21 sets the category21 property value. The label associated with Category 21
 func (m *PlannerCategoryDescriptions) SetCategory21(value *string)() {
-    m.category21 = value
+    err := m.GetBackingStore().Set("category21", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory22 sets the category22 property value. The label associated with Category 22
 func (m *PlannerCategoryDescriptions) SetCategory22(value *string)() {
-    m.category22 = value
+    err := m.GetBackingStore().Set("category22", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory23 sets the category23 property value. The label associated with Category 23
 func (m *PlannerCategoryDescriptions) SetCategory23(value *string)() {
-    m.category23 = value
+    err := m.GetBackingStore().Set("category23", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory24 sets the category24 property value. The label associated with Category 24
 func (m *PlannerCategoryDescriptions) SetCategory24(value *string)() {
-    m.category24 = value
+    err := m.GetBackingStore().Set("category24", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory25 sets the category25 property value. The label associated with Category 25
 func (m *PlannerCategoryDescriptions) SetCategory25(value *string)() {
-    m.category25 = value
+    err := m.GetBackingStore().Set("category25", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory3 sets the category3 property value. The label associated with Category 3
 func (m *PlannerCategoryDescriptions) SetCategory3(value *string)() {
-    m.category3 = value
+    err := m.GetBackingStore().Set("category3", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory4 sets the category4 property value. The label associated with Category 4
 func (m *PlannerCategoryDescriptions) SetCategory4(value *string)() {
-    m.category4 = value
+    err := m.GetBackingStore().Set("category4", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory5 sets the category5 property value. The label associated with Category 5
 func (m *PlannerCategoryDescriptions) SetCategory5(value *string)() {
-    m.category5 = value
+    err := m.GetBackingStore().Set("category5", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory6 sets the category6 property value. The label associated with Category 6
 func (m *PlannerCategoryDescriptions) SetCategory6(value *string)() {
-    m.category6 = value
+    err := m.GetBackingStore().Set("category6", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory7 sets the category7 property value. The label associated with Category 7
 func (m *PlannerCategoryDescriptions) SetCategory7(value *string)() {
-    m.category7 = value
+    err := m.GetBackingStore().Set("category7", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory8 sets the category8 property value. The label associated with Category 8
 func (m *PlannerCategoryDescriptions) SetCategory8(value *string)() {
-    m.category8 = value
+    err := m.GetBackingStore().Set("category8", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCategory9 sets the category9 property value. The label associated with Category 9
 func (m *PlannerCategoryDescriptions) SetCategory9(value *string)() {
-    m.category9 = value
+    err := m.GetBackingStore().Set("category9", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *PlannerCategoryDescriptions) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// PlannerCategoryDescriptionsable 
+type PlannerCategoryDescriptionsable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetCategory1()(*string)
+    GetCategory10()(*string)
+    GetCategory11()(*string)
+    GetCategory12()(*string)
+    GetCategory13()(*string)
+    GetCategory14()(*string)
+    GetCategory15()(*string)
+    GetCategory16()(*string)
+    GetCategory17()(*string)
+    GetCategory18()(*string)
+    GetCategory19()(*string)
+    GetCategory2()(*string)
+    GetCategory20()(*string)
+    GetCategory21()(*string)
+    GetCategory22()(*string)
+    GetCategory23()(*string)
+    GetCategory24()(*string)
+    GetCategory25()(*string)
+    GetCategory3()(*string)
+    GetCategory4()(*string)
+    GetCategory5()(*string)
+    GetCategory6()(*string)
+    GetCategory7()(*string)
+    GetCategory8()(*string)
+    GetCategory9()(*string)
+    GetOdataType()(*string)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetCategory1(value *string)()
+    SetCategory10(value *string)()
+    SetCategory11(value *string)()
+    SetCategory12(value *string)()
+    SetCategory13(value *string)()
+    SetCategory14(value *string)()
+    SetCategory15(value *string)()
+    SetCategory16(value *string)()
+    SetCategory17(value *string)()
+    SetCategory18(value *string)()
+    SetCategory19(value *string)()
+    SetCategory2(value *string)()
+    SetCategory20(value *string)()
+    SetCategory21(value *string)()
+    SetCategory22(value *string)()
+    SetCategory23(value *string)()
+    SetCategory24(value *string)()
+    SetCategory25(value *string)()
+    SetCategory3(value *string)()
+    SetCategory4(value *string)()
+    SetCategory5(value *string)()
+    SetCategory6(value *string)()
+    SetCategory7(value *string)()
+    SetCategory8(value *string)()
+    SetCategory9(value *string)()
+    SetOdataType(value *string)()
 }

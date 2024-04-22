@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type RiskLevel int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i RiskLevel) String() string {
     return []string{"low", "medium", "high", "hidden", "none", "unknownFutureValue"}[i]
 }
-func ParseRiskLevel(v string) (interface{}, error) {
+func ParseRiskLevel(v string) (any, error) {
     result := LOW_RISKLEVEL
     switch v {
         case "low":

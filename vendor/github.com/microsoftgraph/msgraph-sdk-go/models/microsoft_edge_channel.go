@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// The enum to specify the channels for Microsoft Edge apps.
 type MicrosoftEdgeChannel int
 
 const (
@@ -19,7 +19,7 @@ const (
 func (i MicrosoftEdgeChannel) String() string {
     return []string{"dev", "beta", "stable", "unknownFutureValue"}[i]
 }
-func ParseMicrosoftEdgeChannel(v string) (interface{}, error) {
+func ParseMicrosoftEdgeChannel(v string) (any, error) {
     result := DEV_MICROSOFTEDGECHANNEL
     switch v {
         case "dev":

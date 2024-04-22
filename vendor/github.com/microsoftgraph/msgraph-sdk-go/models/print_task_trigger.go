@@ -1,17 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// PrintTaskTrigger provides operations to manage the collection of agreement entities.
+// PrintTaskTrigger 
 type PrintTaskTrigger struct {
     Entity
-    // The definition property
-    definition PrintTaskDefinitionable
-    // The event property
-    event *PrintEvent
 }
 // NewPrintTaskTrigger instantiates a new printTaskTrigger and sets the default values.
 func NewPrintTaskTrigger()(*PrintTaskTrigger) {
@@ -26,17 +21,49 @@ func CreatePrintTaskTriggerFromDiscriminatorValue(parseNode i878a80d2330e89d2689
 }
 // GetDefinition gets the definition property value. The definition property
 func (m *PrintTaskTrigger) GetDefinition()(PrintTaskDefinitionable) {
-    return m.definition
+    val, err := m.GetBackingStore().Get("definition")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(PrintTaskDefinitionable)
+    }
+    return nil
 }
 // GetEvent gets the event property value. The event property
 func (m *PrintTaskTrigger) GetEvent()(*PrintEvent) {
-    return m.event
+    val, err := m.GetBackingStore().Get("event")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*PrintEvent)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *PrintTaskTrigger) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["definition"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreatePrintTaskDefinitionFromDiscriminatorValue , m.SetDefinition)
-    res["event"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParsePrintEvent , m.SetEvent)
+    res["definition"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreatePrintTaskDefinitionFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDefinition(val.(PrintTaskDefinitionable))
+        }
+        return nil
+    }
+    res["event"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParsePrintEvent)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetEvent(val.(*PrintEvent))
+        }
+        return nil
+    }
     return res
 }
 // Serialize serializes information the current object
@@ -62,9 +89,24 @@ func (m *PrintTaskTrigger) Serialize(writer i878a80d2330e89d26896388a3f487eef27b
 }
 // SetDefinition sets the definition property value. The definition property
 func (m *PrintTaskTrigger) SetDefinition(value PrintTaskDefinitionable)() {
-    m.definition = value
+    err := m.GetBackingStore().Set("definition", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetEvent sets the event property value. The event property
 func (m *PrintTaskTrigger) SetEvent(value *PrintEvent)() {
-    m.event = value
+    err := m.GetBackingStore().Set("event", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// PrintTaskTriggerable 
+type PrintTaskTriggerable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetDefinition()(PrintTaskDefinitionable)
+    GetEvent()(*PrintEvent)
+    SetDefinition(value PrintTaskDefinitionable)()
+    SetEvent(value *PrintEvent)()
 }

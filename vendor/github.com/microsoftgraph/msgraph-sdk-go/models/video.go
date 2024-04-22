@@ -1,42 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // Video 
 type Video struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // Number of audio bits per sample.
-    audioBitsPerSample *int32
-    // Number of audio channels.
-    audioChannels *int32
-    // Name of the audio format (AAC, MP3, etc.).
-    audioFormat *string
-    // Number of audio samples per second.
-    audioSamplesPerSecond *int32
-    // Bit rate of the video in bits per second.
-    bitrate *int32
-    // Duration of the file in milliseconds.
-    duration *int64
-    // 'Four character code' name of the video format.
-    fourCC *string
-    // Frame rate of the video.
-    frameRate *float64
-    // Height of the video, in pixels.
-    height *int32
-    // The OdataType property
-    odataType *string
-    // Width of the video, in pixels.
-    width *int32
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewVideo instantiates a new video and sets the default values.
 func NewVideo()(*Video) {
     m := &Video{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateVideoFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -44,68 +23,256 @@ func CreateVideoFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487e
     return NewVideo(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *Video) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *Video) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
 }
 // GetAudioBitsPerSample gets the audioBitsPerSample property value. Number of audio bits per sample.
 func (m *Video) GetAudioBitsPerSample()(*int32) {
-    return m.audioBitsPerSample
+    val, err := m.GetBackingStore().Get("audioBitsPerSample")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetAudioChannels gets the audioChannels property value. Number of audio channels.
 func (m *Video) GetAudioChannels()(*int32) {
-    return m.audioChannels
+    val, err := m.GetBackingStore().Get("audioChannels")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetAudioFormat gets the audioFormat property value. Name of the audio format (AAC, MP3, etc.).
 func (m *Video) GetAudioFormat()(*string) {
-    return m.audioFormat
+    val, err := m.GetBackingStore().Get("audioFormat")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetAudioSamplesPerSecond gets the audioSamplesPerSecond property value. Number of audio samples per second.
 func (m *Video) GetAudioSamplesPerSecond()(*int32) {
-    return m.audioSamplesPerSecond
+    val, err := m.GetBackingStore().Get("audioSamplesPerSecond")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *Video) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetBitrate gets the bitrate property value. Bit rate of the video in bits per second.
 func (m *Video) GetBitrate()(*int32) {
-    return m.bitrate
+    val, err := m.GetBackingStore().Get("bitrate")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetDuration gets the duration property value. Duration of the file in milliseconds.
 func (m *Video) GetDuration()(*int64) {
-    return m.duration
+    val, err := m.GetBackingStore().Get("duration")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int64)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *Video) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["audioBitsPerSample"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetAudioBitsPerSample)
-    res["audioChannels"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetAudioChannels)
-    res["audioFormat"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetAudioFormat)
-    res["audioSamplesPerSecond"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetAudioSamplesPerSecond)
-    res["bitrate"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetBitrate)
-    res["duration"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt64Value(m.SetDuration)
-    res["fourCC"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetFourCC)
-    res["frameRate"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetFrameRate)
-    res["height"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetHeight)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["width"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetWidth)
+    res["audioBitsPerSample"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAudioBitsPerSample(val)
+        }
+        return nil
+    }
+    res["audioChannels"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAudioChannels(val)
+        }
+        return nil
+    }
+    res["audioFormat"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAudioFormat(val)
+        }
+        return nil
+    }
+    res["audioSamplesPerSecond"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAudioSamplesPerSecond(val)
+        }
+        return nil
+    }
+    res["bitrate"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBitrate(val)
+        }
+        return nil
+    }
+    res["duration"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDuration(val)
+        }
+        return nil
+    }
+    res["fourCC"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFourCC(val)
+        }
+        return nil
+    }
+    res["frameRate"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFrameRate(val)
+        }
+        return nil
+    }
+    res["height"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetHeight(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["width"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWidth(val)
+        }
+        return nil
+    }
     return res
 }
 // GetFourCC gets the fourCC property value. 'Four character code' name of the video format.
 func (m *Video) GetFourCC()(*string) {
-    return m.fourCC
+    val, err := m.GetBackingStore().Get("fourCC")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFrameRate gets the frameRate property value. Frame rate of the video.
 func (m *Video) GetFrameRate()(*float64) {
-    return m.frameRate
+    val, err := m.GetBackingStore().Get("frameRate")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // GetHeight gets the height property value. Height of the video, in pixels.
 func (m *Video) GetHeight()(*int32) {
-    return m.height
+    val, err := m.GetBackingStore().Get("height")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *Video) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetWidth gets the width property value. Width of the video, in pixels.
 func (m *Video) GetWidth()(*int32) {
-    return m.width
+    val, err := m.GetBackingStore().Get("width")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *Video) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -184,50 +351,120 @@ func (m *Video) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c4
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *Video) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *Video) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAudioBitsPerSample sets the audioBitsPerSample property value. Number of audio bits per sample.
 func (m *Video) SetAudioBitsPerSample(value *int32)() {
-    m.audioBitsPerSample = value
+    err := m.GetBackingStore().Set("audioBitsPerSample", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAudioChannels sets the audioChannels property value. Number of audio channels.
 func (m *Video) SetAudioChannels(value *int32)() {
-    m.audioChannels = value
+    err := m.GetBackingStore().Set("audioChannels", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAudioFormat sets the audioFormat property value. Name of the audio format (AAC, MP3, etc.).
 func (m *Video) SetAudioFormat(value *string)() {
-    m.audioFormat = value
+    err := m.GetBackingStore().Set("audioFormat", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAudioSamplesPerSecond sets the audioSamplesPerSecond property value. Number of audio samples per second.
 func (m *Video) SetAudioSamplesPerSecond(value *int32)() {
-    m.audioSamplesPerSecond = value
+    err := m.GetBackingStore().Set("audioSamplesPerSecond", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *Video) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetBitrate sets the bitrate property value. Bit rate of the video in bits per second.
 func (m *Video) SetBitrate(value *int32)() {
-    m.bitrate = value
+    err := m.GetBackingStore().Set("bitrate", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDuration sets the duration property value. Duration of the file in milliseconds.
 func (m *Video) SetDuration(value *int64)() {
-    m.duration = value
+    err := m.GetBackingStore().Set("duration", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFourCC sets the fourCC property value. 'Four character code' name of the video format.
 func (m *Video) SetFourCC(value *string)() {
-    m.fourCC = value
+    err := m.GetBackingStore().Set("fourCC", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFrameRate sets the frameRate property value. Frame rate of the video.
 func (m *Video) SetFrameRate(value *float64)() {
-    m.frameRate = value
+    err := m.GetBackingStore().Set("frameRate", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetHeight sets the height property value. Height of the video, in pixels.
 func (m *Video) SetHeight(value *int32)() {
-    m.height = value
+    err := m.GetBackingStore().Set("height", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *Video) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWidth sets the width property value. Width of the video, in pixels.
 func (m *Video) SetWidth(value *int32)() {
-    m.width = value
+    err := m.GetBackingStore().Set("width", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// Videoable 
+type Videoable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAudioBitsPerSample()(*int32)
+    GetAudioChannels()(*int32)
+    GetAudioFormat()(*string)
+    GetAudioSamplesPerSecond()(*int32)
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetBitrate()(*int32)
+    GetDuration()(*int64)
+    GetFourCC()(*string)
+    GetFrameRate()(*float64)
+    GetHeight()(*int32)
+    GetOdataType()(*string)
+    GetWidth()(*int32)
+    SetAudioBitsPerSample(value *int32)()
+    SetAudioChannels(value *int32)()
+    SetAudioFormat(value *string)()
+    SetAudioSamplesPerSecond(value *int32)()
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetBitrate(value *int32)()
+    SetDuration(value *int64)()
+    SetFourCC(value *string)()
+    SetFrameRate(value *float64)()
+    SetHeight(value *int32)()
+    SetOdataType(value *string)()
+    SetWidth(value *int32)()
 }

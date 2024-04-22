@@ -13,8 +13,8 @@ func NewServiceEndpoint()(*ServiceEndpoint) {
     m := &ServiceEndpoint{
         Endpoint: *NewEndpoint(),
     }
-    odataTypeValue := "#microsoft.graph.callRecords.serviceEndpoint";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.callRecords.serviceEndpoint"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateServiceEndpointFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -33,4 +33,9 @@ func (m *ServiceEndpoint) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0
         return err
     }
     return nil
+}
+// ServiceEndpointable 
+type ServiceEndpointable interface {
+    Endpointable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
 }

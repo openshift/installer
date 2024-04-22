@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Storage locations where managed apps can potentially store their data
 type ManagedAppDataStorageLocation int
 
 const (
@@ -19,7 +19,7 @@ const (
 func (i ManagedAppDataStorageLocation) String() string {
     return []string{"oneDriveForBusiness", "sharePoint", "box", "localStorage"}[i]
 }
-func ParseManagedAppDataStorageLocation(v string) (interface{}, error) {
+func ParseManagedAppDataStorageLocation(v string) (any, error) {
     result := ONEDRIVEFORBUSINESS_MANAGEDAPPDATASTORAGELOCATION
     switch v {
         case "oneDriveForBusiness":

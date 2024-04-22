@@ -78,17 +78,20 @@ type UpdateDnsGtmInstanceGlobalConfigRequest struct {
 	PublicCnameMode      string                                         `position:"Query" name:"PublicCnameMode"`
 	PublicUserDomainName string                                         `position:"Query" name:"PublicUserDomainName"`
 	Ttl                  requests.Integer                               `position:"Query" name:"Ttl"`
+	ForceUpdate          requests.Boolean                               `position:"Query" name:"ForceUpdate"`
 	InstanceId           string                                         `position:"Query" name:"InstanceId"`
 	InstanceName         string                                         `position:"Query" name:"InstanceName"`
+	PublicRr             string                                         `position:"Query" name:"PublicRr"`
 	UserClientIp         string                                         `position:"Query" name:"UserClientIp"`
 	PublicZoneName       string                                         `position:"Query" name:"PublicZoneName"`
 }
 
 // UpdateDnsGtmInstanceGlobalConfigAlertConfig is a repeated param struct in UpdateDnsGtmInstanceGlobalConfigRequest
 type UpdateDnsGtmInstanceGlobalConfigAlertConfig struct {
-	SmsNotice   string `name:"SmsNotice"`
-	NoticeType  string `name:"NoticeType"`
-	EmailNotice string `name:"EmailNotice"`
+	DingtalkNotice string `name:"DingtalkNotice"`
+	SmsNotice      string `name:"SmsNotice"`
+	NoticeType     string `name:"NoticeType"`
+	EmailNotice    string `name:"EmailNotice"`
 }
 
 // UpdateDnsGtmInstanceGlobalConfigResponse is the response struct for api UpdateDnsGtmInstanceGlobalConfig

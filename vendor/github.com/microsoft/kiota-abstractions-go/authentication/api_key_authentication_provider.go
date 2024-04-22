@@ -83,7 +83,7 @@ func (p *ApiKeyAuthenticationProvider) AuthenticateRequest(ctx context.Context, 
 		url.RawQuery = query.Encode()
 		request.SetUri(*url)
 	case HEADER_KEYLOCATION:
-		request.Headers[p.parameterName] = p.apiKey
+		request.Headers.Add(p.parameterName, p.apiKey)
 	}
 
 	return nil

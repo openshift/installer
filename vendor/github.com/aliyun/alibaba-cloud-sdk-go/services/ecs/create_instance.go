@@ -82,7 +82,7 @@ type CreateInstanceRequest struct {
 	PrivatePoolOptionsMatchCriteria string                    `position:"Query" name:"PrivatePoolOptions.MatchCriteria"`
 	HostName                        string                    `position:"Query" name:"HostName"`
 	Password                        string                    `position:"Query" name:"Password"`
-	SystemDisk                      string                    `position:"Query" name:"SystemDisk"`
+	SystemDisk                      CreateInstanceSystemDisk  `position:"Query" name:"SystemDisk"  type:"Struct"`
 	DeploymentSetGroupNo            requests.Integer          `position:"Query" name:"DeploymentSetGroupNo"`
 	StorageSetPartitionNumber       requests.Integer          `position:"Query" name:"StorageSetPartitionNumber"`
 	Tag                             *[]CreateInstanceTag      `position:"Query" name:"Tag"  type:"Repeated"`
@@ -139,6 +139,11 @@ type CreateInstanceRequest struct {
 	ImageFamily                     string                    `position:"Query" name:"ImageFamily"`
 	HttpTokens                      string                    `position:"Query" name:"HttpTokens"`
 	SystemDiskDescription           string                    `position:"Query" name:"SystemDisk.Description"`
+}
+
+// CreateInstanceSystemDisk is a repeated param struct in CreateInstanceRequest
+type CreateInstanceSystemDisk struct {
+	StorageClusterId string `name:"StorageClusterId"`
 }
 
 // CreateInstanceTag is a repeated param struct in CreateInstanceRequest

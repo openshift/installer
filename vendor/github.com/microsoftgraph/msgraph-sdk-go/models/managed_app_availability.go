@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// A managed (MAM) application's availability.
 type ManagedAppAvailability int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i ManagedAppAvailability) String() string {
     return []string{"global", "lineOfBusiness"}[i]
 }
-func ParseManagedAppAvailability(v string) (interface{}, error) {
+func ParseManagedAppAvailability(v string) (any, error) {
     result := GLOBAL_MANAGEDAPPAVAILABILITY
     switch v {
         case "global":

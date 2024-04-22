@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type SimulationAutomationRunStatus int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i SimulationAutomationRunStatus) String() string {
     return []string{"unknown", "running", "succeeded", "failed", "skipped", "unknownFutureValue"}[i]
 }
-func ParseSimulationAutomationRunStatus(v string) (interface{}, error) {
+func ParseSimulationAutomationRunStatus(v string) (any, error) {
     result := UNKNOWN_SIMULATIONAUTOMATIONRUNSTATUS
     switch v {
         case "unknown":

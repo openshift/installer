@@ -18,12 +18,20 @@ package alidns
 // Log is a nested struct in alidns response
 type Log struct {
 	OperTimestamp int64  `json:"OperTimestamp" xml:"OperTimestamp"`
-	EntityId      string `json:"EntityId" xml:"EntityId"`
+	Content       string `json:"content" xml:"content"`
 	OperTime      string `json:"OperTime" xml:"OperTime"`
-	EntityType    string `json:"EntityType" xml:"EntityType"`
-	Content       string `json:"Content" xml:"Content"`
+	Action        string `json:"Action" xml:"Action"`
 	Id            int64  `json:"Id" xml:"Id"`
-	OperAction    string `json:"OperAction" xml:"OperAction"`
+	ThreatTime    string `json:"ThreatTime" xml:"ThreatTime"`
 	EntityName    string `json:"EntityName" xml:"EntityName"`
+	SubDomain     string `json:"SubDomain" xml:"SubDomain"`
+	EntityId      string `json:"EntityId" xml:"EntityId"`
+	OperateTime   string `json:"OperateTime" xml:"OperateTime"`
+	EntityType    string `json:"EntityType" xml:"EntityType"`
+	OperAction    string `json:"OperAction" xml:"OperAction"`
+	SourceIp      string `json:"SourceIp" xml:"SourceIp"`
 	OperIp        string `json:"OperIp" xml:"OperIp"`
+	ThreatLevel   string `json:"ThreatLevel" xml:"ThreatLevel"`
+	ThreatType    string `json:"ThreatType" xml:"ThreatType"`
+	Type          string `json:"Type" xml:"Type"`
 }

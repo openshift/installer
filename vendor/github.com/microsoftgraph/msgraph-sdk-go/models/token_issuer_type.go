@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type TokenIssuerType int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i TokenIssuerType) String() string {
     return []string{"AzureAD", "ADFederationServices", "UnknownFutureValue", "AzureADBackupAuth", "ADFederationServicesMFAAdapter", "NPSExtension"}[i]
 }
-func ParseTokenIssuerType(v string) (interface{}, error) {
+func ParseTokenIssuerType(v string) (any, error) {
     result := AZUREAD_TOKENISSUERTYPE
     switch v {
         case "AzureAD":

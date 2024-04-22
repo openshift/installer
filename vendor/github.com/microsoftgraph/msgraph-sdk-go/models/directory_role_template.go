@@ -1,25 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // DirectoryRoleTemplate 
 type DirectoryRoleTemplate struct {
     DirectoryObject
-    // The description to set for the directory role. Read-only.
-    description *string
-    // The display name to set for the directory role. Read-only.
-    displayName *string
 }
-// NewDirectoryRoleTemplate instantiates a new DirectoryRoleTemplate and sets the default values.
+// NewDirectoryRoleTemplate instantiates a new directoryRoleTemplate and sets the default values.
 func NewDirectoryRoleTemplate()(*DirectoryRoleTemplate) {
     m := &DirectoryRoleTemplate{
         DirectoryObject: *NewDirectoryObject(),
     }
-    odataTypeValue := "#microsoft.graph.directoryRoleTemplate";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.directoryRoleTemplate"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateDirectoryRoleTemplateFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -28,17 +23,49 @@ func CreateDirectoryRoleTemplateFromDiscriminatorValue(parseNode i878a80d2330e89
 }
 // GetDescription gets the description property value. The description to set for the directory role. Read-only.
 func (m *DirectoryRoleTemplate) GetDescription()(*string) {
-    return m.description
+    val, err := m.GetBackingStore().Get("description")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDisplayName gets the displayName property value. The display name to set for the directory role. Read-only.
 func (m *DirectoryRoleTemplate) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *DirectoryRoleTemplate) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.DirectoryObject.GetFieldDeserializers()
-    res["description"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDescription)
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
+    res["description"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDescription(val)
+        }
+        return nil
+    }
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
     return res
 }
 // Serialize serializes information the current object
@@ -63,9 +90,24 @@ func (m *DirectoryRoleTemplate) Serialize(writer i878a80d2330e89d26896388a3f487e
 }
 // SetDescription sets the description property value. The description to set for the directory role. Read-only.
 func (m *DirectoryRoleTemplate) SetDescription(value *string)() {
-    m.description = value
+    err := m.GetBackingStore().Set("description", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDisplayName sets the displayName property value. The display name to set for the directory role. Read-only.
 func (m *DirectoryRoleTemplate) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// DirectoryRoleTemplateable 
+type DirectoryRoleTemplateable interface {
+    DirectoryObjectable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetDescription()(*string)
+    GetDisplayName()(*string)
+    SetDescription(value *string)()
+    SetDisplayName(value *string)()
 }

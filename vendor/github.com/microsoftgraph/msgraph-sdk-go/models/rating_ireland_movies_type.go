@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Movies rating labels in Ireland
 type RatingIrelandMoviesType int
 
 const (
@@ -27,7 +27,7 @@ const (
 func (i RatingIrelandMoviesType) String() string {
     return []string{"allAllowed", "allBlocked", "general", "parentalGuidance", "agesAbove12", "agesAbove15", "agesAbove16", "adults"}[i]
 }
-func ParseRatingIrelandMoviesType(v string) (interface{}, error) {
+func ParseRatingIrelandMoviesType(v string) (any, error) {
     result := ALLALLOWED_RATINGIRELANDMOVIESTYPE
     switch v {
         case "allAllowed":

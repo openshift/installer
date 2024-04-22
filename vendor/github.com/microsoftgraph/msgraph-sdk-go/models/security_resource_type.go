@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type SecurityResourceType int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i SecurityResourceType) String() string {
     return []string{"unknown", "attacked", "related", "unknownFutureValue"}[i]
 }
-func ParseSecurityResourceType(v string) (interface{}, error) {
+func ParseSecurityResourceType(v string) (any, error) {
     result := UNKNOWN_SECURITYRESOURCETYPE
     switch v {
         case "unknown":

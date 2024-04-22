@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type CloudAppSecuritySessionControlType int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i CloudAppSecuritySessionControlType) String() string {
     return []string{"mcasConfigured", "monitorOnly", "blockDownloads", "unknownFutureValue"}[i]
 }
-func ParseCloudAppSecuritySessionControlType(v string) (interface{}, error) {
+func ParseCloudAppSecuritySessionControlType(v string) (any, error) {
     result := MCASCONFIGURED_CLOUDAPPSECURITYSESSIONCONTROLTYPE
     switch v {
         case "mcasConfigured":

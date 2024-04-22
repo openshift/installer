@@ -2,39 +2,12 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // ManagedEBook an abstract class containing the base properties for Managed eBook.
 type ManagedEBook struct {
     Entity
-    // The list of assignments for this eBook.
-    assignments []ManagedEBookAssignmentable
-    // The date and time when the eBook file was created.
-    createdDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Description.
-    description *string
-    // The list of installation states for this eBook.
-    deviceStates []DeviceInstallStateable
-    // Name of the eBook.
-    displayName *string
-    // The more information Url.
-    informationUrl *string
-    // Mobile App Install Summary.
-    installSummary EBookInstallSummaryable
-    // Book cover.
-    largeCover MimeContentable
-    // The date and time when the eBook was last modified.
-    lastModifiedDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // The privacy statement Url.
-    privacyInformationUrl *string
-    // The date and time when the eBook was published.
-    publishedDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Publisher.
-    publisher *string
-    // The list of installation states for this eBook.
-    userStateSummary []UserInstallStateSummaryable
 }
 // NewManagedEBook instantiates a new managedEBook and sets the default values.
 func NewManagedEBook()(*ManagedEBook) {
@@ -67,73 +40,293 @@ func CreateManagedEBookFromDiscriminatorValue(parseNode i878a80d2330e89d26896388
 }
 // GetAssignments gets the assignments property value. The list of assignments for this eBook.
 func (m *ManagedEBook) GetAssignments()([]ManagedEBookAssignmentable) {
-    return m.assignments
+    val, err := m.GetBackingStore().Get("assignments")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]ManagedEBookAssignmentable)
+    }
+    return nil
 }
 // GetCreatedDateTime gets the createdDateTime property value. The date and time when the eBook file was created.
 func (m *ManagedEBook) GetCreatedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.createdDateTime
+    val, err := m.GetBackingStore().Get("createdDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetDescription gets the description property value. Description.
 func (m *ManagedEBook) GetDescription()(*string) {
-    return m.description
+    val, err := m.GetBackingStore().Get("description")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDeviceStates gets the deviceStates property value. The list of installation states for this eBook.
 func (m *ManagedEBook) GetDeviceStates()([]DeviceInstallStateable) {
-    return m.deviceStates
+    val, err := m.GetBackingStore().Get("deviceStates")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]DeviceInstallStateable)
+    }
+    return nil
 }
 // GetDisplayName gets the displayName property value. Name of the eBook.
 func (m *ManagedEBook) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *ManagedEBook) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["assignments"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateManagedEBookAssignmentFromDiscriminatorValue , m.SetAssignments)
-    res["createdDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetCreatedDateTime)
-    res["description"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDescription)
-    res["deviceStates"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateDeviceInstallStateFromDiscriminatorValue , m.SetDeviceStates)
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["informationUrl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetInformationUrl)
-    res["installSummary"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateEBookInstallSummaryFromDiscriminatorValue , m.SetInstallSummary)
-    res["largeCover"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateMimeContentFromDiscriminatorValue , m.SetLargeCover)
-    res["lastModifiedDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetLastModifiedDateTime)
-    res["privacyInformationUrl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetPrivacyInformationUrl)
-    res["publishedDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetPublishedDateTime)
-    res["publisher"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetPublisher)
-    res["userStateSummary"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateUserInstallStateSummaryFromDiscriminatorValue , m.SetUserStateSummary)
+    res["assignments"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateManagedEBookAssignmentFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]ManagedEBookAssignmentable, len(val))
+            for i, v := range val {
+                res[i] = v.(ManagedEBookAssignmentable)
+            }
+            m.SetAssignments(res)
+        }
+        return nil
+    }
+    res["createdDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCreatedDateTime(val)
+        }
+        return nil
+    }
+    res["description"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDescription(val)
+        }
+        return nil
+    }
+    res["deviceStates"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateDeviceInstallStateFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]DeviceInstallStateable, len(val))
+            for i, v := range val {
+                res[i] = v.(DeviceInstallStateable)
+            }
+            m.SetDeviceStates(res)
+        }
+        return nil
+    }
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["informationUrl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetInformationUrl(val)
+        }
+        return nil
+    }
+    res["installSummary"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateEBookInstallSummaryFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetInstallSummary(val.(EBookInstallSummaryable))
+        }
+        return nil
+    }
+    res["largeCover"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateMimeContentFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLargeCover(val.(MimeContentable))
+        }
+        return nil
+    }
+    res["lastModifiedDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastModifiedDateTime(val)
+        }
+        return nil
+    }
+    res["privacyInformationUrl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPrivacyInformationUrl(val)
+        }
+        return nil
+    }
+    res["publishedDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPublishedDateTime(val)
+        }
+        return nil
+    }
+    res["publisher"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPublisher(val)
+        }
+        return nil
+    }
+    res["userStateSummary"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateUserInstallStateSummaryFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]UserInstallStateSummaryable, len(val))
+            for i, v := range val {
+                res[i] = v.(UserInstallStateSummaryable)
+            }
+            m.SetUserStateSummary(res)
+        }
+        return nil
+    }
     return res
 }
 // GetInformationUrl gets the informationUrl property value. The more information Url.
 func (m *ManagedEBook) GetInformationUrl()(*string) {
-    return m.informationUrl
+    val, err := m.GetBackingStore().Get("informationUrl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetInstallSummary gets the installSummary property value. Mobile App Install Summary.
 func (m *ManagedEBook) GetInstallSummary()(EBookInstallSummaryable) {
-    return m.installSummary
+    val, err := m.GetBackingStore().Get("installSummary")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(EBookInstallSummaryable)
+    }
+    return nil
 }
 // GetLargeCover gets the largeCover property value. Book cover.
 func (m *ManagedEBook) GetLargeCover()(MimeContentable) {
-    return m.largeCover
+    val, err := m.GetBackingStore().Get("largeCover")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(MimeContentable)
+    }
+    return nil
 }
 // GetLastModifiedDateTime gets the lastModifiedDateTime property value. The date and time when the eBook was last modified.
 func (m *ManagedEBook) GetLastModifiedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.lastModifiedDateTime
+    val, err := m.GetBackingStore().Get("lastModifiedDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetPrivacyInformationUrl gets the privacyInformationUrl property value. The privacy statement Url.
 func (m *ManagedEBook) GetPrivacyInformationUrl()(*string) {
-    return m.privacyInformationUrl
+    val, err := m.GetBackingStore().Get("privacyInformationUrl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetPublishedDateTime gets the publishedDateTime property value. The date and time when the eBook was published.
 func (m *ManagedEBook) GetPublishedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.publishedDateTime
+    val, err := m.GetBackingStore().Get("publishedDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetPublisher gets the publisher property value. Publisher.
 func (m *ManagedEBook) GetPublisher()(*string) {
-    return m.publisher
+    val, err := m.GetBackingStore().Get("publisher")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetUserStateSummary gets the userStateSummary property value. The list of installation states for this eBook.
 func (m *ManagedEBook) GetUserStateSummary()([]UserInstallStateSummaryable) {
-    return m.userStateSummary
+    val, err := m.GetBackingStore().Get("userStateSummary")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]UserInstallStateSummaryable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *ManagedEBook) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -142,7 +335,10 @@ func (m *ManagedEBook) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e
         return err
     }
     if m.GetAssignments() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetAssignments())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetAssignments()))
+        for i, v := range m.GetAssignments() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("assignments", cast)
         if err != nil {
             return err
@@ -161,7 +357,10 @@ func (m *ManagedEBook) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e
         }
     }
     if m.GetDeviceStates() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetDeviceStates())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetDeviceStates()))
+        for i, v := range m.GetDeviceStates() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("deviceStates", cast)
         if err != nil {
             return err
@@ -216,7 +415,10 @@ func (m *ManagedEBook) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e
         }
     }
     if m.GetUserStateSummary() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetUserStateSummary())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetUserStateSummary()))
+        for i, v := range m.GetUserStateSummary() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("userStateSummary", cast)
         if err != nil {
             return err
@@ -226,53 +428,123 @@ func (m *ManagedEBook) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e
 }
 // SetAssignments sets the assignments property value. The list of assignments for this eBook.
 func (m *ManagedEBook) SetAssignments(value []ManagedEBookAssignmentable)() {
-    m.assignments = value
+    err := m.GetBackingStore().Set("assignments", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCreatedDateTime sets the createdDateTime property value. The date and time when the eBook file was created.
 func (m *ManagedEBook) SetCreatedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.createdDateTime = value
+    err := m.GetBackingStore().Set("createdDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDescription sets the description property value. Description.
 func (m *ManagedEBook) SetDescription(value *string)() {
-    m.description = value
+    err := m.GetBackingStore().Set("description", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeviceStates sets the deviceStates property value. The list of installation states for this eBook.
 func (m *ManagedEBook) SetDeviceStates(value []DeviceInstallStateable)() {
-    m.deviceStates = value
+    err := m.GetBackingStore().Set("deviceStates", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDisplayName sets the displayName property value. Name of the eBook.
 func (m *ManagedEBook) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetInformationUrl sets the informationUrl property value. The more information Url.
 func (m *ManagedEBook) SetInformationUrl(value *string)() {
-    m.informationUrl = value
+    err := m.GetBackingStore().Set("informationUrl", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetInstallSummary sets the installSummary property value. Mobile App Install Summary.
 func (m *ManagedEBook) SetInstallSummary(value EBookInstallSummaryable)() {
-    m.installSummary = value
+    err := m.GetBackingStore().Set("installSummary", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLargeCover sets the largeCover property value. Book cover.
 func (m *ManagedEBook) SetLargeCover(value MimeContentable)() {
-    m.largeCover = value
+    err := m.GetBackingStore().Set("largeCover", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLastModifiedDateTime sets the lastModifiedDateTime property value. The date and time when the eBook was last modified.
 func (m *ManagedEBook) SetLastModifiedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.lastModifiedDateTime = value
+    err := m.GetBackingStore().Set("lastModifiedDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPrivacyInformationUrl sets the privacyInformationUrl property value. The privacy statement Url.
 func (m *ManagedEBook) SetPrivacyInformationUrl(value *string)() {
-    m.privacyInformationUrl = value
+    err := m.GetBackingStore().Set("privacyInformationUrl", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPublishedDateTime sets the publishedDateTime property value. The date and time when the eBook was published.
 func (m *ManagedEBook) SetPublishedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.publishedDateTime = value
+    err := m.GetBackingStore().Set("publishedDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPublisher sets the publisher property value. Publisher.
 func (m *ManagedEBook) SetPublisher(value *string)() {
-    m.publisher = value
+    err := m.GetBackingStore().Set("publisher", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUserStateSummary sets the userStateSummary property value. The list of installation states for this eBook.
 func (m *ManagedEBook) SetUserStateSummary(value []UserInstallStateSummaryable)() {
-    m.userStateSummary = value
+    err := m.GetBackingStore().Set("userStateSummary", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// ManagedEBookable 
+type ManagedEBookable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAssignments()([]ManagedEBookAssignmentable)
+    GetCreatedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetDescription()(*string)
+    GetDeviceStates()([]DeviceInstallStateable)
+    GetDisplayName()(*string)
+    GetInformationUrl()(*string)
+    GetInstallSummary()(EBookInstallSummaryable)
+    GetLargeCover()(MimeContentable)
+    GetLastModifiedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetPrivacyInformationUrl()(*string)
+    GetPublishedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetPublisher()(*string)
+    GetUserStateSummary()([]UserInstallStateSummaryable)
+    SetAssignments(value []ManagedEBookAssignmentable)()
+    SetCreatedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetDescription(value *string)()
+    SetDeviceStates(value []DeviceInstallStateable)()
+    SetDisplayName(value *string)()
+    SetInformationUrl(value *string)()
+    SetInstallSummary(value EBookInstallSummaryable)()
+    SetLargeCover(value MimeContentable)()
+    SetLastModifiedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetPrivacyInformationUrl(value *string)()
+    SetPublishedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetPublisher(value *string)()
+    SetUserStateSummary(value []UserInstallStateSummaryable)()
 }

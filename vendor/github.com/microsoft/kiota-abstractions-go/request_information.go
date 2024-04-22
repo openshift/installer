@@ -25,7 +25,7 @@ type RequestInformation struct {
 	Method HttpMethod
 	uri    *u.URL
 	// The Request Headers.
-	Headers map[string]string
+	Headers *RequestHeaders
 	// The Query Parameters of the request.
 	QueryParameters map[string]string
 	// The Request Body.
@@ -42,7 +42,7 @@ const raw_url_key = "request-raw-url"
 // NewRequestInformation creates a new RequestInformation object with default values.
 func NewRequestInformation() *RequestInformation {
 	return &RequestInformation{
-		Headers:         make(map[string]string),
+		Headers:         NewRequestHeaders(),
 		QueryParameters: make(map[string]string),
 		options:         make(map[string]RequestOption),
 		PathParameters:  make(map[string]string),
@@ -151,7 +151,9 @@ const binaryContentType = "application/octet-steam"
 // SetStreamContent sets the request body to a binary stream.
 func (request *RequestInformation) SetStreamContent(content []byte) {
 	request.Content = content
-	request.Headers[contentTypeHeader] = binaryContentType
+	if request.Headers != nil {
+		request.Headers.Add(contentTypeHeader, binaryContentType)
+	}
 }
 
 func (request *RequestInformation) setContentAndContentType(writer s.SerializationWriter, contentType string) error {
@@ -162,7 +164,9 @@ func (request *RequestInformation) setContentAndContentType(writer s.Serializati
 		return errors.New("content cannot be nil")
 	}
 	request.Content = content
-	request.Headers[contentTypeHeader] = contentType
+	if request.Headers != nil {
+		request.Headers.Add(contentTypeHeader, contentType)
+	}
 	return nil
 }
 
@@ -459,7 +463,7 @@ func (request *RequestInformation) AddQueryParameters(source interface{}) {
 			continue
 		}
 		str, ok := value.(*string)
-		if ok && str != nil {
+		if ok && str != nil && *str != "" {
 			request.QueryParameters[fieldName] = *str
 		}
 		bl, ok := value.(*bool)
@@ -474,18 +478,5 @@ func (request *RequestInformation) AddQueryParameters(source interface{}) {
 		if ok && len(arr) > 0 {
 			request.QueryParameters[fieldName] = strings.Join(arr, ",")
 		}
-	}
-}
-
-// AddRequestHeaders adds request headers to the request.
-func (request *RequestInformation) AddRequestHeaders(headersToAdd map[string]string) {
-	if len(headersToAdd) == 0 {
-		return
-	}
-	if len(request.Headers) == 0 {
-		request.Headers = make(map[string]string, len(headersToAdd))
-	}
-	for key, value := range headersToAdd {
-		request.Headers[key] = value
 	}
 }

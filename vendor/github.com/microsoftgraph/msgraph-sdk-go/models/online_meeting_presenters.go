@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type OnlineMeetingPresenters int
 
 const (
@@ -16,7 +16,7 @@ const (
 func (i OnlineMeetingPresenters) String() string {
     return []string{"everyone", "organization", "roleIsPresenter", "organizer", "unknownFutureValue"}[i]
 }
-func ParseOnlineMeetingPresenters(v string) (interface{}, error) {
+func ParseOnlineMeetingPresenters(v string) (any, error) {
     result := EVERYONE_ONLINEMEETINGPRESENTERS
     switch v {
         case "everyone":

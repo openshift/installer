@@ -1,23 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // ManagedDeviceOverview 
 type ManagedDeviceOverview struct {
     Entity
-    // Distribution of Exchange Access State in Intune
-    deviceExchangeAccessStateSummary DeviceExchangeAccessStateSummaryable
-    // Device operating system summary.
-    deviceOperatingSystemSummary DeviceOperatingSystemSummaryable
-    // The number of devices enrolled in both MDM and EAS
-    dualEnrolledDeviceCount *int32
-    // Total enrolled device count. Does not include PC devices managed via Intune PC Agent
-    enrolledDeviceCount *int32
-    // The number of devices enrolled in MDM
-    mdmEnrolledCount *int32
 }
 // NewManagedDeviceOverview instantiates a new managedDeviceOverview and sets the default values.
 func NewManagedDeviceOverview()(*ManagedDeviceOverview) {
@@ -32,33 +21,113 @@ func CreateManagedDeviceOverviewFromDiscriminatorValue(parseNode i878a80d2330e89
 }
 // GetDeviceExchangeAccessStateSummary gets the deviceExchangeAccessStateSummary property value. Distribution of Exchange Access State in Intune
 func (m *ManagedDeviceOverview) GetDeviceExchangeAccessStateSummary()(DeviceExchangeAccessStateSummaryable) {
-    return m.deviceExchangeAccessStateSummary
+    val, err := m.GetBackingStore().Get("deviceExchangeAccessStateSummary")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(DeviceExchangeAccessStateSummaryable)
+    }
+    return nil
 }
 // GetDeviceOperatingSystemSummary gets the deviceOperatingSystemSummary property value. Device operating system summary.
 func (m *ManagedDeviceOverview) GetDeviceOperatingSystemSummary()(DeviceOperatingSystemSummaryable) {
-    return m.deviceOperatingSystemSummary
+    val, err := m.GetBackingStore().Get("deviceOperatingSystemSummary")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(DeviceOperatingSystemSummaryable)
+    }
+    return nil
 }
 // GetDualEnrolledDeviceCount gets the dualEnrolledDeviceCount property value. The number of devices enrolled in both MDM and EAS
 func (m *ManagedDeviceOverview) GetDualEnrolledDeviceCount()(*int32) {
-    return m.dualEnrolledDeviceCount
+    val, err := m.GetBackingStore().Get("dualEnrolledDeviceCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetEnrolledDeviceCount gets the enrolledDeviceCount property value. Total enrolled device count. Does not include PC devices managed via Intune PC Agent
 func (m *ManagedDeviceOverview) GetEnrolledDeviceCount()(*int32) {
-    return m.enrolledDeviceCount
+    val, err := m.GetBackingStore().Get("enrolledDeviceCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *ManagedDeviceOverview) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["deviceExchangeAccessStateSummary"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateDeviceExchangeAccessStateSummaryFromDiscriminatorValue , m.SetDeviceExchangeAccessStateSummary)
-    res["deviceOperatingSystemSummary"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateDeviceOperatingSystemSummaryFromDiscriminatorValue , m.SetDeviceOperatingSystemSummary)
-    res["dualEnrolledDeviceCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetDualEnrolledDeviceCount)
-    res["enrolledDeviceCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetEnrolledDeviceCount)
-    res["mdmEnrolledCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetMdmEnrolledCount)
+    res["deviceExchangeAccessStateSummary"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateDeviceExchangeAccessStateSummaryFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeviceExchangeAccessStateSummary(val.(DeviceExchangeAccessStateSummaryable))
+        }
+        return nil
+    }
+    res["deviceOperatingSystemSummary"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateDeviceOperatingSystemSummaryFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeviceOperatingSystemSummary(val.(DeviceOperatingSystemSummaryable))
+        }
+        return nil
+    }
+    res["dualEnrolledDeviceCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDualEnrolledDeviceCount(val)
+        }
+        return nil
+    }
+    res["enrolledDeviceCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetEnrolledDeviceCount(val)
+        }
+        return nil
+    }
+    res["mdmEnrolledCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMdmEnrolledCount(val)
+        }
+        return nil
+    }
     return res
 }
 // GetMdmEnrolledCount gets the mdmEnrolledCount property value. The number of devices enrolled in MDM
 func (m *ManagedDeviceOverview) GetMdmEnrolledCount()(*int32) {
-    return m.mdmEnrolledCount
+    val, err := m.GetBackingStore().Get("mdmEnrolledCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *ManagedDeviceOverview) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -100,21 +169,51 @@ func (m *ManagedDeviceOverview) Serialize(writer i878a80d2330e89d26896388a3f487e
 }
 // SetDeviceExchangeAccessStateSummary sets the deviceExchangeAccessStateSummary property value. Distribution of Exchange Access State in Intune
 func (m *ManagedDeviceOverview) SetDeviceExchangeAccessStateSummary(value DeviceExchangeAccessStateSummaryable)() {
-    m.deviceExchangeAccessStateSummary = value
+    err := m.GetBackingStore().Set("deviceExchangeAccessStateSummary", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeviceOperatingSystemSummary sets the deviceOperatingSystemSummary property value. Device operating system summary.
 func (m *ManagedDeviceOverview) SetDeviceOperatingSystemSummary(value DeviceOperatingSystemSummaryable)() {
-    m.deviceOperatingSystemSummary = value
+    err := m.GetBackingStore().Set("deviceOperatingSystemSummary", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDualEnrolledDeviceCount sets the dualEnrolledDeviceCount property value. The number of devices enrolled in both MDM and EAS
 func (m *ManagedDeviceOverview) SetDualEnrolledDeviceCount(value *int32)() {
-    m.dualEnrolledDeviceCount = value
+    err := m.GetBackingStore().Set("dualEnrolledDeviceCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetEnrolledDeviceCount sets the enrolledDeviceCount property value. Total enrolled device count. Does not include PC devices managed via Intune PC Agent
 func (m *ManagedDeviceOverview) SetEnrolledDeviceCount(value *int32)() {
-    m.enrolledDeviceCount = value
+    err := m.GetBackingStore().Set("enrolledDeviceCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMdmEnrolledCount sets the mdmEnrolledCount property value. The number of devices enrolled in MDM
 func (m *ManagedDeviceOverview) SetMdmEnrolledCount(value *int32)() {
-    m.mdmEnrolledCount = value
+    err := m.GetBackingStore().Set("mdmEnrolledCount", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// ManagedDeviceOverviewable 
+type ManagedDeviceOverviewable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetDeviceExchangeAccessStateSummary()(DeviceExchangeAccessStateSummaryable)
+    GetDeviceOperatingSystemSummary()(DeviceOperatingSystemSummaryable)
+    GetDualEnrolledDeviceCount()(*int32)
+    GetEnrolledDeviceCount()(*int32)
+    GetMdmEnrolledCount()(*int32)
+    SetDeviceExchangeAccessStateSummary(value DeviceExchangeAccessStateSummaryable)()
+    SetDeviceOperatingSystemSummary(value DeviceOperatingSystemSummaryable)()
+    SetDualEnrolledDeviceCount(value *int32)()
+    SetEnrolledDeviceCount(value *int32)()
+    SetMdmEnrolledCount(value *int32)()
 }

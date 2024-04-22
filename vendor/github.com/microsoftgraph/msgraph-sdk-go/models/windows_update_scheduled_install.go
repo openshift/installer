@@ -1,25 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // WindowsUpdateScheduledInstall 
 type WindowsUpdateScheduledInstall struct {
     WindowsUpdateInstallScheduleType
-    // Possible values for a weekly schedule.
-    scheduledInstallDay *WeeklySchedule
-    // Scheduled Install Time during day
-    scheduledInstallTime *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.TimeOnly
 }
 // NewWindowsUpdateScheduledInstall instantiates a new WindowsUpdateScheduledInstall and sets the default values.
 func NewWindowsUpdateScheduledInstall()(*WindowsUpdateScheduledInstall) {
     m := &WindowsUpdateScheduledInstall{
         WindowsUpdateInstallScheduleType: *NewWindowsUpdateInstallScheduleType(),
     }
-    odataTypeValue := "#microsoft.graph.windowsUpdateScheduledInstall";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.windowsUpdateScheduledInstall"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateWindowsUpdateScheduledInstallFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -29,17 +24,49 @@ func CreateWindowsUpdateScheduledInstallFromDiscriminatorValue(parseNode i878a80
 // GetFieldDeserializers the deserialization information for the current model
 func (m *WindowsUpdateScheduledInstall) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.WindowsUpdateInstallScheduleType.GetFieldDeserializers()
-    res["scheduledInstallDay"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseWeeklySchedule , m.SetScheduledInstallDay)
-    res["scheduledInstallTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeOnlyValue(m.SetScheduledInstallTime)
+    res["scheduledInstallDay"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseWeeklySchedule)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetScheduledInstallDay(val.(*WeeklySchedule))
+        }
+        return nil
+    }
+    res["scheduledInstallTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeOnlyValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetScheduledInstallTime(val)
+        }
+        return nil
+    }
     return res
 }
 // GetScheduledInstallDay gets the scheduledInstallDay property value. Possible values for a weekly schedule.
 func (m *WindowsUpdateScheduledInstall) GetScheduledInstallDay()(*WeeklySchedule) {
-    return m.scheduledInstallDay
+    val, err := m.GetBackingStore().Get("scheduledInstallDay")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*WeeklySchedule)
+    }
+    return nil
 }
 // GetScheduledInstallTime gets the scheduledInstallTime property value. Scheduled Install Time during day
 func (m *WindowsUpdateScheduledInstall) GetScheduledInstallTime()(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.TimeOnly) {
-    return m.scheduledInstallTime
+    val, err := m.GetBackingStore().Get("scheduledInstallTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.TimeOnly)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *WindowsUpdateScheduledInstall) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -64,9 +91,24 @@ func (m *WindowsUpdateScheduledInstall) Serialize(writer i878a80d2330e89d2689638
 }
 // SetScheduledInstallDay sets the scheduledInstallDay property value. Possible values for a weekly schedule.
 func (m *WindowsUpdateScheduledInstall) SetScheduledInstallDay(value *WeeklySchedule)() {
-    m.scheduledInstallDay = value
+    err := m.GetBackingStore().Set("scheduledInstallDay", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetScheduledInstallTime sets the scheduledInstallTime property value. Scheduled Install Time during day
 func (m *WindowsUpdateScheduledInstall) SetScheduledInstallTime(value *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.TimeOnly)() {
-    m.scheduledInstallTime = value
+    err := m.GetBackingStore().Set("scheduledInstallTime", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// WindowsUpdateScheduledInstallable 
+type WindowsUpdateScheduledInstallable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    WindowsUpdateInstallScheduleTypeable
+    GetScheduledInstallDay()(*WeeklySchedule)
+    GetScheduledInstallTime()(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.TimeOnly)
+    SetScheduledInstallDay(value *WeeklySchedule)()
+    SetScheduledInstallTime(value *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.TimeOnly)()
 }

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type TeamworkApplicationIdentityType int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i TeamworkApplicationIdentityType) String() string {
     return []string{"aadApplication", "bot", "tenantBot", "office365Connector", "outgoingWebhook", "unknownFutureValue"}[i]
 }
-func ParseTeamworkApplicationIdentityType(v string) (interface{}, error) {
+func ParseTeamworkApplicationIdentityType(v string) (any, error) {
     result := AADAPPLICATION_TEAMWORKAPPLICATIONIDENTITYTYPE
     switch v {
         case "aadApplication":

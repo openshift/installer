@@ -2,7 +2,7 @@ package security
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type DataSourceScopes int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i DataSourceScopes) String() string {
     return []string{"none", "allTenantMailboxes", "allTenantSites", "allCaseCustodians", "allCaseNoncustodialDataSources", "unknownFutureValue"}[i]
 }
-func ParseDataSourceScopes(v string) (interface{}, error) {
+func ParseDataSourceScopes(v string) (any, error) {
     result := NONE_DATASOURCESCOPES
     switch v {
         case "none":

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type TeamworkConversationIdentityType int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i TeamworkConversationIdentityType) String() string {
     return []string{"team", "channel", "chat", "unknownFutureValue"}[i]
 }
-func ParseTeamworkConversationIdentityType(v string) (interface{}, error) {
+func ParseTeamworkConversationIdentityType(v string) (any, error) {
     result := TEAM_TEAMWORKCONVERSATIONIDENTITYTYPE
     switch v {
         case "team":

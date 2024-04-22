@@ -17,14 +17,15 @@ package alidns
 
 // Config is a nested struct in alidns response
 type Config struct {
-	PublicUserDomainName string                                     `json:"PublicUserDomainName" xml:"PublicUserDomainName"`
-	PublicZoneName       string                                     `json:"PublicZoneName" xml:"PublicZoneName"`
-	InstanceName         string                                     `json:"InstanceName" xml:"InstanceName"`
-	PublicCnameMode      string                                     `json:"PublicCnameMode" xml:"PublicCnameMode"`
-	AlertGroup           string                                     `json:"AlertGroup" xml:"AlertGroup"`
-	CnameType            string                                     `json:"CnameType" xml:"CnameType"`
-	PubicZoneName        string                                     `json:"PubicZoneName" xml:"PubicZoneName"`
-	Ttl                  int                                        `json:"Ttl" xml:"Ttl"`
-	StrategyMode         string                                     `json:"StrategyMode" xml:"StrategyMode"`
-	AlertConfig          []AlertConfigItemInDescribeDnsGtmInstances `json:"AlertConfig" xml:"AlertConfig"`
+	PublicUserDomainName string                              `json:"PublicUserDomainName" xml:"PublicUserDomainName"`
+	PublicZoneName       string                              `json:"PublicZoneName" xml:"PublicZoneName"`
+	AlertGroup           string                              `json:"AlertGroup" xml:"AlertGroup"`
+	InstanceName         string                              `json:"InstanceName" xml:"InstanceName"`
+	PublicCnameMode      string                              `json:"PublicCnameMode" xml:"PublicCnameMode"`
+	CnameType            string                              `json:"CnameType" xml:"CnameType"`
+	PubicZoneName        string                              `json:"PubicZoneName" xml:"PubicZoneName"`
+	Ttl                  int                                 `json:"Ttl" xml:"Ttl"`
+	StrategyMode         string                              `json:"StrategyMode" xml:"StrategyMode"`
+	PublicRr             string                              `json:"PublicRr" xml:"PublicRr"`
+	AlertConfig          AlertConfigInDescribeDnsGtmInstance `json:"AlertConfig" xml:"AlertConfig"`
 }

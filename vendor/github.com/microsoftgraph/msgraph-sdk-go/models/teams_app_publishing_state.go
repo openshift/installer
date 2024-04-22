@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the appCatalogs singleton.
+// 
 type TeamsAppPublishingState int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i TeamsAppPublishingState) String() string {
     return []string{"submitted", "rejected", "published", "unknownFutureValue"}[i]
 }
-func ParseTeamsAppPublishingState(v string) (interface{}, error) {
+func ParseTeamsAppPublishingState(v string) (any, error) {
     result := SUBMITTED_TEAMSAPPPUBLISHINGSTATE
     switch v {
         case "submitted":

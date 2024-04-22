@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the appCatalogs singleton.
+// 
 type TeamsAppDistributionMethod int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i TeamsAppDistributionMethod) String() string {
     return []string{"store", "organization", "sideloaded", "unknownFutureValue"}[i]
 }
-func ParseTeamsAppDistributionMethod(v string) (interface{}, error) {
+func ParseTeamsAppDistributionMethod(v string) (any, error) {
     result := STORE_TEAMSAPPDISTRIBUTIONMETHOD
     switch v {
         case "store":

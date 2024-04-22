@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Device registration status.
 type DeviceRegistrationState int
 
 const (
@@ -27,7 +27,7 @@ const (
 func (i DeviceRegistrationState) String() string {
     return []string{"notRegistered", "registered", "revoked", "keyConflict", "approvalPending", "certificateReset", "notRegisteredPendingEnrollment", "unknown"}[i]
 }
-func ParseDeviceRegistrationState(v string) (interface{}, error) {
+func ParseDeviceRegistrationState(v string) (any, error) {
     result := NOTREGISTERED_DEVICEREGISTRATIONSTATE
     switch v {
         case "notRegistered":

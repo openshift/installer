@@ -1,29 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // TeleconferenceDeviceVideoQuality 
 type TeleconferenceDeviceVideoQuality struct {
     TeleconferenceDeviceMediaQuality
-    // The average inbound stream video bit rate per second.
-    averageInboundBitRate *float64
-    // The average inbound stream video frame rate per second.
-    averageInboundFrameRate *float64
-    // The average outbound stream video bit rate per second.
-    averageOutboundBitRate *float64
-    // The average outbound stream video frame rate per second.
-    averageOutboundFrameRate *float64
 }
 // NewTeleconferenceDeviceVideoQuality instantiates a new TeleconferenceDeviceVideoQuality and sets the default values.
 func NewTeleconferenceDeviceVideoQuality()(*TeleconferenceDeviceVideoQuality) {
     m := &TeleconferenceDeviceVideoQuality{
         TeleconferenceDeviceMediaQuality: *NewTeleconferenceDeviceMediaQuality(),
     }
-    odataTypeValue := "#microsoft.graph.teleconferenceDeviceVideoQuality";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.teleconferenceDeviceVideoQuality"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateTeleconferenceDeviceVideoQualityFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -50,27 +41,91 @@ func CreateTeleconferenceDeviceVideoQualityFromDiscriminatorValue(parseNode i878
 }
 // GetAverageInboundBitRate gets the averageInboundBitRate property value. The average inbound stream video bit rate per second.
 func (m *TeleconferenceDeviceVideoQuality) GetAverageInboundBitRate()(*float64) {
-    return m.averageInboundBitRate
+    val, err := m.GetBackingStore().Get("averageInboundBitRate")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // GetAverageInboundFrameRate gets the averageInboundFrameRate property value. The average inbound stream video frame rate per second.
 func (m *TeleconferenceDeviceVideoQuality) GetAverageInboundFrameRate()(*float64) {
-    return m.averageInboundFrameRate
+    val, err := m.GetBackingStore().Get("averageInboundFrameRate")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // GetAverageOutboundBitRate gets the averageOutboundBitRate property value. The average outbound stream video bit rate per second.
 func (m *TeleconferenceDeviceVideoQuality) GetAverageOutboundBitRate()(*float64) {
-    return m.averageOutboundBitRate
+    val, err := m.GetBackingStore().Get("averageOutboundBitRate")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // GetAverageOutboundFrameRate gets the averageOutboundFrameRate property value. The average outbound stream video frame rate per second.
 func (m *TeleconferenceDeviceVideoQuality) GetAverageOutboundFrameRate()(*float64) {
-    return m.averageOutboundFrameRate
+    val, err := m.GetBackingStore().Get("averageOutboundFrameRate")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *TeleconferenceDeviceVideoQuality) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.TeleconferenceDeviceMediaQuality.GetFieldDeserializers()
-    res["averageInboundBitRate"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetAverageInboundBitRate)
-    res["averageInboundFrameRate"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetAverageInboundFrameRate)
-    res["averageOutboundBitRate"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetAverageOutboundBitRate)
-    res["averageOutboundFrameRate"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetAverageOutboundFrameRate)
+    res["averageInboundBitRate"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAverageInboundBitRate(val)
+        }
+        return nil
+    }
+    res["averageInboundFrameRate"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAverageInboundFrameRate(val)
+        }
+        return nil
+    }
+    res["averageOutboundBitRate"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAverageOutboundBitRate(val)
+        }
+        return nil
+    }
+    res["averageOutboundFrameRate"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAverageOutboundFrameRate(val)
+        }
+        return nil
+    }
     return res
 }
 // Serialize serializes information the current object
@@ -107,17 +162,42 @@ func (m *TeleconferenceDeviceVideoQuality) Serialize(writer i878a80d2330e89d2689
 }
 // SetAverageInboundBitRate sets the averageInboundBitRate property value. The average inbound stream video bit rate per second.
 func (m *TeleconferenceDeviceVideoQuality) SetAverageInboundBitRate(value *float64)() {
-    m.averageInboundBitRate = value
+    err := m.GetBackingStore().Set("averageInboundBitRate", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAverageInboundFrameRate sets the averageInboundFrameRate property value. The average inbound stream video frame rate per second.
 func (m *TeleconferenceDeviceVideoQuality) SetAverageInboundFrameRate(value *float64)() {
-    m.averageInboundFrameRate = value
+    err := m.GetBackingStore().Set("averageInboundFrameRate", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAverageOutboundBitRate sets the averageOutboundBitRate property value. The average outbound stream video bit rate per second.
 func (m *TeleconferenceDeviceVideoQuality) SetAverageOutboundBitRate(value *float64)() {
-    m.averageOutboundBitRate = value
+    err := m.GetBackingStore().Set("averageOutboundBitRate", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAverageOutboundFrameRate sets the averageOutboundFrameRate property value. The average outbound stream video frame rate per second.
 func (m *TeleconferenceDeviceVideoQuality) SetAverageOutboundFrameRate(value *float64)() {
-    m.averageOutboundFrameRate = value
+    err := m.GetBackingStore().Set("averageOutboundFrameRate", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// TeleconferenceDeviceVideoQualityable 
+type TeleconferenceDeviceVideoQualityable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    TeleconferenceDeviceMediaQualityable
+    GetAverageInboundBitRate()(*float64)
+    GetAverageInboundFrameRate()(*float64)
+    GetAverageOutboundBitRate()(*float64)
+    GetAverageOutboundFrameRate()(*float64)
+    SetAverageInboundBitRate(value *float64)()
+    SetAverageInboundFrameRate(value *float64)()
+    SetAverageOutboundBitRate(value *float64)()
+    SetAverageOutboundFrameRate(value *float64)()
 }

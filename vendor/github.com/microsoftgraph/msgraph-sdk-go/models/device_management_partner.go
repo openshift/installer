@@ -2,29 +2,12 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // DeviceManagementPartner entity which represents a connection to device management partner.
 type DeviceManagementPartner struct {
     Entity
-    // Partner display name
-    displayName *string
-    // Whether device management partner is configured or not
-    isConfigured *bool
-    // Timestamp of last heartbeat after admin enabled option Connect to Device management Partner
-    lastHeartbeatDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Partner App Type.
-    partnerAppType *DeviceManagementPartnerAppType
-    // Partner state of this tenant.
-    partnerState *DeviceManagementPartnerTenantState
-    // Partner Single tenant App id
-    singleTenantAppId *string
-    // DateTime in UTC when PartnerDevices will be marked as NonCompliant
-    whenPartnerDevicesWillBeMarkedAsNonCompliantDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // DateTime in UTC when PartnerDevices will be removed
-    whenPartnerDevicesWillBeRemovedDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
 }
 // NewDeviceManagementPartner instantiates a new deviceManagementPartner and sets the default values.
 func NewDeviceManagementPartner()(*DeviceManagementPartner) {
@@ -39,48 +22,201 @@ func CreateDeviceManagementPartnerFromDiscriminatorValue(parseNode i878a80d2330e
 }
 // GetDisplayName gets the displayName property value. Partner display name
 func (m *DeviceManagementPartner) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *DeviceManagementPartner) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["isConfigured"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsConfigured)
-    res["lastHeartbeatDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetLastHeartbeatDateTime)
-    res["partnerAppType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseDeviceManagementPartnerAppType , m.SetPartnerAppType)
-    res["partnerState"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseDeviceManagementPartnerTenantState , m.SetPartnerState)
-    res["singleTenantAppId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSingleTenantAppId)
-    res["whenPartnerDevicesWillBeMarkedAsNonCompliantDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetWhenPartnerDevicesWillBeMarkedAsNonCompliantDateTime)
-    res["whenPartnerDevicesWillBeRemovedDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetWhenPartnerDevicesWillBeRemovedDateTime)
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["groupsRequiringPartnerEnrollment"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateDeviceManagementPartnerAssignmentFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]DeviceManagementPartnerAssignmentable, len(val))
+            for i, v := range val {
+                res[i] = v.(DeviceManagementPartnerAssignmentable)
+            }
+            m.SetGroupsRequiringPartnerEnrollment(res)
+        }
+        return nil
+    }
+    res["isConfigured"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsConfigured(val)
+        }
+        return nil
+    }
+    res["lastHeartbeatDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastHeartbeatDateTime(val)
+        }
+        return nil
+    }
+    res["partnerAppType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseDeviceManagementPartnerAppType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPartnerAppType(val.(*DeviceManagementPartnerAppType))
+        }
+        return nil
+    }
+    res["partnerState"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseDeviceManagementPartnerTenantState)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPartnerState(val.(*DeviceManagementPartnerTenantState))
+        }
+        return nil
+    }
+    res["singleTenantAppId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSingleTenantAppId(val)
+        }
+        return nil
+    }
+    res["whenPartnerDevicesWillBeMarkedAsNonCompliantDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWhenPartnerDevicesWillBeMarkedAsNonCompliantDateTime(val)
+        }
+        return nil
+    }
+    res["whenPartnerDevicesWillBeRemovedDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWhenPartnerDevicesWillBeRemovedDateTime(val)
+        }
+        return nil
+    }
     return res
+}
+// GetGroupsRequiringPartnerEnrollment gets the groupsRequiringPartnerEnrollment property value. User groups that specifies whether enrollment is through partner.
+func (m *DeviceManagementPartner) GetGroupsRequiringPartnerEnrollment()([]DeviceManagementPartnerAssignmentable) {
+    val, err := m.GetBackingStore().Get("groupsRequiringPartnerEnrollment")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]DeviceManagementPartnerAssignmentable)
+    }
+    return nil
 }
 // GetIsConfigured gets the isConfigured property value. Whether device management partner is configured or not
 func (m *DeviceManagementPartner) GetIsConfigured()(*bool) {
-    return m.isConfigured
+    val, err := m.GetBackingStore().Get("isConfigured")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetLastHeartbeatDateTime gets the lastHeartbeatDateTime property value. Timestamp of last heartbeat after admin enabled option Connect to Device management Partner
 func (m *DeviceManagementPartner) GetLastHeartbeatDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.lastHeartbeatDateTime
+    val, err := m.GetBackingStore().Get("lastHeartbeatDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetPartnerAppType gets the partnerAppType property value. Partner App Type.
 func (m *DeviceManagementPartner) GetPartnerAppType()(*DeviceManagementPartnerAppType) {
-    return m.partnerAppType
+    val, err := m.GetBackingStore().Get("partnerAppType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*DeviceManagementPartnerAppType)
+    }
+    return nil
 }
 // GetPartnerState gets the partnerState property value. Partner state of this tenant.
 func (m *DeviceManagementPartner) GetPartnerState()(*DeviceManagementPartnerTenantState) {
-    return m.partnerState
+    val, err := m.GetBackingStore().Get("partnerState")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*DeviceManagementPartnerTenantState)
+    }
+    return nil
 }
 // GetSingleTenantAppId gets the singleTenantAppId property value. Partner Single tenant App id
 func (m *DeviceManagementPartner) GetSingleTenantAppId()(*string) {
-    return m.singleTenantAppId
+    val, err := m.GetBackingStore().Get("singleTenantAppId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetWhenPartnerDevicesWillBeMarkedAsNonCompliantDateTime gets the whenPartnerDevicesWillBeMarkedAsNonCompliantDateTime property value. DateTime in UTC when PartnerDevices will be marked as NonCompliant
 func (m *DeviceManagementPartner) GetWhenPartnerDevicesWillBeMarkedAsNonCompliantDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.whenPartnerDevicesWillBeMarkedAsNonCompliantDateTime
+    val, err := m.GetBackingStore().Get("whenPartnerDevicesWillBeMarkedAsNonCompliantDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetWhenPartnerDevicesWillBeRemovedDateTime gets the whenPartnerDevicesWillBeRemovedDateTime property value. DateTime in UTC when PartnerDevices will be removed
 func (m *DeviceManagementPartner) GetWhenPartnerDevicesWillBeRemovedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.whenPartnerDevicesWillBeRemovedDateTime
+    val, err := m.GetBackingStore().Get("whenPartnerDevicesWillBeRemovedDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *DeviceManagementPartner) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -90,6 +226,16 @@ func (m *DeviceManagementPartner) Serialize(writer i878a80d2330e89d26896388a3f48
     }
     {
         err = writer.WriteStringValue("displayName", m.GetDisplayName())
+        if err != nil {
+            return err
+        }
+    }
+    if m.GetGroupsRequiringPartnerEnrollment() != nil {
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetGroupsRequiringPartnerEnrollment()))
+        for i, v := range m.GetGroupsRequiringPartnerEnrollment() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
+        err = writer.WriteCollectionOfObjectValues("groupsRequiringPartnerEnrollment", cast)
         if err != nil {
             return err
         }
@@ -142,33 +288,87 @@ func (m *DeviceManagementPartner) Serialize(writer i878a80d2330e89d26896388a3f48
 }
 // SetDisplayName sets the displayName property value. Partner display name
 func (m *DeviceManagementPartner) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetGroupsRequiringPartnerEnrollment sets the groupsRequiringPartnerEnrollment property value. User groups that specifies whether enrollment is through partner.
+func (m *DeviceManagementPartner) SetGroupsRequiringPartnerEnrollment(value []DeviceManagementPartnerAssignmentable)() {
+    err := m.GetBackingStore().Set("groupsRequiringPartnerEnrollment", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsConfigured sets the isConfigured property value. Whether device management partner is configured or not
 func (m *DeviceManagementPartner) SetIsConfigured(value *bool)() {
-    m.isConfigured = value
+    err := m.GetBackingStore().Set("isConfigured", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLastHeartbeatDateTime sets the lastHeartbeatDateTime property value. Timestamp of last heartbeat after admin enabled option Connect to Device management Partner
 func (m *DeviceManagementPartner) SetLastHeartbeatDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.lastHeartbeatDateTime = value
+    err := m.GetBackingStore().Set("lastHeartbeatDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPartnerAppType sets the partnerAppType property value. Partner App Type.
 func (m *DeviceManagementPartner) SetPartnerAppType(value *DeviceManagementPartnerAppType)() {
-    m.partnerAppType = value
+    err := m.GetBackingStore().Set("partnerAppType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPartnerState sets the partnerState property value. Partner state of this tenant.
 func (m *DeviceManagementPartner) SetPartnerState(value *DeviceManagementPartnerTenantState)() {
-    m.partnerState = value
+    err := m.GetBackingStore().Set("partnerState", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSingleTenantAppId sets the singleTenantAppId property value. Partner Single tenant App id
 func (m *DeviceManagementPartner) SetSingleTenantAppId(value *string)() {
-    m.singleTenantAppId = value
+    err := m.GetBackingStore().Set("singleTenantAppId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWhenPartnerDevicesWillBeMarkedAsNonCompliantDateTime sets the whenPartnerDevicesWillBeMarkedAsNonCompliantDateTime property value. DateTime in UTC when PartnerDevices will be marked as NonCompliant
 func (m *DeviceManagementPartner) SetWhenPartnerDevicesWillBeMarkedAsNonCompliantDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.whenPartnerDevicesWillBeMarkedAsNonCompliantDateTime = value
+    err := m.GetBackingStore().Set("whenPartnerDevicesWillBeMarkedAsNonCompliantDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWhenPartnerDevicesWillBeRemovedDateTime sets the whenPartnerDevicesWillBeRemovedDateTime property value. DateTime in UTC when PartnerDevices will be removed
 func (m *DeviceManagementPartner) SetWhenPartnerDevicesWillBeRemovedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.whenPartnerDevicesWillBeRemovedDateTime = value
+    err := m.GetBackingStore().Set("whenPartnerDevicesWillBeRemovedDateTime", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// DeviceManagementPartnerable 
+type DeviceManagementPartnerable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetDisplayName()(*string)
+    GetGroupsRequiringPartnerEnrollment()([]DeviceManagementPartnerAssignmentable)
+    GetIsConfigured()(*bool)
+    GetLastHeartbeatDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetPartnerAppType()(*DeviceManagementPartnerAppType)
+    GetPartnerState()(*DeviceManagementPartnerTenantState)
+    GetSingleTenantAppId()(*string)
+    GetWhenPartnerDevicesWillBeMarkedAsNonCompliantDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetWhenPartnerDevicesWillBeRemovedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    SetDisplayName(value *string)()
+    SetGroupsRequiringPartnerEnrollment(value []DeviceManagementPartnerAssignmentable)()
+    SetIsConfigured(value *bool)()
+    SetLastHeartbeatDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetPartnerAppType(value *DeviceManagementPartnerAppType)()
+    SetPartnerState(value *DeviceManagementPartnerTenantState)()
+    SetSingleTenantAppId(value *string)()
+    SetWhenPartnerDevicesWillBeMarkedAsNonCompliantDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetWhenPartnerDevicesWillBeRemovedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
 }

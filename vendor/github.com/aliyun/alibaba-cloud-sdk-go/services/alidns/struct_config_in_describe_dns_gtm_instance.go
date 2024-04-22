@@ -17,13 +17,14 @@ package alidns
 
 // ConfigInDescribeDnsGtmInstance is a nested struct in alidns response
 type ConfigInDescribeDnsGtmInstance struct {
-	InstanceName         string                              `json:"InstanceName" xml:"InstanceName"`
-	CnameType            string                              `json:"CnameType" xml:"CnameType"`
-	PublicUserDomainName string                              `json:"PublicUserDomainName" xml:"PublicUserDomainName"`
-	PublicCnameMode      string                              `json:"PublicCnameMode" xml:"PublicCnameMode"`
-	PubicZoneName        string                              `json:"PubicZoneName" xml:"PubicZoneName"`
 	Ttl                  int                                 `json:"Ttl" xml:"Ttl"`
-	StrategyMode         string                              `json:"StrategyMode" xml:"StrategyMode"`
 	AlertGroup           string                              `json:"AlertGroup" xml:"AlertGroup"`
+	CnameType            string                              `json:"CnameType" xml:"CnameType"`
+	StrategyMode         string                              `json:"StrategyMode" xml:"StrategyMode"`
+	InstanceName         string                              `json:"InstanceName" xml:"InstanceName"`
+	PublicCnameMode      string                              `json:"PublicCnameMode" xml:"PublicCnameMode"`
+	PublicUserDomainName string                              `json:"PublicUserDomainName" xml:"PublicUserDomainName"`
+	PubicZoneName        string                              `json:"PubicZoneName" xml:"PubicZoneName"`
+	PublicRr             string                              `json:"PublicRr" xml:"PublicRr"`
 	AlertConfig          AlertConfigInDescribeDnsGtmInstance `json:"AlertConfig" xml:"AlertConfig"`
 }

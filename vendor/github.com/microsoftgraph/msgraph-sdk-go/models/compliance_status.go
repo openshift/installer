@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ComplianceStatus int
 
 const (
@@ -19,7 +19,7 @@ const (
 func (i ComplianceStatus) String() string {
     return []string{"unknown", "notApplicable", "compliant", "remediated", "nonCompliant", "error", "conflict", "notAssigned"}[i]
 }
-func ParseComplianceStatus(v string) (interface{}, error) {
+func ParseComplianceStatus(v string) (any, error) {
     result := UNKNOWN_COMPLIANCESTATUS
     switch v {
         case "unknown":

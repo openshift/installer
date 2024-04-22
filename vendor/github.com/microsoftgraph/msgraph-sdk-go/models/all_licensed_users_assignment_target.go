@@ -13,8 +13,8 @@ func NewAllLicensedUsersAssignmentTarget()(*AllLicensedUsersAssignmentTarget) {
     m := &AllLicensedUsersAssignmentTarget{
         DeviceAndAppManagementAssignmentTarget: *NewDeviceAndAppManagementAssignmentTarget(),
     }
-    odataTypeValue := "#microsoft.graph.allLicensedUsersAssignmentTarget";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.allLicensedUsersAssignmentTarget"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateAllLicensedUsersAssignmentTargetFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -33,4 +33,9 @@ func (m *AllLicensedUsersAssignmentTarget) Serialize(writer i878a80d2330e89d2689
         return err
     }
     return nil
+}
+// AllLicensedUsersAssignmentTargetable 
+type AllLicensedUsersAssignmentTargetable interface {
+    DeviceAndAppManagementAssignmentTargetable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
 }

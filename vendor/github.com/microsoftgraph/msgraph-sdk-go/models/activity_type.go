@@ -2,19 +2,20 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ActivityType int
 
 const (
     SIGNIN_ACTIVITYTYPE ActivityType = iota
     USER_ACTIVITYTYPE
     UNKNOWNFUTUREVALUE_ACTIVITYTYPE
+    SERVICEPRINCIPAL_ACTIVITYTYPE
 )
 
 func (i ActivityType) String() string {
-    return []string{"signin", "user", "unknownFutureValue"}[i]
+    return []string{"signin", "user", "unknownFutureValue", "servicePrincipal"}[i]
 }
-func ParseActivityType(v string) (interface{}, error) {
+func ParseActivityType(v string) (any, error) {
     result := SIGNIN_ACTIVITYTYPE
     switch v {
         case "signin":
@@ -23,6 +24,8 @@ func ParseActivityType(v string) (interface{}, error) {
             result = USER_ACTIVITYTYPE
         case "unknownFutureValue":
             result = UNKNOWNFUTUREVALUE_ACTIVITYTYPE
+        case "servicePrincipal":
+            result = SERVICEPRINCIPAL_ACTIVITYTYPE
         default:
             return 0, errors.New("Unknown ActivityType value: " + v)
     }

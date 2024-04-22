@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ManagementAgentType int
 
 const (
@@ -36,7 +36,7 @@ const (
 func (i ManagementAgentType) String() string {
     return []string{"eas", "mdm", "easMdm", "intuneClient", "easIntuneClient", "configurationManagerClient", "configurationManagerClientMdm", "configurationManagerClientMdmEas", "unknown", "jamf", "googleCloudDevicePolicyController", "microsoft365ManagedMdm", "msSense"}[i]
 }
-func ParseManagementAgentType(v string) (interface{}, error) {
+func ParseManagementAgentType(v string) (any, error) {
     result := EAS_MANAGEMENTAGENTTYPE
     switch v {
         case "eas":

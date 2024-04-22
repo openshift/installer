@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Indicates the package type of an MSI Win32LobApp.
 type Win32LobAppMsiPackageType int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i Win32LobAppMsiPackageType) String() string {
     return []string{"perMachine", "perUser", "dualPurpose"}[i]
 }
-func ParseWin32LobAppMsiPackageType(v string) (interface{}, error) {
+func ParseWin32LobAppMsiPackageType(v string) (any, error) {
     result := PERMACHINE_WIN32LOBAPPMSIPACKAGETYPE
     switch v {
         case "perMachine":

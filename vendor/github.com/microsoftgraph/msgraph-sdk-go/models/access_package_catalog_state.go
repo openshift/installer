@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type AccessPackageCatalogState int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i AccessPackageCatalogState) String() string {
     return []string{"unpublished", "published", "unknownFutureValue"}[i]
 }
-func ParseAccessPackageCatalogState(v string) (interface{}, error) {
+func ParseAccessPackageCatalogState(v string) (any, error) {
     result := UNPUBLISHED_ACCESSPACKAGECATALOGSTATE
     switch v {
         case "unpublished":

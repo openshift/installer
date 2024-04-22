@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Indicates the type of restart action.
 type Win32LobAppRestartBehavior int
 
 const (
@@ -19,7 +19,7 @@ const (
 func (i Win32LobAppRestartBehavior) String() string {
     return []string{"basedOnReturnCode", "allow", "suppress", "force"}[i]
 }
-func ParseWin32LobAppRestartBehavior(v string) (interface{}, error) {
+func ParseWin32LobAppRestartBehavior(v string) (any, error) {
     result := BASEDONRETURNCODE_WIN32LOBAPPRESTARTBEHAVIOR
     switch v {
         case "basedOnReturnCode":

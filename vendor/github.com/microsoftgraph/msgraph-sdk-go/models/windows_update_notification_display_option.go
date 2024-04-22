@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Windows Update Notification Display Options
 type WindowsUpdateNotificationDisplayOption int
 
 const (
@@ -21,7 +21,7 @@ const (
 func (i WindowsUpdateNotificationDisplayOption) String() string {
     return []string{"notConfigured", "defaultNotifications", "restartWarningsOnly", "disableAllNotifications", "unknownFutureValue"}[i]
 }
-func ParseWindowsUpdateNotificationDisplayOption(v string) (interface{}, error) {
+func ParseWindowsUpdateNotificationDisplayOption(v string) (any, error) {
     result := NOTCONFIGURED_WINDOWSUPDATENOTIFICATIONDISPLAYOPTION
     switch v {
         case "notConfigured":

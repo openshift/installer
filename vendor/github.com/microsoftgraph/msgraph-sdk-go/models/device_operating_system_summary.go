@@ -1,46 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // DeviceOperatingSystemSummary device operating system summary.
 type DeviceOperatingSystemSummary struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // The count of Corporate work profile Android devices. Also known as Corporate Owned Personally Enabled (COPE). Valid values -1 to 2147483647
-    androidCorporateWorkProfileCount *int32
-    // Number of android device count.
-    androidCount *int32
-    // Number of dedicated Android devices.
-    androidDedicatedCount *int32
-    // Number of device admin Android devices.
-    androidDeviceAdminCount *int32
-    // Number of fully managed Android devices.
-    androidFullyManagedCount *int32
-    // Number of work profile Android devices.
-    androidWorkProfileCount *int32
-    // Number of ConfigMgr managed devices.
-    configMgrDeviceCount *int32
-    // Number of iOS device count.
-    iosCount *int32
-    // Number of Mac OS X device count.
-    macOSCount *int32
-    // The OdataType property
-    odataType *string
-    // Number of unknown device count.
-    unknownCount *int32
-    // Number of Windows device count.
-    windowsCount *int32
-    // Number of Windows mobile device count.
-    windowsMobileCount *int32
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewDeviceOperatingSystemSummary instantiates a new deviceOperatingSystemSummary and sets the default values.
 func NewDeviceOperatingSystemSummary()(*DeviceOperatingSystemSummary) {
     m := &DeviceOperatingSystemSummary{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateDeviceOperatingSystemSummaryFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -48,78 +23,298 @@ func CreateDeviceOperatingSystemSummaryFromDiscriminatorValue(parseNode i878a80d
     return NewDeviceOperatingSystemSummary(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *DeviceOperatingSystemSummary) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *DeviceOperatingSystemSummary) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
 }
 // GetAndroidCorporateWorkProfileCount gets the androidCorporateWorkProfileCount property value. The count of Corporate work profile Android devices. Also known as Corporate Owned Personally Enabled (COPE). Valid values -1 to 2147483647
 func (m *DeviceOperatingSystemSummary) GetAndroidCorporateWorkProfileCount()(*int32) {
-    return m.androidCorporateWorkProfileCount
+    val, err := m.GetBackingStore().Get("androidCorporateWorkProfileCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetAndroidCount gets the androidCount property value. Number of android device count.
 func (m *DeviceOperatingSystemSummary) GetAndroidCount()(*int32) {
-    return m.androidCount
+    val, err := m.GetBackingStore().Get("androidCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetAndroidDedicatedCount gets the androidDedicatedCount property value. Number of dedicated Android devices.
 func (m *DeviceOperatingSystemSummary) GetAndroidDedicatedCount()(*int32) {
-    return m.androidDedicatedCount
+    val, err := m.GetBackingStore().Get("androidDedicatedCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetAndroidDeviceAdminCount gets the androidDeviceAdminCount property value. Number of device admin Android devices.
 func (m *DeviceOperatingSystemSummary) GetAndroidDeviceAdminCount()(*int32) {
-    return m.androidDeviceAdminCount
+    val, err := m.GetBackingStore().Get("androidDeviceAdminCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetAndroidFullyManagedCount gets the androidFullyManagedCount property value. Number of fully managed Android devices.
 func (m *DeviceOperatingSystemSummary) GetAndroidFullyManagedCount()(*int32) {
-    return m.androidFullyManagedCount
+    val, err := m.GetBackingStore().Get("androidFullyManagedCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetAndroidWorkProfileCount gets the androidWorkProfileCount property value. Number of work profile Android devices.
 func (m *DeviceOperatingSystemSummary) GetAndroidWorkProfileCount()(*int32) {
-    return m.androidWorkProfileCount
+    val, err := m.GetBackingStore().Get("androidWorkProfileCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *DeviceOperatingSystemSummary) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetConfigMgrDeviceCount gets the configMgrDeviceCount property value. Number of ConfigMgr managed devices.
 func (m *DeviceOperatingSystemSummary) GetConfigMgrDeviceCount()(*int32) {
-    return m.configMgrDeviceCount
+    val, err := m.GetBackingStore().Get("configMgrDeviceCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *DeviceOperatingSystemSummary) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["androidCorporateWorkProfileCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetAndroidCorporateWorkProfileCount)
-    res["androidCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetAndroidCount)
-    res["androidDedicatedCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetAndroidDedicatedCount)
-    res["androidDeviceAdminCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetAndroidDeviceAdminCount)
-    res["androidFullyManagedCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetAndroidFullyManagedCount)
-    res["androidWorkProfileCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetAndroidWorkProfileCount)
-    res["configMgrDeviceCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetConfigMgrDeviceCount)
-    res["iosCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetIosCount)
-    res["macOSCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetMacOSCount)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["unknownCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetUnknownCount)
-    res["windowsCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetWindowsCount)
-    res["windowsMobileCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetWindowsMobileCount)
+    res["androidCorporateWorkProfileCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAndroidCorporateWorkProfileCount(val)
+        }
+        return nil
+    }
+    res["androidCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAndroidCount(val)
+        }
+        return nil
+    }
+    res["androidDedicatedCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAndroidDedicatedCount(val)
+        }
+        return nil
+    }
+    res["androidDeviceAdminCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAndroidDeviceAdminCount(val)
+        }
+        return nil
+    }
+    res["androidFullyManagedCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAndroidFullyManagedCount(val)
+        }
+        return nil
+    }
+    res["androidWorkProfileCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAndroidWorkProfileCount(val)
+        }
+        return nil
+    }
+    res["configMgrDeviceCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetConfigMgrDeviceCount(val)
+        }
+        return nil
+    }
+    res["iosCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIosCount(val)
+        }
+        return nil
+    }
+    res["macOSCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMacOSCount(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["unknownCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUnknownCount(val)
+        }
+        return nil
+    }
+    res["windowsCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWindowsCount(val)
+        }
+        return nil
+    }
+    res["windowsMobileCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWindowsMobileCount(val)
+        }
+        return nil
+    }
     return res
 }
 // GetIosCount gets the iosCount property value. Number of iOS device count.
 func (m *DeviceOperatingSystemSummary) GetIosCount()(*int32) {
-    return m.iosCount
+    val, err := m.GetBackingStore().Get("iosCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetMacOSCount gets the macOSCount property value. Number of Mac OS X device count.
 func (m *DeviceOperatingSystemSummary) GetMacOSCount()(*int32) {
-    return m.macOSCount
+    val, err := m.GetBackingStore().Get("macOSCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *DeviceOperatingSystemSummary) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetUnknownCount gets the unknownCount property value. Number of unknown device count.
 func (m *DeviceOperatingSystemSummary) GetUnknownCount()(*int32) {
-    return m.unknownCount
+    val, err := m.GetBackingStore().Get("unknownCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetWindowsCount gets the windowsCount property value. Number of Windows device count.
 func (m *DeviceOperatingSystemSummary) GetWindowsCount()(*int32) {
-    return m.windowsCount
+    val, err := m.GetBackingStore().Get("windowsCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetWindowsMobileCount gets the windowsMobileCount property value. Number of Windows mobile device count.
 func (m *DeviceOperatingSystemSummary) GetWindowsMobileCount()(*int32) {
-    return m.windowsMobileCount
+    val, err := m.GetBackingStore().Get("windowsMobileCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *DeviceOperatingSystemSummary) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -210,58 +405,138 @@ func (m *DeviceOperatingSystemSummary) Serialize(writer i878a80d2330e89d26896388
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *DeviceOperatingSystemSummary) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *DeviceOperatingSystemSummary) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAndroidCorporateWorkProfileCount sets the androidCorporateWorkProfileCount property value. The count of Corporate work profile Android devices. Also known as Corporate Owned Personally Enabled (COPE). Valid values -1 to 2147483647
 func (m *DeviceOperatingSystemSummary) SetAndroidCorporateWorkProfileCount(value *int32)() {
-    m.androidCorporateWorkProfileCount = value
+    err := m.GetBackingStore().Set("androidCorporateWorkProfileCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAndroidCount sets the androidCount property value. Number of android device count.
 func (m *DeviceOperatingSystemSummary) SetAndroidCount(value *int32)() {
-    m.androidCount = value
+    err := m.GetBackingStore().Set("androidCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAndroidDedicatedCount sets the androidDedicatedCount property value. Number of dedicated Android devices.
 func (m *DeviceOperatingSystemSummary) SetAndroidDedicatedCount(value *int32)() {
-    m.androidDedicatedCount = value
+    err := m.GetBackingStore().Set("androidDedicatedCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAndroidDeviceAdminCount sets the androidDeviceAdminCount property value. Number of device admin Android devices.
 func (m *DeviceOperatingSystemSummary) SetAndroidDeviceAdminCount(value *int32)() {
-    m.androidDeviceAdminCount = value
+    err := m.GetBackingStore().Set("androidDeviceAdminCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAndroidFullyManagedCount sets the androidFullyManagedCount property value. Number of fully managed Android devices.
 func (m *DeviceOperatingSystemSummary) SetAndroidFullyManagedCount(value *int32)() {
-    m.androidFullyManagedCount = value
+    err := m.GetBackingStore().Set("androidFullyManagedCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAndroidWorkProfileCount sets the androidWorkProfileCount property value. Number of work profile Android devices.
 func (m *DeviceOperatingSystemSummary) SetAndroidWorkProfileCount(value *int32)() {
-    m.androidWorkProfileCount = value
+    err := m.GetBackingStore().Set("androidWorkProfileCount", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *DeviceOperatingSystemSummary) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetConfigMgrDeviceCount sets the configMgrDeviceCount property value. Number of ConfigMgr managed devices.
 func (m *DeviceOperatingSystemSummary) SetConfigMgrDeviceCount(value *int32)() {
-    m.configMgrDeviceCount = value
+    err := m.GetBackingStore().Set("configMgrDeviceCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIosCount sets the iosCount property value. Number of iOS device count.
 func (m *DeviceOperatingSystemSummary) SetIosCount(value *int32)() {
-    m.iosCount = value
+    err := m.GetBackingStore().Set("iosCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMacOSCount sets the macOSCount property value. Number of Mac OS X device count.
 func (m *DeviceOperatingSystemSummary) SetMacOSCount(value *int32)() {
-    m.macOSCount = value
+    err := m.GetBackingStore().Set("macOSCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *DeviceOperatingSystemSummary) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUnknownCount sets the unknownCount property value. Number of unknown device count.
 func (m *DeviceOperatingSystemSummary) SetUnknownCount(value *int32)() {
-    m.unknownCount = value
+    err := m.GetBackingStore().Set("unknownCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWindowsCount sets the windowsCount property value. Number of Windows device count.
 func (m *DeviceOperatingSystemSummary) SetWindowsCount(value *int32)() {
-    m.windowsCount = value
+    err := m.GetBackingStore().Set("windowsCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWindowsMobileCount sets the windowsMobileCount property value. Number of Windows mobile device count.
 func (m *DeviceOperatingSystemSummary) SetWindowsMobileCount(value *int32)() {
-    m.windowsMobileCount = value
+    err := m.GetBackingStore().Set("windowsMobileCount", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// DeviceOperatingSystemSummaryable 
+type DeviceOperatingSystemSummaryable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAndroidCorporateWorkProfileCount()(*int32)
+    GetAndroidCount()(*int32)
+    GetAndroidDedicatedCount()(*int32)
+    GetAndroidDeviceAdminCount()(*int32)
+    GetAndroidFullyManagedCount()(*int32)
+    GetAndroidWorkProfileCount()(*int32)
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetConfigMgrDeviceCount()(*int32)
+    GetIosCount()(*int32)
+    GetMacOSCount()(*int32)
+    GetOdataType()(*string)
+    GetUnknownCount()(*int32)
+    GetWindowsCount()(*int32)
+    GetWindowsMobileCount()(*int32)
+    SetAndroidCorporateWorkProfileCount(value *int32)()
+    SetAndroidCount(value *int32)()
+    SetAndroidDedicatedCount(value *int32)()
+    SetAndroidDeviceAdminCount(value *int32)()
+    SetAndroidFullyManagedCount(value *int32)()
+    SetAndroidWorkProfileCount(value *int32)()
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetConfigMgrDeviceCount(value *int32)()
+    SetIosCount(value *int32)()
+    SetMacOSCount(value *int32)()
+    SetOdataType(value *string)()
+    SetUnknownCount(value *int32)()
+    SetWindowsCount(value *int32)()
+    SetWindowsMobileCount(value *int32)()
 }

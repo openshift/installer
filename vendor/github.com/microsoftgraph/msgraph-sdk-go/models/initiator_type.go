@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type InitiatorType int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i InitiatorType) String() string {
     return []string{"user", "application", "system", "unknownFutureValue"}[i]
 }
-func ParseInitiatorType(v string) (interface{}, error) {
+func ParseInitiatorType(v string) (any, error) {
     result := USER_INITIATORTYPE
     switch v {
         case "user":

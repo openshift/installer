@@ -2,49 +2,12 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // DeviceAppManagement 
 type DeviceAppManagement struct {
     Entity
-    // Android managed app policies.
-    androidManagedAppProtections []AndroidManagedAppProtectionable
-    // Default managed app policies.
-    defaultManagedAppProtections []DefaultManagedAppProtectionable
-    // iOS managed app policies.
-    iosManagedAppProtections []IosManagedAppProtectionable
-    // Whether the account is enabled for syncing applications from the Microsoft Store for Business.
-    isEnabledForMicrosoftStoreForBusiness *bool
-    // Managed app policies.
-    managedAppPolicies []ManagedAppPolicyable
-    // The managed app registrations.
-    managedAppRegistrations []ManagedAppRegistrationable
-    // The managed app statuses.
-    managedAppStatuses []ManagedAppStatusable
-    // The Managed eBook.
-    managedEBooks []ManagedEBookable
-    // Windows information protection for apps running on devices which are MDM enrolled.
-    mdmWindowsInformationProtectionPolicies []MdmWindowsInformationProtectionPolicyable
-    // The locale information used to sync applications from the Microsoft Store for Business. Cultures that are specific to a country/region. The names of these cultures follow RFC 4646 (Windows Vista and later). The format is -<country/regioncode2>, where  is a lowercase two-letter code derived from ISO 639-1 and <country/regioncode2> is an uppercase two-letter code derived from ISO 3166. For example, en-US for English (United States) is a specific culture.
-    microsoftStoreForBusinessLanguage *string
-    // The last time an application sync from the Microsoft Store for Business was completed.
-    microsoftStoreForBusinessLastCompletedApplicationSyncTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // The last time the apps from the Microsoft Store for Business were synced successfully for the account.
-    microsoftStoreForBusinessLastSuccessfulSyncDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // The mobile app categories.
-    mobileAppCategories []MobileAppCategoryable
-    // The Managed Device Mobile Application Configurations.
-    mobileAppConfigurations []ManagedDeviceMobileAppConfigurationable
-    // The mobile apps.
-    mobileApps []MobileAppable
-    // Targeted managed app configurations.
-    targetedManagedAppConfigurations []TargetedManagedAppConfigurationable
-    // List of Vpp tokens for this organization.
-    vppTokens []VppTokenable
-    // Windows information protection for apps running on devices which are not MDM enrolled.
-    windowsInformationProtectionPolicies []WindowsInformationProtectionPolicyable
 }
 // NewDeviceAppManagement instantiates a new DeviceAppManagement and sets the default values.
 func NewDeviceAppManagement()(*DeviceAppManagement) {
@@ -59,98 +22,442 @@ func CreateDeviceAppManagementFromDiscriminatorValue(parseNode i878a80d2330e89d2
 }
 // GetAndroidManagedAppProtections gets the androidManagedAppProtections property value. Android managed app policies.
 func (m *DeviceAppManagement) GetAndroidManagedAppProtections()([]AndroidManagedAppProtectionable) {
-    return m.androidManagedAppProtections
+    val, err := m.GetBackingStore().Get("androidManagedAppProtections")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]AndroidManagedAppProtectionable)
+    }
+    return nil
 }
 // GetDefaultManagedAppProtections gets the defaultManagedAppProtections property value. Default managed app policies.
 func (m *DeviceAppManagement) GetDefaultManagedAppProtections()([]DefaultManagedAppProtectionable) {
-    return m.defaultManagedAppProtections
+    val, err := m.GetBackingStore().Get("defaultManagedAppProtections")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]DefaultManagedAppProtectionable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *DeviceAppManagement) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["androidManagedAppProtections"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateAndroidManagedAppProtectionFromDiscriminatorValue , m.SetAndroidManagedAppProtections)
-    res["defaultManagedAppProtections"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateDefaultManagedAppProtectionFromDiscriminatorValue , m.SetDefaultManagedAppProtections)
-    res["iosManagedAppProtections"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateIosManagedAppProtectionFromDiscriminatorValue , m.SetIosManagedAppProtections)
-    res["isEnabledForMicrosoftStoreForBusiness"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsEnabledForMicrosoftStoreForBusiness)
-    res["managedAppPolicies"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateManagedAppPolicyFromDiscriminatorValue , m.SetManagedAppPolicies)
-    res["managedAppRegistrations"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateManagedAppRegistrationFromDiscriminatorValue , m.SetManagedAppRegistrations)
-    res["managedAppStatuses"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateManagedAppStatusFromDiscriminatorValue , m.SetManagedAppStatuses)
-    res["managedEBooks"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateManagedEBookFromDiscriminatorValue , m.SetManagedEBooks)
-    res["mdmWindowsInformationProtectionPolicies"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateMdmWindowsInformationProtectionPolicyFromDiscriminatorValue , m.SetMdmWindowsInformationProtectionPolicies)
-    res["microsoftStoreForBusinessLanguage"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetMicrosoftStoreForBusinessLanguage)
-    res["microsoftStoreForBusinessLastCompletedApplicationSyncTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetMicrosoftStoreForBusinessLastCompletedApplicationSyncTime)
-    res["microsoftStoreForBusinessLastSuccessfulSyncDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetMicrosoftStoreForBusinessLastSuccessfulSyncDateTime)
-    res["mobileAppCategories"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateMobileAppCategoryFromDiscriminatorValue , m.SetMobileAppCategories)
-    res["mobileAppConfigurations"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateManagedDeviceMobileAppConfigurationFromDiscriminatorValue , m.SetMobileAppConfigurations)
-    res["mobileApps"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateMobileAppFromDiscriminatorValue , m.SetMobileApps)
-    res["targetedManagedAppConfigurations"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateTargetedManagedAppConfigurationFromDiscriminatorValue , m.SetTargetedManagedAppConfigurations)
-    res["vppTokens"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateVppTokenFromDiscriminatorValue , m.SetVppTokens)
-    res["windowsInformationProtectionPolicies"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateWindowsInformationProtectionPolicyFromDiscriminatorValue , m.SetWindowsInformationProtectionPolicies)
+    res["androidManagedAppProtections"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateAndroidManagedAppProtectionFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]AndroidManagedAppProtectionable, len(val))
+            for i, v := range val {
+                res[i] = v.(AndroidManagedAppProtectionable)
+            }
+            m.SetAndroidManagedAppProtections(res)
+        }
+        return nil
+    }
+    res["defaultManagedAppProtections"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateDefaultManagedAppProtectionFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]DefaultManagedAppProtectionable, len(val))
+            for i, v := range val {
+                res[i] = v.(DefaultManagedAppProtectionable)
+            }
+            m.SetDefaultManagedAppProtections(res)
+        }
+        return nil
+    }
+    res["iosManagedAppProtections"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateIosManagedAppProtectionFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]IosManagedAppProtectionable, len(val))
+            for i, v := range val {
+                res[i] = v.(IosManagedAppProtectionable)
+            }
+            m.SetIosManagedAppProtections(res)
+        }
+        return nil
+    }
+    res["isEnabledForMicrosoftStoreForBusiness"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsEnabledForMicrosoftStoreForBusiness(val)
+        }
+        return nil
+    }
+    res["managedAppPolicies"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateManagedAppPolicyFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]ManagedAppPolicyable, len(val))
+            for i, v := range val {
+                res[i] = v.(ManagedAppPolicyable)
+            }
+            m.SetManagedAppPolicies(res)
+        }
+        return nil
+    }
+    res["managedAppRegistrations"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateManagedAppRegistrationFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]ManagedAppRegistrationable, len(val))
+            for i, v := range val {
+                res[i] = v.(ManagedAppRegistrationable)
+            }
+            m.SetManagedAppRegistrations(res)
+        }
+        return nil
+    }
+    res["managedAppStatuses"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateManagedAppStatusFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]ManagedAppStatusable, len(val))
+            for i, v := range val {
+                res[i] = v.(ManagedAppStatusable)
+            }
+            m.SetManagedAppStatuses(res)
+        }
+        return nil
+    }
+    res["managedEBooks"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateManagedEBookFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]ManagedEBookable, len(val))
+            for i, v := range val {
+                res[i] = v.(ManagedEBookable)
+            }
+            m.SetManagedEBooks(res)
+        }
+        return nil
+    }
+    res["mdmWindowsInformationProtectionPolicies"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateMdmWindowsInformationProtectionPolicyFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]MdmWindowsInformationProtectionPolicyable, len(val))
+            for i, v := range val {
+                res[i] = v.(MdmWindowsInformationProtectionPolicyable)
+            }
+            m.SetMdmWindowsInformationProtectionPolicies(res)
+        }
+        return nil
+    }
+    res["microsoftStoreForBusinessLanguage"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMicrosoftStoreForBusinessLanguage(val)
+        }
+        return nil
+    }
+    res["microsoftStoreForBusinessLastCompletedApplicationSyncTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMicrosoftStoreForBusinessLastCompletedApplicationSyncTime(val)
+        }
+        return nil
+    }
+    res["microsoftStoreForBusinessLastSuccessfulSyncDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMicrosoftStoreForBusinessLastSuccessfulSyncDateTime(val)
+        }
+        return nil
+    }
+    res["mobileAppCategories"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateMobileAppCategoryFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]MobileAppCategoryable, len(val))
+            for i, v := range val {
+                res[i] = v.(MobileAppCategoryable)
+            }
+            m.SetMobileAppCategories(res)
+        }
+        return nil
+    }
+    res["mobileAppConfigurations"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateManagedDeviceMobileAppConfigurationFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]ManagedDeviceMobileAppConfigurationable, len(val))
+            for i, v := range val {
+                res[i] = v.(ManagedDeviceMobileAppConfigurationable)
+            }
+            m.SetMobileAppConfigurations(res)
+        }
+        return nil
+    }
+    res["mobileApps"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateMobileAppFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]MobileAppable, len(val))
+            for i, v := range val {
+                res[i] = v.(MobileAppable)
+            }
+            m.SetMobileApps(res)
+        }
+        return nil
+    }
+    res["targetedManagedAppConfigurations"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateTargetedManagedAppConfigurationFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]TargetedManagedAppConfigurationable, len(val))
+            for i, v := range val {
+                res[i] = v.(TargetedManagedAppConfigurationable)
+            }
+            m.SetTargetedManagedAppConfigurations(res)
+        }
+        return nil
+    }
+    res["vppTokens"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateVppTokenFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]VppTokenable, len(val))
+            for i, v := range val {
+                res[i] = v.(VppTokenable)
+            }
+            m.SetVppTokens(res)
+        }
+        return nil
+    }
+    res["windowsInformationProtectionPolicies"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateWindowsInformationProtectionPolicyFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]WindowsInformationProtectionPolicyable, len(val))
+            for i, v := range val {
+                res[i] = v.(WindowsInformationProtectionPolicyable)
+            }
+            m.SetWindowsInformationProtectionPolicies(res)
+        }
+        return nil
+    }
     return res
 }
 // GetIosManagedAppProtections gets the iosManagedAppProtections property value. iOS managed app policies.
 func (m *DeviceAppManagement) GetIosManagedAppProtections()([]IosManagedAppProtectionable) {
-    return m.iosManagedAppProtections
+    val, err := m.GetBackingStore().Get("iosManagedAppProtections")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]IosManagedAppProtectionable)
+    }
+    return nil
 }
 // GetIsEnabledForMicrosoftStoreForBusiness gets the isEnabledForMicrosoftStoreForBusiness property value. Whether the account is enabled for syncing applications from the Microsoft Store for Business.
 func (m *DeviceAppManagement) GetIsEnabledForMicrosoftStoreForBusiness()(*bool) {
-    return m.isEnabledForMicrosoftStoreForBusiness
+    val, err := m.GetBackingStore().Get("isEnabledForMicrosoftStoreForBusiness")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetManagedAppPolicies gets the managedAppPolicies property value. Managed app policies.
 func (m *DeviceAppManagement) GetManagedAppPolicies()([]ManagedAppPolicyable) {
-    return m.managedAppPolicies
+    val, err := m.GetBackingStore().Get("managedAppPolicies")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]ManagedAppPolicyable)
+    }
+    return nil
 }
 // GetManagedAppRegistrations gets the managedAppRegistrations property value. The managed app registrations.
 func (m *DeviceAppManagement) GetManagedAppRegistrations()([]ManagedAppRegistrationable) {
-    return m.managedAppRegistrations
+    val, err := m.GetBackingStore().Get("managedAppRegistrations")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]ManagedAppRegistrationable)
+    }
+    return nil
 }
 // GetManagedAppStatuses gets the managedAppStatuses property value. The managed app statuses.
 func (m *DeviceAppManagement) GetManagedAppStatuses()([]ManagedAppStatusable) {
-    return m.managedAppStatuses
+    val, err := m.GetBackingStore().Get("managedAppStatuses")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]ManagedAppStatusable)
+    }
+    return nil
 }
 // GetManagedEBooks gets the managedEBooks property value. The Managed eBook.
 func (m *DeviceAppManagement) GetManagedEBooks()([]ManagedEBookable) {
-    return m.managedEBooks
+    val, err := m.GetBackingStore().Get("managedEBooks")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]ManagedEBookable)
+    }
+    return nil
 }
 // GetMdmWindowsInformationProtectionPolicies gets the mdmWindowsInformationProtectionPolicies property value. Windows information protection for apps running on devices which are MDM enrolled.
 func (m *DeviceAppManagement) GetMdmWindowsInformationProtectionPolicies()([]MdmWindowsInformationProtectionPolicyable) {
-    return m.mdmWindowsInformationProtectionPolicies
+    val, err := m.GetBackingStore().Get("mdmWindowsInformationProtectionPolicies")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]MdmWindowsInformationProtectionPolicyable)
+    }
+    return nil
 }
 // GetMicrosoftStoreForBusinessLanguage gets the microsoftStoreForBusinessLanguage property value. The locale information used to sync applications from the Microsoft Store for Business. Cultures that are specific to a country/region. The names of these cultures follow RFC 4646 (Windows Vista and later). The format is -<country/regioncode2>, where  is a lowercase two-letter code derived from ISO 639-1 and <country/regioncode2> is an uppercase two-letter code derived from ISO 3166. For example, en-US for English (United States) is a specific culture.
 func (m *DeviceAppManagement) GetMicrosoftStoreForBusinessLanguage()(*string) {
-    return m.microsoftStoreForBusinessLanguage
+    val, err := m.GetBackingStore().Get("microsoftStoreForBusinessLanguage")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetMicrosoftStoreForBusinessLastCompletedApplicationSyncTime gets the microsoftStoreForBusinessLastCompletedApplicationSyncTime property value. The last time an application sync from the Microsoft Store for Business was completed.
 func (m *DeviceAppManagement) GetMicrosoftStoreForBusinessLastCompletedApplicationSyncTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.microsoftStoreForBusinessLastCompletedApplicationSyncTime
+    val, err := m.GetBackingStore().Get("microsoftStoreForBusinessLastCompletedApplicationSyncTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetMicrosoftStoreForBusinessLastSuccessfulSyncDateTime gets the microsoftStoreForBusinessLastSuccessfulSyncDateTime property value. The last time the apps from the Microsoft Store for Business were synced successfully for the account.
 func (m *DeviceAppManagement) GetMicrosoftStoreForBusinessLastSuccessfulSyncDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.microsoftStoreForBusinessLastSuccessfulSyncDateTime
+    val, err := m.GetBackingStore().Get("microsoftStoreForBusinessLastSuccessfulSyncDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetMobileAppCategories gets the mobileAppCategories property value. The mobile app categories.
 func (m *DeviceAppManagement) GetMobileAppCategories()([]MobileAppCategoryable) {
-    return m.mobileAppCategories
+    val, err := m.GetBackingStore().Get("mobileAppCategories")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]MobileAppCategoryable)
+    }
+    return nil
 }
 // GetMobileAppConfigurations gets the mobileAppConfigurations property value. The Managed Device Mobile Application Configurations.
 func (m *DeviceAppManagement) GetMobileAppConfigurations()([]ManagedDeviceMobileAppConfigurationable) {
-    return m.mobileAppConfigurations
+    val, err := m.GetBackingStore().Get("mobileAppConfigurations")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]ManagedDeviceMobileAppConfigurationable)
+    }
+    return nil
 }
 // GetMobileApps gets the mobileApps property value. The mobile apps.
 func (m *DeviceAppManagement) GetMobileApps()([]MobileAppable) {
-    return m.mobileApps
+    val, err := m.GetBackingStore().Get("mobileApps")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]MobileAppable)
+    }
+    return nil
 }
 // GetTargetedManagedAppConfigurations gets the targetedManagedAppConfigurations property value. Targeted managed app configurations.
 func (m *DeviceAppManagement) GetTargetedManagedAppConfigurations()([]TargetedManagedAppConfigurationable) {
-    return m.targetedManagedAppConfigurations
+    val, err := m.GetBackingStore().Get("targetedManagedAppConfigurations")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]TargetedManagedAppConfigurationable)
+    }
+    return nil
 }
 // GetVppTokens gets the vppTokens property value. List of Vpp tokens for this organization.
 func (m *DeviceAppManagement) GetVppTokens()([]VppTokenable) {
-    return m.vppTokens
+    val, err := m.GetBackingStore().Get("vppTokens")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]VppTokenable)
+    }
+    return nil
 }
 // GetWindowsInformationProtectionPolicies gets the windowsInformationProtectionPolicies property value. Windows information protection for apps running on devices which are not MDM enrolled.
 func (m *DeviceAppManagement) GetWindowsInformationProtectionPolicies()([]WindowsInformationProtectionPolicyable) {
-    return m.windowsInformationProtectionPolicies
+    val, err := m.GetBackingStore().Get("windowsInformationProtectionPolicies")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]WindowsInformationProtectionPolicyable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *DeviceAppManagement) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -159,21 +466,30 @@ func (m *DeviceAppManagement) Serialize(writer i878a80d2330e89d26896388a3f487eef
         return err
     }
     if m.GetAndroidManagedAppProtections() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetAndroidManagedAppProtections())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetAndroidManagedAppProtections()))
+        for i, v := range m.GetAndroidManagedAppProtections() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("androidManagedAppProtections", cast)
         if err != nil {
             return err
         }
     }
     if m.GetDefaultManagedAppProtections() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetDefaultManagedAppProtections())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetDefaultManagedAppProtections()))
+        for i, v := range m.GetDefaultManagedAppProtections() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("defaultManagedAppProtections", cast)
         if err != nil {
             return err
         }
     }
     if m.GetIosManagedAppProtections() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetIosManagedAppProtections())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetIosManagedAppProtections()))
+        for i, v := range m.GetIosManagedAppProtections() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("iosManagedAppProtections", cast)
         if err != nil {
             return err
@@ -186,35 +502,50 @@ func (m *DeviceAppManagement) Serialize(writer i878a80d2330e89d26896388a3f487eef
         }
     }
     if m.GetManagedAppPolicies() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetManagedAppPolicies())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetManagedAppPolicies()))
+        for i, v := range m.GetManagedAppPolicies() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("managedAppPolicies", cast)
         if err != nil {
             return err
         }
     }
     if m.GetManagedAppRegistrations() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetManagedAppRegistrations())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetManagedAppRegistrations()))
+        for i, v := range m.GetManagedAppRegistrations() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("managedAppRegistrations", cast)
         if err != nil {
             return err
         }
     }
     if m.GetManagedAppStatuses() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetManagedAppStatuses())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetManagedAppStatuses()))
+        for i, v := range m.GetManagedAppStatuses() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("managedAppStatuses", cast)
         if err != nil {
             return err
         }
     }
     if m.GetManagedEBooks() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetManagedEBooks())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetManagedEBooks()))
+        for i, v := range m.GetManagedEBooks() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("managedEBooks", cast)
         if err != nil {
             return err
         }
     }
     if m.GetMdmWindowsInformationProtectionPolicies() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetMdmWindowsInformationProtectionPolicies())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetMdmWindowsInformationProtectionPolicies()))
+        for i, v := range m.GetMdmWindowsInformationProtectionPolicies() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("mdmWindowsInformationProtectionPolicies", cast)
         if err != nil {
             return err
@@ -239,42 +570,60 @@ func (m *DeviceAppManagement) Serialize(writer i878a80d2330e89d26896388a3f487eef
         }
     }
     if m.GetMobileAppCategories() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetMobileAppCategories())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetMobileAppCategories()))
+        for i, v := range m.GetMobileAppCategories() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("mobileAppCategories", cast)
         if err != nil {
             return err
         }
     }
     if m.GetMobileAppConfigurations() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetMobileAppConfigurations())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetMobileAppConfigurations()))
+        for i, v := range m.GetMobileAppConfigurations() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("mobileAppConfigurations", cast)
         if err != nil {
             return err
         }
     }
     if m.GetMobileApps() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetMobileApps())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetMobileApps()))
+        for i, v := range m.GetMobileApps() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("mobileApps", cast)
         if err != nil {
             return err
         }
     }
     if m.GetTargetedManagedAppConfigurations() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetTargetedManagedAppConfigurations())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetTargetedManagedAppConfigurations()))
+        for i, v := range m.GetTargetedManagedAppConfigurations() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("targetedManagedAppConfigurations", cast)
         if err != nil {
             return err
         }
     }
     if m.GetVppTokens() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetVppTokens())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetVppTokens()))
+        for i, v := range m.GetVppTokens() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("vppTokens", cast)
         if err != nil {
             return err
         }
     }
     if m.GetWindowsInformationProtectionPolicies() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetWindowsInformationProtectionPolicies())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetWindowsInformationProtectionPolicies()))
+        for i, v := range m.GetWindowsInformationProtectionPolicies() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("windowsInformationProtectionPolicies", cast)
         if err != nil {
             return err
@@ -284,73 +633,168 @@ func (m *DeviceAppManagement) Serialize(writer i878a80d2330e89d26896388a3f487eef
 }
 // SetAndroidManagedAppProtections sets the androidManagedAppProtections property value. Android managed app policies.
 func (m *DeviceAppManagement) SetAndroidManagedAppProtections(value []AndroidManagedAppProtectionable)() {
-    m.androidManagedAppProtections = value
+    err := m.GetBackingStore().Set("androidManagedAppProtections", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDefaultManagedAppProtections sets the defaultManagedAppProtections property value. Default managed app policies.
 func (m *DeviceAppManagement) SetDefaultManagedAppProtections(value []DefaultManagedAppProtectionable)() {
-    m.defaultManagedAppProtections = value
+    err := m.GetBackingStore().Set("defaultManagedAppProtections", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIosManagedAppProtections sets the iosManagedAppProtections property value. iOS managed app policies.
 func (m *DeviceAppManagement) SetIosManagedAppProtections(value []IosManagedAppProtectionable)() {
-    m.iosManagedAppProtections = value
+    err := m.GetBackingStore().Set("iosManagedAppProtections", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsEnabledForMicrosoftStoreForBusiness sets the isEnabledForMicrosoftStoreForBusiness property value. Whether the account is enabled for syncing applications from the Microsoft Store for Business.
 func (m *DeviceAppManagement) SetIsEnabledForMicrosoftStoreForBusiness(value *bool)() {
-    m.isEnabledForMicrosoftStoreForBusiness = value
+    err := m.GetBackingStore().Set("isEnabledForMicrosoftStoreForBusiness", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetManagedAppPolicies sets the managedAppPolicies property value. Managed app policies.
 func (m *DeviceAppManagement) SetManagedAppPolicies(value []ManagedAppPolicyable)() {
-    m.managedAppPolicies = value
+    err := m.GetBackingStore().Set("managedAppPolicies", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetManagedAppRegistrations sets the managedAppRegistrations property value. The managed app registrations.
 func (m *DeviceAppManagement) SetManagedAppRegistrations(value []ManagedAppRegistrationable)() {
-    m.managedAppRegistrations = value
+    err := m.GetBackingStore().Set("managedAppRegistrations", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetManagedAppStatuses sets the managedAppStatuses property value. The managed app statuses.
 func (m *DeviceAppManagement) SetManagedAppStatuses(value []ManagedAppStatusable)() {
-    m.managedAppStatuses = value
+    err := m.GetBackingStore().Set("managedAppStatuses", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetManagedEBooks sets the managedEBooks property value. The Managed eBook.
 func (m *DeviceAppManagement) SetManagedEBooks(value []ManagedEBookable)() {
-    m.managedEBooks = value
+    err := m.GetBackingStore().Set("managedEBooks", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMdmWindowsInformationProtectionPolicies sets the mdmWindowsInformationProtectionPolicies property value. Windows information protection for apps running on devices which are MDM enrolled.
 func (m *DeviceAppManagement) SetMdmWindowsInformationProtectionPolicies(value []MdmWindowsInformationProtectionPolicyable)() {
-    m.mdmWindowsInformationProtectionPolicies = value
+    err := m.GetBackingStore().Set("mdmWindowsInformationProtectionPolicies", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMicrosoftStoreForBusinessLanguage sets the microsoftStoreForBusinessLanguage property value. The locale information used to sync applications from the Microsoft Store for Business. Cultures that are specific to a country/region. The names of these cultures follow RFC 4646 (Windows Vista and later). The format is -<country/regioncode2>, where  is a lowercase two-letter code derived from ISO 639-1 and <country/regioncode2> is an uppercase two-letter code derived from ISO 3166. For example, en-US for English (United States) is a specific culture.
 func (m *DeviceAppManagement) SetMicrosoftStoreForBusinessLanguage(value *string)() {
-    m.microsoftStoreForBusinessLanguage = value
+    err := m.GetBackingStore().Set("microsoftStoreForBusinessLanguage", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMicrosoftStoreForBusinessLastCompletedApplicationSyncTime sets the microsoftStoreForBusinessLastCompletedApplicationSyncTime property value. The last time an application sync from the Microsoft Store for Business was completed.
 func (m *DeviceAppManagement) SetMicrosoftStoreForBusinessLastCompletedApplicationSyncTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.microsoftStoreForBusinessLastCompletedApplicationSyncTime = value
+    err := m.GetBackingStore().Set("microsoftStoreForBusinessLastCompletedApplicationSyncTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMicrosoftStoreForBusinessLastSuccessfulSyncDateTime sets the microsoftStoreForBusinessLastSuccessfulSyncDateTime property value. The last time the apps from the Microsoft Store for Business were synced successfully for the account.
 func (m *DeviceAppManagement) SetMicrosoftStoreForBusinessLastSuccessfulSyncDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.microsoftStoreForBusinessLastSuccessfulSyncDateTime = value
+    err := m.GetBackingStore().Set("microsoftStoreForBusinessLastSuccessfulSyncDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMobileAppCategories sets the mobileAppCategories property value. The mobile app categories.
 func (m *DeviceAppManagement) SetMobileAppCategories(value []MobileAppCategoryable)() {
-    m.mobileAppCategories = value
+    err := m.GetBackingStore().Set("mobileAppCategories", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMobileAppConfigurations sets the mobileAppConfigurations property value. The Managed Device Mobile Application Configurations.
 func (m *DeviceAppManagement) SetMobileAppConfigurations(value []ManagedDeviceMobileAppConfigurationable)() {
-    m.mobileAppConfigurations = value
+    err := m.GetBackingStore().Set("mobileAppConfigurations", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMobileApps sets the mobileApps property value. The mobile apps.
 func (m *DeviceAppManagement) SetMobileApps(value []MobileAppable)() {
-    m.mobileApps = value
+    err := m.GetBackingStore().Set("mobileApps", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTargetedManagedAppConfigurations sets the targetedManagedAppConfigurations property value. Targeted managed app configurations.
 func (m *DeviceAppManagement) SetTargetedManagedAppConfigurations(value []TargetedManagedAppConfigurationable)() {
-    m.targetedManagedAppConfigurations = value
+    err := m.GetBackingStore().Set("targetedManagedAppConfigurations", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetVppTokens sets the vppTokens property value. List of Vpp tokens for this organization.
 func (m *DeviceAppManagement) SetVppTokens(value []VppTokenable)() {
-    m.vppTokens = value
+    err := m.GetBackingStore().Set("vppTokens", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWindowsInformationProtectionPolicies sets the windowsInformationProtectionPolicies property value. Windows information protection for apps running on devices which are not MDM enrolled.
 func (m *DeviceAppManagement) SetWindowsInformationProtectionPolicies(value []WindowsInformationProtectionPolicyable)() {
-    m.windowsInformationProtectionPolicies = value
+    err := m.GetBackingStore().Set("windowsInformationProtectionPolicies", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// DeviceAppManagementable 
+type DeviceAppManagementable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAndroidManagedAppProtections()([]AndroidManagedAppProtectionable)
+    GetDefaultManagedAppProtections()([]DefaultManagedAppProtectionable)
+    GetIosManagedAppProtections()([]IosManagedAppProtectionable)
+    GetIsEnabledForMicrosoftStoreForBusiness()(*bool)
+    GetManagedAppPolicies()([]ManagedAppPolicyable)
+    GetManagedAppRegistrations()([]ManagedAppRegistrationable)
+    GetManagedAppStatuses()([]ManagedAppStatusable)
+    GetManagedEBooks()([]ManagedEBookable)
+    GetMdmWindowsInformationProtectionPolicies()([]MdmWindowsInformationProtectionPolicyable)
+    GetMicrosoftStoreForBusinessLanguage()(*string)
+    GetMicrosoftStoreForBusinessLastCompletedApplicationSyncTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetMicrosoftStoreForBusinessLastSuccessfulSyncDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetMobileAppCategories()([]MobileAppCategoryable)
+    GetMobileAppConfigurations()([]ManagedDeviceMobileAppConfigurationable)
+    GetMobileApps()([]MobileAppable)
+    GetTargetedManagedAppConfigurations()([]TargetedManagedAppConfigurationable)
+    GetVppTokens()([]VppTokenable)
+    GetWindowsInformationProtectionPolicies()([]WindowsInformationProtectionPolicyable)
+    SetAndroidManagedAppProtections(value []AndroidManagedAppProtectionable)()
+    SetDefaultManagedAppProtections(value []DefaultManagedAppProtectionable)()
+    SetIosManagedAppProtections(value []IosManagedAppProtectionable)()
+    SetIsEnabledForMicrosoftStoreForBusiness(value *bool)()
+    SetManagedAppPolicies(value []ManagedAppPolicyable)()
+    SetManagedAppRegistrations(value []ManagedAppRegistrationable)()
+    SetManagedAppStatuses(value []ManagedAppStatusable)()
+    SetManagedEBooks(value []ManagedEBookable)()
+    SetMdmWindowsInformationProtectionPolicies(value []MdmWindowsInformationProtectionPolicyable)()
+    SetMicrosoftStoreForBusinessLanguage(value *string)()
+    SetMicrosoftStoreForBusinessLastCompletedApplicationSyncTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetMicrosoftStoreForBusinessLastSuccessfulSyncDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetMobileAppCategories(value []MobileAppCategoryable)()
+    SetMobileAppConfigurations(value []ManagedDeviceMobileAppConfigurationable)()
+    SetMobileApps(value []MobileAppable)()
+    SetTargetedManagedAppConfigurations(value []TargetedManagedAppConfigurationable)()
+    SetVppTokens(value []VppTokenable)()
+    SetWindowsInformationProtectionPolicies(value []WindowsInformationProtectionPolicyable)()
 }

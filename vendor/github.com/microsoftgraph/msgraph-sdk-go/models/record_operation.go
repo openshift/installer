@@ -1,17 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // RecordOperation 
 type RecordOperation struct {
     CommsOperation
-    // The access token required to retrieve the recording.
-    recordingAccessToken *string
-    // The location where the recording is located.
-    recordingLocation *string
 }
 // NewRecordOperation instantiates a new RecordOperation and sets the default values.
 func NewRecordOperation()(*RecordOperation) {
@@ -27,17 +22,49 @@ func CreateRecordOperationFromDiscriminatorValue(parseNode i878a80d2330e89d26896
 // GetFieldDeserializers the deserialization information for the current model
 func (m *RecordOperation) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.CommsOperation.GetFieldDeserializers()
-    res["recordingAccessToken"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetRecordingAccessToken)
-    res["recordingLocation"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetRecordingLocation)
+    res["recordingAccessToken"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRecordingAccessToken(val)
+        }
+        return nil
+    }
+    res["recordingLocation"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRecordingLocation(val)
+        }
+        return nil
+    }
     return res
 }
 // GetRecordingAccessToken gets the recordingAccessToken property value. The access token required to retrieve the recording.
 func (m *RecordOperation) GetRecordingAccessToken()(*string) {
-    return m.recordingAccessToken
+    val, err := m.GetBackingStore().Get("recordingAccessToken")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetRecordingLocation gets the recordingLocation property value. The location where the recording is located.
 func (m *RecordOperation) GetRecordingLocation()(*string) {
-    return m.recordingLocation
+    val, err := m.GetBackingStore().Get("recordingLocation")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *RecordOperation) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -61,9 +88,24 @@ func (m *RecordOperation) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0
 }
 // SetRecordingAccessToken sets the recordingAccessToken property value. The access token required to retrieve the recording.
 func (m *RecordOperation) SetRecordingAccessToken(value *string)() {
-    m.recordingAccessToken = value
+    err := m.GetBackingStore().Set("recordingAccessToken", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRecordingLocation sets the recordingLocation property value. The location where the recording is located.
 func (m *RecordOperation) SetRecordingLocation(value *string)() {
-    m.recordingLocation = value
+    err := m.GetBackingStore().Set("recordingLocation", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// RecordOperationable 
+type RecordOperationable interface {
+    CommsOperationable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetRecordingAccessToken()(*string)
+    GetRecordingLocation()(*string)
+    SetRecordingAccessToken(value *string)()
+    SetRecordingLocation(value *string)()
 }

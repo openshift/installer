@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// The current TeamViewer connector status
 type RemoteAssistanceOnboardingStatus int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i RemoteAssistanceOnboardingStatus) String() string {
     return []string{"notOnboarded", "onboarding", "onboarded"}[i]
 }
-func ParseRemoteAssistanceOnboardingStatus(v string) (interface{}, error) {
+func ParseRemoteAssistanceOnboardingStatus(v string) (any, error) {
     result := NOTONBOARDED_REMOTEASSISTANCEONBOARDINGSTATUS
     switch v {
         case "notOnboarded":

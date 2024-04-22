@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Possible values for Miracast channel.
 type MiracastChannel int
 
 const (
@@ -53,7 +53,7 @@ const (
 func (i MiracastChannel) String() string {
     return []string{"userDefined", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "thirtySix", "forty", "fortyFour", "fortyEight", "oneHundredFortyNine", "oneHundredFiftyThree", "oneHundredFiftySeven", "oneHundredSixtyOne", "oneHundredSixtyFive"}[i]
 }
-func ParseMiracastChannel(v string) (interface{}, error) {
+func ParseMiracastChannel(v string) (any, error) {
     result := USERDEFINED_MIRACASTCHANNEL
     switch v {
         case "userDefined":

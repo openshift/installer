@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Contains value for delivery optimization priority.
 type Win32LobAppDeliveryOptimizationPriority int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i Win32LobAppDeliveryOptimizationPriority) String() string {
     return []string{"notConfigured", "foreground"}[i]
 }
-func ParseWin32LobAppDeliveryOptimizationPriority(v string) (interface{}, error) {
+func ParseWin32LobAppDeliveryOptimizationPriority(v string) (any, error) {
     result := NOTCONFIGURED_WIN32LOBAPPDELIVERYOPTIMIZATIONPRIORITY
     switch v {
         case "notConfigured":

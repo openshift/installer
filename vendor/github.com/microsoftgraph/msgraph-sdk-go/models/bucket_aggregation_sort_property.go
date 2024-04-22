@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type BucketAggregationSortProperty int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i BucketAggregationSortProperty) String() string {
     return []string{"count", "keyAsString", "keyAsNumber", "unknownFutureValue"}[i]
 }
-func ParseBucketAggregationSortProperty(v string) (interface{}, error) {
+func ParseBucketAggregationSortProperty(v string) (any, error) {
     result := COUNT_BUCKETAGGREGATIONSORTPROPERTY
     switch v {
         case "count":

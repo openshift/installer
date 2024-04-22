@@ -1,15 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// OnenoteEntityBaseModel provides operations to manage the collection of agreement entities.
+// OnenoteEntityBaseModel 
 type OnenoteEntityBaseModel struct {
     Entity
-    // The endpoint where you can get details about the page. Read-only.
-    self *string
 }
 // NewOnenoteEntityBaseModel instantiates a new onenoteEntityBaseModel and sets the default values.
 func NewOnenoteEntityBaseModel()(*OnenoteEntityBaseModel) {
@@ -55,12 +52,28 @@ func CreateOnenoteEntityBaseModelFromDiscriminatorValue(parseNode i878a80d2330e8
 // GetFieldDeserializers the deserialization information for the current model
 func (m *OnenoteEntityBaseModel) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["self"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSelf)
+    res["self"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSelf(val)
+        }
+        return nil
+    }
     return res
 }
 // GetSelf gets the self property value. The endpoint where you can get details about the page. Read-only.
 func (m *OnenoteEntityBaseModel) GetSelf()(*string) {
-    return m.self
+    val, err := m.GetBackingStore().Get("self")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *OnenoteEntityBaseModel) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -78,5 +91,15 @@ func (m *OnenoteEntityBaseModel) Serialize(writer i878a80d2330e89d26896388a3f487
 }
 // SetSelf sets the self property value. The endpoint where you can get details about the page. Read-only.
 func (m *OnenoteEntityBaseModel) SetSelf(value *string)() {
-    m.self = value
+    err := m.GetBackingStore().Set("self", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// OnenoteEntityBaseModelable 
+type OnenoteEntityBaseModelable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetSelf()(*string)
+    SetSelf(value *string)()
 }

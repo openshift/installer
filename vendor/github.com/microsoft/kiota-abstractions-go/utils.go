@@ -336,3 +336,36 @@ func CollectionStructCast[R interface{}, T any](items []T) []R {
 	})
 	return cast
 }
+
+// InvokeParsableAction nil safe execution of ParsableAction
+func InvokeParsableAction(action serialization.ParsableAction, parsable serialization.Parsable) {
+	if action != nil {
+		action(parsable)
+	}
+}
+
+// InvokeParsableWriter executes the ParsableAction in a nil safe way
+func InvokeParsableWriter(writer serialization.ParsableWriter, parsable serialization.Parsable, serializer serialization.SerializationWriter) error {
+	if writer != nil {
+		return writer(parsable, serializer)
+	}
+	return nil
+}
+
+// CopyMap returns a copy of map[string]string
+func CopyMap[T comparable, R interface{}](items map[T]R) map[T]R {
+	result := make(map[T]R)
+	for idx, item := range items {
+		result[idx] = item
+	}
+	return result
+}
+
+// CopyStringMap returns a copy of map[string]string
+func CopyStringMap(items map[string]string) map[string]string {
+	result := make(map[string]string)
+	for idx, item := range items {
+		result[idx] = item
+	}
+	return result
+}

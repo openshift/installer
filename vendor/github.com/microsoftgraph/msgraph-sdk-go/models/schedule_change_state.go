@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ScheduleChangeState int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i ScheduleChangeState) String() string {
     return []string{"pending", "approved", "declined", "unknownFutureValue"}[i]
 }
-func ParseScheduleChangeState(v string) (interface{}, error) {
+func ParseScheduleChangeState(v string) (any, error) {
     result := PENDING_SCHEDULECHANGESTATE
     switch v {
         case "pending":

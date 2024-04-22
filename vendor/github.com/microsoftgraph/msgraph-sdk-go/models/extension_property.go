@@ -1,31 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// ExtensionProperty provides operations to manage the collection of application entities.
+// ExtensionProperty 
 type ExtensionProperty struct {
     DirectoryObject
-    // Display name of the application object on which this extension property is defined. Read-only.
-    appDisplayName *string
-    // Specifies the data type of the value the extension property can hold. Following values are supported. Not nullable. Binary - 256 bytes maximumBooleanDateTime - Must be specified in ISO 8601 format. Will be stored in UTC.Integer - 32-bit value.LargeInteger - 64-bit value.String - 256 characters maximum
-    dataType *string
-    // Indicates if this extension property was synced from on-premises active directory using Azure AD Connect. Read-only.
-    isSyncedFromOnPremises *bool
-    // Name of the extension property. Not nullable. Supports $filter (eq).
-    name *string
-    // Following values are supported. Not nullable. UserGroupAdministrativeUnitApplicationDeviceOrganization
-    targetObjects []string
 }
 // NewExtensionProperty instantiates a new extensionProperty and sets the default values.
 func NewExtensionProperty()(*ExtensionProperty) {
     m := &ExtensionProperty{
         DirectoryObject: *NewDirectoryObject(),
     }
-    odataTypeValue := "#microsoft.graph.extensionProperty";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.extensionProperty"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateExtensionPropertyFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -34,33 +23,117 @@ func CreateExtensionPropertyFromDiscriminatorValue(parseNode i878a80d2330e89d268
 }
 // GetAppDisplayName gets the appDisplayName property value. Display name of the application object on which this extension property is defined. Read-only.
 func (m *ExtensionProperty) GetAppDisplayName()(*string) {
-    return m.appDisplayName
+    val, err := m.GetBackingStore().Get("appDisplayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDataType gets the dataType property value. Specifies the data type of the value the extension property can hold. Following values are supported. Not nullable. Binary - 256 bytes maximumBooleanDateTime - Must be specified in ISO 8601 format. Will be stored in UTC.Integer - 32-bit value.LargeInteger - 64-bit value.String - 256 characters maximum
 func (m *ExtensionProperty) GetDataType()(*string) {
-    return m.dataType
+    val, err := m.GetBackingStore().Get("dataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *ExtensionProperty) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.DirectoryObject.GetFieldDeserializers()
-    res["appDisplayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetAppDisplayName)
-    res["dataType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDataType)
-    res["isSyncedFromOnPremises"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsSyncedFromOnPremises)
-    res["name"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetName)
-    res["targetObjects"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetTargetObjects)
+    res["appDisplayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAppDisplayName(val)
+        }
+        return nil
+    }
+    res["dataType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDataType(val)
+        }
+        return nil
+    }
+    res["isSyncedFromOnPremises"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsSyncedFromOnPremises(val)
+        }
+        return nil
+    }
+    res["name"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetName(val)
+        }
+        return nil
+    }
+    res["targetObjects"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetTargetObjects(res)
+        }
+        return nil
+    }
     return res
 }
 // GetIsSyncedFromOnPremises gets the isSyncedFromOnPremises property value. Indicates if this extension property was synced from on-premises active directory using Azure AD Connect. Read-only.
 func (m *ExtensionProperty) GetIsSyncedFromOnPremises()(*bool) {
-    return m.isSyncedFromOnPremises
+    val, err := m.GetBackingStore().Get("isSyncedFromOnPremises")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetName gets the name property value. Name of the extension property. Not nullable. Supports $filter (eq).
 func (m *ExtensionProperty) GetName()(*string) {
-    return m.name
+    val, err := m.GetBackingStore().Get("name")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetTargetObjects gets the targetObjects property value. Following values are supported. Not nullable. UserGroupAdministrativeUnitApplicationDeviceOrganization
 func (m *ExtensionProperty) GetTargetObjects()([]string) {
-    return m.targetObjects
+    val, err := m.GetBackingStore().Get("targetObjects")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *ExtensionProperty) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -102,21 +175,51 @@ func (m *ExtensionProperty) Serialize(writer i878a80d2330e89d26896388a3f487eef27
 }
 // SetAppDisplayName sets the appDisplayName property value. Display name of the application object on which this extension property is defined. Read-only.
 func (m *ExtensionProperty) SetAppDisplayName(value *string)() {
-    m.appDisplayName = value
+    err := m.GetBackingStore().Set("appDisplayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDataType sets the dataType property value. Specifies the data type of the value the extension property can hold. Following values are supported. Not nullable. Binary - 256 bytes maximumBooleanDateTime - Must be specified in ISO 8601 format. Will be stored in UTC.Integer - 32-bit value.LargeInteger - 64-bit value.String - 256 characters maximum
 func (m *ExtensionProperty) SetDataType(value *string)() {
-    m.dataType = value
+    err := m.GetBackingStore().Set("dataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsSyncedFromOnPremises sets the isSyncedFromOnPremises property value. Indicates if this extension property was synced from on-premises active directory using Azure AD Connect. Read-only.
 func (m *ExtensionProperty) SetIsSyncedFromOnPremises(value *bool)() {
-    m.isSyncedFromOnPremises = value
+    err := m.GetBackingStore().Set("isSyncedFromOnPremises", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetName sets the name property value. Name of the extension property. Not nullable. Supports $filter (eq).
 func (m *ExtensionProperty) SetName(value *string)() {
-    m.name = value
+    err := m.GetBackingStore().Set("name", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTargetObjects sets the targetObjects property value. Following values are supported. Not nullable. UserGroupAdministrativeUnitApplicationDeviceOrganization
 func (m *ExtensionProperty) SetTargetObjects(value []string)() {
-    m.targetObjects = value
+    err := m.GetBackingStore().Set("targetObjects", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// ExtensionPropertyable 
+type ExtensionPropertyable interface {
+    DirectoryObjectable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAppDisplayName()(*string)
+    GetDataType()(*string)
+    GetIsSyncedFromOnPremises()(*bool)
+    GetName()(*string)
+    GetTargetObjects()([]string)
+    SetAppDisplayName(value *string)()
+    SetDataType(value *string)()
+    SetIsSyncedFromOnPremises(value *bool)()
+    SetName(value *string)()
+    SetTargetObjects(value []string)()
 }

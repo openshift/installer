@@ -17,7 +17,8 @@ package alidns
 
 // AlertConfigItem is a nested struct in alidns response
 type AlertConfigItem struct {
-	NoticeType  string `json:"NoticeType" xml:"NoticeType"`
-	EmailNotice bool   `json:"EmailNotice" xml:"EmailNotice"`
-	SmsNotice   bool   `json:"SmsNotice" xml:"SmsNotice"`
+	NoticeType     string `json:"NoticeType" xml:"NoticeType"`
+	EmailNotice    bool   `json:"EmailNotice" xml:"EmailNotice"`
+	DingtalkNotice bool   `json:"DingtalkNotice" xml:"DingtalkNotice"`
+	SmsNotice      bool   `json:"SmsNotice" xml:"SmsNotice"`
 }

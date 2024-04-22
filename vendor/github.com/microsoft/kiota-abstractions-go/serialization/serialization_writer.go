@@ -70,8 +70,22 @@ type SerializationWriter interface {
 	WriteCollectionOfUUIDValues(key string, collection []uuid.UUID) error
 	// GetSerializedContent returns the resulting byte array from the serialization writer.
 	GetSerializedContent() ([]byte, error)
+	// WriteNullValue writes a null value for the specified key.
+	WriteNullValue(key string) error
 	// WriteAdditionalData writes additional data to underlying the byte array.
 	WriteAdditionalData(value map[string]interface{}) error
 	// WriteAnyValue an object of unknown type as a json value
 	WriteAnyValue(key string, value interface{}) error
+	// GetOnBeforeSerialization returns a callback invoked before the serialization process starts.
+	GetOnBeforeSerialization() ParsableAction
+	// SetOnBeforeSerialization sets a callback invoked before the serialization process starts.
+	SetOnBeforeSerialization(ParsableAction) error
+	// GetOnAfterObjectSerialization returns a callback invoked after the serialization process completes.
+	GetOnAfterObjectSerialization() ParsableAction
+	// SetOnAfterObjectSerialization sets a callback invoked after the serialization process completes.
+	SetOnAfterObjectSerialization(ParsableAction) error
+	// GetOnStartObjectSerialization returns a callback invoked right after the serialization process starts.
+	GetOnStartObjectSerialization() ParsableWriter
+	// SetOnStartObjectSerialization sets a callback invoked right after the serialization process starts.
+	SetOnStartObjectSerialization(ParsableWriter) error
 }

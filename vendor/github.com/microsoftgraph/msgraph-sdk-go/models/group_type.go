@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type GroupType int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i GroupType) String() string {
     return []string{"unifiedGroups", "azureAD", "unknownFutureValue"}[i]
 }
-func ParseGroupType(v string) (interface{}, error) {
+func ParseGroupType(v string) (any, error) {
     result := UNIFIEDGROUPS_GROUPTYPE
     switch v {
         case "unifiedGroups":
