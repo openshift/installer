@@ -73,11 +73,11 @@ export CGO_ENABLED=0
 MODE="${MODE:-release}"
 
 # Build terraform binaries before setting environment variables since it messes up make
-if test "${SKIP_TERRAFORM}" != y && ! (echo "${TAGS}" | grep -q -e 'aro' -e 'altinfra')
-then
-	build_terraform_and_providers
-	copy_terraform_to_mirror # Copy terraform parts to embedded mirror.
-fi
+# if test "${SKIP_TERRAFORM}" != y && ! (echo "${TAGS}" | grep -q -e 'aro' -e 'altinfra')
+# then
+# 	build_terraform_and_providers
+# 	copy_terraform_to_mirror # Copy terraform parts to embedded mirror.
+# fi
 
 # build cluster-api binaries
 if [ -n "${OPENSHIFT_INSTALL_CLUSTER_API}" ]; then
