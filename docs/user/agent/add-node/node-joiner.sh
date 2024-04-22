@@ -120,7 +120,7 @@ done
 res=$(oc exec node-joiner -n "${namespace}" -- cat /assets/exit_code)
 if [ "$res" = 0 ]; then
   echo "node-joiner successfully completed, extracting ISO image..."
-  oc cp -n "${namespace}" node-joiner:/assets/agent-addnodes.x86_64.iso agent-addnodes.x86_64.iso
+  oc cp -n "${namespace}" node-joiner:/assets/node.x86_64.iso node.x86_64.iso
 else
   oc logs node-joiner -n "${namespace}"
   echo "node-joiner failed"

@@ -70,7 +70,7 @@ $ ./node-joiner.sh
 ```
 The script will generate a temporary namespace prefixed with `openshift-node-joiner` in the target cluster,
 where a pod will be launched to execute the effective node-joiner workload.
-In case of success, the `agent-addnodes.x86_64.iso` ISO image will be downloaded in the assets folder.
+In case of success, the `node.x86_64.iso` ISO image will be downloaded in the assets folder.
 
 ### Configuration file name
 By default the script looks for a configuration file named `nodes-config.yaml`. It's possible to specify a 
