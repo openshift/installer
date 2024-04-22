@@ -29,6 +29,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	capimanifests "github.com/openshift/installer/pkg/asset/manifests/clusterapi"
+	"github.com/openshift/installer/pkg/asset/releaseimage"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/clusterapi"
 	"github.com/openshift/installer/pkg/infrastructure"
@@ -68,6 +69,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
 	masterIgnAsset := &machine.Master{}
 	tfvarsAsset := &tfvars.TerraformVariables{}
+	releaseImage := &releaseimage.Image{}
 	parents.Get(
 		manifestsAsset,
 		workersAsset,
@@ -80,6 +82,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		masterIgnAsset,
 		capiMachinesAsset,
 		tfvarsAsset,
+		releaseImage,
 	)
 
 	fileList := []*asset.File{}
@@ -117,7 +120,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 
 	// Run the CAPI system.
 	capiSystem := clusterapi.System()
-	if err := capiSystem.Run(ctx, installConfig); err != nil {
+	if err := capiSystem.Run(ctx, installConfig, releaseImage.PullSpec); err != nil {
 		return fileList, fmt.Errorf("failed to run cluster api system: %w", err)
 	}
 

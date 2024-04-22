@@ -49,7 +49,7 @@ const (
 
 // Interface is the interface for the cluster-api system.
 type Interface interface {
-	Run(ctx context.Context, installConfig *installconfig.InstallConfig) error
+	Run(ctx context.Context, installConfig *installconfig.InstallConfig, pullSpec string) error
 	State() SystemState
 	Client() client.Client
 	Teardown()
@@ -78,17 +78,16 @@ type system struct {
 }
 
 // Run launches the cluster-api system.
-func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallConfig) error {
+func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallConfig, pullSpec string) error {
 	c.Lock()
 	defer c.Unlock()
 
 	// Setup the context with a cancel function.
 	ctx, cancel := context.WithCancel(ctx)
 	c.cancel = cancel
-
 	// Create the local control plane.
 	lcp := &localControlPlane{}
-	if err := lcp.Run(ctx); err != nil {
+	if err := lcp.Run(ctx, pullSpec); err != nil {
 		return fmt.Errorf("failed to run local control plane: %w", err)
 	}
 	c.lcp = lcp

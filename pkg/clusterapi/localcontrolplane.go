@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/openshift/installer/cmd/openshift-install/command"
+	"github.com/openshift/installer/pkg/release/extract"
 )
 
 var (
@@ -60,14 +61,24 @@ type localControlPlane struct {
 }
 
 // Run launches the local control plane.
-func (c *localControlPlane) Run(ctx context.Context) error {
+func (c *localControlPlane) Run(ctx context.Context, pullSpec string) error {
 	// Create a temporary directory to unpack the cluster-api binaries.
 	c.BinDir = filepath.Join(command.RootOpts.Dir, "bin", "cluster-api")
 	if err := UnpackClusterAPIBinary(c.BinDir); err != nil {
 		return fmt.Errorf("failed to unpack cluster-api binary: %w", err)
 	}
-	if err := UnpackEnvtestBinaries(c.BinDir); err != nil {
-		return fmt.Errorf("failed to unpack envtest binaries: %w", err)
+
+	opts := extract.ExtractOptions{
+		From:      pullSpec,
+		Directory: c.BinDir,
+	}
+
+	if err := opts.Extract("etcd"); err != nil {
+		return fmt.Errorf("error extracting etcd from release image: %w", err)
+	}
+
+	if err := opts.Extract("kube-apiserver"); err != nil {
+		return fmt.Errorf("error extracting kube-apiserver from release image: %w", err)
 	}
 
 	log.SetLogger(klog.NewKlogr())
