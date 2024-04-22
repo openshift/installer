@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/sirupsen/logrus"
 
 	ccaws "github.com/openshift/cloud-credential-operator/pkg/aws"
@@ -277,10 +276,7 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string
 		requiredPermissions = append(requiredPermissions, groupPerms...)
 	}
 
-	client, err := ccaws.NewClientFromIAMClient(iam.New(ssn))
-	if err != nil {
-		return fmt.Errorf("failed to create client for permission check: %w", err)
-	}
+	client := ccaws.NewClientFromSession(ssn)
 
 	sParams := &ccaws.SimulateParams{
 		Region: region,
