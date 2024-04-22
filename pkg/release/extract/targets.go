@@ -43,9 +43,29 @@ func generate() []extractTarget {
 	targets := []extractTarget{
 		{
 			Command: "terraform",
-			OS:      "linux",
+			OS:      "linux", //TODO check how OS/ARCH are used and what needs to be done.
 			Arch:    "amd64",
 			Mapping: extract.Mapping{Image: "installer-artifacts", From: "usr/share/terraform/linux_amd64/terraform"},
+		},
+		// CAPI etcd & kas targets
+		// TODO: expand to all arches, os, & static/dynamic linking
+		{
+			Command: "etcd",
+			OS:      "linux",
+			Arch:    "amd64",
+			Mapping: extract.Mapping{
+				Image: "etcd",
+				From:  "usr/bin/etcd",
+			},
+		},
+		{
+			Command: "kube-apiserver",
+			OS:      "linux",
+			Arch:    "amd64",
+			Mapping: extract.Mapping{
+				Image: "hyperkube",
+				From:  "usr/bin/kube-apiserver",
+			},
 		},
 	}
 
@@ -64,6 +84,8 @@ func generate() []extractTarget {
 			}
 		}
 	}
+
+	targets = append(targets, []extractTarget{}...)
 
 	return targets
 }
