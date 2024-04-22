@@ -39,7 +39,7 @@ func NewAddNodesCommand(directory string, kubeConfig string) error {
 	if err != nil {
 		exitCode = "1"
 	}
-	if err2 := os.WriteFile(filepath.Join(directory, addNodesResultFile), []byte(exitCode), 0644); err2 != nil {
+	if err2 := os.WriteFile(filepath.Join(directory, addNodesResultFile), []byte(exitCode), 0600); err2 != nil {
 		return err2
 	}
 
