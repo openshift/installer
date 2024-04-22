@@ -49,6 +49,6 @@ COPY --from=macarmbuilder /go/src/github.com/openshift/installer/bin/openshift-i
 COPY --from=linuxbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/linux_amd64/openshift-install
 COPY --from=linuxarmbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/linux_arm64/openshift-install
 COPY --from=builder /go/src/github.com/openshift/installer/bin/manifests/ /manifests/
-
+COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/linux_amd64/ /usr/share/terraform/linux_amd64/
 # We're not really an operator, we're just getting some data into the release image.
 LABEL io.openshift.release.operator=true
