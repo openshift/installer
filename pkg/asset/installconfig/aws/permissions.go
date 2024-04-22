@@ -42,6 +42,9 @@ const (
 
 	// PermissionKMSEncryptionKeys is an additional set of permissions required when the installer uses user provided kms encryption keys.
 	PermissionKMSEncryptionKeys PermissionGroup = "kms-encryption-keys"
+
+	// PermissionPublicIpv4Pool is an additional set of permissions required when the installer uses public IPv4 pools.
+	PermissionPublicIpv4Pool PermissionGroup = "public-ipv4-pool"
 )
 
 var permissions = map[PermissionGroup][]string{
@@ -231,8 +234,6 @@ var permissions = map[PermissionGroup][]string{
 		"ec2:DeleteVpc",
 		"ec2:DeleteVpcEndpoints",
 		"ec2:DetachInternetGateway",
-		// Needed by terraform when EIPs are created
-		"ec2:DisassociateAddress",
 		"ec2:DisassociateRouteTable",
 		"ec2:ReleaseAddress",
 		"ec2:ReplaceRouteTableAssociation",
@@ -260,6 +261,10 @@ var permissions = map[PermissionGroup][]string{
 		"kms:RevokeGrant",
 		"kms:CreateGrant",
 		"kms:ListGrants",
+	},
+	PermissionPublicIpv4Pool: {
+		// Needed by terraform because of bootstrap EIP created
+		"ec2:DisassociateAddress",
 	},
 }
 
