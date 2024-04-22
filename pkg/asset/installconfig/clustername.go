@@ -42,6 +42,14 @@ func (a *clusterName) Generate(parents asset.Parents) error {
 		}
 	}
 
+    // DNS records are created incorrectly for PowerVS 
+	// if cluster name is greater than 21 characters.
+	if platform.PowerVS != nil {
+		validator = survey.ComposeValidators(validator, func(ans interface{}) error {
+			return validate.ClusterNameMaxLength(ans.(string), 21)
+		})
+	}
+
 	if platform.Ovirt != nil {
 		validator = survey.ComposeValidators(validator, func(ans interface{}) error {
 			return validate.ClusterName(ans.(string))
