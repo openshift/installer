@@ -20,7 +20,7 @@ import (
 // +kubebuilder:resource:path=clustercsidrivers,scope=Cluster
 // +kubebuilder:subresource:status
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/701
-// +openshift:file-pattern=0000_90_cluster_csi_driver_01_configMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_90,operatorName=csi-driver,operatorOrdering=01
 
 // ClusterCSIDriver object allows management and configuration of a CSI driver operator
 // installed by default in OpenShift. Name of the object must be name of the CSI driver

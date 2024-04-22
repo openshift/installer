@@ -13,7 +13,7 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 // +kubebuilder:resource:path=insightsdatagathers,scope=Cluster
 // +kubebuilder:subresource:status
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/1245
-// +openshift:file-pattern=0000_10_config-operator_01_insightsdatagatherMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_10,operatorName=config-operator,operatorOrdering=01
 // +openshift:enable:FeatureGate=InsightsConfig
 // +openshift:compatibility-gen:level=4
 type InsightsDataGather struct {

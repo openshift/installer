@@ -13,7 +13,7 @@ import (
 // Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
 // +openshift:compatibility-gen:level=1
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/470
-// +openshift:file-pattern=0000_10_config-operator_01_featuregateMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_10,operatorName=config-operator,operatorOrdering=01
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=featuregates,scope=Cluster
 // +kubebuilder:subresource:status
@@ -65,6 +65,8 @@ type FeatureGateSelection struct {
 	// Turning on or off features may cause irreversible changes in your cluster which cannot be undone.
 	// +unionDiscriminator
 	// +optional
+	// +kubebuilder:validation:XValidation:rule="oldSelf == 'CustomNoUpgrade' ? self == 'CustomNoUpgrade' : true",message="CustomNoUpgrade may not be changed"
+	// +kubebuilder:validation:XValidation:rule="oldSelf == 'TechPreviewNoUpgrade' ? self == 'TechPreviewNoUpgrade' : true",message="TechPreviewNoUpgrade may not be changed"
 	FeatureSet FeatureSet `json:"featureSet,omitempty"`
 
 	// customNoUpgrade allows the enabling or disabling of any feature. Turning this feature set on IS NOT SUPPORTED, CANNOT BE UNDONE, and PREVENTS UPGRADES.

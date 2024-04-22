@@ -11,7 +11,7 @@ import (
 // +kubebuilder:resource:path=kubeschedulers,scope=Cluster,categories=coreoperators
 // +kubebuilder:subresource:status
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/475
-// +openshift:file-pattern=0000_25_kube-scheduler-operator_01_configMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_25,operatorName=kube-scheduler,operatorOrdering=01
 
 // KubeScheduler provides information to configure an operator to manage scheduler.
 //
