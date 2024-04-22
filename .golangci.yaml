@@ -2,6 +2,7 @@ run:
   timeout: 20m
   skip-dirs:
   - ^bin
+  - ^cluster-api
   - ^data/data
   - ^docs
   - ^hack
