@@ -102,7 +102,7 @@ func MonitorAddNodes(cluster *Cluster, nodeIPAddress string) error {
 
 	wait.Until(func() {
 		if mon.cluster.API.Rest.IsRestAPILive() {
-			_, _, err := cluster.LogAssistedServiceStatus()
+			_, err := cluster.MonitorStatusFromAssistedService()
 			if err != nil {
 				logrus.Warnf("Node %s: %s", nodeIPAddress, err)
 			}

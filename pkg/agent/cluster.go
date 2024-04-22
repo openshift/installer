@@ -66,23 +66,9 @@ type clusterInstallStatusHistory struct {
 }
 
 // NewCluster initializes a Cluster object
-func NewCluster(ctx context.Context, assetDir, rendezvousIP, kubeconfigPath string, workflowType workflow.AgentWorkflowType) (*Cluster, error) {
+func NewCluster(ctx context.Context, assetDir, rendezvousIP, kubeconfigPath, sshKey string, workflowType workflow.AgentWorkflowType) (*Cluster, error) {
 	czero := &Cluster{}
 	capi := &clientSet{}
-
-	var sshKey string
-	if workflowType == workflow.AgentWorkflowTypeInstall {
-		kubeconfigPath = filepath.Join(assetDir, "auth", "kubeconfig")
-
-		ip, key, err := FindRendezvouIPAndSSHKeyFromAssetStore(assetDir)
-		if err != nil {
-			logrus.Fatal(err)
-		}
-		rendezvousIP = ip
-		sshKey = key
-
-		czero.assetDir = assetDir
-	}
 
 	restclient, err := NewNodeZeroRestClient(ctx, rendezvousIP, sshKey)
 	if err != nil {
@@ -127,6 +113,7 @@ func NewCluster(ctx context.Context, assetDir, rendezvousIP, kubeconfigPath stri
 	czero.workflow = workflowType
 	czero.clusterID = nil
 	czero.clusterInfraEnvID = nil
+	czero.assetDir = assetDir
 	czero.clusterConsoleRouteURL = ""
 	czero.installHistory = cinstallstatushistory
 	czero.installHistory.ValidationResults = cvalidationresults
@@ -191,9 +178,9 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 
 	// Agent Rest API is available
 	if agentRestAPILive {
-		isBootstrapComplete, exitOnErr, err := czero.LogAssistedServiceStatus()
+		exitOnErr, err := czero.MonitorStatusFromAssistedService()
 		if err != nil {
-			return isBootstrapComplete, exitOnErr, err
+			return false, exitOnErr, err
 		}
 	}
 
@@ -201,9 +188,18 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 	return false, false, nil
 }
 
-// LogAssistedServiceStatus logs validations and events from
-// Assisted Service.
-func (czero *Cluster) LogAssistedServiceStatus() (bool, bool, error) {
+// MonitorStatusFromAssistedService (exit-on-error, returned-error)
+// checks if the Assisted Service API is up, and both cluster and
+// infraenv have been registered.
+//
+// After those preconditions are met,
+// it then reports on the host validation status and overall cluster
+// status and updates the cluster's install history.
+//
+// After cluster or host installation has started, new events from
+// the Assisted Service API are also logged and updated to the cluster's
+// install history.
+func (czero *Cluster) MonitorStatusFromAssistedService() (bool, error) {
 	resource := "cluster"
 	logPrefix := ""
 	if czero.workflow == workflow.AgentWorkflowTypeAddNodes {
@@ -222,7 +218,7 @@ func (czero *Cluster) LogAssistedServiceStatus() (bool, bool, error) {
 	if czero.clusterID == nil {
 		clusterID, err := czero.API.Rest.getClusterID()
 		if err != nil {
-			return false, false, errors.Wrap(err, "Unable to retrieve clusterID from Agent Rest API")
+			return false, errors.Wrap(err, "Unable to retrieve clusterID from Agent Rest API")
 		}
 		czero.clusterID = clusterID
 	}
@@ -230,7 +226,7 @@ func (czero *Cluster) LogAssistedServiceStatus() (bool, bool, error) {
 	if czero.clusterInfraEnvID == nil {
 		clusterInfraEnvID, err := czero.API.Rest.getClusterInfraEnvID()
 		if err != nil {
-			return false, false, errors.Wrap(err, "Unable to retrieve clusterInfraEnvID from Agent Rest API")
+			return false, errors.Wrap(err, "Unable to retrieve clusterInfraEnvID from Agent Rest API")
 		}
 		czero.clusterInfraEnvID = clusterInfraEnvID
 	}
@@ -238,11 +234,11 @@ func (czero *Cluster) LogAssistedServiceStatus() (bool, bool, error) {
 	// Getting cluster metadata from Agent Rest API
 	clusterMetadata, err := czero.GetClusterRestAPIMetadata()
 	if err != nil {
-		return false, false, errors.Wrap(err, "Unable to retrieve cluster metadata from Agent Rest API")
+		return false, errors.Wrap(err, "Unable to retrieve cluster metadata from Agent Rest API")
 	}
 
 	if clusterMetadata == nil {
-		return false, false, errors.New("cluster metadata returned nil from Agent Rest API")
+		return false, errors.New("cluster metadata returned nil from Agent Rest API")
 	}
 
 	czero.PrintInstallStatus(clusterMetadata)
@@ -264,7 +260,7 @@ func (czero *Cluster) LogAssistedServiceStatus() (bool, bool, error) {
 	if *clusterMetadata.Status == models.ClusterStatusReady {
 		stuck, err := czero.IsClusterStuckInReady()
 		if err != nil {
-			return false, stuck, err
+			return stuck, err
 		}
 	} else {
 		czero.installHistory.NotReadyTime = time.Now()
@@ -276,22 +272,22 @@ func (czero *Cluster) LogAssistedServiceStatus() (bool, bool, error) {
 	if !installing {
 		errored, _ := czero.HasErrored(*clusterMetadata.Status)
 		if errored {
-			return false, false, fmt.Errorf("%s has stopped installing... working to recover installation", resource)
+			return false, fmt.Errorf("%s has stopped installing... working to recover installation", resource)
 		} else if *clusterMetadata.Status == models.ClusterStatusCancelled {
-			return false, true, fmt.Errorf("%s installation was cancelled", resource)
+			return true, fmt.Errorf("%s installation was cancelled", resource)
 		}
 	}
 
 	validationsErr := checkValidations(clusterMetadata, czero.installHistory.ValidationResults, logrus.StandardLogger(), logPrefix)
 	if validationsErr != nil {
-		return false, false, errors.Wrap(validationsErr, "host validations failed")
+		return false, errors.Wrap(validationsErr, "host validations failed")
 
 	}
 
 	// Print most recent event associated with the clusterInfraEnvID
 	eventList, err := czero.API.Rest.GetInfraEnvEvents(czero.clusterInfraEnvID)
 	if err != nil {
-		return false, false, errors.Wrap(err, fmt.Sprintf("Unable to retrieve events about the %s from the Agent Rest API", resource))
+		return false, errors.Wrap(err, fmt.Sprintf("Unable to retrieve events about the %s from the Agent Rest API", resource))
 	}
 	if len(eventList) == 0 {
 		// No cluster events detected from the Agent Rest API
@@ -308,7 +304,7 @@ func (czero *Cluster) LogAssistedServiceStatus() (bool, bool, error) {
 		czero.installHistory.RestAPIPreviousEventMessage = *mostRecentEvent.Message
 		czero.installHistory.RestAPIInfraEnvEventList = eventList
 	}
-	return false, false, nil
+	return false, nil
 }
 
 // IsInstallComplete Determine if the cluster has completed installation.
