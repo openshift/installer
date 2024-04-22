@@ -58,7 +58,8 @@ RUN curl -sSL "${ALIYUN_URI}" --output /tmp/aliyun-cli-linux-latest-amd64.tgz &&
   rm -f /tmp/aliyun-cli-linux-latest-amd64.tgz
 
 # Not packaged, but required by gcloud. See https://cloud.google.com/sdk/crypto
-RUN pip-3 install cryptography pyOpenSSL
+# Pin version because of https://github.com/GoogleCloudPlatform/gsutil/issues/1753
+RUN pip-3 install cryptography pyOpenSSL==23.2.0
 
 ENV CLOUDSDK_PYTHON=/usr/bin/python
 ENV CLOUDSDK_PYTHON_SITEPACKAGES=1
