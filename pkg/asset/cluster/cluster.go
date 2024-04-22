@@ -23,6 +23,7 @@ import (
 	capimanifests "github.com/openshift/installer/pkg/asset/manifests/clusterapi"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/quota"
+	"github.com/openshift/installer/pkg/asset/releaseimage"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	infra "github.com/openshift/installer/pkg/infrastructure/platform"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
@@ -75,6 +76,7 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		&machines.ClusterAPI{},
 		new(rhcos.Image),
 		&manifests.Manifests{},
+		&releaseimage.Image{},
 	}
 }
 
