@@ -60,7 +60,7 @@ func (o *ClusterUninstaller) listCloudControllerTargetPools(ctx context.Context,
 				}
 
 				if !foundClusterResource {
-					o.Logger.Debugf("Invalid instance %s in target pool %s, target pool will not be destroyed", name, pool.Name)
+					o.Logger.Debugf("Skipping target pool instance %s because it is not a cluster resource", pool.Name)
 					return false
 				}
 			}
