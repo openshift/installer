@@ -121,7 +121,7 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 	o.insertPendingItems("forwardingrule", found)
 
 	// Discover associated health checks: loadBalancerName
-	found, err = o.listHealthChecksWithFilter(ctx, "items(name),nextPageToken", loadBalancerNameFilter, nil)
+	found, err = o.listHealthChecksWithFilter(ctx, "healthcheck", "items(name),nextPageToken", loadBalancerNameFilter, o.healthCheckList)
 	if err != nil {
 		return err
 	}
@@ -196,7 +196,7 @@ func (o *ClusterUninstaller) discoverCloudControllerResources(ctx context.Contex
 	if len(o.cloudControllerUID) > 0 {
 		// Discover Cloud Controller health checks: k8s-cloudControllerUID-node
 		filter := fmt.Sprintf("name eq \"k8s-%s-node\"", o.cloudControllerUID)
-		found, err := o.listHealthChecksWithFilter(ctx, "items(name),nextPageToken", filter, nil)
+		found, err := o.listHealthChecksWithFilter(ctx, "healthcheck", "items(name),nextPageToken", filter, o.healthCheckList)
 		if err != nil {
 			return err
 		}
