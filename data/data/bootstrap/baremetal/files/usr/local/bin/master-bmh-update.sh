@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-export KUBECONFIG=/opt/openshift/auth/kubeconfig-loopback
+export KUBECONFIG=/opt/openshift/auth/kubeconfig
 
 # Wait till the baremetalhosts are populated
 until oc get baremetalhosts -n openshift-machine-api; do
@@ -32,4 +32,7 @@ while systemctl is-active metal3-baremetal-operator.service; do
 done
 
 echo "Unpause all baremetal hosts"
-oc annotate --overwrite -n openshift-machine-api baremetalhosts --all "baremetalhost.metal3.io/paused-"
+while ! oc annotate --overwrite -n openshift-machine-api baremetalhosts --all "baremetalhost.metal3.io/paused-" ; do
+    sleep 5
+    echo "Unpause failed, retrying"
+done
