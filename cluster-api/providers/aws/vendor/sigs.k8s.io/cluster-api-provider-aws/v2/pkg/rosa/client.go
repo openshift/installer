@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	sdk "github.com/openshift-online/ocm-sdk-go"
 	ocmcfg "github.com/openshift/rosa/pkg/config"
 	"github.com/openshift/rosa/pkg/ocm"
 	"github.com/sirupsen/logrus"
@@ -29,6 +30,30 @@ func NewOCMClient(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope) (
 		AccessToken: token,
 		URL:         url,
 	}).Build()
+}
+
+func newOCMRawConnection(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope) (*sdk.Connection, error) {
+	logger, err := sdk.NewGoLoggerBuilder().
+		Debug(false).
+		Build()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build logger: %w", err)
+	}
+	token, url, err := ocmCredentials(ctx, rosaScope)
+	if err != nil {
+		return nil, err
+	}
+
+	connection, err := sdk.NewConnectionBuilder().
+		Logger(logger).
+		Tokens(token).
+		URL(url).
+		Build()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create ocm connection: %w", err)
+	}
+
+	return connection, nil
 }
 
 func ocmCredentials(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope) (string, string, error) {

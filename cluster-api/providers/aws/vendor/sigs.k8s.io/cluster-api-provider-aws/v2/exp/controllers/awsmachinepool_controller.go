@@ -586,7 +586,7 @@ func machinePoolToInfrastructureMapFunc(gvk schema.GroupVersionKind) handler.Map
 	return func(ctx context.Context, o client.Object) []reconcile.Request {
 		m, ok := o.(*expclusterv1.MachinePool)
 		if !ok {
-			klog.Error("Expected a MachinePool but got a %T", o)
+			klog.Errorf("Expected a MachinePool but got a %T", o)
 		}
 
 		gk := gvk.GroupKind()

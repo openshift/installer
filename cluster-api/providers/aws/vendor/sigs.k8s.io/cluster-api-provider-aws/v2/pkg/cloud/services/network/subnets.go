@@ -133,8 +133,17 @@ func (s *Service) reconcileSubnets() error {
 		sub := &subnets[i]
 		existingSubnet := existing.FindEqual(sub)
 		if existingSubnet != nil {
-			subnetTags := sub.Tags
+			if len(sub.ID) > 0 {
+				// NOTE: Describing subnets assumes the subnet.ID is the same as the subnet's identifier (i.e. subnet-<xyz>),
+				// if we have a subnet ID specified in the spec, we need to restore it.
+				existingSubnet.ID = sub.ID
+			}
+
+			// Update subnet spec with the existing subnet details
+			existingSubnet.DeepCopyInto(sub)
+
 			// Make sure tags are up-to-date.
+			subnetTags := sub.Tags
 			if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
 				buildParams := s.getSubnetTagParams(unmanagedVPC, existingSubnet.GetResourceID(), existingSubnet.IsPublic, existingSubnet.AvailabilityZone, subnetTags)
 				tagsBuilder := tags.New(&buildParams, tags.WithEC2(s.EC2Client))
@@ -151,19 +160,8 @@ func (s *Service) reconcileSubnets() error {
 				// We may not have a permission to tag unmanaged subnets.
 				// When tagging unmanaged subnet fails, record an event and proceed.
 				record.Warnf(s.scope.InfraCluster(), "FailedTagSubnet", "Failed tagging unmanaged Subnet %q: %v", existingSubnet.GetResourceID(), err)
-				break
+				continue
 			}
-
-			// TODO(vincepri): check if subnet needs to be updated.
-
-			if len(sub.ID) > 0 {
-				// NOTE: Describing subnets assumes the subnet.ID is the same as the subnet's identifier (i.e. subnet-<xyz>),
-				// if we have a subnet ID specified in the spec, we need to restore it.
-				existingSubnet.ID = sub.ID
-			}
-
-			// Update subnet spec with the existing subnet details
-			existingSubnet.DeepCopyInto(sub)
 		} else if unmanagedVPC {
 			// If there is no existing subnet and we have an umanaged vpc report an error
 			record.Warnf(s.scope.InfraCluster(), "FailedMatchSubnet", "Using unmanaged VPC and failed to find existing subnet for specified subnet id %d, cidr %q", sub.GetResourceID(), sub.CidrBlock)

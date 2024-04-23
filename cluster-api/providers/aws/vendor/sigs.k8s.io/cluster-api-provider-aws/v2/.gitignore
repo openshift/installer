@@ -57,6 +57,7 @@ junit.*.xml
 .DS_Store
 
 .tiltbuild
+dist
 
 # test results
 _artifacts

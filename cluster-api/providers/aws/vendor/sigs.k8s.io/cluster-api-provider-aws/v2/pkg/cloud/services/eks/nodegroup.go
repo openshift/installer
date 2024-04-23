@@ -327,7 +327,11 @@ func (s *NodegroupService) deleteNodegroupAndWait() (reterr error) {
 func (s *NodegroupService) reconcileNodegroupVersion(ng *eks.Nodegroup) error {
 	var specVersion *version.Version
 	if s.scope.Version() != nil {
-		specVersion = parseEKSVersion(*s.scope.Version())
+		var err error
+		specVersion, err = parseEKSVersion(*s.scope.Version())
+		if err != nil {
+			return fmt.Errorf("parsing EKS version from spec: %w", err)
+		}
 	}
 	ngVersion := version.MustParseGeneric(*ng.Version)
 	specAMI := s.scope.ManagedMachinePool.Spec.AMIVersion

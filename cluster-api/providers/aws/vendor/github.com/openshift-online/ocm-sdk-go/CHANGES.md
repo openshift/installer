@@ -3,6 +3,24 @@
 This document describes the relevant changes between releases of the OCM API
 SDK.
 
+## 0.1.414
+- Update metamodel version v0.0.60
+
+## 0.1.413
+- Update model version v0.0.366
+  - Fix Default Capabilities.
+
+## 0.1.412
+- Update model version v0.0.365
+  - [OCM-6763] Add default capability resource to SDK.
+
+## 0.1.411
+- Upgrade pgx version and other dependencies
+
+## 0.1.410
+- Update model version v0.0.364
+  - Add `BreakGlassCredentials` to the `Cluster` resource model.
+
 ## 0.1.409
 - Update model version v0.0.363
   - Add `NodeDrainGracePeriod` to the `NodePool` model.

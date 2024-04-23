@@ -38,6 +38,10 @@ func (r *ROSAControlPlane) ValidateCreate() (warnings admission.Warnings, err er
 		allErrs = append(allErrs, err)
 	}
 
+	if err := r.validateExternalAuthProviders(); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
 	allErrs = append(allErrs, r.validateNetwork()...)
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
 
@@ -128,6 +132,15 @@ func (r *ROSAControlPlane) validateEtcdEncryptionKMSArn() *field.Error {
 	err := kmsArnRegexpValidator.ValidateKMSKeyARN(&r.Spec.EtcdEncryptionKMSARN)
 	if err != nil {
 		return field.Invalid(field.NewPath("spec.etcdEncryptionKMSARN"), r.Spec.EtcdEncryptionKMSARN, err.Error())
+	}
+
+	return nil
+}
+
+func (r *ROSAControlPlane) validateExternalAuthProviders() *field.Error {
+	if !r.Spec.EnableExternalAuthProviders && len(r.Spec.ExternalAuthProviders) > 0 {
+		return field.Invalid(field.NewPath("spec.ExternalAuthProviders"), r.Spec.ExternalAuthProviders,
+			"can only be set if spec.EnableExternalAuthProviders is set to 'True'")
 	}
 
 	return nil

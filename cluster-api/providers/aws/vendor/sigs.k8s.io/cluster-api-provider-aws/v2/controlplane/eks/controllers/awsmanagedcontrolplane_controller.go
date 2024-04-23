@@ -40,6 +40,7 @@ import (
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/feature"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/awsnode"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/ec2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/eks"
@@ -87,6 +88,14 @@ type AWSManagedControlPlaneReconciler struct {
 	Recorder  record.EventRecorder
 	Endpoints []scope.ServiceEndpoint
 
+	awsNodeServiceFactory          func(scope.AWSNodeScope) services.AWSNodeInterface
+	ec2ServiceFactory              func(scope.EC2Scope) services.EC2Interface
+	eksServiceFactory              func(*scope.ManagedControlPlaneScope) *eks.Service
+	iamAuthenticatorServiceFactory func(scope.IAMAuthScope, iamauth.BackendType, client.Client) services.IAMAuthenticatorInterface
+	kubeProxyServiceFactory        func(scope.KubeProxyScope) services.KubeProxyInterface
+	networkServiceFactory          func(scope.NetworkScope) services.NetworkInterface
+	securityGroupServiceFactory    func(*scope.ManagedControlPlaneScope) services.SecurityGroupInterface
+
 	EnableIAM                    bool
 	AllowAdditionalRoles         bool
 	WatchFilterValue             string
@@ -94,6 +103,62 @@ type AWSManagedControlPlaneReconciler struct {
 	AlternativeGCStrategy        bool
 	WaitInfraPeriod              time.Duration
 	TagUnmanagedNetworkResources bool
+}
+
+// getAWSNodeService factory func is added for testing purpose so that we can inject mocked AWSNodeInterface to the AWSManagedControlPlaneReconciler.
+func (r *AWSManagedControlPlaneReconciler) getAWSNodeService(scope scope.AWSNodeScope) services.AWSNodeInterface {
+	if r.awsNodeServiceFactory != nil {
+		return r.awsNodeServiceFactory(scope)
+	}
+	return awsnode.NewService(scope)
+}
+
+// getEC2Service factory func is added for testing purpose so that we can inject mocked EC2Service to the AWSManagedControlPlaneReconciler.
+func (r *AWSManagedControlPlaneReconciler) getEC2Service(scope scope.EC2Scope) services.EC2Interface {
+	if r.ec2ServiceFactory != nil {
+		return r.ec2ServiceFactory(scope)
+	}
+	return ec2.NewService(scope)
+}
+
+// getEC2Service factory func is added for testing purpose so that we can inject mocked EC2Service to the AWSManagedControlPlaneReconciler.
+func (r *AWSManagedControlPlaneReconciler) getEKSService(scope *scope.ManagedControlPlaneScope) *eks.Service {
+	if r.ec2ServiceFactory != nil {
+		return r.eksServiceFactory(scope)
+	}
+	return eks.NewService(scope)
+}
+
+// getIAMAuthenticatorService factory func is added for testing purpose so that we can inject mocked IAMAuthenticatorInterface to the AWSManagedControlPlaneReconciler.
+func (r *AWSManagedControlPlaneReconciler) getIAMAuthenticatorService(scope scope.IAMAuthScope, backend iamauth.BackendType, client client.Client) services.IAMAuthenticatorInterface {
+	if r.iamAuthenticatorServiceFactory != nil {
+		return r.iamAuthenticatorServiceFactory(scope, backend, client)
+	}
+	return iamauth.NewService(scope, backend, client)
+}
+
+// getKubeProxyService factory func is added for testing purpose so that we can inject mocked KubeProxyInterface to the AWSManagedControlPlaneReconciler.
+func (r *AWSManagedControlPlaneReconciler) getKubeProxyService(scope scope.KubeProxyScope) services.KubeProxyInterface {
+	if r.kubeProxyServiceFactory != nil {
+		return r.kubeProxyServiceFactory(scope)
+	}
+	return kubeproxy.NewService(scope)
+}
+
+// getNetworkService factory func is added for testing purpose so that we can inject mocked NetworkService to the AWSManagedControlPlaneReconciler.
+func (r *AWSManagedControlPlaneReconciler) getNetworkService(scope scope.NetworkScope) services.NetworkInterface {
+	if r.networkServiceFactory != nil {
+		return r.networkServiceFactory(scope)
+	}
+	return network.NewService(scope)
+}
+
+// getSecurityGroupService factory func is added for testing purpose so that we can inject mocked SecurityGroupService to the AWSClusterReconciler.
+func (r *AWSManagedControlPlaneReconciler) getSecurityGroupService(scope *scope.ManagedControlPlaneScope) services.SecurityGroupInterface {
+	if r.securityGroupServiceFactory != nil {
+		return r.securityGroupServiceFactory(scope)
+	}
+	return securitygroup.NewService(scope, securityGroupRolesForControlPlane(scope))
 }
 
 // SetupWithManager is used to setup the controller.
@@ -238,6 +303,11 @@ func (r *AWSManagedControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 func (r *AWSManagedControlPlaneReconciler) reconcileNormal(ctx context.Context, managedScope *scope.ManagedControlPlaneScope) (res ctrl.Result, reterr error) {
 	managedScope.Info("Reconciling AWSManagedControlPlane")
 
+	if managedScope.Cluster.Spec.InfrastructureRef == nil {
+		managedScope.Info("InfrastructureRef not set, skipping reconciliation")
+		return ctrl.Result{}, nil
+	}
+
 	// TODO (richardcase): we can remove the if check here in the future when we have
 	// allowed enough time for users to move away from using the single kind for
 	// infrastructureRef and controlplaneRef.
@@ -257,13 +327,13 @@ func (r *AWSManagedControlPlaneReconciler) reconcileNormal(ctx context.Context, 
 		}
 	}
 
-	ec2Service := ec2.NewService(managedScope)
-	networkSvc := network.NewService(managedScope)
-	ekssvc := eks.NewService(managedScope)
-	sgService := securitygroup.NewService(managedScope, securityGroupRolesForControlPlane(managedScope))
-	authService := iamauth.NewService(managedScope, iamauth.BackendTypeConfigMap, managedScope.Client)
-	awsnodeService := awsnode.NewService(managedScope)
-	kubeproxyService := kubeproxy.NewService(managedScope)
+	ec2Service := r.getEC2Service(managedScope)
+	networkSvc := r.getNetworkService(managedScope)
+	ekssvc := r.getEKSService(managedScope)
+	sgService := r.getSecurityGroupService(managedScope)
+	authService := r.getIAMAuthenticatorService(managedScope, iamauth.BackendTypeConfigMap, managedScope.Client)
+	awsnodeService := r.getAWSNodeService(managedScope)
+	kubeproxyService := r.getKubeProxyService(managedScope)
 
 	if err := networkSvc.ReconcileNetwork(); err != nil {
 		return reconcile.Result{}, fmt.Errorf("failed to reconcile network for AWSManagedControlPlane %s/%s: %w", awsManagedControlPlane.Namespace, awsManagedControlPlane.Name, err)
