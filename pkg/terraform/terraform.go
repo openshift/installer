@@ -54,7 +54,7 @@ func (p *Provider) Provision(_ context.Context, dir string, parents asset.Parent
 		return nil, fmt.Errorf("cannot get absolute path of terraform directory: %w", err)
 	}
 
-	defer os.RemoveAll(terraformDir)
+	//defer os.RemoveAll(terraformDir)
 	if err = UnpackTerraform(terraformDirPath, releaseImage.PullSpec, p.stages); err != nil {
 		return nil, fmt.Errorf("error unpacking terraform: %w", err)
 	}
