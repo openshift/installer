@@ -84,6 +84,7 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 		},
 		SSHKey:     sshPublicKey.Key,
 		BaseDomain: baseDomain.BaseDomain,
+		Publish:    baseDomain.Publish,
 		PullSecret: pullSecret.PullSecret,
 	}
 
