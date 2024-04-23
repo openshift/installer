@@ -11,7 +11,7 @@ import (
 
 // NewMonitorAddNodesCommand creates a new command for monitor add nodes.
 func NewMonitorAddNodesCommand(directory, kubeconfigPath string, ips []string) error {
-	cluster, err := agentpkg.NewCluster(context.Background(), "", ips[0], kubeconfigPath, workflow.AgentWorkflowTypeAddNodes)
+	cluster, err := agentpkg.NewCluster(context.Background(), "", ips[0], kubeconfigPath, "", workflow.AgentWorkflowTypeAddNodes)
 	if err != nil {
 		// TODO exit code enumerate
 		logrus.Exit(1)
