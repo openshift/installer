@@ -9,11 +9,25 @@ if [ ! -f "$nodesConfigFile" ]; then
   exit 1
 fi
 
-# Generate a random namespace name
-namespace="openshift-node-joiner-$(tr -dc '[:lower:]' < /dev/urandom | head -c 10)"
+# Setup a cleanup function to ensure to remove the temporary
+# file when the script will be completed.
+cleanup() {
+  if [ -f "$pullSecretFile" ]; then
+    echo "Removing temporary file $pullSecretFile"
+    rm "$pullSecretFile"
+  fi
+}
+trap cleanup EXIT TERM
 
-# Extract the installer image pullspec and release version.
-nodeJoinerPullspec=$(oc get is installer -n openshift -o=jsonpath='{.spec.tags[0].from.name}')
+# Retrieve the pullsecret and store it in a temporary file. 
+pullSecretFile=$(mktemp -p "/tmp" -t "nodejoiner-XXXXXXXXXX")
+oc get secret -n openshift-config pull-secret -o jsonpath='{.data.\.dockerconfigjson}' | base64 -d > "$pullSecretFile"
+
+# Extract the baremetal-installer image pullspec from the current cluster.
+nodeJoinerPullspec=$(oc adm release info --image-for=baremetal-installer --registry-config="$pullSecretFile")
+
+# Use the same random temp file suffix for the namespace.
+namespace=$(echo "openshift-node-joiner-${pullSecretFile#/tmp/nodejoiner-}" | tr '[:upper:]' '[:lower:]')
 
 # Create the namespace to run the node-joiner, along with the required roles and bindings.
 staticResources=$(cat <<EOF
@@ -69,7 +83,7 @@ echo "$staticResources" | oc apply -f -
 # Generate a configMap to store the user configuration
 oc create configmap nodes-config --from-file=nodes-config.yaml="${nodesConfigFile}" -n "${namespace}" -o yaml --dry-run=client | oc apply -f -
 
-# Runt the node-joiner pod to generate the ISO
+# Run the node-joiner pod to generate the ISO
 nodeJoinerPod=$(cat <<EOF
 apiVersion: v1
 kind: Pod
