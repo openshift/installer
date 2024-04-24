@@ -125,20 +125,27 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 	// Only add the controllers for the platform we are deploying to.
 	switch platform := installConfig.Config.Platform.Name(); platform {
 	case aws.Name:
-		controllers = append(controllers,
-			c.getInfrastructureController(
-				&AWS,
-				[]string{
-					"-v=4",
-					"--diagnostics-address=0",
-					"--health-addr={{suggestHealthHostPort}}",
-					"--webhook-port={{.WebhookPort}}",
-					"--webhook-cert-dir={{.WebhookCertDir}}",
-					"--feature-gates=BootstrapFormatIgnition=true,ExternalResourceGC=true",
-				},
-				map[string]string{},
-			),
+		controller := c.getInfrastructureController(
+			&AWS,
+			[]string{
+				"-v=4",
+				"--diagnostics-address=0",
+				"--health-addr={{suggestHealthHostPort}}",
+				"--webhook-port={{.WebhookPort}}",
+				"--webhook-cert-dir={{.WebhookCertDir}}",
+				"--feature-gates=BootstrapFormatIgnition=true,ExternalResourceGC=true",
+			},
+			map[string]string{},
 		)
+		if cfg := installConfig.Config.AWS; cfg != nil && len(cfg.ServiceEndpoints) > 0 {
+			endpoints := make([]string, 0, len(cfg.ServiceEndpoints))
+			// CAPA expects name=url pairs of service endpoints
+			for _, endpoint := range cfg.ServiceEndpoints {
+				endpoints = append(endpoints, fmt.Sprintf("%s=%s", endpoint.Name, endpoint.URL))
+			}
+			controller.Args = append(controller.Args, fmt.Sprintf("--service-endpoints=%s:%s", cfg.Region, strings.Join(endpoints, ",")))
+		}
+		controllers = append(controllers, controller)
 	case azure.Name:
 		session, err := installConfig.Azure.Session()
 		if err != nil {
