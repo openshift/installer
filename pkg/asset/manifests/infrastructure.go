@@ -295,11 +295,12 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			return errors.New("unknown publishing strategy")
 		}
 		config.Status.PlatformStatus.PowerVS = &configv1.PowerVSPlatformStatus{
-			Region:         installConfig.Config.Platform.PowerVS.Region,
-			Zone:           installConfig.Config.Platform.PowerVS.Zone,
-			ResourceGroup:  installConfig.Config.Platform.PowerVS.PowerVSResourceGroup,
-			CISInstanceCRN: cisInstanceCRN,
-			DNSInstanceCRN: dnsInstanceCRN,
+			Region:           installConfig.Config.Platform.PowerVS.Region,
+			Zone:             installConfig.Config.Platform.PowerVS.Zone,
+			ResourceGroup:    installConfig.Config.Platform.PowerVS.PowerVSResourceGroup,
+			CISInstanceCRN:   cisInstanceCRN,
+			DNSInstanceCRN:   dnsInstanceCRN,
+			ServiceEndpoints: installConfig.Config.Platform.PowerVS.ServiceEndpoints,
 		}
 	case nutanix.Name:
 		config.Spec.PlatformSpec.Type = configv1.NutanixPlatformType
