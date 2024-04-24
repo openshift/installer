@@ -23,10 +23,10 @@ require (
 	github.com/Azure/go-autorest/autorest/to v0.4.0
 	github.com/IBM-Cloud/bluemix-go v0.0.0-20211102075456-ffc4e11dfb16
 	github.com/IBM-Cloud/power-go-client v1.6.0
-	github.com/IBM/go-sdk-core/v5 v5.16.3
+	github.com/IBM/go-sdk-core/v5 v5.17.0
 	github.com/IBM/keyprotect-go-client v0.12.2
 	github.com/IBM/networking-go-sdk v0.45.0
-	github.com/IBM/platform-services-go-sdk v0.62.0
+	github.com/IBM/platform-services-go-sdk v0.62.6
 	github.com/IBM/vpc-go-sdk v0.50.0
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
@@ -43,7 +43,7 @@ require (
 	github.com/go-openapi/errors v0.22.0
 	github.com/go-openapi/strfmt v0.23.0
 	github.com/go-openapi/swag v0.22.9
-	github.com/go-playground/validator/v10 v10.18.0
+	github.com/go-playground/validator/v10 v10.19.0
 	github.com/golang/mock v1.7.0-rc.1
 	github.com/golang/protobuf v1.5.4
 	github.com/google/go-cmp v0.6.0
@@ -302,7 +302,7 @@ replace (
 // sigs.k8s.io/cluster-api-provider-aws => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20200929152424-eab2e087f366 // Indirect dependency through MAO from cluster API providers
 )
 
-replace sigs.k8s.io/cluster-api-provider-ibmcloud => sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240327041652-384c1894c61e
+replace sigs.k8s.io/cluster-api-provider-ibmcloud => sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240424062805-188d9e99702c
 
 replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.16.1-0.20231024080022-f1c5dd3851ce
 
