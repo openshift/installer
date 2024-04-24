@@ -1,7 +1,5 @@
 package v1beta2
 
-import corev1 "k8s.io/api/core/v1"
-
 // ExternalAuthProvider is an external OIDC identity provider that can issue tokens for this cluster
 type ExternalAuthProvider struct {
 	// Name of the OIDC provider
@@ -68,7 +66,7 @@ type TokenIssuer struct {
 	// configuration namespace. The .data of the configMap must contain
 	// the "ca-bundle.crt" key.
 	// If unset, system trust is used instead.
-	CertificateAuthority *corev1.LocalObjectReference `json:"issuerCertificateAuthority,omitempty"`
+	CertificateAuthority *LocalObjectReference `json:"issuerCertificateAuthority,omitempty"`
 }
 
 // OIDCClientConfig contains configuration for the platform's client that
@@ -101,7 +99,7 @@ type OIDCClientConfig struct {
 
 	// ClientSecret refers to a secret that
 	// contains the client secret in the `clientSecret` key of the `.data` field
-	ClientSecret corev1.SecretReference `json:"clientSecret"` //TODO: required or optional?
+	ClientSecret LocalObjectReference `json:"clientSecret"`
 
 	// ExtraScopes is an optional set of scopes to request tokens with.
 	//
@@ -239,4 +237,13 @@ type TokenRequiredClaim struct {
 	// +kubebuilder:validation:Required
 	// +required
 	RequiredValue string `json:"requiredValue"`
+}
+
+// LocalObjectReference references an object in the same namespace.
+type LocalObjectReference struct {
+	// Name is the metadata.name of the referenced object.
+	//
+	// +kubebuilder:validation:Required
+	// +required
+	Name string `json:"name"`
 }
