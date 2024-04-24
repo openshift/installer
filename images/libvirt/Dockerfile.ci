@@ -27,7 +27,8 @@ RUN yum update -y && \
     libvirt-libs \
     nss_wrapper \
     openssh-clients \
-    virt-install && \
+    virt-install \
+    qemu-kvm && \
     yum clean all && rm -rf /var/cache/yum/*
 
 COPY --from=yq3 /yq /bin/yq-go
