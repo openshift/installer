@@ -29,9 +29,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/apiserver/pkg/storage/names"
 	"k8s.io/klog/v2"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -168,7 +167,7 @@ func (r *MachinePoolReconciler) reconcileExternal(ctx context.Context, cluster *
 		m.Status.FailureReason = &machineStatusFailure
 	}
 	if failureMessage != "" {
-		m.Status.FailureMessage = pointer.String(
+		m.Status.FailureMessage = ptr.To(
 			fmt.Sprintf("Failure detected from referenced resource %v with name %q: %s",
 				obj.GroupVersionKind(), obj.GetName(), failureMessage),
 		)
@@ -225,7 +224,7 @@ func (r *MachinePoolReconciler) reconcileBootstrap(ctx context.Context, cluster 
 			return ctrl.Result{}, errors.Errorf("retrieved empty dataSecretName from bootstrap provider for MachinePool %q in namespace %q", m.Name, m.Namespace)
 		}
 
-		m.Spec.Template.Spec.Bootstrap.DataSecretName = pointer.String(secretName)
+		m.Spec.Template.Spec.Bootstrap.DataSecretName = ptr.To(secretName)
 		m.Status.BootstrapReady = true
 		return ctrl.Result{}, nil
 	}
@@ -253,8 +252,8 @@ func (r *MachinePoolReconciler) reconcileInfrastructure(ctx context.Context, clu
 			if mp.Status.InfrastructureReady {
 				// Infra object went missing after the machine pool was up and running
 				log.Error(err, "infrastructure reference has been deleted after being ready, setting failure state")
-				mp.Status.FailureReason = capierrors.MachinePoolStatusErrorPtr(capierrors.InvalidConfigurationMachinePoolError)
-				mp.Status.FailureMessage = pointer.String(fmt.Sprintf("MachinePool infrastructure resource %v with name %q has been deleted after being ready",
+				mp.Status.FailureReason = ptr.To(capierrors.InvalidConfigurationMachinePoolError)
+				mp.Status.FailureMessage = ptr.To(fmt.Sprintf("MachinePool infrastructure resource %v with name %q has been deleted after being ready",
 					mp.Spec.Template.Spec.InfrastructureRef.GroupVersionKind(), mp.Spec.Template.Spec.InfrastructureRef.Name))
 			}
 			conditions.MarkFalse(mp, clusterv1.InfrastructureReadyCondition, clusterv1.IncorrectExternalRefReason, clusterv1.ConditionSeverityError, fmt.Sprintf("could not find infra reference of kind %s with name %s", mp.Spec.Template.Spec.InfrastructureRef.Kind, mp.Spec.Template.Spec.InfrastructureRef.Name))
@@ -443,7 +442,7 @@ func computeDesiredMachine(mp *expv1.MachinePool, infraMachine *unstructured.Uns
 
 	machine := &clusterv1.Machine{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: names.SimpleNameGenerator.GenerateName(fmt.Sprintf("%s-", mp.Name)),
+			Name: infraMachine.GetName(),
 			// Note: by setting the ownerRef on creation we signal to the Machine controller that this is not a stand-alone Machine.
 			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(mp, machinePoolKind)},
 			Namespace:       mp.Namespace,

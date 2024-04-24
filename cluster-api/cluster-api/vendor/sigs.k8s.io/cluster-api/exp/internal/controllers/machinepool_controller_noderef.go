@@ -189,8 +189,8 @@ func (r *MachinePoolReconciler) getNodeReferences(ctx context.Context, c client.
 				ready++
 			}
 			nodeRefs = append(nodeRefs, corev1.ObjectReference{
-				Kind:       node.Kind,
-				APIVersion: node.APIVersion,
+				APIVersion: corev1.SchemeGroupVersion.String(),
+				Kind:       "Node",
 				Name:       node.Name,
 				UID:        node.UID,
 			})
@@ -228,7 +228,7 @@ func (r *MachinePoolReconciler) patchNodes(ctx context.Context, c client.Client,
 		// Patch the node if needed.
 		if hasAnnotationChanges || hasTaintChanges {
 			if err := patchHelper.Patch(ctx, node); err != nil {
-				log.V(2).Info("Failed patch node to set annotations and drop taints", "err", err, "node name", node.Name)
+				log.V(2).Info("Failed patch Node to set annotations and drop taints", "err", err, "node name", node.Name)
 				return err
 			}
 		}

@@ -45,6 +45,9 @@ var pathTreeData = `{
           "-": null
         },
         "current_account": null,
+        "default_capabilities": {
+          "-": null
+        },
         "deleted_subscriptions": null,
         "feature_toggles": {
           "-": {
@@ -201,6 +204,9 @@ var pathTreeData = `{
               }
             },
             "aws_infrastructure_access_role_grants": {
+              "-": null
+            },
+            "break_glass_credentials": {
               "-": null
             },
             "clusterdeployment": null,

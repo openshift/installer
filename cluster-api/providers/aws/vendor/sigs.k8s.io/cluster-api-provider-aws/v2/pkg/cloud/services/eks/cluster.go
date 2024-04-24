@@ -390,10 +390,18 @@ func (s *Service) createCluster(eksClusterName string) (*eks.Cluster, error) {
 		return nil, errors.Wrapf(err, "error getting control plane iam role: %s", *s.scope.ControlPlane.Spec.RoleName)
 	}
 
-	v := versionToEKS(parseEKSVersion(*s.scope.ControlPlane.Spec.Version))
+	var eksVersion *string
+	if s.scope.ControlPlane.Spec.Version != nil {
+		specVersion, err := parseEKSVersion(*s.scope.ControlPlane.Spec.Version)
+		if err != nil {
+			return nil, fmt.Errorf("parsing EKS version from spec: %w", err)
+		}
+		v := versionToEKS(specVersion)
+		eksVersion = &v
+	}
 	input := &eks.CreateClusterInput{
 		Name:                    aws.String(eksClusterName),
-		Version:                 aws.String(v),
+		Version:                 eksVersion,
 		Logging:                 logging,
 		EncryptionConfig:        encryptionConfigs,
 		ResourcesVpcConfig:      vpcConfig,
@@ -557,9 +565,12 @@ func (s *Service) reconcileEKSEncryptionConfig(currentClusterConfig []*eks.Encry
 	return errors.Errorf("failed to update the EKS control plane: disabling EKS encryption is not allowed after it has been enabled")
 }
 
-func parseEKSVersion(raw string) *version.Version {
-	v := version.MustParseGeneric(raw)
-	return version.MustParseGeneric(fmt.Sprintf("%d.%d", v.Major(), v.Minor()))
+func parseEKSVersion(raw string) (*version.Version, error) {
+	v, err := version.ParseGeneric(raw)
+	if err != nil {
+		return nil, err
+	}
+	return version.MustParseGeneric(fmt.Sprintf("%d.%d", v.Major(), v.Minor())), nil
 }
 
 func versionToEKS(v *version.Version) string {
@@ -567,10 +578,18 @@ func versionToEKS(v *version.Version) string {
 }
 
 func (s *Service) reconcileClusterVersion(cluster *eks.Cluster) error {
-	specVersion := parseEKSVersion(*s.scope.ControlPlane.Spec.Version)
+	var specVersion *version.Version
+	if s.scope.ControlPlane.Spec.Version != nil {
+		var err error
+		specVersion, err = parseEKSVersion(*s.scope.ControlPlane.Spec.Version)
+		if err != nil {
+			return fmt.Errorf("parsing EKS version from spec: %w", err)
+		}
+	}
+
 	clusterVersion := version.MustParseGeneric(*cluster.Version)
 
-	if clusterVersion.LessThan(specVersion) {
+	if specVersion != nil && clusterVersion.LessThan(specVersion) {
 		// NOTE: you can only upgrade increments of minor versions. If you want to upgrade 1.14 to 1.16 we
 		// need to go 1.14-> 1.15 and then 1.15 -> 1.16.
 		nextVersionString := versionToEKS(clusterVersion.WithMinor(clusterVersion.Minor() + 1))

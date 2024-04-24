@@ -22,7 +22,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -32,9 +31,8 @@ import (
 	apirand "k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/util/retry"
 	"k8s.io/klog/v2"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -42,7 +40,6 @@ import (
 	"sigs.k8s.io/cluster-api/internal/controllers/machinedeployment/mdutil"
 	"sigs.k8s.io/cluster-api/internal/util/hash"
 	"sigs.k8s.io/cluster-api/internal/util/ssa"
-	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/patch"
 )
@@ -115,12 +112,7 @@ func (r *Reconciler) getNewMachineSet(ctx context.Context, md *clusterv1.Machine
 		}
 
 		// Ensure MachineDeployment has the latest MachineSet revision in its revision annotation.
-		err = r.updateMachineDeployment(ctx, md, func(innerDeployment *clusterv1.MachineDeployment) {
-			mdutil.SetDeploymentRevision(md, updatedMS.Annotations[clusterv1.RevisionAnnotation])
-		})
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to update revision annotation on MachineDeployment")
-		}
+		mdutil.SetDeploymentRevision(md, updatedMS.Annotations[clusterv1.RevisionAnnotation])
 		return updatedMS, nil
 	}
 
@@ -134,13 +126,7 @@ func (r *Reconciler) getNewMachineSet(ctx context.Context, md *clusterv1.Machine
 		return nil, err
 	}
 
-	// Ensure MachineDeployment has the latest MachineSet revision in its revision annotation.
-	err = r.updateMachineDeployment(ctx, md, func(innerDeployment *clusterv1.MachineDeployment) {
-		mdutil.SetDeploymentRevision(md, newMS.Annotations[clusterv1.RevisionAnnotation])
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to update revision annotation on MachineDeployment")
-	}
+	mdutil.SetDeploymentRevision(md, newMS.Annotations[clusterv1.RevisionAnnotation])
 
 	return newMS, nil
 }
@@ -150,7 +136,7 @@ func (r *Reconciler) updateMachineSet(ctx context.Context, deployment *clusterv1
 	log := ctrl.LoggerFrom(ctx)
 
 	// Compute the desired MachineSet.
-	updatedMS, err := r.computeDesiredMachineSet(deployment, ms, oldMSs, log)
+	updatedMS, err := r.computeDesiredMachineSet(ctx, deployment, ms, oldMSs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to update MachineSet %q", klog.KObj(ms))
 	}
@@ -172,7 +158,7 @@ func (r *Reconciler) createMachineSetAndWait(ctx context.Context, deployment *cl
 	log := ctrl.LoggerFrom(ctx)
 
 	// Compute the desired MachineSet.
-	newMS, err := r.computeDesiredMachineSet(deployment, nil, oldMSs, log)
+	newMS, err := r.computeDesiredMachineSet(ctx, deployment, nil, oldMSs)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create new MachineSet")
 	}
@@ -213,7 +199,7 @@ func (r *Reconciler) createMachineSetAndWait(ctx context.Context, deployment *cl
 // There are small differences in how we calculate the MachineSet depending on if it
 // is a create or update. Example: for a new MachineSet we have to calculate a new name,
 // while for an existing MachineSet we have to use the name of the existing MachineSet.
-func (r *Reconciler) computeDesiredMachineSet(deployment *clusterv1.MachineDeployment, existingMS *clusterv1.MachineSet, oldMSs []*clusterv1.MachineSet, log logr.Logger) (*clusterv1.MachineSet, error) {
+func (r *Reconciler) computeDesiredMachineSet(ctx context.Context, deployment *clusterv1.MachineDeployment, existingMS *clusterv1.MachineSet, oldMSs []*clusterv1.MachineSet) (*clusterv1.MachineSet, error) {
 	var name string
 	var uid types.UID
 	var finalizers []string
@@ -328,15 +314,15 @@ func (r *Reconciler) computeDesiredMachineSet(deployment *clusterv1.MachineDeplo
 	desiredMS.Spec.Selector = *mdutil.CloneSelectorAndAddLabel(&deployment.Spec.Selector, clusterv1.MachineDeploymentUniqueLabel, uniqueIdentifierLabelValue)
 
 	// Set annotations and .spec.template.annotations.
-	if desiredMS.Annotations, err = mdutil.ComputeMachineSetAnnotations(log, deployment, oldMSs, existingMS); err != nil {
+	if desiredMS.Annotations, err = mdutil.ComputeMachineSetAnnotations(ctx, deployment, oldMSs, existingMS); err != nil {
 		return nil, errors.Wrap(err, "failed to compute desired MachineSet: failed to compute annotations")
 	}
 	desiredMS.Spec.Template.Annotations = cloneStringMap(deployment.Spec.Template.Annotations)
 
 	// Set all other in-place mutable fields.
-	desiredMS.Spec.MinReadySeconds = pointer.Int32Deref(deployment.Spec.MinReadySeconds, 0)
+	desiredMS.Spec.MinReadySeconds = ptr.Deref(deployment.Spec.MinReadySeconds, 0)
 	if deployment.Spec.Strategy != nil && deployment.Spec.Strategy.RollingUpdate != nil {
-		desiredMS.Spec.DeletePolicy = pointer.StringDeref(deployment.Spec.Strategy.RollingUpdate.DeletePolicy, "")
+		desiredMS.Spec.DeletePolicy = ptr.Deref(deployment.Spec.Strategy.RollingUpdate.DeletePolicy, "")
 	} else {
 		desiredMS.Spec.DeletePolicy = ""
 	}
@@ -500,6 +486,17 @@ func (r *Reconciler) syncDeploymentStatus(allMSs []*clusterv1.MachineSet, newMS 
 	} else {
 		conditions.MarkFalse(md, clusterv1.MachineDeploymentAvailableCondition, clusterv1.WaitingForAvailableMachinesReason, clusterv1.ConditionSeverityWarning, "Minimum availability requires %d replicas, current %d available", minReplicasNeeded, md.Status.AvailableReplicas)
 	}
+
+	if newMS != nil {
+		// Report a summary of current status of the MachineSet object owned by this MachineDeployment.
+		conditions.SetMirror(md, clusterv1.MachineSetReadyCondition,
+			newMS,
+			conditions.WithFallbackValue(false, clusterv1.WaitingForMachineSetFallbackReason, clusterv1.ConditionSeverityInfo, ""),
+		)
+	} else {
+		conditions.MarkFalse(md, clusterv1.MachineSetReadyCondition, clusterv1.WaitingForMachineSetFallbackReason, clusterv1.ConditionSeverityInfo, "MachineSet not found")
+	}
+
 	return nil
 }
 
@@ -644,28 +641,4 @@ func (r *Reconciler) cleanupDeployment(ctx context.Context, oldMSs []*clusterv1.
 	}
 
 	return nil
-}
-
-func (r *Reconciler) updateMachineDeployment(ctx context.Context, md *clusterv1.MachineDeployment, modify func(*clusterv1.MachineDeployment)) error {
-	return updateMachineDeployment(ctx, r.Client, md, modify)
-}
-
-// We have this as standalone variant to be able to use it from the tests.
-func updateMachineDeployment(ctx context.Context, c client.Client, md *clusterv1.MachineDeployment, modify func(*clusterv1.MachineDeployment)) error {
-	mdObjectKey := util.ObjectKey(md)
-	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		// Note: We intentionally don't re-use the passed in MachineDeployment md here as that would
-		// overwrite any local changes we might have previously made to the MachineDeployment with the version
-		// we get here from the apiserver.
-		md := &clusterv1.MachineDeployment{}
-		if err := c.Get(ctx, mdObjectKey, md); err != nil {
-			return err
-		}
-		patchHelper, err := patch.NewHelper(md, c)
-		if err != nil {
-			return err
-		}
-		modify(md)
-		return patchHelper.Patch(ctx, md)
-	})
 }
