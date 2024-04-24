@@ -10,7 +10,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capg-system/capg-serving-cert
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -62,14 +62,19 @@ spec:
         description: GCPCluster is the Schema for the gcpclusters API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -79,9 +84,9 @@ spec:
               additionalLabels:
                 additionalProperties:
                   type: string
-                description: AdditionalLabels is an optional set of tags to add to
-                  GCP resources managed by the GCP provider, in addition to the ones
-                  added by default.
+                description: |-
+                  AdditionalLabels is an optional set of tags to add to GCP resources managed by the GCP provider, in addition to the
+                  ones added by default.
                 type: object
               controlPlaneEndpoint:
                 description: ControlPlaneEndpoint represents the endpoint used to
@@ -99,38 +104,59 @@ spec:
                 - port
                 type: object
               credentialsRef:
-                description: CredentialsRef is a reference to a Secret that contains
-                  the credentials to use for provisioning this cluster. If not supplied
-                  then the credentials of the controller will be used.
+                description: |-
+                  CredentialsRef is a reference to a Secret that contains the credentials to use for provisioning this cluster. If not
+                  supplied then the credentials of the controller will be used.
                 properties:
                   name:
-                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                    description: |-
+                      Name of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                     type: string
                   namespace:
-                    description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                    description: |-
+                      Namespace of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                     type: string
                 required:
                 - name
                 - namespace
                 type: object
               failureDomains:
-                description: FailureDomains is an optional field which is used to
-                  assign selected availability zones to a cluster FailureDomains if
-                  empty, defaults to all the zones in the selected region and if specified
-                  would override the default zones.
+                description: |-
+                  FailureDomains is an optional field which is used to assign selected availability zones to a cluster
+                  FailureDomains if empty, defaults to all the zones in the selected region and if specified would override
+                  the default zones.
                 items:
                   type: string
                 type: array
+              loadBalancer:
+                description: LoadBalancer contains configuration for one or more LoadBalancers.
+                properties:
+                  apiServerInstanceGroupTagOverride:
+                    description: |-
+                      APIServerInstanceGroupTagOverride overrides the default setting for the
+                      tag used when creating the API Server Instance Group.
+                    maxLength: 16
+                    pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
+                    type: string
+                type: object
               network:
                 description: NetworkSpec encapsulates all things related to GCP network.
                 properties:
                   autoCreateSubnetworks:
-                    description: "AutoCreateSubnetworks: When set to true, the VPC
-                      network is created in \"auto\" mode. When set to false, the
-                      VPC network is created in \"custom\" mode. \n An auto mode VPC
-                      network starts with one subnet per region. Each subnet has a
-                      predetermined range as described in Auto mode VPC network IP
-                      ranges. \n Defaults to true."
+                    description: |-
+                      AutoCreateSubnetworks: When set to true, the VPC network is created
+                      in "auto" mode. When set to false, the VPC network is created in
+                      "custom" mode.
+
+
+                      An auto mode VPC network starts with one subnet per region. Each
+                      subnet has a predetermined range as described in Auto mode VPC
+                      network IP ranges.
+
+
+                      Defaults to true.
                     type: boolean
                   loadBalancerBackendPort:
                     description: Allow for configuration of load balancer backend
@@ -146,45 +172,50 @@ spec:
                       description: SubnetSpec configures an GCP Subnet.
                       properties:
                         cidrBlock:
-                          description: CidrBlock is the range of internal addresses
-                            that are owned by this subnetwork. Provide this property
-                            when you create the subnetwork. For example, 10.0.0.0/8
-                            or 192.168.0.0/16. Ranges must be unique and non-overlapping
-                            within a network. Only IPv4 is supported. This field can
-                            be set only at resource creation time.
+                          description: |-
+                            CidrBlock is the range of internal addresses that are owned by this
+                            subnetwork. Provide this property when you create the subnetwork. For
+                            example, 10.0.0.0/8 or 192.168.0.0/16. Ranges must be unique and
+                            non-overlapping within a network. Only IPv4 is supported. This field
+                            can be set only at resource creation time.
                           type: string
                         description:
                           description: Description is an optional description associated
                             with the resource.
                           type: string
                         enableFlowLogs:
-                          description: 'EnableFlowLogs: Whether to enable flow logging
-                            for this subnetwork. If this field is not explicitly set,
-                            it will not appear in get listings. If not set the default
-                            behavior is to disable flow logging.'
+                          description: |-
+                            EnableFlowLogs: Whether to enable flow logging for this subnetwork.
+                            If this field is not explicitly set, it will not appear in get
+                            listings. If not set the default behavior is to disable flow logging.
                           type: boolean
                         name:
                           description: Name defines a unique identifier to reference
                             this resource.
                           type: string
                         privateGoogleAccess:
-                          description: PrivateGoogleAccess defines whether VMs in
-                            this subnet can access Google services without assigning
-                            external IP addresses
+                          description: |-
+                            PrivateGoogleAccess defines whether VMs in this subnet can access
+                            Google services without assigning external IP addresses
                           type: boolean
                         purpose:
                           default: PRIVATE_RFC_1918
-                          description: "Purpose: The purpose of the resource. If unspecified,
-                            the purpose defaults to PRIVATE_RFC_1918. The enableFlowLogs
-                            field isn't supported with the purpose field set to INTERNAL_HTTPS_LOAD_BALANCER.
-                            \n Possible values: \"INTERNAL_HTTPS_LOAD_BALANCER\" -
-                            Subnet reserved for Internal HTTP(S) Load Balancing. \"PRIVATE\"
-                            - Regular user created or automatically created subnet.
-                            \"PRIVATE_RFC_1918\" - Regular user created or automatically
-                            created subnet. \"PRIVATE_SERVICE_CONNECT\" - Subnetworks
-                            created for Private Service Connect in the producer network.
-                            \"REGIONAL_MANAGED_PROXY\" - Subnetwork used for Regional
-                            Internal/External HTTP(S) Load Balancing."
+                          description: |-
+                            Purpose: The purpose of the resource.
+                            If unspecified, the purpose defaults to PRIVATE_RFC_1918.
+                            The enableFlowLogs field isn't supported with the purpose field set to INTERNAL_HTTPS_LOAD_BALANCER.
+
+
+                            Possible values:
+                              "INTERNAL_HTTPS_LOAD_BALANCER" - Subnet reserved for Internal
+                            HTTP(S) Load Balancing.
+                              "PRIVATE" - Regular user created or automatically created subnet.
+                              "PRIVATE_RFC_1918" - Regular user created or automatically created
+                            subnet.
+                              "PRIVATE_SERVICE_CONNECT" - Subnetworks created for Private Service
+                            Connect in the producer network.
+                              "REGIONAL_MANAGED_PROXY" - Subnetwork used for Regional
+                            Internal/External HTTP(S) Load Balancing.
                           enum:
                           - INTERNAL_HTTPS_LOAD_BALANCER
                           - PRIVATE_RFC_1918
@@ -199,9 +230,9 @@ spec:
                         secondaryCidrBlocks:
                           additionalProperties:
                             type: string
-                          description: SecondaryCidrBlocks defines secondary CIDR
-                            ranges, from which secondary IP ranges of a VM may be
-                            allocated
+                          description: |-
+                            SecondaryCidrBlocks defines secondary CIDR ranges,
+                            from which secondary IP ranges of a VM may be allocated
                           type: object
                       type: object
                     type: array
@@ -214,45 +245,42 @@ spec:
                 description: The GCP Region the cluster lives in.
                 type: string
               resourceManagerTags:
-                description: ResourceManagerTags is an optional set of tags to apply
-                  to GCP resources managed by the GCP provider. GCP supports a maximum
-                  of 50 tags per resource.
+                description: |-
+                  ResourceManagerTags is an optional set of tags to apply to GCP resources managed
+                  by the GCP provider. GCP supports a maximum of 50 tags per resource.
                 items:
                   description: ResourceManagerTag is a tag to apply to GCP resources
                     managed by the GCP provider.
                   properties:
                     key:
-                      description: Key is the key part of the tag. A tag key can have
-                        a maximum of 63 characters and cannot be empty. Tag key must
-                        begin and end with an alphanumeric character, and must contain
-                        only uppercase, lowercase alphanumeric characters, and the
-                        following special characters `._-`.
+                      description: |-
+                        Key is the key part of the tag. A tag key can have a maximum of 63 characters and cannot
+                        be empty. Tag key must begin and end with an alphanumeric character, and must contain
+                        only uppercase, lowercase alphanumeric characters, and the following special
+                        characters `._-`.
                       maxLength: 63
                       minLength: 1
                       pattern: ^[a-zA-Z0-9]([0-9A-Za-z_.-]{0,61}[a-zA-Z0-9])?$
                       type: string
                     parentID:
-                      description: ParentID is the ID of the hierarchical resource
-                        where the tags are defined e.g. at the Organization or the
-                        Project level. To find the Organization or Project ID ref
+                      description: |-
+                        ParentID is the ID of the hierarchical resource where the tags are defined
+                        e.g. at the Organization or the Project level. To find the Organization or Project ID ref
                         https://cloud.google.com/resource-manager/docs/creating-managing-organization#retrieving_your_organization_id
                         https://cloud.google.com/resource-manager/docs/creating-managing-projects#identifying_projects
-                        An OrganizationID must consist of decimal numbers, and cannot
-                        have leading zeroes. A ProjectID must be 6 to 30 characters
-                        in length, can only contain lowercase letters, numbers, and
-                        hyphens, and must start with a letter, and cannot end with
-                        a hyphen.
+                        An OrganizationID must consist of decimal numbers, and cannot have leading zeroes.
+                        A ProjectID must be 6 to 30 characters in length, can only contain lowercase letters,
+                        numbers, and hyphens, and must start with a letter, and cannot end with a hyphen.
                       maxLength: 32
                       minLength: 1
                       pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
                       type: string
                     value:
-                      description: Value is the value part of the tag. A tag value
-                        can have a maximum of 63 characters and cannot be empty. Tag
-                        value must begin and end with an alphanumeric character, and
-                        must contain only uppercase, lowercase alphanumeric characters,
-                        and the following special characters `_-.@%=+:,*#&(){}[]`
-                        and spaces.
+                      description: |-
+                        Value is the value part of the tag. A tag value can have a maximum of 63 characters and
+                        cannot be empty. Tag value must begin and end with an alphanumeric character, and must
+                        contain only uppercase, lowercase alphanumeric characters, and the following special
+                        characters `_-.@%=+:,*#&(){}[]` and spaces.
                       maxLength: 63
                       minLength: 1
                       pattern: ^[a-zA-Z0-9]([0-9A-Za-z_.@%=+:,*#&()\[\]{}\-\s]{0,61}[a-zA-Z0-9])?$
@@ -272,9 +300,9 @@ spec:
             properties:
               failureDomains:
                 additionalProperties:
-                  description: FailureDomainSpec is the Schema for Cluster API failure
-                    domains. It allows controllers to understand how many failure
-                    domains a cluster can optionally span across.
+                  description: |-
+                    FailureDomainSpec is the Schema for Cluster API failure domains.
+                    It allows controllers to understand how many failure domains a cluster can optionally span across.
                   properties:
                     attributes:
                       additionalProperties:
@@ -293,31 +321,36 @@ spec:
                 description: Network encapsulates GCP networking resources.
                 properties:
                   apiServerBackendService:
-                    description: APIServerBackendService is the full reference to
-                      the backend service created for the API Server.
+                    description: |-
+                      APIServerBackendService is the full reference to the backend service
+                      created for the API Server.
                     type: string
                   apiServerForwardingRule:
-                    description: APIServerForwardingRule is the full reference to
-                      the forwarding rule created for the API Server.
+                    description: |-
+                      APIServerForwardingRule is the full reference to the forwarding rule
+                      created for the API Server.
                     type: string
                   apiServerHealthCheck:
-                    description: APIServerHealthCheck is the full reference to the
-                      health check created for the API Server.
+                    description: |-
+                      APIServerHealthCheck is the full reference to the health check
+                      created for the API Server.
                     type: string
                   apiServerInstanceGroups:
                     additionalProperties:
                       type: string
-                    description: APIServerInstanceGroups is a map from zone to the
-                      full reference to the instance groups created for the control
-                      plane nodes created in the same zone.
+                    description: |-
+                      APIServerInstanceGroups is a map from zone to the full reference
+                      to the instance groups created for the control plane nodes created in the same zone.
                     type: object
                   apiServerIpAddress:
-                    description: APIServerAddress is the IPV4 global address assigned
-                      to the load balancer created for the API Server.
+                    description: |-
+                      APIServerAddress is the IPV4 global address assigned to the load balancer
+                      created for the API Server.
                     type: string
                   apiServerTargetProxy:
-                    description: APIServerTargetProxy is the full reference to the
-                      target proxy created for the API Server.
+                    description: |-
+                      APIServerTargetProxy is the full reference to the target proxy
+                      created for the API Server.
                     type: string
                   firewallRules:
                     additionalProperties:
@@ -326,8 +359,9 @@ spec:
                       to its full reference.
                     type: object
                   router:
-                    description: Router is the full reference to the router created
-                      within the network it'll contain the cloud nat gateway
+                    description: |-
+                      Router is the full reference to the router created within the network
+                      it'll contain the cloud nat gateway
                     type: string
                   selfLink:
                     description: SelfLink is the link to the Network used for this
@@ -351,7 +385,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capg-system/capg-serving-cert
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -388,14 +422,19 @@ spec:
           API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -406,24 +445,27 @@ spec:
                 description: GCPClusterTemplateResource contains spec for GCPClusterSpec.
                 properties:
                   metadata:
-                    description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
+                    description: |-
+                      Standard object's metadata.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
                     properties:
                       annotations:
                         additionalProperties:
                           type: string
-                        description: 'Annotations is an unstructured key value map
-                          stored with a resource that may be set by external tools
-                          to store and retrieve arbitrary metadata. They are not queryable
-                          and should be preserved when modifying objects. More info:
-                          http://kubernetes.io/docs/user-guide/annotations'
+                        description: |-
+                          Annotations is an unstructured key value map stored with a resource that may be
+                          set by external tools to store and retrieve arbitrary metadata. They are not
+                          queryable and should be preserved when modifying objects.
+                          More info: http://kubernetes.io/docs/user-guide/annotations
                         type: object
                       labels:
                         additionalProperties:
                           type: string
-                        description: 'Map of string keys and values that can be used
-                          to organize and categorize (scope and select) objects. May
-                          match selectors of replication controllers and services.
-                          More info: http://kubernetes.io/docs/user-guide/labels'
+                        description: |-
+                          Map of string keys and values that can be used to organize and categorize
+                          (scope and select) objects. May match selectors of replication controllers
+                          and services.
+                          More info: http://kubernetes.io/docs/user-guide/labels
                         type: object
                     type: object
                   spec:
@@ -432,9 +474,9 @@ spec:
                       additionalLabels:
                         additionalProperties:
                           type: string
-                        description: AdditionalLabels is an optional set of tags to
-                          add to GCP resources managed by the GCP provider, in addition
-                          to the ones added by default.
+                        description: |-
+                          AdditionalLabels is an optional set of tags to add to GCP resources managed by the GCP provider, in addition to the
+                          ones added by default.
                         type: object
                       controlPlaneEndpoint:
                         description: ControlPlaneEndpoint represents the endpoint
@@ -452,41 +494,61 @@ spec:
                         - port
                         type: object
                       credentialsRef:
-                        description: CredentialsRef is a reference to a Secret that
-                          contains the credentials to use for provisioning this cluster.
-                          If not supplied then the credentials of the controller will
-                          be used.
+                        description: |-
+                          CredentialsRef is a reference to a Secret that contains the credentials to use for provisioning this cluster. If not
+                          supplied then the credentials of the controller will be used.
                         properties:
                           name:
-                            description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                            description: |-
+                              Name of the referent.
+                              More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                             type: string
                           namespace:
-                            description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                            description: |-
+                              Namespace of the referent.
+                              More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                             type: string
                         required:
                         - name
                         - namespace
                         type: object
                       failureDomains:
-                        description: FailureDomains is an optional field which is
-                          used to assign selected availability zones to a cluster
-                          FailureDomains if empty, defaults to all the zones in the
-                          selected region and if specified would override the default
-                          zones.
+                        description: |-
+                          FailureDomains is an optional field which is used to assign selected availability zones to a cluster
+                          FailureDomains if empty, defaults to all the zones in the selected region and if specified would override
+                          the default zones.
                         items:
                           type: string
                         type: array
+                      loadBalancer:
+                        description: LoadBalancer contains configuration for one or
+                          more LoadBalancers.
+                        properties:
+                          apiServerInstanceGroupTagOverride:
+                            description: |-
+                              APIServerInstanceGroupTagOverride overrides the default setting for the
+                              tag used when creating the API Server Instance Group.
+                            maxLength: 16
+                            pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
+                            type: string
+                        type: object
                       network:
                         description: NetworkSpec encapsulates all things related to
                           GCP network.
                         properties:
                           autoCreateSubnetworks:
-                            description: "AutoCreateSubnetworks: When set to true,
-                              the VPC network is created in \"auto\" mode. When set
-                              to false, the VPC network is created in \"custom\" mode.
-                              \n An auto mode VPC network starts with one subnet per
-                              region. Each subnet has a predetermined range as described
-                              in Auto mode VPC network IP ranges. \n Defaults to true."
+                            description: |-
+                              AutoCreateSubnetworks: When set to true, the VPC network is created
+                              in "auto" mode. When set to false, the VPC network is created in
+                              "custom" mode.
+
+
+                              An auto mode VPC network starts with one subnet per region. Each
+                              subnet has a predetermined range as described in Auto mode VPC
+                              network IP ranges.
+
+
+                              Defaults to true.
                             type: boolean
                           loadBalancerBackendPort:
                             description: Allow for configuration of load balancer
@@ -502,49 +564,50 @@ spec:
                               description: SubnetSpec configures an GCP Subnet.
                               properties:
                                 cidrBlock:
-                                  description: CidrBlock is the range of internal
-                                    addresses that are owned by this subnetwork. Provide
-                                    this property when you create the subnetwork.
-                                    For example, 10.0.0.0/8 or 192.168.0.0/16. Ranges
-                                    must be unique and non-overlapping within a network.
-                                    Only IPv4 is supported. This field can be set
-                                    only at resource creation time.
+                                  description: |-
+                                    CidrBlock is the range of internal addresses that are owned by this
+                                    subnetwork. Provide this property when you create the subnetwork. For
+                                    example, 10.0.0.0/8 or 192.168.0.0/16. Ranges must be unique and
+                                    non-overlapping within a network. Only IPv4 is supported. This field
+                                    can be set only at resource creation time.
                                   type: string
                                 description:
                                   description: Description is an optional description
                                     associated with the resource.
                                   type: string
                                 enableFlowLogs:
-                                  description: 'EnableFlowLogs: Whether to enable
-                                    flow logging for this subnetwork. If this field
-                                    is not explicitly set, it will not appear in get
-                                    listings. If not set the default behavior is to
-                                    disable flow logging.'
+                                  description: |-
+                                    EnableFlowLogs: Whether to enable flow logging for this subnetwork.
+                                    If this field is not explicitly set, it will not appear in get
+                                    listings. If not set the default behavior is to disable flow logging.
                                   type: boolean
                                 name:
                                   description: Name defines a unique identifier to
                                     reference this resource.
                                   type: string
                                 privateGoogleAccess:
-                                  description: PrivateGoogleAccess defines whether
-                                    VMs in this subnet can access Google services
-                                    without assigning external IP addresses
+                                  description: |-
+                                    PrivateGoogleAccess defines whether VMs in this subnet can access
+                                    Google services without assigning external IP addresses
                                   type: boolean
                                 purpose:
                                   default: PRIVATE_RFC_1918
-                                  description: "Purpose: The purpose of the resource.
+                                  description: |-
+                                    Purpose: The purpose of the resource.
                                     If unspecified, the purpose defaults to PRIVATE_RFC_1918.
-                                    The enableFlowLogs field isn't supported with
-                                    the purpose field set to INTERNAL_HTTPS_LOAD_BALANCER.
-                                    \n Possible values: \"INTERNAL_HTTPS_LOAD_BALANCER\"
-                                    - Subnet reserved for Internal HTTP(S) Load Balancing.
-                                    \"PRIVATE\" - Regular user created or automatically
-                                    created subnet. \"PRIVATE_RFC_1918\" - Regular
-                                    user created or automatically created subnet.
-                                    \"PRIVATE_SERVICE_CONNECT\" - Subnetworks created
-                                    for Private Service Connect in the producer network.
-                                    \"REGIONAL_MANAGED_PROXY\" - Subnetwork used for
-                                    Regional Internal/External HTTP(S) Load Balancing."
+                                    The enableFlowLogs field isn't supported with the purpose field set to INTERNAL_HTTPS_LOAD_BALANCER.
+
+
+                                    Possible values:
+                                      "INTERNAL_HTTPS_LOAD_BALANCER" - Subnet reserved for Internal
+                                    HTTP(S) Load Balancing.
+                                      "PRIVATE" - Regular user created or automatically created subnet.
+                                      "PRIVATE_RFC_1918" - Regular user created or automatically created
+                                    subnet.
+                                      "PRIVATE_SERVICE_CONNECT" - Subnetworks created for Private Service
+                                    Connect in the producer network.
+                                      "REGIONAL_MANAGED_PROXY" - Subnetwork used for Regional
+                                    Internal/External HTTP(S) Load Balancing.
                                   enum:
                                   - INTERNAL_HTTPS_LOAD_BALANCER
                                   - PRIVATE_RFC_1918
@@ -559,9 +622,9 @@ spec:
                                 secondaryCidrBlocks:
                                   additionalProperties:
                                     type: string
-                                  description: SecondaryCidrBlocks defines secondary
-                                    CIDR ranges, from which secondary IP ranges of
-                                    a VM may be allocated
+                                  description: |-
+                                    SecondaryCidrBlocks defines secondary CIDR ranges,
+                                    from which secondary IP ranges of a VM may be allocated
                                   type: object
                               type: object
                             type: array
@@ -574,45 +637,41 @@ spec:
                         description: The GCP Region the cluster lives in.
                         type: string
                       resourceManagerTags:
-                        description: ResourceManagerTags is an optional set of tags
-                          to apply to GCP resources managed by the GCP provider. GCP
-                          supports a maximum of 50 tags per resource.
+                        description: |-
+                          ResourceManagerTags is an optional set of tags to apply to GCP resources managed
+                          by the GCP provider. GCP supports a maximum of 50 tags per resource.
                         items:
                           description: ResourceManagerTag is a tag to apply to GCP
                             resources managed by the GCP provider.
                           properties:
                             key:
-                              description: Key is the key part of the tag. A tag key
-                                can have a maximum of 63 characters and cannot be
-                                empty. Tag key must begin and end with an alphanumeric
-                                character, and must contain only uppercase, lowercase
-                                alphanumeric characters, and the following special
+                              description: |-
+                                Key is the key part of the tag. A tag key can have a maximum of 63 characters and cannot
+                                be empty. Tag key must begin and end with an alphanumeric character, and must contain
+                                only uppercase, lowercase alphanumeric characters, and the following special
                                 characters `._-`.
                               maxLength: 63
                               minLength: 1
                               pattern: ^[a-zA-Z0-9]([0-9A-Za-z_.-]{0,61}[a-zA-Z0-9])?$
                               type: string
                             parentID:
-                              description: ParentID is the ID of the hierarchical
-                                resource where the tags are defined e.g. at the Organization
-                                or the Project level. To find the Organization or
-                                Project ID ref https://cloud.google.com/resource-manager/docs/creating-managing-organization#retrieving_your_organization_id
+                              description: |-
+                                ParentID is the ID of the hierarchical resource where the tags are defined
+                                e.g. at the Organization or the Project level. To find the Organization or Project ID ref
+                                https://cloud.google.com/resource-manager/docs/creating-managing-organization#retrieving_your_organization_id
                                 https://cloud.google.com/resource-manager/docs/creating-managing-projects#identifying_projects
-                                An OrganizationID must consist of decimal numbers,
-                                and cannot have leading zeroes. A ProjectID must be
-                                6 to 30 characters in length, can only contain lowercase
-                                letters, numbers, and hyphens, and must start with
-                                a letter, and cannot end with a hyphen.
+                                An OrganizationID must consist of decimal numbers, and cannot have leading zeroes.
+                                A ProjectID must be 6 to 30 characters in length, can only contain lowercase letters,
+                                numbers, and hyphens, and must start with a letter, and cannot end with a hyphen.
                               maxLength: 32
                               minLength: 1
                               pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
                               type: string
                             value:
-                              description: Value is the value part of the tag. A tag
-                                value can have a maximum of 63 characters and cannot
-                                be empty. Tag value must begin and end with an alphanumeric
-                                character, and must contain only uppercase, lowercase
-                                alphanumeric characters, and the following special
+                              description: |-
+                                Value is the value part of the tag. A tag value can have a maximum of 63 characters and
+                                cannot be empty. Tag value must begin and end with an alphanumeric character, and must
+                                contain only uppercase, lowercase alphanumeric characters, and the following special
                                 characters `_-.@%=+:,*#&(){}[]` and spaces.
                               maxLength: 63
                               minLength: 1
@@ -643,7 +702,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capg-system/capg-serving-cert
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -698,14 +757,19 @@ spec:
         description: GCPMachine is the Schema for the gcpmachines API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -718,33 +782,33 @@ spec:
                   description: AttachedDiskSpec degined GCP machine disk.
                   properties:
                     deviceType:
-                      description: 'DeviceType is a device type of the attached disk.
-                        Supported types of non-root attached volumes: 1. "pd-standard"
-                        - Standard (HDD) persistent disk 2. "pd-ssd" - SSD persistent
-                        disk 3. "local-ssd" - Local SSD disk (https://cloud.google.com/compute/docs/disks/local-ssd).
-                        Default is "pd-standard".'
+                      description: |-
+                        DeviceType is a device type of the attached disk.
+                        Supported types of non-root attached volumes:
+                        1. "pd-standard" - Standard (HDD) persistent disk
+                        2. "pd-ssd" - SSD persistent disk
+                        3. "local-ssd" - Local SSD disk (https://cloud.google.com/compute/docs/disks/local-ssd).
+                        Default is "pd-standard".
                       type: string
                     encryptionKey:
                       description: EncryptionKey defines the KMS key to be used to
                         encrypt the disk.
                       properties:
                         keyType:
-                          description: KeyType is the type of encryption key. Must
-                            be either Managed, aka Customer-Managed Encryption Key
-                            (CMEK) or Supplied, aka Customer-Supplied EncryptionKey
-                            (CSEK).
+                          description: |-
+                            KeyType is the type of encryption key. Must be either Managed, aka Customer-Managed Encryption Key (CMEK) or
+                            Supplied, aka Customer-Supplied EncryptionKey (CSEK).
                           enum:
                           - Managed
                           - Supplied
                           type: string
                         kmsKeyServiceAccount:
-                          description: 'KMSKeyServiceAccount is the service account
-                            being used for the encryption request for the given KMS
-                            key. If absent, the Compute Engine default service account
-                            is used. For example: "kmsKeyServiceAccount": "name@project_id.iam.gserviceaccount.com.
-                            The maximum length is based on the Service Account ID
-                            (max 30), Project (max 30), and a valid gcloud email suffix
-                            ("iam.gserviceaccount.com").'
+                          description: |-
+                            KMSKeyServiceAccount is the service account being used for the encryption request for the given KMS key.
+                            If absent, the Compute Engine default service account is used. For example:
+                            "kmsKeyServiceAccount": "name@project_id.iam.gserviceaccount.com.
+                            The maximum length is based on the Service Account ID (max 30), Project (max 30), and a valid gcloud email
+                            suffix ("iam.gserviceaccount.com").
                           maxLength: 85
                           pattern: '[-_[A-Za-z0-9]+@[-_[A-Za-z0-9]+.iam.gserviceaccount.com'
                           type: string
@@ -754,9 +818,9 @@ spec:
                             is Managed.
                           properties:
                             kmsKeyName:
-                              description: 'KMSKeyName is the name of the encryption
-                                key that is stored in Google Cloud KMS. For example:
-                                "kmsKeyName": "projects/kms_project_id/locations/region/keyRings/key_region/cryptoKeys/key'
+                              description: |-
+                                KMSKeyName is the name of the encryption key that is stored in Google Cloud KMS. For example:
+                                "kmsKeyName": "projects/kms_project_id/locations/region/keyRings/key_region/cryptoKeys/key
                               maxLength: 160
                               pattern: projects\/[-_[A-Za-z0-9]+\/locations\/[-_[A-Za-z0-9]+\/keyRings\/[-_[A-Za-z0-9]+\/cryptoKeys\/[-_[A-Za-z0-9]+
                               type: string
@@ -768,27 +832,24 @@ spec:
                           minProperties: 1
                           properties:
                             rawKey:
-                              description: 'RawKey specifies a 256-bit customer-supplied
-                                encryption key, encoded in RFC 4648 base64 to either
-                                encrypt or decrypt this resource. You can provide
-                                either the rawKey or the rsaEncryptedKey. For example:
-                                "rawKey": "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0="'
+                              description: |-
+                                RawKey specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
+                                base64 to either encrypt or decrypt this resource. You can provide either the rawKey or the rsaEncryptedKey.
+                                For example: "rawKey": "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0="
                               format: byte
                               type: string
                             rsaEncryptedKey:
-                              description: 'RSAEncryptedKey specifies an RFC 4648
-                                base64 encoded, RSA-wrapped 2048-bit customer-supplied
-                                encryption key to either encrypt or decrypt this resource.
-                                You can provide either the rawKey or the rsaEncryptedKey.
+                              description: |-
+                                RSAEncryptedKey specifies an RFC 4648 base64 encoded, RSA-wrapped 2048-bit customer-supplied encryption
+                                key to either encrypt or decrypt this resource. You can provide either the rawKey or the
+                                rsaEncryptedKey.
                                 For example: "rsaEncryptedKey": "ieCx/NcW06PcT7Ep1X6LUTc/hLvUDYyzSZPPVCVPTVEohpeHASqC8uw5TzyO9U+Fka9JFHi
                                 z0mBibXUInrC/jEk014kCK/NPjYgEMOyssZ4ZINPKxlUh2zn1bV+MCaTICrdmuSBTWlUUiFoDi
                                 D6PYznLwh8ZNdaheCeZ8ewEXgFQ8V+sDroLaN3Xs3MDTXQEMMoNUXMCZEIpg9Vtp9x2oe=="
-                                The key must meet the following requirements before
-                                you can provide it to Compute Engine: 1. The key is
-                                wrapped using a RSA public key certificate provided
-                                by Google. 2. After being wrapped, the key must be
-                                encoded in RFC 4648 base64 encoding. Gets the RSA
-                                public key certificate provided by Google at: https://cloud-certs.storage.googleapis.com/google-cloud-csek-ingress.pem'
+                                The key must meet the following requirements before you can provide it to Compute Engine:
+                                1. The key is wrapped using a RSA public key certificate provided by Google.
+                                2. After being wrapped, the key must be encoded in RFC 4648 base64 encoding.
+                                Gets the RSA public key certificate provided by Google at: https://cloud-certs.storage.googleapis.com/google-cloud-csek-ingress.pem
                               format: byte
                               type: string
                           type: object
@@ -796,8 +857,9 @@ spec:
                       - keyType
                       type: object
                     size:
-                      description: Size is the size of the disk in GBs. Defaults to
-                        30GB. For "local-ssd" size is always 375GB.
+                      description: |-
+                        Size is the size of the disk in GBs.
+                        Defaults to 30GB. For "local-ssd" size is always 375GB.
                       format: int64
                       type: integer
                   type: object
@@ -805,16 +867,15 @@ spec:
               additionalLabels:
                 additionalProperties:
                   type: string
-                description: AdditionalLabels is an optional set of tags to add to
-                  an instance, in addition to the ones added by default by the GCP
-                  provider. If both the GCPCluster and the GCPMachine specify the
-                  same tag name with different values, the GCPMachine's value takes
-                  precedence.
+                description: |-
+                  AdditionalLabels is an optional set of tags to add to an instance, in addition to the ones added by default by the
+                  GCP provider. If both the GCPCluster and the GCPMachine specify the same tag name with different values, the
+                  GCPMachine's value takes precedence.
                 type: object
               additionalMetadata:
-                description: AdditionalMetadata is an optional set of metadata to
-                  add to an instance, in addition to the ones added by default by
-                  the GCP provider.
+                description: |-
+                  AdditionalMetadata is an optional set of metadata to add to an instance, in addition to the ones added by default by the
+                  GCP provider.
                 items:
                   description: MetadataItem defines a single piece of metadata associated
                     with an instance.
@@ -833,25 +894,26 @@ spec:
                 - key
                 x-kubernetes-list-type: map
               additionalNetworkTags:
-                description: AdditionalNetworkTags is a list of network tags that
-                  should be applied to the instance. These tags are set in addition
-                  to any network tags defined at the cluster level or in the actuator.
+                description: |-
+                  AdditionalNetworkTags is a list of network tags that should be applied to the
+                  instance. These tags are set in addition to any network tags defined
+                  at the cluster level or in the actuator.
                 items:
                   type: string
                 type: array
               confidentialCompute:
-                description: ConfidentialCompute Defines whether the instance should
-                  have confidential compute enabled. If enabled OnHostMaintenance
-                  is required to be set to "Terminate". If omitted, the platform chooses
-                  a default, which is subject to change over time, currently that
-                  default is false.
+                description: |-
+                  ConfidentialCompute Defines whether the instance should have confidential compute enabled.
+                  If enabled OnHostMaintenance is required to be set to "Terminate".
+                  If omitted, the platform chooses a default, which is subject to change over time, currently that default is false.
                 enum:
                 - Enabled
                 - Disabled
                 type: string
               image:
-                description: Image is the full reference to a valid image to be used
-                  for this machine. Takes precedence over ImageFamily.
+                description: |-
+                  Image is the full reference to a valid image to be used for this machine.
+                  Takes precedence over ImageFamily.
                 type: string
               imageFamily:
                 description: ImageFamily is the full reference to a valid image family
@@ -863,19 +925,17 @@ spec:
                 type: string
               ipForwarding:
                 default: Enabled
-                description: IPForwarding Allows this instance to send and receive
-                  packets with non-matching destination or source IPs. This is required
-                  if you plan to use this instance to forward routes. Defaults to
-                  enabled.
+                description: |-
+                  IPForwarding Allows this instance to send and receive packets with non-matching destination or source IPs.
+                  This is required if you plan to use this instance to forward routes. Defaults to enabled.
                 enum:
                 - Enabled
                 - Disabled
                 type: string
               onHostMaintenance:
-                description: OnHostMaintenance determines the behavior when a maintenance
-                  event occurs that might cause the instance to reboot. If omitted,
-                  the platform chooses a default, which is subject to change over
-                  time, currently that default is "Migrate".
+                description: |-
+                  OnHostMaintenance determines the behavior when a maintenance event occurs that might cause the instance to reboot.
+                  If omitted, the platform chooses a default, which is subject to change over time, currently that default is "Migrate".
                 enum:
                 - Migrate
                 - Terminate
@@ -888,50 +948,47 @@ spec:
                   cloud provider.
                 type: string
               publicIP:
-                description: PublicIP specifies whether the instance should get a
-                  public IP. Set this to true if you don't have a NAT instances or
-                  Cloud Nat setup.
+                description: |-
+                  PublicIP specifies whether the instance should get a public IP.
+                  Set this to true if you don't have a NAT instances or Cloud Nat setup.
                 type: boolean
               resourceManagerTags:
-                description: ResourceManagerTags is an optional set of tags to apply
-                  to GCP resources managed by the GCP provider. GCP supports a maximum
-                  of 50 tags per resource.
+                description: |-
+                  ResourceManagerTags is an optional set of tags to apply to GCP resources managed
+                  by the GCP provider. GCP supports a maximum of 50 tags per resource.
                 items:
                   description: ResourceManagerTag is a tag to apply to GCP resources
                     managed by the GCP provider.
                   properties:
                     key:
-                      description: Key is the key part of the tag. A tag key can have
-                        a maximum of 63 characters and cannot be empty. Tag key must
-                        begin and end with an alphanumeric character, and must contain
-                        only uppercase, lowercase alphanumeric characters, and the
-                        following special characters `._-`.
+                      description: |-
+                        Key is the key part of the tag. A tag key can have a maximum of 63 characters and cannot
+                        be empty. Tag key must begin and end with an alphanumeric character, and must contain
+                        only uppercase, lowercase alphanumeric characters, and the following special
+                        characters `._-`.
                       maxLength: 63
                       minLength: 1
                       pattern: ^[a-zA-Z0-9]([0-9A-Za-z_.-]{0,61}[a-zA-Z0-9])?$
                       type: string
                     parentID:
-                      description: ParentID is the ID of the hierarchical resource
-                        where the tags are defined e.g. at the Organization or the
-                        Project level. To find the Organization or Project ID ref
+                      description: |-
+                        ParentID is the ID of the hierarchical resource where the tags are defined
+                        e.g. at the Organization or the Project level. To find the Organization or Project ID ref
                         https://cloud.google.com/resource-manager/docs/creating-managing-organization#retrieving_your_organization_id
                         https://cloud.google.com/resource-manager/docs/creating-managing-projects#identifying_projects
-                        An OrganizationID must consist of decimal numbers, and cannot
-                        have leading zeroes. A ProjectID must be 6 to 30 characters
-                        in length, can only contain lowercase letters, numbers, and
-                        hyphens, and must start with a letter, and cannot end with
-                        a hyphen.
+                        An OrganizationID must consist of decimal numbers, and cannot have leading zeroes.
+                        A ProjectID must be 6 to 30 characters in length, can only contain lowercase letters,
+                        numbers, and hyphens, and must start with a letter, and cannot end with a hyphen.
                       maxLength: 32
                       minLength: 1
                       pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
                       type: string
                     value:
-                      description: Value is the value part of the tag. A tag value
-                        can have a maximum of 63 characters and cannot be empty. Tag
-                        value must begin and end with an alphanumeric character, and
-                        must contain only uppercase, lowercase alphanumeric characters,
-                        and the following special characters `_-.@%=+:,*#&(){}[]`
-                        and spaces.
+                      description: |-
+                        Value is the value part of the tag. A tag value can have a maximum of 63 characters and
+                        cannot be empty. Tag value must begin and end with an alphanumeric character, and must
+                        contain only uppercase, lowercase alphanumeric characters, and the following special
+                        characters `_-.@%=+:,*#&(){}[]` and spaces.
                       maxLength: 63
                       minLength: 1
                       pattern: ^[a-zA-Z0-9]([0-9A-Za-z_.@%=+:,*#&()\[\]{}\-\s]{0,61}[a-zA-Z0-9])?$
@@ -943,34 +1000,38 @@ spec:
                   type: object
                 type: array
               rootDeviceSize:
-                description: RootDeviceSize is the size of the root volume in GB.
+                description: |-
+                  RootDeviceSize is the size of the root volume in GB.
                   Defaults to 30.
                 format: int64
                 type: integer
               rootDeviceType:
-                description: 'RootDeviceType is the type of the root volume. Supported
-                  types of root volumes: 1. "pd-standard" - Standard (HDD) persistent
-                  disk 2. "pd-ssd" - SSD persistent disk Default is "pd-standard".'
+                description: |-
+                  RootDeviceType is the type of the root volume.
+                  Supported types of root volumes:
+                  1. "pd-standard" - Standard (HDD) persistent disk
+                  2. "pd-ssd" - SSD persistent disk
+                  Default is "pd-standard".
                 type: string
               rootDiskEncryptionKey:
                 description: RootDiskEncryptionKey defines the KMS key to be used
                   to encrypt the root disk.
                 properties:
                   keyType:
-                    description: KeyType is the type of encryption key. Must be either
-                      Managed, aka Customer-Managed Encryption Key (CMEK) or Supplied,
-                      aka Customer-Supplied EncryptionKey (CSEK).
+                    description: |-
+                      KeyType is the type of encryption key. Must be either Managed, aka Customer-Managed Encryption Key (CMEK) or
+                      Supplied, aka Customer-Supplied EncryptionKey (CSEK).
                     enum:
                     - Managed
                     - Supplied
                     type: string
                   kmsKeyServiceAccount:
-                    description: 'KMSKeyServiceAccount is the service account being
-                      used for the encryption request for the given KMS key. If absent,
-                      the Compute Engine default service account is used. For example:
+                    description: |-
+                      KMSKeyServiceAccount is the service account being used for the encryption request for the given KMS key.
+                      If absent, the Compute Engine default service account is used. For example:
                       "kmsKeyServiceAccount": "name@project_id.iam.gserviceaccount.com.
-                      The maximum length is based on the Service Account ID (max 30),
-                      Project (max 30), and a valid gcloud email suffix ("iam.gserviceaccount.com").'
+                      The maximum length is based on the Service Account ID (max 30), Project (max 30), and a valid gcloud email
+                      suffix ("iam.gserviceaccount.com").
                     maxLength: 85
                     pattern: '[-_[A-Za-z0-9]+@[-_[A-Za-z0-9]+.iam.gserviceaccount.com'
                     type: string
@@ -979,9 +1040,9 @@ spec:
                       Management Service. This should be set when KeyType is Managed.
                     properties:
                       kmsKeyName:
-                        description: 'KMSKeyName is the name of the encryption key
-                          that is stored in Google Cloud KMS. For example: "kmsKeyName":
-                          "projects/kms_project_id/locations/region/keyRings/key_region/cryptoKeys/key'
+                        description: |-
+                          KMSKeyName is the name of the encryption key that is stored in Google Cloud KMS. For example:
+                          "kmsKeyName": "projects/kms_project_id/locations/region/keyRings/key_region/cryptoKeys/key
                         maxLength: 160
                         pattern: projects\/[-_[A-Za-z0-9]+\/locations\/[-_[A-Za-z0-9]+\/keyRings\/[-_[A-Za-z0-9]+\/cryptoKeys\/[-_[A-Za-z0-9]+
                         type: string
@@ -993,26 +1054,24 @@ spec:
                     minProperties: 1
                     properties:
                       rawKey:
-                        description: 'RawKey specifies a 256-bit customer-supplied
-                          encryption key, encoded in RFC 4648 base64 to either encrypt
-                          or decrypt this resource. You can provide either the rawKey
-                          or the rsaEncryptedKey. For example: "rawKey": "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0="'
+                        description: |-
+                          RawKey specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
+                          base64 to either encrypt or decrypt this resource. You can provide either the rawKey or the rsaEncryptedKey.
+                          For example: "rawKey": "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0="
                         format: byte
                         type: string
                       rsaEncryptedKey:
-                        description: 'RSAEncryptedKey specifies an RFC 4648 base64
-                          encoded, RSA-wrapped 2048-bit customer-supplied encryption
-                          key to either encrypt or decrypt this resource. You can
-                          provide either the rawKey or the rsaEncryptedKey. For example:
-                          "rsaEncryptedKey": "ieCx/NcW06PcT7Ep1X6LUTc/hLvUDYyzSZPPVCVPTVEohpeHASqC8uw5TzyO9U+Fka9JFHi
+                        description: |-
+                          RSAEncryptedKey specifies an RFC 4648 base64 encoded, RSA-wrapped 2048-bit customer-supplied encryption
+                          key to either encrypt or decrypt this resource. You can provide either the rawKey or the
+                          rsaEncryptedKey.
+                          For example: "rsaEncryptedKey": "ieCx/NcW06PcT7Ep1X6LUTc/hLvUDYyzSZPPVCVPTVEohpeHASqC8uw5TzyO9U+Fka9JFHi
                           z0mBibXUInrC/jEk014kCK/NPjYgEMOyssZ4ZINPKxlUh2zn1bV+MCaTICrdmuSBTWlUUiFoDi
                           D6PYznLwh8ZNdaheCeZ8ewEXgFQ8V+sDroLaN3Xs3MDTXQEMMoNUXMCZEIpg9Vtp9x2oe=="
-                          The key must meet the following requirements before you
-                          can provide it to Compute Engine: 1. The key is wrapped
-                          using a RSA public key certificate provided by Google. 2.
-                          After being wrapped, the key must be encoded in RFC 4648
-                          base64 encoding. Gets the RSA public key certificate provided
-                          by Google at: https://cloud-certs.storage.googleapis.com/google-cloud-csek-ingress.pem'
+                          The key must meet the following requirements before you can provide it to Compute Engine:
+                          1. The key is wrapped using a RSA public key certificate provided by Google.
+                          2. After being wrapped, the key must be encoded in RFC 4648 base64 encoding.
+                          Gets the RSA public key certificate provided by Google at: https://cloud-certs.storage.googleapis.com/google-cloud-csek-ingress.pem
                         format: byte
                         type: string
                     type: object
@@ -1020,16 +1079,17 @@ spec:
                 - keyType
                 type: object
               serviceAccounts:
-                description: 'ServiceAccount specifies the service account email and
-                  which scopes to assign to the machine. Defaults to: email: "default",
-                  scope: []{compute.CloudPlatformScope}'
+                description: |-
+                  ServiceAccount specifies the service account email and which scopes to assign to the machine.
+                  Defaults to: email: "default", scope: []{compute.CloudPlatformScope}
                 properties:
                   email:
                     description: 'Email: Email address of the service account.'
                     type: string
                   scopes:
-                    description: 'Scopes: The list of scopes to be made available
-                      for this service account.'
+                    description: |-
+                      Scopes: The list of scopes to be made available for this service
+                      account.
                     items:
                       type: string
                     type: array
@@ -1039,45 +1099,38 @@ spec:
                   for this machine
                 properties:
                   integrityMonitoring:
-                    description: IntegrityMonitoring determines whether the instance
-                      should have integrity monitoring that verify the runtime boot
-                      integrity. Compares the most recent boot measurements to the
-                      integrity policy baseline and return a pair of pass/fail results
-                      depending on whether they match or not. If omitted, the platform
-                      chooses a default, which is subject to change over time, currently
-                      that default is Enabled.
+                    description: |-
+                      IntegrityMonitoring determines whether the instance should have integrity monitoring that verify the runtime boot integrity.
+                      Compares the most recent boot measurements to the integrity policy baseline and return
+                      a pair of pass/fail results depending on whether they match or not.
+                      If omitted, the platform chooses a default, which is subject to change over time, currently that default is Enabled.
                     enum:
                     - Enabled
                     - Disabled
                     type: string
                   secureBoot:
-                    description: SecureBoot Defines whether the instance should have
-                      secure boot enabled. Secure Boot verify the digital signature
-                      of all boot components, and halting the boot process if signature
-                      verification fails. If omitted, the platform chooses a default,
-                      which is subject to change over time, currently that default
-                      is Disabled.
+                    description: |-
+                      SecureBoot Defines whether the instance should have secure boot enabled.
+                      Secure Boot verify the digital signature of all boot components, and halting the boot process if signature verification fails.
+                      If omitted, the platform chooses a default, which is subject to change over time, currently that default is Disabled.
                     enum:
                     - Enabled
                     - Disabled
                     type: string
                   virtualizedTrustedPlatformModule:
-                    description: VirtualizedTrustedPlatformModule enable virtualized
-                      trusted platform module measurements to create a known good
-                      boot integrity policy baseline. The integrity policy baseline
-                      is used for comparison with measurements from subsequent VM
-                      boots to determine if anything has changed. If omitted, the
-                      platform chooses a default, which is subject to change over
-                      time, currently that default is Enabled.
+                    description: |-
+                      VirtualizedTrustedPlatformModule enable virtualized trusted platform module measurements to create a known good boot integrity policy baseline.
+                      The integrity policy baseline is used for comparison with measurements from subsequent VM boots to determine if anything has changed.
+                      If omitted, the platform chooses a default, which is subject to change over time, currently that default is Enabled.
                     enum:
                     - Enabled
                     - Disabled
                     type: string
                 type: object
               subnet:
-                description: Subnet is a reference to the subnetwork to use for this
-                  instance. If not specified, the first subnetwork retrieved from
-                  the Cluster Region and Network is picked.
+                description: |-
+                  Subnet is a reference to the subnetwork to use for this instance. If not specified,
+                  the first subnetwork retrieved from the Cluster Region and Network is picked.
                 type: string
             required:
             - instanceType
@@ -1103,34 +1156,46 @@ spec:
                   type: object
                 type: array
               failureMessage:
-                description: "FailureMessage will be set in the event that there is
-                  a terminal problem reconciling the Machine and will contain a more
-                  verbose string suitable for logging and human consumption. \n This
-                  field should not be set for transitive errors that a controller
-                  faces that are expected to be fixed automatically over time (like
-                  service outages), but instead indicate that something is fundamentally
-                  wrong with the Machine's spec or the configuration of the controller,
-                  and that manual intervention is required. Examples of terminal errors
-                  would be invalid combinations of settings in the spec, values that
-                  are unsupported by the controller, or the responsible controller
-                  itself being critically misconfigured. \n Any transient errors that
-                  occur during the reconciliation of Machines can be added as events
-                  to the Machine object and/or logged in the controller's output."
+                description: |-
+                  FailureMessage will be set in the event that there is a terminal problem
+                  reconciling the Machine and will contain a more verbose string suitable
+                  for logging and human consumption.
+
+
+                  This field should not be set for transitive errors that a controller
+                  faces that are expected to be fixed automatically over
+                  time (like service outages), but instead indicate that something is
+                  fundamentally wrong with the Machine's spec or the configuration of
+                  the controller, and that manual intervention is required. Examples
+                  of terminal errors would be invalid combinations of settings in the
+                  spec, values that are unsupported by the controller, or the
+                  responsible controller itself being critically misconfigured.
+
+
+                  Any transient errors that occur during the reconciliation of Machines
+                  can be added as events to the Machine object and/or logged in the
+                  controller's output.
                 type: string
               failureReason:
-                description: "FailureReason will be set in the event that there is
-                  a terminal problem reconciling the Machine and will contain a succinct
-                  value suitable for machine interpretation. \n This field should
-                  not be set for transitive errors that a controller faces that are
-                  expected to be fixed automatically over time (like service outages),
-                  but instead indicate that something is fundamentally wrong with
-                  the Machine's spec or the configuration of the controller, and that
-                  manual intervention is required. Examples of terminal errors would
-                  be invalid combinations of settings in the spec, values that are
-                  unsupported by the controller, or the responsible controller itself
-                  being critically misconfigured. \n Any transient errors that occur
-                  during the reconciliation of Machines can be added as events to
-                  the Machine object and/or logged in the controller's output."
+                description: |-
+                  FailureReason will be set in the event that there is a terminal problem
+                  reconciling the Machine and will contain a succinct value suitable
+                  for machine interpretation.
+
+
+                  This field should not be set for transitive errors that a controller
+                  faces that are expected to be fixed automatically over
+                  time (like service outages), but instead indicate that something is
+                  fundamentally wrong with the Machine's spec or the configuration of
+                  the controller, and that manual intervention is required. Examples
+                  of terminal errors would be invalid combinations of settings in the
+                  spec, values that are unsupported by the controller, or the
+                  responsible controller itself being critically misconfigured.
+
+
+                  Any transient errors that occur during the reconciliation of Machines
+                  can be added as events to the Machine object and/or logged in the
+                  controller's output.
                 type: string
               instanceState:
                 description: InstanceStatus is the status of the GCP instance for
@@ -1151,7 +1216,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capg-system/capg-serving-cert
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -1186,14 +1251,19 @@ spec:
           API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -1205,24 +1275,27 @@ spec:
                   to create am GCPMachine from a template.
                 properties:
                   metadata:
-                    description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
+                    description: |-
+                      Standard object's metadata.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
                     properties:
                       annotations:
                         additionalProperties:
                           type: string
-                        description: 'Annotations is an unstructured key value map
-                          stored with a resource that may be set by external tools
-                          to store and retrieve arbitrary metadata. They are not queryable
-                          and should be preserved when modifying objects. More info:
-                          http://kubernetes.io/docs/user-guide/annotations'
+                        description: |-
+                          Annotations is an unstructured key value map stored with a resource that may be
+                          set by external tools to store and retrieve arbitrary metadata. They are not
+                          queryable and should be preserved when modifying objects.
+                          More info: http://kubernetes.io/docs/user-guide/annotations
                         type: object
                       labels:
                         additionalProperties:
                           type: string
-                        description: 'Map of string keys and values that can be used
-                          to organize and categorize (scope and select) objects. May
-                          match selectors of replication controllers and services.
-                          More info: http://kubernetes.io/docs/user-guide/labels'
+                        description: |-
+                          Map of string keys and values that can be used to organize and categorize
+                          (scope and select) objects. May match selectors of replication controllers
+                          and services.
+                          More info: http://kubernetes.io/docs/user-guide/labels
                         type: object
                     type: object
                   spec:
@@ -1236,35 +1309,33 @@ spec:
                           description: AttachedDiskSpec degined GCP machine disk.
                           properties:
                             deviceType:
-                              description: 'DeviceType is a device type of the attached
-                                disk. Supported types of non-root attached volumes:
+                              description: |-
+                                DeviceType is a device type of the attached disk.
+                                Supported types of non-root attached volumes:
                                 1. "pd-standard" - Standard (HDD) persistent disk
-                                2. "pd-ssd" - SSD persistent disk 3. "local-ssd" -
-                                Local SSD disk (https://cloud.google.com/compute/docs/disks/local-ssd).
-                                Default is "pd-standard".'
+                                2. "pd-ssd" - SSD persistent disk
+                                3. "local-ssd" - Local SSD disk (https://cloud.google.com/compute/docs/disks/local-ssd).
+                                Default is "pd-standard".
                               type: string
                             encryptionKey:
                               description: EncryptionKey defines the KMS key to be
                                 used to encrypt the disk.
                               properties:
                                 keyType:
-                                  description: KeyType is the type of encryption key.
-                                    Must be either Managed, aka Customer-Managed Encryption
-                                    Key (CMEK) or Supplied, aka Customer-Supplied
-                                    EncryptionKey (CSEK).
+                                  description: |-
+                                    KeyType is the type of encryption key. Must be either Managed, aka Customer-Managed Encryption Key (CMEK) or
+                                    Supplied, aka Customer-Supplied EncryptionKey (CSEK).
                                   enum:
                                   - Managed
                                   - Supplied
                                   type: string
                                 kmsKeyServiceAccount:
-                                  description: 'KMSKeyServiceAccount is the service
-                                    account being used for the encryption request
-                                    for the given KMS key. If absent, the Compute
-                                    Engine default service account is used. For example:
+                                  description: |-
+                                    KMSKeyServiceAccount is the service account being used for the encryption request for the given KMS key.
+                                    If absent, the Compute Engine default service account is used. For example:
                                     "kmsKeyServiceAccount": "name@project_id.iam.gserviceaccount.com.
-                                    The maximum length is based on the Service Account
-                                    ID (max 30), Project (max 30), and a valid gcloud
-                                    email suffix ("iam.gserviceaccount.com").'
+                                    The maximum length is based on the Service Account ID (max 30), Project (max 30), and a valid gcloud email
+                                    suffix ("iam.gserviceaccount.com").
                                   maxLength: 85
                                   pattern: '[-_[A-Za-z0-9]+@[-_[A-Za-z0-9]+.iam.gserviceaccount.com'
                                   type: string
@@ -1274,9 +1345,9 @@ spec:
                                     be set when KeyType is Managed.
                                   properties:
                                     kmsKeyName:
-                                      description: 'KMSKeyName is the name of the
-                                        encryption key that is stored in Google Cloud
-                                        KMS. For example: "kmsKeyName": "projects/kms_project_id/locations/region/keyRings/key_region/cryptoKeys/key'
+                                      description: |-
+                                        KMSKeyName is the name of the encryption key that is stored in Google Cloud KMS. For example:
+                                        "kmsKeyName": "projects/kms_project_id/locations/region/keyRings/key_region/cryptoKeys/key
                                       maxLength: 160
                                       pattern: projects\/[-_[A-Za-z0-9]+\/locations\/[-_[A-Za-z0-9]+\/keyRings\/[-_[A-Za-z0-9]+\/cryptoKeys\/[-_[A-Za-z0-9]+
                                       type: string
@@ -1289,29 +1360,24 @@ spec:
                                   minProperties: 1
                                   properties:
                                     rawKey:
-                                      description: 'RawKey specifies a 256-bit customer-supplied
-                                        encryption key, encoded in RFC 4648 base64
-                                        to either encrypt or decrypt this resource.
-                                        You can provide either the rawKey or the rsaEncryptedKey.
-                                        For example: "rawKey": "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0="'
+                                      description: |-
+                                        RawKey specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
+                                        base64 to either encrypt or decrypt this resource. You can provide either the rawKey or the rsaEncryptedKey.
+                                        For example: "rawKey": "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0="
                                       format: byte
                                       type: string
                                     rsaEncryptedKey:
-                                      description: 'RSAEncryptedKey specifies an RFC
-                                        4648 base64 encoded, RSA-wrapped 2048-bit
-                                        customer-supplied encryption key to either
-                                        encrypt or decrypt this resource. You can
-                                        provide either the rawKey or the rsaEncryptedKey.
+                                      description: |-
+                                        RSAEncryptedKey specifies an RFC 4648 base64 encoded, RSA-wrapped 2048-bit customer-supplied encryption
+                                        key to either encrypt or decrypt this resource. You can provide either the rawKey or the
+                                        rsaEncryptedKey.
                                         For example: "rsaEncryptedKey": "ieCx/NcW06PcT7Ep1X6LUTc/hLvUDYyzSZPPVCVPTVEohpeHASqC8uw5TzyO9U+Fka9JFHi
                                         z0mBibXUInrC/jEk014kCK/NPjYgEMOyssZ4ZINPKxlUh2zn1bV+MCaTICrdmuSBTWlUUiFoDi
                                         D6PYznLwh8ZNdaheCeZ8ewEXgFQ8V+sDroLaN3Xs3MDTXQEMMoNUXMCZEIpg9Vtp9x2oe=="
-                                        The key must meet the following requirements
-                                        before you can provide it to Compute Engine:
-                                        1. The key is wrapped using a RSA public key
-                                        certificate provided by Google. 2. After being
-                                        wrapped, the key must be encoded in RFC 4648
-                                        base64 encoding. Gets the RSA public key certificate
-                                        provided by Google at: https://cloud-certs.storage.googleapis.com/google-cloud-csek-ingress.pem'
+                                        The key must meet the following requirements before you can provide it to Compute Engine:
+                                        1. The key is wrapped using a RSA public key certificate provided by Google.
+                                        2. After being wrapped, the key must be encoded in RFC 4648 base64 encoding.
+                                        Gets the RSA public key certificate provided by Google at: https://cloud-certs.storage.googleapis.com/google-cloud-csek-ingress.pem
                                       format: byte
                                       type: string
                                   type: object
@@ -1319,8 +1385,9 @@ spec:
                               - keyType
                               type: object
                             size:
-                              description: Size is the size of the disk in GBs. Defaults
-                                to 30GB. For "local-ssd" size is always 375GB.
+                              description: |-
+                                Size is the size of the disk in GBs.
+                                Defaults to 30GB. For "local-ssd" size is always 375GB.
                               format: int64
                               type: integer
                           type: object
@@ -1328,16 +1395,15 @@ spec:
                       additionalLabels:
                         additionalProperties:
                           type: string
-                        description: AdditionalLabels is an optional set of tags to
-                          add to an instance, in addition to the ones added by default
-                          by the GCP provider. If both the GCPCluster and the GCPMachine
-                          specify the same tag name with different values, the GCPMachine's
-                          value takes precedence.
+                        description: |-
+                          AdditionalLabels is an optional set of tags to add to an instance, in addition to the ones added by default by the
+                          GCP provider. If both the GCPCluster and the GCPMachine specify the same tag name with different values, the
+                          GCPMachine's value takes precedence.
                         type: object
                       additionalMetadata:
-                        description: AdditionalMetadata is an optional set of metadata
-                          to add to an instance, in addition to the ones added by
-                          default by the GCP provider.
+                        description: |-
+                          AdditionalMetadata is an optional set of metadata to add to an instance, in addition to the ones added by default by the
+                          GCP provider.
                         items:
                           description: MetadataItem defines a single piece of metadata
                             associated with an instance.
@@ -1357,26 +1423,26 @@ spec:
                         - key
                         x-kubernetes-list-type: map
                       additionalNetworkTags:
-                        description: AdditionalNetworkTags is a list of network tags
-                          that should be applied to the instance. These tags are set
-                          in addition to any network tags defined at the cluster level
-                          or in the actuator.
+                        description: |-
+                          AdditionalNetworkTags is a list of network tags that should be applied to the
+                          instance. These tags are set in addition to any network tags defined
+                          at the cluster level or in the actuator.
                         items:
                           type: string
                         type: array
                       confidentialCompute:
-                        description: ConfidentialCompute Defines whether the instance
-                          should have confidential compute enabled. If enabled OnHostMaintenance
-                          is required to be set to "Terminate". If omitted, the platform
-                          chooses a default, which is subject to change over time,
-                          currently that default is false.
+                        description: |-
+                          ConfidentialCompute Defines whether the instance should have confidential compute enabled.
+                          If enabled OnHostMaintenance is required to be set to "Terminate".
+                          If omitted, the platform chooses a default, which is subject to change over time, currently that default is false.
                         enum:
                         - Enabled
                         - Disabled
                         type: string
                       image:
-                        description: Image is the full reference to a valid image
-                          to be used for this machine. Takes precedence over ImageFamily.
+                        description: |-
+                          Image is the full reference to a valid image to be used for this machine.
+                          Takes precedence over ImageFamily.
                         type: string
                       imageFamily:
                         description: ImageFamily is the full reference to a valid
@@ -1388,20 +1454,17 @@ spec:
                         type: string
                       ipForwarding:
                         default: Enabled
-                        description: IPForwarding Allows this instance to send and
-                          receive packets with non-matching destination or source
-                          IPs. This is required if you plan to use this instance to
-                          forward routes. Defaults to enabled.
+                        description: |-
+                          IPForwarding Allows this instance to send and receive packets with non-matching destination or source IPs.
+                          This is required if you plan to use this instance to forward routes. Defaults to enabled.
                         enum:
                         - Enabled
                         - Disabled
                         type: string
                       onHostMaintenance:
-                        description: OnHostMaintenance determines the behavior when
-                          a maintenance event occurs that might cause the instance
-                          to reboot. If omitted, the platform chooses a default, which
-                          is subject to change over time, currently that default is
-                          "Migrate".
+                        description: |-
+                          OnHostMaintenance determines the behavior when a maintenance event occurs that might cause the instance to reboot.
+                          If omitted, the platform chooses a default, which is subject to change over time, currently that default is "Migrate".
                         enum:
                         - Migrate
                         - Terminate
@@ -1414,50 +1477,46 @@ spec:
                           by the cloud provider.
                         type: string
                       publicIP:
-                        description: PublicIP specifies whether the instance should
-                          get a public IP. Set this to true if you don't have a NAT
-                          instances or Cloud Nat setup.
+                        description: |-
+                          PublicIP specifies whether the instance should get a public IP.
+                          Set this to true if you don't have a NAT instances or Cloud Nat setup.
                         type: boolean
                       resourceManagerTags:
-                        description: ResourceManagerTags is an optional set of tags
-                          to apply to GCP resources managed by the GCP provider. GCP
-                          supports a maximum of 50 tags per resource.
+                        description: |-
+                          ResourceManagerTags is an optional set of tags to apply to GCP resources managed
+                          by the GCP provider. GCP supports a maximum of 50 tags per resource.
                         items:
                           description: ResourceManagerTag is a tag to apply to GCP
                             resources managed by the GCP provider.
                           properties:
                             key:
-                              description: Key is the key part of the tag. A tag key
-                                can have a maximum of 63 characters and cannot be
-                                empty. Tag key must begin and end with an alphanumeric
-                                character, and must contain only uppercase, lowercase
-                                alphanumeric characters, and the following special
+                              description: |-
+                                Key is the key part of the tag. A tag key can have a maximum of 63 characters and cannot
+                                be empty. Tag key must begin and end with an alphanumeric character, and must contain
+                                only uppercase, lowercase alphanumeric characters, and the following special
                                 characters `._-`.
                               maxLength: 63
                               minLength: 1
                               pattern: ^[a-zA-Z0-9]([0-9A-Za-z_.-]{0,61}[a-zA-Z0-9])?$
                               type: string
                             parentID:
-                              description: ParentID is the ID of the hierarchical
-                                resource where the tags are defined e.g. at the Organization
-                                or the Project level. To find the Organization or
-                                Project ID ref https://cloud.google.com/resource-manager/docs/creating-managing-organization#retrieving_your_organization_id
+                              description: |-
+                                ParentID is the ID of the hierarchical resource where the tags are defined
+                                e.g. at the Organization or the Project level. To find the Organization or Project ID ref
+                                https://cloud.google.com/resource-manager/docs/creating-managing-organization#retrieving_your_organization_id
                                 https://cloud.google.com/resource-manager/docs/creating-managing-projects#identifying_projects
-                                An OrganizationID must consist of decimal numbers,
-                                and cannot have leading zeroes. A ProjectID must be
-                                6 to 30 characters in length, can only contain lowercase
-                                letters, numbers, and hyphens, and must start with
-                                a letter, and cannot end with a hyphen.
+                                An OrganizationID must consist of decimal numbers, and cannot have leading zeroes.
+                                A ProjectID must be 6 to 30 characters in length, can only contain lowercase letters,
+                                numbers, and hyphens, and must start with a letter, and cannot end with a hyphen.
                               maxLength: 32
                               minLength: 1
                               pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
                               type: string
                             value:
-                              description: Value is the value part of the tag. A tag
-                                value can have a maximum of 63 characters and cannot
-                                be empty. Tag value must begin and end with an alphanumeric
-                                character, and must contain only uppercase, lowercase
-                                alphanumeric characters, and the following special
+                              description: |-
+                                Value is the value part of the tag. A tag value can have a maximum of 63 characters and
+                                cannot be empty. Tag value must begin and end with an alphanumeric character, and must
+                                contain only uppercase, lowercase alphanumeric characters, and the following special
                                 characters `_-.@%=+:,*#&(){}[]` and spaces.
                               maxLength: 63
                               minLength: 1
@@ -1470,37 +1529,38 @@ spec:
                           type: object
                         type: array
                       rootDeviceSize:
-                        description: RootDeviceSize is the size of the root volume
-                          in GB. Defaults to 30.
+                        description: |-
+                          RootDeviceSize is the size of the root volume in GB.
+                          Defaults to 30.
                         format: int64
                         type: integer
                       rootDeviceType:
-                        description: 'RootDeviceType is the type of the root volume.
-                          Supported types of root volumes: 1. "pd-standard" - Standard
-                          (HDD) persistent disk 2. "pd-ssd" - SSD persistent disk
-                          Default is "pd-standard".'
+                        description: |-
+                          RootDeviceType is the type of the root volume.
+                          Supported types of root volumes:
+                          1. "pd-standard" - Standard (HDD) persistent disk
+                          2. "pd-ssd" - SSD persistent disk
+                          Default is "pd-standard".
                         type: string
                       rootDiskEncryptionKey:
                         description: RootDiskEncryptionKey defines the KMS key to
                           be used to encrypt the root disk.
                         properties:
                           keyType:
-                            description: KeyType is the type of encryption key. Must
-                              be either Managed, aka Customer-Managed Encryption Key
-                              (CMEK) or Supplied, aka Customer-Supplied EncryptionKey
-                              (CSEK).
+                            description: |-
+                              KeyType is the type of encryption key. Must be either Managed, aka Customer-Managed Encryption Key (CMEK) or
+                              Supplied, aka Customer-Supplied EncryptionKey (CSEK).
                             enum:
                             - Managed
                             - Supplied
                             type: string
                           kmsKeyServiceAccount:
-                            description: 'KMSKeyServiceAccount is the service account
-                              being used for the encryption request for the given
-                              KMS key. If absent, the Compute Engine default service
-                              account is used. For example: "kmsKeyServiceAccount":
-                              "name@project_id.iam.gserviceaccount.com. The maximum
-                              length is based on the Service Account ID (max 30),
-                              Project (max 30), and a valid gcloud email suffix ("iam.gserviceaccount.com").'
+                            description: |-
+                              KMSKeyServiceAccount is the service account being used for the encryption request for the given KMS key.
+                              If absent, the Compute Engine default service account is used. For example:
+                              "kmsKeyServiceAccount": "name@project_id.iam.gserviceaccount.com.
+                              The maximum length is based on the Service Account ID (max 30), Project (max 30), and a valid gcloud email
+                              suffix ("iam.gserviceaccount.com").
                             maxLength: 85
                             pattern: '[-_[A-Za-z0-9]+@[-_[A-Za-z0-9]+.iam.gserviceaccount.com'
                             type: string
@@ -1510,9 +1570,9 @@ spec:
                               KeyType is Managed.
                             properties:
                               kmsKeyName:
-                                description: 'KMSKeyName is the name of the encryption
-                                  key that is stored in Google Cloud KMS. For example:
-                                  "kmsKeyName": "projects/kms_project_id/locations/region/keyRings/key_region/cryptoKeys/key'
+                                description: |-
+                                  KMSKeyName is the name of the encryption key that is stored in Google Cloud KMS. For example:
+                                  "kmsKeyName": "projects/kms_project_id/locations/region/keyRings/key_region/cryptoKeys/key
                                 maxLength: 160
                                 pattern: projects\/[-_[A-Za-z0-9]+\/locations\/[-_[A-Za-z0-9]+\/keyRings\/[-_[A-Za-z0-9]+\/cryptoKeys\/[-_[A-Za-z0-9]+
                                 type: string
@@ -1525,29 +1585,24 @@ spec:
                             minProperties: 1
                             properties:
                               rawKey:
-                                description: 'RawKey specifies a 256-bit customer-supplied
-                                  encryption key, encoded in RFC 4648 base64 to either
-                                  encrypt or decrypt this resource. You can provide
-                                  either the rawKey or the rsaEncryptedKey. For example:
-                                  "rawKey": "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0="'
+                                description: |-
+                                  RawKey specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
+                                  base64 to either encrypt or decrypt this resource. You can provide either the rawKey or the rsaEncryptedKey.
+                                  For example: "rawKey": "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0="
                                 format: byte
                                 type: string
                               rsaEncryptedKey:
-                                description: 'RSAEncryptedKey specifies an RFC 4648
-                                  base64 encoded, RSA-wrapped 2048-bit customer-supplied
-                                  encryption key to either encrypt or decrypt this
-                                  resource. You can provide either the rawKey or the
-                                  rsaEncryptedKey. For example: "rsaEncryptedKey":
-                                  "ieCx/NcW06PcT7Ep1X6LUTc/hLvUDYyzSZPPVCVPTVEohpeHASqC8uw5TzyO9U+Fka9JFHi
+                                description: |-
+                                  RSAEncryptedKey specifies an RFC 4648 base64 encoded, RSA-wrapped 2048-bit customer-supplied encryption
+                                  key to either encrypt or decrypt this resource. You can provide either the rawKey or the
+                                  rsaEncryptedKey.
+                                  For example: "rsaEncryptedKey": "ieCx/NcW06PcT7Ep1X6LUTc/hLvUDYyzSZPPVCVPTVEohpeHASqC8uw5TzyO9U+Fka9JFHi
                                   z0mBibXUInrC/jEk014kCK/NPjYgEMOyssZ4ZINPKxlUh2zn1bV+MCaTICrdmuSBTWlUUiFoDi
                                   D6PYznLwh8ZNdaheCeZ8ewEXgFQ8V+sDroLaN3Xs3MDTXQEMMoNUXMCZEIpg9Vtp9x2oe=="
-                                  The key must meet the following requirements before
-                                  you can provide it to Compute Engine: 1. The key
-                                  is wrapped using a RSA public key certificate provided
-                                  by Google. 2. After being wrapped, the key must
-                                  be encoded in RFC 4648 base64 encoding. Gets the
-                                  RSA public key certificate provided by Google at:
-                                  https://cloud-certs.storage.googleapis.com/google-cloud-csek-ingress.pem'
+                                  The key must meet the following requirements before you can provide it to Compute Engine:
+                                  1. The key is wrapped using a RSA public key certificate provided by Google.
+                                  2. After being wrapped, the key must be encoded in RFC 4648 base64 encoding.
+                                  Gets the RSA public key certificate provided by Google at: https://cloud-certs.storage.googleapis.com/google-cloud-csek-ingress.pem
                                 format: byte
                                 type: string
                             type: object
@@ -1555,16 +1610,17 @@ spec:
                         - keyType
                         type: object
                       serviceAccounts:
-                        description: 'ServiceAccount specifies the service account
-                          email and which scopes to assign to the machine. Defaults
-                          to: email: "default", scope: []{compute.CloudPlatformScope}'
+                        description: |-
+                          ServiceAccount specifies the service account email and which scopes to assign to the machine.
+                          Defaults to: email: "default", scope: []{compute.CloudPlatformScope}
                         properties:
                           email:
                             description: 'Email: Email address of the service account.'
                             type: string
                           scopes:
-                            description: 'Scopes: The list of scopes to be made available
-                              for this service account.'
+                            description: |-
+                              Scopes: The list of scopes to be made available for this service
+                              account.
                             items:
                               type: string
                             type: array
@@ -1574,47 +1630,38 @@ spec:
                           for this machine
                         properties:
                           integrityMonitoring:
-                            description: IntegrityMonitoring determines whether the
-                              instance should have integrity monitoring that verify
-                              the runtime boot integrity. Compares the most recent
-                              boot measurements to the integrity policy baseline and
-                              return a pair of pass/fail results depending on whether
-                              they match or not. If omitted, the platform chooses
-                              a default, which is subject to change over time, currently
-                              that default is Enabled.
+                            description: |-
+                              IntegrityMonitoring determines whether the instance should have integrity monitoring that verify the runtime boot integrity.
+                              Compares the most recent boot measurements to the integrity policy baseline and return
+                              a pair of pass/fail results depending on whether they match or not.
+                              If omitted, the platform chooses a default, which is subject to change over time, currently that default is Enabled.
                             enum:
                             - Enabled
                             - Disabled
                             type: string
                           secureBoot:
-                            description: SecureBoot Defines whether the instance should
-                              have secure boot enabled. Secure Boot verify the digital
-                              signature of all boot components, and halting the boot
-                              process if signature verification fails. If omitted,
-                              the platform chooses a default, which is subject to
-                              change over time, currently that default is Disabled.
+                            description: |-
+                              SecureBoot Defines whether the instance should have secure boot enabled.
+                              Secure Boot verify the digital signature of all boot components, and halting the boot process if signature verification fails.
+                              If omitted, the platform chooses a default, which is subject to change over time, currently that default is Disabled.
                             enum:
                             - Enabled
                             - Disabled
                             type: string
                           virtualizedTrustedPlatformModule:
-                            description: VirtualizedTrustedPlatformModule enable virtualized
-                              trusted platform module measurements to create a known
-                              good boot integrity policy baseline. The integrity policy
-                              baseline is used for comparison with measurements from
-                              subsequent VM boots to determine if anything has changed.
-                              If omitted, the platform chooses a default, which is
-                              subject to change over time, currently that default
-                              is Enabled.
+                            description: |-
+                              VirtualizedTrustedPlatformModule enable virtualized trusted platform module measurements to create a known good boot integrity policy baseline.
+                              The integrity policy baseline is used for comparison with measurements from subsequent VM boots to determine if anything has changed.
+                              If omitted, the platform chooses a default, which is subject to change over time, currently that default is Enabled.
                             enum:
                             - Enabled
                             - Disabled
                             type: string
                         type: object
                       subnet:
-                        description: Subnet is a reference to the subnetwork to use
-                          for this instance. If not specified, the first subnetwork
-                          retrieved from the Cluster Region and Network is picked.
+                        description: |-
+                          Subnet is a reference to the subnetwork to use for this instance. If not specified,
+                          the first subnetwork retrieved from the Cluster Region and Network is picked.
                         type: string
                     required:
                     - instanceType
@@ -1633,7 +1680,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -1675,14 +1722,19 @@ spec:
         description: GCPManagedCluster is the Schema for the gcpmanagedclusters API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -1692,9 +1744,9 @@ spec:
               additionalLabels:
                 additionalProperties:
                   type: string
-                description: AdditionalLabels is an optional set of tags to add to
-                  GCP resources managed by the GCP provider, in addition to the ones
-                  added by default.
+                description: |-
+                  AdditionalLabels is an optional set of tags to add to GCP resources managed by the GCP provider, in addition to the
+                  ones added by default.
                 type: object
               controlPlaneEndpoint:
                 description: ControlPlaneEndpoint represents the endpoint used to
@@ -1712,31 +1764,53 @@ spec:
                 - port
                 type: object
               credentialsRef:
-                description: CredentialsRef is a reference to a Secret that contains
-                  the credentials to use for provisioning this cluster. If not supplied
-                  then the credentials of the controller will be used.
+                description: |-
+                  CredentialsRef is a reference to a Secret that contains the credentials to use for provisioning this cluster. If not
+                  supplied then the credentials of the controller will be used.
                 properties:
                   name:
-                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                    description: |-
+                      Name of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                     type: string
                   namespace:
-                    description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                    description: |-
+                      Namespace of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                     type: string
                 required:
                 - name
                 - namespace
+                type: object
+              loadBalancer:
+                description: LoadBalancerSpec contains configuration for one or more
+                  LoadBalancers.
+                properties:
+                  apiServerInstanceGroupTagOverride:
+                    description: |-
+                      APIServerInstanceGroupTagOverride overrides the default setting for the
+                      tag used when creating the API Server Instance Group.
+                    maxLength: 16
+                    pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
+                    type: string
                 type: object
               network:
                 description: NetworkSpec encapsulates all things related to the GCP
                   network.
                 properties:
                   autoCreateSubnetworks:
-                    description: "AutoCreateSubnetworks: When set to true, the VPC
-                      network is created in \"auto\" mode. When set to false, the
-                      VPC network is created in \"custom\" mode. \n An auto mode VPC
-                      network starts with one subnet per region. Each subnet has a
-                      predetermined range as described in Auto mode VPC network IP
-                      ranges. \n Defaults to true."
+                    description: |-
+                      AutoCreateSubnetworks: When set to true, the VPC network is created
+                      in "auto" mode. When set to false, the VPC network is created in
+                      "custom" mode.
+
+
+                      An auto mode VPC network starts with one subnet per region. Each
+                      subnet has a predetermined range as described in Auto mode VPC
+                      network IP ranges.
+
+
+                      Defaults to true.
                     type: boolean
                   loadBalancerBackendPort:
                     description: Allow for configuration of load balancer backend
@@ -1752,45 +1826,50 @@ spec:
                       description: SubnetSpec configures an GCP Subnet.
                       properties:
                         cidrBlock:
-                          description: CidrBlock is the range of internal addresses
-                            that are owned by this subnetwork. Provide this property
-                            when you create the subnetwork. For example, 10.0.0.0/8
-                            or 192.168.0.0/16. Ranges must be unique and non-overlapping
-                            within a network. Only IPv4 is supported. This field can
-                            be set only at resource creation time.
+                          description: |-
+                            CidrBlock is the range of internal addresses that are owned by this
+                            subnetwork. Provide this property when you create the subnetwork. For
+                            example, 10.0.0.0/8 or 192.168.0.0/16. Ranges must be unique and
+                            non-overlapping within a network. Only IPv4 is supported. This field
+                            can be set only at resource creation time.
                           type: string
                         description:
                           description: Description is an optional description associated
                             with the resource.
                           type: string
                         enableFlowLogs:
-                          description: 'EnableFlowLogs: Whether to enable flow logging
-                            for this subnetwork. If this field is not explicitly set,
-                            it will not appear in get listings. If not set the default
-                            behavior is to disable flow logging.'
+                          description: |-
+                            EnableFlowLogs: Whether to enable flow logging for this subnetwork.
+                            If this field is not explicitly set, it will not appear in get
+                            listings. If not set the default behavior is to disable flow logging.
                           type: boolean
                         name:
                           description: Name defines a unique identifier to reference
                             this resource.
                           type: string
                         privateGoogleAccess:
-                          description: PrivateGoogleAccess defines whether VMs in
-                            this subnet can access Google services without assigning
-                            external IP addresses
+                          description: |-
+                            PrivateGoogleAccess defines whether VMs in this subnet can access
+                            Google services without assigning external IP addresses
                           type: boolean
                         purpose:
                           default: PRIVATE_RFC_1918
-                          description: "Purpose: The purpose of the resource. If unspecified,
-                            the purpose defaults to PRIVATE_RFC_1918. The enableFlowLogs
-                            field isn't supported with the purpose field set to INTERNAL_HTTPS_LOAD_BALANCER.
-                            \n Possible values: \"INTERNAL_HTTPS_LOAD_BALANCER\" -
-                            Subnet reserved for Internal HTTP(S) Load Balancing. \"PRIVATE\"
-                            - Regular user created or automatically created subnet.
-                            \"PRIVATE_RFC_1918\" - Regular user created or automatically
-                            created subnet. \"PRIVATE_SERVICE_CONNECT\" - Subnetworks
-                            created for Private Service Connect in the producer network.
-                            \"REGIONAL_MANAGED_PROXY\" - Subnetwork used for Regional
-                            Internal/External HTTP(S) Load Balancing."
+                          description: |-
+                            Purpose: The purpose of the resource.
+                            If unspecified, the purpose defaults to PRIVATE_RFC_1918.
+                            The enableFlowLogs field isn't supported with the purpose field set to INTERNAL_HTTPS_LOAD_BALANCER.
+
+
+                            Possible values:
+                              "INTERNAL_HTTPS_LOAD_BALANCER" - Subnet reserved for Internal
+                            HTTP(S) Load Balancing.
+                              "PRIVATE" - Regular user created or automatically created subnet.
+                              "PRIVATE_RFC_1918" - Regular user created or automatically created
+                            subnet.
+                              "PRIVATE_SERVICE_CONNECT" - Subnetworks created for Private Service
+                            Connect in the producer network.
+                              "REGIONAL_MANAGED_PROXY" - Subnetwork used for Regional
+                            Internal/External HTTP(S) Load Balancing.
                           enum:
                           - INTERNAL_HTTPS_LOAD_BALANCER
                           - PRIVATE_RFC_1918
@@ -1805,9 +1884,9 @@ spec:
                         secondaryCidrBlocks:
                           additionalProperties:
                             type: string
-                          description: SecondaryCidrBlocks defines secondary CIDR
-                            ranges, from which secondary IP ranges of a VM may be
-                            allocated
+                          description: |-
+                            SecondaryCidrBlocks defines secondary CIDR ranges,
+                            from which secondary IP ranges of a VM may be allocated
                           type: object
                       type: object
                     type: array
@@ -1820,45 +1899,42 @@ spec:
                 description: The GCP Region the cluster lives in.
                 type: string
               resourceManagerTags:
-                description: ResourceManagerTags is an optional set of tags to apply
-                  to GCP resources managed by the GCP provider. GCP supports a maximum
-                  of 50 tags per resource.
+                description: |-
+                  ResourceManagerTags is an optional set of tags to apply to GCP resources managed
+                  by the GCP provider. GCP supports a maximum of 50 tags per resource.
                 items:
                   description: ResourceManagerTag is a tag to apply to GCP resources
                     managed by the GCP provider.
                   properties:
                     key:
-                      description: Key is the key part of the tag. A tag key can have
-                        a maximum of 63 characters and cannot be empty. Tag key must
-                        begin and end with an alphanumeric character, and must contain
-                        only uppercase, lowercase alphanumeric characters, and the
-                        following special characters `._-`.
+                      description: |-
+                        Key is the key part of the tag. A tag key can have a maximum of 63 characters and cannot
+                        be empty. Tag key must begin and end with an alphanumeric character, and must contain
+                        only uppercase, lowercase alphanumeric characters, and the following special
+                        characters `._-`.
                       maxLength: 63
                       minLength: 1
                       pattern: ^[a-zA-Z0-9]([0-9A-Za-z_.-]{0,61}[a-zA-Z0-9])?$
                       type: string
                     parentID:
-                      description: ParentID is the ID of the hierarchical resource
-                        where the tags are defined e.g. at the Organization or the
-                        Project level. To find the Organization or Project ID ref
+                      description: |-
+                        ParentID is the ID of the hierarchical resource where the tags are defined
+                        e.g. at the Organization or the Project level. To find the Organization or Project ID ref
                         https://cloud.google.com/resource-manager/docs/creating-managing-organization#retrieving_your_organization_id
                         https://cloud.google.com/resource-manager/docs/creating-managing-projects#identifying_projects
-                        An OrganizationID must consist of decimal numbers, and cannot
-                        have leading zeroes. A ProjectID must be 6 to 30 characters
-                        in length, can only contain lowercase letters, numbers, and
-                        hyphens, and must start with a letter, and cannot end with
-                        a hyphen.
+                        An OrganizationID must consist of decimal numbers, and cannot have leading zeroes.
+                        A ProjectID must be 6 to 30 characters in length, can only contain lowercase letters,
+                        numbers, and hyphens, and must start with a letter, and cannot end with a hyphen.
                       maxLength: 32
                       minLength: 1
                       pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
                       type: string
                     value:
-                      description: Value is the value part of the tag. A tag value
-                        can have a maximum of 63 characters and cannot be empty. Tag
-                        value must begin and end with an alphanumeric character, and
-                        must contain only uppercase, lowercase alphanumeric characters,
-                        and the following special characters `_-.@%=+:,*#&(){}[]`
-                        and spaces.
+                      description: |-
+                        Value is the value part of the tag. A tag value can have a maximum of 63 characters and
+                        cannot be empty. Tag value must begin and end with an alphanumeric character, and must
+                        contain only uppercase, lowercase alphanumeric characters, and the following special
+                        characters `_-.@%=+:,*#&(){}[]` and spaces.
                       maxLength: 63
                       minLength: 1
                       pattern: ^[a-zA-Z0-9]([0-9A-Za-z_.@%=+:,*#&()\[\]{}\-\s]{0,61}[a-zA-Z0-9])?$
@@ -1884,37 +1960,37 @@ spec:
                     operational state.
                   properties:
                     lastTransitionTime:
-                      description: Last time the condition transitioned from one status
-                        to another. This should be when the underlying condition changed.
-                        If that is not known, then using the time when the API field
-                        changed is acceptable.
+                      description: |-
+                        Last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
-                      description: A human readable message indicating details about
-                        the transition. This field may be empty.
+                      description: |-
+                        A human readable message indicating details about the transition.
+                        This field may be empty.
                       type: string
                     reason:
-                      description: The reason for the condition's last transition
-                        in CamelCase. The specific API may choose whether or not this
-                        field is considered a guaranteed API. This field may not be
-                        empty.
+                      description: |-
+                        The reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may not be empty.
                       type: string
                     severity:
-                      description: Severity provides an explicit classification of
-                        Reason code, so the users or machines can immediately understand
-                        the current situation and act accordingly. The Severity field
-                        MUST be set only when Status=False.
+                      description: |-
+                        Severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
                       type: string
                     status:
                       description: Status of the condition, one of True, False, Unknown.
                       type: string
                     type:
-                      description: Type of condition in CamelCase or in foo.example.com/CamelCase.
-                        Many .condition.type values are consistent across resources
-                        like Available, but because arbitrary conditions can be useful
-                        (see .node.status.conditions), the ability to deconflict is
-                        important.
+                      description: |-
+                        Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
                       type: string
                   required:
                   - lastTransitionTime
@@ -1924,9 +2000,9 @@ spec:
                 type: array
               failureDomains:
                 additionalProperties:
-                  description: FailureDomainSpec is the Schema for Cluster API failure
-                    domains. It allows controllers to understand how many failure
-                    domains a cluster can optionally span across.
+                  description: |-
+                    FailureDomainSpec is the Schema for Cluster API failure domains.
+                    It allows controllers to understand how many failure domains a cluster can optionally span across.
                   properties:
                     attributes:
                       additionalProperties:
@@ -1945,31 +2021,36 @@ spec:
                 description: Network encapsulates GCP networking resources.
                 properties:
                   apiServerBackendService:
-                    description: APIServerBackendService is the full reference to
-                      the backend service created for the API Server.
+                    description: |-
+                      APIServerBackendService is the full reference to the backend service
+                      created for the API Server.
                     type: string
                   apiServerForwardingRule:
-                    description: APIServerForwardingRule is the full reference to
-                      the forwarding rule created for the API Server.
+                    description: |-
+                      APIServerForwardingRule is the full reference to the forwarding rule
+                      created for the API Server.
                     type: string
                   apiServerHealthCheck:
-                    description: APIServerHealthCheck is the full reference to the
-                      health check created for the API Server.
+                    description: |-
+                      APIServerHealthCheck is the full reference to the health check
+                      created for the API Server.
                     type: string
                   apiServerInstanceGroups:
                     additionalProperties:
                       type: string
-                    description: APIServerInstanceGroups is a map from zone to the
-                      full reference to the instance groups created for the control
-                      plane nodes created in the same zone.
+                    description: |-
+                      APIServerInstanceGroups is a map from zone to the full reference
+                      to the instance groups created for the control plane nodes created in the same zone.
                     type: object
                   apiServerIpAddress:
-                    description: APIServerAddress is the IPV4 global address assigned
-                      to the load balancer created for the API Server.
+                    description: |-
+                      APIServerAddress is the IPV4 global address assigned to the load balancer
+                      created for the API Server.
                     type: string
                   apiServerTargetProxy:
-                    description: APIServerTargetProxy is the full reference to the
-                      target proxy created for the API Server.
+                    description: |-
+                      APIServerTargetProxy is the full reference to the target proxy
+                      created for the API Server.
                     type: string
                   firewallRules:
                     additionalProperties:
@@ -1978,8 +2059,9 @@ spec:
                       to its full reference.
                     type: object
                   router:
-                    description: Router is the full reference to the router created
-                      within the network it'll contain the cloud nat gateway
+                    description: |-
+                      Router is the full reference to the router created within the network
+                      it'll contain the cloud nat gateway
                     type: string
                   selfLink:
                     description: SelfLink is the link to the Network used for this
@@ -2001,7 +2083,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -2044,14 +2126,19 @@ spec:
           API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -2059,14 +2146,16 @@ spec:
             description: GCPManagedControlPlaneSpec defines the desired state of GCPManagedControlPlane.
             properties:
               clusterName:
-                description: ClusterName allows you to specify the name of the GKE
-                  cluster. If you don't specify a name then a default name will be
-                  created based on the namespace and name of the managed control plane.
+                description: |-
+                  ClusterName allows you to specify the name of the GKE cluster.
+                  If you don't specify a name then a default name will be created
+                  based on the namespace and name of the managed control plane.
                 type: string
               controlPlaneVersion:
-                description: ControlPlaneVersion represents the control plane version
-                  of the GKE cluster. If not specified, the default version currently
-                  supported by GKE will be used.
+                description: |-
+                  ControlPlaneVersion represents the control plane version of the GKE cluster.
+                  If not specified, the default version currently supported by GKE will be
+                  used.
                 type: string
               enableAutopilot:
                 description: EnableAutopilot indicates whether to enable autopilot
@@ -2088,17 +2177,19 @@ spec:
                 - port
                 type: object
               location:
-                description: Location represents the location (region or zone) in
-                  which the GKE cluster will be created.
+                description: |-
+                  Location represents the location (region or zone) in which the GKE cluster
+                  will be created.
                 type: string
               master_authorized_networks_config:
-                description: MasterAuthorizedNetworksConfig represents configuration
-                  options for master authorized networks feature of the GKE cluster.
+                description: |-
+                  MasterAuthorizedNetworksConfig represents configuration options for master authorized networks feature of the GKE cluster.
                   This feature is disabled if this field is not specified.
                 properties:
                   cidr_blocks:
-                    description: cidr_blocks define up to 50 external networks that
-                      could access Kubernetes master through HTTPS.
+                    description: |-
+                      cidr_blocks define up to 50 external networks that could access
+                      Kubernetes master through HTTPS.
                     items:
                       description: MasterAuthorizedNetworksConfigCidrBlock contains
                         an optional name and one CIDR block.
@@ -2146,37 +2237,37 @@ spec:
                     operational state.
                   properties:
                     lastTransitionTime:
-                      description: Last time the condition transitioned from one status
-                        to another. This should be when the underlying condition changed.
-                        If that is not known, then using the time when the API field
-                        changed is acceptable.
+                      description: |-
+                        Last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
-                      description: A human readable message indicating details about
-                        the transition. This field may be empty.
+                      description: |-
+                        A human readable message indicating details about the transition.
+                        This field may be empty.
                       type: string
                     reason:
-                      description: The reason for the condition's last transition
-                        in CamelCase. The specific API may choose whether or not this
-                        field is considered a guaranteed API. This field may not be
-                        empty.
+                      description: |-
+                        The reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may not be empty.
                       type: string
                     severity:
-                      description: Severity provides an explicit classification of
-                        Reason code, so the users or machines can immediately understand
-                        the current situation and act accordingly. The Severity field
-                        MUST be set only when Status=False.
+                      description: |-
+                        Severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
                       type: string
                     status:
                       description: Status of the condition, one of True, False, Unknown.
                       type: string
                     type:
-                      description: Type of condition in CamelCase or in foo.example.com/CamelCase.
-                        Many .condition.type values are consistent across resources
-                        like Available, but because arbitrary conditions can be useful
-                        (see .node.status.conditions), the ability to deconflict is
-                        important.
+                      description: |-
+                        Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
                       type: string
                   required:
                   - lastTransitionTime
@@ -2189,14 +2280,15 @@ spec:
                   plane.
                 type: string
               initialized:
-                description: Initialized is true when the control plane is available
-                  for initial contact. This may occur before the control plane is
-                  fully ready.
+                description: |-
+                  Initialized is true when the control plane is available for initial contact.
+                  This may occur before the control plane is fully ready.
                 type: boolean
               ready:
                 default: false
-                description: Ready denotes that the GCPManagedControlPlane API Server
-                  is ready to receive requests.
+                description: |-
+                  Ready denotes that the GCPManagedControlPlane API Server is ready to
+                  receive requests.
                 type: boolean
             required:
             - ready
@@ -2211,7 +2303,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -2243,14 +2335,19 @@ spec:
           API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -2260,20 +2357,21 @@ spec:
               additionalLabels:
                 additionalProperties:
                   type: string
-                description: AdditionalLabels is an optional set of tags to add to
-                  GCP resources managed by the GCP provider, in addition to the ones
-                  added by default.
+                description: |-
+                  AdditionalLabels is an optional set of tags to add to GCP resources managed by the GCP provider, in addition to the
+                  ones added by default.
                 type: object
               diskSizeGB:
-                description: DiskSizeGB is size of the disk attached to each node,
+                description: |-
+                  DiskSizeGB is size of the disk attached to each node,
                   specified in GB.
                 format: int64
                 minimum: 10
                 type: integer
               diskSizeGb:
-                description: DiskSizeGb is the size of the disk attached to each node,
-                  specified in GB. The smallest allowed disk size is 10GB. If unspecified,
-                  the default disk size is 100GB.
+                description: |-
+                  DiskSizeGb is the size of the disk attached to each node, specified in GB.
+                  The smallest allowed disk size is 10GB. If unspecified, the default disk size is 100GB.
                 format: int32
                 type: integer
               diskType:
@@ -2351,105 +2449,117 @@ spec:
                 format: int32
                 type: integer
               machineType:
-                description: MachineType is the name of a Google Compute Engine [machine
-                  type](https://cloud.google.com/compute/docs/machine-types). If unspecified,
-                  the default machine type is `e2-medium`.
+                description: |-
+                  MachineType is the name of a Google Compute Engine [machine
+                  type](https://cloud.google.com/compute/docs/machine-types).
+                  If unspecified, the default machine type is `e2-medium`.
                 type: string
               management:
                 description: Management specifies the node pool management options.
                 properties:
                   autoRepair:
-                    description: AutoRepair specifies whether the node auto-repair
-                      is enabled for the node pool. If enabled, the nodes in this
-                      node pool will be monitored and, if they fail health checks
-                      too many times, an automatic repair action will be triggered.
+                    description: |-
+                      AutoRepair specifies whether the node auto-repair is enabled for the node
+                      pool. If enabled, the nodes in this node pool will be monitored and, if
+                      they fail health checks too many times, an automatic repair action will be
+                      triggered.
                     type: boolean
                   autoUpgrade:
-                    description: AutoUpgrade specifies whether node auto-upgrade is
-                      enabled for the node pool. If enabled, node auto-upgrade helps
-                      keep the nodes in your node pool up to date with the latest
-                      release version of Kubernetes.
+                    description: |-
+                      AutoUpgrade specifies whether node auto-upgrade is enabled for the node
+                      pool. If enabled, node auto-upgrade helps keep the nodes in your node pool
+                      up to date with the latest release version of Kubernetes.
                     type: boolean
                 type: object
               maxPodsPerNode:
-                description: MaxPodsPerNode is constraint enforced on the max num
-                  of pods per node.
+                description: |-
+                  MaxPodsPerNode is constraint enforced on the max num of
+                  pods per node.
                 format: int64
                 maximum: 256
                 minimum: 8
                 type: integer
               nodeLocations:
-                description: NodeLocations is the list of zones in which the NodePool's
+                description: |-
+                  NodeLocations is the list of zones in which the NodePool's
                   nodes should be located.
                 items:
                   type: string
                 type: array
               nodeNetwork:
-                description: NodeNetwork specifies the node network configuration
+                description: |-
+                  NodeNetwork specifies the node network configuration
                   options.
                 properties:
                   createPodRange:
-                    description: CreatePodRange specifies whether to create a new
-                      range for pod IPs in this node pool.
+                    description: |-
+                      CreatePodRange specifies whether to create a new range for
+                      pod IPs in this node pool.
                     type: boolean
                   podRangeCidrBlock:
-                    description: PodRangeCidrBlock is the IP address range for pod
-                      IPs in this node pool.
+                    description: |-
+                      PodRangeCidrBlock is the IP address range for pod IPs in
+                      this node pool.
                     type: string
                   podRangeName:
                     description: PodRangeName is ID of the secondary range for pod
                       IPs.
                     type: string
                   tags:
-                    description: Tags is list of instance tags applied to all nodes.
-                      Tags are used to identify valid sources or targets for network
+                    description: |-
+                      Tags is list of instance tags applied to all nodes. Tags
+                      are used to identify valid sources or targets for network
                       firewalls.
                     items:
                       type: string
                     type: array
                 type: object
               nodePoolName:
-                description: NodePoolName specifies the name of the GKE node pool
-                  corresponding to this MachinePool. If you don't specify a name then
-                  a default name will be created based on the namespace and name of
-                  the managed machine pool.
+                description: |-
+                  NodePoolName specifies the name of the GKE node pool corresponding to this MachinePool. If you don't specify a name
+                  then a default name will be created based on the namespace and name of the managed machine pool.
                 type: string
               nodeSecurity:
                 description: NodeSecurity specifies the node security options.
                 properties:
                   enableIntegrityMonitoring:
-                    description: EnableIntegrityMonitoring defines whether the instance
-                      has integrity monitoring enabled.
+                    description: |-
+                      EnableIntegrityMonitoring defines whether the instance has
+                      integrity monitoring enabled.
                     type: boolean
                   enableSecureBoot:
-                    description: EnableSecureBoot defines whether the instance has
-                      Secure Boot enabled.
+                    description: |-
+                      EnableSecureBoot defines whether the instance has Secure
+                      Boot enabled.
                     type: boolean
                   sandboxType:
                     description: SandboxType is type of the sandbox to use for the
                       node.
                     type: string
                   serviceAccount:
-                    description: ServiceAccount specifies the identity details for
-                      node pool.
+                    description: |-
+                      ServiceAccount specifies the identity details for node
+                      pool.
                     properties:
                       email:
-                        description: Email is the Google Cloud Platform Service Account
-                          to be used by the node VMs.
+                        description: |-
+                          Email is the Google Cloud Platform Service Account to be
+                          used by the node VMs.
                         type: string
                       scopes:
-                        description: Scopes is a set of Google API scopes to be made
-                          available on all of the node VMs under the "default" service
-                          account.
+                        description: |-
+                          Scopes is a set of Google API scopes to be made available
+                          on all of the node VMs under the "default" service account.
                         items:
                           type: string
                         type: array
                     type: object
                 type: object
               providerIDList:
-                description: ProviderIDList are the provider IDs of instances in the
-                  managed instance group corresponding to the nodegroup represented
-                  by this machine pool
+                description: |-
+                  ProviderIDList are the provider IDs of instances in the
+                  managed instance group corresponding to the nodegroup represented by this
+                  machine pool
                 items:
                   type: string
                 type: array
@@ -2490,37 +2600,37 @@ spec:
                     operational state.
                   properties:
                     lastTransitionTime:
-                      description: Last time the condition transitioned from one status
-                        to another. This should be when the underlying condition changed.
-                        If that is not known, then using the time when the API field
-                        changed is acceptable.
+                      description: |-
+                        Last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
-                      description: A human readable message indicating details about
-                        the transition. This field may be empty.
+                      description: |-
+                        A human readable message indicating details about the transition.
+                        This field may be empty.
                       type: string
                     reason:
-                      description: The reason for the condition's last transition
-                        in CamelCase. The specific API may choose whether or not this
-                        field is considered a guaranteed API. This field may not be
-                        empty.
+                      description: |-
+                        The reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may not be empty.
                       type: string
                     severity:
-                      description: Severity provides an explicit classification of
-                        Reason code, so the users or machines can immediately understand
-                        the current situation and act accordingly. The Severity field
-                        MUST be set only when Status=False.
+                      description: |-
+                        Severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
                       type: string
                     status:
                       description: Status of the condition, one of True, False, Unknown.
                       type: string
                     type:
-                      description: Type of condition in CamelCase or in foo.example.com/CamelCase.
-                        Many .condition.type values are consistent across resources
-                        like Available, but because arbitrary conditions can be useful
-                        (see .node.status.conditions), the ability to deconflict is
-                        important.
+                      description: |-
+                        Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
                       type: string
                   required:
                   - lastTransitionTime
@@ -2905,7 +3015,7 @@ spec:
         - containerPort: 9440
           name: healthz
           protocol: TCP
-        - containerPort: ${CAPG_DIAGNOSTICS_PORT:=8443}
+        - containerPort: 8443
           name: metrics
           protocol: TCP
         readinessProbe:
