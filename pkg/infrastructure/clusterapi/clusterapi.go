@@ -40,6 +40,9 @@ import (
 // interface the installer uses to call this provider.
 var _ infrastructure.Provider = (*InfraProvider)(nil)
 
+// timeout for each provisioning step.
+const timeout = 15 * time.Minute
+
 // InfraProvider implements common Cluster API logic and
 // contains the platform CAPI provider, which is called
 // in the lifecycle defined by the Provider interface.
@@ -159,6 +162,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 			Duration: time.Second * 10,
 			Factor:   float64(1.5),
 			Steps:    32,
+			Cap:      timeout,
 		}, func(ctx context.Context) (bool, error) {
 			c := &clusterv1.Cluster{}
 			if err := cl.Get(ctx, client.ObjectKey{
@@ -173,7 +177,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 			cluster = c
 			return cluster.Status.InfrastructureReady, nil
 		}); err != nil {
-			return fileList, err
+			return fileList, fmt.Errorf("infrastructure was not ready within %v: %w", timeout, err)
 		}
 		if cluster == nil {
 			return fileList, fmt.Errorf("error occurred during load balancer ready check")
@@ -243,6 +247,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 			Duration: time.Second * 10,
 			Factor:   float64(1.5),
 			Steps:    32,
+			Cap:      timeout,
 		}, func(ctx context.Context) (bool, error) {
 			for i := int64(0); i < masterCount; i++ {
 				machine := &clusterv1.Machine{}
@@ -266,7 +271,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 			}
 			return true, nil
 		}); err != nil {
-			return fileList, err
+			return fileList, fmt.Errorf("machines were not provisioned within %v: %w", timeout, err)
 		}
 	}
 
