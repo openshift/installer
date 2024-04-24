@@ -30,7 +30,7 @@ require (
 	github.com/IBM/vpc-go-sdk v0.50.0
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
-	github.com/aws/aws-sdk-go v1.50.25
+	github.com/aws/aws-sdk-go v1.51.17
 	github.com/cavaliercoder/go-cpio v0.0.0-20180626203310-925f9528c45e
 	github.com/clarketm/json v1.14.1
 	github.com/containers/image v3.0.2+incompatible
@@ -115,7 +115,7 @@ require (
 	k8s.io/utils v0.0.0-20240310230437-4693a0247e57
 	libvirt.org/go/libvirtxml v1.10002.0
 	sigs.k8s.io/cluster-api v1.7.0
-	sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.2-0.20240418073318-b918c3636f5d
+	sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.2-0.20240424180139-4c5b811deab4
 	sigs.k8s.io/cluster-api-provider-azure v1.14.2
 	sigs.k8s.io/cluster-api-provider-gcp v1.6.0
 	sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0
