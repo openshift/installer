@@ -48,7 +48,7 @@ github.com/IBM-Cloud/power-go-client/power/client/storage_types
 github.com/IBM-Cloud/power-go-client/power/client/swagger_spec
 github.com/IBM-Cloud/power-go-client/power/client/workspaces
 github.com/IBM-Cloud/power-go-client/power/models
-# github.com/IBM/go-sdk-core/v5 v5.16.3
+# github.com/IBM/go-sdk-core/v5 v5.17.0
 ## explicit; go 1.20
 github.com/IBM/go-sdk-core/v5/core
 # github.com/IBM/ibm-cos-sdk-go v1.10.2
@@ -96,7 +96,7 @@ github.com/IBM/ibm-cos-sdk-go/service/s3
 ## explicit; go 1.19
 github.com/IBM/networking-go-sdk/common
 github.com/IBM/networking-go-sdk/transitgatewayapisv1
-# github.com/IBM/platform-services-go-sdk v0.62.0
+# github.com/IBM/platform-services-go-sdk v0.62.6
 ## explicit; go 1.20
 github.com/IBM/platform-services-go-sdk/common
 github.com/IBM/platform-services-go-sdk/resourcecontrollerv2
@@ -150,7 +150,7 @@ github.com/coreos/vcontext/tree
 # github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/emicklei/go-restful/v3 v3.11.0
+# github.com/emicklei/go-restful/v3 v3.12.0
 ## explicit; go 1.13
 github.com/emicklei/go-restful/v3
 github.com/emicklei/go-restful/v3/log
@@ -230,7 +230,7 @@ github.com/go-playground/locales/currency
 # github.com/go-playground/universal-translator v0.18.1
 ## explicit; go 1.18
 github.com/go-playground/universal-translator
-# github.com/go-playground/validator/v10 v10.18.0
+# github.com/go-playground/validator/v10 v10.19.0
 ## explicit; go 1.18
 github.com/go-playground/validator/v10
 # github.com/gobuffalo/flect v1.0.2
@@ -246,8 +246,8 @@ github.com/golang-jwt/jwt
 # github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da
 ## explicit
 github.com/golang/groupcache/lru
-# github.com/golang/protobuf v1.5.3
-## explicit; go 1.9
+# github.com/golang/protobuf v1.5.4
+## explicit; go 1.17
 github.com/golang/protobuf/jsonpb
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
@@ -352,7 +352,7 @@ github.com/munnerz/goautoneg
 # github.com/oklog/ulid v1.3.1
 ## explicit
 github.com/oklog/ulid
-# github.com/onsi/gomega v1.31.1
+# github.com/onsi/gomega v1.32.0
 ## explicit; go 1.20
 github.com/onsi/gomega
 github.com/onsi/gomega/format
@@ -434,8 +434,8 @@ go.opentelemetry.io/otel/semconv/internal/v2
 go.opentelemetry.io/otel/semconv/v1.17.0
 go.opentelemetry.io/otel/semconv/v1.17.0/httpconv
 go.opentelemetry.io/otel/semconv/v1.20.0
-go.opentelemetry.io/otel/semconv/v1.21.0
-# go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.20.0
+go.opentelemetry.io/otel/semconv/v1.24.0
+# go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.22.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel/exporters/otlp/otlptrace
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/internal/tracetransform
@@ -450,7 +450,7 @@ go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal/retry
 ## explicit; go 1.20
 go.opentelemetry.io/otel/metric
 go.opentelemetry.io/otel/metric/embedded
-# go.opentelemetry.io/otel/sdk v1.20.0
+# go.opentelemetry.io/otel/sdk v1.22.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel/sdk
 go.opentelemetry.io/otel/sdk/instrumentation
@@ -469,7 +469,7 @@ go.opentelemetry.io/proto/otlp/collector/trace/v1
 go.opentelemetry.io/proto/otlp/common/v1
 go.opentelemetry.io/proto/otlp/resource/v1
 go.opentelemetry.io/proto/otlp/trace/v1
-# golang.org/x/crypto v0.21.0
+# golang.org/x/crypto v0.22.0
 ## explicit; go 1.18
 golang.org/x/crypto/sha3
 # golang.org/x/exp v0.0.0-20230905200255-921286631fa9
@@ -477,7 +477,7 @@ golang.org/x/crypto/sha3
 golang.org/x/exp/constraints
 golang.org/x/exp/maps
 golang.org/x/exp/slices
-# golang.org/x/net v0.22.0
+# golang.org/x/net v0.24.0
 ## explicit; go 1.18
 golang.org/x/net/html
 golang.org/x/net/html/atom
@@ -497,14 +497,14 @@ golang.org/x/oauth2/internal
 # golang.org/x/sync v0.6.0
 ## explicit; go 1.18
 golang.org/x/sync/singleflight
-# golang.org/x/sys v0.18.0
+# golang.org/x/sys v0.19.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
-# golang.org/x/term v0.18.0
+# golang.org/x/term v0.19.0
 ## explicit; go 1.18
 golang.org/x/term
 # golang.org/x/text v0.14.0
@@ -667,7 +667,7 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
-# k8s.io/api v0.29.2
+# k8s.io/api v0.29.3
 ## explicit; go 1.21
 k8s.io/api/admission/v1
 k8s.io/api/admission/v1beta1
@@ -723,11 +723,11 @@ k8s.io/api/scheduling/v1beta1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-# k8s.io/apiextensions-apiserver v0.29.2
+# k8s.io/apiextensions-apiserver v0.29.3
 ## explicit; go 1.21
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
-# k8s.io/apimachinery v0.29.2
+# k8s.io/apimachinery v0.29.3
 ## explicit; go 1.21
 k8s.io/apimachinery/pkg/api/apitesting
 k8s.io/apimachinery/pkg/api/apitesting/fuzzer
@@ -787,7 +787,7 @@ k8s.io/apimachinery/pkg/version
 k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/reflect
-# k8s.io/apiserver v0.29.2
+# k8s.io/apiserver v0.29.3
 ## explicit; go 1.21
 k8s.io/apiserver/pkg/admission
 k8s.io/apiserver/pkg/apis/apiserver
@@ -846,7 +846,7 @@ k8s.io/apiserver/pkg/util/x509metrics
 k8s.io/apiserver/pkg/warning
 k8s.io/apiserver/plugin/pkg/authenticator/token/webhook
 k8s.io/apiserver/plugin/pkg/authorizer/webhook
-# k8s.io/client-go v0.29.2
+# k8s.io/client-go v0.29.3
 ## explicit; go 1.21
 k8s.io/client-go/applyconfigurations/admissionregistration/v1
 k8s.io/client-go/applyconfigurations/admissionregistration/v1alpha1
@@ -989,7 +989,7 @@ k8s.io/client-go/util/flowcontrol
 k8s.io/client-go/util/homedir
 k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/workqueue
-# k8s.io/component-base v0.29.2
+# k8s.io/component-base v0.29.3
 ## explicit; go 1.21
 k8s.io/component-base/cli/flag
 k8s.io/component-base/config
@@ -1057,8 +1057,8 @@ sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/client
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/client/metrics
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/common/metrics
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/proto/client
-# sigs.k8s.io/cluster-api v1.6.2
-## explicit; go 1.20
+# sigs.k8s.io/cluster-api v1.7.0
+## explicit; go 1.21
 sigs.k8s.io/cluster-api/api/v1beta1
 sigs.k8s.io/cluster-api/errors
 sigs.k8s.io/cluster-api/util
@@ -1068,9 +1068,10 @@ sigs.k8s.io/cluster-api/util/contract
 sigs.k8s.io/cluster-api/util/conversion
 sigs.k8s.io/cluster-api/util/flags
 sigs.k8s.io/cluster-api/util/labels
+sigs.k8s.io/cluster-api/util/labels/format
 sigs.k8s.io/cluster-api/util/patch
 sigs.k8s.io/cluster-api/util/predicates
-# sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240327041652-384c1894c61e
+# sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240424062805-188d9e99702c
 ## explicit; go 1.21
 sigs.k8s.io/cluster-api-provider-ibmcloud
 sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta1
@@ -1081,6 +1082,7 @@ sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/authenticator
 sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/cos
 sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/powervs
 sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/resourcecontroller
+sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/resourcemanager
 sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/transitgateway
 sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/utils
 sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/vpc
@@ -1089,7 +1091,7 @@ sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/ignition
 sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/options
 sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/record
 sigs.k8s.io/cluster-api-provider-ibmcloud/util
-# sigs.k8s.io/controller-runtime v0.17.2
+# sigs.k8s.io/controller-runtime v0.17.3
 ## explicit; go 1.21
 sigs.k8s.io/controller-runtime
 sigs.k8s.io/controller-runtime/pkg/builder

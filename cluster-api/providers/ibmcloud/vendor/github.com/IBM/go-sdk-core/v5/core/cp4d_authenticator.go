@@ -1,6 +1,6 @@
 package core
 
-// (C) Copyright IBM Corp. 2019, 2021.
+// (C) Copyright IBM Corp. 2019, 2024.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -56,6 +56,10 @@ type CloudPakForDataAuthenticator struct {
 	// not specified, a suitable default Client will be constructed.
 	Client     *http.Client
 	clientInit sync.Once
+
+	// The User-Agent header value to be included with each token request.
+	userAgent     string
+	userAgentInit sync.Once
 
 	// The cached token and expiration time.
 	tokenData *cp4dTokenData
@@ -182,6 +186,14 @@ func (authenticator *CloudPakForDataAuthenticator) client() *http.Client {
 	return authenticator.Client
 }
 
+// getUserAgent returns the User-Agent header value to be included in each token request invoked by the authenticator.
+func (authenticator *CloudPakForDataAuthenticator) getUserAgent() string {
+	authenticator.userAgentInit.Do(func() {
+		authenticator.userAgent = fmt.Sprintf("%s/%s-%s %s", sdkName, "cp4d-authenticator", __VERSION__, SystemInfo())
+	})
+	return authenticator.userAgent
+}
+
 // Authenticate adds the bearer token (obtained from the token server) to the
 // specified request.
 //
@@ -304,8 +316,9 @@ func (authenticator *CloudPakForDataAuthenticator) requestToken() (tokenResponse
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	// Add the Content-Type header.
+	// Add the Content-Type and User-Agent headers.
 	builder.AddHeader("Content-Type", "application/json")
+	builder.AddHeader(headerNameUserAgent, authenticator.getUserAgent())
 
 	// Add the request body to request.
 	_, err = builder.SetBodyContentJSON(body)
