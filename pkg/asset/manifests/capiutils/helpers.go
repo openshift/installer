@@ -1,7 +1,7 @@
 package capiutils
 
 import (
-	v1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/ipnet"
 )
@@ -21,7 +21,7 @@ func CIDRFromInstallConfig(installConfig *installconfig.InstallConfig) *ipnet.IP
 
 // IsEnabled returns true if the feature gate is enabled.
 func IsEnabled(installConfig *installconfig.InstallConfig) bool {
-	return installConfig.Config.EnabledFeatureGates().Enabled(v1.FeatureGateClusterAPIInstall)
+	return installConfig.Config.EnabledFeatureGates().Enabled(features.FeatureGateClusterAPIInstall)
 }
 
 // GenerateBoostrapMachineName generates the Cluster API Machine used for bootstrapping

@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	configv1 "github.com/openshift/api/config/v1"
+	features "github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -549,7 +550,7 @@ func (c *InstallConfig) EnabledFeatureGates() featuregates.FeatureGate {
 	}
 
 	clusterProfile := GetClusterProfileName()
-	featureSets, ok := configv1.AllFeatureSets()[clusterProfile]
+	featureSets, ok := features.AllFeatureSets()[clusterProfile]
 	if !ok {
 		logrus.Warnf("no feature sets for cluster profile %q", clusterProfile)
 	}
