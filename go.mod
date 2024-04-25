@@ -304,40 +304,15 @@ replace (
 
 replace sigs.k8s.io/cluster-api-provider-ibmcloud => sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240424062805-188d9e99702c
 
-replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.16.1-0.20231024080022-f1c5dd3851ce
-
-// Needed so that the InstallConfig CRD can be created. Later versions of controller-gen balk at using IPNet as a field.
-replace sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
-
-replace github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.10.0
-
 replace github.com/openshift/assisted-service/api => github.com/openshift/assisted-service/api v0.0.0-20230831114549-1922eda29cf8
 
 replace github.com/openshift/assisted-service/client => github.com/openshift/assisted-service/client v0.0.0-20230831114549-1922eda29cf8
 
 replace github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20230831114549-1922eda29cf8
 
-// https://bugzilla.redhat.com/show_bug.cgi?id=2064702
-replace golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
-
-// https://bugzilla.redhat.com/show_bug.cgi?id=2100495
-replace golang.org/x/text => golang.org/x/text v0.3.7
-
-// https://issues.redhat.com/browse/OCPBUGS-5324
-replace gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
-
-// https://issues.redhat.com/browse/OCPBUGS-5667
-replace github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
-
-// https://issues.redhat.com/browse/OCPBUGS-6422
-replace golang.org/x/net => golang.org/x/net v0.5.0
-
 // https://issues.redhat.com/browse/OCPBUGS-8119
 // https://issues.redhat.com/browse/OCPBUGS-27507
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
-
-// https://issues.redhat.com/browse/OCPBUGS-8540
-replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.11.2
 
 // https://issues.redhat.com/browse/OCPBUGS-30642
 replace golang.org/x/oauth2 => golang.org/x/oauth2 v0.15.0

@@ -1,11 +1,9 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.12.0
-  creationTimestamp: null
   name: installconfigs.install.openshift.io
 spec:
   group: install.openshift.io
@@ -2036,7 +2034,7 @@ spec:
                   properties:
                     cidr:
                       description: CIDR is the IP block address pool.
-                      type: Any
+                      type: string
                     hostPrefix:
                       description: HostPrefix is the prefix size to allocate to each
                         node from the CIDR. For example, 24 would allocate 2^8=256
@@ -2071,7 +2069,7 @@ spec:
                   properties:
                     cidr:
                       description: CIDR is the IP block address pool.
-                      type: Any
+                      type: string
                     hostPrefix:
                       description: HostPrefix is the prefix size to allocate to each
                         node from the CIDR. For example, 24 would allocate 2^8=256
@@ -2092,7 +2090,7 @@ spec:
               machineCIDR:
                 description: Deprecated way to configure an IP address pool for machines.
                   Replaced by MachineNetwork which allows for multiple pools.
-                type: Any
+                type: string
               machineNetwork:
                 description: MachineNetwork is the list of IP address pools for machines.
                   This field replaces MachineCIDR, and if set MachineCIDR must be
@@ -2106,7 +2104,7 @@ spec:
                     cidr:
                       description: CIDR is the IP block address pool for machines
                         within the cluster.
-                      type: Any
+                      type: string
                   required:
                   - cidr
                   type: object
@@ -2119,12 +2117,12 @@ spec:
               serviceCIDR:
                 description: Deprecated way to configure an IP address pool for services.
                   Replaced by ServiceNetwork which allows for multiple pools.
-                type: Any
+                type: string
               serviceNetwork:
                 description: 'ServiceNetwork is the list of IP address pools for services.
                   Default is 172.30.0.0/16. NOTE: currently only one entry is supported.'
                 items:
-                  type: Any
+                  type: string
                 maxItems: 1
                 type: array
               type:
@@ -2919,6 +2917,9 @@ spec:
                         - OpenShiftManagedDefault
                         - UserManaged
                         type: string
+                        x-kubernetes-validations:
+                        - message: type is immutable once set
+                          rule: oldSelf == '' || self == oldSelf
                     type: object
                   provisioningBridge:
                     description: Provisioning bridge is used for provisioning nodes,
@@ -2959,7 +2960,7 @@ spec:
                   provisioningNetworkCIDR:
                     description: ProvisioningNetworkCIDR defines the network to use
                       for provisioning.
-                    type: Any
+                    type: string
                   provisioningNetworkInterface:
                     description: ProvisioningNetworkInterface is the name of the network
                       interface on a control plane baremetal host that is connected
@@ -2987,6 +2988,9 @@ spec:
                       installation time. This field is solely for informational and
                       reporting purposes and is not expected to be used for decision-making.
                     type: string
+                    x-kubernetes-validations:
+                    - message: platform name cannot be changed once set
+                      rule: oldSelf == 'Unknown' || self == oldSelf
                 type: object
               gcp:
                 description: GCP is the configuration used when installing on Google
@@ -3353,6 +3357,9 @@ spec:
                             that overrides the default generated endpoint for a client.
                             This must be provided and cannot be empty.
                           type: string
+                          x-kubernetes-validations:
+                          - message: url must be a valid absolute URL
+                            rule: isURL(self)
                       required:
                       - name
                       - url
@@ -3634,6 +3641,9 @@ spec:
                         - OpenShiftManagedDefault
                         - UserManaged
                         type: string
+                        x-kubernetes-validations:
+                        - message: type is immutable once set
+                          rule: oldSelf == '' || self == oldSelf
                     type: object
                   prismCentral:
                     description: PrismCentral is the endpoint (address and port) and
@@ -3949,6 +3959,9 @@ spec:
                         - OpenShiftManagedDefault
                         - UserManaged
                         type: string
+                        x-kubernetes-validations:
+                        - message: type is immutable once set
+                          rule: oldSelf == '' || self == oldSelf
                     type: object
                   machinesSubnet:
                     description: 'DeprecatedMachinesSubnet is a string of the UUIDv4
@@ -4166,6 +4179,9 @@ spec:
                         - OpenShiftManagedDefault
                         - UserManaged
                         type: string
+                        x-kubernetes-validations:
+                        - message: type is immutable once set
+                          rule: oldSelf == '' || self == oldSelf
                     type: object
                   ovirt_cluster_id:
                     description: The target cluster under which all VMs will run
@@ -4465,6 +4481,7 @@ spec:
                                 to an instance. Specified tagIDs must use URN-notation
                                 instead of display names. A maximum of 10 tag IDs
                                 may be specified.
+                              example: urn:vmomi:InventoryServiceTag:5736bf56-49f5-4667-b38c-b97e09dc9578:GLOBAL
                               items:
                                 type: string
                               type: array
@@ -4525,6 +4542,7 @@ spec:
                                 for example, 192.168.1.100/24. IP addresses provided
                                 via ipAddrs are intended to allow explicit assignment
                                 of a machine's IP address.
+                              example: 2001:DB8:0000:0000:244:17FF:FEB6:D37D/64
                               format: ipv6
                               items:
                                 type: string
@@ -4536,6 +4554,7 @@ spec:
                                 If DHCP is not the source of IP addresses for this
                                 network device, nameservers should include a valid
                                 nameserver.
+                              example: 8.8.8.8
                               format: ipv6
                               items:
                                 type: string
@@ -4591,6 +4610,9 @@ spec:
                         - OpenShiftManagedDefault
                         - UserManaged
                         type: string
+                        x-kubernetes-validations:
+                        - message: type is immutable once set
+                          rule: oldSelf == '' || self == oldSelf
                     type: object
                   network:
                     description: 'Network specifies the name of the network to be
@@ -4700,9 +4722,3 @@ spec:
         type: object
     served: true
     storage: true
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null

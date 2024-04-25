@@ -18,7 +18,6 @@ package crd
 
 import (
 	"fmt"
-	"go/ast"
 
 	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -87,6 +86,12 @@ type Parser struct {
 	//       because the implementation is too difficult/clunky to promote them to category 3.
 	// TODO: Should we have a more formal mechanism for putting "type patterns" in each of the above categories?
 	AllowDangerousTypes bool
+
+	// IgnoreUnexportedFields specifies if unexported fields on the struct should be skipped
+	IgnoreUnexportedFields bool
+
+	// GenerateEmbeddedObjectMeta specifies if any embedded ObjectMeta should be generated
+	GenerateEmbeddedObjectMeta bool
 }
 
 func (p *Parser) init() {
@@ -176,7 +181,7 @@ func (p *Parser) NeedSchemaFor(typ TypeIdent) {
 	// avoid tripping recursive schemata, like ManagedFields, by adding an empty WIP schema
 	p.Schemata[typ] = apiext.JSONSchemaProps{}
 
-	schemaCtx := newSchemaContext(typ.Package, p, p.AllowDangerousTypes)
+	schemaCtx := newSchemaContext(typ.Package, p, p.AllowDangerousTypes, p.IgnoreUnexportedFields)
 	ctxForInfo := schemaCtx.ForInfo(info)
 
 	pkgMarkers, err := markers.PackageMarkers(p.Collector, typ.Package)
@@ -216,7 +221,7 @@ func (p *Parser) AddPackage(pkg *loader.Package) {
 		return
 	}
 	p.indexTypes(pkg)
-	p.Checker.Check(pkg, filterTypesForCRDs)
+	p.Checker.Check(pkg)
 	p.packages[pkg] = struct{}{}
 }
 
@@ -235,23 +240,4 @@ func (p *Parser) NeedPackage(pkg *loader.Package) {
 		return
 	}
 	p.AddPackage(pkg)
-}
-
-// filterTypesForCRDs filters out all nodes that aren't used in CRD generation,
-// like interfaces and struct fields without JSON tag.
-func filterTypesForCRDs(node ast.Node) bool {
-	switch node := node.(type) {
-	case *ast.InterfaceType:
-		// skip interfaces, we never care about references in them
-		return false
-	case *ast.StructType:
-		return true
-	case *ast.Field:
-		_, hasTag := loader.ParseAstTag(node.Tag).Lookup("json")
-		// fields without JSON tags mean we have custom serialization,
-		// so only visit fields with tags.
-		return hasTag
-	default:
-		return true
-	}
 }

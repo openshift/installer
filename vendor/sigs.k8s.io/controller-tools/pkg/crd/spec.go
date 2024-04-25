@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,11 +30,19 @@ import (
 )
 
 // SpecMarker is a marker that knows how to apply itself to a particular
-// version in a CRD.
+// version in a CRD Spec.
 type SpecMarker interface {
 	// ApplyToCRD applies this marker to the given CRD, in the given version
 	// within that CRD.  It's called after everything else in the CRD is populated.
 	ApplyToCRD(crd *apiext.CustomResourceDefinitionSpec, version string) error
+}
+
+// Marker is a marker that knows how to apply itself to a particular
+// version in a CRD.
+type Marker interface {
+	// ApplyToCRD applies this marker to the given CRD, in the given version
+	// within that CRD.  It's called after everything else in the CRD is populated.
+	ApplyToCRD(crd *apiext.CustomResourceDefinition, version string) error
 }
 
 // NeedCRDFor requests the full CRD for the given group-kind.  It requires
@@ -55,7 +63,7 @@ func (p *Parser) NeedCRDFor(groupKind schema.GroupKind, maxDescLen *int) {
 		packages = append(packages, pkg)
 	}
 
-	defaultPlural := flect.Pluralize(strings.ToLower(groupKind.Kind))
+	defaultPlural := strings.ToLower(flect.Pluralize(groupKind.Kind))
 	crd := apiext.CustomResourceDefinition{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: apiext.SchemeGroupVersion.String(),
@@ -109,12 +117,14 @@ func (p *Parser) NeedCRDFor(groupKind schema.GroupKind, maxDescLen *int) {
 
 		for _, markerVals := range typeInfo.Markers {
 			for _, val := range markerVals {
-				crdMarker, isCrdMarker := val.(SpecMarker)
-				if !isCrdMarker {
-					continue
-				}
-				if err := crdMarker.ApplyToCRD(&crd.Spec, ver); err != nil {
-					pkg.AddError(loader.ErrFromNode(err /* an okay guess */, typeInfo.RawSpec))
+				if specMarker, isSpecMarker := val.(SpecMarker); isSpecMarker {
+					if err := specMarker.ApplyToCRD(&crd.Spec, ver); err != nil {
+						pkg.AddError(loader.ErrFromNode(err /* an okay guess */, typeInfo.RawSpec))
+					}
+				} else if crdMarker, isCRDMarker := val.(Marker); isCRDMarker {
+					if err := crdMarker.ApplyToCRD(&crd, ver); err != nil {
+						pkg.AddError(loader.ErrFromNode(err /* an okay guess */, typeInfo.RawSpec))
+					}
 				}
 			}
 		}
@@ -163,8 +173,6 @@ func (p *Parser) NeedCRDFor(groupKind schema.GroupKind, maxDescLen *int) {
 		// since there's no specific error location
 		packages[0].AddError(fmt.Errorf("CRD for %s with version(s) %v does not serve any version", groupKind, crd.Spec.Versions))
 	}
-
-	crd.Status = apiext.CustomResourceDefinitionStatus{}
 
 	p.CustomResourceDefinitions[groupKind] = crd
 }
