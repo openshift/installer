@@ -53,7 +53,8 @@ function New-OpenShiftVM {
     {
         Set-VM -VM $vm -MemoryMB $MemoryMB -NumCpu $NumCpu -CoresPerSocket 4 -Confirm:$false > $null
     }
-    Get-HardDisk -VM $vm | Select-Object -First 1 | Set-HardDisk -CapacityGB 120 -Confirm:$false > $null
+    #Get-HardDisk -VM $vm | Select-Object -First 1 | Set-HardDisk -CapacityGB 120 -Confirm:$false > $null
+    updateDisk -VM $vm -CapacityGB 120
 
     # Configure Network (Assuming template networking may not be correct if shared across clusters)
     $pg = Get-VirtualPortgroup -Name $Network -VMHost $(Get-VMHost -VM $vm) 2> $null
@@ -76,6 +77,38 @@ function New-OpenShiftVM {
     }
 
     return $vm
+}
+
+# This function was created to work around issue in vSphere 8.0 where vCenter crashed
+# when Set-HardDisk is called.
+function updateDisk {
+    param (
+        $CapacityGB,
+        $VM
+    )
+
+    $newDiskSizeKB = $CapacityGB * 1024 * 1024
+    $newDiskSizeBytes = $newDiskSizeKB * 1024
+
+    $vmMo = get-view -id $VM.ExtensionData.MoRef
+
+    $devices = $vmMo.Config.Hardware.Device
+
+    $spec = New-Object VMware.Vim.VirtualMachineConfigSpec
+    $spec.DeviceChange = New-Object VMware.Vim.VirtualDeviceConfigSpec[] (1)
+    $spec.DeviceChange[0] = New-Object VMware.Vim.VirtualDeviceConfigSpec
+    $spec.DeviceChange[0].Operation = 'edit'
+
+    foreach($d in $devices) {
+        if ($d.DeviceInfo.Label.Contains("Hard disk")) {
+            $spec.DeviceChange[0].Device = $d
+        }
+    }
+
+    $spec.DeviceChange[0].Device.CapacityInBytes = $newDiskSizeBytes
+    $spec.DeviceChange[0].Device.CapacityInKB = $newDiskSizeKB
+
+    $vmMo.ReconfigVM_Task($spec) > $null
 }
 
 function New-VMConfigs {

@@ -211,7 +211,8 @@ foreach ($fd in $fds)
 
             New-TagAssignment -Entity $template -Tag $tag
             Set-VM -VM $template -MemoryGB 16 -NumCpu 4 -CoresPerSocket 4 -Confirm:$false > $null
-            Get-HardDisk -VM $template | Select-Object -First 1 | Set-HardDisk -CapacityGB 120 -Confirm:$false > $null
+            #Get-HardDisk -VM $template | Select-Object -First 1 | Set-HardDisk -CapacityGB 120 -Confirm:$false > $null
+            updateDisk -VM $template -CapacityGB 120
             New-AdvancedSetting -Entity $template -name "disk.EnableUUID" -value 'TRUE' -confirm:$false -Force > $null
             New-AdvancedSetting -Entity $template -name "guestinfo.ignition.config.data.encoding" -value "base64" -confirm:$false -Force > $null
             #$snapshot = New-Snapshot -VM $template -Name "linked-clone" -Description "linked-clone" -Memory -Quiesce
