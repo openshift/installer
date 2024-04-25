@@ -48,6 +48,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			AzureClusterClassSpec: capz.AzureClusterClassSpec{
 				SubscriptionID:   session.Credentials.SubscriptionID,
 				Location:         installConfig.Config.Azure.Region,
+				AdditionalTags:   installConfig.Config.Platform.Azure.UserTags,
 				AzureEnvironment: string(installConfig.Azure.CloudName),
 				IdentityRef: &corev1.ObjectReference{
 					APIVersion: capz.GroupVersion.String(),
