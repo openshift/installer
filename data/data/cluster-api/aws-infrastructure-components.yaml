@@ -1582,6 +1582,62 @@ spec:
                         AdditionalListenerSpec defines the desired state of an
                         additional listener on an AWS load balancer.
                       properties:
+                        healthCheck:
+                          description: HealthCheck sets the optional custom health
+                            check configuration to the API target group.
+                          properties:
+                            intervalSeconds:
+                              description: |-
+                                The approximate amount of time, in seconds, between health checks of an individual
+                                target.
+                              format: int64
+                              maximum: 300
+                              minimum: 5
+                              type: integer
+                            path:
+                              description: |-
+                                The destination for health checks on the targets when using the protocol HTTP or HTTPS,
+                                otherwise the path will be ignored.
+                              type: string
+                            port:
+                              description: |-
+                                The port the load balancer uses when performing health checks for additional target groups. When
+                                not specified this value will be set for the same of listener port.
+                              type: string
+                            protocol:
+                              description: |-
+                                The protocol to use to health check connect with the target. When not specified the Protocol
+                                will be the same of the listener.
+                              enum:
+                              - TCP
+                              - HTTP
+                              - HTTPS
+                              type: string
+                            thresholdCount:
+                              description: |-
+                                The number of consecutive health check successes required before considering
+                                a target healthy.
+                              format: int64
+                              maximum: 10
+                              minimum: 2
+                              type: integer
+                            timeoutSeconds:
+                              description: |-
+                                The amount of time, in seconds, during which no response from a target means
+                                a failed health check.
+                              format: int64
+                              maximum: 120
+                              minimum: 2
+                              type: integer
+                            unhealthyThresholdCount:
+                              description: |-
+                                The number of consecutive health check failures required before considering
+                                a target unhealthy.
+                              format: int64
+                              maximum: 10
+                              minimum: 2
+                              type: integer
+                          type: object
                         port:
                           description: Port sets the port for the additional listener.
                           format: int64
@@ -1628,6 +1684,43 @@ spec:
                       DisableHostsRewrite disabled the hair pinning issue solution that adds the NLB's address as 127.0.0.1 to the hosts
                       file of each instance. This is by default, false.
                     type: boolean
+                  healthCheck:
+                    description: HealthCheck sets custom health check configuration
+                      to the API target group.
+                    properties:
+                      intervalSeconds:
+                        description: |-
+                          The approximate amount of time, in seconds, between health checks of an individual
+                          target.
+                        format: int64
+                        maximum: 300
+                        minimum: 5
+                        type: integer
+                      thresholdCount:
+                        description: |-
+                          The number of consecutive health check successes required before considering
+                          a target healthy.
+                        format: int64
+                        maximum: 10
+                        minimum: 2
+                        type: integer
+                      timeoutSeconds:
+                        description: |-
+                          The amount of time, in seconds, during which no response from a target means
+                          a failed health check.
+                        format: int64
+                        maximum: 120
+                        minimum: 2
+                        type: integer
+                      unhealthyThresholdCount:
+                        description: |-
+                          The number of consecutive health check failures required before considering
+                          a target unhealthy.
+                        format: int64
+                        maximum: 10
+                        minimum: 2
+                        type: integer
+                    type: object
                   healthCheckProtocol:
                     description: |-
                       HealthCheckProtocol sets the protocol type for ELB health check target
@@ -1962,6 +2055,15 @@ spec:
                             NatGatewayID is the NAT gateway id associated with the subnet.
                             Ignored unless the subnet is managed by the provider, in which case this is set on the public subnet where the NAT gateway resides. It is then used to determine routes for private subnets in the same AZ as the public subnet.
                           type: string
+                        parentZoneName:
+                          description: |-
+                            ParentZoneName is the zone name where the current subnet's zone is tied when
+                            the zone is a Local Zone.
+
+
+                            The subnets in Local Zone locations consume the ParentZoneName to determine the correct
+                            private route table to egress traffic to the internet.
+                          type: string
                         resourceID:
                           description: |-
                             ResourceID is the subnet identifier from AWS, READ ONLY.
@@ -1977,6 +2079,37 @@ spec:
                           description: Tags is a collection of tags describing the
                             resource.
                           type: object
+                        zoneType:
+                          description: |-
+                            ZoneType defines the type of the zone where the subnet is created.
+
+
+                            The valid values are availability-zone, and local-zone.
+
+
+                            Subnet with zone type availability-zone (regular) is always selected to create cluster
+                            resources, like Load Balancers, NAT Gateways, Contol Plane nodes, etc.
+
+
+                            Subnet with zone type local-zone is not eligible to automatically create
+                            regular cluster resources.
+
+
+                            The public subnet in availability-zone or local-zone is associated with regular public
+                            route table with default route entry to a Internet Gateway.
+
+
+                            The private subnet in the availability-zone is associated with a private route table with
+                            the default route entry to a NAT Gateway created in that zone.
+
+
+                            The private subnet in the local-zone is associated with a private route table with
+                            the default route entry re-using the NAT Gateway in the Region (preferred from the
+                            parent zone, the zone type availability-zone in the region, or first table available).
+                          enum:
+                          - availability-zone
+                          - local-zone
+                          type: string
                       required:
                       - id
                       type: object
@@ -2129,6 +2262,10 @@ spec:
                   (https://coreos.github.io/ignition/) for bootstrapping (requires
                   BootstrapFormatIgnition feature flag to be enabled).
                 properties:
+                  bestEffortDeleteObjects:
+                    description: BestEffortDeleteObjects defines whether access/permission
+                      errors during object deletion should be ignored.
+                    type: boolean
                   controlPlaneIAMInstanceProfile:
                     description: |-
                       ControlPlaneIAMInstanceProfile is a name of the IAMInstanceProfile, which will be allowed
@@ -2178,6 +2315,62 @@ spec:
                         AdditionalListenerSpec defines the desired state of an
                         additional listener on an AWS load balancer.
                       properties:
+                        healthCheck:
+                          description: HealthCheck sets the optional custom health
+                            check configuration to the API target group.
+                          properties:
+                            intervalSeconds:
+                              description: |-
+                                The approximate amount of time, in seconds, between health checks of an individual
+                                target.
+                              format: int64
+                              maximum: 300
+                              minimum: 5
+                              type: integer
+                            path:
+                              description: |-
+                                The destination for health checks on the targets when using the protocol HTTP or HTTPS,
+                                otherwise the path will be ignored.
+                              type: string
+                            port:
+                              description: |-
+                                The port the load balancer uses when performing health checks for additional target groups. When
+                                not specified this value will be set for the same of listener port.
+                              type: string
+                            protocol:
+                              description: |-
+                                The protocol to use to health check connect with the target. When not specified the Protocol
+                                will be the same of the listener.
+                              enum:
+                              - TCP
+                              - HTTP
+                              - HTTPS
+                              type: string
+                            thresholdCount:
+                              description: |-
+                                The number of consecutive health check successes required before considering
+                                a target healthy.
+                              format: int64
+                              maximum: 10
+                              minimum: 2
+                              type: integer
+                            timeoutSeconds:
+                              description: |-
+                                The amount of time, in seconds, during which no response from a target means
+                                a failed health check.
+                              format: int64
+                              maximum: 120
+                              minimum: 2
+                              type: integer
+                            unhealthyThresholdCount:
+                              description: |-
+                                The number of consecutive health check failures required before considering
+                                a target unhealthy.
+                              format: int64
+                              maximum: 10
+                              minimum: 2
+                              type: integer
+                          type: object
                         port:
                           description: Port sets the port for the additional listener.
                           format: int64
@@ -2224,6 +2417,43 @@ spec:
                       DisableHostsRewrite disabled the hair pinning issue solution that adds the NLB's address as 127.0.0.1 to the hosts
                       file of each instance. This is by default, false.
                     type: boolean
+                  healthCheck:
+                    description: HealthCheck sets custom health check configuration
+                      to the API target group.
+                    properties:
+                      intervalSeconds:
+                        description: |-
+                          The approximate amount of time, in seconds, between health checks of an individual
+                          target.
+                        format: int64
+                        maximum: 300
+                        minimum: 5
+                        type: integer
+                      thresholdCount:
+                        description: |-
+                          The number of consecutive health check successes required before considering
+                          a target healthy.
+                        format: int64
+                        maximum: 10
+                        minimum: 2
+                        type: integer
+                      timeoutSeconds:
+                        description: |-
+                          The amount of time, in seconds, during which no response from a target means
+                          a failed health check.
+                        format: int64
+                        maximum: 120
+                        minimum: 2
+                        type: integer
+                      unhealthyThresholdCount:
+                        description: |-
+                          The number of consecutive health check failures required before considering
+                          a target unhealthy.
+                        format: int64
+                        maximum: 10
+                        minimum: 2
+                        type: integer
+                    type: object
                   healthCheckProtocol:
                     description: |-
                       HealthCheckProtocol sets the protocol type for ELB health check target
@@ -2779,6 +3009,7 @@ spec:
                                 name:
                                   description: Name of the TargetGroup. Must be unique
                                     over the same group of listeners.
+                                  maxLength: 32
                                   type: string
                                 port:
                                   description: Port is the exposed port
@@ -2812,6 +3043,9 @@ spec:
                                       format: int64
                                       type: integer
                                     timeoutSeconds:
+                                      format: int64
+                                      type: integer
+                                    unhealthyThresholdCount:
                                       format: int64
                                       type: integer
                                   type: object
@@ -2995,6 +3229,7 @@ spec:
                                 name:
                                   description: Name of the TargetGroup. Must be unique
                                     over the same group of listeners.
+                                  maxLength: 32
                                   type: string
                                 port:
                                   description: Port is the exposed port
@@ -3028,6 +3263,9 @@ spec:
                                       format: int64
                                       type: integer
                                     timeoutSeconds:
+                                      format: int64
+                                      type: integer
+                                    unhealthyThresholdCount:
                                       format: int64
                                       type: integer
                                   type: object
@@ -4084,6 +4322,62 @@ spec:
                                 AdditionalListenerSpec defines the desired state of an
                                 additional listener on an AWS load balancer.
                               properties:
+                                healthCheck:
+                                  description: HealthCheck sets the optional custom
+                                    health check configuration to the API target group.
+                                  properties:
+                                    intervalSeconds:
+                                      description: |-
+                                        The approximate amount of time, in seconds, between health checks of an individual
+                                        target.
+                                      format: int64
+                                      maximum: 300
+                                      minimum: 5
+                                      type: integer
+                                    path:
+                                      description: |-
+                                        The destination for health checks on the targets when using the protocol HTTP or HTTPS,
+                                        otherwise the path will be ignored.
+                                      type: string
+                                    port:
+                                      description: |-
+                                        The port the load balancer uses when performing health checks for additional target groups. When
+                                        not specified this value will be set for the same of listener port.
+                                      type: string
+                                    protocol:
+                                      description: |-
+                                        The protocol to use to health check connect with the target. When not specified the Protocol
+                                        will be the same of the listener.
+                                      enum:
+                                      - TCP
+                                      - HTTP
+                                      - HTTPS
+                                      type: string
+                                    thresholdCount:
+                                      description: |-
+                                        The number of consecutive health check successes required before considering
+                                        a target healthy.
+                                      format: int64
+                                      maximum: 10
+                                      minimum: 2
+                                      type: integer
+                                    timeoutSeconds:
+                                      description: |-
+                                        The amount of time, in seconds, during which no response from a target means
+                                        a failed health check.
+                                      format: int64
+                                      maximum: 120
+                                      minimum: 2
+                                      type: integer
+                                    unhealthyThresholdCount:
+                                      description: |-
+                                        The number of consecutive health check failures required before considering
+                                        a target unhealthy.
+                                      format: int64
+                                      maximum: 10
+                                      minimum: 2
+                                      type: integer
+                                  type: object
                                 port:
                                   description: Port sets the port for the additional
                                     listener.
@@ -4131,6 +4425,43 @@ spec:
                               DisableHostsRewrite disabled the hair pinning issue solution that adds the NLB's address as 127.0.0.1 to the hosts
                               file of each instance. This is by default, false.
                             type: boolean
+                          healthCheck:
+                            description: HealthCheck sets custom health check configuration
+                              to the API target group.
+                            properties:
+                              intervalSeconds:
+                                description: |-
+                                  The approximate amount of time, in seconds, between health checks of an individual
+                                  target.
+                                format: int64
+                                maximum: 300
+                                minimum: 5
+                                type: integer
+                              thresholdCount:
+                                description: |-
+                                  The number of consecutive health check successes required before considering
+                                  a target healthy.
+                                format: int64
+                                maximum: 10
+                                minimum: 2
+                                type: integer
+                              timeoutSeconds:
+                                description: |-
+                                  The amount of time, in seconds, during which no response from a target means
+                                  a failed health check.
+                                format: int64
+                                maximum: 120
+                                minimum: 2
+                                type: integer
+                              unhealthyThresholdCount:
+                                description: |-
+                                  The number of consecutive health check failures required before considering
+                                  a target unhealthy.
+                                format: int64
+                                maximum: 10
+                                minimum: 2
+                                type: integer
+                            type: object
                           healthCheckProtocol:
                             description: |-
                               HealthCheckProtocol sets the protocol type for ELB health check target
@@ -4471,6 +4802,15 @@ spec:
                                     NatGatewayID is the NAT gateway id associated with the subnet.
                                     Ignored unless the subnet is managed by the provider, in which case this is set on the public subnet where the NAT gateway resides. It is then used to determine routes for private subnets in the same AZ as the public subnet.
                                   type: string
+                                parentZoneName:
+                                  description: |-
+                                    ParentZoneName is the zone name where the current subnet's zone is tied when
+                                    the zone is a Local Zone.
+
+
+                                    The subnets in Local Zone locations consume the ParentZoneName to determine the correct
+                                    private route table to egress traffic to the internet.
+                                  type: string
                                 resourceID:
                                   description: |-
                                     ResourceID is the subnet identifier from AWS, READ ONLY.
@@ -4486,6 +4826,37 @@ spec:
                                   description: Tags is a collection of tags describing
                                     the resource.
                                   type: object
+                                zoneType:
+                                  description: |-
+                                    ZoneType defines the type of the zone where the subnet is created.
+
+
+                                    The valid values are availability-zone, and local-zone.
+
+
+                                    Subnet with zone type availability-zone (regular) is always selected to create cluster
+                                    resources, like Load Balancers, NAT Gateways, Contol Plane nodes, etc.
+
+
+                                    Subnet with zone type local-zone is not eligible to automatically create
+                                    regular cluster resources.
+
+
+                                    The public subnet in availability-zone or local-zone is associated with regular public
+                                    route table with default route entry to a Internet Gateway.
+
+
+                                    The private subnet in the availability-zone is associated with a private route table with
+                                    the default route entry to a NAT Gateway created in that zone.
+
+
+                                    The private subnet in the local-zone is associated with a private route table with
+                                    the default route entry re-using the NAT Gateway in the Region (preferred from the
+                                    parent zone, the zone type availability-zone in the region, or first table available).
+                                  enum:
+                                  - availability-zone
+                                  - local-zone
+                                  type: string
                               required:
                               - id
                               type: object
@@ -4640,6 +5011,10 @@ spec:
                           (https://coreos.github.io/ignition/) for bootstrapping (requires
                           BootstrapFormatIgnition feature flag to be enabled).
                         properties:
+                          bestEffortDeleteObjects:
+                            description: BestEffortDeleteObjects defines whether access/permission
+                              errors during object deletion should be ignored.
+                            type: boolean
                           controlPlaneIAMInstanceProfile:
                             description: |-
                               ControlPlaneIAMInstanceProfile is a name of the IAMInstanceProfile, which will be allowed
@@ -4689,6 +5064,62 @@ spec:
                                 AdditionalListenerSpec defines the desired state of an
                                 additional listener on an AWS load balancer.
                               properties:
+                                healthCheck:
+                                  description: HealthCheck sets the optional custom
+                                    health check configuration to the API target group.
+                                  properties:
+                                    intervalSeconds:
+                                      description: |-
+                                        The approximate amount of time, in seconds, between health checks of an individual
+                                        target.
+                                      format: int64
+                                      maximum: 300
+                                      minimum: 5
+                                      type: integer
+                                    path:
+                                      description: |-
+                                        The destination for health checks on the targets when using the protocol HTTP or HTTPS,
+                                        otherwise the path will be ignored.
+                                      type: string
+                                    port:
+                                      description: |-
+                                        The port the load balancer uses when performing health checks for additional target groups. When
+                                        not specified this value will be set for the same of listener port.
+                                      type: string
+                                    protocol:
+                                      description: |-
+                                        The protocol to use to health check connect with the target. When not specified the Protocol
+                                        will be the same of the listener.
+                                      enum:
+                                      - TCP
+                                      - HTTP
+                                      - HTTPS
+                                      type: string
+                                    thresholdCount:
+                                      description: |-
+                                        The number of consecutive health check successes required before considering
+                                        a target healthy.
+                                      format: int64
+                                      maximum: 10
+                                      minimum: 2
+                                      type: integer
+                                    timeoutSeconds:
+                                      description: |-
+                                        The amount of time, in seconds, during which no response from a target means
+                                        a failed health check.
+                                      format: int64
+                                      maximum: 120
+                                      minimum: 2
+                                      type: integer
+                                    unhealthyThresholdCount:
+                                      description: |-
+                                        The number of consecutive health check failures required before considering
+                                        a target unhealthy.
+                                      format: int64
+                                      maximum: 10
+                                      minimum: 2
+                                      type: integer
+                                  type: object
                                 port:
                                   description: Port sets the port for the additional
                                     listener.
@@ -4736,6 +5167,43 @@ spec:
                               DisableHostsRewrite disabled the hair pinning issue solution that adds the NLB's address as 127.0.0.1 to the hosts
                               file of each instance. This is by default, false.
                             type: boolean
+                          healthCheck:
+                            description: HealthCheck sets custom health check configuration
+                              to the API target group.
+                            properties:
+                              intervalSeconds:
+                                description: |-
+                                  The approximate amount of time, in seconds, between health checks of an individual
+                                  target.
+                                format: int64
+                                maximum: 300
+                                minimum: 5
+                                type: integer
+                              thresholdCount:
+                                description: |-
+                                  The number of consecutive health check successes required before considering
+                                  a target healthy.
+                                format: int64
+                                maximum: 10
+                                minimum: 2
+                                type: integer
+                              timeoutSeconds:
+                                description: |-
+                                  The amount of time, in seconds, during which no response from a target means
+                                  a failed health check.
+                                format: int64
+                                maximum: 120
+                                minimum: 2
+                                type: integer
+                              unhealthyThresholdCount:
+                                description: |-
+                                  The number of consecutive health check failures required before considering
+                                  a target unhealthy.
+                                format: int64
+                                maximum: 10
+                                minimum: 2
+                                type: integer
+                            type: object
                           healthCheckProtocol:
                             description: |-
                               HealthCheckProtocol sets the protocol type for ELB health check target
@@ -9349,6 +9817,15 @@ spec:
                             NatGatewayID is the NAT gateway id associated with the subnet.
                             Ignored unless the subnet is managed by the provider, in which case this is set on the public subnet where the NAT gateway resides. It is then used to determine routes for private subnets in the same AZ as the public subnet.
                           type: string
+                        parentZoneName:
+                          description: |-
+                            ParentZoneName is the zone name where the current subnet's zone is tied when
+                            the zone is a Local Zone.
+
+
+                            The subnets in Local Zone locations consume the ParentZoneName to determine the correct
+                            private route table to egress traffic to the internet.
+                          type: string
                         resourceID:
                           description: |-
                             ResourceID is the subnet identifier from AWS, READ ONLY.
@@ -9364,6 +9841,37 @@ spec:
                           description: Tags is a collection of tags describing the
                             resource.
                           type: object
+                        zoneType:
+                          description: |-
+                            ZoneType defines the type of the zone where the subnet is created.
+
+
+                            The valid values are availability-zone, and local-zone.
+
+
+                            Subnet with zone type availability-zone (regular) is always selected to create cluster
+                            resources, like Load Balancers, NAT Gateways, Contol Plane nodes, etc.
+
+
+                            Subnet with zone type local-zone is not eligible to automatically create
+                            regular cluster resources.
+
+
+                            The public subnet in availability-zone or local-zone is associated with regular public
+                            route table with default route entry to a Internet Gateway.
+
+
+                            The private subnet in the availability-zone is associated with a private route table with
+                            the default route entry to a NAT Gateway created in that zone.
+
+
+                            The private subnet in the local-zone is associated with a private route table with
+                            the default route entry re-using the NAT Gateway in the Region (preferred from the
+                            parent zone, the zone type availability-zone in the region, or first table available).
+                          enum:
+                          - availability-zone
+                          - local-zone
+                          type: string
                       required:
                       - id
                       type: object
@@ -10253,6 +10761,7 @@ spec:
                                 name:
                                   description: Name of the TargetGroup. Must be unique
                                     over the same group of listeners.
+                                  maxLength: 32
                                   type: string
                                 port:
                                   description: Port is the exposed port
@@ -10286,6 +10795,9 @@ spec:
                                       format: int64
                                       type: integer
                                     timeoutSeconds:
+                                      format: int64
+                                      type: integer
+                                    unhealthyThresholdCount:
                                       format: int64
                                       type: integer
                                   type: object
@@ -10469,6 +10981,7 @@ spec:
                                 name:
                                   description: Name of the TargetGroup. Must be unique
                                     over the same group of listeners.
+                                  maxLength: 32
                                   type: string
                                 port:
                                   description: Port is the exposed port
@@ -10502,6 +11015,9 @@ spec:
                                       format: int64
                                       type: integer
                                     timeoutSeconds:
+                                      format: int64
+                                      type: integer
+                                    unhealthyThresholdCount:
                                       format: int64
                                       type: integer
                                   type: object
@@ -11238,6 +11754,15 @@ spec:
                             NatGatewayID is the NAT gateway id associated with the subnet.
                             Ignored unless the subnet is managed by the provider, in which case this is set on the public subnet where the NAT gateway resides. It is then used to determine routes for private subnets in the same AZ as the public subnet.
                           type: string
+                        parentZoneName:
+                          description: |-
+                            ParentZoneName is the zone name where the current subnet's zone is tied when
+                            the zone is a Local Zone.
+
+
+                            The subnets in Local Zone locations consume the ParentZoneName to determine the correct
+                            private route table to egress traffic to the internet.
+                          type: string
                         resourceID:
                           description: |-
                             ResourceID is the subnet identifier from AWS, READ ONLY.
@@ -11253,6 +11778,37 @@ spec:
                           description: Tags is a collection of tags describing the
                             resource.
                           type: object
+                        zoneType:
+                          description: |-
+                            ZoneType defines the type of the zone where the subnet is created.
+
+
+                            The valid values are availability-zone, and local-zone.
+
+
+                            Subnet with zone type availability-zone (regular) is always selected to create cluster
+                            resources, like Load Balancers, NAT Gateways, Contol Plane nodes, etc.
+
+
+                            Subnet with zone type local-zone is not eligible to automatically create
+                            regular cluster resources.
+
+
+                            The public subnet in availability-zone or local-zone is associated with regular public
+                            route table with default route entry to a Internet Gateway.
+
+
+                            The private subnet in the availability-zone is associated with a private route table with
+                            the default route entry to a NAT Gateway created in that zone.
+
+
+                            The private subnet in the local-zone is associated with a private route table with
+                            the default route entry re-using the NAT Gateway in the Region (preferred from the
+                            parent zone, the zone type availability-zone in the region, or first table available).
+                          enum:
+                          - availability-zone
+                          - local-zone
+                          type: string
                       required:
                       - id
                       type: object
@@ -12155,6 +12711,7 @@ spec:
                                 name:
                                   description: Name of the TargetGroup. Must be unique
                                     over the same group of listeners.
+                                  maxLength: 32
                                   type: string
                                 port:
                                   description: Port is the exposed port
@@ -12188,6 +12745,9 @@ spec:
                                       format: int64
                                       type: integer
                                     timeoutSeconds:
+                                      format: int64
+                                      type: integer
+                                    unhealthyThresholdCount:
                                       format: int64
                                       type: integer
                                   type: object
@@ -12371,6 +12931,7 @@ spec:
                                 name:
                                   description: Name of the TargetGroup. Must be unique
                                     over the same group of listeners.
+                                  maxLength: 32
                                   type: string
                                 port:
                                   description: Port is the exposed port
@@ -12404,6 +12965,9 @@ spec:
                                       format: int64
                                       type: integer
                                     timeoutSeconds:
+                                      format: int64
+                                      type: integer
+                                    unhealthyThresholdCount:
                                       format: int64
                                       type: integer
                                   type: object
@@ -15234,13 +15798,12 @@ spec:
                             If unset, system trust is used instead.
                           properties:
                             name:
-                              description: |-
-                                Name of the referent.
-                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                TODO: Add other useful fields. apiVersion, kind, uid?
+                              description: Name is the metadata.name of the referenced
+                                object.
                               type: string
+                          required:
+                          - name
                           type: object
-                          x-kubernetes-map-type: atomic
                         issuerURL:
                           description: |-
                             URL is the serving URL of the token issuer.
@@ -15275,15 +15838,12 @@ spec:
                               contains the client secret in the `clientSecret` key of the `.data` field
                             properties:
                               name:
-                                description: name is unique within a namespace to
-                                  reference a secret resource.
+                                description: Name is the metadata.name of the referenced
+                                  object.
                                 type: string
-                              namespace:
-                                description: namespace defines the space within which
-                                  the secret name must be unique.
-                                type: string
+                            required:
+                            - name
                             type: object
-                            x-kubernetes-map-type: atomic
                           componentName:
                             description: |-
                               ComponentName is the name of the component that is supposed to consume this
@@ -16055,6 +16615,18 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - configmaps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
   - events
   verbs:
   - create
@@ -16595,7 +17167,7 @@ spec:
         env:
         - name: AWS_SHARED_CREDENTIALS_FILE
           value: /home/.aws/credentials
-        image: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller:v2.4.1
+        image: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller:latest
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3

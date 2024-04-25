@@ -1387,6 +1387,13 @@ type EC2API interface {
 	DescribeLockedSnapshotsWithContext(aws.Context, *ec2.DescribeLockedSnapshotsInput, ...request.Option) (*ec2.DescribeLockedSnapshotsOutput, error)
 	DescribeLockedSnapshotsRequest(*ec2.DescribeLockedSnapshotsInput) (*request.Request, *ec2.DescribeLockedSnapshotsOutput)
 
+	DescribeMacHosts(*ec2.DescribeMacHostsInput) (*ec2.DescribeMacHostsOutput, error)
+	DescribeMacHostsWithContext(aws.Context, *ec2.DescribeMacHostsInput, ...request.Option) (*ec2.DescribeMacHostsOutput, error)
+	DescribeMacHostsRequest(*ec2.DescribeMacHostsInput) (*request.Request, *ec2.DescribeMacHostsOutput)
+
+	DescribeMacHostsPages(*ec2.DescribeMacHostsInput, func(*ec2.DescribeMacHostsOutput, bool) bool) error
+	DescribeMacHostsPagesWithContext(aws.Context, *ec2.DescribeMacHostsInput, func(*ec2.DescribeMacHostsOutput, bool) bool, ...request.Option) error
+
 	DescribeManagedPrefixLists(*ec2.DescribeManagedPrefixListsInput) (*ec2.DescribeManagedPrefixListsOutput, error)
 	DescribeManagedPrefixListsWithContext(aws.Context, *ec2.DescribeManagedPrefixListsInput, ...request.Option) (*ec2.DescribeManagedPrefixListsOutput, error)
 	DescribeManagedPrefixListsRequest(*ec2.DescribeManagedPrefixListsInput) (*request.Request, *ec2.DescribeManagedPrefixListsOutput)
@@ -2164,6 +2171,10 @@ type EC2API interface {
 	GetImageBlockPublicAccessStateWithContext(aws.Context, *ec2.GetImageBlockPublicAccessStateInput, ...request.Option) (*ec2.GetImageBlockPublicAccessStateOutput, error)
 	GetImageBlockPublicAccessStateRequest(*ec2.GetImageBlockPublicAccessStateInput) (*request.Request, *ec2.GetImageBlockPublicAccessStateOutput)
 
+	GetInstanceMetadataDefaults(*ec2.GetInstanceMetadataDefaultsInput) (*ec2.GetInstanceMetadataDefaultsOutput, error)
+	GetInstanceMetadataDefaultsWithContext(aws.Context, *ec2.GetInstanceMetadataDefaultsInput, ...request.Option) (*ec2.GetInstanceMetadataDefaultsOutput, error)
+	GetInstanceMetadataDefaultsRequest(*ec2.GetInstanceMetadataDefaultsInput) (*request.Request, *ec2.GetInstanceMetadataDefaultsOutput)
+
 	GetInstanceTypesFromInstanceRequirements(*ec2.GetInstanceTypesFromInstanceRequirementsInput) (*ec2.GetInstanceTypesFromInstanceRequirementsOutput, error)
 	GetInstanceTypesFromInstanceRequirementsWithContext(aws.Context, *ec2.GetInstanceTypesFromInstanceRequirementsInput, ...request.Option) (*ec2.GetInstanceTypesFromInstanceRequirementsOutput, error)
 	GetInstanceTypesFromInstanceRequirementsRequest(*ec2.GetInstanceTypesFromInstanceRequirementsInput) (*request.Request, *ec2.GetInstanceTypesFromInstanceRequirementsOutput)
@@ -2470,6 +2481,10 @@ type EC2API interface {
 	ModifyInstanceMaintenanceOptions(*ec2.ModifyInstanceMaintenanceOptionsInput) (*ec2.ModifyInstanceMaintenanceOptionsOutput, error)
 	ModifyInstanceMaintenanceOptionsWithContext(aws.Context, *ec2.ModifyInstanceMaintenanceOptionsInput, ...request.Option) (*ec2.ModifyInstanceMaintenanceOptionsOutput, error)
 	ModifyInstanceMaintenanceOptionsRequest(*ec2.ModifyInstanceMaintenanceOptionsInput) (*request.Request, *ec2.ModifyInstanceMaintenanceOptionsOutput)
+
+	ModifyInstanceMetadataDefaults(*ec2.ModifyInstanceMetadataDefaultsInput) (*ec2.ModifyInstanceMetadataDefaultsOutput, error)
+	ModifyInstanceMetadataDefaultsWithContext(aws.Context, *ec2.ModifyInstanceMetadataDefaultsInput, ...request.Option) (*ec2.ModifyInstanceMetadataDefaultsOutput, error)
+	ModifyInstanceMetadataDefaultsRequest(*ec2.ModifyInstanceMetadataDefaultsInput) (*request.Request, *ec2.ModifyInstanceMetadataDefaultsOutput)
 
 	ModifyInstanceMetadataOptions(*ec2.ModifyInstanceMetadataOptionsInput) (*ec2.ModifyInstanceMetadataOptionsOutput, error)
 	ModifyInstanceMetadataOptionsWithContext(aws.Context, *ec2.ModifyInstanceMetadataOptionsInput, ...request.Option) (*ec2.ModifyInstanceMetadataOptionsOutput, error)

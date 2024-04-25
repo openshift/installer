@@ -150,10 +150,26 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 				LoadBalancerType:       capa.LoadBalancerTypeNLB,
 				Scheme:                 &capa.ELBSchemeInternal,
 				CrossZoneLoadBalancing: true,
+				HealthCheckProtocol:    &capa.ELBProtocolHTTPS,
+				HealthCheck: &capa.TargetGroupHealthCheckAPISpec{
+					IntervalSeconds:         ptr.To[int64](10),
+					TimeoutSeconds:          ptr.To[int64](10),
+					ThresholdCount:          ptr.To[int64](2),
+					UnhealthyThresholdCount: ptr.To[int64](2),
+				},
 				AdditionalListeners: []capa.AdditionalListenerSpec{
 					{
 						Port:     22623,
 						Protocol: capa.ELBProtocolTCP,
+						HealthCheck: &capa.TargetGroupHealthCheckAdditionalSpec{
+							Protocol:                ptr.To[string](capa.ELBProtocolHTTPS.String()),
+							Port:                    ptr.To[string]("22623"),
+							Path:                    ptr.To[string]("/healthz"),
+							IntervalSeconds:         ptr.To[int64](10),
+							TimeoutSeconds:          ptr.To[int64](10),
+							ThresholdCount:          ptr.To[int64](2),
+							UnhealthyThresholdCount: ptr.To[int64](2),
+						},
 					},
 				},
 				IngressRules: []capa.IngressRule{
@@ -177,6 +193,13 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 			LoadBalancerType:       capa.LoadBalancerTypeNLB,
 			Scheme:                 &capa.ELBSchemeInternetFacing,
 			CrossZoneLoadBalancing: true,
+			HealthCheckProtocol:    &capa.ELBProtocolHTTPS,
+			HealthCheck: &capa.TargetGroupHealthCheckAPISpec{
+				IntervalSeconds:         ptr.To[int64](10),
+				TimeoutSeconds:          ptr.To[int64](10),
+				ThresholdCount:          ptr.To[int64](2),
+				UnhealthyThresholdCount: ptr.To[int64](2),
+			},
 			IngressRules: []capa.IngressRule{
 				{
 					Description: "Kubernetes API Server traffic for public access",

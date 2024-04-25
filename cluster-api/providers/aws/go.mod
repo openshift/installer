@@ -2,7 +2,7 @@ module openshift/installer/cluster-api/providers/aws
 
 go 1.21
 
-require sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.2-0.20240418073318-b918c3636f5d
+require sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.2-0.20240424180139-4c5b811deab4
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
@@ -10,7 +10,7 @@ require (
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230305170008-8188dc5388df // indirect
 	github.com/apparentlymart/go-cidr v1.1.0 // indirect
 	github.com/aws/amazon-vpc-cni-k8s v1.15.4 // indirect
-	github.com/aws/aws-sdk-go v1.45.26 // indirect
+	github.com/aws/aws-sdk-go v1.51.17 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.24.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/iam v1.27.1 // indirect
 	github.com/aws/smithy-go v1.19.0 // indirect
