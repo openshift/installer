@@ -131,6 +131,13 @@ func main() {
 			Port:    webhookPort,
 			CertDir: webhookCertDir,
 		}),
+		Client: client.Options{
+			Cache: &client.CacheOptions{
+				DisableFor: []client.Object{
+					&infrav1beta2.IBMPowerVSCluster{},
+				},
+			},
+		},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -243,14 +250,8 @@ func setupReconcilers(mgr ctrl.Manager, serviceEndpoint []endpoints.ServiceEndpo
 		os.Exit(1)
 	}
 
-	cfg := ctrl.GetConfigOrDie()
-	uncachedClient, err := client.New(cfg, client.Options{Scheme: mgr.GetScheme(), Mapper: mgr.GetRESTMapper()})
-	if err != nil {
-		setupLog.Error(err, "unable to set up uncached client")
-	}
 	if err := (&controllers.IBMPowerVSClusterReconciler{
 		Client:          mgr.GetClient(),
-		UncachedClient:  uncachedClient,
 		Recorder:        mgr.GetEventRecorderFor("ibmpowervscluster-controller"),
 		ServiceEndpoint: serviceEndpoint,
 		Scheme:          mgr.GetScheme(),

@@ -1,6 +1,6 @@
 package core
 
-// (C) Copyright IBM Corp. 2023.
+// (C) Copyright IBM Corp. 2023, 2024.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,6 +48,10 @@ type MCSPAuthenticator struct {
 	// If not specified by the user, a suitable default Client will be constructed.
 	Client     *http.Client
 	clientInit sync.Once
+
+	// The User-Agent header value to be included with each token request.
+	userAgent     string
+	userAgentInit sync.Once
 
 	// The cached token and expiration time.
 	tokenData *mcspTokenData
@@ -134,6 +138,14 @@ func (authenticator *MCSPAuthenticator) client() *http.Client {
 		}
 	})
 	return authenticator.Client
+}
+
+// getUserAgent returns the User-Agent header value to be included in each token request invoked by the authenticator.
+func (authenticator *MCSPAuthenticator) getUserAgent() string {
+	authenticator.userAgentInit.Do(func() {
+		authenticator.userAgent = fmt.Sprintf("%s/%s-%s %s", sdkName, "mcsp-authenticator", __VERSION__, SystemInfo())
+	})
+	return authenticator.userAgent
 }
 
 // newMCSPAuthenticatorFromMap constructs a new MCSPAuthenticator instance from a map.
@@ -280,6 +292,7 @@ func (authenticator *MCSPAuthenticator) RequestToken() (*MCSPTokenServerResponse
 
 	builder.AddHeader(CONTENT_TYPE, APPLICATION_JSON)
 	builder.AddHeader(Accept, APPLICATION_JSON)
+	builder.AddHeader(headerNameUserAgent, authenticator.getUserAgent())
 	requestBody := fmt.Sprintf(`{"apikey":"%s"}`, authenticator.ApiKey)
 	_, _ = builder.SetBodyContentString(requestBody)
 

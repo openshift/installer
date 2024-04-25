@@ -1,6 +1,6 @@
 package core
 
-// (C) Copyright IBM Corp. 2021, 2023..
+// (C) Copyright IBM Corp. 2021, 2024.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -85,6 +85,10 @@ type ContainerAuthenticator struct {
 	// If not specified by the user, a suitable default Client will be constructed.
 	Client     *http.Client
 	clientInit sync.Once
+
+	// The User-Agent header value to be included with each token request.
+	userAgent     string
+	userAgentInit sync.Once
 
 	// The cached IAM access token and its expiration time.
 	tokenData *iamTokenData
@@ -197,6 +201,14 @@ func (authenticator *ContainerAuthenticator) client() *http.Client {
 		}
 	})
 	return authenticator.Client
+}
+
+// getUserAgent returns the User-Agent header value to be included in each token request invoked by the authenticator.
+func (authenticator *ContainerAuthenticator) getUserAgent() string {
+	authenticator.userAgentInit.Do(func() {
+		authenticator.userAgent = fmt.Sprintf("%s/%s-%s %s", sdkName, "container-authenticator", __VERSION__, SystemInfo())
+	})
+	return authenticator.userAgent
 }
 
 // newContainerAuthenticatorFromMap constructs a new ContainerAuthenticator instance from a map containing
@@ -392,6 +404,7 @@ func (authenticator *ContainerAuthenticator) RequestToken() (*IamTokenServerResp
 
 	builder.AddHeader(CONTENT_TYPE, FORM_URL_ENCODED_HEADER)
 	builder.AddHeader(Accept, APPLICATION_JSON)
+	builder.AddHeader(headerNameUserAgent, authenticator.getUserAgent())
 	builder.AddFormData("grant_type", "", "", iamGrantTypeCRToken) // #nosec G101
 	builder.AddFormData("cr_token", "", "", crToken)
 
