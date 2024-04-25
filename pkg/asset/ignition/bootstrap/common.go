@@ -518,6 +518,11 @@ func AddSystemdUnits(config *igntypes.Config, uri string, templateData interface
 	return nil
 }
 
+// replace is an utilitary function to do string replacement in templates.
+func replace(input, from, to string) string {
+	return strings.ReplaceAll(input, from, to)
+}
+
 // Read data from the string reader, and, if the name ends with
 // '.template', strip that extension from the name and render the
 // template.
@@ -529,7 +534,7 @@ func readFile(name string, reader io.Reader, templateData interface{}) (finalNam
 
 	if filepath.Ext(name) == ".template" {
 		name = strings.TrimSuffix(name, ".template")
-		tmpl := template.New(name)
+		tmpl := template.New(name).Funcs(template.FuncMap{"replace": replace})
 		tmpl, err := tmpl.Parse(string(data))
 		if err != nil {
 			return name, data, err
