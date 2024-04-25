@@ -2,9 +2,11 @@
 Description=Adds the current node to an already existing cluster
 Wants=network-online.target
 Requires=apply-host-config.service
+Conflicts=start-cluster-installation.service
 PartOf=assisted-service-pod.service
 After=network-online.target apply-host-config.service
 ConditionPathExists=/etc/assisted/node0
+ConditionPathExists=/etc/assisted/add-nodes.env
 
 [Service]
 EnvironmentFile=/usr/local/share/assisted-service/assisted-service.env

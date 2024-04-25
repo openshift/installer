@@ -74,7 +74,6 @@ type agentTemplateData struct {
 	ImageTypeISO              string
 	PublicKeyPEM              string
 	PrivateKeyPEM             string
-	WorkflowType              workflow.AgentWorkflowType
 	CaBundleMount             string
 }
 
@@ -166,7 +165,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		numMasters = agentManifests.AgentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents
 		numWorkers = agentManifests.AgentClusterInstall.Spec.ProvisionRequirements.WorkerAgents
 		// Enable specific install services
-		enabledServices = append(enabledServices, "agent-register-cluster.service", "start-cluster-installation.service")
+		enabledServices = append(enabledServices, "start-cluster-installation.service")
 		// Version is retrieved from the embedded data
 		openshiftVersion, err = version.Version()
 		if err != nil {
@@ -185,7 +184,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		numMasters = 0
 		numWorkers = len(addNodesConfig.Config.Hosts)
 		// Enable add-nodes specific services
-		enabledServices = append(enabledServices, "agent-import-cluster.service", "agent-add-node.service")
+		enabledServices = append(enabledServices, "agent-add-node.service")
 		// Generate add-nodes.env file
 		addNodesEnvFile := ignition.FileFromString(addNodesEnvPath, "root", 0644, getAddNodesEnv(*clusterInfo))
 		config.Storage.Files = append(config.Storage.Files, addNodesEnvFile)
@@ -256,7 +255,6 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		imageTypeISO,
 		keyPairAsset.PrivateKey,
 		keyPairAsset.PublicKey,
-		agentWorkflow.Workflow,
 		caBundleMount)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
@@ -327,6 +325,8 @@ func getDefaultEnabledServices() []string {
 	return []string{
 		"agent-interactive-console.service",
 		"agent-interactive-console-serial@.service",
+		"agent-register-cluster.service",
+		"agent-import-cluster.service",
 		"agent-register-infraenv.service",
 		"agent.service",
 		"assisted-service-db.service",
@@ -372,7 +372,6 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 	proxy *v1beta1.Proxy,
 	imageTypeISO,
 	privateKey, publicKey string,
-	workflow workflow.AgentWorkflowType,
 	caBundleMount string) *agentTemplateData {
 	return &agentTemplateData{
 		ServiceProtocol:           "http",
@@ -391,7 +390,6 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 		ImageTypeISO:              imageTypeISO,
 		PrivateKeyPEM:             privateKey,
 		PublicKeyPEM:              publicKey,
-		WorkflowType:              workflow,
 		CaBundleMount:             caBundleMount,
 	}
 }

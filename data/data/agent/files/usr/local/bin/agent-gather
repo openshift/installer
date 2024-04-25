@@ -105,6 +105,12 @@ function gather_database_data() {
 	( >&2 echo " Done")
 }
 
+function gather_systemd_units() {
+	( >&2 echo  -n "Gathering systemd data" )
+	mkdir -p "${ARTIFACTS_DIR}/etc/systemd"
+	cp -a /etc/systemd/system "${ARTIFACTS_DIR}/etc/systemd/"
+}
+
 function Help()
 {
 	echo "Gathers the necessary data for troubleshooting OpenShift's agent based installation"
@@ -147,6 +153,7 @@ gather_network_data
 gather_storage_data
 gather_container_status
 gather_database_data
+gather_systemd_units
 
 # Set permissions so regular users can delete the extracted content
 find "$ARTIFACTS_DIR" -type d -exec chmod a+rwx "{}" \;

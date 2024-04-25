@@ -1,9 +1,11 @@
 [Unit]
 Description=Service that registers the cluster
 Wants=network-online.target assisted-service.service
+Conflicts=agent-import-cluster.service
 PartOf=assisted-service-pod.service
 After=network-online.target assisted-service.service
 ConditionPathExists=/etc/assisted/node0
+ConditionPathExists=!/etc/assisted/add-nodes.env
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
@@ -24,4 +26,4 @@ RestartSec=30
 RemainAfterExit=true
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=start-cluster-installation.service

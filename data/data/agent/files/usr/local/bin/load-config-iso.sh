@@ -82,7 +82,7 @@ copy_archive_contents() {
        is_enabled=$(systemctl is-enabled "$service")
        if [[ "${is_enabled}" == "disabled" ]]; then
           echo "Service ${service} is disabled, enabling it"
-          systemctl enable "${service}"
+          systemctl --no-block --now enable "${service}"
        fi
     done
 
