@@ -2,7 +2,7 @@ module openshift/installer/cluster-api/providers/aws
 
 go 1.21
 
-require sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.2-0.20240424180139-4c5b811deab4
+require sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.2-0.20240426161541-ac4958082eab
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
