@@ -10,10 +10,9 @@ until oc get baremetalhosts -n openshift-machine-api; do
    sleep 20
 done
 
-N="{{ .PlatformData.BareMetal.MasterHostCount }}"
-echo "Waiting for $N masters to become provisioned"
-while [ "$(oc get bmh -n openshift-machine-api -l installer.openshift.io/role=control-plane -o json | jq '.items[].status.provisioning.state' | grep provisioned -c)" -lt "$N"  ]; do
-    echo "Waiting for $N masters to become provisioned"
+echo "Waiting for $CONTROL_PLANE_REPLICA_COUNT masters to become provisioned"
+while [ "$(oc get bmh -n openshift-machine-api -l installer.openshift.io/role=control-plane -o json | jq '.items[].status.provisioning.state' | grep provisioned -c)" -lt "$CONTROL_PLANE_REPLICA_COUNT"  ]; do
+    echo "Waiting for $CONTROL_PLANE_REPLICA_COUNT masters to become provisioned"
     oc get bmh -A || true
     sleep 20
 done
