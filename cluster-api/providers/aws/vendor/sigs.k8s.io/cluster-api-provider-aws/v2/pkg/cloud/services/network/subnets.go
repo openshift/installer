@@ -410,6 +410,9 @@ func (s *Service) describeVpcSubnets() (infrav1.Subnets, error) {
 				if route.GatewayId != nil && strings.HasPrefix(*route.GatewayId, "igw") {
 					spec.IsPublic = true
 				}
+				if route.CarrierGatewayId != nil && strings.HasPrefix(*route.CarrierGatewayId, "cagw-") {
+					spec.IsPublic = true
+				}
 			}
 		}
 
@@ -468,6 +471,8 @@ func (s *Service) createSubnet(sn *infrav1.SubnetSpec) (*infrav1.SubnetSpec, err
 	// IPv6 subnets are not generally supported by AWS Local Zones and Wavelength Zones.
 	// Local Zones have limited zone support for IPv6 subnets:
 	// https://docs.aws.amazon.com/local-zones/latest/ug/how-local-zones-work.html#considerations
+	// Wavelength Zones is currently not supporting IPv6 subnets.
+	// https://docs.aws.amazon.com/wavelength/latest/developerguide/wavelength-quotas.html#vpc-considerations
 	if sn.IsIPv6 && sn.IsEdge() {
 		err := fmt.Errorf("failed to create subnet: IPv6 is not supported with zone type %q", sn.ZoneType)
 		record.Warnf(s.scope.InfraCluster(), "FailedCreateSubnet", "Failed creating managed Subnet for edge zones: %v", err)
@@ -526,7 +531,12 @@ func (s *Service) createSubnet(sn *infrav1.SubnetSpec) (*infrav1.SubnetSpec, err
 		record.Eventf(s.scope.InfraCluster(), "SuccessfulModifySubnetAttributes", "Modified managed Subnet %q attributes", *out.Subnet.SubnetId)
 	}
 
-	if sn.IsPublic {
+	// AWS Wavelength Zone's public subnets does not support to map Carrier IP address on launch, and
+	// MapPublicIpOnLaunch option[1] set to the subnet will fail, instead set the EC2 instance's network
+	// interface to associate Carrier IP Address on launch[2].
+	// [1] https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifySubnetAttribute.html
+	// [2] https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_InstanceNetworkInterfaceSpecification.html
+	if sn.IsPublic && !sn.IsEdgeWavelength() {
 		if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
 			if _, err := s.EC2Client.ModifySubnetAttributeWithContext(context.TODO(), &ec2.ModifySubnetAttributeInput{
 				SubnetId: out.Subnet.SubnetId,
