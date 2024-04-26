@@ -21,6 +21,7 @@ import (
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
+	"github.com/openshift/installer/pkg/types"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 )
 
@@ -49,9 +50,13 @@ func leftInContext(ctx context.Context) time.Duration {
 	return duration
 }
 
+const privatePrefix = "api-int."
+const publicPrefix = "api."
+
 // InfraReady is called once cluster.Status.InfrastructureReady
 // is true, typically after load balancers have been provisioned. It can be used
 // to create DNS records.
+// nolint:gocyclo
 func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
 	var (
 		client      *powervsconfig.Client
@@ -137,11 +142,11 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 
 	for lbKey, loadBalancerStatus := range powerVSCluster.Status.LoadBalancers {
 		var (
-			idx      int
-			substr   string
-			infraID  string
-			hostname string
-			prefix   string
+			idx       int
+			substr    string
+			infraID   string
+			hostnames []string
+			prefix    string
 		)
 
 		// The infra id is "rdr-hamzy-test-dal10-846vd" and we need "rdr-hamzy-test-dal10"
@@ -157,42 +162,53 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		logrus.Debugf("lbKey = %s", lbKey)
 		switch {
 		case lbExtExp.MatchString(lbKey):
-			prefix = "api."
+			if in.InstallConfig.Config.Publish == types.ExternalPublishingStrategy {
+				hostnames = append(hostnames, fmt.Sprintf("%s%s", publicPrefix, infraID))
+			}
 		case lbIntExp.MatchString(lbKey):
-			prefix = "api-int."
+			hostnames = append(hostnames, fmt.Sprintf("%s%s", privatePrefix, infraID))
+			// In the private cluster scenario, also point api.* to internal LB
+			if in.InstallConfig.Config.Publish == types.InternalPublishingStrategy {
+				hostnames = append(hostnames, fmt.Sprintf("%s%s", publicPrefix, infraID))
+			}
 		}
 		logrus.Debugf("prefix = %s", prefix)
 
-		hostname = fmt.Sprintf("%s%s", prefix, infraID)
-
-		logrus.Debugf("InfraReady: crn = %s, base domain = %s, hostname = %s, cname = %s",
-			instanceCRN,
-			in.InstallConfig.PowerVS.BaseDomain,
-			hostname,
-			*loadBalancerStatus.Hostname)
-
-		backoff := wait.Backoff{
-			Duration: 15 * time.Second,
-			Factor:   1.1,
-			Cap:      leftInContext(ctx),
-			Steps:    math.MaxInt32}
-		err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
-			err2 := client.CreateDNSRecord(ctx,
-				in.InstallConfig.Config.Publish,
+		for _, hostname := range hostnames {
+			logrus.Debugf("InfraReady: crn = %s, base domain = %s, hostname = %s, cname = %s",
 				instanceCRN,
 				in.InstallConfig.PowerVS.BaseDomain,
 				hostname,
 				*loadBalancerStatus.Hostname)
-			if err2 == nil {
-				return true, nil
+
+			backoff := wait.Backoff{
+				Duration: 15 * time.Second,
+				Factor:   1.1,
+				Cap:      leftInContext(ctx),
+				Steps:    math.MaxInt32}
+			var lastErr error
+			err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
+				lastErr = client.CreateDNSRecord(ctx,
+					in.InstallConfig.Config.Publish,
+					instanceCRN,
+					in.InstallConfig.PowerVS.BaseDomain,
+					hostname,
+					*loadBalancerStatus.Hostname)
+				if lastErr == nil {
+					return true, nil
+				}
+				return false, nil
+			})
+
+			if err != nil {
+				if lastErr != nil {
+					err = lastErr
+				}
+				return fmt.Errorf("failed to create a DNS CNAME record (%s, %s): %w",
+					hostname,
+					*loadBalancerStatus.Hostname,
+					err)
 			}
-			return false, err2
-		})
-		if err != nil {
-			return fmt.Errorf("failed to create a DNS CNAME record (%s, %s): %w",
-				hostname,
-				*loadBalancerStatus.Hostname,
-				err)
 		}
 	}
 
@@ -262,20 +278,23 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		Direction: ptr.To("inbound"),
 		Protocol:  ptr.To("icmp"),
 	}
-
 	backoff := wait.Backoff{
 		Duration: 15 * time.Second,
 		Factor:   1.1,
 		Cap:      leftInContext(ctx),
 		Steps:    math.MaxInt32}
+	var lastErr error
 	err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
-		err2 := client.AddSecurityGroupRule(ctx, *powerVSCluster.Status.VPC.ID, rule)
-		if err2 == nil {
+		lastErr = client.AddSecurityGroupRule(ctx, *powerVSCluster.Status.VPC.ID, rule)
+		if lastErr == nil {
 			return true, nil
 		}
-		return false, err2
+		return false, nil
 	})
 	if err != nil {
+		if lastErr != nil {
+			err = lastErr
+		}
 		return fmt.Errorf("failed to add security group rule for icmp: %w", err)
 	}
 
