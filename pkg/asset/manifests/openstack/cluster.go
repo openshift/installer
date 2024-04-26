@@ -7,7 +7,9 @@ import (
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
+	"k8s.io/utils/ptr"
+	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/optional"
 	capi "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
@@ -24,6 +26,17 @@ const (
 func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) (*capiutils.GenerateClusterAssetsOutput, error) {
 	manifests := []*asset.RuntimeFile{}
 	openstackInstallConfig := installConfig.Config.OpenStack
+
+	var (
+		externalNetwork        *capo.NetworkParam
+		disableExternalNetwork optional.Bool
+	)
+	if e := openstackInstallConfig.ExternalNetwork; e != "" {
+		externalNetwork = &capo.NetworkParam{Filter: &capo.NetworkFilter{Name: e}}
+	} else {
+		disableExternalNetwork = ptr.To(true)
+	}
+
 	openStackCluster := &capo.OpenStackCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -33,35 +46,47 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 		},
 		Spec: capo.OpenStackClusterSpec{
-			CloudName: cloudName,
-			IdentityRef: &capo.OpenStackIdentityReference{
-				Kind: "Secret",
-				Name: clusterID.InfraID + "-cloud-config",
+			IdentityRef: capo.OpenStackIdentityReference{
+				Name:      clusterID.InfraID + "-cloud-config",
+				CloudName: cloudName,
 			},
 			// We disable management of most networking resources since either
 			// we (the installer) will create them, or the user will have
 			// pre-created them as part of a "Bring Your Own Network (BYON)"
 			// configuration
-			ManagedSecurityGroups:      false,
-			DisableAPIServerFloatingIP: true,
+			ManagedSecurityGroups:      nil,
+			DisableAPIServerFloatingIP: ptr.To(true),
 			// TODO(stephenfin): update when we support dual-stack (there are
 			// potentially *two* IPs here)
-			APIServerFixedIP:  openstackInstallConfig.APIVIPs[0],
-			DNSNameservers:    openstackInstallConfig.ExternalDNS,
-			ExternalNetworkID: openstackInstallConfig.ExternalNetwork,
+			APIServerFixedIP:       &openstackInstallConfig.APIVIPs[0],
+			ExternalNetwork:        externalNetwork,
+			DisableExternalNetwork: disableExternalNetwork,
 			Tags: []string{
 				fmt.Sprintf("openshiftClusterID=%s", clusterID.InfraID),
 			},
 		},
 	}
-	if openstackInstallConfig.ControlPlanePort != nil {
-		// TODO(maysa): update when BYO dual-stack is supported in CAPO
-		openStackCluster.Spec.Network.ID = openstackInstallConfig.ControlPlanePort.Network.ID
-		openStackCluster.Spec.Network.Name = openstackInstallConfig.ControlPlanePort.Network.Name
-		openStackCluster.Spec.Subnet.ID = openstackInstallConfig.ControlPlanePort.FixedIPs[0].Subnet.ID
-		openStackCluster.Spec.Subnet.Name = openstackInstallConfig.ControlPlanePort.FixedIPs[0].Subnet.Name
+	if cpPort := openstackInstallConfig.ControlPlanePort; cpPort != nil {
+		if networkID := cpPort.Network.ID; networkID != "" {
+			openStackCluster.Spec.Network = &capo.NetworkParam{ID: &networkID}
+		} else if networkName := cpPort.Network.Name; networkName != "" {
+			openStackCluster.Spec.Network = &capo.NetworkParam{Filter: &capo.NetworkFilter{Name: networkName}}
+		}
+		openStackCluster.Spec.Subnets = make([]capo.SubnetParam, len(cpPort.FixedIPs))
+		for i := range cpPort.FixedIPs {
+			if subnetID := cpPort.FixedIPs[i].Subnet.ID; subnetID != "" {
+				openStackCluster.Spec.Subnets[i] = capo.SubnetParam{ID: &subnetID}
+			} else {
+				openStackCluster.Spec.Subnets[i] = capo.SubnetParam{Filter: &capo.SubnetFilter{Name: cpPort.FixedIPs[i].Subnet.Name}}
+			}
+		}
 	} else {
-		openStackCluster.Spec.NodeCIDR = capiutils.CIDRFromInstallConfig(installConfig).String()
+		openStackCluster.Spec.ManagedSubnets = []capo.SubnetSpec{
+			{
+				CIDR:           capiutils.CIDRFromInstallConfig(installConfig).String(),
+				DNSNameservers: openstackInstallConfig.ExternalDNS,
+			},
+		}
 	}
 	openStackCluster.SetGroupVersionKind(capo.GroupVersion.WithKind("OpenStackCluster"))
 

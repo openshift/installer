@@ -23,6 +23,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/attachinterfaces"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/availabilityzones"
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/servergroups"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	"github.com/gophercloud/utils/openstack/clientconfig"
@@ -60,6 +61,8 @@ type ComputeClient interface {
 
 	ListAttachedInterfaces(serverID string) ([]attachinterfaces.Interface, error)
 	DeleteAttachedInterface(serverID, portID string) error
+
+	ListServerGroups() ([]servergroups.ServerGroup, error)
 }
 
 type computeClient struct{ client *gophercloud.ServiceClient }
@@ -67,7 +70,8 @@ type computeClient struct{ client *gophercloud.ServiceClient }
 // NewComputeClient returns a new compute client.
 func NewComputeClient(providerClient *gophercloud.ProviderClient, providerClientOpts *clientconfig.ClientOpts) (ComputeClient, error) {
 	compute, err := openstack.NewComputeV2(providerClient, gophercloud.EndpointOpts{
-		Region: providerClientOpts.RegionName,
+		Region:       providerClientOpts.RegionName,
+		Availability: clientconfig.GetEndpointType(providerClientOpts.EndpointType),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create compute service client: %v", err)
@@ -148,6 +152,16 @@ func (c computeClient) DeleteAttachedInterface(serverID, portID string) error {
 	return mc.ObserveRequestIgnoreNotFoundorConflict(err)
 }
 
+func (c computeClient) ListServerGroups() ([]servergroups.ServerGroup, error) {
+	mc := metrics.NewMetricPrometheusContext("server_group", "list")
+	opts := servergroups.ListOpts{}
+	allPages, err := servergroups.List(c.client, opts).AllPages()
+	if mc.ObserveRequest(err) != nil {
+		return nil, err
+	}
+	return servergroups.ExtractServerGroups(allPages)
+}
+
 type computeErrorClient struct{ error }
 
 // NewComputeErrorClient returns a ComputeClient in which every method returns the given error.
@@ -185,4 +199,8 @@ func (e computeErrorClient) ListAttachedInterfaces(_ string) ([]attachinterfaces
 
 func (e computeErrorClient) DeleteAttachedInterface(_, _ string) error {
 	return e.error
+}
+
+func (e computeErrorClient) ListServerGroups() ([]servergroups.ServerGroup, error) {
+	return nil, e.error
 }

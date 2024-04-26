@@ -5,11 +5,12 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
-	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
+	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
+	mapov1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
@@ -32,28 +33,20 @@ func (p Provider) Name() string {
 
 var _ clusterapi.PreProvider = Provider{}
 
-// PreProvision tags the VIP ports and creates the security groups that are needed during CAPI provisioning.
+// PreProvision tags the VIP ports, and creates the security groups and the
+// server groups defined in the Machine manifests.
 func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInput) error {
 	var (
-		infraID            = in.InfraID
-		installConfig      = in.InstallConfig
-		rhcosImage         = string(*in.RhcosImage)
-		mastersSchedulable bool
+		infraID          = in.InfraID
+		installConfig    = in.InstallConfig
+		rhcosImage       = string(*in.RhcosImage)
+		manifestsAsset   = in.ManifestsAsset
+		machineManifests = in.MachineManifests
+		workersAsset     = in.WorkersAsset
 	)
 
-	for _, f := range in.ManifestsAsset.Files() {
-		if f.Filename == manifests.SchedulerCfgFilename {
-			schedulerConfig := configv1.Scheduler{}
-			if err := yaml.Unmarshal(f.Data, &schedulerConfig); err != nil {
-				return fmt.Errorf("unable to decode the scheduler manifest: %w", err)
-			}
-			mastersSchedulable = schedulerConfig.Spec.MastersSchedulable
-			break
-		}
-	}
-
 	if err := preprovision.TagVIPPorts(ctx, installConfig, infraID); err != nil {
-		return err
+		return fmt.Errorf("failed to tag VIP ports: %w", err)
 	}
 
 	// upload the corresponding image to Glance if rhcosImage contains a
@@ -61,11 +54,52 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	// Glance image.
 	if imageName, isURL := rhcos.GenerateOpenStackImageName(rhcosImage, infraID); isURL {
 		if err := preprovision.UploadBaseImage(ctx, installConfig.Config.Platform.OpenStack.Cloud, rhcosImage, imageName, infraID, installConfig.Config.Platform.OpenStack.ClusterOSImageProperties); err != nil {
-			return err
+			return fmt.Errorf("failed to upload the RHCOS base image: %w", err)
 		}
 	}
 
-	return preprovision.SecurityGroups(ctx, installConfig, infraID, mastersSchedulable)
+	{
+		var mastersSchedulable bool
+		for _, f := range manifestsAsset.Files() {
+			if f.Filename == manifests.SchedulerCfgFilename {
+				schedulerConfig := configv1.Scheduler{}
+				if err := yaml.Unmarshal(f.Data, &schedulerConfig); err != nil {
+					return fmt.Errorf("unable to decode the scheduler manifest: %w", err)
+				}
+				mastersSchedulable = schedulerConfig.Spec.MastersSchedulable
+				break
+			}
+		}
+		if err := preprovision.SecurityGroups(ctx, installConfig, infraID, mastersSchedulable); err != nil {
+			return fmt.Errorf("failed to create security groups: %w", err)
+		}
+	}
+
+	{
+		capiMachines := make([]capo.OpenStackMachine, 0, len(machineManifests))
+		for i := range machineManifests {
+			if m, ok := machineManifests[i].(*capo.OpenStackMachine); ok {
+				capiMachines = append(capiMachines, *m)
+			}
+		}
+
+		var workerSpecs []mapov1alpha1.OpenstackProviderSpec
+		{
+			machineSets, err := workersAsset.MachineSets()
+			if err != nil {
+				return fmt.Errorf("failed to extract MachineSets from the worker assets: %w", err)
+			}
+			workerSpecs = make([]mapov1alpha1.OpenstackProviderSpec, 0, len(machineSets))
+			for _, machineSet := range machineSets {
+				workerSpecs = append(workerSpecs, *machineSet.Spec.Template.Spec.ProviderSpec.Value.Object.(*mapov1alpha1.OpenstackProviderSpec))
+			}
+		}
+		if err := preprovision.ServerGroups(ctx, installConfig, capiMachines, workerSpecs); err != nil {
+			return fmt.Errorf("failed to create server groups: %w", err)
+		}
+	}
+
+	return nil
 }
 
 var _ clusterapi.InfraReadyProvider = Provider{}

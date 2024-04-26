@@ -25,10 +25,15 @@ type OpenStackMachineTemplateSpec struct {
 	Template OpenStackMachineTemplateResource `json:"template"`
 }
 
+// +genclient
+// +genclient:Namespaced
 // +kubebuilder:object:root=true
+// +kubebuilder:deprecatedversion:warning="The v1alpha6 version of OpenStackMachineTemplate has been deprecated and will be removed in a future release of the API. Please upgrade."
 // +kubebuilder:resource:path=openstackmachinetemplates,scope=Namespaced,categories=cluster-api,shortName=osmt
 
 // OpenStackMachineTemplate is the Schema for the openstackmachinetemplates API.
+//
+// Deprecated: This type will be removed in one of the next releases.
 type OpenStackMachineTemplate struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -39,6 +44,8 @@ type OpenStackMachineTemplate struct {
 // +kubebuilder:object:root=true
 
 // OpenStackMachineTemplateList contains a list of OpenStackMachineTemplate.
+//
+// Deprecated: This type will be removed in one of the next releases.
 type OpenStackMachineTemplateList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

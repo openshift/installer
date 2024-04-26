@@ -37,12 +37,12 @@ const (
 // Service interfaces with the OpenStack Networking API.
 // It will create a network related infrastructure for the cluster, like network, subnet, router, security groups.
 type Service struct {
-	scope  scope.Scope
+	scope  *scope.WithLogger
 	client clients.NetworkClient
 }
 
 // NewService returns an instance of the networking service.
-func NewService(scope scope.Scope) (*Service, error) {
+func NewService(scope *scope.WithLogger) (*Service, error) {
 	networkClient, err := scope.NewNetworkClient()
 	if err != nil {
 		return nil, err

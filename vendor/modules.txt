@@ -2135,9 +2135,10 @@ sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1
 # sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0 => sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240424062805-188d9e99702c
 ## explicit; go 1.21
 sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2
-# sigs.k8s.io/cluster-api-provider-openstack v0.9.0
-## explicit; go 1.20
-sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7
+# sigs.k8s.io/cluster-api-provider-openstack v0.10.0 => github.com/openshift/cluster-api-provider-openstack v0.9.1-0.20240426092531-c42a4659d6c0
+## explicit; go 1.21
+sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1
+sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/optional
 # sigs.k8s.io/cluster-api-provider-vsphere v1.9.3
 ## explicit; go 1.20
 sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1
@@ -2318,3 +2319,4 @@ sigs.k8s.io/yaml/goyaml.v3
 # github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
 # golang.org/x/oauth2 => golang.org/x/oauth2 v0.15.0
 # google.golang.org/api => google.golang.org/api v0.157.0
+# sigs.k8s.io/cluster-api-provider-openstack => github.com/openshift/cluster-api-provider-openstack v0.9.1-0.20240426092531-c42a4659d6c0

@@ -29,29 +29,84 @@ import (
 )
 
 // RestorerFor holds all field restorers for a given type T.
-type RestorerFor[T metav1.Object] map[string]fieldRestorerFor[T]
+type RestorerFor[T metav1.Object] map[string]FieldRestorerFor[T]
 
-type fieldRestorerFor[T any] interface {
+type FieldRestorerFor[T any] interface {
 	marshalState(T, T) (json.RawMessage, error)
 	restore(json.RawMessage, T) error
 }
+
+// HashedFieldRestorerOpt is a modifier which adds optional behaviour to a
+// HashedFieldRestorer. It can be passed as an argument to
+// HashedFieldRestorer().
+type HashedFieldRestorerOpt[T, F any] func(*hashedFieldRestorer[T, F])
 
 // HashedFieldRestorer restores a field to its original pre-conversion state
 // only if it was not modified while converted. It does this by doing a full
 // round-trip conversion before saving its state, and storing the hash of an
 // unmodified round-trip converted object.
-type HashedFieldRestorer[T any, F any] struct {
-	// GetField returns the field to be restored
-	GetField func(T) *F
+//
+// HashedFieldRestorer takes 2 type arguments:
+//
+//	T: The type of the object being converted. This is a pointer type.
+//	F: The type of the field in T which is being restored. This is not a
+//	   pointer type.
+//
+// The type arguments can usually be omitted, as they can be inferred from the
+// arguments.
+//
+// HashedFieldRestorer takes 2 arguments:
+//
+//	getField: A function which takes the object being converted (of type T) and returns a pointer to the field being restored (of type *F).
+//	restoreField: Described below.
+//
+// restoreField is used to restore parts of the field to their original
+// pre-conversion state which were not restored by the normal conversion
+// functions. This is to preserve idempotency when the normal conversion
+// functions are lossy, so it is only called if the field was not modified
+// during conversion.
+//
+// restoreField takes 2 arguments:
+//
+//	previous: A pointer to the saved original state of the field before conversion.
+//	dst: A pointer to the field which needs to be updated.
+//
+// The normal conversion functions should do as much work as possible, so
+// restoreField should only be used to restore state which cannot be restored
+// any other way.
+func HashedFieldRestorer[T, F any](getField func(T) *F, restoreField func(*F, *F), opts ...HashedFieldRestorerOpt[T, F]) FieldRestorerFor[T] {
+	restorer := hashedFieldRestorer[T, F]{
+		getField:     getField,
+		restoreField: restoreField,
+	}
+	for _, opt := range opts {
+		opt(&restorer)
+	}
 
-	// FilterField returns a modified copy of the field to be used for comparison. i.e. filtered fields will be ignored in comparison.
-	FilterField func(*F) *F
-
-	// RestoreField restores the field to its original pre-conversion state
-	RestoreField func(*F, *F)
+	return restorer
 }
 
-var _ fieldRestorerFor[any] = HashedFieldRestorer[any, any]{}
+// HashedFilterField adds a field filter to a HashedFieldRestorer. The field
+// filter returns a modified copy of the field to be used for comparison. This
+// can be used to ignore certain changes during comparison.
+func HashedFilterField[T, F any](f func(*F) *F) func(*hashedFieldRestorer[T, F]) {
+	return func(r *hashedFieldRestorer[T, F]) {
+		r.filterField = f
+	}
+}
+
+type hashedFieldRestorer[T any, F any] struct {
+	// getField returns the field to be restored
+	getField func(T) *F
+
+	// restoreField restores the field to its original pre-conversion state
+	restoreField func(*F, *F)
+
+	// filterField returns a modified copy of the field to be used for comparison. i.e. filtered fields will be ignored in comparison.
+	filterField func(*F) *F
+}
+
+var _ FieldRestorerFor[any] = hashedFieldRestorer[any, any]{}
 
 //nolint:unused
 type hashedFieldRestoreState struct {
@@ -60,10 +115,10 @@ type hashedFieldRestoreState struct {
 }
 
 //nolint:unused
-func (r HashedFieldRestorer[T, F]) getHash(obj T) []byte {
-	f := r.GetField(obj)
-	if r.FilterField != nil {
-		f = r.FilterField(f)
+func (r hashedFieldRestorer[T, F]) getHash(obj T) []byte {
+	f := r.getField(obj)
+	if r.filterField != nil {
+		f = r.filterField(f)
 	}
 
 	table := crc64.MakeTable(crc64.ECMA)
@@ -73,8 +128,13 @@ func (r HashedFieldRestorer[T, F]) getHash(obj T) []byte {
 }
 
 //nolint:unused
-func (r HashedFieldRestorer[T, F]) marshalState(src, compare T) (json.RawMessage, error) {
-	b, err := json.Marshal(r.GetField(src))
+func (r hashedFieldRestorer[T, F]) marshalState(src, compare T) (json.RawMessage, error) {
+	f := r.getField(src)
+	if r.filterField != nil {
+		f = r.filterField(f)
+	}
+
+	b, err := json.Marshal(f)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +153,7 @@ func (r HashedFieldRestorer[T, F]) marshalState(src, compare T) (json.RawMessage
 }
 
 //nolint:unused
-func (r HashedFieldRestorer[T, F]) restore(b json.RawMessage, dst T) error {
+func (r hashedFieldRestorer[T, F]) restore(b json.RawMessage, dst T) error {
 	var restoreState hashedFieldRestoreState
 	if err := json.Unmarshal(b, &restoreState); err != nil {
 		return err
@@ -104,50 +164,55 @@ func (r HashedFieldRestorer[T, F]) restore(b json.RawMessage, dst T) error {
 		if err := json.Unmarshal(restoreState.Data, &previous); err != nil {
 			return err
 		}
-		r.RestoreField(&previous, r.GetField(dst))
+		r.restoreField(&previous, r.getField(dst))
 	}
 
 	return nil
 }
 
 // UnconditionalFieldRestorer restores a field to its previous value without checking to see if it was modified during conversion.
-//
-
-type UnconditionalFieldRestorer[T any, F any] struct {
-	GetField func(T) *F
+func UnconditionalFieldRestorer[T, F any](getField func(T) *F) FieldRestorerFor[T] {
+	return unconditionalFieldRestorer[T, F]{
+		getField: getField,
+	}
 }
 
-var _ fieldRestorerFor[any] = UnconditionalFieldRestorer[any, any]{}
+type unconditionalFieldRestorer[T any, F any] struct {
+	getField func(T) *F
+}
+
+var _ FieldRestorerFor[any] = unconditionalFieldRestorer[any, any]{}
 
 //nolint:unused
 type unconditionalFieldRestoreState json.RawMessage
 
 //nolint:unused
-func (r UnconditionalFieldRestorer[T, F]) marshalState(src, _ T) (json.RawMessage, error) {
-	f := r.GetField(src)
+func (r unconditionalFieldRestorer[T, F]) marshalState(src, _ T) (json.RawMessage, error) {
+	f := r.getField(src)
 
 	// We could do this with a comparable constraint on F, but that's too restrictive for an arbitrary struct.
-	if reflect.ValueOf(f).Elem().IsZero() {
+	if f == nil || reflect.ValueOf(f).Elem().IsZero() {
 		return nil, nil
 	}
 
-	return json.Marshal(r.GetField(src))
+	return json.Marshal(r.getField(src))
 }
 
 //nolint:unused
-func (r UnconditionalFieldRestorer[T, F]) restore(b json.RawMessage, dst T) error {
-	return json.Unmarshal(b, r.GetField(dst))
+func (r unconditionalFieldRestorer[T, F]) restore(b json.RawMessage, dst T) error {
+	return json.Unmarshal(b, r.getField(dst))
 }
 
 // restoreData serialises state for a set of restorers.
 type restoreData map[string]json.RawMessage
 
-// ConvertAndRestore converts src to dst. During conversion is reads and uses any restore data in the src annotation, and writes new restore data to the dst annotation.
-func ConvertAndRestore[S, D metav1.Object](src S, dst D, compare S, convert func(S, D, conversion.Scope) error, unconvert func(D, S, conversion.Scope) error, srcRestorer RestorerFor[S], dstRestorer RestorerFor[D]) error {
-	// NOTE(mdbooth): passing compare in here is a wart. If there's any way
-	// to redefine the signature of this function such that we can create a
-	// compare object ourselves we should do it.
+type pointerToObject[T any] interface {
+	*T
+	metav1.Object
+}
 
+// ConvertAndRestore converts src to dst. During conversion is reads and uses any restore data in the src annotation, and writes new restore data to the dst annotation.
+func ConvertAndRestore[S pointerToObject[SO], SO any, D metav1.Object](src S, dst D, convert func(S, D, conversion.Scope) error, unconvert func(D, S, conversion.Scope) error, srcRestorer RestorerFor[S], dstRestorer RestorerFor[D]) error {
 	var dstRestoreData restoreData
 	srcAnnotations := src.GetAnnotations()
 	if srcData, ok := srcAnnotations[utilconversion.DataAnnotation]; ok {
@@ -161,6 +226,7 @@ func ConvertAndRestore[S, D metav1.Object](src S, dst D, compare S, convert func
 		return err
 	}
 
+	compare := new(SO)
 	if err := unconvert(dst, compare, nil); err != nil {
 		return err
 	}

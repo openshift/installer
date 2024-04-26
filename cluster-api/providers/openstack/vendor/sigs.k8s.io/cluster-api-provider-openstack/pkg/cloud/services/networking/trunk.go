@@ -22,12 +22,12 @@ import (
 	"time"
 
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/trunks"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/record"
 	capoerrors "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/errors"
-	"sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/names"
 )
 
 const (
@@ -49,10 +49,10 @@ func (s *Service) GetTrunkSupport() (bool, error) {
 	return false, nil
 }
 
-func (s *Service) getOrCreateTrunk(eventObject runtime.Object, clusterName, trunkName, portID string) (*trunks.Trunk, error) {
+func (s *Service) getOrCreateTrunkForPort(eventObject runtime.Object, port *ports.Port) (*trunks.Trunk, error) {
 	trunkList, err := s.client.ListTrunk(trunks.ListOpts{
-		Name:   trunkName,
-		PortID: portID,
+		Name:   port.Name,
+		PortID: port.ID,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("searching for existing trunk for server: %v", err)
@@ -63,9 +63,9 @@ func (s *Service) getOrCreateTrunk(eventObject runtime.Object, clusterName, trun
 	}
 
 	trunkCreateOpts := trunks.CreateOpts{
-		Name:        trunkName,
-		PortID:      portID,
-		Description: names.GetDescription(clusterName),
+		Name:        port.Name,
+		PortID:      port.ID,
+		Description: port.Description,
 	}
 
 	trunk, err := s.client.CreateTrunk(trunkCreateOpts)

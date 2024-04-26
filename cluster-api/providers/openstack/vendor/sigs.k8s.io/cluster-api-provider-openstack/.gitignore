@@ -173,9 +173,18 @@ sshuttle.pid
 
 # Book
 docs/book/book/
+!docs/book/gen-crd-api-reference-docs/config.json
 
 # venv
 .venv
 
 # Development container files (https://containers.dev/)
 .devcontainer
+
+# Don't ignore anything in vendor directories
+!/vendor/**
+!/hack/tools/vendor/**
+
+# Ignore go workspaces
+go.work
+go.work.sum

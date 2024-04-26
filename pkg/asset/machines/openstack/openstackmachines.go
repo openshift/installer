@@ -7,9 +7,10 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
-	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
+	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	capi "sigs.k8s.io/cluster-api/api/v1beta1"
 
+	configv1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
@@ -112,27 +113,22 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 func generateMachineSpec(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role string, trunkSupport bool, failureDomain machinev1.OpenStackFailureDomain) (*capo.OpenStackMachineSpec, error) {
 	port := capo.PortOpts{}
 
-	addressPairs := []capo.AddressPair{}
-	for _, apiVIP := range platform.APIVIPs {
-		addressPairs = append(addressPairs, capo.AddressPair{IPAddress: apiVIP})
-	}
-	for _, ingressVIP := range platform.IngressVIPs {
-		addressPairs = append(addressPairs, capo.AddressPair{IPAddress: ingressVIP})
-	}
+	addressPairs := populateAllowedAddressPairs(platform)
 
 	if platform.ControlPlanePort != nil {
-		port.Network = &capo.NetworkFilter{
-			Name: platform.ControlPlanePort.Network.Name,
-			ID:   platform.ControlPlanePort.Network.ID,
+		if networkID := platform.ControlPlanePort.Network.ID; networkID != "" {
+			port.Network = &capo.NetworkParam{ID: &networkID}
+		} else if networkName := platform.ControlPlanePort.Network.Name; networkName != "" {
+			port.Network = &capo.NetworkParam{Filter: &capo.NetworkFilter{Name: networkName}}
 		}
 
 		var fixedIPs []capo.FixedIP
 		for _, fixedIP := range platform.ControlPlanePort.FixedIPs {
-			fixedIPs = append(fixedIPs, capo.FixedIP{
-				Subnet: &capo.SubnetFilter{
-					ID:   fixedIP.Subnet.ID,
-					Name: fixedIP.Subnet.Name,
-				}})
+			if subnetID := fixedIP.Subnet.ID; subnetID != "" {
+				fixedIPs = append(fixedIPs, capo.FixedIP{Subnet: &capo.SubnetParam{ID: &subnetID}})
+			} else {
+				fixedIPs = append(fixedIPs, capo.FixedIP{Subnet: &capo.SubnetParam{Filter: &capo.SubnetFilter{Name: fixedIP.Subnet.Name}}})
+			}
 		}
 		port.FixedIPs = fixedIPs
 		if len(addressPairs) > 0 {
@@ -142,10 +138,14 @@ func generateMachineSpec(clusterID string, platform *openstack.Platform, mpool *
 		port = capo.PortOpts{
 			FixedIPs: []capo.FixedIP{
 				{
-					Subnet: &capo.SubnetFilter{
-						// NOTE(mandre) the format of the subnet name changes when letting CAPI create it.
-						// So solely rely on tags for now.
-						Tags: fmt.Sprintf("openshiftClusterID=%s", clusterID),
+					Subnet: &capo.SubnetParam{
+						Filter: &capo.SubnetFilter{
+							// NOTE(mandre) the format of the subnet name changes when letting CAPI create it.
+							// So solely rely on tags for now.
+							FilterByNeutronTags: capo.FilterByNeutronTags{
+								TagsAny: []capo.NeutronTag{capo.NeutronTag("openshiftClusterID=" + clusterID)},
+							},
+						},
 					},
 				},
 			},
@@ -156,62 +156,79 @@ func generateMachineSpec(clusterID string, platform *openstack.Platform, mpool *
 	}
 
 	additionalPorts := make([]capo.PortOpts, 0, len(mpool.AdditionalNetworkIDs))
-	for _, networkID := range mpool.AdditionalNetworkIDs {
+	for i := range mpool.AdditionalNetworkIDs {
 		additionalPorts = append(additionalPorts, capo.PortOpts{
-			Network: &capo.NetworkFilter{
-				ID: networkID,
-			},
+			Network: &capo.NetworkParam{ID: &mpool.AdditionalNetworkIDs[i]},
 		})
 	}
 
-	securityGroups := []capo.SecurityGroupFilter{
+	securityGroups := []capo.SecurityGroupParam{
 		{
 			// Bootstrap and Master share the same security group
-			Name: fmt.Sprintf("%s-master", clusterID),
+			Filter: &capo.SecurityGroupFilter{Name: fmt.Sprintf("%s-master", clusterID)},
 		},
 	}
 
-	for _, securityGroup := range mpool.AdditionalSecurityGroupIDs {
-		securityGroups = append(securityGroups, capo.SecurityGroupFilter{ID: securityGroup})
+	for i := range mpool.AdditionalSecurityGroupIDs {
+		securityGroups = append(securityGroups, capo.SecurityGroupParam{ID: &mpool.AdditionalSecurityGroupIDs[i]})
 	}
 
-	// FIXME: Uncomment when the server group rework merged
-	// https://github.com/kubernetes-sigs/cluster-api-provider-openstack/pull/1779
-	// serverGroupName := clusterID + "-" + role
 	spec := capo.OpenStackMachineSpec{
-		CloudName: CloudName,
-		Flavor:    mpool.FlavorName,
+		Flavor: mpool.FlavorName,
 		IdentityRef: &capo.OpenStackIdentityReference{
-			Kind: "Secret",
-			Name: clusterID + "-cloud-config",
+			Name:      clusterID + "-cloud-config",
+			CloudName: CloudName,
 		},
-		// FIXME(stephenfin): We probably want a FIP for bootstrap?
-		// TODO: This is an image name. Migrate to a filter with Name when API v1alpha8 is released.
-		Image:          osImage,
+		Image:          capo.ImageParam{Filter: &capo.ImageFilter{Name: &osImage}},
 		Ports:          append([]capo.PortOpts{port}, additionalPorts...),
 		SecurityGroups: securityGroups,
-		// FIXME: Uncomment when the server group rework merged
-		// https://github.com/kubernetes-sigs/cluster-api-provider-openstack/pull/1779
-		//ServerGroup: *capo.ServerGroupFilter{
-		//	"Name": serverGroupName,
-		// },
-		ServerMetadata: map[string]string{
-			"Name":               fmt.Sprintf("%s-%s", clusterID, role),
-			"openshiftClusterID": clusterID,
+		ServerMetadata: []capo.ServerMetadata{
+			{
+				Key:   "Name",
+				Value: fmt.Sprintf("%s-%s", clusterID, role),
+			},
+			{
+				Key:   "openshiftClusterID",
+				Value: clusterID,
+			},
 		},
+
 		Trunk: trunkSupport,
 		Tags: []string{
 			fmt.Sprintf("openshiftClusterID=%s", clusterID),
 		},
 	}
 
+	if role != "bootstrap" {
+		spec.ServerGroup = &capo.ServerGroupParam{Filter: &capo.ServerGroupFilter{Name: ptr.To(clusterID + "-" + role)}}
+	}
+
 	if mpool.RootVolume != nil {
 		spec.RootVolume = &capo.RootVolume{
-			Size:             mpool.RootVolume.Size,
-			VolumeType:       failureDomain.RootVolume.VolumeType,
-			AvailabilityZone: failureDomain.RootVolume.AvailabilityZone,
+			SizeGiB:           mpool.RootVolume.Size,
+			BlockDeviceVolume: capo.BlockDeviceVolume{Type: failureDomain.RootVolume.VolumeType},
+		}
+		if failureDomain.RootVolume.AvailabilityZone != "" {
+			spec.RootVolume.BlockDeviceVolume.AvailabilityZone = &capo.VolumeAvailabilityZone{
+				From: capo.VolumeAZFromName,
+				Name: ptr.To(capo.VolumeAZName(failureDomain.RootVolume.AvailabilityZone)),
+			}
 		}
 	}
 
 	return &spec, nil
+}
+
+func populateAllowedAddressPairs(platform *openstack.Platform) []capo.AddressPair {
+	if lb := platform.LoadBalancer; lb != nil && lb.Type == configv1.LoadBalancerTypeUserManaged {
+		return nil
+	}
+	addressPairs := []capo.AddressPair{}
+	for _, apiVIP := range platform.APIVIPs {
+		addressPairs = append(addressPairs, capo.AddressPair{IPAddress: apiVIP})
+	}
+	for _, ingressVIP := range platform.IngressVIPs {
+		addressPairs = append(addressPairs, capo.AddressPair{IPAddress: ingressVIP})
+	}
+	return addressPairs
 }
