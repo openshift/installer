@@ -76,6 +76,9 @@ copy_archive_contents() {
 
     # Start the service which does the installation
     local installation_service="start-cluster-installation.service"
+    if cpio -tc <"${unzipped_file}" | grep -q '^/etc/assisted/workflow/add-nodes\.env$'; then
+        installation_service="agent-add-node.service"
+    fi
     is_enabled=$(systemctl is-enabled "$installation_service")
     if [[ "${is_enabled}" == "disabled" ]]; then
        echo "Service ${installation_service} is disabled, starting it"
