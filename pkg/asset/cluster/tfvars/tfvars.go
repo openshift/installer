@@ -272,6 +272,13 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
+		// Based on the number of workers, we could have the following outcomes:
+		// 1. workers > 0, masters not schedulable, valid cluster
+		// 2. workers = 0, masters schedulable, valid compact cluster but currently unsupported
+		// 3. workers = 0, masters not schedulable, invalid cluster
+		if len(workers) == 0 {
+			return errors.Errorf("compact clusters with 0 workers are not supported at this time")
+		}
 		workerConfigs := make([]*machinev1beta1.AWSMachineProviderConfig, len(workers))
 		for i, m := range workers {
 			workerConfigs[i] = m.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AWSMachineProviderConfig) //nolint:errcheck // legacy, pre-linter
@@ -369,6 +376,13 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		workers, err := workersAsset.MachineSets()
 		if err != nil {
 			return err
+		}
+		// Based on the number of workers, we could have the following outcomes:
+		// 1. workers > 0, masters not schedulable, valid cluster
+		// 2. workers = 0, masters schedulable, valid compact cluster but currently unsupported
+		// 3. workers = 0, masters not schedulable, invalid cluster
+		if len(workers) == 0 {
+			return errors.Errorf("compact clusters with 0 workers are not supported at this time")
 		}
 		workerConfigs := make([]*machinev1beta1.AzureMachineProviderSpec, len(workers))
 		for i, w := range workers {
@@ -484,6 +498,13 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		workers, err := workersAsset.MachineSets()
 		if err != nil {
 			return err
+		}
+		// Based on the number of workers, we could have the following outcomes:
+		// 1. workers > 0, masters not schedulable, valid cluster
+		// 2. workers = 0, masters schedulable, valid compact cluster but currently unsupported
+		// 3. workers = 0, masters not schedulable, invalid cluster
+		if len(workers) == 0 {
+			return errors.Errorf("compact clusters with 0 workers are not supported at this time")
 		}
 		workerConfigs := make([]*machinev1beta1.GCPMachineProviderSpec, len(workers))
 		for i, w := range workers {
