@@ -28,9 +28,9 @@ copy_cluster_api_to_mirror() {
 
 sync_envtest() {
   if [ -f "${CLUSTER_API_BIN_DIR}/kube-apiserver" ]; then
-    version=$("${CLUSTER_API_BIN_DIR}/kube-apiserver" --version || echo "Kubernetes v0.0.0")
+    version=$("${CLUSTER_API_BIN_DIR}/kube-apiserver" --version | sed 's/Kubernetes //' || echo "v0.0.0")
     echo "Found envtest binaries with version: ${version}"
-    if [ "${version}" = "Kubernetes v${ENVTEST_K8S_VERSION}" ]; then
+    if printf '%s\n%s' v${ENVTEST_K8S_VERSION} "${version}" | sort -V -C; then
       return
     fi
   fi
