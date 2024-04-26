@@ -21,7 +21,7 @@ import (
 
 const (
 	agentISOFilename         = "agent.%s.iso"
-	agentAddNodesISOFilename = "agent-addnodes.%s.iso"
+	agentAddNodesISOFilename = "node.%s.iso"
 	iso9660Level1ExtLen      = 3
 )
 
