@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/configimage"
 	"github.com/openshift/installer/pkg/asset/agent/image"
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
@@ -32,6 +33,7 @@ func NewAddNodesCommand(directory string, kubeConfig string) error {
 	err = fetcher.FetchAndPersist(context.Background(), []asset.WritableAsset{
 		&workflow.AgentWorkflowAddNodes{},
 		&image.AgentImage{},
+		&configimage.ConfigImage{},
 	})
 
 	// Save the exit code result
