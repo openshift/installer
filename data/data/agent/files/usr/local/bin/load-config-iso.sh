@@ -74,17 +74,13 @@ copy_archive_contents() {
        echo "Setting of core password is overridden"
     fi
 
-    # Enable any services which are not enabled by default
-    declare -a servicelist=("start-cluster-installation.service")
-
-    for service in "${servicelist[@]}"
-    do
-       is_enabled=$(systemctl is-enabled "$service")
-       if [[ "${is_enabled}" == "disabled" ]]; then
-          echo "Service ${service} is disabled, enabling it"
-          systemctl --no-block --now enable "${service}"
-       fi
-    done
+    # Start the service which does the installation
+    local installation_service="start-cluster-installation.service"
+    is_enabled=$(systemctl is-enabled "$installation_service")
+    if [[ "${is_enabled}" == "disabled" ]]; then
+       echo "Service ${installation_service} is disabled, starting it"
+       systemctl --no-block --now enable "${installation_service}"
+    fi
 
     if [[ -d "${ASSISTED_NETWORK_DIR}" ]]; then
        # Run script to generate NetworkManager keyfiles if network files exist
