@@ -38,7 +38,7 @@ import (
 	"github.com/openshift/installer/pkg/version"
 )
 
-const addNodesEnvPath = "/etc/assisted/add-nodes.env"
+const addNodesEnvPath = "/etc/assisted/workflow/add-nodes.env"
 const rendezvousHostEnvPath = "/etc/assisted/rendezvous-host.env"
 const manifestPath = "/etc/assisted/manifests"
 const hostnamesPath = "/etc/assisted/hostnames"
