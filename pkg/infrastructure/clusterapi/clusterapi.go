@@ -32,6 +32,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/clusterapi"
 	"github.com/openshift/installer/pkg/infrastructure"
+	"github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -39,6 +40,18 @@ import (
 // the infrastructure.Provider interface, which is the
 // interface the installer uses to call this provider.
 var _ infrastructure.Provider = (*InfraProvider)(nil)
+
+const (
+	// timeout for each provisioning step.
+	timeout = 15 * time.Minute
+
+	preProvisionStage        = "Infrastructure Pre-provisioning"
+	infrastructureStage      = "Network-infrastructure Provisioning"
+	infrastructureReadyStage = "Post-network, pre-machine Provisioning"
+	ignitionStage            = "Bootstrap Ignition Provisioning"
+	machineStage             = "Machine Provisioning"
+	postProvisionStage       = "Infrastructure Post-provisioning"
+)
 
 // InfraProvider implements common Cluster API logic and
 // contains the platform CAPI provider, which is called
@@ -107,15 +120,17 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 			MachineManifests: machineManifests,
 			WorkersAsset:     workersAsset,
 		}
-
+		timer.StartTimer(preProvisionStage)
 		if err := p.PreProvision(ctx, preProvisionInput); err != nil {
 			return fileList, fmt.Errorf("failed during pre-provisioning: %w", err)
 		}
+		timer.StopTimer(preProvisionStage)
 	} else {
 		logrus.Debugf("No pre-provisioning requirements for the %s provider", i.impl.Name())
 	}
 
 	// Run the CAPI system.
+	timer.StartTimer(infrastructureStage)
 	capiSystem := clusterapi.System()
 	if err := capiSystem.Run(ctx, installConfig); err != nil {
 		return fileList, fmt.Errorf("failed to run cluster api system: %w", err)
@@ -153,12 +168,16 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 
 	// Wait for successful provisioning by checking the InfrastructureReady
 	// status on the cluster object.
+	untilTime := time.Now().Add(timeout)
+	timezone, _ := untilTime.Zone()
+	logrus.Infof("Waiting up to %v (until %v %s) for network infrastructure to become ready...", timeout, untilTime.Format(time.Kitchen), timezone)
 	var cluster *clusterv1.Cluster
 	{
 		if err := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
 			Duration: time.Second * 10,
 			Factor:   float64(1.5),
 			Steps:    32,
+			Cap:      timeout,
 		}, func(ctx context.Context) (bool, error) {
 			c := &clusterv1.Cluster{}
 			if err := cl.Get(ctx, client.ObjectKey{
@@ -173,7 +192,10 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 			cluster = c
 			return cluster.Status.InfrastructureReady, nil
 		}); err != nil {
-			return fileList, err
+			if wait.Interrupted(err) {
+				return fileList, fmt.Errorf("infrastructure was not ready within %v: %w", timeout, err)
+			}
+			return fileList, fmt.Errorf("infrastructure is not ready: %w", err)
 		}
 		if cluster == nil {
 			return fileList, fmt.Errorf("error occurred during load balancer ready check")
@@ -182,6 +204,8 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 			return fileList, fmt.Errorf("control plane endpoint is not set")
 		}
 	}
+	timer.StopTimer(infrastructureStage)
+	logrus.Info("Netork infrastructure is ready")
 
 	if p, ok := i.impl.(InfraReadyProvider); ok {
 		infraReadyInput := InfraReadyInput{
@@ -190,9 +214,11 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 			InfraID:       clusterID.InfraID,
 		}
 
+		timer.StartTimer(infrastructureReadyStage)
 		if err := p.InfraReady(ctx, infraReadyInput); err != nil {
 			return fileList, fmt.Errorf("failed provisioning resources after infrastructure ready: %w", err)
 		}
+		timer.StopTimer(infrastructureReadyStage)
 	} else {
 		logrus.Debugf("No infrastructure ready requirements for the %s provider", i.impl.Name())
 	}
@@ -213,9 +239,11 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 			TFVarsAsset:      tfvarsAsset,
 		}
 
+		timer.StartTimer(ignitionStage)
 		if bootstrapIgnData, err = p.Ignition(ctx, ignInput); err != nil {
 			return fileList, fmt.Errorf("failed preparing ignition data: %w", err)
 		}
+		timer.StopTimer(ignitionStage)
 	} else {
 		logrus.Debugf("No Ignition requirements for the %s provider", i.impl.Name())
 	}
@@ -223,6 +251,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	masterIgnSecret := IgnitionSecret(masterIgnAsset.Files()[0].Data, clusterID.InfraID, "master")
 	machineManifests = append(machineManifests, bootstrapIgnSecret, masterIgnSecret)
 
+	timer.StartTimer(machineStage)
 	// Create the machine manifests.
 	for _, m := range machineManifests {
 		m.SetNamespace(capiutils.Namespace)
@@ -238,11 +267,14 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 			masterCount = *reps
 		}
 
-		logrus.Debugf("Waiting for machines to provision")
+		untilTime := time.Now().Add(timeout)
+		timezone, _ := untilTime.Zone()
+		logrus.Infof("Waiting up to %v (until %v %s) for machines to provision...", timeout, untilTime.Format(time.Kitchen), timezone)
 		if err := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
 			Duration: time.Second * 10,
 			Factor:   float64(1.5),
 			Steps:    32,
+			Cap:      timeout,
 		}, func(ctx context.Context) (bool, error) {
 			for i := int64(0); i < masterCount; i++ {
 				machine := &clusterv1.Machine{}
@@ -266,9 +298,14 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 			}
 			return true, nil
 		}); err != nil {
-			return fileList, err
+			if wait.Interrupted(err) {
+				return fileList, fmt.Errorf("control-plane machines were not provisioned within %v: %w", timeout, err)
+			}
+			return fileList, fmt.Errorf("control-plane machines are not ready: %w", err)
 		}
 	}
+	timer.StopTimer(machineStage)
+	logrus.Info("Control-plane machines are ready")
 
 	if p, ok := i.impl.(PostProvider); ok {
 		postMachineInput := PostProvisionInput{
@@ -277,9 +314,11 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 			InfraID:       clusterID.InfraID,
 		}
 
+		timer.StartTimer(postProvisionStage)
 		if err = p.PostProvision(ctx, postMachineInput); err != nil {
 			return fileList, fmt.Errorf("failed during post-machine creation hook: %w", err)
 		}
+		timer.StopTimer(postProvisionStage)
 	}
 
 	// For each manifest we created, retrieve it and store it in the asset.
