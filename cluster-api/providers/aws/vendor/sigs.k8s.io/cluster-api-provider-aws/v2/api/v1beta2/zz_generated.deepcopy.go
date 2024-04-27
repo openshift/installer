@@ -2130,6 +2130,11 @@ func (in *VPCSpec) DeepCopyInto(out *VPCSpec) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.CarrierGatewayID != nil {
+		in, out := &in.CarrierGatewayID, &out.CarrierGatewayID
+		*out = new(string)
+		**out = **in
+	}
 	if in.Tags != nil {
 		in, out := &in.Tags, &out.Tags
 		*out = make(Tags, len(*in))

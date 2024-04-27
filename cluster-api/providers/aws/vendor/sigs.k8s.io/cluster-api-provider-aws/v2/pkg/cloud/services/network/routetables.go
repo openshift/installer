@@ -340,6 +340,13 @@ func (s *Service) getGatewayPublicIPv6Route() *ec2.CreateRouteInput {
 	}
 }
 
+func (s *Service) getCarrierGatewayPublicIPv4Route() *ec2.CreateRouteInput {
+	return &ec2.CreateRouteInput{
+		DestinationCidrBlock: aws.String(services.AnyIPv4CidrBlock),
+		CarrierGatewayId:     aws.String(*s.scope.VPC().CarrierGatewayID),
+	}
+}
+
 func (s *Service) getRouteTableTagParams(id string, public bool, zone string) infrav1.BuildParams {
 	var name strings.Builder
 
@@ -371,6 +378,14 @@ func (s *Service) getRoutesToPublicSubnet(sn *infrav1.SubnetSpec) ([]*ec2.Create
 
 	if sn.IsEdge() && sn.IsIPv6 {
 		return nil, errors.Errorf("can't determine routes for unsupported ipv6 subnet in zone type %q", sn.ZoneType)
+	}
+
+	if sn.IsEdgeWavelength() {
+		if s.scope.VPC().CarrierGatewayID == nil {
+			return routes, errors.Errorf("failed to create carrier routing table: carrier gateway for VPC %q is not present", s.scope.VPC().ID)
+		}
+		routes = append(routes, s.getCarrierGatewayPublicIPv4Route())
+		return routes, nil
 	}
 
 	if s.scope.VPC().InternetGatewayID == nil {

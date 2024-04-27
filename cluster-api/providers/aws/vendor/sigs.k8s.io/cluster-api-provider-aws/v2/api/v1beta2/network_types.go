@@ -46,6 +46,8 @@ const (
 	ZoneTypeAvailabilityZone ZoneType = "availability-zone"
 	// ZoneTypeLocalZone defines the AWS zone type in Local Zone infrastructure.
 	ZoneTypeLocalZone ZoneType = "local-zone"
+	// ZoneTypeWavelengthZone defines the AWS zone type in Wavelength infrastructure.
+	ZoneTypeWavelengthZone ZoneType = "wavelength-zone"
 )
 
 // NetworkStatus encapsulates AWS networking resources.
@@ -409,6 +411,12 @@ type VPCSpec struct {
 	// +optional
 	InternetGatewayID *string `json:"internetGatewayId,omitempty"`
 
+	// CarrierGatewayID is the id of the internet gateway associated with the VPC,
+	// for carrier network (Wavelength Zones).
+	// +optional
+	// +kubebuilder:validation:XValidation:rule="self.startsWith('cagw-')",message="Carrier Gateway ID must start with 'cagw-'"
+	CarrierGatewayID *string `json:"carrierGatewayId,omitempty"`
+
 	// Tags is a collection of tags describing the resource.
 	Tags Tags `json:"tags,omitempty"`
 
@@ -521,33 +529,36 @@ type SubnetSpec struct {
 
 	// ZoneType defines the type of the zone where the subnet is created.
 	//
-	// The valid values are availability-zone, and local-zone.
+	// The valid values are availability-zone, local-zone, and wavelength-zone.
 	//
 	// Subnet with zone type availability-zone (regular) is always selected to create cluster
 	// resources, like Load Balancers, NAT Gateways, Contol Plane nodes, etc.
 	//
-	// Subnet with zone type local-zone is not eligible to automatically create
+	// Subnet with zone type local-zone or wavelength-zone is not eligible to automatically create
 	// regular cluster resources.
 	//
 	// The public subnet in availability-zone or local-zone is associated with regular public
 	// route table with default route entry to a Internet Gateway.
 	//
+	// The public subnet in wavelength-zone is associated with a carrier public
+	// route table with default route entry to a Carrier Gateway.
+	//
 	// The private subnet in the availability-zone is associated with a private route table with
 	// the default route entry to a NAT Gateway created in that zone.
 	//
-	// The private subnet in the local-zone is associated with a private route table with
+	// The private subnet in the local-zone or wavelength-zone is associated with a private route table with
 	// the default route entry re-using the NAT Gateway in the Region (preferred from the
 	// parent zone, the zone type availability-zone in the region, or first table available).
 	//
-	// +kubebuilder:validation:Enum=availability-zone;local-zone
+	// +kubebuilder:validation:Enum=availability-zone;local-zone;wavelength-zone
 	// +optional
 	ZoneType *ZoneType `json:"zoneType,omitempty"`
 
 	// ParentZoneName is the zone name where the current subnet's zone is tied when
 	// the zone is a Local Zone.
 	//
-	// The subnets in Local Zone locations consume the ParentZoneName to determine the correct
-	// private route table to egress traffic to the internet.
+	// The subnets in Local Zone or Wavelength Zone locations consume the ParentZoneName
+	// to select the correct private route table to egress traffic to the internet.
 	//
 	// +optional
 	ParentZoneName *string `json:"parentZoneName,omitempty"`
@@ -570,7 +581,27 @@ func (s *SubnetSpec) String() string {
 // IsEdge returns the true when the subnet is created in the edge zone,
 // Local Zones.
 func (s *SubnetSpec) IsEdge() bool {
-	return s.ZoneType != nil && *s.ZoneType == ZoneTypeLocalZone
+	if s.ZoneType == nil {
+		return false
+	}
+	if s.ZoneType.Equal(ZoneTypeLocalZone) {
+		return true
+	}
+	if s.ZoneType.Equal(ZoneTypeWavelengthZone) {
+		return true
+	}
+	return false
+}
+
+// IsEdgeWavelength returns true only when the subnet is created in Wavelength Zone.
+func (s *SubnetSpec) IsEdgeWavelength() bool {
+	if s.ZoneType == nil {
+		return false
+	}
+	if *s.ZoneType == ZoneTypeWavelengthZone {
+		return true
+	}
+	return false
 }
 
 // SetZoneInfo updates the subnets with zone information.
@@ -681,7 +712,7 @@ func (s Subnets) FilterPrivate() (res Subnets) {
 			res = append(res, x)
 		}
 	}
-	return res
+	return
 }
 
 // FilterPublic returns a slice containing all subnets marked as public.
@@ -695,7 +726,7 @@ func (s Subnets) FilterPublic() (res Subnets) {
 			res = append(res, x)
 		}
 	}
-	return res
+	return
 }
 
 // FilterByZone returns a slice containing all subnets that live in the availability zone specified.
@@ -705,7 +736,7 @@ func (s Subnets) FilterByZone(zone string) (res Subnets) {
 			res = append(res, x)
 		}
 	}
-	return res
+	return
 }
 
 // GetUniqueZones returns a slice containing the unique zones of the subnets.
@@ -729,6 +760,19 @@ func (s Subnets) SetZoneInfo(zones []*ec2.AvailabilityZone) error {
 		}
 	}
 	return nil
+}
+
+// HasPublicSubnetWavelength returns true when there are subnets in Wavelength zone.
+func (s Subnets) HasPublicSubnetWavelength() bool {
+	for _, sub := range s {
+		if sub.ZoneType == nil {
+			return false
+		}
+		if sub.IsPublic && *sub.ZoneType == ZoneTypeWavelengthZone {
+			return true
+		}
+	}
+	return false
 }
 
 // CNISpec defines configuration for CNI.
@@ -952,4 +996,9 @@ type ZoneType string
 // String returns the string representation for the zone type.
 func (z ZoneType) String() string {
 	return string(z)
+}
+
+// Equal compares two zone types.
+func (z ZoneType) Equal(other ZoneType) bool {
+	return z == other
 }
