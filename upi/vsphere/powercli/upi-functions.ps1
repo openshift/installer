@@ -17,6 +17,8 @@ function New-OpenShiftVM {
         $NumCpu,
         $ReferenceSnapshot,
         $ResourcePool,
+        $SecureBoot,
+        $StoragePolicy,
         [Parameter(Mandatory=$true)]
         $Tag,
         [Parameter(Mandatory=$true)]
@@ -35,6 +37,7 @@ function New-OpenShiftVM {
     $args.Remove('Network') > $null
     $args.Remove('MemoryMB') > $null
     $args.Remove('NumCpu') > $null
+    $args.Remove('SecureBoot') > $null
     foreach ($key in $args.Keys){
         if ($NULL -eq $($args.Item($key)) -or $($args.Item($key)) -eq "") {
             $args.Remove($key) > $null
@@ -74,6 +77,12 @@ function New-OpenShiftVM {
     {
         $kargs = "ip=$($Networking.ipAddress)::$($Networking.gateway):$($Networking.netmask):$($Networking.hostname):ens192:none:$($Networking.dns)"
         New-AdvancedSetting -Entity $vm -name "guestinfo.afterburn.initrd.network-kargs" -value $kargs -Confirm:$false -Force > $null
+    }
+
+    # Enable secure boot if needed
+    if ($true -eq $SecureBoot)
+    {
+        Set-SecureBoot -VM $vm
     }
 
     return $vm
@@ -289,7 +298,7 @@ function New-OpenshiftVMs {
 
             # Clone the virtual machine from the imported template
             #$vm = New-OpenShiftVM -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -LinkedClone -ReferenceSnapshot $snapshot -IgnitionData $ignition -Tag $tag -Networking $network -NumCPU $numCPU -MemoryMB $memory
-            $vm = New-OpenShiftVM -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -IgnitionData $ignition -Tag $tag -Networking $network -Network $node.network -NumCPU $numCPU -MemoryMB $memory
+            $vm = New-OpenShiftVM -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -IgnitionData $ignition -Tag $tag -Networking $network -Network $node.network -SecureBoot $secureboot -StoragePolicy $storagepolicy -NumCPU $numCPU -MemoryMB $memory
 
             # Assign tag so we can later clean up
             # New-TagAssignment -Entity $vm -Tag $tag
@@ -321,4 +330,21 @@ function New-OpenshiftVMs {
     foreach ($job in $jobs) {
         Receive-Job -Job $job
     }
+}
+
+# This function is used to set secure boot.
+function Set-SecureBoot {
+    param(
+        $VM
+    )
+
+    $spec = New-Object VMware.Vim.VirtualMachineConfigSpec
+    $spec.Firmware = [VMware.Vim.GuestOsDescriptorFirmwareType]::efi
+
+    $boot = New-Object VMware.Vim.VirtualMachineBootOptions
+    $boot.EfiSecureBootEnabled = $true
+
+    $spec.BootOptions = $boot
+
+    $VM.ExtensionData.ReconfigVM($spec)
 }
