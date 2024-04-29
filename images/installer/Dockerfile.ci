@@ -13,14 +13,9 @@ COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/ terr
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 RUN go run -mod=vendor hack/build-coreos-manifest.go
 
-FROM registry.ci.openshift.org/ocp/4.16:cli-artifacts AS tools
-
 FROM registry.ci.openshift.org/ocp/4.16:base
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 COPY --from=builder /go/src/github.com/openshift/installer/bin/manifests/ /manifests/
-# Required to run agent-based installer from the container
-COPY --from=tools /usr/bin/oc /bin/oc
-RUN dnf install -y nmstate
 
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
