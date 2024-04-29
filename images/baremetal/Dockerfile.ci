@@ -8,8 +8,6 @@ COPY . .
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build-node-joiner.sh
 
-FROM registry.ci.openshift.org/ocp/4.16:cli-artifacts AS tools
-
 FROM registry.ci.openshift.org/ocp/4.16:base
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 
@@ -20,8 +18,7 @@ RUN dnf upgrade -y && \
 
 # node-joiner requirements
 COPY --from=builder /go/src/github.com/openshift/installer/bin/node-joiner /bin/node-joiner
-COPY --from=tools /usr/bin/oc /bin/oc
-RUN dnf install -y nmstate
+RUN dnf install -y nmstate openshift-clients
 
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
