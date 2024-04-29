@@ -36,31 +36,6 @@ foreach ($template in $templates) {
     Remove-Template -Template $($template.Entity) -DeletePermanently -confirm:$false
 }
 
-# Clean up storage policy
-$storagePolicies = Get-SpbmStoragePolicy -Tag $tag
-
-foreach ($policy in $storagePolicies) {
-
-    $clusterInventory = @()
-    $splitResults = @($policy.Name -split "openshift-storage-policy-")
-
-    if ($splitResults.Count -eq 2) {
-        $clusterId = $splitResults[1]
-        if ($clusterId -ne "") {
-            Write-Host $clusterId
-            $clusterInventory = @(Get-Inventory -Name "$($clusterId)*" -ErrorAction Continue)
-
-            if ($clusterInventory.Count -eq 0) {
-                Write-Host "Removing policy: $($policy.Name)"
-                $policy | Remove-SpbmStoragePolicy -Confirm:$false
-            }
-            else {
-                Write-Host "not deleting: $($clusterInventory)"
-            }
-        }
-    }
-}
-
 # Clean up all resource pools
 $rps = Get-TagAssignment -Tag $tag -Entity (Get-ResourcePool)
 foreach ($rp in $rps) {
@@ -73,6 +48,31 @@ $folders = Get-TagAssignment -Tag $tag -Entity (Get-Folder)
 foreach ($folder in $folders) {
     Write-Output "Removing folder $($folder.Entity)"
     Remove-Folder -Folder $($folder.Entity) -DeletePermanently -confirm:$false
+}
+
+# Clean up storage policy.  Must be done after all other object cleanup except tag/tagCategory
+$storagePolicies = Get-SpbmStoragePolicy -Tag $tag
+
+foreach ($policy in $storagePolicies) {
+
+    $clusterInventory = @()
+    $splitResults = @($policy.Name -split "openshift-storage-policy-")
+
+    if ($splitResults.Count -eq 2) {
+        $clusterId = $splitResults[1]
+        if ($clusterId -ne "") {
+            Write-Host "Checking for storage policies for "$clusterId
+            $clusterInventory = @(Get-Inventory -Name "$($clusterId)*" -ErrorAction Continue)
+
+            if ($clusterInventory.Count -eq 0) {
+                Write-Host "Removing policy: $($policy.Name)"
+                $policy | Remove-SpbmStoragePolicy -Confirm:$false
+            }
+            else {
+                Write-Host "not deleting: $($clusterInventory)"
+            }
+        }
+    }
 }
 
 # Clean up tags
