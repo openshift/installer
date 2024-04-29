@@ -14,6 +14,8 @@ unconfiguredIgnContains /etc/assisted/manifests/cluster-image-set.yaml
 unconfiguredIgnCmp /etc/assisted/manifests/cluster-image-set.yaml expected/cluster-image-set.yaml
 
 -- cluster-manifests/infraenv.yaml --
+apiVersion: agent-install.openshift.io/v1beta1
+kind: InfraEnv
 metadata:
   name: ostest
   namespace: cluster0
@@ -40,6 +42,8 @@ stringData:
     }
 
 -- expected/cluster-image-set.yaml --
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
 metadata:
   creationTimestamp: null
   name: openshift-was not built correctly

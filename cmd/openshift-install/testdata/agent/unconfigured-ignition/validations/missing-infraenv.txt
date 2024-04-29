@@ -11,6 +11,8 @@ stderr 'failed to generate asset "InfraEnv Config": missing configuration or man
 ! exists $WORK/auth/kubeadmin-password
 
 -- cluster-manifests/cluster-image-set.yaml --
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
 metadata:
   name: cluster0-image-set
   namespace: cluster0

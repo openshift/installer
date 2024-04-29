@@ -43,6 +43,8 @@ metadata:
 rendezvousIP: 192.168.111.20
 
 -- expected/agent-cluster-install.yaml --
+apiVersion: extensions.hive.openshift.io/v1beta1
+kind: AgentClusterInstall
 metadata:
   creationTimestamp: null
   name: ostest
@@ -73,7 +75,7 @@ status:
   progress:
     totalPercentage: 0
 -- expected/cluster-deployment.yaml --
-apiVersion: v1
+apiVersion: hive.openshift.io/v1
 kind: ClusterDeployment
 metadata:
   creationTimestamp: null
@@ -95,6 +97,8 @@ spec:
     name: ostest-pull-secret
 status: {}
 -- expected/cluster-image-set.yaml --
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
 metadata:
   creationTimestamp: null
   name: openshift-was not built correctly

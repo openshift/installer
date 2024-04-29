@@ -48,6 +48,8 @@ metadata:
 rendezvousIP: 192.168.111.20
 
 -- expected/cluster-image-set.yaml --
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
 metadata:
   creationTimestamp: null
   name: openshift-was not built correctly
@@ -56,6 +58,8 @@ spec:
   releaseImage: $RELEASE_IMAGE
 status: {}
 -- expected/infraenv.yaml --
+apiVersion: agent-install.openshift.io/v1beta1
+kind: InfraEnv
 metadata:
   creationTimestamp: null
   name: ostest
