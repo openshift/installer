@@ -1964,8 +1964,8 @@ spec:
             type: array
           featureSet:
             description: FeatureSet enables features that are not part of the default
-              feature set. Valid values are "Default", "TechPreviewNoUpgrade" and
-              "CustomNoUpgrade". When omitted, the "Default" feature set is used.
+              feature set. Valid values are "Default", "TechPreviewNoUpgrade", "DevPreviewNoUpgrade",
+              and "CustomNoUpgrade". When omitted, the "Default" feature set is used.
             type: string
           fips:
             default: false

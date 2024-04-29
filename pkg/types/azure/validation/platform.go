@@ -99,7 +99,7 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("outboundType"), p.OutboundType, fmt.Sprintf("%s is only allowed when installing to pre-existing network", azure.UserDefinedRoutingOutboundType)))
 	}
 	if p.OutboundType == azure.NatGatewayOutboundType {
-		if ic.FeatureSet != configv1.TechPreviewNoUpgrade {
+		if ic.FeatureSet != configv1.TechPreviewNoUpgrade && ic.FeatureSet != configv1.DevPreviewNoUpgrade {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("outboundType"), p.OutboundType, "not supported in this feature set"))
 		}
 		if p.VirtualNetwork != "" {
