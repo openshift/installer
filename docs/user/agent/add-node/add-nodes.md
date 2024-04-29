@@ -2,9 +2,9 @@
 
 ## Pre-requisites
 1. The `oc` tool must be available in the execution environment (the "user host").
-2. Ensure `oc` is properly configured to manage the cluster to be expanded, ie by either:
-   - running `oc login` command with the required cluster credentials
-   - export the environment variable `$KUBECONFIG` pointing to the cluster `kubeconfig` file
+2. Ensure `oc` is properly configured to manage the cluster to be expanded, i.e. by either:
+   - running `oc login` command with the required cluster credentials, or
+   - running `export KUBECONFIG=<cluster `kubeconfig` file>`
 
 ## Setup
 1. Download the [node-joiner.sh](./node-joiner.sh) script in a working directory in
