@@ -279,6 +279,7 @@ var map_MachineConfigPoolSpec = map[string]string{
 	"paused":                "paused specifies whether or not changes to this machine config pool should be stopped. This includes generating new desiredMachineConfig and update of machines.",
 	"maxUnavailable":        "maxUnavailable defines either an integer number or percentage of nodes in the pool that can go Unavailable during an update. This includes nodes Unavailable for any reason, including user initiated cordons, failing nodes, etc. The default value is 1.\n\nA value larger than 1 will mean multiple nodes going unavailable during the update, which may affect your workload stress on the remaining nodes. You cannot set this value to 0 to stop updates (it will default back to 1); to stop updates, use the 'paused' property instead. Drain will respect Pod Disruption Budgets (PDBs) such as etcd quorum guards, even if maxUnavailable is greater than one.",
 	"configuration":         "The targeted MachineConfig object for the machine config pool.",
+	"pinnedImageSets":       "pinnedImageSets specifies a sequence of PinnedImageSetRef objects for the pool. Nodes within this pool will preload and pin images defined in the PinnedImageSet. Before pulling images the MachineConfigDaemon will ensure the total uncompressed size of all the images does not exceed available resources. If the total size of the images exceeds the available resources the controller will report a Degraded status to the MachineConfigPool and not attempt to pull any images. Also to help ensure the kubelet can mitigate storage risk, the pinned_image configuration and subsequent service reload will happen only after all of the images have been pulled for each set. Images from multiple PinnedImageSets are loaded and pinned sequentially as listed. Duplicate and existing images will be skipped.\n\nAny failure to prefetch or pin images will result in a Degraded pool. Resolving these failures is the responsibility of the user. The admin should be proactive in ensuring adequate storage and proper image authentication exists in advance.",
 }
 
 func (MachineConfigPoolSpec) SwaggerDoc() map[string]string {
@@ -296,6 +297,7 @@ var map_MachineConfigPoolStatus = map[string]string{
 	"degradedMachineCount":    "degradedMachineCount represents the total number of machines marked degraded (or unreconcilable). A node is marked degraded if applying a configuration failed..",
 	"conditions":              "conditions represents the latest available observations of current state.",
 	"certExpirys":             "certExpirys keeps track of important certificate expiration data",
+	"poolSynchronizersStatus": "poolSynchronizersStatus is the status of the machines managed by the pool synchronizers.",
 }
 
 func (MachineConfigPoolStatus) SwaggerDoc() map[string]string {
@@ -333,6 +335,28 @@ var map_NetworkInfo = map[string]string{
 
 func (NetworkInfo) SwaggerDoc() map[string]string {
 	return map_NetworkInfo
+}
+
+var map_PinnedImageSetRef = map[string]string{
+	"name": "name is a reference to the name of a PinnedImageSet.  Must adhere to RFC-1123 (https://tools.ietf.org/html/rfc1123). Made up of one of more period-separated (.) segments, where each segment consists of alphanumeric characters and hyphens (-), must begin and end with an alphanumeric character, and is at most 63 characters in length. The total length of the name must not exceed 253 characters.",
+}
+
+func (PinnedImageSetRef) SwaggerDoc() map[string]string {
+	return map_PinnedImageSetRef
+}
+
+var map_PoolSynchronizerStatus = map[string]string{
+	"poolSynchronizerType":    "poolSynchronizerType describes the type of the pool synchronizer.",
+	"machineCount":            "machineCount is the number of machines that are managed by the node synchronizer.",
+	"updatedMachineCount":     "updatedMachineCount is the number of machines that have been updated by the node synchronizer.",
+	"readyMachineCount":       "readyMachineCount is the number of machines managed by the node synchronizer that are in a ready state.",
+	"availableMachineCount":   "availableMachineCount is the number of machines managed by the node synchronizer which are available.",
+	"unavailableMachineCount": "unavailableMachineCount is the number of machines managed by the node synchronizer but are unavailable.",
+	"observedGeneration":      "observedGeneration is the last generation change that has been applied.",
+}
+
+func (PoolSynchronizerStatus) SwaggerDoc() map[string]string {
+	return map_PoolSynchronizerStatus
 }
 
 // AUTO-GENERATED FUNCTIONS END HERE

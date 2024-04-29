@@ -44,7 +44,7 @@ type OperatorHubStatus struct {
 // +genclient
 // +genclient:nonNamespaced
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/470
-// +openshift:file-pattern=0000_03_marketplace-operator_01_operatorhubMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_03,operatorName=marketplace,operatorOrdering=01
 // +openshift:capability=marketplace
 // +openshift:compatibility-gen:level=1
 type OperatorHub struct {

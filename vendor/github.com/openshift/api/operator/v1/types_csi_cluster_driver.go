@@ -20,7 +20,7 @@ import (
 // +kubebuilder:resource:path=clustercsidrivers,scope=Cluster
 // +kubebuilder:subresource:status
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/701
-// +openshift:file-pattern=0000_90_cluster_csi_driver_01_configMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_90,operatorName=csi-driver,operatorOrdering=01
 
 // ClusterCSIDriver object allows management and configuration of a CSI driver operator
 // installed by default in OpenShift. Name of the object must be name of the CSI driver
@@ -281,6 +281,35 @@ type VSphereCSIDriverConfigSpec struct {
 	// will be rejected.
 	// +optional
 	TopologyCategories []string `json:"topologyCategories,omitempty"`
+
+	// globalMaxSnapshotsPerBlockVolume is a global configuration parameter that applies to volumes on all kinds of
+	// datastores. If omitted, the platform chooses a default, which is subject to change over time, currently that default is 3.
+	// Snapshots can not be disabled using this parameter.
+	// Increasing number of snapshots above 3 can have negative impact on performance, for more details see: https://kb.vmware.com/s/article/1025279
+	// Volume snapshot documentation: https://docs.vmware.com/en/VMware-vSphere-Container-Storage-Plug-in/3.0/vmware-vsphere-csp-getting-started/GUID-E0B41C69-7EEB-450F-A73D-5FD2FF39E891.html
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=32
+	// +openshift:enable:FeatureGate=VSphereDriverConfiguration
+	// +optional
+	GlobalMaxSnapshotsPerBlockVolume *uint32 `json:"globalMaxSnapshotsPerBlockVolume,omitempty"`
+
+	// granularMaxSnapshotsPerBlockVolumeInVSAN is a granular configuration parameter on vSAN datastore only. It
+	// overrides GlobalMaxSnapshotsPerBlockVolume if set, while it falls back to the global constraint if unset.
+	// Snapshots for VSAN can not be disabled using this parameter.
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=32
+	// +openshift:enable:FeatureGate=VSphereDriverConfiguration
+	// +optional
+	GranularMaxSnapshotsPerBlockVolumeInVSAN *uint32 `json:"granularMaxSnapshotsPerBlockVolumeInVSAN,omitempty"`
+
+	// granularMaxSnapshotsPerBlockVolumeInVVOL is a granular configuration parameter on Virtual Volumes datastore only.
+	// It overrides GlobalMaxSnapshotsPerBlockVolume if set, while it falls back to the global constraint if unset.
+	// Snapshots for VVOL can not be disabled using this parameter.
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=32
+	// +openshift:enable:FeatureGate=VSphereDriverConfiguration
+	// +optional
+	GranularMaxSnapshotsPerBlockVolumeInVVOL *uint32 `json:"granularMaxSnapshotsPerBlockVolumeInVVOL,omitempty"`
 }
 
 // ClusterCSIDriverStatus is the observed status of CSI driver operator
