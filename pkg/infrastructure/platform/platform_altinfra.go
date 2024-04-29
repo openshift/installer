@@ -6,7 +6,6 @@ package platform
 import (
 	"fmt"
 
-	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/infrastructure"
 	awscapi "github.com/openshift/installer/pkg/infrastructure/aws/clusterapi"
 	awsinfra "github.com/openshift/installer/pkg/infrastructure/aws/sdk"
@@ -18,6 +17,7 @@ import (
 	openstackcapi "github.com/openshift/installer/pkg/infrastructure/openstack/clusterapi"
 	powervscapi "github.com/openshift/installer/pkg/infrastructure/powervs/clusterapi"
 	vspherecapi "github.com/openshift/installer/pkg/infrastructure/vsphere/clusterapi"
+	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/featuregates"
@@ -33,40 +33,40 @@ import (
 func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastructure.Provider, error) {
 	switch platform {
 	case awstypes.Name:
-		if fg.Enabled(features.FeatureGateClusterAPIInstall) {
+		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(&awscapi.Provider{}), nil
 		}
 		return awsinfra.InitializeProvider(), nil
 	case azuretypes.Name:
-		if fg.Enabled(features.FeatureGateClusterAPIInstall) {
+		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(&azurecapi.Provider{}), nil
 		}
 		return nil, nil
 	case gcptypes.Name:
-		if fg.Enabled(features.FeatureGateClusterAPIInstall) {
+		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(gcpcapi.Provider{}), nil
 		}
 		return nil, nil
 	case ibmcloudtypes.Name:
-		if fg.Enabled(features.FeatureGateClusterAPIInstall) {
+		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(ibmcloudcapi.Provider{}), nil
 		}
 		return nil, nil
 	case vspheretypes.Name:
-		if fg.Enabled(features.FeatureGateClusterAPIInstall) {
+		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(vspherecapi.Provider{}), nil
 		}
 	case powervstypes.Name:
-		if fg.Enabled(features.FeatureGateClusterAPIInstall) {
+		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(powervscapi.Provider{}), nil
 		}
 		return nil, nil
 	case openstacktypes.Name:
-		if fg.Enabled(features.FeatureGateClusterAPIInstall) {
+		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(openstackcapi.Provider{}), nil
 		}
 	case nutanixtypes.Name:
-		if fg.Enabled(features.FeatureGateClusterAPIInstall) {
+		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(nutanixcapi.Provider{}), nil
 		}
 	}

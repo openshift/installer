@@ -30,6 +30,7 @@ import (
 	"github.com/openshift/installer/pkg/terraform/stages/ovirt"
 	"github.com/openshift/installer/pkg/terraform/stages/powervs"
 	"github.com/openshift/installer/pkg/terraform/stages/vsphere"
+	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
@@ -50,7 +51,7 @@ import (
 func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastructure.Provider, error) {
 	switch platform {
 	case awstypes.Name:
-		if fg.Enabled(features.FeatureGateClusterAPIInstall) {
+		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(&awscapi.Provider{}), nil
 		}
 		if fg.Enabled(features.FeatureGateInstallAlternateInfrastructureAWS) {
@@ -58,7 +59,7 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 		}
 		return terraform.InitializeProvider(aws.PlatformStages), nil
 	case azuretypes.Name:
-		if fg.Enabled(features.FeatureGateClusterAPIInstall) {
+		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(&azureinfra.Provider{}), nil
 		}
 		return terraform.InitializeProvider(azure.PlatformStages), nil
@@ -67,36 +68,36 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 	case baremetaltypes.Name:
 		return baremetalinfra.InitializeProvider(), nil
 	case gcptypes.Name:
-		if fg.Enabled(features.FeatureGateClusterAPIInstall) {
+		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(gcpcapi.Provider{}), nil
 		}
 		return terraform.InitializeProvider(gcp.PlatformStages), nil
 	case ibmcloudtypes.Name:
-		if fg.Enabled(features.FeatureGateClusterAPIInstall) {
+		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(ibmcloudcapi.Provider{}), nil
 		}
 		return terraform.InitializeProvider(ibmcloud.PlatformStages), nil
 	case libvirttypes.Name:
 		return terraform.InitializeProvider(libvirt.PlatformStages), nil
 	case nutanixtypes.Name:
-		if fg.Enabled(features.FeatureGateClusterAPIInstall) {
+		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(nutanixcapi.Provider{}), nil
 		}
 		return terraform.InitializeProvider(nutanix.PlatformStages), nil
 	case powervstypes.Name:
-		if fg.Enabled(features.FeatureGateClusterAPIInstall) {
+		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(&powervscapi.Provider{}), nil
 		}
 		return terraform.InitializeProvider(powervs.PlatformStages), nil
 	case openstacktypes.Name:
-		if fg.Enabled(features.FeatureGateClusterAPIInstall) {
+		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(openstackcapi.Provider{}), nil
 		}
 		return terraform.InitializeProvider(openstack.PlatformStages), nil
 	case ovirttypes.Name:
 		return terraform.InitializeProvider(ovirt.PlatformStages), nil
 	case vspheretypes.Name:
-		if fg.Enabled(features.FeatureGateClusterAPIInstall) {
+		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(vspherecapi.Provider{}), nil
 		}
 		return terraform.InitializeProvider(vsphere.PlatformStages), nil
