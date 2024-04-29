@@ -104,21 +104,3 @@ func (kube *ClusterKubeAPIClient) ListCSRs() (*certificatesv1.CertificateSigning
 	}
 	return csrs, nil
 }
-
-func (kube *ClusterKubeAPIClient) getCSRsPendingApproval(signerName string) []certificatesv1.CertificateSigningRequest {
-	csrs, err := kube.ListCSRs()
-	if err != nil {
-		logrus.Debugf("error calling listCSRs(): %v ", err)
-	}
-
-	var matchedCSRs []certificatesv1.CertificateSigningRequest
-	for _, csr := range csrs.Items {
-		if len(csr.Status.Conditions) == 0 {
-			// CSR is Pending and awaiting approval
-			if csr.Spec.SignerName == signerName {
-				matchedCSRs = append(matchedCSRs, csr)
-			}
-		}
-	}
-	return matchedCSRs
-}

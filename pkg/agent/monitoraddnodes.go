@@ -2,6 +2,8 @@ package agent
 
 import (
 	"context"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"net"
 	"net/http"
@@ -10,6 +12,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	certificatesv1 "k8s.io/api/certificates/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -34,9 +37,13 @@ type addNodeMonitor struct {
 	status        addNodeStatusHistory
 }
 
-func newAddNodeMonitor(nodeIP string, cluster *Cluster) *addNodeMonitor {
+func newAddNodeMonitor(nodeIP string, cluster *Cluster) (*addNodeMonitor, error) {
+	parsedIPAddress := net.ParseIP(nodeIP)
+	if parsedIPAddress == nil {
+		return nil, fmt.Errorf("%s is not valid IP Address", nodeIP)
+	}
 	mon := addNodeMonitor{
-		nodeIPAddress: nodeIP,
+		nodeIPAddress: parsedIPAddress.String(),
 		cluster:       cluster,
 		status: addNodeStatusHistory{
 			RestAPISeen:            false,
@@ -47,7 +54,7 @@ func newAddNodeMonitor(nodeIP string, cluster *Cluster) *addNodeMonitor {
 			NodeIsReady:            false,
 		},
 	}
-	return &mon
+	return &mon, nil
 }
 
 func (mon *addNodeMonitor) logStatus(status string) {
@@ -57,16 +64,14 @@ func (mon *addNodeMonitor) logStatus(status string) {
 // MonitorAddNodes waits for the a node to be added to the cluster
 // and reports its status until it becomes Ready.
 func MonitorAddNodes(cluster *Cluster, nodeIPAddress string) error {
-	parsedIPAddress := net.ParseIP(nodeIPAddress)
-	if parsedIPAddress == nil {
-		return fmt.Errorf("%s is not valid IP Address", nodeIPAddress)
-	}
-
 	timeout := 90 * time.Minute
 	waitContext, cancel := context.WithTimeout(cluster.Ctx, timeout)
 	defer cancel()
 
-	mon := newAddNodeMonitor(nodeIPAddress, cluster)
+	mon, err := newAddNodeMonitor(nodeIPAddress, cluster)
+	if err != nil {
+		return err
+	}
 
 	wait.Until(func() {
 		if !mon.status.RestAPISeen &&
@@ -180,36 +185,65 @@ func (mon *addNodeMonitor) nodeHasJoinedClusterAndIsReady() (bool, bool, error) 
 }
 
 func (mon *addNodeMonitor) logCSRsPendingApproval(signerName string) {
-	// TODO? The CSRs have no IP address to identify for which
-	// node it is for, so it is possible to log CSRs pending for
-	// other nodes.
-	csrs, err := mon.cluster.API.Kube.ListCSRs()
-	if err != nil {
-		logrus.Debugf("error calling listCSRs(): %v ", err)
-	}
+	csrsPendingApproval := mon.getCSRsPendingApproval(signerName)
 
-	for _, csr := range csrs.Items {
-		if len(csr.Status.Conditions) == 0 {
-			// CSR is Pending and awaiting approval
-			if signerName != "" && signerName != csr.Spec.SignerName {
-				continue
-			}
-
-			logrus.Infof("CSR %s with signerName %s and username %s is Pending and awaiting approval",
-				csr.Name, csr.Spec.SignerName, csr.Spec.Username)
-		}
+	for _, csr := range csrsPendingApproval {
+		mon.logStatus(fmt.Sprintf("CSR %s with signerName %s and username %s is Pending and awaiting approval",
+			csr.Name, csr.Spec.SignerName, csr.Spec.Username))
 	}
 }
 
 func (mon *addNodeMonitor) clusterHasFirstCSRPending() bool {
-	return len(mon.cluster.API.Kube.getCSRsPendingApproval(firstCSRSignerName)) > 0
+	return len(mon.getCSRsPendingApproval(firstCSRSignerName)) > 0
 }
 
 func (mon *addNodeMonitor) clusterHasSecondCSRPending() bool {
-	// TODO: the csr.Spec.Username contains the node name
-	// can we use it as an additional filter to only show
-	// those matching mon.nodeIPAddress?
-	return len(mon.cluster.API.Kube.getCSRsPendingApproval(secondCSRSignerName)) > 0
+	return len(mon.getCSRsPendingApproval(secondCSRSignerName)) > 0
+}
+
+func (mon *addNodeMonitor) getCSRsPendingApproval(signerName string) []certificatesv1.CertificateSigningRequest {
+	hostnames, err := net.LookupAddr(mon.nodeIPAddress)
+	if err != nil {
+		logrus.Debugf("error looking up hostnames from IP address: %v", err)
+		return []certificatesv1.CertificateSigningRequest{}
+	}
+
+	csrs, err := mon.cluster.API.Kube.ListCSRs()
+	if err != nil {
+		logrus.Debugf("error calling listCSRs(): %v", err)
+		return []certificatesv1.CertificateSigningRequest{}
+	}
+
+	return filterCSRsMatchingHostname(signerName, csrs, hostnames)
+}
+
+func filterCSRsMatchingHostname(signerName string, csrs *certificatesv1.CertificateSigningRequestList, hostnames []string) []certificatesv1.CertificateSigningRequest {
+	matchedCSRs := []certificatesv1.CertificateSigningRequest{}
+	for _, csr := range csrs.Items {
+		if len(csr.Status.Conditions) > 0 {
+			// CSR is not Pending and not awaiting approval
+			continue
+		}
+		if signerName == firstCSRSignerName && csr.Spec.SignerName == firstCSRSignerName &&
+			containsHostname(decodedFirstCSRSubject(csr.Spec.Request), hostnames) {
+			matchedCSRs = append(matchedCSRs, csr)
+		}
+		if signerName == secondCSRSignerName && csr.Spec.SignerName == secondCSRSignerName &&
+			containsHostname(csr.Spec.Username, hostnames) {
+			matchedCSRs = append(matchedCSRs, csr)
+		}
+	}
+	return matchedCSRs
+}
+
+func containsHostname(searchString string, hostnames []string) bool {
+	for _, hostname := range hostnames {
+		parts := strings.Split(hostname, ".")
+		if strings.Contains(searchString, parts[0]) {
+			return true
+		}
+	}
+	return false
 }
 
 // isKubeletRunningOnNode checks if kubelet responds
@@ -236,4 +270,42 @@ func (mon *addNodeMonitor) isKubeletRunningOnNode() bool {
 		logrus.Debugf("kubelet http status code: %v", resp.StatusCode)
 	}
 	return false
+}
+
+// decodedFirstCSRSubject decodes the CSR.Spec.Request PEM block
+// into readable output and returns the subject as string.
+//
+// Example of decoded request:
+// Certificate Request:
+// Data:
+// Version: 1 (0x0)
+// Subject: O = system:nodes, CN = system:node:extraworker-1
+// Subject Public Key Info:
+//
+//	Public Key Algorithm: id-ecPublicKey
+//		Public-Key: (256 bit)
+//		pub:
+//			*snip*
+//		ASN1 OID: prime256v1
+//		NIST CURVE: P-256
+//
+// Attributes:
+//
+//	a0:00
+//
+// Signature Algorithm: ecdsa-with-SHA256
+//
+//	*snip*
+func decodedFirstCSRSubject(request []byte) string {
+	block, _ := pem.Decode(request)
+	if block == nil {
+		return ""
+	}
+	csrDER := block.Bytes
+	decodedRequest, err := x509.ParseCertificateRequest(csrDER)
+	if err != nil {
+		logrus.Warn("error in x509.ParseCertificateRequest(csrDER)")
+		return ""
+	}
+	return decodedRequest.Subject.String()
 }

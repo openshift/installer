@@ -120,10 +120,7 @@ func (rest *NodeZeroRestClient) IsRestAPILive() bool {
 	// GET /v2/infraenvs
 	listInfraEnvsParams := installer.NewListInfraEnvsParams()
 	_, err := rest.Client.Installer.ListInfraEnvs(rest.ctx, listInfraEnvsParams)
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 // GetRestAPIServiceBaseURL Return the url of the Agent Rest API on node zero
