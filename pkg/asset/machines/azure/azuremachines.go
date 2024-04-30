@@ -131,6 +131,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 				AdditionalCapabilities: additionalCapabilities,
 				AllocatePublicIP:       false,
 				EnableIPForwarding:     false,
+				SecurityProfile:        securityProfile,
 			},
 		}
 		azureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))
