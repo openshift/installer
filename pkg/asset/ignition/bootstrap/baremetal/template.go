@@ -59,7 +59,7 @@ type TemplateData struct {
 	Hosts []*baremetal.Host
 
 	// How many of the Hosts are control plane machines?
-	MasterHostCount int
+	ControlPlaneReplicas int64
 
 	// ProvisioningNetwork displays the type of provisioning network being used
 	ProvisioningNetwork string
@@ -98,16 +98,11 @@ func externalURLs(apiVIPs []string) (externalURLv4 string, externalURLv6 string)
 }
 
 // GetTemplateData returns platform-specific data for bootstrap templates.
-func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetworkEntry, ironicUsername, ironicPassword string) *TemplateData {
+func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetworkEntry, controlPlaneReplicaCount int64, ironicUsername, ironicPassword string) *TemplateData {
 	var templateData TemplateData
 
 	templateData.Hosts = config.Hosts
-
-	for _, host := range config.Hosts {
-		if host.IsMaster() {
-			templateData.MasterHostCount++
-		}
-	}
+	templateData.ControlPlaneReplicas = controlPlaneReplicaCount
 
 	templateData.ProvisioningIP = config.BootstrapProvisioningIP
 	templateData.ProvisioningNetwork = string(config.ProvisioningNetwork)

@@ -283,7 +283,13 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 
 	switch installConfig.Config.Platform.Name() {
 	case baremetaltypes.Name:
-		platformData.BareMetal = baremetal.GetTemplateData(installConfig.Config.Platform.BareMetal, installConfig.Config.MachineNetwork, ironicCreds.Username, ironicCreds.Password)
+		platformData.BareMetal = baremetal.GetTemplateData(
+			installConfig.Config.Platform.BareMetal,
+			installConfig.Config.MachineNetwork,
+			*installConfig.Config.ControlPlane.Replicas,
+			ironicCreds.Username,
+			ironicCreds.Password,
+		)
 	case vspheretypes.Name:
 		platformData.VSphere = vsphere.GetTemplateData(installConfig.Config.Platform.VSphere)
 	}
