@@ -517,5 +517,6 @@ if ($waitForComplete)
 
 Get-Job | Remove-Job
 
+Disconnect-VIServer -Server $vcenter -Force:$true -Confirm:$false
 
 Write-Output "Install Complete!"

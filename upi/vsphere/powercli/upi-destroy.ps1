@@ -78,3 +78,5 @@ foreach ($policy in $storagePolicies) {
 # Clean up tags
 Remove-Tag -Tag $tag -confirm:$false
 Remove-TagCategory -Category $tagCategory -confirm:$false
+
+Disconnect-VIServer -Server $vcenter -Force:$true -Confirm:$false
