@@ -29,6 +29,8 @@ $datastore = "workload_share_vcs8eworkload_lrFsW"
 $datacenter = "IBMCloud"
 $cluster = "vcs-8e-workload"
 $vcentercredpath = "secrets/vcenter-creds.xml"
+$storagepolicy = ""
+$secureboot = $false
 
 $pullsecret = @"
 {"auths":{"fake":{"auth":"aWQ6cGFzcwo="}}}
