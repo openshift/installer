@@ -3,7 +3,7 @@
 
 FROM registry.ci.openshift.org/ocp/4.16:installer-terraform-providers AS providers
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.21-openshift-4.16 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS builder
 # FIPS support is offered via the baremetal-installer image
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
@@ -13,7 +13,8 @@ COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/ terr
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 RUN go run -mod=vendor hack/build-coreos-manifest.go
 
-FROM registry.ci.openshift.org/ocp/4.16:base
+FROM registry.ci.openshift.org/ocp/4.16:base-rhel9
+
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 COPY --from=builder /go/src/github.com/openshift/installer/bin/manifests/ /manifests/
 
