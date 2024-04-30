@@ -276,8 +276,32 @@ func createIgnition(virConn *libvirt.Libvirt, config baremetalConfig, pool libvi
 
 	return nil
 }
+
+func getCapabilities(virConn *libvirt.Libvirt) (libvirtxml.Caps, error) {
+	var caps libvirtxml.Caps
+
+	capsBytes, err := virConn.Capabilities()
+	if err != nil {
+		return caps, err
+	}
+
+	err = xml.Unmarshal(capsBytes, &caps)
+	if err != nil {
+		return caps, err
+	}
+
+	return caps, nil
+}
+
 func createBootstrapDomain(virConn *libvirt.Libvirt, config baremetalConfig, pool libvirt.StoragePool, volume libvirt.StorageVol) error {
 	bootstrapDom := newDomain(fmt.Sprintf("%s-bootstrap", config.ClusterID))
+
+	capabilities, err := getCapabilities(virConn)
+	if err != nil {
+		return fmt.Errorf("failed to get libvirt capabilities: %w", err)
+	}
+
+	bootstrapDom.OS.Type.Arch = capabilities.Host.CPU.Arch
 
 	for _, bridge := range config.Bridges {
 		netIface := libvirtxml.DomainInterface{
