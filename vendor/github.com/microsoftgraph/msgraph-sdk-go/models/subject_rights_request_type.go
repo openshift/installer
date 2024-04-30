@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type SubjectRightsRequestType int
 
 const (
@@ -16,7 +16,7 @@ const (
 func (i SubjectRightsRequestType) String() string {
     return []string{"export", "delete", "access", "tagForAction", "unknownFutureValue"}[i]
 }
-func ParseSubjectRightsRequestType(v string) (interface{}, error) {
+func ParseSubjectRightsRequestType(v string) (any, error) {
     result := EXPORT_SUBJECTRIGHTSREQUESTTYPE
     switch v {
         case "export":

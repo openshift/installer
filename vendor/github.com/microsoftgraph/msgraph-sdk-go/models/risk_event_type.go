@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type RiskEventType int
 
 const (
@@ -26,7 +26,7 @@ const (
 func (i RiskEventType) String() string {
     return []string{"unlikelyTravel", "anonymizedIPAddress", "maliciousIPAddress", "unfamiliarFeatures", "malwareInfectedIPAddress", "suspiciousIPAddress", "leakedCredentials", "investigationsThreatIntelligence", "generic", "adminConfirmedUserCompromised", "mcasImpossibleTravel", "mcasSuspiciousInboxManipulationRules", "investigationsThreatIntelligenceSigninLinked", "maliciousIPAddressValidCredentialsBlockedIP", "unknownFutureValue"}[i]
 }
-func ParseRiskEventType(v string) (interface{}, error) {
+func ParseRiskEventType(v string) (any, error) {
     result := UNLIKELYTRAVEL_RISKEVENTTYPE
     switch v {
         case "unlikelyTravel":

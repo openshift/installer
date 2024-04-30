@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Possible values for welcome screen meeting information.
 type WelcomeScreenMeetingInformation int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i WelcomeScreenMeetingInformation) String() string {
     return []string{"userDefined", "showOrganizerAndTimeOnly", "showOrganizerAndTimeAndSubject"}[i]
 }
-func ParseWelcomeScreenMeetingInformation(v string) (interface{}, error) {
+func ParseWelcomeScreenMeetingInformation(v string) (any, error) {
     result := USERDEFINED_WELCOMESCREENMEETINGINFORMATION
     switch v {
         case "userDefined":

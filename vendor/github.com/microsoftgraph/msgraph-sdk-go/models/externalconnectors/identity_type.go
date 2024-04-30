@@ -2,7 +2,7 @@ package externalconnectors
 import (
     "errors"
 )
-// Provides operations to manage the collection of externalConnection entities.
+// 
 type IdentityType int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i IdentityType) String() string {
     return []string{"user", "group", "externalGroup", "unknownFutureValue"}[i]
 }
-func ParseIdentityType(v string) (interface{}, error) {
+func ParseIdentityType(v string) (any, error) {
     result := USER_IDENTITYTYPE
     switch v {
         case "user":

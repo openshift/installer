@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type SimulationAttackTechnique int
 
 const (
@@ -18,7 +18,7 @@ const (
 func (i SimulationAttackTechnique) String() string {
     return []string{"unknown", "credentialHarvesting", "attachmentMalware", "driveByUrl", "linkInAttachment", "linkToMalwareFile", "unknownFutureValue"}[i]
 }
-func ParseSimulationAttackTechnique(v string) (interface{}, error) {
+func ParseSimulationAttackTechnique(v string) (any, error) {
     result := UNKNOWN_SIMULATIONATTACKTECHNIQUE
     switch v {
         case "unknown":

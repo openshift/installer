@@ -1,28 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // ShiftAvailability 
 type ShiftAvailability struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // The OdataType property
-    odataType *string
-    // Specifies the pattern for recurrence
-    recurrence PatternedRecurrenceable
-    // The time slot(s) preferred by the user.
-    timeSlots []TimeRangeable
-    // Specifies the time zone for the indicated time.
-    timeZone *string
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewShiftAvailability instantiates a new shiftAvailability and sets the default values.
 func NewShiftAvailability()(*ShiftAvailability) {
     m := &ShiftAvailability{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateShiftAvailabilityFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -30,33 +23,113 @@ func CreateShiftAvailabilityFromDiscriminatorValue(parseNode i878a80d2330e89d268
     return NewShiftAvailability(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *ShiftAvailability) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *ShiftAvailability) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *ShiftAvailability) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *ShiftAvailability) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["recurrence"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreatePatternedRecurrenceFromDiscriminatorValue , m.SetRecurrence)
-    res["timeSlots"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateTimeRangeFromDiscriminatorValue , m.SetTimeSlots)
-    res["timeZone"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetTimeZone)
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["recurrence"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreatePatternedRecurrenceFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRecurrence(val.(PatternedRecurrenceable))
+        }
+        return nil
+    }
+    res["timeSlots"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateTimeRangeFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]TimeRangeable, len(val))
+            for i, v := range val {
+                res[i] = v.(TimeRangeable)
+            }
+            m.SetTimeSlots(res)
+        }
+        return nil
+    }
+    res["timeZone"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTimeZone(val)
+        }
+        return nil
+    }
     return res
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *ShiftAvailability) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetRecurrence gets the recurrence property value. Specifies the pattern for recurrence
 func (m *ShiftAvailability) GetRecurrence()(PatternedRecurrenceable) {
-    return m.recurrence
+    val, err := m.GetBackingStore().Get("recurrence")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(PatternedRecurrenceable)
+    }
+    return nil
 }
 // GetTimeSlots gets the timeSlots property value. The time slot(s) preferred by the user.
 func (m *ShiftAvailability) GetTimeSlots()([]TimeRangeable) {
-    return m.timeSlots
+    val, err := m.GetBackingStore().Get("timeSlots")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]TimeRangeable)
+    }
+    return nil
 }
 // GetTimeZone gets the timeZone property value. Specifies the time zone for the indicated time.
 func (m *ShiftAvailability) GetTimeZone()(*string) {
-    return m.timeZone
+    val, err := m.GetBackingStore().Get("timeZone")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *ShiftAvailability) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -73,7 +146,10 @@ func (m *ShiftAvailability) Serialize(writer i878a80d2330e89d26896388a3f487eef27
         }
     }
     if m.GetTimeSlots() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetTimeSlots())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetTimeSlots()))
+        for i, v := range m.GetTimeSlots() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err := writer.WriteCollectionOfObjectValues("timeSlots", cast)
         if err != nil {
             return err
@@ -94,22 +170,57 @@ func (m *ShiftAvailability) Serialize(writer i878a80d2330e89d26896388a3f487eef27
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *ShiftAvailability) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *ShiftAvailability) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *ShiftAvailability) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *ShiftAvailability) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRecurrence sets the recurrence property value. Specifies the pattern for recurrence
 func (m *ShiftAvailability) SetRecurrence(value PatternedRecurrenceable)() {
-    m.recurrence = value
+    err := m.GetBackingStore().Set("recurrence", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTimeSlots sets the timeSlots property value. The time slot(s) preferred by the user.
 func (m *ShiftAvailability) SetTimeSlots(value []TimeRangeable)() {
-    m.timeSlots = value
+    err := m.GetBackingStore().Set("timeSlots", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTimeZone sets the timeZone property value. Specifies the time zone for the indicated time.
 func (m *ShiftAvailability) SetTimeZone(value *string)() {
-    m.timeZone = value
+    err := m.GetBackingStore().Set("timeZone", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// ShiftAvailabilityable 
+type ShiftAvailabilityable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetOdataType()(*string)
+    GetRecurrence()(PatternedRecurrenceable)
+    GetTimeSlots()([]TimeRangeable)
+    GetTimeZone()(*string)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetOdataType(value *string)()
+    SetRecurrence(value PatternedRecurrenceable)()
+    SetTimeSlots(value []TimeRangeable)()
+    SetTimeZone(value *string)()
 }

@@ -1,15 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // SiteCollectionResponse 
 type SiteCollectionResponse struct {
     BaseCollectionPaginationCountResponse
-    // The value property
-    value []Siteable
 }
 // NewSiteCollectionResponse instantiates a new SiteCollectionResponse and sets the default values.
 func NewSiteCollectionResponse()(*SiteCollectionResponse) {
@@ -25,12 +22,32 @@ func CreateSiteCollectionResponseFromDiscriminatorValue(parseNode i878a80d2330e8
 // GetFieldDeserializers the deserialization information for the current model
 func (m *SiteCollectionResponse) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.BaseCollectionPaginationCountResponse.GetFieldDeserializers()
-    res["value"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateSiteFromDiscriminatorValue , m.SetValue)
+    res["value"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateSiteFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]Siteable, len(val))
+            for i, v := range val {
+                res[i] = v.(Siteable)
+            }
+            m.SetValue(res)
+        }
+        return nil
+    }
     return res
 }
 // GetValue gets the value property value. The value property
 func (m *SiteCollectionResponse) GetValue()([]Siteable) {
-    return m.value
+    val, err := m.GetBackingStore().Get("value")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]Siteable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *SiteCollectionResponse) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -39,7 +56,10 @@ func (m *SiteCollectionResponse) Serialize(writer i878a80d2330e89d26896388a3f487
         return err
     }
     if m.GetValue() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetValue())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetValue()))
+        for i, v := range m.GetValue() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("value", cast)
         if err != nil {
             return err
@@ -49,5 +69,15 @@ func (m *SiteCollectionResponse) Serialize(writer i878a80d2330e89d26896388a3f487
 }
 // SetValue sets the value property value. The value property
 func (m *SiteCollectionResponse) SetValue(value []Siteable)() {
-    m.value = value
+    err := m.GetBackingStore().Set("value", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SiteCollectionResponseable 
+type SiteCollectionResponseable interface {
+    BaseCollectionPaginationCountResponseable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetValue()([]Siteable)
+    SetValue(value []Siteable)()
 }

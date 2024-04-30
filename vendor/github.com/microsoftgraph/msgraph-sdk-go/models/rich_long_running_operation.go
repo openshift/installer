@@ -1,21 +1,14 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // RichLongRunningOperation 
 type RichLongRunningOperation struct {
     LongRunningOperation
-    // Error that caused the operation to fail.
-    error PublicErrorable
-    // A value between 0 and 100 that indicates the progress of the operation.
-    percentageComplete *int32
-    // The unique identifier for the result.
-    resourceId *string
     // The type of the operation.
-    type_escaped *string
+    TypeEscaped *string
 }
 // NewRichLongRunningOperation instantiates a new RichLongRunningOperation and sets the default values.
 func NewRichLongRunningOperation()(*RichLongRunningOperation) {
@@ -30,28 +23,92 @@ func CreateRichLongRunningOperationFromDiscriminatorValue(parseNode i878a80d2330
 }
 // GetError gets the error property value. Error that caused the operation to fail.
 func (m *RichLongRunningOperation) GetError()(PublicErrorable) {
-    return m.error
+    val, err := m.GetBackingStore().Get("error")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(PublicErrorable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *RichLongRunningOperation) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.LongRunningOperation.GetFieldDeserializers()
-    res["error"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreatePublicErrorFromDiscriminatorValue , m.SetError)
-    res["percentageComplete"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetPercentageComplete)
-    res["resourceId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetResourceId)
-    res["type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetType)
+    res["error"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreatePublicErrorFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetError(val.(PublicErrorable))
+        }
+        return nil
+    }
+    res["percentageComplete"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPercentageComplete(val)
+        }
+        return nil
+    }
+    res["resourceId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetResourceId(val)
+        }
+        return nil
+    }
+    res["type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetType(val)
+        }
+        return nil
+    }
     return res
 }
 // GetPercentageComplete gets the percentageComplete property value. A value between 0 and 100 that indicates the progress of the operation.
 func (m *RichLongRunningOperation) GetPercentageComplete()(*int32) {
-    return m.percentageComplete
+    val, err := m.GetBackingStore().Get("percentageComplete")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetResourceId gets the resourceId property value. The unique identifier for the result.
 func (m *RichLongRunningOperation) GetResourceId()(*string) {
-    return m.resourceId
+    val, err := m.GetBackingStore().Get("resourceId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetType gets the type property value. The type of the operation.
 func (m *RichLongRunningOperation) GetType()(*string) {
-    return m.type_escaped
+    val, err := m.GetBackingStore().Get("typeEscaped")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *RichLongRunningOperation) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -87,17 +144,42 @@ func (m *RichLongRunningOperation) Serialize(writer i878a80d2330e89d26896388a3f4
 }
 // SetError sets the error property value. Error that caused the operation to fail.
 func (m *RichLongRunningOperation) SetError(value PublicErrorable)() {
-    m.error = value
+    err := m.GetBackingStore().Set("error", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPercentageComplete sets the percentageComplete property value. A value between 0 and 100 that indicates the progress of the operation.
 func (m *RichLongRunningOperation) SetPercentageComplete(value *int32)() {
-    m.percentageComplete = value
+    err := m.GetBackingStore().Set("percentageComplete", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetResourceId sets the resourceId property value. The unique identifier for the result.
 func (m *RichLongRunningOperation) SetResourceId(value *string)() {
-    m.resourceId = value
+    err := m.GetBackingStore().Set("resourceId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetType sets the type property value. The type of the operation.
 func (m *RichLongRunningOperation) SetType(value *string)() {
-    m.type_escaped = value
+    err := m.GetBackingStore().Set("typeEscaped", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// RichLongRunningOperationable 
+type RichLongRunningOperationable interface {
+    LongRunningOperationable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetError()(PublicErrorable)
+    GetPercentageComplete()(*int32)
+    GetResourceId()(*string)
+    GetType()(*string)
+    SetError(value PublicErrorable)()
+    SetPercentageComplete(value *int32)()
+    SetResourceId(value *string)()
+    SetType(value *string)()
 }

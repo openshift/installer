@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of application entities.
+// 
 type PermissionType int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i PermissionType) String() string {
     return []string{"application", "delegated", "delegatedUserConsentable"}[i]
 }
-func ParsePermissionType(v string) (interface{}, error) {
+func ParsePermissionType(v string) (any, error) {
     result := APPLICATION_PERMISSIONTYPE
     switch v {
         case "application":

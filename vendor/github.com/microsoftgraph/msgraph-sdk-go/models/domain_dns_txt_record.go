@@ -1,15 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // DomainDnsTxtRecord 
 type DomainDnsTxtRecord struct {
     DomainDnsRecord
-    // Value used when configuring the text property at the DNS host.
-    text *string
 }
 // NewDomainDnsTxtRecord instantiates a new DomainDnsTxtRecord and sets the default values.
 func NewDomainDnsTxtRecord()(*DomainDnsTxtRecord) {
@@ -25,12 +22,28 @@ func CreateDomainDnsTxtRecordFromDiscriminatorValue(parseNode i878a80d2330e89d26
 // GetFieldDeserializers the deserialization information for the current model
 func (m *DomainDnsTxtRecord) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.DomainDnsRecord.GetFieldDeserializers()
-    res["text"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetText)
+    res["text"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetText(val)
+        }
+        return nil
+    }
     return res
 }
 // GetText gets the text property value. Value used when configuring the text property at the DNS host.
 func (m *DomainDnsTxtRecord) GetText()(*string) {
-    return m.text
+    val, err := m.GetBackingStore().Get("text")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *DomainDnsTxtRecord) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -48,5 +61,15 @@ func (m *DomainDnsTxtRecord) Serialize(writer i878a80d2330e89d26896388a3f487eef2
 }
 // SetText sets the text property value. Value used when configuring the text property at the DNS host.
 func (m *DomainDnsTxtRecord) SetText(value *string)() {
-    m.text = value
+    err := m.GetBackingStore().Set("text", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// DomainDnsTxtRecordable 
+type DomainDnsTxtRecordable interface {
+    DomainDnsRecordable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetText()(*string)
+    SetText(value *string)()
 }

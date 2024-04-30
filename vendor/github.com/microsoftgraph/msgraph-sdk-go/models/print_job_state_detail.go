@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type PrintJobStateDetail int
 
 const (
@@ -19,7 +19,7 @@ const (
 func (i PrintJobStateDetail) String() string {
     return []string{"uploadPending", "transforming", "completedSuccessfully", "completedWithWarnings", "completedWithErrors", "releaseWait", "interpreting", "unknownFutureValue"}[i]
 }
-func ParsePrintJobStateDetail(v string) (interface{}, error) {
+func ParsePrintJobStateDetail(v string) (any, error) {
     result := UPLOADPENDING_PRINTJOBSTATEDETAIL
     switch v {
         case "uploadPending":

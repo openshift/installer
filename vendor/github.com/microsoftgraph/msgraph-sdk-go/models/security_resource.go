@@ -1,26 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // SecurityResource 
 type SecurityResource struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // The OdataType property
-    odataType *string
-    // Name of the resource that is related to current alert. Required.
-    resource *string
-    // Represents type of security resources related to an alert. Possible values are: attacked, related.
-    resourceType *SecurityResourceType
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewSecurityResource instantiates a new securityResource and sets the default values.
 func NewSecurityResource()(*SecurityResource) {
     m := &SecurityResource{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateSecurityResourceFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -28,28 +23,88 @@ func CreateSecurityResourceFromDiscriminatorValue(parseNode i878a80d2330e89d2689
     return NewSecurityResource(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *SecurityResource) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *SecurityResource) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *SecurityResource) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *SecurityResource) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["resource"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetResource)
-    res["resourceType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseSecurityResourceType , m.SetResourceType)
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["resource"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetResource(val)
+        }
+        return nil
+    }
+    res["resourceType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseSecurityResourceType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetResourceType(val.(*SecurityResourceType))
+        }
+        return nil
+    }
     return res
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *SecurityResource) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetResource gets the resource property value. Name of the resource that is related to current alert. Required.
 func (m *SecurityResource) GetResource()(*string) {
-    return m.resource
+    val, err := m.GetBackingStore().Get("resource")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetResourceType gets the resourceType property value. Represents type of security resources related to an alert. Possible values are: attacked, related.
 func (m *SecurityResource) GetResourceType()(*SecurityResourceType) {
-    return m.resourceType
+    val, err := m.GetBackingStore().Get("resourceType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*SecurityResourceType)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *SecurityResource) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -81,18 +136,48 @@ func (m *SecurityResource) Serialize(writer i878a80d2330e89d26896388a3f487eef27b
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *SecurityResource) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *SecurityResource) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *SecurityResource) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *SecurityResource) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetResource sets the resource property value. Name of the resource that is related to current alert. Required.
 func (m *SecurityResource) SetResource(value *string)() {
-    m.resource = value
+    err := m.GetBackingStore().Set("resource", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetResourceType sets the resourceType property value. Represents type of security resources related to an alert. Possible values are: attacked, related.
 func (m *SecurityResource) SetResourceType(value *SecurityResourceType)() {
-    m.resourceType = value
+    err := m.GetBackingStore().Set("resourceType", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SecurityResourceable 
+type SecurityResourceable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetOdataType()(*string)
+    GetResource()(*string)
+    GetResourceType()(*SecurityResourceType)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetOdataType(value *string)()
+    SetResource(value *string)()
+    SetResourceType(value *SecurityResourceType)()
 }

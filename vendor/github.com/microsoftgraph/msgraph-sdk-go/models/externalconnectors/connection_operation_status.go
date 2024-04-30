@@ -2,7 +2,7 @@ package externalconnectors
 import (
     "errors"
 )
-// Provides operations to manage the collection of externalConnection entities.
+// 
 type ConnectionOperationStatus int
 
 const (
@@ -16,7 +16,7 @@ const (
 func (i ConnectionOperationStatus) String() string {
     return []string{"unspecified", "inprogress", "completed", "failed", "unknownFutureValue"}[i]
 }
-func ParseConnectionOperationStatus(v string) (interface{}, error) {
+func ParseConnectionOperationStatus(v string) (any, error) {
     result := UNSPECIFIED_CONNECTIONOPERATIONSTATUS
     switch v {
         case "unspecified":

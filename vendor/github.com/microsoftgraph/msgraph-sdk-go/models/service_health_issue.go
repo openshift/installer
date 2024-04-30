@@ -1,39 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // ServiceHealthIssue 
 type ServiceHealthIssue struct {
     ServiceAnnouncementBase
-    // The classification property
-    classification *ServiceHealthClassificationType
-    // The feature name of the service issue.
-    feature *string
-    // The feature group name of the service issue.
-    featureGroup *string
-    // The description of the service issue impact.
-    impactDescription *string
-    // Indicates whether the issue is resolved.
-    isResolved *bool
-    // The origin property
-    origin *ServiceHealthOrigin
-    // Collection of historical posts for the service issue.
-    posts []ServiceHealthIssuePostable
-    // Indicates the service affected by the issue.
-    service *string
-    // The status property
-    status *ServiceHealthStatus
 }
 // NewServiceHealthIssue instantiates a new ServiceHealthIssue and sets the default values.
 func NewServiceHealthIssue()(*ServiceHealthIssue) {
     m := &ServiceHealthIssue{
         ServiceAnnouncementBase: *NewServiceAnnouncementBase(),
     }
-    odataTypeValue := "#microsoft.graph.serviceHealthIssue";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.serviceHealthIssue"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateServiceHealthIssueFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -42,53 +23,201 @@ func CreateServiceHealthIssueFromDiscriminatorValue(parseNode i878a80d2330e89d26
 }
 // GetClassification gets the classification property value. The classification property
 func (m *ServiceHealthIssue) GetClassification()(*ServiceHealthClassificationType) {
-    return m.classification
+    val, err := m.GetBackingStore().Get("classification")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*ServiceHealthClassificationType)
+    }
+    return nil
 }
 // GetFeature gets the feature property value. The feature name of the service issue.
 func (m *ServiceHealthIssue) GetFeature()(*string) {
-    return m.feature
+    val, err := m.GetBackingStore().Get("feature")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFeatureGroup gets the featureGroup property value. The feature group name of the service issue.
 func (m *ServiceHealthIssue) GetFeatureGroup()(*string) {
-    return m.featureGroup
+    val, err := m.GetBackingStore().Get("featureGroup")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *ServiceHealthIssue) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.ServiceAnnouncementBase.GetFieldDeserializers()
-    res["classification"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseServiceHealthClassificationType , m.SetClassification)
-    res["feature"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetFeature)
-    res["featureGroup"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetFeatureGroup)
-    res["impactDescription"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetImpactDescription)
-    res["isResolved"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsResolved)
-    res["origin"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseServiceHealthOrigin , m.SetOrigin)
-    res["posts"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateServiceHealthIssuePostFromDiscriminatorValue , m.SetPosts)
-    res["service"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetService)
-    res["status"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseServiceHealthStatus , m.SetStatus)
+    res["classification"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseServiceHealthClassificationType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetClassification(val.(*ServiceHealthClassificationType))
+        }
+        return nil
+    }
+    res["feature"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFeature(val)
+        }
+        return nil
+    }
+    res["featureGroup"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFeatureGroup(val)
+        }
+        return nil
+    }
+    res["impactDescription"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetImpactDescription(val)
+        }
+        return nil
+    }
+    res["isResolved"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsResolved(val)
+        }
+        return nil
+    }
+    res["origin"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseServiceHealthOrigin)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOrigin(val.(*ServiceHealthOrigin))
+        }
+        return nil
+    }
+    res["posts"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateServiceHealthIssuePostFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]ServiceHealthIssuePostable, len(val))
+            for i, v := range val {
+                res[i] = v.(ServiceHealthIssuePostable)
+            }
+            m.SetPosts(res)
+        }
+        return nil
+    }
+    res["service"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetService(val)
+        }
+        return nil
+    }
+    res["status"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseServiceHealthStatus)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetStatus(val.(*ServiceHealthStatus))
+        }
+        return nil
+    }
     return res
 }
 // GetImpactDescription gets the impactDescription property value. The description of the service issue impact.
 func (m *ServiceHealthIssue) GetImpactDescription()(*string) {
-    return m.impactDescription
+    val, err := m.GetBackingStore().Get("impactDescription")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetIsResolved gets the isResolved property value. Indicates whether the issue is resolved.
 func (m *ServiceHealthIssue) GetIsResolved()(*bool) {
-    return m.isResolved
+    val, err := m.GetBackingStore().Get("isResolved")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetOrigin gets the origin property value. The origin property
 func (m *ServiceHealthIssue) GetOrigin()(*ServiceHealthOrigin) {
-    return m.origin
+    val, err := m.GetBackingStore().Get("origin")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*ServiceHealthOrigin)
+    }
+    return nil
 }
 // GetPosts gets the posts property value. Collection of historical posts for the service issue.
 func (m *ServiceHealthIssue) GetPosts()([]ServiceHealthIssuePostable) {
-    return m.posts
+    val, err := m.GetBackingStore().Get("posts")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]ServiceHealthIssuePostable)
+    }
+    return nil
 }
 // GetService gets the service property value. Indicates the service affected by the issue.
 func (m *ServiceHealthIssue) GetService()(*string) {
-    return m.service
+    val, err := m.GetBackingStore().Get("service")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetStatus gets the status property value. The status property
 func (m *ServiceHealthIssue) GetStatus()(*ServiceHealthStatus) {
-    return m.status
+    val, err := m.GetBackingStore().Get("status")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*ServiceHealthStatus)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *ServiceHealthIssue) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -135,7 +264,10 @@ func (m *ServiceHealthIssue) Serialize(writer i878a80d2330e89d26896388a3f487eef2
         }
     }
     if m.GetPosts() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetPosts())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetPosts()))
+        for i, v := range m.GetPosts() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("posts", cast)
         if err != nil {
             return err
@@ -158,37 +290,87 @@ func (m *ServiceHealthIssue) Serialize(writer i878a80d2330e89d26896388a3f487eef2
 }
 // SetClassification sets the classification property value. The classification property
 func (m *ServiceHealthIssue) SetClassification(value *ServiceHealthClassificationType)() {
-    m.classification = value
+    err := m.GetBackingStore().Set("classification", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFeature sets the feature property value. The feature name of the service issue.
 func (m *ServiceHealthIssue) SetFeature(value *string)() {
-    m.feature = value
+    err := m.GetBackingStore().Set("feature", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFeatureGroup sets the featureGroup property value. The feature group name of the service issue.
 func (m *ServiceHealthIssue) SetFeatureGroup(value *string)() {
-    m.featureGroup = value
+    err := m.GetBackingStore().Set("featureGroup", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetImpactDescription sets the impactDescription property value. The description of the service issue impact.
 func (m *ServiceHealthIssue) SetImpactDescription(value *string)() {
-    m.impactDescription = value
+    err := m.GetBackingStore().Set("impactDescription", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsResolved sets the isResolved property value. Indicates whether the issue is resolved.
 func (m *ServiceHealthIssue) SetIsResolved(value *bool)() {
-    m.isResolved = value
+    err := m.GetBackingStore().Set("isResolved", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOrigin sets the origin property value. The origin property
 func (m *ServiceHealthIssue) SetOrigin(value *ServiceHealthOrigin)() {
-    m.origin = value
+    err := m.GetBackingStore().Set("origin", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPosts sets the posts property value. Collection of historical posts for the service issue.
 func (m *ServiceHealthIssue) SetPosts(value []ServiceHealthIssuePostable)() {
-    m.posts = value
+    err := m.GetBackingStore().Set("posts", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetService sets the service property value. Indicates the service affected by the issue.
 func (m *ServiceHealthIssue) SetService(value *string)() {
-    m.service = value
+    err := m.GetBackingStore().Set("service", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetStatus sets the status property value. The status property
 func (m *ServiceHealthIssue) SetStatus(value *ServiceHealthStatus)() {
-    m.status = value
+    err := m.GetBackingStore().Set("status", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// ServiceHealthIssueable 
+type ServiceHealthIssueable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    ServiceAnnouncementBaseable
+    GetClassification()(*ServiceHealthClassificationType)
+    GetFeature()(*string)
+    GetFeatureGroup()(*string)
+    GetImpactDescription()(*string)
+    GetIsResolved()(*bool)
+    GetOrigin()(*ServiceHealthOrigin)
+    GetPosts()([]ServiceHealthIssuePostable)
+    GetService()(*string)
+    GetStatus()(*ServiceHealthStatus)
+    SetClassification(value *ServiceHealthClassificationType)()
+    SetFeature(value *string)()
+    SetFeatureGroup(value *string)()
+    SetImpactDescription(value *string)()
+    SetIsResolved(value *bool)()
+    SetOrigin(value *ServiceHealthOrigin)()
+    SetPosts(value []ServiceHealthIssuePostable)()
+    SetService(value *string)()
+    SetStatus(value *ServiceHealthStatus)()
 }

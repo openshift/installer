@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ConnectionStatus int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i ConnectionStatus) String() string {
     return []string{"unknown", "attempted", "succeeded", "blocked", "failed", "unknownFutureValue"}[i]
 }
-func ParseConnectionStatus(v string) (interface{}, error) {
+func ParseConnectionStatus(v string) (any, error) {
     result := UNKNOWN_CONNECTIONSTATUS
     switch v {
         case "unknown":

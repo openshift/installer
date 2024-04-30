@@ -2,7 +2,7 @@ package externalconnectors
 import (
     "errors"
 )
-// Provides operations to manage the collection of externalConnection entities.
+// 
 type PropertyType int
 
 const (
@@ -21,7 +21,7 @@ const (
 func (i PropertyType) String() string {
     return []string{"string", "int64", "double", "dateTime", "boolean", "stringCollection", "int64Collection", "doubleCollection", "dateTimeCollection", "unknownFutureValue"}[i]
 }
-func ParsePropertyType(v string) (interface{}, error) {
+func ParsePropertyType(v string) (any, error) {
     result := STRING_PROPERTYTYPE
     switch v {
         case "string":

@@ -4,7 +4,7 @@ import (
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// AuthenticationMethod provides operations to manage the collection of agreement entities.
+// AuthenticationMethod 
 type AuthenticationMethod struct {
     Entity
 }
@@ -63,4 +63,9 @@ func (m *AuthenticationMethod) Serialize(writer i878a80d2330e89d26896388a3f487ee
         return err
     }
     return nil
+}
+// AuthenticationMethodable 
+type AuthenticationMethodable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
 }

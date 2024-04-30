@@ -1,15 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // Windows10GeneralConfigurationCollectionResponse 
 type Windows10GeneralConfigurationCollectionResponse struct {
     BaseCollectionPaginationCountResponse
-    // The value property
-    value []Windows10GeneralConfigurationable
 }
 // NewWindows10GeneralConfigurationCollectionResponse instantiates a new Windows10GeneralConfigurationCollectionResponse and sets the default values.
 func NewWindows10GeneralConfigurationCollectionResponse()(*Windows10GeneralConfigurationCollectionResponse) {
@@ -25,12 +22,32 @@ func CreateWindows10GeneralConfigurationCollectionResponseFromDiscriminatorValue
 // GetFieldDeserializers the deserialization information for the current model
 func (m *Windows10GeneralConfigurationCollectionResponse) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.BaseCollectionPaginationCountResponse.GetFieldDeserializers()
-    res["value"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateWindows10GeneralConfigurationFromDiscriminatorValue , m.SetValue)
+    res["value"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateWindows10GeneralConfigurationFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]Windows10GeneralConfigurationable, len(val))
+            for i, v := range val {
+                res[i] = v.(Windows10GeneralConfigurationable)
+            }
+            m.SetValue(res)
+        }
+        return nil
+    }
     return res
 }
 // GetValue gets the value property value. The value property
 func (m *Windows10GeneralConfigurationCollectionResponse) GetValue()([]Windows10GeneralConfigurationable) {
-    return m.value
+    val, err := m.GetBackingStore().Get("value")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]Windows10GeneralConfigurationable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *Windows10GeneralConfigurationCollectionResponse) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -39,7 +56,10 @@ func (m *Windows10GeneralConfigurationCollectionResponse) Serialize(writer i878a
         return err
     }
     if m.GetValue() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetValue())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetValue()))
+        for i, v := range m.GetValue() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("value", cast)
         if err != nil {
             return err
@@ -49,5 +69,15 @@ func (m *Windows10GeneralConfigurationCollectionResponse) Serialize(writer i878a
 }
 // SetValue sets the value property value. The value property
 func (m *Windows10GeneralConfigurationCollectionResponse) SetValue(value []Windows10GeneralConfigurationable)() {
-    m.value = value
+    err := m.GetBackingStore().Set("value", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// Windows10GeneralConfigurationCollectionResponseable 
+type Windows10GeneralConfigurationCollectionResponseable interface {
+    BaseCollectionPaginationCountResponseable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetValue()([]Windows10GeneralConfigurationable)
+    SetValue(value []Windows10GeneralConfigurationable)()
 }

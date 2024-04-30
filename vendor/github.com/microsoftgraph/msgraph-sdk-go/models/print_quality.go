@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type PrintQuality int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i PrintQuality) String() string {
     return []string{"low", "medium", "high", "unknownFutureValue"}[i]
 }
-func ParsePrintQuality(v string) (interface{}, error) {
+func ParsePrintQuality(v string) (any, error) {
     result := LOW_PRINTQUALITY
     switch v {
         case "low":

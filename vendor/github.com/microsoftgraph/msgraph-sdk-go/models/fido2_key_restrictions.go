@@ -1,28 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // Fido2KeyRestrictions 
 type Fido2KeyRestrictions struct {
-    // A collection of Authenticator Attestation GUIDs. AADGUIDs define key types and manufacturers.
-    aaGuids []string
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // Enforcement type. Possible values are: allow, block.
-    enforcementType *Fido2RestrictionEnforcementType
-    // Determines if the configured key enforcement is enabled.
-    isEnforced *bool
-    // The OdataType property
-    odataType *string
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewFido2KeyRestrictions instantiates a new fido2KeyRestrictions and sets the default values.
 func NewFido2KeyRestrictions()(*Fido2KeyRestrictions) {
     m := &Fido2KeyRestrictions{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateFido2KeyRestrictionsFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -31,32 +24,112 @@ func CreateFido2KeyRestrictionsFromDiscriminatorValue(parseNode i878a80d2330e89d
 }
 // GetAaGuids gets the aaGuids property value. A collection of Authenticator Attestation GUIDs. AADGUIDs define key types and manufacturers.
 func (m *Fido2KeyRestrictions) GetAaGuids()([]string) {
-    return m.aaGuids
+    val, err := m.GetBackingStore().Get("aaGuids")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *Fido2KeyRestrictions) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *Fido2KeyRestrictions) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *Fido2KeyRestrictions) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetEnforcementType gets the enforcementType property value. Enforcement type. Possible values are: allow, block.
 func (m *Fido2KeyRestrictions) GetEnforcementType()(*Fido2RestrictionEnforcementType) {
-    return m.enforcementType
+    val, err := m.GetBackingStore().Get("enforcementType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*Fido2RestrictionEnforcementType)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *Fido2KeyRestrictions) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["aaGuids"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetAaGuids)
-    res["enforcementType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseFido2RestrictionEnforcementType , m.SetEnforcementType)
-    res["isEnforced"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsEnforced)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
+    res["aaGuids"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetAaGuids(res)
+        }
+        return nil
+    }
+    res["enforcementType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseFido2RestrictionEnforcementType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetEnforcementType(val.(*Fido2RestrictionEnforcementType))
+        }
+        return nil
+    }
+    res["isEnforced"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsEnforced(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
     return res
 }
 // GetIsEnforced gets the isEnforced property value. Determines if the configured key enforcement is enabled.
 func (m *Fido2KeyRestrictions) GetIsEnforced()(*bool) {
-    return m.isEnforced
+    val, err := m.GetBackingStore().Get("isEnforced")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *Fido2KeyRestrictions) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *Fido2KeyRestrictions) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -95,21 +168,56 @@ func (m *Fido2KeyRestrictions) Serialize(writer i878a80d2330e89d26896388a3f487ee
 }
 // SetAaGuids sets the aaGuids property value. A collection of Authenticator Attestation GUIDs. AADGUIDs define key types and manufacturers.
 func (m *Fido2KeyRestrictions) SetAaGuids(value []string)() {
-    m.aaGuids = value
+    err := m.GetBackingStore().Set("aaGuids", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *Fido2KeyRestrictions) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *Fido2KeyRestrictions) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *Fido2KeyRestrictions) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetEnforcementType sets the enforcementType property value. Enforcement type. Possible values are: allow, block.
 func (m *Fido2KeyRestrictions) SetEnforcementType(value *Fido2RestrictionEnforcementType)() {
-    m.enforcementType = value
+    err := m.GetBackingStore().Set("enforcementType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsEnforced sets the isEnforced property value. Determines if the configured key enforcement is enabled.
 func (m *Fido2KeyRestrictions) SetIsEnforced(value *bool)() {
-    m.isEnforced = value
+    err := m.GetBackingStore().Set("isEnforced", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *Fido2KeyRestrictions) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// Fido2KeyRestrictionsable 
+type Fido2KeyRestrictionsable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAaGuids()([]string)
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetEnforcementType()(*Fido2RestrictionEnforcementType)
+    GetIsEnforced()(*bool)
+    GetOdataType()(*string)
+    SetAaGuids(value []string)()
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetEnforcementType(value *Fido2RestrictionEnforcementType)()
+    SetIsEnforced(value *bool)()
+    SetOdataType(value *string)()
 }

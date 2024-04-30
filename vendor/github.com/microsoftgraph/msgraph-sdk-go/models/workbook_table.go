@@ -1,41 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// WorkbookTable provides operations to manage the collection of agreement entities.
+// WorkbookTable 
 type WorkbookTable struct {
     Entity
-    // Represents a collection of all the columns in the table. Read-only.
-    columns []WorkbookTableColumnable
-    // Indicates whether the first column contains special formatting.
-    highlightFirstColumn *bool
-    // Indicates whether the last column contains special formatting.
-    highlightLastColumn *bool
-    // Legacy Id used in older Excle clients. The value of the identifier remains the same even when the table is renamed. This property should be interpreted as an opaque string value and should not be parsed to any other type. Read-only.
-    legacyId *string
-    // Name of the table.
-    name *string
-    // Represents a collection of all the rows in the table. Read-only.
-    rows []WorkbookTableRowable
-    // Indicates whether the columns show banded formatting in which odd columns are highlighted differently from even ones to make reading the table easier.
-    showBandedColumns *bool
-    // Indicates whether the rows show banded formatting in which odd rows are highlighted differently from even ones to make reading the table easier.
-    showBandedRows *bool
-    // Indicates whether the filter buttons are visible at the top of each column header. Setting this is only allowed if the table contains a header row.
-    showFilterButton *bool
-    // Indicates whether the header row is visible or not. This value can be set to show or remove the header row.
-    showHeaders *bool
-    // Indicates whether the total row is visible or not. This value can be set to show or remove the total row.
-    showTotals *bool
-    // Represents the sorting for the table. Read-only.
-    sort WorkbookTableSortable
-    // Constant value that represents the Table style. The possible values are: TableStyleLight1 thru TableStyleLight21, TableStyleMedium1 thru TableStyleMedium28, TableStyleStyleDark1 thru TableStyleStyleDark11. A custom user-defined style present in the workbook can also be specified.
-    style *string
-    // The worksheet containing the current table. Read-only.
-    worksheet WorkbookWorksheetable
 }
 // NewWorkbookTable instantiates a new workbookTable and sets the default values.
 func NewWorkbookTable()(*WorkbookTable) {
@@ -50,78 +21,310 @@ func CreateWorkbookTableFromDiscriminatorValue(parseNode i878a80d2330e89d2689638
 }
 // GetColumns gets the columns property value. Represents a collection of all the columns in the table. Read-only.
 func (m *WorkbookTable) GetColumns()([]WorkbookTableColumnable) {
-    return m.columns
+    val, err := m.GetBackingStore().Get("columns")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]WorkbookTableColumnable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *WorkbookTable) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["columns"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateWorkbookTableColumnFromDiscriminatorValue , m.SetColumns)
-    res["highlightFirstColumn"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetHighlightFirstColumn)
-    res["highlightLastColumn"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetHighlightLastColumn)
-    res["legacyId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetLegacyId)
-    res["name"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetName)
-    res["rows"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateWorkbookTableRowFromDiscriminatorValue , m.SetRows)
-    res["showBandedColumns"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetShowBandedColumns)
-    res["showBandedRows"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetShowBandedRows)
-    res["showFilterButton"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetShowFilterButton)
-    res["showHeaders"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetShowHeaders)
-    res["showTotals"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetShowTotals)
-    res["sort"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateWorkbookTableSortFromDiscriminatorValue , m.SetSort)
-    res["style"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetStyle)
-    res["worksheet"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateWorkbookWorksheetFromDiscriminatorValue , m.SetWorksheet)
+    res["columns"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateWorkbookTableColumnFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]WorkbookTableColumnable, len(val))
+            for i, v := range val {
+                res[i] = v.(WorkbookTableColumnable)
+            }
+            m.SetColumns(res)
+        }
+        return nil
+    }
+    res["highlightFirstColumn"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetHighlightFirstColumn(val)
+        }
+        return nil
+    }
+    res["highlightLastColumn"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetHighlightLastColumn(val)
+        }
+        return nil
+    }
+    res["legacyId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLegacyId(val)
+        }
+        return nil
+    }
+    res["name"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetName(val)
+        }
+        return nil
+    }
+    res["rows"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateWorkbookTableRowFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]WorkbookTableRowable, len(val))
+            for i, v := range val {
+                res[i] = v.(WorkbookTableRowable)
+            }
+            m.SetRows(res)
+        }
+        return nil
+    }
+    res["showBandedColumns"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetShowBandedColumns(val)
+        }
+        return nil
+    }
+    res["showBandedRows"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetShowBandedRows(val)
+        }
+        return nil
+    }
+    res["showFilterButton"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetShowFilterButton(val)
+        }
+        return nil
+    }
+    res["showHeaders"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetShowHeaders(val)
+        }
+        return nil
+    }
+    res["showTotals"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetShowTotals(val)
+        }
+        return nil
+    }
+    res["sort"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateWorkbookTableSortFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSort(val.(WorkbookTableSortable))
+        }
+        return nil
+    }
+    res["style"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetStyle(val)
+        }
+        return nil
+    }
+    res["worksheet"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateWorkbookWorksheetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWorksheet(val.(WorkbookWorksheetable))
+        }
+        return nil
+    }
     return res
 }
 // GetHighlightFirstColumn gets the highlightFirstColumn property value. Indicates whether the first column contains special formatting.
 func (m *WorkbookTable) GetHighlightFirstColumn()(*bool) {
-    return m.highlightFirstColumn
+    val, err := m.GetBackingStore().Get("highlightFirstColumn")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetHighlightLastColumn gets the highlightLastColumn property value. Indicates whether the last column contains special formatting.
 func (m *WorkbookTable) GetHighlightLastColumn()(*bool) {
-    return m.highlightLastColumn
+    val, err := m.GetBackingStore().Get("highlightLastColumn")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetLegacyId gets the legacyId property value. Legacy Id used in older Excle clients. The value of the identifier remains the same even when the table is renamed. This property should be interpreted as an opaque string value and should not be parsed to any other type. Read-only.
 func (m *WorkbookTable) GetLegacyId()(*string) {
-    return m.legacyId
+    val, err := m.GetBackingStore().Get("legacyId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetName gets the name property value. Name of the table.
 func (m *WorkbookTable) GetName()(*string) {
-    return m.name
+    val, err := m.GetBackingStore().Get("name")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetRows gets the rows property value. Represents a collection of all the rows in the table. Read-only.
 func (m *WorkbookTable) GetRows()([]WorkbookTableRowable) {
-    return m.rows
+    val, err := m.GetBackingStore().Get("rows")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]WorkbookTableRowable)
+    }
+    return nil
 }
 // GetShowBandedColumns gets the showBandedColumns property value. Indicates whether the columns show banded formatting in which odd columns are highlighted differently from even ones to make reading the table easier.
 func (m *WorkbookTable) GetShowBandedColumns()(*bool) {
-    return m.showBandedColumns
+    val, err := m.GetBackingStore().Get("showBandedColumns")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetShowBandedRows gets the showBandedRows property value. Indicates whether the rows show banded formatting in which odd rows are highlighted differently from even ones to make reading the table easier.
 func (m *WorkbookTable) GetShowBandedRows()(*bool) {
-    return m.showBandedRows
+    val, err := m.GetBackingStore().Get("showBandedRows")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetShowFilterButton gets the showFilterButton property value. Indicates whether the filter buttons are visible at the top of each column header. Setting this is only allowed if the table contains a header row.
 func (m *WorkbookTable) GetShowFilterButton()(*bool) {
-    return m.showFilterButton
+    val, err := m.GetBackingStore().Get("showFilterButton")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetShowHeaders gets the showHeaders property value. Indicates whether the header row is visible or not. This value can be set to show or remove the header row.
 func (m *WorkbookTable) GetShowHeaders()(*bool) {
-    return m.showHeaders
+    val, err := m.GetBackingStore().Get("showHeaders")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetShowTotals gets the showTotals property value. Indicates whether the total row is visible or not. This value can be set to show or remove the total row.
 func (m *WorkbookTable) GetShowTotals()(*bool) {
-    return m.showTotals
+    val, err := m.GetBackingStore().Get("showTotals")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetSort gets the sort property value. Represents the sorting for the table. Read-only.
 func (m *WorkbookTable) GetSort()(WorkbookTableSortable) {
-    return m.sort
+    val, err := m.GetBackingStore().Get("sort")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(WorkbookTableSortable)
+    }
+    return nil
 }
 // GetStyle gets the style property value. Constant value that represents the Table style. The possible values are: TableStyleLight1 thru TableStyleLight21, TableStyleMedium1 thru TableStyleMedium28, TableStyleStyleDark1 thru TableStyleStyleDark11. A custom user-defined style present in the workbook can also be specified.
 func (m *WorkbookTable) GetStyle()(*string) {
-    return m.style
+    val, err := m.GetBackingStore().Get("style")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetWorksheet gets the worksheet property value. The worksheet containing the current table. Read-only.
 func (m *WorkbookTable) GetWorksheet()(WorkbookWorksheetable) {
-    return m.worksheet
+    val, err := m.GetBackingStore().Get("worksheet")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(WorkbookWorksheetable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *WorkbookTable) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -130,7 +333,10 @@ func (m *WorkbookTable) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0
         return err
     }
     if m.GetColumns() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetColumns())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetColumns()))
+        for i, v := range m.GetColumns() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("columns", cast)
         if err != nil {
             return err
@@ -161,7 +367,10 @@ func (m *WorkbookTable) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0
         }
     }
     if m.GetRows() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetRows())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetRows()))
+        for i, v := range m.GetRows() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("rows", cast)
         if err != nil {
             return err
@@ -219,57 +428,132 @@ func (m *WorkbookTable) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0
 }
 // SetColumns sets the columns property value. Represents a collection of all the columns in the table. Read-only.
 func (m *WorkbookTable) SetColumns(value []WorkbookTableColumnable)() {
-    m.columns = value
+    err := m.GetBackingStore().Set("columns", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetHighlightFirstColumn sets the highlightFirstColumn property value. Indicates whether the first column contains special formatting.
 func (m *WorkbookTable) SetHighlightFirstColumn(value *bool)() {
-    m.highlightFirstColumn = value
+    err := m.GetBackingStore().Set("highlightFirstColumn", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetHighlightLastColumn sets the highlightLastColumn property value. Indicates whether the last column contains special formatting.
 func (m *WorkbookTable) SetHighlightLastColumn(value *bool)() {
-    m.highlightLastColumn = value
+    err := m.GetBackingStore().Set("highlightLastColumn", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLegacyId sets the legacyId property value. Legacy Id used in older Excle clients. The value of the identifier remains the same even when the table is renamed. This property should be interpreted as an opaque string value and should not be parsed to any other type. Read-only.
 func (m *WorkbookTable) SetLegacyId(value *string)() {
-    m.legacyId = value
+    err := m.GetBackingStore().Set("legacyId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetName sets the name property value. Name of the table.
 func (m *WorkbookTable) SetName(value *string)() {
-    m.name = value
+    err := m.GetBackingStore().Set("name", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRows sets the rows property value. Represents a collection of all the rows in the table. Read-only.
 func (m *WorkbookTable) SetRows(value []WorkbookTableRowable)() {
-    m.rows = value
+    err := m.GetBackingStore().Set("rows", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetShowBandedColumns sets the showBandedColumns property value. Indicates whether the columns show banded formatting in which odd columns are highlighted differently from even ones to make reading the table easier.
 func (m *WorkbookTable) SetShowBandedColumns(value *bool)() {
-    m.showBandedColumns = value
+    err := m.GetBackingStore().Set("showBandedColumns", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetShowBandedRows sets the showBandedRows property value. Indicates whether the rows show banded formatting in which odd rows are highlighted differently from even ones to make reading the table easier.
 func (m *WorkbookTable) SetShowBandedRows(value *bool)() {
-    m.showBandedRows = value
+    err := m.GetBackingStore().Set("showBandedRows", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetShowFilterButton sets the showFilterButton property value. Indicates whether the filter buttons are visible at the top of each column header. Setting this is only allowed if the table contains a header row.
 func (m *WorkbookTable) SetShowFilterButton(value *bool)() {
-    m.showFilterButton = value
+    err := m.GetBackingStore().Set("showFilterButton", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetShowHeaders sets the showHeaders property value. Indicates whether the header row is visible or not. This value can be set to show or remove the header row.
 func (m *WorkbookTable) SetShowHeaders(value *bool)() {
-    m.showHeaders = value
+    err := m.GetBackingStore().Set("showHeaders", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetShowTotals sets the showTotals property value. Indicates whether the total row is visible or not. This value can be set to show or remove the total row.
 func (m *WorkbookTable) SetShowTotals(value *bool)() {
-    m.showTotals = value
+    err := m.GetBackingStore().Set("showTotals", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSort sets the sort property value. Represents the sorting for the table. Read-only.
 func (m *WorkbookTable) SetSort(value WorkbookTableSortable)() {
-    m.sort = value
+    err := m.GetBackingStore().Set("sort", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetStyle sets the style property value. Constant value that represents the Table style. The possible values are: TableStyleLight1 thru TableStyleLight21, TableStyleMedium1 thru TableStyleMedium28, TableStyleStyleDark1 thru TableStyleStyleDark11. A custom user-defined style present in the workbook can also be specified.
 func (m *WorkbookTable) SetStyle(value *string)() {
-    m.style = value
+    err := m.GetBackingStore().Set("style", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWorksheet sets the worksheet property value. The worksheet containing the current table. Read-only.
 func (m *WorkbookTable) SetWorksheet(value WorkbookWorksheetable)() {
-    m.worksheet = value
+    err := m.GetBackingStore().Set("worksheet", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// WorkbookTableable 
+type WorkbookTableable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetColumns()([]WorkbookTableColumnable)
+    GetHighlightFirstColumn()(*bool)
+    GetHighlightLastColumn()(*bool)
+    GetLegacyId()(*string)
+    GetName()(*string)
+    GetRows()([]WorkbookTableRowable)
+    GetShowBandedColumns()(*bool)
+    GetShowBandedRows()(*bool)
+    GetShowFilterButton()(*bool)
+    GetShowHeaders()(*bool)
+    GetShowTotals()(*bool)
+    GetSort()(WorkbookTableSortable)
+    GetStyle()(*string)
+    GetWorksheet()(WorkbookWorksheetable)
+    SetColumns(value []WorkbookTableColumnable)()
+    SetHighlightFirstColumn(value *bool)()
+    SetHighlightLastColumn(value *bool)()
+    SetLegacyId(value *string)()
+    SetName(value *string)()
+    SetRows(value []WorkbookTableRowable)()
+    SetShowBandedColumns(value *bool)()
+    SetShowBandedRows(value *bool)()
+    SetShowFilterButton(value *bool)()
+    SetShowHeaders(value *bool)()
+    SetShowTotals(value *bool)()
+    SetSort(value WorkbookTableSortable)()
+    SetStyle(value *string)()
+    SetWorksheet(value WorkbookWorksheetable)()
 }

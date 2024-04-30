@@ -1,19 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// PrintDocument provides operations to manage the collection of agreement entities.
+// PrintDocument 
 type PrintDocument struct {
     Entity
-    // The document's content (MIME) type. Read-only.
-    contentType *string
-    // The document's name. Read-only.
-    displayName *string
-    // The document's size in bytes. Read-only.
-    size *int64
 }
 // NewPrintDocument instantiates a new printDocument and sets the default values.
 func NewPrintDocument()(*PrintDocument) {
@@ -28,23 +21,71 @@ func CreatePrintDocumentFromDiscriminatorValue(parseNode i878a80d2330e89d2689638
 }
 // GetContentType gets the contentType property value. The document's content (MIME) type. Read-only.
 func (m *PrintDocument) GetContentType()(*string) {
-    return m.contentType
+    val, err := m.GetBackingStore().Get("contentType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDisplayName gets the displayName property value. The document's name. Read-only.
 func (m *PrintDocument) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *PrintDocument) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["contentType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetContentType)
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["size"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt64Value(m.SetSize)
+    res["contentType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetContentType(val)
+        }
+        return nil
+    }
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["size"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSize(val)
+        }
+        return nil
+    }
     return res
 }
 // GetSize gets the size property value. The document's size in bytes. Read-only.
 func (m *PrintDocument) GetSize()(*int64) {
-    return m.size
+    val, err := m.GetBackingStore().Get("size")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int64)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *PrintDocument) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -74,13 +115,33 @@ func (m *PrintDocument) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0
 }
 // SetContentType sets the contentType property value. The document's content (MIME) type. Read-only.
 func (m *PrintDocument) SetContentType(value *string)() {
-    m.contentType = value
+    err := m.GetBackingStore().Set("contentType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDisplayName sets the displayName property value. The document's name. Read-only.
 func (m *PrintDocument) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSize sets the size property value. The document's size in bytes. Read-only.
 func (m *PrintDocument) SetSize(value *int64)() {
-    m.size = value
+    err := m.GetBackingStore().Set("size", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// PrintDocumentable 
+type PrintDocumentable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetContentType()(*string)
+    GetDisplayName()(*string)
+    GetSize()(*int64)
+    SetContentType(value *string)()
+    SetDisplayName(value *string)()
+    SetSize(value *int64)()
 }

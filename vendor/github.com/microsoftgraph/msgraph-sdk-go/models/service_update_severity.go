@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the admin singleton.
+// 
 type ServiceUpdateSeverity int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i ServiceUpdateSeverity) String() string {
     return []string{"normal", "high", "critical", "unknownFutureValue"}[i]
 }
-func ParseServiceUpdateSeverity(v string) (interface{}, error) {
+func ParseServiceUpdateSeverity(v string) (any, error) {
     result := NORMAL_SERVICEUPDATESEVERITY
     switch v {
         case "normal":

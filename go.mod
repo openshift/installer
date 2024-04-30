@@ -23,7 +23,7 @@ require (
 	github.com/IBM/networking-go-sdk v0.42.2
 	github.com/IBM/platform-services-go-sdk v0.52.1
 	github.com/IBM/vpc-go-sdk v0.42.0
-	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1264
+	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1323
 	github.com/aliyun/aliyun-oss-go-sdk v2.1.8+incompatible
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
@@ -55,8 +55,8 @@ require (
 	github.com/libvirt/libvirt-go v5.10.0+incompatible
 	github.com/metal3-io/baremetal-operator/apis v0.4.0
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.4.0
-	github.com/microsoft/kiota-authentication-azure-go v0.5.0
-	github.com/microsoftgraph/msgraph-sdk-go v0.47.0
+	github.com/microsoft/kiota-authentication-azure-go v0.6.0
+	github.com/microsoftgraph/msgraph-sdk-go v0.59.0
 	github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64
 	github.com/onsi/gomega v1.28.1
 	github.com/openshift/api v0.0.0-20240105144543-e4433f750375
@@ -65,12 +65,12 @@ require (
 	github.com/openshift/assisted-service/client v0.0.0
 	github.com/openshift/assisted-service/models v0.0.0
 	github.com/openshift/client-go v0.0.0-20230503144108-75015d2347cb
-	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
+	github.com/openshift/cloud-credential-operator v0.0.0-20240422222427-55199c9b5870
 	github.com/openshift/cluster-api-provider-baremetal v0.0.0-20220408122422-7a548effc26e
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20230308152226-83c0473d4429
 	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20220323121149-e3f2850dd519
 	github.com/openshift/hive/apis v0.0.0-20220222213051-def9088fdb5a
-	github.com/openshift/library-go v0.0.0-20230508110756-9b7abe2c9cbf
+	github.com/openshift/library-go v0.0.0-20230620084201-504ca4bd5a83
 	github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20231207164151-6b0b8ea7b16d
 	github.com/openshift/machine-config-operator v0.0.0
 	github.com/ovirt/go-ovirt v0.0.0-20210809163552-d4276e35d3db
@@ -140,7 +140,7 @@ require (
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
-	github.com/cjlapao/common-go v0.0.29 // indirect
+	github.com/cjlapao/common-go v0.0.39 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/coreos/vcontext v0.0.0-20230201181013-d72178a18687 // indirect
@@ -195,11 +195,12 @@ require (
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
-	github.com/microsoft/kiota-abstractions-go v0.14.0 // indirect
-	github.com/microsoft/kiota-http-go v0.9.0 // indirect
-	github.com/microsoft/kiota-serialization-json-go v0.7.2 // indirect
-	github.com/microsoft/kiota-serialization-text-go v0.6.0 // indirect
-	github.com/microsoftgraph/msgraph-sdk-go-core v0.30.1 // indirect
+	github.com/microsoft/kiota-abstractions-go v0.18.0 // indirect
+	github.com/microsoft/kiota-http-go v0.16.0 // indirect
+	github.com/microsoft/kiota-serialization-form-go v0.9.0 // indirect
+	github.com/microsoft/kiota-serialization-json-go v0.9.0 // indirect
+	github.com/microsoft/kiota-serialization-text-go v0.7.0 // indirect
+	github.com/microsoftgraph/msgraph-sdk-go-core v0.34.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -238,7 +239,7 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230803162519-f966b187b2e5 // indirect
-	google.golang.org/protobuf v1.31.0 // indirect
+	google.golang.org/protobuf v1.32.0 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

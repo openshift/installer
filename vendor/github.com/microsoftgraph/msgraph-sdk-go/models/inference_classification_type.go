@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type InferenceClassificationType int
 
 const (
@@ -13,7 +13,7 @@ const (
 func (i InferenceClassificationType) String() string {
     return []string{"focused", "other"}[i]
 }
-func ParseInferenceClassificationType(v string) (interface{}, error) {
+func ParseInferenceClassificationType(v string) (any, error) {
     result := FOCUSED_INFERENCECLASSIFICATIONTYPE
     switch v {
         case "focused":

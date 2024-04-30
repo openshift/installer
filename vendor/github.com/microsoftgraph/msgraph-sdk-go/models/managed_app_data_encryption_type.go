@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Represents the level to which app data is encrypted for managed apps
 type ManagedAppDataEncryptionType int
 
 const (
@@ -19,7 +19,7 @@ const (
 func (i ManagedAppDataEncryptionType) String() string {
     return []string{"useDeviceSettings", "afterDeviceRestart", "whenDeviceLockedExceptOpenFiles", "whenDeviceLocked"}[i]
 }
-func ParseManagedAppDataEncryptionType(v string) (interface{}, error) {
+func ParseManagedAppDataEncryptionType(v string) (any, error) {
     result := USEDEVICESETTINGS_MANAGEDAPPDATAENCRYPTIONTYPE
     switch v {
         case "useDeviceSettings":

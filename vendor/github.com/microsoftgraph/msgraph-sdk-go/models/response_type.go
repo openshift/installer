@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ResponseType int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i ResponseType) String() string {
     return []string{"none", "organizer", "tentativelyAccepted", "accepted", "declined", "notResponded"}[i]
 }
-func ParseResponseType(v string) (interface{}, error) {
+func ParseResponseType(v string) (any, error) {
     result := NONE_RESPONSETYPE
     switch v {
         case "none":

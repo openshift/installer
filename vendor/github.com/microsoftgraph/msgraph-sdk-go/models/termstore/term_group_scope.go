@@ -2,7 +2,7 @@ package termstore
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type TermGroupScope int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i TermGroupScope) String() string {
     return []string{"global", "system", "siteCollection", "unknownFutureValue"}[i]
 }
-func ParseTermGroupScope(v string) (interface{}, error) {
+func ParseTermGroupScope(v string) (any, error) {
     result := GLOBAL_TERMGROUPSCOPE
     switch v {
         case "global":

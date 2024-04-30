@@ -2,39 +2,12 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// AgreementAcceptance provides operations to manage the collection of agreementAcceptance entities.
+// AgreementAcceptance 
 type AgreementAcceptance struct {
     Entity
-    // The identifier of the agreement file accepted by the user.
-    agreementFileId *string
-    // The identifier of the agreement.
-    agreementId *string
-    // The display name of the device used for accepting the agreement.
-    deviceDisplayName *string
-    // The unique identifier of the device used for accepting the agreement. Supports $filter (eq) and eq for null values.
-    deviceId *string
-    // The operating system used to accept the agreement.
-    deviceOSType *string
-    // The operating system version of the device used to accept the agreement.
-    deviceOSVersion *string
-    // The expiration date time of the acceptance. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z. Supports $filter (eq, ge, le) and eq for null values.
-    expirationDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
-    recordedDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // The state of the agreement acceptance. Possible values are: accepted, declined. Supports $filter (eq).
-    state *AgreementAcceptanceState
-    // Display name of the user when the acceptance was recorded.
-    userDisplayName *string
-    // Email of the user when the acceptance was recorded.
-    userEmail *string
-    // The identifier of the user who accepted the agreement. Supports $filter (eq).
-    userId *string
-    // UPN of the user when the acceptance was recorded.
-    userPrincipalName *string
 }
 // NewAgreementAcceptance instantiates a new agreementAcceptance and sets the default values.
 func NewAgreementAcceptance()(*AgreementAcceptance) {
@@ -49,73 +22,281 @@ func CreateAgreementAcceptanceFromDiscriminatorValue(parseNode i878a80d2330e89d2
 }
 // GetAgreementFileId gets the agreementFileId property value. The identifier of the agreement file accepted by the user.
 func (m *AgreementAcceptance) GetAgreementFileId()(*string) {
-    return m.agreementFileId
+    val, err := m.GetBackingStore().Get("agreementFileId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetAgreementId gets the agreementId property value. The identifier of the agreement.
 func (m *AgreementAcceptance) GetAgreementId()(*string) {
-    return m.agreementId
+    val, err := m.GetBackingStore().Get("agreementId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDeviceDisplayName gets the deviceDisplayName property value. The display name of the device used for accepting the agreement.
 func (m *AgreementAcceptance) GetDeviceDisplayName()(*string) {
-    return m.deviceDisplayName
+    val, err := m.GetBackingStore().Get("deviceDisplayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDeviceId gets the deviceId property value. The unique identifier of the device used for accepting the agreement. Supports $filter (eq) and eq for null values.
 func (m *AgreementAcceptance) GetDeviceId()(*string) {
-    return m.deviceId
+    val, err := m.GetBackingStore().Get("deviceId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDeviceOSType gets the deviceOSType property value. The operating system used to accept the agreement.
 func (m *AgreementAcceptance) GetDeviceOSType()(*string) {
-    return m.deviceOSType
+    val, err := m.GetBackingStore().Get("deviceOSType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDeviceOSVersion gets the deviceOSVersion property value. The operating system version of the device used to accept the agreement.
 func (m *AgreementAcceptance) GetDeviceOSVersion()(*string) {
-    return m.deviceOSVersion
+    val, err := m.GetBackingStore().Get("deviceOSVersion")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetExpirationDateTime gets the expirationDateTime property value. The expiration date time of the acceptance. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z. Supports $filter (eq, ge, le) and eq for null values.
 func (m *AgreementAcceptance) GetExpirationDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.expirationDateTime
+    val, err := m.GetBackingStore().Get("expirationDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *AgreementAcceptance) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["agreementFileId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetAgreementFileId)
-    res["agreementId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetAgreementId)
-    res["deviceDisplayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDeviceDisplayName)
-    res["deviceId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDeviceId)
-    res["deviceOSType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDeviceOSType)
-    res["deviceOSVersion"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDeviceOSVersion)
-    res["expirationDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetExpirationDateTime)
-    res["recordedDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetRecordedDateTime)
-    res["state"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseAgreementAcceptanceState , m.SetState)
-    res["userDisplayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetUserDisplayName)
-    res["userEmail"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetUserEmail)
-    res["userId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetUserId)
-    res["userPrincipalName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetUserPrincipalName)
+    res["agreementFileId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAgreementFileId(val)
+        }
+        return nil
+    }
+    res["agreementId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAgreementId(val)
+        }
+        return nil
+    }
+    res["deviceDisplayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeviceDisplayName(val)
+        }
+        return nil
+    }
+    res["deviceId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeviceId(val)
+        }
+        return nil
+    }
+    res["deviceOSType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeviceOSType(val)
+        }
+        return nil
+    }
+    res["deviceOSVersion"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeviceOSVersion(val)
+        }
+        return nil
+    }
+    res["expirationDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetExpirationDateTime(val)
+        }
+        return nil
+    }
+    res["recordedDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRecordedDateTime(val)
+        }
+        return nil
+    }
+    res["state"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseAgreementAcceptanceState)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetState(val.(*AgreementAcceptanceState))
+        }
+        return nil
+    }
+    res["userDisplayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUserDisplayName(val)
+        }
+        return nil
+    }
+    res["userEmail"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUserEmail(val)
+        }
+        return nil
+    }
+    res["userId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUserId(val)
+        }
+        return nil
+    }
+    res["userPrincipalName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUserPrincipalName(val)
+        }
+        return nil
+    }
     return res
 }
 // GetRecordedDateTime gets the recordedDateTime property value. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
 func (m *AgreementAcceptance) GetRecordedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.recordedDateTime
+    val, err := m.GetBackingStore().Get("recordedDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetState gets the state property value. The state of the agreement acceptance. Possible values are: accepted, declined. Supports $filter (eq).
 func (m *AgreementAcceptance) GetState()(*AgreementAcceptanceState) {
-    return m.state
+    val, err := m.GetBackingStore().Get("state")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*AgreementAcceptanceState)
+    }
+    return nil
 }
 // GetUserDisplayName gets the userDisplayName property value. Display name of the user when the acceptance was recorded.
 func (m *AgreementAcceptance) GetUserDisplayName()(*string) {
-    return m.userDisplayName
+    val, err := m.GetBackingStore().Get("userDisplayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetUserEmail gets the userEmail property value. Email of the user when the acceptance was recorded.
 func (m *AgreementAcceptance) GetUserEmail()(*string) {
-    return m.userEmail
+    val, err := m.GetBackingStore().Get("userEmail")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetUserId gets the userId property value. The identifier of the user who accepted the agreement. Supports $filter (eq).
 func (m *AgreementAcceptance) GetUserId()(*string) {
-    return m.userId
+    val, err := m.GetBackingStore().Get("userId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetUserPrincipalName gets the userPrincipalName property value. UPN of the user when the acceptance was recorded.
 func (m *AgreementAcceptance) GetUserPrincipalName()(*string) {
-    return m.userPrincipalName
+    val, err := m.GetBackingStore().Get("userPrincipalName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *AgreementAcceptance) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -206,53 +387,123 @@ func (m *AgreementAcceptance) Serialize(writer i878a80d2330e89d26896388a3f487eef
 }
 // SetAgreementFileId sets the agreementFileId property value. The identifier of the agreement file accepted by the user.
 func (m *AgreementAcceptance) SetAgreementFileId(value *string)() {
-    m.agreementFileId = value
+    err := m.GetBackingStore().Set("agreementFileId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAgreementId sets the agreementId property value. The identifier of the agreement.
 func (m *AgreementAcceptance) SetAgreementId(value *string)() {
-    m.agreementId = value
+    err := m.GetBackingStore().Set("agreementId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeviceDisplayName sets the deviceDisplayName property value. The display name of the device used for accepting the agreement.
 func (m *AgreementAcceptance) SetDeviceDisplayName(value *string)() {
-    m.deviceDisplayName = value
+    err := m.GetBackingStore().Set("deviceDisplayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeviceId sets the deviceId property value. The unique identifier of the device used for accepting the agreement. Supports $filter (eq) and eq for null values.
 func (m *AgreementAcceptance) SetDeviceId(value *string)() {
-    m.deviceId = value
+    err := m.GetBackingStore().Set("deviceId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeviceOSType sets the deviceOSType property value. The operating system used to accept the agreement.
 func (m *AgreementAcceptance) SetDeviceOSType(value *string)() {
-    m.deviceOSType = value
+    err := m.GetBackingStore().Set("deviceOSType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeviceOSVersion sets the deviceOSVersion property value. The operating system version of the device used to accept the agreement.
 func (m *AgreementAcceptance) SetDeviceOSVersion(value *string)() {
-    m.deviceOSVersion = value
+    err := m.GetBackingStore().Set("deviceOSVersion", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetExpirationDateTime sets the expirationDateTime property value. The expiration date time of the acceptance. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z. Supports $filter (eq, ge, le) and eq for null values.
 func (m *AgreementAcceptance) SetExpirationDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.expirationDateTime = value
+    err := m.GetBackingStore().Set("expirationDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRecordedDateTime sets the recordedDateTime property value. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
 func (m *AgreementAcceptance) SetRecordedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.recordedDateTime = value
+    err := m.GetBackingStore().Set("recordedDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetState sets the state property value. The state of the agreement acceptance. Possible values are: accepted, declined. Supports $filter (eq).
 func (m *AgreementAcceptance) SetState(value *AgreementAcceptanceState)() {
-    m.state = value
+    err := m.GetBackingStore().Set("state", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUserDisplayName sets the userDisplayName property value. Display name of the user when the acceptance was recorded.
 func (m *AgreementAcceptance) SetUserDisplayName(value *string)() {
-    m.userDisplayName = value
+    err := m.GetBackingStore().Set("userDisplayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUserEmail sets the userEmail property value. Email of the user when the acceptance was recorded.
 func (m *AgreementAcceptance) SetUserEmail(value *string)() {
-    m.userEmail = value
+    err := m.GetBackingStore().Set("userEmail", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUserId sets the userId property value. The identifier of the user who accepted the agreement. Supports $filter (eq).
 func (m *AgreementAcceptance) SetUserId(value *string)() {
-    m.userId = value
+    err := m.GetBackingStore().Set("userId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUserPrincipalName sets the userPrincipalName property value. UPN of the user when the acceptance was recorded.
 func (m *AgreementAcceptance) SetUserPrincipalName(value *string)() {
-    m.userPrincipalName = value
+    err := m.GetBackingStore().Set("userPrincipalName", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// AgreementAcceptanceable 
+type AgreementAcceptanceable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAgreementFileId()(*string)
+    GetAgreementId()(*string)
+    GetDeviceDisplayName()(*string)
+    GetDeviceId()(*string)
+    GetDeviceOSType()(*string)
+    GetDeviceOSVersion()(*string)
+    GetExpirationDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetRecordedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetState()(*AgreementAcceptanceState)
+    GetUserDisplayName()(*string)
+    GetUserEmail()(*string)
+    GetUserId()(*string)
+    GetUserPrincipalName()(*string)
+    SetAgreementFileId(value *string)()
+    SetAgreementId(value *string)()
+    SetDeviceDisplayName(value *string)()
+    SetDeviceId(value *string)()
+    SetDeviceOSType(value *string)()
+    SetDeviceOSVersion(value *string)()
+    SetExpirationDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetRecordedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetState(value *AgreementAcceptanceState)()
+    SetUserDisplayName(value *string)()
+    SetUserEmail(value *string)()
+    SetUserId(value *string)()
+    SetUserPrincipalName(value *string)()
 }

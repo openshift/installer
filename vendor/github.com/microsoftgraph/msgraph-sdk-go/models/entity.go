@@ -1,24 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // Entity 
 type Entity struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // The unique idenfier for an entity. Read-only.
-    id *string
-    // The OdataType property
-    odataType *string
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewEntity instantiates a new entity and sets the default values.
 func NewEntity()(*Entity) {
     m := &Entity{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateEntityFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -47,8 +44,14 @@ func CreateEntityFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487
                         return NewAccessPackageAssignmentRequest(), nil
                     case "#microsoft.graph.accessPackageCatalog":
                         return NewAccessPackageCatalog(), nil
+                    case "#microsoft.graph.accessPackageMultipleChoiceQuestion":
+                        return NewAccessPackageMultipleChoiceQuestion(), nil
+                    case "#microsoft.graph.accessPackageQuestion":
+                        return NewAccessPackageQuestion(), nil
                     case "#microsoft.graph.accessPackageSubject":
                         return NewAccessPackageSubject(), nil
+                    case "#microsoft.graph.accessPackageTextInputQuestion":
+                        return NewAccessPackageTextInputQuestion(), nil
                     case "#microsoft.graph.accessReviewHistoryDefinition":
                         return NewAccessReviewHistoryDefinition(), nil
                     case "#microsoft.graph.accessReviewHistoryInstance":
@@ -127,6 +130,8 @@ func CreateEntityFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487
                         return NewApplication(), nil
                     case "#microsoft.graph.applicationTemplate":
                         return NewApplicationTemplate(), nil
+                    case "#microsoft.graph.appManagementPolicy":
+                        return NewAppManagementPolicy(), nil
                     case "#microsoft.graph.appRoleAssignment":
                         return NewAppRoleAssignment(), nil
                     case "#microsoft.graph.approval":
@@ -171,6 +176,8 @@ func CreateEntityFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487
                         return NewAuthoredNote(), nil
                     case "#microsoft.graph.authorizationPolicy":
                         return NewAuthorizationPolicy(), nil
+                    case "#microsoft.graph.azureCommunicationServicesUserConversationMember":
+                        return NewAzureCommunicationServicesUserConversationMember(), nil
                     case "#microsoft.graph.b2xIdentityUserFlow":
                         return NewB2xIdentityUserFlow(), nil
                     case "#microsoft.graph.baseItem":
@@ -275,8 +282,22 @@ func CreateEntityFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487
                         return NewDataPolicyOperation(), nil
                     case "#microsoft.graph.defaultManagedAppProtection":
                         return NewDefaultManagedAppProtection(), nil
+                    case "#microsoft.graph.delegatedAdminAccessAssignment":
+                        return NewDelegatedAdminAccessAssignment(), nil
+                    case "#microsoft.graph.delegatedAdminCustomer":
+                        return NewDelegatedAdminCustomer(), nil
+                    case "#microsoft.graph.delegatedAdminRelationship":
+                        return NewDelegatedAdminRelationship(), nil
+                    case "#microsoft.graph.delegatedAdminRelationshipOperation":
+                        return NewDelegatedAdminRelationshipOperation(), nil
+                    case "#microsoft.graph.delegatedAdminRelationshipRequest":
+                        return NewDelegatedAdminRelationshipRequest(), nil
+                    case "#microsoft.graph.delegatedAdminServiceManagementDetail":
+                        return NewDelegatedAdminServiceManagementDetail(), nil
                     case "#microsoft.graph.delegatedPermissionClassification":
                         return NewDelegatedPermissionClassification(), nil
+                    case "#microsoft.graph.deletedTeam":
+                        return NewDeletedTeam(), nil
                     case "#microsoft.graph.detectedApp":
                         return NewDetectedApp(), nil
                     case "#microsoft.graph.device":
@@ -435,6 +456,8 @@ func CreateEntityFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487
                         return NewEnrollmentConfigurationAssignment(), nil
                     case "#microsoft.graph.enrollmentTroubleshootingEvent":
                         return NewEnrollmentTroubleshootingEvent(), nil
+                    case "#microsoft.graph.enterpriseCodeSigningCertificate":
+                        return NewEnterpriseCodeSigningCertificate(), nil
                     case "#microsoft.graph.entitlementManagement":
                         return NewEntitlementManagement(), nil
                     case "#microsoft.graph.entitlementManagementSettings":
@@ -505,8 +528,6 @@ func CreateEntityFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487
                         return NewInferenceClassification(), nil
                     case "#microsoft.graph.inferenceClassificationOverride":
                         return NewInferenceClassificationOverride(), nil
-                    case "#microsoft.graph.informationProtection":
-                        return NewInformationProtection(), nil
                     case "#microsoft.graph.internalDomainFederation":
                         return NewInternalDomainFederation(), nil
                     case "#microsoft.graph.invitation":
@@ -523,8 +544,12 @@ func CreateEntityFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487
                         return NewIosDeviceFeaturesConfiguration(), nil
                     case "#microsoft.graph.iosGeneralDeviceConfiguration":
                         return NewIosGeneralDeviceConfiguration(), nil
+                    case "#microsoft.graph.iosiPadOSWebClip":
+                        return NewIosiPadOSWebClip(), nil
                     case "#microsoft.graph.iosLobApp":
                         return NewIosLobApp(), nil
+                    case "#microsoft.graph.iosLobAppProvisioningConfigurationAssignment":
+                        return NewIosLobAppProvisioningConfigurationAssignment(), nil
                     case "#microsoft.graph.iosManagedAppProtection":
                         return NewIosManagedAppProtection(), nil
                     case "#microsoft.graph.iosManagedAppRegistration":
@@ -553,6 +578,10 @@ func CreateEntityFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487
                         return NewItemAnalytics(), nil
                     case "#microsoft.graph.itemAttachment":
                         return NewItemAttachment(), nil
+                    case "#microsoft.graph.learningContent":
+                        return NewLearningContent(), nil
+                    case "#microsoft.graph.learningProvider":
+                        return NewLearningProvider(), nil
                     case "#microsoft.graph.licenseDetails":
                         return NewLicenseDetails(), nil
                     case "#microsoft.graph.linkedResource":
@@ -665,6 +694,8 @@ func CreateEntityFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487
                         return NewMobileAppContent(), nil
                     case "#microsoft.graph.mobileAppContentFile":
                         return NewMobileAppContentFile(), nil
+                    case "#microsoft.graph.mobileContainedApp":
+                        return NewMobileContainedApp(), nil
                     case "#microsoft.graph.mobileLobApp":
                         return NewMobileLobApp(), nil
                     case "#microsoft.graph.mobileThreatDefenseConnector":
@@ -705,6 +736,8 @@ func CreateEntityFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487
                         return NewOnlineMeeting(), nil
                     case "#microsoft.graph.onPremisesConditionalAccessSettings":
                         return NewOnPremisesConditionalAccessSettings(), nil
+                    case "#microsoft.graph.onPremisesDirectorySynchronization":
+                        return NewOnPremisesDirectorySynchronization(), nil
                     case "#microsoft.graph.openShift":
                         return NewOpenShift(), nil
                     case "#microsoft.graph.openShiftChangeRequest":
@@ -827,8 +860,6 @@ func CreateEntityFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487
                         return NewReferenceAttachment(), nil
                     case "#microsoft.graph.remoteAssistancePartner":
                         return NewRemoteAssistancePartner(), nil
-                    case "#microsoft.graph.reportRoot":
-                        return NewReportRoot(), nil
                     case "#microsoft.graph.request":
                         return NewRequest(), nil
                     case "#microsoft.graph.resourceOperation":
@@ -839,6 +870,10 @@ func CreateEntityFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487
                         return NewRichLongRunningOperation(), nil
                     case "#microsoft.graph.riskDetection":
                         return NewRiskDetection(), nil
+                    case "#microsoft.graph.riskyServicePrincipal":
+                        return NewRiskyServicePrincipal(), nil
+                    case "#microsoft.graph.riskyServicePrincipalHistoryItem":
+                        return NewRiskyServicePrincipalHistoryItem(), nil
                     case "#microsoft.graph.riskyUser":
                         return NewRiskyUser(), nil
                     case "#microsoft.graph.riskyUserHistoryItem":
@@ -889,6 +924,8 @@ func CreateEntityFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487
                         return NewServiceHealthIssue(), nil
                     case "#microsoft.graph.servicePrincipal":
                         return NewServicePrincipal(), nil
+                    case "#microsoft.graph.servicePrincipalRiskDetection":
+                        return NewServicePrincipalRiskDetection(), nil
                     case "#microsoft.graph.serviceUpdateMessage":
                         return NewServiceUpdateMessage(), nil
                     case "#microsoft.graph.settingStateDeviceSummary":
@@ -983,6 +1020,8 @@ func CreateEntityFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487
                         return NewTemporaryAccessPassAuthenticationMethod(), nil
                     case "#microsoft.graph.temporaryAccessPassAuthenticationMethodConfiguration":
                         return NewTemporaryAccessPassAuthenticationMethodConfiguration(), nil
+                    case "#microsoft.graph.tenantAppManagementPolicy":
+                        return NewTenantAppManagementPolicy(), nil
                     case "#microsoft.graph.termsAndConditions":
                         return NewTermsAndConditions(), nil
                     case "#microsoft.graph.termsAndConditionsAcceptanceStatus":
@@ -1121,6 +1160,8 @@ func CreateEntityFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487
                         return NewWindowsInformationProtectionNetworkLearningSummary(), nil
                     case "#microsoft.graph.windowsInformationProtectionPolicy":
                         return NewWindowsInformationProtectionPolicy(), nil
+                    case "#microsoft.graph.windowsMicrosoftEdgeApp":
+                        return NewWindowsMicrosoftEdgeApp(), nil
                     case "#microsoft.graph.windowsMobileMSI":
                         return NewWindowsMobileMSI(), nil
                     case "#microsoft.graph.windowsPhone81CompliancePolicy":
@@ -1131,8 +1172,12 @@ func CreateEntityFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487
                         return NewWindowsPhone81GeneralConfiguration(), nil
                     case "#microsoft.graph.windowsUniversalAppX":
                         return NewWindowsUniversalAppX(), nil
+                    case "#microsoft.graph.windowsUniversalAppXContainedApp":
+                        return NewWindowsUniversalAppXContainedApp(), nil
                     case "#microsoft.graph.windowsUpdateForBusinessConfiguration":
                         return NewWindowsUpdateForBusinessConfiguration(), nil
+                    case "#microsoft.graph.windowsWebApp":
+                        return NewWindowsWebApp(), nil
                     case "#microsoft.graph.workbook":
                         return NewWorkbook(), nil
                     case "#microsoft.graph.workbookApplication":
@@ -1236,23 +1281,67 @@ func CreateEntityFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487
     return NewEntity(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *Entity) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *Entity) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *Entity) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *Entity) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["id"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetId)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
+    res["id"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetId(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
     return res
 }
 // GetId gets the id property value. The unique idenfier for an entity. Read-only.
 func (m *Entity) GetId()(*string) {
-    return m.id
+    val, err := m.GetBackingStore().Get("id")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *Entity) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *Entity) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -1277,14 +1366,39 @@ func (m *Entity) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *Entity) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *Entity) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *Entity) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetId sets the id property value. The unique idenfier for an entity. Read-only.
 func (m *Entity) SetId(value *string)() {
-    m.id = value
+    err := m.GetBackingStore().Set("id", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *Entity) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// Entityable 
+type Entityable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetId()(*string)
+    GetOdataType()(*string)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetId(value *string)()
+    SetOdataType(value *string)()
 }

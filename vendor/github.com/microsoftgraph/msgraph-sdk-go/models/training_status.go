@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type TrainingStatus int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i TrainingStatus) String() string {
     return []string{"unknown", "assigned", "inProgress", "completed", "overdue", "unknownFutureValue"}[i]
 }
-func ParseTrainingStatus(v string) (interface{}, error) {
+func ParseTrainingStatus(v string) (any, error) {
     result := UNKNOWN_TRAININGSTATUS
     switch v {
         case "unknown":

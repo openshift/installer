@@ -7,8 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-
 ### Changed
+
+### Added
+
+## [0.9.0] - 2023-03-30
+
+### Added
+
+- Add Unmarshal and Marshal helpers.
+
+## [0.8.3] - 2023-03-20
+
+### Added
+
+- Validates json content before parsing.
+
+## [0.8.2] - 2023-03-01
+
+### Added
+
+- Fixes bug that returned `JsonParseNode` as value for nested maps when `GetRawValue` is called.
+
+## [0.8.1] - 2023-02-20
+
+### Added
+
+- Fixes bug that returned `JsonParseNode` as value for collections when `GetRawValue` is called.
+
+## [0.8.0] - 2023-01-23
+
+### Added
+
+- Added support for backing store.
 
 ## [0.7.2] - 2022-09-29
 

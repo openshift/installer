@@ -2,39 +2,12 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// AccessPackageAssignmentPolicy provides operations to manage the collection of agreement entities.
+// AccessPackageAssignmentPolicy 
 type AccessPackageAssignmentPolicy struct {
     Entity
-    // Access package containing this policy. Read-only.
-    accessPackage AccessPackageable
-    // Principals that can be assigned the access package through this policy. The possible values are: notSpecified, specificDirectoryUsers, specificConnectedOrganizationUsers, specificDirectoryServicePrincipals, allMemberUsers, allDirectoryUsers, allDirectoryServicePrincipals, allConfiguredConnectedOrganizationUsers, allExternalUsers, unknownFutureValue.
-    allowedTargetScope *AllowedTargetScope
-    // This property is only present for an auto assignment policy; if absent, this is a request-based policy.
-    automaticRequestSettings AccessPackageAutomaticRequestSettingsable
-    // Catalog of the access package containing this policy. Read-only.
-    catalog AccessPackageCatalogable
-    // The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
-    createdDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // The description of the policy.
-    description *string
-    // The display name of the policy.
-    displayName *string
-    // The expiration date for assignments created in this policy.
-    expiration ExpirationPatternable
-    // The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
-    modifiedDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Specifies the settings for approval of requests for an access package assignment through this policy. For example, if approval is required for new requests.
-    requestApprovalSettings AccessPackageAssignmentApprovalSettingsable
-    // Provides additional settings to select who can create a request for an access package assignment through this policy, and what they can include in their request.
-    requestorSettings AccessPackageAssignmentRequestorSettingsable
-    // Settings for access reviews of assignments through this policy.
-    reviewSettings AccessPackageAssignmentReviewSettingsable
-    // The principals that can be assigned access from an access package through this policy.
-    specificAllowedTargets []SubjectSetable
 }
 // NewAccessPackageAssignmentPolicy instantiates a new accessPackageAssignmentPolicy and sets the default values.
 func NewAccessPackageAssignmentPolicy()(*AccessPackageAssignmentPolicy) {
@@ -49,73 +22,310 @@ func CreateAccessPackageAssignmentPolicyFromDiscriminatorValue(parseNode i878a80
 }
 // GetAccessPackage gets the accessPackage property value. Access package containing this policy. Read-only.
 func (m *AccessPackageAssignmentPolicy) GetAccessPackage()(AccessPackageable) {
-    return m.accessPackage
+    val, err := m.GetBackingStore().Get("accessPackage")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(AccessPackageable)
+    }
+    return nil
 }
 // GetAllowedTargetScope gets the allowedTargetScope property value. Principals that can be assigned the access package through this policy. The possible values are: notSpecified, specificDirectoryUsers, specificConnectedOrganizationUsers, specificDirectoryServicePrincipals, allMemberUsers, allDirectoryUsers, allDirectoryServicePrincipals, allConfiguredConnectedOrganizationUsers, allExternalUsers, unknownFutureValue.
 func (m *AccessPackageAssignmentPolicy) GetAllowedTargetScope()(*AllowedTargetScope) {
-    return m.allowedTargetScope
+    val, err := m.GetBackingStore().Get("allowedTargetScope")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*AllowedTargetScope)
+    }
+    return nil
 }
 // GetAutomaticRequestSettings gets the automaticRequestSettings property value. This property is only present for an auto assignment policy; if absent, this is a request-based policy.
 func (m *AccessPackageAssignmentPolicy) GetAutomaticRequestSettings()(AccessPackageAutomaticRequestSettingsable) {
-    return m.automaticRequestSettings
+    val, err := m.GetBackingStore().Get("automaticRequestSettings")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(AccessPackageAutomaticRequestSettingsable)
+    }
+    return nil
 }
 // GetCatalog gets the catalog property value. Catalog of the access package containing this policy. Read-only.
 func (m *AccessPackageAssignmentPolicy) GetCatalog()(AccessPackageCatalogable) {
-    return m.catalog
+    val, err := m.GetBackingStore().Get("catalog")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(AccessPackageCatalogable)
+    }
+    return nil
 }
 // GetCreatedDateTime gets the createdDateTime property value. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
 func (m *AccessPackageAssignmentPolicy) GetCreatedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.createdDateTime
+    val, err := m.GetBackingStore().Get("createdDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetDescription gets the description property value. The description of the policy.
 func (m *AccessPackageAssignmentPolicy) GetDescription()(*string) {
-    return m.description
+    val, err := m.GetBackingStore().Get("description")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDisplayName gets the displayName property value. The display name of the policy.
 func (m *AccessPackageAssignmentPolicy) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetExpiration gets the expiration property value. The expiration date for assignments created in this policy.
 func (m *AccessPackageAssignmentPolicy) GetExpiration()(ExpirationPatternable) {
-    return m.expiration
+    val, err := m.GetBackingStore().Get("expiration")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ExpirationPatternable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *AccessPackageAssignmentPolicy) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["accessPackage"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateAccessPackageFromDiscriminatorValue , m.SetAccessPackage)
-    res["allowedTargetScope"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseAllowedTargetScope , m.SetAllowedTargetScope)
-    res["automaticRequestSettings"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateAccessPackageAutomaticRequestSettingsFromDiscriminatorValue , m.SetAutomaticRequestSettings)
-    res["catalog"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateAccessPackageCatalogFromDiscriminatorValue , m.SetCatalog)
-    res["createdDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetCreatedDateTime)
-    res["description"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDescription)
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["expiration"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateExpirationPatternFromDiscriminatorValue , m.SetExpiration)
-    res["modifiedDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetModifiedDateTime)
-    res["requestApprovalSettings"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateAccessPackageAssignmentApprovalSettingsFromDiscriminatorValue , m.SetRequestApprovalSettings)
-    res["requestorSettings"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateAccessPackageAssignmentRequestorSettingsFromDiscriminatorValue , m.SetRequestorSettings)
-    res["reviewSettings"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateAccessPackageAssignmentReviewSettingsFromDiscriminatorValue , m.SetReviewSettings)
-    res["specificAllowedTargets"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateSubjectSetFromDiscriminatorValue , m.SetSpecificAllowedTargets)
+    res["accessPackage"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateAccessPackageFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAccessPackage(val.(AccessPackageable))
+        }
+        return nil
+    }
+    res["allowedTargetScope"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseAllowedTargetScope)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAllowedTargetScope(val.(*AllowedTargetScope))
+        }
+        return nil
+    }
+    res["automaticRequestSettings"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateAccessPackageAutomaticRequestSettingsFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAutomaticRequestSettings(val.(AccessPackageAutomaticRequestSettingsable))
+        }
+        return nil
+    }
+    res["catalog"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateAccessPackageCatalogFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCatalog(val.(AccessPackageCatalogable))
+        }
+        return nil
+    }
+    res["createdDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCreatedDateTime(val)
+        }
+        return nil
+    }
+    res["description"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDescription(val)
+        }
+        return nil
+    }
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["expiration"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateExpirationPatternFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetExpiration(val.(ExpirationPatternable))
+        }
+        return nil
+    }
+    res["modifiedDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetModifiedDateTime(val)
+        }
+        return nil
+    }
+    res["questions"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateAccessPackageQuestionFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]AccessPackageQuestionable, len(val))
+            for i, v := range val {
+                res[i] = v.(AccessPackageQuestionable)
+            }
+            m.SetQuestions(res)
+        }
+        return nil
+    }
+    res["requestApprovalSettings"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateAccessPackageAssignmentApprovalSettingsFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRequestApprovalSettings(val.(AccessPackageAssignmentApprovalSettingsable))
+        }
+        return nil
+    }
+    res["requestorSettings"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateAccessPackageAssignmentRequestorSettingsFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRequestorSettings(val.(AccessPackageAssignmentRequestorSettingsable))
+        }
+        return nil
+    }
+    res["reviewSettings"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateAccessPackageAssignmentReviewSettingsFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetReviewSettings(val.(AccessPackageAssignmentReviewSettingsable))
+        }
+        return nil
+    }
+    res["specificAllowedTargets"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateSubjectSetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]SubjectSetable, len(val))
+            for i, v := range val {
+                res[i] = v.(SubjectSetable)
+            }
+            m.SetSpecificAllowedTargets(res)
+        }
+        return nil
+    }
     return res
 }
 // GetModifiedDateTime gets the modifiedDateTime property value. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
 func (m *AccessPackageAssignmentPolicy) GetModifiedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.modifiedDateTime
+    val, err := m.GetBackingStore().Get("modifiedDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
+}
+// GetQuestions gets the questions property value. Questions that are posed to the  requestor.
+func (m *AccessPackageAssignmentPolicy) GetQuestions()([]AccessPackageQuestionable) {
+    val, err := m.GetBackingStore().Get("questions")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]AccessPackageQuestionable)
+    }
+    return nil
 }
 // GetRequestApprovalSettings gets the requestApprovalSettings property value. Specifies the settings for approval of requests for an access package assignment through this policy. For example, if approval is required for new requests.
 func (m *AccessPackageAssignmentPolicy) GetRequestApprovalSettings()(AccessPackageAssignmentApprovalSettingsable) {
-    return m.requestApprovalSettings
+    val, err := m.GetBackingStore().Get("requestApprovalSettings")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(AccessPackageAssignmentApprovalSettingsable)
+    }
+    return nil
 }
 // GetRequestorSettings gets the requestorSettings property value. Provides additional settings to select who can create a request for an access package assignment through this policy, and what they can include in their request.
 func (m *AccessPackageAssignmentPolicy) GetRequestorSettings()(AccessPackageAssignmentRequestorSettingsable) {
-    return m.requestorSettings
+    val, err := m.GetBackingStore().Get("requestorSettings")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(AccessPackageAssignmentRequestorSettingsable)
+    }
+    return nil
 }
 // GetReviewSettings gets the reviewSettings property value. Settings for access reviews of assignments through this policy.
 func (m *AccessPackageAssignmentPolicy) GetReviewSettings()(AccessPackageAssignmentReviewSettingsable) {
-    return m.reviewSettings
+    val, err := m.GetBackingStore().Get("reviewSettings")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(AccessPackageAssignmentReviewSettingsable)
+    }
+    return nil
 }
 // GetSpecificAllowedTargets gets the specificAllowedTargets property value. The principals that can be assigned access from an access package through this policy.
 func (m *AccessPackageAssignmentPolicy) GetSpecificAllowedTargets()([]SubjectSetable) {
-    return m.specificAllowedTargets
+    val, err := m.GetBackingStore().Get("specificAllowedTargets")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]SubjectSetable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *AccessPackageAssignmentPolicy) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -178,6 +388,16 @@ func (m *AccessPackageAssignmentPolicy) Serialize(writer i878a80d2330e89d2689638
             return err
         }
     }
+    if m.GetQuestions() != nil {
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetQuestions()))
+        for i, v := range m.GetQuestions() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
+        err = writer.WriteCollectionOfObjectValues("questions", cast)
+        if err != nil {
+            return err
+        }
+    }
     {
         err = writer.WriteObjectValue("requestApprovalSettings", m.GetRequestApprovalSettings())
         if err != nil {
@@ -197,7 +417,10 @@ func (m *AccessPackageAssignmentPolicy) Serialize(writer i878a80d2330e89d2689638
         }
     }
     if m.GetSpecificAllowedTargets() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetSpecificAllowedTargets())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetSpecificAllowedTargets()))
+        for i, v := range m.GetSpecificAllowedTargets() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("specificAllowedTargets", cast)
         if err != nil {
             return err
@@ -207,53 +430,132 @@ func (m *AccessPackageAssignmentPolicy) Serialize(writer i878a80d2330e89d2689638
 }
 // SetAccessPackage sets the accessPackage property value. Access package containing this policy. Read-only.
 func (m *AccessPackageAssignmentPolicy) SetAccessPackage(value AccessPackageable)() {
-    m.accessPackage = value
+    err := m.GetBackingStore().Set("accessPackage", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAllowedTargetScope sets the allowedTargetScope property value. Principals that can be assigned the access package through this policy. The possible values are: notSpecified, specificDirectoryUsers, specificConnectedOrganizationUsers, specificDirectoryServicePrincipals, allMemberUsers, allDirectoryUsers, allDirectoryServicePrincipals, allConfiguredConnectedOrganizationUsers, allExternalUsers, unknownFutureValue.
 func (m *AccessPackageAssignmentPolicy) SetAllowedTargetScope(value *AllowedTargetScope)() {
-    m.allowedTargetScope = value
+    err := m.GetBackingStore().Set("allowedTargetScope", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAutomaticRequestSettings sets the automaticRequestSettings property value. This property is only present for an auto assignment policy; if absent, this is a request-based policy.
 func (m *AccessPackageAssignmentPolicy) SetAutomaticRequestSettings(value AccessPackageAutomaticRequestSettingsable)() {
-    m.automaticRequestSettings = value
+    err := m.GetBackingStore().Set("automaticRequestSettings", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCatalog sets the catalog property value. Catalog of the access package containing this policy. Read-only.
 func (m *AccessPackageAssignmentPolicy) SetCatalog(value AccessPackageCatalogable)() {
-    m.catalog = value
+    err := m.GetBackingStore().Set("catalog", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCreatedDateTime sets the createdDateTime property value. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
 func (m *AccessPackageAssignmentPolicy) SetCreatedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.createdDateTime = value
+    err := m.GetBackingStore().Set("createdDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDescription sets the description property value. The description of the policy.
 func (m *AccessPackageAssignmentPolicy) SetDescription(value *string)() {
-    m.description = value
+    err := m.GetBackingStore().Set("description", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDisplayName sets the displayName property value. The display name of the policy.
 func (m *AccessPackageAssignmentPolicy) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetExpiration sets the expiration property value. The expiration date for assignments created in this policy.
 func (m *AccessPackageAssignmentPolicy) SetExpiration(value ExpirationPatternable)() {
-    m.expiration = value
+    err := m.GetBackingStore().Set("expiration", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetModifiedDateTime sets the modifiedDateTime property value. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
 func (m *AccessPackageAssignmentPolicy) SetModifiedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.modifiedDateTime = value
+    err := m.GetBackingStore().Set("modifiedDateTime", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetQuestions sets the questions property value. Questions that are posed to the  requestor.
+func (m *AccessPackageAssignmentPolicy) SetQuestions(value []AccessPackageQuestionable)() {
+    err := m.GetBackingStore().Set("questions", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRequestApprovalSettings sets the requestApprovalSettings property value. Specifies the settings for approval of requests for an access package assignment through this policy. For example, if approval is required for new requests.
 func (m *AccessPackageAssignmentPolicy) SetRequestApprovalSettings(value AccessPackageAssignmentApprovalSettingsable)() {
-    m.requestApprovalSettings = value
+    err := m.GetBackingStore().Set("requestApprovalSettings", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRequestorSettings sets the requestorSettings property value. Provides additional settings to select who can create a request for an access package assignment through this policy, and what they can include in their request.
 func (m *AccessPackageAssignmentPolicy) SetRequestorSettings(value AccessPackageAssignmentRequestorSettingsable)() {
-    m.requestorSettings = value
+    err := m.GetBackingStore().Set("requestorSettings", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetReviewSettings sets the reviewSettings property value. Settings for access reviews of assignments through this policy.
 func (m *AccessPackageAssignmentPolicy) SetReviewSettings(value AccessPackageAssignmentReviewSettingsable)() {
-    m.reviewSettings = value
+    err := m.GetBackingStore().Set("reviewSettings", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSpecificAllowedTargets sets the specificAllowedTargets property value. The principals that can be assigned access from an access package through this policy.
 func (m *AccessPackageAssignmentPolicy) SetSpecificAllowedTargets(value []SubjectSetable)() {
-    m.specificAllowedTargets = value
+    err := m.GetBackingStore().Set("specificAllowedTargets", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// AccessPackageAssignmentPolicyable 
+type AccessPackageAssignmentPolicyable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAccessPackage()(AccessPackageable)
+    GetAllowedTargetScope()(*AllowedTargetScope)
+    GetAutomaticRequestSettings()(AccessPackageAutomaticRequestSettingsable)
+    GetCatalog()(AccessPackageCatalogable)
+    GetCreatedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetDescription()(*string)
+    GetDisplayName()(*string)
+    GetExpiration()(ExpirationPatternable)
+    GetModifiedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetQuestions()([]AccessPackageQuestionable)
+    GetRequestApprovalSettings()(AccessPackageAssignmentApprovalSettingsable)
+    GetRequestorSettings()(AccessPackageAssignmentRequestorSettingsable)
+    GetReviewSettings()(AccessPackageAssignmentReviewSettingsable)
+    GetSpecificAllowedTargets()([]SubjectSetable)
+    SetAccessPackage(value AccessPackageable)()
+    SetAllowedTargetScope(value *AllowedTargetScope)()
+    SetAutomaticRequestSettings(value AccessPackageAutomaticRequestSettingsable)()
+    SetCatalog(value AccessPackageCatalogable)()
+    SetCreatedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetDescription(value *string)()
+    SetDisplayName(value *string)()
+    SetExpiration(value ExpirationPatternable)()
+    SetModifiedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetQuestions(value []AccessPackageQuestionable)()
+    SetRequestApprovalSettings(value AccessPackageAssignmentApprovalSettingsable)()
+    SetRequestorSettings(value AccessPackageAssignmentRequestorSettingsable)()
+    SetReviewSettings(value AccessPackageAssignmentReviewSettingsable)()
+    SetSpecificAllowedTargets(value []SubjectSetable)()
 }

@@ -1,33 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // EventMessageRequest 
 type EventMessageRequest struct {
     EventMessage
-    // True if the meeting organizer allows invitees to propose a new time when responding, false otherwise. Optional. Default is true.
-    allowNewTimeProposals *bool
-    // The meetingRequestType property
-    meetingRequestType *MeetingRequestType
-    // If the meeting update changes the meeting end time, this property specifies the previous meeting end time.
-    previousEndDateTime DateTimeTimeZoneable
-    // If the meeting update changes the meeting location, this property specifies the previous meeting location.
-    previousLocation Locationable
-    // If the meeting update changes the meeting start time, this property specifies the previous meeting start time.
-    previousStartDateTime DateTimeTimeZoneable
-    // Set to true if the sender would like the invitee to send a response to the requested meeting.
-    responseRequested *bool
 }
 // NewEventMessageRequest instantiates a new EventMessageRequest and sets the default values.
 func NewEventMessageRequest()(*EventMessageRequest) {
     m := &EventMessageRequest{
         EventMessage: *NewEventMessage(),
     }
-    odataTypeValue := "#microsoft.graph.eventMessageRequest";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.eventMessageRequest"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateEventMessageRequestFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -36,38 +23,134 @@ func CreateEventMessageRequestFromDiscriminatorValue(parseNode i878a80d2330e89d2
 }
 // GetAllowNewTimeProposals gets the allowNewTimeProposals property value. True if the meeting organizer allows invitees to propose a new time when responding, false otherwise. Optional. Default is true.
 func (m *EventMessageRequest) GetAllowNewTimeProposals()(*bool) {
-    return m.allowNewTimeProposals
+    val, err := m.GetBackingStore().Get("allowNewTimeProposals")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *EventMessageRequest) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.EventMessage.GetFieldDeserializers()
-    res["allowNewTimeProposals"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetAllowNewTimeProposals)
-    res["meetingRequestType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseMeetingRequestType , m.SetMeetingRequestType)
-    res["previousEndDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateDateTimeTimeZoneFromDiscriminatorValue , m.SetPreviousEndDateTime)
-    res["previousLocation"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateLocationFromDiscriminatorValue , m.SetPreviousLocation)
-    res["previousStartDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateDateTimeTimeZoneFromDiscriminatorValue , m.SetPreviousStartDateTime)
-    res["responseRequested"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetResponseRequested)
+    res["allowNewTimeProposals"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAllowNewTimeProposals(val)
+        }
+        return nil
+    }
+    res["meetingRequestType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseMeetingRequestType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMeetingRequestType(val.(*MeetingRequestType))
+        }
+        return nil
+    }
+    res["previousEndDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateDateTimeTimeZoneFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPreviousEndDateTime(val.(DateTimeTimeZoneable))
+        }
+        return nil
+    }
+    res["previousLocation"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateLocationFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPreviousLocation(val.(Locationable))
+        }
+        return nil
+    }
+    res["previousStartDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateDateTimeTimeZoneFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPreviousStartDateTime(val.(DateTimeTimeZoneable))
+        }
+        return nil
+    }
+    res["responseRequested"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetResponseRequested(val)
+        }
+        return nil
+    }
     return res
 }
 // GetMeetingRequestType gets the meetingRequestType property value. The meetingRequestType property
 func (m *EventMessageRequest) GetMeetingRequestType()(*MeetingRequestType) {
-    return m.meetingRequestType
+    val, err := m.GetBackingStore().Get("meetingRequestType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*MeetingRequestType)
+    }
+    return nil
 }
 // GetPreviousEndDateTime gets the previousEndDateTime property value. If the meeting update changes the meeting end time, this property specifies the previous meeting end time.
 func (m *EventMessageRequest) GetPreviousEndDateTime()(DateTimeTimeZoneable) {
-    return m.previousEndDateTime
+    val, err := m.GetBackingStore().Get("previousEndDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(DateTimeTimeZoneable)
+    }
+    return nil
 }
 // GetPreviousLocation gets the previousLocation property value. If the meeting update changes the meeting location, this property specifies the previous meeting location.
 func (m *EventMessageRequest) GetPreviousLocation()(Locationable) {
-    return m.previousLocation
+    val, err := m.GetBackingStore().Get("previousLocation")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Locationable)
+    }
+    return nil
 }
 // GetPreviousStartDateTime gets the previousStartDateTime property value. If the meeting update changes the meeting start time, this property specifies the previous meeting start time.
 func (m *EventMessageRequest) GetPreviousStartDateTime()(DateTimeTimeZoneable) {
-    return m.previousStartDateTime
+    val, err := m.GetBackingStore().Get("previousStartDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(DateTimeTimeZoneable)
+    }
+    return nil
 }
 // GetResponseRequested gets the responseRequested property value. Set to true if the sender would like the invitee to send a response to the requested meeting.
 func (m *EventMessageRequest) GetResponseRequested()(*bool) {
-    return m.responseRequested
+    val, err := m.GetBackingStore().Get("responseRequested")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *EventMessageRequest) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -116,25 +199,60 @@ func (m *EventMessageRequest) Serialize(writer i878a80d2330e89d26896388a3f487eef
 }
 // SetAllowNewTimeProposals sets the allowNewTimeProposals property value. True if the meeting organizer allows invitees to propose a new time when responding, false otherwise. Optional. Default is true.
 func (m *EventMessageRequest) SetAllowNewTimeProposals(value *bool)() {
-    m.allowNewTimeProposals = value
+    err := m.GetBackingStore().Set("allowNewTimeProposals", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMeetingRequestType sets the meetingRequestType property value. The meetingRequestType property
 func (m *EventMessageRequest) SetMeetingRequestType(value *MeetingRequestType)() {
-    m.meetingRequestType = value
+    err := m.GetBackingStore().Set("meetingRequestType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPreviousEndDateTime sets the previousEndDateTime property value. If the meeting update changes the meeting end time, this property specifies the previous meeting end time.
 func (m *EventMessageRequest) SetPreviousEndDateTime(value DateTimeTimeZoneable)() {
-    m.previousEndDateTime = value
+    err := m.GetBackingStore().Set("previousEndDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPreviousLocation sets the previousLocation property value. If the meeting update changes the meeting location, this property specifies the previous meeting location.
 func (m *EventMessageRequest) SetPreviousLocation(value Locationable)() {
-    m.previousLocation = value
+    err := m.GetBackingStore().Set("previousLocation", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPreviousStartDateTime sets the previousStartDateTime property value. If the meeting update changes the meeting start time, this property specifies the previous meeting start time.
 func (m *EventMessageRequest) SetPreviousStartDateTime(value DateTimeTimeZoneable)() {
-    m.previousStartDateTime = value
+    err := m.GetBackingStore().Set("previousStartDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetResponseRequested sets the responseRequested property value. Set to true if the sender would like the invitee to send a response to the requested meeting.
 func (m *EventMessageRequest) SetResponseRequested(value *bool)() {
-    m.responseRequested = value
+    err := m.GetBackingStore().Set("responseRequested", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// EventMessageRequestable 
+type EventMessageRequestable interface {
+    EventMessageable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAllowNewTimeProposals()(*bool)
+    GetMeetingRequestType()(*MeetingRequestType)
+    GetPreviousEndDateTime()(DateTimeTimeZoneable)
+    GetPreviousLocation()(Locationable)
+    GetPreviousStartDateTime()(DateTimeTimeZoneable)
+    GetResponseRequested()(*bool)
+    SetAllowNewTimeProposals(value *bool)()
+    SetMeetingRequestType(value *MeetingRequestType)()
+    SetPreviousEndDateTime(value DateTimeTimeZoneable)()
+    SetPreviousLocation(value Locationable)()
+    SetPreviousStartDateTime(value DateTimeTimeZoneable)()
+    SetResponseRequested(value *bool)()
 }

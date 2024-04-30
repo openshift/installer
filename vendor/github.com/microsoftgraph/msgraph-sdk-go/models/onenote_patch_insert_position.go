@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to call the onenotePatchContent method.
+// 
 type OnenotePatchInsertPosition int
 
 const (
@@ -13,7 +13,7 @@ const (
 func (i OnenotePatchInsertPosition) String() string {
     return []string{"After", "Before"}[i]
 }
-func ParseOnenotePatchInsertPosition(v string) (interface{}, error) {
+func ParseOnenotePatchInsertPosition(v string) (any, error) {
     result := AFTER_ONENOTEPATCHINSERTPOSITION
     switch v {
         case "After":

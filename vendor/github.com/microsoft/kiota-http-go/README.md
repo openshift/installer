@@ -1,6 +1,6 @@
 # Kiota Http Library for Go
 
-![Go](https://github.com/microsoft/kiota/actions/workflows/http-go-nethttp.yml/badge.svg)
+![Go](https://github.com/microsoft/kiota-http-go/actions/workflows/go.yml/badge.svg)
 
 The Kiota HTTP Library for Go is the Go HTTP library implementation with [net/http](https://pkg.go.dev/net/http).
 

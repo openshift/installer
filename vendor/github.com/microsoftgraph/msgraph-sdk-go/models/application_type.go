@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Possible types of Application
 type ApplicationType int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i ApplicationType) String() string {
     return []string{"universal", "desktop"}[i]
 }
-func ParseApplicationType(v string) (interface{}, error) {
+func ParseApplicationType(v string) (any, error) {
     result := UNIVERSAL_APPLICATIONTYPE
     switch v {
         case "universal":

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type PayloadDeliveryPlatform int
 
 const (
@@ -16,7 +16,7 @@ const (
 func (i PayloadDeliveryPlatform) String() string {
     return []string{"unknown", "sms", "email", "teams", "unknownFutureValue"}[i]
 }
-func ParsePayloadDeliveryPlatform(v string) (interface{}, error) {
+func ParsePayloadDeliveryPlatform(v string) (any, error) {
     result := UNKNOWN_PAYLOADDELIVERYPLATFORM
     switch v {
         case "unknown":

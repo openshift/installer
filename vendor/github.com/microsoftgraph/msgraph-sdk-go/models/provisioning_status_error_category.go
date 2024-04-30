@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ProvisioningStatusErrorCategory int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i ProvisioningStatusErrorCategory) String() string {
     return []string{"failure", "nonServiceFailure", "success", "unknownFutureValue"}[i]
 }
-func ParseProvisioningStatusErrorCategory(v string) (interface{}, error) {
+func ParseProvisioningStatusErrorCategory(v string) (any, error) {
     result := FAILURE_PROVISIONINGSTATUSERRORCATEGORY
     switch v {
         case "failure":

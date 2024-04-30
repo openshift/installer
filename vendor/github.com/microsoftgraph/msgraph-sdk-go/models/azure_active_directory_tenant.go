@@ -1,25 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // AzureActiveDirectoryTenant 
 type AzureActiveDirectoryTenant struct {
     IdentitySource
-    // The name of the Azure Active Directory tenant. Read only.
-    displayName *string
-    // The ID of the Azure Active Directory tenant. Read only.
-    tenantId *string
 }
 // NewAzureActiveDirectoryTenant instantiates a new AzureActiveDirectoryTenant and sets the default values.
 func NewAzureActiveDirectoryTenant()(*AzureActiveDirectoryTenant) {
     m := &AzureActiveDirectoryTenant{
         IdentitySource: *NewIdentitySource(),
     }
-    odataTypeValue := "#microsoft.graph.azureActiveDirectoryTenant";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.azureActiveDirectoryTenant"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateAzureActiveDirectoryTenantFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -28,18 +23,50 @@ func CreateAzureActiveDirectoryTenantFromDiscriminatorValue(parseNode i878a80d23
 }
 // GetDisplayName gets the displayName property value. The name of the Azure Active Directory tenant. Read only.
 func (m *AzureActiveDirectoryTenant) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *AzureActiveDirectoryTenant) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.IdentitySource.GetFieldDeserializers()
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["tenantId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetTenantId)
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["tenantId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTenantId(val)
+        }
+        return nil
+    }
     return res
 }
 // GetTenantId gets the tenantId property value. The ID of the Azure Active Directory tenant. Read only.
 func (m *AzureActiveDirectoryTenant) GetTenantId()(*string) {
-    return m.tenantId
+    val, err := m.GetBackingStore().Get("tenantId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *AzureActiveDirectoryTenant) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -63,9 +90,24 @@ func (m *AzureActiveDirectoryTenant) Serialize(writer i878a80d2330e89d26896388a3
 }
 // SetDisplayName sets the displayName property value. The name of the Azure Active Directory tenant. Read only.
 func (m *AzureActiveDirectoryTenant) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTenantId sets the tenantId property value. The ID of the Azure Active Directory tenant. Read only.
 func (m *AzureActiveDirectoryTenant) SetTenantId(value *string)() {
-    m.tenantId = value
+    err := m.GetBackingStore().Set("tenantId", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// AzureActiveDirectoryTenantable 
+type AzureActiveDirectoryTenantable interface {
+    IdentitySourceable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetDisplayName()(*string)
+    GetTenantId()(*string)
+    SetDisplayName(value *string)()
+    SetTenantId(value *string)()
 }

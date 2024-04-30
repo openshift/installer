@@ -1,17 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // SharedWithChannelTeamInfo 
 type SharedWithChannelTeamInfo struct {
     TeamInfo
-    // A collection of team members who have access to the shared channel.
-    allowedMembers []ConversationMemberable
-    // Indicates whether the team is the host of the channel.
-    isHostTeam *bool
 }
 // NewSharedWithChannelTeamInfo instantiates a new SharedWithChannelTeamInfo and sets the default values.
 func NewSharedWithChannelTeamInfo()(*SharedWithChannelTeamInfo) {
@@ -26,18 +21,54 @@ func CreateSharedWithChannelTeamInfoFromDiscriminatorValue(parseNode i878a80d233
 }
 // GetAllowedMembers gets the allowedMembers property value. A collection of team members who have access to the shared channel.
 func (m *SharedWithChannelTeamInfo) GetAllowedMembers()([]ConversationMemberable) {
-    return m.allowedMembers
+    val, err := m.GetBackingStore().Get("allowedMembers")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]ConversationMemberable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *SharedWithChannelTeamInfo) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.TeamInfo.GetFieldDeserializers()
-    res["allowedMembers"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateConversationMemberFromDiscriminatorValue , m.SetAllowedMembers)
-    res["isHostTeam"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsHostTeam)
+    res["allowedMembers"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateConversationMemberFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]ConversationMemberable, len(val))
+            for i, v := range val {
+                res[i] = v.(ConversationMemberable)
+            }
+            m.SetAllowedMembers(res)
+        }
+        return nil
+    }
+    res["isHostTeam"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsHostTeam(val)
+        }
+        return nil
+    }
     return res
 }
 // GetIsHostTeam gets the isHostTeam property value. Indicates whether the team is the host of the channel.
 func (m *SharedWithChannelTeamInfo) GetIsHostTeam()(*bool) {
-    return m.isHostTeam
+    val, err := m.GetBackingStore().Get("isHostTeam")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *SharedWithChannelTeamInfo) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -46,7 +77,10 @@ func (m *SharedWithChannelTeamInfo) Serialize(writer i878a80d2330e89d26896388a3f
         return err
     }
     if m.GetAllowedMembers() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetAllowedMembers())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetAllowedMembers()))
+        for i, v := range m.GetAllowedMembers() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("allowedMembers", cast)
         if err != nil {
             return err
@@ -62,9 +96,24 @@ func (m *SharedWithChannelTeamInfo) Serialize(writer i878a80d2330e89d26896388a3f
 }
 // SetAllowedMembers sets the allowedMembers property value. A collection of team members who have access to the shared channel.
 func (m *SharedWithChannelTeamInfo) SetAllowedMembers(value []ConversationMemberable)() {
-    m.allowedMembers = value
+    err := m.GetBackingStore().Set("allowedMembers", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsHostTeam sets the isHostTeam property value. Indicates whether the team is the host of the channel.
 func (m *SharedWithChannelTeamInfo) SetIsHostTeam(value *bool)() {
-    m.isHostTeam = value
+    err := m.GetBackingStore().Set("isHostTeam", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SharedWithChannelTeamInfoable 
+type SharedWithChannelTeamInfoable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    TeamInfoable
+    GetAllowedMembers()([]ConversationMemberable)
+    GetIsHostTeam()(*bool)
+    SetAllowedMembers(value []ConversationMemberable)()
+    SetIsHostTeam(value *bool)()
 }

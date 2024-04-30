@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Device Exchange Access State.
 type DeviceManagementExchangeAccessState int
 
 const (
@@ -21,7 +21,7 @@ const (
 func (i DeviceManagementExchangeAccessState) String() string {
     return []string{"none", "unknown", "allowed", "blocked", "quarantined"}[i]
 }
-func ParseDeviceManagementExchangeAccessState(v string) (interface{}, error) {
+func ParseDeviceManagementExchangeAccessState(v string) (any, error) {
     result := NONE_DEVICEMANAGEMENTEXCHANGEACCESSSTATE
     switch v {
         case "none":

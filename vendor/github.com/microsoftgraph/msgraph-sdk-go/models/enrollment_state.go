@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type EnrollmentState int
 
 const (
@@ -21,7 +21,7 @@ const (
 func (i EnrollmentState) String() string {
     return []string{"unknown", "enrolled", "pendingReset", "failed", "notContacted"}[i]
 }
-func ParseEnrollmentState(v string) (interface{}, error) {
+func ParseEnrollmentState(v string) (any, error) {
     result := UNKNOWN_ENROLLMENTSTATE
     switch v {
         case "unknown":

@@ -2,7 +2,7 @@ package security
 import (
     "errors"
 )
-// Provides operations to call the purgeData method.
+// 
 type PurgeAreas int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i PurgeAreas) String() string {
     return []string{"mailboxes", "teamsMessages", "unknownFutureValue"}[i]
 }
-func ParsePurgeAreas(v string) (interface{}, error) {
+func ParsePurgeAreas(v string) (any, error) {
     result := MAILBOXES_PURGEAREAS
     switch v {
         case "mailboxes":

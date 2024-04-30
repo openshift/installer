@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type LifecycleEventType int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i LifecycleEventType) String() string {
     return []string{"missed", "subscriptionRemoved", "reauthorizationRequired"}[i]
 }
-func ParseLifecycleEventType(v string) (interface{}, error) {
+func ParseLifecycleEventType(v string) (any, error) {
     result := MISSED_LIFECYCLEEVENTTYPE
     switch v {
         case "missed":

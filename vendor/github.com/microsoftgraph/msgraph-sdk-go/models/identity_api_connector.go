@@ -1,21 +1,14 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // IdentityApiConnector 
 type IdentityApiConnector struct {
     Entity
-    // The object which describes the authentication configuration details for calling the API. Basic and PKCS 12 client certificate are supported.
-    authenticationConfiguration ApiAuthenticationConfigurationBaseable
-    // The name of the API connector.
-    displayName *string
-    // The URL of the API endpoint to call.
-    targetUrl *string
 }
-// NewIdentityApiConnector instantiates a new IdentityApiConnector and sets the default values.
+// NewIdentityApiConnector instantiates a new identityApiConnector and sets the default values.
 func NewIdentityApiConnector()(*IdentityApiConnector) {
     m := &IdentityApiConnector{
         Entity: *NewEntity(),
@@ -28,23 +21,71 @@ func CreateIdentityApiConnectorFromDiscriminatorValue(parseNode i878a80d2330e89d
 }
 // GetAuthenticationConfiguration gets the authenticationConfiguration property value. The object which describes the authentication configuration details for calling the API. Basic and PKCS 12 client certificate are supported.
 func (m *IdentityApiConnector) GetAuthenticationConfiguration()(ApiAuthenticationConfigurationBaseable) {
-    return m.authenticationConfiguration
+    val, err := m.GetBackingStore().Get("authenticationConfiguration")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ApiAuthenticationConfigurationBaseable)
+    }
+    return nil
 }
 // GetDisplayName gets the displayName property value. The name of the API connector.
 func (m *IdentityApiConnector) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *IdentityApiConnector) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["authenticationConfiguration"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateApiAuthenticationConfigurationBaseFromDiscriminatorValue , m.SetAuthenticationConfiguration)
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["targetUrl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetTargetUrl)
+    res["authenticationConfiguration"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateApiAuthenticationConfigurationBaseFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAuthenticationConfiguration(val.(ApiAuthenticationConfigurationBaseable))
+        }
+        return nil
+    }
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["targetUrl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTargetUrl(val)
+        }
+        return nil
+    }
     return res
 }
 // GetTargetUrl gets the targetUrl property value. The URL of the API endpoint to call.
 func (m *IdentityApiConnector) GetTargetUrl()(*string) {
-    return m.targetUrl
+    val, err := m.GetBackingStore().Get("targetUrl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *IdentityApiConnector) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -74,13 +115,33 @@ func (m *IdentityApiConnector) Serialize(writer i878a80d2330e89d26896388a3f487ee
 }
 // SetAuthenticationConfiguration sets the authenticationConfiguration property value. The object which describes the authentication configuration details for calling the API. Basic and PKCS 12 client certificate are supported.
 func (m *IdentityApiConnector) SetAuthenticationConfiguration(value ApiAuthenticationConfigurationBaseable)() {
-    m.authenticationConfiguration = value
+    err := m.GetBackingStore().Set("authenticationConfiguration", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDisplayName sets the displayName property value. The name of the API connector.
 func (m *IdentityApiConnector) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTargetUrl sets the targetUrl property value. The URL of the API endpoint to call.
 func (m *IdentityApiConnector) SetTargetUrl(value *string)() {
-    m.targetUrl = value
+    err := m.GetBackingStore().Set("targetUrl", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// IdentityApiConnectorable 
+type IdentityApiConnectorable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAuthenticationConfiguration()(ApiAuthenticationConfigurationBaseable)
+    GetDisplayName()(*string)
+    GetTargetUrl()(*string)
+    SetAuthenticationConfiguration(value ApiAuthenticationConfigurationBaseable)()
+    SetDisplayName(value *string)()
+    SetTargetUrl(value *string)()
 }

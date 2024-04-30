@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Tenant mobile device management subscription state.
 type DeviceManagementSubscriptionState int
 
 const (
@@ -25,7 +25,7 @@ const (
 func (i DeviceManagementSubscriptionState) String() string {
     return []string{"pending", "active", "warning", "disabled", "deleted", "blocked", "lockedOut"}[i]
 }
-func ParseDeviceManagementSubscriptionState(v string) (interface{}, error) {
+func ParseDeviceManagementSubscriptionState(v string) (any, error) {
     result := PENDING_DEVICEMANAGEMENTSUBSCRIPTIONSTATE
     switch v {
         case "pending":

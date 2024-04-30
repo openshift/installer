@@ -11,6 +11,7 @@ func GetDefaultMiddlewaresWithOptions(options *GraphClientOptions) []khttp.Middl
 	kiotaMiddlewares := khttp.GetDefaultMiddlewares()
 	graphMiddlewares := []khttp.Middleware{
 		NewGraphTelemetryHandler(options),
+		khttp.NewUrlReplaceHandler(),
 	}
 	graphMiddlewaresLen := len(graphMiddlewares)
 	resultMiddlewares := make([]khttp.Middleware, len(kiotaMiddlewares)+graphMiddlewaresLen)

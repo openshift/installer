@@ -11,6 +11,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.18.0] - 2023-03-20
+
+### Added
+
+- Adds utility functions `CopyMap` and `CopyStringMap` that returns a copy of the passed map.
+
+## [0.17.3] - 2023-03-15
+
+### Changed
+
+- Fixes panic when updating in-memory slices, maps or structs .
+
+## [0.17.2] - 2023-03-01
+
+### Added
+
+- Adds ResponseStatusCode field in ApiError struct.
+
+## [0.17.1] - 2023-01-28
+
+### Added
+
+- Adds a type qualifier for backing store instance type to be `BackingStoreFactory`.
+
+### Changed
+
+## [0.17.0] - 2023-01-23
+
+### Added
+
+- Added support for backing store.
+
+## [0.16.0] - 2023-01-10
+
+### Added
+
+- Added a method to convert abstract requests to native requests in the request adapter interface.
+
+## [0.15.2] - 2023-01-09
+
+### Changed
+
+- Fix bug where empty string query parameters are added to the request.
+
+## [0.15.1] - 2022-12-15
+
+### Changed
+
+- Fix bug preventing adding authentication key to header requests.
+
+## [0.15.0] - 2022-12-15
+
+### Added
+
+- Added support for multi-valued request headers.
+
 ## [0.14.0] - 2022-10-28
 
 ### Changed

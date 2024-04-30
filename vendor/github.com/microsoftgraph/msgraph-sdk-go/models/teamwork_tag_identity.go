@@ -13,8 +13,8 @@ func NewTeamworkTagIdentity()(*TeamworkTagIdentity) {
     m := &TeamworkTagIdentity{
         Identity: *NewIdentity(),
     }
-    odataTypeValue := "#microsoft.graph.teamworkTagIdentity";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.teamworkTagIdentity"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateTeamworkTagIdentityFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -33,4 +33,9 @@ func (m *TeamworkTagIdentity) Serialize(writer i878a80d2330e89d26896388a3f487eef
         return err
     }
     return nil
+}
+// TeamworkTagIdentityable 
+type TeamworkTagIdentityable interface {
+    Identityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
 }

@@ -1,21 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// WorkbookRangeBorder provides operations to manage the collection of agreement entities.
+// WorkbookRangeBorder 
 type WorkbookRangeBorder struct {
     Entity
-    // HTML color code representing the color of the border line, of the form #RRGGBB (e.g. 'FFA500') or as a named HTML color (e.g. 'orange').
-    color *string
-    // Constant value that indicates the specific side of the border. The possible values are: EdgeTop, EdgeBottom, EdgeLeft, EdgeRight, InsideVertical, InsideHorizontal, DiagonalDown, DiagonalUp. Read-only.
-    sideIndex *string
-    // One of the constants of line style specifying the line style for the border. The possible values are: None, Continuous, Dash, DashDot, DashDotDot, Dot, Double, SlantDashDot.
-    style *string
-    // Specifies the weight of the border around a range. The possible values are: Hairline, Thin, Medium, Thick.
-    weight *string
 }
 // NewWorkbookRangeBorder instantiates a new workbookRangeBorder and sets the default values.
 func NewWorkbookRangeBorder()(*WorkbookRangeBorder) {
@@ -30,28 +21,92 @@ func CreateWorkbookRangeBorderFromDiscriminatorValue(parseNode i878a80d2330e89d2
 }
 // GetColor gets the color property value. HTML color code representing the color of the border line, of the form #RRGGBB (e.g. 'FFA500') or as a named HTML color (e.g. 'orange').
 func (m *WorkbookRangeBorder) GetColor()(*string) {
-    return m.color
+    val, err := m.GetBackingStore().Get("color")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *WorkbookRangeBorder) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["color"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetColor)
-    res["sideIndex"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSideIndex)
-    res["style"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetStyle)
-    res["weight"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetWeight)
+    res["color"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetColor(val)
+        }
+        return nil
+    }
+    res["sideIndex"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSideIndex(val)
+        }
+        return nil
+    }
+    res["style"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetStyle(val)
+        }
+        return nil
+    }
+    res["weight"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWeight(val)
+        }
+        return nil
+    }
     return res
 }
 // GetSideIndex gets the sideIndex property value. Constant value that indicates the specific side of the border. The possible values are: EdgeTop, EdgeBottom, EdgeLeft, EdgeRight, InsideVertical, InsideHorizontal, DiagonalDown, DiagonalUp. Read-only.
 func (m *WorkbookRangeBorder) GetSideIndex()(*string) {
-    return m.sideIndex
+    val, err := m.GetBackingStore().Get("sideIndex")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetStyle gets the style property value. One of the constants of line style specifying the line style for the border. The possible values are: None, Continuous, Dash, DashDot, DashDotDot, Dot, Double, SlantDashDot.
 func (m *WorkbookRangeBorder) GetStyle()(*string) {
-    return m.style
+    val, err := m.GetBackingStore().Get("style")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetWeight gets the weight property value. Specifies the weight of the border around a range. The possible values are: Hairline, Thin, Medium, Thick.
 func (m *WorkbookRangeBorder) GetWeight()(*string) {
-    return m.weight
+    val, err := m.GetBackingStore().Get("weight")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *WorkbookRangeBorder) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -87,17 +142,42 @@ func (m *WorkbookRangeBorder) Serialize(writer i878a80d2330e89d26896388a3f487eef
 }
 // SetColor sets the color property value. HTML color code representing the color of the border line, of the form #RRGGBB (e.g. 'FFA500') or as a named HTML color (e.g. 'orange').
 func (m *WorkbookRangeBorder) SetColor(value *string)() {
-    m.color = value
+    err := m.GetBackingStore().Set("color", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSideIndex sets the sideIndex property value. Constant value that indicates the specific side of the border. The possible values are: EdgeTop, EdgeBottom, EdgeLeft, EdgeRight, InsideVertical, InsideHorizontal, DiagonalDown, DiagonalUp. Read-only.
 func (m *WorkbookRangeBorder) SetSideIndex(value *string)() {
-    m.sideIndex = value
+    err := m.GetBackingStore().Set("sideIndex", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetStyle sets the style property value. One of the constants of line style specifying the line style for the border. The possible values are: None, Continuous, Dash, DashDot, DashDotDot, Dot, Double, SlantDashDot.
 func (m *WorkbookRangeBorder) SetStyle(value *string)() {
-    m.style = value
+    err := m.GetBackingStore().Set("style", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWeight sets the weight property value. Specifies the weight of the border around a range. The possible values are: Hairline, Thin, Medium, Thick.
 func (m *WorkbookRangeBorder) SetWeight(value *string)() {
-    m.weight = value
+    err := m.GetBackingStore().Set("weight", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// WorkbookRangeBorderable 
+type WorkbookRangeBorderable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetColor()(*string)
+    GetSideIndex()(*string)
+    GetStyle()(*string)
+    GetWeight()(*string)
+    SetColor(value *string)()
+    SetSideIndex(value *string)()
+    SetStyle(value *string)()
+    SetWeight(value *string)()
 }

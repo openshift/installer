@@ -2,89 +2,12 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// EducationUser provides operations to manage the collection of agreement entities.
+// EducationUser 
 type EducationUser struct {
     Entity
-    // True if the account is enabled; otherwise, false. This property is required when a user is created. Supports $filter.
-    accountEnabled *bool
-    // The licenses that are assigned to the user. Not nullable.
-    assignedLicenses []AssignedLicenseable
-    // The plans that are assigned to the user. Read-only. Not nullable.
-    assignedPlans []AssignedPlanable
-    // Assignments belonging to the user.
-    assignments []EducationAssignmentable
-    // The telephone numbers for the user. Note: Although this is a string collection, only one number can be set for this property.
-    businessPhones []string
-    // Classes to which the user belongs. Nullable.
-    classes []EducationClassable
-    // The entity who created the user.
-    createdBy IdentitySetable
-    // The name for the department in which the user works. Supports $filter.
-    department *string
-    // The name displayed in the address book for the user. This is usually the combination of the user's first name, middle initial, and last name. This property is required when a user is created and it cannot be cleared during updates. Supports $filter and $orderby.
-    displayName *string
-    // Where this user was created from. Possible values are: sis, manual.
-    externalSource *EducationExternalSource
-    // The name of the external source this resource was generated from.
-    externalSourceDetail *string
-    // The given name (first name) of the user. Supports $filter.
-    givenName *string
-    // The SMTP address for the user, for example, jeff@contoso.onmicrosoft.com. Read-Only. Supports $filter.
-    mail *string
-    // The mail address of the user.
-    mailingAddress PhysicalAddressable
-    // The mail alias for the user. This property must be specified when a user is created. Supports $filter.
-    mailNickname *string
-    // The middle name of the user.
-    middleName *string
-    // The primary cellular telephone number for the user.
-    mobilePhone *string
-    // The officeLocation property
-    officeLocation *string
-    // Additional information used to associate the Azure Active Directory user with its Active Directory counterpart.
-    onPremisesInfo EducationOnPremisesInfoable
-    // Specifies password policies for the user. This value is an enumeration with one possible value being DisableStrongPassword, which allows weaker passwords than the default policy to be specified. DisablePasswordExpiration can also be specified. The two can be specified together; for example: DisablePasswordExpiration, DisableStrongPassword.
-    passwordPolicies *string
-    // Specifies the password profile for the user. The profile contains the user's password. This property is required when a user is created. The password in the profile must satisfy minimum requirements as specified by the passwordPolicies property. By default, a strong password is required.
-    passwordProfile PasswordProfileable
-    // The preferred language for the user that should follow the ISO 639-1 code, for example, en-US.
-    preferredLanguage *string
-    // The primaryRole property
-    primaryRole *EducationUserRole
-    // The plans that are provisioned for the user. Read-only. Not nullable.
-    provisionedPlans []ProvisionedPlanable
-    // The refreshTokensValidFromDateTime property
-    refreshTokensValidFromDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Related records associated with the user. Read-only.
-    relatedContacts []RelatedContactable
-    // The address where the user lives.
-    residenceAddress PhysicalAddressable
-    // When set, the grading rubric attached to the assignment.
-    rubrics []EducationRubricable
-    // Schools to which the user belongs. Nullable.
-    schools []EducationSchoolable
-    // True if the Outlook Global Address List should contain this user; otherwise, false. If not set, this will be treated as true. For users invited through the invitation manager, this property will be set to false.
-    showInAddressList *bool
-    // If the primary role is student, this block will contain student specific data.
-    student EducationStudentable
-    // The user's surname (family name or last name). Supports $filter.
-    surname *string
-    // Classes for which the user is a teacher.
-    taughtClasses []EducationClassable
-    // If the primary role is teacher, this block will contain teacher specific data.
-    teacher EducationTeacherable
-    // A two-letter country code (ISO standard 3166). Required for users who will be assigned licenses due to a legal requirement to check for availability of services in countries or regions. Examples include: US, JP, and GB. Not nullable. Supports $filter.
-    usageLocation *string
-    // The directory user that corresponds to this user.
-    user Userable
-    // The user principal name (UPN) of the user. The UPN is an internet-style login name for the user based on the internet standard RFC 822. By convention, this should map to the user's email name. The general format is alias@domain, where domain must be present in the tenant's collection of verified domains. This property is required when a user is created. The verified domains for the tenant can be accessed from the verifiedDomains property of the organization. Supports $filter and $orderby.
-    userPrincipalName *string
-    // A string value that can be used to classify user types in your directory, such as Member and Guest. Supports $filter.
-    userType *string
 }
 // NewEducationUser instantiates a new educationUser and sets the default values.
 func NewEducationUser()(*EducationUser) {
@@ -99,198 +22,846 @@ func CreateEducationUserFromDiscriminatorValue(parseNode i878a80d2330e89d2689638
 }
 // GetAccountEnabled gets the accountEnabled property value. True if the account is enabled; otherwise, false. This property is required when a user is created. Supports $filter.
 func (m *EducationUser) GetAccountEnabled()(*bool) {
-    return m.accountEnabled
+    val, err := m.GetBackingStore().Get("accountEnabled")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetAssignedLicenses gets the assignedLicenses property value. The licenses that are assigned to the user. Not nullable.
 func (m *EducationUser) GetAssignedLicenses()([]AssignedLicenseable) {
-    return m.assignedLicenses
+    val, err := m.GetBackingStore().Get("assignedLicenses")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]AssignedLicenseable)
+    }
+    return nil
 }
 // GetAssignedPlans gets the assignedPlans property value. The plans that are assigned to the user. Read-only. Not nullable.
 func (m *EducationUser) GetAssignedPlans()([]AssignedPlanable) {
-    return m.assignedPlans
+    val, err := m.GetBackingStore().Get("assignedPlans")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]AssignedPlanable)
+    }
+    return nil
 }
 // GetAssignments gets the assignments property value. Assignments belonging to the user.
 func (m *EducationUser) GetAssignments()([]EducationAssignmentable) {
-    return m.assignments
+    val, err := m.GetBackingStore().Get("assignments")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]EducationAssignmentable)
+    }
+    return nil
 }
 // GetBusinessPhones gets the businessPhones property value. The telephone numbers for the user. Note: Although this is a string collection, only one number can be set for this property.
 func (m *EducationUser) GetBusinessPhones()([]string) {
-    return m.businessPhones
+    val, err := m.GetBackingStore().Get("businessPhones")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
 }
 // GetClasses gets the classes property value. Classes to which the user belongs. Nullable.
 func (m *EducationUser) GetClasses()([]EducationClassable) {
-    return m.classes
+    val, err := m.GetBackingStore().Get("classes")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]EducationClassable)
+    }
+    return nil
 }
 // GetCreatedBy gets the createdBy property value. The entity who created the user.
 func (m *EducationUser) GetCreatedBy()(IdentitySetable) {
-    return m.createdBy
+    val, err := m.GetBackingStore().Get("createdBy")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(IdentitySetable)
+    }
+    return nil
 }
 // GetDepartment gets the department property value. The name for the department in which the user works. Supports $filter.
 func (m *EducationUser) GetDepartment()(*string) {
-    return m.department
+    val, err := m.GetBackingStore().Get("department")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDisplayName gets the displayName property value. The name displayed in the address book for the user. This is usually the combination of the user's first name, middle initial, and last name. This property is required when a user is created and it cannot be cleared during updates. Supports $filter and $orderby.
 func (m *EducationUser) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetExternalSource gets the externalSource property value. Where this user was created from. Possible values are: sis, manual.
 func (m *EducationUser) GetExternalSource()(*EducationExternalSource) {
-    return m.externalSource
+    val, err := m.GetBackingStore().Get("externalSource")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*EducationExternalSource)
+    }
+    return nil
 }
 // GetExternalSourceDetail gets the externalSourceDetail property value. The name of the external source this resource was generated from.
 func (m *EducationUser) GetExternalSourceDetail()(*string) {
-    return m.externalSourceDetail
+    val, err := m.GetBackingStore().Get("externalSourceDetail")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *EducationUser) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["accountEnabled"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetAccountEnabled)
-    res["assignedLicenses"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateAssignedLicenseFromDiscriminatorValue , m.SetAssignedLicenses)
-    res["assignedPlans"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateAssignedPlanFromDiscriminatorValue , m.SetAssignedPlans)
-    res["assignments"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateEducationAssignmentFromDiscriminatorValue , m.SetAssignments)
-    res["businessPhones"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetBusinessPhones)
-    res["classes"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateEducationClassFromDiscriminatorValue , m.SetClasses)
-    res["createdBy"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateIdentitySetFromDiscriminatorValue , m.SetCreatedBy)
-    res["department"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDepartment)
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["externalSource"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseEducationExternalSource , m.SetExternalSource)
-    res["externalSourceDetail"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetExternalSourceDetail)
-    res["givenName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetGivenName)
-    res["mail"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetMail)
-    res["mailingAddress"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreatePhysicalAddressFromDiscriminatorValue , m.SetMailingAddress)
-    res["mailNickname"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetMailNickname)
-    res["middleName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetMiddleName)
-    res["mobilePhone"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetMobilePhone)
-    res["officeLocation"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOfficeLocation)
-    res["onPremisesInfo"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateEducationOnPremisesInfoFromDiscriminatorValue , m.SetOnPremisesInfo)
-    res["passwordPolicies"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetPasswordPolicies)
-    res["passwordProfile"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreatePasswordProfileFromDiscriminatorValue , m.SetPasswordProfile)
-    res["preferredLanguage"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetPreferredLanguage)
-    res["primaryRole"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseEducationUserRole , m.SetPrimaryRole)
-    res["provisionedPlans"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateProvisionedPlanFromDiscriminatorValue , m.SetProvisionedPlans)
-    res["refreshTokensValidFromDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetRefreshTokensValidFromDateTime)
-    res["relatedContacts"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateRelatedContactFromDiscriminatorValue , m.SetRelatedContacts)
-    res["residenceAddress"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreatePhysicalAddressFromDiscriminatorValue , m.SetResidenceAddress)
-    res["rubrics"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateEducationRubricFromDiscriminatorValue , m.SetRubrics)
-    res["schools"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateEducationSchoolFromDiscriminatorValue , m.SetSchools)
-    res["showInAddressList"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetShowInAddressList)
-    res["student"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateEducationStudentFromDiscriminatorValue , m.SetStudent)
-    res["surname"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSurname)
-    res["taughtClasses"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateEducationClassFromDiscriminatorValue , m.SetTaughtClasses)
-    res["teacher"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateEducationTeacherFromDiscriminatorValue , m.SetTeacher)
-    res["usageLocation"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetUsageLocation)
-    res["user"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateUserFromDiscriminatorValue , m.SetUser)
-    res["userPrincipalName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetUserPrincipalName)
-    res["userType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetUserType)
+    res["accountEnabled"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAccountEnabled(val)
+        }
+        return nil
+    }
+    res["assignedLicenses"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateAssignedLicenseFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]AssignedLicenseable, len(val))
+            for i, v := range val {
+                res[i] = v.(AssignedLicenseable)
+            }
+            m.SetAssignedLicenses(res)
+        }
+        return nil
+    }
+    res["assignedPlans"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateAssignedPlanFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]AssignedPlanable, len(val))
+            for i, v := range val {
+                res[i] = v.(AssignedPlanable)
+            }
+            m.SetAssignedPlans(res)
+        }
+        return nil
+    }
+    res["assignments"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateEducationAssignmentFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]EducationAssignmentable, len(val))
+            for i, v := range val {
+                res[i] = v.(EducationAssignmentable)
+            }
+            m.SetAssignments(res)
+        }
+        return nil
+    }
+    res["businessPhones"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetBusinessPhones(res)
+        }
+        return nil
+    }
+    res["classes"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateEducationClassFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]EducationClassable, len(val))
+            for i, v := range val {
+                res[i] = v.(EducationClassable)
+            }
+            m.SetClasses(res)
+        }
+        return nil
+    }
+    res["createdBy"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateIdentitySetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCreatedBy(val.(IdentitySetable))
+        }
+        return nil
+    }
+    res["department"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDepartment(val)
+        }
+        return nil
+    }
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["externalSource"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseEducationExternalSource)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetExternalSource(val.(*EducationExternalSource))
+        }
+        return nil
+    }
+    res["externalSourceDetail"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetExternalSourceDetail(val)
+        }
+        return nil
+    }
+    res["givenName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetGivenName(val)
+        }
+        return nil
+    }
+    res["mail"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMail(val)
+        }
+        return nil
+    }
+    res["mailingAddress"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreatePhysicalAddressFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMailingAddress(val.(PhysicalAddressable))
+        }
+        return nil
+    }
+    res["mailNickname"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMailNickname(val)
+        }
+        return nil
+    }
+    res["middleName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMiddleName(val)
+        }
+        return nil
+    }
+    res["mobilePhone"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMobilePhone(val)
+        }
+        return nil
+    }
+    res["officeLocation"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOfficeLocation(val)
+        }
+        return nil
+    }
+    res["onPremisesInfo"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateEducationOnPremisesInfoFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOnPremisesInfo(val.(EducationOnPremisesInfoable))
+        }
+        return nil
+    }
+    res["passwordPolicies"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPasswordPolicies(val)
+        }
+        return nil
+    }
+    res["passwordProfile"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreatePasswordProfileFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPasswordProfile(val.(PasswordProfileable))
+        }
+        return nil
+    }
+    res["preferredLanguage"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPreferredLanguage(val)
+        }
+        return nil
+    }
+    res["primaryRole"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseEducationUserRole)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPrimaryRole(val.(*EducationUserRole))
+        }
+        return nil
+    }
+    res["provisionedPlans"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateProvisionedPlanFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]ProvisionedPlanable, len(val))
+            for i, v := range val {
+                res[i] = v.(ProvisionedPlanable)
+            }
+            m.SetProvisionedPlans(res)
+        }
+        return nil
+    }
+    res["refreshTokensValidFromDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRefreshTokensValidFromDateTime(val)
+        }
+        return nil
+    }
+    res["relatedContacts"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateRelatedContactFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]RelatedContactable, len(val))
+            for i, v := range val {
+                res[i] = v.(RelatedContactable)
+            }
+            m.SetRelatedContacts(res)
+        }
+        return nil
+    }
+    res["residenceAddress"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreatePhysicalAddressFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetResidenceAddress(val.(PhysicalAddressable))
+        }
+        return nil
+    }
+    res["rubrics"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateEducationRubricFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]EducationRubricable, len(val))
+            for i, v := range val {
+                res[i] = v.(EducationRubricable)
+            }
+            m.SetRubrics(res)
+        }
+        return nil
+    }
+    res["schools"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateEducationSchoolFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]EducationSchoolable, len(val))
+            for i, v := range val {
+                res[i] = v.(EducationSchoolable)
+            }
+            m.SetSchools(res)
+        }
+        return nil
+    }
+    res["showInAddressList"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetShowInAddressList(val)
+        }
+        return nil
+    }
+    res["student"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateEducationStudentFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetStudent(val.(EducationStudentable))
+        }
+        return nil
+    }
+    res["surname"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSurname(val)
+        }
+        return nil
+    }
+    res["taughtClasses"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateEducationClassFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]EducationClassable, len(val))
+            for i, v := range val {
+                res[i] = v.(EducationClassable)
+            }
+            m.SetTaughtClasses(res)
+        }
+        return nil
+    }
+    res["teacher"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateEducationTeacherFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTeacher(val.(EducationTeacherable))
+        }
+        return nil
+    }
+    res["usageLocation"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUsageLocation(val)
+        }
+        return nil
+    }
+    res["user"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateUserFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUser(val.(Userable))
+        }
+        return nil
+    }
+    res["userPrincipalName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUserPrincipalName(val)
+        }
+        return nil
+    }
+    res["userType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUserType(val)
+        }
+        return nil
+    }
     return res
 }
 // GetGivenName gets the givenName property value. The given name (first name) of the user. Supports $filter.
 func (m *EducationUser) GetGivenName()(*string) {
-    return m.givenName
+    val, err := m.GetBackingStore().Get("givenName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetMail gets the mail property value. The SMTP address for the user, for example, jeff@contoso.onmicrosoft.com. Read-Only. Supports $filter.
 func (m *EducationUser) GetMail()(*string) {
-    return m.mail
+    val, err := m.GetBackingStore().Get("mail")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetMailingAddress gets the mailingAddress property value. The mail address of the user.
 func (m *EducationUser) GetMailingAddress()(PhysicalAddressable) {
-    return m.mailingAddress
+    val, err := m.GetBackingStore().Get("mailingAddress")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(PhysicalAddressable)
+    }
+    return nil
 }
 // GetMailNickname gets the mailNickname property value. The mail alias for the user. This property must be specified when a user is created. Supports $filter.
 func (m *EducationUser) GetMailNickname()(*string) {
-    return m.mailNickname
+    val, err := m.GetBackingStore().Get("mailNickname")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetMiddleName gets the middleName property value. The middle name of the user.
 func (m *EducationUser) GetMiddleName()(*string) {
-    return m.middleName
+    val, err := m.GetBackingStore().Get("middleName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetMobilePhone gets the mobilePhone property value. The primary cellular telephone number for the user.
 func (m *EducationUser) GetMobilePhone()(*string) {
-    return m.mobilePhone
+    val, err := m.GetBackingStore().Get("mobilePhone")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOfficeLocation gets the officeLocation property value. The officeLocation property
 func (m *EducationUser) GetOfficeLocation()(*string) {
-    return m.officeLocation
+    val, err := m.GetBackingStore().Get("officeLocation")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOnPremisesInfo gets the onPremisesInfo property value. Additional information used to associate the Azure Active Directory user with its Active Directory counterpart.
 func (m *EducationUser) GetOnPremisesInfo()(EducationOnPremisesInfoable) {
-    return m.onPremisesInfo
+    val, err := m.GetBackingStore().Get("onPremisesInfo")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(EducationOnPremisesInfoable)
+    }
+    return nil
 }
 // GetPasswordPolicies gets the passwordPolicies property value. Specifies password policies for the user. This value is an enumeration with one possible value being DisableStrongPassword, which allows weaker passwords than the default policy to be specified. DisablePasswordExpiration can also be specified. The two can be specified together; for example: DisablePasswordExpiration, DisableStrongPassword.
 func (m *EducationUser) GetPasswordPolicies()(*string) {
-    return m.passwordPolicies
+    val, err := m.GetBackingStore().Get("passwordPolicies")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetPasswordProfile gets the passwordProfile property value. Specifies the password profile for the user. The profile contains the user's password. This property is required when a user is created. The password in the profile must satisfy minimum requirements as specified by the passwordPolicies property. By default, a strong password is required.
 func (m *EducationUser) GetPasswordProfile()(PasswordProfileable) {
-    return m.passwordProfile
+    val, err := m.GetBackingStore().Get("passwordProfile")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(PasswordProfileable)
+    }
+    return nil
 }
 // GetPreferredLanguage gets the preferredLanguage property value. The preferred language for the user that should follow the ISO 639-1 code, for example, en-US.
 func (m *EducationUser) GetPreferredLanguage()(*string) {
-    return m.preferredLanguage
+    val, err := m.GetBackingStore().Get("preferredLanguage")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetPrimaryRole gets the primaryRole property value. The primaryRole property
 func (m *EducationUser) GetPrimaryRole()(*EducationUserRole) {
-    return m.primaryRole
+    val, err := m.GetBackingStore().Get("primaryRole")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*EducationUserRole)
+    }
+    return nil
 }
 // GetProvisionedPlans gets the provisionedPlans property value. The plans that are provisioned for the user. Read-only. Not nullable.
 func (m *EducationUser) GetProvisionedPlans()([]ProvisionedPlanable) {
-    return m.provisionedPlans
+    val, err := m.GetBackingStore().Get("provisionedPlans")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]ProvisionedPlanable)
+    }
+    return nil
 }
 // GetRefreshTokensValidFromDateTime gets the refreshTokensValidFromDateTime property value. The refreshTokensValidFromDateTime property
 func (m *EducationUser) GetRefreshTokensValidFromDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.refreshTokensValidFromDateTime
+    val, err := m.GetBackingStore().Get("refreshTokensValidFromDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetRelatedContacts gets the relatedContacts property value. Related records associated with the user. Read-only.
 func (m *EducationUser) GetRelatedContacts()([]RelatedContactable) {
-    return m.relatedContacts
+    val, err := m.GetBackingStore().Get("relatedContacts")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]RelatedContactable)
+    }
+    return nil
 }
 // GetResidenceAddress gets the residenceAddress property value. The address where the user lives.
 func (m *EducationUser) GetResidenceAddress()(PhysicalAddressable) {
-    return m.residenceAddress
+    val, err := m.GetBackingStore().Get("residenceAddress")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(PhysicalAddressable)
+    }
+    return nil
 }
 // GetRubrics gets the rubrics property value. When set, the grading rubric attached to the assignment.
 func (m *EducationUser) GetRubrics()([]EducationRubricable) {
-    return m.rubrics
+    val, err := m.GetBackingStore().Get("rubrics")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]EducationRubricable)
+    }
+    return nil
 }
 // GetSchools gets the schools property value. Schools to which the user belongs. Nullable.
 func (m *EducationUser) GetSchools()([]EducationSchoolable) {
-    return m.schools
+    val, err := m.GetBackingStore().Get("schools")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]EducationSchoolable)
+    }
+    return nil
 }
 // GetShowInAddressList gets the showInAddressList property value. True if the Outlook Global Address List should contain this user; otherwise, false. If not set, this will be treated as true. For users invited through the invitation manager, this property will be set to false.
 func (m *EducationUser) GetShowInAddressList()(*bool) {
-    return m.showInAddressList
+    val, err := m.GetBackingStore().Get("showInAddressList")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetStudent gets the student property value. If the primary role is student, this block will contain student specific data.
 func (m *EducationUser) GetStudent()(EducationStudentable) {
-    return m.student
+    val, err := m.GetBackingStore().Get("student")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(EducationStudentable)
+    }
+    return nil
 }
 // GetSurname gets the surname property value. The user's surname (family name or last name). Supports $filter.
 func (m *EducationUser) GetSurname()(*string) {
-    return m.surname
+    val, err := m.GetBackingStore().Get("surname")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetTaughtClasses gets the taughtClasses property value. Classes for which the user is a teacher.
 func (m *EducationUser) GetTaughtClasses()([]EducationClassable) {
-    return m.taughtClasses
+    val, err := m.GetBackingStore().Get("taughtClasses")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]EducationClassable)
+    }
+    return nil
 }
 // GetTeacher gets the teacher property value. If the primary role is teacher, this block will contain teacher specific data.
 func (m *EducationUser) GetTeacher()(EducationTeacherable) {
-    return m.teacher
+    val, err := m.GetBackingStore().Get("teacher")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(EducationTeacherable)
+    }
+    return nil
 }
 // GetUsageLocation gets the usageLocation property value. A two-letter country code (ISO standard 3166). Required for users who will be assigned licenses due to a legal requirement to check for availability of services in countries or regions. Examples include: US, JP, and GB. Not nullable. Supports $filter.
 func (m *EducationUser) GetUsageLocation()(*string) {
-    return m.usageLocation
+    val, err := m.GetBackingStore().Get("usageLocation")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetUser gets the user property value. The directory user that corresponds to this user.
 func (m *EducationUser) GetUser()(Userable) {
-    return m.user
+    val, err := m.GetBackingStore().Get("user")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Userable)
+    }
+    return nil
 }
 // GetUserPrincipalName gets the userPrincipalName property value. The user principal name (UPN) of the user. The UPN is an internet-style login name for the user based on the internet standard RFC 822. By convention, this should map to the user's email name. The general format is alias@domain, where domain must be present in the tenant's collection of verified domains. This property is required when a user is created. The verified domains for the tenant can be accessed from the verifiedDomains property of the organization. Supports $filter and $orderby.
 func (m *EducationUser) GetUserPrincipalName()(*string) {
-    return m.userPrincipalName
+    val, err := m.GetBackingStore().Get("userPrincipalName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetUserType gets the userType property value. A string value that can be used to classify user types in your directory, such as Member and Guest. Supports $filter.
 func (m *EducationUser) GetUserType()(*string) {
-    return m.userType
+    val, err := m.GetBackingStore().Get("userType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *EducationUser) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -305,21 +876,30 @@ func (m *EducationUser) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0
         }
     }
     if m.GetAssignedLicenses() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetAssignedLicenses())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetAssignedLicenses()))
+        for i, v := range m.GetAssignedLicenses() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("assignedLicenses", cast)
         if err != nil {
             return err
         }
     }
     if m.GetAssignedPlans() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetAssignedPlans())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetAssignedPlans()))
+        for i, v := range m.GetAssignedPlans() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("assignedPlans", cast)
         if err != nil {
             return err
         }
     }
     if m.GetAssignments() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetAssignments())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetAssignments()))
+        for i, v := range m.GetAssignments() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("assignments", cast)
         if err != nil {
             return err
@@ -332,7 +912,10 @@ func (m *EducationUser) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0
         }
     }
     if m.GetClasses() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetClasses())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetClasses()))
+        for i, v := range m.GetClasses() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("classes", cast)
         if err != nil {
             return err
@@ -443,7 +1026,10 @@ func (m *EducationUser) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0
         }
     }
     if m.GetProvisionedPlans() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetProvisionedPlans())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetProvisionedPlans()))
+        for i, v := range m.GetProvisionedPlans() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("provisionedPlans", cast)
         if err != nil {
             return err
@@ -456,7 +1042,10 @@ func (m *EducationUser) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0
         }
     }
     if m.GetRelatedContacts() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetRelatedContacts())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetRelatedContacts()))
+        for i, v := range m.GetRelatedContacts() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("relatedContacts", cast)
         if err != nil {
             return err
@@ -469,14 +1058,20 @@ func (m *EducationUser) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0
         }
     }
     if m.GetRubrics() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetRubrics())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetRubrics()))
+        for i, v := range m.GetRubrics() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("rubrics", cast)
         if err != nil {
             return err
         }
     }
     if m.GetSchools() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetSchools())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetSchools()))
+        for i, v := range m.GetSchools() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("schools", cast)
         if err != nil {
             return err
@@ -501,7 +1096,10 @@ func (m *EducationUser) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0
         }
     }
     if m.GetTaughtClasses() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetTaughtClasses())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetTaughtClasses()))
+        for i, v := range m.GetTaughtClasses() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("taughtClasses", cast)
         if err != nil {
             return err
@@ -541,153 +1139,348 @@ func (m *EducationUser) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0
 }
 // SetAccountEnabled sets the accountEnabled property value. True if the account is enabled; otherwise, false. This property is required when a user is created. Supports $filter.
 func (m *EducationUser) SetAccountEnabled(value *bool)() {
-    m.accountEnabled = value
+    err := m.GetBackingStore().Set("accountEnabled", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAssignedLicenses sets the assignedLicenses property value. The licenses that are assigned to the user. Not nullable.
 func (m *EducationUser) SetAssignedLicenses(value []AssignedLicenseable)() {
-    m.assignedLicenses = value
+    err := m.GetBackingStore().Set("assignedLicenses", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAssignedPlans sets the assignedPlans property value. The plans that are assigned to the user. Read-only. Not nullable.
 func (m *EducationUser) SetAssignedPlans(value []AssignedPlanable)() {
-    m.assignedPlans = value
+    err := m.GetBackingStore().Set("assignedPlans", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAssignments sets the assignments property value. Assignments belonging to the user.
 func (m *EducationUser) SetAssignments(value []EducationAssignmentable)() {
-    m.assignments = value
+    err := m.GetBackingStore().Set("assignments", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBusinessPhones sets the businessPhones property value. The telephone numbers for the user. Note: Although this is a string collection, only one number can be set for this property.
 func (m *EducationUser) SetBusinessPhones(value []string)() {
-    m.businessPhones = value
+    err := m.GetBackingStore().Set("businessPhones", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetClasses sets the classes property value. Classes to which the user belongs. Nullable.
 func (m *EducationUser) SetClasses(value []EducationClassable)() {
-    m.classes = value
+    err := m.GetBackingStore().Set("classes", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCreatedBy sets the createdBy property value. The entity who created the user.
 func (m *EducationUser) SetCreatedBy(value IdentitySetable)() {
-    m.createdBy = value
+    err := m.GetBackingStore().Set("createdBy", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDepartment sets the department property value. The name for the department in which the user works. Supports $filter.
 func (m *EducationUser) SetDepartment(value *string)() {
-    m.department = value
+    err := m.GetBackingStore().Set("department", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDisplayName sets the displayName property value. The name displayed in the address book for the user. This is usually the combination of the user's first name, middle initial, and last name. This property is required when a user is created and it cannot be cleared during updates. Supports $filter and $orderby.
 func (m *EducationUser) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetExternalSource sets the externalSource property value. Where this user was created from. Possible values are: sis, manual.
 func (m *EducationUser) SetExternalSource(value *EducationExternalSource)() {
-    m.externalSource = value
+    err := m.GetBackingStore().Set("externalSource", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetExternalSourceDetail sets the externalSourceDetail property value. The name of the external source this resource was generated from.
 func (m *EducationUser) SetExternalSourceDetail(value *string)() {
-    m.externalSourceDetail = value
+    err := m.GetBackingStore().Set("externalSourceDetail", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetGivenName sets the givenName property value. The given name (first name) of the user. Supports $filter.
 func (m *EducationUser) SetGivenName(value *string)() {
-    m.givenName = value
+    err := m.GetBackingStore().Set("givenName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMail sets the mail property value. The SMTP address for the user, for example, jeff@contoso.onmicrosoft.com. Read-Only. Supports $filter.
 func (m *EducationUser) SetMail(value *string)() {
-    m.mail = value
+    err := m.GetBackingStore().Set("mail", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMailingAddress sets the mailingAddress property value. The mail address of the user.
 func (m *EducationUser) SetMailingAddress(value PhysicalAddressable)() {
-    m.mailingAddress = value
+    err := m.GetBackingStore().Set("mailingAddress", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMailNickname sets the mailNickname property value. The mail alias for the user. This property must be specified when a user is created. Supports $filter.
 func (m *EducationUser) SetMailNickname(value *string)() {
-    m.mailNickname = value
+    err := m.GetBackingStore().Set("mailNickname", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMiddleName sets the middleName property value. The middle name of the user.
 func (m *EducationUser) SetMiddleName(value *string)() {
-    m.middleName = value
+    err := m.GetBackingStore().Set("middleName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMobilePhone sets the mobilePhone property value. The primary cellular telephone number for the user.
 func (m *EducationUser) SetMobilePhone(value *string)() {
-    m.mobilePhone = value
+    err := m.GetBackingStore().Set("mobilePhone", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOfficeLocation sets the officeLocation property value. The officeLocation property
 func (m *EducationUser) SetOfficeLocation(value *string)() {
-    m.officeLocation = value
+    err := m.GetBackingStore().Set("officeLocation", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOnPremisesInfo sets the onPremisesInfo property value. Additional information used to associate the Azure Active Directory user with its Active Directory counterpart.
 func (m *EducationUser) SetOnPremisesInfo(value EducationOnPremisesInfoable)() {
-    m.onPremisesInfo = value
+    err := m.GetBackingStore().Set("onPremisesInfo", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPasswordPolicies sets the passwordPolicies property value. Specifies password policies for the user. This value is an enumeration with one possible value being DisableStrongPassword, which allows weaker passwords than the default policy to be specified. DisablePasswordExpiration can also be specified. The two can be specified together; for example: DisablePasswordExpiration, DisableStrongPassword.
 func (m *EducationUser) SetPasswordPolicies(value *string)() {
-    m.passwordPolicies = value
+    err := m.GetBackingStore().Set("passwordPolicies", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPasswordProfile sets the passwordProfile property value. Specifies the password profile for the user. The profile contains the user's password. This property is required when a user is created. The password in the profile must satisfy minimum requirements as specified by the passwordPolicies property. By default, a strong password is required.
 func (m *EducationUser) SetPasswordProfile(value PasswordProfileable)() {
-    m.passwordProfile = value
+    err := m.GetBackingStore().Set("passwordProfile", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPreferredLanguage sets the preferredLanguage property value. The preferred language for the user that should follow the ISO 639-1 code, for example, en-US.
 func (m *EducationUser) SetPreferredLanguage(value *string)() {
-    m.preferredLanguage = value
+    err := m.GetBackingStore().Set("preferredLanguage", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPrimaryRole sets the primaryRole property value. The primaryRole property
 func (m *EducationUser) SetPrimaryRole(value *EducationUserRole)() {
-    m.primaryRole = value
+    err := m.GetBackingStore().Set("primaryRole", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetProvisionedPlans sets the provisionedPlans property value. The plans that are provisioned for the user. Read-only. Not nullable.
 func (m *EducationUser) SetProvisionedPlans(value []ProvisionedPlanable)() {
-    m.provisionedPlans = value
+    err := m.GetBackingStore().Set("provisionedPlans", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRefreshTokensValidFromDateTime sets the refreshTokensValidFromDateTime property value. The refreshTokensValidFromDateTime property
 func (m *EducationUser) SetRefreshTokensValidFromDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.refreshTokensValidFromDateTime = value
+    err := m.GetBackingStore().Set("refreshTokensValidFromDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRelatedContacts sets the relatedContacts property value. Related records associated with the user. Read-only.
 func (m *EducationUser) SetRelatedContacts(value []RelatedContactable)() {
-    m.relatedContacts = value
+    err := m.GetBackingStore().Set("relatedContacts", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetResidenceAddress sets the residenceAddress property value. The address where the user lives.
 func (m *EducationUser) SetResidenceAddress(value PhysicalAddressable)() {
-    m.residenceAddress = value
+    err := m.GetBackingStore().Set("residenceAddress", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRubrics sets the rubrics property value. When set, the grading rubric attached to the assignment.
 func (m *EducationUser) SetRubrics(value []EducationRubricable)() {
-    m.rubrics = value
+    err := m.GetBackingStore().Set("rubrics", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSchools sets the schools property value. Schools to which the user belongs. Nullable.
 func (m *EducationUser) SetSchools(value []EducationSchoolable)() {
-    m.schools = value
+    err := m.GetBackingStore().Set("schools", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetShowInAddressList sets the showInAddressList property value. True if the Outlook Global Address List should contain this user; otherwise, false. If not set, this will be treated as true. For users invited through the invitation manager, this property will be set to false.
 func (m *EducationUser) SetShowInAddressList(value *bool)() {
-    m.showInAddressList = value
+    err := m.GetBackingStore().Set("showInAddressList", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetStudent sets the student property value. If the primary role is student, this block will contain student specific data.
 func (m *EducationUser) SetStudent(value EducationStudentable)() {
-    m.student = value
+    err := m.GetBackingStore().Set("student", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSurname sets the surname property value. The user's surname (family name or last name). Supports $filter.
 func (m *EducationUser) SetSurname(value *string)() {
-    m.surname = value
+    err := m.GetBackingStore().Set("surname", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTaughtClasses sets the taughtClasses property value. Classes for which the user is a teacher.
 func (m *EducationUser) SetTaughtClasses(value []EducationClassable)() {
-    m.taughtClasses = value
+    err := m.GetBackingStore().Set("taughtClasses", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTeacher sets the teacher property value. If the primary role is teacher, this block will contain teacher specific data.
 func (m *EducationUser) SetTeacher(value EducationTeacherable)() {
-    m.teacher = value
+    err := m.GetBackingStore().Set("teacher", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUsageLocation sets the usageLocation property value. A two-letter country code (ISO standard 3166). Required for users who will be assigned licenses due to a legal requirement to check for availability of services in countries or regions. Examples include: US, JP, and GB. Not nullable. Supports $filter.
 func (m *EducationUser) SetUsageLocation(value *string)() {
-    m.usageLocation = value
+    err := m.GetBackingStore().Set("usageLocation", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUser sets the user property value. The directory user that corresponds to this user.
 func (m *EducationUser) SetUser(value Userable)() {
-    m.user = value
+    err := m.GetBackingStore().Set("user", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUserPrincipalName sets the userPrincipalName property value. The user principal name (UPN) of the user. The UPN is an internet-style login name for the user based on the internet standard RFC 822. By convention, this should map to the user's email name. The general format is alias@domain, where domain must be present in the tenant's collection of verified domains. This property is required when a user is created. The verified domains for the tenant can be accessed from the verifiedDomains property of the organization. Supports $filter and $orderby.
 func (m *EducationUser) SetUserPrincipalName(value *string)() {
-    m.userPrincipalName = value
+    err := m.GetBackingStore().Set("userPrincipalName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUserType sets the userType property value. A string value that can be used to classify user types in your directory, such as Member and Guest. Supports $filter.
 func (m *EducationUser) SetUserType(value *string)() {
-    m.userType = value
+    err := m.GetBackingStore().Set("userType", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// EducationUserable 
+type EducationUserable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAccountEnabled()(*bool)
+    GetAssignedLicenses()([]AssignedLicenseable)
+    GetAssignedPlans()([]AssignedPlanable)
+    GetAssignments()([]EducationAssignmentable)
+    GetBusinessPhones()([]string)
+    GetClasses()([]EducationClassable)
+    GetCreatedBy()(IdentitySetable)
+    GetDepartment()(*string)
+    GetDisplayName()(*string)
+    GetExternalSource()(*EducationExternalSource)
+    GetExternalSourceDetail()(*string)
+    GetGivenName()(*string)
+    GetMail()(*string)
+    GetMailingAddress()(PhysicalAddressable)
+    GetMailNickname()(*string)
+    GetMiddleName()(*string)
+    GetMobilePhone()(*string)
+    GetOfficeLocation()(*string)
+    GetOnPremisesInfo()(EducationOnPremisesInfoable)
+    GetPasswordPolicies()(*string)
+    GetPasswordProfile()(PasswordProfileable)
+    GetPreferredLanguage()(*string)
+    GetPrimaryRole()(*EducationUserRole)
+    GetProvisionedPlans()([]ProvisionedPlanable)
+    GetRefreshTokensValidFromDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetRelatedContacts()([]RelatedContactable)
+    GetResidenceAddress()(PhysicalAddressable)
+    GetRubrics()([]EducationRubricable)
+    GetSchools()([]EducationSchoolable)
+    GetShowInAddressList()(*bool)
+    GetStudent()(EducationStudentable)
+    GetSurname()(*string)
+    GetTaughtClasses()([]EducationClassable)
+    GetTeacher()(EducationTeacherable)
+    GetUsageLocation()(*string)
+    GetUser()(Userable)
+    GetUserPrincipalName()(*string)
+    GetUserType()(*string)
+    SetAccountEnabled(value *bool)()
+    SetAssignedLicenses(value []AssignedLicenseable)()
+    SetAssignedPlans(value []AssignedPlanable)()
+    SetAssignments(value []EducationAssignmentable)()
+    SetBusinessPhones(value []string)()
+    SetClasses(value []EducationClassable)()
+    SetCreatedBy(value IdentitySetable)()
+    SetDepartment(value *string)()
+    SetDisplayName(value *string)()
+    SetExternalSource(value *EducationExternalSource)()
+    SetExternalSourceDetail(value *string)()
+    SetGivenName(value *string)()
+    SetMail(value *string)()
+    SetMailingAddress(value PhysicalAddressable)()
+    SetMailNickname(value *string)()
+    SetMiddleName(value *string)()
+    SetMobilePhone(value *string)()
+    SetOfficeLocation(value *string)()
+    SetOnPremisesInfo(value EducationOnPremisesInfoable)()
+    SetPasswordPolicies(value *string)()
+    SetPasswordProfile(value PasswordProfileable)()
+    SetPreferredLanguage(value *string)()
+    SetPrimaryRole(value *EducationUserRole)()
+    SetProvisionedPlans(value []ProvisionedPlanable)()
+    SetRefreshTokensValidFromDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetRelatedContacts(value []RelatedContactable)()
+    SetResidenceAddress(value PhysicalAddressable)()
+    SetRubrics(value []EducationRubricable)()
+    SetSchools(value []EducationSchoolable)()
+    SetShowInAddressList(value *bool)()
+    SetStudent(value EducationStudentable)()
+    SetSurname(value *string)()
+    SetTaughtClasses(value []EducationClassable)()
+    SetTeacher(value EducationTeacherable)()
+    SetUsageLocation(value *string)()
+    SetUser(value Userable)()
+    SetUserPrincipalName(value *string)()
+    SetUserType(value *string)()
 }

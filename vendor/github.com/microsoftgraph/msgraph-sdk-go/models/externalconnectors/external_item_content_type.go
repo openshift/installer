@@ -2,7 +2,7 @@ package externalconnectors
 import (
     "errors"
 )
-// Provides operations to manage the collection of externalConnection entities.
+// 
 type ExternalItemContentType int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i ExternalItemContentType) String() string {
     return []string{"text", "html", "unknownFutureValue"}[i]
 }
-func ParseExternalItemContentType(v string) (interface{}, error) {
+func ParseExternalItemContentType(v string) (any, error) {
     result := TEXT_EXTERNALITEMCONTENTTYPE
     switch v {
         case "text":

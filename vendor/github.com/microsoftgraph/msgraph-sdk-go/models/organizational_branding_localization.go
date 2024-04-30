@@ -4,7 +4,7 @@ import (
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// OrganizationalBrandingLocalization provides operations to manage the organizationalBranding singleton.
+// OrganizationalBrandingLocalization 
 type OrganizationalBrandingLocalization struct {
     OrganizationalBrandingProperties
 }
@@ -13,8 +13,8 @@ func NewOrganizationalBrandingLocalization()(*OrganizationalBrandingLocalization
     m := &OrganizationalBrandingLocalization{
         OrganizationalBrandingProperties: *NewOrganizationalBrandingProperties(),
     }
-    odataTypeValue := "#microsoft.graph.organizationalBrandingLocalization";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.organizationalBrandingLocalization"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateOrganizationalBrandingLocalizationFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -33,4 +33,9 @@ func (m *OrganizationalBrandingLocalization) Serialize(writer i878a80d2330e89d26
         return err
     }
     return nil
+}
+// OrganizationalBrandingLocalizationable 
+type OrganizationalBrandingLocalizationable interface {
+    OrganizationalBrandingPropertiesable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
 }

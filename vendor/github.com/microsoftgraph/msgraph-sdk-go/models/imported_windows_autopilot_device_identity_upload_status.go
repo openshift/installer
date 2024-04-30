@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ImportedWindowsAutopilotDeviceIdentityUploadStatus int
 
 const (
@@ -19,7 +19,7 @@ const (
 func (i ImportedWindowsAutopilotDeviceIdentityUploadStatus) String() string {
     return []string{"noUpload", "pending", "complete", "error"}[i]
 }
-func ParseImportedWindowsAutopilotDeviceIdentityUploadStatus(v string) (interface{}, error) {
+func ParseImportedWindowsAutopilotDeviceIdentityUploadStatus(v string) (any, error) {
     result := NOUPLOAD_IMPORTEDWINDOWSAUTOPILOTDEVICEIDENTITYUPLOADSTATUS
     switch v {
         case "noUpload":

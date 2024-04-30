@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type RegistryOperation int
 
 const (
@@ -16,7 +16,7 @@ const (
 func (i RegistryOperation) String() string {
     return []string{"unknown", "create", "modify", "delete", "unknownFutureValue"}[i]
 }
-func ParseRegistryOperation(v string) (interface{}, error) {
+func ParseRegistryOperation(v string) (any, error) {
     result := UNKNOWN_REGISTRYOPERATION
     switch v {
         case "unknown":

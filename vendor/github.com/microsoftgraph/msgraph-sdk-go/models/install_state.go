@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Possible values for install state.
 type InstallState int
 
 const (
@@ -23,7 +23,7 @@ const (
 func (i InstallState) String() string {
     return []string{"notApplicable", "installed", "failed", "notInstalled", "uninstallFailed", "unknown"}[i]
 }
-func ParseInstallState(v string) (interface{}, error) {
+func ParseInstallState(v string) (any, error) {
     result := NOTAPPLICABLE_INSTALLSTATE
     switch v {
         case "notApplicable":

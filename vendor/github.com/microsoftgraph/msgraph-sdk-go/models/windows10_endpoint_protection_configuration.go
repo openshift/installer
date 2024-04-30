@@ -1,93 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // Windows10EndpointProtectionConfiguration 
 type Windows10EndpointProtectionConfiguration struct {
     DeviceConfiguration
-    // Allow persisting user generated data inside the App Guard Containter (favorites, cookies, web passwords, etc.)
-    applicationGuardAllowPersistence *bool
-    // Allow printing to Local Printers from Container
-    applicationGuardAllowPrintToLocalPrinters *bool
-    // Allow printing to Network Printers from Container
-    applicationGuardAllowPrintToNetworkPrinters *bool
-    // Allow printing to PDF from Container
-    applicationGuardAllowPrintToPDF *bool
-    // Allow printing to XPS from Container
-    applicationGuardAllowPrintToXPS *bool
-    // Possible values for applicationGuardBlockClipboardSharingType
-    applicationGuardBlockClipboardSharing *ApplicationGuardBlockClipboardSharingType
-    // Possible values for applicationGuardBlockFileTransfer
-    applicationGuardBlockFileTransfer *ApplicationGuardBlockFileTransferType
-    // Block enterprise sites to load non-enterprise content, such as third party plug-ins
-    applicationGuardBlockNonEnterpriseContent *bool
-    // Enable Windows Defender Application Guard
-    applicationGuardEnabled *bool
-    // Force auditing will persist Windows logs and events to meet security/compliance criteria (sample events are user login-logoff, use of privilege rights, software installation, system changes, etc.)
-    applicationGuardForceAuditing *bool
-    // Possible values of AppLocker Application Control Types
-    appLockerApplicationControl *AppLockerApplicationControlType
-    // Allows the Admin to disable the warning prompt for other disk encryption on the user machines.
-    bitLockerDisableWarningForOtherDiskEncryption *bool
-    // Allows the admin to require encryption to be turned on using BitLocker. This policy is valid only for a mobile SKU.
-    bitLockerEnableStorageCardEncryptionOnMobile *bool
-    // Allows the admin to require encryption to be turned on using BitLocker.
-    bitLockerEncryptDevice *bool
-    // BitLocker Removable Drive Policy.
-    bitLockerRemovableDrivePolicy BitLockerRemovableDrivePolicyable
-    // List of folder paths to be added to the list of protected folders
-    defenderAdditionalGuardedFolders []string
-    // List of exe files and folders to be excluded from attack surface reduction rules
-    defenderAttackSurfaceReductionExcludedPaths []string
-    // Xml content containing information regarding exploit protection details.
-    defenderExploitProtectionXml []byte
-    // Name of the file from which DefenderExploitProtectionXml was obtained.
-    defenderExploitProtectionXmlFileName *string
-    // List of paths to exe that are allowed to access protected folders
-    defenderGuardedFoldersAllowedAppPaths []string
-    // Indicates whether or not to block user from overriding Exploit Protection settings.
-    defenderSecurityCenterBlockExploitProtectionOverride *bool
-    // Blocks stateful FTP connections to the device
-    firewallBlockStatefulFTP *bool
-    // Possible values for firewallCertificateRevocationListCheckMethod
-    firewallCertificateRevocationListCheckMethod *FirewallCertificateRevocationListCheckMethodType
-    // Configures the idle timeout for security associations, in seconds, from 300 to 3600 inclusive. This is the period after which security associations will expire and be deleted. Valid values 300 to 3600
-    firewallIdleTimeoutForSecurityAssociationInSeconds *int32
-    // Configures IPSec exemptions to allow both IPv4 and IPv6 DHCP traffic
-    firewallIPSecExemptionsAllowDHCP *bool
-    // Configures IPSec exemptions to allow ICMP
-    firewallIPSecExemptionsAllowICMP *bool
-    // Configures IPSec exemptions to allow neighbor discovery IPv6 ICMP type-codes
-    firewallIPSecExemptionsAllowNeighborDiscovery *bool
-    // Configures IPSec exemptions to allow router discovery IPv6 ICMP type-codes
-    firewallIPSecExemptionsAllowRouterDiscovery *bool
-    // If an authentication set is not fully supported by a keying module, direct the module to ignore only unsupported authentication suites rather than the entire set
-    firewallMergeKeyingModuleSettings *bool
-    // Possible values for firewallPacketQueueingMethod
-    firewallPacketQueueingMethod *FirewallPacketQueueingMethodType
-    // Possible values for firewallPreSharedKeyEncodingMethod
-    firewallPreSharedKeyEncodingMethod *FirewallPreSharedKeyEncodingMethodType
-    // Configures the firewall profile settings for domain networks
-    firewallProfileDomain WindowsFirewallNetworkProfileable
-    // Configures the firewall profile settings for private networks
-    firewallProfilePrivate WindowsFirewallNetworkProfileable
-    // Configures the firewall profile settings for public networks
-    firewallProfilePublic WindowsFirewallNetworkProfileable
-    // Allows IT Admins to control whether users can can ignore SmartScreen warnings and run malicious files.
-    smartScreenBlockOverrideForFiles *bool
-    // Allows IT Admins to configure SmartScreen for Windows.
-    smartScreenEnableInShell *bool
 }
 // NewWindows10EndpointProtectionConfiguration instantiates a new Windows10EndpointProtectionConfiguration and sets the default values.
 func NewWindows10EndpointProtectionConfiguration()(*Windows10EndpointProtectionConfiguration) {
     m := &Windows10EndpointProtectionConfiguration{
         DeviceConfiguration: *NewDeviceConfiguration(),
     }
-    odataTypeValue := "#microsoft.graph.windows10EndpointProtectionConfiguration";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.windows10EndpointProtectionConfiguration"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateWindows10EndpointProtectionConfigurationFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -96,188 +23,776 @@ func CreateWindows10EndpointProtectionConfigurationFromDiscriminatorValue(parseN
 }
 // GetApplicationGuardAllowPersistence gets the applicationGuardAllowPersistence property value. Allow persisting user generated data inside the App Guard Containter (favorites, cookies, web passwords, etc.)
 func (m *Windows10EndpointProtectionConfiguration) GetApplicationGuardAllowPersistence()(*bool) {
-    return m.applicationGuardAllowPersistence
+    val, err := m.GetBackingStore().Get("applicationGuardAllowPersistence")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetApplicationGuardAllowPrintToLocalPrinters gets the applicationGuardAllowPrintToLocalPrinters property value. Allow printing to Local Printers from Container
 func (m *Windows10EndpointProtectionConfiguration) GetApplicationGuardAllowPrintToLocalPrinters()(*bool) {
-    return m.applicationGuardAllowPrintToLocalPrinters
+    val, err := m.GetBackingStore().Get("applicationGuardAllowPrintToLocalPrinters")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetApplicationGuardAllowPrintToNetworkPrinters gets the applicationGuardAllowPrintToNetworkPrinters property value. Allow printing to Network Printers from Container
 func (m *Windows10EndpointProtectionConfiguration) GetApplicationGuardAllowPrintToNetworkPrinters()(*bool) {
-    return m.applicationGuardAllowPrintToNetworkPrinters
+    val, err := m.GetBackingStore().Get("applicationGuardAllowPrintToNetworkPrinters")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetApplicationGuardAllowPrintToPDF gets the applicationGuardAllowPrintToPDF property value. Allow printing to PDF from Container
 func (m *Windows10EndpointProtectionConfiguration) GetApplicationGuardAllowPrintToPDF()(*bool) {
-    return m.applicationGuardAllowPrintToPDF
+    val, err := m.GetBackingStore().Get("applicationGuardAllowPrintToPDF")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetApplicationGuardAllowPrintToXPS gets the applicationGuardAllowPrintToXPS property value. Allow printing to XPS from Container
 func (m *Windows10EndpointProtectionConfiguration) GetApplicationGuardAllowPrintToXPS()(*bool) {
-    return m.applicationGuardAllowPrintToXPS
+    val, err := m.GetBackingStore().Get("applicationGuardAllowPrintToXPS")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetApplicationGuardBlockClipboardSharing gets the applicationGuardBlockClipboardSharing property value. Possible values for applicationGuardBlockClipboardSharingType
 func (m *Windows10EndpointProtectionConfiguration) GetApplicationGuardBlockClipboardSharing()(*ApplicationGuardBlockClipboardSharingType) {
-    return m.applicationGuardBlockClipboardSharing
+    val, err := m.GetBackingStore().Get("applicationGuardBlockClipboardSharing")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*ApplicationGuardBlockClipboardSharingType)
+    }
+    return nil
 }
 // GetApplicationGuardBlockFileTransfer gets the applicationGuardBlockFileTransfer property value. Possible values for applicationGuardBlockFileTransfer
 func (m *Windows10EndpointProtectionConfiguration) GetApplicationGuardBlockFileTransfer()(*ApplicationGuardBlockFileTransferType) {
-    return m.applicationGuardBlockFileTransfer
+    val, err := m.GetBackingStore().Get("applicationGuardBlockFileTransfer")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*ApplicationGuardBlockFileTransferType)
+    }
+    return nil
 }
 // GetApplicationGuardBlockNonEnterpriseContent gets the applicationGuardBlockNonEnterpriseContent property value. Block enterprise sites to load non-enterprise content, such as third party plug-ins
 func (m *Windows10EndpointProtectionConfiguration) GetApplicationGuardBlockNonEnterpriseContent()(*bool) {
-    return m.applicationGuardBlockNonEnterpriseContent
+    val, err := m.GetBackingStore().Get("applicationGuardBlockNonEnterpriseContent")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetApplicationGuardEnabled gets the applicationGuardEnabled property value. Enable Windows Defender Application Guard
 func (m *Windows10EndpointProtectionConfiguration) GetApplicationGuardEnabled()(*bool) {
-    return m.applicationGuardEnabled
+    val, err := m.GetBackingStore().Get("applicationGuardEnabled")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetApplicationGuardForceAuditing gets the applicationGuardForceAuditing property value. Force auditing will persist Windows logs and events to meet security/compliance criteria (sample events are user login-logoff, use of privilege rights, software installation, system changes, etc.)
 func (m *Windows10EndpointProtectionConfiguration) GetApplicationGuardForceAuditing()(*bool) {
-    return m.applicationGuardForceAuditing
+    val, err := m.GetBackingStore().Get("applicationGuardForceAuditing")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetAppLockerApplicationControl gets the appLockerApplicationControl property value. Possible values of AppLocker Application Control Types
 func (m *Windows10EndpointProtectionConfiguration) GetAppLockerApplicationControl()(*AppLockerApplicationControlType) {
-    return m.appLockerApplicationControl
+    val, err := m.GetBackingStore().Get("appLockerApplicationControl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*AppLockerApplicationControlType)
+    }
+    return nil
 }
 // GetBitLockerDisableWarningForOtherDiskEncryption gets the bitLockerDisableWarningForOtherDiskEncryption property value. Allows the Admin to disable the warning prompt for other disk encryption on the user machines.
 func (m *Windows10EndpointProtectionConfiguration) GetBitLockerDisableWarningForOtherDiskEncryption()(*bool) {
-    return m.bitLockerDisableWarningForOtherDiskEncryption
+    val, err := m.GetBackingStore().Get("bitLockerDisableWarningForOtherDiskEncryption")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetBitLockerEnableStorageCardEncryptionOnMobile gets the bitLockerEnableStorageCardEncryptionOnMobile property value. Allows the admin to require encryption to be turned on using BitLocker. This policy is valid only for a mobile SKU.
 func (m *Windows10EndpointProtectionConfiguration) GetBitLockerEnableStorageCardEncryptionOnMobile()(*bool) {
-    return m.bitLockerEnableStorageCardEncryptionOnMobile
+    val, err := m.GetBackingStore().Get("bitLockerEnableStorageCardEncryptionOnMobile")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetBitLockerEncryptDevice gets the bitLockerEncryptDevice property value. Allows the admin to require encryption to be turned on using BitLocker.
 func (m *Windows10EndpointProtectionConfiguration) GetBitLockerEncryptDevice()(*bool) {
-    return m.bitLockerEncryptDevice
+    val, err := m.GetBackingStore().Get("bitLockerEncryptDevice")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetBitLockerRemovableDrivePolicy gets the bitLockerRemovableDrivePolicy property value. BitLocker Removable Drive Policy.
 func (m *Windows10EndpointProtectionConfiguration) GetBitLockerRemovableDrivePolicy()(BitLockerRemovableDrivePolicyable) {
-    return m.bitLockerRemovableDrivePolicy
+    val, err := m.GetBackingStore().Get("bitLockerRemovableDrivePolicy")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(BitLockerRemovableDrivePolicyable)
+    }
+    return nil
 }
 // GetDefenderAdditionalGuardedFolders gets the defenderAdditionalGuardedFolders property value. List of folder paths to be added to the list of protected folders
 func (m *Windows10EndpointProtectionConfiguration) GetDefenderAdditionalGuardedFolders()([]string) {
-    return m.defenderAdditionalGuardedFolders
+    val, err := m.GetBackingStore().Get("defenderAdditionalGuardedFolders")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
 }
 // GetDefenderAttackSurfaceReductionExcludedPaths gets the defenderAttackSurfaceReductionExcludedPaths property value. List of exe files and folders to be excluded from attack surface reduction rules
 func (m *Windows10EndpointProtectionConfiguration) GetDefenderAttackSurfaceReductionExcludedPaths()([]string) {
-    return m.defenderAttackSurfaceReductionExcludedPaths
+    val, err := m.GetBackingStore().Get("defenderAttackSurfaceReductionExcludedPaths")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
 }
 // GetDefenderExploitProtectionXml gets the defenderExploitProtectionXml property value. Xml content containing information regarding exploit protection details.
 func (m *Windows10EndpointProtectionConfiguration) GetDefenderExploitProtectionXml()([]byte) {
-    return m.defenderExploitProtectionXml
+    val, err := m.GetBackingStore().Get("defenderExploitProtectionXml")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]byte)
+    }
+    return nil
 }
 // GetDefenderExploitProtectionXmlFileName gets the defenderExploitProtectionXmlFileName property value. Name of the file from which DefenderExploitProtectionXml was obtained.
 func (m *Windows10EndpointProtectionConfiguration) GetDefenderExploitProtectionXmlFileName()(*string) {
-    return m.defenderExploitProtectionXmlFileName
+    val, err := m.GetBackingStore().Get("defenderExploitProtectionXmlFileName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDefenderGuardedFoldersAllowedAppPaths gets the defenderGuardedFoldersAllowedAppPaths property value. List of paths to exe that are allowed to access protected folders
 func (m *Windows10EndpointProtectionConfiguration) GetDefenderGuardedFoldersAllowedAppPaths()([]string) {
-    return m.defenderGuardedFoldersAllowedAppPaths
+    val, err := m.GetBackingStore().Get("defenderGuardedFoldersAllowedAppPaths")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
 }
 // GetDefenderSecurityCenterBlockExploitProtectionOverride gets the defenderSecurityCenterBlockExploitProtectionOverride property value. Indicates whether or not to block user from overriding Exploit Protection settings.
 func (m *Windows10EndpointProtectionConfiguration) GetDefenderSecurityCenterBlockExploitProtectionOverride()(*bool) {
-    return m.defenderSecurityCenterBlockExploitProtectionOverride
+    val, err := m.GetBackingStore().Get("defenderSecurityCenterBlockExploitProtectionOverride")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *Windows10EndpointProtectionConfiguration) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.DeviceConfiguration.GetFieldDeserializers()
-    res["applicationGuardAllowPersistence"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetApplicationGuardAllowPersistence)
-    res["applicationGuardAllowPrintToLocalPrinters"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetApplicationGuardAllowPrintToLocalPrinters)
-    res["applicationGuardAllowPrintToNetworkPrinters"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetApplicationGuardAllowPrintToNetworkPrinters)
-    res["applicationGuardAllowPrintToPDF"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetApplicationGuardAllowPrintToPDF)
-    res["applicationGuardAllowPrintToXPS"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetApplicationGuardAllowPrintToXPS)
-    res["applicationGuardBlockClipboardSharing"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseApplicationGuardBlockClipboardSharingType , m.SetApplicationGuardBlockClipboardSharing)
-    res["applicationGuardBlockFileTransfer"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseApplicationGuardBlockFileTransferType , m.SetApplicationGuardBlockFileTransfer)
-    res["applicationGuardBlockNonEnterpriseContent"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetApplicationGuardBlockNonEnterpriseContent)
-    res["applicationGuardEnabled"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetApplicationGuardEnabled)
-    res["applicationGuardForceAuditing"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetApplicationGuardForceAuditing)
-    res["appLockerApplicationControl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseAppLockerApplicationControlType , m.SetAppLockerApplicationControl)
-    res["bitLockerDisableWarningForOtherDiskEncryption"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetBitLockerDisableWarningForOtherDiskEncryption)
-    res["bitLockerEnableStorageCardEncryptionOnMobile"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetBitLockerEnableStorageCardEncryptionOnMobile)
-    res["bitLockerEncryptDevice"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetBitLockerEncryptDevice)
-    res["bitLockerRemovableDrivePolicy"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateBitLockerRemovableDrivePolicyFromDiscriminatorValue , m.SetBitLockerRemovableDrivePolicy)
-    res["defenderAdditionalGuardedFolders"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetDefenderAdditionalGuardedFolders)
-    res["defenderAttackSurfaceReductionExcludedPaths"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetDefenderAttackSurfaceReductionExcludedPaths)
-    res["defenderExploitProtectionXml"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetByteArrayValue(m.SetDefenderExploitProtectionXml)
-    res["defenderExploitProtectionXmlFileName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDefenderExploitProtectionXmlFileName)
-    res["defenderGuardedFoldersAllowedAppPaths"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetDefenderGuardedFoldersAllowedAppPaths)
-    res["defenderSecurityCenterBlockExploitProtectionOverride"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetDefenderSecurityCenterBlockExploitProtectionOverride)
-    res["firewallBlockStatefulFTP"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetFirewallBlockStatefulFTP)
-    res["firewallCertificateRevocationListCheckMethod"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseFirewallCertificateRevocationListCheckMethodType , m.SetFirewallCertificateRevocationListCheckMethod)
-    res["firewallIdleTimeoutForSecurityAssociationInSeconds"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetFirewallIdleTimeoutForSecurityAssociationInSeconds)
-    res["firewallIPSecExemptionsAllowDHCP"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetFirewallIPSecExemptionsAllowDHCP)
-    res["firewallIPSecExemptionsAllowICMP"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetFirewallIPSecExemptionsAllowICMP)
-    res["firewallIPSecExemptionsAllowNeighborDiscovery"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetFirewallIPSecExemptionsAllowNeighborDiscovery)
-    res["firewallIPSecExemptionsAllowRouterDiscovery"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetFirewallIPSecExemptionsAllowRouterDiscovery)
-    res["firewallMergeKeyingModuleSettings"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetFirewallMergeKeyingModuleSettings)
-    res["firewallPacketQueueingMethod"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseFirewallPacketQueueingMethodType , m.SetFirewallPacketQueueingMethod)
-    res["firewallPreSharedKeyEncodingMethod"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseFirewallPreSharedKeyEncodingMethodType , m.SetFirewallPreSharedKeyEncodingMethod)
-    res["firewallProfileDomain"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateWindowsFirewallNetworkProfileFromDiscriminatorValue , m.SetFirewallProfileDomain)
-    res["firewallProfilePrivate"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateWindowsFirewallNetworkProfileFromDiscriminatorValue , m.SetFirewallProfilePrivate)
-    res["firewallProfilePublic"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateWindowsFirewallNetworkProfileFromDiscriminatorValue , m.SetFirewallProfilePublic)
-    res["smartScreenBlockOverrideForFiles"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetSmartScreenBlockOverrideForFiles)
-    res["smartScreenEnableInShell"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetSmartScreenEnableInShell)
+    res["applicationGuardAllowPersistence"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetApplicationGuardAllowPersistence(val)
+        }
+        return nil
+    }
+    res["applicationGuardAllowPrintToLocalPrinters"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetApplicationGuardAllowPrintToLocalPrinters(val)
+        }
+        return nil
+    }
+    res["applicationGuardAllowPrintToNetworkPrinters"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetApplicationGuardAllowPrintToNetworkPrinters(val)
+        }
+        return nil
+    }
+    res["applicationGuardAllowPrintToPDF"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetApplicationGuardAllowPrintToPDF(val)
+        }
+        return nil
+    }
+    res["applicationGuardAllowPrintToXPS"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetApplicationGuardAllowPrintToXPS(val)
+        }
+        return nil
+    }
+    res["applicationGuardBlockClipboardSharing"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseApplicationGuardBlockClipboardSharingType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetApplicationGuardBlockClipboardSharing(val.(*ApplicationGuardBlockClipboardSharingType))
+        }
+        return nil
+    }
+    res["applicationGuardBlockFileTransfer"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseApplicationGuardBlockFileTransferType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetApplicationGuardBlockFileTransfer(val.(*ApplicationGuardBlockFileTransferType))
+        }
+        return nil
+    }
+    res["applicationGuardBlockNonEnterpriseContent"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetApplicationGuardBlockNonEnterpriseContent(val)
+        }
+        return nil
+    }
+    res["applicationGuardEnabled"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetApplicationGuardEnabled(val)
+        }
+        return nil
+    }
+    res["applicationGuardForceAuditing"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetApplicationGuardForceAuditing(val)
+        }
+        return nil
+    }
+    res["appLockerApplicationControl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseAppLockerApplicationControlType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAppLockerApplicationControl(val.(*AppLockerApplicationControlType))
+        }
+        return nil
+    }
+    res["bitLockerDisableWarningForOtherDiskEncryption"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBitLockerDisableWarningForOtherDiskEncryption(val)
+        }
+        return nil
+    }
+    res["bitLockerEnableStorageCardEncryptionOnMobile"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBitLockerEnableStorageCardEncryptionOnMobile(val)
+        }
+        return nil
+    }
+    res["bitLockerEncryptDevice"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBitLockerEncryptDevice(val)
+        }
+        return nil
+    }
+    res["bitLockerRemovableDrivePolicy"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateBitLockerRemovableDrivePolicyFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBitLockerRemovableDrivePolicy(val.(BitLockerRemovableDrivePolicyable))
+        }
+        return nil
+    }
+    res["defenderAdditionalGuardedFolders"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetDefenderAdditionalGuardedFolders(res)
+        }
+        return nil
+    }
+    res["defenderAttackSurfaceReductionExcludedPaths"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetDefenderAttackSurfaceReductionExcludedPaths(res)
+        }
+        return nil
+    }
+    res["defenderExploitProtectionXml"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetByteArrayValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDefenderExploitProtectionXml(val)
+        }
+        return nil
+    }
+    res["defenderExploitProtectionXmlFileName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDefenderExploitProtectionXmlFileName(val)
+        }
+        return nil
+    }
+    res["defenderGuardedFoldersAllowedAppPaths"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetDefenderGuardedFoldersAllowedAppPaths(res)
+        }
+        return nil
+    }
+    res["defenderSecurityCenterBlockExploitProtectionOverride"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDefenderSecurityCenterBlockExploitProtectionOverride(val)
+        }
+        return nil
+    }
+    res["firewallBlockStatefulFTP"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFirewallBlockStatefulFTP(val)
+        }
+        return nil
+    }
+    res["firewallCertificateRevocationListCheckMethod"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseFirewallCertificateRevocationListCheckMethodType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFirewallCertificateRevocationListCheckMethod(val.(*FirewallCertificateRevocationListCheckMethodType))
+        }
+        return nil
+    }
+    res["firewallIdleTimeoutForSecurityAssociationInSeconds"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFirewallIdleTimeoutForSecurityAssociationInSeconds(val)
+        }
+        return nil
+    }
+    res["firewallIPSecExemptionsAllowDHCP"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFirewallIPSecExemptionsAllowDHCP(val)
+        }
+        return nil
+    }
+    res["firewallIPSecExemptionsAllowICMP"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFirewallIPSecExemptionsAllowICMP(val)
+        }
+        return nil
+    }
+    res["firewallIPSecExemptionsAllowNeighborDiscovery"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFirewallIPSecExemptionsAllowNeighborDiscovery(val)
+        }
+        return nil
+    }
+    res["firewallIPSecExemptionsAllowRouterDiscovery"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFirewallIPSecExemptionsAllowRouterDiscovery(val)
+        }
+        return nil
+    }
+    res["firewallMergeKeyingModuleSettings"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFirewallMergeKeyingModuleSettings(val)
+        }
+        return nil
+    }
+    res["firewallPacketQueueingMethod"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseFirewallPacketQueueingMethodType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFirewallPacketQueueingMethod(val.(*FirewallPacketQueueingMethodType))
+        }
+        return nil
+    }
+    res["firewallPreSharedKeyEncodingMethod"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseFirewallPreSharedKeyEncodingMethodType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFirewallPreSharedKeyEncodingMethod(val.(*FirewallPreSharedKeyEncodingMethodType))
+        }
+        return nil
+    }
+    res["firewallProfileDomain"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateWindowsFirewallNetworkProfileFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFirewallProfileDomain(val.(WindowsFirewallNetworkProfileable))
+        }
+        return nil
+    }
+    res["firewallProfilePrivate"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateWindowsFirewallNetworkProfileFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFirewallProfilePrivate(val.(WindowsFirewallNetworkProfileable))
+        }
+        return nil
+    }
+    res["firewallProfilePublic"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateWindowsFirewallNetworkProfileFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFirewallProfilePublic(val.(WindowsFirewallNetworkProfileable))
+        }
+        return nil
+    }
+    res["smartScreenBlockOverrideForFiles"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSmartScreenBlockOverrideForFiles(val)
+        }
+        return nil
+    }
+    res["smartScreenEnableInShell"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSmartScreenEnableInShell(val)
+        }
+        return nil
+    }
     return res
 }
 // GetFirewallBlockStatefulFTP gets the firewallBlockStatefulFTP property value. Blocks stateful FTP connections to the device
 func (m *Windows10EndpointProtectionConfiguration) GetFirewallBlockStatefulFTP()(*bool) {
-    return m.firewallBlockStatefulFTP
+    val, err := m.GetBackingStore().Get("firewallBlockStatefulFTP")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetFirewallCertificateRevocationListCheckMethod gets the firewallCertificateRevocationListCheckMethod property value. Possible values for firewallCertificateRevocationListCheckMethod
 func (m *Windows10EndpointProtectionConfiguration) GetFirewallCertificateRevocationListCheckMethod()(*FirewallCertificateRevocationListCheckMethodType) {
-    return m.firewallCertificateRevocationListCheckMethod
+    val, err := m.GetBackingStore().Get("firewallCertificateRevocationListCheckMethod")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*FirewallCertificateRevocationListCheckMethodType)
+    }
+    return nil
 }
 // GetFirewallIdleTimeoutForSecurityAssociationInSeconds gets the firewallIdleTimeoutForSecurityAssociationInSeconds property value. Configures the idle timeout for security associations, in seconds, from 300 to 3600 inclusive. This is the period after which security associations will expire and be deleted. Valid values 300 to 3600
 func (m *Windows10EndpointProtectionConfiguration) GetFirewallIdleTimeoutForSecurityAssociationInSeconds()(*int32) {
-    return m.firewallIdleTimeoutForSecurityAssociationInSeconds
+    val, err := m.GetBackingStore().Get("firewallIdleTimeoutForSecurityAssociationInSeconds")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetFirewallIPSecExemptionsAllowDHCP gets the firewallIPSecExemptionsAllowDHCP property value. Configures IPSec exemptions to allow both IPv4 and IPv6 DHCP traffic
 func (m *Windows10EndpointProtectionConfiguration) GetFirewallIPSecExemptionsAllowDHCP()(*bool) {
-    return m.firewallIPSecExemptionsAllowDHCP
+    val, err := m.GetBackingStore().Get("firewallIPSecExemptionsAllowDHCP")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetFirewallIPSecExemptionsAllowICMP gets the firewallIPSecExemptionsAllowICMP property value. Configures IPSec exemptions to allow ICMP
 func (m *Windows10EndpointProtectionConfiguration) GetFirewallIPSecExemptionsAllowICMP()(*bool) {
-    return m.firewallIPSecExemptionsAllowICMP
+    val, err := m.GetBackingStore().Get("firewallIPSecExemptionsAllowICMP")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetFirewallIPSecExemptionsAllowNeighborDiscovery gets the firewallIPSecExemptionsAllowNeighborDiscovery property value. Configures IPSec exemptions to allow neighbor discovery IPv6 ICMP type-codes
 func (m *Windows10EndpointProtectionConfiguration) GetFirewallIPSecExemptionsAllowNeighborDiscovery()(*bool) {
-    return m.firewallIPSecExemptionsAllowNeighborDiscovery
+    val, err := m.GetBackingStore().Get("firewallIPSecExemptionsAllowNeighborDiscovery")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetFirewallIPSecExemptionsAllowRouterDiscovery gets the firewallIPSecExemptionsAllowRouterDiscovery property value. Configures IPSec exemptions to allow router discovery IPv6 ICMP type-codes
 func (m *Windows10EndpointProtectionConfiguration) GetFirewallIPSecExemptionsAllowRouterDiscovery()(*bool) {
-    return m.firewallIPSecExemptionsAllowRouterDiscovery
+    val, err := m.GetBackingStore().Get("firewallIPSecExemptionsAllowRouterDiscovery")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetFirewallMergeKeyingModuleSettings gets the firewallMergeKeyingModuleSettings property value. If an authentication set is not fully supported by a keying module, direct the module to ignore only unsupported authentication suites rather than the entire set
 func (m *Windows10EndpointProtectionConfiguration) GetFirewallMergeKeyingModuleSettings()(*bool) {
-    return m.firewallMergeKeyingModuleSettings
+    val, err := m.GetBackingStore().Get("firewallMergeKeyingModuleSettings")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetFirewallPacketQueueingMethod gets the firewallPacketQueueingMethod property value. Possible values for firewallPacketQueueingMethod
 func (m *Windows10EndpointProtectionConfiguration) GetFirewallPacketQueueingMethod()(*FirewallPacketQueueingMethodType) {
-    return m.firewallPacketQueueingMethod
+    val, err := m.GetBackingStore().Get("firewallPacketQueueingMethod")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*FirewallPacketQueueingMethodType)
+    }
+    return nil
 }
 // GetFirewallPreSharedKeyEncodingMethod gets the firewallPreSharedKeyEncodingMethod property value. Possible values for firewallPreSharedKeyEncodingMethod
 func (m *Windows10EndpointProtectionConfiguration) GetFirewallPreSharedKeyEncodingMethod()(*FirewallPreSharedKeyEncodingMethodType) {
-    return m.firewallPreSharedKeyEncodingMethod
+    val, err := m.GetBackingStore().Get("firewallPreSharedKeyEncodingMethod")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*FirewallPreSharedKeyEncodingMethodType)
+    }
+    return nil
 }
 // GetFirewallProfileDomain gets the firewallProfileDomain property value. Configures the firewall profile settings for domain networks
 func (m *Windows10EndpointProtectionConfiguration) GetFirewallProfileDomain()(WindowsFirewallNetworkProfileable) {
-    return m.firewallProfileDomain
+    val, err := m.GetBackingStore().Get("firewallProfileDomain")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(WindowsFirewallNetworkProfileable)
+    }
+    return nil
 }
 // GetFirewallProfilePrivate gets the firewallProfilePrivate property value. Configures the firewall profile settings for private networks
 func (m *Windows10EndpointProtectionConfiguration) GetFirewallProfilePrivate()(WindowsFirewallNetworkProfileable) {
-    return m.firewallProfilePrivate
+    val, err := m.GetBackingStore().Get("firewallProfilePrivate")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(WindowsFirewallNetworkProfileable)
+    }
+    return nil
 }
 // GetFirewallProfilePublic gets the firewallProfilePublic property value. Configures the firewall profile settings for public networks
 func (m *Windows10EndpointProtectionConfiguration) GetFirewallProfilePublic()(WindowsFirewallNetworkProfileable) {
-    return m.firewallProfilePublic
+    val, err := m.GetBackingStore().Get("firewallProfilePublic")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(WindowsFirewallNetworkProfileable)
+    }
+    return nil
 }
 // GetSmartScreenBlockOverrideForFiles gets the smartScreenBlockOverrideForFiles property value. Allows IT Admins to control whether users can can ignore SmartScreen warnings and run malicious files.
 func (m *Windows10EndpointProtectionConfiguration) GetSmartScreenBlockOverrideForFiles()(*bool) {
-    return m.smartScreenBlockOverrideForFiles
+    val, err := m.GetBackingStore().Get("smartScreenBlockOverrideForFiles")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetSmartScreenEnableInShell gets the smartScreenEnableInShell property value. Allows IT Admins to configure SmartScreen for Windows.
 func (m *Windows10EndpointProtectionConfiguration) GetSmartScreenEnableInShell()(*bool) {
-    return m.smartScreenEnableInShell
+    val, err := m.GetBackingStore().Get("smartScreenEnableInShell")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *Windows10EndpointProtectionConfiguration) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -511,145 +1026,330 @@ func (m *Windows10EndpointProtectionConfiguration) Serialize(writer i878a80d2330
 }
 // SetApplicationGuardAllowPersistence sets the applicationGuardAllowPersistence property value. Allow persisting user generated data inside the App Guard Containter (favorites, cookies, web passwords, etc.)
 func (m *Windows10EndpointProtectionConfiguration) SetApplicationGuardAllowPersistence(value *bool)() {
-    m.applicationGuardAllowPersistence = value
+    err := m.GetBackingStore().Set("applicationGuardAllowPersistence", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetApplicationGuardAllowPrintToLocalPrinters sets the applicationGuardAllowPrintToLocalPrinters property value. Allow printing to Local Printers from Container
 func (m *Windows10EndpointProtectionConfiguration) SetApplicationGuardAllowPrintToLocalPrinters(value *bool)() {
-    m.applicationGuardAllowPrintToLocalPrinters = value
+    err := m.GetBackingStore().Set("applicationGuardAllowPrintToLocalPrinters", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetApplicationGuardAllowPrintToNetworkPrinters sets the applicationGuardAllowPrintToNetworkPrinters property value. Allow printing to Network Printers from Container
 func (m *Windows10EndpointProtectionConfiguration) SetApplicationGuardAllowPrintToNetworkPrinters(value *bool)() {
-    m.applicationGuardAllowPrintToNetworkPrinters = value
+    err := m.GetBackingStore().Set("applicationGuardAllowPrintToNetworkPrinters", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetApplicationGuardAllowPrintToPDF sets the applicationGuardAllowPrintToPDF property value. Allow printing to PDF from Container
 func (m *Windows10EndpointProtectionConfiguration) SetApplicationGuardAllowPrintToPDF(value *bool)() {
-    m.applicationGuardAllowPrintToPDF = value
+    err := m.GetBackingStore().Set("applicationGuardAllowPrintToPDF", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetApplicationGuardAllowPrintToXPS sets the applicationGuardAllowPrintToXPS property value. Allow printing to XPS from Container
 func (m *Windows10EndpointProtectionConfiguration) SetApplicationGuardAllowPrintToXPS(value *bool)() {
-    m.applicationGuardAllowPrintToXPS = value
+    err := m.GetBackingStore().Set("applicationGuardAllowPrintToXPS", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetApplicationGuardBlockClipboardSharing sets the applicationGuardBlockClipboardSharing property value. Possible values for applicationGuardBlockClipboardSharingType
 func (m *Windows10EndpointProtectionConfiguration) SetApplicationGuardBlockClipboardSharing(value *ApplicationGuardBlockClipboardSharingType)() {
-    m.applicationGuardBlockClipboardSharing = value
+    err := m.GetBackingStore().Set("applicationGuardBlockClipboardSharing", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetApplicationGuardBlockFileTransfer sets the applicationGuardBlockFileTransfer property value. Possible values for applicationGuardBlockFileTransfer
 func (m *Windows10EndpointProtectionConfiguration) SetApplicationGuardBlockFileTransfer(value *ApplicationGuardBlockFileTransferType)() {
-    m.applicationGuardBlockFileTransfer = value
+    err := m.GetBackingStore().Set("applicationGuardBlockFileTransfer", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetApplicationGuardBlockNonEnterpriseContent sets the applicationGuardBlockNonEnterpriseContent property value. Block enterprise sites to load non-enterprise content, such as third party plug-ins
 func (m *Windows10EndpointProtectionConfiguration) SetApplicationGuardBlockNonEnterpriseContent(value *bool)() {
-    m.applicationGuardBlockNonEnterpriseContent = value
+    err := m.GetBackingStore().Set("applicationGuardBlockNonEnterpriseContent", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetApplicationGuardEnabled sets the applicationGuardEnabled property value. Enable Windows Defender Application Guard
 func (m *Windows10EndpointProtectionConfiguration) SetApplicationGuardEnabled(value *bool)() {
-    m.applicationGuardEnabled = value
+    err := m.GetBackingStore().Set("applicationGuardEnabled", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetApplicationGuardForceAuditing sets the applicationGuardForceAuditing property value. Force auditing will persist Windows logs and events to meet security/compliance criteria (sample events are user login-logoff, use of privilege rights, software installation, system changes, etc.)
 func (m *Windows10EndpointProtectionConfiguration) SetApplicationGuardForceAuditing(value *bool)() {
-    m.applicationGuardForceAuditing = value
+    err := m.GetBackingStore().Set("applicationGuardForceAuditing", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAppLockerApplicationControl sets the appLockerApplicationControl property value. Possible values of AppLocker Application Control Types
 func (m *Windows10EndpointProtectionConfiguration) SetAppLockerApplicationControl(value *AppLockerApplicationControlType)() {
-    m.appLockerApplicationControl = value
+    err := m.GetBackingStore().Set("appLockerApplicationControl", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBitLockerDisableWarningForOtherDiskEncryption sets the bitLockerDisableWarningForOtherDiskEncryption property value. Allows the Admin to disable the warning prompt for other disk encryption on the user machines.
 func (m *Windows10EndpointProtectionConfiguration) SetBitLockerDisableWarningForOtherDiskEncryption(value *bool)() {
-    m.bitLockerDisableWarningForOtherDiskEncryption = value
+    err := m.GetBackingStore().Set("bitLockerDisableWarningForOtherDiskEncryption", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBitLockerEnableStorageCardEncryptionOnMobile sets the bitLockerEnableStorageCardEncryptionOnMobile property value. Allows the admin to require encryption to be turned on using BitLocker. This policy is valid only for a mobile SKU.
 func (m *Windows10EndpointProtectionConfiguration) SetBitLockerEnableStorageCardEncryptionOnMobile(value *bool)() {
-    m.bitLockerEnableStorageCardEncryptionOnMobile = value
+    err := m.GetBackingStore().Set("bitLockerEnableStorageCardEncryptionOnMobile", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBitLockerEncryptDevice sets the bitLockerEncryptDevice property value. Allows the admin to require encryption to be turned on using BitLocker.
 func (m *Windows10EndpointProtectionConfiguration) SetBitLockerEncryptDevice(value *bool)() {
-    m.bitLockerEncryptDevice = value
+    err := m.GetBackingStore().Set("bitLockerEncryptDevice", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBitLockerRemovableDrivePolicy sets the bitLockerRemovableDrivePolicy property value. BitLocker Removable Drive Policy.
 func (m *Windows10EndpointProtectionConfiguration) SetBitLockerRemovableDrivePolicy(value BitLockerRemovableDrivePolicyable)() {
-    m.bitLockerRemovableDrivePolicy = value
+    err := m.GetBackingStore().Set("bitLockerRemovableDrivePolicy", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDefenderAdditionalGuardedFolders sets the defenderAdditionalGuardedFolders property value. List of folder paths to be added to the list of protected folders
 func (m *Windows10EndpointProtectionConfiguration) SetDefenderAdditionalGuardedFolders(value []string)() {
-    m.defenderAdditionalGuardedFolders = value
+    err := m.GetBackingStore().Set("defenderAdditionalGuardedFolders", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDefenderAttackSurfaceReductionExcludedPaths sets the defenderAttackSurfaceReductionExcludedPaths property value. List of exe files and folders to be excluded from attack surface reduction rules
 func (m *Windows10EndpointProtectionConfiguration) SetDefenderAttackSurfaceReductionExcludedPaths(value []string)() {
-    m.defenderAttackSurfaceReductionExcludedPaths = value
+    err := m.GetBackingStore().Set("defenderAttackSurfaceReductionExcludedPaths", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDefenderExploitProtectionXml sets the defenderExploitProtectionXml property value. Xml content containing information regarding exploit protection details.
 func (m *Windows10EndpointProtectionConfiguration) SetDefenderExploitProtectionXml(value []byte)() {
-    m.defenderExploitProtectionXml = value
+    err := m.GetBackingStore().Set("defenderExploitProtectionXml", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDefenderExploitProtectionXmlFileName sets the defenderExploitProtectionXmlFileName property value. Name of the file from which DefenderExploitProtectionXml was obtained.
 func (m *Windows10EndpointProtectionConfiguration) SetDefenderExploitProtectionXmlFileName(value *string)() {
-    m.defenderExploitProtectionXmlFileName = value
+    err := m.GetBackingStore().Set("defenderExploitProtectionXmlFileName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDefenderGuardedFoldersAllowedAppPaths sets the defenderGuardedFoldersAllowedAppPaths property value. List of paths to exe that are allowed to access protected folders
 func (m *Windows10EndpointProtectionConfiguration) SetDefenderGuardedFoldersAllowedAppPaths(value []string)() {
-    m.defenderGuardedFoldersAllowedAppPaths = value
+    err := m.GetBackingStore().Set("defenderGuardedFoldersAllowedAppPaths", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDefenderSecurityCenterBlockExploitProtectionOverride sets the defenderSecurityCenterBlockExploitProtectionOverride property value. Indicates whether or not to block user from overriding Exploit Protection settings.
 func (m *Windows10EndpointProtectionConfiguration) SetDefenderSecurityCenterBlockExploitProtectionOverride(value *bool)() {
-    m.defenderSecurityCenterBlockExploitProtectionOverride = value
+    err := m.GetBackingStore().Set("defenderSecurityCenterBlockExploitProtectionOverride", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFirewallBlockStatefulFTP sets the firewallBlockStatefulFTP property value. Blocks stateful FTP connections to the device
 func (m *Windows10EndpointProtectionConfiguration) SetFirewallBlockStatefulFTP(value *bool)() {
-    m.firewallBlockStatefulFTP = value
+    err := m.GetBackingStore().Set("firewallBlockStatefulFTP", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFirewallCertificateRevocationListCheckMethod sets the firewallCertificateRevocationListCheckMethod property value. Possible values for firewallCertificateRevocationListCheckMethod
 func (m *Windows10EndpointProtectionConfiguration) SetFirewallCertificateRevocationListCheckMethod(value *FirewallCertificateRevocationListCheckMethodType)() {
-    m.firewallCertificateRevocationListCheckMethod = value
+    err := m.GetBackingStore().Set("firewallCertificateRevocationListCheckMethod", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFirewallIdleTimeoutForSecurityAssociationInSeconds sets the firewallIdleTimeoutForSecurityAssociationInSeconds property value. Configures the idle timeout for security associations, in seconds, from 300 to 3600 inclusive. This is the period after which security associations will expire and be deleted. Valid values 300 to 3600
 func (m *Windows10EndpointProtectionConfiguration) SetFirewallIdleTimeoutForSecurityAssociationInSeconds(value *int32)() {
-    m.firewallIdleTimeoutForSecurityAssociationInSeconds = value
+    err := m.GetBackingStore().Set("firewallIdleTimeoutForSecurityAssociationInSeconds", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFirewallIPSecExemptionsAllowDHCP sets the firewallIPSecExemptionsAllowDHCP property value. Configures IPSec exemptions to allow both IPv4 and IPv6 DHCP traffic
 func (m *Windows10EndpointProtectionConfiguration) SetFirewallIPSecExemptionsAllowDHCP(value *bool)() {
-    m.firewallIPSecExemptionsAllowDHCP = value
+    err := m.GetBackingStore().Set("firewallIPSecExemptionsAllowDHCP", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFirewallIPSecExemptionsAllowICMP sets the firewallIPSecExemptionsAllowICMP property value. Configures IPSec exemptions to allow ICMP
 func (m *Windows10EndpointProtectionConfiguration) SetFirewallIPSecExemptionsAllowICMP(value *bool)() {
-    m.firewallIPSecExemptionsAllowICMP = value
+    err := m.GetBackingStore().Set("firewallIPSecExemptionsAllowICMP", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFirewallIPSecExemptionsAllowNeighborDiscovery sets the firewallIPSecExemptionsAllowNeighborDiscovery property value. Configures IPSec exemptions to allow neighbor discovery IPv6 ICMP type-codes
 func (m *Windows10EndpointProtectionConfiguration) SetFirewallIPSecExemptionsAllowNeighborDiscovery(value *bool)() {
-    m.firewallIPSecExemptionsAllowNeighborDiscovery = value
+    err := m.GetBackingStore().Set("firewallIPSecExemptionsAllowNeighborDiscovery", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFirewallIPSecExemptionsAllowRouterDiscovery sets the firewallIPSecExemptionsAllowRouterDiscovery property value. Configures IPSec exemptions to allow router discovery IPv6 ICMP type-codes
 func (m *Windows10EndpointProtectionConfiguration) SetFirewallIPSecExemptionsAllowRouterDiscovery(value *bool)() {
-    m.firewallIPSecExemptionsAllowRouterDiscovery = value
+    err := m.GetBackingStore().Set("firewallIPSecExemptionsAllowRouterDiscovery", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFirewallMergeKeyingModuleSettings sets the firewallMergeKeyingModuleSettings property value. If an authentication set is not fully supported by a keying module, direct the module to ignore only unsupported authentication suites rather than the entire set
 func (m *Windows10EndpointProtectionConfiguration) SetFirewallMergeKeyingModuleSettings(value *bool)() {
-    m.firewallMergeKeyingModuleSettings = value
+    err := m.GetBackingStore().Set("firewallMergeKeyingModuleSettings", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFirewallPacketQueueingMethod sets the firewallPacketQueueingMethod property value. Possible values for firewallPacketQueueingMethod
 func (m *Windows10EndpointProtectionConfiguration) SetFirewallPacketQueueingMethod(value *FirewallPacketQueueingMethodType)() {
-    m.firewallPacketQueueingMethod = value
+    err := m.GetBackingStore().Set("firewallPacketQueueingMethod", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFirewallPreSharedKeyEncodingMethod sets the firewallPreSharedKeyEncodingMethod property value. Possible values for firewallPreSharedKeyEncodingMethod
 func (m *Windows10EndpointProtectionConfiguration) SetFirewallPreSharedKeyEncodingMethod(value *FirewallPreSharedKeyEncodingMethodType)() {
-    m.firewallPreSharedKeyEncodingMethod = value
+    err := m.GetBackingStore().Set("firewallPreSharedKeyEncodingMethod", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFirewallProfileDomain sets the firewallProfileDomain property value. Configures the firewall profile settings for domain networks
 func (m *Windows10EndpointProtectionConfiguration) SetFirewallProfileDomain(value WindowsFirewallNetworkProfileable)() {
-    m.firewallProfileDomain = value
+    err := m.GetBackingStore().Set("firewallProfileDomain", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFirewallProfilePrivate sets the firewallProfilePrivate property value. Configures the firewall profile settings for private networks
 func (m *Windows10EndpointProtectionConfiguration) SetFirewallProfilePrivate(value WindowsFirewallNetworkProfileable)() {
-    m.firewallProfilePrivate = value
+    err := m.GetBackingStore().Set("firewallProfilePrivate", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFirewallProfilePublic sets the firewallProfilePublic property value. Configures the firewall profile settings for public networks
 func (m *Windows10EndpointProtectionConfiguration) SetFirewallProfilePublic(value WindowsFirewallNetworkProfileable)() {
-    m.firewallProfilePublic = value
+    err := m.GetBackingStore().Set("firewallProfilePublic", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSmartScreenBlockOverrideForFiles sets the smartScreenBlockOverrideForFiles property value. Allows IT Admins to control whether users can can ignore SmartScreen warnings and run malicious files.
 func (m *Windows10EndpointProtectionConfiguration) SetSmartScreenBlockOverrideForFiles(value *bool)() {
-    m.smartScreenBlockOverrideForFiles = value
+    err := m.GetBackingStore().Set("smartScreenBlockOverrideForFiles", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSmartScreenEnableInShell sets the smartScreenEnableInShell property value. Allows IT Admins to configure SmartScreen for Windows.
 func (m *Windows10EndpointProtectionConfiguration) SetSmartScreenEnableInShell(value *bool)() {
-    m.smartScreenEnableInShell = value
+    err := m.GetBackingStore().Set("smartScreenEnableInShell", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// Windows10EndpointProtectionConfigurationable 
+type Windows10EndpointProtectionConfigurationable interface {
+    DeviceConfigurationable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetApplicationGuardAllowPersistence()(*bool)
+    GetApplicationGuardAllowPrintToLocalPrinters()(*bool)
+    GetApplicationGuardAllowPrintToNetworkPrinters()(*bool)
+    GetApplicationGuardAllowPrintToPDF()(*bool)
+    GetApplicationGuardAllowPrintToXPS()(*bool)
+    GetApplicationGuardBlockClipboardSharing()(*ApplicationGuardBlockClipboardSharingType)
+    GetApplicationGuardBlockFileTransfer()(*ApplicationGuardBlockFileTransferType)
+    GetApplicationGuardBlockNonEnterpriseContent()(*bool)
+    GetApplicationGuardEnabled()(*bool)
+    GetApplicationGuardForceAuditing()(*bool)
+    GetAppLockerApplicationControl()(*AppLockerApplicationControlType)
+    GetBitLockerDisableWarningForOtherDiskEncryption()(*bool)
+    GetBitLockerEnableStorageCardEncryptionOnMobile()(*bool)
+    GetBitLockerEncryptDevice()(*bool)
+    GetBitLockerRemovableDrivePolicy()(BitLockerRemovableDrivePolicyable)
+    GetDefenderAdditionalGuardedFolders()([]string)
+    GetDefenderAttackSurfaceReductionExcludedPaths()([]string)
+    GetDefenderExploitProtectionXml()([]byte)
+    GetDefenderExploitProtectionXmlFileName()(*string)
+    GetDefenderGuardedFoldersAllowedAppPaths()([]string)
+    GetDefenderSecurityCenterBlockExploitProtectionOverride()(*bool)
+    GetFirewallBlockStatefulFTP()(*bool)
+    GetFirewallCertificateRevocationListCheckMethod()(*FirewallCertificateRevocationListCheckMethodType)
+    GetFirewallIdleTimeoutForSecurityAssociationInSeconds()(*int32)
+    GetFirewallIPSecExemptionsAllowDHCP()(*bool)
+    GetFirewallIPSecExemptionsAllowICMP()(*bool)
+    GetFirewallIPSecExemptionsAllowNeighborDiscovery()(*bool)
+    GetFirewallIPSecExemptionsAllowRouterDiscovery()(*bool)
+    GetFirewallMergeKeyingModuleSettings()(*bool)
+    GetFirewallPacketQueueingMethod()(*FirewallPacketQueueingMethodType)
+    GetFirewallPreSharedKeyEncodingMethod()(*FirewallPreSharedKeyEncodingMethodType)
+    GetFirewallProfileDomain()(WindowsFirewallNetworkProfileable)
+    GetFirewallProfilePrivate()(WindowsFirewallNetworkProfileable)
+    GetFirewallProfilePublic()(WindowsFirewallNetworkProfileable)
+    GetSmartScreenBlockOverrideForFiles()(*bool)
+    GetSmartScreenEnableInShell()(*bool)
+    SetApplicationGuardAllowPersistence(value *bool)()
+    SetApplicationGuardAllowPrintToLocalPrinters(value *bool)()
+    SetApplicationGuardAllowPrintToNetworkPrinters(value *bool)()
+    SetApplicationGuardAllowPrintToPDF(value *bool)()
+    SetApplicationGuardAllowPrintToXPS(value *bool)()
+    SetApplicationGuardBlockClipboardSharing(value *ApplicationGuardBlockClipboardSharingType)()
+    SetApplicationGuardBlockFileTransfer(value *ApplicationGuardBlockFileTransferType)()
+    SetApplicationGuardBlockNonEnterpriseContent(value *bool)()
+    SetApplicationGuardEnabled(value *bool)()
+    SetApplicationGuardForceAuditing(value *bool)()
+    SetAppLockerApplicationControl(value *AppLockerApplicationControlType)()
+    SetBitLockerDisableWarningForOtherDiskEncryption(value *bool)()
+    SetBitLockerEnableStorageCardEncryptionOnMobile(value *bool)()
+    SetBitLockerEncryptDevice(value *bool)()
+    SetBitLockerRemovableDrivePolicy(value BitLockerRemovableDrivePolicyable)()
+    SetDefenderAdditionalGuardedFolders(value []string)()
+    SetDefenderAttackSurfaceReductionExcludedPaths(value []string)()
+    SetDefenderExploitProtectionXml(value []byte)()
+    SetDefenderExploitProtectionXmlFileName(value *string)()
+    SetDefenderGuardedFoldersAllowedAppPaths(value []string)()
+    SetDefenderSecurityCenterBlockExploitProtectionOverride(value *bool)()
+    SetFirewallBlockStatefulFTP(value *bool)()
+    SetFirewallCertificateRevocationListCheckMethod(value *FirewallCertificateRevocationListCheckMethodType)()
+    SetFirewallIdleTimeoutForSecurityAssociationInSeconds(value *int32)()
+    SetFirewallIPSecExemptionsAllowDHCP(value *bool)()
+    SetFirewallIPSecExemptionsAllowICMP(value *bool)()
+    SetFirewallIPSecExemptionsAllowNeighborDiscovery(value *bool)()
+    SetFirewallIPSecExemptionsAllowRouterDiscovery(value *bool)()
+    SetFirewallMergeKeyingModuleSettings(value *bool)()
+    SetFirewallPacketQueueingMethod(value *FirewallPacketQueueingMethodType)()
+    SetFirewallPreSharedKeyEncodingMethod(value *FirewallPreSharedKeyEncodingMethodType)()
+    SetFirewallProfileDomain(value WindowsFirewallNetworkProfileable)()
+    SetFirewallProfilePrivate(value WindowsFirewallNetworkProfileable)()
+    SetFirewallProfilePublic(value WindowsFirewallNetworkProfileable)()
+    SetSmartScreenBlockOverrideForFiles(value *bool)()
+    SetSmartScreenEnableInShell(value *bool)()
 }

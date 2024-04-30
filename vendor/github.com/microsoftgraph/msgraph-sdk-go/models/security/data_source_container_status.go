@@ -2,7 +2,7 @@ package security
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type DataSourceContainerStatus int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i DataSourceContainerStatus) String() string {
     return []string{"active", "released", "unknownFutureValue"}[i]
 }
-func ParseDataSourceContainerStatus(v string) (interface{}, error) {
+func ParseDataSourceContainerStatus(v string) (any, error) {
     result := ACTIVE_DATASOURCECONTAINERSTATUS
     switch v {
         case "active":

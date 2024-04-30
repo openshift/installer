@@ -11,6 +11,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.59.0] - 2023-03-21
+
+### Changed
+
+- Weekly generation
+
+## [0.58.0] - 2023-03-14
+
+### Changed
+
+- Weekly generation
+
+## [0.57.0] - 2023-03-10
+
+### Changed
+
+- Weekly generation
+
+## [0.56.0] - 2023-03-03
+
+### Changed
+
+- Weekly generation
+- shimmed "me" package, backing store , uuid fix and reduced file count.
+
+## [0.55.0] - 2023-02-21
+
+### Changed
+
+- Weekly generation.
+
+## [0.54.0] - 2023-02-07
+
+### Changed
+
+- Weekly generation.
+- BREAKING: OData Functions/Actions now use their full name e.g. GetEffectivePermissions is now MicrosoftGraphGetEffectivePermissions.
+
+## [0.53.0] - 2023-01-24
+
+### Changed
+
+- Weekly generation.
+- Updated dependencies.
+
+## [0.52.0] - 2023-01-17
+
+### Changed
+
+- Weekly generation.
+
+## [0.51.0] - 2023-01-10
+
+### Changed
+
+- Weekly generation.
+- BREAKING: createXXXRequestInformation methods are now named toXXXRequestInformation.
+
+## [0.50.0] - 2022-12-28
+
+### Changed
+
+- Weekly generation.
+
+## [0.49.0] - 2022-12-14
+
+### Added
+
+- BREAKING: added support for multi-valued request headers.
+
+### Changed
+
+- BREAKING: shortens the type names by removing the redudant first level path segment.
+
+## [0.48.0] - 2022-12-02
+
+### Changed
+
+- BREAKING: the package structure has been flattened, making most imports much shorter.
+- Significant improvements in build time.
+- Weekly generation.
+
 ## [0.47.0] - 2022-11-22
 
 ### Changed

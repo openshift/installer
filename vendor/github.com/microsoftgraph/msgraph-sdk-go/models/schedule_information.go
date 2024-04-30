@@ -1,32 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // ScheduleInformation 
 type ScheduleInformation struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // Represents a merged view of availability of all the items in scheduleItems. The view consists of time slots. Availability during each time slot is indicated with: 0= free, 1= tentative, 2= busy, 3= out of office, 4= working elsewhere.
-    availabilityView *string
-    // Error information from attempting to get the availability of the user, distribution list, or resource.
-    error FreeBusyErrorable
-    // The OdataType property
-    odataType *string
-    // An SMTP address of the user, distribution list, or resource, identifying an instance of scheduleInformation.
-    scheduleId *string
-    // Contains the items that describe the availability of the user or resource.
-    scheduleItems []ScheduleItemable
-    // The days of the week and hours in a specific time zone that the user works. These are set as part of the user's mailboxSettings.
-    workingHours WorkingHoursable
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewScheduleInformation instantiates a new scheduleInformation and sets the default values.
 func NewScheduleInformation()(*ScheduleInformation) {
     m := &ScheduleInformation{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateScheduleInformationFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -34,43 +23,155 @@ func CreateScheduleInformationFromDiscriminatorValue(parseNode i878a80d2330e89d2
     return NewScheduleInformation(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *ScheduleInformation) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *ScheduleInformation) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
 }
 // GetAvailabilityView gets the availabilityView property value. Represents a merged view of availability of all the items in scheduleItems. The view consists of time slots. Availability during each time slot is indicated with: 0= free, 1= tentative, 2= busy, 3= out of office, 4= working elsewhere.
 func (m *ScheduleInformation) GetAvailabilityView()(*string) {
-    return m.availabilityView
+    val, err := m.GetBackingStore().Get("availabilityView")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *ScheduleInformation) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetError gets the error property value. Error information from attempting to get the availability of the user, distribution list, or resource.
 func (m *ScheduleInformation) GetError()(FreeBusyErrorable) {
-    return m.error
+    val, err := m.GetBackingStore().Get("error")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(FreeBusyErrorable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *ScheduleInformation) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["availabilityView"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetAvailabilityView)
-    res["error"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateFreeBusyErrorFromDiscriminatorValue , m.SetError)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["scheduleId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetScheduleId)
-    res["scheduleItems"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateScheduleItemFromDiscriminatorValue , m.SetScheduleItems)
-    res["workingHours"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateWorkingHoursFromDiscriminatorValue , m.SetWorkingHours)
+    res["availabilityView"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAvailabilityView(val)
+        }
+        return nil
+    }
+    res["error"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateFreeBusyErrorFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetError(val.(FreeBusyErrorable))
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["scheduleId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetScheduleId(val)
+        }
+        return nil
+    }
+    res["scheduleItems"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateScheduleItemFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]ScheduleItemable, len(val))
+            for i, v := range val {
+                res[i] = v.(ScheduleItemable)
+            }
+            m.SetScheduleItems(res)
+        }
+        return nil
+    }
+    res["workingHours"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateWorkingHoursFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWorkingHours(val.(WorkingHoursable))
+        }
+        return nil
+    }
     return res
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *ScheduleInformation) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetScheduleId gets the scheduleId property value. An SMTP address of the user, distribution list, or resource, identifying an instance of scheduleInformation.
 func (m *ScheduleInformation) GetScheduleId()(*string) {
-    return m.scheduleId
+    val, err := m.GetBackingStore().Get("scheduleId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetScheduleItems gets the scheduleItems property value. Contains the items that describe the availability of the user or resource.
 func (m *ScheduleInformation) GetScheduleItems()([]ScheduleItemable) {
-    return m.scheduleItems
+    val, err := m.GetBackingStore().Get("scheduleItems")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]ScheduleItemable)
+    }
+    return nil
 }
 // GetWorkingHours gets the workingHours property value. The days of the week and hours in a specific time zone that the user works. These are set as part of the user's mailboxSettings.
 func (m *ScheduleInformation) GetWorkingHours()(WorkingHoursable) {
-    return m.workingHours
+    val, err := m.GetBackingStore().Get("workingHours")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(WorkingHoursable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *ScheduleInformation) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -99,7 +200,10 @@ func (m *ScheduleInformation) Serialize(writer i878a80d2330e89d26896388a3f487eef
         }
     }
     if m.GetScheduleItems() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetScheduleItems())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetScheduleItems()))
+        for i, v := range m.GetScheduleItems() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err := writer.WriteCollectionOfObjectValues("scheduleItems", cast)
         if err != nil {
             return err
@@ -120,30 +224,75 @@ func (m *ScheduleInformation) Serialize(writer i878a80d2330e89d26896388a3f487eef
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *ScheduleInformation) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *ScheduleInformation) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAvailabilityView sets the availabilityView property value. Represents a merged view of availability of all the items in scheduleItems. The view consists of time slots. Availability during each time slot is indicated with: 0= free, 1= tentative, 2= busy, 3= out of office, 4= working elsewhere.
 func (m *ScheduleInformation) SetAvailabilityView(value *string)() {
-    m.availabilityView = value
+    err := m.GetBackingStore().Set("availabilityView", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *ScheduleInformation) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetError sets the error property value. Error information from attempting to get the availability of the user, distribution list, or resource.
 func (m *ScheduleInformation) SetError(value FreeBusyErrorable)() {
-    m.error = value
+    err := m.GetBackingStore().Set("error", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *ScheduleInformation) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetScheduleId sets the scheduleId property value. An SMTP address of the user, distribution list, or resource, identifying an instance of scheduleInformation.
 func (m *ScheduleInformation) SetScheduleId(value *string)() {
-    m.scheduleId = value
+    err := m.GetBackingStore().Set("scheduleId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetScheduleItems sets the scheduleItems property value. Contains the items that describe the availability of the user or resource.
 func (m *ScheduleInformation) SetScheduleItems(value []ScheduleItemable)() {
-    m.scheduleItems = value
+    err := m.GetBackingStore().Set("scheduleItems", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWorkingHours sets the workingHours property value. The days of the week and hours in a specific time zone that the user works. These are set as part of the user's mailboxSettings.
 func (m *ScheduleInformation) SetWorkingHours(value WorkingHoursable)() {
-    m.workingHours = value
+    err := m.GetBackingStore().Set("workingHours", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// ScheduleInformationable 
+type ScheduleInformationable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAvailabilityView()(*string)
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetError()(FreeBusyErrorable)
+    GetOdataType()(*string)
+    GetScheduleId()(*string)
+    GetScheduleItems()([]ScheduleItemable)
+    GetWorkingHours()(WorkingHoursable)
+    SetAvailabilityView(value *string)()
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetError(value FreeBusyErrorable)()
+    SetOdataType(value *string)()
+    SetScheduleId(value *string)()
+    SetScheduleItems(value []ScheduleItemable)()
+    SetWorkingHours(value WorkingHoursable)()
 }

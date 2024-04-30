@@ -79,17 +79,17 @@ type DescribeDnsGtmInstanceRequest struct {
 // DescribeDnsGtmInstanceResponse is the response struct for api DescribeDnsGtmInstance
 type DescribeDnsGtmInstanceResponse struct {
 	*responses.BaseResponse
+	ExpireTimestamp int64                          `json:"ExpireTimestamp" xml:"ExpireTimestamp"`
 	RequestId       string                         `json:"RequestId" xml:"RequestId"`
+	ResourceGroupId string                         `json:"ResourceGroupId" xml:"ResourceGroupId"`
 	InstanceId      string                         `json:"InstanceId" xml:"InstanceId"`
-	VersionCode     string                         `json:"VersionCode" xml:"VersionCode"`
-	SmsQuota        int                            `json:"SmsQuota" xml:"SmsQuota"`
 	TaskQuota       int                            `json:"TaskQuota" xml:"TaskQuota"`
 	CreateTime      string                         `json:"CreateTime" xml:"CreateTime"`
-	CreateTimestamp int64                          `json:"CreateTimestamp" xml:"CreateTimestamp"`
-	ExpireTime      string                         `json:"ExpireTime" xml:"ExpireTime"`
-	ExpireTimestamp int64                          `json:"ExpireTimestamp" xml:"ExpireTimestamp"`
-	ResourceGroupId string                         `json:"ResourceGroupId" xml:"ResourceGroupId"`
+	SmsQuota        int                            `json:"SmsQuota" xml:"SmsQuota"`
+	VersionCode     string                         `json:"VersionCode" xml:"VersionCode"`
 	PaymentType     string                         `json:"PaymentType" xml:"PaymentType"`
+	ExpireTime      string                         `json:"ExpireTime" xml:"ExpireTime"`
+	CreateTimestamp int64                          `json:"CreateTimestamp" xml:"CreateTimestamp"`
 	Config          ConfigInDescribeDnsGtmInstance `json:"Config" xml:"Config"`
 	UsedQuota       UsedQuota                      `json:"UsedQuota" xml:"UsedQuota"`
 }

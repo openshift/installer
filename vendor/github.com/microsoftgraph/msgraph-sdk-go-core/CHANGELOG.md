@@ -11,6 +11,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.34.1] - 2023-03-06
+
+### Changed
+
+- Change `PageIterator` to use `GetValue` method instead of `value` field to access response.
+
+## [0.34.0] - 2023-02-23
+
+### Added
+
+- Adds `UrlReplaceHandler` to default middleware.
+
+## [0.33.1] - 2023-01-26
+
+### Added
+
+- Upgrade dependencies to support backing store.
+
+## [0.33.0] - 2023-01-17
+
+### Added
+
+- Added authentication provider with Microsoft Graph defaults.
+
+## [0.32.0] - 2023-01-11
+
+### Changed
+
+- Upgraded abstractions and http dependencies.
+
+## [0.31.1] - 2022-12-15
+
+### Changed
+
+- Fixes path parameters missing when sending batch requests.
+- Fixes appending items when sending batch requests.
+- Fixes `Send` url when sending batch requests
+
+## [0.31.0] - 2022-12-13
+
+### Changed
+
+- Updated references to core libraries for multi-valued request headers.
+
 ## [0.30.1] - 2022-10-21
 
 ### Changed

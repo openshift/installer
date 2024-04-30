@@ -1,74 +1,21 @@
 package callrecords
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // NetworkInfo 
 type NetworkInfo struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // Fraction of the call that the media endpoint detected the available bandwidth or bandwidth policy was low enough to cause poor quality of the audio sent.
-    bandwidthLowEventRatio *float32
-    // The wireless LAN basic service set identifier of the media endpoint used to connect to the network.
-    basicServiceSetIdentifier *string
-    // The connectionType property
-    connectionType *NetworkConnectionType
-    // Fraction of the call that the media endpoint detected the network delay was significant enough to impact the ability to have real-time two-way communication.
-    delayEventRatio *float32
-    // DNS suffix associated with the network adapter of the media endpoint.
-    dnsSuffix *string
-    // IP address of the media endpoint.
-    ipAddress *string
-    // Link speed in bits per second reported by the network adapter used by the media endpoint.
-    linkSpeed *int64
-    // The media access control (MAC) address of the media endpoint's network device.
-    macAddress *string
-    // The networkTransportProtocol property
-    networkTransportProtocol *NetworkTransportProtocol
-    // The OdataType property
-    odataType *string
-    // Network port number used by media endpoint.
-    port *int32
-    // Fraction of the call that the media endpoint detected the network was causing poor quality of the audio received.
-    receivedQualityEventRatio *float32
-    // IP address of the media endpoint as seen by the media relay server. This is typically the public internet IP address associated to the endpoint.
-    reflexiveIPAddress *string
-    // IP address of the media relay server allocated by the media endpoint.
-    relayIPAddress *string
-    // Network port number allocated on the media relay server by the media endpoint.
-    relayPort *int32
-    // Fraction of the call that the media endpoint detected the network was causing poor quality of the audio sent.
-    sentQualityEventRatio *float32
-    // Subnet used for media stream by the media endpoint.
-    subnet *string
-    // List of network trace route hops collected for this media stream.*
-    traceRouteHops []TraceRouteHopable
-    // The wifiBand property
-    wifiBand *WifiBand
-    // Estimated remaining battery charge in percentage reported by the media endpoint.
-    wifiBatteryCharge *int32
-    // WiFi channel used by the media endpoint.
-    wifiChannel *int32
-    // Name of the Microsoft WiFi driver used by the media endpoint. Value may be localized based on the language used by endpoint.
-    wifiMicrosoftDriver *string
-    // Version of the Microsoft WiFi driver used by the media endpoint.
-    wifiMicrosoftDriverVersion *string
-    // The wifiRadioType property
-    wifiRadioType *WifiRadioType
-    // WiFi signal strength in percentage reported by the media endpoint.
-    wifiSignalStrength *int32
-    // Name of the WiFi driver used by the media endpoint. Value may be localized based on the language used by endpoint.
-    wifiVendorDriver *string
-    // Version of the WiFi driver used by the media endpoint.
-    wifiVendorDriverVersion *string
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewNetworkInfo instantiates a new networkInfo and sets the default values.
 func NewNetworkInfo()(*NetworkInfo) {
     m := &NetworkInfo{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateNetworkInfoFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -76,148 +23,596 @@ func CreateNetworkInfoFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a
     return NewNetworkInfo(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *NetworkInfo) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *NetworkInfo) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *NetworkInfo) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetBandwidthLowEventRatio gets the bandwidthLowEventRatio property value. Fraction of the call that the media endpoint detected the available bandwidth or bandwidth policy was low enough to cause poor quality of the audio sent.
 func (m *NetworkInfo) GetBandwidthLowEventRatio()(*float32) {
-    return m.bandwidthLowEventRatio
+    val, err := m.GetBackingStore().Get("bandwidthLowEventRatio")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float32)
+    }
+    return nil
 }
 // GetBasicServiceSetIdentifier gets the basicServiceSetIdentifier property value. The wireless LAN basic service set identifier of the media endpoint used to connect to the network.
 func (m *NetworkInfo) GetBasicServiceSetIdentifier()(*string) {
-    return m.basicServiceSetIdentifier
+    val, err := m.GetBackingStore().Get("basicServiceSetIdentifier")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetConnectionType gets the connectionType property value. The connectionType property
 func (m *NetworkInfo) GetConnectionType()(*NetworkConnectionType) {
-    return m.connectionType
+    val, err := m.GetBackingStore().Get("connectionType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*NetworkConnectionType)
+    }
+    return nil
 }
 // GetDelayEventRatio gets the delayEventRatio property value. Fraction of the call that the media endpoint detected the network delay was significant enough to impact the ability to have real-time two-way communication.
 func (m *NetworkInfo) GetDelayEventRatio()(*float32) {
-    return m.delayEventRatio
+    val, err := m.GetBackingStore().Get("delayEventRatio")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float32)
+    }
+    return nil
 }
 // GetDnsSuffix gets the dnsSuffix property value. DNS suffix associated with the network adapter of the media endpoint.
 func (m *NetworkInfo) GetDnsSuffix()(*string) {
-    return m.dnsSuffix
+    val, err := m.GetBackingStore().Get("dnsSuffix")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *NetworkInfo) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["bandwidthLowEventRatio"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat32Value(m.SetBandwidthLowEventRatio)
-    res["basicServiceSetIdentifier"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetBasicServiceSetIdentifier)
-    res["connectionType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseNetworkConnectionType , m.SetConnectionType)
-    res["delayEventRatio"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat32Value(m.SetDelayEventRatio)
-    res["dnsSuffix"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDnsSuffix)
-    res["ipAddress"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetIpAddress)
-    res["linkSpeed"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt64Value(m.SetLinkSpeed)
-    res["macAddress"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetMacAddress)
-    res["networkTransportProtocol"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseNetworkTransportProtocol , m.SetNetworkTransportProtocol)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["port"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetPort)
-    res["receivedQualityEventRatio"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat32Value(m.SetReceivedQualityEventRatio)
-    res["reflexiveIPAddress"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetReflexiveIPAddress)
-    res["relayIPAddress"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetRelayIPAddress)
-    res["relayPort"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetRelayPort)
-    res["sentQualityEventRatio"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat32Value(m.SetSentQualityEventRatio)
-    res["subnet"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSubnet)
-    res["traceRouteHops"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateTraceRouteHopFromDiscriminatorValue , m.SetTraceRouteHops)
-    res["wifiBand"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseWifiBand , m.SetWifiBand)
-    res["wifiBatteryCharge"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetWifiBatteryCharge)
-    res["wifiChannel"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetWifiChannel)
-    res["wifiMicrosoftDriver"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetWifiMicrosoftDriver)
-    res["wifiMicrosoftDriverVersion"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetWifiMicrosoftDriverVersion)
-    res["wifiRadioType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseWifiRadioType , m.SetWifiRadioType)
-    res["wifiSignalStrength"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetWifiSignalStrength)
-    res["wifiVendorDriver"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetWifiVendorDriver)
-    res["wifiVendorDriverVersion"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetWifiVendorDriverVersion)
+    res["bandwidthLowEventRatio"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBandwidthLowEventRatio(val)
+        }
+        return nil
+    }
+    res["basicServiceSetIdentifier"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBasicServiceSetIdentifier(val)
+        }
+        return nil
+    }
+    res["connectionType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseNetworkConnectionType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetConnectionType(val.(*NetworkConnectionType))
+        }
+        return nil
+    }
+    res["delayEventRatio"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDelayEventRatio(val)
+        }
+        return nil
+    }
+    res["dnsSuffix"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDnsSuffix(val)
+        }
+        return nil
+    }
+    res["ipAddress"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIpAddress(val)
+        }
+        return nil
+    }
+    res["linkSpeed"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLinkSpeed(val)
+        }
+        return nil
+    }
+    res["macAddress"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMacAddress(val)
+        }
+        return nil
+    }
+    res["networkTransportProtocol"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseNetworkTransportProtocol)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetNetworkTransportProtocol(val.(*NetworkTransportProtocol))
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["port"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPort(val)
+        }
+        return nil
+    }
+    res["receivedQualityEventRatio"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetReceivedQualityEventRatio(val)
+        }
+        return nil
+    }
+    res["reflexiveIPAddress"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetReflexiveIPAddress(val)
+        }
+        return nil
+    }
+    res["relayIPAddress"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRelayIPAddress(val)
+        }
+        return nil
+    }
+    res["relayPort"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRelayPort(val)
+        }
+        return nil
+    }
+    res["sentQualityEventRatio"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSentQualityEventRatio(val)
+        }
+        return nil
+    }
+    res["subnet"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSubnet(val)
+        }
+        return nil
+    }
+    res["traceRouteHops"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateTraceRouteHopFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]TraceRouteHopable, len(val))
+            for i, v := range val {
+                res[i] = v.(TraceRouteHopable)
+            }
+            m.SetTraceRouteHops(res)
+        }
+        return nil
+    }
+    res["wifiBand"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseWifiBand)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWifiBand(val.(*WifiBand))
+        }
+        return nil
+    }
+    res["wifiBatteryCharge"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWifiBatteryCharge(val)
+        }
+        return nil
+    }
+    res["wifiChannel"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWifiChannel(val)
+        }
+        return nil
+    }
+    res["wifiMicrosoftDriver"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWifiMicrosoftDriver(val)
+        }
+        return nil
+    }
+    res["wifiMicrosoftDriverVersion"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWifiMicrosoftDriverVersion(val)
+        }
+        return nil
+    }
+    res["wifiRadioType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseWifiRadioType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWifiRadioType(val.(*WifiRadioType))
+        }
+        return nil
+    }
+    res["wifiSignalStrength"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWifiSignalStrength(val)
+        }
+        return nil
+    }
+    res["wifiVendorDriver"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWifiVendorDriver(val)
+        }
+        return nil
+    }
+    res["wifiVendorDriverVersion"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWifiVendorDriverVersion(val)
+        }
+        return nil
+    }
     return res
 }
 // GetIpAddress gets the ipAddress property value. IP address of the media endpoint.
 func (m *NetworkInfo) GetIpAddress()(*string) {
-    return m.ipAddress
+    val, err := m.GetBackingStore().Get("ipAddress")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetLinkSpeed gets the linkSpeed property value. Link speed in bits per second reported by the network adapter used by the media endpoint.
 func (m *NetworkInfo) GetLinkSpeed()(*int64) {
-    return m.linkSpeed
+    val, err := m.GetBackingStore().Get("linkSpeed")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int64)
+    }
+    return nil
 }
 // GetMacAddress gets the macAddress property value. The media access control (MAC) address of the media endpoint's network device.
 func (m *NetworkInfo) GetMacAddress()(*string) {
-    return m.macAddress
+    val, err := m.GetBackingStore().Get("macAddress")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetNetworkTransportProtocol gets the networkTransportProtocol property value. The networkTransportProtocol property
 func (m *NetworkInfo) GetNetworkTransportProtocol()(*NetworkTransportProtocol) {
-    return m.networkTransportProtocol
+    val, err := m.GetBackingStore().Get("networkTransportProtocol")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*NetworkTransportProtocol)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *NetworkInfo) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetPort gets the port property value. Network port number used by media endpoint.
 func (m *NetworkInfo) GetPort()(*int32) {
-    return m.port
+    val, err := m.GetBackingStore().Get("port")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetReceivedQualityEventRatio gets the receivedQualityEventRatio property value. Fraction of the call that the media endpoint detected the network was causing poor quality of the audio received.
 func (m *NetworkInfo) GetReceivedQualityEventRatio()(*float32) {
-    return m.receivedQualityEventRatio
+    val, err := m.GetBackingStore().Get("receivedQualityEventRatio")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float32)
+    }
+    return nil
 }
 // GetReflexiveIPAddress gets the reflexiveIPAddress property value. IP address of the media endpoint as seen by the media relay server. This is typically the public internet IP address associated to the endpoint.
 func (m *NetworkInfo) GetReflexiveIPAddress()(*string) {
-    return m.reflexiveIPAddress
+    val, err := m.GetBackingStore().Get("reflexiveIPAddress")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetRelayIPAddress gets the relayIPAddress property value. IP address of the media relay server allocated by the media endpoint.
 func (m *NetworkInfo) GetRelayIPAddress()(*string) {
-    return m.relayIPAddress
+    val, err := m.GetBackingStore().Get("relayIPAddress")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetRelayPort gets the relayPort property value. Network port number allocated on the media relay server by the media endpoint.
 func (m *NetworkInfo) GetRelayPort()(*int32) {
-    return m.relayPort
+    val, err := m.GetBackingStore().Get("relayPort")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetSentQualityEventRatio gets the sentQualityEventRatio property value. Fraction of the call that the media endpoint detected the network was causing poor quality of the audio sent.
 func (m *NetworkInfo) GetSentQualityEventRatio()(*float32) {
-    return m.sentQualityEventRatio
+    val, err := m.GetBackingStore().Get("sentQualityEventRatio")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float32)
+    }
+    return nil
 }
 // GetSubnet gets the subnet property value. Subnet used for media stream by the media endpoint.
 func (m *NetworkInfo) GetSubnet()(*string) {
-    return m.subnet
+    val, err := m.GetBackingStore().Get("subnet")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetTraceRouteHops gets the traceRouteHops property value. List of network trace route hops collected for this media stream.*
 func (m *NetworkInfo) GetTraceRouteHops()([]TraceRouteHopable) {
-    return m.traceRouteHops
+    val, err := m.GetBackingStore().Get("traceRouteHops")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]TraceRouteHopable)
+    }
+    return nil
 }
 // GetWifiBand gets the wifiBand property value. The wifiBand property
 func (m *NetworkInfo) GetWifiBand()(*WifiBand) {
-    return m.wifiBand
+    val, err := m.GetBackingStore().Get("wifiBand")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*WifiBand)
+    }
+    return nil
 }
 // GetWifiBatteryCharge gets the wifiBatteryCharge property value. Estimated remaining battery charge in percentage reported by the media endpoint.
 func (m *NetworkInfo) GetWifiBatteryCharge()(*int32) {
-    return m.wifiBatteryCharge
+    val, err := m.GetBackingStore().Get("wifiBatteryCharge")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetWifiChannel gets the wifiChannel property value. WiFi channel used by the media endpoint.
 func (m *NetworkInfo) GetWifiChannel()(*int32) {
-    return m.wifiChannel
+    val, err := m.GetBackingStore().Get("wifiChannel")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetWifiMicrosoftDriver gets the wifiMicrosoftDriver property value. Name of the Microsoft WiFi driver used by the media endpoint. Value may be localized based on the language used by endpoint.
 func (m *NetworkInfo) GetWifiMicrosoftDriver()(*string) {
-    return m.wifiMicrosoftDriver
+    val, err := m.GetBackingStore().Get("wifiMicrosoftDriver")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetWifiMicrosoftDriverVersion gets the wifiMicrosoftDriverVersion property value. Version of the Microsoft WiFi driver used by the media endpoint.
 func (m *NetworkInfo) GetWifiMicrosoftDriverVersion()(*string) {
-    return m.wifiMicrosoftDriverVersion
+    val, err := m.GetBackingStore().Get("wifiMicrosoftDriverVersion")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetWifiRadioType gets the wifiRadioType property value. The wifiRadioType property
 func (m *NetworkInfo) GetWifiRadioType()(*WifiRadioType) {
-    return m.wifiRadioType
+    val, err := m.GetBackingStore().Get("wifiRadioType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*WifiRadioType)
+    }
+    return nil
 }
 // GetWifiSignalStrength gets the wifiSignalStrength property value. WiFi signal strength in percentage reported by the media endpoint.
 func (m *NetworkInfo) GetWifiSignalStrength()(*int32) {
-    return m.wifiSignalStrength
+    val, err := m.GetBackingStore().Get("wifiSignalStrength")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetWifiVendorDriver gets the wifiVendorDriver property value. Name of the WiFi driver used by the media endpoint. Value may be localized based on the language used by endpoint.
 func (m *NetworkInfo) GetWifiVendorDriver()(*string) {
-    return m.wifiVendorDriver
+    val, err := m.GetBackingStore().Get("wifiVendorDriver")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetWifiVendorDriverVersion gets the wifiVendorDriverVersion property value. Version of the WiFi driver used by the media endpoint.
 func (m *NetworkInfo) GetWifiVendorDriverVersion()(*string) {
-    return m.wifiVendorDriverVersion
+    val, err := m.GetBackingStore().Get("wifiVendorDriverVersion")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *NetworkInfo) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -326,7 +721,10 @@ func (m *NetworkInfo) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6
         }
     }
     if m.GetTraceRouteHops() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetTraceRouteHops())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetTraceRouteHops()))
+        for i, v := range m.GetTraceRouteHops() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err := writer.WriteCollectionOfObjectValues("traceRouteHops", cast)
         if err != nil {
             return err
@@ -397,114 +795,264 @@ func (m *NetworkInfo) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *NetworkInfo) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *NetworkInfo) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *NetworkInfo) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetBandwidthLowEventRatio sets the bandwidthLowEventRatio property value. Fraction of the call that the media endpoint detected the available bandwidth or bandwidth policy was low enough to cause poor quality of the audio sent.
 func (m *NetworkInfo) SetBandwidthLowEventRatio(value *float32)() {
-    m.bandwidthLowEventRatio = value
+    err := m.GetBackingStore().Set("bandwidthLowEventRatio", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBasicServiceSetIdentifier sets the basicServiceSetIdentifier property value. The wireless LAN basic service set identifier of the media endpoint used to connect to the network.
 func (m *NetworkInfo) SetBasicServiceSetIdentifier(value *string)() {
-    m.basicServiceSetIdentifier = value
+    err := m.GetBackingStore().Set("basicServiceSetIdentifier", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetConnectionType sets the connectionType property value. The connectionType property
 func (m *NetworkInfo) SetConnectionType(value *NetworkConnectionType)() {
-    m.connectionType = value
+    err := m.GetBackingStore().Set("connectionType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDelayEventRatio sets the delayEventRatio property value. Fraction of the call that the media endpoint detected the network delay was significant enough to impact the ability to have real-time two-way communication.
 func (m *NetworkInfo) SetDelayEventRatio(value *float32)() {
-    m.delayEventRatio = value
+    err := m.GetBackingStore().Set("delayEventRatio", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDnsSuffix sets the dnsSuffix property value. DNS suffix associated with the network adapter of the media endpoint.
 func (m *NetworkInfo) SetDnsSuffix(value *string)() {
-    m.dnsSuffix = value
+    err := m.GetBackingStore().Set("dnsSuffix", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIpAddress sets the ipAddress property value. IP address of the media endpoint.
 func (m *NetworkInfo) SetIpAddress(value *string)() {
-    m.ipAddress = value
+    err := m.GetBackingStore().Set("ipAddress", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLinkSpeed sets the linkSpeed property value. Link speed in bits per second reported by the network adapter used by the media endpoint.
 func (m *NetworkInfo) SetLinkSpeed(value *int64)() {
-    m.linkSpeed = value
+    err := m.GetBackingStore().Set("linkSpeed", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMacAddress sets the macAddress property value. The media access control (MAC) address of the media endpoint's network device.
 func (m *NetworkInfo) SetMacAddress(value *string)() {
-    m.macAddress = value
+    err := m.GetBackingStore().Set("macAddress", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetNetworkTransportProtocol sets the networkTransportProtocol property value. The networkTransportProtocol property
 func (m *NetworkInfo) SetNetworkTransportProtocol(value *NetworkTransportProtocol)() {
-    m.networkTransportProtocol = value
+    err := m.GetBackingStore().Set("networkTransportProtocol", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *NetworkInfo) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPort sets the port property value. Network port number used by media endpoint.
 func (m *NetworkInfo) SetPort(value *int32)() {
-    m.port = value
+    err := m.GetBackingStore().Set("port", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetReceivedQualityEventRatio sets the receivedQualityEventRatio property value. Fraction of the call that the media endpoint detected the network was causing poor quality of the audio received.
 func (m *NetworkInfo) SetReceivedQualityEventRatio(value *float32)() {
-    m.receivedQualityEventRatio = value
+    err := m.GetBackingStore().Set("receivedQualityEventRatio", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetReflexiveIPAddress sets the reflexiveIPAddress property value. IP address of the media endpoint as seen by the media relay server. This is typically the public internet IP address associated to the endpoint.
 func (m *NetworkInfo) SetReflexiveIPAddress(value *string)() {
-    m.reflexiveIPAddress = value
+    err := m.GetBackingStore().Set("reflexiveIPAddress", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRelayIPAddress sets the relayIPAddress property value. IP address of the media relay server allocated by the media endpoint.
 func (m *NetworkInfo) SetRelayIPAddress(value *string)() {
-    m.relayIPAddress = value
+    err := m.GetBackingStore().Set("relayIPAddress", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRelayPort sets the relayPort property value. Network port number allocated on the media relay server by the media endpoint.
 func (m *NetworkInfo) SetRelayPort(value *int32)() {
-    m.relayPort = value
+    err := m.GetBackingStore().Set("relayPort", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSentQualityEventRatio sets the sentQualityEventRatio property value. Fraction of the call that the media endpoint detected the network was causing poor quality of the audio sent.
 func (m *NetworkInfo) SetSentQualityEventRatio(value *float32)() {
-    m.sentQualityEventRatio = value
+    err := m.GetBackingStore().Set("sentQualityEventRatio", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSubnet sets the subnet property value. Subnet used for media stream by the media endpoint.
 func (m *NetworkInfo) SetSubnet(value *string)() {
-    m.subnet = value
+    err := m.GetBackingStore().Set("subnet", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTraceRouteHops sets the traceRouteHops property value. List of network trace route hops collected for this media stream.*
 func (m *NetworkInfo) SetTraceRouteHops(value []TraceRouteHopable)() {
-    m.traceRouteHops = value
+    err := m.GetBackingStore().Set("traceRouteHops", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWifiBand sets the wifiBand property value. The wifiBand property
 func (m *NetworkInfo) SetWifiBand(value *WifiBand)() {
-    m.wifiBand = value
+    err := m.GetBackingStore().Set("wifiBand", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWifiBatteryCharge sets the wifiBatteryCharge property value. Estimated remaining battery charge in percentage reported by the media endpoint.
 func (m *NetworkInfo) SetWifiBatteryCharge(value *int32)() {
-    m.wifiBatteryCharge = value
+    err := m.GetBackingStore().Set("wifiBatteryCharge", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWifiChannel sets the wifiChannel property value. WiFi channel used by the media endpoint.
 func (m *NetworkInfo) SetWifiChannel(value *int32)() {
-    m.wifiChannel = value
+    err := m.GetBackingStore().Set("wifiChannel", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWifiMicrosoftDriver sets the wifiMicrosoftDriver property value. Name of the Microsoft WiFi driver used by the media endpoint. Value may be localized based on the language used by endpoint.
 func (m *NetworkInfo) SetWifiMicrosoftDriver(value *string)() {
-    m.wifiMicrosoftDriver = value
+    err := m.GetBackingStore().Set("wifiMicrosoftDriver", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWifiMicrosoftDriverVersion sets the wifiMicrosoftDriverVersion property value. Version of the Microsoft WiFi driver used by the media endpoint.
 func (m *NetworkInfo) SetWifiMicrosoftDriverVersion(value *string)() {
-    m.wifiMicrosoftDriverVersion = value
+    err := m.GetBackingStore().Set("wifiMicrosoftDriverVersion", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWifiRadioType sets the wifiRadioType property value. The wifiRadioType property
 func (m *NetworkInfo) SetWifiRadioType(value *WifiRadioType)() {
-    m.wifiRadioType = value
+    err := m.GetBackingStore().Set("wifiRadioType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWifiSignalStrength sets the wifiSignalStrength property value. WiFi signal strength in percentage reported by the media endpoint.
 func (m *NetworkInfo) SetWifiSignalStrength(value *int32)() {
-    m.wifiSignalStrength = value
+    err := m.GetBackingStore().Set("wifiSignalStrength", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWifiVendorDriver sets the wifiVendorDriver property value. Name of the WiFi driver used by the media endpoint. Value may be localized based on the language used by endpoint.
 func (m *NetworkInfo) SetWifiVendorDriver(value *string)() {
-    m.wifiVendorDriver = value
+    err := m.GetBackingStore().Set("wifiVendorDriver", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWifiVendorDriverVersion sets the wifiVendorDriverVersion property value. Version of the WiFi driver used by the media endpoint.
 func (m *NetworkInfo) SetWifiVendorDriverVersion(value *string)() {
-    m.wifiVendorDriverVersion = value
+    err := m.GetBackingStore().Set("wifiVendorDriverVersion", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// NetworkInfoable 
+type NetworkInfoable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetBandwidthLowEventRatio()(*float32)
+    GetBasicServiceSetIdentifier()(*string)
+    GetConnectionType()(*NetworkConnectionType)
+    GetDelayEventRatio()(*float32)
+    GetDnsSuffix()(*string)
+    GetIpAddress()(*string)
+    GetLinkSpeed()(*int64)
+    GetMacAddress()(*string)
+    GetNetworkTransportProtocol()(*NetworkTransportProtocol)
+    GetOdataType()(*string)
+    GetPort()(*int32)
+    GetReceivedQualityEventRatio()(*float32)
+    GetReflexiveIPAddress()(*string)
+    GetRelayIPAddress()(*string)
+    GetRelayPort()(*int32)
+    GetSentQualityEventRatio()(*float32)
+    GetSubnet()(*string)
+    GetTraceRouteHops()([]TraceRouteHopable)
+    GetWifiBand()(*WifiBand)
+    GetWifiBatteryCharge()(*int32)
+    GetWifiChannel()(*int32)
+    GetWifiMicrosoftDriver()(*string)
+    GetWifiMicrosoftDriverVersion()(*string)
+    GetWifiRadioType()(*WifiRadioType)
+    GetWifiSignalStrength()(*int32)
+    GetWifiVendorDriver()(*string)
+    GetWifiVendorDriverVersion()(*string)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetBandwidthLowEventRatio(value *float32)()
+    SetBasicServiceSetIdentifier(value *string)()
+    SetConnectionType(value *NetworkConnectionType)()
+    SetDelayEventRatio(value *float32)()
+    SetDnsSuffix(value *string)()
+    SetIpAddress(value *string)()
+    SetLinkSpeed(value *int64)()
+    SetMacAddress(value *string)()
+    SetNetworkTransportProtocol(value *NetworkTransportProtocol)()
+    SetOdataType(value *string)()
+    SetPort(value *int32)()
+    SetReceivedQualityEventRatio(value *float32)()
+    SetReflexiveIPAddress(value *string)()
+    SetRelayIPAddress(value *string)()
+    SetRelayPort(value *int32)()
+    SetSentQualityEventRatio(value *float32)()
+    SetSubnet(value *string)()
+    SetTraceRouteHops(value []TraceRouteHopable)()
+    SetWifiBand(value *WifiBand)()
+    SetWifiBatteryCharge(value *int32)()
+    SetWifiChannel(value *int32)()
+    SetWifiMicrosoftDriver(value *string)()
+    SetWifiMicrosoftDriverVersion(value *string)()
+    SetWifiRadioType(value *WifiRadioType)()
+    SetWifiSignalStrength(value *int32)()
+    SetWifiVendorDriver(value *string)()
+    SetWifiVendorDriverVersion(value *string)()
 }

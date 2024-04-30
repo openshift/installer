@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Possible ways of adding a mobile device to management.
 type DeviceEnrollmentType int
 
 const (
@@ -37,7 +37,7 @@ const (
 func (i DeviceEnrollmentType) String() string {
     return []string{"unknown", "userEnrollment", "deviceEnrollmentManager", "appleBulkWithUser", "appleBulkWithoutUser", "windowsAzureADJoin", "windowsBulkUserless", "windowsAutoEnrollment", "windowsBulkAzureDomainJoin", "windowsCoManagement", "windowsAzureADJoinUsingDeviceAuth", "appleUserEnrollment", "appleUserEnrollmentWithServiceAccount"}[i]
 }
-func ParseDeviceEnrollmentType(v string) (interface{}, error) {
+func ParseDeviceEnrollmentType(v string) (any, error) {
     result := UNKNOWN_DEVICEENROLLMENTTYPE
     switch v {
         case "unknown":

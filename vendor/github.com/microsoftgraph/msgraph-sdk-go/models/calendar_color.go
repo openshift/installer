@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type CalendarColor int
 
 const (
@@ -22,7 +22,7 @@ const (
 func (i CalendarColor) String() string {
     return []string{"auto", "lightBlue", "lightGreen", "lightOrange", "lightGray", "lightYellow", "lightTeal", "lightPink", "lightBrown", "lightRed", "maxColor"}[i]
 }
-func ParseCalendarColor(v string) (interface{}, error) {
+func ParseCalendarColor(v string) (any, error) {
     result := AUTO_CALENDARCOLOR
     switch v {
         case "auto":

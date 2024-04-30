@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ConnectionDirection int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i ConnectionDirection) String() string {
     return []string{"unknown", "inbound", "outbound", "unknownFutureValue"}[i]
 }
-func ParseConnectionDirection(v string) (interface{}, error) {
+func ParseConnectionDirection(v string) (any, error) {
     result := UNKNOWN_CONNECTIONDIRECTION
     switch v {
         case "unknown":

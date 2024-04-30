@@ -1,46 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // MailTips 
 type MailTips struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // Mail tips for automatic reply if it has been set up by the recipient.
-    automaticReplies AutomaticRepliesMailTipsable
-    // A custom mail tip that can be set on the recipient's mailbox.
-    customMailTip *string
-    // Whether the recipient's mailbox is restricted, for example, accepting messages from only a predefined list of senders, rejecting messages from a predefined list of senders, or accepting messages from only authenticated senders.
-    deliveryRestricted *bool
-    // The email address of the recipient to get mailtips for.
-    emailAddress EmailAddressable
-    // Errors that occur during the getMailTips action.
-    error MailTipsErrorable
-    // The number of external members if the recipient is a distribution list.
-    externalMemberCount *int32
-    // Whether sending messages to the recipient requires approval. For example, if the recipient is a large distribution list and a moderator has been set up to approve messages sent to that distribution list, or if sending messages to a recipient requires approval of the recipient's manager.
-    isModerated *bool
-    // The mailbox full status of the recipient.
-    mailboxFull *bool
-    // The maximum message size that has been configured for the recipient's organization or mailbox.
-    maxMessageSize *int32
-    // The OdataType property
-    odataType *string
-    // The scope of the recipient. Possible values are: none, internal, external, externalPartner, externalNonParther. For example, an administrator can set another organization to be its 'partner'. The scope is useful if an administrator wants certain mailtips to be accessible to certain scopes. It's also useful to senders to inform them that their message may leave the organization, helping them make the correct decisions about wording, tone and content.
-    recipientScope *RecipientScopeType
-    // Recipients suggested based on previous contexts where they appear in the same message.
-    recipientSuggestions []Recipientable
-    // The number of members if the recipient is a distribution list.
-    totalMemberCount *int32
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewMailTips instantiates a new mailTips and sets the default values.
 func NewMailTips()(*MailTips) {
     m := &MailTips{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateMailTipsFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -48,78 +23,302 @@ func CreateMailTipsFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f4
     return NewMailTips(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *MailTips) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *MailTips) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
 }
 // GetAutomaticReplies gets the automaticReplies property value. Mail tips for automatic reply if it has been set up by the recipient.
 func (m *MailTips) GetAutomaticReplies()(AutomaticRepliesMailTipsable) {
-    return m.automaticReplies
+    val, err := m.GetBackingStore().Get("automaticReplies")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(AutomaticRepliesMailTipsable)
+    }
+    return nil
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *MailTips) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetCustomMailTip gets the customMailTip property value. A custom mail tip that can be set on the recipient's mailbox.
 func (m *MailTips) GetCustomMailTip()(*string) {
-    return m.customMailTip
+    val, err := m.GetBackingStore().Get("customMailTip")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDeliveryRestricted gets the deliveryRestricted property value. Whether the recipient's mailbox is restricted, for example, accepting messages from only a predefined list of senders, rejecting messages from a predefined list of senders, or accepting messages from only authenticated senders.
 func (m *MailTips) GetDeliveryRestricted()(*bool) {
-    return m.deliveryRestricted
+    val, err := m.GetBackingStore().Get("deliveryRestricted")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetEmailAddress gets the emailAddress property value. The email address of the recipient to get mailtips for.
 func (m *MailTips) GetEmailAddress()(EmailAddressable) {
-    return m.emailAddress
+    val, err := m.GetBackingStore().Get("emailAddress")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(EmailAddressable)
+    }
+    return nil
 }
 // GetError gets the error property value. Errors that occur during the getMailTips action.
 func (m *MailTips) GetError()(MailTipsErrorable) {
-    return m.error
+    val, err := m.GetBackingStore().Get("error")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(MailTipsErrorable)
+    }
+    return nil
 }
 // GetExternalMemberCount gets the externalMemberCount property value. The number of external members if the recipient is a distribution list.
 func (m *MailTips) GetExternalMemberCount()(*int32) {
-    return m.externalMemberCount
+    val, err := m.GetBackingStore().Get("externalMemberCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *MailTips) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["automaticReplies"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateAutomaticRepliesMailTipsFromDiscriminatorValue , m.SetAutomaticReplies)
-    res["customMailTip"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCustomMailTip)
-    res["deliveryRestricted"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetDeliveryRestricted)
-    res["emailAddress"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateEmailAddressFromDiscriminatorValue , m.SetEmailAddress)
-    res["error"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateMailTipsErrorFromDiscriminatorValue , m.SetError)
-    res["externalMemberCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetExternalMemberCount)
-    res["isModerated"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsModerated)
-    res["mailboxFull"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetMailboxFull)
-    res["maxMessageSize"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetMaxMessageSize)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["recipientScope"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseRecipientScopeType , m.SetRecipientScope)
-    res["recipientSuggestions"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateRecipientFromDiscriminatorValue , m.SetRecipientSuggestions)
-    res["totalMemberCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetTotalMemberCount)
+    res["automaticReplies"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateAutomaticRepliesMailTipsFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAutomaticReplies(val.(AutomaticRepliesMailTipsable))
+        }
+        return nil
+    }
+    res["customMailTip"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCustomMailTip(val)
+        }
+        return nil
+    }
+    res["deliveryRestricted"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeliveryRestricted(val)
+        }
+        return nil
+    }
+    res["emailAddress"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateEmailAddressFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetEmailAddress(val.(EmailAddressable))
+        }
+        return nil
+    }
+    res["error"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateMailTipsErrorFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetError(val.(MailTipsErrorable))
+        }
+        return nil
+    }
+    res["externalMemberCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetExternalMemberCount(val)
+        }
+        return nil
+    }
+    res["isModerated"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsModerated(val)
+        }
+        return nil
+    }
+    res["mailboxFull"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMailboxFull(val)
+        }
+        return nil
+    }
+    res["maxMessageSize"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMaxMessageSize(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["recipientScope"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseRecipientScopeType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRecipientScope(val.(*RecipientScopeType))
+        }
+        return nil
+    }
+    res["recipientSuggestions"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateRecipientFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]Recipientable, len(val))
+            for i, v := range val {
+                res[i] = v.(Recipientable)
+            }
+            m.SetRecipientSuggestions(res)
+        }
+        return nil
+    }
+    res["totalMemberCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTotalMemberCount(val)
+        }
+        return nil
+    }
     return res
 }
 // GetIsModerated gets the isModerated property value. Whether sending messages to the recipient requires approval. For example, if the recipient is a large distribution list and a moderator has been set up to approve messages sent to that distribution list, or if sending messages to a recipient requires approval of the recipient's manager.
 func (m *MailTips) GetIsModerated()(*bool) {
-    return m.isModerated
+    val, err := m.GetBackingStore().Get("isModerated")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetMailboxFull gets the mailboxFull property value. The mailbox full status of the recipient.
 func (m *MailTips) GetMailboxFull()(*bool) {
-    return m.mailboxFull
+    val, err := m.GetBackingStore().Get("mailboxFull")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetMaxMessageSize gets the maxMessageSize property value. The maximum message size that has been configured for the recipient's organization or mailbox.
 func (m *MailTips) GetMaxMessageSize()(*int32) {
-    return m.maxMessageSize
+    val, err := m.GetBackingStore().Get("maxMessageSize")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *MailTips) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetRecipientScope gets the recipientScope property value. The scope of the recipient. Possible values are: none, internal, external, externalPartner, externalNonParther. For example, an administrator can set another organization to be its 'partner'. The scope is useful if an administrator wants certain mailtips to be accessible to certain scopes. It's also useful to senders to inform them that their message may leave the organization, helping them make the correct decisions about wording, tone and content.
 func (m *MailTips) GetRecipientScope()(*RecipientScopeType) {
-    return m.recipientScope
+    val, err := m.GetBackingStore().Get("recipientScope")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*RecipientScopeType)
+    }
+    return nil
 }
 // GetRecipientSuggestions gets the recipientSuggestions property value. Recipients suggested based on previous contexts where they appear in the same message.
 func (m *MailTips) GetRecipientSuggestions()([]Recipientable) {
-    return m.recipientSuggestions
+    val, err := m.GetBackingStore().Get("recipientSuggestions")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]Recipientable)
+    }
+    return nil
 }
 // GetTotalMemberCount gets the totalMemberCount property value. The number of members if the recipient is a distribution list.
 func (m *MailTips) GetTotalMemberCount()(*int32) {
-    return m.totalMemberCount
+    val, err := m.GetBackingStore().Get("totalMemberCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *MailTips) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -191,7 +390,10 @@ func (m *MailTips) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c01
         }
     }
     if m.GetRecipientSuggestions() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetRecipientSuggestions())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetRecipientSuggestions()))
+        for i, v := range m.GetRecipientSuggestions() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err := writer.WriteCollectionOfObjectValues("recipientSuggestions", cast)
         if err != nil {
             return err
@@ -212,58 +414,138 @@ func (m *MailTips) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c01
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *MailTips) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *MailTips) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAutomaticReplies sets the automaticReplies property value. Mail tips for automatic reply if it has been set up by the recipient.
 func (m *MailTips) SetAutomaticReplies(value AutomaticRepliesMailTipsable)() {
-    m.automaticReplies = value
+    err := m.GetBackingStore().Set("automaticReplies", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *MailTips) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetCustomMailTip sets the customMailTip property value. A custom mail tip that can be set on the recipient's mailbox.
 func (m *MailTips) SetCustomMailTip(value *string)() {
-    m.customMailTip = value
+    err := m.GetBackingStore().Set("customMailTip", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeliveryRestricted sets the deliveryRestricted property value. Whether the recipient's mailbox is restricted, for example, accepting messages from only a predefined list of senders, rejecting messages from a predefined list of senders, or accepting messages from only authenticated senders.
 func (m *MailTips) SetDeliveryRestricted(value *bool)() {
-    m.deliveryRestricted = value
+    err := m.GetBackingStore().Set("deliveryRestricted", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetEmailAddress sets the emailAddress property value. The email address of the recipient to get mailtips for.
 func (m *MailTips) SetEmailAddress(value EmailAddressable)() {
-    m.emailAddress = value
+    err := m.GetBackingStore().Set("emailAddress", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetError sets the error property value. Errors that occur during the getMailTips action.
 func (m *MailTips) SetError(value MailTipsErrorable)() {
-    m.error = value
+    err := m.GetBackingStore().Set("error", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetExternalMemberCount sets the externalMemberCount property value. The number of external members if the recipient is a distribution list.
 func (m *MailTips) SetExternalMemberCount(value *int32)() {
-    m.externalMemberCount = value
+    err := m.GetBackingStore().Set("externalMemberCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsModerated sets the isModerated property value. Whether sending messages to the recipient requires approval. For example, if the recipient is a large distribution list and a moderator has been set up to approve messages sent to that distribution list, or if sending messages to a recipient requires approval of the recipient's manager.
 func (m *MailTips) SetIsModerated(value *bool)() {
-    m.isModerated = value
+    err := m.GetBackingStore().Set("isModerated", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMailboxFull sets the mailboxFull property value. The mailbox full status of the recipient.
 func (m *MailTips) SetMailboxFull(value *bool)() {
-    m.mailboxFull = value
+    err := m.GetBackingStore().Set("mailboxFull", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMaxMessageSize sets the maxMessageSize property value. The maximum message size that has been configured for the recipient's organization or mailbox.
 func (m *MailTips) SetMaxMessageSize(value *int32)() {
-    m.maxMessageSize = value
+    err := m.GetBackingStore().Set("maxMessageSize", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *MailTips) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRecipientScope sets the recipientScope property value. The scope of the recipient. Possible values are: none, internal, external, externalPartner, externalNonParther. For example, an administrator can set another organization to be its 'partner'. The scope is useful if an administrator wants certain mailtips to be accessible to certain scopes. It's also useful to senders to inform them that their message may leave the organization, helping them make the correct decisions about wording, tone and content.
 func (m *MailTips) SetRecipientScope(value *RecipientScopeType)() {
-    m.recipientScope = value
+    err := m.GetBackingStore().Set("recipientScope", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRecipientSuggestions sets the recipientSuggestions property value. Recipients suggested based on previous contexts where they appear in the same message.
 func (m *MailTips) SetRecipientSuggestions(value []Recipientable)() {
-    m.recipientSuggestions = value
+    err := m.GetBackingStore().Set("recipientSuggestions", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTotalMemberCount sets the totalMemberCount property value. The number of members if the recipient is a distribution list.
 func (m *MailTips) SetTotalMemberCount(value *int32)() {
-    m.totalMemberCount = value
+    err := m.GetBackingStore().Set("totalMemberCount", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// MailTipsable 
+type MailTipsable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAutomaticReplies()(AutomaticRepliesMailTipsable)
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetCustomMailTip()(*string)
+    GetDeliveryRestricted()(*bool)
+    GetEmailAddress()(EmailAddressable)
+    GetError()(MailTipsErrorable)
+    GetExternalMemberCount()(*int32)
+    GetIsModerated()(*bool)
+    GetMailboxFull()(*bool)
+    GetMaxMessageSize()(*int32)
+    GetOdataType()(*string)
+    GetRecipientScope()(*RecipientScopeType)
+    GetRecipientSuggestions()([]Recipientable)
+    GetTotalMemberCount()(*int32)
+    SetAutomaticReplies(value AutomaticRepliesMailTipsable)()
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetCustomMailTip(value *string)()
+    SetDeliveryRestricted(value *bool)()
+    SetEmailAddress(value EmailAddressable)()
+    SetError(value MailTipsErrorable)()
+    SetExternalMemberCount(value *int32)()
+    SetIsModerated(value *bool)()
+    SetMailboxFull(value *bool)()
+    SetMaxMessageSize(value *int32)()
+    SetOdataType(value *string)()
+    SetRecipientScope(value *RecipientScopeType)()
+    SetRecipientSuggestions(value []Recipientable)()
+    SetTotalMemberCount(value *int32)()
 }

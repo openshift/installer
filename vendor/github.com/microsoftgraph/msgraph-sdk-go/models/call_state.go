@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the cloudCommunications singleton.
+// 
 type CallState int
 
 const (
@@ -21,7 +21,7 @@ const (
 func (i CallState) String() string {
     return []string{"incoming", "establishing", "established", "hold", "transferring", "transferAccepted", "redirecting", "terminating", "terminated", "unknownFutureValue"}[i]
 }
-func ParseCallState(v string) (interface{}, error) {
+func ParseCallState(v string) (any, error) {
     result := INCOMING_CALLSTATE
     switch v {
         case "incoming":

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type TemplateScenarios int
 
 const (
@@ -18,7 +18,7 @@ const (
 func (i TemplateScenarios) String() string {
     return []string{"new", "secureFoundation", "zeroTrust", "remoteWork", "protectAdmins", "emergingThreats", "unknownFutureValue"}[i]
 }
-func ParseTemplateScenarios(v string) (interface{}, error) {
+func ParseTemplateScenarios(v string) (any, error) {
     result := NEW_TEMPLATESCENARIOS
     switch v {
         case "new":

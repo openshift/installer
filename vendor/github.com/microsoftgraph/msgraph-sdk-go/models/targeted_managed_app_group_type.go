@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to call the targetApps method.
+// Indicates a collection of apps to target which can be one of several pre-defined lists of apps or a manually selected list of apps
 type TargetedManagedAppGroupType int
 
 const (
@@ -19,7 +19,7 @@ const (
 func (i TargetedManagedAppGroupType) String() string {
     return []string{"selectedPublicApps", "allCoreMicrosoftApps", "allMicrosoftApps", "allApps"}[i]
 }
-func ParseTargetedManagedAppGroupType(v string) (interface{}, error) {
+func ParseTargetedManagedAppGroupType(v string) (any, error) {
     result := SELECTEDPUBLICAPPS_TARGETEDMANAGEDAPPGROUPTYPE
     switch v {
         case "selectedPublicApps":

@@ -27,17 +27,17 @@ func (provider *BaseBearerTokenAuthenticationProvider) AuthenticateRequest(ctx c
 		return errors.New("request is nil")
 	}
 	if request.Headers == nil {
-		request.Headers = make(map[string]string)
+		request.Headers = abs.NewRequestHeaders()
 	}
 	if provider.accessTokenProvider == nil {
 		return errors.New("this class needs to be initialized with an access token provider")
 	}
 	if len(additionalAuthenticationContext) > 0 &&
 		additionalAuthenticationContext[claimsKey] != nil &&
-		request.Headers[authorizationHeader] != "" {
-		request.Headers[authorizationHeader] = ""
+		request.Headers.ContainsKey(authorizationHeader) {
+		request.Headers.Remove(authorizationHeader)
 	}
-	if request.Headers[authorizationHeader] == "" {
+	if !request.Headers.ContainsKey(authorizationHeader) {
 		uri, err := request.GetUri()
 		if err != nil {
 			return err
@@ -47,7 +47,7 @@ func (provider *BaseBearerTokenAuthenticationProvider) AuthenticateRequest(ctx c
 			return err
 		}
 		if token != "" {
-			request.Headers[authorizationHeader] = "Bearer " + token
+			request.Headers.Add(authorizationHeader, "Bearer "+token)
 		}
 	}
 

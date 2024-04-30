@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Contains rule types for Win32 LOB apps.
 type Win32LobAppRuleType int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i Win32LobAppRuleType) String() string {
     return []string{"detection", "requirement"}[i]
 }
-func ParseWin32LobAppRuleType(v string) (interface{}, error) {
+func ParseWin32LobAppRuleType(v string) (any, error) {
     result := DETECTION_WIN32LOBAPPRULETYPE
     switch v {
         case "detection":

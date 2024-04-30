@@ -1,25 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // SkypeForBusinessUserConversationMember 
 type SkypeForBusinessUserConversationMember struct {
     ConversationMember
-    // The tenantId property
-    tenantId *string
-    // The userId property
-    userId *string
 }
 // NewSkypeForBusinessUserConversationMember instantiates a new SkypeForBusinessUserConversationMember and sets the default values.
 func NewSkypeForBusinessUserConversationMember()(*SkypeForBusinessUserConversationMember) {
     m := &SkypeForBusinessUserConversationMember{
         ConversationMember: *NewConversationMember(),
     }
-    odataTypeValue := "#microsoft.graph.skypeForBusinessUserConversationMember";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.skypeForBusinessUserConversationMember"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateSkypeForBusinessUserConversationMemberFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -29,17 +24,49 @@ func CreateSkypeForBusinessUserConversationMemberFromDiscriminatorValue(parseNod
 // GetFieldDeserializers the deserialization information for the current model
 func (m *SkypeForBusinessUserConversationMember) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.ConversationMember.GetFieldDeserializers()
-    res["tenantId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetTenantId)
-    res["userId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetUserId)
+    res["tenantId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTenantId(val)
+        }
+        return nil
+    }
+    res["userId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUserId(val)
+        }
+        return nil
+    }
     return res
 }
-// GetTenantId gets the tenantId property value. The tenantId property
+// GetTenantId gets the tenantId property value. ID of the tenant that the user belongs to.
 func (m *SkypeForBusinessUserConversationMember) GetTenantId()(*string) {
-    return m.tenantId
+    val, err := m.GetBackingStore().Get("tenantId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
-// GetUserId gets the userId property value. The userId property
+// GetUserId gets the userId property value. Azure Active Directory ID of the user.
 func (m *SkypeForBusinessUserConversationMember) GetUserId()(*string) {
-    return m.userId
+    val, err := m.GetBackingStore().Get("userId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *SkypeForBusinessUserConversationMember) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -61,11 +88,26 @@ func (m *SkypeForBusinessUserConversationMember) Serialize(writer i878a80d2330e8
     }
     return nil
 }
-// SetTenantId sets the tenantId property value. The tenantId property
+// SetTenantId sets the tenantId property value. ID of the tenant that the user belongs to.
 func (m *SkypeForBusinessUserConversationMember) SetTenantId(value *string)() {
-    m.tenantId = value
+    err := m.GetBackingStore().Set("tenantId", value)
+    if err != nil {
+        panic(err)
+    }
 }
-// SetUserId sets the userId property value. The userId property
+// SetUserId sets the userId property value. Azure Active Directory ID of the user.
 func (m *SkypeForBusinessUserConversationMember) SetUserId(value *string)() {
-    m.userId = value
+    err := m.GetBackingStore().Set("userId", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SkypeForBusinessUserConversationMemberable 
+type SkypeForBusinessUserConversationMemberable interface {
+    ConversationMemberable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetTenantId()(*string)
+    GetUserId()(*string)
+    SetTenantId(value *string)()
+    SetUserId(value *string)()
 }

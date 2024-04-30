@@ -1,31 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // MicrosoftStoreForBusinessApp 
 type MicrosoftStoreForBusinessApp struct {
     MobileApp
-    // The licenseType property
-    licenseType *MicrosoftStoreForBusinessLicenseType
-    // The app package identifier
-    packageIdentityName *string
-    // The app product key
-    productKey *string
-    // The total number of Microsoft Store for Business licenses.
-    totalLicenseCount *int32
-    // The number of Microsoft Store for Business licenses in use.
-    usedLicenseCount *int32
 }
 // NewMicrosoftStoreForBusinessApp instantiates a new MicrosoftStoreForBusinessApp and sets the default values.
 func NewMicrosoftStoreForBusinessApp()(*MicrosoftStoreForBusinessApp) {
     m := &MicrosoftStoreForBusinessApp{
         MobileApp: *NewMobileApp(),
     }
-    odataTypeValue := "#microsoft.graph.microsoftStoreForBusinessApp";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.microsoftStoreForBusinessApp"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateMicrosoftStoreForBusinessAppFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -35,32 +24,112 @@ func CreateMicrosoftStoreForBusinessAppFromDiscriminatorValue(parseNode i878a80d
 // GetFieldDeserializers the deserialization information for the current model
 func (m *MicrosoftStoreForBusinessApp) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.MobileApp.GetFieldDeserializers()
-    res["licenseType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseMicrosoftStoreForBusinessLicenseType , m.SetLicenseType)
-    res["packageIdentityName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetPackageIdentityName)
-    res["productKey"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetProductKey)
-    res["totalLicenseCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetTotalLicenseCount)
-    res["usedLicenseCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetUsedLicenseCount)
+    res["licenseType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseMicrosoftStoreForBusinessLicenseType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLicenseType(val.(*MicrosoftStoreForBusinessLicenseType))
+        }
+        return nil
+    }
+    res["packageIdentityName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPackageIdentityName(val)
+        }
+        return nil
+    }
+    res["productKey"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetProductKey(val)
+        }
+        return nil
+    }
+    res["totalLicenseCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTotalLicenseCount(val)
+        }
+        return nil
+    }
+    res["usedLicenseCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUsedLicenseCount(val)
+        }
+        return nil
+    }
     return res
 }
 // GetLicenseType gets the licenseType property value. The licenseType property
 func (m *MicrosoftStoreForBusinessApp) GetLicenseType()(*MicrosoftStoreForBusinessLicenseType) {
-    return m.licenseType
+    val, err := m.GetBackingStore().Get("licenseType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*MicrosoftStoreForBusinessLicenseType)
+    }
+    return nil
 }
 // GetPackageIdentityName gets the packageIdentityName property value. The app package identifier
 func (m *MicrosoftStoreForBusinessApp) GetPackageIdentityName()(*string) {
-    return m.packageIdentityName
+    val, err := m.GetBackingStore().Get("packageIdentityName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetProductKey gets the productKey property value. The app product key
 func (m *MicrosoftStoreForBusinessApp) GetProductKey()(*string) {
-    return m.productKey
+    val, err := m.GetBackingStore().Get("productKey")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetTotalLicenseCount gets the totalLicenseCount property value. The total number of Microsoft Store for Business licenses.
 func (m *MicrosoftStoreForBusinessApp) GetTotalLicenseCount()(*int32) {
-    return m.totalLicenseCount
+    val, err := m.GetBackingStore().Get("totalLicenseCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetUsedLicenseCount gets the usedLicenseCount property value. The number of Microsoft Store for Business licenses in use.
 func (m *MicrosoftStoreForBusinessApp) GetUsedLicenseCount()(*int32) {
-    return m.usedLicenseCount
+    val, err := m.GetBackingStore().Get("usedLicenseCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *MicrosoftStoreForBusinessApp) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -103,21 +172,51 @@ func (m *MicrosoftStoreForBusinessApp) Serialize(writer i878a80d2330e89d26896388
 }
 // SetLicenseType sets the licenseType property value. The licenseType property
 func (m *MicrosoftStoreForBusinessApp) SetLicenseType(value *MicrosoftStoreForBusinessLicenseType)() {
-    m.licenseType = value
+    err := m.GetBackingStore().Set("licenseType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPackageIdentityName sets the packageIdentityName property value. The app package identifier
 func (m *MicrosoftStoreForBusinessApp) SetPackageIdentityName(value *string)() {
-    m.packageIdentityName = value
+    err := m.GetBackingStore().Set("packageIdentityName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetProductKey sets the productKey property value. The app product key
 func (m *MicrosoftStoreForBusinessApp) SetProductKey(value *string)() {
-    m.productKey = value
+    err := m.GetBackingStore().Set("productKey", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTotalLicenseCount sets the totalLicenseCount property value. The total number of Microsoft Store for Business licenses.
 func (m *MicrosoftStoreForBusinessApp) SetTotalLicenseCount(value *int32)() {
-    m.totalLicenseCount = value
+    err := m.GetBackingStore().Set("totalLicenseCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUsedLicenseCount sets the usedLicenseCount property value. The number of Microsoft Store for Business licenses in use.
 func (m *MicrosoftStoreForBusinessApp) SetUsedLicenseCount(value *int32)() {
-    m.usedLicenseCount = value
+    err := m.GetBackingStore().Set("usedLicenseCount", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// MicrosoftStoreForBusinessAppable 
+type MicrosoftStoreForBusinessAppable interface {
+    MobileAppable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetLicenseType()(*MicrosoftStoreForBusinessLicenseType)
+    GetPackageIdentityName()(*string)
+    GetProductKey()(*string)
+    GetTotalLicenseCount()(*int32)
+    GetUsedLicenseCount()(*int32)
+    SetLicenseType(value *MicrosoftStoreForBusinessLicenseType)()
+    SetPackageIdentityName(value *string)()
+    SetProductKey(value *string)()
+    SetTotalLicenseCount(value *int32)()
+    SetUsedLicenseCount(value *int32)()
 }

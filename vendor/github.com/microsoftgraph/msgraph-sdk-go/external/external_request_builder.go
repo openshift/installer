@@ -3,10 +3,8 @@ package external
 import (
     "context"
     i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
-    i48e814d71144f5121a67549d49468b2234835e783775817ee48121414806c410 "github.com/microsoftgraph/msgraph-sdk-go/external/connections"
     i648e92ed22999203da3c8fad3bc63deefe974fd0d511e7f830d70ea0aff57ffc "github.com/microsoftgraph/msgraph-sdk-go/models/externalconnectors"
     ia572726a95efa92ddd544552cd950653dc691023836923576b2f4bf716cf204a "github.com/microsoftgraph/msgraph-sdk-go/models/odataerrors"
-    i577c32b3546bb944ef6f26d23de16748f1a577be367300410114bee1d27f70cb "github.com/microsoftgraph/msgraph-sdk-go/external/connections/item"
 )
 
 // ExternalRequestBuilder provides operations to manage the external singleton.
@@ -28,7 +26,7 @@ type ExternalRequestBuilderGetQueryParameters struct {
 // ExternalRequestBuilderGetRequestConfiguration configuration for the request such as headers, query parameters, and middleware options.
 type ExternalRequestBuilderGetRequestConfiguration struct {
     // Request headers
-    Headers map[string]string
+    Headers *i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.RequestHeaders
     // Request options
     Options []i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.RequestOption
     // Request query parameters
@@ -37,16 +35,16 @@ type ExternalRequestBuilderGetRequestConfiguration struct {
 // ExternalRequestBuilderPatchRequestConfiguration configuration for the request such as headers, query parameters, and middleware options.
 type ExternalRequestBuilderPatchRequestConfiguration struct {
     // Request headers
-    Headers map[string]string
+    Headers *i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.RequestHeaders
     // Request options
     Options []i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.RequestOption
 }
 // Connections provides operations to manage the connections property of the microsoft.graph.externalConnectors.external entity.
-func (m *ExternalRequestBuilder) Connections()(*i48e814d71144f5121a67549d49468b2234835e783775817ee48121414806c410.ConnectionsRequestBuilder) {
-    return i48e814d71144f5121a67549d49468b2234835e783775817ee48121414806c410.NewConnectionsRequestBuilderInternal(m.pathParameters, m.requestAdapter);
+func (m *ExternalRequestBuilder) Connections()(*ConnectionsRequestBuilder) {
+    return NewConnectionsRequestBuilderInternal(m.pathParameters, m.requestAdapter)
 }
 // ConnectionsById provides operations to manage the connections property of the microsoft.graph.externalConnectors.external entity.
-func (m *ExternalRequestBuilder) ConnectionsById(id string)(*i577c32b3546bb944ef6f26d23de16748f1a577be367300410114bee1d27f70cb.ExternalConnectionItemRequestBuilder) {
+func (m *ExternalRequestBuilder) ConnectionsById(id string)(*ConnectionsExternalConnectionItemRequestBuilder) {
     urlTplParams := make(map[string]string)
     for idx, item := range m.pathParameters {
         urlTplParams[idx] = item
@@ -54,7 +52,7 @@ func (m *ExternalRequestBuilder) ConnectionsById(id string)(*i577c32b3546bb944ef
     if id != "" {
         urlTplParams["externalConnection%2Did"] = id
     }
-    return i577c32b3546bb944ef6f26d23de16748f1a577be367300410114bee1d27f70cb.NewExternalConnectionItemRequestBuilderInternal(urlTplParams, m.requestAdapter);
+    return NewConnectionsExternalConnectionItemRequestBuilderInternal(urlTplParams, m.requestAdapter)
 }
 // NewExternalRequestBuilderInternal instantiates a new ExternalRequestBuilder and sets the default values.
 func NewExternalRequestBuilderInternal(pathParameters map[string]string, requestAdapter i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.RequestAdapter)(*ExternalRequestBuilder) {
@@ -65,8 +63,8 @@ func NewExternalRequestBuilderInternal(pathParameters map[string]string, request
     for idx, item := range pathParameters {
         urlTplParams[idx] = item
     }
-    m.pathParameters = urlTplParams;
-    m.requestAdapter = requestAdapter;
+    m.pathParameters = urlTplParams
+    m.requestAdapter = requestAdapter
     return m
 }
 // NewExternalRequestBuilder instantiates a new ExternalRequestBuilder and sets the default values.
@@ -75,39 +73,9 @@ func NewExternalRequestBuilder(rawUrl string, requestAdapter i2ae4187f7daee26337
     urlParams["request-raw-url"] = rawUrl
     return NewExternalRequestBuilderInternal(urlParams, requestAdapter)
 }
-// CreateGetRequestInformation get external
-func (m *ExternalRequestBuilder) CreateGetRequestInformation(ctx context.Context, requestConfiguration *ExternalRequestBuilderGetRequestConfiguration)(*i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.RequestInformation, error) {
-    requestInfo := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.NewRequestInformation()
-    requestInfo.UrlTemplate = m.urlTemplate
-    requestInfo.PathParameters = m.pathParameters
-    requestInfo.Method = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.GET
-    requestInfo.Headers["Accept"] = "application/json"
-    if requestConfiguration != nil {
-        if requestConfiguration.QueryParameters != nil {
-            requestInfo.AddQueryParameters(*(requestConfiguration.QueryParameters))
-        }
-        requestInfo.AddRequestHeaders(requestConfiguration.Headers)
-        requestInfo.AddRequestOptions(requestConfiguration.Options)
-    }
-    return requestInfo, nil
-}
-// CreatePatchRequestInformation update external
-func (m *ExternalRequestBuilder) CreatePatchRequestInformation(ctx context.Context, body i648e92ed22999203da3c8fad3bc63deefe974fd0d511e7f830d70ea0aff57ffc.Externalable, requestConfiguration *ExternalRequestBuilderPatchRequestConfiguration)(*i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.RequestInformation, error) {
-    requestInfo := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.NewRequestInformation()
-    requestInfo.UrlTemplate = m.urlTemplate
-    requestInfo.PathParameters = m.pathParameters
-    requestInfo.Method = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.PATCH
-    requestInfo.Headers["Accept"] = "application/json"
-    requestInfo.SetContentFromParsable(ctx, m.requestAdapter, "application/json", body)
-    if requestConfiguration != nil {
-        requestInfo.AddRequestHeaders(requestConfiguration.Headers)
-        requestInfo.AddRequestOptions(requestConfiguration.Options)
-    }
-    return requestInfo, nil
-}
 // Get get external
 func (m *ExternalRequestBuilder) Get(ctx context.Context, requestConfiguration *ExternalRequestBuilderGetRequestConfiguration)(i648e92ed22999203da3c8fad3bc63deefe974fd0d511e7f830d70ea0aff57ffc.Externalable, error) {
-    requestInfo, err := m.CreateGetRequestInformation(ctx, requestConfiguration);
+    requestInfo, err := m.ToGetRequestInformation(ctx, requestConfiguration);
     if err != nil {
         return nil, err
     }
@@ -115,7 +83,7 @@ func (m *ExternalRequestBuilder) Get(ctx context.Context, requestConfiguration *
         "4XX": ia572726a95efa92ddd544552cd950653dc691023836923576b2f4bf716cf204a.CreateODataErrorFromDiscriminatorValue,
         "5XX": ia572726a95efa92ddd544552cd950653dc691023836923576b2f4bf716cf204a.CreateODataErrorFromDiscriminatorValue,
     }
-    res, err := m.requestAdapter.SendAsync(ctx, requestInfo, i648e92ed22999203da3c8fad3bc63deefe974fd0d511e7f830d70ea0aff57ffc.CreateExternalFromDiscriminatorValue, errorMapping)
+    res, err := m.requestAdapter.Send(ctx, requestInfo, i648e92ed22999203da3c8fad3bc63deefe974fd0d511e7f830d70ea0aff57ffc.CreateExternalFromDiscriminatorValue, errorMapping)
     if err != nil {
         return nil, err
     }
@@ -126,7 +94,7 @@ func (m *ExternalRequestBuilder) Get(ctx context.Context, requestConfiguration *
 }
 // Patch update external
 func (m *ExternalRequestBuilder) Patch(ctx context.Context, body i648e92ed22999203da3c8fad3bc63deefe974fd0d511e7f830d70ea0aff57ffc.Externalable, requestConfiguration *ExternalRequestBuilderPatchRequestConfiguration)(i648e92ed22999203da3c8fad3bc63deefe974fd0d511e7f830d70ea0aff57ffc.Externalable, error) {
-    requestInfo, err := m.CreatePatchRequestInformation(ctx, body, requestConfiguration);
+    requestInfo, err := m.ToPatchRequestInformation(ctx, body, requestConfiguration);
     if err != nil {
         return nil, err
     }
@@ -134,7 +102,7 @@ func (m *ExternalRequestBuilder) Patch(ctx context.Context, body i648e92ed229992
         "4XX": ia572726a95efa92ddd544552cd950653dc691023836923576b2f4bf716cf204a.CreateODataErrorFromDiscriminatorValue,
         "5XX": ia572726a95efa92ddd544552cd950653dc691023836923576b2f4bf716cf204a.CreateODataErrorFromDiscriminatorValue,
     }
-    res, err := m.requestAdapter.SendAsync(ctx, requestInfo, i648e92ed22999203da3c8fad3bc63deefe974fd0d511e7f830d70ea0aff57ffc.CreateExternalFromDiscriminatorValue, errorMapping)
+    res, err := m.requestAdapter.Send(ctx, requestInfo, i648e92ed22999203da3c8fad3bc63deefe974fd0d511e7f830d70ea0aff57ffc.CreateExternalFromDiscriminatorValue, errorMapping)
     if err != nil {
         return nil, err
     }
@@ -142,4 +110,37 @@ func (m *ExternalRequestBuilder) Patch(ctx context.Context, body i648e92ed229992
         return nil, nil
     }
     return res.(i648e92ed22999203da3c8fad3bc63deefe974fd0d511e7f830d70ea0aff57ffc.Externalable), nil
+}
+// ToGetRequestInformation get external
+func (m *ExternalRequestBuilder) ToGetRequestInformation(ctx context.Context, requestConfiguration *ExternalRequestBuilderGetRequestConfiguration)(*i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.RequestInformation, error) {
+    requestInfo := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.NewRequestInformation()
+    requestInfo.UrlTemplate = m.urlTemplate
+    requestInfo.PathParameters = m.pathParameters
+    requestInfo.Method = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.GET
+    requestInfo.Headers.Add("Accept", "application/json")
+    if requestConfiguration != nil {
+        if requestConfiguration.QueryParameters != nil {
+            requestInfo.AddQueryParameters(*(requestConfiguration.QueryParameters))
+        }
+        requestInfo.Headers.AddAll(requestConfiguration.Headers)
+        requestInfo.AddRequestOptions(requestConfiguration.Options)
+    }
+    return requestInfo, nil
+}
+// ToPatchRequestInformation update external
+func (m *ExternalRequestBuilder) ToPatchRequestInformation(ctx context.Context, body i648e92ed22999203da3c8fad3bc63deefe974fd0d511e7f830d70ea0aff57ffc.Externalable, requestConfiguration *ExternalRequestBuilderPatchRequestConfiguration)(*i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.RequestInformation, error) {
+    requestInfo := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.NewRequestInformation()
+    requestInfo.UrlTemplate = m.urlTemplate
+    requestInfo.PathParameters = m.pathParameters
+    requestInfo.Method = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.PATCH
+    requestInfo.Headers.Add("Accept", "application/json")
+    err := requestInfo.SetContentFromParsable(ctx, m.requestAdapter, "application/json", body)
+    if err != nil {
+        return nil, err
+    }
+    if requestConfiguration != nil {
+        requestInfo.Headers.AddAll(requestConfiguration.Headers)
+        requestInfo.AddRequestOptions(requestConfiguration.Options)
+    }
+    return requestInfo, nil
 }

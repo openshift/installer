@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreementAcceptance entities.
+// 
 type AgreementAcceptanceState int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i AgreementAcceptanceState) String() string {
     return []string{"accepted", "declined", "unknownFutureValue"}[i]
 }
-func ParseAgreementAcceptanceState(v string) (interface{}, error) {
+func ParseAgreementAcceptanceState(v string) (any, error) {
     result := ACCEPTED_AGREEMENTACCEPTANCESTATE
     switch v {
         case "accepted":

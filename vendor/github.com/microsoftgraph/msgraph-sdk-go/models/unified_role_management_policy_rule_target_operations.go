@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type UnifiedRoleManagementPolicyRuleTargetOperations int
 
 const (
@@ -20,7 +20,7 @@ const (
 func (i UnifiedRoleManagementPolicyRuleTargetOperations) String() string {
     return []string{"all", "activate", "deactivate", "assign", "update", "remove", "extend", "renew", "unknownFutureValue"}[i]
 }
-func ParseUnifiedRoleManagementPolicyRuleTargetOperations(v string) (interface{}, error) {
+func ParseUnifiedRoleManagementPolicyRuleTargetOperations(v string) (any, error) {
     result := ALL_UNIFIEDROLEMANAGEMENTPOLICYRULETARGETOPERATIONS
     switch v {
         case "all":

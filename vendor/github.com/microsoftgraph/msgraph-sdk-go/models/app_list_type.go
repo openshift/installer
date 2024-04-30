@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Possible values of the compliance app list.
 type AppListType int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i AppListType) String() string {
     return []string{"none", "appsInListCompliant", "appsNotInListCompliant"}[i]
 }
-func ParseAppListType(v string) (interface{}, error) {
+func ParseAppListType(v string) (any, error) {
     result := NONE_APPLISTTYPE
     switch v {
         case "none":

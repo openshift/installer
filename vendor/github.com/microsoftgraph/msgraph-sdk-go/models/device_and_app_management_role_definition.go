@@ -13,8 +13,8 @@ func NewDeviceAndAppManagementRoleDefinition()(*DeviceAndAppManagementRoleDefini
     m := &DeviceAndAppManagementRoleDefinition{
         RoleDefinition: *NewRoleDefinition(),
     }
-    odataTypeValue := "#microsoft.graph.deviceAndAppManagementRoleDefinition";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.deviceAndAppManagementRoleDefinition"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateDeviceAndAppManagementRoleDefinitionFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -33,4 +33,9 @@ func (m *DeviceAndAppManagementRoleDefinition) Serialize(writer i878a80d2330e89d
         return err
     }
     return nil
+}
+// DeviceAndAppManagementRoleDefinitionable 
+type DeviceAndAppManagementRoleDefinitionable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    RoleDefinitionable
 }

@@ -1,25 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // DomainIdentitySource 
 type DomainIdentitySource struct {
     IdentitySource
-    // The name of the identity source, typically also the domain name. Read only.
-    displayName *string
-    // The domain name. Read only.
-    domainName *string
 }
 // NewDomainIdentitySource instantiates a new DomainIdentitySource and sets the default values.
 func NewDomainIdentitySource()(*DomainIdentitySource) {
     m := &DomainIdentitySource{
         IdentitySource: *NewIdentitySource(),
     }
-    odataTypeValue := "#microsoft.graph.domainIdentitySource";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.domainIdentitySource"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateDomainIdentitySourceFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -28,17 +23,49 @@ func CreateDomainIdentitySourceFromDiscriminatorValue(parseNode i878a80d2330e89d
 }
 // GetDisplayName gets the displayName property value. The name of the identity source, typically also the domain name. Read only.
 func (m *DomainIdentitySource) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDomainName gets the domainName property value. The domain name. Read only.
 func (m *DomainIdentitySource) GetDomainName()(*string) {
-    return m.domainName
+    val, err := m.GetBackingStore().Get("domainName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *DomainIdentitySource) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.IdentitySource.GetFieldDeserializers()
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["domainName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDomainName)
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["domainName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDomainName(val)
+        }
+        return nil
+    }
     return res
 }
 // Serialize serializes information the current object
@@ -63,9 +90,24 @@ func (m *DomainIdentitySource) Serialize(writer i878a80d2330e89d26896388a3f487ee
 }
 // SetDisplayName sets the displayName property value. The name of the identity source, typically also the domain name. Read only.
 func (m *DomainIdentitySource) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDomainName sets the domainName property value. The domain name. Read only.
 func (m *DomainIdentitySource) SetDomainName(value *string)() {
-    m.domainName = value
+    err := m.GetBackingStore().Set("domainName", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// DomainIdentitySourceable 
+type DomainIdentitySourceable interface {
+    IdentitySourceable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetDisplayName()(*string)
+    GetDomainName()(*string)
+    SetDisplayName(value *string)()
+    SetDomainName(value *string)()
 }

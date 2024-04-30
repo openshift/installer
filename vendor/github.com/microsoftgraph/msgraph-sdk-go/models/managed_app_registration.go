@@ -2,43 +2,12 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // ManagedAppRegistration the ManagedAppEntity is the base entity type for all other entity types under app management workflow.
 type ManagedAppRegistration struct {
     Entity
-    // The app package Identifier
-    appIdentifier MobileAppIdentifierable
-    // App version
-    applicationVersion *string
-    // Zero or more policys already applied on the registered app when it last synchronized with managment service.
-    appliedPolicies []ManagedAppPolicyable
-    // Date and time of creation
-    createdDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Host device name
-    deviceName *string
-    // App management SDK generated tag, which helps relate apps hosted on the same device. Not guaranteed to relate apps in all conditions.
-    deviceTag *string
-    // Host device type
-    deviceType *string
-    // Zero or more reasons an app registration is flagged. E.g. app running on rooted device
-    flaggedReasons []ManagedAppFlaggedReason
-    // Zero or more policies admin intended for the app as of now.
-    intendedPolicies []ManagedAppPolicyable
-    // Date and time of last the app synced with management service.
-    lastSyncDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // App management SDK version
-    managementSdkVersion *string
-    // Zero or more long running operations triggered on the app registration.
-    operations []ManagedAppOperationable
-    // Operating System version
-    platformVersion *string
-    // The user Id to who this app registration belongs.
-    userId *string
-    // Version of the entity.
-    version *string
 }
 // NewManagedAppRegistration instantiates a new managedAppRegistration and sets the default values.
 func NewManagedAppRegistration()(*ManagedAppRegistration) {
@@ -73,83 +42,339 @@ func CreateManagedAppRegistrationFromDiscriminatorValue(parseNode i878a80d2330e8
 }
 // GetAppIdentifier gets the appIdentifier property value. The app package Identifier
 func (m *ManagedAppRegistration) GetAppIdentifier()(MobileAppIdentifierable) {
-    return m.appIdentifier
+    val, err := m.GetBackingStore().Get("appIdentifier")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(MobileAppIdentifierable)
+    }
+    return nil
 }
 // GetApplicationVersion gets the applicationVersion property value. App version
 func (m *ManagedAppRegistration) GetApplicationVersion()(*string) {
-    return m.applicationVersion
+    val, err := m.GetBackingStore().Get("applicationVersion")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetAppliedPolicies gets the appliedPolicies property value. Zero or more policys already applied on the registered app when it last synchronized with managment service.
 func (m *ManagedAppRegistration) GetAppliedPolicies()([]ManagedAppPolicyable) {
-    return m.appliedPolicies
+    val, err := m.GetBackingStore().Get("appliedPolicies")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]ManagedAppPolicyable)
+    }
+    return nil
 }
 // GetCreatedDateTime gets the createdDateTime property value. Date and time of creation
 func (m *ManagedAppRegistration) GetCreatedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.createdDateTime
+    val, err := m.GetBackingStore().Get("createdDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetDeviceName gets the deviceName property value. Host device name
 func (m *ManagedAppRegistration) GetDeviceName()(*string) {
-    return m.deviceName
+    val, err := m.GetBackingStore().Get("deviceName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDeviceTag gets the deviceTag property value. App management SDK generated tag, which helps relate apps hosted on the same device. Not guaranteed to relate apps in all conditions.
 func (m *ManagedAppRegistration) GetDeviceTag()(*string) {
-    return m.deviceTag
+    val, err := m.GetBackingStore().Get("deviceTag")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDeviceType gets the deviceType property value. Host device type
 func (m *ManagedAppRegistration) GetDeviceType()(*string) {
-    return m.deviceType
+    val, err := m.GetBackingStore().Get("deviceType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *ManagedAppRegistration) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["appIdentifier"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateMobileAppIdentifierFromDiscriminatorValue , m.SetAppIdentifier)
-    res["applicationVersion"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetApplicationVersion)
-    res["appliedPolicies"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateManagedAppPolicyFromDiscriminatorValue , m.SetAppliedPolicies)
-    res["createdDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetCreatedDateTime)
-    res["deviceName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDeviceName)
-    res["deviceTag"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDeviceTag)
-    res["deviceType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDeviceType)
-    res["flaggedReasons"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfEnumValues(ParseManagedAppFlaggedReason , m.SetFlaggedReasons)
-    res["intendedPolicies"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateManagedAppPolicyFromDiscriminatorValue , m.SetIntendedPolicies)
-    res["lastSyncDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetLastSyncDateTime)
-    res["managementSdkVersion"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetManagementSdkVersion)
-    res["operations"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateManagedAppOperationFromDiscriminatorValue , m.SetOperations)
-    res["platformVersion"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetPlatformVersion)
-    res["userId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetUserId)
-    res["version"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetVersion)
+    res["appIdentifier"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateMobileAppIdentifierFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAppIdentifier(val.(MobileAppIdentifierable))
+        }
+        return nil
+    }
+    res["applicationVersion"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetApplicationVersion(val)
+        }
+        return nil
+    }
+    res["appliedPolicies"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateManagedAppPolicyFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]ManagedAppPolicyable, len(val))
+            for i, v := range val {
+                res[i] = v.(ManagedAppPolicyable)
+            }
+            m.SetAppliedPolicies(res)
+        }
+        return nil
+    }
+    res["createdDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCreatedDateTime(val)
+        }
+        return nil
+    }
+    res["deviceName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeviceName(val)
+        }
+        return nil
+    }
+    res["deviceTag"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeviceTag(val)
+        }
+        return nil
+    }
+    res["deviceType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeviceType(val)
+        }
+        return nil
+    }
+    res["flaggedReasons"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfEnumValues(ParseManagedAppFlaggedReason)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]ManagedAppFlaggedReason, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*ManagedAppFlaggedReason))
+            }
+            m.SetFlaggedReasons(res)
+        }
+        return nil
+    }
+    res["intendedPolicies"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateManagedAppPolicyFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]ManagedAppPolicyable, len(val))
+            for i, v := range val {
+                res[i] = v.(ManagedAppPolicyable)
+            }
+            m.SetIntendedPolicies(res)
+        }
+        return nil
+    }
+    res["lastSyncDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastSyncDateTime(val)
+        }
+        return nil
+    }
+    res["managementSdkVersion"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetManagementSdkVersion(val)
+        }
+        return nil
+    }
+    res["operations"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateManagedAppOperationFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]ManagedAppOperationable, len(val))
+            for i, v := range val {
+                res[i] = v.(ManagedAppOperationable)
+            }
+            m.SetOperations(res)
+        }
+        return nil
+    }
+    res["platformVersion"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPlatformVersion(val)
+        }
+        return nil
+    }
+    res["userId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUserId(val)
+        }
+        return nil
+    }
+    res["version"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetVersion(val)
+        }
+        return nil
+    }
     return res
 }
 // GetFlaggedReasons gets the flaggedReasons property value. Zero or more reasons an app registration is flagged. E.g. app running on rooted device
 func (m *ManagedAppRegistration) GetFlaggedReasons()([]ManagedAppFlaggedReason) {
-    return m.flaggedReasons
+    val, err := m.GetBackingStore().Get("flaggedReasons")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]ManagedAppFlaggedReason)
+    }
+    return nil
 }
 // GetIntendedPolicies gets the intendedPolicies property value. Zero or more policies admin intended for the app as of now.
 func (m *ManagedAppRegistration) GetIntendedPolicies()([]ManagedAppPolicyable) {
-    return m.intendedPolicies
+    val, err := m.GetBackingStore().Get("intendedPolicies")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]ManagedAppPolicyable)
+    }
+    return nil
 }
 // GetLastSyncDateTime gets the lastSyncDateTime property value. Date and time of last the app synced with management service.
 func (m *ManagedAppRegistration) GetLastSyncDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.lastSyncDateTime
+    val, err := m.GetBackingStore().Get("lastSyncDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetManagementSdkVersion gets the managementSdkVersion property value. App management SDK version
 func (m *ManagedAppRegistration) GetManagementSdkVersion()(*string) {
-    return m.managementSdkVersion
+    val, err := m.GetBackingStore().Get("managementSdkVersion")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOperations gets the operations property value. Zero or more long running operations triggered on the app registration.
 func (m *ManagedAppRegistration) GetOperations()([]ManagedAppOperationable) {
-    return m.operations
+    val, err := m.GetBackingStore().Get("operations")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]ManagedAppOperationable)
+    }
+    return nil
 }
 // GetPlatformVersion gets the platformVersion property value. Operating System version
 func (m *ManagedAppRegistration) GetPlatformVersion()(*string) {
-    return m.platformVersion
+    val, err := m.GetBackingStore().Get("platformVersion")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetUserId gets the userId property value. The user Id to who this app registration belongs.
 func (m *ManagedAppRegistration) GetUserId()(*string) {
-    return m.userId
+    val, err := m.GetBackingStore().Get("userId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetVersion gets the version property value. Version of the entity.
 func (m *ManagedAppRegistration) GetVersion()(*string) {
-    return m.version
+    val, err := m.GetBackingStore().Get("version")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *ManagedAppRegistration) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -170,7 +395,10 @@ func (m *ManagedAppRegistration) Serialize(writer i878a80d2330e89d26896388a3f487
         }
     }
     if m.GetAppliedPolicies() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetAppliedPolicies())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetAppliedPolicies()))
+        for i, v := range m.GetAppliedPolicies() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("appliedPolicies", cast)
         if err != nil {
             return err
@@ -207,7 +435,10 @@ func (m *ManagedAppRegistration) Serialize(writer i878a80d2330e89d26896388a3f487
         }
     }
     if m.GetIntendedPolicies() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetIntendedPolicies())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetIntendedPolicies()))
+        for i, v := range m.GetIntendedPolicies() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("intendedPolicies", cast)
         if err != nil {
             return err
@@ -226,7 +457,10 @@ func (m *ManagedAppRegistration) Serialize(writer i878a80d2330e89d26896388a3f487
         }
     }
     if m.GetOperations() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetOperations())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetOperations()))
+        for i, v := range m.GetOperations() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("operations", cast)
         if err != nil {
             return err
@@ -254,61 +488,141 @@ func (m *ManagedAppRegistration) Serialize(writer i878a80d2330e89d26896388a3f487
 }
 // SetAppIdentifier sets the appIdentifier property value. The app package Identifier
 func (m *ManagedAppRegistration) SetAppIdentifier(value MobileAppIdentifierable)() {
-    m.appIdentifier = value
+    err := m.GetBackingStore().Set("appIdentifier", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetApplicationVersion sets the applicationVersion property value. App version
 func (m *ManagedAppRegistration) SetApplicationVersion(value *string)() {
-    m.applicationVersion = value
+    err := m.GetBackingStore().Set("applicationVersion", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAppliedPolicies sets the appliedPolicies property value. Zero or more policys already applied on the registered app when it last synchronized with managment service.
 func (m *ManagedAppRegistration) SetAppliedPolicies(value []ManagedAppPolicyable)() {
-    m.appliedPolicies = value
+    err := m.GetBackingStore().Set("appliedPolicies", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCreatedDateTime sets the createdDateTime property value. Date and time of creation
 func (m *ManagedAppRegistration) SetCreatedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.createdDateTime = value
+    err := m.GetBackingStore().Set("createdDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeviceName sets the deviceName property value. Host device name
 func (m *ManagedAppRegistration) SetDeviceName(value *string)() {
-    m.deviceName = value
+    err := m.GetBackingStore().Set("deviceName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeviceTag sets the deviceTag property value. App management SDK generated tag, which helps relate apps hosted on the same device. Not guaranteed to relate apps in all conditions.
 func (m *ManagedAppRegistration) SetDeviceTag(value *string)() {
-    m.deviceTag = value
+    err := m.GetBackingStore().Set("deviceTag", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeviceType sets the deviceType property value. Host device type
 func (m *ManagedAppRegistration) SetDeviceType(value *string)() {
-    m.deviceType = value
+    err := m.GetBackingStore().Set("deviceType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFlaggedReasons sets the flaggedReasons property value. Zero or more reasons an app registration is flagged. E.g. app running on rooted device
 func (m *ManagedAppRegistration) SetFlaggedReasons(value []ManagedAppFlaggedReason)() {
-    m.flaggedReasons = value
+    err := m.GetBackingStore().Set("flaggedReasons", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIntendedPolicies sets the intendedPolicies property value. Zero or more policies admin intended for the app as of now.
 func (m *ManagedAppRegistration) SetIntendedPolicies(value []ManagedAppPolicyable)() {
-    m.intendedPolicies = value
+    err := m.GetBackingStore().Set("intendedPolicies", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLastSyncDateTime sets the lastSyncDateTime property value. Date and time of last the app synced with management service.
 func (m *ManagedAppRegistration) SetLastSyncDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.lastSyncDateTime = value
+    err := m.GetBackingStore().Set("lastSyncDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetManagementSdkVersion sets the managementSdkVersion property value. App management SDK version
 func (m *ManagedAppRegistration) SetManagementSdkVersion(value *string)() {
-    m.managementSdkVersion = value
+    err := m.GetBackingStore().Set("managementSdkVersion", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOperations sets the operations property value. Zero or more long running operations triggered on the app registration.
 func (m *ManagedAppRegistration) SetOperations(value []ManagedAppOperationable)() {
-    m.operations = value
+    err := m.GetBackingStore().Set("operations", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPlatformVersion sets the platformVersion property value. Operating System version
 func (m *ManagedAppRegistration) SetPlatformVersion(value *string)() {
-    m.platformVersion = value
+    err := m.GetBackingStore().Set("platformVersion", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUserId sets the userId property value. The user Id to who this app registration belongs.
 func (m *ManagedAppRegistration) SetUserId(value *string)() {
-    m.userId = value
+    err := m.GetBackingStore().Set("userId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetVersion sets the version property value. Version of the entity.
 func (m *ManagedAppRegistration) SetVersion(value *string)() {
-    m.version = value
+    err := m.GetBackingStore().Set("version", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// ManagedAppRegistrationable 
+type ManagedAppRegistrationable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAppIdentifier()(MobileAppIdentifierable)
+    GetApplicationVersion()(*string)
+    GetAppliedPolicies()([]ManagedAppPolicyable)
+    GetCreatedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetDeviceName()(*string)
+    GetDeviceTag()(*string)
+    GetDeviceType()(*string)
+    GetFlaggedReasons()([]ManagedAppFlaggedReason)
+    GetIntendedPolicies()([]ManagedAppPolicyable)
+    GetLastSyncDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetManagementSdkVersion()(*string)
+    GetOperations()([]ManagedAppOperationable)
+    GetPlatformVersion()(*string)
+    GetUserId()(*string)
+    GetVersion()(*string)
+    SetAppIdentifier(value MobileAppIdentifierable)()
+    SetApplicationVersion(value *string)()
+    SetAppliedPolicies(value []ManagedAppPolicyable)()
+    SetCreatedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetDeviceName(value *string)()
+    SetDeviceTag(value *string)()
+    SetDeviceType(value *string)()
+    SetFlaggedReasons(value []ManagedAppFlaggedReason)()
+    SetIntendedPolicies(value []ManagedAppPolicyable)()
+    SetLastSyncDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetManagementSdkVersion(value *string)()
+    SetOperations(value []ManagedAppOperationable)()
+    SetPlatformVersion(value *string)()
+    SetUserId(value *string)()
+    SetVersion(value *string)()
 }

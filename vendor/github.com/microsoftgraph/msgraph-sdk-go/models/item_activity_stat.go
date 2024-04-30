@@ -2,33 +2,12 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // ItemActivityStat 
 type ItemActivityStat struct {
     Entity
-    // Statistics about the access actions in this interval. Read-only.
-    access ItemActionStatable
-    // Exposes the itemActivities represented in this itemActivityStat resource.
-    activities []ItemActivityable
-    // Statistics about the create actions in this interval. Read-only.
-    create ItemActionStatable
-    // Statistics about the delete actions in this interval. Read-only.
-    delete ItemActionStatable
-    // Statistics about the edit actions in this interval. Read-only.
-    edit ItemActionStatable
-    // When the interval ends. Read-only.
-    endDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Indicates that the statistics in this interval are based on incomplete data. Read-only.
-    incompleteData IncompleteDataable
-    // Indicates whether the item is 'trending.' Read-only.
-    isTrending *bool
-    // Statistics about the move actions in this interval. Read-only.
-    move ItemActionStatable
-    // When the interval starts. Read-only.
-    startDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
 }
 // NewItemActivityStat instantiates a new itemActivityStat and sets the default values.
 func NewItemActivityStat()(*ItemActivityStat) {
@@ -43,58 +22,222 @@ func CreateItemActivityStatFromDiscriminatorValue(parseNode i878a80d2330e89d2689
 }
 // GetAccess gets the access property value. Statistics about the access actions in this interval. Read-only.
 func (m *ItemActivityStat) GetAccess()(ItemActionStatable) {
-    return m.access
+    val, err := m.GetBackingStore().Get("access")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ItemActionStatable)
+    }
+    return nil
 }
 // GetActivities gets the activities property value. Exposes the itemActivities represented in this itemActivityStat resource.
 func (m *ItemActivityStat) GetActivities()([]ItemActivityable) {
-    return m.activities
+    val, err := m.GetBackingStore().Get("activities")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]ItemActivityable)
+    }
+    return nil
 }
 // GetCreate gets the create property value. Statistics about the create actions in this interval. Read-only.
 func (m *ItemActivityStat) GetCreate()(ItemActionStatable) {
-    return m.create
+    val, err := m.GetBackingStore().Get("create")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ItemActionStatable)
+    }
+    return nil
 }
 // GetDelete gets the delete property value. Statistics about the delete actions in this interval. Read-only.
 func (m *ItemActivityStat) GetDelete()(ItemActionStatable) {
-    return m.delete
+    val, err := m.GetBackingStore().Get("delete")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ItemActionStatable)
+    }
+    return nil
 }
 // GetEdit gets the edit property value. Statistics about the edit actions in this interval. Read-only.
 func (m *ItemActivityStat) GetEdit()(ItemActionStatable) {
-    return m.edit
+    val, err := m.GetBackingStore().Get("edit")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ItemActionStatable)
+    }
+    return nil
 }
 // GetEndDateTime gets the endDateTime property value. When the interval ends. Read-only.
 func (m *ItemActivityStat) GetEndDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.endDateTime
+    val, err := m.GetBackingStore().Get("endDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *ItemActivityStat) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["access"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateItemActionStatFromDiscriminatorValue , m.SetAccess)
-    res["activities"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateItemActivityFromDiscriminatorValue , m.SetActivities)
-    res["create"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateItemActionStatFromDiscriminatorValue , m.SetCreate)
-    res["delete"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateItemActionStatFromDiscriminatorValue , m.SetDelete)
-    res["edit"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateItemActionStatFromDiscriminatorValue , m.SetEdit)
-    res["endDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetEndDateTime)
-    res["incompleteData"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateIncompleteDataFromDiscriminatorValue , m.SetIncompleteData)
-    res["isTrending"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsTrending)
-    res["move"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateItemActionStatFromDiscriminatorValue , m.SetMove)
-    res["startDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetStartDateTime)
+    res["access"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateItemActionStatFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAccess(val.(ItemActionStatable))
+        }
+        return nil
+    }
+    res["activities"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateItemActivityFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]ItemActivityable, len(val))
+            for i, v := range val {
+                res[i] = v.(ItemActivityable)
+            }
+            m.SetActivities(res)
+        }
+        return nil
+    }
+    res["create"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateItemActionStatFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCreate(val.(ItemActionStatable))
+        }
+        return nil
+    }
+    res["delete"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateItemActionStatFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDelete(val.(ItemActionStatable))
+        }
+        return nil
+    }
+    res["edit"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateItemActionStatFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetEdit(val.(ItemActionStatable))
+        }
+        return nil
+    }
+    res["endDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetEndDateTime(val)
+        }
+        return nil
+    }
+    res["incompleteData"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateIncompleteDataFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIncompleteData(val.(IncompleteDataable))
+        }
+        return nil
+    }
+    res["isTrending"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsTrending(val)
+        }
+        return nil
+    }
+    res["move"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateItemActionStatFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMove(val.(ItemActionStatable))
+        }
+        return nil
+    }
+    res["startDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetStartDateTime(val)
+        }
+        return nil
+    }
     return res
 }
 // GetIncompleteData gets the incompleteData property value. Indicates that the statistics in this interval are based on incomplete data. Read-only.
 func (m *ItemActivityStat) GetIncompleteData()(IncompleteDataable) {
-    return m.incompleteData
+    val, err := m.GetBackingStore().Get("incompleteData")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(IncompleteDataable)
+    }
+    return nil
 }
 // GetIsTrending gets the isTrending property value. Indicates whether the item is 'trending.' Read-only.
 func (m *ItemActivityStat) GetIsTrending()(*bool) {
-    return m.isTrending
+    val, err := m.GetBackingStore().Get("isTrending")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetMove gets the move property value. Statistics about the move actions in this interval. Read-only.
 func (m *ItemActivityStat) GetMove()(ItemActionStatable) {
-    return m.move
+    val, err := m.GetBackingStore().Get("move")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ItemActionStatable)
+    }
+    return nil
 }
 // GetStartDateTime gets the startDateTime property value. When the interval starts. Read-only.
 func (m *ItemActivityStat) GetStartDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.startDateTime
+    val, err := m.GetBackingStore().Get("startDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *ItemActivityStat) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -109,7 +252,10 @@ func (m *ItemActivityStat) Serialize(writer i878a80d2330e89d26896388a3f487eef27b
         }
     }
     if m.GetActivities() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetActivities())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetActivities()))
+        for i, v := range m.GetActivities() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("activities", cast)
         if err != nil {
             return err
@@ -167,41 +313,96 @@ func (m *ItemActivityStat) Serialize(writer i878a80d2330e89d26896388a3f487eef27b
 }
 // SetAccess sets the access property value. Statistics about the access actions in this interval. Read-only.
 func (m *ItemActivityStat) SetAccess(value ItemActionStatable)() {
-    m.access = value
+    err := m.GetBackingStore().Set("access", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetActivities sets the activities property value. Exposes the itemActivities represented in this itemActivityStat resource.
 func (m *ItemActivityStat) SetActivities(value []ItemActivityable)() {
-    m.activities = value
+    err := m.GetBackingStore().Set("activities", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCreate sets the create property value. Statistics about the create actions in this interval. Read-only.
 func (m *ItemActivityStat) SetCreate(value ItemActionStatable)() {
-    m.create = value
+    err := m.GetBackingStore().Set("create", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDelete sets the delete property value. Statistics about the delete actions in this interval. Read-only.
 func (m *ItemActivityStat) SetDelete(value ItemActionStatable)() {
-    m.delete = value
+    err := m.GetBackingStore().Set("delete", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetEdit sets the edit property value. Statistics about the edit actions in this interval. Read-only.
 func (m *ItemActivityStat) SetEdit(value ItemActionStatable)() {
-    m.edit = value
+    err := m.GetBackingStore().Set("edit", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetEndDateTime sets the endDateTime property value. When the interval ends. Read-only.
 func (m *ItemActivityStat) SetEndDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.endDateTime = value
+    err := m.GetBackingStore().Set("endDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIncompleteData sets the incompleteData property value. Indicates that the statistics in this interval are based on incomplete data. Read-only.
 func (m *ItemActivityStat) SetIncompleteData(value IncompleteDataable)() {
-    m.incompleteData = value
+    err := m.GetBackingStore().Set("incompleteData", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsTrending sets the isTrending property value. Indicates whether the item is 'trending.' Read-only.
 func (m *ItemActivityStat) SetIsTrending(value *bool)() {
-    m.isTrending = value
+    err := m.GetBackingStore().Set("isTrending", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMove sets the move property value. Statistics about the move actions in this interval. Read-only.
 func (m *ItemActivityStat) SetMove(value ItemActionStatable)() {
-    m.move = value
+    err := m.GetBackingStore().Set("move", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetStartDateTime sets the startDateTime property value. When the interval starts. Read-only.
 func (m *ItemActivityStat) SetStartDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.startDateTime = value
+    err := m.GetBackingStore().Set("startDateTime", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// ItemActivityStatable 
+type ItemActivityStatable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAccess()(ItemActionStatable)
+    GetActivities()([]ItemActivityable)
+    GetCreate()(ItemActionStatable)
+    GetDelete()(ItemActionStatable)
+    GetEdit()(ItemActionStatable)
+    GetEndDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetIncompleteData()(IncompleteDataable)
+    GetIsTrending()(*bool)
+    GetMove()(ItemActionStatable)
+    GetStartDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    SetAccess(value ItemActionStatable)()
+    SetActivities(value []ItemActivityable)()
+    SetCreate(value ItemActionStatable)()
+    SetDelete(value ItemActionStatable)()
+    SetEdit(value ItemActionStatable)()
+    SetEndDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetIncompleteData(value IncompleteDataable)()
+    SetIsTrending(value *bool)()
+    SetMove(value ItemActionStatable)()
+    SetStartDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
 }

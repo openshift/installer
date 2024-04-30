@@ -50,4 +50,12 @@ type ParseNode interface {
 	GetByteArrayValue() ([]byte, error)
 	// GetRawValue returns the values of the node as an interface of any type.
 	GetRawValue() (interface{}, error)
+	// GetOnBeforeAssignFieldValues returns a callback invoked before the node is deserialized.
+	GetOnBeforeAssignFieldValues() ParsableAction
+	// SetOnBeforeAssignFieldValues sets a callback invoked before the node is deserialized.
+	SetOnBeforeAssignFieldValues(ParsableAction) error
+	// GetOnAfterAssignFieldValues returns a callback invoked after the node is deserialized.
+	GetOnAfterAssignFieldValues() ParsableAction
+	// SetOnAfterAssignFieldValues sets a callback invoked after the node is deserialized.
+	SetOnAfterAssignFieldValues(ParsableAction) error
 }

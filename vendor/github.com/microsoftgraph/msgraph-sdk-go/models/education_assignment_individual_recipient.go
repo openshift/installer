@@ -1,23 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // EducationAssignmentIndividualRecipient 
 type EducationAssignmentIndividualRecipient struct {
     EducationAssignmentRecipient
-    // A collection of IDs of the recipients.
-    recipients []string
 }
 // NewEducationAssignmentIndividualRecipient instantiates a new EducationAssignmentIndividualRecipient and sets the default values.
 func NewEducationAssignmentIndividualRecipient()(*EducationAssignmentIndividualRecipient) {
     m := &EducationAssignmentIndividualRecipient{
         EducationAssignmentRecipient: *NewEducationAssignmentRecipient(),
     }
-    odataTypeValue := "#microsoft.graph.educationAssignmentIndividualRecipient";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.educationAssignmentIndividualRecipient"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateEducationAssignmentIndividualRecipientFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -27,12 +24,32 @@ func CreateEducationAssignmentIndividualRecipientFromDiscriminatorValue(parseNod
 // GetFieldDeserializers the deserialization information for the current model
 func (m *EducationAssignmentIndividualRecipient) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.EducationAssignmentRecipient.GetFieldDeserializers()
-    res["recipients"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetRecipients)
+    res["recipients"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetRecipients(res)
+        }
+        return nil
+    }
     return res
 }
 // GetRecipients gets the recipients property value. A collection of IDs of the recipients.
 func (m *EducationAssignmentIndividualRecipient) GetRecipients()([]string) {
-    return m.recipients
+    val, err := m.GetBackingStore().Get("recipients")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *EducationAssignmentIndividualRecipient) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -50,5 +67,15 @@ func (m *EducationAssignmentIndividualRecipient) Serialize(writer i878a80d2330e8
 }
 // SetRecipients sets the recipients property value. A collection of IDs of the recipients.
 func (m *EducationAssignmentIndividualRecipient) SetRecipients(value []string)() {
-    m.recipients = value
+    err := m.GetBackingStore().Set("recipients", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// EducationAssignmentIndividualRecipientable 
+type EducationAssignmentIndividualRecipientable interface {
+    EducationAssignmentRecipientable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetRecipients()([]string)
+    SetRecipients(value []string)()
 }

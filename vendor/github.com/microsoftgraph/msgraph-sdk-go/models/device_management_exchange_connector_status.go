@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// The current status of the Exchange Connector.
 type DeviceManagementExchangeConnectorStatus int
 
 const (
@@ -14,12 +14,14 @@ const (
     CONNECTED_DEVICEMANAGEMENTEXCHANGECONNECTORSTATUS
     // Disconnected from the Exchange Environment
     DISCONNECTED_DEVICEMANAGEMENTEXCHANGECONNECTORSTATUS
+    // Evolvable enumeration sentinel value. Do not use.
+    UNKNOWNFUTUREVALUE_DEVICEMANAGEMENTEXCHANGECONNECTORSTATUS
 )
 
 func (i DeviceManagementExchangeConnectorStatus) String() string {
-    return []string{"none", "connectionPending", "connected", "disconnected"}[i]
+    return []string{"none", "connectionPending", "connected", "disconnected", "unknownFutureValue"}[i]
 }
-func ParseDeviceManagementExchangeConnectorStatus(v string) (interface{}, error) {
+func ParseDeviceManagementExchangeConnectorStatus(v string) (any, error) {
     result := NONE_DEVICEMANAGEMENTEXCHANGECONNECTORSTATUS
     switch v {
         case "none":
@@ -30,6 +32,8 @@ func ParseDeviceManagementExchangeConnectorStatus(v string) (interface{}, error)
             result = CONNECTED_DEVICEMANAGEMENTEXCHANGECONNECTORSTATUS
         case "disconnected":
             result = DISCONNECTED_DEVICEMANAGEMENTEXCHANGECONNECTORSTATUS
+        case "unknownFutureValue":
+            result = UNKNOWNFUTUREVALUE_DEVICEMANAGEMENTEXCHANGECONNECTORSTATUS
         default:
             return 0, errors.New("Unknown DeviceManagementExchangeConnectorStatus value: " + v)
     }

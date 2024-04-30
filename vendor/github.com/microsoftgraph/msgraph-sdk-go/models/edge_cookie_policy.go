@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Possible values to specify which cookies are allowed in Microsoft Edge.
 type EdgeCookiePolicy int
 
 const (
@@ -19,7 +19,7 @@ const (
 func (i EdgeCookiePolicy) String() string {
     return []string{"userDefined", "allow", "blockThirdParty", "blockAll"}[i]
 }
-func ParseEdgeCookiePolicy(v string) (interface{}, error) {
+func ParseEdgeCookiePolicy(v string) (any, error) {
     result := USERDEFINED_EDGECOOKIEPOLICY
     switch v {
         case "userDefined":

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type EmailRole int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i EmailRole) String() string {
     return []string{"unknown", "sender", "recipient", "unknownFutureValue"}[i]
 }
-func ParseEmailRole(v string) (interface{}, error) {
+func ParseEmailRole(v string) (any, error) {
     result := UNKNOWN_EMAILROLE
     switch v {
         case "unknown":

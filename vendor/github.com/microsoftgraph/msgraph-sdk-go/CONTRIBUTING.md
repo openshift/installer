@@ -1,6 +1,6 @@
-# Contributing to the Microsoft Graph Core SDK for Go
+# Contributing to the Microsoft Graph SDK for Go
 
-The Microsoft Graph Core SDK for Go is available for all manner of contribution. There are a couple of different recommended paths to get contributions into the released version of this SDK.
+The Microsoft Graph SDK for Go is available for all manner of contribution. There are a couple of different recommended paths to get contributions into the released version of this SDK.
 
 __NOTE__ A signed a contribution license agreement is required for all contributions, and is checked automatically on new pull requests. Please read and sign [the agreement](https://cla.microsoft.com/) before starting any work for this repository.
 

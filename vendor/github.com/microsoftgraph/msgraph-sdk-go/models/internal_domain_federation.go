@@ -1,35 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // InternalDomainFederation 
 type InternalDomainFederation struct {
     SamlOrWsFedProvider
-    // URL of the endpoint used by active clients when authenticating with federated domains set up for single sign-on in Azure Active Directory (Azure AD). Corresponds to the ActiveLogOnUri property of the Set-MsolDomainFederationSettings MSOnline v1 PowerShell cmdlet.
-    activeSignInUri *string
-    // Determines whether Azure AD accepts the MFA performed by the federated IdP when a federated user accesses an application that is governed by a conditional access policy that requires MFA. The possible values are: acceptIfMfaDoneByFederatedIdp, enforceMfaByFederatedIdp, rejectMfaByFederatedIdp, unknownFutureValue. For more information, see federatedIdpMfaBehavior values.
-    federatedIdpMfaBehavior *FederatedIdpMfaBehavior
-    // If true, when SAML authentication requests are sent to the federated SAML IdP, Azure AD will sign those requests using the OrgID signing key. If false (default), the SAML authentication requests sent to the federated IdP are not signed.
-    isSignedAuthenticationRequestRequired *bool
-    // Fallback token signing certificate that is used to sign tokens when the primary signing certificate expires. Formatted as Base64 encoded strings of the public portion of the federated IdP's token signing certificate. Needs to be compatible with the X509Certificate2 class. Much like the signingCertificate, the nextSigningCertificate property is used if a rollover is required outside of the auto-rollover update, a new federation service is being set up, or if the new token signing certificate is not present in the federation properties after the federation service certificate has been updated.
-    nextSigningCertificate *string
-    // Sets the preferred behavior for the sign-in prompt. The possible values are: translateToFreshPasswordAuthentication, nativeSupport, disabled, unknownFutureValue.
-    promptLoginBehavior *PromptLoginBehavior
-    // Provides status and timestamp of the last update of the signing certificate.
-    signingCertificateUpdateStatus SigningCertificateUpdateStatusable
-    // URI that clients are redirected to when they sign out of Azure AD services. Corresponds to the LogOffUri property of the Set-MsolDomainFederationSettings MSOnline v1 PowerShell cmdlet.
-    signOutUri *string
 }
 // NewInternalDomainFederation instantiates a new InternalDomainFederation and sets the default values.
 func NewInternalDomainFederation()(*InternalDomainFederation) {
     m := &InternalDomainFederation{
         SamlOrWsFedProvider: *NewSamlOrWsFedProvider(),
     }
-    odataTypeValue := "#microsoft.graph.internalDomainFederation";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.internalDomainFederation"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateInternalDomainFederationFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -38,43 +23,155 @@ func CreateInternalDomainFederationFromDiscriminatorValue(parseNode i878a80d2330
 }
 // GetActiveSignInUri gets the activeSignInUri property value. URL of the endpoint used by active clients when authenticating with federated domains set up for single sign-on in Azure Active Directory (Azure AD). Corresponds to the ActiveLogOnUri property of the Set-MsolDomainFederationSettings MSOnline v1 PowerShell cmdlet.
 func (m *InternalDomainFederation) GetActiveSignInUri()(*string) {
-    return m.activeSignInUri
+    val, err := m.GetBackingStore().Get("activeSignInUri")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFederatedIdpMfaBehavior gets the federatedIdpMfaBehavior property value. Determines whether Azure AD accepts the MFA performed by the federated IdP when a federated user accesses an application that is governed by a conditional access policy that requires MFA. The possible values are: acceptIfMfaDoneByFederatedIdp, enforceMfaByFederatedIdp, rejectMfaByFederatedIdp, unknownFutureValue. For more information, see federatedIdpMfaBehavior values.
 func (m *InternalDomainFederation) GetFederatedIdpMfaBehavior()(*FederatedIdpMfaBehavior) {
-    return m.federatedIdpMfaBehavior
+    val, err := m.GetBackingStore().Get("federatedIdpMfaBehavior")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*FederatedIdpMfaBehavior)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *InternalDomainFederation) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.SamlOrWsFedProvider.GetFieldDeserializers()
-    res["activeSignInUri"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetActiveSignInUri)
-    res["federatedIdpMfaBehavior"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseFederatedIdpMfaBehavior , m.SetFederatedIdpMfaBehavior)
-    res["isSignedAuthenticationRequestRequired"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsSignedAuthenticationRequestRequired)
-    res["nextSigningCertificate"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetNextSigningCertificate)
-    res["promptLoginBehavior"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParsePromptLoginBehavior , m.SetPromptLoginBehavior)
-    res["signingCertificateUpdateStatus"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateSigningCertificateUpdateStatusFromDiscriminatorValue , m.SetSigningCertificateUpdateStatus)
-    res["signOutUri"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSignOutUri)
+    res["activeSignInUri"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetActiveSignInUri(val)
+        }
+        return nil
+    }
+    res["federatedIdpMfaBehavior"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseFederatedIdpMfaBehavior)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFederatedIdpMfaBehavior(val.(*FederatedIdpMfaBehavior))
+        }
+        return nil
+    }
+    res["isSignedAuthenticationRequestRequired"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsSignedAuthenticationRequestRequired(val)
+        }
+        return nil
+    }
+    res["nextSigningCertificate"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetNextSigningCertificate(val)
+        }
+        return nil
+    }
+    res["promptLoginBehavior"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParsePromptLoginBehavior)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPromptLoginBehavior(val.(*PromptLoginBehavior))
+        }
+        return nil
+    }
+    res["signingCertificateUpdateStatus"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateSigningCertificateUpdateStatusFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSigningCertificateUpdateStatus(val.(SigningCertificateUpdateStatusable))
+        }
+        return nil
+    }
+    res["signOutUri"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSignOutUri(val)
+        }
+        return nil
+    }
     return res
 }
 // GetIsSignedAuthenticationRequestRequired gets the isSignedAuthenticationRequestRequired property value. If true, when SAML authentication requests are sent to the federated SAML IdP, Azure AD will sign those requests using the OrgID signing key. If false (default), the SAML authentication requests sent to the federated IdP are not signed.
 func (m *InternalDomainFederation) GetIsSignedAuthenticationRequestRequired()(*bool) {
-    return m.isSignedAuthenticationRequestRequired
+    val, err := m.GetBackingStore().Get("isSignedAuthenticationRequestRequired")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetNextSigningCertificate gets the nextSigningCertificate property value. Fallback token signing certificate that is used to sign tokens when the primary signing certificate expires. Formatted as Base64 encoded strings of the public portion of the federated IdP's token signing certificate. Needs to be compatible with the X509Certificate2 class. Much like the signingCertificate, the nextSigningCertificate property is used if a rollover is required outside of the auto-rollover update, a new federation service is being set up, or if the new token signing certificate is not present in the federation properties after the federation service certificate has been updated.
 func (m *InternalDomainFederation) GetNextSigningCertificate()(*string) {
-    return m.nextSigningCertificate
+    val, err := m.GetBackingStore().Get("nextSigningCertificate")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetPromptLoginBehavior gets the promptLoginBehavior property value. Sets the preferred behavior for the sign-in prompt. The possible values are: translateToFreshPasswordAuthentication, nativeSupport, disabled, unknownFutureValue.
 func (m *InternalDomainFederation) GetPromptLoginBehavior()(*PromptLoginBehavior) {
-    return m.promptLoginBehavior
+    val, err := m.GetBackingStore().Get("promptLoginBehavior")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*PromptLoginBehavior)
+    }
+    return nil
 }
 // GetSigningCertificateUpdateStatus gets the signingCertificateUpdateStatus property value. Provides status and timestamp of the last update of the signing certificate.
 func (m *InternalDomainFederation) GetSigningCertificateUpdateStatus()(SigningCertificateUpdateStatusable) {
-    return m.signingCertificateUpdateStatus
+    val, err := m.GetBackingStore().Get("signingCertificateUpdateStatus")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(SigningCertificateUpdateStatusable)
+    }
+    return nil
 }
 // GetSignOutUri gets the signOutUri property value. URI that clients are redirected to when they sign out of Azure AD services. Corresponds to the LogOffUri property of the Set-MsolDomainFederationSettings MSOnline v1 PowerShell cmdlet.
 func (m *InternalDomainFederation) GetSignOutUri()(*string) {
-    return m.signOutUri
+    val, err := m.GetBackingStore().Get("signOutUri")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *InternalDomainFederation) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -130,29 +227,69 @@ func (m *InternalDomainFederation) Serialize(writer i878a80d2330e89d26896388a3f4
 }
 // SetActiveSignInUri sets the activeSignInUri property value. URL of the endpoint used by active clients when authenticating with federated domains set up for single sign-on in Azure Active Directory (Azure AD). Corresponds to the ActiveLogOnUri property of the Set-MsolDomainFederationSettings MSOnline v1 PowerShell cmdlet.
 func (m *InternalDomainFederation) SetActiveSignInUri(value *string)() {
-    m.activeSignInUri = value
+    err := m.GetBackingStore().Set("activeSignInUri", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFederatedIdpMfaBehavior sets the federatedIdpMfaBehavior property value. Determines whether Azure AD accepts the MFA performed by the federated IdP when a federated user accesses an application that is governed by a conditional access policy that requires MFA. The possible values are: acceptIfMfaDoneByFederatedIdp, enforceMfaByFederatedIdp, rejectMfaByFederatedIdp, unknownFutureValue. For more information, see federatedIdpMfaBehavior values.
 func (m *InternalDomainFederation) SetFederatedIdpMfaBehavior(value *FederatedIdpMfaBehavior)() {
-    m.federatedIdpMfaBehavior = value
+    err := m.GetBackingStore().Set("federatedIdpMfaBehavior", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsSignedAuthenticationRequestRequired sets the isSignedAuthenticationRequestRequired property value. If true, when SAML authentication requests are sent to the federated SAML IdP, Azure AD will sign those requests using the OrgID signing key. If false (default), the SAML authentication requests sent to the federated IdP are not signed.
 func (m *InternalDomainFederation) SetIsSignedAuthenticationRequestRequired(value *bool)() {
-    m.isSignedAuthenticationRequestRequired = value
+    err := m.GetBackingStore().Set("isSignedAuthenticationRequestRequired", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetNextSigningCertificate sets the nextSigningCertificate property value. Fallback token signing certificate that is used to sign tokens when the primary signing certificate expires. Formatted as Base64 encoded strings of the public portion of the federated IdP's token signing certificate. Needs to be compatible with the X509Certificate2 class. Much like the signingCertificate, the nextSigningCertificate property is used if a rollover is required outside of the auto-rollover update, a new federation service is being set up, or if the new token signing certificate is not present in the federation properties after the federation service certificate has been updated.
 func (m *InternalDomainFederation) SetNextSigningCertificate(value *string)() {
-    m.nextSigningCertificate = value
+    err := m.GetBackingStore().Set("nextSigningCertificate", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPromptLoginBehavior sets the promptLoginBehavior property value. Sets the preferred behavior for the sign-in prompt. The possible values are: translateToFreshPasswordAuthentication, nativeSupport, disabled, unknownFutureValue.
 func (m *InternalDomainFederation) SetPromptLoginBehavior(value *PromptLoginBehavior)() {
-    m.promptLoginBehavior = value
+    err := m.GetBackingStore().Set("promptLoginBehavior", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSigningCertificateUpdateStatus sets the signingCertificateUpdateStatus property value. Provides status and timestamp of the last update of the signing certificate.
 func (m *InternalDomainFederation) SetSigningCertificateUpdateStatus(value SigningCertificateUpdateStatusable)() {
-    m.signingCertificateUpdateStatus = value
+    err := m.GetBackingStore().Set("signingCertificateUpdateStatus", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSignOutUri sets the signOutUri property value. URI that clients are redirected to when they sign out of Azure AD services. Corresponds to the LogOffUri property of the Set-MsolDomainFederationSettings MSOnline v1 PowerShell cmdlet.
 func (m *InternalDomainFederation) SetSignOutUri(value *string)() {
-    m.signOutUri = value
+    err := m.GetBackingStore().Set("signOutUri", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// InternalDomainFederationable 
+type InternalDomainFederationable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    SamlOrWsFedProviderable
+    GetActiveSignInUri()(*string)
+    GetFederatedIdpMfaBehavior()(*FederatedIdpMfaBehavior)
+    GetIsSignedAuthenticationRequestRequired()(*bool)
+    GetNextSigningCertificate()(*string)
+    GetPromptLoginBehavior()(*PromptLoginBehavior)
+    GetSigningCertificateUpdateStatus()(SigningCertificateUpdateStatusable)
+    GetSignOutUri()(*string)
+    SetActiveSignInUri(value *string)()
+    SetFederatedIdpMfaBehavior(value *FederatedIdpMfaBehavior)()
+    SetIsSignedAuthenticationRequestRequired(value *bool)()
+    SetNextSigningCertificate(value *string)()
+    SetPromptLoginBehavior(value *PromptLoginBehavior)()
+    SetSigningCertificateUpdateStatus(value SigningCertificateUpdateStatusable)()
+    SetSignOutUri(value *string)()
 }

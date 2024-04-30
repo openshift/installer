@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Possible values for system scan type.
 type DefenderScanType int
 
 const (
@@ -19,7 +19,7 @@ const (
 func (i DefenderScanType) String() string {
     return []string{"userDefined", "disabled", "quick", "full"}[i]
 }
-func ParseDefenderScanType(v string) (interface{}, error) {
+func ParseDefenderScanType(v string) (any, error) {
     result := USERDEFINED_DEFENDERSCANTYPE
     switch v {
         case "userDefined":

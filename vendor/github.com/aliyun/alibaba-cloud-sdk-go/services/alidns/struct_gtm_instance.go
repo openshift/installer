@@ -17,14 +17,14 @@ package alidns
 
 // GtmInstance is a nested struct in alidns response
 type GtmInstance struct {
-	Cname             string    `json:"Cname" xml:"Cname"`
 	AddressPoolNum    int       `json:"AddressPoolNum" xml:"AddressPoolNum"`
+	Cname             string    `json:"Cname" xml:"Cname"`
 	UserDomainName    string    `json:"UserDomainName" xml:"UserDomainName"`
 	CreateTimestamp   int64     `json:"CreateTimestamp" xml:"CreateTimestamp"`
 	AccessStrategyNum int       `json:"AccessStrategyNum" xml:"AccessStrategyNum"`
 	ExpireTimestamp   int64     `json:"ExpireTimestamp" xml:"ExpireTimestamp"`
-	InstanceName      string    `json:"InstanceName" xml:"InstanceName"`
 	AlertGroup        string    `json:"AlertGroup" xml:"AlertGroup"`
+	InstanceName      string    `json:"InstanceName" xml:"InstanceName"`
 	CreateTime        string    `json:"CreateTime" xml:"CreateTime"`
 	VersionCode       string    `json:"VersionCode" xml:"VersionCode"`
 	CnameMode         string    `json:"CnameMode" xml:"CnameMode"`

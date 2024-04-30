@@ -2,52 +2,21 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // CopyNotebookModel 
 type CopyNotebookModel struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // The createdBy property
-    createdBy *string
-    // The createdByIdentity property
-    createdByIdentity IdentitySetable
-    // The createdTime property
-    createdTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // The id property
-    id *string
-    // The isDefault property
-    isDefault *bool
-    // The isShared property
-    isShared *bool
-    // The lastModifiedBy property
-    lastModifiedBy *string
-    // The lastModifiedByIdentity property
-    lastModifiedByIdentity IdentitySetable
-    // The lastModifiedTime property
-    lastModifiedTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // The links property
-    links NotebookLinksable
-    // The name property
-    name *string
-    // The OdataType property
-    odataType *string
-    // The sectionGroupsUrl property
-    sectionGroupsUrl *string
-    // The sectionsUrl property
-    sectionsUrl *string
-    // The self property
-    self *string
-    // The userRole property
-    userRole *OnenoteUserRole
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewCopyNotebookModel instantiates a new CopyNotebookModel and sets the default values.
 func NewCopyNotebookModel()(*CopyNotebookModel) {
     m := &CopyNotebookModel{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateCopyNotebookModelFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -55,93 +24,361 @@ func CreateCopyNotebookModelFromDiscriminatorValue(parseNode i878a80d2330e89d268
     return NewCopyNotebookModel(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *CopyNotebookModel) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *CopyNotebookModel) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *CopyNotebookModel) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetCreatedBy gets the createdBy property value. The createdBy property
 func (m *CopyNotebookModel) GetCreatedBy()(*string) {
-    return m.createdBy
+    val, err := m.GetBackingStore().Get("createdBy")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCreatedByIdentity gets the createdByIdentity property value. The createdByIdentity property
 func (m *CopyNotebookModel) GetCreatedByIdentity()(IdentitySetable) {
-    return m.createdByIdentity
+    val, err := m.GetBackingStore().Get("createdByIdentity")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(IdentitySetable)
+    }
+    return nil
 }
 // GetCreatedTime gets the createdTime property value. The createdTime property
 func (m *CopyNotebookModel) GetCreatedTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.createdTime
+    val, err := m.GetBackingStore().Get("createdTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *CopyNotebookModel) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["createdBy"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCreatedBy)
-    res["createdByIdentity"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateIdentitySetFromDiscriminatorValue , m.SetCreatedByIdentity)
-    res["createdTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetCreatedTime)
-    res["id"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetId)
-    res["isDefault"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsDefault)
-    res["isShared"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsShared)
-    res["lastModifiedBy"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetLastModifiedBy)
-    res["lastModifiedByIdentity"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateIdentitySetFromDiscriminatorValue , m.SetLastModifiedByIdentity)
-    res["lastModifiedTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetLastModifiedTime)
-    res["links"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateNotebookLinksFromDiscriminatorValue , m.SetLinks)
-    res["name"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetName)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["sectionGroupsUrl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSectionGroupsUrl)
-    res["sectionsUrl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSectionsUrl)
-    res["self"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSelf)
-    res["userRole"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseOnenoteUserRole , m.SetUserRole)
+    res["createdBy"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCreatedBy(val)
+        }
+        return nil
+    }
+    res["createdByIdentity"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateIdentitySetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCreatedByIdentity(val.(IdentitySetable))
+        }
+        return nil
+    }
+    res["createdTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCreatedTime(val)
+        }
+        return nil
+    }
+    res["id"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetId(val)
+        }
+        return nil
+    }
+    res["isDefault"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsDefault(val)
+        }
+        return nil
+    }
+    res["isShared"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsShared(val)
+        }
+        return nil
+    }
+    res["lastModifiedBy"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastModifiedBy(val)
+        }
+        return nil
+    }
+    res["lastModifiedByIdentity"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateIdentitySetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastModifiedByIdentity(val.(IdentitySetable))
+        }
+        return nil
+    }
+    res["lastModifiedTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastModifiedTime(val)
+        }
+        return nil
+    }
+    res["links"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateNotebookLinksFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLinks(val.(NotebookLinksable))
+        }
+        return nil
+    }
+    res["name"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetName(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["sectionGroupsUrl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSectionGroupsUrl(val)
+        }
+        return nil
+    }
+    res["sectionsUrl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSectionsUrl(val)
+        }
+        return nil
+    }
+    res["self"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSelf(val)
+        }
+        return nil
+    }
+    res["userRole"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseOnenoteUserRole)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUserRole(val.(*OnenoteUserRole))
+        }
+        return nil
+    }
     return res
 }
 // GetId gets the id property value. The id property
 func (m *CopyNotebookModel) GetId()(*string) {
-    return m.id
+    val, err := m.GetBackingStore().Get("id")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetIsDefault gets the isDefault property value. The isDefault property
 func (m *CopyNotebookModel) GetIsDefault()(*bool) {
-    return m.isDefault
+    val, err := m.GetBackingStore().Get("isDefault")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetIsShared gets the isShared property value. The isShared property
 func (m *CopyNotebookModel) GetIsShared()(*bool) {
-    return m.isShared
+    val, err := m.GetBackingStore().Get("isShared")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetLastModifiedBy gets the lastModifiedBy property value. The lastModifiedBy property
 func (m *CopyNotebookModel) GetLastModifiedBy()(*string) {
-    return m.lastModifiedBy
+    val, err := m.GetBackingStore().Get("lastModifiedBy")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetLastModifiedByIdentity gets the lastModifiedByIdentity property value. The lastModifiedByIdentity property
 func (m *CopyNotebookModel) GetLastModifiedByIdentity()(IdentitySetable) {
-    return m.lastModifiedByIdentity
+    val, err := m.GetBackingStore().Get("lastModifiedByIdentity")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(IdentitySetable)
+    }
+    return nil
 }
 // GetLastModifiedTime gets the lastModifiedTime property value. The lastModifiedTime property
 func (m *CopyNotebookModel) GetLastModifiedTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.lastModifiedTime
+    val, err := m.GetBackingStore().Get("lastModifiedTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetLinks gets the links property value. The links property
 func (m *CopyNotebookModel) GetLinks()(NotebookLinksable) {
-    return m.links
+    val, err := m.GetBackingStore().Get("links")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(NotebookLinksable)
+    }
+    return nil
 }
 // GetName gets the name property value. The name property
 func (m *CopyNotebookModel) GetName()(*string) {
-    return m.name
+    val, err := m.GetBackingStore().Get("name")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *CopyNotebookModel) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetSectionGroupsUrl gets the sectionGroupsUrl property value. The sectionGroupsUrl property
 func (m *CopyNotebookModel) GetSectionGroupsUrl()(*string) {
-    return m.sectionGroupsUrl
+    val, err := m.GetBackingStore().Get("sectionGroupsUrl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetSectionsUrl gets the sectionsUrl property value. The sectionsUrl property
 func (m *CopyNotebookModel) GetSectionsUrl()(*string) {
-    return m.sectionsUrl
+    val, err := m.GetBackingStore().Get("sectionsUrl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetSelf gets the self property value. The self property
 func (m *CopyNotebookModel) GetSelf()(*string) {
-    return m.self
+    val, err := m.GetBackingStore().Get("self")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetUserRole gets the userRole property value. The userRole property
 func (m *CopyNotebookModel) GetUserRole()(*OnenoteUserRole) {
-    return m.userRole
+    val, err := m.GetBackingStore().Get("userRole")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*OnenoteUserRole)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *CopyNotebookModel) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -251,70 +488,165 @@ func (m *CopyNotebookModel) Serialize(writer i878a80d2330e89d26896388a3f487eef27
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *CopyNotebookModel) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *CopyNotebookModel) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *CopyNotebookModel) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetCreatedBy sets the createdBy property value. The createdBy property
 func (m *CopyNotebookModel) SetCreatedBy(value *string)() {
-    m.createdBy = value
+    err := m.GetBackingStore().Set("createdBy", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCreatedByIdentity sets the createdByIdentity property value. The createdByIdentity property
 func (m *CopyNotebookModel) SetCreatedByIdentity(value IdentitySetable)() {
-    m.createdByIdentity = value
+    err := m.GetBackingStore().Set("createdByIdentity", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCreatedTime sets the createdTime property value. The createdTime property
 func (m *CopyNotebookModel) SetCreatedTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.createdTime = value
+    err := m.GetBackingStore().Set("createdTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetId sets the id property value. The id property
 func (m *CopyNotebookModel) SetId(value *string)() {
-    m.id = value
+    err := m.GetBackingStore().Set("id", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsDefault sets the isDefault property value. The isDefault property
 func (m *CopyNotebookModel) SetIsDefault(value *bool)() {
-    m.isDefault = value
+    err := m.GetBackingStore().Set("isDefault", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsShared sets the isShared property value. The isShared property
 func (m *CopyNotebookModel) SetIsShared(value *bool)() {
-    m.isShared = value
+    err := m.GetBackingStore().Set("isShared", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLastModifiedBy sets the lastModifiedBy property value. The lastModifiedBy property
 func (m *CopyNotebookModel) SetLastModifiedBy(value *string)() {
-    m.lastModifiedBy = value
+    err := m.GetBackingStore().Set("lastModifiedBy", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLastModifiedByIdentity sets the lastModifiedByIdentity property value. The lastModifiedByIdentity property
 func (m *CopyNotebookModel) SetLastModifiedByIdentity(value IdentitySetable)() {
-    m.lastModifiedByIdentity = value
+    err := m.GetBackingStore().Set("lastModifiedByIdentity", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLastModifiedTime sets the lastModifiedTime property value. The lastModifiedTime property
 func (m *CopyNotebookModel) SetLastModifiedTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.lastModifiedTime = value
+    err := m.GetBackingStore().Set("lastModifiedTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLinks sets the links property value. The links property
 func (m *CopyNotebookModel) SetLinks(value NotebookLinksable)() {
-    m.links = value
+    err := m.GetBackingStore().Set("links", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetName sets the name property value. The name property
 func (m *CopyNotebookModel) SetName(value *string)() {
-    m.name = value
+    err := m.GetBackingStore().Set("name", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *CopyNotebookModel) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSectionGroupsUrl sets the sectionGroupsUrl property value. The sectionGroupsUrl property
 func (m *CopyNotebookModel) SetSectionGroupsUrl(value *string)() {
-    m.sectionGroupsUrl = value
+    err := m.GetBackingStore().Set("sectionGroupsUrl", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSectionsUrl sets the sectionsUrl property value. The sectionsUrl property
 func (m *CopyNotebookModel) SetSectionsUrl(value *string)() {
-    m.sectionsUrl = value
+    err := m.GetBackingStore().Set("sectionsUrl", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSelf sets the self property value. The self property
 func (m *CopyNotebookModel) SetSelf(value *string)() {
-    m.self = value
+    err := m.GetBackingStore().Set("self", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUserRole sets the userRole property value. The userRole property
 func (m *CopyNotebookModel) SetUserRole(value *OnenoteUserRole)() {
-    m.userRole = value
+    err := m.GetBackingStore().Set("userRole", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// CopyNotebookModelable 
+type CopyNotebookModelable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetCreatedBy()(*string)
+    GetCreatedByIdentity()(IdentitySetable)
+    GetCreatedTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetId()(*string)
+    GetIsDefault()(*bool)
+    GetIsShared()(*bool)
+    GetLastModifiedBy()(*string)
+    GetLastModifiedByIdentity()(IdentitySetable)
+    GetLastModifiedTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetLinks()(NotebookLinksable)
+    GetName()(*string)
+    GetOdataType()(*string)
+    GetSectionGroupsUrl()(*string)
+    GetSectionsUrl()(*string)
+    GetSelf()(*string)
+    GetUserRole()(*OnenoteUserRole)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetCreatedBy(value *string)()
+    SetCreatedByIdentity(value IdentitySetable)()
+    SetCreatedTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetId(value *string)()
+    SetIsDefault(value *bool)()
+    SetIsShared(value *bool)()
+    SetLastModifiedBy(value *string)()
+    SetLastModifiedByIdentity(value IdentitySetable)()
+    SetLastModifiedTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetLinks(value NotebookLinksable)()
+    SetName(value *string)()
+    SetOdataType(value *string)()
+    SetSectionGroupsUrl(value *string)()
+    SetSectionsUrl(value *string)()
+    SetSelf(value *string)()
+    SetUserRole(value *OnenoteUserRole)()
 }

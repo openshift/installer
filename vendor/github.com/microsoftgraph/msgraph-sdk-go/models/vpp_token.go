@@ -2,35 +2,12 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // VppToken you purchase multiple licenses for iOS apps through the Apple Volume Purchase Program for Business or Education. This involves setting up an Apple VPP account from the Apple website and uploading the Apple VPP Business or Education token to Intune. You can then synchronize your volume purchase information with Intune and track your volume-purchased app use. You can upload multiple Apple VPP Business or Education tokens.
 type VppToken struct {
     Entity
-    // The apple Id associated with the given Apple Volume Purchase Program Token.
-    appleId *string
-    // Whether or not apps for the VPP token will be automatically updated.
-    automaticallyUpdateApps *bool
-    // Whether or not apps for the VPP token will be automatically updated.
-    countryOrRegion *string
-    // The expiration date time of the Apple Volume Purchase Program Token.
-    expirationDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Last modification date time associated with the Apple Volume Purchase Program Token.
-    lastModifiedDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // The last time when an application sync was done with the Apple volume purchase program service using the the Apple Volume Purchase Program Token.
-    lastSyncDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Possible sync statuses associated with an Apple Volume Purchase Program token.
-    lastSyncStatus *VppTokenSyncStatus
-    // The organization associated with the Apple Volume Purchase Program Token
-    organizationName *string
-    // Possible states associated with an Apple Volume Purchase Program token.
-    state *VppTokenState
-    // The Apple Volume Purchase Program Token string downloaded from the Apple Volume Purchase Program.
-    token *string
-    // Possible types of an Apple Volume Purchase Program token.
-    vppTokenAccountType *VppTokenAccountType
 }
 // NewVppToken instantiates a new vppToken and sets the default values.
 func NewVppToken()(*VppToken) {
@@ -45,63 +22,239 @@ func CreateVppTokenFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f4
 }
 // GetAppleId gets the appleId property value. The apple Id associated with the given Apple Volume Purchase Program Token.
 func (m *VppToken) GetAppleId()(*string) {
-    return m.appleId
+    val, err := m.GetBackingStore().Get("appleId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetAutomaticallyUpdateApps gets the automaticallyUpdateApps property value. Whether or not apps for the VPP token will be automatically updated.
 func (m *VppToken) GetAutomaticallyUpdateApps()(*bool) {
-    return m.automaticallyUpdateApps
+    val, err := m.GetBackingStore().Get("automaticallyUpdateApps")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetCountryOrRegion gets the countryOrRegion property value. Whether or not apps for the VPP token will be automatically updated.
 func (m *VppToken) GetCountryOrRegion()(*string) {
-    return m.countryOrRegion
+    val, err := m.GetBackingStore().Get("countryOrRegion")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetExpirationDateTime gets the expirationDateTime property value. The expiration date time of the Apple Volume Purchase Program Token.
 func (m *VppToken) GetExpirationDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.expirationDateTime
+    val, err := m.GetBackingStore().Get("expirationDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *VppToken) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["appleId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetAppleId)
-    res["automaticallyUpdateApps"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetAutomaticallyUpdateApps)
-    res["countryOrRegion"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCountryOrRegion)
-    res["expirationDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetExpirationDateTime)
-    res["lastModifiedDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetLastModifiedDateTime)
-    res["lastSyncDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetLastSyncDateTime)
-    res["lastSyncStatus"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseVppTokenSyncStatus , m.SetLastSyncStatus)
-    res["organizationName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOrganizationName)
-    res["state"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseVppTokenState , m.SetState)
-    res["token"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetToken)
-    res["vppTokenAccountType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseVppTokenAccountType , m.SetVppTokenAccountType)
+    res["appleId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAppleId(val)
+        }
+        return nil
+    }
+    res["automaticallyUpdateApps"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAutomaticallyUpdateApps(val)
+        }
+        return nil
+    }
+    res["countryOrRegion"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCountryOrRegion(val)
+        }
+        return nil
+    }
+    res["expirationDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetExpirationDateTime(val)
+        }
+        return nil
+    }
+    res["lastModifiedDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastModifiedDateTime(val)
+        }
+        return nil
+    }
+    res["lastSyncDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastSyncDateTime(val)
+        }
+        return nil
+    }
+    res["lastSyncStatus"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseVppTokenSyncStatus)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastSyncStatus(val.(*VppTokenSyncStatus))
+        }
+        return nil
+    }
+    res["organizationName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOrganizationName(val)
+        }
+        return nil
+    }
+    res["state"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseVppTokenState)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetState(val.(*VppTokenState))
+        }
+        return nil
+    }
+    res["token"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetToken(val)
+        }
+        return nil
+    }
+    res["vppTokenAccountType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseVppTokenAccountType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetVppTokenAccountType(val.(*VppTokenAccountType))
+        }
+        return nil
+    }
     return res
 }
 // GetLastModifiedDateTime gets the lastModifiedDateTime property value. Last modification date time associated with the Apple Volume Purchase Program Token.
 func (m *VppToken) GetLastModifiedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.lastModifiedDateTime
+    val, err := m.GetBackingStore().Get("lastModifiedDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetLastSyncDateTime gets the lastSyncDateTime property value. The last time when an application sync was done with the Apple volume purchase program service using the the Apple Volume Purchase Program Token.
 func (m *VppToken) GetLastSyncDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.lastSyncDateTime
+    val, err := m.GetBackingStore().Get("lastSyncDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetLastSyncStatus gets the lastSyncStatus property value. Possible sync statuses associated with an Apple Volume Purchase Program token.
 func (m *VppToken) GetLastSyncStatus()(*VppTokenSyncStatus) {
-    return m.lastSyncStatus
+    val, err := m.GetBackingStore().Get("lastSyncStatus")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*VppTokenSyncStatus)
+    }
+    return nil
 }
 // GetOrganizationName gets the organizationName property value. The organization associated with the Apple Volume Purchase Program Token
 func (m *VppToken) GetOrganizationName()(*string) {
-    return m.organizationName
+    val, err := m.GetBackingStore().Get("organizationName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetState gets the state property value. Possible states associated with an Apple Volume Purchase Program token.
 func (m *VppToken) GetState()(*VppTokenState) {
-    return m.state
+    val, err := m.GetBackingStore().Get("state")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*VppTokenState)
+    }
+    return nil
 }
 // GetToken gets the token property value. The Apple Volume Purchase Program Token string downloaded from the Apple Volume Purchase Program.
 func (m *VppToken) GetToken()(*string) {
-    return m.token
+    val, err := m.GetBackingStore().Get("token")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetVppTokenAccountType gets the vppTokenAccountType property value. Possible types of an Apple Volume Purchase Program token.
 func (m *VppToken) GetVppTokenAccountType()(*VppTokenAccountType) {
-    return m.vppTokenAccountType
+    val, err := m.GetBackingStore().Get("vppTokenAccountType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*VppTokenAccountType)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *VppToken) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -182,45 +335,105 @@ func (m *VppToken) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c01
 }
 // SetAppleId sets the appleId property value. The apple Id associated with the given Apple Volume Purchase Program Token.
 func (m *VppToken) SetAppleId(value *string)() {
-    m.appleId = value
+    err := m.GetBackingStore().Set("appleId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAutomaticallyUpdateApps sets the automaticallyUpdateApps property value. Whether or not apps for the VPP token will be automatically updated.
 func (m *VppToken) SetAutomaticallyUpdateApps(value *bool)() {
-    m.automaticallyUpdateApps = value
+    err := m.GetBackingStore().Set("automaticallyUpdateApps", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCountryOrRegion sets the countryOrRegion property value. Whether or not apps for the VPP token will be automatically updated.
 func (m *VppToken) SetCountryOrRegion(value *string)() {
-    m.countryOrRegion = value
+    err := m.GetBackingStore().Set("countryOrRegion", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetExpirationDateTime sets the expirationDateTime property value. The expiration date time of the Apple Volume Purchase Program Token.
 func (m *VppToken) SetExpirationDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.expirationDateTime = value
+    err := m.GetBackingStore().Set("expirationDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLastModifiedDateTime sets the lastModifiedDateTime property value. Last modification date time associated with the Apple Volume Purchase Program Token.
 func (m *VppToken) SetLastModifiedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.lastModifiedDateTime = value
+    err := m.GetBackingStore().Set("lastModifiedDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLastSyncDateTime sets the lastSyncDateTime property value. The last time when an application sync was done with the Apple volume purchase program service using the the Apple Volume Purchase Program Token.
 func (m *VppToken) SetLastSyncDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.lastSyncDateTime = value
+    err := m.GetBackingStore().Set("lastSyncDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLastSyncStatus sets the lastSyncStatus property value. Possible sync statuses associated with an Apple Volume Purchase Program token.
 func (m *VppToken) SetLastSyncStatus(value *VppTokenSyncStatus)() {
-    m.lastSyncStatus = value
+    err := m.GetBackingStore().Set("lastSyncStatus", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOrganizationName sets the organizationName property value. The organization associated with the Apple Volume Purchase Program Token
 func (m *VppToken) SetOrganizationName(value *string)() {
-    m.organizationName = value
+    err := m.GetBackingStore().Set("organizationName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetState sets the state property value. Possible states associated with an Apple Volume Purchase Program token.
 func (m *VppToken) SetState(value *VppTokenState)() {
-    m.state = value
+    err := m.GetBackingStore().Set("state", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetToken sets the token property value. The Apple Volume Purchase Program Token string downloaded from the Apple Volume Purchase Program.
 func (m *VppToken) SetToken(value *string)() {
-    m.token = value
+    err := m.GetBackingStore().Set("token", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetVppTokenAccountType sets the vppTokenAccountType property value. Possible types of an Apple Volume Purchase Program token.
 func (m *VppToken) SetVppTokenAccountType(value *VppTokenAccountType)() {
-    m.vppTokenAccountType = value
+    err := m.GetBackingStore().Set("vppTokenAccountType", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// VppTokenable 
+type VppTokenable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAppleId()(*string)
+    GetAutomaticallyUpdateApps()(*bool)
+    GetCountryOrRegion()(*string)
+    GetExpirationDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetLastModifiedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetLastSyncDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetLastSyncStatus()(*VppTokenSyncStatus)
+    GetOrganizationName()(*string)
+    GetState()(*VppTokenState)
+    GetToken()(*string)
+    GetVppTokenAccountType()(*VppTokenAccountType)
+    SetAppleId(value *string)()
+    SetAutomaticallyUpdateApps(value *bool)()
+    SetCountryOrRegion(value *string)()
+    SetExpirationDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetLastModifiedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetLastSyncDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetLastSyncStatus(value *VppTokenSyncStatus)()
+    SetOrganizationName(value *string)()
+    SetState(value *VppTokenState)()
+    SetToken(value *string)()
+    SetVppTokenAccountType(value *VppTokenAccountType)()
 }

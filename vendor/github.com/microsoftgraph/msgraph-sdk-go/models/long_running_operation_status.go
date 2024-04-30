@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type LongRunningOperationStatus int
 
 const (
@@ -16,7 +16,7 @@ const (
 func (i LongRunningOperationStatus) String() string {
     return []string{"notStarted", "running", "succeeded", "failed", "unknownFutureValue"}[i]
 }
-func ParseLongRunningOperationStatus(v string) (interface{}, error) {
+func ParseLongRunningOperationStatus(v string) (any, error) {
     result := NOTSTARTED_LONGRUNNINGOPERATIONSTATUS
     switch v {
         case "notStarted":

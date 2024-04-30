@@ -3,6 +3,7 @@ package nethttplibrary
 import (
 	"context"
 	"fmt"
+	"io"
 	"math"
 	nethttp "net/http"
 	"strconv"
@@ -133,6 +134,12 @@ func (middleware RetryHandler) retryRequest(ctx context.Context, pipeline Pipeli
 		delay := middleware.getRetryDelay(req, resp, options, executionCount)
 		cumulativeDelay += delay
 		req.Header.Set(retryAttemptHeader, strconv.Itoa(executionCount))
+		if req.Body != nil {
+			s, ok := req.Body.(io.Seeker)
+			if ok {
+				s.Seek(0, io.SeekStart)
+			}
+		}
 		if observabilityName != "" {
 			ctx, span := otel.GetTracerProvider().Tracer(observabilityName).Start(ctx, "RetryHandler_Intercept - attempt "+fmt.Sprint(executionCount))
 			span.SetAttributes(attribute.Int("http.retry_count", executionCount),

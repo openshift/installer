@@ -1,32 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // BucketAggregationDefinition 
 type BucketAggregationDefinition struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // True to specify the sort order as descending. The default is false, with the sort order as ascending. Optional.
-    isDescending *bool
-    // The minimum number of items that should be present in the aggregation to be returned in a bucket. Optional.
-    minimumCount *int32
-    // The OdataType property
-    odataType *string
-    // A filter to define a matching criteria. The key should start with the specified prefix to be returned in the response. Optional.
-    prefixFilter *string
-    // Specifies the manual ranges to compute the aggregations. This is only valid for non-string refiners of date or numeric type. Optional.
-    ranges []BucketAggregationRangeable
-    // The sortBy property
-    sortBy *BucketAggregationSortProperty
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewBucketAggregationDefinition instantiates a new bucketAggregationDefinition and sets the default values.
 func NewBucketAggregationDefinition()(*BucketAggregationDefinition) {
     m := &BucketAggregationDefinition{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateBucketAggregationDefinitionFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -34,43 +23,155 @@ func CreateBucketAggregationDefinitionFromDiscriminatorValue(parseNode i878a80d2
     return NewBucketAggregationDefinition(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *BucketAggregationDefinition) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *BucketAggregationDefinition) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *BucketAggregationDefinition) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *BucketAggregationDefinition) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["isDescending"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsDescending)
-    res["minimumCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetMinimumCount)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["prefixFilter"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetPrefixFilter)
-    res["ranges"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateBucketAggregationRangeFromDiscriminatorValue , m.SetRanges)
-    res["sortBy"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseBucketAggregationSortProperty , m.SetSortBy)
+    res["isDescending"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsDescending(val)
+        }
+        return nil
+    }
+    res["minimumCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMinimumCount(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["prefixFilter"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPrefixFilter(val)
+        }
+        return nil
+    }
+    res["ranges"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateBucketAggregationRangeFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]BucketAggregationRangeable, len(val))
+            for i, v := range val {
+                res[i] = v.(BucketAggregationRangeable)
+            }
+            m.SetRanges(res)
+        }
+        return nil
+    }
+    res["sortBy"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseBucketAggregationSortProperty)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSortBy(val.(*BucketAggregationSortProperty))
+        }
+        return nil
+    }
     return res
 }
 // GetIsDescending gets the isDescending property value. True to specify the sort order as descending. The default is false, with the sort order as ascending. Optional.
 func (m *BucketAggregationDefinition) GetIsDescending()(*bool) {
-    return m.isDescending
+    val, err := m.GetBackingStore().Get("isDescending")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetMinimumCount gets the minimumCount property value. The minimum number of items that should be present in the aggregation to be returned in a bucket. Optional.
 func (m *BucketAggregationDefinition) GetMinimumCount()(*int32) {
-    return m.minimumCount
+    val, err := m.GetBackingStore().Get("minimumCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *BucketAggregationDefinition) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetPrefixFilter gets the prefixFilter property value. A filter to define a matching criteria. The key should start with the specified prefix to be returned in the response. Optional.
 func (m *BucketAggregationDefinition) GetPrefixFilter()(*string) {
-    return m.prefixFilter
+    val, err := m.GetBackingStore().Get("prefixFilter")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetRanges gets the ranges property value. Specifies the manual ranges to compute the aggregations. This is only valid for non-string refiners of date or numeric type. Optional.
 func (m *BucketAggregationDefinition) GetRanges()([]BucketAggregationRangeable) {
-    return m.ranges
+    val, err := m.GetBackingStore().Get("ranges")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]BucketAggregationRangeable)
+    }
+    return nil
 }
 // GetSortBy gets the sortBy property value. The sortBy property
 func (m *BucketAggregationDefinition) GetSortBy()(*BucketAggregationSortProperty) {
-    return m.sortBy
+    val, err := m.GetBackingStore().Get("sortBy")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*BucketAggregationSortProperty)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *BucketAggregationDefinition) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -99,7 +200,10 @@ func (m *BucketAggregationDefinition) Serialize(writer i878a80d2330e89d26896388a
         }
     }
     if m.GetRanges() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetRanges())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetRanges()))
+        for i, v := range m.GetRanges() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err := writer.WriteCollectionOfObjectValues("ranges", cast)
         if err != nil {
             return err
@@ -121,30 +225,75 @@ func (m *BucketAggregationDefinition) Serialize(writer i878a80d2330e89d26896388a
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *BucketAggregationDefinition) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *BucketAggregationDefinition) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *BucketAggregationDefinition) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetIsDescending sets the isDescending property value. True to specify the sort order as descending. The default is false, with the sort order as ascending. Optional.
 func (m *BucketAggregationDefinition) SetIsDescending(value *bool)() {
-    m.isDescending = value
+    err := m.GetBackingStore().Set("isDescending", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMinimumCount sets the minimumCount property value. The minimum number of items that should be present in the aggregation to be returned in a bucket. Optional.
 func (m *BucketAggregationDefinition) SetMinimumCount(value *int32)() {
-    m.minimumCount = value
+    err := m.GetBackingStore().Set("minimumCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *BucketAggregationDefinition) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPrefixFilter sets the prefixFilter property value. A filter to define a matching criteria. The key should start with the specified prefix to be returned in the response. Optional.
 func (m *BucketAggregationDefinition) SetPrefixFilter(value *string)() {
-    m.prefixFilter = value
+    err := m.GetBackingStore().Set("prefixFilter", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRanges sets the ranges property value. Specifies the manual ranges to compute the aggregations. This is only valid for non-string refiners of date or numeric type. Optional.
 func (m *BucketAggregationDefinition) SetRanges(value []BucketAggregationRangeable)() {
-    m.ranges = value
+    err := m.GetBackingStore().Set("ranges", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSortBy sets the sortBy property value. The sortBy property
 func (m *BucketAggregationDefinition) SetSortBy(value *BucketAggregationSortProperty)() {
-    m.sortBy = value
+    err := m.GetBackingStore().Set("sortBy", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// BucketAggregationDefinitionable 
+type BucketAggregationDefinitionable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetIsDescending()(*bool)
+    GetMinimumCount()(*int32)
+    GetOdataType()(*string)
+    GetPrefixFilter()(*string)
+    GetRanges()([]BucketAggregationRangeable)
+    GetSortBy()(*BucketAggregationSortProperty)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetIsDescending(value *bool)()
+    SetMinimumCount(value *int32)()
+    SetOdataType(value *string)()
+    SetPrefixFilter(value *string)()
+    SetRanges(value []BucketAggregationRangeable)()
+    SetSortBy(value *BucketAggregationSortProperty)()
 }

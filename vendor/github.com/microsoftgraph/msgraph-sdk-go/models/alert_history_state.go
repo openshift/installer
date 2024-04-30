@@ -2,36 +2,21 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // AlertHistoryState 
 type AlertHistoryState struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // The appId property
-    appId *string
-    // The assignedTo property
-    assignedTo *string
-    // The comments property
-    comments []string
-    // The feedback property
-    feedback *AlertFeedback
-    // The OdataType property
-    odataType *string
-    // The status property
-    status *AlertStatus
-    // The updatedDateTime property
-    updatedDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // The user property
-    user *string
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewAlertHistoryState instantiates a new alertHistoryState and sets the default values.
 func NewAlertHistoryState()(*AlertHistoryState) {
     m := &AlertHistoryState{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateAlertHistoryStateFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -39,53 +24,197 @@ func CreateAlertHistoryStateFromDiscriminatorValue(parseNode i878a80d2330e89d268
     return NewAlertHistoryState(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *AlertHistoryState) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *AlertHistoryState) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
 }
 // GetAppId gets the appId property value. The appId property
 func (m *AlertHistoryState) GetAppId()(*string) {
-    return m.appId
+    val, err := m.GetBackingStore().Get("appId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetAssignedTo gets the assignedTo property value. The assignedTo property
 func (m *AlertHistoryState) GetAssignedTo()(*string) {
-    return m.assignedTo
+    val, err := m.GetBackingStore().Get("assignedTo")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *AlertHistoryState) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetComments gets the comments property value. The comments property
 func (m *AlertHistoryState) GetComments()([]string) {
-    return m.comments
+    val, err := m.GetBackingStore().Get("comments")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
 }
 // GetFeedback gets the feedback property value. The feedback property
 func (m *AlertHistoryState) GetFeedback()(*AlertFeedback) {
-    return m.feedback
+    val, err := m.GetBackingStore().Get("feedback")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*AlertFeedback)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *AlertHistoryState) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["appId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetAppId)
-    res["assignedTo"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetAssignedTo)
-    res["comments"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetComments)
-    res["feedback"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseAlertFeedback , m.SetFeedback)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["status"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseAlertStatus , m.SetStatus)
-    res["updatedDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetUpdatedDateTime)
-    res["user"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetUser)
+    res["appId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAppId(val)
+        }
+        return nil
+    }
+    res["assignedTo"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAssignedTo(val)
+        }
+        return nil
+    }
+    res["comments"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetComments(res)
+        }
+        return nil
+    }
+    res["feedback"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseAlertFeedback)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFeedback(val.(*AlertFeedback))
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["status"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseAlertStatus)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetStatus(val.(*AlertStatus))
+        }
+        return nil
+    }
+    res["updatedDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUpdatedDateTime(val)
+        }
+        return nil
+    }
+    res["user"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUser(val)
+        }
+        return nil
+    }
     return res
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *AlertHistoryState) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetStatus gets the status property value. The status property
 func (m *AlertHistoryState) GetStatus()(*AlertStatus) {
-    return m.status
+    val, err := m.GetBackingStore().Get("status")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*AlertStatus)
+    }
+    return nil
 }
 // GetUpdatedDateTime gets the updatedDateTime property value. The updatedDateTime property
 func (m *AlertHistoryState) GetUpdatedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.updatedDateTime
+    val, err := m.GetBackingStore().Get("updatedDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetUser gets the user property value. The user property
 func (m *AlertHistoryState) GetUser()(*string) {
-    return m.user
+    val, err := m.GetBackingStore().Get("user")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *AlertHistoryState) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -148,38 +277,93 @@ func (m *AlertHistoryState) Serialize(writer i878a80d2330e89d26896388a3f487eef27
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *AlertHistoryState) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *AlertHistoryState) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAppId sets the appId property value. The appId property
 func (m *AlertHistoryState) SetAppId(value *string)() {
-    m.appId = value
+    err := m.GetBackingStore().Set("appId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAssignedTo sets the assignedTo property value. The assignedTo property
 func (m *AlertHistoryState) SetAssignedTo(value *string)() {
-    m.assignedTo = value
+    err := m.GetBackingStore().Set("assignedTo", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *AlertHistoryState) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetComments sets the comments property value. The comments property
 func (m *AlertHistoryState) SetComments(value []string)() {
-    m.comments = value
+    err := m.GetBackingStore().Set("comments", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFeedback sets the feedback property value. The feedback property
 func (m *AlertHistoryState) SetFeedback(value *AlertFeedback)() {
-    m.feedback = value
+    err := m.GetBackingStore().Set("feedback", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *AlertHistoryState) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetStatus sets the status property value. The status property
 func (m *AlertHistoryState) SetStatus(value *AlertStatus)() {
-    m.status = value
+    err := m.GetBackingStore().Set("status", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUpdatedDateTime sets the updatedDateTime property value. The updatedDateTime property
 func (m *AlertHistoryState) SetUpdatedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.updatedDateTime = value
+    err := m.GetBackingStore().Set("updatedDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUser sets the user property value. The user property
 func (m *AlertHistoryState) SetUser(value *string)() {
-    m.user = value
+    err := m.GetBackingStore().Set("user", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// AlertHistoryStateable 
+type AlertHistoryStateable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAppId()(*string)
+    GetAssignedTo()(*string)
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetComments()([]string)
+    GetFeedback()(*AlertFeedback)
+    GetOdataType()(*string)
+    GetStatus()(*AlertStatus)
+    GetUpdatedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetUser()(*string)
+    SetAppId(value *string)()
+    SetAssignedTo(value *string)()
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetComments(value []string)()
+    SetFeedback(value *AlertFeedback)()
+    SetOdataType(value *string)()
+    SetStatus(value *AlertStatus)()
+    SetUpdatedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetUser(value *string)()
 }

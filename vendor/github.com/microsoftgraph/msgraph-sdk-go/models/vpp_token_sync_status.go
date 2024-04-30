@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Possible sync statuses associated with an Apple Volume Purchase Program token.
 type VppTokenSyncStatus int
 
 const (
@@ -19,7 +19,7 @@ const (
 func (i VppTokenSyncStatus) String() string {
     return []string{"none", "inProgress", "completed", "failed"}[i]
 }
-func ParseVppTokenSyncStatus(v string) (interface{}, error) {
+func ParseVppTokenSyncStatus(v string) (any, error) {
     result := NONE_VPPTOKENSYNCSTATUS
     switch v {
         case "none":

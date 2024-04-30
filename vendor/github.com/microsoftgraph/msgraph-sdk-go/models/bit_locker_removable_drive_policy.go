@@ -1,28 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // BitLockerRemovableDrivePolicy bitLocker Removable Drive Policies.
 type BitLockerRemovableDrivePolicy struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // This policy setting determines whether BitLocker protection is required for removable data drives to be writable on a computer.
-    blockCrossOrganizationWriteAccess *bool
-    // Select the encryption method for removable  drives. Possible values are: aesCbc128, aesCbc256, xtsAes128, xtsAes256.
-    encryptionMethod *BitLockerEncryptionMethod
-    // The OdataType property
-    odataType *string
-    // Indicates whether to block write access to devices configured in another organization.  If requireEncryptionForWriteAccess is false, this value does not affect.
-    requireEncryptionForWriteAccess *bool
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewBitLockerRemovableDrivePolicy instantiates a new bitLockerRemovableDrivePolicy and sets the default values.
 func NewBitLockerRemovableDrivePolicy()(*BitLockerRemovableDrivePolicy) {
     m := &BitLockerRemovableDrivePolicy{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateBitLockerRemovableDrivePolicyFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -30,33 +23,109 @@ func CreateBitLockerRemovableDrivePolicyFromDiscriminatorValue(parseNode i878a80
     return NewBitLockerRemovableDrivePolicy(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *BitLockerRemovableDrivePolicy) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *BitLockerRemovableDrivePolicy) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *BitLockerRemovableDrivePolicy) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetBlockCrossOrganizationWriteAccess gets the blockCrossOrganizationWriteAccess property value. This policy setting determines whether BitLocker protection is required for removable data drives to be writable on a computer.
 func (m *BitLockerRemovableDrivePolicy) GetBlockCrossOrganizationWriteAccess()(*bool) {
-    return m.blockCrossOrganizationWriteAccess
+    val, err := m.GetBackingStore().Get("blockCrossOrganizationWriteAccess")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetEncryptionMethod gets the encryptionMethod property value. Select the encryption method for removable  drives. Possible values are: aesCbc128, aesCbc256, xtsAes128, xtsAes256.
 func (m *BitLockerRemovableDrivePolicy) GetEncryptionMethod()(*BitLockerEncryptionMethod) {
-    return m.encryptionMethod
+    val, err := m.GetBackingStore().Get("encryptionMethod")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*BitLockerEncryptionMethod)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *BitLockerRemovableDrivePolicy) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["blockCrossOrganizationWriteAccess"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetBlockCrossOrganizationWriteAccess)
-    res["encryptionMethod"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseBitLockerEncryptionMethod , m.SetEncryptionMethod)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["requireEncryptionForWriteAccess"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetRequireEncryptionForWriteAccess)
+    res["blockCrossOrganizationWriteAccess"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBlockCrossOrganizationWriteAccess(val)
+        }
+        return nil
+    }
+    res["encryptionMethod"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseBitLockerEncryptionMethod)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetEncryptionMethod(val.(*BitLockerEncryptionMethod))
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["requireEncryptionForWriteAccess"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRequireEncryptionForWriteAccess(val)
+        }
+        return nil
+    }
     return res
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *BitLockerRemovableDrivePolicy) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetRequireEncryptionForWriteAccess gets the requireEncryptionForWriteAccess property value. Indicates whether to block write access to devices configured in another organization.  If requireEncryptionForWriteAccess is false, this value does not affect.
 func (m *BitLockerRemovableDrivePolicy) GetRequireEncryptionForWriteAccess()(*bool) {
-    return m.requireEncryptionForWriteAccess
+    val, err := m.GetBackingStore().Get("requireEncryptionForWriteAccess")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *BitLockerRemovableDrivePolicy) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -94,22 +163,57 @@ func (m *BitLockerRemovableDrivePolicy) Serialize(writer i878a80d2330e89d2689638
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *BitLockerRemovableDrivePolicy) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *BitLockerRemovableDrivePolicy) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *BitLockerRemovableDrivePolicy) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetBlockCrossOrganizationWriteAccess sets the blockCrossOrganizationWriteAccess property value. This policy setting determines whether BitLocker protection is required for removable data drives to be writable on a computer.
 func (m *BitLockerRemovableDrivePolicy) SetBlockCrossOrganizationWriteAccess(value *bool)() {
-    m.blockCrossOrganizationWriteAccess = value
+    err := m.GetBackingStore().Set("blockCrossOrganizationWriteAccess", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetEncryptionMethod sets the encryptionMethod property value. Select the encryption method for removable  drives. Possible values are: aesCbc128, aesCbc256, xtsAes128, xtsAes256.
 func (m *BitLockerRemovableDrivePolicy) SetEncryptionMethod(value *BitLockerEncryptionMethod)() {
-    m.encryptionMethod = value
+    err := m.GetBackingStore().Set("encryptionMethod", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *BitLockerRemovableDrivePolicy) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRequireEncryptionForWriteAccess sets the requireEncryptionForWriteAccess property value. Indicates whether to block write access to devices configured in another organization.  If requireEncryptionForWriteAccess is false, this value does not affect.
 func (m *BitLockerRemovableDrivePolicy) SetRequireEncryptionForWriteAccess(value *bool)() {
-    m.requireEncryptionForWriteAccess = value
+    err := m.GetBackingStore().Set("requireEncryptionForWriteAccess", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// BitLockerRemovableDrivePolicyable 
+type BitLockerRemovableDrivePolicyable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetBlockCrossOrganizationWriteAccess()(*bool)
+    GetEncryptionMethod()(*BitLockerEncryptionMethod)
+    GetOdataType()(*string)
+    GetRequireEncryptionForWriteAccess()(*bool)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetBlockCrossOrganizationWriteAccess(value *bool)()
+    SetEncryptionMethod(value *BitLockerEncryptionMethod)()
+    SetOdataType(value *string)()
+    SetRequireEncryptionForWriteAccess(value *bool)()
 }

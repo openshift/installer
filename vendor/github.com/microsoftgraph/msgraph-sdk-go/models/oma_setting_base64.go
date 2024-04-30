@@ -1,25 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // OmaSettingBase64 
 type OmaSettingBase64 struct {
     OmaSetting
-    // File name associated with the Value property (.cer
-    fileName *string
-    // Value. (Base64 encoded string)
-    value *string
 }
 // NewOmaSettingBase64 instantiates a new OmaSettingBase64 and sets the default values.
 func NewOmaSettingBase64()(*OmaSettingBase64) {
     m := &OmaSettingBase64{
         OmaSetting: *NewOmaSetting(),
     }
-    odataTypeValue := "#microsoft.graph.omaSettingBase64";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.omaSettingBase64"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateOmaSettingBase64FromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -29,17 +24,49 @@ func CreateOmaSettingBase64FromDiscriminatorValue(parseNode i878a80d2330e89d2689
 // GetFieldDeserializers the deserialization information for the current model
 func (m *OmaSettingBase64) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.OmaSetting.GetFieldDeserializers()
-    res["fileName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetFileName)
-    res["value"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetValue)
+    res["fileName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFileName(val)
+        }
+        return nil
+    }
+    res["value"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetValue(val)
+        }
+        return nil
+    }
     return res
 }
 // GetFileName gets the fileName property value. File name associated with the Value property (.cer
 func (m *OmaSettingBase64) GetFileName()(*string) {
-    return m.fileName
+    val, err := m.GetBackingStore().Get("fileName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetValue gets the value property value. Value. (Base64 encoded string)
 func (m *OmaSettingBase64) GetValue()(*string) {
-    return m.value
+    val, err := m.GetBackingStore().Get("value")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *OmaSettingBase64) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -63,9 +90,24 @@ func (m *OmaSettingBase64) Serialize(writer i878a80d2330e89d26896388a3f487eef27b
 }
 // SetFileName sets the fileName property value. File name associated with the Value property (.cer
 func (m *OmaSettingBase64) SetFileName(value *string)() {
-    m.fileName = value
+    err := m.GetBackingStore().Set("fileName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetValue sets the value property value. Value. (Base64 encoded string)
 func (m *OmaSettingBase64) SetValue(value *string)() {
-    m.value = value
+    err := m.GetBackingStore().Set("value", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// OmaSettingBase64able 
+type OmaSettingBase64able interface {
+    OmaSettingable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetFileName()(*string)
+    GetValue()(*string)
+    SetFileName(value *string)()
+    SetValue(value *string)()
 }

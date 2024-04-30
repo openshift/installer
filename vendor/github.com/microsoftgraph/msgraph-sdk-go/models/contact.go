@@ -2,95 +2,20 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // Contact 
 type Contact struct {
     OutlookItem
-    // The name of the contact's assistant.
-    assistantName *string
-    // The contact's birthday. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z
-    birthday *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // The contact's business address.
-    businessAddress PhysicalAddressable
-    // The business home page of the contact.
-    businessHomePage *string
-    // The contact's business phone numbers.
-    businessPhones []string
-    // The names of the contact's children.
-    children []string
-    // The name of the contact's company.
-    companyName *string
-    // The contact's department.
-    department *string
-    // The contact's display name. You can specify the display name in a create or update operation. Note that later updates to other properties may cause an automatically generated value to overwrite the displayName value you have specified. To preserve a pre-existing value, always include it as displayName in an update operation.
-    displayName *string
-    // The contact's email addresses.
-    emailAddresses []EmailAddressable
-    // The collection of open extensions defined for the contact. Read-only. Nullable.
-    extensions []Extensionable
-    // The name the contact is filed under.
-    fileAs *string
-    // The contact's generation.
-    generation *string
-    // The contact's given name.
-    givenName *string
-    // The contact's home address.
-    homeAddress PhysicalAddressable
-    // The contact's home phone numbers.
-    homePhones []string
-    // The imAddresses property
-    imAddresses []string
-    // The initials property
-    initials *string
-    // The jobTitle property
-    jobTitle *string
-    // The manager property
-    manager *string
-    // The middleName property
-    middleName *string
-    // The mobilePhone property
-    mobilePhone *string
-    // The collection of multi-value extended properties defined for the contact. Read-only. Nullable.
-    multiValueExtendedProperties []MultiValueLegacyExtendedPropertyable
-    // The nickName property
-    nickName *string
-    // The officeLocation property
-    officeLocation *string
-    // The otherAddress property
-    otherAddress PhysicalAddressable
-    // The parentFolderId property
-    parentFolderId *string
-    // The personalNotes property
-    personalNotes *string
-    // Optional contact picture. You can get or set a photo for a contact.
-    photo ProfilePhotoable
-    // The profession property
-    profession *string
-    // The collection of single-value extended properties defined for the contact. Read-only. Nullable.
-    singleValueExtendedProperties []SingleValueLegacyExtendedPropertyable
-    // The spouseName property
-    spouseName *string
-    // The surname property
-    surname *string
-    // The title property
-    title *string
-    // The yomiCompanyName property
-    yomiCompanyName *string
-    // The yomiGivenName property
-    yomiGivenName *string
-    // The yomiSurname property
-    yomiSurname *string
 }
-// NewContact instantiates a new Contact and sets the default values.
+// NewContact instantiates a new contact and sets the default values.
 func NewContact()(*Contact) {
     m := &Contact{
         OutlookItem: *NewOutlookItem(),
     }
-    odataTypeValue := "#microsoft.graph.contact";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.contact"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateContactFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -99,193 +24,817 @@ func CreateContactFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f48
 }
 // GetAssistantName gets the assistantName property value. The name of the contact's assistant.
 func (m *Contact) GetAssistantName()(*string) {
-    return m.assistantName
+    val, err := m.GetBackingStore().Get("assistantName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetBirthday gets the birthday property value. The contact's birthday. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z
 func (m *Contact) GetBirthday()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.birthday
+    val, err := m.GetBackingStore().Get("birthday")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetBusinessAddress gets the businessAddress property value. The contact's business address.
 func (m *Contact) GetBusinessAddress()(PhysicalAddressable) {
-    return m.businessAddress
+    val, err := m.GetBackingStore().Get("businessAddress")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(PhysicalAddressable)
+    }
+    return nil
 }
 // GetBusinessHomePage gets the businessHomePage property value. The business home page of the contact.
 func (m *Contact) GetBusinessHomePage()(*string) {
-    return m.businessHomePage
+    val, err := m.GetBackingStore().Get("businessHomePage")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetBusinessPhones gets the businessPhones property value. The contact's business phone numbers.
 func (m *Contact) GetBusinessPhones()([]string) {
-    return m.businessPhones
+    val, err := m.GetBackingStore().Get("businessPhones")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
 }
 // GetChildren gets the children property value. The names of the contact's children.
 func (m *Contact) GetChildren()([]string) {
-    return m.children
+    val, err := m.GetBackingStore().Get("children")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
 }
 // GetCompanyName gets the companyName property value. The name of the contact's company.
 func (m *Contact) GetCompanyName()(*string) {
-    return m.companyName
+    val, err := m.GetBackingStore().Get("companyName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDepartment gets the department property value. The contact's department.
 func (m *Contact) GetDepartment()(*string) {
-    return m.department
+    val, err := m.GetBackingStore().Get("department")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDisplayName gets the displayName property value. The contact's display name. You can specify the display name in a create or update operation. Note that later updates to other properties may cause an automatically generated value to overwrite the displayName value you have specified. To preserve a pre-existing value, always include it as displayName in an update operation.
 func (m *Contact) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetEmailAddresses gets the emailAddresses property value. The contact's email addresses.
 func (m *Contact) GetEmailAddresses()([]EmailAddressable) {
-    return m.emailAddresses
+    val, err := m.GetBackingStore().Get("emailAddresses")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]EmailAddressable)
+    }
+    return nil
 }
 // GetExtensions gets the extensions property value. The collection of open extensions defined for the contact. Read-only. Nullable.
 func (m *Contact) GetExtensions()([]Extensionable) {
-    return m.extensions
+    val, err := m.GetBackingStore().Get("extensions")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]Extensionable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *Contact) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.OutlookItem.GetFieldDeserializers()
-    res["assistantName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetAssistantName)
-    res["birthday"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetBirthday)
-    res["businessAddress"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreatePhysicalAddressFromDiscriminatorValue , m.SetBusinessAddress)
-    res["businessHomePage"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetBusinessHomePage)
-    res["businessPhones"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetBusinessPhones)
-    res["children"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetChildren)
-    res["companyName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCompanyName)
-    res["department"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDepartment)
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["emailAddresses"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateEmailAddressFromDiscriminatorValue , m.SetEmailAddresses)
-    res["extensions"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateExtensionFromDiscriminatorValue , m.SetExtensions)
-    res["fileAs"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetFileAs)
-    res["generation"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetGeneration)
-    res["givenName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetGivenName)
-    res["homeAddress"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreatePhysicalAddressFromDiscriminatorValue , m.SetHomeAddress)
-    res["homePhones"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetHomePhones)
-    res["imAddresses"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetImAddresses)
-    res["initials"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetInitials)
-    res["jobTitle"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetJobTitle)
-    res["manager"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetManager)
-    res["middleName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetMiddleName)
-    res["mobilePhone"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetMobilePhone)
-    res["multiValueExtendedProperties"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateMultiValueLegacyExtendedPropertyFromDiscriminatorValue , m.SetMultiValueExtendedProperties)
-    res["nickName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetNickName)
-    res["officeLocation"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOfficeLocation)
-    res["otherAddress"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreatePhysicalAddressFromDiscriminatorValue , m.SetOtherAddress)
-    res["parentFolderId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetParentFolderId)
-    res["personalNotes"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetPersonalNotes)
-    res["photo"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateProfilePhotoFromDiscriminatorValue , m.SetPhoto)
-    res["profession"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetProfession)
-    res["singleValueExtendedProperties"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateSingleValueLegacyExtendedPropertyFromDiscriminatorValue , m.SetSingleValueExtendedProperties)
-    res["spouseName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSpouseName)
-    res["surname"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSurname)
-    res["title"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetTitle)
-    res["yomiCompanyName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetYomiCompanyName)
-    res["yomiGivenName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetYomiGivenName)
-    res["yomiSurname"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetYomiSurname)
+    res["assistantName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAssistantName(val)
+        }
+        return nil
+    }
+    res["birthday"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBirthday(val)
+        }
+        return nil
+    }
+    res["businessAddress"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreatePhysicalAddressFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBusinessAddress(val.(PhysicalAddressable))
+        }
+        return nil
+    }
+    res["businessHomePage"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBusinessHomePage(val)
+        }
+        return nil
+    }
+    res["businessPhones"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetBusinessPhones(res)
+        }
+        return nil
+    }
+    res["children"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetChildren(res)
+        }
+        return nil
+    }
+    res["companyName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCompanyName(val)
+        }
+        return nil
+    }
+    res["department"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDepartment(val)
+        }
+        return nil
+    }
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["emailAddresses"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateEmailAddressFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]EmailAddressable, len(val))
+            for i, v := range val {
+                res[i] = v.(EmailAddressable)
+            }
+            m.SetEmailAddresses(res)
+        }
+        return nil
+    }
+    res["extensions"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateExtensionFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]Extensionable, len(val))
+            for i, v := range val {
+                res[i] = v.(Extensionable)
+            }
+            m.SetExtensions(res)
+        }
+        return nil
+    }
+    res["fileAs"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFileAs(val)
+        }
+        return nil
+    }
+    res["generation"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetGeneration(val)
+        }
+        return nil
+    }
+    res["givenName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetGivenName(val)
+        }
+        return nil
+    }
+    res["homeAddress"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreatePhysicalAddressFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetHomeAddress(val.(PhysicalAddressable))
+        }
+        return nil
+    }
+    res["homePhones"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetHomePhones(res)
+        }
+        return nil
+    }
+    res["imAddresses"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetImAddresses(res)
+        }
+        return nil
+    }
+    res["initials"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetInitials(val)
+        }
+        return nil
+    }
+    res["jobTitle"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetJobTitle(val)
+        }
+        return nil
+    }
+    res["manager"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetManager(val)
+        }
+        return nil
+    }
+    res["middleName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMiddleName(val)
+        }
+        return nil
+    }
+    res["mobilePhone"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMobilePhone(val)
+        }
+        return nil
+    }
+    res["multiValueExtendedProperties"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateMultiValueLegacyExtendedPropertyFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]MultiValueLegacyExtendedPropertyable, len(val))
+            for i, v := range val {
+                res[i] = v.(MultiValueLegacyExtendedPropertyable)
+            }
+            m.SetMultiValueExtendedProperties(res)
+        }
+        return nil
+    }
+    res["nickName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetNickName(val)
+        }
+        return nil
+    }
+    res["officeLocation"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOfficeLocation(val)
+        }
+        return nil
+    }
+    res["otherAddress"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreatePhysicalAddressFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOtherAddress(val.(PhysicalAddressable))
+        }
+        return nil
+    }
+    res["parentFolderId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetParentFolderId(val)
+        }
+        return nil
+    }
+    res["personalNotes"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPersonalNotes(val)
+        }
+        return nil
+    }
+    res["photo"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateProfilePhotoFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPhoto(val.(ProfilePhotoable))
+        }
+        return nil
+    }
+    res["profession"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetProfession(val)
+        }
+        return nil
+    }
+    res["singleValueExtendedProperties"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateSingleValueLegacyExtendedPropertyFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]SingleValueLegacyExtendedPropertyable, len(val))
+            for i, v := range val {
+                res[i] = v.(SingleValueLegacyExtendedPropertyable)
+            }
+            m.SetSingleValueExtendedProperties(res)
+        }
+        return nil
+    }
+    res["spouseName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSpouseName(val)
+        }
+        return nil
+    }
+    res["surname"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSurname(val)
+        }
+        return nil
+    }
+    res["title"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTitle(val)
+        }
+        return nil
+    }
+    res["yomiCompanyName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetYomiCompanyName(val)
+        }
+        return nil
+    }
+    res["yomiGivenName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetYomiGivenName(val)
+        }
+        return nil
+    }
+    res["yomiSurname"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetYomiSurname(val)
+        }
+        return nil
+    }
     return res
 }
 // GetFileAs gets the fileAs property value. The name the contact is filed under.
 func (m *Contact) GetFileAs()(*string) {
-    return m.fileAs
+    val, err := m.GetBackingStore().Get("fileAs")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetGeneration gets the generation property value. The contact's generation.
 func (m *Contact) GetGeneration()(*string) {
-    return m.generation
+    val, err := m.GetBackingStore().Get("generation")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetGivenName gets the givenName property value. The contact's given name.
 func (m *Contact) GetGivenName()(*string) {
-    return m.givenName
+    val, err := m.GetBackingStore().Get("givenName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetHomeAddress gets the homeAddress property value. The contact's home address.
 func (m *Contact) GetHomeAddress()(PhysicalAddressable) {
-    return m.homeAddress
+    val, err := m.GetBackingStore().Get("homeAddress")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(PhysicalAddressable)
+    }
+    return nil
 }
 // GetHomePhones gets the homePhones property value. The contact's home phone numbers.
 func (m *Contact) GetHomePhones()([]string) {
-    return m.homePhones
+    val, err := m.GetBackingStore().Get("homePhones")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
 }
 // GetImAddresses gets the imAddresses property value. The imAddresses property
 func (m *Contact) GetImAddresses()([]string) {
-    return m.imAddresses
+    val, err := m.GetBackingStore().Get("imAddresses")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
 }
 // GetInitials gets the initials property value. The initials property
 func (m *Contact) GetInitials()(*string) {
-    return m.initials
+    val, err := m.GetBackingStore().Get("initials")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetJobTitle gets the jobTitle property value. The jobTitle property
 func (m *Contact) GetJobTitle()(*string) {
-    return m.jobTitle
+    val, err := m.GetBackingStore().Get("jobTitle")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetManager gets the manager property value. The manager property
 func (m *Contact) GetManager()(*string) {
-    return m.manager
+    val, err := m.GetBackingStore().Get("manager")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetMiddleName gets the middleName property value. The middleName property
 func (m *Contact) GetMiddleName()(*string) {
-    return m.middleName
+    val, err := m.GetBackingStore().Get("middleName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetMobilePhone gets the mobilePhone property value. The mobilePhone property
 func (m *Contact) GetMobilePhone()(*string) {
-    return m.mobilePhone
+    val, err := m.GetBackingStore().Get("mobilePhone")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetMultiValueExtendedProperties gets the multiValueExtendedProperties property value. The collection of multi-value extended properties defined for the contact. Read-only. Nullable.
 func (m *Contact) GetMultiValueExtendedProperties()([]MultiValueLegacyExtendedPropertyable) {
-    return m.multiValueExtendedProperties
+    val, err := m.GetBackingStore().Get("multiValueExtendedProperties")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]MultiValueLegacyExtendedPropertyable)
+    }
+    return nil
 }
 // GetNickName gets the nickName property value. The nickName property
 func (m *Contact) GetNickName()(*string) {
-    return m.nickName
+    val, err := m.GetBackingStore().Get("nickName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOfficeLocation gets the officeLocation property value. The officeLocation property
 func (m *Contact) GetOfficeLocation()(*string) {
-    return m.officeLocation
+    val, err := m.GetBackingStore().Get("officeLocation")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOtherAddress gets the otherAddress property value. The otherAddress property
 func (m *Contact) GetOtherAddress()(PhysicalAddressable) {
-    return m.otherAddress
+    val, err := m.GetBackingStore().Get("otherAddress")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(PhysicalAddressable)
+    }
+    return nil
 }
 // GetParentFolderId gets the parentFolderId property value. The parentFolderId property
 func (m *Contact) GetParentFolderId()(*string) {
-    return m.parentFolderId
+    val, err := m.GetBackingStore().Get("parentFolderId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetPersonalNotes gets the personalNotes property value. The personalNotes property
 func (m *Contact) GetPersonalNotes()(*string) {
-    return m.personalNotes
+    val, err := m.GetBackingStore().Get("personalNotes")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetPhoto gets the photo property value. Optional contact picture. You can get or set a photo for a contact.
 func (m *Contact) GetPhoto()(ProfilePhotoable) {
-    return m.photo
+    val, err := m.GetBackingStore().Get("photo")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ProfilePhotoable)
+    }
+    return nil
 }
 // GetProfession gets the profession property value. The profession property
 func (m *Contact) GetProfession()(*string) {
-    return m.profession
+    val, err := m.GetBackingStore().Get("profession")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetSingleValueExtendedProperties gets the singleValueExtendedProperties property value. The collection of single-value extended properties defined for the contact. Read-only. Nullable.
 func (m *Contact) GetSingleValueExtendedProperties()([]SingleValueLegacyExtendedPropertyable) {
-    return m.singleValueExtendedProperties
+    val, err := m.GetBackingStore().Get("singleValueExtendedProperties")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]SingleValueLegacyExtendedPropertyable)
+    }
+    return nil
 }
 // GetSpouseName gets the spouseName property value. The spouseName property
 func (m *Contact) GetSpouseName()(*string) {
-    return m.spouseName
+    val, err := m.GetBackingStore().Get("spouseName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetSurname gets the surname property value. The surname property
 func (m *Contact) GetSurname()(*string) {
-    return m.surname
+    val, err := m.GetBackingStore().Get("surname")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetTitle gets the title property value. The title property
 func (m *Contact) GetTitle()(*string) {
-    return m.title
+    val, err := m.GetBackingStore().Get("title")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetYomiCompanyName gets the yomiCompanyName property value. The yomiCompanyName property
 func (m *Contact) GetYomiCompanyName()(*string) {
-    return m.yomiCompanyName
+    val, err := m.GetBackingStore().Get("yomiCompanyName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetYomiGivenName gets the yomiGivenName property value. The yomiGivenName property
 func (m *Contact) GetYomiGivenName()(*string) {
-    return m.yomiGivenName
+    val, err := m.GetBackingStore().Get("yomiGivenName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetYomiSurname gets the yomiSurname property value. The yomiSurname property
 func (m *Contact) GetYomiSurname()(*string) {
-    return m.yomiSurname
+    val, err := m.GetBackingStore().Get("yomiSurname")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *Contact) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -348,14 +897,20 @@ func (m *Contact) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010
         }
     }
     if m.GetEmailAddresses() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetEmailAddresses())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetEmailAddresses()))
+        for i, v := range m.GetEmailAddresses() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("emailAddresses", cast)
         if err != nil {
             return err
         }
     }
     if m.GetExtensions() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetExtensions())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetExtensions()))
+        for i, v := range m.GetExtensions() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("extensions", cast)
         if err != nil {
             return err
@@ -428,7 +983,10 @@ func (m *Contact) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010
         }
     }
     if m.GetMultiValueExtendedProperties() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetMultiValueExtendedProperties())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetMultiValueExtendedProperties()))
+        for i, v := range m.GetMultiValueExtendedProperties() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("multiValueExtendedProperties", cast)
         if err != nil {
             return err
@@ -477,7 +1035,10 @@ func (m *Contact) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010
         }
     }
     if m.GetSingleValueExtendedProperties() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetSingleValueExtendedProperties())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetSingleValueExtendedProperties()))
+        for i, v := range m.GetSingleValueExtendedProperties() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("singleValueExtendedProperties", cast)
         if err != nil {
             return err
@@ -523,149 +1084,339 @@ func (m *Contact) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010
 }
 // SetAssistantName sets the assistantName property value. The name of the contact's assistant.
 func (m *Contact) SetAssistantName(value *string)() {
-    m.assistantName = value
+    err := m.GetBackingStore().Set("assistantName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBirthday sets the birthday property value. The contact's birthday. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z
 func (m *Contact) SetBirthday(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.birthday = value
+    err := m.GetBackingStore().Set("birthday", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBusinessAddress sets the businessAddress property value. The contact's business address.
 func (m *Contact) SetBusinessAddress(value PhysicalAddressable)() {
-    m.businessAddress = value
+    err := m.GetBackingStore().Set("businessAddress", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBusinessHomePage sets the businessHomePage property value. The business home page of the contact.
 func (m *Contact) SetBusinessHomePage(value *string)() {
-    m.businessHomePage = value
+    err := m.GetBackingStore().Set("businessHomePage", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBusinessPhones sets the businessPhones property value. The contact's business phone numbers.
 func (m *Contact) SetBusinessPhones(value []string)() {
-    m.businessPhones = value
+    err := m.GetBackingStore().Set("businessPhones", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetChildren sets the children property value. The names of the contact's children.
 func (m *Contact) SetChildren(value []string)() {
-    m.children = value
+    err := m.GetBackingStore().Set("children", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCompanyName sets the companyName property value. The name of the contact's company.
 func (m *Contact) SetCompanyName(value *string)() {
-    m.companyName = value
+    err := m.GetBackingStore().Set("companyName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDepartment sets the department property value. The contact's department.
 func (m *Contact) SetDepartment(value *string)() {
-    m.department = value
+    err := m.GetBackingStore().Set("department", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDisplayName sets the displayName property value. The contact's display name. You can specify the display name in a create or update operation. Note that later updates to other properties may cause an automatically generated value to overwrite the displayName value you have specified. To preserve a pre-existing value, always include it as displayName in an update operation.
 func (m *Contact) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetEmailAddresses sets the emailAddresses property value. The contact's email addresses.
 func (m *Contact) SetEmailAddresses(value []EmailAddressable)() {
-    m.emailAddresses = value
+    err := m.GetBackingStore().Set("emailAddresses", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetExtensions sets the extensions property value. The collection of open extensions defined for the contact. Read-only. Nullable.
 func (m *Contact) SetExtensions(value []Extensionable)() {
-    m.extensions = value
+    err := m.GetBackingStore().Set("extensions", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFileAs sets the fileAs property value. The name the contact is filed under.
 func (m *Contact) SetFileAs(value *string)() {
-    m.fileAs = value
+    err := m.GetBackingStore().Set("fileAs", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetGeneration sets the generation property value. The contact's generation.
 func (m *Contact) SetGeneration(value *string)() {
-    m.generation = value
+    err := m.GetBackingStore().Set("generation", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetGivenName sets the givenName property value. The contact's given name.
 func (m *Contact) SetGivenName(value *string)() {
-    m.givenName = value
+    err := m.GetBackingStore().Set("givenName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetHomeAddress sets the homeAddress property value. The contact's home address.
 func (m *Contact) SetHomeAddress(value PhysicalAddressable)() {
-    m.homeAddress = value
+    err := m.GetBackingStore().Set("homeAddress", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetHomePhones sets the homePhones property value. The contact's home phone numbers.
 func (m *Contact) SetHomePhones(value []string)() {
-    m.homePhones = value
+    err := m.GetBackingStore().Set("homePhones", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetImAddresses sets the imAddresses property value. The imAddresses property
 func (m *Contact) SetImAddresses(value []string)() {
-    m.imAddresses = value
+    err := m.GetBackingStore().Set("imAddresses", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetInitials sets the initials property value. The initials property
 func (m *Contact) SetInitials(value *string)() {
-    m.initials = value
+    err := m.GetBackingStore().Set("initials", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetJobTitle sets the jobTitle property value. The jobTitle property
 func (m *Contact) SetJobTitle(value *string)() {
-    m.jobTitle = value
+    err := m.GetBackingStore().Set("jobTitle", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetManager sets the manager property value. The manager property
 func (m *Contact) SetManager(value *string)() {
-    m.manager = value
+    err := m.GetBackingStore().Set("manager", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMiddleName sets the middleName property value. The middleName property
 func (m *Contact) SetMiddleName(value *string)() {
-    m.middleName = value
+    err := m.GetBackingStore().Set("middleName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMobilePhone sets the mobilePhone property value. The mobilePhone property
 func (m *Contact) SetMobilePhone(value *string)() {
-    m.mobilePhone = value
+    err := m.GetBackingStore().Set("mobilePhone", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMultiValueExtendedProperties sets the multiValueExtendedProperties property value. The collection of multi-value extended properties defined for the contact. Read-only. Nullable.
 func (m *Contact) SetMultiValueExtendedProperties(value []MultiValueLegacyExtendedPropertyable)() {
-    m.multiValueExtendedProperties = value
+    err := m.GetBackingStore().Set("multiValueExtendedProperties", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetNickName sets the nickName property value. The nickName property
 func (m *Contact) SetNickName(value *string)() {
-    m.nickName = value
+    err := m.GetBackingStore().Set("nickName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOfficeLocation sets the officeLocation property value. The officeLocation property
 func (m *Contact) SetOfficeLocation(value *string)() {
-    m.officeLocation = value
+    err := m.GetBackingStore().Set("officeLocation", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOtherAddress sets the otherAddress property value. The otherAddress property
 func (m *Contact) SetOtherAddress(value PhysicalAddressable)() {
-    m.otherAddress = value
+    err := m.GetBackingStore().Set("otherAddress", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetParentFolderId sets the parentFolderId property value. The parentFolderId property
 func (m *Contact) SetParentFolderId(value *string)() {
-    m.parentFolderId = value
+    err := m.GetBackingStore().Set("parentFolderId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPersonalNotes sets the personalNotes property value. The personalNotes property
 func (m *Contact) SetPersonalNotes(value *string)() {
-    m.personalNotes = value
+    err := m.GetBackingStore().Set("personalNotes", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPhoto sets the photo property value. Optional contact picture. You can get or set a photo for a contact.
 func (m *Contact) SetPhoto(value ProfilePhotoable)() {
-    m.photo = value
+    err := m.GetBackingStore().Set("photo", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetProfession sets the profession property value. The profession property
 func (m *Contact) SetProfession(value *string)() {
-    m.profession = value
+    err := m.GetBackingStore().Set("profession", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSingleValueExtendedProperties sets the singleValueExtendedProperties property value. The collection of single-value extended properties defined for the contact. Read-only. Nullable.
 func (m *Contact) SetSingleValueExtendedProperties(value []SingleValueLegacyExtendedPropertyable)() {
-    m.singleValueExtendedProperties = value
+    err := m.GetBackingStore().Set("singleValueExtendedProperties", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSpouseName sets the spouseName property value. The spouseName property
 func (m *Contact) SetSpouseName(value *string)() {
-    m.spouseName = value
+    err := m.GetBackingStore().Set("spouseName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSurname sets the surname property value. The surname property
 func (m *Contact) SetSurname(value *string)() {
-    m.surname = value
+    err := m.GetBackingStore().Set("surname", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTitle sets the title property value. The title property
 func (m *Contact) SetTitle(value *string)() {
-    m.title = value
+    err := m.GetBackingStore().Set("title", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetYomiCompanyName sets the yomiCompanyName property value. The yomiCompanyName property
 func (m *Contact) SetYomiCompanyName(value *string)() {
-    m.yomiCompanyName = value
+    err := m.GetBackingStore().Set("yomiCompanyName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetYomiGivenName sets the yomiGivenName property value. The yomiGivenName property
 func (m *Contact) SetYomiGivenName(value *string)() {
-    m.yomiGivenName = value
+    err := m.GetBackingStore().Set("yomiGivenName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetYomiSurname sets the yomiSurname property value. The yomiSurname property
 func (m *Contact) SetYomiSurname(value *string)() {
-    m.yomiSurname = value
+    err := m.GetBackingStore().Set("yomiSurname", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// Contactable 
+type Contactable interface {
+    OutlookItemable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAssistantName()(*string)
+    GetBirthday()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetBusinessAddress()(PhysicalAddressable)
+    GetBusinessHomePage()(*string)
+    GetBusinessPhones()([]string)
+    GetChildren()([]string)
+    GetCompanyName()(*string)
+    GetDepartment()(*string)
+    GetDisplayName()(*string)
+    GetEmailAddresses()([]EmailAddressable)
+    GetExtensions()([]Extensionable)
+    GetFileAs()(*string)
+    GetGeneration()(*string)
+    GetGivenName()(*string)
+    GetHomeAddress()(PhysicalAddressable)
+    GetHomePhones()([]string)
+    GetImAddresses()([]string)
+    GetInitials()(*string)
+    GetJobTitle()(*string)
+    GetManager()(*string)
+    GetMiddleName()(*string)
+    GetMobilePhone()(*string)
+    GetMultiValueExtendedProperties()([]MultiValueLegacyExtendedPropertyable)
+    GetNickName()(*string)
+    GetOfficeLocation()(*string)
+    GetOtherAddress()(PhysicalAddressable)
+    GetParentFolderId()(*string)
+    GetPersonalNotes()(*string)
+    GetPhoto()(ProfilePhotoable)
+    GetProfession()(*string)
+    GetSingleValueExtendedProperties()([]SingleValueLegacyExtendedPropertyable)
+    GetSpouseName()(*string)
+    GetSurname()(*string)
+    GetTitle()(*string)
+    GetYomiCompanyName()(*string)
+    GetYomiGivenName()(*string)
+    GetYomiSurname()(*string)
+    SetAssistantName(value *string)()
+    SetBirthday(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetBusinessAddress(value PhysicalAddressable)()
+    SetBusinessHomePage(value *string)()
+    SetBusinessPhones(value []string)()
+    SetChildren(value []string)()
+    SetCompanyName(value *string)()
+    SetDepartment(value *string)()
+    SetDisplayName(value *string)()
+    SetEmailAddresses(value []EmailAddressable)()
+    SetExtensions(value []Extensionable)()
+    SetFileAs(value *string)()
+    SetGeneration(value *string)()
+    SetGivenName(value *string)()
+    SetHomeAddress(value PhysicalAddressable)()
+    SetHomePhones(value []string)()
+    SetImAddresses(value []string)()
+    SetInitials(value *string)()
+    SetJobTitle(value *string)()
+    SetManager(value *string)()
+    SetMiddleName(value *string)()
+    SetMobilePhone(value *string)()
+    SetMultiValueExtendedProperties(value []MultiValueLegacyExtendedPropertyable)()
+    SetNickName(value *string)()
+    SetOfficeLocation(value *string)()
+    SetOtherAddress(value PhysicalAddressable)()
+    SetParentFolderId(value *string)()
+    SetPersonalNotes(value *string)()
+    SetPhoto(value ProfilePhotoable)()
+    SetProfession(value *string)()
+    SetSingleValueExtendedProperties(value []SingleValueLegacyExtendedPropertyable)()
+    SetSpouseName(value *string)()
+    SetSurname(value *string)()
+    SetTitle(value *string)()
+    SetYomiCompanyName(value *string)()
+    SetYomiGivenName(value *string)()
+    SetYomiSurname(value *string)()
 }
