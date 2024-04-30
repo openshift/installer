@@ -35,6 +35,7 @@ type CreateStorageAccountInput struct {
 	CloudName          aztypes.CloudEnvironment
 	TokenCredential    azcore.TokenCredential
 	CloudConfiguration cloud.Configuration
+	ManagedKeys        *aztypes.CustomerManagedKey
 }
 
 // CreateStorageAccountOutput contains the return values after creating a
@@ -73,6 +74,32 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		return nil, fmt.Errorf("failed to get storage account factory %w", err)
 	}
 
+	sku := armstorage.SKUNameStandardLRS
+	parameterProperties := armstorage.AccountPropertiesCreateParameters{
+		AllowBlobPublicAccess: to.Ptr(true), // XXX true if using disk encryption
+		AllowSharedKeyAccess:  to.Ptr(true),
+		IsLocalUserEnabled:    to.Ptr(true),
+		LargeFileSharesState:  to.Ptr(armstorage.LargeFileSharesStateEnabled),
+		PublicNetworkAccess:   to.Ptr(armstorage.PublicNetworkAccessEnabled),
+		MinimumTLSVersion:     &minimumTLSVersion,
+	}
+
+	if in.ManagedKeys != nil {
+		sku = armstorage.SKUNamePremiumLRS
+		keyVaultURI := fmt.Sprintf("subscriptions/%s/resourceGroups/%s/providers/Microsoft.KeyVault/vaults/%s", in.SubscriptionID, in.ManagedKeys.KeyVault.ResourceGroup, in.ManagedKeys.KeyVault.Name)
+		// userAssignedIdentityURI := fmt.Sprintf("subscriptions/%s/resourceGroups/%s/providers/Microsoft.ManagedIdentity/userAssignedIdentities/%s", in.SubscriptionID, in.ManagedKeys.KeyVault.ResourceGroup, in.ManagedKeys.UserAssignedIdentityKey)
+		parameterProperties.Encryption = &armstorage.Encryption{
+			EncryptionIdentity: &armstorage.EncryptionIdentity{
+				EncryptionUserAssignedIdentity: to.Ptr(in.ManagedKeys.UserAssignedIdentityKey),
+			},
+			KeySource: to.Ptr(armstorage.KeySourceMicrosoftKeyvault),
+			KeyVaultProperties: &armstorage.KeyVaultProperties{
+				KeyName:     to.Ptr(in.ManagedKeys.KeyVault.KeyName),
+				KeyVaultURI: to.Ptr(keyVaultURI),
+			},
+		}
+	}
+
 	logrus.Debugf("Creating storage account")
 	accountsClient := storageClientFactory.NewAccountsClient()
 	pollerResponse, err := accountsClient.BeginCreate(
@@ -83,17 +110,10 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 			Kind:     to.Ptr(armstorage.KindStorageV2),
 			Location: to.Ptr(in.Region),
 			SKU: &armstorage.SKU{
-				Name: to.Ptr(armstorage.SKUNameStandardLRS), // XXX Premium_LRS if disk encryption if used
+				Name: to.Ptr(sku),
 			},
-			Properties: &armstorage.AccountPropertiesCreateParameters{
-				AllowBlobPublicAccess: to.Ptr(true), // XXX true if using disk encryption
-				AllowSharedKeyAccess:  to.Ptr(true),
-				IsLocalUserEnabled:    to.Ptr(true),
-				LargeFileSharesState:  to.Ptr(armstorage.LargeFileSharesStateEnabled),
-				PublicNetworkAccess:   to.Ptr(armstorage.PublicNetworkAccessEnabled),
-				MinimumTLSVersion:     &minimumTLSVersion,
-			},
-			Tags: in.Tags,
+			Properties: &parameterProperties,
+			Tags:       in.Tags,
 		},
 		nil,
 	)

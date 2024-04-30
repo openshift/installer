@@ -200,6 +200,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		Tags:               tags,
 		TokenCredential:    tokenCredential,
 		CloudConfiguration: cloudConfiguration,
+		ManagedKeys:        in.InstallConfig.Config.Azure.CustomerManagedKey,
 	})
 	if err != nil {
 		return err
