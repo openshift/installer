@@ -153,16 +153,26 @@ variable "gcp_master_on_host_maintenance" {
   default = ""
 }
 
-variable "gcp_create_bootstrap_sa" {
-  type = bool
-  default = false
-  description = "Whether a service account should be created to sign the ignition URL."
-}
-
 variable "gcp_user_provisioned_dns" {
   type = bool
   default = false
   description = <<EOF
 When true the user has selected to configure their own dns solution, and no dns records will be created.
 EOF
+}
+
+
+variable "gcp_extra_tags" {
+  type        = map(string)
+  description = <<EOF
+(optional) Extra GCP tags to be applied to the created resources.
+Example: `{ "tagKeys/123" = "tagValues/456", "tagKeys/456" = "tagValues/789" }`
+EOF
+  default = {}
+}
+
+variable "gcp_ignition_shim" {
+  type = string
+  description = "Ignition stub containing the signed url that points to the bucket containing the ignition data."
+  default = ""
 }
