@@ -3,10 +3,13 @@ package powervs
 import (
 	"context"
 	"fmt"
+	"math"
 	"sync"
+	"time"
 
 	"github.com/IBM-Cloud/bluemix-go/crn"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/openshift/installer/pkg/types"
 )
@@ -281,4 +284,83 @@ func (m *Metadata) GetDNSServerIP(ctx context.Context, vpcName string) (string, 
 		return "", err
 	}
 	return dnsServerIP, nil
+}
+
+// CreateDNSRecord creates a CNAME record for the specified hostname and destination hostname.
+func (m *Metadata) CreateDNSRecord(ctx context.Context, hostname string, destHostname string) error {
+	instanceCRN, err := m.client.GetInstanceCRNByName(ctx, m.BaseDomain, m.PublishStrategy)
+	if err != nil {
+		return fmt.Errorf("failed to get InstanceCRN (%s) by name: %w", m.PublishStrategy, err)
+	}
+
+	backoff := wait.Backoff{
+		Duration: 15 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32}
+
+	var lastErr error
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
+		lastErr = m.client.CreateDNSRecord(ctx, m.PublishStrategy, instanceCRN, m.BaseDomain, hostname, destHostname)
+		if lastErr == nil {
+			return true, nil
+		}
+		return false, nil
+	})
+
+	if err != nil {
+		if lastErr != nil {
+			err = lastErr
+		}
+		return fmt.Errorf("failed to create a DNS CNAME record (%s, %s): %w",
+			hostname,
+			destHostname,
+			err)
+	}
+	return err
+}
+
+// ListSecurityGroupRules lists the rules created in the specified VPC.
+func (m *Metadata) ListSecurityGroupRules(ctx context.Context, vpcID string) (*vpcv1.SecurityGroupRuleCollection, error) {
+	return m.client.ListSecurityGroupRules(ctx, vpcID)
+}
+
+// SetVPCServiceURLForRegion sets the URL for the VPC based on the specified region.
+func (m *Metadata) SetVPCServiceURLForRegion(ctx context.Context, vpcRegion string) error {
+	return m.client.SetVPCServiceURLForRegion(ctx, vpcRegion)
+}
+
+// AddSecurityGroupRule adds a security group rule to the specified VPC.
+func (m *Metadata) AddSecurityGroupRule(ctx context.Context, rule *vpcv1.SecurityGroupRulePrototype, vpcID string) error {
+	backoff := wait.Backoff{
+		Duration: 15 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32}
+
+	var lastErr error
+	err := wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
+		lastErr = m.client.AddSecurityGroupRule(ctx, vpcID, rule)
+		if lastErr == nil {
+			return true, nil
+		}
+		return false, nil
+	})
+
+	if err != nil {
+		if lastErr != nil {
+			err = lastErr
+		}
+		return fmt.Errorf("failed to add security group rule: %w", err)
+	}
+	return err
+}
+
+func leftInContext(ctx context.Context) time.Duration {
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		return math.MaxInt64
+	}
+
+	return time.Until(deadline)
 }
