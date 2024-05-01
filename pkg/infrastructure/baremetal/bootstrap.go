@@ -347,15 +347,43 @@ func createBootstrapDomain(virConn *libvirt.Libvirt, config baremetalConfig, poo
 	bootstrapDom.Devices.Disks = append(bootstrapDom.Devices.Disks, disk)
 
 	ignitionKey := fmt.Sprintf("/var/lib/libvirt/openshift-images/%s-bootstrap/%s-bootstrap.ign", config.ClusterID, config.ClusterID)
-	bootstrapDom.QEMUCommandline = &libvirtxml.DomainQEMUCommandline{
-		Args: []libvirtxml.DomainQEMUCommandlineArg{
-			{
-				Value: "-fw_cfg",
+
+	arch := capabilities.Host.CPU.Arch
+
+	switch arch {
+	case "i686", "x86_64", "aarch64":
+		bootstrapDom.QEMUCommandline = &libvirtxml.DomainQEMUCommandline{
+			Args: []libvirtxml.DomainQEMUCommandlineArg{
+				{
+					Value: "-fw_cfg",
+				},
+				{
+					Value: fmt.Sprintf("name=%s,file=%s", "opt/com.coreos/config", ignitionKey),
+				},
 			},
-			{
-				Value: fmt.Sprintf("name=%s,file=%s", "opt/com.coreos/config", ignitionKey),
+		}
+	case "s390", "s390x", "ppc64", "ppc64le":
+		igndisk := libvirtxml.DomainDisk{
+			Device: "disk",
+			Source: &libvirtxml.DomainDiskSource{
+				File: &libvirtxml.DomainDiskSourceFile{
+					File: ignitionKey,
+				},
 			},
-		},
+			Target: &libvirtxml.DomainDiskTarget{
+				Dev: "vdb",
+				Bus: "virtio",
+			},
+			Driver: &libvirtxml.DomainDiskDriver{
+				Name: "qemu",
+				Type: "raw",
+			},
+			ReadOnly: &libvirtxml.DomainDiskReadOnly{},
+			Serial:   "ignition",
+		}
+		bootstrapDom.Devices.Disks = append(bootstrapDom.Devices.Disks, igndisk)
+	default:
+		return fmt.Errorf("ignition not supported on %q", arch)
 	}
 
 	bootstrapDom.Resource = nil
