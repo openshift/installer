@@ -2,7 +2,10 @@ package baremetal
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	baremetalhost "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
 	"github.com/sirupsen/logrus"
@@ -12,11 +15,13 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	clientwatch "k8s.io/client-go/tools/watch"
+
+	"github.com/openshift/installer/pkg/infrastructure/baremetal"
 )
 
 // WaitForBaremetalBootstrapControlPlane will watch baremetalhost resources on the bootstrap
 // and wait for the control plane to finish provisioning.
-func WaitForBaremetalBootstrapControlPlane(ctx context.Context, config *rest.Config) error {
+func WaitForBaremetalBootstrapControlPlane(ctx context.Context, config *rest.Config, dir string) error {
 	client, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return fmt.Errorf("creating a baremetal client: %w", err)
@@ -91,5 +96,19 @@ func WaitForBaremetalBootstrapControlPlane(ctx context.Context, config *rest.Con
 		},
 	)
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	mastersJSON, err := json.Marshal(masters)
+	if err != nil {
+		return fmt.Errorf("failed to marshal masters: %w", err)
+	}
+
+	err = os.WriteFile(filepath.Join(dir, baremetal.MastersFileName), mastersJSON, 0600)
+	if err != nil {
+		return fmt.Errorf("failed to persist masters file to disk: %w", err)
+	}
+
+	return nil
 }
