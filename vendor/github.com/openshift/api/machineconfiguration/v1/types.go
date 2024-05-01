@@ -23,7 +23,7 @@ const KubeletConfigRoleLabelPrefix = "pools.operator.machineconfiguration.opensh
 // +kubebuilder:resource:path=controllerconfigs,scope=Cluster
 // +kubebuilder:subresource:status
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/1453
-// +openshift:file-pattern=0000_80_controllerconfigMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_80,operatorName=machine-config,operatorOrdering=01
 // +kubebuilder:metadata:labels=openshift.io/operator-managed=
 
 // ControllerConfig describes configuration for MachineConfigController.
@@ -292,7 +292,7 @@ type ControllerConfigList struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=machineconfigs,scope=Cluster,shortName=mc
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/1453
-// +openshift:file-pattern=0000_80_machineconfigMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_80,operatorName=machine-config,operatorOrdering=01
 // +kubebuilder:metadata:labels="openshift.io/operator-managed="
 // +kubebuilder:printcolumn:name=GeneratedByController,JSONPath=.metadata.annotations.machineconfiguration\.openshift\.io/generated-by-controller-version,type=string,description=Version of the controller that generated the machineconfig. This will be empty if the machineconfig is not managed by a controller.
 // +kubebuilder:printcolumn:name=IgnitionVersion,JSONPath=.spec.config.ignition.version,type=string,description=Version of the Ignition Config defined in the machineconfig.
@@ -366,7 +366,7 @@ type MachineConfigList struct {
 // +kubebuilder:resource:path=machineconfigpools,scope=Cluster,shortName=mcp
 // +kubebuilder:subresource:status
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/1453
-// +openshift:file-pattern=0000_80_machineconfigpoolMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_80,operatorName=machine-config,operatorOrdering=01
 // +kubebuilder:metadata:labels="openshift.io/operator-managed="
 // +kubebuilder:printcolumn:name=Config,JSONPath=.status.configuration.name,type=string
 // +kubebuilder:printcolumn:name=Updated,JSONPath=.status.conditions[?(@.type=="Updated")].status,type=string,description=When all the machines in the pool are updated to the correct machine config.
@@ -421,6 +421,45 @@ type MachineConfigPoolSpec struct {
 	// The targeted MachineConfig object for the machine config pool.
 	// +optional
 	Configuration MachineConfigPoolStatusConfiguration `json:"configuration"`
+
+	// pinnedImageSets specifies a sequence of PinnedImageSetRef objects for the
+	// pool. Nodes within this pool will preload and pin images defined in the
+	// PinnedImageSet. Before pulling images the MachineConfigDaemon will ensure
+	// the total uncompressed size of all the images does not exceed available
+	// resources. If the total size of the images exceeds the available
+	// resources the controller will report a Degraded status to the
+	// MachineConfigPool and not attempt to pull any images. Also to help ensure
+	// the kubelet can mitigate storage risk, the pinned_image configuration and
+	// subsequent service reload will happen only after all of the images have
+	// been pulled for each set. Images from multiple PinnedImageSets are loaded
+	// and pinned sequentially as listed. Duplicate and existing images will be
+	// skipped.
+	//
+	// Any failure to prefetch or pin images will result in a Degraded pool.
+	// Resolving these failures is the responsibility of the user. The admin
+	// should be proactive in ensuring adequate storage and proper image
+	// authentication exists in advance.
+	// +openshift:enable:FeatureGate=PinnedImages
+	// +optional
+	// +listType=map
+	// +listMapKey=name
+	// +kubebuilder:validation:MaxItems=100
+	PinnedImageSets []PinnedImageSetRef `json:"pinnedImageSets,omitempty"`
+}
+
+type PinnedImageSetRef struct {
+	// name is a reference to the name of a PinnedImageSet.  Must adhere to
+	// RFC-1123 (https://tools.ietf.org/html/rfc1123).
+	// Made up of one of more period-separated (.) segments, where each segment
+	// consists of alphanumeric characters and hyphens (-), must begin and end
+	// with an alphanumeric character, and is at most 63 characters in length.
+	// The total length of the name must not exceed 253 characters.
+	// +openshift:enable:FeatureGate=PinnedImages
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:Pattern=`^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$`
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
 }
 
 // MachineConfigPoolStatus is the status for MachineConfigPool resource.
@@ -464,7 +503,61 @@ type MachineConfigPoolStatus struct {
 	// +listType=atomic
 	// +optional
 	CertExpirys []CertExpiry `json:"certExpirys"`
+
+	// poolSynchronizersStatus is the status of the machines managed by the pool synchronizers.
+	// +openshift:enable:FeatureGate=PinnedImages
+	// +listType=map
+	// +listMapKey=poolSynchronizerType
+	// +optional
+	PoolSynchronizersStatus []PoolSynchronizerStatus `json:"poolSynchronizersStatus,omitempty"`
 }
+
+// +kubebuilder:validation:XValidation:rule="self.machineCount >= self.updatedMachineCount", message="machineCount must be greater than or equal to updatedMachineCount"
+// +kubebuilder:validation:XValidation:rule="self.machineCount >= self.availableMachineCount", message="machineCount must be greater than or equal to availableMachineCount"
+// +kubebuilder:validation:XValidation:rule="self.machineCount >= self.unavailableMachineCount", message="machineCount must be greater than or equal to unavailableMachineCount"
+// +kubebuilder:validation:XValidation:rule="self.machineCount >= self.readyMachineCount", message="machineCount must be greater than or equal to readyMachineCount"
+// +kubebuilder:validation:XValidation:rule="self.availableMachineCount >= self.readyMachineCount", message="availableMachineCount must be greater than or equal to readyMachineCount"
+type PoolSynchronizerStatus struct {
+	// poolSynchronizerType describes the type of the pool synchronizer.
+	// +kubebuilder:validation:Required
+	PoolSynchronizerType PoolSynchronizerType `json:"poolSynchronizerType"`
+	// machineCount is the number of machines that are managed by the node synchronizer.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=0
+	MachineCount int64 `json:"machineCount"`
+	// updatedMachineCount is the number of machines that have been updated by the node synchronizer.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=0
+	UpdatedMachineCount int64 `json:"updatedMachineCount"`
+	// readyMachineCount is the number of machines managed by the node synchronizer that are in a ready state.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=0
+	ReadyMachineCount int64 `json:"readyMachineCount"`
+	// availableMachineCount is the number of machines managed by the node synchronizer which are available.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=0
+	AvailableMachineCount int64 `json:"availableMachineCount"`
+	// unavailableMachineCount is the number of machines managed by the node synchronizer but are unavailable.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=0
+	UnavailableMachineCount int64 `json:"unavailableMachineCount"`
+	// +kubebuilder:validation:XValidation:rule="self >= oldSelf || (self == 0 && oldSelf > 0)", message="observedGeneration must not move backwards except to zero"
+	// observedGeneration is the last generation change that has been applied.
+	// +kubebuilder:validation:Minimum=0
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+}
+
+// PoolSynchronizerType is an enum that describe the type of pool synchronizer. A pool synchronizer is a one or more controllers that
+// manages the on disk state of a set of machines within a pool.
+// +kubebuilder:validation:Enum:="PinnedImageSets"
+// +kubebuilder:validation:MaxLength=256
+type PoolSynchronizerType string
+
+const (
+	// PinnedImageSets represents a pool synchronizer for pinned image sets.
+	PinnedImageSets PoolSynchronizerType = "PinnedImageSets"
+)
 
 // ceryExpiry contains the bundle name and the expiry date
 type CertExpiry struct {
@@ -536,6 +629,14 @@ const (
 	// MachineConfigPoolRenderDegraded means the rendered configuration for the pool cannot be generated because of an error
 	MachineConfigPoolRenderDegraded MachineConfigPoolConditionType = "RenderDegraded"
 
+	// MachineConfigPoolPinnedImageSetsDegraded means the pinned image sets for the pool cannot be populated because of an error
+	// +openshift:enable:FeatureGate=PinnedImages
+	MachineConfigPoolPinnedImageSetsDegraded MachineConfigPoolConditionType = "PinnedImageSetsDegraded"
+
+	// MachineConfigPoolSynchronizerDegraded means the pool synchronizer can not be updated because of an error
+	// +openshift:enable:FeatureGate=PinnedImages
+	MachineConfigPoolSynchronizerDegraded MachineConfigPoolConditionType = "PoolSynchronizerDegraded"
+
 	// MachineConfigPoolDegraded is the overall status of the pool based, today, on whether we fail with NodeDegraded or RenderDegraded
 	MachineConfigPoolDegraded MachineConfigPoolConditionType = "Degraded"
 
@@ -574,7 +675,7 @@ type MachineConfigPoolList struct {
 // +kubebuilder:resource:path=kubeletconfigs,scope=Cluster
 // +kubebuilder:subresource:status
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/1453
-// +openshift:file-pattern=0000_80_kubeletconfigMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_80,operatorName=machine-config,operatorOrdering=01
 // +kubebuilder:metadata:labels="openshift.io/operator-managed="
 // +openshift:compatibility-gen:level=1
 type KubeletConfig struct {
@@ -683,7 +784,7 @@ type KubeletConfigList struct {
 // +kubebuilder:resource:path=containerruntimeconfigs,scope=Cluster,shortName=ctrcfg
 // +kubebuilder:subresource:status
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/1453
-// +openshift:file-pattern=0000_80_containerruntimeconfigMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_80,operatorName=machine-config,operatorOrdering=01
 // +kubebuilder:metadata:labels="openshift.io/operator-managed="
 // +openshift:compatibility-gen:level=1
 type ContainerRuntimeConfig struct {

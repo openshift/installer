@@ -9,9 +9,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	configv1 "github.com/openshift/api/config/v1"
+	features "github.com/openshift/api/features"
 )
 
-func toFeatureGateNames(in []configv1.FeatureGateDescription) []configv1.FeatureGateName {
+func toFeatureGateNames(in []features.FeatureGateDescription) []configv1.FeatureGateName {
 	out := []configv1.FeatureGateName{}
 	for _, curr := range in {
 		out = append(out, curr.FeatureGateAttributes.Name)
@@ -21,7 +22,7 @@ func toFeatureGateNames(in []configv1.FeatureGateDescription) []configv1.Feature
 }
 
 // completeFeatureGates identifies every known feature and ensures that is explicitly on or explicitly off.
-func completeFeatureGates(knownFeatureSets map[configv1.FeatureSet]*configv1.FeatureGateEnabledDisabled, enabled, disabled []configv1.FeatureGateName) ([]configv1.FeatureGateName, []configv1.FeatureGateName) {
+func completeFeatureGates(knownFeatureSets map[configv1.FeatureSet]*features.FeatureGateEnabledDisabled, enabled, disabled []configv1.FeatureGateName) ([]configv1.FeatureGateName, []configv1.FeatureGateName) {
 	specificallyEnabledFeatureGates := sets.New[configv1.FeatureGateName]()
 	specificallyEnabledFeatureGates.Insert(enabled...)
 
@@ -41,7 +42,7 @@ func completeFeatureGates(knownFeatureSets map[configv1.FeatureSet]*configv1.Fea
 }
 
 // FeatureGateFromFeatureSets creates a FeatureGate from the active feature sets.
-func FeatureGateFromFeatureSets(knownFeatureSets map[configv1.FeatureSet]*configv1.FeatureGateEnabledDisabled, fs configv1.FeatureSet, customFS *configv1.CustomFeatureGates) FeatureGate {
+func FeatureGateFromFeatureSets(knownFeatureSets map[configv1.FeatureSet]*features.FeatureGateEnabledDisabled, fs configv1.FeatureSet, customFS *configv1.CustomFeatureGates) FeatureGate {
 	if customFS != nil {
 		completeEnabled, completeDisabled := completeFeatureGates(knownFeatureSets, customFS.Enabled, customFS.Disabled)
 		return newFeatureGate(completeEnabled, completeDisabled)

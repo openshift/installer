@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	configv1 "github.com/openshift/api/config/v1"
+	features "github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -549,11 +550,44 @@ func (c *InstallConfig) EnabledFeatureGates() featuregates.FeatureGate {
 	}
 
 	clusterProfile := GetClusterProfileName()
-	featureSets, ok := configv1.AllFeatureSets()[clusterProfile]
+	featureSets, ok := features.AllFeatureSets()[clusterProfile]
 	if !ok {
 		logrus.Warnf("no feature sets for cluster profile %q", clusterProfile)
 	}
 	fg := featuregates.FeatureGateFromFeatureSets(featureSets, c.FeatureSet, customFS)
 
 	return fg
+}
+
+// ClusterAPIFeatureGateEnabled checks whether feature gates enabling
+// cluster api installs are enabled.
+func ClusterAPIFeatureGateEnabled(platform string, fgs featuregates.FeatureGate) bool {
+	// FeatureGateClusterAPIInstall enables for all platforms.
+	if fgs.Enabled(features.FeatureGateClusterAPIInstall) {
+		return true
+	}
+
+	// Check if CAPI install is enabled for individual platforms.
+	switch platform {
+	case aws.Name:
+		return fgs.Enabled(features.FeatureGateClusterAPIInstallAWS)
+	case azure.StackTerraformName, azure.StackCloud.Name():
+		return false
+	case azure.Name:
+		return fgs.Enabled(features.FeatureGateClusterAPIInstallAzure)
+	case gcp.Name:
+		return fgs.Enabled(features.FeatureGateClusterAPIInstallGCP)
+	case ibmcloud.Name:
+		return fgs.Enabled(features.FeatureGateClusterAPIInstallIBMCloud)
+	case nutanix.Name:
+		return fgs.Enabled(features.FeatureGateClusterAPIInstallNutanix)
+	case openstack.Name:
+		return fgs.Enabled(features.FeatureGateClusterAPIInstallOpenStack)
+	case powervs.Name:
+		return fgs.Enabled(features.FeatureGateClusterAPIInstallPowerVS)
+	case vsphere.Name:
+		return fgs.Enabled(features.FeatureGateClusterAPIInstallVSphere)
+	default:
+		return false
+	}
 }

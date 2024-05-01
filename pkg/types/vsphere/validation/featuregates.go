@@ -3,7 +3,7 @@ package validation
 import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/featuregates"
 )
@@ -14,7 +14,7 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 	v := c.VSphere
 	return []featuregates.GatedInstallConfigFeature{
 		{
-			FeatureGateName: configv1.FeatureGateVSphereStaticIPs,
+			FeatureGateName: features.FeatureGateVSphereStaticIPs,
 			Condition:       len(v.Hosts) > 0,
 			Field:           field.NewPath("platform", "vsphere", "hosts"),
 		},

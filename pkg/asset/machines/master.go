@@ -43,6 +43,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/ovirt"
 	"github.com/openshift/installer/pkg/asset/machines/powervs"
 	"github.com/openshift/installer/pkg/asset/machines/vsphere"
+	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
@@ -270,7 +271,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		// so we don't want to include target pools in the control plane machineset.
 		// TODO(padillon): once this feature gate is the default and we are
 		// no longer using Terraform, we can update ConfigMasters not to populate this.
-		if ic.EnabledFeatureGates().Enabled(configv1.FeatureGateClusterAPIInstall) {
+		if capiutils.IsEnabled(installConfig) {
 			for _, machine := range machines {
 				providerSpec, ok := machine.Spec.ProviderSpec.Value.Object.(*machinev1beta1.GCPMachineProviderSpec)
 				if !ok {
