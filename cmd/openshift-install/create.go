@@ -462,7 +462,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 	defer cancel()
 
 	if platformName == baremetal.Name {
-		if err := baremetalutils.WaitForBaremetalBootstrapControlPlane(waitCtx, config); err != nil {
+		if err := baremetalutils.WaitForBaremetalBootstrapControlPlane(waitCtx, config, command.RootOpts.Dir); err != nil {
 			return newBootstrapError(err)
 		}
 		logrus.Infof("  Baremetal control plane finished provisioning.")
