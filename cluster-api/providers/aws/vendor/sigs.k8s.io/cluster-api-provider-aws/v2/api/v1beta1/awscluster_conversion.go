@@ -103,15 +103,21 @@ func (src *AWSCluster) ConvertTo(dstRaw conversion.Hub) error {
 
 	dst.Spec.NetworkSpec.VPC.EmptyRoutesDefaultVPCSecurityGroup = restored.Spec.NetworkSpec.VPC.EmptyRoutesDefaultVPCSecurityGroup
 	dst.Spec.NetworkSpec.VPC.PrivateDNSHostnameTypeOnLaunch = restored.Spec.NetworkSpec.VPC.PrivateDNSHostnameTypeOnLaunch
+	dst.Spec.NetworkSpec.VPC.CarrierGatewayID = restored.Spec.NetworkSpec.VPC.CarrierGatewayID
 
-	// Restore SubnetSpec.ResourceID field, if any.
+	// Restore SubnetSpec.ResourceID, SubnetSpec.ParentZoneName, and SubnetSpec.ZoneType fields, if any.
 	for _, subnet := range restored.Spec.NetworkSpec.Subnets {
-		if len(subnet.ResourceID) == 0 {
-			continue
-		}
 		for i, dstSubnet := range dst.Spec.NetworkSpec.Subnets {
 			if dstSubnet.ID == subnet.ID {
-				dstSubnet.ResourceID = subnet.ResourceID
+				if len(subnet.ResourceID) > 0 {
+					dstSubnet.ResourceID = subnet.ResourceID
+				}
+				if subnet.ParentZoneName != nil {
+					dstSubnet.ParentZoneName = subnet.ParentZoneName
+				}
+				if subnet.ZoneType != nil {
+					dstSubnet.ZoneType = subnet.ZoneType
+				}
 				dstSubnet.DeepCopyInto(&dst.Spec.NetworkSpec.Subnets[i])
 			}
 		}
@@ -152,6 +158,7 @@ func restoreIPAMPool(restored, dst *infrav2.IPAMPool) {
 func restoreControlPlaneLoadBalancer(restored, dst *infrav2.AWSLoadBalancerSpec) {
 	dst.Name = restored.Name
 	dst.HealthCheckProtocol = restored.HealthCheckProtocol
+	dst.HealthCheck = restored.HealthCheck
 	dst.LoadBalancerType = restored.LoadBalancerType
 	dst.DisableHostsRewrite = restored.DisableHostsRewrite
 	dst.PreserveClientIP = restored.PreserveClientIP

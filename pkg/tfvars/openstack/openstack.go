@@ -125,13 +125,13 @@ func TFVars(
 		rootVolumeSize = rootVolume.Size
 	}
 
-	masterServerGroupPolicy := getServerGroupPolicy(mastermpool, defaultmpool, types_openstack.SGPolicySoftAntiAffinity)
+	masterServerGroupPolicy := GetServerGroupPolicy(mastermpool, defaultmpool)
 	masterServerGroupName := masterSpecs[0].ServerGroupName
 	if masterSpecs[0].ServerGroupID != "" {
 		return nil, fmt.Errorf("the field ServerGroupID is not implemented in the Installer. Please use ServerGroupName for automatic creation of the Control Plane server group")
 	}
 
-	workerServerGroupPolicy := getServerGroupPolicy(workermpool, defaultmpool, types_openstack.SGPolicySoftAntiAffinity)
+	workerServerGroupPolicy := GetServerGroupPolicy(workermpool, defaultmpool)
 	var workerServerGroupNames []string
 	{
 		for _, workerConfig := range workerSpecs {
@@ -272,12 +272,13 @@ func isOctaviaSupported(serviceCatalog *tokens.ServiceCatalog) (bool, error) {
 	return true, nil
 }
 
-func getServerGroupPolicy(machinePool, defaultMachinePool *types_openstack.MachinePool, defaultPolicy types_openstack.ServerGroupPolicy) types_openstack.ServerGroupPolicy {
+// GetServerGroupPolicy returns the server group policy set in the given machine-pool, or in the default one, or falls back to soft-anti-affinity.
+func GetServerGroupPolicy(machinePool, defaultMachinePool *types_openstack.MachinePool) types_openstack.ServerGroupPolicy {
 	if machinePool != nil && machinePool.ServerGroupPolicy.IsSet() {
 		return machinePool.ServerGroupPolicy
 	}
 	if defaultMachinePool != nil && defaultMachinePool.ServerGroupPolicy.IsSet() {
 		return defaultMachinePool.ServerGroupPolicy
 	}
-	return defaultPolicy
+	return types_openstack.SGPolicySoftAntiAffinity
 }

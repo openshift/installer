@@ -840,6 +840,10 @@ func (m *PowerVSMachineScope) SetAddresses(instance *models.PVMInstance) { //nol
 	// Get the Details of DHCP server associated with the network
 	var dhcpServerDetails *models.DHCPServerDetail
 	for _, server := range dhcpServer {
+		if server.Network == nil || server.Network.ID == nil {
+			m.V(3).Info("Skipping the DHCP server as its network details is nil", "DHCP server", *server.ID)
+			continue
+		}
 		if *server.Network.ID == *networkID {
 			m.Info("found DHCP server for network", "DHCP server ID", *server.ID, "network ID", *networkID)
 			dhcpServerDetails, err = m.IBMPowerVSClient.GetDHCPServer(*server.ID)

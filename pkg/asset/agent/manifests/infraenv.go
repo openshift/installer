@@ -86,6 +86,10 @@ func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 
 func (i *InfraEnv) generateManifest(clusterName, clusterNamespace, sshKey, additionalTrustBundle string, proxy *types.Proxy, architecture string) error {
 	infraEnv := &aiv1beta1.InfraEnv{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "InfraEnv",
+			APIVersion: aiv1beta1.GroupVersion.String(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterName,
 			Namespace: clusterNamespace,

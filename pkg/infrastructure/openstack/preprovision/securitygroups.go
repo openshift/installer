@@ -81,6 +81,7 @@ func SecurityGroups(ctx context.Context, installConfig *installconfig.InstallCon
 		}
 	}
 
+	logrus.Debugf("Creating the security group rules")
 	var (
 		machineV4CIDRs = make([]string, 0, len(installConfig.Config.Networking.MachineNetwork))
 		machineV6CIDRs = make([]string, 0, len(installConfig.Config.Networking.MachineNetwork))
@@ -202,7 +203,7 @@ func SecurityGroups(ctx context.Context, installConfig *installconfig.InstallCon
 			addRules(ctx, r, masterGroup.ID, serviceOVNDB, ipVersion, CIDRs)
 			addRules(ctx, r, workerGroup.ID, serviceRouter, ipVersion, CIDRs)
 			if mastersSchedulable {
-				addRules(ctx, r, masterGroup.ID, serviceRouter, rules.EtherType4, machineV4CIDRs)
+				addRules(ctx, r, masterGroup.ID, serviceRouter, rules.EtherType4, CIDRs)
 			}
 		}
 
@@ -211,7 +212,6 @@ func SecurityGroups(ctx context.Context, installConfig *installconfig.InstallCon
 		addRules(ctx, r, workerGroup.ID, serviceIKENat, rules.EtherType4, machineV4CIDRs)
 	}()
 
-	logrus.Debugf("Creating the security group rules")
 	for ruleCreateOpts := range r {
 		if _, err := rules.Create(networkClient, ruleCreateOpts).Extract(); err != nil {
 			return fmt.Errorf("failed to create the security group rule on group %q for %s %s on ports %d-%d: %w", ruleCreateOpts.SecGroupID, ruleCreateOpts.EtherType, ruleCreateOpts.Protocol, ruleCreateOpts.PortRangeMin, ruleCreateOpts.PortRangeMax, err)

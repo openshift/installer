@@ -101,7 +101,7 @@ var defaultCAPAFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	EKSAllowAddRoles:              {Default: false, PreRelease: featuregate.Beta},
 	EKSFargate:                    {Default: false, PreRelease: featuregate.Alpha},
 	EventBridgeInstanceState:      {Default: false, PreRelease: featuregate.Alpha},
-	MachinePool:                   {Default: false, PreRelease: featuregate.Alpha},
+	MachinePool:                   {Default: true, PreRelease: featuregate.Beta},
 	AutoControllerIdentityCreator: {Default: true, PreRelease: featuregate.Alpha},
 	BootstrapFormatIgnition:       {Default: false, PreRelease: featuregate.Alpha},
 	ExternalResourceGC:            {Default: false, PreRelease: featuregate.Alpha},

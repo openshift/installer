@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	capnv1 "github.com/nutanix-cloud-native/cluster-api-provider-nutanix/api/v1beta1"
 	"github.com/sirupsen/logrus"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -19,9 +20,8 @@ import (
 	capzv1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	capgv1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	capiv1 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
-	capov1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
+	capov1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	capvv1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	clusterv1alpha4 "sigs.k8s.io/cluster-api/api/v1alpha4" //nolint:staticcheck
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -36,7 +36,6 @@ var (
 )
 
 func init() {
-	utilruntime.Must(clusterv1alpha4.AddToScheme(Scheme))
 	utilruntime.Must(clusterv1.AddToScheme(Scheme))
 	utilruntime.Must(capav1beta1.AddToScheme(Scheme))
 	utilruntime.Must(capav1.AddToScheme(Scheme))
@@ -45,6 +44,7 @@ func init() {
 	utilruntime.Must(capvv1.AddToScheme(Scheme))
 	utilruntime.Must(capov1.AddToScheme(Scheme))
 	utilruntime.Must(capiv1.AddToScheme(Scheme))
+	utilruntime.Must(capnv1.AddToScheme(Scheme))
 }
 
 // localControlPlane creates a local capi control plane

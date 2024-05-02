@@ -16,8 +16,6 @@ limitations under the License.
 
 package v1alpha7
 
-const defaultIdentityRefKind = "Secret"
-
 // OpenStackIdentityReference is a reference to an infrastructure
 // provider identity to be used to provision cluster resources.
 type OpenStackIdentityReference struct {

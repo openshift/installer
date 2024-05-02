@@ -3,11 +3,14 @@ package machines
 import (
 	"context"
 	"fmt"
+	"net"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/vmware/govmomi/vim25/soap"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -20,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/gcp"
+	nutanixcapi "github.com/openshift/installer/pkg/asset/machines/nutanix"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/machines/powervs"
 	vspherecapi "github.com/openshift/installer/pkg/asset/machines/vsphere"
@@ -33,6 +37,7 @@ import (
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -301,10 +306,41 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		mpool.Set(pool.Platform.VSphere)
 
 		platform := ic.VSphere
+		resolver := &net.Resolver{
+			PreferGo: true,
+		}
 
 		for _, v := range platform.VCenters {
-			err := installConfig.VSphere.Networks(ctx, v, platform.FailureDomains)
+			// Defense against potential issues with assisted installer
+			// If the installer is unable to resolve vCenter there is a good possibility
+			// that the installer's install-config has been provided with bogus values.
+
+			// Timeout context for Lookup
+			ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+			defer cancel()
+
+			_, err := resolver.LookupHost(ctx, v.Server)
 			if err != nil {
+				logrus.Warnf("unable to resolve vSphere server %s", v.Server)
+				return nil
+			}
+
+			// Timeout context for Networks
+			// vCenter APIs can be unreliable in performance, extended this context
+			// timeout to 60 seconds.
+			ctx, cancel = context.WithTimeout(context.TODO(), 60*time.Second)
+			defer cancel()
+
+			err = installConfig.VSphere.Networks(ctx, v, platform.FailureDomains)
+			if err != nil {
+				// If we are receiving an error as a Soap Fault this is caused by
+				// incorrect credentials and in the scenario of assisted installer
+				// the credentials are never valid. Since vCenter hostname is
+				// incorrect as well we shouldn't get this far.
+				if soap.IsSoapFault(err) {
+					logrus.Warn("authentication failure to vCenter, Cluster API machine manifests not created, cluster may not install")
+					return nil
+				}
 				return err
 			}
 		}
@@ -380,6 +416,21 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		}
 
 		c.FileList = append(c.FileList, powervsMachines...)
+	case nutanixtypes.Name:
+		mpool := defaultNutanixMachinePoolPlatform()
+		mpool.NumCPUs = 8
+		mpool.Set(ic.Platform.Nutanix.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.Nutanix)
+		if err = mpool.ValidateConfig(ic.Platform.Nutanix); err != nil {
+			return fmt.Errorf("failed to generate Cluster API machine manifests for control-plane: %w", err)
+		}
+		pool.Platform.Nutanix = &mpool
+		templateName := nutanixtypes.RHCOSImageName(clusterID.InfraID)
+
+		c.FileList, err = nutanixcapi.GenerateMachines(clusterID.InfraID, ic, &pool, templateName, "master")
+		if err != nil {
+			return fmt.Errorf("unable to generate CAPI machines for Nutanix %w", err)
+		}
 	default:
 		// TODO: support other platforms
 	}
@@ -406,6 +457,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 func (c *ClusterAPI) Files() []*asset.File {
 	files := []*asset.File{}
 	for _, f := range c.FileList {
+		f := f // TODO: remove with golang 1.22
 		files = append(files, &f.File)
 	}
 	return files
@@ -448,7 +500,8 @@ func (c *ClusterAPI) Load(f asset.FileFetcher) (bool, error) {
 		c.FileList = append(c.FileList, &asset.RuntimeFile{
 			File: asset.File{
 				Filename: file.Filename,
-				Data:     file.Data},
+				Data:     file.Data,
+			},
 			Object: obj.(client.Object),
 		})
 	}

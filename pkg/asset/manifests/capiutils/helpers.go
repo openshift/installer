@@ -1,9 +1,10 @@
 package capiutils
 
 import (
-	v1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/types"
+	typesazure "github.com/openshift/installer/pkg/types/azure"
 )
 
 var (
@@ -21,7 +22,11 @@ func CIDRFromInstallConfig(installConfig *installconfig.InstallConfig) *ipnet.IP
 
 // IsEnabled returns true if the feature gate is enabled.
 func IsEnabled(installConfig *installconfig.InstallConfig) bool {
-	return installConfig.Config.EnabledFeatureGates().Enabled(v1.FeatureGateClusterAPIInstall)
+	platform := installConfig.Config.Platform.Name()
+	if azure := installConfig.Config.Platform.Azure; azure != nil && azure.CloudName == typesazure.StackCloud {
+		platform = typesazure.StackTerraformName
+	}
+	return types.ClusterAPIFeatureGateEnabled(platform, installConfig.Config.EnabledFeatureGates())
 }
 
 // GenerateBoostrapMachineName generates the Cluster API Machine used for bootstrapping

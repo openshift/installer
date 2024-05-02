@@ -76,6 +76,10 @@ type IamAuthenticator struct {
 	Client     *http.Client
 	clientInit sync.Once
 
+	// The User-Agent header value to be included with each token request.
+	userAgent     string
+	userAgentInit sync.Once
+
 	// The cached token and expiration time.
 	tokenData *iamTokenData
 
@@ -188,6 +192,14 @@ func (authenticator *IamAuthenticator) client() *http.Client {
 		}
 	})
 	return authenticator.Client
+}
+
+// getUserAgent returns the User-Agent header value to be included in each token request invoked by the authenticator.
+func (authenticator *IamAuthenticator) getUserAgent() string {
+	authenticator.userAgentInit.Do(func() {
+		authenticator.userAgent = fmt.Sprintf("%s/%s-%s %s", sdkName, "iam-authenticator", __VERSION__, SystemInfo())
+	})
+	return authenticator.userAgent
 }
 
 // NewIamAuthenticator constructs a new IamAuthenticator instance.
@@ -413,6 +425,7 @@ func (authenticator *IamAuthenticator) RequestToken() (*IamTokenServerResponse, 
 
 	builder.AddHeader(CONTENT_TYPE, "application/x-www-form-urlencoded")
 	builder.AddHeader(Accept, APPLICATION_JSON)
+	builder.AddHeader(headerNameUserAgent, authenticator.getUserAgent())
 	builder.AddFormData("response_type", "", "", "cloud_iam")
 
 	if authenticator.ApiKey != "" {

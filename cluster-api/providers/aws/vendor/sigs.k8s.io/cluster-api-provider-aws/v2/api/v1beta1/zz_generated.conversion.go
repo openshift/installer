@@ -1235,6 +1235,7 @@ func autoConvert_v1beta2_AWSLoadBalancerSpec_To_v1beta1_AWSLoadBalancerSpec(in *
 	out.CrossZoneLoadBalancing = in.CrossZoneLoadBalancing
 	out.Subnets = *(*[]string)(unsafe.Pointer(&in.Subnets))
 	out.HealthCheckProtocol = (*ClassicELBProtocol)(unsafe.Pointer(in.HealthCheckProtocol))
+	// WARNING: in.HealthCheck requires manual conversion: does not exist in peer-type
 	out.AdditionalSecurityGroups = *(*[]string)(unsafe.Pointer(&in.AdditionalSecurityGroups))
 	// WARNING: in.AdditionalListeners requires manual conversion: does not exist in peer-type
 	// WARNING: in.IngressRules requires manual conversion: does not exist in peer-type
@@ -2164,6 +2165,7 @@ func autoConvert_v1beta2_S3Bucket_To_v1beta1_S3Bucket(in *v1beta2.S3Bucket, out 
 	out.NodesIAMInstanceProfiles = *(*[]string)(unsafe.Pointer(&in.NodesIAMInstanceProfiles))
 	// WARNING: in.PresignedURLDuration requires manual conversion: does not exist in peer-type
 	out.Name = in.Name
+	// WARNING: in.BestEffortDeleteObjects requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -2262,6 +2264,8 @@ func autoConvert_v1beta2_SubnetSpec_To_v1beta1_SubnetSpec(in *v1beta2.SubnetSpec
 	out.RouteTableID = (*string)(unsafe.Pointer(in.RouteTableID))
 	out.NatGatewayID = (*string)(unsafe.Pointer(in.NatGatewayID))
 	out.Tags = *(*Tags)(unsafe.Pointer(&in.Tags))
+	// WARNING: in.ZoneType requires manual conversion: does not exist in peer-type
+	// WARNING: in.ParentZoneName requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -2303,6 +2307,7 @@ func autoConvert_v1beta2_VPCSpec_To_v1beta1_VPCSpec(in *v1beta2.VPCSpec, out *VP
 		out.IPv6 = nil
 	}
 	out.InternetGatewayID = (*string)(unsafe.Pointer(in.InternetGatewayID))
+	// WARNING: in.CarrierGatewayID requires manual conversion: does not exist in peer-type
 	out.Tags = *(*Tags)(unsafe.Pointer(&in.Tags))
 	out.AvailabilityZoneUsageLimit = (*int)(unsafe.Pointer(in.AvailabilityZoneUsageLimit))
 	out.AvailabilityZoneSelection = (*AZSelectionScheme)(unsafe.Pointer(in.AvailabilityZoneSelection))

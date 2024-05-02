@@ -7,6 +7,9 @@ controlplanemachinesets.machine.openshift.io:
   Capability: MachineAPI
   Category: ""
   FeatureGates: []
+  FilenameOperatorName: control-plane-machine-set
+  FilenameOperatorOrdering: "01"
+  FilenameRunLevel: "0000_10"
   GroupName: machine.openshift.io
   HasStatus: true
   KindName: ControlPlaneMachineSet
@@ -43,7 +46,6 @@ controlplanemachinesets.machine.openshift.io:
     type: date
   Scope: Namespaced
   ShortNames: null
-  TargetFilenamePattern: 0000_10_controlplanemachinesetMARKERS.crd.yaml
   TopLevelFeatureGates: []
   Version: v1
 

@@ -11,7 +11,7 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 // Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
 // +openshift:compatibility-gen:level=1
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/470
-// +openshift:file-pattern=0000_10_config-operator_01_projectMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_10,operatorName=config-operator,operatorOrdering=01
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=projects,scope=Cluster
 // +kubebuilder:subresource:status

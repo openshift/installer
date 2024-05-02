@@ -169,6 +169,16 @@ func (c *ClusterClient) Autoscaler() *AutoscalerClient {
 	)
 }
 
+// BreakGlassCredentials returns the target 'break_glass_credentials' resource.
+//
+// Reference to the resource that manages the break glass credentials.
+func (c *ClusterClient) BreakGlassCredentials() *BreakGlassCredentialsClient {
+	return NewBreakGlassCredentialsClient(
+		c.transport,
+		path.Join(c.path, "break_glass_credentials"),
+	)
+}
+
 // Clusterdeployment returns the target 'clusterdeployment' resource.
 //
 // Reference to the resource that manages the cluster deployment.

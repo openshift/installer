@@ -101,6 +101,8 @@ linters-settings:
       - pkg: sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha6
         alias: infrav1alpha6
       - pkg: sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7
+        alias: infrav1alpha7
+      - pkg: sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1
         alias: infrav1
       - pkg: sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/errors
         alias: capoerrors
@@ -126,10 +128,13 @@ linters-settings:
       - pkg: sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1
         alias: controlplanev1
 
+  nolintlint:
+    # https://github.com/golangci/golangci-lint/issues/3228
+    allow-unused: true
   staticcheck:
-    go: "1.17"
+    go: "1.20"
   stylecheck:
-    go: "1.17"
+    go: "1.20"
   nestif:
     # minimal complexity of if statements to report, 5 by default
     # TODO(sbuerin) fix remaining findings and set to 5 after:
@@ -163,11 +168,14 @@ issues:
   - linters:
     - revive
     text: "var-naming: don't use underscores in Go names;"
-    path: .*(api|types)\/.*\/.*conversion.*\.go$
   - linters:
     - stylecheck
     text: "ST1003: should not use underscores in Go names;"
-    path: .*(api|types)\/.*\/.*conversion.*\.go$
+    path: (api\/.*|pkg/utils/optional)\/.*conversion.*\.go$
+  - linters:
+    - stylecheck
+    text: "ST1003: should not use underscores in Go names;"
+    path: pkg/utils/conversioncommon/.*.go
 
 run:
   timeout: 10m

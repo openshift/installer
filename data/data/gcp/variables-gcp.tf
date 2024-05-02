@@ -175,3 +175,8 @@ variable "gcp_ignition_shim" {
   description = "Ignition stub containing the signed url that points to the bucket containing the ignition data."
   default = ""
 }
+
+variable "gcp_signed_url" {
+  type = string
+  description = "Presigned url for bootstrap ignition link to the bucket where the ignition shim is stored."
+}

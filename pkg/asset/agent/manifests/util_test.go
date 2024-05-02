@@ -452,6 +452,10 @@ func getAgentHostsWithBMCConfig() *agentconfig.AgentHosts {
 
 func getGoodACI() *hiveext.AgentClusterInstall {
 	goodACI := &hiveext.AgentClusterInstall{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "AgentClusterInstall",
+			APIVersion: "extensions.hive.openshift.io/v1beta1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      getAgentClusterInstallName(getValidOptionalInstallConfig()),
 			Namespace: getValidOptionalInstallConfig().ClusterNamespace(),

@@ -74,7 +74,7 @@ type agentTemplateData struct {
 	ImageTypeISO              string
 	PublicKeyPEM              string
 	PrivateKeyPEM             string
-	WorkflowType              workflow.AgentWorkflowType
+	CaBundleMount             string
 }
 
 // Name returns the human-friendly name of the asset.
@@ -165,7 +165,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		numMasters = agentManifests.AgentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents
 		numWorkers = agentManifests.AgentClusterInstall.Spec.ProvisionRequirements.WorkerAgents
 		// Enable specific install services
-		enabledServices = append(enabledServices, "agent-register-cluster.service", "start-cluster-installation.service")
+		enabledServices = append(enabledServices, "start-cluster-installation.service")
 		// Version is retrieved from the embedded data
 		openshiftVersion, err = version.Version()
 		if err != nil {
@@ -184,7 +184,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		numMasters = 0
 		numWorkers = len(addNodesConfig.Config.Hosts)
 		// Enable add-nodes specific services
-		enabledServices = append(enabledServices, "agent-import-cluster.service", "agent-add-node.service")
+		enabledServices = append(enabledServices, "agent-add-node.service")
 		// Generate add-nodes.env file
 		addNodesEnvFile := ignition.FileFromString(addNodesEnvPath, "root", 0644, getAddNodesEnv(*clusterInfo))
 		config.Storage.Files = append(config.Storage.Files, addNodesEnvFile)
@@ -238,6 +238,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	}
 	a.CPUArch = *osImage.CPUArchitecture
 
+	caBundleMount := defineCABundleMount(registriesConfig, registryCABundle)
+
 	agentTemplateData := getTemplateData(
 		clusterName,
 		agentManifests.GetPullSecretData(),
@@ -253,7 +255,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		imageTypeISO,
 		keyPairAsset.PrivateKey,
 		keyPairAsset.PublicKey,
-		agentWorkflow.Workflow)
+		caBundleMount)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
 	if err != nil {
@@ -323,6 +325,8 @@ func getDefaultEnabledServices() []string {
 	return []string{
 		"agent-interactive-console.service",
 		"agent-interactive-console-serial@.service",
+		"agent-register-cluster.service",
+		"agent-import-cluster.service",
 		"agent-register-infraenv.service",
 		"agent.service",
 		"assisted-service-db.service",
@@ -368,7 +372,7 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 	proxy *v1beta1.Proxy,
 	imageTypeISO,
 	privateKey, publicKey string,
-	workflow workflow.AgentWorkflowType) *agentTemplateData {
+	caBundleMount string) *agentTemplateData {
 	return &agentTemplateData{
 		ServiceProtocol:           "http",
 		PullSecret:                pullSecret,
@@ -386,7 +390,7 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 		ImageTypeISO:              imageTypeISO,
 		PrivateKeyPEM:             privateKey,
 		PublicKeyPEM:              publicKey,
-		WorkflowType:              workflow,
+		CaBundleMount:             caBundleMount,
 	}
 }
 
@@ -478,6 +482,19 @@ func addMirrorData(config *igntypes.Config, registriesConfig *mirror.RegistriesC
 			"root", 0600, registryCABundle.File.Data)
 		config.Storage.Files = append(config.Storage.Files, caFile)
 	}
+}
+
+func defineCABundleMount(registriesConfig *mirror.RegistriesConf, registryCABundle *mirror.CaBundle) string {
+	// By default, the current host CA bundle is used (it will also contain eventually a user CA bundle, if
+	// defined in the AdditionalTrustBundle field of install-config.yaml).
+	hostSourceCABundle := "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"
+
+	// If mirror registry is configured and the user provided a bundle, then let's mount just the user one.
+	if len(registriesConfig.MirrorConfig) > 0 && registryCABundle.File != nil && len(registryCABundle.File.Data) > 0 {
+		hostSourceCABundle = registryCABundlePath
+	}
+
+	return fmt.Sprintf("-v %s:/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem:z", hostSourceCABundle)
 }
 
 // Creates a file named with a host's MAC address. The desired hostname

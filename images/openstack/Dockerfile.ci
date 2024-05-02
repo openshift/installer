@@ -2,7 +2,7 @@
 # It builds an image containing the openshift-install command as well as the openstack cli.
 FROM registry.ci.openshift.org/ocp/4.16:installer-terraform-providers as providers
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.21-openshift-4.16 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS builder
 # FIPS support is offered via the baremetal-installer image
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
@@ -13,7 +13,7 @@ RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/4.16:cli AS cli
 
-FROM registry.ci.openshift.org/ocp/4.16:base
+FROM registry.ci.openshift.org/ocp/4.16:base-rhel9
 COPY --from=cli /usr/bin/oc /bin/oc
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 COPY --from=builder /go/src/github.com/openshift/installer/upi/openstack /var/lib/openshift-install/upi
@@ -22,20 +22,13 @@ COPY --from=builder /go/src/github.com/openshift/installer/hack/openstack/test-m
 
 # Install Dependendencies for tests
 # https://github.com/openshift/origin/blob/6114cbc507bf18890f009f16ee424a62007bc390/images/tests/Dockerfile.rhel
-RUN yum install --setopt=tsflags=nodocs -y gettext make git gzip util-linux glibc-locale-source && \
+RUN yum update -y && \
+    yum install --setopt=tsflags=nodocs -y gettext make git gzip util-linux glibc-locale-source python3-pip unzip jq nmap && \
     yum clean all && rm -rf /var/cache/yum/* && \
     localedef -c -f UTF-8 -i en_US en_US.UTF-8 && \
     git config --system user.name test && \
     git config --system user.email test@example.com && \
     chmod g+w /etc/passwd
-
-RUN yum update -y && \
-    yum install --setopt=tsflags=nodocs -y \
-    python38 unzip jq nmap && \
-    yum erase -y python36 && \
-    yum clean all && rm -rf /var/cache/yum/*
-
-RUN python3 -m pip install --upgrade pip
 
 # ansible 2.9 is EOL in September 2023, so we need to install ansible-core and get the collections from source
 # until we have a package available.

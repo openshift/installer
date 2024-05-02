@@ -28,8 +28,11 @@ const (
 	// ROSAControlPlaneUpgradingCondition condition reports whether ROSAControlPlane is upgrading or not.
 	ROSAControlPlaneUpgradingCondition clusterv1.ConditionType = "ROSAControlPlaneUpgrading"
 
-	// ROSAControlPlaneReconciliationFailedReason used to report failures while reconciling ROSAControlPlane.
-	ROSAControlPlaneReconciliationFailedReason = "ReconciliationFailed"
+	// ExternalAuthConfiguredCondition condition reports whether external auth has beed correctly configured.
+	ExternalAuthConfiguredCondition clusterv1.ConditionType = "ExternalAuthConfigured"
+
+	// ReconciliationFailedReason used to report reconciliation failures.
+	ReconciliationFailedReason = "ReconciliationFailed"
 
 	// ROSAControlPlaneDeletionFailedReason used to report failures while deleting ROSAControlPlane.
 	ROSAControlPlaneDeletionFailedReason = "DeletionFailed"

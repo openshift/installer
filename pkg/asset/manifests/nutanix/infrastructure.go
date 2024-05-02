@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"k8s.io/utils/ptr"
 
@@ -17,9 +18,12 @@ func GetInfrastructureNutanixPlatformSpec(ic *installconfig.InstallConfig) (*con
 	nutanixPlatform := ic.Config.Nutanix
 
 	// Retrieve the prism element name
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	defer cancel()
+
 	var peName string
 	if len(nutanixPlatform.PrismElements[0].Name) == 0 {
-		nc, err := nutanix.CreateNutanixClient(context.Background(),
+		nc, err := nutanix.CreateNutanixClient(ctx,
 			nutanixPlatform.PrismCentral.Endpoint.Address,
 			strconv.Itoa(int(nutanixPlatform.PrismCentral.Endpoint.Port)),
 			nutanixPlatform.PrismCentral.Username,
@@ -27,7 +31,7 @@ func GetInfrastructureNutanixPlatformSpec(ic *installconfig.InstallConfig) (*con
 		if err != nil {
 			return nil, fmt.Errorf("unable to connect to Prism Central %s: %w", nutanixPlatform.PrismCentral.Endpoint.Address, err)
 		}
-		pe, err := nc.V3.GetCluster(nutanixPlatform.PrismElements[0].UUID)
+		pe, err := nc.V3.GetCluster(ctx, nutanixPlatform.PrismElements[0].UUID)
 		if err != nil {
 			return nil, fmt.Errorf("fail to find the Prism Element (cluster) with uuid %s: %w", nutanixPlatform.PrismElements[0].UUID, err)
 		}

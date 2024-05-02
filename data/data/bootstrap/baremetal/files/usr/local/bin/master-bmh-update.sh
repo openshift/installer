@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-export KUBECONFIG=/opt/openshift/auth/kubeconfig-loopback
+export KUBECONFIG=/opt/openshift/auth/kubeconfig
 
 # Wait till the baremetalhosts are populated
 until oc get baremetalhosts -n openshift-machine-api; do
@@ -10,14 +10,10 @@ until oc get baremetalhosts -n openshift-machine-api; do
    sleep 20
 done
 
-while [ "$(oc get bmh -n openshift-machine-api -o name | wc -l)" -lt 1  ]; do
-    echo "Waiting for bmh"
-    sleep 20
-done
-
-while [ "$(oc get bmh -n openshift-machine-api -l installer.openshift.io/role=control-plane -o json | jq '.items[].status.provisioning.state' | grep -v provisioned -c)" -gt 0  ]; do
-    echo "Waiting for masters to become provisioned"
-    oc get bmh -A
+echo "Waiting for $CONTROL_PLANE_REPLICA_COUNT masters to become provisioned"
+while [ "$(oc get bmh -n openshift-machine-api -l installer.openshift.io/role=control-plane -o json | jq '.items[].status.provisioning.state' | grep provisioned -c)" -lt "$CONTROL_PLANE_REPLICA_COUNT"  ]; do
+    echo "Waiting for $CONTROL_PLANE_REPLICA_COUNT masters to become provisioned"
+    oc get bmh -A || true
     sleep 20
 done
 
@@ -30,4 +26,7 @@ while systemctl is-active metal3-baremetal-operator.service; do
 done
 
 echo "Unpause all baremetal hosts"
-oc annotate --overwrite -n openshift-machine-api baremetalhosts --all "baremetalhost.metal3.io/paused-"
+while ! oc annotate --overwrite -n openshift-machine-api baremetalhosts --all "baremetalhost.metal3.io/paused-" ; do
+    sleep 5
+    echo "Unpause failed, retrying"
+done

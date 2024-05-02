@@ -11,6 +11,37 @@ provider "google" {
   region      = var.gcp_region
 }
 
+resource "google_storage_bucket" "ignition" {
+  name                        = "${var.cluster_id}-bootstrap-ignition"
+  location                    = var.gcp_region
+  uniform_bucket_level_access = true
+  labels                      = var.gcp_extra_labels
+}
+
+resource "google_tags_location_tag_binding" "user_tag_binding_bucket" {
+  for_each = var.gcp_extra_tags
+
+  parent = format("//storage.googleapis.com/projects/_/buckets/%s",
+    google_storage_bucket.ignition.name,
+  )
+  tag_value = each.value
+  location  = var.gcp_region
+
+  depends_on = [google_storage_bucket.ignition]
+}
+
+resource "google_storage_bucket_object" "ignition" {
+  bucket  = google_storage_bucket.ignition.name
+  name    = "bootstrap.ign"
+  content = var.ignition_bootstrap
+}
+
+data "ignition_config" "redirect" {
+  replace {
+    source = var.gcp_signed_url
+  }
+}
+
 resource "google_compute_address" "bootstrap" {
   name        = "${var.cluster_id}-bootstrap-ip"
   description = local.description
@@ -87,7 +118,7 @@ resource "google_compute_instance" "bootstrap" {
   }
 
   metadata = {
-    user-data = var.gcp_ignition_shim
+    user-data = data.ignition_config.redirect.rendered
   }
 
   tags = ["${var.cluster_id}-master", "${var.cluster_id}-bootstrap"]

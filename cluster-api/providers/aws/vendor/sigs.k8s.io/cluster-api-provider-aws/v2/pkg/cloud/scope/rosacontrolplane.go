@@ -177,10 +177,25 @@ func (s *ROSAControlPlaneScope) CredentialsSecret() *corev1.Secret {
 
 // ClusterAdminPasswordSecret returns the corev1.Secret object for the cluster admin password.
 func (s *ROSAControlPlaneScope) ClusterAdminPasswordSecret() *corev1.Secret {
+	return s.secretWithOwnerReference(fmt.Sprintf("%s-admin-password", s.Cluster.Name))
+}
+
+// ExternalAuthBootstrapKubeconfigSecret returns the corev1.Secret object for the external auth bootstrap kubeconfig.
+// This is a temporarily admin kubeconfig generated using break-glass credentials for the user to bootstreap their environment like setting up RBAC for oidc users/groups.
+// This Kubeonconfig will be created only once initially and be valid for only 24h.
+// The kubeconfig secret will not be autoamticallty rotated and will be invalid after the 24h. However, users can opt to manually delete the secret to trigger the generation of a new one which will be valid for another 24h.
+func (s *ROSAControlPlaneScope) ExternalAuthBootstrapKubeconfigSecret() *corev1.Secret {
+	return s.secretWithOwnerReference(fmt.Sprintf("%s-bootstrap-kubeconfig", s.Cluster.Name))
+}
+
+func (s *ROSAControlPlaneScope) secretWithOwnerReference(name string) *corev1.Secret {
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-admin-password", s.Cluster.Name),
+			Name:      name,
 			Namespace: s.ControlPlane.Namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				*metav1.NewControllerRef(s.ControlPlane, rosacontrolplanev1.GroupVersion.WithKind("ROSAControlPlane")),
+			},
 		},
 	}
 }

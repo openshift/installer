@@ -11,7 +11,7 @@ import (
 // +kubebuilder:resource:path=etcds,scope=Cluster,categories=coreoperators
 // +kubebuilder:subresource:status
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/752
-// +openshift:file-pattern=0000_12_etcd-operator_01_configMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_12,operatorName=etcd,operatorOrdering=01
 
 // Etcd provides information to configure an operator to manage etcd.
 //

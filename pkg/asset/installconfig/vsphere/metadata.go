@@ -2,11 +2,14 @@ package vsphere
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path"
+	"strings"
 	"sync"
 
 	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/vim25/soap"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
 
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -122,10 +125,33 @@ func (m *Metadata) unlockedSession(ctx context.Context, server string) (*session
 	return m.sessions[server], err
 }
 
+// unwrapToSoapFault is required because soapErrorFaul is not exported
+// and are unable to use errors.As()
+// https://github.com/vmware/govmomi/blob/main/vim25/soap/error.go#L38
+func unwrapToSoapFault(err error) error {
+	if err != nil {
+		if soapFault := soap.IsSoapFault(err); !soapFault {
+			return unwrapToSoapFault(errors.Unwrap(err))
+		}
+		return err
+	}
+	return err
+}
+
 // Networks populates VCenterContext and the ClusterNetworkMap based on the vCenter server url and the FailureDomains.
 func (m *Metadata) Networks(ctx context.Context, vcenter vsphere.VCenter, failureDomains []vsphere.FailureDomain) error {
 	_, err := m.Session(ctx, vcenter.Server)
 	if err != nil {
+		// Defense against potential issues with assisted installer
+		if soapErr := unwrapToSoapFault(err); soapErr != nil {
+			soapFault := soap.ToSoapFault(soapErr)
+			// The assisted installer provides bogus username and password
+			// values. Only return the soap error (fault) if it matches incorrect username or password.
+			if strings.Contains(soapFault.String, "Cannot complete login due to an incorrect user name or password") {
+				return soapErr
+			}
+		}
+		// if soapErr is nil then this is not a SOAP fault, return err
 		return err
 	}
 

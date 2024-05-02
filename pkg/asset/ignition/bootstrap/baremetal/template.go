@@ -58,6 +58,9 @@ type TemplateData struct {
 	// Hosts is the information needed to create the objects in Ironic.
 	Hosts []*baremetal.Host
 
+	// How many of the Hosts are control plane machines?
+	ControlPlaneReplicas int64
+
 	// ProvisioningNetwork displays the type of provisioning network being used
 	ProvisioningNetwork string
 
@@ -95,10 +98,11 @@ func externalURLs(apiVIPs []string) (externalURLv4 string, externalURLv6 string)
 }
 
 // GetTemplateData returns platform-specific data for bootstrap templates.
-func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetworkEntry, ironicUsername, ironicPassword string) *TemplateData {
+func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetworkEntry, controlPlaneReplicaCount int64, ironicUsername, ironicPassword string) *TemplateData {
 	var templateData TemplateData
 
 	templateData.Hosts = config.Hosts
+	templateData.ControlPlaneReplicas = controlPlaneReplicaCount
 
 	templateData.ProvisioningIP = config.BootstrapProvisioningIP
 	templateData.ProvisioningNetwork = string(config.ProvisioningNetwork)

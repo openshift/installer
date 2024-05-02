@@ -5,7 +5,7 @@ FROM registry.ci.openshift.org/ocp/4.16:installer-terraform-providers AS provide
 
 # FIPS support is offered via the baremetal-installer image
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.21-openshift-4.16 AS macbuilder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS macbuilder
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
@@ -13,7 +13,7 @@ COPY . .
 COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/darwin_amd64 terraform/bin/darwin_amd64
 RUN GOOS=darwin GOARCH=amd64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.21-openshift-4.16 AS macarmbuilder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS macarmbuilder
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
@@ -21,7 +21,7 @@ COPY . .
 COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/darwin_arm64 terraform/bin/darwin_arm64
 RUN GOOS=darwin GOARCH=arm64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.21-openshift-4.16 AS linuxbuilder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS linuxbuilder
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
@@ -29,7 +29,7 @@ COPY . .
 COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/linux_amd64 terraform/bin/linux_amd64
 RUN GOOS=linux GOARCH=amd64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.21-openshift-4.16 AS linuxarmbuilder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS linuxarmbuilder
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
@@ -37,13 +37,14 @@ COPY . .
 COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/linux_arm64 terraform/bin/linux_arm64
 RUN GOOS=linux GOARCH=arm64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.21-openshift-4.16 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS builder
+ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN go run -mod=vendor hack/build-coreos-manifest.go
 
-FROM registry.ci.openshift.org/ocp/4.16:base
+FROM registry.ci.openshift.org/ocp/4.16:base-rhel9
 COPY --from=macbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/mac/openshift-install
 COPY --from=macarmbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/mac_arm64/openshift-install
 COPY --from=linuxbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/linux_amd64/openshift-install

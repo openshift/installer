@@ -68,17 +68,17 @@ func (mr *MockAPIMockRecorder) AddSecurityGroupRule(ctx, securityGroupID, rule i
 }
 
 // CreateDNSRecord mocks base method.
-func (m *MockAPI) CreateDNSRecord(ctx context.Context, crnstr, baseDomain, hostname, cname string) error {
+func (m *MockAPI) CreateDNSRecord(ctx context.Context, publish types.PublishingStrategy, crnstr, baseDomain, hostname, cname string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateDNSRecord", ctx, crnstr, baseDomain, hostname, cname)
+	ret := m.ctrl.Call(m, "CreateDNSRecord", ctx, publish, crnstr, baseDomain, hostname, cname)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateDNSRecord indicates an expected call of CreateDNSRecord.
-func (mr *MockAPIMockRecorder) CreateDNSRecord(ctx, crnstr, baseDomain, hostname, cname interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) CreateDNSRecord(ctx, publish, crnstr, baseDomain, hostname, cname interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDNSRecord", reflect.TypeOf((*MockAPI)(nil).CreateDNSRecord), ctx, crnstr, baseDomain, hostname, cname)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDNSRecord", reflect.TypeOf((*MockAPI)(nil).CreateDNSRecord), ctx, publish, crnstr, baseDomain, hostname, cname)
 }
 
 // CreateSSHKey mocks base method.

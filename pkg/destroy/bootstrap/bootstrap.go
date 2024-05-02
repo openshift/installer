@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset/cluster/metadata"
 	osp "github.com/openshift/installer/pkg/destroy/openstack"
 	"github.com/openshift/installer/pkg/infrastructure/openstack/preprovision"
@@ -73,7 +73,7 @@ func Destroy(ctx context.Context, dir string) (err error) {
 	// Get cluster profile for new FeatureGate access.  Blank is no longer an option, so default to
 	// SelfManaged.
 	clusterProfile := types.GetClusterProfileName()
-	featureSets, ok := configv1.AllFeatureSets()[clusterProfile]
+	featureSets, ok := features.AllFeatureSets()[clusterProfile]
 	if !ok {
 		return fmt.Errorf("no feature sets for cluster profile %q", clusterProfile)
 	}

@@ -35,7 +35,7 @@ func TestTemplatingIPv4(t *testing.T) {
 		},
 	}
 
-	result := GetTemplateData(&bareMetalConfig, nil, "bootstrap-ironic-user", "passw0rd")
+	result := GetTemplateData(&bareMetalConfig, nil, 3, "bootstrap-ironic-user", "passw0rd")
 
 	assert.Equal(t, result.ProvisioningDHCPRange, "172.22.0.10,172.22.0.100,24")
 	assert.Equal(t, result.ProvisioningCIDR, 24)
@@ -54,7 +54,7 @@ func TestTemplatingManagedIPv6(t *testing.T) {
 		ProvisioningNetwork:     baremetal.ManagedProvisioningNetwork,
 	}
 
-	result := GetTemplateData(&bareMetalConfig, nil, "bootstrap-ironic-user", "passw0rd")
+	result := GetTemplateData(&bareMetalConfig, nil, 3, "bootstrap-ironic-user", "passw0rd")
 
 	assert.Equal(t, result.ProvisioningDHCPRange, "fd2e:6f44:5dd8:b856::1,fd2e:6f44:5dd8::ff,80")
 	assert.Equal(t, result.ProvisioningCIDR, 80)
@@ -71,7 +71,7 @@ func TestTemplatingUnmanagedIPv6(t *testing.T) {
 		ProvisioningNetwork:     baremetal.UnmanagedProvisioningNetwork,
 	}
 
-	result := GetTemplateData(&bareMetalConfig, nil, "bootstrap-ironic-user", "passw0rd")
+	result := GetTemplateData(&bareMetalConfig, nil, 3, "bootstrap-ironic-user", "passw0rd")
 
 	assert.Equal(t, result.ProvisioningDHCPRange, "")
 	assert.Equal(t, result.ProvisioningCIDR, 64)

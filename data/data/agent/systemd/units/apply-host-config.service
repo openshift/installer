@@ -23,4 +23,4 @@ Type=oneshot
 RemainAfterExit=true
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=start-cluster-installation.service agent-add-node.service

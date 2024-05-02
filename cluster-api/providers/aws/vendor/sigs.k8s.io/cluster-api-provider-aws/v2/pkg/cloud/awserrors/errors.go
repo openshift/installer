@@ -33,6 +33,7 @@ const (
 	GatewayNotFound                   = "InvalidGatewayID.NotFound"
 	GroupNotFound                     = "InvalidGroup.NotFound"
 	InternetGatewayNotFound           = "InvalidInternetGatewayID.NotFound"
+	InvalidCarrierGatewayNotFound     = "InvalidCarrierGatewayID.NotFound"
 	EgressOnlyInternetGatewayNotFound = "InvalidEgressOnlyInternetGatewayID.NotFound"
 	InUseIPAddress                    = "InvalidIPAddress.InUse"
 	InvalidAccessKeyID                = "InvalidAccessKeyId"

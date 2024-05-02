@@ -1,5 +1,9 @@
 package powervs
 
+import (
+	configv1 "github.com/openshift/api/config/v1"
+)
+
 // Platform stores all the global configuration that all machinesets
 // use.
 type Platform struct {
@@ -52,4 +56,10 @@ type Platform struct {
 	// instance during cluster creation.
 	// +optional
 	ServiceInstanceGUID string `json:"serviceInstanceGUID,omitempty"`
+
+	// ServiceEndpoints is a list which contains custom endpoints to override default
+	// service endpoints of IBM Cloud Services.
+	// There must only be one ServiceEndpoint for a service (no duplicates).
+	// +optional
+	ServiceEndpoints []configv1.PowerVSServiceEndpoint `json:"serviceEndpoints,omitempty"`
 }

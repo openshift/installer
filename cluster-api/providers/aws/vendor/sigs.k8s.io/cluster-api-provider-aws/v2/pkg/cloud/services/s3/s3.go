@@ -32,6 +32,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/aws/aws-sdk-go/service/sts/stsiface"
 	"github.com/pkg/errors"
+	"k8s.io/utils/ptr"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	iam "sigs.k8s.io/cluster-api-provider-aws/v2/iam/api/v1beta1"
@@ -194,12 +195,8 @@ func (s *Service) Delete(m *scope.MachineScope) error {
 				// anyway for backwards compatibility reasons.
 				s.scope.Debug("Received 403 forbidden from S3 HeadObject call. If GetObject permission has been granted to the controller but not ListBucket, object is already deleted. Attempting deletion anyway in case GetObject permission hasn't been granted to the controller but DeleteObject has.", "bucket", bucket, "key", key)
 
-				_, err = s.S3Client.DeleteObject(&s3.DeleteObjectInput{
-					Bucket: aws.String(bucket),
-					Key:    aws.String(key),
-				})
-				if err != nil {
-					return errors.Wrap(err, "deleting S3 object")
+				if err := s.deleteObject(bucket, key); err != nil {
+					return err
 				}
 
 				s.scope.Debug("Delete object call succeeded despite missing GetObject permission", "bucket", bucket, "key", key)
@@ -221,11 +218,23 @@ func (s *Service) Delete(m *scope.MachineScope) error {
 
 	s.scope.Info("Deleting S3 object", "bucket", bucket, "key", key)
 
-	_, err = s.S3Client.DeleteObject(&s3.DeleteObjectInput{
+	return s.deleteObject(bucket, key)
+}
+
+func (s *Service) deleteObject(bucket, key string) error {
+	if _, err := s.S3Client.DeleteObject(&s3.DeleteObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
-	})
-	if err != nil {
+	}); err != nil {
+		if ptr.Deref(s.scope.Bucket().BestEffortDeleteObjects, false) {
+			if aerr, ok := err.(awserr.Error); ok {
+				switch aerr.Code() {
+				case "Forbidden", "AccessDenied":
+					s.scope.Debug("Ignoring deletion error", "bucket", bucket, "key", key, "error", aerr.Message())
+					return nil
+				}
+			}
+		}
 		return errors.Wrap(err, "deleting S3 object")
 	}
 

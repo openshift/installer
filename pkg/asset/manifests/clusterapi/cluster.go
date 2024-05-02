@@ -9,6 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -20,6 +21,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/manifests/gcp"
+	"github.com/openshift/installer/pkg/asset/manifests/nutanix"
 	"github.com/openshift/installer/pkg/asset/manifests/openstack"
 	"github.com/openshift/installer/pkg/asset/manifests/powervs"
 	"github.com/openshift/installer/pkg/asset/manifests/vsphere"
@@ -29,6 +31,7 @@ import (
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vsphereplatform "github.com/openshift/installer/pkg/types/vsphere"
@@ -88,7 +91,11 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 			Name:      clusterID.InfraID,
 			Namespace: capiutils.Namespace,
 		},
-		Spec: clusterv1.ClusterSpec{},
+		Spec: clusterv1.ClusterSpec{
+			ClusterNetwork: &clusterv1.ClusterNetwork{
+				APIServerPort: ptr.To[int32](6443),
+			},
+		},
 	}
 	cluster.SetGroupVersionKind(clusterv1.GroupVersion.WithKind("Cluster"))
 	c.FileList = append(c.FileList, &asset.RuntimeFile{Object: cluster, File: asset.File{Filename: "01_capi-cluster.yaml"}})
@@ -132,6 +139,12 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return fmt.Errorf("failed to generate PowerVS manifests %w", err)
 		}
+	case nutanixtypes.Name:
+		var err error
+		out, err = nutanix.GenerateClusterAssets(installConfig, clusterID)
+		if err != nil {
+			return errors.Wrap(err, "failed to generate Nutanix manifests")
+		}
 	default:
 		return fmt.Errorf("unsupported platform %q", platform)
 	}
@@ -168,6 +181,7 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 func (c *Cluster) Files() []*asset.File {
 	files := []*asset.File{}
 	for _, f := range c.FileList {
+		f := f // TODO: remove with golang 1.22
 		files = append(files, &f.File)
 	}
 	return files
@@ -210,7 +224,8 @@ func (c *Cluster) Load(f asset.FileFetcher) (bool, error) {
 		c.FileList = append(c.FileList, &asset.RuntimeFile{
 			File: asset.File{
 				Filename: file.Filename,
-				Data:     file.Data},
+				Data:     file.Data,
+			},
 			Object: obj.(client.Object),
 		})
 	}

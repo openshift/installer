@@ -21,11 +21,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
 	"github.com/nutanix-cloud-native/prism-go-client/environment"
-	credentialTypes "github.com/nutanix-cloud-native/prism-go-client/environment/credentials"
+	"github.com/nutanix-cloud-native/prism-go-client/environment/credentials"
 	kubernetesEnv "github.com/nutanix-cloud-native/prism-go-client/environment/providers/kubernetes"
 	envTypes "github.com/nutanix-cloud-native/prism-go-client/environment/types"
 	nutanixClientV3 "github.com/nutanix-cloud-native/prism-go-client/v3"
@@ -37,64 +36,140 @@ import (
 
 const (
 	defaultEndpointPort = "9440"
-	ProviderName        = "nutanix"
-	configPath          = "/etc/nutanix/config"
-	endpointKey         = "prismCentral"
-	capxNamespaceKey    = "POD_NAMESPACE"
+
+	capxNamespaceKey = "POD_NAMESPACE"
+)
+
+const (
+	configPath = "/etc/nutanix/config/prismCentral"
+)
+
+var (
+	ErrPrismAddressNotSet = fmt.Errorf("cannot get credentials if Prism Address is not set")
+	ErrPrismPortNotSet    = fmt.Errorf("cannot get credentials if Prism Port is not set")
+
+	ErrPrismIUsernameNotSet = fmt.Errorf("could not create client because username was not set")
+	ErrPrismIPasswordNotSet = fmt.Errorf("could not create client because password was not set")
+
+	ErrCredentialRefNotSet = fmt.Errorf("credentialRef must be set on CAPX manager")
 )
 
 type NutanixClientHelper struct {
 	secretInformer    coreinformers.SecretInformer
 	configMapInformer coreinformers.ConfigMapInformer
+
+	managerNutanixPrismEndpointReader func() (*credentials.NutanixPrismEndpoint, error)
 }
 
-func NewNutanixClientHelper(secretInformer coreinformers.SecretInformer, cmInformer coreinformers.ConfigMapInformer) (*NutanixClientHelper, error) {
+func NewHelper(secretInformer coreinformers.SecretInformer, cmInformer coreinformers.ConfigMapInformer) *NutanixClientHelper {
 	return &NutanixClientHelper{
-		secretInformer:    secretInformer,
-		configMapInformer: cmInformer,
-	}, nil
+		secretInformer:                    secretInformer,
+		configMapInformer:                 cmInformer,
+		managerNutanixPrismEndpointReader: readManagerNutanixPrismEndpointFromDefaultFile,
+	}
 }
 
-func (n *NutanixClientHelper) GetClientFromEnvironment(ctx context.Context, nutanixCluster *infrav1.NutanixCluster) (*nutanixClientV3.Client, error) {
-	log := ctrl.LoggerFrom(ctx)
-	// Create a list of env providers
-	providers := make([]envTypes.Provider, 0)
+func (n *NutanixClientHelper) withCustomNutanixPrismEndpointReader(getter func() (*credentials.NutanixPrismEndpoint, error)) *NutanixClientHelper {
+	n.managerNutanixPrismEndpointReader = getter
+	return n
+}
 
-	// If PrismCentral is set, add the required env provider
-	prismCentralInfo := nutanixCluster.Spec.PrismCentral
-	if prismCentralInfo != nil {
-		if prismCentralInfo.Address == "" {
-			return nil, fmt.Errorf("cannot get credentials if Prism Address is not set")
-		}
-		if prismCentralInfo.Port == 0 {
-			return nil, fmt.Errorf("cannot get credentials if Prism Port is not set")
-		}
-		credentialRef := prismCentralInfo.CredentialRef
-		if credentialRef == nil {
-			return nil, fmt.Errorf("credentialRef must be set on prismCentral attribute for cluster %s in namespace %s", nutanixCluster.Name, nutanixCluster.Namespace)
-		}
-		// If namespace is empty, use the cluster namespace
-		if credentialRef.Namespace == "" {
-			credentialRef.Namespace = nutanixCluster.Namespace
-		}
-		additionalTrustBundleRef := prismCentralInfo.AdditionalTrustBundle
-		if additionalTrustBundleRef != nil &&
-			additionalTrustBundleRef.Kind == credentialTypes.NutanixTrustBundleKindConfigMap &&
-			additionalTrustBundleRef.Namespace == "" {
-			additionalTrustBundleRef.Namespace = nutanixCluster.Namespace
-		}
-		providers = append(providers, kubernetesEnv.NewProvider(
-			*nutanixCluster.Spec.PrismCentral,
-			n.secretInformer,
-			n.configMapInformer))
-	} else {
-		log.Info(fmt.Sprintf("[WARNING] prismCentral attribute was not set on NutanixCluster %s in namespace %s. Defaulting to CAPX manager credentials", nutanixCluster.Name, nutanixCluster.Namespace))
-	}
-
-	// Add env provider for CAPX manager
-	npe, err := n.getManagerNutanixPrismEndpoint()
+// BuildClientForNutanixClusterWithFallback builds a Nutanix Client from the information provided in nutanixCluster.
+func (n *NutanixClientHelper) BuildClientForNutanixClusterWithFallback(ctx context.Context, nutanixCluster *infrav1.NutanixCluster) (*nutanixClientV3.Client, error) {
+	me, err := n.buildManagementEndpoint(ctx, nutanixCluster)
 	if err != nil {
 		return nil, err
+	}
+	creds := prismgoclient.Credentials{
+		URL:      me.Address.Host,
+		Endpoint: me.Address.Host,
+		Insecure: me.Insecure,
+		Username: me.ApiCredentials.Username,
+		Password: me.ApiCredentials.Password,
+	}
+	return Build(creds, me.AdditionalTrustBundle)
+}
+
+// buildManagementEndpoint takes in a NutanixCluster and constructs a ManagementEndpoint with all the information provided.
+// If required information is not set, it will fallback to using information from /etc/nutanix/config/prismCentral,
+// which is expected to be mounted in the Pod.
+func (n *NutanixClientHelper) buildManagementEndpoint(ctx context.Context, nutanixCluster *infrav1.NutanixCluster) (*envTypes.ManagementEndpoint, error) {
+	log := ctrl.LoggerFrom(ctx)
+
+	// Create an empty list of env providers
+	providers := make([]envTypes.Provider, 0)
+
+	// Attempt to build a provider from the NutanixCluster object
+	providerForNutanixCluster, err := n.buildProviderFromNutanixCluster(nutanixCluster)
+	if err != nil {
+		return nil, fmt.Errorf("error building an environment provider from NutanixCluster: %w", err)
+	}
+	if providerForNutanixCluster != nil {
+		providers = append(providers, providerForNutanixCluster)
+	} else {
+		log.Info(fmt.Sprintf("[WARNING] prismCentral attribute was not set on NutanixCluster %s in namespace %s. Defaulting to CAPX manager credentials", nutanixCluster.Name, nutanixCluster.Namespace))
+		// Fallback to building a provider using prism central information from the CAPX management cluster
+		// using information from /etc/nutanix/config/prismCentral
+		providerForLocalFile, err := n.buildProviderFromFile()
+		if err != nil {
+			return nil, fmt.Errorf("error building an environment provider from file: %w", err)
+		}
+		if providerForLocalFile != nil {
+			providers = append(providers, providerForLocalFile)
+		}
+	}
+
+	// Initialize environment with providers
+	env := environment.NewEnvironment(providers...)
+	// GetManagementEndpoint will return the first valid endpoint from the list of providers
+	me, err := env.GetManagementEndpoint(envTypes.Topology{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get management endpoint object: %w", err)
+	}
+	return me, nil
+}
+
+// buildProviderFromNutanixCluster will return an envTypes.Provider with info from the provided NutanixCluster.
+// It will return nil if nutanixCluster.Spec.PrismCentral is nil.
+// It will return an error if required information is missing.
+func (n *NutanixClientHelper) buildProviderFromNutanixCluster(nutanixCluster *infrav1.NutanixCluster) (envTypes.Provider, error) {
+	prismCentralInfo := nutanixCluster.Spec.PrismCentral
+	if prismCentralInfo == nil {
+		return nil, nil
+	}
+
+	// PrismCentral is set, build a provider and fixup missing information
+	if prismCentralInfo.Address == "" {
+		return nil, ErrPrismAddressNotSet
+	}
+	if prismCentralInfo.Port == 0 {
+		return nil, ErrPrismPortNotSet
+	}
+	credentialRef, err := nutanixCluster.GetPrismCentralCredentialRef()
+	if err != nil {
+		//nolint:wrapcheck // error is already wrapped
+		return nil, err
+	}
+	// If namespace is empty, use the cluster namespace
+	if credentialRef.Namespace == "" {
+		credentialRef.Namespace = nutanixCluster.Namespace
+	}
+	additionalTrustBundleRef := prismCentralInfo.AdditionalTrustBundle
+	if additionalTrustBundleRef != nil &&
+		additionalTrustBundleRef.Kind == credentials.NutanixTrustBundleKindConfigMap &&
+		additionalTrustBundleRef.Namespace == "" {
+		additionalTrustBundleRef.Namespace = nutanixCluster.Namespace
+	}
+
+	return kubernetesEnv.NewProvider(*prismCentralInfo, n.secretInformer, n.configMapInformer), nil
+}
+
+// buildProviderFromFile will return an envTypes.Provider with info from the provided file.
+// It will return an error if required information is missing.
+func (n *NutanixClientHelper) buildProviderFromFile() (envTypes.Provider, error) {
+	npe, err := n.managerNutanixPrismEndpointReader()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create prism endpoint: %w", err)
 	}
 	// If namespaces is not set, set it to the namespace of the CAPX manager
 	if npe.CredentialRef.Namespace == "" {
@@ -111,101 +186,70 @@ func (n *NutanixClientHelper) GetClientFromEnvironment(ctx context.Context, nuta
 		}
 		npe.AdditionalTrustBundle.Namespace = capxNamespace
 	}
-	providers = append(providers, kubernetesEnv.NewProvider(
-		*npe,
-		n.secretInformer,
-		n.configMapInformer))
 
-	// init env with providers
-	env := environment.NewEnvironment(
-		providers...,
-	)
-	// fetch endpoint details
-	me, err := env.GetManagementEndpoint(envTypes.Topology{})
+	return kubernetesEnv.NewProvider(*npe, n.secretInformer, n.configMapInformer), nil
+}
+
+func Build(creds prismgoclient.Credentials, additionalTrustBundle string) (*nutanixClientV3.Client, error) {
+	cli, err := buildClientFromCredentials(creds, additionalTrustBundle)
 	if err != nil {
 		return nil, err
 	}
-	creds := prismgoclient.Credentials{
-		URL:      me.Address.Host,
-		Endpoint: me.Address.Host,
-		Insecure: me.Insecure,
-		Username: me.ApiCredentials.Username,
-		Password: me.ApiCredentials.Password,
+	// Check if the client is working
+	_, err = cli.V3.GetCurrentLoggedInUser(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get current logged in user with client: %w", err)
 	}
-
-	return n.GetClient(creds, me.AdditionalTrustBundle)
+	return cli, nil
 }
 
-func (n *NutanixClientHelper) GetClient(cred prismgoclient.Credentials, additionalTrustBundle string) (*nutanixClientV3.Client, error) {
-	if cred.Username == "" {
-		return nil, fmt.Errorf("could not create client because username was not set")
+func buildClientFromCredentials(creds prismgoclient.Credentials, additionalTrustBundle string) (*nutanixClientV3.Client, error) {
+	if creds.Username == "" {
+		return nil, ErrPrismIUsernameNotSet
 	}
-	if cred.Password == "" {
-		return nil, fmt.Errorf("could not create client because password was not set")
+	if creds.Password == "" {
+		return nil, ErrPrismIPasswordNotSet
 	}
-	if cred.Port == "" {
-		cred.Port = defaultEndpointPort
+	if creds.Port == "" {
+		creds.Port = defaultEndpointPort
 	}
-	if cred.URL == "" {
-		cred.URL = fmt.Sprintf("%s:%s", cred.Endpoint, cred.Port)
+	if creds.URL == "" {
+		creds.URL = fmt.Sprintf("%s:%s", creds.Endpoint, creds.Port)
 	}
+
 	clientOpts := make([]nutanixClientV3.ClientOption, 0)
 	if additionalTrustBundle != "" {
 		clientOpts = append(clientOpts, nutanixClientV3.WithPEMEncodedCertBundle([]byte(additionalTrustBundle)))
 	}
-	cli, err := nutanixClientV3.NewV3Client(cred, clientOpts...)
+	// Build the client with the creds and possibly an additional TrustBundle
+	cli, err := nutanixClientV3.NewV3Client(creds, clientOpts...)
 	if err != nil {
-		return nil, err
-	}
-
-	// Check if the client is working
-	_, err = cli.V3.GetCurrentLoggedInUser(context.Background())
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create new nutanix client: %w", err)
 	}
 
 	return cli, nil
 }
 
-func (n *NutanixClientHelper) getManagerNutanixPrismEndpoint() (*credentialTypes.NutanixPrismEndpoint, error) {
-	npe := &credentialTypes.NutanixPrismEndpoint{}
-	config, err := n.readEndpointConfig()
+// readManagerNutanixPrismEndpoint reads the default config file and unmarshalls it into NutanixPrismEndpoint.
+// Returns an error if the file does not exist and other read or unmarshalling errors.
+func readManagerNutanixPrismEndpointFromDefaultFile() (*credentials.NutanixPrismEndpoint, error) {
+	return readManagerNutanixPrismEndpointFromFile(configPath)
+}
+
+// this function is primarily here to make writing unit tests simpler
+// readManagerNutanixPrismEndpointFromDefaultFile should be used outside of tests
+func readManagerNutanixPrismEndpointFromFile(configFile string) (*credentials.NutanixPrismEndpoint, error) {
+	// fail on all errors including NotExist error
+	config, err := os.ReadFile(configFile)
 	if err != nil {
-		return npe, err
+		return nil, fmt.Errorf("failed to read prism config in manager: %w", err)
 	}
+	npe := &credentials.NutanixPrismEndpoint{}
 	if err = json.Unmarshal(config, npe); err != nil {
-		return npe, err
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 	if npe.CredentialRef == nil {
-		return nil, fmt.Errorf("credentialRef must be set on CAPX manager")
+		return nil, ErrCredentialRefNotSet
 	}
 	return npe, nil
-}
-
-func (n *NutanixClientHelper) readEndpointConfig() ([]byte, error) {
-	if b, err := os.ReadFile(filepath.Join(configPath, endpointKey)); err == nil {
-		return b, err
-	} else if os.IsNotExist(err) {
-		return []byte{}, nil
-	} else {
-		return []byte{}, err
-	}
-}
-
-func GetCredentialRefForCluster(nutanixCluster *infrav1.NutanixCluster) (*credentialTypes.NutanixCredentialReference, error) {
-	if nutanixCluster == nil {
-		return nil, fmt.Errorf("cannot get credential reference if nutanix cluster object is nil")
-	}
-	prismCentralinfo := nutanixCluster.Spec.PrismCentral
-	if prismCentralinfo == nil {
-		return nil, nil
-	}
-	if prismCentralinfo.CredentialRef == nil {
-		return nil, fmt.Errorf("credentialRef must be set on prismCentral attribute for cluster %s in namespace %s", nutanixCluster.Name, nutanixCluster.Namespace)
-	}
-	if prismCentralinfo.CredentialRef.Kind != credentialTypes.SecretKind {
-		return nil, nil
-	}
-
-	return prismCentralinfo.CredentialRef, nil
 }

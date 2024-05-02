@@ -60,7 +60,7 @@ func (o *ClusterUninstaller) listCloudControllerTargetPools(ctx context.Context,
 				}
 
 				if !foundClusterResource {
-					o.Logger.Debugf("Invalid instance %s in target pool %s, target pool will not be destroyed", name, pool.Name)
+					o.Logger.Debugf("Skipping target pool instance %s because it is not a cluster resource", pool.Name)
 					return false
 				}
 			}
@@ -76,7 +76,7 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 	loadBalancerNameFilter := fmt.Sprintf("name eq \"%s\"", loadBalancerName)
 
 	// Discover associated addresses: loadBalancerName
-	found, err := o.listAddressesWithFilter(ctx, "items(name),nextPageToken", loadBalancerNameFilter, nil)
+	found, err := o.listAddressesWithFilter(ctx, "items(name),nextPageToken", loadBalancerNameFilter, nil, gcpRegionalResource)
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 	o.insertPendingItems("forwardingrule", found)
 
 	// Discover associated health checks: loadBalancerName
-	found, err = o.listHealthChecksWithFilter(ctx, "items(name),nextPageToken", loadBalancerNameFilter, nil)
+	found, err = o.listHealthChecksWithFilter(ctx, "healthcheck", "items(name),nextPageToken", loadBalancerNameFilter, o.healthCheckList)
 	if err != nil {
 		return err
 	}
@@ -196,7 +196,7 @@ func (o *ClusterUninstaller) discoverCloudControllerResources(ctx context.Contex
 	if len(o.cloudControllerUID) > 0 {
 		// Discover Cloud Controller health checks: k8s-cloudControllerUID-node
 		filter := fmt.Sprintf("name eq \"k8s-%s-node\"", o.cloudControllerUID)
-		found, err := o.listHealthChecksWithFilter(ctx, "items(name),nextPageToken", filter, nil)
+		found, err := o.listHealthChecksWithFilter(ctx, "healthcheck", "items(name),nextPageToken", filter, o.healthCheckList)
 		if err != nil {
 			return err
 		}

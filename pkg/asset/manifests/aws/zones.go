@@ -15,12 +15,16 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
+// subnetsInput handles subnets information gathered from metadata.
 type subnetsInput struct {
 	vpc            string
 	privateSubnets aws.Subnets
 	publicSubnets  aws.Subnets
+	edgeSubnets    aws.Subnets
 }
 
+// zonesInput handles input parameters required to create managed and unmanaged
+// Subnets to CAPI.
 type zonesInput struct {
 	InstallConfig *installconfig.InstallConfig
 	Cluster       *capa.AWSCluster
@@ -49,56 +53,69 @@ func (zin *zonesInput) GatherSubnetsFromMetadata(ctx context.Context) (err error
 	if zin.Subnets.publicSubnets, err = zin.InstallConfig.AWS.PublicSubnets(ctx); err != nil {
 		return fmt.Errorf("failed to get public subnets: %w", err)
 	}
+	if zin.Subnets.edgeSubnets, err = zin.InstallConfig.AWS.EdgeSubnets(ctx); err != nil {
+		return fmt.Errorf("failed to get edge subnets: %w", err)
+	}
 	if zin.Subnets.vpc, err = zin.InstallConfig.AWS.VPC(ctx); err != nil {
 		return fmt.Errorf("failed to get VPC: %w", err)
 	}
 	return nil
 }
 
-type zonesCAPI struct {
-	controlPlaneZones sets.Set[string]
-	computeZones      sets.Set[string]
+// ZonesCAPI handles the discovered zones used to create subnets to CAPA.
+// ZonesCAPI is scoped in this package, but exported to use complex scenarios
+// with go-cmp on unit tests.
+type ZonesCAPI struct {
+	ControlPlaneZones sets.Set[string]
+	ComputeZones      sets.Set[string]
+	EdgeZones         sets.Set[string]
 }
 
-// AvailabilityZones returns a sorted union of Availability Zones defined
-// in the zone attribute in the pools for control plane and compute zones.
-func (zo *zonesCAPI) AvailabilityZones() []string {
-	return sets.List(zo.controlPlaneZones.Union(zo.computeZones))
+// GetAvailabilityZones returns a sorted union of Availability Zones defined
+// in the zone attribute in the pools for control plane and compute.
+func (zo *ZonesCAPI) GetAvailabilityZones() []string {
+	return sets.List(zo.ControlPlaneZones.Union(zo.ComputeZones))
+}
+
+// GetEdgeZones returns a sorted union of Local Zones or Wavelength Zones
+// defined in the zone attribute in the edge compute pool.
+func (zo *ZonesCAPI) GetEdgeZones() []string {
+	return sets.List(zo.EdgeZones)
 }
 
 // SetAvailabilityZones insert the zone to the given compute pool, and to
 // the regular zone (zone type availability-zone) list.
-func (zo *zonesCAPI) SetAvailabilityZones(pool string, zones []string) {
+func (zo *ZonesCAPI) SetAvailabilityZones(pool string, zones []string) {
 	switch pool {
 	case types.MachinePoolControlPlaneRoleName:
-		zo.controlPlaneZones.Insert(zones...)
+		zo.ControlPlaneZones.Insert(zones...)
 
 	case types.MachinePoolComputeRoleName:
-		zo.computeZones.Insert(zones...)
+		zo.ComputeZones.Insert(zones...)
 	}
 }
 
 // SetDefaultConfigZones evaluates if machine pools (control plane and workers) have been
 // set the zones from install-config.yaml, if not sets the default from platform, when exists,
 // otherwise set the default from the region discovered from AWS API.
-func (zo *zonesCAPI) SetDefaultConfigZones(pool string, defConfig []string, defRegion []string) {
+func (zo *ZonesCAPI) SetDefaultConfigZones(pool string, defConfig []string, defRegion []string) {
 	zones := []string{}
 	switch pool {
 	case types.MachinePoolControlPlaneRoleName:
-		if len(zo.controlPlaneZones) == 0 && len(defConfig) > 0 {
+		if len(zo.ControlPlaneZones) == 0 && len(defConfig) > 0 {
 			zones = defConfig
-		} else if len(zo.controlPlaneZones) == 0 {
+		} else if len(zo.ControlPlaneZones) == 0 {
 			zones = defRegion
 		}
-		zo.controlPlaneZones.Insert(zones...)
+		zo.ControlPlaneZones.Insert(zones...)
 
 	case types.MachinePoolComputeRoleName:
-		if len(zo.computeZones) == 0 && len(defConfig) > 0 {
+		if len(zo.ComputeZones) == 0 && len(defConfig) > 0 {
 			zones = defConfig
-		} else if len(zo.computeZones) == 0 {
+		} else if len(zo.ComputeZones) == 0 {
 			zones = defRegion
 		}
-		zo.computeZones.Insert(zones...)
+		zo.ComputeZones.Insert(zones...)
 	}
 }
 
@@ -118,6 +135,8 @@ func setSubnets(ctx context.Context, in *zonesInput) error {
 	if in.Cluster == nil {
 		return fmt.Errorf("failed to get AWSCluster config")
 	}
+
+	// BYO VPC ("unmanaged") deployments
 	if len(in.InstallConfig.Config.AWS.Subnets) > 0 {
 		if err := in.GatherSubnetsFromMetadata(ctx); err != nil {
 			return fmt.Errorf("failed to get subnets from metadata: %w", err)
@@ -125,6 +144,7 @@ func setSubnets(ctx context.Context, in *zonesInput) error {
 		return setSubnetsBYOVPC(in)
 	}
 
+	// Managed VPC (fully automated) deployments
 	if err := in.GatherZonesFromMetadata(ctx); err != nil {
 		return fmt.Errorf("failed to get availability zones from metadata: %w", err)
 	}
@@ -133,10 +153,10 @@ func setSubnets(ctx context.Context, in *zonesInput) error {
 
 // setSubnetsBYOVPC creates the CAPI NetworkSpec.Subnets setting the
 // desired subnets from install-config.yaml in the BYO VPC deployment.
-// This function does not have support for unit test to mock for AWS API,
+// This function does not provide support for unit test to mock for AWS API,
 // so all API calls must be done prior this execution.
-// TODO: create support to mock AWS API calls in the unit tests, so we can merge
-// the methods GatherSubnetsFromMetadata() into this.
+// TODO: create support to mock AWS API calls in the unit tests, then the method
+// GatherSubnetsFromMetadata() can be added in setSubnetsBYOVPC.
 func setSubnetsBYOVPC(in *zonesInput) error {
 	in.Cluster.Spec.NetworkSpec.VPC = capa.VPCSpec{
 		ID: in.Subnets.vpc,
@@ -159,64 +179,90 @@ func setSubnetsBYOVPC(in *zonesInput) error {
 		})
 	}
 
+	// edgeSubnets are subnet created on AWS Local Zones or Wavelength Zone,
+	// discovered by ID and zone-type attribute.
+	for _, subnet := range in.Subnets.edgeSubnets {
+		in.Cluster.Spec.NetworkSpec.Subnets = append(in.Cluster.Spec.NetworkSpec.Subnets, capa.SubnetSpec{
+			ID:               subnet.ID,
+			CidrBlock:        subnet.CIDR,
+			AvailabilityZone: subnet.Zone.Name,
+			IsPublic:         subnet.Public,
+		})
+	}
+
 	return nil
 }
 
 // setSubnetsManagedVPC creates the CAPI NetworkSpec.VPC and the NetworkSpec.Subnets,
 // setting the desired zones from install-config.yaml in the managed
 // VPC deployment, when specified, otherwise default zones are set from
-// the previously discovered from AWS API.
-// This function does not have mock for AWS API, so all API calls must be done prior
-// this execution.
-// TODO: create support to mock AWS API calls in the unit tests, so we can merge
-// the methods GatherZonesFromMetadata() into this.
+// the AWS API, previously discovered.
 // The CIDR blocks are calculated leaving free blocks to allow future expansions,
 // in Day-2, when desired.
+// This function does not have mock for AWS API, so all API calls must be added prior
+// this execution.
+// TODO: create support to mock AWS API calls in the unit tests, then the method
+// GatherZonesFromMetadata() can be added in setSubnetsManagedVPC.
 func setSubnetsManagedVPC(in *zonesInput) error {
 	out, err := extractZonesFromInstallConfig(in)
 	if err != nil {
 		return fmt.Errorf("failed to get availability zones: %w", err)
 	}
 
-	allZones := out.AvailabilityZones()
 	isPublishingExternal := in.InstallConfig.Config.Publish == types.ExternalPublishingStrategy
+	allAvailabilityZones := out.GetAvailabilityZones()
+	allEdgeZones := out.GetEdgeZones()
+
 	mainCIDR := capiutils.CIDRFromInstallConfig(in.InstallConfig)
 	in.Cluster.Spec.NetworkSpec.VPC = capa.VPCSpec{
 		CidrBlock: mainCIDR.String(),
 	}
 
-	// Base subnets considering only private zones, leaving one free block to allow
+	// Base subnets count considering only private zones, leaving one free block to allow
 	// future subnet expansions in Day-2.
-	numSubnets := len(allZones) + 1
+	numSubnets := len(allAvailabilityZones) + 1
 
-	// Public subnets consumes one range from base blocks.
+	// Public subnets consumes one range from private CIDR block.
 	if isPublishingExternal {
+		numSubnets++
+	}
+
+	// Edge subnets consumes one CIDR block from private CIDR, slicing it
+	// into smaller depending on the amount edge zones added to install config.
+	if len(allEdgeZones) > 0 {
 		numSubnets++
 	}
 
 	privateCIDRs, err := utilscidr.SplitIntoSubnetsIPv4(mainCIDR.String(), numSubnets)
 	if err != nil {
-		return fmt.Errorf("unable to retrieve CIDR blocks for all private subnets: %w", err)
+		return fmt.Errorf("unable to generate CIDR blocks for all private subnets: %w", err)
+	}
+
+	publicCIDR := privateCIDRs[len(allAvailabilityZones)].String()
+
+	var edgeCIDR string
+	if len(allEdgeZones) > 0 {
+		edgeCIDR = privateCIDRs[len(allAvailabilityZones)+1].String()
 	}
 
 	var publicCIDRs []*net.IPNet
 	if isPublishingExternal {
 		// The last num(zones) blocks are dedicated to the public subnets.
-		publicCIDRs, err = utilscidr.SplitIntoSubnetsIPv4(privateCIDRs[len(allZones)].String(), len(allZones))
+		publicCIDRs, err = utilscidr.SplitIntoSubnetsIPv4(publicCIDR, len(allAvailabilityZones))
 		if err != nil {
-			return fmt.Errorf("unable to retrieve CIDR blocks for all public subnets: %w", err)
+			return fmt.Errorf("unable to generate CIDR blocks for all public subnets: %w", err)
 		}
 	}
 
-	// Create subnets from zone pool with type availability-zone
-	if len(privateCIDRs) < len(allZones) {
+	// Create subnets from zone pools (control plane and compute) with type availability-zone.
+	if len(privateCIDRs) < len(allAvailabilityZones) {
 		return fmt.Errorf("unable to define CIDR blocks to all zones for private subnets")
 	}
-	if isPublishingExternal && len(publicCIDRs) < len(allZones) {
+	if isPublishingExternal && len(publicCIDRs) < len(allAvailabilityZones) {
 		return fmt.Errorf("unable to define CIDR blocks to all zones for public subnets")
 	}
 
-	for idxCIDR, zone := range allZones {
+	for idxCIDR, zone := range allAvailabilityZones {
 		in.Cluster.Spec.NetworkSpec.Subnets = append(in.Cluster.Spec.NetworkSpec.Subnets, capa.SubnetSpec{
 			AvailabilityZone: zone,
 			CidrBlock:        privateCIDRs[idxCIDR].String(),
@@ -232,14 +278,63 @@ func setSubnetsManagedVPC(in *zonesInput) error {
 			})
 		}
 	}
+
+	// no edge zones, nothing else to do
+	if len(allEdgeZones) == 0 {
+		return nil
+	}
+
+	// Create subnets from edge zone pool with type local-zone.
+
+	// Slice the main CIDR (edgeCIDR) into N*zones for privates subnets,
+	// and, when publish external, duplicate to create public subnets.
+	numEdgeSubnets := len(allEdgeZones)
+	if isPublishingExternal {
+		numEdgeSubnets *= 2
+	}
+
+	// Allow one CIDR block for future expansion.
+	numEdgeSubnets++
+
+	// Slice the edgeCIDR into the amount of desired subnets.
+	edgeCIDRs, err := utilscidr.SplitIntoSubnetsIPv4(edgeCIDR, numEdgeSubnets)
+	if err != nil {
+		return fmt.Errorf("unable to generate CIDR blocks for all edge subnets: %w", err)
+	}
+	if len(edgeCIDRs) < len(allEdgeZones) {
+		return fmt.Errorf("unable to define CIDR blocks to all edge zones for private subnets")
+	}
+	if isPublishingExternal && (len(edgeCIDRs) < (len(allEdgeZones) * 2)) {
+		return fmt.Errorf("unable to define CIDR blocks to all edge zones for public subnets")
+	}
+
+	// Create subnets from zone pool with type local-zone or wavelength-zone (edge zones)
+	for idxCIDR, zone := range allEdgeZones {
+		in.Cluster.Spec.NetworkSpec.Subnets = append(in.Cluster.Spec.NetworkSpec.Subnets, capa.SubnetSpec{
+			AvailabilityZone: zone,
+			CidrBlock:        edgeCIDRs[idxCIDR].String(),
+			ID:               fmt.Sprintf("%s-subnet-private-%s", in.ClusterID.InfraID, zone),
+			IsPublic:         false,
+		})
+		if isPublishingExternal {
+			in.Cluster.Spec.NetworkSpec.Subnets = append(in.Cluster.Spec.NetworkSpec.Subnets, capa.SubnetSpec{
+				AvailabilityZone: zone,
+				CidrBlock:        edgeCIDRs[len(allEdgeZones)+idxCIDR].String(),
+				ID:               fmt.Sprintf("%s-subnet-public-%s", in.ClusterID.InfraID, zone),
+				IsPublic:         true,
+			})
+		}
+	}
+
 	return nil
 }
 
 // extractZonesFromInstallConfig extracts zones defined in the install-config.
-func extractZonesFromInstallConfig(in *zonesInput) (*zonesCAPI, error) {
-	out := zonesCAPI{
-		controlPlaneZones: sets.New[string](),
-		computeZones:      sets.New[string](),
+func extractZonesFromInstallConfig(in *zonesInput) (*ZonesCAPI, error) {
+	out := ZonesCAPI{
+		ControlPlaneZones: sets.New[string](),
+		ComputeZones:      sets.New[string](),
+		EdgeZones:         sets.New[string](),
 	}
 
 	cfg := in.InstallConfig.Config
@@ -253,19 +348,35 @@ func extractZonesFromInstallConfig(in *zonesInput) (*zonesCAPI, error) {
 	}
 	out.SetDefaultConfigZones(types.MachinePoolControlPlaneRoleName, defaultZones, in.ZonesInRegion)
 
+	// set the zones in the compute/worker pool, when defined, otherwise use defaults.
 	for _, pool := range cfg.Compute {
 		if pool.Platform.AWS == nil {
 			continue
 		}
+		// edge compute pools should have zones defined.
+		if pool.Name == types.MachinePoolEdgeRoleName {
+			if len(pool.Platform.AWS.Zones) == 0 {
+				return nil, fmt.Errorf("expect one or more zones in the edge compute pool, got: %q", pool.Platform.AWS.Zones)
+			}
+			out.EdgeZones.Insert(pool.Platform.AWS.Zones...)
+			continue
+		}
+
 		if len(pool.Platform.AWS.Zones) > 0 {
 			out.SetAvailabilityZones(pool.Name, pool.Platform.AWS.Zones)
 		}
-		// Ignoring as edge pool is not yet supported by CAPA.
-		// See https://github.com/openshift/installer/pull/8173
-		if pool.Name == types.MachinePoolEdgeRoleName {
-			continue
-		}
 		out.SetDefaultConfigZones(types.MachinePoolComputeRoleName, defaultZones, in.ZonesInRegion)
 	}
+
+	// set defaults for worker pool when not defined in config.
+	if len(out.ComputeZones) == 0 {
+		out.SetDefaultConfigZones(types.MachinePoolComputeRoleName, defaultZones, in.ZonesInRegion)
+	}
+
+	// should raise an error if no zones is available in the pools, default platform config, or metadata.
+	if azs := out.GetAvailabilityZones(); len(azs) == 0 {
+		return nil, fmt.Errorf("failed to set zones from config, got: %q", azs)
+	}
+
 	return &out, nil
 }

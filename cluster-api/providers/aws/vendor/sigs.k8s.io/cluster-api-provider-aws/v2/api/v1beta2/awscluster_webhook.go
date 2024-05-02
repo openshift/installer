@@ -248,6 +248,11 @@ func (r *AWSCluster) validateNetwork() field.ErrorList {
 		if subnet.IsIPv6 || subnet.IPv6CidrBlock != "" {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("subnets"), r.Spec.NetworkSpec.Subnets, "IPv6 cannot be used with unmanaged clusters at this time."))
 		}
+		if subnet.ZoneType != nil && subnet.IsEdge() {
+			if subnet.ParentZoneName == nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("subnets"), r.Spec.NetworkSpec.Subnets, "ParentZoneName must be set when ZoneType is 'local-zone'."))
+			}
+		}
 	}
 
 	if r.Spec.NetworkSpec.VPC.CidrBlock != "" && r.Spec.NetworkSpec.VPC.IPAMPool != nil {

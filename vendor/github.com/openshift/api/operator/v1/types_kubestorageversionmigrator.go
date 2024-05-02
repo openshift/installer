@@ -11,7 +11,7 @@ import (
 // +kubebuilder:resource:path=kubestorageversionmigrators,scope=Cluster
 // +kubebuilder:subresource:status
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/503
-// +openshift:file-pattern=0000_40_kube-storage-version-migrator-operator_00_configMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_40,operatorName=kube-storage-version-migrator,operatorOrdering=00
 
 // KubeStorageVersionMigrator provides information to configure an operator to manage kube-storage-version-migrator.
 //

@@ -135,6 +135,7 @@ type OpenStackMachineStatus struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:deprecatedversion:warning="The v1alpha5 version of OpenStackMachine has been deprecated and will be removed in a future release of the API. Please upgrade."
 // +kubebuilder:resource:path=openstackmachines,scope=Namespaced,categories=cluster-api,shortName=osm
 // +kubebuilder:subresource:status

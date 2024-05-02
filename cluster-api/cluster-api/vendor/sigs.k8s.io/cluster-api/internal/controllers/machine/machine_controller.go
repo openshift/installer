@@ -100,6 +100,14 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 	if err != nil {
 		return err
 	}
+	msToMachines, err := util.MachineSetToObjectsMapper(mgr.GetClient(), &clusterv1.MachineList{}, mgr.GetScheme())
+	if err != nil {
+		return err
+	}
+	mdToMachines, err := util.MachineDeploymentToObjectsMapper(mgr.GetClient(), &clusterv1.MachineList{}, mgr.GetScheme())
+	if err != nil {
+		return err
+	}
 
 	if r.nodeDeletionRetryTimeout.Nanoseconds() == 0 {
 		r.nodeDeletionRetryTimeout = 10 * time.Second
@@ -122,6 +130,14 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 					predicates.ResourceHasFilterLabel(ctrl.LoggerFrom(ctx), r.WatchFilterValue),
 				),
 			)).
+		Watches(
+			&clusterv1.MachineSet{},
+			handler.EnqueueRequestsFromMapFunc(msToMachines),
+		).
+		Watches(
+			&clusterv1.MachineDeployment{},
+			handler.EnqueueRequestsFromMapFunc(mdToMachines),
+		).
 		Build(r)
 	if err != nil {
 		return errors.Wrap(err, "failed setting up with a controller manager")
@@ -206,7 +222,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 		// the current cluster because of concurrent access.
 		if errors.Is(err, remote.ErrClusterLocked) {
 			log.V(5).Info("Requeuing because another worker has the lock on the ClusterCacheTracker")
-			return ctrl.Result{Requeue: true}, nil
+			return ctrl.Result{RequeueAfter: time.Minute}, nil
 		}
 		return res, err
 	}
@@ -224,7 +240,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 	// the current cluster because of concurrent access.
 	if errors.Is(err, remote.ErrClusterLocked) {
 		log.V(5).Info("Requeuing because another worker has the lock on the ClusterCacheTracker")
-		return ctrl.Result{Requeue: true}, nil
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}
 	return res, err
 }
@@ -242,6 +258,7 @@ func patchMachine(ctx context.Context, patchHelper *patch.Helper, machine *clust
 			// MHC reported condition should take precedence over the remediation progress
 			clusterv1.MachineHealthCheckSucceededCondition,
 			clusterv1.MachineOwnerRemediatedCondition,
+			clusterv1.DrainingSucceededCondition,
 		),
 		conditions.WithStepCounterIf(machine.ObjectMeta.DeletionTimestamp.IsZero() && machine.Spec.ProviderID == nil),
 		conditions.WithStepCounterIfOnly(
@@ -337,7 +354,7 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, cluster *clusterv1.Clu
 			if m.Status.NodeRef != nil {
 				nodeName = m.Status.NodeRef.Name
 			}
-			log.Info("Deleting Kubernetes Node associated with Machine is not allowed", "Node", klog.KRef("", nodeName), "cause", err.Error())
+			log.Info("Skipping deletion of Kubernetes Node associated with Machine as it is not allowed", "Node", klog.KRef("", nodeName), "cause", err.Error())
 		default:
 			return ctrl.Result{}, errors.Wrapf(err, "failed to check if Kubernetes Node deletion is allowed")
 		}
@@ -606,7 +623,7 @@ func (r *Reconciler) drainNode(ctx context.Context, cluster *clusterv1.Cluster, 
 	if err != nil {
 		if errors.Is(err, remote.ErrClusterLocked) {
 			log.V(5).Info("Requeuing drain Node because another worker has the lock on the ClusterCacheTracker")
-			return ctrl.Result{Requeue: true}, nil
+			return ctrl.Result{RequeueAfter: time.Minute}, nil
 		}
 		log.Error(err, "Error creating a remote client for cluster while draining Node, won't retry")
 		return ctrl.Result{}, nil

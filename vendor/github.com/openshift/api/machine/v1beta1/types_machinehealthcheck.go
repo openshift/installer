@@ -17,11 +17,10 @@ type RemediationStrategyType string
 // +kubebuilder:resource:path=machinehealthchecks,scope=Namespaced,shortName=mhc;mhcs
 // +kubebuilder:subresource:status
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/1032
-// +openshift:file-pattern=0000_10_machinehealthcheckMARKERS.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_10,operatorName=machine-api,operatorOrdering=01
 // +openshift:capability=MachineAPI
 // +kubebuilder:metadata:annotations="exclude.release.openshift.io/internal-openshift-hosted=true"
 // +kubebuilder:metadata:annotations="include.release.openshift.io/self-managed-high-availability=true"
-// +kubebuilder:metadata:annotations="include.release.openshift.io/single-node-developer=true"
 // +k8s:openapi-gen=true
 // +kubebuilder:printcolumn:name="MaxUnhealthy",type="string",JSONPath=".spec.maxUnhealthy",description="Maximum number of unhealthy machines allowed"
 // +kubebuilder:printcolumn:name="ExpectedMachines",type="integer",JSONPath=".status.expectedMachines",description="Number of machines currently monitored"

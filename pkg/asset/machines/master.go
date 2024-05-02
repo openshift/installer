@@ -43,6 +43,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/ovirt"
 	"github.com/openshift/installer/pkg/asset/machines/powervs"
 	"github.com/openshift/installer/pkg/asset/machines/vsphere"
+	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
@@ -264,6 +265,26 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		err := gcp.ConfigMasters(machines, controlPlaneMachineSet, clusterID.InfraID, ic.Publish)
 		if err != nil {
 			return err
+		}
+
+		// CAPG-based installs will use only backend services--no target pools,
+		// so we don't want to include target pools in the control plane machineset.
+		// TODO(padillon): once this feature gate is the default and we are
+		// no longer using Terraform, we can update ConfigMasters not to populate this.
+		if capiutils.IsEnabled(installConfig) {
+			for _, machine := range machines {
+				providerSpec, ok := machine.Spec.ProviderSpec.Value.Object.(*machinev1beta1.GCPMachineProviderSpec)
+				if !ok {
+					return errors.New("unable to convert ProviderSpec to GCPMachineProviderSpec")
+				}
+				providerSpec.TargetPools = nil
+			}
+			cpms := controlPlaneMachineSet.Spec.Template.OpenShiftMachineV1Beta1Machine.Spec.ProviderSpec.Value.Object
+			providerSpec, ok := cpms.(*machinev1beta1.GCPMachineProviderSpec)
+			if !ok {
+				return errors.New("Unable to set target pools to control plane machine set")
+			}
+			providerSpec.TargetPools = nil
 		}
 	case ibmcloudtypes.Name:
 		subnets := map[string]string{}

@@ -18,6 +18,8 @@ limitations under the License.
 package services
 
 import (
+	"context"
+
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -130,4 +132,19 @@ type ObjectStoreInterface interface {
 	ReconcileBucket() error
 	Delete(m *scope.MachineScope) error
 	Create(m *scope.MachineScope, data []byte) (objectURL string, err error)
+}
+
+// AWSNodeInterface installs the CNI for EKS clusters.
+type AWSNodeInterface interface {
+	ReconcileCNI(ctx context.Context) error
+}
+
+// IAMAuthenticatorInterface installs aws-iam-authenticator for EKS clusters.
+type IAMAuthenticatorInterface interface {
+	ReconcileIAMAuthenticator(ctx context.Context) error
+}
+
+// KubeProxyInterface installs kube-proxy for EKS clusters.
+type KubeProxyInterface interface {
+	ReconcileKubeProxy(ctx context.Context) error
 }
