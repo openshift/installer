@@ -118,7 +118,7 @@ resource "google_compute_instance" "bootstrap" {
   }
 
   metadata = {
-    user-data = data.ignition_config.redirect.rendered
+    user-data = var.gcp_ignition_shim
   }
 
   tags = ["${var.cluster_id}-master", "${var.cluster_id}-bootstrap"]
