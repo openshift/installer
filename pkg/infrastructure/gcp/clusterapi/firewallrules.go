@@ -8,6 +8,7 @@ import (
 	"google.golang.org/api/compute/v1"
 
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
+	"github.com/openshift/installer/pkg/types"
 )
 
 func getControlPlanePorts() []*compute.FirewallAllowed {
@@ -108,6 +109,17 @@ func getInternalNetworkPorts() []*compute.FirewallAllowed {
 	}
 }
 
+func getIngressPorts() []*compute.FirewallAllowed {
+	return []*compute.FirewallAllowed{
+		{
+			IPProtocol: "tcp",
+			Ports: []string{
+				"6080", // ingress, *.apps
+			},
+		},
+	}
+}
+
 // addFirewallRule creates the firewall rule and adds it the compute's firewalls.
 func addFirewallRule(ctx context.Context, name, network, projectID string, ports []*compute.FirewallAllowed, srcTags, targetTags, srcRanges []string) error {
 	service, err := NewComputeService()
@@ -185,7 +197,20 @@ func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, net
 	targetTags = []string{workerTag, masterTag}
 	machineCIDR := in.InstallConfig.Config.Networking.MachineNetwork[0].CIDR.String()
 	srcRanges = []string{machineCIDR}
-	err := addFirewallRule(ctx, firewallName, network, projectID, getInternalNetworkPorts(), srcTags, targetTags, srcRanges)
+	if err := addFirewallRule(ctx, firewallName, network, projectID, getInternalNetworkPorts(), srcTags, targetTags, srcRanges); err != nil {
+		return err
+	}
+
+	// health-check rules are used to allow GCP health probes to reach the control plane.
+	// https://cloud.google.com/load-balancing/docs/health-checks#fw-rule
+	firewallName = fmt.Sprintf("%s-health-checks", in.InfraID)
+	srcTags = []string{}
+	targetTags = []string{masterTag}
+	srcRanges = []string{"35.191.0.0/16", "130.211.0.0/22"}
+	if in.InstallConfig.Config.Publish == types.ExternalPublishingStrategy {
+		srcRanges = append(srcRanges, "209.85.152.0/22", "209.85.204.0/22")
+	}
+	err := addFirewallRule(ctx, firewallName, network, projectID, getIngressPorts(), srcTags, targetTags, srcRanges)
 
 	return err
 }
