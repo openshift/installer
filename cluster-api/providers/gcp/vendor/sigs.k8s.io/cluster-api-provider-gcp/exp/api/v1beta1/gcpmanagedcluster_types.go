@@ -59,6 +59,10 @@ type GCPManagedClusterSpec struct {
 	// supplied then the credentials of the controller will be used.
 	// +optional
 	CredentialsRef *infrav1.ObjectReference `json:"credentialsRef,omitempty"`
+
+	// LoadBalancerSpec contains configuration for one or more LoadBalancers.
+	// +optional
+	LoadBalancer infrav1.LoadBalancerSpec `json:"loadBalancer,omitempty"`
 }
 
 // GCPManagedClusterStatus defines the observed state of GCPManagedCluster.

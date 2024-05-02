@@ -250,10 +250,10 @@ func (s *Service) createCluster(ctx context.Context, log *logr.Logger) error {
 	}
 
 	isRegional := shared.IsRegional(s.scope.Region())
-
 	cluster := &containerpb.Cluster{
-		Name:    s.scope.ClusterName(),
-		Network: *s.scope.GCPManagedCluster.Spec.Network.Name,
+		Name:       s.scope.ClusterName(),
+		Network:    *s.scope.GCPManagedCluster.Spec.Network.Name,
+		Subnetwork: s.getSubnetNameInClusterRegion(),
 		Autopilot: &containerpb.Autopilot{
 			Enabled: s.scope.GCPManagedControlPlane.Spec.EnableAutopilot,
 		},
@@ -293,6 +293,16 @@ func (s *Service) createCluster(ctx context.Context, log *logr.Logger) error {
 	}
 
 	return nil
+}
+
+// getSubnetNameInClusterRegion returns the subnet which is in the same region as cluster. If not found it returns empty string.
+func (s *Service) getSubnetNameInClusterRegion() string {
+	for _, subnet := range s.scope.GCPManagedCluster.Spec.Network.Subnets {
+		if subnet.Region == s.scope.Region() {
+			return subnet.Name
+		}
+	}
+	return ""
 }
 
 func (s *Service) updateCluster(ctx context.Context, updateClusterRequest *containerpb.UpdateClusterRequest, log *logr.Logger) error {

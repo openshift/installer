@@ -130,6 +130,11 @@ func (s *ClusterScope) AdditionalLabels() infrav1.Labels {
 	return s.GCPCluster.Spec.AdditionalLabels
 }
 
+// LoadBalancer returns the LoadBalancer configuration.
+func (s *ClusterScope) LoadBalancer() infrav1.LoadBalancerSpec {
+	return s.GCPCluster.Spec.LoadBalancer
+}
+
 // ResourceManagerTags returns ResourceManagerTags from the scope's GCPCluster. The returned value will never be nil.
 func (s *ClusterScope) ResourceManagerTags() infrav1.ResourceManagerTags {
 	if len(s.GCPCluster.Spec.ResourceManagerTags) == 0 {
@@ -339,8 +344,9 @@ func (s *ClusterScope) HealthCheckSpec() *compute.HealthCheck {
 // InstanceGroupSpec returns google compute instance-group spec.
 func (s *ClusterScope) InstanceGroupSpec(zone string) *compute.InstanceGroup {
 	port := ptr.Deref(s.GCPCluster.Spec.Network.LoadBalancerBackendPort, 6443)
+	tag := ptr.Deref(s.GCPCluster.Spec.LoadBalancer.APIServerInstanceGroupTagOverride, infrav1.APIServerRoleTagValue)
 	return &compute.InstanceGroup{
-		Name: fmt.Sprintf("%s-%s-%s", s.Name(), infrav1.APIServerRoleTagValue, zone),
+		Name: fmt.Sprintf("%s-%s-%s", s.Name(), tag, zone),
 		NamedPorts: []*compute.NamedPort{
 			{
 				Name: "apiserver",

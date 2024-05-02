@@ -114,6 +114,18 @@ type NetworkSpec struct {
 	LoadBalancerBackendPort *int32 `json:"loadBalancerBackendPort,omitempty"`
 }
 
+// LoadBalancerSpec contains configuration for one or more LoadBalancers.
+type LoadBalancerSpec struct {
+
+	// APIServerInstanceGroupTagOverride overrides the default setting for the
+	// tag used when creating the API Server Instance Group.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:MaxLength=16
+	// +kubebuilder:validation:Pattern=`(^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)`
+	// +optional
+	APIServerInstanceGroupTagOverride *string `json:"apiServerInstanceGroupTagOverride,omitempty"`
+}
+
 // SubnetSpec configures an GCP Subnet.
 type SubnetSpec struct {
 	// Name defines a unique identifier to reference this resource.

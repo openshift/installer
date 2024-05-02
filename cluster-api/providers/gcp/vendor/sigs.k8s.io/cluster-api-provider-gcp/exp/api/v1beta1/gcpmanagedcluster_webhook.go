@@ -20,6 +20,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -53,7 +54,7 @@ var _ webhook.Validator = &GCPManagedCluster{}
 func (r *GCPManagedCluster) ValidateCreate() (admission.Warnings, error) {
 	gcpmanagedclusterlog.Info("validate create", "name", r.Name)
 
-	return nil, nil
+	return r.validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
@@ -95,4 +96,37 @@ func (r *GCPManagedCluster) ValidateDelete() (admission.Warnings, error) {
 	gcpmanagedclusterlog.Info("validate delete", "name", r.Name)
 
 	return nil, nil
+}
+
+func (r *GCPManagedCluster) validate() (admission.Warnings, error) {
+	validators := []func() error{
+		r.validateCustomSubnet,
+	}
+
+	var errs []error
+	for _, validator := range validators {
+		if err := validator(); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return nil, kerrors.NewAggregate(errs)
+}
+
+func (r *GCPManagedCluster) validateCustomSubnet() error {
+	gcpmanagedclusterlog.Info("validate custom subnet", "name", r.Name)
+	if r.Spec.Network.AutoCreateSubnetworks == nil || *r.Spec.Network.AutoCreateSubnetworks {
+		return nil
+	}
+	var isSubnetExistInClusterRegion = false
+	for _, subnet := range r.Spec.Network.Subnets {
+		if subnet.Region == r.Spec.Region {
+			isSubnetExistInClusterRegion = true
+		}
+	}
+
+	if !isSubnetExistInClusterRegion {
+		return field.Required(field.NewPath("spec", "network", "subnet"), "at least one given subnets region should be same as spec.network.region when spec.network.autoCreateSubnetworks is false")
+	}
+	return nil
 }
