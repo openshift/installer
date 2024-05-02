@@ -303,6 +303,10 @@ func createBootstrapDomain(virConn *libvirt.Libvirt, config baremetalConfig, poo
 
 	bootstrapDom.OS.Type.Arch = capabilities.Host.CPU.Arch
 
+	if bootstrapDom.OS.Type.Arch == "aarch64" {
+		bootstrapDom.OS.Firmware = "efi"
+	}
+
 	for _, bridge := range config.Bridges {
 		netIface := libvirtxml.DomainInterface{
 			Model: &libvirtxml.DomainInterfaceModel{
