@@ -292,7 +292,7 @@ func newCreateCmd(ctx context.Context) *cobra.Command {
 		t.command.Args = cobra.ExactArgs(0)
 		t.command.Run = runTargetCmd(ctx, t.assets...)
 		if t.name == "Cluster" {
-			cmd.PersistentFlags().BoolVar(&skipPasswordPrintFlag, "skip-password-print", false, "Do not print the generated user password.")
+			t.command.PersistentFlags().BoolVar(&skipPasswordPrintFlag, "skip-password-print", false, "Do not print the generated user password.")
 		}
 		cmd.AddCommand(t.command)
 	}
