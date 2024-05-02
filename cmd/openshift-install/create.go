@@ -765,7 +765,7 @@ func logComplete(directory, consoleURL string) error {
 	if consoleURL != "" {
 		logrus.Infof("Access the OpenShift web-console here: %s", consoleURL)
 		if skipPasswordPrintFlag {
-			logrus.Infof("Credentials omitted, if necessary verify the ./auth/kubeadmin-password file")
+			logrus.Infof("Credentials omitted, if necessary verify the %s file", pwFile)
 		} else {
 			logrus.Infof("Login to the console with user: %q, and password: %q", "kubeadmin", pw)
 		}
