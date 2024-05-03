@@ -2,6 +2,9 @@
 # the installer layered on top of the cluster-native Linux installer image.
 
 FROM registry.ci.openshift.org/ocp/4.16:installer-terraform-providers AS providers
+# We copy from the -artifacts images because they are statically linked
+FROM registry.ci.openshift.org/ocp/4.16:installer-kube-apiserver-artifacts AS kas-artifacts
+FROM registry.ci.openshift.org/ocp/4.16:installer-etcd-artifacts AS etcd-artifacts
 
 # FIPS support is offered via the baremetal-installer image
 
@@ -11,6 +14,8 @@ ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/darwin_amd64 terraform/bin/darwin_amd64
+COPY --from=kas-artifacts /usr/share/openshift/darwin/amd64 cluster-api/bin/darwin_amd64
+COPY --from=etcd-artifacts /usr/share/openshift/darwin/amd64 cluster-api/bin/darwin_amd64
 RUN GOOS=darwin GOARCH=amd64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS macarmbuilder
@@ -19,6 +24,8 @@ ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/darwin_arm64 terraform/bin/darwin_arm64
+COPY --from=kas-artifacts /usr/share/openshift/darwin/arm64 cluster-api/bin/darwin_arm64
+COPY --from=etcd-artifacts /usr/share/openshift/darwin/arm64 cluster-api/bin/darwin_arm64
 RUN GOOS=darwin GOARCH=arm64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS linuxbuilder
@@ -27,6 +34,8 @@ ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/linux_amd64 terraform/bin/linux_amd64
+COPY --from=kas-artifacts /usr/share/openshift/linux/amd64 cluster-api/bin/linux_amd64
+COPY --from=etcd-artifacts /usr/share/openshift/linux/amd64 cluster-api/bin/linux_amd64
 RUN GOOS=linux GOARCH=amd64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS linuxarmbuilder
@@ -35,6 +44,8 @@ ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/linux_arm64 terraform/bin/linux_arm64
+COPY --from=kas-artifacts /usr/share/openshift/linux/arm64 cluster-api/bin/linux_arm64
+COPY --from=etcd-artifacts /usr/share/openshift/linux/arm64 cluster-api/bin/linux_arm64
 RUN GOOS=linux GOARCH=arm64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS builder
