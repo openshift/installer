@@ -76,6 +76,11 @@ func (c *localControlPlane) Run(ctx context.Context) error {
 		BinaryAssetsDirectory:    c.BinDir,
 		ControlPlaneStartTimeout: 10 * time.Second,
 		ControlPlaneStopTimeout:  10 * time.Second,
+		ControlPlane: envtest.ControlPlane{
+			Etcd: &envtest.Etcd{
+				DataDir: c.BinDir,
+			},
+		},
 	}
 	var err error
 	c.Cfg, err = c.Env.Start()
