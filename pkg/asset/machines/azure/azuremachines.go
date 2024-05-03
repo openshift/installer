@@ -58,7 +58,8 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 					Offer:     osImage.Offer,
 					SKU:       osImage.SKU,
 				},
-				Version: osImage.Version,
+				ThirdPartyImage: true, //TODO
+				Version:         osImage.Version,
 			},
 		}
 	case useImageGallery:

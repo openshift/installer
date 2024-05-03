@@ -589,6 +589,14 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		machineConfigs = append(machineConfigs, ignIPv6)
 	}
 
+	if ic.Platform.Name() == azuretypes.Name && capiutils.IsEnabled(installConfig) {
+		capzBootstrap, err := machineconfig.ForCAPZBootstrap("master")
+		if err != nil {
+			return fmt.Errorf("failed to create machine config for capz bootstrapping: %w", err)
+		}
+		machineConfigs = append(machineConfigs, capzBootstrap)
+	}
+
 	m.MachineConfigFiles, err = machineconfig.Manifests(machineConfigs, "master", directory)
 	if err != nil {
 		return errors.Wrap(err, "failed to create MachineConfig manifests for master machines")
