@@ -10,6 +10,12 @@ until oc get baremetalhosts -n openshift-machine-api; do
    sleep 20
 done
 
+echo "Scaling down the CBO"
+while ! oc scale deployment -n openshift-machine-api --replicas=0 cluster-baremetal-operator ; do
+    sleep 5
+    echo "Scale failed, retrying"
+done
+
 echo "Waiting for $CONTROL_PLANE_REPLICA_COUNT masters to become provisioned"
 while [ "$(oc get bmh -n openshift-machine-api -l installer.openshift.io/role=control-plane -o json | jq '.items[].status.provisioning.state' | grep provisioned -c)" -lt "$CONTROL_PLANE_REPLICA_COUNT"  ]; do
     echo "Waiting for $CONTROL_PLANE_REPLICA_COUNT masters to become provisioned"
@@ -23,6 +29,12 @@ echo "Stopping provisioning services..."
 systemctl --no-block stop ironic.service
 while systemctl is-active metal3-baremetal-operator.service; do
     sleep 10
+done
+
+echo "Scaling up the CBO"
+while ! oc scale deployment -n openshift-machine-api --replicas=1 cluster-baremetal-operator ; do
+    sleep 5
+    echo "Scale failed, retrying"
 done
 
 echo "Unpause all baremetal hosts"
