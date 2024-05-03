@@ -46,24 +46,29 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 	var result []*asset.RuntimeFile
 
 	for idx := int64(0); idx < total; idx++ {
-		var subnet *capa.AWSResourceReference
-		// By not setting subnets for the machine, we let CAPA choose one for us
+		subnet := &capa.AWSResourceReference{}
+		zone := mpool.Zones[int(idx)%len(mpool.Zones)]
+
+		// BYO VPC deployments when subnet IDs are set on install-config.yaml
 		if len(in.Subnets) > 0 {
-			zone := mpool.Zones[int(idx)%len(mpool.Zones)]
 			subnetID, ok := in.Subnets[zone]
 			if len(in.Subnets) > 0 && !ok {
 				return nil, fmt.Errorf("no subnet for zone %s", zone)
 			}
-			subnet = &capa.AWSResourceReference{}
 			if subnetID == "" {
-				subnet.Filters = []capa.Filter{
-					{
-						Name:   "tag:Name",
-						Values: []string{fmt.Sprintf("%s-subnet-private-%s", clusterID, zone)},
-					},
-				}
-			} else {
-				subnet.ID = ptr.To(subnetID)
+				return nil, fmt.Errorf("invalid subnet ID for zone %s", zone)
+			}
+			subnet.ID = ptr.To(subnetID)
+		} else {
+			subnetInternetScope := "private"
+			if in.PublicIP {
+				subnetInternetScope = "public"
+			}
+			subnet.Filters = []capa.Filter{
+				{
+					Name:   "tag:Name",
+					Values: []string{fmt.Sprintf("%s-subnet-%s-%s", clusterID, subnetInternetScope, zone)},
+				},
 			}
 		}
 

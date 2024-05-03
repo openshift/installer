@@ -91,13 +91,27 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 	switch ic.Platform.Name() {
 	case awstypes.Name:
 		subnets := map[string]string{}
+		bootstrapSubnets := map[string]string{}
 		if len(ic.Platform.AWS.Subnets) > 0 {
+			// fetch private subnets to master nodes.
 			subnetMeta, err := installConfig.AWS.PrivateSubnets(ctx)
 			if err != nil {
 				return err
 			}
 			for id, subnet := range subnetMeta {
 				subnets[subnet.Zone.Name] = id
+			}
+			// fetch public subnets for bootstrap, when exists, otherwise use private.
+			if installConfig.Config.Publish == types.ExternalPublishingStrategy {
+				subnetMeta, err := installConfig.AWS.PublicSubnets(ctx)
+				if err != nil {
+					return err
+				}
+				for id, subnet := range subnetMeta {
+					bootstrapSubnets[subnet.Zone.Name] = id
+				}
+			} else {
+				bootstrapSubnets = subnets
 			}
 		}
 
@@ -177,7 +191,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		pool.Platform.AWS = &mpool
 		bootstrapAWSMachine, err := aws.GenerateMachines(clusterID.InfraID, &aws.MachineInput{
 			Role:     "bootstrap",
-			Subnets:  nil, // let CAPA pick one
+			Subnets:  bootstrapSubnets,
 			Pool:     &pool,
 			Tags:     tags,
 			PublicIP: installConfig.Config.Publish == types.ExternalPublishingStrategy,
