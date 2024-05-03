@@ -128,7 +128,8 @@ func (m *MachineScope) Namespace() string {
 
 // ControlPlaneGroupName returns the control-plane instance group name.
 func (m *MachineScope) ControlPlaneGroupName() string {
-	return fmt.Sprintf("%s-%s-%s", m.ClusterGetter.Name(), infrav1.APIServerRoleTagValue, m.Zone())
+	tag := ptr.Deref(m.ClusterGetter.LoadBalancer().APIServerInstanceGroupTagOverride, infrav1.APIServerRoleTagValue)
+	return fmt.Sprintf("%s-%s-%s", m.ClusterGetter.Name(), tag, m.Zone())
 }
 
 // IsControlPlane returns true if the machine is a control plane.

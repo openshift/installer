@@ -19,48 +19,50 @@ package loadbalancers
 import (
 	"context"
 
+	k8scloud "github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud"
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/filter"
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/meta"
 	"google.golang.org/api/compute/v1"
+
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud"
 )
 
 type addressesInterface interface {
-	Get(ctx context.Context, key *meta.Key) (*compute.Address, error)
-	Insert(ctx context.Context, key *meta.Key, obj *compute.Address) error
-	Delete(ctx context.Context, key *meta.Key) error
+	Get(ctx context.Context, key *meta.Key, options ...k8scloud.Option) (*compute.Address, error)
+	Insert(ctx context.Context, key *meta.Key, obj *compute.Address, options ...k8scloud.Option) error
+	Delete(ctx context.Context, key *meta.Key, options ...k8scloud.Option) error
 }
 
 type backendservicesInterface interface {
-	Get(ctx context.Context, key *meta.Key) (*compute.BackendService, error)
-	Insert(ctx context.Context, key *meta.Key, obj *compute.BackendService) error
-	Update(context.Context, *meta.Key, *compute.BackendService) error
-	Delete(ctx context.Context, key *meta.Key) error
+	Get(ctx context.Context, key *meta.Key, options ...k8scloud.Option) (*compute.BackendService, error)
+	Insert(ctx context.Context, key *meta.Key, obj *compute.BackendService, options ...k8scloud.Option) error
+	Update(ctx context.Context, key *meta.Key, obj *compute.BackendService, options ...k8scloud.Option) error
+	Delete(ctx context.Context, key *meta.Key, options ...k8scloud.Option) error
 }
 
 type forwardingrulesInterface interface {
-	Get(ctx context.Context, key *meta.Key) (*compute.ForwardingRule, error)
-	Insert(ctx context.Context, key *meta.Key, obj *compute.ForwardingRule) error
-	Delete(ctx context.Context, key *meta.Key) error
+	Get(ctx context.Context, key *meta.Key, options ...k8scloud.Option) (*compute.ForwardingRule, error)
+	Insert(ctx context.Context, key *meta.Key, obj *compute.ForwardingRule, options ...k8scloud.Option) error
+	Delete(ctx context.Context, key *meta.Key, options ...k8scloud.Option) error
 }
 
 type healthchecksInterface interface {
-	Get(ctx context.Context, key *meta.Key) (*compute.HealthCheck, error)
-	Insert(ctx context.Context, key *meta.Key, obj *compute.HealthCheck) error
-	Delete(ctx context.Context, key *meta.Key) error
+	Get(ctx context.Context, key *meta.Key, options ...k8scloud.Option) (*compute.HealthCheck, error)
+	Insert(ctx context.Context, key *meta.Key, obj *compute.HealthCheck, options ...k8scloud.Option) error
+	Delete(ctx context.Context, key *meta.Key, options ...k8scloud.Option) error
 }
 
 type instancegroupsInterface interface {
-	Get(ctx context.Context, key *meta.Key) (*compute.InstanceGroup, error)
-	List(ctx context.Context, zone string, fl *filter.F) ([]*compute.InstanceGroup, error)
-	Insert(ctx context.Context, key *meta.Key, obj *compute.InstanceGroup) error
-	Delete(ctx context.Context, key *meta.Key) error
+	Get(ctx context.Context, key *meta.Key, options ...k8scloud.Option) (*compute.InstanceGroup, error)
+	List(ctx context.Context, zone string, fl *filter.F, options ...k8scloud.Option) ([]*compute.InstanceGroup, error)
+	Insert(ctx context.Context, key *meta.Key, obj *compute.InstanceGroup, options ...k8scloud.Option) error
+	Delete(ctx context.Context, key *meta.Key, options ...k8scloud.Option) error
 }
 
 type targettcpproxiesInterface interface {
-	Get(ctx context.Context, key *meta.Key) (*compute.TargetTcpProxy, error)
-	Insert(ctx context.Context, key *meta.Key, obj *compute.TargetTcpProxy) error
-	Delete(ctx context.Context, key *meta.Key) error
+	Get(ctx context.Context, key *meta.Key, options ...k8scloud.Option) (*compute.TargetTcpProxy, error)
+	Insert(ctx context.Context, key *meta.Key, obj *compute.TargetTcpProxy, options ...k8scloud.Option) error
+	Delete(ctx context.Context, key *meta.Key, options ...k8scloud.Option) error
 }
 
 // Scope is an interfaces that hold used methods.

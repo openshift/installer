@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/compute/v1"
 
+	"github.com/openshift/installer/pkg/asset/manifests/gcp"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 )
 
@@ -130,7 +131,7 @@ func createInternalLB(ctx context.Context, in clusterapi.InfraReadyInput, subnet
 	}
 	backends := []*compute.Backend{}
 	for _, zone := range zones {
-		igName := fmt.Sprintf("%s-apiserver-%s", in.InfraID, *zone)
+		igName := fmt.Sprintf("%s-%s-%s", in.InfraID, gcp.InstanceGroupRoleTag, *zone)
 		ig, err := service.InstanceGroups.Get(projectID, *zone, igName).Context(ctx).Do()
 		if err != nil {
 			return "", fmt.Errorf("error getting instance group %s in zone %s: %w", igName, *zone, err)

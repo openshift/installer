@@ -19,21 +19,23 @@ package networks
 import (
 	"context"
 
+	k8scloud "github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud"
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/meta"
 	"google.golang.org/api/compute/v1"
+
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud"
 )
 
 type networksInterface interface {
-	Get(ctx context.Context, key *meta.Key) (*compute.Network, error)
-	Insert(ctx context.Context, key *meta.Key, obj *compute.Network) error
-	Delete(ctx context.Context, key *meta.Key) error
+	Get(ctx context.Context, key *meta.Key, options ...k8scloud.Option) (*compute.Network, error)
+	Insert(ctx context.Context, key *meta.Key, obj *compute.Network, options ...k8scloud.Option) error
+	Delete(ctx context.Context, key *meta.Key, options ...k8scloud.Option) error
 }
 
 type routersInterface interface {
-	Get(ctx context.Context, key *meta.Key) (*compute.Router, error)
-	Insert(ctx context.Context, key *meta.Key, obj *compute.Router) error
-	Delete(ctx context.Context, key *meta.Key) error
+	Get(ctx context.Context, key *meta.Key, options ...k8scloud.Option) (*compute.Router, error)
+	Insert(ctx context.Context, key *meta.Key, obj *compute.Router, options ...k8scloud.Option) error
+	Delete(ctx context.Context, key *meta.Key, options ...k8scloud.Option) error
 }
 
 // Scope is an interfaces that hold used methods.

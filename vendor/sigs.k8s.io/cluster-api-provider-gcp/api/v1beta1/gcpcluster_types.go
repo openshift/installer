@@ -64,6 +64,10 @@ type GCPClusterSpec struct {
 	// supplied then the credentials of the controller will be used.
 	// +optional
 	CredentialsRef *ObjectReference `json:"credentialsRef,omitempty"`
+
+	// LoadBalancer contains configuration for one or more LoadBalancers.
+	// +optional
+	LoadBalancer LoadBalancerSpec `json:"loadBalancer,omitempty"`
 }
 
 // GCPClusterStatus defines the observed state of GCPCluster.

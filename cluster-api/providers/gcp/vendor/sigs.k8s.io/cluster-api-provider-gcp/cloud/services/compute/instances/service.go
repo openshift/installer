@@ -21,22 +21,24 @@ import (
 
 	"github.com/go-logr/logr"
 
+	k8scloud "github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud"
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/filter"
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/meta"
 	"google.golang.org/api/compute/v1"
+
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud"
 )
 
 type instancesInterface interface {
-	Get(ctx context.Context, key *meta.Key) (*compute.Instance, error)
-	Insert(ctx context.Context, key *meta.Key, obj *compute.Instance) error
-	Delete(ctx context.Context, key *meta.Key) error
+	Get(ctx context.Context, key *meta.Key, options ...k8scloud.Option) (*compute.Instance, error)
+	Insert(ctx context.Context, key *meta.Key, obj *compute.Instance, options ...k8scloud.Option) error
+	Delete(ctx context.Context, key *meta.Key, options ...k8scloud.Option) error
 }
 
 type instancegroupsInterface interface {
-	AddInstances(ctx context.Context, key *meta.Key, req *compute.InstanceGroupsAddInstancesRequest) error
-	ListInstances(ctx context.Context, key *meta.Key, req *compute.InstanceGroupsListInstancesRequest, fl *filter.F) ([]*compute.InstanceWithNamedPorts, error)
-	RemoveInstances(ctx context.Context, key *meta.Key, req *compute.InstanceGroupsRemoveInstancesRequest) error
+	AddInstances(ctx context.Context, key *meta.Key, req *compute.InstanceGroupsAddInstancesRequest, options ...k8scloud.Option) error
+	ListInstances(ctx context.Context, key *meta.Key, req *compute.InstanceGroupsListInstancesRequest, fl *filter.F, options ...k8scloud.Option) ([]*compute.InstanceWithNamedPorts, error)
+	RemoveInstances(ctx context.Context, key *meta.Key, req *compute.InstanceGroupsRemoveInstancesRequest, options ...k8scloud.Option) error
 }
 
 // Scope is an interfaces that hold used methods.

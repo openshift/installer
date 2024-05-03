@@ -19,13 +19,14 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
+// InstanceGroupRoleTag is the tag used in the instance
+// group name to maintain compatibility between MAPI & CAPI.
+const InstanceGroupRoleTag = "master"
+
 // GenerateClusterAssets generates the manifests for the cluster-api.
 func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) (*capiutils.GenerateClusterAssetsOutput, error) {
 	manifests := []*asset.RuntimeFile{}
-
-	const (
-		description = "Created By OpenShift Installer"
-	)
+	const description = "Created By OpenShift Installer"
 
 	networkName := fmt.Sprintf("%s-network", clusterID.InfraID)
 	if installConfig.Config.GCP.Network != "" {
@@ -118,6 +119,9 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 			AdditionalLabels: labels,
 			FailureDomains:   findFailureDomains(installConfig),
+			LoadBalancer: capg.LoadBalancerSpec{
+				APIServerInstanceGroupTagOverride: ptr.To(InstanceGroupRoleTag),
+			},
 		},
 	}
 	gcpCluster.SetGroupVersionKind(capg.GroupVersion.WithKind("GCPCluster"))
