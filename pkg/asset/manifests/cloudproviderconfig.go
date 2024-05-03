@@ -253,6 +253,18 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		vpcSubnets := installConfig.Config.PowerVS.VPCSubnets
 		if vpc == "" {
 			vpc = fmt.Sprintf("vpc-%s", clusterID.InfraID)
+		} else {
+			existingSubnets, err := installConfig.PowerVS.GetVPCSubnets(context.TODO(), vpc)
+			if err != nil {
+				return err
+			}
+
+			// cluster-api-provider-ibm requires any existing VPC subnet to be specified in the cluster
+			// manifest and as such we need to also specify these in the cloudproviderconfig.
+			// @TODO: Deprecate platform.powervs.vpcSubnets?
+			for _, subnet := range existingSubnets {
+				vpcSubnets = append(vpcSubnets, *subnet.Name)
+			}
 		}
 
 		if len(vpcSubnets) == 0 {
