@@ -81,7 +81,7 @@ func (p *Provider) Provision(_ context.Context, dir string, parents asset.Parent
 // DestroyBootstrap implements pkg/infrastructure/provider.DestroyBootstrap.
 // DestroyBootstrap iterates through each stage, and will run the destroy
 // command when defined on a stage.
-func (p *Provider) DestroyBootstrap(dir string) error {
+func (p *Provider) DestroyBootstrap(ctx context.Context, dir string) error {
 	varFiles := []string{tfVarsFileName, tfPlatformVarsFileName}
 	for _, stage := range p.stages {
 		varFiles = append(varFiles, stage.OutputsFilename())

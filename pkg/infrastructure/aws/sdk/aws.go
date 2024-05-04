@@ -303,7 +303,7 @@ func (a InfraProvider) Provision(ctx context.Context, dir string, parents asset.
 }
 
 // DestroyBootstrap destroys the temporary bootstrap resources.
-func (a InfraProvider) DestroyBootstrap(dir string) error {
+func (a InfraProvider) DestroyBootstrap(ctx context.Context, dir string) error {
 	// Unmarshall input from tf variables, so we can use it along with
 	// installConfig and other assets as the contractual input regardless of
 	// the implementation.
@@ -341,7 +341,7 @@ func (a InfraProvider) DestroyBootstrap(dir string) error {
 		Fn:   request.MakeAddToUserAgentHandler("OpenShift/4.x Destroyer", version.Raw),
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Minute)
 	defer cancel()
 
 	logger := logrus.StandardLogger()
