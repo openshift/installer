@@ -386,7 +386,7 @@ func (i *InfraProvider) DestroyBootstrap(ctx context.Context, dir string) error 
 		return fmt.Errorf("failed to delete bootstrap machine: %w", err)
 	}
 
-	machineDeletionTimeout := 2 * time.Minute
+	machineDeletionTimeout := 5 * time.Minute
 	logrus.Infof("Waiting up to %v for bootstrap machine deletion %s/%s...", machineDeletionTimeout, machineNamespace, machineName)
 	ctx, cancel := context.WithTimeout(ctx, machineDeletionTimeout)
 	wait.UntilWithContext(ctx, func(context.Context) {
@@ -406,10 +406,10 @@ func (i *InfraProvider) DestroyBootstrap(ctx context.Context, dir string) error 
 
 	err = ctx.Err()
 	if err != nil && !errors.Is(err, context.Canceled) {
-		logrus.Infof("Timeout deleting bootstrap machine: %s", err)
+		logrus.Warnf("Timeout deleting bootstrap machine: %s", err)
+	} else {
+		logrus.Infof("Finished destroying bootstrap resources")
 	}
-
-	logrus.Infof("Finished destroying bootstrap resources")
 	clusterapi.System().Teardown()
 
 	return nil
