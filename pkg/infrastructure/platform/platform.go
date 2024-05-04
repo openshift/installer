@@ -6,10 +6,8 @@ package platform
 import (
 	"fmt"
 
-	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/infrastructure"
 	awscapi "github.com/openshift/installer/pkg/infrastructure/aws/clusterapi"
-	awsinfra "github.com/openshift/installer/pkg/infrastructure/aws/sdk"
 	azureinfra "github.com/openshift/installer/pkg/infrastructure/azure"
 	baremetalinfra "github.com/openshift/installer/pkg/infrastructure/baremetal"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
@@ -53,9 +51,6 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 	case awstypes.Name:
 		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(&awscapi.Provider{}), nil
-		}
-		if fg.Enabled(features.FeatureGateInstallAlternateInfrastructureAWS) {
-			return awsinfra.InitializeProvider(), nil
 		}
 		return terraform.InitializeProvider(aws.PlatformStages), nil
 	case azuretypes.Name:
