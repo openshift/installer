@@ -132,7 +132,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	// Run the CAPI system.
 	timer.StartTimer(infrastructureStage)
 	capiSystem := clusterapi.System()
-	if err := capiSystem.Run(ctx, installConfig); err != nil {
+	if err := capiSystem.Run(ctx); err != nil {
 		return fileList, fmt.Errorf("failed to run cluster api system: %w", err)
 	}
 

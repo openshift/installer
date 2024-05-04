@@ -17,8 +17,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
+	"github.com/openshift/installer/cmd/openshift-install/command"
 	"github.com/openshift/installer/data"
-	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/cluster/metadata"
+	azic "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpic "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	powervsic "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/clusterapi/internal/process"
@@ -49,7 +51,7 @@ const (
 
 // Interface is the interface for the cluster-api system.
 type Interface interface {
-	Run(ctx context.Context, installConfig *installconfig.InstallConfig) error
+	Run(ctx context.Context) error
 	State() SystemState
 	Client() client.Client
 	Teardown()
@@ -78,7 +80,7 @@ type system struct {
 }
 
 // Run launches the cluster-api system.
-func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallConfig) error {
+func (c *system) Run(ctx context.Context) error {
 	c.Lock()
 	defer c.Unlock()
 
@@ -121,9 +123,19 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 		},
 	}
 
+	metadata, err := metadata.Load(command.RootOpts.Dir)
+	if err != nil {
+		return fmt.Errorf("failed to load metadata: %w", err)
+	}
+
+	platform := metadata.Platform()
+	if platform == "" {
+		return fmt.Errorf("no platform configured in metadata")
+	}
+
 	// Create the infrastructure controllers.
 	// Only add the controllers for the platform we are deploying to.
-	switch platform := installConfig.Config.Platform.Name(); platform {
+	switch platform {
 	case aws.Name:
 		controller := c.getInfrastructureController(
 			&AWS,
@@ -137,7 +149,7 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 			},
 			map[string]string{},
 		)
-		if cfg := installConfig.Config.AWS; cfg != nil && len(cfg.ServiceEndpoints) > 0 {
+		if cfg := metadata.AWS; cfg != nil && len(cfg.ServiceEndpoints) > 0 {
 			endpoints := make([]string, 0, len(cfg.ServiceEndpoints))
 			// CAPA expects name=url pairs of service endpoints
 			for _, endpoint := range cfg.ServiceEndpoints {
@@ -147,9 +159,13 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 		}
 		controllers = append(controllers, controller)
 	case azure.Name:
-		session, err := installConfig.Azure.Session()
+		cloudName := metadata.Azure.CloudName
+		if cloudName == "" {
+			cloudName = azure.PublicCloud
+		}
+		session, err := azic.GetSession(cloudName, metadata.Azure.ARMEndpoint)
 		if err != nil {
-			return fmt.Errorf("failed to create azure session: %w", err)
+			return fmt.Errorf("unable to retrieve azure session: %w", err)
 		}
 
 		controllers = append(controllers,
