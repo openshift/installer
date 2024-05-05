@@ -180,3 +180,9 @@ variable "aws_worker_iam_role_name" {
   description = "The name of the IAM role that will be attached to worker instances."
   default = ""
 }
+
+variable "aws_master_use_spot_instance" {
+  type = bool
+  description = "(optional) Whether to use instances from the Spot market for masters"
+  default = false
+}
