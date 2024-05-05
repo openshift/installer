@@ -6,7 +6,6 @@ import (
 	"math"
 	"reflect"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
@@ -56,17 +55,10 @@ const publicPrefix = "api."
 // InfraReady is called once cluster.Status.InfrastructureReady
 // is true, typically after load balancers have been provisioned. It can be used
 // to create DNS records.
-// nolint:gocyclo
 func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
 	var (
-		client      *powervsconfig.Client
-		vpcRegion   string
-		instanceCRN string
-		rules       *vpcv1.SecurityGroupRuleCollection
-		rule        *vpcv1.SecurityGroupRulePrototype
-		wantedPorts = sets.New[int64](22, 10258, 22623)
-		foundPorts  = sets.Set[int64]{}
-		err         error
+		err  error
+		rule *vpcv1.SecurityGroupRulePrototype
 	)
 
 	logrus.Debugf("InfraReady: in = %+v", in)
@@ -103,16 +95,8 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	}
 	logrus.Debugf("InfraReady: image = %+v", powerVSImage)
 
-	// SAD: client in the Metadata struct is lowercase and therefore private
-	// client = in.InstallConfig.PowerVS.client
-	client, err = powervsconfig.NewClient()
-	if err != nil {
-		return fmt.Errorf("failed to get NewClient in InfraReady: %w", err)
-	}
-	logrus.Debugf("InfraReady: NewClient returns %+v", client)
-
 	// We need to set the region we will eventually query inside
-	vpcRegion = in.InstallConfig.Config.Platform.PowerVS.VPCRegion
+	vpcRegion := in.InstallConfig.Config.Platform.PowerVS.VPCRegion
 	if vpcRegion == "" {
 		vpcRegion, err = powervstypes.VPCRegionForPowerVSRegion(in.InstallConfig.Config.Platform.PowerVS.Region)
 		if err != nil {
@@ -120,112 +104,106 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		}
 	}
 	logrus.Debugf("InfraReady: vpcRegion = %s", vpcRegion)
-	if err = client.SetVPCServiceURLForRegion(ctx, vpcRegion); err != nil {
+	if err = in.InstallConfig.PowerVS.SetVPCServiceURLForRegion(ctx, vpcRegion); err != nil {
 		return fmt.Errorf("failed to set the VPC service region (%s) in InfraReady: %w", vpcRegion, err)
 	}
 
-	// Step 1.
-	// Create DNS records for the two load balancers
-	// map[string]VPCLoadBalancerStatus
-	instanceCRN, err = client.GetInstanceCRNByName(ctx,
-		in.InstallConfig.PowerVS.BaseDomain,
-		in.InstallConfig.Config.Publish)
-	if err != nil {
-		return fmt.Errorf("failed to get InstanceCRN (%s) by name in InfraReady: %w",
-			in.InstallConfig.Config.Publish,
-			err)
+	// Step 1: Create DNS records for the two load balancers
+	if err = createLoadBalancerDNSRecords(ctx, in, powerVSCluster.Status.LoadBalancers); err != nil {
+		return fmt.Errorf("failed to create DNS records for loadbalancers: %w", err)
 	}
-	logrus.Debugf("InfraReady: instanceCRN = %s", instanceCRN)
 
+	// Step 2: See which ports are already allowed.
+	missingPorts, err := findMissingSecurityGroupRules(ctx, in, *powerVSCluster.Status.VPC.ID)
+	if err != nil {
+		return fmt.Errorf("failed to find missing security group rules: %w", err)
+	}
+
+	// Step 3: Add to security group rules
+	for port := range missingPorts {
+		port := port // TODO: remove when using golang 1.22+
+		rule = &vpcv1.SecurityGroupRulePrototype{
+			Direction: ptr.To("inbound"),
+			Protocol:  ptr.To("tcp"),
+			PortMin:   ptr.To(port),
+			PortMax:   ptr.To(port),
+		}
+
+		logrus.Debugf("InfraReady: Adding port %d to security group rule to %v", port, *powerVSCluster.Status.VPC.ID)
+		err := in.InstallConfig.PowerVS.AddSecurityGroupRule(ctx, rule, *powerVSCluster.Status.VPC.ID)
+		if err != nil {
+			return fmt.Errorf("failed to add security group rule for port %d: %w", port, err)
+		}
+	}
+
+	// Also allow ping so we can debug
+	rule = &vpcv1.SecurityGroupRulePrototype{
+		Direction: ptr.To("inbound"),
+		Protocol:  ptr.To("icmp"),
+	}
+
+	err = in.InstallConfig.PowerVS.AddSecurityGroupRule(ctx, rule, *powerVSCluster.Status.VPC.ID)
+	if err != nil {
+		return fmt.Errorf("failed to add ping security group rule: %w", err)
+	}
+	return nil
+}
+
+func createLoadBalancerDNSRecords(ctx context.Context, in clusterapi.InfraReadyInput, loadBalancers map[string]capibm.VPCLoadBalancerStatus) error {
 	lbExtExp := regexp.MustCompile(`\b-loadbalancer\b$`)
 	lbIntExp := regexp.MustCompile(`\b-loadbalancer-int\b$`)
+	for lbKey, loadBalancerStatus := range loadBalancers {
+		var hostnames []string
 
-	for lbKey, loadBalancerStatus := range powerVSCluster.Status.LoadBalancers {
-		var (
-			idx       int
-			substr    string
-			infraID   string
-			hostnames []string
-			prefix    string
-		)
-
-		// The infra id is "rdr-hamzy-test-dal10-846vd" and we need "rdr-hamzy-test-dal10"
-		logrus.Debugf("in.InfraID = %s", in.InfraID)
-		idx = strings.LastIndex(in.InfraID, "-")
-		logrus.Debugf("idx = %d", idx)
-		substr = in.InfraID[idx:]
-		logrus.Debugf("substr = %s", substr)
-		infraID = strings.ReplaceAll(in.InfraID, substr, "")
-		logrus.Debugf("infraID = %s", infraID)
+		clusterName := in.InstallConfig.Config.ObjectMeta.Name
 
 		// Is it external (public) or internal (private)?
 		logrus.Debugf("lbKey = %s", lbKey)
 		switch {
 		case lbExtExp.MatchString(lbKey):
 			if in.InstallConfig.Config.Publish == types.ExternalPublishingStrategy {
-				hostnames = append(hostnames, fmt.Sprintf("%s%s", publicPrefix, infraID))
+				hostnames = append(hostnames, fmt.Sprintf("%s%s", publicPrefix, clusterName))
 			}
 		case lbIntExp.MatchString(lbKey):
-			hostnames = append(hostnames, fmt.Sprintf("%s%s", privatePrefix, infraID))
+			hostnames = append(hostnames, fmt.Sprintf("%s%s", privatePrefix, clusterName))
 			// In the private cluster scenario, also point api.* to internal LB
 			if in.InstallConfig.Config.Publish == types.InternalPublishingStrategy {
-				hostnames = append(hostnames, fmt.Sprintf("%s%s", publicPrefix, infraID))
+				hostnames = append(hostnames, fmt.Sprintf("%s%s", publicPrefix, clusterName))
 			}
 		}
-		logrus.Debugf("prefix = %s", prefix)
 
 		for _, hostname := range hostnames {
-			logrus.Debugf("InfraReady: crn = %s, base domain = %s, hostname = %s, cname = %s",
-				instanceCRN,
-				in.InstallConfig.PowerVS.BaseDomain,
+			logrus.Debugf("InfraReady: hostname = %s, cname = %s",
 				hostname,
 				*loadBalancerStatus.Hostname)
 
-			backoff := wait.Backoff{
-				Duration: 15 * time.Second,
-				Factor:   1.1,
-				Cap:      leftInContext(ctx),
-				Steps:    math.MaxInt32}
-			var lastErr error
-			err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
-				lastErr = client.CreateDNSRecord(ctx,
-					in.InstallConfig.Config.Publish,
-					instanceCRN,
-					in.InstallConfig.PowerVS.BaseDomain,
-					hostname,
-					*loadBalancerStatus.Hostname)
-				if lastErr == nil {
-					return true, nil
-				}
-				return false, nil
-			})
-
+			err := in.InstallConfig.PowerVS.CreateDNSRecord(ctx,
+				hostname,
+				*loadBalancerStatus.Hostname)
 			if err != nil {
-				if lastErr != nil {
-					err = lastErr
-				}
-				return fmt.Errorf("failed to create a DNS CNAME record (%s, %s): %w",
-					hostname,
-					*loadBalancerStatus.Hostname,
-					err)
+				return fmt.Errorf("InfraReady: Failed to create DNS record: %w", err)
 			}
 		}
 	}
+	return nil
+}
 
-	// Step 2.
-	// See which ports are already allowed.
-	rules, err = client.ListSecurityGroupRules(ctx, *powerVSCluster.Status.VPC.ID)
+func findMissingSecurityGroupRules(ctx context.Context, in clusterapi.InfraReadyInput, vpcID string) (sets.Set[int64], error) {
+	foundPorts := sets.Set[int64]{}
+	wantedPorts := sets.New[int64](22, 10258, 22623)
+
+	existingRules, err := in.InstallConfig.PowerVS.ListSecurityGroupRules(ctx, vpcID)
 	if err != nil {
-		return fmt.Errorf("failed to list security group rules: %w", err)
+		return nil, fmt.Errorf("failed to list security group rules: %w", err)
 	}
 
-	for _, existingRule := range rules.Rules {
+	for _, existingRule := range existingRules.Rules {
 		switch reflect.TypeOf(existingRule).String() {
 		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll":
 		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp":
 			securityGroupRule, ok := existingRule.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp)
 			if !ok {
-				return fmt.Errorf("could not convert to ProtocolTcpudp")
+				return nil, fmt.Errorf("could not convert to ProtocolTcpudp")
 			}
 			logrus.Debugf("InfraReady: VPC has rule: direction = %s, proto = %s, min = %d, max = %d",
 				*securityGroupRule.Direction,
@@ -239,66 +217,14 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp":
 		}
 	}
+
+	missingPorts := wantedPorts.Difference(foundPorts)
+
 	logrus.Debugf("InfraReady: foundPorts = %+v", foundPorts)
 	logrus.Debugf("InfraReady: wantedPorts = %+v", wantedPorts)
-	logrus.Debugf("InfraReady: wantedPorts.Difference(foundPorts) = %+v", wantedPorts.Difference(foundPorts))
+	logrus.Debugf("InfraReady: wantedPorts.Difference(foundPorts) = %+v", missingPorts)
 
-	// Step 3.
-	// Add to security group rules
-	for port := range wantedPorts.Difference(foundPorts) {
-		rule = &vpcv1.SecurityGroupRulePrototype{
-			Direction: ptr.To("inbound"),
-			Protocol:  ptr.To("tcp"),
-			PortMin:   ptr.To(port),
-			PortMax:   ptr.To(port),
-		}
-
-		backoff := wait.Backoff{
-			Duration: 15 * time.Second,
-			Factor:   1.1,
-			Cap:      leftInContext(ctx),
-			Steps:    math.MaxInt32}
-		err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
-			logrus.Debugf("InfraReady: Adding port %d to security group rule to %v",
-				port,
-				*powerVSCluster.Status.VPC.ID)
-			err2 := client.AddSecurityGroupRule(ctx, *powerVSCluster.Status.VPC.ID, rule)
-			if err2 == nil {
-				return true, nil
-			}
-			return false, err2
-		})
-		if err != nil {
-			return fmt.Errorf("failed to add security group rule for port %d: %w", port, err)
-		}
-	}
-
-	// Allow ping so we can debug
-	rule = &vpcv1.SecurityGroupRulePrototype{
-		Direction: ptr.To("inbound"),
-		Protocol:  ptr.To("icmp"),
-	}
-	backoff := wait.Backoff{
-		Duration: 15 * time.Second,
-		Factor:   1.1,
-		Cap:      leftInContext(ctx),
-		Steps:    math.MaxInt32}
-	var lastErr error
-	err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
-		lastErr = client.AddSecurityGroupRule(ctx, *powerVSCluster.Status.VPC.ID, rule)
-		if lastErr == nil {
-			return true, nil
-		}
-		return false, nil
-	})
-	if err != nil {
-		if lastErr != nil {
-			err = lastErr
-		}
-		return fmt.Errorf("failed to add security group rule for icmp: %w", err)
-	}
-
-	return nil
+	return missingPorts, nil
 }
 
 func findMachineAddress(ctx context.Context, in clusterapi.PostProvisionInput, key crclient.ObjectKey) (string, error) {
