@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
@@ -41,6 +42,7 @@ type config struct {
 	WorkerIAMRoleName               string            `json:"aws_worker_iam_role_name,omitempty"`
 	MasterMetadataAuthentication    string            `json:"aws_master_instance_metadata_authentication,omitempty"`
 	BootstrapMetadataAuthentication string            `json:"aws_bootstrap_instance_metadata_authentication,omitempty"`
+	MasterUseSpotInstance           bool              `json:"aws_master_use_spot_instance,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -120,6 +122,11 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		return nil, errors.New("EBS IOPS must be configured for the io1 root volume")
 	}
 
+	useSpotInstances := masterConfig.SpotMarketOptions != nil
+	if useSpotInstances {
+		logrus.Warn("Found Spot instance configuration. Please be warned, this is not advised.")
+	}
+
 	cfg := &config{
 		CustomEndpoints:         endpoints,
 		Region:                  masterConfig.Placement.Region,
@@ -138,6 +145,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		IgnitionBucket:          sources.IgnitionBucket,
 		MasterIAMRoleName:       sources.MasterIAMRoleName,
 		WorkerIAMRoleName:       sources.WorkerIAMRoleName,
+		MasterUseSpotInstance:   useSpotInstances,
 	}
 
 	stubIgn, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(sources.IgnitionPresignedURL, sources.AdditionalTrustBundle, sources.Proxy)
