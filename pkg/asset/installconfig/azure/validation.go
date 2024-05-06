@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	azdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
-	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/network/mgmt/network"
+	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/sirupsen/logrus"
@@ -526,7 +526,19 @@ func validateNetworks(client API, p *aztypes.Platform, machineNetworks []types.M
 func validateSubnet(client API, fieldPath *field.Path, subnet *aznetwork.Subnet, subnetName string, networks []types.MachineNetworkEntry) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	subnetIP, _, err := net.ParseCIDR(*subnet.AddressPrefix)
+	var addressPrefix string
+	switch {
+	case subnet.AddressPrefix != nil:
+		addressPrefix = *subnet.AddressPrefix
+	// NOTE: if the subscription has the `AllowMultipleAddressPrefixesOnSubnet` feature, the Azure API will return a
+	// `addressPrefixes` field with a slice of addresses instead of a single value via `addressPrefix`.
+	case subnet.AddressPrefixes != nil && len(*subnet.AddressPrefixes) > 0:
+		addressPrefix = (*subnet.AddressPrefixes)[0]
+	default:
+		return append(allErrs, field.Invalid(fieldPath, subnetName, "subnet does not have an address prefix"))
+	}
+
+	subnetIP, _, err := net.ParseCIDR(addressPrefix)
 	if err != nil {
 		return append(allErrs, field.Invalid(fieldPath, subnetName, "unable to parse subnet CIDR"))
 	}
