@@ -22,7 +22,7 @@ func Extract(isoPath string, workDir string) error {
 		return err
 	}
 
-	fs, err := d.GetFilesystem(0)
+	fs, err := GetISO9660FileSystem(d)
 	if err != nil {
 		return err
 	}
@@ -289,7 +289,7 @@ func GetISOFileInfo(filePath, isoPath string) (int64, int64, error) {
 		return 0, 0, err
 	}
 
-	fs, err := d.GetFilesystem(0)
+	fs, err := GetISO9660FileSystem(d)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -312,7 +312,7 @@ func GetFileFromISO(isoPath, filePath string) (filesystem.File, error) {
 		return nil, err
 	}
 
-	fs, err := d.GetFilesystem(0)
+	fs, err := GetISO9660FileSystem(d)
 	if err != nil {
 		return nil, err
 	}
@@ -336,4 +336,9 @@ func ReadFileFromISO(isoPath, filePath string) ([]byte, error) {
 		return nil, err
 	}
 	return ret, nil
+}
+
+// Gets directly the ISO 9660 filesystem (equivalent to GetFileSystem(0)).
+func GetISO9660FileSystem(d *disk.Disk) (filesystem.FileSystem, error) {
+	return iso9660.Read(d.File, d.Size, 0, 0)
 }
