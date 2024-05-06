@@ -24,12 +24,10 @@ At a high level, the local control plane is responsible for:
 The Cluster API system is formed of a set of binaries. The core Cluster API manager, and the infrastructure providers are built using Go Modules in the `cluster-api` folder.
 
 The binaries are built and packaged during the standard installer build process, `hack/build.sh`. Cluster API specific build flow is contained in the `hack/build-cluster-api.sh` script:
-- Only enabled if the `OPENSHIFT_INSTALL_CLUSTER_API` environment variable is set.
 - Builds (as needed) every binary listed as a Go Module in  the `cluster-api` folder.
 - Downloads (as needed) the specified version of `envtest` to package `kube-apiserver` and `etcd`.
 - Produces a single `cluster-api.zip` file which is then copied in `pkg/clusterapi/mirror`.
 
 To build an `openshift-install` binary with Cluster API bundled:
-- Set `export OPENSHIFT_INSTALL_CLUSTER_API=y`
-    - Optionally `export SKIP_TERRAFORM=y` if you don't need to use Terraform.
+- Optionally `export SKIP_TERRAFORM=y` if you don't need to use Terraform.
 - Run `./hack/build.sh`, the binary is then produced in `bin/openshift-install`.
