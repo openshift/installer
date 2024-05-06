@@ -8,9 +8,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	network "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/network/mgmt/network"
 	resources "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
 	subscriptions "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
+	network "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
 	compute "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	gomock "github.com/golang/mock/gomock"
 )
