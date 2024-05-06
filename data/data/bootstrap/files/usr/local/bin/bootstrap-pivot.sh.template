@@ -23,7 +23,7 @@ if [ ! -f /opt/openshift/.pivot-done ]; then
 {{if .IsFCOS -}}
   MACHINE_OS_IMAGE=$(image_for fedora-coreos)
 {{else if .IsSCOS -}}
-  MACHINE_OS_IMAGE=$(image_for centos-stream-coreos-9)
+  MACHINE_OS_IMAGE=$(image_for stream-coreos)
 {{end -}}
   echo "Pulling ${MACHINE_OS_IMAGE}..."
   while true
