@@ -148,7 +148,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 	// when multiple zones are defined, network and workspace are derived from the topology
 	origProv := vsphereMachineProvider.DeepCopy()
-	if len(failureDomains) > 1 {
+	if len(failureDomains) >= 1 {
 		vsphereMachineProvider.Network = machineapi.NetworkSpec{}
 		vsphereMachineProvider.Workspace = &machineapi.Workspace{}
 		vsphereMachineProvider.Template = ""
