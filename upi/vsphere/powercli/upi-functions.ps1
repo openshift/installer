@@ -44,6 +44,13 @@ function New-OpenShiftVM {
         }
     }
 
+    # If storage policy is set, lets pull the mo ref
+    if ($NULL -ne $StoragePolicy -and $StoragePolicy -ne "")
+    {
+        $storagePolicyRef = Get-SpbmStoragePolicy -Id $StoragePolicy
+        $args["StoragePolicy"] = $storagePolicyRef
+    }
+
     # Clone the virtual machine from the imported template
     # $vm = New-VM -VM $Template -Name $Name -Datastore $Datastore -ResourcePool $ResourcePool #-Location $Folder #-LinkedClone -ReferenceSnapshot $Snapshot
     $vm = New-VM -VM $Template @args
