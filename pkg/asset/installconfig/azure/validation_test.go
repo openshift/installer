@@ -5,9 +5,9 @@ import (
 	"net"
 	"testing"
 
-	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/network/mgmt/network"
 	azres "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
 	azsubs "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
+	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/golang/mock/gomock"
