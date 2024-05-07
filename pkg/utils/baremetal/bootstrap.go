@@ -37,7 +37,7 @@ func WaitForBaremetalBootstrapControlPlane(ctx context.Context, config *rest.Con
 
 	masters := map[string]baremetalhost.BareMetalHost{}
 
-	_, err = clientwatch.UntilWithSync(
+	_, withSyncErr := clientwatch.UntilWithSync(
 		ctx,
 		blw,
 		&unstructured.Unstructured{},
@@ -96,10 +96,6 @@ func WaitForBaremetalBootstrapControlPlane(ctx context.Context, config *rest.Con
 		},
 	)
 
-	if err != nil {
-		return err
-	}
-
 	mastersJSON, err := json.Marshal(masters)
 	if err != nil {
 		return fmt.Errorf("failed to marshal masters: %w", err)
@@ -110,5 +106,5 @@ func WaitForBaremetalBootstrapControlPlane(ctx context.Context, config *rest.Con
 		return fmt.Errorf("failed to persist masters file to disk: %w", err)
 	}
 
-	return nil
+	return withSyncErr
 }
