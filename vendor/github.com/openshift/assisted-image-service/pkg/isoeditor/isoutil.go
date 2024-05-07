@@ -22,7 +22,7 @@ func Extract(isoPath string, workDir string) error {
 		return err
 	}
 
-	fs, err := d.GetFilesystem(0)
+	fs, err := GetISO9660FileSystem(d)
 	if err != nil {
 		return err
 	}
@@ -167,6 +167,27 @@ func Create(outPath string, workDir string, volumeLabel string) error {
 				},
 			},
 		}
+	} else if exists, _ := fileExists(filepath.Join(workDir, "images/cdboot.img")); exists {
+		// Creating an ISO for S390 boot:
+		cdbootSectors, err := cdbootLoadSectors(workDir)
+		if err != nil {
+			return err
+		}
+		if exists, _ := fileExists(filepath.Join(workDir, "boot.catalog")); !exists {
+			return fmt.Errorf("missing boot.catalog file")
+		}
+		options.ElTorito = &iso9660.ElTorito{
+			BootCatalog:     "boot.catalog",
+			HideBootCatalog: true,
+			Entries: []*iso9660.ElToritoEntry{
+				{
+					Platform:  iso9660.BIOS,
+					Emulation: iso9660.NoEmulation,
+					BootFile:  "images/cdboot.img",
+					LoadSize:  cdbootSectors,
+				},
+			},
+		}
 	}
 
 	return iso.Finalize(options)
@@ -180,6 +201,42 @@ func efiLoadSectors(workDir string) (uint16, error) {
 		return 0, err
 	}
 	return uint16(math.Ceil(float64(efiStat.Size()) / 2048)), nil
+}
+
+func cdbootLoadSectors(workDir string) (result uint16, err error) {
+	// Calculate the number of 512 sectors that would be needed for the boot image:
+	info, err := os.Stat(filepath.Join(workDir, "images/cdboot.img"))
+	if err != nil {
+		return
+	}
+	size := info.Size()
+	sectors := size / 512
+	if size%512 != 0 {
+		sectors++
+	}
+
+	// Some BIOS may have problems if this number isn't a multiple of four, because then it
+	// won't fit into complete the 2048 byte blocks used by CD devices. So we need to round
+	// up to the closest multiple of four.
+	if sectors%4 != 0 {
+		sectors += 4 - sectors%4
+	}
+
+	// The resulting number will not fit in a 16 bit unsigned number if the file is 32 MiB
+	// or larger. For example, in OpenShift 4.14.0 the s390x boot image is 64 MiB:
+	//
+	//	# mount -o loop,ro rhcos-4.14.0-s390x-live.s390x.iso /mnt
+	//	# ls -lh /mnt/images/cdboot.img
+	//	-r--r--r--. 1 root root 64M Sep 20 20:16 /mnt/images/cdboot.img
+	//
+	// In that case the 'xorrisofs' tool that is used to generate those ISO files sets the
+	// field to 65535, the maximum value for a 16 bits unsigned integer. That is incorrect,
+	// but seems to work, so we do the same.
+	if sectors > math.MaxUint16 {
+		sectors = math.MaxUint16
+	}
+	result = uint16(sectors)
+	return
 }
 
 func haveBootFiles(workDir string) (bool, error) {
@@ -232,7 +289,7 @@ func GetISOFileInfo(filePath, isoPath string) (int64, int64, error) {
 		return 0, 0, err
 	}
 
-	fs, err := d.GetFilesystem(0)
+	fs, err := GetISO9660FileSystem(d)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -255,7 +312,7 @@ func GetFileFromISO(isoPath, filePath string) (filesystem.File, error) {
 		return nil, err
 	}
 
-	fs, err := d.GetFilesystem(0)
+	fs, err := GetISO9660FileSystem(d)
 	if err != nil {
 		return nil, err
 	}
@@ -279,4 +336,9 @@ func ReadFileFromISO(isoPath, filePath string) ([]byte, error) {
 		return nil, err
 	}
 	return ret, nil
+}
+
+// Gets directly the ISO 9660 filesystem (equivalent to GetFileSystem(0)).
+func GetISO9660FileSystem(d *disk.Disk) (filesystem.FileSystem, error) {
+	return iso9660.Read(d.File, d.Size, 0, 0)
 }
