@@ -1,12 +1,3 @@
-variable "aws_config_version" {
-  description = <<EOF
-(internal) This declares the version of the AWS configuration variables.
-It has no impact on generated assets but declares the version contract of the configuration.
-EOF
-
-  default = "1.0"
-}
-
 variable "custom_endpoints" {
   type = map(string)
 
@@ -21,22 +12,22 @@ EOF
 }
 
 variable "aws_bootstrap_instance_type" {
-  type        = string
+  type = string
   description = "Instance type for the bootstrap node. Example: `m4.large`."
 }
 
 variable "aws_master_instance_type" {
-  type        = string
+  type = string
   description = "Instance type for the master node(s). Example: `m4.large`."
 }
 
 variable "aws_ami" {
-  type        = string
+  type = string
   description = "AMI for all nodes.  An encrypted copy of this AMI will be used.  Example: `ami-foobar123`."
 }
 
 variable "aws_ami_region" {
-  type        = string
+  type = string
   description = "Region for the AMI for all nodes.  An encrypted copy of this AMI will be used.  Example: `ami-foobar123`."
 }
 
@@ -53,12 +44,12 @@ EOF
 }
 
 variable "aws_master_root_volume_type" {
-  type = string
+  type        = string
   description = "The type of volume for the root block device of master nodes."
 }
 
 variable "aws_master_root_volume_size" {
-  type = string
+  type        = string
   description = "The size of the volume in gigabytes for the root block device of master nodes."
 }
 
@@ -94,41 +85,41 @@ EOF
 }
 
 variable "aws_master_instance_metadata_authentication" {
-  type        = string
-  default     = "optional"
+  type = string
+  default = "optional"
   description = "The session tokens requirement, also referred to as Instance Metadata Service Version 2 (IMDSv2). Values are optional or required. Defaults to optional."
 }
 
 variable "aws_bootstrap_instance_metadata_authentication" {
-  type        = string
-  default     = "optional"
+  type = string
+  default = "optional"
   description = "The session tokens requirement, also referred to as Instance Metadata Service Version 2 (IMDSv2). Values are optional or required. Defaults to optional."
 }
 
 variable "aws_region" {
-  type        = string
+  type = string
   description = "The target AWS region for the cluster."
 }
 
 variable "aws_master_availability_zones" {
-  type        = list(string)
+  type = list(string)
   description = "The availability zones in which to create the masters. The length of this list must match master_count."
 }
 
 variable "aws_worker_availability_zones" {
-  type        = list(string)
+  type = list(string)
   description = "The availability zones to provision for workers.  Worker instances are created by the machine-API operator, but this variable controls their supporting infrastructure (subnets, routing, etc.)."
 }
 
 variable "aws_edge_local_zones" {
-  type    = list(string)
+  type = list(string)
   default = []
 
   description = "The zones to provision subnets for the edge pool. Edge instances are created by the machine-API operator, but this variable controls their supporting infrastructure (subnets, routing, etc.)."
 }
 
 variable "aws_edge_parent_zones_index" {
-  type    = map(string)
+  type = map(string)
   default = {}
 
   description = <<EOF
@@ -141,48 +132,48 @@ EOF
 }
 
 variable "aws_vpc" {
-  type = string
-  default = null
+  type        = string
+  default     = null
   description = "(optional) An existing network (VPC ID) into which the cluster should be installed."
 }
 
 variable "aws_public_subnets" {
-  type = list(string)
-  default = null
+  type        = list(string)
+  default     = null
   description = "(optional) Existing public subnets into which the cluster should be installed."
 }
 
 variable "aws_private_subnets" {
-  type = list(string)
-  default = null
+  type        = list(string)
+  default     = null
   description = "(optional) Existing private subnets into which the cluster should be installed."
 }
 
 variable "aws_internal_zone" {
-  type = string
-  default = null
+  type        = string
+  default     = null
   description = "(optional) An existing hosted zone (zone ID) to use for the internal API."
 }
 
 variable "aws_internal_zone_role" {
-  type = string
-  default = null
+  type        = string
+  default     = null
   description = "(optional) A role to assume when using an existing hosted zone from another account."
 }
 
 
 variable "aws_publish_strategy" {
-  type = string
+  type        = string
   description = "The cluster publishing strategy, either Internal or External"
 }
 
 variable "aws_ignition_bucket" {
-  type = string
+  type        = string
   description = "The S3 bucket where the ignition configuration is stored"
 }
 
 variable "aws_bootstrap_stub_ignition" {
-  type = string
+  type        = string
   description = <<EOF
 The stub Ignition config that should be used to boot the bootstrap instance. This already points to the presigned URL for the s3 bucket
 specified in aws_ignition_bucket.
@@ -190,30 +181,30 @@ EOF
 }
 
 variable "aws_master_iam_role_name" {
-  type        = string
+  type = string
   description = "The name of the IAM role that will be attached to master instances."
-  default     = ""
+  default = ""
 }
 
 variable "aws_worker_iam_role_name" {
-  type        = string
+  type = string
   description = "The name of the IAM role that will be attached to worker instances."
-  default     = ""
+  default = ""
 }
 
 variable "aws_preserve_bootstrap_ignition" {
-  type        = bool
+  type = bool
   description = "The variable that needs to be set to avoid destuction of S3 objects during bootstrap destroy."
 }
 
 variable "aws_master_security_groups" {
-  type        = list(string)
+  type = list(string)
   description = "(optional) List of additional security group IDs to attach to the master nodes"
-  default     = []
+  default = []
 }
 
 variable "aws_edge_zones_type" {
-  type    = map(string)
+  type = map(string)
   default = {}
 
   description = <<EOF
