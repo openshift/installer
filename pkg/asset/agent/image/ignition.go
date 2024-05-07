@@ -100,6 +100,7 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
 		&gencrypto.AuthConfig{},
+		&common.InfraEnvID{},
 	}
 }
 
@@ -113,7 +114,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	agentHostsAsset := &agentconfig.AgentHosts{}
 	extraManifests := &manifests.ExtraManifests{}
 	keyPairAsset := &gencrypto.AuthConfig{}
-	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests, keyPairAsset, agentWorkflow, clusterInfo, addNodesConfig)
+	infraEnvAsset := &common.InfraEnvID{}
+	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests, keyPairAsset, agentWorkflow, clusterInfo, addNodesConfig, infraEnvAsset)
 
 	pwd := &password.KubeadminPassword{}
 	dependencies.Get(pwd)
@@ -229,7 +231,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	releaseImageMirror := mirror.GetMirrorFromRelease(agentManifests.ClusterImageSet.Spec.ReleaseImage, registriesConfig)
 
-	infraEnvID := common.InfraEnvID
+	infraEnvID := infraEnvAsset.ID
 	logrus.Debug("Generated random infra-env id ", infraEnvID)
 
 	osImage, err := getOSImagesInfo(archName, openshiftVersion, streamGetter)

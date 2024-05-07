@@ -78,16 +78,18 @@ func (a *UnconfiguredIgnition) Dependencies() []asset.Asset {
 		&manifests.NMStateConfig{},
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
+		&common.InfraEnvID{},
 	}
 }
 
 // Generate generates the agent installer unconfigured ignition.
 func (a *UnconfiguredIgnition) Generate(dependencies asset.Parents) error {
 	infraEnvAsset := &manifests.InfraEnv{}
+	infraEnvIDAsset := &common.InfraEnvID{}
 	clusterImageSetAsset := &manifests.ClusterImageSet{}
 	pullSecretAsset := &manifests.AgentPullSecret{}
 	nmStateConfigs := &manifests.NMStateConfig{}
-	dependencies.Get(infraEnvAsset, clusterImageSetAsset, pullSecretAsset, nmStateConfigs)
+	dependencies.Get(infraEnvAsset, clusterImageSetAsset, pullSecretAsset, nmStateConfigs, infraEnvIDAsset)
 
 	infraEnv := infraEnvAsset.Config
 	clusterImageSet := clusterImageSetAsset.Config
@@ -122,7 +124,7 @@ func (a *UnconfiguredIgnition) Generate(dependencies asset.Parents) error {
 	registryCABundle := &mirror.CaBundle{}
 	dependencies.Get(registriesConfig, registryCABundle)
 
-	infraEnvID := common.InfraEnvID
+	infraEnvID := infraEnvIDAsset.ID
 	logrus.Debug("Generated random infra-env id ", infraEnvID)
 
 	openshiftVersion, err := version.Version()
