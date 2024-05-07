@@ -37,13 +37,6 @@ func newDomain(name string) libvirtxml.Domain {
 				Arch: "x86_64",
 			},
 		},
-		SecLabel: []libvirtxml.DomainSecLabel{
-			{
-				Type:    "none",
-				Model:   "selinux",
-				Relabel: "no",
-			},
-		},
 		Devices: &libvirtxml.DomainDeviceList{
 			Graphics: []libvirtxml.DomainGraphic{
 				{
