@@ -8,7 +8,7 @@ After=network-online.target ironic-volume.service build-ironic-env.service image
 [Container]
 ContainerName=baremetal-operator
 Image=$METAL3_BAREMETAL_OPERATOR_IMAGE
-Exec=/baremetal-operator -build-preprov-image
+Exec=/baremetal-operator -build-preprov-image -webhook-port 0
 Network=host
 Volume=${AUTH_DIR}:/auth:z,ro
 Volume=/opt/openshift:/opt/openshift:z,ro
