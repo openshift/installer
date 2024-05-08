@@ -94,3 +94,11 @@ Example: `{ "tagKeys/123" = "tagValues/456", "tagKeys/456" = "tagValues/789" }`
 EOF
   default = {}
 }
+
+variable "user_provisioned_dns" {
+  type = bool
+  default = false
+  description = <<EOF
+When true the user has selected to configure their own dns solution, and no dns records will be created.
+EOF
+}
