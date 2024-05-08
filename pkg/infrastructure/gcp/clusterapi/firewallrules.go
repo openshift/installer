@@ -8,6 +8,7 @@ import (
 	"google.golang.org/api/compute/v1"
 
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
+	"github.com/openshift/installer/pkg/types"
 )
 
 func getControlPlanePorts() []*compute.FirewallAllowed {
@@ -108,6 +109,20 @@ func getInternalNetworkPorts() []*compute.FirewallAllowed {
 	}
 }
 
+func getBootstrapSSHPorts() []*compute.FirewallAllowed {
+	return []*compute.FirewallAllowed{
+		{
+			IPProtocol: "tcp",
+			Ports: []string{
+				"22", // SSH
+			},
+		},
+		{
+			IPProtocol: "icmp",
+		},
+	}
+}
+
 // addFirewallRule creates the firewall rule and adds it the compute's firewalls.
 func addFirewallRule(ctx context.Context, name, network, projectID string, ports []*compute.FirewallAllowed, srcTags, targetTags, srcRanges []string) error {
 	service, err := NewComputeService()
@@ -146,7 +161,7 @@ func addFirewallRule(ctx context.Context, name, network, projectID string, ports
 	return nil
 }
 
-// createFirewallRules creates the rules needed between tthe worker and master nodes.
+// createFirewallRules creates the rules needed between the worker and master nodes.
 func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, network string) error {
 	projectID := in.InstallConfig.Config.Platform.GCP.ProjectID
 	workerTag := fmt.Sprintf("%s-worker", in.InfraID)
@@ -188,4 +203,21 @@ func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, net
 	err := addFirewallRule(ctx, firewallName, network, projectID, getInternalNetworkPorts(), srcTags, targetTags, srcRanges)
 
 	return err
+}
+
+// createBootstrapFirewallRules creates the rules needed for the bootstrap node.
+func createBootstrapFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, network string) error {
+	projectID := in.InstallConfig.Config.Platform.GCP.ProjectID
+	firewallName := fmt.Sprintf("%s-bootstrap-in-ssh", in.InfraID)
+	srcTags := []string{}
+	bootstrapTag := fmt.Sprintf("%s-control-plane", in.InfraID)
+	targetTags := []string{bootstrapTag}
+	var srcRanges []string
+	if in.InstallConfig.Config.Publish == types.ExternalPublishingStrategy {
+		srcRanges = []string{"0.0.0.0/0"}
+	} else {
+		machineCIDR := in.InstallConfig.Config.Networking.MachineNetwork[0].CIDR.String()
+		srcRanges = []string{machineCIDR}
+	}
+	return addFirewallRule(ctx, firewallName, network, projectID, getBootstrapSSHPorts(), srcTags, targetTags, srcRanges)
 }

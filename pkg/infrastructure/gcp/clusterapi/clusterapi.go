@@ -144,6 +144,10 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		logrus.Debugf("publish strategy is set to external but api address is empty")
 	}
 
+	if err := createBootstrapFirewallRules(ctx, in, *gcpCluster.Status.Network.SelfLink); err != nil {
+		return fmt.Errorf("failed to add bootstrap firewall rule: %w", err)
+	}
+
 	client, err := icgcp.NewClient(context.TODO())
 	if err != nil {
 		return err
@@ -222,7 +226,6 @@ func (p Provider) DestroyBootstrap(dir string) error {
 	if err != nil {
 		return err
 	}
-
 	if err := gcp.DestroyStorage(context.Background(), metadata.ClusterID); err != nil {
 		return fmt.Errorf("failed to destroy storage")
 	}
