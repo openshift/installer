@@ -34,14 +34,6 @@ func newDomain(name string) libvirtxml.Domain {
 		OS: &libvirtxml.DomainOS{
 			Type: &libvirtxml.DomainOSType{
 				Type: "hvm",
-				Arch: "x86_64",
-			},
-		},
-		SecLabel: []libvirtxml.DomainSecLabel{
-			{
-				Type:    "none",
-				Model:   "selinux",
-				Relabel: "no",
 			},
 		},
 		Devices: &libvirtxml.DomainDeviceList{
@@ -54,6 +46,9 @@ func newDomain(name string) libvirtxml.Domain {
 			},
 			Channels: []libvirtxml.DomainChannel{
 				{
+					Source: &libvirtxml.DomainChardevSource{
+						UNIX: &libvirtxml.DomainChardevSourceUNIX{},
+					},
 					Target: &libvirtxml.DomainChannelTarget{
 						VirtIO: &libvirtxml.DomainChannelTargetVirtIO{
 							Name: "org.qemu.guest_agent.0",
@@ -295,6 +290,12 @@ func getCapabilities(virConn *libvirt.Libvirt) (libvirtxml.Caps, error) {
 
 func createBootstrapDomain(virConn *libvirt.Libvirt, config baremetalConfig, pool libvirt.StoragePool, volume libvirt.StorageVol) error {
 	bootstrapDom := newDomain(fmt.Sprintf("%s-bootstrap", config.ClusterID))
+
+	if bootstrapDom.OS.Type.Arch == "aarch64" {
+		// for aarch64 speciffying this will automatically select the firmware and NVRAM file
+		// reference: https://libvirt.org/formatdomain.html#bios-bootloader
+		bootstrapDom.OS.Firmware = "efi"
+	}
 
 	capabilities, err := getCapabilities(virConn)
 	if err != nil {
