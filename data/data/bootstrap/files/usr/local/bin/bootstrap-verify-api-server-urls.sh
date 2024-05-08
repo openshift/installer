@@ -31,6 +31,19 @@ function validate_url() {
         return 1
     fi
 }
+#
+# This functions expects 2 arguments:
+# 1. name of the URL
+# 2. URL to validate
+function validate_get_url() {
+    if [[ $(curl -k --get --silent --fail --write-out "%{http_code}\\n" "${2}" -o /dev/null) == 200 ]]; then
+        echo "Success while trying to reach ${1}'s https endpoint at ${2}"
+        return 0
+    else
+        echo "Unable to reach ${1}'s https endpoint at ${2}"
+        return 1
+    fi
+}
 
 function resolve_url() {
     if [[ -z "${1}" ]] || [[ -z "${2}" ]]; then
@@ -92,7 +105,7 @@ function check_url() {
     CURL_URL="https://${2}:6443/version"
 
     record_service_stage_start ${URL_STAGE_NAME}
-    if validate_url "$URL_TYPE" "$CURL_URL"; then
+    if validate_get_url "$URL_TYPE" "$CURL_URL"; then
         record_service_stage_success
         # Return the value from the validate_url- even on success
         return 0

@@ -215,7 +215,7 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
     name                   = "${var.cluster_id}-bootstrap_OSDisk" # os disk name needs to match cluster-api convention
     caching                = "ReadWrite"
     storage_account_type   = var.azure_master_root_volume_type
-    disk_size_gb           = 100
+    disk_size_gb           = 1000
     disk_encryption_set_id = var.azure_master_disk_encryption_set_id
 
     security_encryption_type         = var.azure_master_security_encryption_type
