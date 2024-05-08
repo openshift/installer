@@ -2,11 +2,6 @@
 
 set -e
 
-# Check if the OPENSHIFT_INSTALL_CLUSTER_API is not empty.
-if [ -z "${OPENSHIFT_INSTALL_CLUSTER_API}" ]; then
-  return
-fi
-
 TARGET_OS_ARCH=$(go env GOOS)_$(go env GOARCH)
 CLUSTER_API_BIN_DIR="${PWD}/cluster-api/bin/${TARGET_OS_ARCH}"
 CLUSTER_API_MIRROR_DIR="${PWD}/pkg/clusterapi/mirror/"
