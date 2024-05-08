@@ -205,7 +205,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		}
 	}
 	timer.StopTimer(infrastructureStage)
-	logrus.Info("Netork infrastructure is ready")
+	logrus.Info("Network infrastructure is ready")
 
 	if p, ok := i.impl.(InfraReadyProvider); ok {
 		infraReadyInput := InfraReadyInput{
