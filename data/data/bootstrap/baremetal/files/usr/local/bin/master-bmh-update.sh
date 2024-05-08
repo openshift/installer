@@ -25,6 +25,12 @@ while systemctl is-active metal3-baremetal-operator.service; do
     sleep 10
 done
 
+echo "Unpause provisioning"
+while ! oc annotate --overwrite provisioning provisioning-configuration "provisioning.metal3.io/paused-" ; do
+    sleep 5
+    echo "Unpause failed, retrying"
+done
+
 echo "Unpause all baremetal hosts"
 while ! oc annotate --overwrite -n openshift-machine-api baremetalhosts --all "baremetalhost.metal3.io/paused-" ; do
     sleep 5
