@@ -32,6 +32,7 @@ RUN dnf install -y nmstate && \
 
 
 RUN if grep -q '^ID="centos"' /etc/os-release; then \
+    dnf -y install skopeo && \
     skopeo copy docker://quay.io/openshift/origin-cli:4.12 docker-archive:/tmp/origin-cli.tar && \
     tar -xf /tmp/origin-cli.tar -C /tmp && \
     tar -xf /tmp/e026412ff296a8ef1b9d1af62e266fc42528ef89e69aee533ab76d76629a1c69.tar -C /tmp && \
