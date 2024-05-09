@@ -38,7 +38,7 @@ RUN if grep -q '^ID="centos"' /etc/os-release; then \
     ls -la && \
     ls -la /tmp/usr/bin && \
     cp /tmp/usr/bin/oc /usr/local/bin/ && \
-    rm -rf /tmp/* && \
+    rm -rf /tmp/* ;\
     fi
 
 
