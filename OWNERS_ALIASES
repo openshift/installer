@@ -51,9 +51,12 @@ aliases:
     - jcpowermac
     - patrickdillon
     - rvanderp3
+    - vr4manta
   vsphere-reviewers:
     - jcpowermac
     - patrickdillon
+    - rvanderp3
+    - vr4manta
   baremetal-approvers:
     - dtantsur
     - elfosardo
