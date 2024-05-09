@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"os"
 	"path/filepath"
@@ -27,6 +28,7 @@ import (
 	"github.com/openshift/installer/pkg/gather/service"
 	"github.com/openshift/installer/pkg/gather/ssh"
 	"github.com/openshift/installer/pkg/infrastructure"
+	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	infra "github.com/openshift/installer/pkg/infrastructure/platform"
 
 	_ "github.com/openshift/installer/pkg/gather/aws"
@@ -142,6 +144,13 @@ func gatherBootstrap(bootstrap string, port int, masters []string, directory str
 	gatherID := time.Now().Format("20060102150405")
 	archives := map[string]string{}
 
+	if capiManifestsBundlePath, err := gatherCAPIManifests(directory, gatherID); err != nil {
+		// Do not fail the whole gather if we can't find capi manifests (we can be running terraform)
+		logrus.Infof("Failed to gather Cluster API manifests: %s", err.Error())
+	} else {
+		archives[capiManifestsBundlePath] = "clusterapi"
+	}
+
 	serialLogBundle := filepath.Join(directory, fmt.Sprintf("serial-log-bundle-%s.tar.gz", gatherID))
 	serialLogBundlePath, err := filepath.Abs(serialLogBundle)
 	if err != nil {
@@ -236,4 +245,38 @@ func logClusterOperatorConditions(ctx context.Context, config *rest.Config) erro
 	}
 
 	return nil
+}
+
+func gatherCAPIManifests(directory, gatherID string) (string, error) {
+	logrus.Infoln("Pulling Cluster API manifests")
+	dir, err := filepath.Abs(directory)
+	if err != nil {
+		return "", fmt.Errorf("failed to get absolute path for %s: %w", directory, err)
+	}
+
+	capiDir := filepath.Join(dir, clusterapi.CAPIArtifactsDir)
+	if _, err := os.Stat(capiDir); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return "", fmt.Errorf("either Cluster API manifests not generated or terraform provision")
+		}
+		return "", fmt.Errorf("failed to stat Cluster API output directory: %w", err)
+	}
+
+	bundleDir := filepath.Join(dir, fmt.Sprintf("capi-manifests-bundle-%s", gatherID))
+	// Symlink the hidden directory so the manifests are not hidden in the archive
+	if err := os.Symlink(capiDir, bundleDir); err != nil {
+		return "", fmt.Errorf("failed to copy Cluster API manifests: %w", err)
+	}
+	defer os.Remove(bundleDir)
+
+	capiManifests, err := filepath.Glob(filepath.Join(bundleDir, "*.yaml"))
+	if err != nil {
+		return "", fmt.Errorf("failed to gather Cluster API manifests: %w", err)
+	}
+
+	capiManifestsBundlePath := fmt.Sprintf("%s.tar.gz", bundleDir)
+	if err := serialgather.CreateArchive(capiManifests, capiManifestsBundlePath); err != nil {
+		return "", fmt.Errorf("failed to create clusterapi bundle file: %w", err)
+	}
+	return capiManifestsBundlePath, nil
 }
