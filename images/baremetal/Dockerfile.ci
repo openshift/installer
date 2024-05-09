@@ -27,8 +27,20 @@ RUN dnf upgrade -y && \
 
 # node-joiner requirements
 COPY --from=builder /go/src/github.com/openshift/installer/bin/node-joiner /bin/node-joiner
-RUN dnf install -y nmstate openshift-clients && \
+RUN dnf install -y nmstate && \
     dnf clean all && rm -rf /var/cache/yum/*
+
+
+RUN if grep -q '^ID="centos"' /etc/os-release; then \
+    skopeo copy docker://quay.io/openshift/origin-cli:4.12 docker-archive:/tmp/origin-cli.tar && \
+    tar -xf /tmp/origin-cli.tar -C /tmp && \
+    tar -xf /tmp/e026412ff296a8ef1b9d1af62e266fc42528ef89e69aee533ab76d76629a1c69.tar -C /tmp && \
+    ls -la && \
+    ls -la /tmp/usr/bin && \
+    cp /tmp/usr/bin/oc /usr/local/bin/ && \
+    rm -rf /tmp/* && \
+    fi
+
 
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
