@@ -36,8 +36,9 @@ func CloudProviderConfig(infraID, projectID, subnet, networkProjectID string) (s
 			Regional:  true,
 			Multizone: true,
 
-			// To make sure k8s cloud provide has tags for firewal for load balancer.
-			NodeTags:                     []string{fmt.Sprintf("%s-master", infraID), fmt.Sprintf("%s-worker", infraID)},
+			// To make sure k8s cloud provider has tags for firewall for load balancer.
+			// The CAPI gcp provider uses the node tag "control-plane" for master nodes.
+			NodeTags:                     []string{fmt.Sprintf("%s-master", infraID), fmt.Sprintf("%s-control-plane", infraID), fmt.Sprintf("%s-worker", infraID)},
 			NodeInstancePrefix:           infraID,
 			ExternalInstanceGroupsPrefix: infraID,
 
