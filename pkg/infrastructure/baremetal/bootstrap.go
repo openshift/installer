@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/digitalocean/go-libvirt"
 	"github.com/sirupsen/logrus"
@@ -272,7 +273,7 @@ func createIgnition(virConn *libvirt.Libvirt, config baremetalConfig, pool libvi
 	return nil
 }
 
-func getCapabilities(virConn *libvirt.Libvirt) (libvirtxml.Caps, error) {
+func getHostCapabilities(virConn *libvirt.Libvirt) (libvirtxml.Caps, error) {
 	var caps libvirtxml.Caps
 
 	capsBytes, err := virConn.Capabilities()
@@ -291,18 +292,19 @@ func getCapabilities(virConn *libvirt.Libvirt) (libvirtxml.Caps, error) {
 func createBootstrapDomain(virConn *libvirt.Libvirt, config baremetalConfig, pool libvirt.StoragePool, volume libvirt.StorageVol) error {
 	bootstrapDom := newDomain(fmt.Sprintf("%s-bootstrap", config.ClusterID))
 
-	if bootstrapDom.OS.Type.Arch == "aarch64" {
-		// for aarch64 speciffying this will automatically select the firmware and NVRAM file
-		// reference: https://libvirt.org/formatdomain.html#bios-bootloader
-		bootstrapDom.OS.Firmware = "efi"
-	}
-
-	capabilities, err := getCapabilities(virConn)
+	capabilities, err := getHostCapabilities(virConn)
 	if err != nil {
 		return fmt.Errorf("failed to get libvirt capabilities: %w", err)
 	}
 
-	bootstrapDom.OS.Type.Arch = capabilities.Host.CPU.Arch
+	arch := capabilities.Host.CPU.Arch
+	bootstrapDom.OS.Type.Arch = arch
+
+	if arch == "aarch64" {
+		// for aarch64 speciffying this will automatically select the firmware and NVRAM file
+		// reference: https://libvirt.org/formatdomain.html#bios-bootloader
+		bootstrapDom.OS.Firmware = "efi"
+	}
 
 	for _, bridge := range config.Bridges {
 		netIface := libvirtxml.DomainInterface{
