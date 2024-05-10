@@ -13,7 +13,6 @@ import (
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/coreos/stream-metadata-go/stream"
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -24,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	agentcommon "github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/common"
 	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
@@ -100,6 +100,7 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
 		&gencrypto.AuthConfig{},
+		&common.InfraEnvID{},
 	}
 }
 
@@ -113,7 +114,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	agentHostsAsset := &agentconfig.AgentHosts{}
 	extraManifests := &manifests.ExtraManifests{}
 	keyPairAsset := &gencrypto.AuthConfig{}
-	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests, keyPairAsset, agentWorkflow, clusterInfo, addNodesConfig)
+	infraEnvAsset := &common.InfraEnvID{}
+	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests, keyPairAsset, agentWorkflow, clusterInfo, addNodesConfig, infraEnvAsset)
 
 	pwd := &password.KubeadminPassword{}
 	dependencies.Get(pwd)
@@ -229,7 +231,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	releaseImageMirror := mirror.GetMirrorFromRelease(agentManifests.ClusterImageSet.Spec.ReleaseImage, registriesConfig)
 
-	infraEnvID := uuid.New().String()
+	infraEnvID := infraEnvAsset.ID
 	logrus.Debug("Generated random infra-env id ", infraEnvID)
 
 	osImage, err := getOSImagesInfo(archName, openshiftVersion, streamGetter)
