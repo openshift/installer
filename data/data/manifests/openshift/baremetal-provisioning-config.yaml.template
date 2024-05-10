@@ -2,10 +2,6 @@ apiVersion: metal3.io/v1alpha1
 kind: Provisioning
 metadata:
   name: provisioning-configuration
-  annotations:
-    # We want to pause the metal3 provisioning services until we can be sure
-    # that all control plane nodes are ready.
-    provisioning.metal3.io/paused: "true"
 spec:
   provisioningInterface: "{{.Baremetal.ProvisioningNetworkInterface}}"
   provisioningIP: "{{.Baremetal.ClusterProvisioningIP}}"
