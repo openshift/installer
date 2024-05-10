@@ -307,6 +307,11 @@ func createBootstrapDomain(virConn *libvirt.Libvirt, config baremetalConfig, poo
 		bootstrapDom.OS.Firmware = "efi"
 	}
 
+	// For aarch64, s390x, ppc64 and ppc64le spice is not supported
+	if arch == "aarch64" || arch == "s390x" || strings.HasPrefix(arch, "ppc64") {
+		bootstrapDom.Devices.Graphics = nil
+	}
+
 	for _, bridge := range config.Bridges {
 		netIface := libvirtxml.DomainInterface{
 			Model: &libvirtxml.DomainInterfaceModel{
