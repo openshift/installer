@@ -2,6 +2,7 @@ package baremetal
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -453,9 +454,22 @@ func destroyBootstrap(config baremetalConfig) error {
 	}
 
 	logrus.Debug("  Undefining domain")
-	err = virConn.DomainUndefine(dom)
-	if err != nil {
-		return err
+
+	if err := virConn.DomainUndefineFlags(dom, libvirt.DomainUndefineNvram|libvirt.DomainUndefineSnapshotsMetadata|libvirt.DomainUndefineManagedSave|libvirt.DomainUndefineCheckpointsMetadata); err != nil {
+		var libvirtErr *libvirt.Error
+
+		if !errors.As(err, &libvirtErr) {
+			return fmt.Errorf("failed to cast to libvirt.Error: %w", err)
+		}
+
+		if libvirtErr.Code == uint32(libvirt.ErrNoSupport) || libvirtErr.Code == uint32(libvirt.ErrInvalidArg) {
+			logrus.Printf("libvirt does not support undefine flags: will try again without flags")
+			if err := virConn.DomainUndefine(dom); err != nil {
+				return fmt.Errorf("couldn't undefine libvirt domain: %w", err)
+			}
+		} else {
+			return fmt.Errorf("couldn't undefine libvirt domain with flags: %w", err)
+		}
 	}
 
 	pool, err := virConn.StoragePoolLookupByName(name)
