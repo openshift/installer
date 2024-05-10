@@ -73,6 +73,7 @@ type agentTemplateData struct {
 	ConfigImageFiles          string
 	ImageTypeISO              string
 	PublicKeyPEM              string
+	Token                     string
 	CaBundleMount             string
 }
 
@@ -255,6 +256,7 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 		infraEnv.Spec.Proxy,
 		imageTypeISO,
 		keyPairAsset.PublicKey,
+		keyPairAsset.Token,
 		caBundleMount)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
@@ -371,8 +373,7 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 	osImage *models.OsImage,
 	proxy *v1beta1.Proxy,
 	imageTypeISO,
-	publicKey string,
-	caBundleMount string) *agentTemplateData {
+	publicKey, token, caBundleMount string) *agentTemplateData {
 	return &agentTemplateData{
 		ServiceProtocol:           "http",
 		PullSecret:                pullSecret,
@@ -389,6 +390,7 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 		Proxy:                     proxy,
 		ImageTypeISO:              imageTypeISO,
 		PublicKeyPEM:              publicKey,
+		Token:                     token,
 		CaBundleMount:             caBundleMount,
 	}
 }
