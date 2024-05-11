@@ -27,7 +27,7 @@ sync_envtest() {
       echo "Found cross-compiled artifact: skipping envtest binaries version check"
       return
     fi
-    version=$("${CLUSTER_API_BIN_DIR}/kube-apiserver" --version | sed 's/Kubernetes //' || echo "v0.0.0")
+    version=$( ("${CLUSTER_API_BIN_DIR}/kube-apiserver" --version || echo "v0.0.0") | sed 's/Kubernetes //' )
     echo "Found envtest binaries with version: ${version}"
     if printf '%s\n%s' v${ENVTEST_K8S_VERSION} "${version}" | sort -V -C; then
       return
