@@ -2,11 +2,14 @@ package clusterapi
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/sirupsen/logrus"
 	"k8s.io/utils/ptr"
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -18,9 +21,13 @@ import (
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
 
-var _ clusterapi.Provider = (*Provider)(nil)
-var _ clusterapi.PreProvider = (*Provider)(nil)
-var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
+var (
+	_ clusterapi.Provider           = (*Provider)(nil)
+	_ clusterapi.PreProvider        = (*Provider)(nil)
+	_ clusterapi.InfraReadyProvider = (*Provider)(nil)
+
+	errNotFound = errors.New("not found")
+)
 
 // Provider implements AWS CAPI installation.
 type Provider struct{}
@@ -103,12 +110,16 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 	}
 
 	logrus.Infoln("Creating Route53 records for control plane load balancer")
+	aliasZoneID, err := getHostedZoneIDForNLB(ctx, awsSession, awsCluster.Spec.Region, awsCluster.Status.Network.APIServerELB.Name)
+	if err != nil {
+		return fmt.Errorf("failed to find HostedZone ID for NLB: %w", err)
+	}
 	apiHost := awsCluster.Status.Network.SecondaryAPIServerELB.DNSName
 	if awsCluster.Status.Network.APIServerELB.Scheme == capa.ELBSchemeInternetFacing {
 		apiHost = awsCluster.Status.Network.APIServerELB.DNSName
 	}
 	apiIntHost := awsCluster.Spec.ControlPlaneEndpoint.Host
-	err = client.CreateOrUpdateRecord(ctx, in.InstallConfig.Config, apiHost, apiIntHost, phzID)
+	err = client.CreateOrUpdateRecord(ctx, in.InstallConfig.Config, apiHost, apiIntHost, phzID, aliasZoneID)
 	if err != nil {
 		return fmt.Errorf("failed to create route53 records: %w", err)
 	}
@@ -156,4 +167,28 @@ func getVPCFromSubnets(ctx context.Context, awsSession *session.Session, region 
 	}
 
 	return vpcID, nil
+}
+
+// getHostedZoneIDForNLB returns the HostedZone ID for a region from a known table or queries it from the LB instead.
+func getHostedZoneIDForNLB(ctx context.Context, awsSession *session.Session, region string, lbName string) (string, error) {
+	if hzID, ok := awsconfig.HostedZoneIDPerRegionNLBMap[region]; ok {
+		return hzID, nil
+	}
+	// If the HostedZoneID is not known, query from the LoadBalancer
+	input := elbv2.DescribeLoadBalancersInput{
+		Names: aws.StringSlice([]string{lbName}),
+	}
+	res, err := elbv2.New(awsSession).DescribeLoadBalancersWithContext(ctx, &input)
+	if err != nil {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == elbv2.ErrCodeLoadBalancerNotFoundException {
+			return "", errNotFound
+		}
+		return "", fmt.Errorf("failed to list load balancers: %w", err)
+	}
+	for _, lb := range res.LoadBalancers {
+		return *lb.CanonicalHostedZoneId, nil
+	}
+
+	return "", errNotFound
 }
