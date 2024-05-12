@@ -1,13 +1,15 @@
 package main
 
 import (
+	"context"
+	
 	"github.com/spf13/cobra"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ibi"
 )
 
-func newImageBasedInstallCmd() *cobra.Command {
+func newImageBasedInstallCmd(ctx context.Context) *cobra.Command {
 	ibiCmd := &cobra.Command{
 		Use:   "ibi",
 		Short: "Commands for supporting cluster installation using the Image-based installer",
@@ -16,7 +18,7 @@ func newImageBasedInstallCmd() *cobra.Command {
 		},
 	}
 
-	ibiCmd.AddCommand(newImageBasedInstallCreateCmd())
+	ibiCmd.AddCommand(newImageBasedInstallCreateCmd(ctx))
 	return ibiCmd
 }
 
@@ -42,15 +44,13 @@ var (
 		},
 		assets: []asset.WritableAsset{
 			&ibi.ImageBasedInstallImage{},
-			// &kubeconfig.AgentAdminClient{},
-			// &password.KubeadminPassword{},
 		},
 	}
 
 	imageBasedInstallTargets = []target{imageBasedInstallConfigTarget, imageBasedInstallImageTarget}
 )
 
-func newImageBasedInstallCreateCmd() *cobra.Command {
+func newImageBasedInstallCreateCmd(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Commands for generating image-based installation artifacts",
@@ -61,7 +61,7 @@ func newImageBasedInstallCreateCmd() *cobra.Command {
 
 	for _, t := range imageBasedInstallTargets {
 		t.command.Args = cobra.ExactArgs(0)
-		t.command.Run = runTargetCmd(t.assets...)
+		t.command.Run = runTargetCmd(ctx, t.assets...)
 		cmd.AddCommand(t.command)
 	}
 

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/openshift-kni/lifecycle-agent/api/ibiconfig"
 	"github.com/openshift-kni/lifecycle-agent/ib-cli/installationiso"
 	"github.com/openshift-kni/lifecycle-agent/lca-cli/ops"
 	"github.com/openshift/installer/pkg/asset"
@@ -17,19 +18,8 @@ const (
 
 // ImageBasedInstallImage is an asset that generates the bootable image used to install clusters.
 type ImageBasedInstallImage struct {
-	seedImage           string
-	seedVersion         string
-	authFile            string
-	pullSecretFile      string
-	sshPublicKeyFile    string
-	lcaImage            string
-	rhcosLiveISO        string
-	installationDisk    string
-	extraPartitionStart string
-	precacheBestEffort  bool
-	precacheDisabled    bool
-
-	tmpPath string
+	IbiConfig *ibiconfig.IBIPrepareConfig
+	tmpPath   string
 }
 
 var _ asset.WritableAsset = (*ImageBasedInstallImage)(nil)
@@ -38,35 +28,33 @@ var _ asset.WritableAsset = (*ImageBasedInstallImage)(nil)
 func (i *ImageBasedInstallImage) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&ImageBasedInstallConfig{},
-		&ImageBasedInstallArtifacts{},
 	}
 }
 
 // Generate generates the image file for the ISO asset.
 func (i *ImageBasedInstallImage) Generate(dependencies asset.Parents) error {
 	ibiConfig := &ImageBasedInstallConfig{}
-	ibiArtifacts := &ImageBasedInstallArtifacts{}
-	dependencies.Get(ibiConfig, ibiArtifacts)
-
-	i.seedImage = ibiConfig.Config.SeedImage
-	i.seedVersion = ibiConfig.Config.SeedVersion
-	i.authFile = ibiConfig.Config.AuthFile
-	i.pullSecretFile = ibiConfig.Config.PullSecretFile
-	i.sshPublicKeyFile = ibiConfig.Config.SSHPublicKeyFile
-	i.lcaImage = ibiConfig.Config.LCAImage
-	i.rhcosLiveISO = ibiConfig.Config.RHCOSLiveISO
-	i.installationDisk = ibiConfig.Config.InstallationDisk
-	i.extraPartitionStart = ibiConfig.Config.ExtraPartitionStart
-	i.precacheBestEffort = ibiConfig.Config.PrecacheBestEffort
-	i.precacheDisabled = ibiConfig.Config.PrecacheDisabled
-
-	i.tmpPath = ibiArtifacts.TmpPath
-
+	dependencies.Get(ibiConfig)
+	i.IbiConfig = &ibiConfig.Config.IBIPrepareConfig
 	return nil
 }
 
 // PersistToFile writes the iso image in the assets folder.
 func (i *ImageBasedInstallImage) PersistToFile(directory string) error {
+
+	if i.IbiConfig == nil {
+		return fmt.Errorf("IBI configuration is nil")
+	}
+
+	// Create a tmp folder to store all the pieces required to generate the agent artifacts.
+	tmpPath, err := os.MkdirTemp("", "ibi")
+	if err != nil {
+		return err
+	}
+	i.tmpPath = tmpPath
+	if err := os.MkdirAll(i.tmpPath, 0755); err != nil {
+		return fmt.Errorf("failed to create temporary directory: %w", err)
+	}
 	defer os.RemoveAll(i.tmpPath)
 
 	ibiIsoFile := filepath.Join(directory, ibiISOFilename)
@@ -76,21 +64,9 @@ func (i *ImageBasedInstallImage) PersistToFile(directory string) error {
 
 	hostCommandsExecutor := ops.NewRegularExecutor(logrus.StandardLogger(), true)
 	op := ops.NewOps(logrus.StandardLogger(), hostCommandsExecutor)
-
 	isoCreator := installationiso.NewInstallationIso(logrus.StandardLogger(), op, i.tmpPath)
 
-	if err := isoCreator.Create(
-		i.seedImage,
-		i.seedVersion,
-		i.authFile,
-		i.pullSecretFile,
-		i.sshPublicKeyFile,
-		i.lcaImage,
-		i.rhcosLiveISO,
-		i.installationDisk,
-		i.extraPartitionStart,
-		i.precacheBestEffort,
-		i.precacheDisabled); err != nil {
+	if err := isoCreator.Create(i.IbiConfig); err != nil {
 		return fmt.Errorf("failed to create installation ISO: %w", err)
 	}
 	logrus.Infof("Generated ISO at %s", ibiIsoFile)

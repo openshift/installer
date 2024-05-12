@@ -980,6 +980,18 @@ github.com/opencontainers/go-digest
 ## explicit; go 1.17
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
+# github.com/openshift-kni/lifecycle-agent v0.0.0-20240513085322-3592ad014a92
+## explicit; go 1.20
+github.com/openshift-kni/lifecycle-agent/api/ibiconfig
+github.com/openshift-kni/lifecycle-agent/api/seedreconfig
+github.com/openshift-kni/lifecycle-agent/api/v1alpha1
+github.com/openshift-kni/lifecycle-agent/controllers/utils
+github.com/openshift-kni/lifecycle-agent/ib-cli/installationiso
+github.com/openshift-kni/lifecycle-agent/internal/common
+github.com/openshift-kni/lifecycle-agent/internal/recert
+github.com/openshift-kni/lifecycle-agent/lca-cli/ops
+github.com/openshift-kni/lifecycle-agent/lca-cli/seedclusterinfo
+github.com/openshift-kni/lifecycle-agent/utils
 # github.com/openshift/api v0.0.0-20240510053056-88a8afea030c
 ## explicit; go 1.21
 github.com/openshift/api/annotations
@@ -1105,6 +1117,9 @@ github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1
 github.com/opentracing/opentracing-go
 github.com/opentracing/opentracing-go/ext
 github.com/opentracing/opentracing-go/log
+# github.com/otiai10/copy v1.14.0
+## explicit; go 1.18
+github.com/otiai10/copy
 # github.com/ovirt/go-ovirt v0.0.0-20210809163552-d4276e35d3db
 ## explicit; go 1.15
 github.com/ovirt/go-ovirt
@@ -1181,6 +1196,9 @@ github.com/rogpeppe/go-internal/txtar
 # github.com/russross/blackfriday/v2 v2.1.0
 ## explicit
 github.com/russross/blackfriday/v2
+# github.com/samber/lo v1.39.0
+## explicit; go 1.18
+github.com/samber/lo
 # github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749
 ## explicit
 github.com/shurcooL/httpfs/vfsutil
@@ -1345,6 +1363,9 @@ go.starlark.net/resolve
 go.starlark.net/starlark
 go.starlark.net/starlarkstruct
 go.starlark.net/syntax
+# go.uber.org/mock v0.4.0
+## explicit; go 1.20
+go.uber.org/mock/gomock
 # go.uber.org/multierr v1.11.0
 ## explicit; go 1.19
 go.uber.org/multierr
@@ -1359,7 +1380,7 @@ go.uber.org/zap/internal/exit
 go.uber.org/zap/internal/pool
 go.uber.org/zap/internal/stacktrace
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.22.0
+# golang.org/x/crypto v0.23.0
 ## explicit; go 1.18
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -1418,16 +1439,16 @@ golang.org/x/oauth2/jwt
 ## explicit; go 1.18
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.19.0
+# golang.org/x/sys v0.20.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.19.0
+# golang.org/x/term v0.20.0
 ## explicit; go 1.18
 golang.org/x/term
-# golang.org/x/text v0.14.0
+# golang.org/x/text v0.15.0
 ## explicit; go 1.18
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap

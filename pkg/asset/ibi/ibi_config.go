@@ -51,11 +51,10 @@ seedImage: quay.io/openshift-kni/seed-image:4.16.0
 seedVersion: 4.16.0
 pullSecretFile: ./pull-secret.json
 authFile: ./auth-file.json
-sshPublicKeyFile: ./id-rsa.pub
-lcaImage: quay.io/openshift-kni/lifecycle-agent-operator:4.16.0
+sshPublicKeyFile: ./id_rsa.pub
 rhcosLiveIso: https://mirror.openshift.com/pub/openshift-v4/amd64/dependencies/rhcos/latest/rhcos-live.x86_64.iso
-installationDisk: vda1
-extraPartitionStart: use_directory
+installationDisk: vda
+useContainersFolder: false
 precacheBestEffort: false
 precacheDisabled: false
 `
@@ -101,18 +100,15 @@ func (i *ImageBasedInstallConfig) Load(f asset.FileFetcher) (bool, error) {
 		}
 		return false, errors.Wrap(err, fmt.Sprintf("failed to load %s file", ibiConfigFilename))
 	}
-
 	config := &ibi.Config{}
 	if err := yaml.UnmarshalStrict(file.Data, config); err != nil {
 		return false, errors.Wrapf(err, "failed to unmarshal %s", ibiConfigFilename)
 	}
 
 	i.File, i.Config = file, config
-
 	if err = i.finish(); err != nil {
 		return false, err
 	}
-
 	return true, nil
 }
 
@@ -120,12 +116,16 @@ func (i *ImageBasedInstallConfig) finish() error {
 	if err := i.validate().ToAggregate(); err != nil {
 		return errors.Wrapf(err, "invalid Image-based Install Config configuration")
 	}
-
 	return nil
 }
 
 func (i *ImageBasedInstallConfig) validate() field.ErrorList {
 	var allErrs field.ErrorList
-	// TODO: implement
+	// TODO: change validate function to return field name
+	err := i.Config.Validate()
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath(""), "", err.Error()))
+	}
+
 	return allErrs
 }
