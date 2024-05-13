@@ -83,6 +83,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 		ManagedDisk: &capz.ManagedDiskParameters{
 			StorageAccountType: mpool.DiskType,
 		},
+		CachingType: "ReadWrite",
 	}
 	ultrassd := mpool.UltraSSDCapability == "Enabled"
 	additionalCapabilities := &capz.AdditionalCapabilities{
