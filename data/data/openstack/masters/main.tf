@@ -268,7 +268,7 @@ resource "openstack_compute_instance_v2" "master_conf_2" {
 resource "openstack_compute_servergroup_v2" "server_groups" {
   for_each = var.openstack_worker_server_group_names
   name = each.key
-  policies = [var.openstack_master_server_group_policy]
+  policies = [var.openstack_worker_server_group_policy]
 }
 
 resource "openstack_networking_port_v2" "master_0_failuredomain" {
