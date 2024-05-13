@@ -46,6 +46,14 @@ func (o *ClusterUninstaller) listDHCPNetworks() (cloudResources, error) {
 		}
 		if dhcpServer.Network.Name == nil {
 			o.Logger.Debugf("listDHCPNetworks: DHCP has empty Network.Name: %s", *dhcpServer.ID)
+			foundOne = true
+			result = append(result, cloudResource{
+				key:      *dhcpServer.ID,
+				name:     "Empty network name",
+				status:   "",
+				typeName: dhcpTypeName,
+				id:       *dhcpServer.ID,
+			})
 			continue
 		}
 
