@@ -98,6 +98,7 @@ func TestGenerateMachines(t *testing.T) {
 						Spec: capa.AWSMachineSpec{
 							InstanceMetadataOptions: &capa.InstanceMetadataOptions{
 								HTTPEndpoint: capa.InstanceMetadataEndpointStateEnabled,
+								HTTPTokens:   capa.HTTPTokensStateOptional,
 							},
 							AMI: capa.AMIReference{
 								ID: ptr.To(""),
@@ -153,6 +154,7 @@ func TestGenerateMachines(t *testing.T) {
 						Spec: capa.AWSMachineSpec{
 							InstanceMetadataOptions: &capa.InstanceMetadataOptions{
 								HTTPEndpoint: capa.InstanceMetadataEndpointStateEnabled,
+								HTTPTokens:   capa.HTTPTokensStateOptional,
 							},
 							AMI: capa.AMIReference{
 								ID: ptr.To(""),

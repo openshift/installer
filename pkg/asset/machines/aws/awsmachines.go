@@ -43,6 +43,11 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 		total = *in.Pool.Replicas
 	}
 
+	imds := capa.HTTPTokensStateOptional
+	if mpool.EC2Metadata.Authentication == "Required" {
+		imds = capa.HTTPTokensStateRequired
+	}
+
 	var result []*asset.RuntimeFile
 
 	for idx := int64(0); idx < total; idx++ {
@@ -97,7 +102,7 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 					EncryptionKey: mpool.KMSKeyARN,
 				},
 				InstanceMetadataOptions: &capa.InstanceMetadataOptions{
-					HTTPTokens:   capa.HTTPTokensState(mpool.EC2Metadata.Authentication),
+					HTTPTokens:   imds,
 					HTTPEndpoint: capa.InstanceMetadataEndpointStateEnabled,
 				},
 			},
