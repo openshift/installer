@@ -7,7 +7,7 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-ipAddresses=$@
+ipAddresses="$*"
 
 # Setup a cleanup function to ensure to remove the temporary
 # file when the script will be completed.
