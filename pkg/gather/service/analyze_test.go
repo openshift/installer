@@ -39,7 +39,6 @@ func failedReleaseImage() []logrus.Entry {
 
 func failedURLChecks() []logrus.Entry {
 	return []logrus.Entry{
-		{Level: logrus.WarnLevel, Message: "The bootstrap machine is unable to resolve API and/or API-Int Server URLs"},
 		{Level: logrus.InfoLevel, Message: "Line 1"},
 		{Level: logrus.InfoLevel, Message: "Line 2"},
 		{Level: logrus.InfoLevel, Message: "Line 3"},

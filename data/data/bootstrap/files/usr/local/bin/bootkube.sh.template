@@ -459,13 +459,22 @@ then
     record_service_stage_success
 fi
 
-# Check if the API and API_INT Server URLs can be resolved.
-echo "Check if API and API-Int URLs are resolvable during bootstrap"
 API_SERVER_URL="{{.APIServerURL}}"
-API_INT_SERVER_URL="{{.APIIntServerURL}}" 
+API_INT_SERVER_URL="{{.APIIntServerURL}}"
+if [ ! -f api-dns-resolved.done ]; then
+  echo "Check if API URL is resolvable during bootstrap"
 
-resolve_url "API_URL" "${API_SERVER_URL}"
-resolve_url "API_INT_URL" "${API_INT_SERVER_URL}"
+  if resolve_url "API_URL" "${API_SERVER_URL}"; then
+    touch api-dns-resolved.done
+  fi
+fi
+
+if [ ! -f api-int-dns-resolved.done ]; then
+  echo "Check if API-Int URL is resolvable during bootstrap"
+  if resolve_url "API_INT_URL" "${API_INT_SERVER_URL}"; then
+    touch api-int-dns-resolved.done
+  fi
+fi
 
 if [ ! -f cco-bootstrap.done ]
 then
@@ -578,11 +587,20 @@ else
     fi
 fi
 
-# Check if the API and API_INT Server URLs can be reached.
-echo "Check if API and API-Int URLs are reachable during bootstrap"
+if [ ! -f api-dns-check.done ]; then
+  echo "Check if API URL is reachable during bootstrap"
 
-check_url "API_URL" "${API_SERVER_URL}"
-check_url "API_INT_URL" "${API_INT_SERVER_URL}"
+  if check_url "API_URL" "${API_SERVER_URL}"; then
+    touch api-dns-check.done
+  fi
+fi
+
+if [ ! -f api-int-dns-check.done ]; then
+  echo "Check if API-Int URL is reachable during bootstrap"
+  if check_url "API_INT_URL" "${API_INT_SERVER_URL}"; then
+    touch api-int-dns-check.done
+  fi
+fi
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/openshift/.bootkube.done
