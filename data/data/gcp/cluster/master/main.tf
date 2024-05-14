@@ -83,9 +83,9 @@ resource "google_compute_instance" "master" {
   }
 
   metadata = {
-    user-data = var.ignition
+    user-data      = var.ignition
+    startup-script = var.user_provisioned_dns ? "echo \"Custom-DNS Test\"; echo \"#Added by OpenShift\" >> /tmp/temp.conf; echo \"nameserver $(ip -o route get 8.8.8.8 | head -1 | cut -d' ' -f7\" >> /tmp/temp.conf; cat /etc/resolv.conf >> /tmp/temp.conf; cat /tmp/temp.conf; sudo cp /tmp/temp.conf /etc/resolv.conf" : ""
   }
-  metadata_startup_script = var.user_provisioned_dns ? "echo \"Custom-DNS Test\"; echo \"Added by OpenShift\" >> /tmp/temp.conf; echo \"nameserver $(ip route get 8.8.8.8 | grep -oP 'src \\K[^ ]+')\" >> /tmp/temp.conf; cat /etc/resolv.conf >> /tmp/temp.conf; cat /tmp/temp.conf; sudo cp /tmp/temp.conf /etc/resolv.conf" : ""
 
   tags = concat(
     ["${var.cluster_id}-master"],
