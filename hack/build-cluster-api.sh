@@ -23,7 +23,11 @@ copy_cluster_api_to_mirror() {
 
 sync_envtest() {
   if [ -f "${CLUSTER_API_BIN_DIR}/kube-apiserver" ]; then
-    version=$("${CLUSTER_API_BIN_DIR}/kube-apiserver" --version | sed 's/Kubernetes //' || echo "v0.0.0")
+    if [ "$(go env GOOS)" != "$(go env GOHOSTOS)" ] || [ "$(go env GOARCH)" != "$(go env GOHOSTARCH)" ]; then
+      echo "Found cross-compiled artifact: skipping envtest binaries version check"
+      return
+    fi
+    version=$( ("${CLUSTER_API_BIN_DIR}/kube-apiserver" --version || echo "v0.0.0") | sed 's/Kubernetes //' )
     echo "Found envtest binaries with version: ${version}"
     if printf '%s\n%s' v${ENVTEST_K8S_VERSION} "${version}" | sort -V -C; then
       return
