@@ -45,6 +45,9 @@ const (
 
 	// PermissionPublicIpv4Pool is an additional set of permissions required when the installer uses public IPv4 pools.
 	PermissionPublicIpv4Pool PermissionGroup = "public-ipv4-pool"
+
+	// PermissionDeleteIgnitionObjects is a permission set required when `preserveBootstrapIgnition` is not set.
+	PermissionDeleteIgnitionObjects PermissionGroup = "delete-ignition-objects"
 )
 
 var permissions = map[PermissionGroup][]string{
@@ -156,7 +159,6 @@ var permissions = map[PermissionGroup][]string{
 
 		// S3 related perms
 		"s3:CreateBucket",
-		"s3:DeleteBucket",
 		"s3:GetAccelerateConfiguration",
 		"s3:GetBucketAcl",
 		"s3:GetBucketCors",
@@ -177,7 +179,6 @@ var permissions = map[PermissionGroup][]string{
 		"s3:PutEncryptionConfiguration",
 
 		// More S3 (would be nice to limit 'Resource' to just the bucket we actually interact with...)
-		"s3:DeleteObject",
 		"s3:GetObject",
 		"s3:GetObjectAcl",
 		"s3:GetObjectTagging",
@@ -201,6 +202,7 @@ var permissions = map[PermissionGroup][]string{
 		"iam:ListInstanceProfiles",
 		"iam:ListRolePolicies",
 		"iam:ListUserPolicies",
+		"s3:DeleteBucket",
 		"s3:DeleteObject",
 		"s3:ListBucketVersions",
 		"tag:GetResources",
@@ -265,6 +267,12 @@ var permissions = map[PermissionGroup][]string{
 	PermissionPublicIpv4Pool: {
 		// Needed by terraform because of bootstrap EIP created
 		"ec2:DisassociateAddress",
+	},
+	PermissionDeleteIgnitionObjects: {
+		// Needed by terraform during the bootstrap destroy stage.
+		"s3:DeleteBucket",
+		// Needed by capa which always deletes the ignition objects once the VMs are up.
+		"s3:DeleteObject",
 	},
 }
 
