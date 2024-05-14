@@ -8,8 +8,6 @@ set -euoE pipefail ## -E option will cause functions to inherit trap
 . /usr/local/bin/release-image.sh
 # shellcheck source=bootstrap-cluster-gather.sh
 . /usr/local/bin/bootstrap-cluster-gather.sh
-# shellcheck source=bootstrap-verify-api-server-urls.sh
-. /usr/local/bin/bootstrap-verify-api-server-urls.sh
 
 mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
 
@@ -538,7 +536,7 @@ run_cluster_bootstrap() {
         "${CLUSTER_BOOTSTRAP_IMAGE}" \
         start --tear-down-early=false --asset-dir=/assets --required-pods="${REQUIRED_PODS}"
 }
-    
+
 if [ ! -f cb-bootstrap.done ]
 then
     if run_cluster_bootstrap
@@ -590,22 +588,24 @@ else
             --kubeconfig /assets/auth/kubeconfig
         record_service_stage_success
     fi
+
+    if [ ! -f lb-check.done ]
+    then
+        record_service_stage_start "lb-check"
+        echo "Verifying API LB is ready..."
+
+        bootkube_podman_run  \
+            --name kube-apiserver-api-check \
+            --volume "$PWD:/assets:z" \
+            "${KUBE_APISERVER_OPERATOR_IMAGE}" \
+            /usr/bin/cluster-kube-apiserver-operator check-api-lb \
+            --kubeconfig /assets/auth/kubeconfig
+
+        record_service_stage_success
+        touch /opt/openshift/lb-check.done
+    fi
 fi
 
-if [ ! -f api-dns-check.done ]; then
-  echo "Check if API URL is reachable during bootstrap"
-
-  if check_url "API_URL" "${API_SERVER_URL}"; then
-    touch api-dns-check.done
-  fi
-fi
-
-if [ ! -f api-int-dns-check.done ]; then
-  echo "Check if API-Int URL is reachable during bootstrap"
-  if check_url "API_INT_URL" "${API_INT_SERVER_URL}"; then
-    touch api-int-dns-check.done
-  fi
-fi
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/openshift/.bootkube.done
