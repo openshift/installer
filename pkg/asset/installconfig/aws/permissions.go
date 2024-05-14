@@ -263,6 +263,8 @@ var permissions = map[PermissionGroup][]string{
 		"kms:ListGrants",
 	},
 	PermissionPublicIpv4Pool: {
+		// Needed to check the IP pools during install-config validation
+		"ec2:DescribePublicIpv4Pools",
 		// Needed by terraform because of bootstrap EIP created
 		"ec2:DisassociateAddress",
 	},
