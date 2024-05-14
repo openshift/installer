@@ -492,6 +492,7 @@ var (
 					reportProblemsToJiraComponent("Installer").
 					contactPerson("bfournie").
 					productScope(ocpSpecific).
+					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 					mustRegister()
 
 	FeatureGateClusterAPIInstallIBMCloud = newFeatureGate("ClusterAPIInstallIBMCloud").
