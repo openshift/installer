@@ -157,9 +157,8 @@ func GetR53ClientCfg(sess *awss.Session, roleARN string) *aws.Config {
 }
 
 // CreateOrUpdateRecord Creates or Updates the Route53 Record for the cluster endpoint.
-func (c *Client) CreateOrUpdateRecord(ctx context.Context, ic *types.InstallConfig, target string, intTarget string, phzID string) error {
+func (c *Client) CreateOrUpdateRecord(ctx context.Context, ic *types.InstallConfig, target string, intTarget string, phzID string, aliasZoneID string) error {
 	useCNAME := cnameRegions.Has(ic.AWS.Region)
-	aliasZoneID := hostedZoneIDPerRegionNLBMap[ic.AWS.Region]
 
 	apiName := fmt.Sprintf("api.%s.", ic.ClusterDomain())
 	apiIntName := fmt.Sprintf("api-int.%s.", ic.ClusterDomain())
@@ -382,7 +381,8 @@ func r53Tags(tags map[string]string) []*route53.Tag {
 
 // See https://docs.aws.amazon.com/general/latest/gr/elb.html#elb_region
 
-var hostedZoneIDPerRegionNLBMap = map[string]string{
+// HostedZoneIDPerRegionNLBMap maps HostedZoneIDs from known regions.
+var HostedZoneIDPerRegionNLBMap = map[string]string{
 	endpoints.AfSouth1RegionID:     "Z203XCE67M25HM",
 	endpoints.ApEast1RegionID:      "Z12Y7K3UBGUAD1",
 	endpoints.ApNortheast1RegionID: "Z31USIVHYNEOWT",
