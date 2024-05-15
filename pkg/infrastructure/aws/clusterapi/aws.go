@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -11,11 +13,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	k8sClient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	awsmanifest "github.com/openshift/installer/pkg/asset/manifests/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
@@ -191,4 +195,78 @@ func getHostedZoneIDForNLB(ctx context.Context, awsSession *session.Session, reg
 	}
 
 	return "", errNotFound
+}
+
+// DestroyBootstrap removes aws bootstrap resources not handled
+// by the deletion of the bootstrap machine by the capi controllers.
+func (*Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapDestroyInput) error {
+	if err := removeSSHRule(ctx, in.Client, in.Metadata.InfraID); err != nil {
+		return fmt.Errorf("failed to remove bootstrap SSH rule: %w", err)
+	}
+	return nil
+}
+
+// removeSSHRule removes the SSH rule for accessing the bootstrap node
+// by removing the rule from the cluster spec and updating the object.
+func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string) error {
+	awsCluster := &capa.AWSCluster{}
+	key := k8sClient.ObjectKey{
+		Name:      infraID,
+		Namespace: capiutils.Namespace,
+	}
+	if err := cl.Get(ctx, key, awsCluster); err != nil {
+		return fmt.Errorf("failed to get AWSCluster: %w", err)
+	}
+
+	postBootstrapRules := []capa.IngressRule{}
+	for _, rule := range awsCluster.Spec.NetworkSpec.AdditionalControlPlaneIngressRules {
+		if strings.EqualFold(rule.Description, awsmanifest.BootstrapSSHDescription) {
+			continue
+		}
+		postBootstrapRules = append(postBootstrapRules, rule)
+	}
+
+	awsCluster.Spec.NetworkSpec.AdditionalControlPlaneIngressRules = postBootstrapRules
+
+	if err := cl.Update(ctx, awsCluster); err != nil {
+		return fmt.Errorf("failed to update AWSCluster during bootstrap destroy: %w", err)
+	}
+	logrus.Debug("Updated AWSCluster to remove bootstrap SSH rule")
+
+	timeout := 5 * time.Minute
+	untilTime := time.Now().Add(timeout)
+	timezone, _ := untilTime.Zone()
+	logrus.Infof("Waiting up to %v (until %v %s) for bootstrap SSH rule to be destroyed...", timeout, untilTime.Format(time.Kitchen), timezone)
+	if err := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
+		Duration: time.Second * 10,
+		Factor:   float64(1.5),
+		Steps:    32,
+		Cap:      timeout,
+	}, func(ctx context.Context) (bool, error) {
+		c := &capa.AWSCluster{}
+		if err := cl.Get(ctx, key, c); err != nil {
+			return false, err
+		}
+		if sg, ok := c.Status.Network.SecurityGroups[capa.SecurityGroupControlPlane]; ok {
+			for _, r := range sg.IngressRules {
+				if r.Description == awsmanifest.BootstrapSSHDescription {
+					return false, nil
+				}
+			}
+			return true, nil
+		}
+		// This shouldn't happen, but if control plane SG is not found, return an error.
+		keys := make([]capa.SecurityGroupRole, 0, len(c.Status.Network.SecurityGroups))
+		for sgr := range c.Status.Network.SecurityGroups {
+			keys = append(keys, sgr)
+		}
+		return false, fmt.Errorf("controlplane not found in cluster security groups: %v", keys)
+	}); err != nil {
+		if wait.Interrupted(err) {
+			return fmt.Errorf("bootstrap ssh rule was not removed within %v: %w", timeout, err)
+		}
+		return fmt.Errorf("unable to remove bootstrap ssh rule: %w", err)
+	}
+
+	return nil
 }

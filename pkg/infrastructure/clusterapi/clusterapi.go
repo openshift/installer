@@ -378,6 +378,17 @@ func (i *InfraProvider) DestroyBootstrap(ctx context.Context, dir string) error 
 		}
 	}
 
+	if p, ok := i.impl.(BootstrapDestroyer); ok {
+		bootstrapDestoryInput := BootstrapDestroyInput{
+			Client:   sys.Client(),
+			Metadata: *metadata,
+		}
+
+		if err = p.DestroyBootstrap(ctx, bootstrapDestoryInput); err != nil {
+			return fmt.Errorf("failed during the destroy bootstrap hook: %w", err)
+		}
+	}
+
 	machineName := capiutils.GenerateBoostrapMachineName(metadata.InfraID)
 	machineNamespace := capiutils.Namespace
 	if err := sys.Client().Delete(ctx, &clusterv1.Machine{

@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/rhcos"
+	"github.com/openshift/installer/pkg/types"
 )
 
 // Provider is the base interface that cloud platforms
@@ -86,4 +87,16 @@ type PostProvisionInput struct {
 	Client        client.Client
 	InstallConfig *installconfig.InstallConfig
 	InfraID       string
+}
+
+// BootstrapDestroyer allows platform-specific behavior when
+// destroying bootstrap resources.
+type BootstrapDestroyer interface {
+	DestroyBootstrap(ctx context.Context, in BootstrapDestroyInput) error
+}
+
+// BootstrapDestroyInput collects args passed to the DestroyBootstrap hook.
+type BootstrapDestroyInput struct {
+	Client   client.Client
+	Metadata types.ClusterMetadata
 }

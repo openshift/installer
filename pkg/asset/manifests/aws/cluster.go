@@ -17,6 +17,11 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
+// BootstrapSSHDescription is the description for the
+// ingress rule that provides SSH access to the bootstrap node
+// & identifies the rule for removal during bootstrap destroy.
+const BootstrapSSHDescription = "Bootstrap SSH Access"
+
 // GenerateClusterAssets generates the manifests for the cluster-api.
 func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installconfig.ClusterID) (*capiutils.GenerateClusterAssetsOutput, error) {
 	manifests := []*asset.RuntimeFile{}
@@ -133,7 +138,7 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 						SourceSecurityGroupRoles: []capa.SecurityGroupRole{"controlplane", "node"},
 					},
 					{
-						Description: "SSH everyone",
+						Description: BootstrapSSHDescription,
 						Protocol:    capa.SecurityGroupProtocolTCP,
 						FromPort:    22,
 						ToPort:      22,
