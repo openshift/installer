@@ -2,7 +2,9 @@ package powervs
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
+	"math/big"
 
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -22,6 +24,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	var (
 		manifests          []*asset.RuntimeFile
 		network            string
+		dhcpSubnet         = "192.168.0.0/24"
 		service            capibm.IBMPowerVSResourceReference
 		vpcName            string
 		vpcRegion          string
@@ -52,6 +55,12 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	manifests = []*asset.RuntimeFile{}
 
 	network = fmt.Sprintf("%s-network", clusterID.InfraID)
+
+	n, err := rand.Int(rand.Reader, big.NewInt(253))
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate random subnet: %w", err)
+	}
+	dhcpSubnet = fmt.Sprintf("192.168.%d.0/24", n.Int64())
 
 	if installConfig.Config.PowerVS.ServiceInstanceGUID == "" {
 		serviceName := fmt.Sprintf("%s-power-iaas", clusterID.InfraID)
@@ -104,6 +113,9 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		Spec: capibm.IBMPowerVSClusterSpec{
 			Network: capibm.IBMPowerVSResourceReference{
 				Name: &network,
+			},
+			DHCPServer: &capibm.DHCPServer{
+				Cidr: &dhcpSubnet,
 			},
 			ServiceInstance: &service,
 			Zone:            &installConfig.Config.Platform.PowerVS.Zone,
@@ -163,9 +175,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			return nil, fmt.Errorf("unable to find a DNS server for specified VPC: %s %w", installConfig.Config.PowerVS.VPCName, err)
 		}
 
-		powerVSCluster.Spec.DHCPServer = &capibm.DHCPServer{
-			DNSServer: &dnsServerIP,
-		}
+		powerVSCluster.Spec.DHCPServer.DNSServer = &dnsServerIP
 	}
 
 	// If a VPC was specified, pass all subnets in it to cluster API
