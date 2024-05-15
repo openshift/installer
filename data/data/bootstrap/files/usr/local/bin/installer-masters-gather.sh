@@ -39,6 +39,9 @@ ip route >& "${ARTIFACTS}/network/ip-route.txt"
 hostname >& "${ARTIFACTS}/network/hostname.txt"
 netstat -anp >& "${ARTIFACTS}/network/netstat.txt"
 cp -r /etc/resolv.conf "${ARTIFACTS}/network/"
+if [ -f /etc/NetworkManager/conf.d/dns.conf ]; then
+  cp -r /etc/NetworkManager/conf.d/dns.conf "${ARTIFACTS}/network/"
+fi
 
 echo "Gathering master containers ..."
 mkdir -p "${ARTIFACTS}/containers"
