@@ -47,6 +47,10 @@ const (
 	SystemStateRunning SystemState = "running"
 	// SystemStateStopped indicates the system is stopped.
 	SystemStateStopped SystemState = "stopped"
+
+	// ArtifactsDir is the directory where output (manifests, kubeconfig, etc.)
+	// related to CAPI-based installs are stored.
+	ArtifactsDir = ".clusterapi_output"
 )
 
 // Interface is the interface for the cluster-api system.
@@ -364,6 +368,10 @@ func (c *system) Teardown() {
 
 	// Clean up the binary directory.
 	defer os.RemoveAll(c.lcp.BinDir)
+
+	// Clean up log file handles.
+	defer c.lcp.EtcdLog.Close()
+	defer c.lcp.APIServerLog.Close()
 
 	// Proceed to shutdown.
 	c.teardownOnce.Do(func() {
