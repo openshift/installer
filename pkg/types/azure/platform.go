@@ -163,6 +163,36 @@ func (p *Platform) ClusterResourceGroupName(infraID string) string {
 	return fmt.Sprintf("%s-rg", infraID)
 }
 
+// VirtualNetworkName returns the name of the virtual network for the cluster.
+func (p *Platform) VirtualNetworkName(infraID string) string {
+	if len(p.VirtualNetwork) > 0 {
+		return p.VirtualNetwork
+	}
+	return fmt.Sprintf("%s-vnet", infraID)
+}
+
+// ControlPlaneSubnetName returns the name of the control plane subnet for the
+// cluster.
+func (p *Platform) ControlPlaneSubnetName(infraID string) string {
+	if len(p.ControlPlaneSubnet) > 0 {
+		return p.ControlPlaneSubnet
+	}
+	return fmt.Sprintf("%s-master-subnet", infraID)
+}
+
+// ComputeSubnetName returns the name of the compute subnet for the cluster.
+func (p *Platform) ComputeSubnetName(infraID string) string {
+	if len(p.ComputeSubnet) > 0 {
+		return p.ComputeSubnet
+	}
+	return fmt.Sprintf("%s-worker-subnet", infraID)
+}
+
+// NetworkSecurityGroupName returns the name of the network security group.
+func (p *Platform) NetworkSecurityGroupName(infraID string) string {
+	return fmt.Sprintf("%s-nsg", infraID)
+}
+
 // IsARO returns true if ARO-only modifications are enabled
 func (p *Platform) IsARO() bool {
 	return aro

@@ -179,12 +179,18 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 			},
 		},
 		Spec: capz.AzureMachineSpec{
-			VMSize:                 mpool.InstanceType,
-			Image:                  image,
-			FailureDomain:          ptr.To(mpool.Zones[0]),
-			OSDisk:                 osDisk,
-			AdditionalTags:         tags,
-			AllocatePublicIP:       true,
+			VMSize:         mpool.InstanceType,
+			Image:          image,
+			FailureDomain:  ptr.To(mpool.Zones[0]),
+			OSDisk:         osDisk,
+			AdditionalTags: tags,
+			// Do not allocate a public IP since it isn't
+			// accessible as we are using an outbound LB for the
+			// control plane. This is temporary until we have a
+			// workaround for accessing SSH	(Most likely port
+			// forwarding SSH off the LB until the bootstrap node
+			// is destroyed).
+			AllocatePublicIP:       false,
 			AdditionalCapabilities: additionalCapabilities,
 			SecurityProfile:        securityProfile,
 		},

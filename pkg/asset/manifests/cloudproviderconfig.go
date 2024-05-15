@@ -124,7 +124,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "could not get azure session")
 		}
 
-		nsg := fmt.Sprintf("%s-nsg", clusterID.InfraID)
+		nsg := installConfig.Config.Azure.NetworkSecurityGroupName(clusterID.InfraID)
 		nrg := installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID)
 		if installConfig.Config.Azure.NetworkResourceGroupName != "" {
 			nrg = installConfig.Config.Azure.NetworkResourceGroupName

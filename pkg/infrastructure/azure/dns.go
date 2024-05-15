@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/dns/armdns"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns"
@@ -85,15 +87,29 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 		return fmt.Errorf("failed to create session: %w", err)
 	}
 	subscriptionID := session.Credentials.SubscriptionID
+	cloudConfiguration := session.CloudConfig
+
 	tokenCreds, err := azidentity.NewClientSecretCredential(session.Credentials.TenantID, session.Credentials.ClientID, session.Credentials.ClientSecret, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create identity: %w", err)
 	}
-	recordSetClient, err := armdns.NewRecordSetsClient(subscriptionID, tokenCreds, nil)
+	recordSetClient, err := armdns.NewRecordSetsClient(subscriptionID, tokenCreds,
+		&arm.ClientOptions{
+			ClientOptions: policy.ClientOptions{
+				Cloud: cloudConfiguration,
+			},
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create public record client: %w", err)
 	}
-	privateRecordSetClient, err := armprivatedns.NewRecordSetsClient(subscriptionID, tokenCreds, nil)
+	privateRecordSetClient, err := armprivatedns.NewRecordSetsClient(subscriptionID, tokenCreds,
+		&arm.ClientOptions{
+			ClientOptions: policy.ClientOptions{
+				Cloud: cloudConfiguration,
+			},
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create private record client: %w", err)
 	}
