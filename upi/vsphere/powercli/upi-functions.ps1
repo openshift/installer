@@ -300,7 +300,7 @@ function New-OpenshiftVMs {
             $ignition = [Convert]::ToBase64String($bytes)
 
             # Get correct template / folder
-            $folder = Get-Folder -Name $metadata.infraID -Location $node.datacenter
+            $folder = Get-Folder -Name $clustername -Location $node.datacenter
             $template = Get-VM -Name $vm_template -Location $($node.datacenter)
 
             # Clone the virtual machine from the imported template
