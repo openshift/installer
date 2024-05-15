@@ -33,6 +33,7 @@ type addNodeStatusHistory struct {
 
 type addNodeMonitor struct {
 	nodeIPAddress string
+	hostnames     []string
 	cluster       *Cluster
 	status        addNodeStatusHistory
 }
@@ -53,6 +54,12 @@ func newAddNodeMonitor(nodeIP string, cluster *Cluster) (*addNodeMonitor, error)
 			NodeJoinedCluster:      false,
 			NodeIsReady:            false,
 		},
+	}
+	hostnames, err := net.LookupAddr(nodeIP)
+	if err != nil {
+		logrus.Infof("Cannot resolve IP address %v to a hostname. Skipping checks for pending CSRs.", nodeIP)
+	} else {
+		mon.hostnames = hostnames
 	}
 	return &mon, nil
 }
@@ -202,19 +209,18 @@ func (mon *addNodeMonitor) clusterHasSecondCSRPending() bool {
 }
 
 func (mon *addNodeMonitor) getCSRsPendingApproval(signerName string) []certificatesv1.CertificateSigningRequest {
-	hostnames, err := net.LookupAddr(mon.nodeIPAddress)
-	if err != nil {
-		logrus.Debugf("error looking up hostnames from IP address: %v", err)
+	if mon.hostnames == nil {
 		return []certificatesv1.CertificateSigningRequest{}
 	}
 
 	csrs, err := mon.cluster.API.Kube.ListCSRs()
 	if err != nil {
 		logrus.Debugf("error calling listCSRs(): %v", err)
+		logrus.Infof("Cannot retrieve CSRs from Kube API. Skipping checks for pending CSRs")
 		return []certificatesv1.CertificateSigningRequest{}
 	}
 
-	return filterCSRsMatchingHostname(signerName, csrs, hostnames)
+	return filterCSRsMatchingHostname(signerName, csrs, mon.hostnames)
 }
 
 func filterCSRsMatchingHostname(signerName string, csrs *certificatesv1.CertificateSigningRequestList, hostnames []string) []certificatesv1.CertificateSigningRequest {
@@ -236,6 +242,10 @@ func filterCSRsMatchingHostname(signerName string, csrs *certificatesv1.Certific
 	return matchedCSRs
 }
 
+// containsHostname checks if the searchString contains one of the node's
+// hostnames. Only the first element of the hostname is checked.
+// For example if the hostname is "extraworker-0.ostest.test.metalkube.org",
+// "extraworker-0" is used to check if it exists in the searchString.
 func containsHostname(searchString string, hostnames []string) bool {
 	for _, hostname := range hostnames {
 		parts := strings.Split(hostname, ".")
