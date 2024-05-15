@@ -2,7 +2,6 @@ package isoeditor
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -155,7 +154,7 @@ func fixIsolinuxConfig(rootFSURL, extractDir string) error {
 }
 
 func editFile(fileName string, reString string, replacement string) error {
-	content, err := ioutil.ReadFile(fileName)
+	content, err := os.ReadFile(fileName)
 	if err != nil {
 		return err
 	}
@@ -163,7 +162,7 @@ func editFile(fileName string, reString string, replacement string) error {
 	re := regexp.MustCompile(reString)
 	newContent := re.ReplaceAllString(string(content), replacement)
 
-	if err := ioutil.WriteFile(fileName, []byte(newContent), 0600); err != nil {
+	if err := os.WriteFile(fileName, []byte(newContent), 0600); err != nil {
 		return err
 	}
 

@@ -37,5 +37,12 @@ func (ic *IgnitionContent) Archive() (*bytes.Reader, error) {
 		return nil, errors.Wrap(err, "Failed to gzip ignition config")
 	}
 
+	padSize := (4 - (compressedBuffer.Len() % 4)) % 4
+	for i := 0; i < padSize; i++ {
+		if err := compressedBuffer.WriteByte(0); err != nil {
+			return nil, err
+		}
+	}
+
 	return bytes.NewReader(compressedBuffer.Bytes()), nil
 }
