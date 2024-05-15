@@ -186,17 +186,6 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		return fmt.Errorf("could not find master subnet %s in subnets %v", masterSubnetName, subnets)
 	}
 
-	zones := gcpCluster.Status.FailureDomains.GetIDs()
-
-	// Currently, the internal/private load balancer is not created by CAPG. The load balancer will be created
-	// by the installer for now.
-	// TODO: remove the creation of the LB and health check here when supported by CAPG.
-	// https://github.com/kubernetes-sigs/cluster-api-provider-gcp/issues/903
-	apiIntIPAddress, err := createInternalLB(ctx, in, masterSubnetSelflink, networkSelfLink, zones)
-	if err != nil {
-		return fmt.Errorf("failed to create internal load balancer address: %w", err)
-	}
-
 	// The firewall for masters, aka control-plane, is created by CAPG
 	// Create the ones needed for worker to master communication
 	if err = createFirewallRules(ctx, in, *gcpCluster.Status.Network.SelfLink); err != nil {
@@ -212,6 +201,11 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		// Create the private zone if one does not exist
 		if err := createPrivateManagedZone(ctx, in.InstallConfig, in.InfraID, *gcpCluster.Status.Network.SelfLink); err != nil {
 			return fmt.Errorf("failed to create the private managed zone: %w", err)
+		}
+
+		apiIntIPAddress, err := getInternalLBAddress(ctx, in.InstallConfig.Config.GCP.ProjectID, in.InstallConfig.Config.GCP.Region, getAPIAddressName(in.InfraID))
+		if err != nil {
+			return fmt.Errorf("failed to get the internal load balancer address: %w", err)
 		}
 
 		// Create the public (optional) and private dns records

@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
@@ -101,6 +102,11 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		labels[label.Key] = label.Value
 	}
 
+	capgLoadBalancerType := capg.InternalExternal
+	if installConfig.Config.Publish == types.InternalPublishingStrategy {
+		capgLoadBalancerType = capg.Internal
+	}
+
 	gcpCluster := &capg.GCPCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -121,6 +127,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			FailureDomains:   findFailureDomains(installConfig),
 			LoadBalancer: capg.LoadBalancerSpec{
 				APIServerInstanceGroupTagOverride: ptr.To(InstanceGroupRoleTag),
+				LoadBalancerType:                  ptr.To(capgLoadBalancerType),
 			},
 		},
 	}
