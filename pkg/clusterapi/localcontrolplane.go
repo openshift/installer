@@ -55,6 +55,8 @@ type localControlPlane struct {
 	Cfg            *rest.Config
 	BinDir         string
 	KubeconfigPath string
+	EtcdLog        *os.File
+	APIServerLog   *os.File
 }
 
 // Run launches the local control plane.
@@ -68,21 +70,38 @@ func (c *localControlPlane) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to unpack envtest binaries: %w", err)
 	}
 
+	// Write etcd & kube-apiserver output to log files.
+	var err error
+	if err := os.MkdirAll(filepath.Join(command.RootOpts.Dir, ArtifactsDir), 0750); err != nil {
+		return fmt.Errorf("error creating artifacts dir: %w", err)
+	}
+	if c.EtcdLog, err = os.Create(filepath.Join(command.RootOpts.Dir, ArtifactsDir, "etcd.log")); err != nil {
+		return fmt.Errorf("failed to create etcd log file: %w", err)
+	}
+	if c.APIServerLog, err = os.Create(filepath.Join(command.RootOpts.Dir, ArtifactsDir, "kube-apiserver.log")); err != nil {
+		return fmt.Errorf("failed to create kube-apiserver log file: %w", err)
+	}
+
 	log.SetLogger(klog.NewKlogr())
 	logrus.Info("Started local control plane with envtest")
 	c.Env = &envtest.Environment{
 		Scheme:                   Scheme,
-		AttachControlPlaneOutput: false,
+		AttachControlPlaneOutput: true,
 		BinaryAssetsDirectory:    c.BinDir,
 		ControlPlaneStartTimeout: 10 * time.Second,
 		ControlPlaneStopTimeout:  10 * time.Second,
 		ControlPlane: envtest.ControlPlane{
 			Etcd: &envtest.Etcd{
 				DataDir: c.BinDir,
+				Out:     c.EtcdLog,
+				Err:     c.EtcdLog,
+			},
+			APIServer: &envtest.APIServer{
+				Out: c.APIServerLog,
+				Err: c.APIServerLog,
 			},
 		},
 	}
-	var err error
 	c.Cfg, err = c.Env.Start()
 	if err != nil {
 		return err

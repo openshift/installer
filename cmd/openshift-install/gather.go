@@ -24,11 +24,11 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	"github.com/openshift/installer/pkg/asset/tls"
+	"github.com/openshift/installer/pkg/clusterapi"
 	serialgather "github.com/openshift/installer/pkg/gather"
 	"github.com/openshift/installer/pkg/gather/service"
 	"github.com/openshift/installer/pkg/gather/ssh"
 	"github.com/openshift/installer/pkg/infrastructure"
-	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	infra "github.com/openshift/installer/pkg/infrastructure/platform"
 
 	_ "github.com/openshift/installer/pkg/gather/aws"
@@ -254,7 +254,7 @@ func gatherCAPIManifests(directory, gatherID string) (string, error) {
 		return "", fmt.Errorf("failed to get absolute path for %s: %w", directory, err)
 	}
 
-	capiDir := filepath.Join(dir, clusterapi.CAPIArtifactsDir)
+	capiDir := filepath.Join(dir, clusterapi.ArtifactsDir)
 	if _, err := os.Stat(capiDir); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return "", fmt.Errorf("either Cluster API manifests not generated or terraform provision")
