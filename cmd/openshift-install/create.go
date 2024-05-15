@@ -133,7 +133,6 @@ var (
 			// FIXME: add longer descriptions for our commands with examples for better UX.
 			// Long:  "",
 			PostRun: func(cmd *cobra.Command, _ []string) {
-
 				// Get the context that was set in newCreateCmd.
 				ctx := cmd.Context()
 
@@ -414,29 +413,30 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 	}
 
 	var lastErr error
-	wait.Until(func() {
+	err = wait.PollUntilContextCancel(apiContext, 2*time.Second, true, func(_ context.Context) (done bool, err error) {
 		version, err := discovery.ServerVersion()
 		if err == nil {
 			logrus.Infof("API %s up", version)
 			timer.StopTimer("API")
-			cancel()
-		} else {
-			lastErr = err
-			silenceRemaining--
-			chunks := strings.Split(err.Error(), ":")
-			errorSuffix := chunks[len(chunks)-1]
-			if previousErrorSuffix != errorSuffix {
-				logrus.Debugf("Still waiting for the Kubernetes API: %v", err)
-				previousErrorSuffix = errorSuffix
-				silenceRemaining = logDownsample
-			} else if silenceRemaining == 0 {
-				logrus.Debugf("Still waiting for the Kubernetes API: %v", err)
-				silenceRemaining = logDownsample
-			}
+			return true, nil
 		}
-	}, 2*time.Second, apiContext.Done())
-	err = apiContext.Err()
-	if err != nil && err != context.Canceled {
+
+		lastErr = err
+		silenceRemaining--
+		chunks := strings.Split(err.Error(), ":")
+		errorSuffix := chunks[len(chunks)-1]
+		if previousErrorSuffix != errorSuffix {
+			logrus.Debugf("Still waiting for the Kubernetes API: %v", err)
+			previousErrorSuffix = errorSuffix
+			silenceRemaining = logDownsample
+		} else if silenceRemaining == 0 {
+			logrus.Debugf("Still waiting for the Kubernetes API: %v", err)
+			silenceRemaining = logDownsample
+		}
+
+		return false, nil
+	})
+	if err != nil {
 		if lastErr != nil {
 			return newAPIError(lastErr)
 		}
