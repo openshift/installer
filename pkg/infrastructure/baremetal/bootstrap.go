@@ -2,10 +2,12 @@ package baremetal
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/digitalocean/go-libvirt"
 	"github.com/sirupsen/logrus"
@@ -272,7 +274,7 @@ func createIgnition(virConn *libvirt.Libvirt, config baremetalConfig, pool libvi
 	return nil
 }
 
-func getCapabilities(virConn *libvirt.Libvirt) (libvirtxml.Caps, error) {
+func getHostCapabilities(virConn *libvirt.Libvirt) (libvirtxml.Caps, error) {
 	var caps libvirtxml.Caps
 
 	capsBytes, err := virConn.Capabilities()
@@ -291,18 +293,24 @@ func getCapabilities(virConn *libvirt.Libvirt) (libvirtxml.Caps, error) {
 func createBootstrapDomain(virConn *libvirt.Libvirt, config baremetalConfig, pool libvirt.StoragePool, volume libvirt.StorageVol) error {
 	bootstrapDom := newDomain(fmt.Sprintf("%s-bootstrap", config.ClusterID))
 
-	if bootstrapDom.OS.Type.Arch == "aarch64" {
+	capabilities, err := getHostCapabilities(virConn)
+	if err != nil {
+		return fmt.Errorf("failed to get libvirt capabilities: %w", err)
+	}
+
+	arch := capabilities.Host.CPU.Arch
+	bootstrapDom.OS.Type.Arch = arch
+
+	if arch == "aarch64" {
 		// for aarch64 speciffying this will automatically select the firmware and NVRAM file
 		// reference: https://libvirt.org/formatdomain.html#bios-bootloader
 		bootstrapDom.OS.Firmware = "efi"
 	}
 
-	capabilities, err := getCapabilities(virConn)
-	if err != nil {
-		return fmt.Errorf("failed to get libvirt capabilities: %w", err)
+	// For aarch64, s390x, ppc64 and ppc64le spice is not supported
+	if arch == "aarch64" || arch == "s390x" || strings.HasPrefix(arch, "ppc64") {
+		bootstrapDom.Devices.Graphics = nil
 	}
-
-	bootstrapDom.OS.Type.Arch = capabilities.Host.CPU.Arch
 
 	for _, bridge := range config.Bridges {
 		netIface := libvirtxml.DomainInterface{
@@ -451,9 +459,22 @@ func destroyBootstrap(config baremetalConfig) error {
 	}
 
 	logrus.Debug("  Undefining domain")
-	err = virConn.DomainUndefine(dom)
-	if err != nil {
-		return err
+
+	if err := virConn.DomainUndefineFlags(dom, libvirt.DomainUndefineNvram|libvirt.DomainUndefineSnapshotsMetadata|libvirt.DomainUndefineManagedSave|libvirt.DomainUndefineCheckpointsMetadata); err != nil {
+		var libvirtErr *libvirt.Error
+
+		if !errors.As(err, &libvirtErr) {
+			return fmt.Errorf("failed to cast to libvirt.Error: %w", err)
+		}
+
+		if libvirtErr.Code == uint32(libvirt.ErrNoSupport) || libvirtErr.Code == uint32(libvirt.ErrInvalidArg) {
+			logrus.Printf("libvirt does not support undefine flags: will try again without flags")
+			if err := virConn.DomainUndefine(dom); err != nil {
+				return fmt.Errorf("couldn't undefine libvirt domain: %w", err)
+			}
+		} else {
+			return fmt.Errorf("couldn't undefine libvirt domain with flags: %w", err)
+		}
 	}
 
 	pool, err := virConn.StoragePoolLookupByName(name)
