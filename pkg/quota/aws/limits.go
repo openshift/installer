@@ -24,6 +24,7 @@ var SupportedRegions = sets.NewString(
 	"ap-southeast-2",
 	"ap-northeast-1",
 	"ca-central-1",
+	"ca-west-1",
 	"eu-central-1",
 	"eu-west-1",
 	"eu-west-2",
