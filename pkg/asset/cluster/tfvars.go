@@ -29,6 +29,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	baremetalbootstrap "github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
+	gcpbootstrap "github.com/openshift/installer/pkg/asset/ignition/bootstrap/gcp"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
@@ -514,6 +515,16 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			}
 		}
 
+		url, err := gcpbootstrap.CreateSignedURL(clusterID.InfraID)
+		if err != nil {
+			return fmt.Errorf("failed to provision gcp bootstrap storage resources: %w", err)
+		}
+
+		shim, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(url, installConfig.Config.AdditionalTrustBundle, installConfig.Config.Proxy)
+		if err != nil {
+			return fmt.Errorf("failed to create gcp ignition shim: %w", err)
+		}
+
 		archName := coreosarch.RpmArch(string(installConfig.Config.ControlPlane.Architecture))
 		st, err := rhcospkg.FetchCoreOSBuild(ctx)
 		if err != nil {
@@ -541,6 +552,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				PublishStrategy:     installConfig.Config.Publish,
 				InfrastructureName:  clusterID.InfraID,
 				UserProvisionedDNS:  installConfig.Config.GCP.UserProvisionedDNS == gcp.UserProvisionedDNSEnabled,
+				IgnitionShim:        string(shim),
 			},
 		)
 		if err != nil {
