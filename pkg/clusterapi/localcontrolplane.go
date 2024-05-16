@@ -60,7 +60,7 @@ type localControlPlane struct {
 // Run launches the local control plane.
 func (c *localControlPlane) Run(ctx context.Context) error {
 	// Create a temporary directory to unpack the cluster-api binaries.
-	c.BinDir = filepath.Join(command.RootOpts.Dir, "bin", "cluster-api")
+	c.BinDir = filepath.Join(command.RootOpts.Dir, "cluster-api")
 	if err := UnpackClusterAPIBinary(c.BinDir); err != nil {
 		return fmt.Errorf("failed to unpack cluster-api binary: %w", err)
 	}

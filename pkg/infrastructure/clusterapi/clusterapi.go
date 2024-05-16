@@ -13,6 +13,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	utilkubeconfig "sigs.k8s.io/cluster-api/util/kubeconfig"
@@ -61,6 +62,8 @@ const (
 // in the lifecycle defined by the Provider interface.
 type InfraProvider struct {
 	impl Provider
+
+	appliedManifests []client.Object
 }
 
 // InitializeProvider returns a ClusterAPI provider implementation
@@ -72,7 +75,7 @@ func InitializeProvider(platform Provider) infrastructure.Provider {
 // Provision creates cluster resources by applying CAPI manifests to a locally running control plane.
 //
 //nolint:gocyclo
-func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset.Parents) ([]*asset.File, error) {
+func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset.Parents) (fileList []*asset.File, err error) {
 	manifestsAsset := &manifests.Manifests{}
 	workersAsset := &machines.Worker{}
 	capiManifestsAsset := &capimanifests.Cluster{}
@@ -97,8 +100,6 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		capiMachinesAsset,
 		tfvarsAsset,
 	)
-
-	fileList := []*asset.File{}
 
 	// Collect cluster and non-machine-related infra manifests
 	// to be applied during the initial stage.
@@ -142,15 +143,29 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	// Grab the client.
 	cl := capiSystem.Client()
 
+	// Make sure to always return generated manifests, even if errors happened
+	defer func(ctx context.Context, cl client.Client) {
+		var errs []error
+		// Overriding the named return with the generated list
+		fileList, errs = i.collectManifests(ctx, cl)
+		// If Provision returned an error, add it to the list
+		if err != nil {
+			errs = append(errs, err)
+		}
+		err = utilerrors.NewAggregate(errs)
+	}(ctx, cl)
+
+	i.appliedManifests = []client.Object{}
+
 	// Create the infra manifests.
 	for _, m := range infraManifests {
 		m.SetNamespace(capiutils.Namespace)
 		if err := cl.Create(ctx, m); err != nil {
 			return fileList, fmt.Errorf("failed to create infrastructure manifest: %w", err)
 		}
+		i.appliedManifests = append(i.appliedManifests, m)
 		logrus.Infof("Created manifest %+T, namespace=%s name=%s", m, m.GetNamespace(), m.GetName())
 	}
-
 	// Pass cluster kubeconfig and store it in; this is usually the role of a bootstrap provider.
 	{
 		key := client.ObjectKey{
@@ -228,7 +243,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 
 	bootstrapIgnData, err := injectInstallInfo(bootstrapIgnAsset.Files()[0].Data)
 	if err != nil {
-		return nil, fmt.Errorf("unable to inject installation info: %w", err)
+		return fileList, fmt.Errorf("unable to inject installation info: %w", err)
 	}
 
 	// The cloud-platform may need to override the default
@@ -261,6 +276,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		if err := cl.Create(ctx, m); err != nil {
 			return fileList, fmt.Errorf("failed to create control-plane manifest: %w", err)
 		}
+		i.appliedManifests = append(i.appliedManifests, m)
 		logrus.Infof("Created manifest %+T, namespace=%s name=%s", m, m.GetNamespace(), m.GetName())
 	}
 
@@ -322,34 +338,6 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 			return fileList, fmt.Errorf("failed during post-machine creation hook: %w", err)
 		}
 		timer.StopTimer(postProvisionStage)
-	}
-
-	// For each manifest we created, retrieve it and store it in the asset.
-	manifests := []client.Object{}
-	manifests = append(manifests, infraManifests...)
-	manifests = append(manifests, machineManifests...)
-	for _, m := range manifests {
-		key := client.ObjectKey{
-			Name:      m.GetName(),
-			Namespace: m.GetNamespace(),
-		}
-		if err := cl.Get(ctx, key, m); err != nil {
-			return fileList, fmt.Errorf("failed to get manifest: %w", err)
-		}
-
-		gvk, err := cl.GroupVersionKindFor(m)
-		if err != nil {
-			return fileList, fmt.Errorf("failed to get GVK for manifest: %w", err)
-		}
-		fileName := filepath.Join(CAPIArtifactsDir, fmt.Sprintf("%s-%s-%s.yaml", gvk.Kind, m.GetNamespace(), m.GetName()))
-		objData, err := yaml.Marshal(m)
-		if err != nil {
-			return fileList, fmt.Errorf("failed to create infrastructure manifest %s from InstallConfig: %w", fileName, err)
-		}
-		fileList = append(fileList, &asset.File{
-			Filename: fileName,
-			Data:     objData,
-		})
 	}
 
 	logrus.Infof("Cluster API resources have been created. Waiting for cluster to become ready...")
@@ -528,4 +516,37 @@ func IgnitionSecret(ign []byte, infraID, role string) *corev1.Secret {
 	}
 	secret.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Secret"))
 	return secret
+}
+
+func (i *InfraProvider) collectManifests(ctx context.Context, cl client.Client) ([]*asset.File, []error) {
+	logrus.Debug("Collecting applied cluster api manifests...")
+	errorList := []error{}
+	fileList := []*asset.File{}
+	for _, m := range i.appliedManifests {
+		key := client.ObjectKey{
+			Name:      m.GetName(),
+			Namespace: m.GetNamespace(),
+		}
+		if err := cl.Get(ctx, key, m); err != nil {
+			errorList = append(errorList, fmt.Errorf("failed to get manifest %s: %w", m.GetName(), err))
+			continue
+		}
+
+		gvk, err := cl.GroupVersionKindFor(m)
+		if err != nil {
+			errorList = append(errorList, fmt.Errorf("failed to get GVK for manifest %s: %w", m.GetName(), err))
+			continue
+		}
+		fileName := filepath.Join(CAPIArtifactsDir, fmt.Sprintf("%s-%s-%s.yaml", gvk.Kind, m.GetNamespace(), m.GetName()))
+		objData, err := yaml.Marshal(m)
+		if err != nil {
+			errorList = append(errorList, fmt.Errorf("failed to marshal manifest %s: %w", fileName, err))
+			continue
+		}
+		fileList = append(fileList, &asset.File{
+			Filename: fileName,
+			Data:     objData,
+		})
+	}
+	return fileList, errorList
 }
