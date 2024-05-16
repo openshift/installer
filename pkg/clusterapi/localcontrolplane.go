@@ -54,6 +54,7 @@ type localControlPlane struct {
 	Client         client.Client
 	Cfg            *rest.Config
 	BinDir         string
+	EtcdDataDir    string
 	KubeconfigPath string
 	EtcdLog        *os.File
 	APIServerLog   *os.File
@@ -69,6 +70,7 @@ func (c *localControlPlane) Run(ctx context.Context) error {
 	if err := UnpackEnvtestBinaries(c.BinDir); err != nil {
 		return fmt.Errorf("failed to unpack envtest binaries: %w", err)
 	}
+	c.EtcdDataDir = filepath.Join(command.RootOpts.Dir, ArtifactsDir, "etcd")
 
 	// Write etcd & kube-apiserver output to log files.
 	var err error
@@ -92,7 +94,7 @@ func (c *localControlPlane) Run(ctx context.Context) error {
 		ControlPlaneStopTimeout:  10 * time.Second,
 		ControlPlane: envtest.ControlPlane{
 			Etcd: &envtest.Etcd{
-				DataDir: c.BinDir,
+				DataDir: c.EtcdDataDir,
 				Out:     c.EtcdLog,
 				Err:     c.EtcdLog,
 			},
