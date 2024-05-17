@@ -156,13 +156,13 @@ foreach ($fd in $fds)
 
     # If the folder already exists
     Write-Output "Checking for folder in failure domain $($fd.datacenter)/$($fd.cluster)"
-    $folder = Get-Folder -Name $metadata.infraID -Location $fd.datacenter -ErrorAction continue 2>$null
+    $folder = Get-Folder -Name $clustername -Location $fd.datacenter -ErrorAction continue 2>$null
 
     # Otherwise create the folder within the datacenter as defined in the upi-variables
     if (-Not $?) {
-        Write-Output "Creating folder $($metadata.infraID) in datacenter $($fd.datacenter)"
-        (get-view (Get-Datacenter -Name $fd.datacenter).ExtensionData.vmfolder).CreateFolder($metadata.infraID)
-        $folder = Get-Folder -Name $metadata.infraID -Location $fd.datacenter
+        Write-Output "Creating folder $($clustername) in datacenter $($fd.datacenter)"
+        (get-view (Get-Datacenter -Name $fd.datacenter).ExtensionData.vmfolder).CreateFolder($clustername)
+        $folder = Get-Folder -Name $clustername -Location $fd.datacenter
         New-TagAssignment -Entity $folder -Tag $tag > $null
     }
 
@@ -234,7 +234,7 @@ Write-Output "Creating LB"
 # Data needed for LB VM creation
 $rp = Get-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Name $($fds[0].cluster)) -Server $vcenter
 $datastoreInfo = Get-Datastore -Name $fds[0].datastore -Server $vcenter -Location $fds[0].datacenter
-$folder = Get-Folder -Name $metadata.infraID -Location $fds[0].datacenter
+$folder = Get-Folder -Name $clustername -Location $fds[0].datacenter
 $template = Get-VM -Name $vm_template -Location $fds[0].datacenter
 
 # Create LB for Cluster
