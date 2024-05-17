@@ -2,7 +2,6 @@ package agent
 
 import (
 	"context"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -34,12 +33,10 @@ const (
 )
 
 // NewClusterOpenShiftAPIClient Create a kube client with OCP understanding
-func NewClusterOpenShiftAPIClient(ctx context.Context, assetDir string) (*ClusterOpenShiftAPIClient, error) {
-
+func NewClusterOpenShiftAPIClient(ctx context.Context, kubeconfigPath string) (*ClusterOpenShiftAPIClient, error) {
 	ocpClient := &ClusterOpenShiftAPIClient{}
 
-	kubeconfigpath := filepath.Join(assetDir, "auth", "kubeconfig")
-	kubeconfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigpath)
+	kubeconfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating kubeconfig for ocp config client")
 	}
@@ -58,7 +55,7 @@ func NewClusterOpenShiftAPIClient(ctx context.Context, assetDir string) (*Cluste
 	ocpClient.RouteClient = routeClient
 	ocpClient.ctx = ctx
 	ocpClient.config = kubeconfig
-	ocpClient.configPath = kubeconfigpath
+	ocpClient.configPath = kubeconfigPath
 
 	return ocpClient, nil
 
