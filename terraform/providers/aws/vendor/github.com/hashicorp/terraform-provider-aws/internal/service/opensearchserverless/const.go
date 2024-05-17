@@ -1,3 +1,0 @@
-package opensearchserverless
-
-const idSeparator = "/"
