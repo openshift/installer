@@ -278,6 +278,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		}
 	case powervs.Name:
 		config.Spec.PlatformSpec.Type = configv1.PowerVSPlatformType
+		config.Spec.PlatformSpec.PowerVS = &configv1.PowerVSPlatformSpec{}
 		var cisInstanceCRN, dnsInstanceCRN string
 		var err error
 		switch installConfig.Config.Publish {
@@ -293,6 +294,12 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			}
 		default:
 			return errors.New("unknown publishing strategy")
+		}
+		for _, service := range installConfig.Config.Platform.PowerVS.ServiceEndpoints {
+			config.Spec.PlatformSpec.PowerVS.ServiceEndpoints = append(config.Spec.PlatformSpec.PowerVS.ServiceEndpoints, configv1.PowerVSServiceEndpoint{
+				Name: service.Name,
+				URL:  service.URL,
+			})
 		}
 		config.Status.PlatformStatus.PowerVS = &configv1.PowerVSPlatformStatus{
 			Region:           installConfig.Config.Platform.PowerVS.Region,
