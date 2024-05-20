@@ -1,0 +1,8 @@
+linters:
+  enable:
+    - asciicheck
+    - bodyclose
+    - dupl
+    - errorlint
+    - exportloopref
+    - funlen
