@@ -1,0 +1,107 @@
+run:
+  deadline: 5m
+
+linters-settings:
+  staticcheck:
+    go: 1.17
+  stylecheck:
+    go: 1.17
+  gci:
+    local-prefixes: github.com/gophercloud
+  goimports:
+    local-prefixes: github.com/gophercloud
+
+linters:
+  fast: false
+  disable-all: true
+  enable:
+    - asciicheck
+    - bodyclose
+    - deadcode
+    - depguard
+    - dogsled
+    - errcheck
+    - exhaustive
+    - exportloopref
+    - gci
+    - godot
+    - gofmt
+    - goheader
+    - goimports
+    - gomodguard
+    - goprintffuncname
+    - govet
+    - ineffassign
+    - misspell
+    - nakedret
+    - nolintlint
+    - prealloc
+    - rowserrcheck
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unused
+    - varcheck
+    - whitespace
+#    - cyclop
+#    - dupl
+#    - durationcheck
+#    - errname
+#    - errorlint
+#    - exhaustivestruct
+#    - forbidigo
+#    - forcetypeassert
+#    - funlen
+#    - gochecknoglobals
+#    - gochecknoinits
+#    - gocognit
+#    - goconst
+#    - gocritic
+#    - gocyclo
+#    - godox
+#    - goerr113
+#    - gofumpt
+#    - golint
+#    - gomnd
+#    - gomoddirectives
+#    - gosec (gas)
+#    - gosimple (megacheck)
+#    - ifshort
+#    - importas
+#    - interfacer
+#    - lll
+#    - makezero
+#    - maligned
+#    - nestif
+#    - nilerr
+#    - nlreturn
+#    - noctx
+#    - paralleltest
+#    - predeclared
+#    - promlinter
+#    - revive
+#    - scopelint
+#    - sqlclosecheck
+#    - tagliatelle
+#    - testpackage
+#    - thelper
+#    - tparallel
+#    - unparam
+#    - wastedassign
+#    - wrapcheck
+#    - wsl
+
+issues:
+  exclude-rules:
+    - linters:
+        - staticcheck
+      text: "SA1019:"
+    - linters:
+        - stylecheck
+      text: "ST1005:"
+
+    - linters:
+        - errcheck
+      text: "Error return value of `d.Set` is not checked"
