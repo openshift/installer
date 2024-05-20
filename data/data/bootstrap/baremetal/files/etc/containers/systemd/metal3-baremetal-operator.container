@@ -8,7 +8,7 @@ After=network-online.target ironic-volume.service build-ironic-env.service image
 [Container]
 ContainerName=baremetal-operator
 Image=$METAL3_BAREMETAL_OPERATOR_IMAGE
-Exec=/baremetal-operator -build-preprov-image -webhook-port 0
+Exec=/baremetal-operator -build-preprov-image -webhook-port 0 -enable-leader-election -namespace openshift-machine-api
 Network=host
 Volume=${AUTH_DIR}:/auth:z,ro
 Volume=/opt/openshift:/opt/openshift:z,ro
@@ -19,6 +19,9 @@ Environment="IRONIC_KERNEL_PARAMS=${IRONIC_KERNEL_PARAMS}"
 Environment="HTTP_PORT=${HTTP_PORT}"
 Environment="IRONIC_ENDPOINT=${IRONIC_ENDPOINT}"
 Environment="IRONIC_EXTERNAL_URL_V6=${IRONIC_EXTERNAL_URL_V6}"
+Environment="LEASE_DURATION_SECONDS=137"
+Environment="RENEW_DEADLINE_SECONDS=107"
+Environment="RETRY_PERIOD_SECONDS=26"
 
 [Service]
 EnvironmentFile=/etc/metal3.env
