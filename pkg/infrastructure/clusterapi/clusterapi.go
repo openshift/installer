@@ -366,17 +366,6 @@ func (i *InfraProvider) DestroyBootstrap(ctx context.Context, dir string) error 
 		}
 	}
 
-	if p, ok := i.impl.(BootstrapDestroyer); ok {
-		bootstrapDestoryInput := BootstrapDestroyInput{
-			Client:   sys.Client(),
-			Metadata: *metadata,
-		}
-
-		if err = p.DestroyBootstrap(ctx, bootstrapDestoryInput); err != nil {
-			return fmt.Errorf("failed during the destroy bootstrap hook: %w", err)
-		}
-	}
-
 	machineName := capiutils.GenerateBoostrapMachineName(metadata.InfraID)
 	machineNamespace := capiutils.Namespace
 	if err := sys.Client().Delete(ctx, &clusterv1.Machine{
@@ -390,9 +379,9 @@ func (i *InfraProvider) DestroyBootstrap(ctx context.Context, dir string) error 
 
 	machineDeletionTimeout := 5 * time.Minute
 	logrus.Infof("Waiting up to %v for bootstrap machine deletion %s/%s...", machineDeletionTimeout, machineNamespace, machineName)
-	ctx, cancel := context.WithTimeout(ctx, machineDeletionTimeout)
-	wait.UntilWithContext(ctx, func(context.Context) {
-		err := sys.Client().Get(ctx, client.ObjectKey{
+	machineCtx, cancel := context.WithTimeout(ctx, machineDeletionTimeout)
+	wait.UntilWithContext(machineCtx, func(context.Context) {
+		err := sys.Client().Get(machineCtx, client.ObjectKey{
 			Name:      machineName,
 			Namespace: machineNamespace,
 		}, &clusterv1.Machine{})
@@ -406,13 +395,24 @@ func (i *InfraProvider) DestroyBootstrap(ctx context.Context, dir string) error 
 		}
 	}, 2*time.Second)
 
-	err = ctx.Err()
+	err = machineCtx.Err()
 	if err != nil && !errors.Is(err, context.Canceled) {
 		logrus.Warnf("Timeout deleting bootstrap machine: %s", err)
 	} else {
 		logrus.Infof("Finished destroying bootstrap resources")
 	}
 	clusterapi.System().Teardown()
+
+	if p, ok := i.impl.(BootstrapDestroyer); ok {
+		bootstrapDestoryInput := BootstrapDestroyInput{
+			Client:   sys.Client(),
+			Metadata: *metadata,
+		}
+
+		if err = p.DestroyBootstrap(ctx, bootstrapDestoryInput); err != nil {
+			return fmt.Errorf("failed during the destroy bootstrap hook: %w", err)
+		}
+	}
 
 	return nil
 }
