@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -15,6 +16,8 @@ import (
 	coreosarch "github.com/coreos/stream-metadata-go/arch"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/vim25/mo"
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -35,6 +38,7 @@ import (
 	ibmcloudconfig "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
+	vsphereconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
@@ -51,6 +55,7 @@ import (
 	openstacktfvars "github.com/openshift/installer/pkg/tfvars/openstack"
 	ovirttfvars "github.com/openshift/installer/pkg/tfvars/ovirt"
 	powervstfvars "github.com/openshift/installer/pkg/tfvars/powervs"
+	vspheretfvars "github.com/openshift/installer/pkg/tfvars/vsphere"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -1040,9 +1045,102 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		})
 
 	case vsphere.Name:
-		t.FileList = make([]*asset.File, 0)
-		logrus.Warn("installing on vSphere via terraform is no longer supported")
-		return nil
+		networkFailureDomainMap := make(map[string]string)
+		ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+		defer cancel()
+
+		vim25Client, _, cleanup, err := vsphereconfig.CreateVSphereClients(context.TODO(),
+			installConfig.Config.VSphere.VCenters[0].Server,
+			installConfig.Config.VSphere.VCenters[0].Username,
+			installConfig.Config.VSphere.VCenters[0].Password)
+		if err != nil {
+			return errors.Wrapf(err, "unable to connect to vCenter %s. Ensure provided information is correct and client certs have been added to system trust", installConfig.Config.VSphere.VCenters[0].Server)
+		}
+		defer cleanup()
+
+		finder := vsphereconfig.NewFinder(vim25Client)
+
+		controlPlanes, err := mastersAsset.Machines()
+		if err != nil {
+			return err
+		}
+		ipAddresses, err := mastersAsset.IPAddresses()
+		if err != nil {
+			return err
+		}
+		controlPlaneConfigs := make([]*machinev1beta1.VSphereMachineProviderSpec, len(controlPlanes))
+		for i, c := range controlPlanes {
+			var clusterMo mo.ClusterComputeResource
+			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1beta1.VSphereMachineProviderSpec) //nolint:errcheck // legacy, pre-linter
+
+			rpObj, err := finder.ResourcePool(ctx, controlPlaneConfigs[i].Workspace.ResourcePool)
+			if err != nil {
+				return err
+			}
+
+			clusterRef, err := rpObj.Owner(ctx)
+			if err != nil {
+				return err
+			}
+
+			// When using finder.ObjectReference the InventoryPath is defined
+			// NewClusterComputeResource I don't believe assigns that value.
+			clusterObjRef, err := finder.ObjectReference(ctx, clusterRef.Reference())
+			if err != nil {
+				return err
+			}
+
+			clusterObj, ok := clusterObjRef.(*object.ClusterComputeResource)
+			if !ok {
+				return errors.New("unable to convert cluster object reference to object cluster compute resource")
+			}
+			err = clusterObj.Properties(ctx, clusterRef.Reference(), []string{"name", "summary"}, &clusterMo)
+			if err != nil {
+				return err
+			}
+
+			networkPath := path.Join(clusterObj.InventoryPath, controlPlaneConfigs[i].Network.Devices[0].NetworkName)
+			netObj, err := finder.Network(ctx, networkPath)
+			if err != nil {
+				return err
+			}
+
+			controlPlaneConfigs[i].Network.Devices[0].NetworkName = netObj.Reference().Value
+		}
+
+		for _, fd := range installConfig.Config.VSphere.FailureDomains {
+			// Must use the Managed Object ID for a port group (e.g. dvportgroup-5258)
+			// instead of the name since port group names aren't always unique in vSphere.
+			// https://bugzilla.redhat.com/show_bug.cgi?id=1918005
+
+			networkPath := path.Join(fd.Topology.ComputeCluster, fd.Topology.Networks[0])
+			netObj, err := finder.Network(ctx, networkPath)
+			if err != nil {
+				return errors.Wrap(err, "failed to get vSphere network ID")
+			}
+
+			networkFailureDomainMap[fd.Name] = netObj.Reference().Value
+		}
+
+		data, err = vspheretfvars.TFVars(
+			vspheretfvars.TFVarsSources{
+				ControlPlaneConfigs:     controlPlaneConfigs,
+				ImageURL:                string(*rhcosImage),
+				DiskType:                installConfig.Config.Platform.VSphere.DiskType,
+				NetworksInFailureDomain: networkFailureDomainMap,
+				InfraID:                 clusterID.InfraID,
+				InstallConfig:           installConfig,
+				ControlPlaneMachines:    controlPlanes,
+				IPAddresses:             ipAddresses,
+			},
+		)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
+		}
+		t.FileList = append(t.FileList, &asset.File{
+			Filename: TfPlatformVarsFileName,
+			Data:     data,
+		})
 	case nutanix.Name:
 		controlPlanes, err := mastersAsset.Machines()
 		if err != nil {

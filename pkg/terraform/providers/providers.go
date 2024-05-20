@@ -37,6 +37,10 @@ var (
 	OVirt = provider("ovirt")
 	// Time is the provider for adding create and sleep requirements for resources.
 	Time = provider("time")
+	// VSphere is the provider for creating resource in vSphere.
+	VSphere = provider("vsphere")
+	// VSpherePrivate is an internal provider augmenting the VSphere provider by adding functionality.
+	VSpherePrivate = provider("vsphereprivate")
 )
 
 // Provider is a terraform provider.
