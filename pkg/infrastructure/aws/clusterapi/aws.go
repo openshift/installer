@@ -200,7 +200,14 @@ func getHostedZoneIDForNLB(ctx context.Context, awsSession *session.Session, reg
 // DestroyBootstrap removes aws bootstrap resources not handled
 // by the deletion of the bootstrap machine by the capi controllers.
 func (*Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapDestroyInput) error {
-	if err := removeSSHRule(ctx, in.Client, in.Metadata.InfraID); err != nil {
+	region := in.Metadata.AWS.Region
+	awsSession, err := awsconfig.GetSessionWithOptions(awsconfig.WithRegion(region), awsconfig.WithServiceEndpoints(region, in.Metadata.AWS.ServiceEndpoints))
+	if err != nil {
+		return fmt.Errorf("failed to get aws session: %w", err)
+	}
+	client := ec2.New(awsSession)
+
+	if err := removeSSHRule(ctx, in.Client, client, in.Metadata.InfraID); err != nil {
 		return fmt.Errorf("failed to remove bootstrap SSH rule: %w", err)
 	}
 	return nil
@@ -208,7 +215,7 @@ func (*Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapDe
 
 // removeSSHRule removes the SSH rule for accessing the bootstrap node
 // by removing the rule from the cluster spec and updating the object.
-func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string) error {
+func removeSSHRule(ctx context.Context, cl k8sClient.Client, client *ec2.EC2, infraID string) error {
 	awsCluster := &capa.AWSCluster{}
 	key := k8sClient.ObjectKey{
 		Name:      infraID,
@@ -218,21 +225,26 @@ func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string) err
 		return fmt.Errorf("failed to get AWSCluster: %w", err)
 	}
 
-	postBootstrapRules := []capa.IngressRule{}
-	for _, rule := range awsCluster.Spec.NetworkSpec.AdditionalControlPlaneIngressRules {
-		if strings.EqualFold(rule.Description, awsmanifest.BootstrapSSHDescription) {
+	sg, ok := awsCluster.Status.Network.SecurityGroups[capa.SecurityGroupControlPlane]
+	if !ok {
+		// Should never happen but if it does, we have an error msg for it.
+		return fmt.Errorf("failed to get controlplane security group")
+	}
+	input := &ec2.RevokeSecurityGroupIngressInput{GroupId: aws.String(sg.ID)}
+	for _, rule := range sg.IngressRules {
+		if !strings.EqualFold(rule.Description, awsmanifest.BootstrapSSHDescription) {
 			continue
 		}
-		postBootstrapRules = append(postBootstrapRules, rule)
+		rule := rule // TODO: remove with golang >= 1.22
+		input.IpPermissions = append(input.IpPermissions, ingressRuleFromCAPAToSDKType(&rule))
 	}
 
-	awsCluster.Spec.NetworkSpec.AdditionalControlPlaneIngressRules = postBootstrapRules
-
-	if err := cl.Update(ctx, awsCluster); err != nil {
-		return fmt.Errorf("failed to update AWSCluster during bootstrap destroy: %w", err)
+	if len(input.IpPermissions) == 0 {
+		logrus.Infof("Bootstrap SSH rule not found or already revoked")
+		return nil
 	}
-	logrus.Debug("Updated AWSCluster to remove bootstrap SSH rule")
 
+	var lastErr error
 	timeout := 5 * time.Minute
 	untilTime := time.Now().Add(timeout)
 	timezone, _ := untilTime.Zone()
@@ -243,30 +255,51 @@ func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string) err
 		Steps:    32,
 		Cap:      timeout,
 	}, func(ctx context.Context) (bool, error) {
-		c := &capa.AWSCluster{}
-		if err := cl.Get(ctx, key, c); err != nil {
-			return false, err
-		}
-		if sg, ok := c.Status.Network.SecurityGroups[capa.SecurityGroupControlPlane]; ok {
-			for _, r := range sg.IngressRules {
-				if r.Description == awsmanifest.BootstrapSSHDescription {
-					return false, nil
-				}
-			}
-			return true, nil
-		}
-		// This shouldn't happen, but if control plane SG is not found, return an error.
-		keys := make([]capa.SecurityGroupRole, 0, len(c.Status.Network.SecurityGroups))
-		for sgr := range c.Status.Network.SecurityGroups {
-			keys = append(keys, sgr)
-		}
-		return false, fmt.Errorf("controlplane not found in cluster security groups: %v", keys)
+		_, lastErr = client.RevokeSecurityGroupIngressWithContext(ctx, input)
+		return lastErr == nil, nil
 	}); err != nil {
 		if wait.Interrupted(err) {
-			return fmt.Errorf("bootstrap ssh rule was not removed within %v: %w", timeout, err)
+			return fmt.Errorf("bootstrap ssh rule was not removed within %v: %w", timeout, lastErr)
 		}
-		return fmt.Errorf("unable to remove bootstrap ssh rule: %w", err)
+		return fmt.Errorf("unable to remove bootstrap ssh rule: %w", lastErr)
 	}
+	logrus.Infof("Bootstrap SSH rule destroyed")
 
 	return nil
+}
+
+// ingressRuleFromCAPAToSDKType converts a capa ingress rule to an aws sdk ec2.IpPermission.
+// Adapted from https://github.com/kubernetes-sigs/cluster-api-provider-aws/blob/main/pkg/cloud/services/securitygroup/securitygroups.go#L766
+func ingressRuleFromCAPAToSDKType(rule *capa.IngressRule) *ec2.IpPermission {
+	perm := &ec2.IpPermission{
+		IpProtocol: aws.String(string(rule.Protocol)),
+		FromPort:   aws.Int64(rule.FromPort),
+		ToPort:     aws.Int64(rule.ToPort),
+	}
+
+	for _, cidr := range rule.CidrBlocks {
+		ipRange := &ec2.IpRange{
+			CidrIp:      aws.String(cidr),
+			Description: aws.String(rule.Description),
+		}
+		perm.IpRanges = append(perm.IpRanges, ipRange)
+	}
+
+	for _, cidr := range rule.IPv6CidrBlocks {
+		ipV6Range := &ec2.Ipv6Range{
+			CidrIpv6:    aws.String(cidr),
+			Description: aws.String(rule.Description),
+		}
+		perm.Ipv6Ranges = append(perm.Ipv6Ranges, ipV6Range)
+	}
+
+	for _, groupID := range rule.SourceSecurityGroupIDs {
+		groupPair := &ec2.UserIdGroupPair{
+			GroupId:     aws.String(groupID),
+			Description: aws.String(rule.Description),
+		}
+		perm.UserIdGroupPairs = append(perm.UserIdGroupPairs, groupPair)
+	}
+
+	return perm
 }
