@@ -39,21 +39,21 @@ data "vsphere_compute_cluster" "compute_cluster" {
    name = local.clusters[count.index]
    datacenter_id = data.vsphere_datacenter.dc[index(data.vsphere_datacenter.dc.*.name, local.datacenters[count.index])].id
 }
-# 
+#
 data "vsphere_datastore" "datastore" {
    count = length(local.failure_domains)
    name = local.datastores[count.index]
    datacenter_id = data.vsphere_datacenter.dc[index(data.vsphere_datacenter.dc.*.name, local.datacenters[count.index])].id
 }
 
-# 
+#
 data "vsphere_network" "network" {
   count = length(local.failure_domains)
   name          = local.failure_domains[count.index]["network"]
   datacenter_id = data.vsphere_datacenter.dc[index(data.vsphere_datacenter.dc.*.name, local.failure_domains[count.index]["datacenter"])].id
   distributed_virtual_switch_uuid = local.failure_domains[count.index]["distributed_virtual_switch_uuid"]
 }
- 
+
 data "vsphere_virtual_machine" "template" {
   count = length(local.datacenters_distinct)
   name          = var.vm_template
@@ -72,39 +72,41 @@ resource "vsphere_resource_pool" "resource_pool" {
   parent_resource_pool_id = data.vsphere_resource_pool.ci_resource_pool[count.index].id
 }
 
+/*
 data "vsphere_resource_pool" "resource_pool" {
   count = length(local.datacenters_distinct)
   name = "ipi-ci-clusters"
   datacenter_id = data.vsphere_datacenter.dc[index(data.vsphere_datacenter.dc.*.name, local.datacenters_distinct[count.index])].id
 }
+*/
 
 resource "vsphere_folder" "folder" {
   count = length(local.datacenters_distinct)
   path          = var.cluster_id
-  type          = "vm"  
+  type          = "vm"
   datacenter_id = data.vsphere_datacenter.dc[index(data.vsphere_datacenter.dc.*.name, local.datacenters_distinct[count.index])].id
 }
- 
+
  // Request from phpIPAM a new IP address for the bootstrap node
  module "ipam_bootstrap" {
    source = "./ipam"
- 
+
    // The hostname that will be added to phpIPAM when requesting an ip address
    hostnames = local.bootstrap_fqdns
- 
+
    // Hostname or IP address of the phpIPAM server
    ipam = var.ipam
- 
+
    // Access token for phpIPAM
    ipam_token = var.ipam_token
- 
+
    // Subnet where we will request an ip address from phpIPAM
    machine_cidr = var.machine_cidr
- 
+
    static_ip_addresses = var.bootstrap_ip_address == "" ? [] : [var.bootstrap_ip_address]
- 
+
  }
- 
+
  // Request from phpIPAM a new IP addresses for the control-plane nodes
  module "ipam_control_plane" {
    source              = "./ipam"
@@ -114,7 +116,7 @@ resource "vsphere_folder" "folder" {
    machine_cidr        = var.machine_cidr
    static_ip_addresses = var.control_plane_ip_addresses
  }
- 
+
  // Request from phpIPAM a new IP addresses for the compute nodes
  module "ipam_compute" {
    source              = "./ipam"
@@ -124,7 +126,7 @@ resource "vsphere_folder" "folder" {
    machine_cidr        = var.machine_cidr
    static_ip_addresses = var.compute_ip_addresses
  }
- 
+
  // Request from phpIPAM a new IP addresses for the load balancer nodes
  module "ipam_lb" {
    source              = "./ipam"
@@ -134,26 +136,26 @@ resource "vsphere_folder" "folder" {
    machine_cidr        = var.machine_cidr
    static_ip_addresses = var.lb_ip_address == "" ? [] : [var.lb_ip_address]
  }
- 
+
  module "lb" {
    source        = "./lb"
    lb_ip_address = module.ipam_lb.ip_addresses[0]
- 
+
    api_backend_addresses = flatten([
      module.ipam_bootstrap.ip_addresses[0],
      module.ipam_control_plane.ip_addresses]
    )
- 
+
    ingress_backend_addresses = module.ipam_compute.ip_addresses
    ssh_public_key_path       = var.ssh_public_key_path
  }
- 
+
  module "dns_cluster_domain" {
    source         = "./cluster_domain"
    cluster_domain = var.cluster_domain
    base_domain    = var.base_domain
  }
- 
+
  module "lb_a_records" {
    source  = "./host_a_record"
    zone_id = module.dns_cluster_domain.zone_id
@@ -162,21 +164,21 @@ resource "vsphere_folder" "folder" {
      [for name in local.api_lb_fqdns : module.ipam_lb.ip_addresses[0]]
    )
  }
- 
+
  module "control_plane_a_records" {
    source  = "./host_a_record"
    zone_id = module.dns_cluster_domain.zone_id
    records = zipmap(local.control_plane_fqdns, module.ipam_control_plane.ip_addresses)
  }
- 
+
  module "compute_a_records" {
    source  = "./host_a_record"
    zone_id = module.dns_cluster_domain.zone_id
    records = zipmap(local.compute_fqdns, module.ipam_compute.ip_addresses)
  }
- 
+
  module "lb_vm" {
-   source = "./vm"   
+   source = "./vm"
    vmname                = element(split(".", local.lb_fqdns[0]), 0)
    ipaddress             = module.ipam_lb.ip_addresses[0]
    ignition               = module.lb.ignition
@@ -195,7 +197,7 @@ resource "vsphere_folder" "folder" {
    memory        = 2096
    dns_addresses = var.vm_dns_addresses
  }
- 
+
 module "bootstrap" {
   source = "./vm"
 
@@ -220,7 +222,7 @@ module "bootstrap" {
   memory        = 8192
   dns_addresses = var.vm_dns_addresses
 }
- 
+
 module "control_plane_vm" {
   count = length(module.control_plane_a_records.fqdns)
   source = "./vm"
