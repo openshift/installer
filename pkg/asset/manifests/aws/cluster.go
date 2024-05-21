@@ -31,6 +31,14 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 		return nil, fmt.Errorf("failed to get user tags: %w", err)
 	}
 
+	sshRuleCidr := []string{"0.0.0.0/0"}
+	if ic.Config.Publish == types.InternalPublishingStrategy {
+		sshRuleCidr = []string{}
+		for _, machineNetwork := range ic.Config.Networking.MachineNetwork {
+			sshRuleCidr = append(sshRuleCidr, machineNetwork.CIDR.String())
+		}
+	}
+
 	awsCluster := &capa.AWSCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -142,7 +150,7 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 						Protocol:    capa.SecurityGroupProtocolTCP,
 						FromPort:    22,
 						ToPort:      22,
-						CidrBlocks:  []string{"0.0.0.0/0"},
+						CidrBlocks:  sshRuleCidr,
 					},
 				},
 			},
