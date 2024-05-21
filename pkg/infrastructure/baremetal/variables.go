@@ -99,6 +99,13 @@ func getMasterAddresses(dir string) ([]string, error) {
 	}
 
 	for _, bmh := range hosts {
+		logrus.Debug("  bmh:", bmh.Name)
+
+		if bmh.Status.HardwareDetails == nil {
+			logrus.Debug("    HardwareDetails nil, skipping")
+			continue
+		}
+
 		for _, nic := range bmh.Status.HardwareDetails.NIC {
 			masters = append(masters, nic.IP)
 		}
