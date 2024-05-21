@@ -63,7 +63,7 @@ data "vsphere_virtual_machine" "template" {
 data "vsphere_resource_pool" "ci_resource_pool" {
   count                   = length(data.vsphere_compute_cluster.compute_cluster)
   name = "${data.vsphere_compute_cluster.compute_cluster[count.index].name}/ci"
-
+  datacenter_id = data.vsphere_compute_cluster.compute_cluster[count.index].datacenter_id
 }
 
 resource "vsphere_resource_pool" "resource_pool" {
