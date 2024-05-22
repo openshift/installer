@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
@@ -248,9 +247,8 @@ func (c *Client) CreateHostedZone(ctx context.Context, input *HostedZoneInput) (
 	cfg := GetR53ClientCfg(c.ssn, input.Role)
 	svc := route53.New(c.ssn, cfg)
 
-	callRef := fmt.Sprintf("%d", time.Now().Unix())
 	res, err := svc.CreateHostedZoneWithContext(ctx, &route53.CreateHostedZoneInput{
-		CallerReference: aws.String(callRef),
+		CallerReference: aws.String(input.InfraID),
 		Name:            aws.String(input.Name),
 		HostedZoneConfig: &route53.HostedZoneConfig{
 			PrivateZone: aws.Bool(true),
