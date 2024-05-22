@@ -164,7 +164,6 @@ func generateNutanixMachine(machineName string, providerSpec *machinev1.NutanixM
 			},
 			Subnets:              []capnv1.NutanixResourceIdentifier{},
 			AdditionalCategories: categoryIdentifiers,
-			BootType:             capnv1.NutanixBootType(providerSpec.BootType),
 		},
 	}
 	ntxMachine.SetGroupVersionKind(capnv1.GroupVersion.WithKind("NutanixMachine"))
@@ -185,8 +184,13 @@ func generateNutanixMachine(machineName string, providerSpec *machinev1.NutanixM
 			})
 	}
 
-	if providerSpec.BootType != "" {
-		ntxMachine.Spec.BootType = capnv1.NutanixBootType(providerSpec.BootType)
+	switch providerSpec.BootType {
+	case machinev1.NutanixLegacyBoot:
+		ntxMachine.Spec.BootType = capnv1.NutanixBootTypeLegacy
+	case machinev1.NutanixUEFIBoot, machinev1.NutanixSecureBoot:
+		ntxMachine.Spec.BootType = capnv1.NutanixBootTypeUEFI
+	default:
+		// Use the default boot type
 	}
 
 	if providerSpec.Project.Type != "" {
