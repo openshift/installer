@@ -102,7 +102,7 @@ function check_url() {
         local URL_STAGE_NAME="check-api-int-url"
     fi
 
-    CURL_URL="https://${2}:6443/version"
+    CURL_URL="https://${2}:6443/readyz"
 
     record_service_stage_start ${URL_STAGE_NAME}
     if validate_get_url "$URL_TYPE" "$CURL_URL"; then
