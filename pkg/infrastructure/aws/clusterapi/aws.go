@@ -233,8 +233,10 @@ func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string) err
 	}
 	logrus.Debug("Updated AWSCluster to remove bootstrap SSH rule")
 
-	timeout := 5 * time.Minute
+	timeout := 15 * time.Minute
 	untilTime := time.Now().Add(timeout)
+	warnTime := time.Now().Add(5 * time.Minute)
+	warned := false
 	timezone, _ := untilTime.Zone()
 	logrus.Infof("Waiting up to %v (until %v %s) for bootstrap SSH rule to be destroyed...", timeout, untilTime.Format(time.Kitchen), timezone)
 	if err := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
@@ -247,12 +249,18 @@ func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string) err
 		if err := cl.Get(ctx, key, c); err != nil {
 			return false, err
 		}
+		if time.Now().After(warnTime) && !warned {
+			logrus.Warn("Deleting bootstrap SSH rule is still progressing but taking longer than expected")
+			warned = true
+		}
 		if sg, ok := c.Status.Network.SecurityGroups[capa.SecurityGroupControlPlane]; ok {
 			for _, r := range sg.IngressRules {
 				if r.Description == awsmanifest.BootstrapSSHDescription {
+					logrus.Debugf("Still waiting for bootstrap SSH security rule %s to be deleted from %s...", r.Description, sg.ID)
 					return false, nil
 				}
 			}
+			logrus.Debugf("The bootstrap SSH security rule %s has been removed from %s", awsmanifest.BootstrapSSHDescription, sg.ID)
 			return true, nil
 		}
 		// This shouldn't happen, but if control plane SG is not found, return an error.

@@ -27,7 +27,6 @@ import (
 	"github.com/openshift/installer/pkg/terraform/stages/openstack"
 	"github.com/openshift/installer/pkg/terraform/stages/ovirt"
 	"github.com/openshift/installer/pkg/terraform/stages/powervs"
-	"github.com/openshift/installer/pkg/terraform/stages/vsphere"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
@@ -95,7 +94,7 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(vspherecapi.Provider{}), nil
 		}
-		return terraform.InitializeProvider(vsphere.PlatformStages), nil
+		return nil, fmt.Errorf("installing on vSphere via terraform is no longer supported")
 	case nonetypes.Name:
 		// terraform is not used when the platform is "none"
 		return terraform.InitializeProvider([]terraform.Stage{}), nil
