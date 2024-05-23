@@ -92,7 +92,7 @@ var (
 
 // createIAMRoles creates the roles used by control-plane and compute nodes.
 func createIAMRoles(ctx context.Context, infraID string, ic *installconfig.InstallConfig) error {
-	logrus.Infoln("Creating IAM roles for control-plane and compute nodes")
+	logrus.Infoln("Reconciling IAM roles for control-plane and compute nodes")
 	// Create the IAM Role with the aws sdk.
 	// https://docs.aws.amazon.com/sdk-for-go/api/service/iam/#IAM.CreateRole
 	session, err := ic.AWS.Session(ctx)
@@ -140,21 +140,7 @@ func createIAMRoles(ctx context.Context, infraID string, ic *installconfig.Insta
 	for _, role := range []string{master, worker} {
 		roleName, err := getOrCreateIAMRole(ctx, role, infraID, string(assumePolicyBytes), *ic, tags, svc)
 		if err != nil {
-			return fmt.Errorf("failed to create IAM roles: %w", err)
-		}
-
-		// Put the policy inline.
-		policyName := aws.String(fmt.Sprintf("%s-%s-policy", infraID, role))
-		b, err := json.Marshal(policies[role])
-		if err != nil {
-			return fmt.Errorf("failed to marshal %s policy: %w", role, err)
-		}
-		if _, err := svc.PutRolePolicyWithContext(ctx, &iam.PutRolePolicyInput{
-			PolicyDocument: aws.String(string(b)),
-			PolicyName:     policyName,
-			RoleName:       aws.String(roleName),
-		}); err != nil {
-			return fmt.Errorf("failed to create inline policy for role %s: %w", role, err)
+			return fmt.Errorf("failed to create IAM %s role: %w", role, err)
 		}
 
 		profileName := aws.String(fmt.Sprintf("%s-%s-profile", infraID, role))
@@ -220,6 +206,7 @@ func getOrCreateIAMRole(ctx context.Context, nodeRole, infraID, assumePolicy str
 			return "", fmt.Errorf("failed to get %s role: %w", nodeRole, err)
 		}
 		// If the role does not exist, create it.
+		logrus.Infof("Creating IAM role for %s", nodeRole)
 		createRoleInput := &iam.CreateRoleInput{
 			RoleName:                 roleName,
 			AssumeRolePolicyDocument: aws.String(assumePolicy),
@@ -233,6 +220,21 @@ func getOrCreateIAMRole(ctx context.Context, nodeRole, infraID, assumePolicy str
 			return "", fmt.Errorf("failed to wait for %s role to exist: %w", nodeRole, err)
 		}
 	}
+
+	// Put the policy inline.
+	policyName := aws.String(fmt.Sprintf("%s-%s-policy", infraID, nodeRole))
+	b, err := json.Marshal(policies[nodeRole])
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal %s policy: %w", nodeRole, err)
+	}
+	if _, err := svc.PutRolePolicyWithContext(ctx, &iam.PutRolePolicyInput{
+		PolicyDocument: aws.String(string(b)),
+		PolicyName:     policyName,
+		RoleName:       roleName,
+	}); err != nil {
+		return "", fmt.Errorf("failed to create inline policy for role %s: %w", nodeRole, err)
+	}
+
 	return *roleName, nil
 }
 
