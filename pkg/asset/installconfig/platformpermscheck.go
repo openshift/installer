@@ -102,7 +102,7 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 			permissionGroups = append(permissionGroups, awsconfig.PermissionPublicIpv4Pool)
 		}
 
-		if !ic.Config.AWS.PreserveBootstrapIgnition {
+		if !ic.Config.AWS.BestEffortDeleteIgnition {
 			permissionGroups = append(permissionGroups, awsconfig.PermissionDeleteIgnitionObjects)
 		}
 

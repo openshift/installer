@@ -334,7 +334,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			WorkerIAMRoleName:         workerIAMRoleName,
 			Architecture:              installConfig.Config.ControlPlane.Architecture,
 			Proxy:                     installConfig.Config.Proxy,
-			PreserveBootstrapIgnition: installConfig.Config.AWS.PreserveBootstrapIgnition,
+			PreserveBootstrapIgnition: installConfig.Config.AWS.BestEffortDeleteIgnition,
 			MasterSecurityGroups:      securityGroups,
 			PublicIpv4Pool:            installConfig.Config.AWS.PublicIpv4Pool,
 		})
