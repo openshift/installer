@@ -152,6 +152,14 @@ func (requestBuilder *RequestBuilder) ResolveRequestURL(serviceURL string, path 
 	// If we have a non-empty "path" input parameter, then process it for possible path param references.
 	if path != "" {
 
+		// Encode the unresolved path string.  This will convert all special characters to their
+		// "%" encoding counterparts.  Then we need to revert the encodings for '/', '{' and '}' characters
+		// to retain the original path segments and to make it easy to insert the encoded path param values below.
+		path = url.PathEscape(path)
+		path = strings.ReplaceAll(path, "%2F", "/")
+		path = strings.ReplaceAll(path, "%7B", "{")
+		path = strings.ReplaceAll(path, "%7D", "}")
+
 		// If path parameter values were passed in, then for each one, replace any references to it
 		// within "path" with the path parameter's encoded value.
 		if len(pathParams) > 0 {

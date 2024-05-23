@@ -80,7 +80,7 @@ type IBMPowerVSClusterSpec struct {
 	// resourceGroup name under which the resources will be created.
 	// when powervs.cluster.x-k8s.io/create-infra=true annotation is set on IBMPowerVSCluster resource,
 	// 1. it is expected to set the ResourceGroup.Name, not setting will result in webhook error.
-	// ServiceInstance.ID and ServiceInstance.Regex is not yet supported and system will ignore the value.
+	// ResourceGroup.ID and ResourceGroup.Regex is not yet supported and system will ignore the value.
 	// +optional
 	ResourceGroup *IBMPowerVSResourceReference `json:"resourceGroup,omitempty"`
 
@@ -102,6 +102,10 @@ type IBMPowerVSClusterSpec struct {
 	// if subnet with name VPCSubnets[].Name not found, system will create new subnet in VPCSubnets[].Zone.
 	// +optional
 	VPCSubnets []Subnet `json:"vpcSubnets,omitempty"`
+
+	// VPCSecurityGroups to attach it to the VPC resource
+	// +optional
+	VPCSecurityGroups []VPCSecurityGroup `json:"vpcSecurityGroups,omitempty"`
 
 	// transitGateway contains information about IBM Cloud TransitGateway
 	// IBM Cloud TransitGateway helps in establishing network connectivity between IBM Cloud Power VS and VPC infrastructure
@@ -200,6 +204,9 @@ type IBMPowerVSClusterStatus struct {
 	// vpcSubnet is reference to IBM Cloud VPC subnet.
 	VPCSubnet map[string]ResourceReference `json:"vpcSubnet,omitempty"`
 
+	// vpcSecurityGroups is reference to IBM Cloud VPC security group.
+	VPCSecurityGroups map[string]VPCSecurityGroupStatus `json:"vpcSecurityGroups,omitempty"`
+
 	// transitGateway is reference to IBM Cloud TransitGateway.
 	TransitGateway *ResourceReference `json:"transitGateway,omitempty"`
 
@@ -251,6 +258,11 @@ type TransitGateway struct {
 	// id of resource.
 	// +optional
 	ID *string `json:"id,omitempty"`
+	// globalRouting indicates whether to set global routing true or not while creating the transit gateway.
+	// set this field to true only when PowerVS and VPC are from different regions, if they are same it's suggested to use local routing by setting the field to false.
+	// when the field is omitted,  based on PowerVS region (region associated with IBMPowerVSCluster.Spec.Zone) and VPC region(IBMPowerVSCluster.Spec.VPC.Region) system will decide whether to enable globalRouting or not.
+	// +optional
+	GlobalRouting *bool `json:"globalRouting,omitempty"`
 }
 
 // VPCResourceReference is a reference to a specific VPC resource by ID or Name

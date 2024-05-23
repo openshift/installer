@@ -21,9 +21,12 @@ import (
 	"fmt"
 	"strconv"
 
+	"k8s.io/utils/ptr"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	infrav1beta2 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
+	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/endpoints"
 )
 
 // GetClusterByName finds and return a Cluster object using the specified params.
@@ -196,4 +199,34 @@ func VPCZonesForPowerVSRegion(region string) ([]string, error) {
 		return r.VPCZones, nil
 	}
 	return nil, fmt.Errorf("VPC zones corresponding to a PowerVS region %s not found ", region)
+}
+
+// IsGlobalRoutingRequiredForTG returns true when powervs and vpc regions are different.
+func IsGlobalRoutingRequiredForTG(powerVSRegion string, vpcRegion string) bool {
+	if r, ok := Regions[powerVSRegion]; ok && r.VPCRegion == vpcRegion {
+		return false
+	}
+	return true
+}
+
+// GetTransitGatewayLocationAndRouting returns appropriate location and routing suitable for transit gateway.
+// routing indicates whether to enable global routing on transit gateway or not.
+// returns true when PowerVS and VPC region are not same otherwise false.
+func GetTransitGatewayLocationAndRouting(powerVSZone *string, vpcRegion *string) (*string, *bool, error) {
+	if powerVSZone == nil {
+		return nil, nil, fmt.Errorf("powervs zone is not set")
+	}
+	powerVSRegion := endpoints.ConstructRegionFromZone(*powerVSZone)
+
+	if vpcRegion != nil {
+		routing := IsGlobalRoutingRequiredForTG(powerVSRegion, *vpcRegion)
+		return vpcRegion, &routing, nil
+	}
+	location, err := VPCRegionForPowerVSRegion(powerVSRegion)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to fetch vpc region associated with powervs region '%s': %w", powerVSRegion, err)
+	}
+
+	// since VPC region is not set and used PowerVS region to calculate the transit gateway location, hence returning local routing as default.
+	return &location, ptr.To(false), nil
 }
