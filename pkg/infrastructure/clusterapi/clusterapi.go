@@ -269,23 +269,24 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	masterIgnSecret := IgnitionSecret(masterIgnAsset.Files()[0].Data, clusterID.InfraID, "master")
 	machineManifests = append(machineManifests, bootstrapIgnSecret, masterIgnSecret)
 
-	timer.StartTimer(machineStage)
 	// Create the machine manifests.
+	timer.StartTimer(machineStage)
+	machineNames := []string{}
+
 	for _, m := range machineManifests {
 		m.SetNamespace(capiutils.Namespace)
 		if err := cl.Create(ctx, m); err != nil {
 			return fileList, fmt.Errorf("failed to create control-plane manifest: %w", err)
 		}
 		i.appliedManifests = append(i.appliedManifests, m)
+
+		if machine, ok := m.(*clusterv1.Machine); ok {
+			machineNames = append(machineNames, machine.Name)
+		}
 		logrus.Infof("Created manifest %+T, namespace=%s name=%s", m, m.GetNamespace(), m.GetName())
 	}
 
 	{
-		masterCount := int64(1)
-		if reps := installConfig.Config.ControlPlane.Replicas; reps != nil {
-			masterCount = *reps
-		}
-
 		untilTime := time.Now().Add(timeout)
 		timezone, _ := untilTime.Zone()
 		logrus.Infof("Waiting up to %v (until %v %s) for machines to provision...", timeout, untilTime.Format(time.Kitchen), timezone)
@@ -295,10 +296,10 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 			Steps:    32,
 			Cap:      timeout,
 		}, func(ctx context.Context) (bool, error) {
-			for i := int64(0); i < masterCount; i++ {
+			for _, machineName := range machineNames {
 				machine := &clusterv1.Machine{}
 				if err := cl.Get(ctx, client.ObjectKey{
-					Name:      fmt.Sprintf("%s-%s-%d", clusterID.InfraID, "master", i),
+					Name:      machineName,
 					Namespace: capiutils.Namespace,
 				}, machine); err != nil {
 					if apierrors.IsNotFound(err) {
