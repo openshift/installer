@@ -1,6 +1,7 @@
 package configimage
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -30,14 +31,14 @@ var _ asset.WritableAsset = (*InstallConfig)(nil)
 // Dependencies returns all of the dependencies directly needed by an
 // InstallConfig asset.
 func (i *InstallConfig) Dependencies() []asset.Asset {
-	// Return no dependencies for the Agent install config, because it is
-	// optional. We don't need to run the survey if it doesn't exist, since the
-	// user may have supplied cluster-manifests that fully define the cluster.
+	// Return no dependencies for the Image-based install config, because it is
+	// optional. We don't need to run the survey if it doesn't exist, since it
+	// does not support the `none` platform.
 	return []asset.Asset{}
 }
 
 // Generate generates the install-config.yaml file.
-func (i *InstallConfig) Generate(parents asset.Parents) error {
+func (i *InstallConfig) Generate(_ context.Context, parents asset.Parents) error {
 	// Just generate an empty install config, since we have no dependencies.
 	return nil
 }
