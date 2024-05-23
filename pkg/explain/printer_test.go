@@ -153,6 +153,9 @@ func Test_PrintFields(t *testing.T) {
     amiID <string>
       AMIID is the AMI that should be used to boot machines for the cluster. If set, the AMI should belong to the same region as the cluster.
 
+    bestEffortDeleteIgnition <boolean>
+      BestEffortDeleteIgnition is an optional field that can be used to ignore errors from S3 deletion of ignition objects during cluster bootstrap. The default behavior is to fail the installation if ignition objects cannot be deleted. Enable this functionality when there are known reasons disallowing their deletion.
+
     defaultMachinePlatform <object>
       DefaultMachinePlatform is the default configuration used when installing on AWS for machine pools which do not define their own platform configuration.
 
@@ -173,7 +176,7 @@ func Test_PrintFields(t *testing.T) {
  If this field is not set explicitly, it defaults to "Classic".  This default is subject to change over time.
 
     preserveBootstrapIgnition <boolean>
-      PreserveBootstrapIgnition is an optional field that can be used to make the S3 deletion optional during bootstrap destroy.
+      PreserveBootstrapIgnition is deprecated. Use bestEffortDeleteIgnition instead.
 
     propagateUserTags <boolean>
       PropagateUserTags is a flag that directs in-cluster operators to include the specified user tags in the tags of the AWS resources that the operators create.
