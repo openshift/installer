@@ -591,3 +591,16 @@ func ClusterAPIFeatureGateEnabled(platform string, fgs featuregates.FeatureGate)
 		return false
 	}
 }
+
+// PublicAPI indicates whether the API load balancer should be public
+// by inspecting the cluster and operator publishing strategies.
+func (c *InstallConfig) PublicAPI() bool {
+	if c.Publish == ExternalPublishingStrategy {
+		return true
+	}
+
+	if op := c.OperatorPublishingStrategy; op != nil && strings.EqualFold(op.APIServer, "External") {
+		return true
+	}
+	return false
+}
