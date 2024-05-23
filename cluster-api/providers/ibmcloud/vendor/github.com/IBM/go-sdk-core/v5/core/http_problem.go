@@ -150,16 +150,32 @@ func EnrichHTTPProblem(err error, operationID string, component *ProblemComponen
 	// If the problem originated from an HTTP error response, populate the
 	// HTTPProblem instance with details from the SDK that weren't available
 	// in the core at problem creation time.
-	var httpProp *HTTPProblem
-	if errors.As(err, &httpProp) {
-		enrichHTTPProblem(httpProp, operationID, component)
+	var httpProb *HTTPProblem
+
+	// In the case of an SDKProblem instance originating in the core,
+	// it will not track an HTTPProblem instance in its "caused by"
+	// chain, but we still want to be able to enrich it. It will be
+	// stored in the private "httpProblem" field.
+	var sdkProb *SDKProblem
+
+	if errors.As(err, &httpProb) {
+		enrichHTTPProblem(httpProb, operationID, component)
+	} else if errors.As(err, &sdkProb) && sdkProb.httpProblem != nil {
+		enrichHTTPProblem(sdkProb.httpProblem, operationID, component)
 	}
 }
 
 // enrichHTTPProblem takes an HTTPProblem instance alongside information about the request
 // and adds the extra info to the instance. It also loosely deserializes the response
 // in order to set additional information, like the error code.
-func enrichHTTPProblem(httpProp *HTTPProblem, operationID string, component *ProblemComponent) {
-	httpProp.Component = component
-	httpProp.OperationID = operationID
+func enrichHTTPProblem(httpProb *HTTPProblem, operationID string, component *ProblemComponent) {
+	// If this problem is already populated with service-level information,
+	// we should not enrich it any further. Most likely, this is an authentication
+	// error passed from the core to the SDK.
+	if httpProb.Component.Name != "" {
+		return
+	}
+
+	httpProb.Component = component
+	httpProb.OperationID = operationID
 }

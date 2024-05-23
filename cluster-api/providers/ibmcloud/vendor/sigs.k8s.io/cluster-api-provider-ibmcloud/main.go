@@ -18,6 +18,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -30,7 +31,6 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	cgrecord "k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
-	"k8s.io/klog/v2/textlogger"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -56,107 +56,22 @@ var (
 	healthAddr           string
 	syncPeriod           time.Duration
 	diagnosticsOptions   = flags.DiagnosticsOptions{}
+	webhookPort          int
+	webhookCertDir       string
 
-	scheme         = runtime.NewScheme()
-	setupLog       = ctrl.Log.WithName("setup")
-	webhookPort    int
-	webhookCertDir string
+	scheme   = runtime.NewScheme()
+	setupLog = ctrl.Log.WithName("setup")
 )
 
 func init() {
+	klog.InitFlags(nil)
+
 	_ = clientgoscheme.AddToScheme(scheme)
 
 	_ = infrav1beta1.AddToScheme(scheme)
 	_ = infrav1beta2.AddToScheme(scheme)
 	_ = capiv1beta1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
-}
-
-// Add RBAC for the authorized diagnostics endpoint.
-// +kubebuilder:rbac:groups=authentication.k8s.io,resources=tokenreviews,verbs=create
-// +kubebuilder:rbac:groups=authorization.k8s.io,resources=subjectaccessreviews,verbs=create
-
-func main() {
-	klog.InitFlags(nil)
-
-	initFlags(pflag.CommandLine)
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	pflag.Parse()
-
-	ctrl.SetLogger(textlogger.NewLogger(textlogger.NewConfig()))
-
-	// Parse service endpoints.
-	serviceEndpoint, err := endpoints.ParseServiceEndpointFlag(endpoints.ServiceEndpointFormat)
-	if err != nil {
-		setupLog.Error(err, "unable to parse service endpoint flag", "controller", "cluster")
-		os.Exit(1)
-	}
-
-	if err := validateFlags(); err != nil {
-		setupLog.Error(err, "Flag validation failure")
-		os.Exit(1)
-	}
-
-	if watchNamespace != "" {
-		setupLog.Info("Watching cluster-api objects only in namespace for reconciliation", "namespace", watchNamespace)
-	}
-
-	// Machine and cluster operations can create enough events to trigger the event recorder spam filter
-	// Setting the burst size higher ensures all events will be recorded and submitted to the API
-	broadcaster := cgrecord.NewBroadcasterWithCorrelatorOptions(cgrecord.CorrelatorOptions{
-		BurstSize: 100,
-	})
-
-	diagnosticsOpts := flags.GetDiagnosticsOptions(diagnosticsOptions)
-
-	var watchNamespaces map[string]cache.Config
-	if watchNamespace != "" {
-		watchNamespaces = map[string]cache.Config{
-			watchNamespace: {},
-		}
-	}
-
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:           scheme,
-		LeaderElection:   enableLeaderElection,
-		Metrics:          diagnosticsOpts,
-		LeaderElectionID: "effcf9b8.cluster.x-k8s.io",
-		Cache: cache.Options{
-			DefaultNamespaces: watchNamespaces,
-			SyncPeriod:        &syncPeriod,
-		},
-		EventBroadcaster:       broadcaster,
-		HealthProbeBindAddress: healthAddr,
-		WebhookServer: webhook.NewServer(webhook.Options{
-			Port:    webhookPort,
-			CertDir: webhookCertDir,
-		}),
-		Client: client.Options{
-			Cache: &client.CacheOptions{
-				DisableFor: []client.Object{
-					&infrav1beta2.IBMPowerVSCluster{},
-				},
-			},
-		},
-	})
-	if err != nil {
-		setupLog.Error(err, "unable to start manager")
-		os.Exit(1)
-	}
-
-	// Initialize event recorder.
-	record.InitFromRecorder(mgr.GetEventRecorderFor("ibmcloud-controller"))
-
-	setupReconcilers(mgr, serviceEndpoint)
-	setupWebhooks(mgr)
-	setupChecks(mgr)
-
-	// +kubebuilder:scaffold:builder
-	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		setupLog.Error(err, "problem running manager")
-		os.Exit(1)
-	}
 }
 
 func initFlags(fs *pflag.FlagSet) {
@@ -227,14 +142,104 @@ func validateFlags() error {
 	return nil
 }
 
-func setupReconcilers(mgr ctrl.Manager, serviceEndpoint []endpoints.ServiceEndpoint) {
+// Add RBAC for the authorized diagnostics endpoint.
+// +kubebuilder:rbac:groups=authentication.k8s.io,resources=tokenreviews,verbs=create
+// +kubebuilder:rbac:groups=authorization.k8s.io,resources=subjectaccessreviews,verbs=create
+
+func main() {
+	initFlags(pflag.CommandLine)
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.Parse()
+
+	ctrl.SetLogger(klog.Background())
+
+	// Parse service endpoints.
+	serviceEndpoint, err := endpoints.ParseServiceEndpointFlag(endpoints.ServiceEndpointFormat)
+	if err != nil {
+		setupLog.Error(err, "unable to parse service endpoint flag", "controller", "cluster")
+		os.Exit(1)
+	}
+
+	if err := validateFlags(); err != nil {
+		setupLog.Error(err, "Flag validation failure")
+		os.Exit(1)
+	}
+
+	if watchNamespace != "" {
+		setupLog.Info("Watching cluster-api objects only in namespace for reconciliation", "namespace", watchNamespace)
+	}
+
+	// Machine and cluster operations can create enough events to trigger the event recorder spam filter
+	// Setting the burst size higher ensures all events will be recorded and submitted to the API
+	broadcaster := cgrecord.NewBroadcasterWithCorrelatorOptions(cgrecord.CorrelatorOptions{
+		BurstSize: 100,
+	})
+
+	diagnosticsOpts := flags.GetDiagnosticsOptions(diagnosticsOptions)
+
+	var watchNamespaces map[string]cache.Config
+	if watchNamespace != "" {
+		watchNamespaces = map[string]cache.Config{
+			watchNamespace: {},
+		}
+	}
+
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		Scheme:           scheme,
+		LeaderElection:   enableLeaderElection,
+		Metrics:          diagnosticsOpts,
+		LeaderElectionID: "effcf9b8.cluster.x-k8s.io",
+		Cache: cache.Options{
+			DefaultNamespaces: watchNamespaces,
+			SyncPeriod:        &syncPeriod,
+		},
+		EventBroadcaster:       broadcaster,
+		HealthProbeBindAddress: healthAddr,
+		WebhookServer: webhook.NewServer(webhook.Options{
+			Port:    webhookPort,
+			CertDir: webhookCertDir,
+		}),
+		Client: client.Options{
+			Cache: &client.CacheOptions{
+				DisableFor: []client.Object{
+					// We want to avoid use of cache for IBMPowerVSCluster as we exclusively depend on IBMPowerVSCluster.Status.[Resource].ControllerCreated
+					// to mark resources created by controller.
+					&infrav1beta2.IBMPowerVSCluster{},
+				},
+			},
+		},
+	})
+	if err != nil {
+		setupLog.Error(err, "unable to start manager")
+		os.Exit(1)
+	}
+
+	// Initialize event recorder.
+	record.InitFromRecorder(mgr.GetEventRecorderFor("ibmcloud-controller"))
+
+	// Setup the context that's going to be used in controllers and for the manager.
+	ctx := ctrl.SetupSignalHandler()
+
+	setupReconcilers(ctx, mgr, serviceEndpoint)
+	setupWebhooks(mgr)
+	setupChecks(mgr)
+
+	// +kubebuilder:scaffold:builder
+	setupLog.Info("starting manager")
+	if err := mgr.Start(ctx); err != nil {
+		setupLog.Error(err, "problem running manager")
+		os.Exit(1)
+	}
+}
+
+func setupReconcilers(ctx context.Context, mgr ctrl.Manager, serviceEndpoint []endpoints.ServiceEndpoint) {
 	if err := (&controllers.IBMVPCClusterReconciler{
 		Client:          mgr.GetClient(),
 		Log:             ctrl.Log.WithName("controllers").WithName("IBMVPCCluster"),
 		Recorder:        mgr.GetEventRecorderFor("ibmvpccluster-controller"),
 		ServiceEndpoint: serviceEndpoint,
 		Scheme:          mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "IBMVPCCluster")
 		os.Exit(1)
 	}
@@ -255,7 +260,7 @@ func setupReconcilers(mgr ctrl.Manager, serviceEndpoint []endpoints.ServiceEndpo
 		Recorder:        mgr.GetEventRecorderFor("ibmpowervscluster-controller"),
 		ServiceEndpoint: serviceEndpoint,
 		Scheme:          mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "IBMPowerVSCluster")
 		os.Exit(1)
 	}

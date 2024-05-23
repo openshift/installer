@@ -44,4 +44,5 @@ type PowerVS interface {
 	DeleteDHCPServer(id string) error
 	WithClients(options ServiceOptions) *Service
 	GetNetworkByName(networkName string) (*models.NetworkReference, error)
+	GetDatacenterCapabilities(zone string) (map[string]bool, error)
 }

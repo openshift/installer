@@ -190,62 +190,62 @@ var (
 	ResourceTypeResourceGroup = ResourceType("resourceGroup")
 )
 
-// SecurityGroupRuleAction represents the actions for a Security Group Rule.
+// VPCSecurityGroupRuleAction represents the actions for a Security Group Rule.
 // +kubebuilder:validation:Enum=allow;deny
-type SecurityGroupRuleAction string
+type VPCSecurityGroupRuleAction string
 
 const (
-	// SecurityGroupRuleActionAllow defines that the Rule should allow traffic.
-	SecurityGroupRuleActionAllow SecurityGroupRuleAction = vpcv1.NetworkACLRuleActionAllowConst
-	// SecurityGroupRuleActionDeny defines that the Rule should deny traffic.
-	SecurityGroupRuleActionDeny SecurityGroupRuleAction = vpcv1.NetworkACLRuleActionDenyConst
+	// VPCSecurityGroupRuleActionAllow defines that the Rule should allow traffic.
+	VPCSecurityGroupRuleActionAllow VPCSecurityGroupRuleAction = vpcv1.NetworkACLRuleActionAllowConst
+	// VPCSecurityGroupRuleActionDeny defines that the Rule should deny traffic.
+	VPCSecurityGroupRuleActionDeny VPCSecurityGroupRuleAction = vpcv1.NetworkACLRuleActionDenyConst
 )
 
-// SecurityGroupRuleDirection represents the directions for a Security Group Rule.
+// VPCSecurityGroupRuleDirection represents the directions for a Security Group Rule.
 // +kubebuilder:validation:Enum=inbound;outbound
-type SecurityGroupRuleDirection string
+type VPCSecurityGroupRuleDirection string
 
 const (
-	// SecurityGroupRuleDirectionInbound defines the Rule is for inbound traffic.
-	SecurityGroupRuleDirectionInbound SecurityGroupRuleDirection = vpcv1.NetworkACLRuleDirectionInboundConst
-	// SecurityGroupRuleDirectionOutbound defines the Rule is for outbound traffic.
-	SecurityGroupRuleDirectionOutbound SecurityGroupRuleDirection = vpcv1.NetworkACLRuleDirectionOutboundConst
+	// VPCSecurityGroupRuleDirectionInbound defines the Rule is for inbound traffic.
+	VPCSecurityGroupRuleDirectionInbound VPCSecurityGroupRuleDirection = vpcv1.NetworkACLRuleDirectionInboundConst
+	// VPCSecurityGroupRuleDirectionOutbound defines the Rule is for outbound traffic.
+	VPCSecurityGroupRuleDirectionOutbound VPCSecurityGroupRuleDirection = vpcv1.NetworkACLRuleDirectionOutboundConst
 )
 
-// SecurityGroupRuleProtocol represents the protocols for a Security Group Rule.
+// VPCSecurityGroupRuleProtocol represents the protocols for a Security Group Rule.
 // +kubebuilder:validation:Enum=all;icmp;tcp;udp
-type SecurityGroupRuleProtocol string
+type VPCSecurityGroupRuleProtocol string
 
 const (
-	// SecurityGroupRuleProtocolAll defines the Rule is for all network protocols.
-	SecurityGroupRuleProtocolAll SecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolAllConst
-	// SecurityGroupRuleProtocolIcmp defiens the Rule is for ICMP network protocol.
-	SecurityGroupRuleProtocolIcmp SecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolIcmpConst
-	// SecurityGroupRuleProtocolTCP defines the Rule is for TCP network protocol.
-	SecurityGroupRuleProtocolTCP SecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolTCPConst
-	// SecurityGroupRuleProtocolUDP defines the Rule is for UDP network protocol.
-	SecurityGroupRuleProtocolUDP SecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolUDPConst
+	// VPCSecurityGroupRuleProtocolAll defines the Rule is for all network protocols.
+	VPCSecurityGroupRuleProtocolAll VPCSecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolAllConst
+	// VPCSecurityGroupRuleProtocolIcmp defiens the Rule is for ICMP network protocol.
+	VPCSecurityGroupRuleProtocolIcmp VPCSecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolIcmpConst
+	// VPCSecurityGroupRuleProtocolTCP defines the Rule is for TCP network protocol.
+	VPCSecurityGroupRuleProtocolTCP VPCSecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolTCPConst
+	// VPCSecurityGroupRuleProtocolUDP defines the Rule is for UDP network protocol.
+	VPCSecurityGroupRuleProtocolUDP VPCSecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolUDPConst
 )
 
-// SecurityGroupRuleRemoteType represents the type of Security Group Rule's destination or source is
-// intended. This is intended to define the SecurityGroupRulePrototype subtype.
+// VPCSecurityGroupRuleRemoteType represents the type of Security Group Rule's destination or source is
+// intended. This is intended to define the VPCSecurityGroupRulePrototype subtype.
 // For example:
 // - any - Any source or destination (0.0.0.0/0)
 // - cidr - A CIDR representing a set of IP's (10.0.0.0/28)
-// - ip - A specific IP address (192.168.0.1)
+// - address - A specific address (192.168.0.1)
 // - sg - A Security Group.
-// +kubebuilder:validation:Enum=any;cidr;ip;sg
-type SecurityGroupRuleRemoteType string
+// +kubebuilder:validation:Enum=any;cidr;address;sg
+type VPCSecurityGroupRuleRemoteType string
 
 const (
-	// SecurityGroupRuleRemoteTypeAny defines the destination or source for the Rule is anything/anywhere.
-	SecurityGroupRuleRemoteTypeAny SecurityGroupRuleRemoteType = SecurityGroupRuleRemoteType("any")
-	// SecurityGroupRuleRemoteTypeCIDR defines the destination or source for the Rule is a CIDR block.
-	SecurityGroupRuleRemoteTypeCIDR SecurityGroupRuleRemoteType = SecurityGroupRuleRemoteType("cidr")
-	// SecurityGroupRuleRemoteTypeIP defines the destination or source for the Rule is an IP address.
-	SecurityGroupRuleRemoteTypeIP SecurityGroupRuleRemoteType = SecurityGroupRuleRemoteType("ip")
-	// SecurityGroupRuleRemoteTypeSG defines the destination or source for the Rule is a VPC Security Group.
-	SecurityGroupRuleRemoteTypeSG SecurityGroupRuleRemoteType = SecurityGroupRuleRemoteType("sg")
+	// VPCSecurityGroupRuleRemoteTypeAny defines the destination or source for the Rule is anything/anywhere.
+	VPCSecurityGroupRuleRemoteTypeAny VPCSecurityGroupRuleRemoteType = VPCSecurityGroupRuleRemoteType("any")
+	// VPCSecurityGroupRuleRemoteTypeCIDR defines the destination or source for the Rule is a CIDR block.
+	VPCSecurityGroupRuleRemoteTypeCIDR VPCSecurityGroupRuleRemoteType = VPCSecurityGroupRuleRemoteType("cidr")
+	// VPCSecurityGroupRuleRemoteTypeAddress defines the destination or source for the Rule is an address.
+	VPCSecurityGroupRuleRemoteTypeAddress VPCSecurityGroupRuleRemoteType = VPCSecurityGroupRuleRemoteType("address")
+	// VPCSecurityGroupRuleRemoteTypeSG defines the destination or source for the Rule is a VPC Security Group.
+	VPCSecurityGroupRuleRemoteTypeSG VPCSecurityGroupRuleRemoteType = VPCSecurityGroupRuleRemoteType("sg")
 )
 
 // NetworkInterface holds the network interface information like subnet id.
@@ -254,23 +254,23 @@ type NetworkInterface struct {
 	Subnet string `json:"subnet,omitempty"`
 }
 
-// PortRange represents a range of ports, minimum to maximum.
+// VPCSecurityGroupPortRange represents a range of ports, minimum to maximum.
 // +kubebuilder:validation:XValidation:rule="self.maximumPort >= self.minimumPort",message="maximum port must be greater than or equal to minimum port"
-type PortRange struct {
+type VPCSecurityGroupPortRange struct {
 	// maximumPort is the inclusive upper range of ports.
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
-	MaximumPort int `json:"maximumPort,omitempty"`
+	MaximumPort int64 `json:"maximumPort,omitempty"`
 
 	// minimumPort is the inclusive lower range of ports.
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
-	MinimumPort int `json:"minimumPort,omitempty"`
+	MinimumPort int64 `json:"minimumPort,omitempty"`
 }
 
-// SecurityGroup defines a VPC Security Group that should exist or be created within the specified VPC, with the specified Security Group Rules.
+// VPCSecurityGroup defines a VPC Security Group that should exist or be created within the specified VPC, with the specified Security Group Rules.
 // +kubebuilder:validation:XValidation:rule="has(self.id) || has(self.name)",message="either an id or name must be specified"
-type SecurityGroup struct {
+type VPCSecurityGroup struct {
 	// id of the Security Group.
 	// +optional
 	ID *string `json:"id,omitempty"`
@@ -279,107 +279,99 @@ type SecurityGroup struct {
 	// +optional
 	Name *string `json:"name,omitempty"`
 
-	// resourceGroup of the Security Group.
-	// +optional
-	ResourceGroup *string `json:"resourceGroup,omitempty"`
-
 	// rules are the Security Group Rules for the Security Group.
 	// +optional
-	Rules []*SecurityGroupRule `json:"rules,omitempty"`
+	Rules []*VPCSecurityGroupRule `json:"rules,omitempty"`
 
 	// tags are tags to add to the Security Group.
 	// +optional
 	Tags []*string `json:"tags,omitempty"`
-
-	// vpc is the IBM Cloud VPC for the Security Group.
-	// +optional
-	VPC *VPCResourceReference `json:"vpc,omitempty"`
 }
 
-// SecurityGroupRule defines a VPC Security Group Rule for a specified Security Group.
+// VPCSecurityGroupRule defines a VPC Security Group Rule for a specified Security Group.
 // +kubebuilder:validation:XValidation:rule="(has(self.destination) && !has(self.source)) || (!has(self.destination) && has(self.source))",message="both destination and source cannot be provided"
-// +kubebuilder:validation:XValidation:rule="self.direction == 'inbound' ? has(self.source) : true",message="source must be set for SecurityGroupRuleDirectionInbound direction"
-// +kubebuilder:validation:XValidation:rule="self.direction == 'inbound' ? !has(self.destination) : true",message="destination is not valid for SecurityGroupRuleDirectionInbound direction"
-// +kubebuilder:validation:XValidation:rule="self.direction == 'outbound' ? has(self.destination) : true",message="destination must be set for SecurityGroupRuleDirectionOutbound direction"
-// +kubebuilder:validation:XValidation:rule="self.direction == 'outbound' ? !has(self.source) : true",message="source is not valid for SecurityGroupRuleDirectionOutbound direction"
-type SecurityGroupRule struct {
+// +kubebuilder:validation:XValidation:rule="self.direction == 'inbound' ? has(self.source) : true",message="source must be set for VPCSecurityGroupRuleDirectionInbound direction"
+// +kubebuilder:validation:XValidation:rule="self.direction == 'inbound' ? !has(self.destination) : true",message="destination is not valid for VPCSecurityGroupRuleDirectionInbound direction"
+// +kubebuilder:validation:XValidation:rule="self.direction == 'outbound' ? has(self.destination) : true",message="destination must be set for VPCSecurityGroupRuleDirectionOutbound direction"
+// +kubebuilder:validation:XValidation:rule="self.direction == 'outbound' ? !has(self.source) : true",message="source is not valid for VPCSecurityGroupRuleDirectionOutbound direction"
+type VPCSecurityGroupRule struct {
 	// action defines whether to allow or deny traffic defined by the Security Group Rule.
 	// +required
-	Action SecurityGroupRuleAction `json:"action"`
+	Action VPCSecurityGroupRuleAction `json:"action"`
 
-	// destination is a SecurityGroupRulePrototype which defines the destination of outbound traffic for the Security Group Rule.
-	// Only used when direction is SecurityGroupRuleDirectionOutbound.
+	// destination is a VPCSecurityGroupRulePrototype which defines the destination of outbound traffic for the Security Group Rule.
+	// Only used when direction is VPCSecurityGroupRuleDirectionOutbound.
 	// +optional
-	Destination *SecurityGroupRulePrototype `json:"destination,omitempty"`
+	Destination *VPCSecurityGroupRulePrototype `json:"destination,omitempty"`
 
 	// direction defines whether the traffic is inbound or outbound for the Security Group Rule.
 	// +required
-	Direction SecurityGroupRuleDirection `json:"direction"`
+	Direction VPCSecurityGroupRuleDirection `json:"direction"`
 
 	// securityGroupID is the ID of the Security Group for the Security Group Rule.
 	// +optional
 	SecurityGroupID *string `json:"securityGroupID,omitempty"`
 
-	// source is a SecurityGroupRulePrototype which defines the source of inbound traffic for the Security Group Rule.
-	// Only used when direction is SecurityGroupRuleDirectionInbound.
+	// source is a VPCSecurityGroupRulePrototype which defines the source of inbound traffic for the Security Group Rule.
+	// Only used when direction is VPCSecurityGroupRuleDirectionInbound.
 	// +optional
-	Source *SecurityGroupRulePrototype `json:"source,omitempty"`
+	Source *VPCSecurityGroupRulePrototype `json:"source,omitempty"`
 }
 
-// SecurityGroupRuleRemote defines a VPC Security Group Rule's remote details.
+// VPCSecurityGroupRuleRemote defines a VPC Security Group Rule's remote details.
 // The type of remote defines the additional remote details where are used for defining the remote.
-// +kubebuilder:validation:XValidation:rule="self.remoteType == 'any' ? (!has(self.cidrSubnetName) && !has(self.ip) && !has(self.securityGroupName)) : true",message="cidrSubnetName, ip, and securityGroupName are not valid for SecurityGroupRuleRemoteTypeAny remoteType"
-// +kubebuilder:validation:XValidation:rule="self.remoteType == 'cidr' ? (has(self.cidrSubnetName) && !has(self.ip) && !has(self.securityGroupName)) : true",message="only cidrSubnetName is valid for SecurityGroupRuleRemoteTypeCIDR remoteType"
-// +kubebuilder:validation:XValidation:rule="self.remoteType == 'ip' ? (has(self.ip) && !has(self.cidrSubnetName) && !has(self.securityGroupName)) : true",message="only ip is valid for SecurityGroupRuleRemoteTypeIP remoteType"
-// +kubebuilder:validation:XValidation:rule="self.remoteType == 'sg' ? (has(self.securityGroupName) && !has(self.cidrSubnetName) && !has(self.ip)) : true",message="only securityGroupName is valid for SecurityGroupRuleRemoteTypeSG remoteType"
-type SecurityGroupRuleRemote struct {
+// +kubebuilder:validation:XValidation:rule="self.remoteType == 'any' ? (!has(self.cidrSubnetName) && !has(self.address) && !has(self.securityGroupName)) : true",message="cidrSubnetName, addresss, and securityGroupName are not valid for VPCSecurityGroupRuleRemoteTypeAny remoteType"
+// +kubebuilder:validation:XValidation:rule="self.remoteType == 'cidr' ? (has(self.cidrSubnetName) && !has(self.address) && !has(self.securityGroupName)) : true",message="only cidrSubnetName is valid for VPCSecurityGroupRuleRemoteTypeCIDR remoteType"
+// +kubebuilder:validation:XValidation:rule="self.remoteType == 'address' ? (has(self.address) && !has(self.cidrSubnetName) && !has(self.securityGroupName)) : true",message="only address is valid for VPCSecurityGroupRuleRemoteTypeIP remoteType"
+// +kubebuilder:validation:XValidation:rule="self.remoteType == 'sg' ? (has(self.securityGroupName) && !has(self.cidrSubnetName) && !has(self.address)) : true",message="only securityGroupName is valid for VPCSecurityGroupRuleRemoteTypeSG remoteType"
+type VPCSecurityGroupRuleRemote struct {
 	// cidrSubnetName is the name of the VPC Subnet to retrieve the CIDR from, to use for the remote's destination/source.
-	// Only used when remoteType is SecurityGroupRuleRemoteTypeCIDR.
+	// Only used when remoteType is VPCSecurityGroupRuleRemoteTypeCIDR.
 	// +optional
 	CIDRSubnetName *string `json:"cidrSubnetName,omitempty"`
 
-	// ip is the IP to use for the remote's destination/source.
-	// Only used when remoteType is SecurityGroupRuleRemoteTypeIP.
+	//  address is the address to use for the remote's destination/source.
+	// Only used when remoteType is VPCSecurityGroupRuleRemoteTypeAddress.
 	// +optional
-	IP *string `json:"ip,omitempty"`
+	Address *string `json:"address,omitempty"`
 
 	// remoteType defines the type of filter to define for the remote's destination/source.
 	// +required
-	RemoteType SecurityGroupRuleRemoteType `json:"remoteType"`
+	RemoteType VPCSecurityGroupRuleRemoteType `json:"remoteType"`
 
 	// securityGroupName is the name of the VPC Security Group to use for the remote's destination/source.
-	// Only used when remoteType is SecurityGroupRuleRemoteTypeSG
+	// Only used when remoteType is VPCSecurityGroupRuleRemoteTypeSG
 	// +optional
 	SecurityGroupName *string `json:"securityGroupName,omitempty"`
 }
 
-// SecurityGroupRulePrototype defines a VPC Security Group Rule's traffic specifics for a series of remotes (destinations or sources).
-// +kubebuilder:validation:XValidation:rule="self.protocol != 'icmp' ? (!has(self.icmpCode) && !has(self.icmpType)) : true",message="icmpCode and icmpType are only supported for SecurityGroupRuleProtocolIcmp protocol"
-// +kubebuilder:validation:XValidation:rule="self.protocol == 'all' ? !has(self.portRange) : true",message="portRange is not valid for SecurityGroupRuleProtocolAll protocol"
-// +kubebuilder:validation:XValidation:rule="self.protocol == 'icmp' ? !has(self.portRange) : true",message="portRange is not valid for SecurityGroupRuleProtocolIcmp protocol"
-type SecurityGroupRulePrototype struct {
+// VPCSecurityGroupRulePrototype defines a VPC Security Group Rule's traffic specifics for a series of remotes (destinations or sources).
+// +kubebuilder:validation:XValidation:rule="self.protocol != 'icmp' ? (!has(self.icmpCode) && !has(self.icmpType)) : true",message="icmpCode and icmpType are only supported for VPCSecurityGroupRuleProtocolIcmp protocol"
+// +kubebuilder:validation:XValidation:rule="self.protocol == 'all' ? !has(self.portRange) : true",message="portRange is not valid for VPCSecurityGroupRuleProtocolAll protocol"
+// +kubebuilder:validation:XValidation:rule="self.protocol == 'icmp' ? !has(self.portRange) : true",message="portRange is not valid for VPCSecurityGroupRuleProtocolIcmp protocol"
+type VPCSecurityGroupRulePrototype struct {
 	// icmpCode is the ICMP code for the Rule.
-	// Only used when Protocol is SecurityGroupProtocolICMP.
+	// Only used when Protocol is VPCSecurityGroupRuleProtocolIcmp.
 	// +optional
-	ICMPCode *string `json:"icmpCode,omitempty"`
+	ICMPCode *int64 `json:"icmpCode,omitempty"`
 
 	// icmpType is the ICMP type for the Rule.
-	// Only used when Protocol is SecurityGroupProtocolICMP.
+	// Only used when Protocol is VPCSecurityGroupRuleProtocolIcmp.
 	// +optional
-	ICMPType *string `json:"icmpType,omitempty"`
+	ICMPType *int64 `json:"icmpType,omitempty"`
 
 	// portRange is a range of ports allowed for the Rule's remote.
 	// +optional
-	PortRange *PortRange `json:"portRange,omitempty"`
+	PortRange *VPCSecurityGroupPortRange `json:"portRange,omitempty"`
 
 	// protocol defines the traffic protocol used for the Security Group Rule.
 	// +required
-	Protocol SecurityGroupRuleProtocol `json:"protocol"`
+	Protocol VPCSecurityGroupRuleProtocol `json:"protocol"`
 
-	// remotes is a set of SecurityGroupRuleRemote's that define the traffic allowed by the Rule's remote.
-	// Specifying multiple SecurityGroupRuleRemote's creates a unique Security Group Rule with the shared Protocol, PortRange, etc.
+	// remotes is a set of VPCSecurityGroupRuleRemote's that define the traffic allowed by the Rule's remote.
+	// Specifying multiple VPCSecurityGroupRuleRemote's creates a unique Security Group Rule with the shared Protocol, PortRange, etc.
 	// This allows for easier management of Security Group Rule's for sets of CIDR's, IP's, etc.
-	Remotes []SecurityGroupRuleRemote `json:"remotes"`
+	Remotes []VPCSecurityGroupRuleRemote `json:"remotes"`
 }
 
 // Subnet describes a subnet.

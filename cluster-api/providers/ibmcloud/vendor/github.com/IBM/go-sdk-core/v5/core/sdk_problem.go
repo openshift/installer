@@ -34,6 +34,19 @@ type SDKProblem struct {
 	// function names, files, and line numbers invoked
 	// leading up to the origination of the problem.
 	stack []sdkStackFrame
+
+	// If the problem instance originated in the core, we
+	// want to keep track of the information for debugging
+	// purposes (even though we aren't using the problem
+	// as a "caused by" problem).
+	coreProblem *sparseSDKProblem
+
+	// If the problem instance originated in the core and
+	// was caused by an HTTP request, we don't use the
+	// HTTPProblem instance as a "caused by" but we need
+	// to store the instance to pass it to a downstream
+	// SDKProblem instance.
+	httpProblem *HTTPProblem
 }
 
 // GetConsoleMessage returns all public fields of
@@ -84,6 +97,10 @@ func (e *SDKProblem) GetDebugOrderedMaps() *OrderedMaps {
 
 	orderedMaps.Add("stack", e.stack)
 
+	if e.coreProblem != nil {
+		orderedMaps.Add("core_problem", e.coreProblem)
+	}
+
 	var orderableCausedBy OrderableProblem
 	if errors.As(e.GetCausedBy(), &orderableCausedBy) {
 		orderedMaps.Add("caused_by", orderableCausedBy.GetDebugOrderedMaps().GetMaps())
@@ -97,11 +114,49 @@ func SDKErrorf(err error, summary, discriminator string, component *ProblemCompo
 	function := computeFunctionName(component.Name)
 	stack := getStackInfo(component.Name)
 
-	return &SDKProblem{
-		IBMProblem: IBMErrorf(err, component, summary, discriminator),
+	ibmProb := IBMErrorf(err, component, summary, discriminator)
+	newSDKProb := &SDKProblem{
+		IBMProblem: ibmProb,
 		Function:   function,
 		stack:      stack,
 	}
+
+	// Flatten chains of SDKProblem instances in order to present a single,
+	// unique error scenario for the SDK context. Multiple Golang components
+	// can invoke each other, but we only want to track "caused by" problems
+	// through context boundaries (like API, SDK, Terraform, etc.). This
+	// eliminates unnecessary granularity of problem scenarios for the SDK
+	// context. If the problem originated in this library (the Go SDK Core),
+	// we still want to track that info for debugging purposes.
+	var sdkCausedBy *SDKProblem
+	if errors.As(err, &sdkCausedBy) {
+		// Not a "native" caused by but allows us to maintain compatibility through "Unwrap".
+		newSDKProb.nativeCausedBy = sdkCausedBy
+		newSDKProb.causedBy = nil
+
+		if isCoreProblem(sdkCausedBy) {
+			newSDKProb.coreProblem = newSparseSDKProblem(sdkCausedBy)
+
+			// If we stored an HTTPProblem instance in the core, we'll want to use
+			// it as the actual "caused by" problem for the new SDK problem.
+			if sdkCausedBy.httpProblem != nil {
+				newSDKProb.causedBy = sdkCausedBy.httpProblem
+			}
+		}
+	}
+
+	// We can't use HTTPProblem instances as "caused by" problems for Go SDK Core
+	// problems because 1) it prevents us from enumerating hashes in the core and
+	// 2) core problems will almost never be the instances that users interact with
+	// and the HTTPProblem will need to be used as the "caused by" of the problems
+	// coming from actual service SDK libraries.
+	var httpCausedBy *HTTPProblem
+	if errors.As(err, &httpCausedBy) && isCoreProblem(newSDKProb) {
+		newSDKProb.httpProblem = httpCausedBy
+		newSDKProb.causedBy = nil
+	}
+
+	return newSDKProb
 }
 
 // RepurposeSDKProblem provides a convenient way to take a problem from

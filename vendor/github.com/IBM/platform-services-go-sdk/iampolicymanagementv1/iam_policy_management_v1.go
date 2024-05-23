@@ -5914,8 +5914,8 @@ func UnmarshalPolicyAssignmentV1OptionsRootTemplate(m map[string]json.RawMessage
 
 // PolicyAssignmentV1Resources : The policy assignment resources.
 type PolicyAssignmentV1Resources struct {
-	// policy template details.
-	Target *AssignmentTemplateDetails `json:"target,omitempty"`
+	// assignment target account and type.
+	Target *AssignmentTargetDetails `json:"target,omitempty"`
 
 	// Set of properties for the assigned resource.
 	Policy *PolicyAssignmentResourcePolicy `json:"policy,omitempty"`
@@ -5924,7 +5924,7 @@ type PolicyAssignmentV1Resources struct {
 // UnmarshalPolicyAssignmentV1Resources unmarshals an instance of PolicyAssignmentV1Resources from the specified map of raw messages.
 func UnmarshalPolicyAssignmentV1Resources(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(PolicyAssignmentV1Resources)
-	err = core.UnmarshalModel(m, "target", &obj.Target, UnmarshalAssignmentTemplateDetails)
+	err = core.UnmarshalModel(m, "target", &obj.Target, UnmarshalAssignmentTargetDetails)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
 		return

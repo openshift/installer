@@ -85,6 +85,11 @@ const (
 	// NetworkReconciliationFailedReason used when an error occurs during network reconciliation.
 	NetworkReconciliationFailedReason = "NetworkReconciliationFailed"
 
+	// VPCSecurityGroupReadyCondition reports on the successful reconciliation of a VPC.
+	VPCSecurityGroupReadyCondition capiv1beta1.ConditionType = "VPCSecurityGroupReady"
+	// VPCSecurityGroupReconciliationFailedReason used when an error occurs during VPC reconciliation.
+	VPCSecurityGroupReconciliationFailedReason = "VPCSecurityGroupReconciliationFailed"
+
 	// VPCReadyCondition reports on the successful reconciliation of a VPC.
 	VPCReadyCondition capiv1beta1.ConditionType = "VPCReady"
 	// VPCReconciliationFailedReason used when an error occurs during VPC reconciliation.
