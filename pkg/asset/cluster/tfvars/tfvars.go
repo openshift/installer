@@ -82,7 +82,7 @@ const (
 	// https://www.terraform.io/docs/configuration/variables.html#variable-files
 	TfPlatformVarsFileName = "terraform.platform.auto.tfvars.json"
 
-	tfvarsAssetName = "Terraform Variables"
+	tfvarsAssetName = "Cluster Infrastructure Variables"
 )
 
 // TerraformVariables depends on InstallConfig, Manifests,
