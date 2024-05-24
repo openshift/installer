@@ -23,11 +23,11 @@ require (
 	github.com/Azure/go-autorest/autorest/to v0.4.0
 	github.com/IBM-Cloud/bluemix-go v0.0.0-20211102075456-ffc4e11dfb16
 	github.com/IBM-Cloud/power-go-client v1.6.0
-	github.com/IBM/go-sdk-core/v5 v5.17.0
+	github.com/IBM/go-sdk-core/v5 v5.17.3
 	github.com/IBM/keyprotect-go-client v0.12.2
 	github.com/IBM/networking-go-sdk v0.45.0
-	github.com/IBM/platform-services-go-sdk v0.62.6
-	github.com/IBM/vpc-go-sdk v0.50.0
+	github.com/IBM/platform-services-go-sdk v0.62.11
+	github.com/IBM/vpc-go-sdk v0.51.0
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
 	github.com/aws/aws-sdk-go v1.51.17
@@ -96,11 +96,11 @@ require (
 	github.com/ulikunitz/xz v0.5.11
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/vmware/govmomi v0.34.2
-	golang.org/x/crypto v0.22.0
+	golang.org/x/crypto v0.23.0
 	golang.org/x/oauth2 v0.19.0
 	golang.org/x/sync v0.7.0
-	golang.org/x/sys v0.19.0
-	golang.org/x/term v0.19.0
+	golang.org/x/sys v0.20.0
+	golang.org/x/term v0.20.0
 	google.golang.org/api v0.176.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240314234333-6e1732d8331c
 	google.golang.org/grpc v1.63.2
@@ -115,7 +115,7 @@ require (
 	k8s.io/klog/v2 v2.120.1
 	k8s.io/utils v0.0.0-20240310230437-4693a0247e57
 	libvirt.org/go/libvirtxml v1.10002.0
-	sigs.k8s.io/cluster-api v1.7.0
+	sigs.k8s.io/cluster-api v1.7.1
 	sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.2-0.20240426161541-ac4958082eab
 	sigs.k8s.io/cluster-api-provider-azure v1.14.2
 	sigs.k8s.io/cluster-api-provider-gcp v1.6.1-0.20240425114559-a1994e55ab7a
@@ -264,8 +264,8 @@ require (
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a // indirect
 	golang.org/x/mod v0.17.0 // indirect
-	golang.org/x/net v0.24.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/net v0.25.0 // indirect
+	golang.org/x/text v0.15.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.17.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
@@ -301,7 +301,7 @@ replace (
 // sigs.k8s.io/cluster-api-provider-aws => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20200929152424-eab2e087f366 // Indirect dependency through MAO from cluster API providers
 )
 
-replace sigs.k8s.io/cluster-api-provider-ibmcloud => sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240424062805-188d9e99702c
+replace sigs.k8s.io/cluster-api-provider-ibmcloud => sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0
 
 replace github.com/openshift/assisted-service/api => github.com/openshift/assisted-service/api v0.0.0-20230831114549-1922eda29cf8
 

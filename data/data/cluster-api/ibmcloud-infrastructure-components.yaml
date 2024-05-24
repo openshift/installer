@@ -361,7 +361,7 @@ spec:
                   resourceGroup name under which the resources will be created.
                   when powervs.cluster.x-k8s.io/create-infra=true annotation is set on IBMPowerVSCluster resource,
                   1. it is expected to set the ResourceGroup.Name, not setting will result in webhook error.
-                  ServiceInstance.ID and ServiceInstance.Regex is not yet supported and system will ignore the value.
+                  ResourceGroup.ID and ResourceGroup.Regex is not yet supported and system will ignore the value.
                 properties:
                   id:
                     description: ID of resource
@@ -419,6 +419,12 @@ spec:
                   when TransitGateway.ID is set, its expected that there exist a TransitGateway with ID or else system will give error.
                   when TransitGateway.Name is set, system will first check for TransitGateway with Name, if not exist system will create new TransitGateway.
                 properties:
+                  globalRouting:
+                    description: |-
+                      globalRouting indicates whether to set global routing true or not while creating the transit gateway.
+                      set this field to true only when PowerVS and VPC are from different regions, if they are same it's suggested to use local routing by setting the field to false.
+                      when the field is omitted,  based on PowerVS region (region associated with IBMPowerVSCluster.Spec.Zone) and VPC region(IBMPowerVSCluster.Spec.VPC.Region) system will decide whether to enable globalRouting or not.
+                    type: boolean
                   id:
                     description: id of resource.
                     type: string
@@ -457,6 +463,331 @@ spec:
                       it is expected to set the region, not setting will result in webhook error.
                     type: string
                 type: object
+              vpcSecurityGroups:
+                description: VPCSecurityGroups to attach it to the VPC resource
+                items:
+                  description: VPCSecurityGroup defines a VPC Security Group that
+                    should exist or be created within the specified VPC, with the
+                    specified Security Group Rules.
+                  properties:
+                    id:
+                      description: id of the Security Group.
+                      type: string
+                    name:
+                      description: name of the Security Group.
+                      type: string
+                    rules:
+                      description: rules are the Security Group Rules for the Security
+                        Group.
+                      items:
+                        description: VPCSecurityGroupRule defines a VPC Security Group
+                          Rule for a specified Security Group.
+                        properties:
+                          action:
+                            description: action defines whether to allow or deny traffic
+                              defined by the Security Group Rule.
+                            enum:
+                            - allow
+                            - deny
+                            type: string
+                          destination:
+                            description: |-
+                              destination is a VPCSecurityGroupRulePrototype which defines the destination of outbound traffic for the Security Group Rule.
+                              Only used when direction is VPCSecurityGroupRuleDirectionOutbound.
+                            properties:
+                              icmpCode:
+                                description: |-
+                                  icmpCode is the ICMP code for the Rule.
+                                  Only used when Protocol is VPCSecurityGroupRuleProtocolIcmp.
+                                format: int64
+                                type: integer
+                              icmpType:
+                                description: |-
+                                  icmpType is the ICMP type for the Rule.
+                                  Only used when Protocol is VPCSecurityGroupRuleProtocolIcmp.
+                                format: int64
+                                type: integer
+                              portRange:
+                                description: portRange is a range of ports allowed
+                                  for the Rule's remote.
+                                properties:
+                                  maximumPort:
+                                    description: maximumPort is the inclusive upper
+                                      range of ports.
+                                    format: int64
+                                    maximum: 65535
+                                    minimum: 1
+                                    type: integer
+                                  minimumPort:
+                                    description: minimumPort is the inclusive lower
+                                      range of ports.
+                                    format: int64
+                                    maximum: 65535
+                                    minimum: 1
+                                    type: integer
+                                type: object
+                                x-kubernetes-validations:
+                                - message: maximum port must be greater than or equal
+                                    to minimum port
+                                  rule: self.maximumPort >= self.minimumPort
+                              protocol:
+                                description: protocol defines the traffic protocol
+                                  used for the Security Group Rule.
+                                enum:
+                                - all
+                                - icmp
+                                - tcp
+                                - udp
+                                type: string
+                              remotes:
+                                description: |-
+                                  remotes is a set of VPCSecurityGroupRuleRemote's that define the traffic allowed by the Rule's remote.
+                                  Specifying multiple VPCSecurityGroupRuleRemote's creates a unique Security Group Rule with the shared Protocol, PortRange, etc.
+                                  This allows for easier management of Security Group Rule's for sets of CIDR's, IP's, etc.
+                                items:
+                                  description: |-
+                                    VPCSecurityGroupRuleRemote defines a VPC Security Group Rule's remote details.
+                                    The type of remote defines the additional remote details where are used for defining the remote.
+                                  properties:
+                                    address:
+                                      description: |2-
+                                         address is the address to use for the remote's destination/source.
+                                        Only used when remoteType is VPCSecurityGroupRuleRemoteTypeAddress.
+                                      type: string
+                                    cidrSubnetName:
+                                      description: |-
+                                        cidrSubnetName is the name of the VPC Subnet to retrieve the CIDR from, to use for the remote's destination/source.
+                                        Only used when remoteType is VPCSecurityGroupRuleRemoteTypeCIDR.
+                                      type: string
+                                    remoteType:
+                                      description: remoteType defines the type of
+                                        filter to define for the remote's destination/source.
+                                      enum:
+                                      - any
+                                      - cidr
+                                      - address
+                                      - sg
+                                      type: string
+                                    securityGroupName:
+                                      description: |-
+                                        securityGroupName is the name of the VPC Security Group to use for the remote's destination/source.
+                                        Only used when remoteType is VPCSecurityGroupRuleRemoteTypeSG
+                                      type: string
+                                  required:
+                                  - remoteType
+                                  type: object
+                                  x-kubernetes-validations:
+                                  - message: cidrSubnetName, addresss, and securityGroupName
+                                      are not valid for VPCSecurityGroupRuleRemoteTypeAny
+                                      remoteType
+                                    rule: 'self.remoteType == ''any'' ? (!has(self.cidrSubnetName)
+                                      && !has(self.address) && !has(self.securityGroupName))
+                                      : true'
+                                  - message: only cidrSubnetName is valid for VPCSecurityGroupRuleRemoteTypeCIDR
+                                      remoteType
+                                    rule: 'self.remoteType == ''cidr'' ? (has(self.cidrSubnetName)
+                                      && !has(self.address) && !has(self.securityGroupName))
+                                      : true'
+                                  - message: only address is valid for VPCSecurityGroupRuleRemoteTypeIP
+                                      remoteType
+                                    rule: 'self.remoteType == ''address'' ? (has(self.address)
+                                      && !has(self.cidrSubnetName) && !has(self.securityGroupName))
+                                      : true'
+                                  - message: only securityGroupName is valid for VPCSecurityGroupRuleRemoteTypeSG
+                                      remoteType
+                                    rule: 'self.remoteType == ''sg'' ? (has(self.securityGroupName)
+                                      && !has(self.cidrSubnetName) && !has(self.address))
+                                      : true'
+                                type: array
+                            required:
+                            - protocol
+                            - remotes
+                            type: object
+                            x-kubernetes-validations:
+                            - message: icmpCode and icmpType are only supported for
+                                VPCSecurityGroupRuleProtocolIcmp protocol
+                              rule: 'self.protocol != ''icmp'' ? (!has(self.icmpCode)
+                                && !has(self.icmpType)) : true'
+                            - message: portRange is not valid for VPCSecurityGroupRuleProtocolAll
+                                protocol
+                              rule: 'self.protocol == ''all'' ? !has(self.portRange)
+                                : true'
+                            - message: portRange is not valid for VPCSecurityGroupRuleProtocolIcmp
+                                protocol
+                              rule: 'self.protocol == ''icmp'' ? !has(self.portRange)
+                                : true'
+                          direction:
+                            description: direction defines whether the traffic is
+                              inbound or outbound for the Security Group Rule.
+                            enum:
+                            - inbound
+                            - outbound
+                            type: string
+                          securityGroupID:
+                            description: securityGroupID is the ID of the Security
+                              Group for the Security Group Rule.
+                            type: string
+                          source:
+                            description: |-
+                              source is a VPCSecurityGroupRulePrototype which defines the source of inbound traffic for the Security Group Rule.
+                              Only used when direction is VPCSecurityGroupRuleDirectionInbound.
+                            properties:
+                              icmpCode:
+                                description: |-
+                                  icmpCode is the ICMP code for the Rule.
+                                  Only used when Protocol is VPCSecurityGroupRuleProtocolIcmp.
+                                format: int64
+                                type: integer
+                              icmpType:
+                                description: |-
+                                  icmpType is the ICMP type for the Rule.
+                                  Only used when Protocol is VPCSecurityGroupRuleProtocolIcmp.
+                                format: int64
+                                type: integer
+                              portRange:
+                                description: portRange is a range of ports allowed
+                                  for the Rule's remote.
+                                properties:
+                                  maximumPort:
+                                    description: maximumPort is the inclusive upper
+                                      range of ports.
+                                    format: int64
+                                    maximum: 65535
+                                    minimum: 1
+                                    type: integer
+                                  minimumPort:
+                                    description: minimumPort is the inclusive lower
+                                      range of ports.
+                                    format: int64
+                                    maximum: 65535
+                                    minimum: 1
+                                    type: integer
+                                type: object
+                                x-kubernetes-validations:
+                                - message: maximum port must be greater than or equal
+                                    to minimum port
+                                  rule: self.maximumPort >= self.minimumPort
+                              protocol:
+                                description: protocol defines the traffic protocol
+                                  used for the Security Group Rule.
+                                enum:
+                                - all
+                                - icmp
+                                - tcp
+                                - udp
+                                type: string
+                              remotes:
+                                description: |-
+                                  remotes is a set of VPCSecurityGroupRuleRemote's that define the traffic allowed by the Rule's remote.
+                                  Specifying multiple VPCSecurityGroupRuleRemote's creates a unique Security Group Rule with the shared Protocol, PortRange, etc.
+                                  This allows for easier management of Security Group Rule's for sets of CIDR's, IP's, etc.
+                                items:
+                                  description: |-
+                                    VPCSecurityGroupRuleRemote defines a VPC Security Group Rule's remote details.
+                                    The type of remote defines the additional remote details where are used for defining the remote.
+                                  properties:
+                                    address:
+                                      description: |2-
+                                         address is the address to use for the remote's destination/source.
+                                        Only used when remoteType is VPCSecurityGroupRuleRemoteTypeAddress.
+                                      type: string
+                                    cidrSubnetName:
+                                      description: |-
+                                        cidrSubnetName is the name of the VPC Subnet to retrieve the CIDR from, to use for the remote's destination/source.
+                                        Only used when remoteType is VPCSecurityGroupRuleRemoteTypeCIDR.
+                                      type: string
+                                    remoteType:
+                                      description: remoteType defines the type of
+                                        filter to define for the remote's destination/source.
+                                      enum:
+                                      - any
+                                      - cidr
+                                      - address
+                                      - sg
+                                      type: string
+                                    securityGroupName:
+                                      description: |-
+                                        securityGroupName is the name of the VPC Security Group to use for the remote's destination/source.
+                                        Only used when remoteType is VPCSecurityGroupRuleRemoteTypeSG
+                                      type: string
+                                  required:
+                                  - remoteType
+                                  type: object
+                                  x-kubernetes-validations:
+                                  - message: cidrSubnetName, addresss, and securityGroupName
+                                      are not valid for VPCSecurityGroupRuleRemoteTypeAny
+                                      remoteType
+                                    rule: 'self.remoteType == ''any'' ? (!has(self.cidrSubnetName)
+                                      && !has(self.address) && !has(self.securityGroupName))
+                                      : true'
+                                  - message: only cidrSubnetName is valid for VPCSecurityGroupRuleRemoteTypeCIDR
+                                      remoteType
+                                    rule: 'self.remoteType == ''cidr'' ? (has(self.cidrSubnetName)
+                                      && !has(self.address) && !has(self.securityGroupName))
+                                      : true'
+                                  - message: only address is valid for VPCSecurityGroupRuleRemoteTypeIP
+                                      remoteType
+                                    rule: 'self.remoteType == ''address'' ? (has(self.address)
+                                      && !has(self.cidrSubnetName) && !has(self.securityGroupName))
+                                      : true'
+                                  - message: only securityGroupName is valid for VPCSecurityGroupRuleRemoteTypeSG
+                                      remoteType
+                                    rule: 'self.remoteType == ''sg'' ? (has(self.securityGroupName)
+                                      && !has(self.cidrSubnetName) && !has(self.address))
+                                      : true'
+                                type: array
+                            required:
+                            - protocol
+                            - remotes
+                            type: object
+                            x-kubernetes-validations:
+                            - message: icmpCode and icmpType are only supported for
+                                VPCSecurityGroupRuleProtocolIcmp protocol
+                              rule: 'self.protocol != ''icmp'' ? (!has(self.icmpCode)
+                                && !has(self.icmpType)) : true'
+                            - message: portRange is not valid for VPCSecurityGroupRuleProtocolAll
+                                protocol
+                              rule: 'self.protocol == ''all'' ? !has(self.portRange)
+                                : true'
+                            - message: portRange is not valid for VPCSecurityGroupRuleProtocolIcmp
+                                protocol
+                              rule: 'self.protocol == ''icmp'' ? !has(self.portRange)
+                                : true'
+                        required:
+                        - action
+                        - direction
+                        type: object
+                        x-kubernetes-validations:
+                        - message: both destination and source cannot be provided
+                          rule: (has(self.destination) && !has(self.source)) || (!has(self.destination)
+                            && has(self.source))
+                        - message: source must be set for VPCSecurityGroupRuleDirectionInbound
+                            direction
+                          rule: 'self.direction == ''inbound'' ? has(self.source)
+                            : true'
+                        - message: destination is not valid for VPCSecurityGroupRuleDirectionInbound
+                            direction
+                          rule: 'self.direction == ''inbound'' ? !has(self.destination)
+                            : true'
+                        - message: destination must be set for VPCSecurityGroupRuleDirectionOutbound
+                            direction
+                          rule: 'self.direction == ''outbound'' ? has(self.destination)
+                            : true'
+                        - message: source is not valid for VPCSecurityGroupRuleDirectionOutbound
+                            direction
+                          rule: 'self.direction == ''outbound'' ? !has(self.source)
+                            : true'
+                      type: array
+                    tags:
+                      description: tags are tags to add to the Security Group.
+                      items:
+                        type: string
+                      type: array
+                  type: object
+                  x-kubernetes-validations:
+                  - message: either an id or name must be specified
+                    rule: has(self.id) || has(self.name)
+                type: array
               vpcSubnets:
                 description: |-
                   vpcSubnets contains information about IBM Cloud VPC Subnet resources.
@@ -656,6 +987,29 @@ spec:
                   id:
                     description: id represents the id of the resource.
                     type: string
+                type: object
+              vpcSecurityGroups:
+                additionalProperties:
+                  description: VPCSecurityGroupStatus defines a vpc security group
+                    resource status with its id and respective rule's ids.
+                  properties:
+                    controllerCreated:
+                      default: false
+                      description: controllerCreated indicates whether the resource
+                        is created by the controller.
+                      type: boolean
+                    id:
+                      description: id represents the id of the resource.
+                      type: string
+                    ruleIDs:
+                      description: rules contains the id of rules created under the
+                        security group
+                      items:
+                        type: string
+                      type: array
+                  type: object
+                description: vpcSecurityGroups is reference to IBM Cloud VPC security
+                  group.
                 type: object
               vpcSubnet:
                 additionalProperties:
@@ -1054,7 +1408,7 @@ spec:
                           resourceGroup name under which the resources will be created.
                           when powervs.cluster.x-k8s.io/create-infra=true annotation is set on IBMPowerVSCluster resource,
                           1. it is expected to set the ResourceGroup.Name, not setting will result in webhook error.
-                          ServiceInstance.ID and ServiceInstance.Regex is not yet supported and system will ignore the value.
+                          ResourceGroup.ID and ResourceGroup.Regex is not yet supported and system will ignore the value.
                         properties:
                           id:
                             description: ID of resource
@@ -1112,6 +1466,12 @@ spec:
                           when TransitGateway.ID is set, its expected that there exist a TransitGateway with ID or else system will give error.
                           when TransitGateway.Name is set, system will first check for TransitGateway with Name, if not exist system will create new TransitGateway.
                         properties:
+                          globalRouting:
+                            description: |-
+                              globalRouting indicates whether to set global routing true or not while creating the transit gateway.
+                              set this field to true only when PowerVS and VPC are from different regions, if they are same it's suggested to use local routing by setting the field to false.
+                              when the field is omitted,  based on PowerVS region (region associated with IBMPowerVSCluster.Spec.Zone) and VPC region(IBMPowerVSCluster.Spec.VPC.Region) system will decide whether to enable globalRouting or not.
+                            type: boolean
                           id:
                             description: id of resource.
                             type: string
@@ -1150,6 +1510,338 @@ spec:
                               it is expected to set the region, not setting will result in webhook error.
                             type: string
                         type: object
+                      vpcSecurityGroups:
+                        description: VPCSecurityGroups to attach it to the VPC resource
+                        items:
+                          description: VPCSecurityGroup defines a VPC Security Group
+                            that should exist or be created within the specified VPC,
+                            with the specified Security Group Rules.
+                          properties:
+                            id:
+                              description: id of the Security Group.
+                              type: string
+                            name:
+                              description: name of the Security Group.
+                              type: string
+                            rules:
+                              description: rules are the Security Group Rules for
+                                the Security Group.
+                              items:
+                                description: VPCSecurityGroupRule defines a VPC Security
+                                  Group Rule for a specified Security Group.
+                                properties:
+                                  action:
+                                    description: action defines whether to allow or
+                                      deny traffic defined by the Security Group Rule.
+                                    enum:
+                                    - allow
+                                    - deny
+                                    type: string
+                                  destination:
+                                    description: |-
+                                      destination is a VPCSecurityGroupRulePrototype which defines the destination of outbound traffic for the Security Group Rule.
+                                      Only used when direction is VPCSecurityGroupRuleDirectionOutbound.
+                                    properties:
+                                      icmpCode:
+                                        description: |-
+                                          icmpCode is the ICMP code for the Rule.
+                                          Only used when Protocol is VPCSecurityGroupRuleProtocolIcmp.
+                                        format: int64
+                                        type: integer
+                                      icmpType:
+                                        description: |-
+                                          icmpType is the ICMP type for the Rule.
+                                          Only used when Protocol is VPCSecurityGroupRuleProtocolIcmp.
+                                        format: int64
+                                        type: integer
+                                      portRange:
+                                        description: portRange is a range of ports
+                                          allowed for the Rule's remote.
+                                        properties:
+                                          maximumPort:
+                                            description: maximumPort is the inclusive
+                                              upper range of ports.
+                                            format: int64
+                                            maximum: 65535
+                                            minimum: 1
+                                            type: integer
+                                          minimumPort:
+                                            description: minimumPort is the inclusive
+                                              lower range of ports.
+                                            format: int64
+                                            maximum: 65535
+                                            minimum: 1
+                                            type: integer
+                                        type: object
+                                        x-kubernetes-validations:
+                                        - message: maximum port must be greater than
+                                            or equal to minimum port
+                                          rule: self.maximumPort >= self.minimumPort
+                                      protocol:
+                                        description: protocol defines the traffic
+                                          protocol used for the Security Group Rule.
+                                        enum:
+                                        - all
+                                        - icmp
+                                        - tcp
+                                        - udp
+                                        type: string
+                                      remotes:
+                                        description: |-
+                                          remotes is a set of VPCSecurityGroupRuleRemote's that define the traffic allowed by the Rule's remote.
+                                          Specifying multiple VPCSecurityGroupRuleRemote's creates a unique Security Group Rule with the shared Protocol, PortRange, etc.
+                                          This allows for easier management of Security Group Rule's for sets of CIDR's, IP's, etc.
+                                        items:
+                                          description: |-
+                                            VPCSecurityGroupRuleRemote defines a VPC Security Group Rule's remote details.
+                                            The type of remote defines the additional remote details where are used for defining the remote.
+                                          properties:
+                                            address:
+                                              description: |2-
+                                                 address is the address to use for the remote's destination/source.
+                                                Only used when remoteType is VPCSecurityGroupRuleRemoteTypeAddress.
+                                              type: string
+                                            cidrSubnetName:
+                                              description: |-
+                                                cidrSubnetName is the name of the VPC Subnet to retrieve the CIDR from, to use for the remote's destination/source.
+                                                Only used when remoteType is VPCSecurityGroupRuleRemoteTypeCIDR.
+                                              type: string
+                                            remoteType:
+                                              description: remoteType defines the
+                                                type of filter to define for the remote's
+                                                destination/source.
+                                              enum:
+                                              - any
+                                              - cidr
+                                              - address
+                                              - sg
+                                              type: string
+                                            securityGroupName:
+                                              description: |-
+                                                securityGroupName is the name of the VPC Security Group to use for the remote's destination/source.
+                                                Only used when remoteType is VPCSecurityGroupRuleRemoteTypeSG
+                                              type: string
+                                          required:
+                                          - remoteType
+                                          type: object
+                                          x-kubernetes-validations:
+                                          - message: cidrSubnetName, addresss, and
+                                              securityGroupName are not valid for
+                                              VPCSecurityGroupRuleRemoteTypeAny remoteType
+                                            rule: 'self.remoteType == ''any'' ? (!has(self.cidrSubnetName)
+                                              && !has(self.address) && !has(self.securityGroupName))
+                                              : true'
+                                          - message: only cidrSubnetName is valid
+                                              for VPCSecurityGroupRuleRemoteTypeCIDR
+                                              remoteType
+                                            rule: 'self.remoteType == ''cidr'' ? (has(self.cidrSubnetName)
+                                              && !has(self.address) && !has(self.securityGroupName))
+                                              : true'
+                                          - message: only address is valid for VPCSecurityGroupRuleRemoteTypeIP
+                                              remoteType
+                                            rule: 'self.remoteType == ''address''
+                                              ? (has(self.address) && !has(self.cidrSubnetName)
+                                              && !has(self.securityGroupName)) : true'
+                                          - message: only securityGroupName is valid
+                                              for VPCSecurityGroupRuleRemoteTypeSG
+                                              remoteType
+                                            rule: 'self.remoteType == ''sg'' ? (has(self.securityGroupName)
+                                              && !has(self.cidrSubnetName) && !has(self.address))
+                                              : true'
+                                        type: array
+                                    required:
+                                    - protocol
+                                    - remotes
+                                    type: object
+                                    x-kubernetes-validations:
+                                    - message: icmpCode and icmpType are only supported
+                                        for VPCSecurityGroupRuleProtocolIcmp protocol
+                                      rule: 'self.protocol != ''icmp'' ? (!has(self.icmpCode)
+                                        && !has(self.icmpType)) : true'
+                                    - message: portRange is not valid for VPCSecurityGroupRuleProtocolAll
+                                        protocol
+                                      rule: 'self.protocol == ''all'' ? !has(self.portRange)
+                                        : true'
+                                    - message: portRange is not valid for VPCSecurityGroupRuleProtocolIcmp
+                                        protocol
+                                      rule: 'self.protocol == ''icmp'' ? !has(self.portRange)
+                                        : true'
+                                  direction:
+                                    description: direction defines whether the traffic
+                                      is inbound or outbound for the Security Group
+                                      Rule.
+                                    enum:
+                                    - inbound
+                                    - outbound
+                                    type: string
+                                  securityGroupID:
+                                    description: securityGroupID is the ID of the
+                                      Security Group for the Security Group Rule.
+                                    type: string
+                                  source:
+                                    description: |-
+                                      source is a VPCSecurityGroupRulePrototype which defines the source of inbound traffic for the Security Group Rule.
+                                      Only used when direction is VPCSecurityGroupRuleDirectionInbound.
+                                    properties:
+                                      icmpCode:
+                                        description: |-
+                                          icmpCode is the ICMP code for the Rule.
+                                          Only used when Protocol is VPCSecurityGroupRuleProtocolIcmp.
+                                        format: int64
+                                        type: integer
+                                      icmpType:
+                                        description: |-
+                                          icmpType is the ICMP type for the Rule.
+                                          Only used when Protocol is VPCSecurityGroupRuleProtocolIcmp.
+                                        format: int64
+                                        type: integer
+                                      portRange:
+                                        description: portRange is a range of ports
+                                          allowed for the Rule's remote.
+                                        properties:
+                                          maximumPort:
+                                            description: maximumPort is the inclusive
+                                              upper range of ports.
+                                            format: int64
+                                            maximum: 65535
+                                            minimum: 1
+                                            type: integer
+                                          minimumPort:
+                                            description: minimumPort is the inclusive
+                                              lower range of ports.
+                                            format: int64
+                                            maximum: 65535
+                                            minimum: 1
+                                            type: integer
+                                        type: object
+                                        x-kubernetes-validations:
+                                        - message: maximum port must be greater than
+                                            or equal to minimum port
+                                          rule: self.maximumPort >= self.minimumPort
+                                      protocol:
+                                        description: protocol defines the traffic
+                                          protocol used for the Security Group Rule.
+                                        enum:
+                                        - all
+                                        - icmp
+                                        - tcp
+                                        - udp
+                                        type: string
+                                      remotes:
+                                        description: |-
+                                          remotes is a set of VPCSecurityGroupRuleRemote's that define the traffic allowed by the Rule's remote.
+                                          Specifying multiple VPCSecurityGroupRuleRemote's creates a unique Security Group Rule with the shared Protocol, PortRange, etc.
+                                          This allows for easier management of Security Group Rule's for sets of CIDR's, IP's, etc.
+                                        items:
+                                          description: |-
+                                            VPCSecurityGroupRuleRemote defines a VPC Security Group Rule's remote details.
+                                            The type of remote defines the additional remote details where are used for defining the remote.
+                                          properties:
+                                            address:
+                                              description: |2-
+                                                 address is the address to use for the remote's destination/source.
+                                                Only used when remoteType is VPCSecurityGroupRuleRemoteTypeAddress.
+                                              type: string
+                                            cidrSubnetName:
+                                              description: |-
+                                                cidrSubnetName is the name of the VPC Subnet to retrieve the CIDR from, to use for the remote's destination/source.
+                                                Only used when remoteType is VPCSecurityGroupRuleRemoteTypeCIDR.
+                                              type: string
+                                            remoteType:
+                                              description: remoteType defines the
+                                                type of filter to define for the remote's
+                                                destination/source.
+                                              enum:
+                                              - any
+                                              - cidr
+                                              - address
+                                              - sg
+                                              type: string
+                                            securityGroupName:
+                                              description: |-
+                                                securityGroupName is the name of the VPC Security Group to use for the remote's destination/source.
+                                                Only used when remoteType is VPCSecurityGroupRuleRemoteTypeSG
+                                              type: string
+                                          required:
+                                          - remoteType
+                                          type: object
+                                          x-kubernetes-validations:
+                                          - message: cidrSubnetName, addresss, and
+                                              securityGroupName are not valid for
+                                              VPCSecurityGroupRuleRemoteTypeAny remoteType
+                                            rule: 'self.remoteType == ''any'' ? (!has(self.cidrSubnetName)
+                                              && !has(self.address) && !has(self.securityGroupName))
+                                              : true'
+                                          - message: only cidrSubnetName is valid
+                                              for VPCSecurityGroupRuleRemoteTypeCIDR
+                                              remoteType
+                                            rule: 'self.remoteType == ''cidr'' ? (has(self.cidrSubnetName)
+                                              && !has(self.address) && !has(self.securityGroupName))
+                                              : true'
+                                          - message: only address is valid for VPCSecurityGroupRuleRemoteTypeIP
+                                              remoteType
+                                            rule: 'self.remoteType == ''address''
+                                              ? (has(self.address) && !has(self.cidrSubnetName)
+                                              && !has(self.securityGroupName)) : true'
+                                          - message: only securityGroupName is valid
+                                              for VPCSecurityGroupRuleRemoteTypeSG
+                                              remoteType
+                                            rule: 'self.remoteType == ''sg'' ? (has(self.securityGroupName)
+                                              && !has(self.cidrSubnetName) && !has(self.address))
+                                              : true'
+                                        type: array
+                                    required:
+                                    - protocol
+                                    - remotes
+                                    type: object
+                                    x-kubernetes-validations:
+                                    - message: icmpCode and icmpType are only supported
+                                        for VPCSecurityGroupRuleProtocolIcmp protocol
+                                      rule: 'self.protocol != ''icmp'' ? (!has(self.icmpCode)
+                                        && !has(self.icmpType)) : true'
+                                    - message: portRange is not valid for VPCSecurityGroupRuleProtocolAll
+                                        protocol
+                                      rule: 'self.protocol == ''all'' ? !has(self.portRange)
+                                        : true'
+                                    - message: portRange is not valid for VPCSecurityGroupRuleProtocolIcmp
+                                        protocol
+                                      rule: 'self.protocol == ''icmp'' ? !has(self.portRange)
+                                        : true'
+                                required:
+                                - action
+                                - direction
+                                type: object
+                                x-kubernetes-validations:
+                                - message: both destination and source cannot be provided
+                                  rule: (has(self.destination) && !has(self.source))
+                                    || (!has(self.destination) && has(self.source))
+                                - message: source must be set for VPCSecurityGroupRuleDirectionInbound
+                                    direction
+                                  rule: 'self.direction == ''inbound'' ? has(self.source)
+                                    : true'
+                                - message: destination is not valid for VPCSecurityGroupRuleDirectionInbound
+                                    direction
+                                  rule: 'self.direction == ''inbound'' ? !has(self.destination)
+                                    : true'
+                                - message: destination must be set for VPCSecurityGroupRuleDirectionOutbound
+                                    direction
+                                  rule: 'self.direction == ''outbound'' ? has(self.destination)
+                                    : true'
+                                - message: source is not valid for VPCSecurityGroupRuleDirectionOutbound
+                                    direction
+                                  rule: 'self.direction == ''outbound'' ? !has(self.source)
+                                    : true'
+                              type: array
+                            tags:
+                              description: tags are tags to add to the Security Group.
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                          x-kubernetes-validations:
+                          - message: either an id or name must be specified
+                            rule: has(self.id) || has(self.name)
+                        type: array
                       vpcSubnets:
                         description: |-
                           vpcSubnets contains information about IBM Cloud VPC Subnet resources.
@@ -4325,7 +5017,7 @@ spec:
         env:
         - name: IBM_CREDENTIALS_FILE
           value: /home/.ibmcloud/ibm-credentials.env
-        image: gcr.io/k8s-staging-capi-ibmcloud/cluster-api-ibmcloud-controller:v0.8.0-alpha.0
+        image: registry.k8s.io/capi-ibmcloud/cluster-api-ibmcloud-controller:v0.8.0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:

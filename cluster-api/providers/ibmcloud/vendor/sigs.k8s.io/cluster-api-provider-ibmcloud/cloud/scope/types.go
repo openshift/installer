@@ -37,4 +37,7 @@ var (
 
 	// COSInstanceNotFound is the error returned when a COS service instance is not found.
 	COSInstanceNotFound = ResourceNotFound("COS instance unavailable")
+
+	// VPCSecurityGroupNotFound is the error returned when a VPC security group is not found.
+	VPCSecurityGroupNotFound = ResourceNotFound("Security group not found")
 )

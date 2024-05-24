@@ -26,6 +26,9 @@ import (
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/utils"
 )
 
+// SecurityGroupByNameNotFound returns an appropriate error when security group by name not found.
+var SecurityGroupByNameNotFound = func(name string) error { return fmt.Errorf("failed to find security group by name '%s'", name) }
+
 // Service holds the VPC Service specific information.
 type Service struct {
 	vpcService *vpcv1.VpcV1
@@ -335,6 +338,58 @@ func (s *Service) GetSubnetAddrPrefix(vpcID, zone string) (string, error) {
 		return *addrPrefix.CIDR, nil
 	}
 	return "", fmt.Errorf("not found a valid CIDR for VPC %s in zone %s", vpcID, zone)
+}
+
+// CreateSecurityGroup creates a new security group.
+func (s *Service) CreateSecurityGroup(options *vpcv1.CreateSecurityGroupOptions) (*vpcv1.SecurityGroup, *core.DetailedResponse, error) {
+	return s.vpcService.CreateSecurityGroup(options)
+}
+
+// DeleteSecurityGroup deletes the security group passed.
+func (s *Service) DeleteSecurityGroup(options *vpcv1.DeleteSecurityGroupOptions) (*core.DetailedResponse, error) {
+	return s.vpcService.DeleteSecurityGroup(options)
+}
+
+// ListSecurityGroups lists security group.
+func (s *Service) ListSecurityGroups(options *vpcv1.ListSecurityGroupsOptions) (*vpcv1.SecurityGroupCollection, *core.DetailedResponse, error) {
+	return s.vpcService.ListSecurityGroups(options)
+}
+
+// GetSecurityGroup gets a specific security group by id.
+func (s *Service) GetSecurityGroup(options *vpcv1.GetSecurityGroupOptions) (*vpcv1.SecurityGroup, *core.DetailedResponse, error) {
+	return s.vpcService.GetSecurityGroup(options)
+}
+
+// GetSecurityGroupByName gets a specific security group by name.
+func (s *Service) GetSecurityGroupByName(name string) (*vpcv1.SecurityGroup, error) {
+	securityGroupPager, err := s.vpcService.NewSecurityGroupsPager(&vpcv1.ListSecurityGroupsOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("error listing security group: %v", err)
+	}
+
+	for {
+		if !securityGroupPager.HasNext() {
+			break
+		}
+
+		securityGroups, err := securityGroupPager.GetNext()
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving next page of security groups: %v", err)
+		}
+
+		for _, sg := range securityGroups {
+			if *sg.Name == name {
+				return &sg, nil
+			}
+		}
+	}
+
+	return nil, SecurityGroupByNameNotFound(name)
+}
+
+// GetSecurityGroupRule gets a specific security group rule.
+func (s *Service) GetSecurityGroupRule(options *vpcv1.GetSecurityGroupRuleOptions) (vpcv1.SecurityGroupRuleIntf, *core.DetailedResponse, error) {
+	return s.vpcService.GetSecurityGroupRule(options)
 }
 
 // NewService returns a new VPC Service.

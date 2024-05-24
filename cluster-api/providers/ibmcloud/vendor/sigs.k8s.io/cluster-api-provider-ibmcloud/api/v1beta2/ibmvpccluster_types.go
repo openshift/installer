@@ -93,6 +93,17 @@ type AdditionalListenerSpec struct {
 	Port int64 `json:"port"`
 }
 
+// VPCSecurityGroupStatus defines a vpc security group resource status with its id and respective rule's ids.
+type VPCSecurityGroupStatus struct {
+	// id represents the id of the resource.
+	ID *string `json:"id,omitempty"`
+	// rules contains the id of rules created under the security group
+	RuleIDs []*string `json:"ruleIDs,omitempty"`
+	// +kubebuilder:default=false
+	// controllerCreated indicates whether the resource is created by the controller.
+	ControllerCreated *bool `json:"controllerCreated,omitempty"`
+}
+
 // VPCLoadBalancerStatus defines the status VPC load balancer.
 type VPCLoadBalancerStatus struct {
 	// id of VPC load balancer.

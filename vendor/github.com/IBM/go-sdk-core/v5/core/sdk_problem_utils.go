@@ -106,3 +106,19 @@ func formatFrames(pcs []uintptr, componentName string) []sdkStackFrame {
 
 	return result
 }
+
+type sparseSDKProblem struct {
+	ID       string
+	Function string
+}
+
+func newSparseSDKProblem(prob *SDKProblem) *sparseSDKProblem {
+	return &sparseSDKProblem{
+		ID:       prob.GetID(),
+		Function: prob.Function,
+	}
+}
+
+func isCoreProblem(prob *SDKProblem) bool {
+	return prob.Component != nil && prob.Component.Name == MODULE_NAME
+}
