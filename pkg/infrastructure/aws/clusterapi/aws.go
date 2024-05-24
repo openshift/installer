@@ -45,13 +45,29 @@ func (*Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInp
 		return fmt.Errorf("failed to create IAM roles: %w", err)
 	}
 
-	amiID, err := copyAMIToRegion(ctx, in.InstallConfig, in.InfraID, string(*in.RhcosImage))
+	// The AWSMachine manifests might already have the AMI ID set from the machine pool which takes into account the
+	// ways in which the AMI can be specified: the default rhcos if already in the target region, a custom AMI ID set in
+	// platform.aws.amiID, and a custom AMI ID specified in the controlPlane stanza. So we just get the value from the
+	// first awsmachine manifest we find, instead of duplicating all the inheriting logic here.
+	for i := range in.MachineManifests {
+		if awsMachine, ok := in.MachineManifests[i].(*capa.AWSMachine); ok {
+			// Default/custom AMI already in target region, nothing else to do
+			if ptr.Deref(awsMachine.Spec.AMI.ID, "") != "" {
+				return nil
+			}
+		}
+	}
+
+	// Notice that we have to use the default RHCOS value because we set the AMI.ID to empty if the default RHCOS is not
+	// in the target region and it needs to be copied over. See pkg/asset/machines/clusterapi.go
+	amiID, err := copyAMIToRegion(ctx, in.InstallConfig, in.InfraID, in.RhcosImage)
 	if err != nil {
 		return fmt.Errorf("failed to copy AMI: %w", err)
 	}
+	// Update manifests with the new ID
 	for i := range in.MachineManifests {
 		if awsMachine, ok := in.MachineManifests[i].(*capa.AWSMachine); ok {
-			awsMachine.Spec.AMI = capa.AMIReference{ID: ptr.To(amiID)}
+			awsMachine.Spec.AMI.ID = ptr.To(amiID)
 		}
 	}
 	return nil
