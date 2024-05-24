@@ -14,7 +14,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
-	"github.com/openshift/installer/pkg/types"
 )
 
 // BootstrapSSHDescription is the description for the
@@ -29,6 +28,11 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 	tags, err := aws.CapaTagsFromUserTags(clusterID.InfraID, ic.Config.AWS.UserTags)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user tags: %w", err)
+	}
+
+	sshRuleCidr := []string{"0.0.0.0/0"}
+	if !ic.Config.PublicAPI() {
+		sshRuleCidr = []string{capiutils.CIDRFromInstallConfig(ic).String()}
 	}
 
 	awsCluster := &capa.AWSCluster{
@@ -142,7 +146,7 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 						Protocol:    capa.SecurityGroupProtocolTCP,
 						FromPort:    22,
 						ToPort:      22,
-						CidrBlocks:  []string{"0.0.0.0/0"},
+						CidrBlocks:  sshRuleCidr,
 					},
 				},
 			},
@@ -193,7 +197,7 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 	}
 	awsCluster.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSCluster"))
 
-	if ic.Config.Publish == types.ExternalPublishingStrategy {
+	if ic.Config.PublicAPI() {
 		awsCluster.Spec.SecondaryControlPlaneLoadBalancer = &capa.AWSLoadBalancerSpec{
 			Name:                   ptr.To(clusterID.InfraID + "-ext"),
 			LoadBalancerType:       capa.LoadBalancerTypeNLB,
