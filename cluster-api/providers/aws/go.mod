@@ -1,6 +1,6 @@
 module openshift/installer/cluster-api/providers/aws
 
-go 1.21
+go 1.22
 
 require sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.2-0.20240426161541-ac4958082eab
 

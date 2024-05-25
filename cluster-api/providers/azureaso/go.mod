@@ -1,6 +1,6 @@
 module openshift/installer/cluster-api/providers/azureaso
 
-go 1.21
+go 1.22
 
 require github.com/Azure/azure-service-operator/v2 v2.6.0
 
