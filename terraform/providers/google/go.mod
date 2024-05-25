@@ -1,6 +1,6 @@
 module github.com/openshift/installer/terraform/providers/google
 
-go 1.20
+go 1.22
 
 require github.com/hashicorp/terraform-provider-google v1.20.1-0.20230718215755-3edc574a3a8f // v4.74.0
 
