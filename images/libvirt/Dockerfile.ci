@@ -8,6 +8,7 @@ FROM registry.ci.openshift.org/ocp/4.16:hyperkube AS kas
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS builder
 ARG TAGS="libvirt fipscapable"
+ARG SKIP_ENVTEST="y"
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 COPY --from=etcd /usr/bin/etcd /usr/bin/etcd
