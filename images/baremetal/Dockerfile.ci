@@ -5,7 +5,7 @@
 FROM registry.ci.openshift.org/ocp/4.16:etcd AS etcd
 FROM registry.ci.openshift.org/ocp/4.16:hyperkube AS kas
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.22-openshift-4.17 AS builder
 ARG TAGS="baremetal fipscapable"
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
