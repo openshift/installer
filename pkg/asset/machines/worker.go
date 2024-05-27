@@ -585,7 +585,7 @@ func (w *Worker) GenerateWithContext(ctx context.Context, dependencies asset.Par
 
 			imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
 
-			sets, err := openstack.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", workerUserDataSecretName)
+			sets, err := openstack.MachineSets(ctx, clusterID.InfraID, ic, &pool, imageName, "worker", workerUserDataSecretName)
 			if err != nil {
 				return fmt.Errorf("failed to create worker machine objects: %w", err)
 			}

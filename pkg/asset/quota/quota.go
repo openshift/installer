@@ -132,7 +132,7 @@ func (a *PlatformQuotaCheck) GenerateWithContext(ctx context.Context, dependenci
 			logrus.Warnf("OVERRIDE: pre-flight validation disabled.")
 			return nil
 		}
-		ci, err := openstackvalidation.GetCloudInfo(ic.Config)
+		ci, err := openstackvalidation.GetCloudInfo(ctx, ic.Config)
 		if err != nil {
 			return errors.Wrap(err, "failed to get cloud info")
 		}

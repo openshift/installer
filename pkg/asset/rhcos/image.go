@@ -68,6 +68,7 @@ func (i *Image) GenerateWithContext(ctx context.Context, p asset.Parents) error 
 	return nil
 }
 
+//nolint:gocyclo
 func osImage(ctx context.Context, config *types.InstallConfig) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()

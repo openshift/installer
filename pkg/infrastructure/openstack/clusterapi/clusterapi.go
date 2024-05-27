@@ -125,7 +125,7 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		return fmt.Errorf("failed to get OSPCluster: %w", err)
 	}
 
-	return infraready.FloatingIPs(ospCluster, installConfig, infraID)
+	return infraready.FloatingIPs(ctx, ospCluster, installConfig, infraID)
 }
 
 var _ clusterapi.IgnitionProvider = Provider{}

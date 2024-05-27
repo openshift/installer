@@ -92,7 +92,7 @@ func (a *platform) GenerateWithContext(ctx context.Context, _ asset.Parents) err
 	case none.Name:
 		a.None = &none.Platform{}
 	case openstack.Name:
-		a.OpenStack, err = openstackconfig.Platform()
+		a.OpenStack, err = openstackconfig.Platform(ctx)
 		if err != nil {
 			return err
 		}

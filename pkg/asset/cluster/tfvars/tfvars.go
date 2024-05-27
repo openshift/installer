@@ -788,6 +788,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		})
 	case openstack.Name:
 		data, err = openstacktfvars.TFVars(
+			ctx,
 			installConfig,
 			mastersAsset,
 			workersAsset,

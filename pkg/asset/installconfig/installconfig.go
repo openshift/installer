@@ -222,7 +222,7 @@ func (a *InstallConfig) platformValidation(ctx context.Context) error {
 		return icovirt.Validate(a.Config)
 	}
 	if a.Config.Platform.OpenStack != nil {
-		return icopenstack.Validate(a.Config)
+		return icopenstack.Validate(ctx, a.Config)
 	}
 	if a.Config.Platform.PowerVS != nil {
 		return icpowervs.Validate(a.Config)

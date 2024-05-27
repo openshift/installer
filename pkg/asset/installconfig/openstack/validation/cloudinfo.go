@@ -1,28 +1,28 @@
 package validation
 
 import (
-	"errors"
+	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 
-	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack/blockstorage/extensions/availabilityzones"
-	"github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumetypes"
-	"github.com/gophercloud/gophercloud/openstack/common/extensions"
-	computequotasets "github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/quotasets"
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
-	tokensv2 "github.com/gophercloud/gophercloud/openstack/identity/v2/tokens"
-	tokensv3 "github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
-	networkquotasets "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/quotas"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
-	"github.com/gophercloud/utils/openstack/clientconfig"
-	azutils "github.com/gophercloud/utils/openstack/compute/v2/availabilityzones"
-	flavorutils "github.com/gophercloud/utils/openstack/compute/v2/flavors"
-	imageutils "github.com/gophercloud/utils/openstack/imageservice/v2/images"
-	networkutils "github.com/gophercloud/utils/openstack/networking/v2/networks"
+	"github.com/gophercloud/gophercloud/v2"
+	"github.com/gophercloud/gophercloud/v2/openstack/blockstorage/v3/availabilityzones"
+	"github.com/gophercloud/gophercloud/v2/openstack/blockstorage/v3/volumetypes"
+	"github.com/gophercloud/gophercloud/v2/openstack/common/extensions"
+	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/flavors"
+	computequotasets "github.com/gophercloud/gophercloud/v2/openstack/compute/v2/quotasets"
+	tokensv2 "github.com/gophercloud/gophercloud/v2/openstack/identity/v2/tokens"
+	tokensv3 "github.com/gophercloud/gophercloud/v2/openstack/identity/v3/tokens"
+	"github.com/gophercloud/gophercloud/v2/openstack/image/v2/images"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/layer3/floatingips"
+	networkquotasets "github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/quotas"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/networks"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/subnets"
+	azutils "github.com/gophercloud/utils/v2/openstack/compute/v2/availabilityzones"
+	flavorutils "github.com/gophercloud/utils/v2/openstack/compute/v2/flavors"
+	imageutils "github.com/gophercloud/utils/v2/openstack/image/v2/images"
+	networkutils "github.com/gophercloud/utils/v2/openstack/networking/v2/networks"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/quota"
@@ -68,7 +68,7 @@ type Flavor struct {
 var ci *CloudInfo
 
 // GetCloudInfo fetches and caches metadata from openstack
-func GetCloudInfo(ic *types.InstallConfig) (*CloudInfo, error) {
+func GetCloudInfo(ctx context.Context, ic *types.InstallConfig) (*CloudInfo, error) {
 	var err error
 
 	if ci != nil {
@@ -82,32 +82,32 @@ func GetCloudInfo(ic *types.InstallConfig) (*CloudInfo, error) {
 
 	opts := openstackdefaults.DefaultClientOpts(ic.OpenStack.Cloud)
 
-	ci.clients.networkClient, err = openstackdefaults.NewServiceClient("network", opts)
+	ci.clients.networkClient, err = openstackdefaults.NewServiceClient(ctx, "network", opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a network client: %w", err)
 	}
 
-	ci.clients.computeClient, err = openstackdefaults.NewServiceClient("compute", opts)
+	ci.clients.computeClient, err = openstackdefaults.NewServiceClient(ctx, "compute", opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a compute client: %w", err)
 	}
 
-	ci.clients.imageClient, err = openstackdefaults.NewServiceClient("image", opts)
+	ci.clients.imageClient, err = openstackdefaults.NewServiceClient(ctx, "image", opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create an image client: %w", err)
 	}
 
-	ci.clients.identityClient, err = openstackdefaults.NewServiceClient("identity", opts)
+	ci.clients.identityClient, err = openstackdefaults.NewServiceClient(ctx, "identity", opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create an identity client: %w", err)
 	}
 
-	ci.clients.volumeClient, err = openstackdefaults.NewServiceClient("volume", opts)
+	ci.clients.volumeClient, err = openstackdefaults.NewServiceClient(ctx, "volume", opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a volume client: %w", err)
 	}
 
-	err = ci.collectInfo(ic, opts)
+	err = ci.collectInfo(ctx, ic)
 	if err != nil {
 		logrus.Warnf("Failed to generate OpenStack cloud info: %v", err)
 		return nil, nil
@@ -116,10 +116,14 @@ func GetCloudInfo(ic *types.InstallConfig) (*CloudInfo, error) {
 	return ci, nil
 }
 
-func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.ClientOpts) error {
+// I see no reason to artificially split this function into chunks just to make
+// the linter happy
+//
+//nolint:gocyclo
+func (ci *CloudInfo) collectInfo(ctx context.Context, ic *types.InstallConfig) error {
 	var err error
 
-	ci.ExternalNetwork, err = ci.getNetworkByName(ic.OpenStack.ExternalNetwork)
+	ci.ExternalNetwork, err = ci.getNetworkByName(ctx, ic.OpenStack.ExternalNetwork)
 	if err != nil {
 		return fmt.Errorf("failed to fetch external network info: %w", err)
 	}
@@ -128,7 +132,7 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 	imagePtr := ic.OpenStack.ClusterOSImage
 	if imagePtr != "" {
 		if _, err := url.ParseRequestURI(imagePtr); err != nil {
-			ci.OSImage, err = ci.getImage(imagePtr)
+			ci.OSImage, err = ci.getImage(ctx, imagePtr)
 			if err != nil {
 				return err
 			}
@@ -139,8 +143,8 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 	if ic.Platform.OpenStack.DefaultMachinePlatform != nil {
 		if flavorName := ic.Platform.OpenStack.DefaultMachinePlatform.FlavorName; flavorName != "" {
 			if _, seen := ci.Flavors[flavorName]; !seen {
-				flavor, err := ci.getFlavor(flavorName)
-				if !isNotFoundError(err) {
+				flavor, err := ci.getFlavor(ctx, flavorName)
+				if !gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
 					if err != nil {
 						return err
 					}
@@ -153,8 +157,8 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 	if ic.ControlPlane != nil && ic.ControlPlane.Platform.OpenStack != nil {
 		if flavorName := ic.ControlPlane.Platform.OpenStack.FlavorName; flavorName != "" {
 			if _, seen := ci.Flavors[flavorName]; !seen {
-				flavor, err := ci.getFlavor(flavorName)
-				if !isNotFoundError(err) {
+				flavor, err := ci.getFlavor(ctx, flavorName)
+				if !gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
 					if err != nil {
 						return err
 					}
@@ -168,8 +172,8 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 		if machine.Platform.OpenStack != nil {
 			if flavorName := machine.Platform.OpenStack.FlavorName; flavorName != "" {
 				if _, seen := ci.Flavors[flavorName]; !seen {
-					flavor, err := ci.getFlavor(flavorName)
-					if !isNotFoundError(err) {
+					flavor, err := ci.getFlavor(ctx, flavorName)
+					if !gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
 						if err != nil {
 							return err
 						}
@@ -181,64 +185,66 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 	}
 	if ic.OpenStack.ControlPlanePort != nil {
 		controlPlanePort := ic.OpenStack.ControlPlanePort
-		ci.ControlPlanePortSubnets, err = ci.getSubnets(controlPlanePort)
+		ci.ControlPlanePortSubnets, err = ci.getSubnets(ctx, controlPlanePort)
 		if err != nil {
 			return err
 		}
 
-		ci.ControlPlanePortNetwork, err = ci.getNetwork(controlPlanePort)
+		ci.ControlPlanePortNetwork, err = ci.getNetwork(ctx, controlPlanePort)
 		if err != nil {
 			return err
 		}
 	}
 
-	ci.APIFIP, err = ci.getFloatingIP(ic.OpenStack.APIFloatingIP)
+	ci.APIFIP, err = ci.getFloatingIP(ctx, ic.OpenStack.APIFloatingIP)
 	if err != nil {
 		return err
 	}
 
-	ci.IngressFIP, err = ci.getFloatingIP(ic.OpenStack.IngressFloatingIP)
+	ci.IngressFIP, err = ci.getFloatingIP(ctx, ic.OpenStack.IngressFloatingIP)
 	if err != nil {
 		return err
 	}
 
-	ci.ComputeZones, err = ci.getComputeZones()
+	ci.ComputeZones, err = ci.getComputeZones(ctx)
 	if err != nil {
 		return err
 	}
 
-	ci.VolumeZones, err = ci.getVolumeZones()
+	ci.VolumeZones, err = ci.getVolumeZones(ctx)
 	if err != nil {
 		return err
 	}
 
-	ci.VolumeTypes, err = ci.getVolumeTypes()
+	ci.VolumeTypes, err = ci.getVolumeTypes(ctx)
 	if err != nil {
 		return err
 	}
 
-	ci.Quotas, err = loadQuotas(ci)
+	ci.Quotas, err = loadQuotas(ctx, ci)
 	if err != nil {
-		if isUnauthorized(err) {
+		switch {
+		case gophercloud.ResponseCodeIs(err, http.StatusForbidden):
 			logrus.Warnf("Missing permissions to fetch Quotas and therefore will skip checking them: %v", err)
-		} else if isNotFoundError(err) {
+		case gophercloud.ResponseCodeIs(err, http.StatusNotFound):
 			logrus.Warnf("Quota API is not available and therefore will skip checking them: %v", err)
-		} else {
+		default:
 			return fmt.Errorf("failed to load Quota: %w", err)
 		}
 	}
 
-	ci.NetworkExtensions, err = networkextensions.Get(ci.clients.networkClient)
+	ci.NetworkExtensions, err = networkextensions.Get(ctx, ci.clients.networkClient)
 	if err != nil {
 		return fmt.Errorf("failed to fetch network extensions: %w", err)
 	}
 
 	return nil
 }
-func (ci *CloudInfo) getSubnets(controlPlanePort *openstack.PortTarget) ([]*subnets.Subnet, error) {
+
+func (ci *CloudInfo) getSubnets(ctx context.Context, controlPlanePort *openstack.PortTarget) ([]*subnets.Subnet, error) {
 	controlPlaneSubnets := make([]*subnets.Subnet, 0, len(controlPlanePort.FixedIPs))
 	for _, fixedIP := range controlPlanePort.FixedIPs {
-		page, err := subnets.List(ci.clients.networkClient, subnets.ListOpts{ID: fixedIP.Subnet.ID, Name: fixedIP.Subnet.Name}).AllPages()
+		page, err := subnets.List(ci.clients.networkClient, subnets.ListOpts{ID: fixedIP.Subnet.ID, Name: fixedIP.Subnet.Name}).AllPages(ctx)
 		if err != nil {
 			return controlPlaneSubnets, err
 		}
@@ -255,22 +261,13 @@ func (ci *CloudInfo) getSubnets(controlPlanePort *openstack.PortTarget) ([]*subn
 	return controlPlaneSubnets, nil
 }
 
-func isNotFoundError(err error) bool {
-	var errNotFound gophercloud.ErrResourceNotFound
-	var pErrNotFound *gophercloud.ErrResourceNotFound
-	var errDefault404 gophercloud.ErrDefault404
-	var pErrDefault404 *gophercloud.ErrDefault404
-
-	return errors.As(err, &errNotFound) || errors.As(err, &pErrNotFound) || errors.As(err, &errDefault404) || errors.As(err, &pErrDefault404)
-}
-
-func (ci *CloudInfo) getFlavor(flavorName string) (Flavor, error) {
-	flavorID, err := flavorutils.IDFromName(ci.clients.computeClient, flavorName)
+func (ci *CloudInfo) getFlavor(ctx context.Context, flavorName string) (Flavor, error) {
+	flavorID, err := flavorutils.IDFromName(ctx, ci.clients.computeClient, flavorName)
 	if err != nil {
 		return Flavor{}, err
 	}
 
-	flavor, err := flavors.Get(ci.clients.computeClient, flavorID).Extract()
+	flavor, err := flavors.Get(ctx, ci.clients.computeClient, flavorID).Extract()
 	if err != nil {
 		return Flavor{}, err
 	}
@@ -279,8 +276,8 @@ func (ci *CloudInfo) getFlavor(flavorName string) (Flavor, error) {
 	{
 		const baremetalProperty = "baremetal"
 
-		m, err := flavors.GetExtraSpec(ci.clients.computeClient, flavorID, baremetalProperty).Extract()
-		if err != nil && !isNotFoundError(err) {
+		m, err := flavors.GetExtraSpec(ctx, ci.clients.computeClient, flavorID, baremetalProperty).Extract()
+		if err != nil && !gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
 			return Flavor{}, err
 		}
 
@@ -298,19 +295,19 @@ func (ci *CloudInfo) getFlavor(flavorName string) (Flavor, error) {
 	}, nil
 }
 
-func (ci *CloudInfo) getNetworkByName(networkName string) (*networks.Network, error) {
+func (ci *CloudInfo) getNetworkByName(ctx context.Context, networkName string) (*networks.Network, error) {
 	if networkName == "" {
 		return nil, nil
 	}
-	networkID, err := networkutils.IDFromName(ci.clients.networkClient, networkName)
+	networkID, err := networkutils.IDFromName(ctx, ci.clients.networkClient, networkName)
 	if err != nil {
-		if isNotFoundError(err) {
+		if gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
 			return nil, nil
 		}
 		return nil, err
 	}
 
-	network, err := networks.Get(ci.clients.networkClient, networkID).Extract()
+	network, err := networks.Get(ctx, ci.clients.networkClient, networkID).Extract()
 	if err != nil {
 		return nil, err
 	}
@@ -318,7 +315,7 @@ func (ci *CloudInfo) getNetworkByName(networkName string) (*networks.Network, er
 	return network, nil
 }
 
-func (ci *CloudInfo) getNetwork(controlPlanePort *openstack.PortTarget) (*networks.Network, error) {
+func (ci *CloudInfo) getNetwork(ctx context.Context, controlPlanePort *openstack.PortTarget) (*networks.Network, error) {
 	networkName := controlPlanePort.Network.Name
 	networkID := controlPlanePort.Network.ID
 	if networkName == "" && networkID == "" {
@@ -331,7 +328,7 @@ func (ci *CloudInfo) getNetwork(controlPlanePort *openstack.PortTarget) (*networ
 	if networkName != "" {
 		opts.Name = controlPlanePort.Network.Name
 	}
-	allPages, err := networks.List(ci.clients.networkClient, opts).AllPages()
+	allPages, err := networks.List(ci.clients.networkClient, opts).AllPages(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -350,12 +347,12 @@ func (ci *CloudInfo) getNetwork(controlPlanePort *openstack.PortTarget) (*networ
 	return &allNetworks[0], nil
 }
 
-func (ci *CloudInfo) getFloatingIP(fip string) (*floatingips.FloatingIP, error) {
+func (ci *CloudInfo) getFloatingIP(ctx context.Context, fip string) (*floatingips.FloatingIP, error) {
 	if fip != "" {
 		opts := floatingips.ListOpts{
 			FloatingIP: fip,
 		}
-		allPages, err := floatingips.List(ci.clients.networkClient, opts).AllPages()
+		allPages, err := floatingips.List(ci.clients.networkClient, opts).AllPages(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -373,16 +370,16 @@ func (ci *CloudInfo) getFloatingIP(fip string) (*floatingips.FloatingIP, error) 
 	return nil, nil
 }
 
-func (ci *CloudInfo) getImage(imageName string) (*images.Image, error) {
-	imageID, err := imageutils.IDFromName(ci.clients.imageClient, imageName)
+func (ci *CloudInfo) getImage(ctx context.Context, imageName string) (*images.Image, error) {
+	imageID, err := imageutils.IDFromName(ctx, ci.clients.imageClient, imageName)
 	if err != nil {
-		if isNotFoundError(err) {
+		if gophercloud.ResponseCodeIs(err, http.StatusNotFound) {
 			return nil, nil
 		}
 		return nil, err
 	}
 
-	image, err := images.Get(ci.clients.imageClient, imageID).Extract()
+	image, err := images.Get(ctx, ci.clients.imageClient, imageID).Extract()
 	if err != nil {
 		return nil, err
 	}
@@ -390,8 +387,8 @@ func (ci *CloudInfo) getImage(imageName string) (*images.Image, error) {
 	return image, nil
 }
 
-func (ci *CloudInfo) getComputeZones() ([]string, error) {
-	zones, err := azutils.ListAvailableAvailabilityZones(ci.clients.computeClient)
+func (ci *CloudInfo) getComputeZones(ctx context.Context) ([]string, error) {
+	zones, err := azutils.ListAvailableAvailabilityZones(ctx, ci.clients.computeClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list compute availability zones: %w", err)
 	}
@@ -403,8 +400,8 @@ func (ci *CloudInfo) getComputeZones() ([]string, error) {
 	return zones, nil
 }
 
-func (ci *CloudInfo) getVolumeZones() ([]string, error) {
-	allPages, err := availabilityzones.List(ci.clients.volumeClient).AllPages()
+func (ci *CloudInfo) getVolumeZones(ctx context.Context) ([]string, error) {
+	allPages, err := availabilityzones.List(ci.clients.volumeClient).AllPages(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list volume availability zones: %w", err)
 	}
@@ -428,8 +425,8 @@ func (ci *CloudInfo) getVolumeZones() ([]string, error) {
 	return zones, nil
 }
 
-func (ci *CloudInfo) getVolumeTypes() ([]string, error) {
-	allPages, err := volumetypes.List(ci.clients.volumeClient, volumetypes.ListOpts{}).AllPages()
+func (ci *CloudInfo) getVolumeTypes(ctx context.Context) ([]string, error) {
+	allPages, err := volumetypes.List(ci.clients.volumeClient, volumetypes.ListOpts{}).AllPages(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list volume types: %w", err)
 	}
@@ -453,7 +450,7 @@ func (ci *CloudInfo) getVolumeTypes() ([]string, error) {
 
 // loadQuotas loads the quota information for a project and provided services. It provides information
 // about the usage and limit for each resource quota.
-func loadQuotas(ci *CloudInfo) ([]quota.Quota, error) {
+func loadQuotas(ctx context.Context, ci *CloudInfo) ([]quota.Quota, error) {
 	var quotas []quota.Quota
 
 	projectID, err := getProjectID(ci)
@@ -461,13 +458,13 @@ func loadQuotas(ci *CloudInfo) ([]quota.Quota, error) {
 		return nil, fmt.Errorf("failed to get keystone project ID: %w", err)
 	}
 
-	computeRecords, err := getComputeLimits(ci, projectID)
+	computeRecords, err := getComputeLimits(ctx, ci, projectID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get compute quota records: %w", err)
 	}
 	quotas = append(quotas, computeRecords...)
 
-	networkRecords, err := getNetworkLimits(ci, projectID)
+	networkRecords, err := getNetworkLimits(ctx, ci, projectID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get network quota records: %w", err)
 	}
@@ -476,8 +473,8 @@ func loadQuotas(ci *CloudInfo) ([]quota.Quota, error) {
 	return quotas, nil
 }
 
-func getComputeLimits(ci *CloudInfo, projectID string) ([]quota.Quota, error) {
-	qs, err := computequotasets.GetDetail(ci.clients.computeClient, projectID).Extract()
+func getComputeLimits(ctx context.Context, ci *CloudInfo, projectID string) ([]quota.Quota, error) {
+	qs, err := computequotasets.GetDetail(ctx, ci.clients.computeClient, projectID).Extract()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get QuotaSets from OpenStack Compute API: %w", err)
 	}
@@ -499,8 +496,8 @@ func getComputeLimits(ci *CloudInfo, projectID string) ([]quota.Quota, error) {
 	return quotas, nil
 }
 
-func getNetworkLimits(ci *CloudInfo, projectID string) ([]quota.Quota, error) {
-	qs, err := networkquotasets.GetDetail(ci.clients.networkClient, projectID).Extract()
+func getNetworkLimits(ctx context.Context, ci *CloudInfo, projectID string) ([]quota.Quota, error) {
+	qs, err := networkquotasets.GetDetail(ctx, ci.clients.networkClient, projectID).Extract()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get QuotaSets from OpenStack Network API: %w", err)
 	}
@@ -550,13 +547,4 @@ func getProjectID(ci *CloudInfo) (string, error) {
 	default:
 		return "", fmt.Errorf("unsupported AuthResult type: %T", authResult)
 	}
-}
-
-// isUnauthorized checks if the error is unauthorized (http code 403)
-func isUnauthorized(err error) bool {
-	if err == nil {
-		return false
-	}
-	var gErr gophercloud.ErrDefault403
-	return errors.As(err, &gErr)
 }

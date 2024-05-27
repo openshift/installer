@@ -2,6 +2,7 @@
 package openstack
 
 import (
+	"context"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,7 +25,7 @@ const maxInt32 int64 = int64(^uint32(0)) >> 1
 // availability zones, Storage availability zones and Root volume types), when
 // more than one is specified, values of identical index are grouped in the
 // same MachineSet.
-func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]*clusterapi.MachineSet, error) {
+func MachineSets(ctx context.Context, clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]*clusterapi.MachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name {
 		return nil, fmt.Errorf("non-OpenStack configuration: %q", configPlatform)
 	}
@@ -59,6 +60,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		}
 
 		providerSpec, err := generateProviderSpec(
+			ctx,
 			clusterID,
 			config.Platform.OpenStack,
 			mpool,

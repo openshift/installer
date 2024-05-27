@@ -112,7 +112,7 @@ func (cpc *CloudProviderConfig) GenerateWithContext(ctx context.Context, depende
 		cm.Data[cloudProviderConfigDataKey] = `[Global]
 `
 	case openstacktypes.Name:
-		cloudProviderConfigData, cloudProviderConfigCABundleData, err := openstackmanifests.GenerateCloudProviderConfig(*installConfig.Config)
+		cloudProviderConfigData, cloudProviderConfigCABundleData, err := openstackmanifests.GenerateCloudProviderConfig(ctx, *installConfig.Config)
 		if err != nil {
 			return errors.Wrap(err, "failed to generate OpenStack provider config")
 		}

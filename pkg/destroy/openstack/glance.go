@@ -1,10 +1,11 @@
 package openstack
 
 import (
+	"context"
 	"fmt"
 	"time"
 
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
+	"github.com/gophercloud/gophercloud/v2/openstack/image/v2/images"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -12,14 +13,14 @@ import (
 )
 
 // DeleteGlanceImage deletes the image with the specified name
-func DeleteGlanceImage(name string, cloud string) error {
+func DeleteGlanceImage(ctx context.Context, name string, cloud string) error {
 	backoffSettings := wait.Backoff{
 		Duration: time.Second * 20,
 		Steps:    30,
 	}
 
 	err := wait.ExponentialBackoff(backoffSettings, func() (bool, error) {
-		return deleteGlanceImage(name, cloud)
+		return deleteGlanceImage(ctx, name, cloud)
 	})
 	if err != nil {
 		return fmt.Errorf("unrecoverable error/timed out: %w", err)
@@ -28,8 +29,8 @@ func DeleteGlanceImage(name string, cloud string) error {
 	return nil
 }
 
-func deleteGlanceImage(name string, cloud string) (bool, error) {
-	conn, err := openstackdefaults.NewServiceClient("image", openstackdefaults.DefaultClientOpts(cloud))
+func deleteGlanceImage(ctx context.Context, name string, cloud string) (bool, error) {
+	conn, err := openstackdefaults.NewServiceClient(ctx, "image", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		logrus.Warningf("There was an error during the image removal: %v", err)
 		return false, nil
@@ -39,7 +40,7 @@ func deleteGlanceImage(name string, cloud string) (bool, error) {
 		Name: name,
 	}
 
-	allPages, err := images.List(conn, listOpts).AllPages()
+	allPages, err := images.List(conn, listOpts).AllPages(ctx)
 	if err != nil {
 		logrus.Warningf("There was an error during the image removal: %v", err)
 		return false, nil
@@ -52,7 +53,7 @@ func deleteGlanceImage(name string, cloud string) (bool, error) {
 	}
 
 	for _, image := range allImages {
-		err := images.Delete(conn, image.ID).ExtractErr()
+		err := images.Delete(ctx, conn, image.ID).ExtractErr()
 		if err != nil {
 			logrus.Warningf("There was an error during the image removal: %v", err)
 			return false, nil

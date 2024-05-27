@@ -332,7 +332,7 @@ func (m *Master) GenerateWithContext(ctx context.Context, dependencies asset.Par
 
 		imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
 
-		machines, controlPlaneMachineSet, err = openstack.Machines(clusterID.InfraID, ic, &pool, imageName, "master", masterUserDataSecretName)
+		machines, controlPlaneMachineSet, err = openstack.Machines(ctx, clusterID.InfraID, ic, &pool, imageName, "master", masterUserDataSecretName)
 		if err != nil {
 			return fmt.Errorf("failed to create master machine objects: %w", err)
 		}
