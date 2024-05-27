@@ -408,4 +408,4 @@
         port_range_min: 30000
         port_range_max: 32767
 
-    when: os_subnet6 is defined
+    when: os_subnet6_range is defined
