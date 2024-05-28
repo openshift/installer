@@ -73,7 +73,7 @@ func GetRegion(defaultRegion string) (string, error) {
 	var region string
 	li := sort.SearchStrings(shortRegions, defaultRegion)
 	if li == len(shortRegions) || shortRegions[li] != defaultRegion {
-		defaultRegion = ""
+		defaultRegion = "dal"
 	} else {
 		defaultRegion = longRegions[li]
 	}
