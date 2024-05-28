@@ -60,8 +60,8 @@ func (a *InstallConfig) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the install-config.yaml file.
-func (a *InstallConfig) Generate(parents asset.Parents) error {
+// GenerateWithContext generates the install-config.yaml file.
+func (a *InstallConfig) GenerateWithContext(ctx context.Context, parents asset.Parents) error {
 	sshPublicKey := &sshPublicKey{}
 	baseDomain := &baseDomain{}
 	clusterName := &clusterName{}
@@ -103,14 +103,15 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 
 	defaults.SetInstallConfigDefaults(a.Config)
 
-	return a.finish("")
+	return a.finish(ctx, "")
 }
 
 // Load returns the installconfig from disk.
 func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
+	ctx := context.TODO()
 	found, err = a.LoadFromFile(f)
 	if found && err == nil {
-		if err := a.finish(installConfigFilename); err != nil {
+		if err := a.finish(ctx, installConfigFilename); err != nil {
 			return false, errors.Wrap(err, asset.InstallConfigError)
 		}
 	}
@@ -138,7 +139,7 @@ func (a *InstallConfig) finishAWS() error {
 	return nil
 }
 
-func (a *InstallConfig) finish(filename string) error {
+func (a *InstallConfig) finish(ctx context.Context, filename string) error {
 	if a.Config.AWS != nil {
 		a.AWS = aws.NewMetadata(a.Config.Platform.AWS.Region, a.Config.Platform.AWS.Subnets, a.Config.AWS.ServiceEndpoints)
 		if err := a.finishAWS(); err != nil {
@@ -169,7 +170,7 @@ func (a *InstallConfig) finish(filename string) error {
 		return errors.Wrapf(err, "invalid %q file", filename)
 	}
 
-	if err := a.platformValidation(); err != nil {
+	if err := a.platformValidation(ctx); err != nil {
 		return err
 	}
 
@@ -179,7 +180,7 @@ func (a *InstallConfig) finish(filename string) error {
 // platformValidation runs validations that require connecting to the
 // underlying platform. In some cases, platforms also duplicate validations
 // that have already been checked by validation.ValidateInstallConfig().
-func (a *InstallConfig) platformValidation() error {
+func (a *InstallConfig) platformValidation(ctx context.Context) error {
 	if a.Config.Platform.Azure != nil {
 		if a.Config.Platform.Azure.IsARO() {
 			// ARO performs platform validation in the Resource Provider before
@@ -193,7 +194,7 @@ func (a *InstallConfig) platformValidation() error {
 		return icazure.Validate(client, a.Config)
 	}
 	if a.Config.Platform.GCP != nil {
-		client, err := icgcp.NewClient(context.TODO())
+		client, err := icgcp.NewClient(ctx)
 		if err != nil {
 			return err
 		}
@@ -212,7 +213,7 @@ func (a *InstallConfig) platformValidation() error {
 		return icibmcloud.Validate(client, a.Config)
 	}
 	if a.Config.Platform.AWS != nil {
-		return aws.Validate(context.TODO(), a.AWS, a.Config)
+		return aws.Validate(ctx, a.AWS, a.Config)
 	}
 	if a.Config.Platform.VSphere != nil {
 		return icvsphere.Validate(a.Config)
@@ -230,4 +231,10 @@ func (a *InstallConfig) platformValidation() error {
 		return icnutanix.Validate(a.Config)
 	}
 	return field.ErrorList{}.ToAggregate()
+}
+
+// Generate is implemented so this asset maintains compatibility with the Asset
+// interface. It should never be called.
+func (*InstallConfig) Generate(_ asset.Parents) (err error) {
+	panic("InstallConfig.Generate was called instead of InstallConfig.GenerateWithContext")
 }

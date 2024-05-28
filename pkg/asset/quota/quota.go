@@ -53,8 +53,8 @@ func (a *PlatformQuotaCheck) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate queries for input from the user.
-func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
+// GenerateWithContext queries for input from the user.
+func (a *PlatformQuotaCheck) GenerateWithContext(ctx context.Context, dependencies asset.Parents) error {
 	ic := &installconfig.InstallConfig{}
 	mastersAsset := &machines.Master{}
 	workersAsset := &machines.Worker{}
@@ -78,11 +78,11 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 			return nil
 		}
 		services := []string{"ec2", "vpc"}
-		session, err := ic.AWS.Session(context.TODO())
+		session, err := ic.AWS.Session(ctx)
 		if err != nil {
 			return errors.Wrap(err, "failed to load AWS session")
 		}
-		q, err := quotaaws.Load(context.TODO(), session, ic.AWS.Region, services...)
+		q, err := quotaaws.Load(ctx, session, ic.AWS.Region, services...)
 		if quotaaws.IsUnauthorized(err) {
 			logrus.Debugf("Missing permissions to fetch Quotas and therefore will skip checking them: %v, make sure you have `servicequotas:ListAWSDefaultServiceQuotas` permission available to the user.", err)
 			logrus.Info("Skipping quota checks")
@@ -91,7 +91,7 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrapf(err, "failed to load Quota for services: %s", strings.Join(services, ", "))
 		}
-		instanceTypes, err := aws.InstanceTypes(context.TODO(), session, ic.AWS.Region)
+		instanceTypes, err := aws.InstanceTypes(ctx, session, ic.AWS.Region)
 		if quotaaws.IsUnauthorized(err) {
 			logrus.Warnf("Missing permissions to fetch instance types and therefore will skip checking Quotas: %v, make sure you have `ec2:DescribeInstanceTypes` permission available to the user.", err)
 			return nil
@@ -106,7 +106,7 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 		summarizeReport(reports)
 	case typesgcp.Name:
 		services := []string{"compute.googleapis.com", "iam.googleapis.com"}
-		q, err := quotagcp.Load(context.TODO(), ic.Config.Platform.GCP.ProjectID, services...)
+		q, err := quotagcp.Load(ctx, ic.Config.Platform.GCP.ProjectID, services...)
 		if quotagcp.IsUnauthorized(err) {
 			logrus.Warnf("Missing permissions to fetch Quotas and therefore will skip checking them: %v, make sure you have `roles/servicemanagement.quotaViewer` assigned to the user.", err)
 			return nil
@@ -114,11 +114,11 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrapf(err, "failed to load Quota for services: %s", strings.Join(services, ", "))
 		}
-		session, err := configgcp.GetSession(context.TODO())
+		session, err := configgcp.GetSession(ctx)
 		if err != nil {
 			return errors.Wrap(err, "failed to load GCP session")
 		}
-		client, err := gcp.NewClient(context.TODO(), session, ic.Config.Platform.GCP.ProjectID)
+		client, err := gcp.NewClient(ctx, session, ic.Config.Platform.GCP.ProjectID)
 		if err != nil {
 			return errors.Wrap(err, "failed to create client for quota constraints")
 		}
@@ -223,4 +223,10 @@ func summarizeReport(reports []quota.ConstraintReport) {
 	if len(low) > 0 {
 		logrus.Warnf("Following quotas %s are available but will be completely used pretty soon.", strings.Join(low, ", "))
 	}
+}
+
+// Generate is implemented so this asset maintains compatibility with the Asset
+// interface. It should never be called.
+func (*PlatformQuotaCheck) Generate(_ asset.Parents) (err error) {
+	panic("PlatformQuotaCheck.Generate was called instead of PlatformQuotaCheck.GenerateWithContext")
 }

@@ -34,12 +34,12 @@ func (r *Release) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate the Release string.
-func (r *Release) Generate(p asset.Parents) error {
+// GenerateWithContext the Release string.
+func (r *Release) GenerateWithContext(ctx context.Context, p asset.Parents) error {
 	ic := &installconfig.InstallConfig{}
 	p.Get(ic)
 	config := ic.Config
-	release, err := release(config)
+	release, err := release(ctx, config)
 	if err != nil {
 		return err
 	}
@@ -47,8 +47,8 @@ func (r *Release) Generate(p asset.Parents) error {
 	return nil
 }
 
-func release(config *types.InstallConfig) (string, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+func release(ctx context.Context, config *types.InstallConfig) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	archName := arch.RpmArch(string(config.ControlPlane.Architecture))
@@ -85,4 +85,10 @@ func (r *Release) GetAzureReleaseVersion() string {
 		imageVersion = imageVersion[:len(imageVersion)-6]
 	}
 	return imageVersion
+}
+
+// Generate is implemented so this asset maintains compatibility with the Asset
+// interface. It should never be called.
+func (*Release) Generate(_ asset.Parents) (err error) {
+	panic("Release.Generate was called instead of Release.GenerateWithContext")
 }

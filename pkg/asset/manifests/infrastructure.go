@@ -61,8 +61,10 @@ func (*Infrastructure) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the Infrastructure config and its CRD.
-func (i *Infrastructure) Generate(dependencies asset.Parents) error {
+// GenerateWithContext generates the Infrastructure config and its CRD.
+//
+//nolint:gocyclo
+func (i *Infrastructure) GenerateWithContext(ctx context.Context, dependencies asset.Parents) error {
 	cloudProviderConfigMapKey := cloudProviderConfigDataKey
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
@@ -204,13 +206,13 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		config.Spec.PlatformSpec.Type = configv1.IBMCloudPlatformType
 		var cisInstanceCRN, dnsInstanceCRN string
 		if installConfig.Config.Publish == types.InternalPublishingStrategy {
-			dnsInstance, err := installConfig.IBMCloud.DNSInstance(context.TODO())
+			dnsInstance, err := installConfig.IBMCloud.DNSInstance(ctx)
 			if err != nil {
 				return errors.Wrap(err, "cannot retrieve IBM DNS Services instance CRN")
 			}
 			dnsInstanceCRN = dnsInstance.CRN
 		} else {
-			crn, err := installConfig.IBMCloud.CISInstanceCRN(context.TODO())
+			crn, err := installConfig.IBMCloud.CISInstanceCRN(ctx)
 			if err != nil {
 				return errors.Wrap(err, "cannot retrieve IBM Cloud Internet Services instance CRN")
 			}
@@ -283,12 +285,12 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		var err error
 		switch installConfig.Config.Publish {
 		case types.InternalPublishingStrategy:
-			dnsInstanceCRN, err = installConfig.PowerVS.DNSInstanceCRN(context.TODO())
+			dnsInstanceCRN, err = installConfig.PowerVS.DNSInstanceCRN(ctx)
 			if err != nil {
 				return errors.Wrapf(err, "failed to get instance CRN")
 			}
 		case types.ExternalPublishingStrategy:
-			cisInstanceCRN, err = installConfig.PowerVS.CISInstanceCRN(context.TODO())
+			cisInstanceCRN, err = installConfig.PowerVS.CISInstanceCRN(ctx)
 			if err != nil {
 				return errors.Wrapf(err, "failed to get instance CRN")
 			}
@@ -362,4 +364,10 @@ func (i *Infrastructure) Files() []*asset.File {
 // Load returns false since this asset is not written to disk by the installer.
 func (i *Infrastructure) Load(f asset.FileFetcher) (bool, error) {
 	return false, nil
+}
+
+// Generate is implemented so this asset maintains compatibility with the Asset
+// interface. It should never be called.
+func (*Infrastructure) Generate(_ asset.Parents) (err error) {
+	panic("Infrastructure.Generate was called instead of Infrastructure.GenerateWithContext")
 }

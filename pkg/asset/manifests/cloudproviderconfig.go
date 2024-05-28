@@ -75,8 +75,10 @@ func (*CloudProviderConfig) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the CloudProviderConfig.
-func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
+// GenerateWithContext generates the CloudProviderConfig.
+//
+//nolint:gocyclo
+func (cpc *CloudProviderConfig) GenerateWithContext(ctx context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
 	dependencies.Get(installConfig, clusterID)
@@ -175,13 +177,13 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		}
 		cm.Data[cloudProviderConfigDataKey] = gcpConfig
 	case ibmcloudtypes.Name:
-		accountID, err := installConfig.IBMCloud.AccountID(context.TODO())
+		accountID, err := installConfig.IBMCloud.AccountID(ctx)
 		if err != nil {
 			return err
 		}
 
 		subnetNames := []string{}
-		cpSubnets, err := installConfig.IBMCloud.ControlPlaneSubnets(context.TODO())
+		cpSubnets, err := installConfig.IBMCloud.ControlPlaneSubnets(ctx)
 		if err != nil {
 			return errors.Wrap(err, "could not retrieve IBM Cloud control plane subnets")
 		}
@@ -189,7 +191,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			subnetNames = append(subnetNames, cpSubnet.Name)
 		}
 
-		computeSubnets, err := installConfig.IBMCloud.ComputeSubnets(context.TODO())
+		computeSubnets, err := installConfig.IBMCloud.ComputeSubnets(ctx)
 		if err != nil {
 			return errors.Wrap(err, "could not retrieve IBM Cloud compute subnets")
 		}
@@ -238,7 +240,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			err                  error
 		)
 
-		if accountID, err = installConfig.PowerVS.AccountID(context.TODO()); err != nil {
+		if accountID, err = installConfig.PowerVS.AccountID(ctx); err != nil {
 			return err
 		}
 
@@ -255,7 +257,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		if vpc == "" {
 			vpc = fmt.Sprintf("vpc-%s", clusterID.InfraID)
 		} else {
-			existingSubnets, err := installConfig.PowerVS.GetVPCSubnets(context.TODO(), vpc)
+			existingSubnets, err := installConfig.PowerVS.GetVPCSubnets(ctx, vpc)
 			if err != nil {
 				return err
 			}
@@ -362,4 +364,10 @@ func (cpc *CloudProviderConfig) Files() []*asset.File {
 // Load loads the already-rendered files back from disk.
 func (cpc *CloudProviderConfig) Load(f asset.FileFetcher) (bool, error) {
 	return false, nil
+}
+
+// Generate is implemented so this asset maintains compatibility with the Asset
+// interface. It should never be called.
+func (*CloudProviderConfig) Generate(_ asset.Parents) (err error) {
+	panic("CloudProviderConfig.Generate was called instead of CloudProviderConfig.GenerateWithContext")
 }
