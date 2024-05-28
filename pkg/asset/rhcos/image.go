@@ -51,6 +51,7 @@ func (i *Image) Dependencies() []asset.Asset {
 
 // Generate the RHCOS image location.
 func (i *Image) Generate(p asset.Parents) error {
+	ctx := context.TODO()
 	if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE"); ok && oi != "" {
 		logrus.Warn("Found override for OS Image. Please be warned, this is not advised")
 		*i = Image(oi)
@@ -60,7 +61,7 @@ func (i *Image) Generate(p asset.Parents) error {
 	ic := &installconfig.InstallConfig{}
 	p.Get(ic)
 	config := ic.Config
-	osimage, err := osImage(config)
+	osimage, err := osImage(ctx, config)
 	if err != nil {
 		return err
 	}
@@ -68,8 +69,8 @@ func (i *Image) Generate(p asset.Parents) error {
 	return nil
 }
 
-func osImage(config *types.InstallConfig) (string, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+func osImage(ctx context.Context, config *types.InstallConfig) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	archName := arch.RpmArch(string(config.ControlPlane.Architecture))

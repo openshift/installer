@@ -71,6 +71,7 @@ func (c *ClusterAPI) Dependencies() []asset.Asset {
 //
 //nolint:gocyclo
 func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
+	ctx := context.TODO()
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
 	rhcosImage := new(rhcos.Image)
@@ -86,7 +87,6 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 	var err error
 	ic := installConfig.Config
 	pool := *ic.ControlPlane
-	ctx := context.TODO()
 
 	switch ic.Platform.Name() {
 	case awstypes.Name:
@@ -227,7 +227,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			mpool.Zones = []string{""}
 		}
 		if len(mpool.Zones) == 0 {
-			azs, err := client.GetAvailabilityZones(context.TODO(), ic.Platform.Azure.Region, mpool.InstanceType)
+			azs, err := client.GetAvailabilityZones(ctx, ic.Platform.Azure.Region, mpool.InstanceType)
 			if err != nil {
 				return fmt.Errorf("failed to fetch availability zones: %w", err)
 			}
@@ -238,10 +238,10 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 				mpool.Zones = []string{""}
 			}
 		}
-		// client.GetControlPlaneSubnet(context.TODO(), ic.Platform.Azure.ResourceGroupName, ic.Platform.Azure.VirtualNetwork, )
+		// client.GetControlPlaneSubnet(ctx, ic.Platform.Azure.ResourceGroupName, ic.Platform.Azure.VirtualNetwork, )
 
 		if mpool.OSImage.Publisher != "" {
-			img, ierr := client.GetMarketplaceImage(context.TODO(), ic.Platform.Azure.Region, mpool.OSImage.Publisher, mpool.OSImage.Offer, mpool.OSImage.SKU, mpool.OSImage.Version)
+			img, ierr := client.GetMarketplaceImage(ctx, ic.Platform.Azure.Region, mpool.OSImage.Publisher, mpool.OSImage.Offer, mpool.OSImage.SKU, mpool.OSImage.Version)
 			if ierr != nil {
 				return fmt.Errorf("failed to fetch marketplace image: %w", ierr)
 			}
@@ -255,7 +255,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		pool.Platform.Azure = &mpool
 		subnet := ic.Azure.ControlPlaneSubnet
 
-		capabilities, err := client.GetVMCapabilities(context.TODO(), mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
+		capabilities, err := client.GetVMCapabilities(ctx, mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
 		if err != nil {
 			return err
 		}
@@ -330,7 +330,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			// that the installer's install-config has been provided with bogus values.
 
 			// Timeout context for Lookup
-			ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 			defer cancel()
 
 			_, err := resolver.LookupHost(ctx, v.Server)
@@ -342,7 +342,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			// Timeout context for Networks
 			// vCenter APIs can be unreliable in performance, extended this context
 			// timeout to 60 seconds.
-			ctx, cancel = context.WithTimeout(context.TODO(), 60*time.Second)
+			ctx, cancel = context.WithTimeout(ctx, 60*time.Second)
 			defer cancel()
 
 			err = installConfig.VSphere.Networks(ctx, v, platform.FailureDomains)

@@ -37,12 +37,13 @@ func (i *BootstrapImage) Dependencies() []asset.Asset {
 
 // Generate the RHCOS Bootstrap image location.
 func (i *BootstrapImage) Generate(p asset.Parents) error {
+	ctx := context.TODO()
 	ic := &installconfig.InstallConfig{}
 	rhcosImage := new(Image)
 	p.Get(ic, rhcosImage)
 	config := ic.Config
 
-	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	switch config.Platform.Name() {

@@ -77,6 +77,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 
 // Generate generates the respective operator config.yml files
 func (o *Openshift) Generate(dependencies asset.Parents) error {
+	ctx := context.TODO()
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
 	kubeadminPassword := &password.KubeadminPassword{}
@@ -87,7 +88,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
 	case awstypes.Name:
-		ssn, err := installConfig.AWS.Session(context.TODO())
+		ssn, err := installConfig.AWS.Session(ctx)
 		if err != nil {
 			return err
 		}
@@ -128,7 +129,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			},
 		}
 	case gcptypes.Name:
-		session, err := gcp.GetSession(context.TODO())
+		session, err := gcp.GetSession(ctx)
 		if err != nil {
 			return err
 		}

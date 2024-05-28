@@ -36,10 +36,11 @@ func (r *Release) Dependencies() []asset.Asset {
 
 // Generate the Release string.
 func (r *Release) Generate(p asset.Parents) error {
+	ctx := context.TODO()
 	ic := &installconfig.InstallConfig{}
 	p.Get(ic)
 	config := ic.Config
-	release, err := release(config)
+	release, err := release(ctx, config)
 	if err != nil {
 		return err
 	}
@@ -47,8 +48,8 @@ func (r *Release) Generate(p asset.Parents) error {
 	return nil
 }
 
-func release(config *types.InstallConfig) (string, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+func release(ctx context.Context, config *types.InstallConfig) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	archName := arch.RpmArch(string(config.ControlPlane.Architecture))
