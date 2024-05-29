@@ -512,6 +512,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		publicZoneName := ""
 		privateZoneName := ""
 
+		installConfig.Config.GCP.UserProvisionedDNS = gcp.UserProvisionedDNSEnabled
+
 		if installConfig.Config.GCP.UserProvisionedDNS != gcp.UserProvisionedDNSEnabled {
 			if installConfig.Config.Publish == types.ExternalPublishingStrategy {
 				publicZone, err := client.GetDNSZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain, true)

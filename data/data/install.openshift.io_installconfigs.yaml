@@ -3186,7 +3186,7 @@ spec:
                       type: object
                     type: array
                   userProvisionedDNS:
-                    default: Disabled
+                    default: Enabled
                     description: UserProvisionedDNS indicates if the customer is providing
                       their own DNS solution in place of the default provisioned by
                       the Installer.

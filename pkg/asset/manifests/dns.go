@@ -137,6 +137,8 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 	case gcptypes.Name:
 		// We donot want to configure cloud DNS when `UserProvisionedDNS` is enabled.
 		// So, do not set PrivateZone and PublicZone fields in the DNS manifest.
+		installConfig.Config.GCP.UserProvisionedDNS = gcptypes.UserProvisionedDNSEnabled
+
 		if installConfig.Config.GCP.UserProvisionedDNS == gcptypes.UserProvisionedDNSEnabled {
 			config.Spec.PublicZone = &configv1.DNSZone{ID: ""}
 			config.Spec.PrivateZone = &configv1.DNSZone{ID: ""}
