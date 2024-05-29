@@ -7,7 +7,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
 
-  "regexp"
+	"regexp"
 )
 
 const (
@@ -77,8 +77,8 @@ func verifyBootstrapInPlace(installConfig *types.InstallConfig) error {
 		errorList = append(errorList, field.Required(field.NewPath("bootstrapInPlace", "installationDisk"),
 			"installationDisk must be set the target disk drive for the installation"))
 	} else {
-    pathRegex := regexp.MustCompile(`^(/([A-Za-z0-9_-]+)|/)+$`)
-    if pathRegex.MatchString(installConfig.BootstrapInPlace.InstallationDisk) == false {
+		pathRegex := regexp.MustCompile(`^(/([A-Za-z0-9_-]+)|/)+$`)
+		if pathRegex.MatchString(installConfig.BootstrapInPlace.InstallationDisk) == false {
 		errorList = append(errorList, field.Required(field.NewPath("bootstrapInPlace", "installationDisk"),
 			"installationDisk can only contain a disk-path string (e.g, /dev/sda/)"))
     }
