@@ -19,7 +19,7 @@ import (
 )
 
 // GenerateMachines returns manifests and runtime objects to provision the control plane (including bootstrap, if applicable) nodes using CAPI.
-func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role string, trunkSupport bool) ([]*asset.RuntimeFile, error) {
+func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role string) ([]*asset.RuntimeFile, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name {
 		return nil, fmt.Errorf("non-OpenStack configuration: %q", configPlatform)
 	}
@@ -44,7 +44,6 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 			mpool,
 			osImage,
 			role,
-			trunkSupport,
 			failureDomain,
 		)
 		if err != nil {
@@ -110,7 +109,7 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 	return result, nil
 }
 
-func generateMachineSpec(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role string, trunkSupport bool, failureDomain machinev1.OpenStackFailureDomain) (*capo.OpenStackMachineSpec, error) {
+func generateMachineSpec(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role string, failureDomain machinev1.OpenStackFailureDomain) (*capo.OpenStackMachineSpec, error) {
 	port := capo.PortOpts{}
 
 	addressPairs := populateAllowedAddressPairs(platform)
@@ -192,8 +191,7 @@ func generateMachineSpec(clusterID string, platform *openstack.Platform, mpool *
 				Value: clusterID,
 			},
 		},
-
-		Trunk: trunkSupport,
+		Trunk: false,
 		Tags: []string{
 			fmt.Sprintf("openshiftClusterID=%s", clusterID),
 		},

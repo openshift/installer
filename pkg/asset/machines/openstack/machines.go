@@ -35,7 +35,7 @@ const (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, trunkSupport bool) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name {
 		return nil, nil, fmt.Errorf("non-OpenStack configuration: %q", configPlatform)
 	}
@@ -61,7 +61,6 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			osImage,
 			role,
 			userDataSecret,
-			trunkSupport,
 			failureDomain,
 		)
 		if err != nil {
@@ -99,7 +98,6 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		osImage,
 		role,
 		userDataSecret,
-		trunkSupport,
 		machinev1.OpenStackFailureDomain{RootVolume: &machinev1.RootVolume{}},
 	)
 	if err != nil {
@@ -159,7 +157,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, controlPlaneMachineSet, nil
 }
 
-func generateProviderSpec(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role, userDataSecret string, trunkSupport bool, failureDomain machinev1.OpenStackFailureDomain) (*machinev1alpha1.OpenstackProviderSpec, error) {
+func generateProviderSpec(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role, userDataSecret string, failureDomain machinev1.OpenStackFailureDomain) (*machinev1alpha1.OpenstackProviderSpec, error) {
 	var controlPlaneNetwork machinev1alpha1.NetworkParam
 	additionalNetworks := make([]machinev1alpha1.NetworkParam, 0, len(mpool.AdditionalNetworkIDs))
 	primarySubnet := ""
@@ -249,7 +247,7 @@ func generateProviderSpec(clusterID string, platform *openstack.Platform, mpool 
 		AvailabilityZone: failureDomain.AvailabilityZone,
 		SecurityGroups:   securityGroups,
 		ServerGroupName:  serverGroupName,
-		Trunk:            trunkSupport,
+		Trunk:            false,
 		Tags: []string{
 			fmt.Sprintf("openshiftClusterID=%s", clusterID),
 		},
