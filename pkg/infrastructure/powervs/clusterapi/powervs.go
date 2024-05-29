@@ -38,6 +38,10 @@ func (p Provider) Name() string {
 	return powervstypes.Name
 }
 
+// BootstrapHasPublicIP indicates that an ExternalIP is not
+// required in the machine ready checks.
+func (*Provider) BootstrapHasPublicIP() bool { return false }
+
 func leftInContext(ctx context.Context) time.Duration {
 	deadline, ok := ctx.Deadline()
 	if !ok {

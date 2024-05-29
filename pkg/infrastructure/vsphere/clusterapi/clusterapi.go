@@ -27,6 +27,10 @@ func (p Provider) Name() string {
 	return vsphere.Name
 }
 
+// BootstrapHasPublicIP indicates that an ExternalIP is not
+// required in the machine ready checks.
+func (Provider) BootstrapHasPublicIP() bool { return false }
+
 func initializeFoldersAndTemplates(ctx context.Context, cachedImage string, failureDomain vsphere.FailureDomain, session *session.Session, diskType vsphere.DiskType, clusterID, tagID string) error {
 	finder := session.Finder
 

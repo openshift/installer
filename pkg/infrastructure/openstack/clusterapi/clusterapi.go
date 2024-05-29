@@ -31,6 +31,10 @@ func (p Provider) Name() string {
 	return openstack.Name
 }
 
+// BootstrapHasPublicIP indicates that an ExternalIP is not
+// required in the machine ready checks.
+func (Provider) BootstrapHasPublicIP() bool { return false }
+
 var _ clusterapi.PreProvider = Provider{}
 
 // PreProvision tags the VIP ports, and creates the security groups and the
