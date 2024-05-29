@@ -62,7 +62,7 @@ func IsSupportedPlatform(platform hiveext.PlatformType) bool {
 // DetermineReleaseImageArch returns the arch of the release image.
 func DetermineReleaseImageArch(pullSecret, pullSpec string) (string, error) {
 	templateFilter := "-o=go-template={{if and .metadata.metadata (index . \"metadata\" \"metadata\" \"release.openshift.io/architecture\")}}{{index . \"metadata\" \"metadata\" \"release.openshift.io/architecture\"}}{{else}}{{.config.architecture}}{{end}}"
-
+	insecure := "--insecure=true"
 	var getReleaseArch = []string{
 		"oc",
 		"adm",
@@ -70,6 +70,7 @@ func DetermineReleaseImageArch(pullSecret, pullSpec string) (string, error) {
 		"info",
 		pullSpec,
 		templateFilter,
+		insecure,
 	}
 
 	releaseArch, err := ExecuteOC(pullSecret, getReleaseArch)
