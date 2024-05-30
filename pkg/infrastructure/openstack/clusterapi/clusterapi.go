@@ -33,7 +33,7 @@ func (p Provider) Name() string {
 
 // BootstrapHasPublicIP indicates that an ExternalIP is not
 // required in the machine ready checks.
-func (Provider) BootstrapHasPublicIP() bool { return false }
+func (Provider) BootstrapHasPublicIP() bool { return true }
 
 var _ clusterapi.PreProvider = Provider{}
 
