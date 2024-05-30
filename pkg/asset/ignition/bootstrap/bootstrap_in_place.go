@@ -18,6 +18,7 @@ var (
 	bootstrapInPlaceEnabledServices = []string{
 		"install-to-disk.service",
 	}
+	installDiskValidationRegex = regexp.MustCompile(`^(/([A-Za-z0-9_-]+)|/)+$`)
 )
 
 // SingleNodeBootstrapInPlace is an asset that generates the ignition config for single node OpenShift.
@@ -76,12 +77,9 @@ func verifyBootstrapInPlace(installConfig *types.InstallConfig) error {
 	} else if installConfig.BootstrapInPlace.InstallationDisk == "" {
 		errorList = append(errorList, field.Required(field.NewPath("bootstrapInPlace", "installationDisk"),
 			"installationDisk must be set the target disk drive for the installation"))
-	} else {
-		pathRegex := regexp.MustCompile(`^(/([A-Za-z0-9_-]+)|/)+$`)
-		if pathRegex.MatchString(installConfig.BootstrapInPlace.InstallationDisk) == false {
+	} else if installDiskValidationRegex.MatchString(installConfig.BootstrapInPlace.InstallationDisk) == false {
 		errorList = append(errorList, field.Required(field.NewPath("bootstrapInPlace", "installationDisk"),
-			"installationDisk can only contain a disk-path string (e.g, /dev/sda/)"))
-    }
-  }
+			"installationDisk can only contain a disk-path string (e.g., /dev/sda/)"))
+	}
 	return errorList.ToAggregate()
 }
