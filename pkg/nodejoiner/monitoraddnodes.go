@@ -3,8 +3,6 @@ package nodejoiner
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
-
 	agentpkg "github.com/openshift/installer/pkg/agent"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
@@ -16,15 +14,18 @@ func NewMonitorAddNodesCommand(directory, kubeconfigPath string, ips []string) e
 		return err
 	}
 
-	cluster, err := agentpkg.NewCluster(context.Background(), "", ips[0], kubeconfigPath, "", workflow.AgentWorkflowTypeAddNodes)
-	if err != nil {
-		// TODO exit code enumerate
-		logrus.Exit(1)
-	}
+	// sshKey is not required parameter for monitor-add-nodes
+	sshKey := ""
 
-	if err != nil {
-		return err
+	clusters := []*agentpkg.Cluster{}
+	for _, ip := range ips {
+		cluster, err := agentpkg.NewCluster(context.Background(), directory, ip, kubeconfigPath, sshKey, workflow.AgentWorkflowTypeAddNodes)
+		if err != nil {
+			return err
+		}
+		clusters = append(clusters, cluster)
 	}
+	agentpkg.MonitorAddNodes(clusters, ips)
 
-	return agentpkg.MonitorAddNodes(cluster, ips[0])
+	return nil
 }

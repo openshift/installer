@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -68,16 +69,34 @@ func (mon *addNodeMonitor) logStatus(status string) {
 	logrus.Infof("Node %s: %s", mon.nodeIPAddress, status)
 }
 
-// MonitorAddNodes waits for the a node to be added to the cluster
+// MonitorAddNodes display the progress of one or more nodes being
+// added to a cluster. ipAddresses is an array of IP addresses to be
+// monitored. clusters is an array of their corresponding initialized Cluster
+// struct used to interact with the assisted-service and k8s APIs.
+func MonitorAddNodes(clusters []*Cluster, ipAddresses []string) {
+	var wg sync.WaitGroup
+
+	for i, ipAddress := range ipAddresses {
+		wg.Add(1)
+
+		go MonitorSingleNode(clusters[i], ipAddress, &wg)
+	}
+
+	wg.Wait()
+}
+
+// MonitorSingleNode waits for the a node to be added to the cluster
 // and reports its status until it becomes Ready.
-func MonitorAddNodes(cluster *Cluster, nodeIPAddress string) error {
+func MonitorSingleNode(cluster *Cluster, nodeIPAddress string, wg *sync.WaitGroup) {
+	defer wg.Done()
 	timeout := 90 * time.Minute
 	waitContext, cancel := context.WithTimeout(cluster.Ctx, timeout)
 	defer cancel()
 
 	mon, err := newAddNodeMonitor(nodeIPAddress, cluster)
 	if err != nil {
-		return err
+		logrus.Errorf("could not initialize node monitor for node %v: %v", nodeIPAddress, err)
+		return
 	}
 
 	wait.Until(func() {
@@ -111,7 +130,7 @@ func MonitorAddNodes(cluster *Cluster, nodeIPAddress string) error {
 
 		hasJoined, isReady, err := mon.nodeHasJoinedClusterAndIsReady()
 		if err != nil {
-			logrus.Debugf("nodeHasJoinedClusterAndIsReady returned err: %v", err)
+			logrus.Debugf("Node %v joined cluster and is ready check returned err: %v", nodeIPAddress, err)
 		}
 
 		if !mon.status.NodeJoinedCluster && hasJoined {
@@ -133,7 +152,7 @@ func MonitorAddNodes(cluster *Cluster, nodeIPAddress string) error {
 		if mon.cluster.API.Rest.IsRestAPILive() {
 			_, err = cluster.MonitorStatusFromAssistedService()
 			if err != nil {
-				logrus.Warnf("Node %s: %s", nodeIPAddress, err)
+				logrus.Warnf("error fetching status from assisted-service for node %s: %s", nodeIPAddress, err)
 			}
 		}
 	}, 5*time.Second, waitContext.Done())
@@ -144,11 +163,9 @@ func MonitorAddNodes(cluster *Cluster, nodeIPAddress string) error {
 			cancel()
 		}
 		if errors.Is(waitErr, context.DeadlineExceeded) {
-			return errors.Wrap(waitErr, "monitor-add-nodes process timed out")
+			mon.logStatus(fmt.Sprintf("Node monitoring timed out after %v minutes", timeout))
 		}
 	}
-
-	return nil
 }
 
 func (mon *addNodeMonitor) nodeHasJoinedClusterAndIsReady() (bool, bool, error) {
