@@ -70,10 +70,8 @@ func NewCluster(ctx context.Context, assetDir, rendezvousIP, kubeconfigPath, ssh
 	czero := &Cluster{}
 	capi := &clientSet{}
 
-	restclient, err := NewNodeZeroRestClient(ctx, rendezvousIP, sshKey)
-	if err != nil {
-		logrus.Fatal(err)
-	}
+	restclient := NewNodeZeroRestClient(ctx, rendezvousIP, sshKey)
+
 	kubeclient, err := NewClusterKubeAPIClient(ctx, kubeconfigPath)
 	if err != nil {
 		logrus.Fatal(err)
