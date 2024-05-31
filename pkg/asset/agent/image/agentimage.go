@@ -129,21 +129,25 @@ func (a *AgentImage) updateIgnitionContent(agentArtifacts *AgentArtifacts) error
 }
 
 func (a *AgentImage) overwriteFileData(fileInfo []isoeditor.FileData) error {
+	var errs []error
 	for _, fileData := range fileInfo {
+		defer fileData.Data.Close()
+
 		filename := filepath.Join(a.tmpPath, fileData.Filename)
 		file, err := os.Create(filename)
 		if err != nil {
-			return err
+			errs = append(errs, err)
+			continue
 		}
 		defer file.Close()
 
 		_, err = io.Copy(file, fileData.Data)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 func updateKargsFile(tmpPath, filename string, embedArea *regexp.Regexp, kargs []byte) error {
