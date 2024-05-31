@@ -2262,7 +2262,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Capabilities = &types.Capabilities{
 					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
 				}
-				c.Capabilities.AdditionalEnabledCapabilities = append(c.Capabilities.AdditionalEnabledCapabilities, configv1.ClusterVersionCapabilityCloudCredential, configv1.ClusterVersionCapabilityCloudControllerManager)
+				c.Capabilities.AdditionalEnabledCapabilities = append(c.Capabilities.AdditionalEnabledCapabilities, configv1.ClusterVersionCapabilityCloudCredential, configv1.ClusterVersionCapabilityCloudControllerManager, configv1.ClusterVersionCapabilityIngress)
 				return c
 			}(),
 		},
@@ -2272,7 +2272,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c := validInstallConfig()
 				c.Capabilities = &types.Capabilities{
 					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
-					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityBaremetal, configv1.ClusterVersionCapabilityMachineAPI, configv1.ClusterVersionCapabilityCloudCredential, configv1.ClusterVersionCapabilityCloudControllerManager},
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityBaremetal, configv1.ClusterVersionCapabilityMachineAPI, configv1.ClusterVersionCapabilityCloudCredential, configv1.ClusterVersionCapabilityCloudControllerManager, configv1.ClusterVersionCapabilityIngress},
 				}
 				return c
 			}(),
@@ -2283,7 +2283,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c := validInstallConfig()
 				c.Capabilities = &types.Capabilities{
 					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
-					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityMachineAPI, configv1.ClusterVersionCapabilityCloudCredential, configv1.ClusterVersionCapabilityCloudControllerManager},
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityMachineAPI, configv1.ClusterVersionCapabilityCloudCredential, configv1.ClusterVersionCapabilityCloudControllerManager, configv1.ClusterVersionCapabilityIngress},
 				}
 				return c
 			}(),
@@ -2342,7 +2342,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.AWS = nil
 				c.Capabilities = &types.Capabilities{
 					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
-					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityBaremetal, configv1.ClusterVersionCapabilityMachineAPI},
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityBaremetal, configv1.ClusterVersionCapabilityMachineAPI, configv1.ClusterVersionCapabilityIngress},
 				}
 				return c
 			}(),
@@ -2365,7 +2365,8 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.AWS = nil
 				c.Platform.None = &none.Platform{}
 				c.Capabilities = &types.Capabilities{
-					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
+					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityIngress},
 				}
 				return c
 			}(),
@@ -2378,7 +2379,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.BareMetal = validBareMetalPlatform()
 				c.Capabilities = &types.Capabilities{
 					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
-					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityBaremetal, configv1.ClusterVersionCapabilityMachineAPI},
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityBaremetal, configv1.ClusterVersionCapabilityMachineAPI, configv1.ClusterVersionCapabilityIngress},
 				}
 				return c
 			}(),
@@ -2391,7 +2392,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.External = &external.Platform{}
 				c.Capabilities = &types.Capabilities{
 					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
-					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityCloudCredential},
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityCloudCredential, configv1.ClusterVersionCapabilityIngress},
 				}
 				return c
 			}(),
@@ -2406,7 +2407,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				c.Capabilities = &types.Capabilities{
 					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
-					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityCloudCredential},
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityCloudCredential, configv1.ClusterVersionCapabilityIngress},
 				}
 				return c
 			}(),
@@ -2426,6 +2427,17 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: "disabling CloudControllerManager on External platform supported only with cloudControllerManager value none",
+		},
+		{
+			name: "Ingress can't be disabled",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &types.Capabilities{
+					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
+				}
+				return c
+			}(),
+			expectedError: "the Ingress capability is required",
 		},
 	}
 	for _, tc := range cases {
