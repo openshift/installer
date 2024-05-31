@@ -25,6 +25,7 @@ import (
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
 
 	"github.com/openshift/installer/pkg/types"
@@ -1360,11 +1361,18 @@ func (c *Client) AddIPToLoadBalancerPool(ctx context.Context, lbID string, poolN
 	clbpmOptions = c.vpcAPI.NewCreateLoadBalancerPoolMemberOptions(lbID, *lbPool.ID, port, lbpmtp)
 	logrus.Debugf("AddIPToLoadBalancerPool: clbpmOptions = %+v", clbpmOptions)
 
-	lbpm, response, err = c.vpcAPI.CreateLoadBalancerPoolMemberWithContext(ctx, clbpmOptions)
-	if err != nil {
-		return fmt.Errorf("could not add the load balancer pool member and the response = %+v, err = %w", response, err)
-	}
-	logrus.Debugf("AddIPToLoadBalancerPool: CLBPMWC lbpm = %+v", lbpm)
+	return wait.PollUntilContextCancel(ctx,
+		time.Second*10,
+		false,
+		func(ctx context.Context) (bool, error) {
+			lbpm, response, err = c.vpcAPI.CreateLoadBalancerPoolMemberWithContext(ctx, clbpmOptions)
+			if err != nil {
+				logrus.Debugf("AddIPToLoadBalancerPool: could not add the load balancer pool member yet, err = %v", err)
+				return false, nil
+			}
 
-	return nil
+			logrus.Debugf("AddIPToLoadBalancerPool: CLBPMWC lbpm = %+v", lbpm)
+
+			return true, nil
+		})
 }
