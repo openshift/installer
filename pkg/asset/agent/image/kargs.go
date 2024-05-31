@@ -61,10 +61,10 @@ func (a *Kargs) Name() string {
 }
 
 // KernelCmdLine returns the data to be appended to the kernel arguments.
-func (a *Kargs) KernelCmdLine() []byte {
+func (a *Kargs) KernelCmdLine() string {
 	cmdLine := a.consoleArgs
 	if a.fips {
 		cmdLine += " fips=1"
 	}
-	return []byte(cmdLine)
+	return cmdLine
 }

@@ -101,7 +101,7 @@ func TestKargs_Generate(t *testing.T) {
 
 			if tc.expectedErr == "" {
 				assert.NoError(t, err)
-				assert.Equal(t, tc.expectedArgs, string(kargs.KernelCmdLine()))
+				assert.Equal(t, tc.expectedArgs, kargs.KernelCmdLine())
 			} else {
 				assert.Regexp(t, tc.expectedErr, err.Error())
 			}
