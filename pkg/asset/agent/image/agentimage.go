@@ -125,6 +125,10 @@ func (a *AgentImage) updateIgnitionContent(agentArtifacts *AgentArtifacts) error
 		return err
 	}
 
+	return a.overwriteFileData(fileInfo)
+}
+
+func (a *AgentImage) overwriteFileData(fileInfo []isoeditor.FileData) error {
 	for _, fileData := range fileInfo {
 		filename := filepath.Join(a.tmpPath, fileData.Filename)
 		file, err := os.Create(filename)
