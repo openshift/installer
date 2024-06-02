@@ -395,6 +395,10 @@ func (m *Master) GenerateWithContext(ctx context.Context, dependencies asset.Par
 		// Use managed user data secret, since we always have up to date images
 		// available in the cluster
 		masterUserDataSecretName = "master-user-data-managed"
+		enabledCaps := installConfig.Config.GetEnabledCapabilities()
+		if !enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) {
+			break
+		}
 		machines, err = baremetal.Machines(clusterID.InfraID, ic, &pool, "master", masterUserDataSecretName)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")

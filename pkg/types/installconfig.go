@@ -6,6 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	configv1 "github.com/openshift/api/config/v1"
 	features "github.com/openshift/api/features"
@@ -518,6 +519,32 @@ type Capabilities struct {
 	// baselineCapabilitySet. The default is an empty set.
 	// +optional
 	AdditionalEnabledCapabilities []configv1.ClusterVersionCapability `json:"additionalEnabledCapabilities,omitempty"`
+}
+
+// GetEnabledCapabilities returns a set of enabled ClusterVersionCapabilities.
+func (c *InstallConfig) GetEnabledCapabilities() sets.Set[configv1.ClusterVersionCapability] {
+	enabledCaps := sets.Set[configv1.ClusterVersionCapability]{}
+	if c.Capabilities == nil || c.Capabilities.BaselineCapabilitySet == "" {
+		// when Capabilities and/or BaselineCapabilitySet is not specified, default is vCurrent
+		baseSet := configv1.ClusterVersionCapabilitySets[configv1.ClusterVersionCapabilitySetCurrent]
+		for _, cap := range baseSet {
+			enabledCaps.Insert(cap)
+		}
+	}
+	if c.Capabilities != nil {
+		if c.Capabilities.BaselineCapabilitySet != "" {
+			baseSet := configv1.ClusterVersionCapabilitySets[c.Capabilities.BaselineCapabilitySet]
+			for _, cap := range baseSet {
+				enabledCaps.Insert(cap)
+			}
+		}
+		if c.Capabilities.AdditionalEnabledCapabilities != nil {
+			for _, cap := range c.Capabilities.AdditionalEnabledCapabilities {
+				enabledCaps.Insert(cap)
+			}
+		}
+	}
+	return enabledCaps
 }
 
 // WorkerMachinePool retrieves the worker MachinePool from InstallConfig.Compute

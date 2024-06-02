@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	baremetalvalidation "github.com/openshift/installer/pkg/types/baremetal/validation"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
@@ -54,28 +55,8 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 	platform := ic.Config.Platform.Name()
 
 	// IPI requires MachineAPI capability
-	enabledCaps := sets.NewString()
-	if ic.Config.Capabilities == nil || ic.Config.Capabilities.BaselineCapabilitySet == "" {
-		// when Capabilities and/or BaselineCapabilitySet is not specified, default is vCurrent
-		baseSet := configv1.ClusterVersionCapabilitySets[configv1.ClusterVersionCapabilitySetCurrent]
-		for _, cap := range baseSet {
-			enabledCaps.Insert(string(cap))
-		}
-	}
-	if ic.Config.Capabilities != nil {
-		if ic.Config.Capabilities.BaselineCapabilitySet != "" {
-			baseSet := configv1.ClusterVersionCapabilitySets[ic.Config.Capabilities.BaselineCapabilitySet]
-			for _, cap := range baseSet {
-				enabledCaps.Insert(string(cap))
-			}
-		}
-		if ic.Config.Capabilities.AdditionalEnabledCapabilities != nil {
-			for _, cap := range ic.Config.Capabilities.AdditionalEnabledCapabilities {
-				enabledCaps.Insert(string(cap))
-			}
-		}
-	}
-	if !enabledCaps.Has(string(configv1.ClusterVersionCapabilityMachineAPI)) {
+	enabledCaps := ic.Config.GetEnabledCapabilities()
+	if !enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) {
 		return errors.New("IPI requires MachineAPI capability")
 	}
 
@@ -114,6 +95,11 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
+		err = baremetalvalidation.ValidateHosts(ic.Config.BareMetal, field.NewPath("platform"), ic.Config).ToAggregate()
+		if err != nil {
+			return err
+		}
+
 	case gcp.Name:
 		err := gcpconfig.ValidateForProvisioning(ic.Config)
 		if err != nil {

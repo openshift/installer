@@ -433,7 +433,8 @@ func ValidatePlatform(p *baremetal.Platform, agentBasedInstallation bool, n *typ
 		}
 	}
 
-	if !agentBasedInstallation && p.Hosts == nil {
+	enabledCaps := c.GetEnabledCapabilities()
+	if !agentBasedInstallation && enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) && p.Hosts == nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("hosts"), p.Hosts, "bare metal hosts are missing"))
 	}
 
@@ -441,16 +442,10 @@ func ValidatePlatform(p *baremetal.Platform, agentBasedInstallation bool, n *typ
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
 
-	if !agentBasedInstallation {
-		if err := validateHostsCount(p.Hosts, c); err != nil {
-			allErrs = append(allErrs, field.Required(fldPath.Child("Hosts"), err.Error()))
+	if !agentBasedInstallation && enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) {
+		if err := ValidateHosts(p, fldPath, c); err != nil {
+			allErrs = append(allErrs, err...)
 		}
-		allErrs = append(allErrs, validateHostsWithoutBMC(p.Hosts, fldPath)...)
-		allErrs = append(allErrs, validateBootMode(p.Hosts, fldPath.Child("Hosts"))...)
-		allErrs = append(allErrs, validateRootDeviceHints(p.Hosts, fldPath.Child("Hosts"))...)
-		allErrs = append(allErrs, validateNetworkConfig(p.Hosts, fldPath.Child("Hosts"))...)
-
-		allErrs = append(allErrs, validateHostsName(p.Hosts, fldPath.Child("Hosts"))...)
 	}
 
 	if c.BareMetal.LoadBalancer != nil {
@@ -459,6 +454,22 @@ func ValidatePlatform(p *baremetal.Platform, agentBasedInstallation bool, n *typ
 		}
 	}
 
+	return allErrs
+}
+
+// ValidateHosts returns an error if the Hosts are not valid.
+func ValidateHosts(p *baremetal.Platform, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if err := validateHostsCount(p.Hosts, c); err != nil {
+		allErrs = append(allErrs, field.Required(fldPath.Child("Hosts"), err.Error()))
+	}
+	allErrs = append(allErrs, validateHostsWithoutBMC(p.Hosts, fldPath)...)
+	allErrs = append(allErrs, validateBootMode(p.Hosts, fldPath.Child("Hosts"))...)
+	allErrs = append(allErrs, validateRootDeviceHints(p.Hosts, fldPath.Child("Hosts"))...)
+	allErrs = append(allErrs, validateNetworkConfig(p.Hosts, fldPath.Child("Hosts"))...)
+
+	allErrs = append(allErrs, validateHostsName(p.Hosts, fldPath.Child("Hosts"))...)
 	return allErrs
 }
 
