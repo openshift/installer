@@ -52,6 +52,7 @@ import (
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/baremetal/validation"
 	externaltypes "github.com/openshift/installer/pkg/types/external"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
@@ -501,15 +502,18 @@ func (w *Worker) GenerateWithContext(ctx context.Context, dependencies asset.Par
 			mpool.Set(pool.Platform.BareMetal)
 			pool.Platform.BareMetal = &mpool
 
-			// Use managed user data secret, since images used by MachineSet
-			// are always up to date
-			workerUserDataSecretName = "worker-user-data-managed"
-			sets, err := baremetal.MachineSets(clusterID.InfraID, ic, &pool, "", "worker", workerUserDataSecretName)
-			if err != nil {
-				return errors.Wrap(err, "failed to create worker machine objects")
-			}
-			for _, set := range sets {
-				machineSets = append(machineSets, set)
+			enabledCaps := validation.GetEnabledCapabilities(installConfig.Config.Capabilities)
+			if enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) {
+				// Use managed user data secret, since images used by MachineSet
+				// are always up to date
+				workerUserDataSecretName = "worker-user-data-managed"
+				sets, err := baremetal.MachineSets(clusterID.InfraID, ic, &pool, "", "worker", workerUserDataSecretName)
+				if err != nil {
+					return errors.Wrap(err, "failed to create worker machine objects")
+				}
+				for _, set := range sets {
+					machineSets = append(machineSets, set)
+				}
 			}
 		case gcptypes.Name:
 			mpool := defaultGCPMachinePoolPlatform(pool.Architecture)
