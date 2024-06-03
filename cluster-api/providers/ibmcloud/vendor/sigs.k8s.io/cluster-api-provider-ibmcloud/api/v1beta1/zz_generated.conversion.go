@@ -562,6 +562,7 @@ func autoConvert_v1beta2_IBMPowerVSClusterSpec_To_v1beta1_IBMPowerVSClusterSpec(
 	// WARNING: in.ResourceGroup requires manual conversion: does not exist in peer-type
 	// WARNING: in.VPC requires manual conversion: does not exist in peer-type
 	// WARNING: in.VPCSubnets requires manual conversion: does not exist in peer-type
+	// WARNING: in.VPCSecurityGroups requires manual conversion: does not exist in peer-type
 	// WARNING: in.TransitGateway requires manual conversion: does not exist in peer-type
 	// WARNING: in.LoadBalancers requires manual conversion: does not exist in peer-type
 	// WARNING: in.CosInstance requires manual conversion: does not exist in peer-type
@@ -587,6 +588,7 @@ func autoConvert_v1beta2_IBMPowerVSClusterStatus_To_v1beta1_IBMPowerVSClusterSta
 	// WARNING: in.DHCPServer requires manual conversion: does not exist in peer-type
 	// WARNING: in.VPC requires manual conversion: does not exist in peer-type
 	// WARNING: in.VPCSubnet requires manual conversion: does not exist in peer-type
+	// WARNING: in.VPCSecurityGroups requires manual conversion: does not exist in peer-type
 	// WARNING: in.TransitGateway requires manual conversion: does not exist in peer-type
 	// WARNING: in.COSInstance requires manual conversion: does not exist in peer-type
 	// WARNING: in.LoadBalancers requires manual conversion: does not exist in peer-type

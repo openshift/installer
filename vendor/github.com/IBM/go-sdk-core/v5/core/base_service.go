@@ -389,7 +389,7 @@ func (service *BaseService) Request(req *http.Request, result interface{}) (deta
 		var sdkErr *SDKProblem
 		if errors.As(authenticateError, &authErr) {
 			detailedResponse = authErr.Response
-			err = SDKErrorf(authErr.HTTPProblem, fmt.Sprintf(ERRORMSG_AUTHENTICATE_ERROR, authErr.Error()), "auth-failed", getComponentInfo())
+			err = SDKErrorf(authErr.HTTPProblem, fmt.Sprintf(ERRORMSG_AUTHENTICATE_ERROR, authErr.Error()), "auth-request-failed", getComponentInfo())
 		} else if errors.As(authenticateError, &sdkErr) {
 			sdkErr := RepurposeSDKProblem(authenticateError, "auth-failed")
 			// For compatibility.
@@ -398,7 +398,7 @@ func (service *BaseService) Request(req *http.Request, result interface{}) (deta
 		} else {
 			// External authenticators that implement the core interface might return a standard error.
 			// Handle that by wrapping it here.
-			err = SDKErrorf(err, fmt.Sprintf(ERRORMSG_AUTHENTICATE_ERROR, authErr.Error()), "custom-auth-failed", getComponentInfo())
+			err = SDKErrorf(err, fmt.Sprintf(ERRORMSG_AUTHENTICATE_ERROR, authenticateError.Error()), "custom-auth-failed", getComponentInfo())
 		}
 		return
 	}

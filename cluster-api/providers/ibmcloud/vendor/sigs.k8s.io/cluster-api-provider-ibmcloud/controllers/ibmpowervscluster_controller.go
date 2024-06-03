@@ -179,8 +179,8 @@ func (r *IBMPowerVSClusterReconciler) reconcile(clusterScope *scope.PowerVSClust
 
 	// reconcile VPC Subnet
 	clusterScope.Info("Reconciling VPC subnets")
-	if requeue, err := clusterScope.ReconcileVPCSubnet(); err != nil {
-		clusterScope.Error(err, "failed to reconcile VPC subnet")
+	if requeue, err := clusterScope.ReconcileVPCSubnets(); err != nil {
+		clusterScope.Error(err, "failed to reconcile VPC subnets")
 		conditions.MarkFalse(powerVSCluster, infrav1beta2.VPCSubnetReadyCondition, infrav1beta2.VPCSubnetReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
 		return reconcile.Result{}, err
 	} else if requeue {
@@ -188,6 +188,15 @@ func (r *IBMPowerVSClusterReconciler) reconcile(clusterScope *scope.PowerVSClust
 		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
 	}
 	conditions.MarkTrue(powerVSCluster, infrav1beta2.VPCSubnetReadyCondition)
+
+	// reconcile VPC security group
+	clusterScope.Info("Reconciling VPC security group")
+	if err := clusterScope.ReconcileVPCSecurityGroups(); err != nil {
+		clusterScope.Error(err, "failed to reconcile VPC security groups")
+		conditions.MarkFalse(powerVSCluster, infrav1beta2.VPCSecurityGroupReadyCondition, infrav1beta2.VPCSecurityGroupReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
+		return reconcile.Result{}, err
+	}
+	conditions.MarkTrue(powerVSCluster, infrav1beta2.VPCSecurityGroupReadyCondition)
 
 	// reconcile Transit Gateway
 	clusterScope.Info("Reconciling Transit Gateway")
@@ -203,8 +212,8 @@ func (r *IBMPowerVSClusterReconciler) reconcile(clusterScope *scope.PowerVSClust
 
 	// reconcile LoadBalancer
 	clusterScope.Info("Reconciling VPC load balancers")
-	if requeue, err := clusterScope.ReconcileLoadBalancer(); err != nil {
-		clusterScope.Error(err, "failed to reconcile VPC load balancer")
+	if requeue, err := clusterScope.ReconcileLoadBalancers(); err != nil {
+		clusterScope.Error(err, "failed to reconcile VPC load balancers")
 		conditions.MarkFalse(powerVSCluster, infrav1beta2.LoadBalancerReadyCondition, infrav1beta2.LoadBalancerReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
 		return reconcile.Result{}, err
 	} else if requeue {
@@ -279,6 +288,11 @@ func (r *IBMPowerVSClusterReconciler) reconcileDelete(ctx context.Context, clust
 		return reconcile.Result{RequeueAfter: 1 * time.Minute}, nil
 	}
 
+	clusterScope.Info("Deleting VPC security group")
+	if err := clusterScope.DeleteVPCSecurityGroups(); err != nil {
+		allErrs = append(allErrs, errors.Wrapf(err, "failed to delete VPC subnet"))
+	}
+
 	clusterScope.Info("Deleting VPC subnet")
 	if requeue, err := clusterScope.DeleteVPCSubnet(); err != nil {
 		allErrs = append(allErrs, errors.Wrapf(err, "failed to delete VPC subnet"))
@@ -316,6 +330,7 @@ func (r *IBMPowerVSClusterReconciler) reconcileDelete(ctx context.Context, clust
 	}
 
 	if len(allErrs) > 0 {
+		clusterScope.Error(kerrors.NewAggregate(allErrs), "failed to delete IBMPowerVSCluster")
 		return ctrl.Result{}, kerrors.NewAggregate(allErrs)
 	}
 
@@ -454,9 +469,9 @@ func (c clusterDescendants) filterOwnedDescendants(cluster *infrav1beta2.IBMPowe
 }
 
 // SetupWithManager creates a new IBMPowerVSCluster controller for a manager.
-func (r *IBMPowerVSClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *IBMPowerVSClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&infrav1beta2.IBMPowerVSCluster{}).
-		WithEventFilter(predicates.ResourceIsNotExternallyManaged(ctrl.LoggerFrom(context.TODO()))).
+		WithEventFilter(predicates.ResourceIsNotExternallyManaged(ctrl.LoggerFrom(ctx))).
 		Complete(r)
 }
