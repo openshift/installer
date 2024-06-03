@@ -229,6 +229,11 @@ func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapD
 	if err := gcp.DestroyStorage(ctx, in.Metadata.InfraID); err != nil {
 		return fmt.Errorf("failed to destroy storage: %w", err)
 	}
+
+	if err := removeBootstrapFirewallRules(ctx, in.Metadata.InfraID, in.Metadata.GCP.ProjectID); err != nil {
+		return fmt.Errorf("failed to remove bootstrap firewall rules: %w", err)
+	}
+
 	return nil
 }
 
