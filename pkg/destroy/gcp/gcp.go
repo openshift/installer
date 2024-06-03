@@ -13,6 +13,7 @@ import (
 	resourcemanager "google.golang.org/api/cloudresourcemanager/v3"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/dns/v1"
+	"google.golang.org/api/file/v1"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/option"
@@ -63,6 +64,7 @@ type ClusterUninstaller struct {
 	dnsSvc     *dns.Service
 	storageSvc *storage.Service
 	rmSvc      *resourcemanager.Service
+	fileSvc    *file.Service
 
 	// cpusByMachineType caches the number of CPUs per machine type, used in quota
 	// calculations on deletion
@@ -147,6 +149,11 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		return nil, errors.Wrap(err, "failed to create resourcemanager service")
 	}
 
+	o.fileSvc, err = file.NewService(ctx, options...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create filestore service")
+	}
+
 	err = wait.PollImmediateInfinite(
 		time.Second*10,
 		o.destroyCluster,
@@ -187,6 +194,7 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 		{name: "Routers", execute: o.destroyRouters},
 		{name: "Subnetworks", execute: o.destroySubnetworks},
 		{name: "Networks", execute: o.destroyNetworks},
+		{name: "Filestores", execute: o.destroyFilestores},
 	}}
 
 	// create the main Context, so all stages can accept and make context children
@@ -257,6 +265,18 @@ func (o *ClusterUninstaller) clusterLabelFilter() string {
 
 func (o *ClusterUninstaller) clusterLabelOrClusterIDFilter() string {
 	return fmt.Sprintf("(%s) OR (%s)", o.clusterIDFilter(), o.clusterLabelFilter())
+}
+
+func isForbidden(err error) bool {
+	if err == nil {
+		return false
+	}
+	var ae *googleapi.Error
+	if errors.As(err, &ae) {
+		return ae.Code == http.StatusForbidden
+	}
+
+	return false
 }
 
 func isNoOp(err error) bool {
