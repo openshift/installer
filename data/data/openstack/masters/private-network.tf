@@ -156,16 +156,6 @@ resource "openstack_networking_port_v2" "ingress_port" {
   }
 }
 
-resource "openstack_networking_trunk_v2" "masters" {
-  name        = "${var.cluster_id}-master-trunk-${count.index}"
-  count       = var.openstack_trunk_support ? var.master_count : 0
-  description = local.description
-  tags        = ["openshiftClusterID=${var.cluster_id}"]
-
-  admin_state_up = "true"
-  port_id        = openstack_networking_port_v2.masters[count.index].id
-}
-
 // If external network is defined, assign the floating IP to one of the masters.
 //
 // Strictly speaking, this is not required to finish the installation. We

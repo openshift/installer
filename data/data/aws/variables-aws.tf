@@ -230,3 +230,9 @@ EOF
 
   default = ""
 }
+
+variable "aws_master_use_spot_instance" {
+  type = bool
+  description = "(optional) Whether to use instances from the Spot market for masters"
+  default = false
+}

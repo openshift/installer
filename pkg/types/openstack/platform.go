@@ -53,7 +53,7 @@ type Platform struct {
 
 	// TrunkSupport holds a `0` or `1` value that indicates whether or not to use trunk ports
 	// in your OpenShift cluster.
-	// Deprecated: this value is set by the installer automatically.
+	// Deprecated: the machine manifest should be used to specify that trunk should be used.
 	// +optional
 	DeprecatedTrunkSupport string `json:"trunkSupport,omitempty"`
 

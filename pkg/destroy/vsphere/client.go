@@ -185,6 +185,7 @@ func (c *Client) DeleteFolder(ctx context.Context, f mo.Folder) error {
 	defer cancel()
 
 	folder := object.NewFolder(c.client, f.Reference())
+
 	task, err := folder.Destroy(ctx)
 	if err == nil {
 		err = task.Wait(ctx)

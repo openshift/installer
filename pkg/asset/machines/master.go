@@ -331,15 +331,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 
 		imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
 
-		trunkSupport, err := openstack.CheckNetworkExtensionAvailability(
-			ic.Platform.OpenStack.Cloud,
-			"trunk",
-			nil,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to check for trunk support: %w", err)
-		}
-		machines, controlPlaneMachineSet, err = openstack.Machines(clusterID.InfraID, ic, &pool, imageName, "master", masterUserDataSecretName, trunkSupport)
+		machines, controlPlaneMachineSet, err = openstack.Machines(clusterID.InfraID, ic, &pool, imageName, "master", masterUserDataSecretName)
 		if err != nil {
 			return fmt.Errorf("failed to create master machine objects: %w", err)
 		}
