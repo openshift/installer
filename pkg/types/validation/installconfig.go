@@ -214,10 +214,6 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 				allErrs = append(allErrs, field.Invalid(field.NewPath("additionalEnabledCapabilities"), c.Capabilities.AdditionalEnabledCapabilities,
 					"platform baremetal requires the baremetal capability"))
 			}
-			if !enabledCaps.Has(configv1.ClusterVersionCapabilityIngress) {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("additionalEnabledCapabilities"), c.Capabilities.AdditionalEnabledCapabilities,
-					"the Ingress capability is required"))
-			}
 		}
 
 		if !enabledCaps.Has(configv1.ClusterVersionCapabilityCloudCredential) {
@@ -237,6 +233,11 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 				allErrs = append(allErrs, field.Invalid(field.NewPath("capabilities"), c.Capabilities,
 					"disabling CloudControllerManager on External platform supported only with cloudControllerManager value none"))
 			}
+		}
+
+		if !enabledCaps.Has(configv1.ClusterVersionCapabilityIngress) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("capabilities"), c.Capabilities,
+				"the Ingress capability is required"))
 		}
 	}
 
