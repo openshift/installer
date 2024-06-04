@@ -15,6 +15,7 @@ import (
 	coreosarch "github.com/coreos/stream-metadata-go/arch"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -214,6 +215,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		return errors.Errorf("master slice cannot be empty")
 	}
 
+	numWorkers := int64(0)
+	for _, worker := range installConfig.Config.Compute {
+		numWorkers += ptr.Deref(worker.Replicas, 0)
+	}
+
 	switch platform {
 	case aws.Name:
 		var vpc string
@@ -267,13 +273,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		// Based on the number of workers, we could have the following outcomes:
-		// 1. workers > 0, masters not schedulable, valid cluster
-		// 2. workers = 0, masters schedulable, valid compact cluster but currently unsupported
-		// 3. workers = 0, masters not schedulable, invalid cluster
-		if len(workers) == 0 {
-			return errors.Errorf("compact clusters with 0 workers are not supported at this time")
-		}
+
 		workerConfigs := make([]*machinev1beta1.AWSMachineProviderConfig, len(workers))
 		for i, m := range workers {
 			workerConfigs[i] = m.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AWSMachineProviderConfig) //nolint:errcheck // legacy, pre-linter
@@ -371,13 +371,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		workers, err := workersAsset.MachineSets()
 		if err != nil {
 			return err
-		}
-		// Based on the number of workers, we could have the following outcomes:
-		// 1. workers > 0, masters not schedulable, valid cluster
-		// 2. workers = 0, masters schedulable, valid compact cluster but currently unsupported
-		// 3. workers = 0, masters not schedulable, invalid cluster
-		if len(workers) == 0 {
-			return errors.Errorf("compact clusters with 0 workers are not supported at this time")
 		}
 		workerConfigs := make([]*machinev1beta1.AzureMachineProviderSpec, len(workers))
 		for i, w := range workers {
@@ -495,12 +488,16 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return err
 		}
 		// Based on the number of workers, we could have the following outcomes:
-		// 1. workers > 0, masters not schedulable, valid cluster
-		// 2. workers = 0, masters schedulable, valid compact cluster but currently unsupported
-		// 3. workers = 0, masters not schedulable, invalid cluster
-		if len(workers) == 0 {
-			return errors.Errorf("compact clusters with 0 workers are not supported at this time")
+		// 1. compute replicas > 0, worker machinesets > 0, masters not schedulable, valid cluster
+		// 2. compute replicas > 0, worker machinesets = 0, invalid cluster
+		// 3. compute replicas = 0, masters schedulable, valid cluster
+		if numWorkers != 0 && len(workers) == 0 {
+			return fmt.Errorf("invalid configuration. No worker assets available for requested number of compute replicas (%d)", numWorkers)
 		}
+		if numWorkers == 0 && !mastersSchedulable {
+			return fmt.Errorf("invalid configuration. No workers requested but masters are not schedulable")
+		}
+
 		workerConfigs := make([]*machinev1beta1.GCPMachineProviderSpec, len(workers))
 		for i, w := range workers {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.GCPMachineProviderSpec) //nolint:errcheck // legacy, pre-linter
