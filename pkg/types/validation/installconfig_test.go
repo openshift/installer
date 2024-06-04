@@ -30,6 +30,7 @@ import (
 )
 
 const TechPreviewNoUpgrade = "TechPreviewNoUpgrade"
+const OpenShiftSDN = "OpenShiftSDN"
 
 func validInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
@@ -148,6 +149,25 @@ func validVSpherePlatform() *vsphere.Platform {
 					Folder:         "/test-datacenter/vm/test-folder",
 				},
 			},
+		},
+	}
+}
+
+func validBootstrapInPlace() *types.InstallConfig {
+	return &types.InstallConfig{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: types.InstallConfigVersion,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-cluster",
+		},
+		BaseDomain: "test-domain",
+		BootstrapInPlace: &types.BootstrapInPlace{
+			InstallationDisk: "validaInstallDisk",
+		},
+		Networking: validIPv4NetworkingConfig(),
+		Platform: types.Platform{
+			None: &none.Platform{},
 		},
 	}
 }
@@ -1273,6 +1293,27 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 		},
 		{
+			name: "valid single-stack IPv4 configuration with OpenShiftSDN",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validIPv4NetworkingConfig()
+				c.Networking.NetworkType = OpenShiftSDN
+				return c
+			}(),
+		},
+		{
+			name: "valid BootstrapInPlace configuration with OpenShiftSDN",
+			installConfig: func() *types.InstallConfig {
+				c := validBootstrapInPlace()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validIPv4NetworkingConfig()
+				c.Networking.NetworkType = OpenShiftSDN
+				return c
+			}(),
+			expectedError: `Invalid value: "OpenShiftSDN": networkType OpenShiftSDN is currently not supported on Single Node OpenShift`,
+		},
+		{
 			name: "invalid dual-stack configuration, bad platform",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -1298,7 +1339,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c := validInstallConfig()
 				c.Platform = types.Platform{None: &none.Platform{}}
 				c.Networking = validDualStackNetworkingConfig()
-				c.Networking.NetworkType = "OpenShiftSDN"
+				c.Networking.NetworkType = OpenShiftSDN
 				return c
 			}(),
 			expectedError: `IPv6 is not supported for this networking plugin`,
@@ -1309,7 +1350,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c := validInstallConfig()
 				c.Platform = types.Platform{None: &none.Platform{}}
 				c.Networking = validIPv6NetworkingConfig()
-				c.Networking.NetworkType = "OpenShiftSDN"
+				c.Networking.NetworkType = OpenShiftSDN
 				return c
 			}(),
 			expectedError: `IPv6 is not supported for this networking plugin`,
