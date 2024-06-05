@@ -17,7 +17,7 @@ import (
 
 // AuthConfig is an asset that generates ECDSA public/private keys, JWT token.
 type AuthConfig struct {
-	PublicKey, PrivateKey, Token string
+	PublicKey, Token string
 }
 
 var _ asset.Asset = (*AuthConfig)(nil)
@@ -49,10 +49,8 @@ func (a *AuthConfig) Generate(dependencies asset.Parents) error {
 		return err
 	}
 	// Encode to Base64 (Standard encoding)
-	encodedPrivateKeyPEM := base64.StdEncoding.EncodeToString([]byte(PrivateKey))
 	encodedPubKeyPEM := base64.StdEncoding.EncodeToString([]byte(PublicKey))
 
-	a.PrivateKey = encodedPrivateKeyPEM
 	a.PublicKey = encodedPubKeyPEM
 
 	token, err := localJWTForKey(infraEnvID.ID, PrivateKey)
