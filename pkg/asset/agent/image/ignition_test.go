@@ -90,11 +90,10 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	}
 	clusterName := "test-agent-cluster-install.test"
 
-	privateKey := "-----BEGIN EC PRIVATE KEY-----\nMFkwEwYHKoAiDHV4tg==\n-----END EC PRIVATE KEY-----\n"        //nolint:gosec
 	publicKey := "-----BEGIN EC PUBLIC KEY-----\nMHcCAQEEIOSCfDNmx0qe6dncV4tg==\n-----END EC PUBLIC KEY-----\n" //nolint:gosec
 	token := "someToken"
 
-	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, infraEnvID, osImage, proxy, "minimal-iso", privateKey, publicKey, token, "")
+	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, infraEnvID, osImage, proxy, "minimal-iso", publicKey, token, "")
 	assert.Equal(t, clusterName, templateData.ClusterName)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
@@ -108,7 +107,6 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	assert.Equal(t, infraEnvID, templateData.InfraEnvID)
 	assert.Equal(t, osImage, templateData.OSImage)
 	assert.Equal(t, proxy, templateData.Proxy)
-	assert.Equal(t, privateKey, templateData.PrivateKeyPEM)
 	assert.Equal(t, publicKey, templateData.PublicKeyPEM)
 	assert.Equal(t, token, templateData.Token)
 }
