@@ -91,7 +91,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	clusterName := "test-agent-cluster-install.test"
 
 	privateKey := "-----BEGIN EC PUBLIC KEY-----\nMFkwEwYHKoAiDHV4tg==\n-----END EC PUBLIC KEY-----\n"
-	publicKey := "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEIOSCfDNmx0qe6dncV4tg==\n-----END EC PRIVATE KEY-----\n"
+	publicKey := "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEIOSCfDNmx0qe6dncV4tg==\n-----END EC PRIVATE KEY-----\n" //nolint:gosec
 
 	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, infraEnvID, osImage, proxy, "minimal-iso", privateKey, publicKey, "")
 	assert.Equal(t, clusterName, templateData.ClusterName)
