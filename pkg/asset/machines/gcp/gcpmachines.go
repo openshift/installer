@@ -115,9 +115,6 @@ func createGCPMachine(name string, installConfig *installconfig.InstallConfig, i
 		osImage = mpool.OSImage.Name
 	}
 
-	// TODO tags aren't currently being set in GCPMachine which only has
-	// AdditionalNetworkTags []string
-
 	masterSubnet := installConfig.Config.Platform.GCP.ControlPlaneSubnet
 	if masterSubnet == "" {
 		masterSubnet = gcptypes.DefaultSubnetName(infraID, masterRole)
@@ -131,12 +128,13 @@ func createGCPMachine(name string, installConfig *installconfig.InstallConfig, i
 			},
 		},
 		Spec: capg.GCPMachineSpec{
-			InstanceType:     mpool.InstanceType,
-			Subnet:           ptr.To(masterSubnet),
-			AdditionalLabels: getLabelsFromInstallConfig(installConfig, infraID),
-			Image:            ptr.To(osImage),
-			RootDeviceType:   ptr.To(capg.DiskType(mpool.OSDisk.DiskType)),
-			RootDeviceSize:   mpool.OSDisk.DiskSizeGB,
+			InstanceType:          mpool.InstanceType,
+			Subnet:                ptr.To(masterSubnet),
+			AdditionalLabels:      getLabelsFromInstallConfig(installConfig, infraID),
+			Image:                 ptr.To(osImage),
+			RootDeviceType:        ptr.To(capg.DiskType(mpool.OSDisk.DiskType)),
+			RootDeviceSize:        mpool.OSDisk.DiskSizeGB,
+			AdditionalNetworkTags: mpool.Tags,
 		},
 	}
 	gcpMachine.SetGroupVersionKind(capg.GroupVersion.WithKind("GCPMachine"))
