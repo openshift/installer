@@ -100,7 +100,7 @@ spec:
   - name: node-joiner-monitor
     imagePullPolicy: IfNotPresent
     image: $nodeJoinerPullspec
-    command: ["/bin/sh", "-c", "node-joiner monitor-add-nodes $ipAddresses --log-level=info; sleep 5"]    
+    command: ["/bin/sh", "-c", "node-joiner monitor-add-nodes $ipAddresses --dir /tmp --log-level=info; sleep 5"]
 EOF
 )
 echo "$nodeJoinerPod" | oc apply -f -
