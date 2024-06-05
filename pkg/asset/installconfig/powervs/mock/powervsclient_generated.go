@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	dnssvcsv1 "github.com/IBM/networking-go-sdk/dnssvcsv1"
 	iamidentityv1 "github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	resourcemanagerv2 "github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	vpcv1 "github.com/IBM/vpc-go-sdk/vpcv1"
@@ -67,6 +68,35 @@ func (mr *MockAPIMockRecorder) AddSecurityGroupRule(ctx, securityGroupID, rule i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddSecurityGroupRule", reflect.TypeOf((*MockAPI)(nil).AddSecurityGroupRule), ctx, securityGroupID, rule)
 }
 
+// AddVPCToPermittedNetworks mocks base method.
+func (m *MockAPI) AddVPCToPermittedNetworks(ctx context.Context, vpcCRN, dnsID, dnsZone string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddVPCToPermittedNetworks", ctx, vpcCRN, dnsID, dnsZone)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddVPCToPermittedNetworks indicates an expected call of AddVPCToPermittedNetworks.
+func (mr *MockAPIMockRecorder) AddVPCToPermittedNetworks(ctx, vpcCRN, dnsID, dnsZone interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddVPCToPermittedNetworks", reflect.TypeOf((*MockAPI)(nil).AddVPCToPermittedNetworks), ctx, vpcCRN, dnsID, dnsZone)
+}
+
+// CreateDNSCustomResolver mocks base method.
+func (m *MockAPI) CreateDNSCustomResolver(ctx context.Context, name, dnsID, vpcID string) (*dnssvcsv1.CustomResolver, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateDNSCustomResolver", ctx, name, dnsID, vpcID)
+	ret0, _ := ret[0].(*dnssvcsv1.CustomResolver)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateDNSCustomResolver indicates an expected call of CreateDNSCustomResolver.
+func (mr *MockAPIMockRecorder) CreateDNSCustomResolver(ctx, name, dnsID, vpcID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDNSCustomResolver", reflect.TypeOf((*MockAPI)(nil).CreateDNSCustomResolver), ctx, name, dnsID, vpcID)
+}
+
 // CreateDNSRecord mocks base method.
 func (m *MockAPI) CreateDNSRecord(ctx context.Context, publish types.PublishingStrategy, crnstr, baseDomain, hostname, cname string) error {
 	m.ctrl.T.Helper()
@@ -93,6 +123,21 @@ func (m *MockAPI) CreateSSHKey(ctx context.Context, serviceInstance, zone, sshKe
 func (mr *MockAPIMockRecorder) CreateSSHKey(ctx, serviceInstance, zone, sshKeyName, sshKey interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSSHKey", reflect.TypeOf((*MockAPI)(nil).CreateSSHKey), ctx, serviceInstance, zone, sshKeyName, sshKey)
+}
+
+// EnableDNSCustomResolver mocks base method.
+func (m *MockAPI) EnableDNSCustomResolver(ctx context.Context, dnsID, resolverID string) (*dnssvcsv1.CustomResolver, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnableDNSCustomResolver", ctx, dnsID, resolverID)
+	ret0, _ := ret[0].(*dnssvcsv1.CustomResolver)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EnableDNSCustomResolver indicates an expected call of EnableDNSCustomResolver.
+func (mr *MockAPIMockRecorder) EnableDNSCustomResolver(ctx, dnsID, resolverID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableDNSCustomResolver", reflect.TypeOf((*MockAPI)(nil).EnableDNSCustomResolver), ctx, dnsID, resolverID)
 }
 
 // GetAPIKey mocks base method.
