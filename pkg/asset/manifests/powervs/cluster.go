@@ -181,6 +181,12 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	// If a VPC was specified, pass all subnets in it to cluster API
 	if installConfig.Config.Platform.PowerVS.VPCName != "" {
 		logrus.Debugf("GenerateClusterAssets: VPCName = %s", installConfig.Config.Platform.PowerVS.VPCName)
+		if installConfig.Config.Publish == types.InternalPublishingStrategy {
+			err = installConfig.PowerVS.EnsureVPCIsPermittedNetwork(context.TODO(), installConfig.Config.PowerVS.VPCName)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("error ensuring VPC is permitted: %s %w", installConfig.Config.PowerVS.VPCName, err)
+		}
 		subnets, err := installConfig.PowerVS.GetVPCSubnets(context.TODO(), vpcName)
 		if err != nil {
 			return nil, fmt.Errorf("error getting subnets in specified VPC: %s %w", installConfig.Config.PowerVS.VPCName, err)
