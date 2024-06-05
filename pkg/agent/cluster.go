@@ -281,7 +281,6 @@ func (czero *Cluster) MonitorStatusFromAssistedService() (bool, error) {
 	validationsErr := checkValidations(clusterMetadata, czero.installHistory.ValidationResults, logrus.StandardLogger(), logPrefix)
 	if validationsErr != nil {
 		return false, errors.Wrap(validationsErr, "host validations failed")
-
 	}
 
 	// Print most recent event associated with the clusterInfraEnvID
