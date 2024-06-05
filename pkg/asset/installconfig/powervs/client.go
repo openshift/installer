@@ -642,8 +642,7 @@ func (c *Client) ListServiceInstances(ctx context.Context) ([]string, error) {
 			if response != nil && response.StatusCode == http.StatusNotFound || response.StatusCode == http.StatusInternalServerError {
 				continue
 			}
-
-			if resourceInstance.Type != nil && *resourceInstance.Type == "service_instance" {
+			if resourceInstance.Type != nil && (*resourceInstance.Type == "service_instance" || *resourceInstance.Type == "composite_instance") {
 				serviceInstances = append(serviceInstances, fmt.Sprintf("%s %s", *resource.Name, *resource.GUID))
 			}
 		}
@@ -718,7 +717,7 @@ func (c *Client) ServiceInstanceIDToCRN(ctx context.Context, id string) (string,
 				continue
 			}
 
-			if resourceInstance.Type != nil && *resourceInstance.Type == "service_instance" {
+			if resourceInstance.Type != nil && (*resourceInstance.Type == "service_instance" || *resourceInstance.Type == "composite_instance") {
 				if resourceInstance.GUID != nil && *resourceInstance.GUID == id {
 					if resourceInstance.CRN == nil {
 						return "", nil
