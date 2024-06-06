@@ -70,6 +70,15 @@ func writeKubeletConfig(object *KubeletConfig, stream *jsoniter.Stream) {
 		if count > 0 {
 			stream.WriteMore()
 		}
+		stream.WriteObjectField("name")
+		stream.WriteString(object.name)
+		count++
+	}
+	present_ = object.bitmap_&16 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
 		stream.WriteObjectField("pod_pids_limit")
 		stream.WriteInt(object.podPidsLimit)
 	}
@@ -108,10 +117,14 @@ func readKubeletConfig(iterator *jsoniter.Iterator) *KubeletConfig {
 		case "href":
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
+		case "name":
+			value := iterator.ReadString()
+			object.name = value
+			object.bitmap_ |= 8
 		case "pod_pids_limit":
 			value := iterator.ReadInt()
 			object.podPidsLimit = value
-			object.bitmap_ |= 8
+			object.bitmap_ |= 16
 		default:
 			iterator.ReadAny()
 		}

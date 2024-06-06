@@ -249,7 +249,7 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
-# github.com/google/cel-go v0.17.7
+# github.com/google/cel-go v0.17.8
 ## explicit; go 1.18
 github.com/google/cel-go/cel
 github.com/google/cel-go/checker
@@ -367,9 +367,11 @@ github.com/openshift-online/ocm-common/pkg/ocm/consts
 github.com/openshift-online/ocm-common/pkg/ocm/validations
 github.com/openshift-online/ocm-common/pkg/resource/validations
 github.com/openshift-online/ocm-common/pkg/utils
-# github.com/openshift-online/ocm-sdk-go v0.1.414
+# github.com/openshift-online/ocm-sdk-go v0.1.422
 ## explicit; go 1.21
 github.com/openshift-online/ocm-sdk-go
+github.com/openshift-online/ocm-sdk-go/accesstransparency
+github.com/openshift-online/ocm-sdk-go/accesstransparency/v1
 github.com/openshift-online/ocm-sdk-go/accountsmgmt
 github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 github.com/openshift-online/ocm-sdk-go/addonsmgmt
@@ -1080,7 +1082,7 @@ k8s.io/klog/v2/internal/dbg
 k8s.io/klog/v2/internal/serialize
 k8s.io/klog/v2/internal/severity
 k8s.io/klog/v2/internal/sloghandler
-# k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00 => k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00
+# k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 => k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00
 ## explicit; go 1.19
 k8s.io/kube-openapi/pkg/builder
 k8s.io/kube-openapi/pkg/builder3
@@ -1113,7 +1115,7 @@ k8s.io/utils/pointer
 k8s.io/utils/ptr
 k8s.io/utils/strings/slices
 k8s.io/utils/trace
-# sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.28.0
+# sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.29.0
 ## explicit; go 1.20
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/client
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/client/metrics
@@ -1123,7 +1125,7 @@ sigs.k8s.io/apiserver-network-proxy/konnectivity-client/proto/client
 ## explicit; go 1.21
 sigs.k8s.io/aws-iam-authenticator/pkg/mapper/crd/apis/iamauthenticator
 sigs.k8s.io/aws-iam-authenticator/pkg/mapper/crd/apis/iamauthenticator/v1alpha1
-# sigs.k8s.io/cluster-api v1.7.0 => sigs.k8s.io/cluster-api v1.7.0
+# sigs.k8s.io/cluster-api v1.7.1 => sigs.k8s.io/cluster-api v1.7.1
 ## explicit; go 1.21
 sigs.k8s.io/cluster-api/api/v1beta1
 sigs.k8s.io/cluster-api/api/v1beta1/index
@@ -1150,7 +1152,7 @@ sigs.k8s.io/cluster-api/util/predicates
 sigs.k8s.io/cluster-api/util/secret
 sigs.k8s.io/cluster-api/util/topology
 sigs.k8s.io/cluster-api/version
-# sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.2-0.20240426161541-ac4958082eab
+# sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.2-0.20240613114012-888c6596e3a1
 ## explicit; go 1.21
 sigs.k8s.io/cluster-api-provider-aws/v2
 sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1
@@ -1218,6 +1220,7 @@ sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger
 sigs.k8s.io/cluster-api-provider-aws/v2/pkg/planner
 sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record
 sigs.k8s.io/cluster-api-provider-aws/v2/pkg/rosa
+sigs.k8s.io/cluster-api-provider-aws/v2/pkg/utils
 sigs.k8s.io/cluster-api-provider-aws/v2/util/conditions
 sigs.k8s.io/cluster-api-provider-aws/v2/util/system
 sigs.k8s.io/cluster-api-provider-aws/v2/version
@@ -1308,4 +1311,4 @@ sigs.k8s.io/yaml/goyaml.v2
 # github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.18.0
 # github.com/prometheus/common => github.com/prometheus/common v0.46.0
 # k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00
-# sigs.k8s.io/cluster-api => sigs.k8s.io/cluster-api v1.7.0
+# sigs.k8s.io/cluster-api => sigs.k8s.io/cluster-api v1.7.1

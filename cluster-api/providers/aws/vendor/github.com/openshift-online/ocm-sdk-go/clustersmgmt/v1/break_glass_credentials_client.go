@@ -73,10 +73,6 @@ func (c *BreakGlassCredentialsClient) Delete() *BreakGlassCredentialsDeleteReque
 // List creates a request for the 'list' method.
 //
 // Retrieves the list of break glass credentials.
-//
-// IMPORTANT: This collection doesn't currently support paging or searching, so the returned
-// `page` will always be 1 and `size` and `total` will always be the total number of break
-// glass credentials for this cluster.
 func (c *BreakGlassCredentialsClient) List() *BreakGlassCredentialsListRequest {
 	return &BreakGlassCredentialsListRequest{
 		transport: c.transport,
@@ -356,7 +352,9 @@ type BreakGlassCredentialsListRequest struct {
 	path      string
 	query     url.Values
 	header    http.Header
+	order     *string
 	page      *int
+	search    *string
 	size      *int
 }
 
@@ -379,11 +377,51 @@ func (r *BreakGlassCredentialsListRequest) Impersonate(user string) *BreakGlassC
 	return r
 }
 
+// Order sets the value of the 'order' parameter.
+//
+// Order criteria.
+//
+// The syntax of this parameter is similar to the syntax of the _order by_ clause of
+// a SQL statement, but using the names of the attributes of the break glass credentials
+// instead of the the names of the columns of a table. For example, in order to sort the
+// credentials descending by identifier the value should be:
+//
+// ```sql
+// id desc
+// ```
+//
+// If the parameter isn't provided, or if the value is empty, then the order of the
+// results is undefined.
+func (r *BreakGlassCredentialsListRequest) Order(value string) *BreakGlassCredentialsListRequest {
+	r.order = &value
+	return r
+}
+
 // Page sets the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
 func (r *BreakGlassCredentialsListRequest) Page(value int) *BreakGlassCredentialsListRequest {
 	r.page = &value
+	return r
+}
+
+// Search sets the value of the 'search' parameter.
+//
+// Search criteria.
+//
+// The syntax of this parameter is similar to the syntax of the _where_ clause of a
+// SQL statement, but using the names of the attributes of the break glass credentials
+// instead of the names of the columns of a table. For example, in order to retrieve all
+// the credentials with a specific username and status the following is required:
+//
+// ```sql
+// username='user1' AND status='expired'
+// ```
+//
+// If the parameter isn't provided, or if the value is empty, then all the
+// break glass credentials that the user has permission to see will be returned.
+func (r *BreakGlassCredentialsListRequest) Search(value string) *BreakGlassCredentialsListRequest {
+	r.search = &value
 	return r
 }
 
@@ -406,8 +444,14 @@ func (r *BreakGlassCredentialsListRequest) Send() (result *BreakGlassCredentials
 // SendContext sends this request, waits for the response, and returns it.
 func (r *BreakGlassCredentialsListRequest) SendContext(ctx context.Context) (result *BreakGlassCredentialsListResponse, err error) {
 	query := helpers.CopyQuery(r.query)
+	if r.order != nil {
+		helpers.AddValue(&query, "order", *r.order)
+	}
 	if r.page != nil {
 		helpers.AddValue(&query, "page", *r.page)
+	}
+	if r.search != nil {
+		helpers.AddValue(&query, "search", *r.search)
 	}
 	if r.size != nil {
 		helpers.AddValue(&query, "size", *r.size)
