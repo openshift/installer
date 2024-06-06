@@ -36,8 +36,8 @@ sync_envtest() {
     fi
   fi
 
-  bucket="https://storage.googleapis.com/kubebuilder-tools"
-  tar_file="kubebuilder-tools-${ENVTEST_K8S_VERSION}-${ENVTEST_ARCH}.tar.gz"
+  bucket="https://github.com/kubernetes-sigs/controller-tools/releases/download/envtest-v${ENVTEST_K8S_VERSION}"
+  tar_file="envtest-v${ENVTEST_K8S_VERSION}-${ENVTEST_ARCH}.tar.gz"
   dst="${CLUSTER_API_BIN_DIR}/${tar_file}"
   if ! [ -f "${CLUSTER_API_BIN_DIR}/${tar_file}" ]; then
     echo "Downloading envtest binaries"
