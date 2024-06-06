@@ -53,6 +53,12 @@ func initializeFoldersAndTemplates(ctx context.Context, cachedImage string, fail
 		return fmt.Errorf("unable to create folder: %w", err)
 	}
 
+	// attach tag to folder
+	err = session.TagManager.AttachTag(ctx, tagID, folderMo.Reference())
+	if err != nil {
+		return fmt.Errorf("unable to attach tag to folder: %w", err)
+	}
+
 	// if the template is empty, the ova must be imported
 	if len(failureDomain.Topology.Template) == 0 {
 		if err = importRhcosOva(ctx, session, folderMo,
