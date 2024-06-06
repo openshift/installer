@@ -409,6 +409,15 @@ func (r *AWSMachineReconciler) reconcileDelete(machineScope *scope.MachineScope,
 			conditions.MarkFalse(machineScope.AWSMachine, infrav1.SecurityGroupsReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
 		}
 
+		// Release an Elastic IP when the machine has public IP Address (EIP) with a cluster-wide config
+		// to consume from BYO IPv4 Pool.
+		if machineScope.GetElasticIPPool() != nil {
+			if err := ec2Service.ReleaseElasticIP(instance.ID); err != nil {
+				machineScope.Error(err, "failed to release elastic IP address")
+				return ctrl.Result{}, err
+			}
+		}
+
 		machineScope.Info("EC2 instance successfully terminated", "instance-id", instance.ID)
 		r.Recorder.Eventf(machineScope.AWSMachine, corev1.EventTypeNormal, "SuccessfulTerminate", "Terminated instance %q", instance.ID)
 
@@ -522,6 +531,21 @@ func (r *AWSMachineReconciler) reconcileNormal(_ context.Context, machineScope *
 			return ctrl.Result{}, err
 		}
 	}
+
+	// BYO Public IPv4 Pool feature: allocates and associates an EIP to machine when PublicIP and
+	// cluster-wide Public IPv4 Pool configuration are set. The EIP must be associated after the instance
+	// is created and transictioned from Pending state.
+	// In the regular flow, if the instance have already a public IPv4 address (EIP) associated it will
+	// be released when a new is assigned, the createInstance() prevents that behavior by enforcing
+	// to not launch an instance with EIP, allowing ReconcileElasticIPFromPublicPool assigning
+	// a BYOIP without duplication.
+	if pool := machineScope.GetElasticIPPool(); pool != nil {
+		if err := ec2svc.ReconcileElasticIPFromPublicPool(pool, instance); err != nil {
+			machineScope.Error(err, "failed to associate elastic IP address")
+			return ctrl.Result{}, err
+		}
+	}
+
 	if feature.Gates.Enabled(feature.EventBridgeInstanceState) {
 		instancestateSvc := instancestate.NewService(ec2Scope)
 		if err := instancestateSvc.AddInstanceToEventPattern(instance.ID); err != nil {

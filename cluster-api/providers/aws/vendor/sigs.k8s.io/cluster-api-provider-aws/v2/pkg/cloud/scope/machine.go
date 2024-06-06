@@ -400,3 +400,11 @@ func (m *MachineScope) SetInterruptible() {
 		m.AWSMachine.Status.Interruptible = true
 	}
 }
+
+// GetElasticIPPool returns the Elastic IP Pool for an machine, when exists.
+func (m *MachineScope) GetElasticIPPool() *infrav1.ElasticIPPool {
+	if m.AWSMachine == nil {
+		return nil
+	}
+	return m.AWSMachine.Spec.ElasticIPPool
+}

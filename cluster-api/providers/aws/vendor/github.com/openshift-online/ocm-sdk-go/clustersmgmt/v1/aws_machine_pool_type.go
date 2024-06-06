@@ -42,6 +42,7 @@ type AWSMachinePool struct {
 	availabilityZoneTypes      map[string]string
 	spotMarketOptions          *AWSSpotMarketOptions
 	subnetOutposts             map[string]string
+	tags                       map[string]string
 }
 
 // Kind returns the name of the type of the object.
@@ -189,6 +190,43 @@ func (o *AWSMachinePool) GetSubnetOutposts() (value map[string]string, ok bool) 
 	ok = o != nil && o.bitmap_&64 != 0
 	if ok {
 		value = o.subnetOutposts
+	}
+	return
+}
+
+// Tags returns the value of the 'tags' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Optional keys and values that the machine pool provisioner will add as AWS tags to all AWS resources it creates.
+//
+// AWS tags must conform to the following standards:
+// - Each resource may have a maximum of 25 tags
+// - Tags beginning with "aws:" are reserved for system use and may not be set
+// - Tag keys may be between 1 and 128 characters in length
+// - Tag values may be between 0 and 256 characters in length
+// - Tags may only contain letters, numbers, spaces, and the following characters: [_ . : / = + - @]
+func (o *AWSMachinePool) Tags() map[string]string {
+	if o != nil && o.bitmap_&128 != 0 {
+		return o.tags
+	}
+	return nil
+}
+
+// GetTags returns the value of the 'tags' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Optional keys and values that the machine pool provisioner will add as AWS tags to all AWS resources it creates.
+//
+// AWS tags must conform to the following standards:
+// - Each resource may have a maximum of 25 tags
+// - Tags beginning with "aws:" are reserved for system use and may not be set
+// - Tag keys may be between 1 and 128 characters in length
+// - Tag values may be between 0 and 256 characters in length
+// - Tags may only contain letters, numbers, spaces, and the following characters: [_ . : / = + - @]
+func (o *AWSMachinePool) GetTags() (value map[string]string, ok bool) {
+	ok = o != nil && o.bitmap_&128 != 0
+	if ok {
+		value = o.tags
 	}
 	return
 }

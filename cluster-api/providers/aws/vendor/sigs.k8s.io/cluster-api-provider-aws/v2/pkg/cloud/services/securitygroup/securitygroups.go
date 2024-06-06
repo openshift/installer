@@ -592,24 +592,7 @@ func (s *Service) getSecurityGroupIngressRules(role infrav1.SecurityGroupRole) (
 			rules = append(rules, s.defaultSSHIngressRule(s.scope.SecurityGroups()[infrav1.SecurityGroupBastion].ID))
 		}
 
-		ingressRules := s.scope.AdditionalControlPlaneIngressRules()
-		for i := range ingressRules {
-			if len(ingressRules[i].CidrBlocks) != 0 || len(ingressRules[i].IPv6CidrBlocks) != 0 { // don't set source security group if cidr blocks are set
-				continue
-			}
-
-			if len(ingressRules[i].SourceSecurityGroupIDs) == 0 && len(ingressRules[i].SourceSecurityGroupRoles) == 0 { // if the rule doesn't have a source security group, use the control plane security group
-				ingressRules[i].SourceSecurityGroupIDs = []string{s.scope.SecurityGroups()[infrav1.SecurityGroupControlPlane].ID}
-				continue
-			}
-
-			securityGroupIDs := sets.New[string](ingressRules[i].SourceSecurityGroupIDs...)
-			for _, sourceSGRole := range ingressRules[i].SourceSecurityGroupRoles {
-				securityGroupIDs.Insert(s.scope.SecurityGroups()[sourceSGRole].ID)
-			}
-			ingressRules[i].SourceSecurityGroupIDs = sets.List[string](securityGroupIDs)
-		}
-		rules = append(rules, ingressRules...)
+		rules = append(rules, s.processIngressRulesSGs(s.scope.AdditionalControlPlaneIngressRules())...)
 
 		return append(cniRules, rules...), nil
 
@@ -656,7 +639,7 @@ func (s *Service) getSecurityGroupIngressRules(role infrav1.SecurityGroupRole) (
 		return infrav1.IngressRules{}, nil
 	case infrav1.SecurityGroupAPIServerLB:
 		kubeletRules := s.getIngressRulesToAllowKubeletToAccessTheControlPlaneLB()
-		customIngressRules := s.getControlPlaneLBIngressRules()
+		customIngressRules := s.processIngressRulesSGs(s.getControlPlaneLBIngressRules())
 		rulesToApply := customIngressRules.Difference(kubeletRules)
 		return append(kubeletRules, rulesToApply...), nil
 	case infrav1.SecurityGroupLB:
@@ -979,4 +962,31 @@ func (s *Service) getIngressRuleToAllowVPCCidrInTheAPIServer() infrav1.IngressRu
 			CidrBlocks:  []string{s.scope.VPC().CidrBlock},
 		},
 	}
+}
+
+func (s *Service) processIngressRulesSGs(ingressRules []infrav1.IngressRule) infrav1.IngressRules {
+	output := []infrav1.IngressRule{}
+
+	for _, rule := range ingressRules {
+		if len(rule.CidrBlocks) != 0 || len(rule.IPv6CidrBlocks) != 0 { // don't set source security group if cidr blocks are set
+			output = append(output, rule)
+			continue
+		}
+
+		if len(rule.SourceSecurityGroupIDs) == 0 && len(rule.SourceSecurityGroupRoles) == 0 { // if the rule doesn't have a source security group, use the control plane security group
+			rule.SourceSecurityGroupIDs = []string{s.scope.SecurityGroups()[infrav1.SecurityGroupControlPlane].ID}
+			output = append(output, rule)
+			continue
+		}
+
+		securityGroupIDs := sets.New(rule.SourceSecurityGroupIDs...)
+		for _, sourceSGRole := range rule.SourceSecurityGroupRoles {
+			securityGroupIDs.Insert(s.scope.SecurityGroups()[sourceSGRole].ID)
+		}
+		rule.SourceSecurityGroupIDs = sets.List(securityGroupIDs)
+
+		output = append(output, rule)
+	}
+
+	return output
 }

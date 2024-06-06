@@ -222,6 +222,13 @@ func (o *AWSNodePool) GetSubnetOutposts() (value map[string]string, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Optional keys and values that the installer will add as tags to all AWS resources it creates.
+//
+// AWS tags must conform to the following standards:
+// - Each resource may have a maximum of 25 tags
+// - Tags beginning with "aws:" are reserved for system use and may not be set
+// - Tag keys may be between 1 and 128 characters in length
+// - Tag values may be between 0 and 256 characters in length
+// - Tags may only contain letters, numbers, spaces, and the following characters: [_ . : / = + - @]
 func (o *AWSNodePool) Tags() map[string]string {
 	if o != nil && o.bitmap_&256 != 0 {
 		return o.tags
@@ -233,6 +240,13 @@ func (o *AWSNodePool) Tags() map[string]string {
 // a flag indicating if the attribute has a value.
 //
 // Optional keys and values that the installer will add as tags to all AWS resources it creates.
+//
+// AWS tags must conform to the following standards:
+// - Each resource may have a maximum of 25 tags
+// - Tags beginning with "aws:" are reserved for system use and may not be set
+// - Tag keys may be between 1 and 128 characters in length
+// - Tag values may be between 0 and 256 characters in length
+// - Tags may only contain letters, numbers, spaces, and the following characters: [_ . : / = + - @]
 func (o *AWSNodePool) GetTags() (value map[string]string, ok bool) {
 	ok = o != nil && o.bitmap_&256 != 0
 	if ok {

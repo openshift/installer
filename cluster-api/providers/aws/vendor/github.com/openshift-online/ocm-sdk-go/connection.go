@@ -30,6 +30,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/openshift-online/ocm-sdk-go/accesstransparency"
 	"github.com/openshift-online/ocm-sdk-go/accountsmgmt"
 	"github.com/openshift-online/ocm-sdk-go/addonsmgmt"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
@@ -994,6 +995,11 @@ func (c *Connection) AlternativeURLs() map[string]string {
 		}
 	}
 	return result
+}
+
+// AccessTransparency returns the client for the access transparency service.
+func (c *Connection) AccessTransparency() *accesstransparency.Client {
+	return accesstransparency.NewClient(c, "/api/access_transparency")
 }
 
 // AccountsMgmt returns the client for the accounts management service.
