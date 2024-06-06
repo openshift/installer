@@ -234,6 +234,11 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 					"disabling CloudControllerManager on External platform supported only with cloudControllerManager value none"))
 			}
 		}
+
+		if !enabledCaps.Has(configv1.ClusterVersionCapabilityIngress) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("capabilities"), c.Capabilities,
+				"the Ingress capability is required"))
+		}
 	}
 
 	allErrs = append(allErrs, ValidateFeatureSet(c)...)
