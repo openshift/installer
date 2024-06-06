@@ -451,7 +451,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 		}
 	}
 
-	timeout := 30 * time.Minute
+	timeout := 45 * time.Minute
 
 	// Wait longer for baremetal, VSphere due to length of time it takes to boot
 	if platformName == baremetal.Name || platformName == vsphere.Name {
