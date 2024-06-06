@@ -85,6 +85,21 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 			expected: `^test-path\.diskSizeGB: Invalid value: 66000: exceeding maximum GCP disk size limit, must be below 65536$`,
 		},
+		{
+			name: "enable confidential compute with correct on host maintenance",
+			pool: &gcp.MachinePool{
+				ConfidentialCompute: string(gcp.EnabledFeature),
+				OnHostMaintenance:   string(gcp.OnHostMaintenanceTerminate),
+			},
+		},
+		{
+			name: "enable confidential compute with incorrect on host maintenance",
+			pool: &gcp.MachinePool{
+				ConfidentialCompute: string(gcp.EnabledFeature),
+				OnHostMaintenance:   string(gcp.OnHostMaintenanceMigrate),
+			},
+			expected: `test-path.OnHostMaintenance: Invalid value: "Migrate": OnHostMaintenace must be set to Terminate when ConfidentialCompute is Enabled`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
