@@ -90,7 +90,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	}
 	clusterName := "test-agent-cluster-install.test"
 
-	privateKey := "-----BEGIN EC PRIVATE KEY-----\nMFkwEwYHKoAiDHV4tg==\n-----END EC PRIVATE KEY-----\n" //nolint:gosec
+	privateKey := "-----BEGIN EC PRIVATE KEY-----\nMFkwEwYHKoAiDHV4tg==\n-----END EC PRIVATE KEY-----\n"        //nolint:gosec
 	publicKey := "-----BEGIN EC PUBLIC KEY-----\nMHcCAQEEIOSCfDNmx0qe6dncV4tg==\n-----END EC PUBLIC KEY-----\n" //nolint:gosec
 	token := "someToken"
 
