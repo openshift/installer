@@ -2160,6 +2160,39 @@ spec:
                           Defaults to 10.0.0.0/16.
                           Mutually exclusive with IPAMPool.
                         type: string
+                      elasticIpPool:
+                        description: |-
+                          ElasticIPPool contains specific configuration to allocate Public IPv4 address (Elastic IP) from user-defined pool
+                          brought to AWS for core infrastructure resources, like NAT Gateways and Public Network Load Balancers for
+                          the API Server.
+                        properties:
+                          publicIpv4Pool:
+                            description: |-
+                              PublicIpv4Pool sets a custom Public IPv4 Pool used to create Elastic IP address for resources
+                              created in public IPv4 subnets. Every IPv4 address, Elastic IP, will be allocated from the custom
+                              Public IPv4 pool that you brought to AWS, instead of Amazon-provided pool. The public IPv4 pool
+                              resource ID starts with 'ipv4pool-ec2'.
+                            maxLength: 30
+                            type: string
+                          publicIpv4PoolFallbackOrder:
+                            description: |-
+                              PublicIpv4PoolFallBackOrder defines the fallback action when the Public IPv4 Pool has been exhausted,
+                              no more IPv4 address available in the pool.
+
+
+                              When set to 'amazon-pool', the controller check if the pool has available IPv4 address, when pool has reached the
+                              IPv4 limit, the address will be claimed from Amazon-pool (default).
+
+
+                              When set to 'none', the controller will fail the Elastic IP allocation when the publicIpv4Pool is exhausted.
+                            enum:
+                            - amazon-pool
+                            - none
+                            type: string
+                            x-kubernetes-validations:
+                            - message: allowed values are 'none' and 'amazon-pool'
+                              rule: self in ['none','amazon-pool']
+                        type: object
                       emptyRoutesDefaultVPCSecurityGroup:
                         description: |-
                           EmptyRoutesDefaultVPCSecurityGroup specifies whether the default VPC security group ingress
@@ -4920,6 +4953,39 @@ spec:
                                   Defaults to 10.0.0.0/16.
                                   Mutually exclusive with IPAMPool.
                                 type: string
+                              elasticIpPool:
+                                description: |-
+                                  ElasticIPPool contains specific configuration to allocate Public IPv4 address (Elastic IP) from user-defined pool
+                                  brought to AWS for core infrastructure resources, like NAT Gateways and Public Network Load Balancers for
+                                  the API Server.
+                                properties:
+                                  publicIpv4Pool:
+                                    description: |-
+                                      PublicIpv4Pool sets a custom Public IPv4 Pool used to create Elastic IP address for resources
+                                      created in public IPv4 subnets. Every IPv4 address, Elastic IP, will be allocated from the custom
+                                      Public IPv4 pool that you brought to AWS, instead of Amazon-provided pool. The public IPv4 pool
+                                      resource ID starts with 'ipv4pool-ec2'.
+                                    maxLength: 30
+                                    type: string
+                                  publicIpv4PoolFallbackOrder:
+                                    description: |-
+                                      PublicIpv4PoolFallBackOrder defines the fallback action when the Public IPv4 Pool has been exhausted,
+                                      no more IPv4 address available in the pool.
+
+
+                                      When set to 'amazon-pool', the controller check if the pool has available IPv4 address, when pool has reached the
+                                      IPv4 limit, the address will be claimed from Amazon-pool (default).
+
+
+                                      When set to 'none', the controller will fail the Elastic IP allocation when the publicIpv4Pool is exhausted.
+                                    enum:
+                                    - amazon-pool
+                                    - none
+                                    type: string
+                                    x-kubernetes-validations:
+                                    - message: allowed values are 'none' and 'amazon-pool'
+                                      rule: self in ['none','amazon-pool']
+                                type: object
                               emptyRoutesDefaultVPCSecurityGroup:
                                 description: |-
                                   EmptyRoutesDefaultVPCSecurityGroup specifies whether the default VPC security group ingress
@@ -7603,6 +7669,37 @@ spec:
                     - ssm-parameter-store
                     type: string
                 type: object
+              elasticIpPool:
+                description: ElasticIPPool is the configuration to allocate Public
+                  IPv4 address (Elastic IP/EIP) from user-defined pool.
+                properties:
+                  publicIpv4Pool:
+                    description: |-
+                      PublicIpv4Pool sets a custom Public IPv4 Pool used to create Elastic IP address for resources
+                      created in public IPv4 subnets. Every IPv4 address, Elastic IP, will be allocated from the custom
+                      Public IPv4 pool that you brought to AWS, instead of Amazon-provided pool. The public IPv4 pool
+                      resource ID starts with 'ipv4pool-ec2'.
+                    maxLength: 30
+                    type: string
+                  publicIpv4PoolFallbackOrder:
+                    description: |-
+                      PublicIpv4PoolFallBackOrder defines the fallback action when the Public IPv4 Pool has been exhausted,
+                      no more IPv4 address available in the pool.
+
+
+                      When set to 'amazon-pool', the controller check if the pool has available IPv4 address, when pool has reached the
+                      IPv4 limit, the address will be claimed from Amazon-pool (default).
+
+
+                      When set to 'none', the controller will fail the Elastic IP allocation when the publicIpv4Pool is exhausted.
+                    enum:
+                    - amazon-pool
+                    - none
+                    type: string
+                    x-kubernetes-validations:
+                    - message: allowed values are 'none' and 'amazon-pool'
+                      rule: self in ['none','amazon-pool']
+                type: object
               iamInstanceProfile:
                 description: IAMInstanceProfile is a name of an IAM instance profile
                   to assign to the instance
@@ -8744,6 +8841,37 @@ spec:
                             - secrets-manager
                             - ssm-parameter-store
                             type: string
+                        type: object
+                      elasticIpPool:
+                        description: ElasticIPPool is the configuration to allocate
+                          Public IPv4 address (Elastic IP/EIP) from user-defined pool.
+                        properties:
+                          publicIpv4Pool:
+                            description: |-
+                              PublicIpv4Pool sets a custom Public IPv4 Pool used to create Elastic IP address for resources
+                              created in public IPv4 subnets. Every IPv4 address, Elastic IP, will be allocated from the custom
+                              Public IPv4 pool that you brought to AWS, instead of Amazon-provided pool. The public IPv4 pool
+                              resource ID starts with 'ipv4pool-ec2'.
+                            maxLength: 30
+                            type: string
+                          publicIpv4PoolFallbackOrder:
+                            description: |-
+                              PublicIpv4PoolFallBackOrder defines the fallback action when the Public IPv4 Pool has been exhausted,
+                              no more IPv4 address available in the pool.
+
+
+                              When set to 'amazon-pool', the controller check if the pool has available IPv4 address, when pool has reached the
+                              IPv4 limit, the address will be claimed from Amazon-pool (default).
+
+
+                              When set to 'none', the controller will fail the Elastic IP allocation when the publicIpv4Pool is exhausted.
+                            enum:
+                            - amazon-pool
+                            - none
+                            type: string
+                            x-kubernetes-validations:
+                            - message: allowed values are 'none' and 'amazon-pool'
+                              rule: self in ['none','amazon-pool']
                         type: object
                       iamInstanceProfile:
                         description: IAMInstanceProfile is a name of an IAM instance
@@ -9948,6 +10076,39 @@ spec:
                           Defaults to 10.0.0.0/16.
                           Mutually exclusive with IPAMPool.
                         type: string
+                      elasticIpPool:
+                        description: |-
+                          ElasticIPPool contains specific configuration to allocate Public IPv4 address (Elastic IP) from user-defined pool
+                          brought to AWS for core infrastructure resources, like NAT Gateways and Public Network Load Balancers for
+                          the API Server.
+                        properties:
+                          publicIpv4Pool:
+                            description: |-
+                              PublicIpv4Pool sets a custom Public IPv4 Pool used to create Elastic IP address for resources
+                              created in public IPv4 subnets. Every IPv4 address, Elastic IP, will be allocated from the custom
+                              Public IPv4 pool that you brought to AWS, instead of Amazon-provided pool. The public IPv4 pool
+                              resource ID starts with 'ipv4pool-ec2'.
+                            maxLength: 30
+                            type: string
+                          publicIpv4PoolFallbackOrder:
+                            description: |-
+                              PublicIpv4PoolFallBackOrder defines the fallback action when the Public IPv4 Pool has been exhausted,
+                              no more IPv4 address available in the pool.
+
+
+                              When set to 'amazon-pool', the controller check if the pool has available IPv4 address, when pool has reached the
+                              IPv4 limit, the address will be claimed from Amazon-pool (default).
+
+
+                              When set to 'none', the controller will fail the Elastic IP allocation when the publicIpv4Pool is exhausted.
+                            enum:
+                            - amazon-pool
+                            - none
+                            type: string
+                            x-kubernetes-validations:
+                            - message: allowed values are 'none' and 'amazon-pool'
+                              rule: self in ['none','amazon-pool']
+                        type: object
                       emptyRoutesDefaultVPCSecurityGroup:
                         description: |-
                           EmptyRoutesDefaultVPCSecurityGroup specifies whether the default VPC security group ingress
@@ -11898,6 +12059,39 @@ spec:
                           Defaults to 10.0.0.0/16.
                           Mutually exclusive with IPAMPool.
                         type: string
+                      elasticIpPool:
+                        description: |-
+                          ElasticIPPool contains specific configuration to allocate Public IPv4 address (Elastic IP) from user-defined pool
+                          brought to AWS for core infrastructure resources, like NAT Gateways and Public Network Load Balancers for
+                          the API Server.
+                        properties:
+                          publicIpv4Pool:
+                            description: |-
+                              PublicIpv4Pool sets a custom Public IPv4 Pool used to create Elastic IP address for resources
+                              created in public IPv4 subnets. Every IPv4 address, Elastic IP, will be allocated from the custom
+                              Public IPv4 pool that you brought to AWS, instead of Amazon-provided pool. The public IPv4 pool
+                              resource ID starts with 'ipv4pool-ec2'.
+                            maxLength: 30
+                            type: string
+                          publicIpv4PoolFallbackOrder:
+                            description: |-
+                              PublicIpv4PoolFallBackOrder defines the fallback action when the Public IPv4 Pool has been exhausted,
+                              no more IPv4 address available in the pool.
+
+
+                              When set to 'amazon-pool', the controller check if the pool has available IPv4 address, when pool has reached the
+                              IPv4 limit, the address will be claimed from Amazon-pool (default).
+
+
+                              When set to 'none', the controller will fail the Elastic IP allocation when the publicIpv4Pool is exhausted.
+                            enum:
+                            - amazon-pool
+                            - none
+                            type: string
+                            x-kubernetes-validations:
+                            - message: allowed values are 'none' and 'amazon-pool'
+                              rule: self in ['none','amazon-pool']
+                        type: object
                       emptyRoutesDefaultVPCSecurityGroup:
                         description: |-
                           EmptyRoutesDefaultVPCSecurityGroup specifies whether the default VPC security group ingress
@@ -13334,6 +13528,8 @@ spec:
                 - AL2_x86_64
                 - AL2_x86_64_GPU
                 - AL2_ARM_64
+                - AL2023_x86_64_STANDARD
+                - AL2023_ARM_64_STANDARD
                 - CUSTOM
                 type: string
               amiVersion:
@@ -13808,6 +14004,8 @@ spec:
                 - AL2_x86_64
                 - AL2_x86_64_GPU
                 - AL2_ARM_64
+                - AL2023_x86_64_STANDARD
+                - AL2023_ARM_64_STANDARD
                 - CUSTOM
                 type: string
               amiVersion:
@@ -16412,10 +16610,10 @@ spec:
                   underlying EC2 instances associated with this machine pool.
                 type: object
               autoRepair:
-                default: false
+                default: true
                 description: |-
                   AutoRepair specifies whether health checks should be enabled for machines
-                  in the NodePool. The default is false.
+                  in the NodePool. The default is true.
                 type: boolean
               autoscaling:
                 description: |-
@@ -16507,6 +16705,59 @@ spec:
                 items:
                   type: string
                 type: array
+              updateConfig:
+                description: UpdateConfig specifies update configurations.
+                properties:
+                  rollingUpdate:
+                    description: RollingUpdate specifies MaxUnavailable & MaxSurge
+                      number of nodes during update.
+                    properties:
+                      maxSurge:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        default: 1
+                        description: |-
+                          MaxSurge is the maximum number of nodes that can be provisioned above the desired number of nodes.
+                          Value can be an absolute number (ex: 5) or a percentage of desired nodes (ex: 10%).
+                          Absolute number is calculated from percentage by rounding up.
+
+
+                          MaxSurge can not be 0 if MaxUnavailable is 0, default is 1.
+                          Both MaxSurge & MaxUnavailable must use the same units (absolute value or percentage).
+
+
+                          Example: when MaxSurge is set to 30%, new nodes can be provisioned immediately
+                          when the rolling update starts, such that the total number of old and new
+                          nodes do not exceed 130% of desired nodes. Once old nodes have been
+                          deleted, new nodes can be provisioned, ensuring that total number of nodes
+                          running at any time during the update is at most 130% of desired nodes.
+                        pattern: ^((100|[0-9]{1,2})%|[0-9]+)$
+                        x-kubernetes-int-or-string: true
+                      maxUnavailable:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        default: 0
+                        description: |-
+                          MaxUnavailable is the maximum number of nodes that can be unavailable during the update.
+                          Value can be an absolute number (ex: 5) or a percentage of desired nodes (ex: 10%).
+                          Absolute number is calculated from percentage by rounding down.
+
+
+                          MaxUnavailable can not be 0 if MaxSurge is 0, default is 0.
+                          Both MaxUnavailable & MaxSurge must use the same units (absolute value or percentage).
+
+
+                          Example: when MaxUnavailable is set to 30%, old nodes can be deleted down to 70% of
+                          desired nodes immediately when the rolling update starts. Once new nodes
+                          are ready, more old nodes be deleted, followed by provisioning new nodes,
+                          ensuring that the total number of nodes available at all times during the
+                          update is at least 70% of desired nodes.
+                        pattern: ^((100|[0-9]{1,2})%|[0-9]+)$
+                        x-kubernetes-int-or-string: true
+                    type: object
+                type: object
               version:
                 description: |-
                   Version specifies the OpenShift version of the nodes associated with this machinepool.
@@ -17219,7 +17470,7 @@ spec:
         env:
         - name: AWS_SHARED_CREDENTIALS_FILE
           value: /home/.aws/credentials
-        image: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller:latest
+        image: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller:v2.4.1
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
