@@ -1,5 +1,26 @@
 package gcp
 
+// FeatureSwitch indicates whether the feature is enabled or disabled.
+type FeatureSwitch string
+
+// OnHostMaintenanceType indicates the setting for the OnHostMaintenance feature, but this is only
+// applicable when ConfidentialCompute is Enabled.
+type OnHostMaintenanceType string
+
+const (
+	// EnabledFeature indicates that the feature is configured as enabled.
+	EnabledFeature FeatureSwitch = "Enabled"
+
+	// DisabledFeature indicates that the feature is configured as disabled.
+	DisabledFeature FeatureSwitch = "Disabled"
+
+	// OnHostMaintenanceMigrate is the default, and it indicates that the OnHostMaintenance feature is set to Migrate.
+	OnHostMaintenanceMigrate OnHostMaintenanceType = "Migrate"
+
+	// OnHostMaintenanceTerminate indicates that the OnHostMaintenance feature is set to Terminate.
+	OnHostMaintenanceTerminate OnHostMaintenanceType = "Terminate"
+)
+
 // MachinePool stores the configuration for a machine pool installed on GCP.
 type MachinePool struct {
 	// Zones is list of availability zones that can be used.
@@ -38,6 +59,8 @@ type MachinePool struct {
 	// OnHostMaintenance determines the behavior when a maintenance event occurs that might cause the instance to reboot.
 	// Allowed values are "Migrate" and "Terminate".
 	// If omitted, the platform chooses a default, which is subject to change over time, currently that default is "Migrate".
+	// +kubebuilder:default="Migrate"
+	// +default="Migrate"
 	// +kubebuilder:validation:Enum=Migrate;Terminate;
 	// +optional
 	OnHostMaintenance string `json:"onHostMaintenance,omitempty"`
@@ -45,6 +68,8 @@ type MachinePool struct {
 	// ConfidentialCompute Defines whether the instance should have confidential compute enabled.
 	// If enabled OnHostMaintenance is required to be set to "Terminate".
 	// If omitted, the platform chooses a default, which is subject to change over time, currently that default is false.
+	// +kubebuilder:default="Disabled"
+	// +default="Disabled"
 	// +kubebuilder:validation:Enum=Enabled;Disabled
 	// +optional
 	ConfidentialCompute string `json:"confidentialCompute,omitempty"`
