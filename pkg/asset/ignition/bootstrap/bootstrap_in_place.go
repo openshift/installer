@@ -18,7 +18,7 @@ var (
 	bootstrapInPlaceEnabledServices = []string{
 		"install-to-disk.service",
 	}
-	installDiskValidationRegex = regexp.MustCompile(`^(/([A-Za-z0-9_-]+)|/)+$`)
+	installDiskValidationRegex = regexp.MustCompile(`^(/([A-Za-z0-9:._-]+)|/)+$`)
 )
 
 // SingleNodeBootstrapInPlace is an asset that generates the ignition config for single node OpenShift.
