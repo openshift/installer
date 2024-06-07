@@ -257,11 +257,13 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 
 	return &capiutils.GenerateClusterAssetsOutput{
 		Manifests: manifests,
-		InfrastructureRef: &corev1.ObjectReference{
-			APIVersion: capa.GroupVersion.String(),
-			Kind:       "AWSCluster",
-			Name:       awsCluster.Name,
-			Namespace:  awsCluster.Namespace,
+		InfrastructureRefs: []*corev1.ObjectReference{
+			{
+				APIVersion: capa.GroupVersion.String(),
+				Kind:       "AWSCluster",
+				Name:       awsCluster.Name,
+				Namespace:  awsCluster.Namespace,
+			},
 		},
 	}, nil
 }
