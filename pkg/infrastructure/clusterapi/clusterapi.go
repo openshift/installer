@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	utilkubeconfig "sigs.k8s.io/cluster-api/util/kubeconfig"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -269,36 +270,39 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	masterIgnSecret := IgnitionSecret(masterIgnAsset.Files()[0].Data, clusterID.InfraID, "master")
 	machineManifests = append(machineManifests, bootstrapIgnSecret, masterIgnSecret)
 
-	timer.StartTimer(machineStage)
 	// Create the machine manifests.
+	timer.StartTimer(machineStage)
+	machineNames := []string{}
+
 	for _, m := range machineManifests {
 		m.SetNamespace(capiutils.Namespace)
 		if err := cl.Create(ctx, m); err != nil {
 			return fileList, fmt.Errorf("failed to create control-plane manifest: %w", err)
 		}
 		i.appliedManifests = append(i.appliedManifests, m)
+
+		if machine, ok := m.(*clusterv1.Machine); ok {
+			machineNames = append(machineNames, machine.Name)
+		}
 		logrus.Infof("Created manifest %+T, namespace=%s name=%s", m, m.GetNamespace(), m.GetName())
 	}
 
 	{
-		masterCount := int64(1)
-		if reps := installConfig.Config.ControlPlane.Replicas; reps != nil {
-			masterCount = *reps
-		}
-
 		untilTime := time.Now().Add(timeout)
 		timezone, _ := untilTime.Zone()
-		logrus.Infof("Waiting up to %v (until %v %s) for machines to provision...", timeout, untilTime.Format(time.Kitchen), timezone)
+		reqBootstrapPubIP := installConfig.Config.Publish == types.ExternalPublishingStrategy && i.impl.BootstrapHasPublicIP()
+		logrus.Infof("Waiting up to %v (until %v %s) for machines %v to provision...", timeout, untilTime.Format(time.Kitchen), timezone, machineNames)
 		if err := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
 			Duration: time.Second * 10,
 			Factor:   float64(1.5),
 			Steps:    32,
 			Cap:      timeout,
 		}, func(ctx context.Context) (bool, error) {
-			for i := int64(0); i < masterCount; i++ {
+			allReady := true
+			for _, machineName := range machineNames {
 				machine := &clusterv1.Machine{}
 				if err := cl.Get(ctx, client.ObjectKey{
-					Name:      fmt.Sprintf("%s-%s-%d", clusterID.InfraID, "master", i),
+					Name:      machineName,
 					Namespace: capiutils.Namespace,
 				}, machine); err != nil {
 					if apierrors.IsNotFound(err) {
@@ -307,15 +311,18 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 					}
 					return false, err
 				}
-				if machine.Status.Phase != string(clusterv1.MachinePhaseProvisioned) &&
-					machine.Status.Phase != string(clusterv1.MachinePhaseRunning) {
-					return false, nil
-				} else if machine.Status.Phase == string(clusterv1.MachinePhaseFailed) {
-					return false, fmt.Errorf("machine %s failed to provision: %q", machine.Name, *machine.Status.FailureMessage)
+				reqPubIP := reqBootstrapPubIP && machineName == capiutils.GenerateBoostrapMachineName(clusterID.InfraID)
+				ready, err := checkMachineReady(machine, reqPubIP)
+				if err != nil {
+					return false, fmt.Errorf("failed waiting for machines: %w", err)
 				}
-				logrus.Debugf("Machine %s is ready. Phase: %s", machine.Name, machine.Status.Phase)
+				if !ready {
+					allReady = false
+				} else {
+					logrus.Debugf("Machine %s is ready. Phase: %s", machine.Name, machine.Status.Phase)
+				}
 			}
-			return true, nil
+			return allReady, nil
 		}); err != nil {
 			if wait.Interrupted(err) {
 				return fileList, fmt.Errorf("control-plane machines were not provisioned within %v: %w", timeout, err)
@@ -549,4 +556,38 @@ func (i *InfraProvider) collectManifests(ctx context.Context, cl client.Client) 
 		})
 	}
 	return fileList, errorList
+}
+
+func checkMachineReady(machine *clusterv1.Machine, requirePublicIP bool) (bool, error) {
+	logrus.Debugf("Checking that machine %s has provisioned...", machine.Name)
+	if machine.Status.Phase != string(clusterv1.MachinePhaseProvisioned) &&
+		machine.Status.Phase != string(clusterv1.MachinePhaseRunning) {
+		logrus.Debugf("Machine %s has not yet provisioned: %s", machine.Name, machine.Status.Phase)
+		return false, nil
+	} else if machine.Status.Phase == string(clusterv1.MachinePhaseFailed) {
+		msg := ptr.Deref(machine.Status.FailureMessage, "machine.Status.FailureMessage was not set")
+		return false, fmt.Errorf("machine %s failed to provision: %s", machine.Name, msg)
+	}
+	logrus.Debugf("Machine %s has status: %s", machine.Name, machine.Status.Phase)
+	return hasRequiredIP(machine, requirePublicIP), nil
+}
+
+func hasRequiredIP(machine *clusterv1.Machine, requirePublicIP bool) bool {
+	logrus.Debugf("Checking that IP addresses are populated in the status of machine %s...", machine.Name)
+
+	for _, addr := range machine.Status.Addresses {
+		switch {
+		case len(addr.Address) == 0:
+			continue
+		case addr.Type == clusterv1.MachineExternalIP:
+			logrus.Debugf("Found external IP address: %s", addr.Address)
+			return true
+		case addr.Type == clusterv1.MachineInternalIP && !requirePublicIP:
+			logrus.Debugf("Found internal IP address: %s", addr.Address)
+			return true
+		}
+		logrus.Debugf("Checked IP %s: %s", addr.Type, addr.Address)
+	}
+	logrus.Debugf("Still waiting for machine %s to get required IPs", machine.Name)
+	return false
 }

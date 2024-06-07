@@ -37,6 +37,10 @@ func (p Provider) Name() string {
 	return gcptypes.Name
 }
 
+// BootstrapHasPublicIP indicates that machine ready checks
+// should wait for an ExternalIP in the status.
+func (Provider) BootstrapHasPublicIP() bool { return true }
+
 // PreProvision is called before provisioning using CAPI controllers has initiated.
 // GCP resources that are not created by CAPG (and are required for other stages of the install) are
 // created here using the gcp sdk.

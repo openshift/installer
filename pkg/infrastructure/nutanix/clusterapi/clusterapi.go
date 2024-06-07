@@ -26,6 +26,10 @@ func (p Provider) Name() string {
 	return nutanixtypes.Name
 }
 
+// BootstrapHasPublicIP indicates that an ExternalIP is not
+// required in the machine ready checks.
+func (Provider) BootstrapHasPublicIP() bool { return false }
+
 // PreProvision creates the resources required prior to running capi nutanix controller.
 func (p Provider) PreProvision(ctx context.Context, in infracapi.PreProvisionInput) error {
 	// create categories with name "kubernetes-io-cluster-<cluster_id>" and values ["owned", "shared"].

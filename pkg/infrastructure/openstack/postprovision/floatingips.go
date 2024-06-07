@@ -8,6 +8,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/attributestags"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
+	apiv1 "k8s.io/api/core/v1"
 	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -40,9 +41,22 @@ func FloatingIPs(ctx context.Context, c client.Client, cluster *capo.OpenStackCl
 		return err
 	}
 
-	_, err = createAndAttachFIP(networkClient, "bootstrap", infraID, cluster.Status.ExternalNetwork.ID, bootstrapPort.ID)
+	fip, err := createAndAttachFIP(networkClient, "bootstrap", infraID, cluster.Status.ExternalNetwork.ID, bootstrapPort.ID)
 	if err != nil {
 		return err
+	}
+
+	bootstrapMachine.Status.Addresses = append(bootstrapMachine.Status.Addresses, apiv1.NodeAddress{
+		Type:    apiv1.NodeExternalIP,
+		Address: fip.FloatingIP,
+	})
+
+	// Here Installer is updating the CAPO manifest directly. This is a
+	// hack to make the gather machinery aware of the bootstrap external
+	// IP. We want to remove this whole post-provision step in 4.17 once we
+	// directly pass CAPO a bootstrap manifest requesting a FIP.
+	if err := c.Update(ctx, bootstrapMachine); err != nil {
+		return fmt.Errorf("failed to update the bootstrap Machine manifest with the floating ip: %w", err)
 	}
 
 	return nil
