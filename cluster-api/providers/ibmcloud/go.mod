@@ -1,8 +1,6 @@
 module openshift/installer/cluster-api/providers/ibmcloud
 
-go 1.21
-
-toolchain go1.21.4
+go 1.22
 
 require sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0
 

@@ -1,6 +1,6 @@
 module openshift/installer/cluster-api/providers/azure
 
-go 1.21
+go 1.22
 
 require sigs.k8s.io/cluster-api-provider-azure v1.14.2
 
