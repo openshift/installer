@@ -259,38 +259,36 @@ func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string) err
 	warnTime := time.Now().Add(5 * time.Minute)
 	warned := false
 	timezone, _ := untilTime.Zone()
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
 	logrus.Infof("Waiting up to %v (until %v %s) for bootstrap SSH rule to be destroyed...", timeout, untilTime.Format(time.Kitchen), timezone)
-	if err := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
-		Duration: time.Second * 10,
-		Factor:   float64(1.5),
-		Steps:    32,
-		Cap:      timeout,
-	}, func(ctx context.Context) (bool, error) {
-		c := &capa.AWSCluster{}
-		if err := cl.Get(ctx, key, c); err != nil {
-			return false, err
-		}
-		if time.Now().After(warnTime) && !warned {
-			logrus.Warn("Deleting bootstrap SSH rule is still progressing but taking longer than expected")
-			warned = true
-		}
-		if sg, ok := c.Status.Network.SecurityGroups[capa.SecurityGroupControlPlane]; ok {
-			for _, r := range sg.IngressRules {
-				if r.Description == awsmanifest.BootstrapSSHDescription {
-					logrus.Debugf("Still waiting for bootstrap SSH security rule %s to be deleted from %s...", r.Description, sg.ID)
-					return false, nil
-				}
+	if err := wait.PollUntilContextCancel(ctx, 20*time.Second, true,
+		func(ctx context.Context) (bool, error) {
+			c := &capa.AWSCluster{}
+			if err := cl.Get(ctx, key, c); err != nil {
+				return false, err
 			}
-			logrus.Debugf("The bootstrap SSH security rule %s has been removed from %s", awsmanifest.BootstrapSSHDescription, sg.ID)
-			return true, nil
-		}
-		// This shouldn't happen, but if control plane SG is not found, return an error.
-		keys := make([]capa.SecurityGroupRole, 0, len(c.Status.Network.SecurityGroups))
-		for sgr := range c.Status.Network.SecurityGroups {
-			keys = append(keys, sgr)
-		}
-		return false, fmt.Errorf("controlplane not found in cluster security groups: %v", keys)
-	}); err != nil {
+			if time.Now().After(warnTime) && !warned {
+				logrus.Warn("Deleting bootstrap SSH rule is still progressing but taking longer than expected")
+				warned = true
+			}
+			if sg, ok := c.Status.Network.SecurityGroups[capa.SecurityGroupControlPlane]; ok {
+				for _, r := range sg.IngressRules {
+					if r.Description == awsmanifest.BootstrapSSHDescription {
+						logrus.Debugf("Still waiting for bootstrap SSH security rule %s to be deleted from %s...", r.Description, sg.ID)
+						return false, nil
+					}
+				}
+				logrus.Debugf("The bootstrap SSH security rule %s has been removed from %s", awsmanifest.BootstrapSSHDescription, sg.ID)
+				return true, nil
+			}
+			// This shouldn't happen, but if control plane SG is not found, return an error.
+			keys := make([]capa.SecurityGroupRole, 0, len(c.Status.Network.SecurityGroups))
+			for sgr := range c.Status.Network.SecurityGroups {
+				keys = append(keys, sgr)
+			}
+			return false, fmt.Errorf("controlplane not found in cluster security groups: %v", keys)
+		}); err != nil {
 		if wait.Interrupted(err) {
 			return fmt.Errorf("bootstrap ssh rule was not removed within %v: %w", timeout, err)
 		}
