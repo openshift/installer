@@ -73,7 +73,6 @@ type agentTemplateData struct {
 	ConfigImageFiles          string
 	ImageTypeISO              string
 	PublicKeyPEM              string
-	PrivateKeyPEM             string
 	CaBundleMount             string
 }
 
