@@ -29,6 +29,7 @@ var (
 	_ clusterapi.Provider           = (*Provider)(nil)
 	_ clusterapi.PreProvider        = (*Provider)(nil)
 	_ clusterapi.InfraReadyProvider = (*Provider)(nil)
+	_ clusterapi.BootstrapDestroyer = (*Provider)(nil)
 
 	errNotFound = errors.New("not found")
 )
