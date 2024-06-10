@@ -101,9 +101,17 @@ type errorHelper struct {
 	// A collection of unexported helpers for error construction
 }
 
-func (h *errorHelper) sErr(err errors.Error) *Result {
+func (h *errorHelper) sErr(err errors.Error, recycle bool) *Result {
 	// Builds a Result from standard errors.Error
-	return &Result{Errors: []error{err}}
+	var result *Result
+	if recycle {
+		result = pools.poolOfResults.BorrowResult()
+	} else {
+		result = new(Result)
+	}
+	result.Errors = []error{err}
+
+	return result
 }
 
 func (h *errorHelper) addPointerError(res *Result, err error, ref string, fromPath string) *Result {
@@ -225,7 +233,7 @@ func (h *paramHelper) safeExpandedParamsFor(path, method, operationID string, re
 		operation.Parameters = resolvedParams
 
 		for _, ppr := range s.expandedAnalyzer().SafeParamsFor(method, path,
-			func(p spec.Parameter, err error) bool {
+			func(_ spec.Parameter, err error) bool {
 				// since params have already been expanded, there are few causes for error
 				res.AddErrors(someParametersBrokenMsg(path, method, operationID))
 				// original error from analyzer
@@ -306,6 +314,7 @@ func (r *responseHelper) expandResponseRef(
 		errorHelp.addPointerError(res, err, response.Ref.String(), path)
 		return nil, res
 	}
+
 	return response, res
 }
 
