@@ -44,9 +44,6 @@ import (
 var _ infrastructure.Provider = (*InfraProvider)(nil)
 
 const (
-	// timeout for each provisioning step.
-	timeout = 15 * time.Minute
-
 	preProvisionStage        = "Infrastructure Pre-provisioning"
 	infrastructureStage      = "Network-infrastructure Provisioning"
 	infrastructureReadyStage = "Post-network, pre-machine Provisioning"
@@ -182,14 +179,20 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		}
 	}
 
+	var networkTimeout = 15 * time.Minute
+
+	if p, ok := i.impl.(Timeouts); ok {
+		networkTimeout = p.NetworkTimeout()
+	}
+
 	// Wait for successful provisioning by checking the InfrastructureReady
 	// status on the cluster object.
-	untilTime := time.Now().Add(timeout)
+	untilTime := time.Now().Add(networkTimeout)
 	timezone, _ := untilTime.Zone()
-	logrus.Infof("Waiting up to %v (until %v %s) for network infrastructure to become ready...", timeout, untilTime.Format(time.Kitchen), timezone)
+	logrus.Infof("Waiting up to %v (until %v %s) for network infrastructure to become ready...", networkTimeout, untilTime.Format(time.Kitchen), timezone)
 	var cluster *clusterv1.Cluster
 	{
-		if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, timeout, true,
+		if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, networkTimeout, true,
 			func(ctx context.Context) (bool, error) {
 				c := &clusterv1.Cluster{}
 				if err := cl.Get(ctx, client.ObjectKey{
@@ -205,7 +208,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 				return cluster.Status.InfrastructureReady, nil
 			}); err != nil {
 			if wait.Interrupted(err) {
-				return fileList, fmt.Errorf("infrastructure was not ready within %v: %w", timeout, err)
+				return fileList, fmt.Errorf("infrastructure was not ready within %v: %w", networkTimeout, err)
 			}
 			return fileList, fmt.Errorf("infrastructure is not ready: %w", err)
 		}
@@ -280,12 +283,18 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		logrus.Infof("Created manifest %+T, namespace=%s name=%s", m, m.GetNamespace(), m.GetName())
 	}
 
+	var provisionTimeout = 15 * time.Minute
+
+	if p, ok := i.impl.(Timeouts); ok {
+		provisionTimeout = p.ProvisionTimeout()
+	}
+
 	{
-		untilTime := time.Now().Add(timeout)
+		untilTime := time.Now().Add(provisionTimeout)
 		timezone, _ := untilTime.Zone()
 		reqBootstrapPubIP := installConfig.Config.Publish == types.ExternalPublishingStrategy && i.impl.BootstrapHasPublicIP()
-		logrus.Infof("Waiting up to %v (until %v %s) for machines %v to provision...", timeout, untilTime.Format(time.Kitchen), timezone, machineNames)
-		if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, timeout, true,
+		logrus.Infof("Waiting up to %v (until %v %s) for machines %v to provision...", provisionTimeout, untilTime.Format(time.Kitchen), timezone, machineNames)
+		if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, provisionTimeout, true,
 			func(ctx context.Context) (bool, error) {
 				allReady := true
 				for _, machineName := range machineNames {
@@ -314,7 +323,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 				return allReady, nil
 			}); err != nil {
 			if wait.Interrupted(err) {
-				return fileList, fmt.Errorf("control-plane machines were not provisioned within %v: %w", timeout, err)
+				return fileList, fmt.Errorf("control-plane machines were not provisioned within %v: %w", provisionTimeout, err)
 			}
 			return fileList, fmt.Errorf("control-plane machines are not ready: %w", err)
 		}
