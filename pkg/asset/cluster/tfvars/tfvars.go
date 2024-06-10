@@ -117,8 +117,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 // Generate generates the terraform.tfvars file.
 //
 //nolint:gocyclo // legacy, pre-linter cyclomatic complexity
-func (t *TerraformVariables) Generate(parents asset.Parents) error {
-	ctx := context.TODO()
+func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
@@ -374,7 +373,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AzureMachineProviderSpec) //nolint:errcheck // legacy, pre-linter
 		}
 		client := aztypes.NewClient(session)
-		hyperVGeneration, err := client.GetHyperVGenerationVersion(context.TODO(), masterConfigs[0].VMSize, masterConfigs[0].Location, "")
+		hyperVGeneration, err := client.GetHyperVGenerationVersion(ctx, masterConfigs[0].VMSize, masterConfigs[0].Location, "")
 		if err != nil {
 			return err
 		}
@@ -526,7 +525,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			}
 		}
 
-		ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+		ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 		defer cancel()
 
 		url, err := gcpbootstrap.CreateSignedURL(clusterID.InfraID)

@@ -52,8 +52,8 @@ func (a *PlatformQuotaCheck) Dependencies() []asset.Asset {
 	}
 }
 
-// GenerateWithContext queries for input from the user.
-func (a *PlatformQuotaCheck) GenerateWithContext(ctx context.Context, dependencies asset.Parents) error {
+// Generate queries for input from the user.
+func (a *PlatformQuotaCheck) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ic := &installconfig.InstallConfig{}
 	mastersAsset := &machines.Master{}
 	workersAsset := &machines.Worker{}
@@ -222,10 +222,4 @@ func summarizeReport(reports []quota.ConstraintReport) {
 	if len(low) > 0 {
 		logrus.Warnf("Following quotas %s are available but will be completely used pretty soon.", strings.Join(low, ", "))
 	}
-}
-
-// Generate is implemented so this asset maintains compatibility with the Asset
-// interface. It should never be called.
-func (*PlatformQuotaCheck) Generate(_ asset.Parents) (err error) {
-	panic("PlatformQuotaCheck.Generate was called instead of PlatformQuotaCheck.GenerateWithContext")
 }

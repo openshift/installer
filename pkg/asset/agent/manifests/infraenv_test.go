@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"errors"
 	"os"
 	"strings"
@@ -225,7 +226,7 @@ func TestInfraEnv_Generate(t *testing.T) {
 			parents.Add(tc.dependencies...)
 
 			asset := &InfraEnv{}
-			err := asset.Generate(parents)
+			err := asset.Generate(context.Background(), parents)
 
 			if tc.expectedError != "" {
 				assert.Equal(t, tc.expectedError, err.Error())

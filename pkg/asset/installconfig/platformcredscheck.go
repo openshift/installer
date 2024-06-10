@@ -43,8 +43,7 @@ func (a *PlatformCredsCheck) Dependencies() []asset.Asset {
 }
 
 // Generate queries for input from the user.
-func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
-	ctx := context.TODO()
+func (a *PlatformCredsCheck) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ic := &InstallConfig{}
 	dependencies.Get(ic)
 
@@ -57,7 +56,7 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 			return err
 		}
 	case gcp.Name:
-		client, err := gcpconfig.NewClient(context.TODO())
+		client, err := gcpconfig.NewClient(ctx)
 		if err != nil {
 			return err
 		}

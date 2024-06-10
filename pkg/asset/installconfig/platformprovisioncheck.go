@@ -48,7 +48,9 @@ func (a *PlatformProvisionCheck) Dependencies() []asset.Asset {
 }
 
 // Generate queries for input from the user.
-func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
+//
+//nolint:gocyclo
+func (a *PlatformProvisionCheck) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ic := &InstallConfig{}
 	dependencies.Get(ic)
 	platform := ic.Config.Platform.Name()
@@ -81,7 +83,7 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 
 	switch platform {
 	case aws.Name:
-		session, err := ic.AWS.Session(context.TODO())
+		session, err := ic.AWS.Session(ctx)
 		if err != nil {
 			return err
 		}

@@ -75,10 +75,10 @@ func (o *Openshift) Dependencies() []asset.Asset {
 	}
 }
 
-// GenerateWithContext generates the respective operator config.yml files.
+// Generate generates the respective operator config.yml files
 //
 //nolint:gocyclo
-func (o *Openshift) GenerateWithContext(ctx context.Context, dependencies asset.Parents) error {
+func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
 	kubeadminPassword := &password.KubeadminPassword{}
@@ -354,10 +354,4 @@ func (o *Openshift) Load(f asset.FileFetcher) (bool, error) {
 
 	asset.SortFiles(o.FileList)
 	return len(o.FileList) > 0, nil
-}
-
-// Generate is implemented so this asset maintains compatibility with the Asset
-// interface. It should never be called.
-func (*Openshift) Generate(_ asset.Parents) (err error) {
-	panic("Openshift.Generate was called instead of Openshift.GenerateWithContext")
 }

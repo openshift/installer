@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -133,7 +134,9 @@ func (*AgentClusterInstall) Dependencies() []asset.Asset {
 }
 
 // Generate generates the AgentClusterInstall manifest.
-func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
+//
+//nolint:gocyclo
+func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	installConfig := &agent.OptionalInstallConfig{}
 	agentHosts := &agentconfig.AgentHosts{}

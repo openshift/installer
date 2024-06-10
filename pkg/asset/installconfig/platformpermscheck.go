@@ -40,8 +40,7 @@ func (a *PlatformPermsCheck) Dependencies() []asset.Asset {
 }
 
 // Generate queries for input from the user.
-func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
-	ctx := context.TODO()
+func (a *PlatformPermsCheck) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ic := &InstallConfig{}
 	dependencies.Get(ic)
 
@@ -115,7 +114,7 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "validate AWS credentials")
 		}
 	case gcp.Name:
-		client, err := gcpconfig.NewClient(context.TODO())
+		client, err := gcpconfig.NewClient(ctx)
 		if err != nil {
 			return err
 		}

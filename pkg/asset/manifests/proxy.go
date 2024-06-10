@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"path/filepath"
@@ -46,7 +47,7 @@ func (*Proxy) Dependencies() []asset.Asset {
 }
 
 // Generate generates the Proxy config and its CRD.
-func (p *Proxy) Generate(dependencies asset.Parents) error {
+func (p *Proxy) Generate(_ context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	network := &Networking{}
 	dependencies.Get(installConfig, network)

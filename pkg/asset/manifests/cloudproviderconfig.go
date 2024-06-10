@@ -73,10 +73,10 @@ func (*CloudProviderConfig) Dependencies() []asset.Asset {
 	}
 }
 
-// GenerateWithContext generates the CloudProviderConfig.
+// Generate generates the CloudProviderConfig.
 //
 //nolint:gocyclo
-func (cpc *CloudProviderConfig) GenerateWithContext(ctx context.Context, dependencies asset.Parents) error {
+func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
 	dependencies.Get(installConfig, clusterID)
@@ -354,10 +354,4 @@ func (cpc *CloudProviderConfig) Files() []*asset.File {
 // Load loads the already-rendered files back from disk.
 func (cpc *CloudProviderConfig) Load(f asset.FileFetcher) (bool, error) {
 	return false, nil
-}
-
-// Generate is implemented so this asset maintains compatibility with the Asset
-// interface. It should never be called.
-func (*CloudProviderConfig) Generate(_ asset.Parents) (err error) {
-	panic("CloudProviderConfig.Generate was called instead of CloudProviderConfig.GenerateWithContext")
 }

@@ -147,7 +147,7 @@ func TestBaseIso_Generate(t *testing.T) {
 					}, nil
 				},
 			}
-			err = baseIso.Generate(dependencies)
+			err = baseIso.Generate(context.Background(), dependencies)
 
 			if tc.expectedError == "" {
 				assert.NoError(t, err)

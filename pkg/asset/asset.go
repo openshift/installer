@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"context"
 	"io"
 	"os"
 	"path/filepath"
@@ -24,7 +25,7 @@ type Asset interface {
 	Dependencies() []Asset
 
 	// Generate generates this asset given the states of its parent assets.
-	Generate(Parents) error
+	Generate(context.Context, Parents) error
 
 	// Name returns the human-friendly name of the asset.
 	Name() string

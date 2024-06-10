@@ -44,7 +44,6 @@ type Cluster struct {
 }
 
 var _ asset.WritableAsset = (*Cluster)(nil)
-var _ asset.Generator = (*Cluster)(nil)
 
 // Name returns the human-friendly name of the asset.
 func (c *Cluster) Name() string {
@@ -80,8 +79,8 @@ func (c *Cluster) Dependencies() []asset.Asset {
 	}
 }
 
-// GenerateWithContext launches the cluster and generates the terraform state file on disk.
-func (c *Cluster) GenerateWithContext(ctx context.Context, parents asset.Parents) (err error) {
+// Generate launches the cluster and generates the terraform state file on disk.
+func (c *Cluster) Generate(ctx context.Context, parents asset.Parents) (err error) {
 	if InstallDir == "" {
 		logrus.Fatalf("InstallDir has not been set for the %q asset", c.Name())
 	}
@@ -179,10 +178,4 @@ func (c *Cluster) Load(f asset.FileFetcher) (found bool, err error) {
 		return true, fmt.Errorf("local infrastructure provisioning artifacts already exist. There may already be a running cluster")
 	}
 	return false, nil
-}
-
-// Generate is implemented so the Cluster Asset maintains compatibility
-// with the Asset interface. It should never be called.
-func (c *Cluster) Generate(_ asset.Parents) (err error) {
-	panic("Cluster.Generate was called instead of Cluster.GenerateWithContext")
 }

@@ -1,6 +1,8 @@
 package image
 
 import (
+	"context"
+
 	"github.com/sirupsen/logrus"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
@@ -25,7 +27,7 @@ func (a *Kargs) Dependencies() []asset.Asset {
 }
 
 // Generate generates the kernel args configurations for the agent ISO image and PXE assets.
-func (a *Kargs) Generate(dependencies asset.Parents) error {
+func (a *Kargs) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	agentClusterInstall := &manifests.AgentClusterInstall{}
 	dependencies.Get(agentClusterInstall, agentWorkflow)

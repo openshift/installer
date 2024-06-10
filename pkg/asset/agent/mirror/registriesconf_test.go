@@ -1,6 +1,7 @@
 package mirror
 
 import (
+	"context"
 	"errors"
 	"os"
 	"testing"
@@ -263,7 +264,7 @@ unqualified-search-registries = []
 			parents.Add(tc.dependencies...)
 
 			asset := &RegistriesConf{}
-			err := asset.Generate(parents)
+			err := asset.Generate(context.Background(), parents)
 
 			assert.NoError(t, err)
 

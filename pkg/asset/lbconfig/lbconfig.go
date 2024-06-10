@@ -1,6 +1,7 @@
 package lbconfig
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -49,7 +50,7 @@ func (*Config) Dependencies() []asset.Asset {
 }
 
 // Generate generates the openshift-install ConfigMap.
-func (i *Config) Generate(dependencies asset.Parents) error {
+func (i *Config) Generate(_ context.Context, dependencies asset.Parents) error {
 	cm, err := CreateLBConfigMap("openshift-lb-config", "", "")
 	if err != nil {
 		return err
@@ -66,7 +67,7 @@ func (i *Config) Generate(dependencies asset.Parents) error {
 // GenerateLBConfigOverride generates an LBConfig an overrides the file data.
 func GenerateLBConfigOverride(lbIntDNS, lbDNS string) (*Config, error) {
 	config := &Config{}
-	if err := config.Generate(asset.Parents{}); err != nil {
+	if err := config.Generate(context.TODO(), asset.Parents{}); err != nil {
 		return nil, err
 	}
 

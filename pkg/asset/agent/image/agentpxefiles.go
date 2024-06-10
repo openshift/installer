@@ -2,6 +2,7 @@ package image
 
 import (
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -41,7 +42,7 @@ func (a *AgentPXEFiles) Dependencies() []asset.Asset {
 }
 
 // Generate generates the image files for PXE asset.
-func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
+func (a *AgentPXEFiles) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentArtifacts := &AgentArtifacts{}
 	dependencies.Get(agentArtifacts)
 

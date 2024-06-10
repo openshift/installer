@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -37,7 +38,7 @@ func (*FeatureGate) Dependencies() []asset.Asset {
 }
 
 // Generate generates the FeatureGate CRD.
-func (f *FeatureGate) Generate(dependencies asset.Parents) error {
+func (f *FeatureGate) Generate(_ context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	dependencies.Get(installConfig)
 

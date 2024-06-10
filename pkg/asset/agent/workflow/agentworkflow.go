@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -28,7 +29,7 @@ func (*AgentWorkflow) Dependencies() []asset.Asset {
 }
 
 // Generate generates the AgentWorkflow asset.
-func (a *AgentWorkflow) Generate(dependencies asset.Parents) error {
+func (a *AgentWorkflow) Generate(_ context.Context, dependencies asset.Parents) error {
 	// Set install workflow as a default
 	a.Workflow = AgentWorkflowTypeInstall
 	a.File = &asset.File{

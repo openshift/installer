@@ -1,6 +1,7 @@
 package image
 
 import (
+	"context"
 	"encoding/base64"
 	"testing"
 
@@ -85,7 +86,7 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 			parents.Add(deps...)
 
 			unconfiguredIgnitionAsset := &UnconfiguredIgnition{}
-			err := unconfiguredIgnitionAsset.Generate(parents)
+			err := unconfiguredIgnitionAsset.Generate(context.Background(), parents)
 
 			if tc.expectedError != "" {
 				assert.Equal(t, tc.expectedError, err.Error())

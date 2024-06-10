@@ -1,6 +1,7 @@
 package mirror
 
 import (
+	"context"
 	"errors"
 	"os"
 	"testing"
@@ -194,7 +195,7 @@ OIUk31HnM/Fj
 			parents.Add(tc.dependencies...)
 
 			asset := &CaBundle{}
-			err := asset.Generate(parents)
+			err := asset.Generate(context.Background(), parents)
 
 			if tc.expectedError != "" {
 				assert.EqualError(t, err, tc.expectedError)

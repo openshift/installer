@@ -1,6 +1,7 @@
 package machine
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 
@@ -34,7 +35,7 @@ func (a *Master) Dependencies() []asset.Asset {
 }
 
 // Generate generates the ignition config for the Master asset.
-func (a *Master) Generate(dependencies asset.Parents) error {
+func (a *Master) Generate(_ context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	rootCA := &tls.RootCA{}
 	dependencies.Get(installConfig, rootCA)

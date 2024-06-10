@@ -1,6 +1,7 @@
 package tls
 
 import (
+	"context"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"net"
@@ -32,7 +33,7 @@ func (a *MCSCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (a *MCSCertKey) Generate(dependencies asset.Parents) error {
+func (a *MCSCertKey) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ca := &RootCA{}
 	installConfig := &installconfig.InstallConfig{}
 	dependencies.Get(ca, installConfig)
@@ -66,7 +67,7 @@ func (a *MCSCertKey) Generate(dependencies asset.Parents) error {
 		cfg.DNSNames = append(cfg.DNSNames, vip)
 	}
 
-	return a.SignedCertKey.Generate(cfg, ca, "machine-config-server", DoNotAppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "machine-config-server", DoNotAppendParent)
 }
 
 // Name returns the human-friendly name of the asset.

@@ -1,6 +1,7 @@
 package agentconfig
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -40,7 +41,7 @@ func (*AgentConfig) Dependencies() []asset.Asset {
 }
 
 // Generate generates the Agent Config manifest.
-func (a *AgentConfig) Generate(dependencies asset.Parents) error {
+func (a *AgentConfig) Generate(_ context.Context, dependencies asset.Parents) error {
 	// TODO: We are temporarily generating a template of the agent-config.yaml
 	// Change this when its interactive survey is implemented.
 	agentConfigTemplate := `#

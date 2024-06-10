@@ -1,6 +1,7 @@
 package installconfig
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -46,7 +47,7 @@ func readSSHKey(path string) (string, error) {
 }
 
 // Generate generates the SSH public key asset.
-func (a *sshPublicKey) Generate(asset.Parents) error {
+func (a *sshPublicKey) Generate(context.Context, asset.Parents) error {
 	pubKeys := map[string]string{
 		noSSHKey: "",
 	}

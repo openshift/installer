@@ -1,6 +1,7 @@
 package clusterapi
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -63,7 +64,7 @@ func (c *Cluster) Dependencies() []asset.Asset {
 }
 
 // Generate generates the respective operator config.yml files.
-func (c *Cluster) Generate(dependencies asset.Parents) error {
+func (c *Cluster) Generate(_ context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
 	openshiftInstall := &openshiftinstall.Config{}

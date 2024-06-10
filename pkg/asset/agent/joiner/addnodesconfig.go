@@ -1,6 +1,7 @@
 package joiner
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -66,7 +67,7 @@ func (*AddNodesConfig) Dependencies() []asset.Asset {
 }
 
 // Generate it's empty for this asset, always loaded from disk.
-func (*AddNodesConfig) Generate(dependencies asset.Parents) error {
+func (*AddNodesConfig) Generate(_ context.Context, dependencies asset.Parents) error {
 	return nil
 }
 

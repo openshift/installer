@@ -1,6 +1,8 @@
 package bootstrap
 
 import (
+	"context"
+
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -31,7 +33,7 @@ func (a *SingleNodeBootstrapInPlace) Name() string {
 }
 
 // Generate generates the ignition config for the Bootstrap asset.
-func (a *SingleNodeBootstrapInPlace) Generate(dependencies asset.Parents) error {
+func (a *SingleNodeBootstrapInPlace) Generate(_ context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	dependencies.Get(installConfig)
 	if err := verifyBootstrapInPlace(installConfig.Config); err != nil {

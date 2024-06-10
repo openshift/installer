@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -44,7 +45,7 @@ func (*ClusterDeployment) Dependencies() []asset.Asset {
 }
 
 // Generate generates the ClusterDeployment manifest.
-func (cd *ClusterDeployment) Generate(dependencies asset.Parents) error {
+func (cd *ClusterDeployment) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	installConfig := &agent.OptionalInstallConfig{}
 	dependencies.Get(agentWorkflow, installConfig)

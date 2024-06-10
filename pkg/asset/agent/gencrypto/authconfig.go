@@ -2,6 +2,7 @@ package gencrypto
 
 import (
 	"bytes"
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -37,7 +38,7 @@ func (a *AuthConfig) Dependencies() []asset.Asset {
 }
 
 // Generate generates the auth config for agent installer APIs.
-func (a *AuthConfig) Generate(dependencies asset.Parents) error {
+func (a *AuthConfig) Generate(_ context.Context, dependencies asset.Parents) error {
 	infraEnvID := &common.InfraEnvID{}
 	dependencies.Get(infraEnvID)
 	PublicKey, PrivateKey, err := keyPairPEM()

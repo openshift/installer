@@ -1,6 +1,7 @@
 package tls
 
 import (
+	"context"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"net"
@@ -46,11 +47,11 @@ func TestSignedCertKeyGenerate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rootCA := &RootCA{}
-			err := rootCA.Generate(nil)
+			err := rootCA.Generate(context.Background(), nil)
 			assert.NoError(t, err, "failed to generate root CA")
 
 			certKey := &SignedCertKey{}
-			err = certKey.Generate(tt.certCfg, rootCA, tt.filenameBase, tt.appendParent)
+			err = certKey.Generate(context.Background(), tt.certCfg, rootCA, tt.filenameBase, tt.appendParent)
 			if err != nil {
 				assert.EqualErrorf(t, err, tt.errString, tt.name)
 				return

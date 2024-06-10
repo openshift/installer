@@ -1,6 +1,8 @@
 package installconfig
 
 import (
+	"context"
+
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/pkg/errors"
 
@@ -24,7 +26,7 @@ func (a *clusterName) Dependencies() []asset.Asset {
 }
 
 // Generate queries for the cluster name from the user.
-func (a *clusterName) Generate(parents asset.Parents) error {
+func (a *clusterName) Generate(_ context.Context, parents asset.Parents) error {
 	bd := &baseDomain{}
 	platform := &platform{}
 	parents.Get(bd, platform)

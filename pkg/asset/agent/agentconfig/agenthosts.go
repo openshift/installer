@@ -1,6 +1,7 @@
 package agentconfig
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -59,7 +60,7 @@ func (a *AgentHosts) Dependencies() []asset.Asset {
 }
 
 // Generate generates the Hosts data.
-func (a *AgentHosts) Generate(dependencies asset.Parents) error {
+func (a *AgentHosts) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	addNodesConfig := &joiner.AddNodesConfig{}
 	agentConfig := &AgentConfig{}

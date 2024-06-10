@@ -105,7 +105,7 @@ func (a *Ignition) Dependencies() []asset.Asset {
 }
 
 // Generate generates the agent installer ignition.
-func (a *Ignition) Generate(dependencies asset.Parents) error {
+func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	clusterInfo := &joiner.ClusterInfo{}
 	addNodesConfig := &joiner.AddNodesConfig{}

@@ -64,7 +64,7 @@ func (*ClusterInfo) Dependencies() []asset.Asset {
 }
 
 // Generate generates the ClusterInfo.
-func (ci *ClusterInfo) Generate(dependencies asset.Parents) error {
+func (ci *ClusterInfo) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	addNodesConfig := &AddNodesConfig{}
 	dependencies.Get(agentWorkflow, addNodesConfig)

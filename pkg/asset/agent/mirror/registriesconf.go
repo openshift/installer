@@ -1,6 +1,7 @@
 package mirror
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -138,7 +139,7 @@ func (*RegistriesConf) Dependencies() []asset.Asset {
 }
 
 // Generate generates the registries.conf file from install-config.
-func (i *RegistriesConf) Generate(dependencies asset.Parents) error {
+func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	clusterInfo := &joiner.ClusterInfo{}
 	installConfig := &agent.OptionalInstallConfig{}
@@ -236,9 +237,12 @@ func (i *RegistriesConf) Files() []*asset.File {
 
 // Load returns RegistriesConf asset from the disk.
 func (i *RegistriesConf) Load(f asset.FileFetcher) (bool, error) {
+	ctx := context.TODO()
 
 	releaseImage := &releaseimage.Image{}
-	releaseImage.Generate(asset.Parents{})
+	if err := releaseImage.Generate(ctx, asset.Parents{}); err != nil {
+		return false, fmt.Errorf("failed to generate the release image asset: %w", err)
+	}
 
 	file, err := f.FetchByName(RegistriesConfFilename)
 	if err != nil {

@@ -261,10 +261,10 @@ func (w *Worker) Dependencies() []asset.Asset {
 	}
 }
 
-// GenerateWithContext generates the Worker asset.
+// Generate generates the Worker asset.
 //
 //nolint:gocyclo
-func (w *Worker) GenerateWithContext(ctx context.Context, dependencies asset.Parents) error {
+func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	rhcosImage := new(rhcos.Image)
@@ -837,10 +837,4 @@ func (w *Worker) MachineSets() ([]machinev1beta1.MachineSet, error) {
 	}
 
 	return machineSets, nil
-}
-
-// Generate is implemented so this asset maintains compatibility with the Asset
-// interface. It should never be called.
-func (*Worker) Generate(_ asset.Parents) (err error) {
-	panic("Worker.Generate was called instead of Worker.GenerateWithContext")
 }

@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -35,7 +36,7 @@ func (*ImageContentSourcePolicy) Dependencies() []asset.Asset {
 }
 
 // Generate generates the ImageContentSourcePolicy config and its CR.
-func (p *ImageContentSourcePolicy) Generate(dependencies asset.Parents) error {
+func (p *ImageContentSourcePolicy) Generate(_ context.Context, dependencies asset.Parents) error {
 	installconfig := &installconfig.InstallConfig{}
 	dependencies.Get(installconfig)
 

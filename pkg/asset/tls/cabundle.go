@@ -2,6 +2,7 @@ package tls
 
 import (
 	"bytes"
+	"context"
 	"encoding/pem"
 
 	"github.com/pkg/errors"
@@ -22,7 +23,7 @@ func (b *CertBundle) Cert() []byte {
 }
 
 // Generate generates the cert bundle from certs.
-func (b *CertBundle) Generate(filename string, certs ...CertInterface) error {
+func (b *CertBundle) Generate(_ context.Context, filename string, certs ...CertInterface) error {
 	if len(certs) < 1 {
 		return errors.New("atleast one certificate required for a bundle")
 	}

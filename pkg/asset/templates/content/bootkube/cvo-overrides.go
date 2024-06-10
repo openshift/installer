@@ -1,6 +1,7 @@
 package bootkube
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -33,7 +34,7 @@ func (t *CVOOverrides) Name() string {
 }
 
 // Generate generates the actual files by this asset
-func (t *CVOOverrides) Generate(parents asset.Parents) error {
+func (t *CVOOverrides) Generate(_ context.Context, parents asset.Parents) error {
 	fileName := cVOOverridesFileName
 	data, err := content.GetBootkubeTemplate(fileName)
 	if err != nil {
