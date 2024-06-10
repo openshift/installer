@@ -3,6 +3,7 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -24,6 +25,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/quota"
 	"github.com/openshift/installer/pkg/asset/rhcos"
+	"github.com/openshift/installer/pkg/clusterapi"
 	infra "github.com/openshift/installer/pkg/infrastructure/platform"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
@@ -161,9 +163,21 @@ func (c *Cluster) Load(f asset.FileFetcher) (found bool, err error) {
 		return true, err
 	}
 	if len(matches) != 0 {
-		return true, errors.Errorf("terraform state files alread exist.  There may already be a running cluster")
+		return true, fmt.Errorf("terraform state files already exist.  There may already be a running cluster")
 	}
 
+	matches, err = filepath.Glob(filepath.Join(InstallDir, clusterapi.ArtifactsDir, "envtest.kubeconfig"))
+	if err != nil {
+		return true, fmt.Errorf("error checking for existence of envtest.kubeconfig: %w", err)
+	}
+
+	// Cluster-API based installs can be re-entered, but this is an experimental feature
+	// that should be opted into and only used for testing and development.
+	reentrant := strings.EqualFold(os.Getenv("OPENSHIFT_INSTALL_REENTRANT"), "true")
+
+	if !reentrant && len(matches) != 0 {
+		return true, fmt.Errorf("local infrastructure provisioning artifacts already exist. There may already be a running cluster")
+	}
 	return false, nil
 }
 
