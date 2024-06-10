@@ -2,6 +2,7 @@ package clusterapi
 
 import (
 	"context"
+	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -116,4 +117,12 @@ type PostDestroyer interface {
 // PostDestroyerInput collects args passed to the PostDestroyer hook.
 type PostDestroyerInput struct {
 	Metadata types.ClusterMetadata
+}
+
+// Timeouts allows platform provider to override the timeouts for certain phases.
+type Timeouts interface {
+	// When waiting for the network infrastructure to become ready.
+	NetworkTimeout() time.Duration
+	// When waiting for the machines to provision.
+	ProvisionTimeout() time.Duration
 }

@@ -29,6 +29,7 @@ type Provider struct {
 	clusterapi.InfraProvider
 }
 
+var _ clusterapi.Timeouts = (*Provider)(nil)
 var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
 var _ clusterapi.Provider = (*Provider)(nil)
 var _ clusterapi.PostProvider = (*Provider)(nil)
@@ -55,6 +56,18 @@ func leftInContext(ctx context.Context) time.Duration {
 
 const privatePrefix = "api-int."
 const publicPrefix = "api."
+
+// NetworkTimeout allows platform provider to override the timeout
+// when waiting for the network infrastructure to become ready.
+func (p Provider) NetworkTimeout() time.Duration {
+	return 30 * time.Minute
+}
+
+// ProvisionTimeout allows platform provider to override the timeout
+// when waiting for the machines to provision.
+func (p Provider) ProvisionTimeout() time.Duration {
+	return 15 * time.Minute
+}
 
 // InfraReady is called once cluster.Status.InfrastructureReady
 // is true, typically after load balancers have been provisioned. It can be used
