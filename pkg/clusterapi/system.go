@@ -487,6 +487,13 @@ func (c *system) runController(ctx context.Context, ct *controller) error {
 		templateData := map[string]string{
 			"WebhookPort":    fmt.Sprintf("%d", wh.LocalServingPort),
 			"WebhookCertDir": wh.LocalServingCertDir,
+			"KubeconfigPath": c.lcp.KubeconfigPath,
+		}
+
+		// We cannot override KUBECONFIG, e.g., in case the user supplies a callback that needs to access the cluster,
+		// such as via credential_process in the AWS config file. The kubeconfig path is set in the controller instead.
+		if ct.Provider == nil || ct.Provider.Name != "azureaso" {
+			ct.Args = append(ct.Args, "--kubeconfig={{.KubeconfigPath}}")
 		}
 
 		args := make([]string, 0, len(ct.Args))
@@ -508,7 +515,10 @@ func (c *system) runController(ctx context.Context, ct *controller) error {
 			ct.Env = map[string]string{}
 		}
 		// Override KUBECONFIG to point to the local control plane.
-		ct.Env["KUBECONFIG"] = c.lcp.KubeconfigPath
+		// azureaso doesn't support the --kubeconfig parameter.
+		if ct.Provider != nil && ct.Provider.Name == "azureaso" {
+			ct.Env["KUBECONFIG"] = c.lcp.KubeconfigPath
+		}
 		for key, value := range ct.Env {
 			env = append(env, fmt.Sprintf("%s=%s", key, value))
 		}
