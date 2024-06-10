@@ -41,17 +41,6 @@ func (src *AWSMachine) ConvertTo(dstRaw conversion.Hub) error {
 	dst.Spec.PlacementGroupPartition = restored.Spec.PlacementGroupPartition
 	dst.Spec.PrivateDNSName = restored.Spec.PrivateDNSName
 	dst.Spec.SecurityGroupOverrides = restored.Spec.SecurityGroupOverrides
-	if restored.Spec.ElasticIPPool != nil {
-		if dst.Spec.ElasticIPPool == nil {
-			dst.Spec.ElasticIPPool = &infrav1.ElasticIPPool{}
-		}
-		if restored.Spec.ElasticIPPool.PublicIpv4Pool != nil {
-			dst.Spec.ElasticIPPool.PublicIpv4Pool = restored.Spec.ElasticIPPool.PublicIpv4Pool
-		}
-		if restored.Spec.ElasticIPPool.PublicIpv4PoolFallBackOrder != nil {
-			dst.Spec.ElasticIPPool.PublicIpv4PoolFallBackOrder = restored.Spec.ElasticIPPool.PublicIpv4PoolFallBackOrder
-		}
-	}
 
 	return nil
 }
@@ -102,17 +91,6 @@ func (r *AWSMachineTemplate) ConvertTo(dstRaw conversion.Hub) error {
 	dst.Spec.Template.Spec.PlacementGroupPartition = restored.Spec.Template.Spec.PlacementGroupPartition
 	dst.Spec.Template.Spec.PrivateDNSName = restored.Spec.Template.Spec.PrivateDNSName
 	dst.Spec.Template.Spec.SecurityGroupOverrides = restored.Spec.Template.Spec.SecurityGroupOverrides
-	if restored.Spec.Template.Spec.ElasticIPPool != nil {
-		if dst.Spec.Template.Spec.ElasticIPPool == nil {
-			dst.Spec.Template.Spec.ElasticIPPool = &infrav1.ElasticIPPool{}
-		}
-		if restored.Spec.Template.Spec.ElasticIPPool.PublicIpv4Pool != nil {
-			dst.Spec.Template.Spec.ElasticIPPool.PublicIpv4Pool = restored.Spec.Template.Spec.ElasticIPPool.PublicIpv4Pool
-		}
-		if restored.Spec.Template.Spec.ElasticIPPool.PublicIpv4PoolFallBackOrder != nil {
-			dst.Spec.Template.Spec.ElasticIPPool.PublicIpv4PoolFallBackOrder = restored.Spec.Template.Spec.ElasticIPPool.PublicIpv4PoolFallBackOrder
-		}
-	}
 
 	return nil
 }

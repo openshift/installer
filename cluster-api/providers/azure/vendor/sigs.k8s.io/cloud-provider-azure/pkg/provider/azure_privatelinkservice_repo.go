@@ -33,7 +33,7 @@ import (
 	"sigs.k8s.io/cloud-provider-azure/pkg/retry"
 )
 
-func (az *Cloud) CreateOrUpdatePLS(service *v1.Service, resourceGroup string, pls network.PrivateLinkService) error {
+func (az *Cloud) CreateOrUpdatePLS(_ *v1.Service, resourceGroup string, pls network.PrivateLinkService) error {
 	ctx, cancel := getContextWithCancel()
 	defer cancel()
 

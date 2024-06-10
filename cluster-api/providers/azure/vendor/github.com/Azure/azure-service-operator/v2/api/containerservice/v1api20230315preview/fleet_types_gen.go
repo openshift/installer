@@ -412,9 +412,6 @@ func (fleet *Fleet_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 		for key, value := range fleet.Tags {
 			result.Tags[key] = value
 		}
-	} else {
-		// Set property to empty map, as this resource is set to serialize all collections explicitly
-		result.Tags = make(map[string]string)
 	}
 	return result, nil
 }

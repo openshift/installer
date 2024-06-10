@@ -55,4 +55,6 @@ const (
 	PodNamespace = "POD_NAMESPACE"
 	// UseWorkloadIdentityAuth boolean is used to determine if we're using Workload Identity authentication for global credential
 	UseWorkloadIdentityAuth = "USE_WORKLOAD_IDENTITY_AUTH"
+	// UserAgentSuffix is appended to the default User-Agent for Azure HTTP clients.
+	UserAgentSuffix = "AZURE_USER_AGENT_SUFFIX"
 )

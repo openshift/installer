@@ -13,10 +13,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 
 	"github.com/rogpeppe/go-internal/diff"
+	"github.com/rogpeppe/go-internal/testscript/internal/pty"
 	"github.com/rogpeppe/go-internal/txtar"
 )
 
@@ -41,6 +43,8 @@ var scriptCmds = map[string]func(*TestScript, bool, []string){
 	"stderr":   (*TestScript).cmdStderr,
 	"stdin":    (*TestScript).cmdStdin,
 	"stdout":   (*TestScript).cmdStdout,
+	"ttyin":    (*TestScript).cmdTtyin,
+	"ttyout":   (*TestScript).cmdTtyout,
 	"stop":     (*TestScript).cmdStop,
 	"symlink":  (*TestScript).cmdSymlink,
 	"unix2dos": (*TestScript).cmdUNIX2DOS,
@@ -177,6 +181,10 @@ func (ts *TestScript) cmdCp(neg bool, args []string) {
 		case "stderr":
 			src = arg
 			data = []byte(ts.stderr)
+			mode = 0o666
+		case "ttyout":
+			src = arg
+			data = []byte(ts.ttyout)
 			mode = 0o666
 		default:
 			src = ts.MkAbs(arg)
@@ -382,6 +390,9 @@ func (ts *TestScript) cmdStdin(neg bool, args []string) {
 	if len(args) != 1 {
 		ts.Fatalf("usage: stdin filename")
 	}
+	if ts.stdinPty {
+		ts.Fatalf("conflicting use of 'stdin' and 'ttyin -stdin'")
+	}
 	ts.stdin = ts.ReadFile(args[0])
 }
 
@@ -399,6 +410,37 @@ func (ts *TestScript) cmdStderr(neg bool, args []string) {
 // Like stdout/stderr and unlike Unix grep, it accepts Go regexp syntax.
 func (ts *TestScript) cmdGrep(neg bool, args []string) {
 	scriptMatch(ts, neg, args, "", "grep")
+}
+
+func (ts *TestScript) cmdTtyin(neg bool, args []string) {
+	if !pty.Supported {
+		ts.Fatalf("unsupported: ttyin on %s", runtime.GOOS)
+	}
+	if neg {
+		ts.Fatalf("unsupported: ! ttyin")
+	}
+	switch len(args) {
+	case 1:
+		ts.ttyin = ts.ReadFile(args[0])
+	case 2:
+		if args[0] != "-stdin" {
+			ts.Fatalf("usage: ttyin [-stdin] filename")
+		}
+		if ts.stdin != "" {
+			ts.Fatalf("conflicting use of 'stdin' and 'ttyin -stdin'")
+		}
+		ts.stdinPty = true
+		ts.ttyin = ts.ReadFile(args[1])
+	default:
+		ts.Fatalf("usage: ttyin [-stdin] filename")
+	}
+	if ts.ttyin == "" {
+		ts.Fatalf("tty input file is empty")
+	}
+}
+
+func (ts *TestScript) cmdTtyout(neg bool, args []string) {
+	scriptMatch(ts, neg, args, ts.ttyout, "ttyout")
 }
 
 // stop stops execution of the test (marking it passed).

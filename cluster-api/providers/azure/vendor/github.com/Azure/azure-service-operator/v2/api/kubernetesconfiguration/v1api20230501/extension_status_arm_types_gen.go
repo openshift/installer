@@ -38,6 +38,10 @@ type Extension_Properties_STATUS_ARM struct {
 	// AutoUpgradeMinorVersion: Flag to note if this extension participates in auto upgrade of minor version, or not.
 	AutoUpgradeMinorVersion *bool `json:"autoUpgradeMinorVersion,omitempty"`
 
+	// ConfigurationProtectedSettings: Configuration settings that are sensitive, as name-value pairs for configuring this
+	// extension.
+	ConfigurationProtectedSettings map[string]string `json:"configurationProtectedSettings,omitempty"`
+
 	// ConfigurationSettings: Configuration settings, as name-value pairs for configuring this extension.
 	ConfigurationSettings map[string]string `json:"configurationSettings,omitempty"`
 

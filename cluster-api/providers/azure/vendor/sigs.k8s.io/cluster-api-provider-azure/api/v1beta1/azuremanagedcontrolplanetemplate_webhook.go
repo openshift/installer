@@ -252,13 +252,6 @@ func (mcp *AzureManagedControlPlaneTemplate) validateK8sVersionUpdate(old *Azure
 // validateVirtualNetworkTemplateUpdate validates update to VirtualNetworkTemplate.
 func (mcp *AzureManagedControlPlaneTemplate) validateVirtualNetworkTemplateUpdate(old *AzureManagedControlPlaneTemplate) field.ErrorList {
 	var allErrs field.ErrorList
-	if old.Spec.Template.Spec.VirtualNetwork.Name != mcp.Spec.Template.Spec.VirtualNetwork.Name {
-		allErrs = append(allErrs,
-			field.Invalid(
-				field.NewPath("Spec", "Template", "Spec", "VirtualNetwork.Name"),
-				mcp.Spec.Template.Spec.VirtualNetwork.Name,
-				"Virtual Network Name is immutable"))
-	}
 
 	if old.Spec.Template.Spec.VirtualNetwork.CIDRBlock != mcp.Spec.Template.Spec.VirtualNetwork.CIDRBlock {
 		allErrs = append(allErrs,

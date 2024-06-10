@@ -3,7 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315pre
 ├── APIVersion: Enum (1 value)
 │   └── "2023-03-15-preview"
 ├── Fleet: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (6 properties)
 │   │   ├── AzureName: Validated<string> (3 rules)
 │   │   │   ├── Rule 0: MaxLength: 63

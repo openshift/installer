@@ -116,11 +116,9 @@ func (s *azureManagedMachinePoolService) Reconcile(ctx context.Context) error {
 	}
 	var agentPoolName string
 	if s.scope.IsPreviewEnabled() {
-		agentPoolTyped := agentPool.(*asocontainerservicev1preview.ManagedClustersAgentPool)
-		agentPoolName = agentPoolTyped.AzureName()
+		agentPoolName = agentPool.(*asocontainerservicev1preview.ManagedClustersAgentPool).AzureName()
 	} else {
-		agentPoolTyped := agentPool.(*asocontainerservicev1.ManagedClustersAgentPool)
-		agentPoolName = agentPoolTyped.AzureName()
+		agentPoolName = agentPool.(*asocontainerservicev1.ManagedClustersAgentPool).AzureName()
 	}
 
 	if err := s.agentPoolsSvc.Reconcile(ctx); err != nil {

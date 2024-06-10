@@ -220,7 +220,7 @@ func (mw *azureManagedControlPlaneWebhook) ValidateUpdate(ctx context.Context, o
 		allErrs = append(allErrs, errs...)
 	}
 
-	if errs := m.validateFleetsMember(old); len(errs) > 0 {
+	if errs := m.validateFleetsMemberUpdate(old); len(errs) > 0 {
 		allErrs = append(allErrs, errs...)
 	}
 
@@ -291,6 +291,8 @@ func (m *AzureManagedControlPlane) Validate(cli client.Client) error {
 	allErrs = append(allErrs, validateAPIServerAccessProfile(m.Spec.APIServerAccessProfile, field.NewPath("spec").Child("APIServerAccessProfile"))...)
 
 	allErrs = append(allErrs, validateAMCPVirtualNetwork(m.Spec.VirtualNetwork, field.NewPath("spec").Child("VirtualNetwork"))...)
+
+	allErrs = append(allErrs, validateFleetsMember(m.Spec.FleetsMember, field.NewPath("spec").Child("FleetsMember"))...)
 
 	return allErrs.ToAggregate()
 }
@@ -460,6 +462,25 @@ func validateAMCPVirtualNetwork(virtualNetwork ManagedControlPlaneVirtualNetwork
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("CIDRBlock"), virtualNetwork.CIDRBlock, "pre-existing virtual networks CIDR block should contain the subnet CIDR block"))
 		}
 	}
+	return allErrs
+}
+
+func validateFleetsMember(fleetsMember *FleetsMember, fldPath *field.Path) field.ErrorList {
+	var allErrs field.ErrorList
+
+	if fleetsMember != nil && fleetsMember.Name != "" {
+		match, _ := regexp.MatchString(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`, fleetsMember.Name)
+		if !match {
+			allErrs = append(allErrs,
+				field.Invalid(
+					fldPath.Child("Name"),
+					fleetsMember.Name,
+					"Name must match ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+				),
+			)
+		}
+	}
+
 	return allErrs
 }
 
@@ -882,8 +903,8 @@ func (m *AzureManagedControlPlane) validateOIDCIssuerProfileUpdate(old *AzureMan
 	return allErrs
 }
 
-// validateFleetsMember validates a FleetsMember.
-func (m *AzureManagedControlPlane) validateFleetsMember(old *AzureManagedControlPlane) field.ErrorList {
+// validateFleetsMemberUpdate validates a FleetsMember.
+func (m *AzureManagedControlPlane) validateFleetsMemberUpdate(old *AzureManagedControlPlane) field.ErrorList {
 	var allErrs field.ErrorList
 
 	if old.Spec.FleetsMember == nil || m.Spec.FleetsMember == nil {
