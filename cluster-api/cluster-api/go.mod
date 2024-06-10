@@ -2,7 +2,7 @@ module openshift/installer/cluster-api/providers/core
 
 go 1.22
 
-require sigs.k8s.io/cluster-api v1.7.0
+require sigs.k8s.io/cluster-api v1.7.2
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
