@@ -18,6 +18,12 @@ import (
 type Provider interface {
 	// Name provides the name for the cloud platform.
 	Name() string
+
+	// BootstrapHasPublicIP indicates whether a public IP address
+	// is expected on the bootstrap node in a public cluster.
+	// When BootstrapHasPublicIP returns true, the machine ready checks
+	// wait for an ExternalIP address to be populated in the machine status.
+	BootstrapHasPublicIP() bool
 }
 
 // PreProvider defines the PreProvision hook, which is called prior to
