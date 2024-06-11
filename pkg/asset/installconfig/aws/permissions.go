@@ -124,6 +124,7 @@ var permissions = map[PermissionGroup][]string{
 		"elasticloadbalancing:RegisterInstancesWithLoadBalancer",
 		"elasticloadbalancing:RegisterTargets",
 		"elasticloadbalancing:SetLoadBalancerPoliciesOfListener",
+		"elasticloadbalancing:SetSecurityGroups",
 
 		// IAM related perms
 		"iam:AddRoleToInstanceProfile",
