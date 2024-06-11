@@ -107,10 +107,15 @@ func (c *localControlPlane) Run(ctx context.Context) error {
 		return err
 	}
 
+	artifactsDirPath := filepath.Join(command.RootOpts.Dir, ArtifactsDir)
+	err = os.MkdirAll(artifactsDirPath, 0750)
+	if err != nil {
+		return fmt.Errorf("error creating cluster-api artifacts directory: %w", err)
+	}
+
 	kc := fromEnvTestConfig(c.Cfg)
 	{
-		dir := filepath.Join(command.RootOpts.Dir, "auth")
-		kf, err := os.Create(filepath.Join(dir, "envtest.kubeconfig"))
+		kf, err := os.Create(filepath.Join(artifactsDirPath, "envtest.kubeconfig"))
 		if err != nil {
 			return err
 		}
