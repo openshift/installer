@@ -13,6 +13,7 @@ import (
 	"github.com/vmware/govmomi/vim25/soap"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -166,11 +167,6 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			return fmt.Errorf("failed to create CAPA tags from UserTags: %w", err)
 		}
 
-		ignition, err := aws.CapaIgnitionWithCertBundleAndProxy(installConfig.Config.AdditionalTrustBundle, installConfig.Config.Proxy)
-		if err != nil {
-			return fmt.Errorf("failed to generation CAPA ignition: %w", err)
-		}
-
 		pool.Platform.AWS = &mpool
 		awsMachines, err := aws.GenerateMachines(clusterID.InfraID, &aws.MachineInput{
 			Role:     "master",
@@ -178,12 +174,22 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			Subnets:  subnets,
 			Tags:     tags,
 			PublicIP: false,
-			Ignition: ignition,
+			Ignition: &v1beta2.Ignition{
+				Version: "3.2",
+				// master machines should get ignition from the MCS on the bootstrap node
+				StorageType: v1beta2.IgnitionStorageTypeOptionUnencryptedUserData,
+			},
 		})
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 		c.FileList = append(c.FileList, awsMachines...)
+
+		ignition, err := aws.CapaIgnitionWithCertBundleAndProxy(installConfig.Config.AdditionalTrustBundle, installConfig.Config.Proxy)
+		if err != nil {
+			return fmt.Errorf("failed to generation CAPA ignition: %w", err)
+		}
+		ignition.StorageType = v1beta2.IgnitionStorageTypeOptionClusterObjectStore
 
 		pool := *ic.ControlPlane
 		pool.Name = "bootstrap"
