@@ -12,7 +12,6 @@ import (
 	capg "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/openshift/installer/pkg/asset/cluster/metadata"
 	"github.com/openshift/installer/pkg/asset/cluster/tfvars"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/gcp"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
@@ -31,6 +30,7 @@ var _ clusterapi.PreProvider = (*Provider)(nil)
 var _ clusterapi.IgnitionProvider = (*Provider)(nil)
 var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
 var _ clusterapi.PostProvider = (*Provider)(nil)
+var _ clusterapi.BootstrapDestroyer = (*Provider)(nil)
 
 // Name returns the name for the platform.
 func (p Provider) Name() string {
@@ -224,14 +224,10 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 }
 
 // DestroyBootstrap destroys the temporary bootstrap resources.
-func (p Provider) DestroyBootstrap(dir string) error {
+func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapDestroyInput) error {
 	logrus.Warnf("Destroying GCP Bootstrap Resources")
-	metadata, err := metadata.Load(dir)
-	if err != nil {
-		return err
-	}
-	if err := gcp.DestroyStorage(context.Background(), metadata.ClusterID); err != nil {
-		return fmt.Errorf("failed to destroy storage")
+	if err := gcp.DestroyStorage(ctx, in.Metadata.InfraID); err != nil {
+		return fmt.Errorf("failed to destroy storage: %w", err)
 	}
 	return nil
 }
