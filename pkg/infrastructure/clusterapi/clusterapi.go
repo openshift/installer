@@ -350,6 +350,8 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 
 // DestroyBootstrap destroys the temporary bootstrap resources.
 func (i *InfraProvider) DestroyBootstrap(ctx context.Context, dir string) error {
+	defer clusterapi.System().CleanEtcd()
+
 	metadata, err := metadata.Load(dir)
 	if err != nil {
 		return err

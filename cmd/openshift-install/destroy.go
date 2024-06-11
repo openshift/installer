@@ -11,6 +11,7 @@ import (
 
 	"github.com/openshift/installer/cmd/openshift-install/command"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
+	"github.com/openshift/installer/pkg/clusterapi"
 	"github.com/openshift/installer/pkg/destroy"
 	"github.com/openshift/installer/pkg/destroy/bootstrap"
 	quotaasset "github.com/openshift/installer/pkg/destroy/quota"
@@ -108,6 +109,9 @@ func runDestroyCmd(directory string, reportQuota bool) error {
 			return errors.Wrapf(err, "failed to remove terraform file %q", f)
 		}
 	}
+
+	// ensure capi etcd data store is cleaned up
+	clusterapi.System().CleanEtcd()
 
 	timer.StopTimer(timer.TotalTimeElapsed)
 	timer.LogSummary()
