@@ -153,7 +153,7 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 			S3Bucket: &capa.S3Bucket{
 				Name:                    fmt.Sprintf("openshift-bootstrap-data-%s", clusterID.InfraID),
 				PresignedURLDuration:    &metav1.Duration{Duration: 1 * time.Hour},
-				BestEffortDeleteObjects: ptr.To(ic.Config.AWS.PreserveBootstrapIgnition),
+				BestEffortDeleteObjects: ptr.To(ic.Config.AWS.BestEffortDeleteIgnition),
 			},
 			ControlPlaneLoadBalancer: &capa.AWSLoadBalancerSpec{
 				Name:                   ptr.To(clusterID.InfraID + "-int"),

@@ -2163,6 +2163,14 @@ spec:
                       for the cluster. If set, the AMI should belong to the same region
                       as the cluster.
                     type: string
+                  bestEffortDeleteIgnition:
+                    description: BestEffortDeleteIgnition is an optional field that
+                      can be used to ignore errors from S3 deletion of ignition objects
+                      during cluster bootstrap. The default behavior is to fail the
+                      installation if ignition objects cannot be deleted. Enable this
+                      functionality when there are known reasons disallowing their
+                      deletion.
+                    type: boolean
                   defaultMachinePlatform:
                     description: DefaultMachinePlatform is the default configuration
                       used when installing on AWS for machine pools which do not define
@@ -2283,9 +2291,8 @@ spec:
                       \ This default is subject to change over time."
                     type: string
                   preserveBootstrapIgnition:
-                    description: PreserveBootstrapIgnition is an optional field that
-                      can be used to make the S3 deletion optional during bootstrap
-                      destroy.
+                    description: PreserveBootstrapIgnition is deprecated. Use bestEffortDeleteIgnition
+                      instead.
                     type: boolean
                   propagateUserTags:
                     description: PropagateUserTags is a flag that directs in-cluster
