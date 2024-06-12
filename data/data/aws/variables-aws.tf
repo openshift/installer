@@ -227,3 +227,9 @@ a Public Route Table and the default route entry pointing to the carrier gateway
 Example: `{ "us-east-1-nyc-1a"=local-zone, "us-east-1-wl1-nyc-wlz-1"=wavelength-zone }`
 EOF
 }
+
+variable "aws_master_use_spot_instance" {
+  type = bool
+  description = "(optional) Whether to use instances from the Spot market for masters"
+  default = false
+}

@@ -48,6 +48,7 @@ func installerMain() {
 		newCompletionCmd(),
 		newExplainCmd(),
 		newAgentCmd(),
+		newListFeaturesCmd(),
 	} {
 		rootCmd.AddCommand(subCmd)
 	}
