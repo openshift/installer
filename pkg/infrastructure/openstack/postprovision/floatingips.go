@@ -8,6 +8,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/attributestags"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
+	"github.com/gophercloud/gophercloud/pagination"
 	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -35,7 +36,7 @@ func FloatingIPs(ctx context.Context, c client.Client, cluster *capo.OpenStackCl
 		return err
 	}
 
-	bootstrapPort, err := getPortForInstance(networkClient, *bootstrapMachine.Status.InstanceID)
+	bootstrapPort, err := getPortForInstance(networkClient, *bootstrapMachine.Status.InstanceID, cluster.Status.Network.ID)
 	if err != nil {
 		return err
 	}
@@ -48,27 +49,27 @@ func FloatingIPs(ctx context.Context, c client.Client, cluster *capo.OpenStackCl
 	return nil
 }
 
-// Get the first port associated with an instance.
-//
-// This is used to attach a FIP to the instance.
-func getPortForInstance(client *gophercloud.ServiceClient, instanceID string) (*ports.Port, error) {
-	listOpts := ports.ListOpts{
-		DeviceID: instanceID,
+// Return the first port associated with the given instance and existing on the
+// given network.
+func getPortForInstance(client *gophercloud.ServiceClient, instanceID, networkID string) (*ports.Port, error) {
+	var port *ports.Port
+	if err := ports.List(client, ports.ListOpts{DeviceID: instanceID, NetworkID: networkID}).EachPage(func(page pagination.Page) (bool, error) {
+		ports, err := ports.ExtractPorts(page)
+		if err != nil {
+			return false, err
+		}
+		if len(ports) > 0 {
+			port = &ports[0]
+			return false, nil
+		}
+		return true, nil
+	}); err != nil {
+		return nil, fmt.Errorf("failed to list the ports of the bootstrap server: %w", err)
 	}
-	allPages, err := ports.List(client, listOpts).AllPages()
-	if err != nil {
-		return nil, fmt.Errorf("failed to list ports: %w", err)
+	if port == nil {
+		return nil, fmt.Errorf("the bootstrap server has no associated ports")
 	}
-	allPorts, err := ports.ExtractPorts(allPages)
-	if err != nil {
-		return nil, fmt.Errorf("failed to extract ports: %w", err)
-	}
-
-	if len(allPorts) < 1 {
-		return nil, fmt.Errorf("bootstrap machine has no associated ports")
-	}
-
-	return &allPorts[0], nil
+	return port, nil
 }
 
 // Create a floating IP.
