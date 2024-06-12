@@ -18,6 +18,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/mo"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -217,6 +218,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 	if masterCount == 0 {
 		return errors.Errorf("master slice cannot be empty")
+	}
+
+	numWorkers := int64(0)
+	for _, worker := range installConfig.Config.Compute {
+		numWorkers += ptr.Deref(worker.Replicas, 0)
 	}
 
 	switch platform {
@@ -484,6 +490,18 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
+
+		// Based on the number of workers, we could have the following outcomes:
+		// 1. compute replicas > 0, worker machinesets > 0, masters not schedulable, valid cluster
+		// 2. compute replicas > 0, worker machinesets = 0, invalid cluster
+		// 3. compute replicas = 0, masters schedulable, valid cluster
+		if numWorkers != 0 && len(workers) == 0 {
+			return fmt.Errorf("invalid configuration. No worker assets available for requested number of compute replicas (%d)", numWorkers)
+		}
+		if numWorkers == 0 && !mastersSchedulable {
+			return fmt.Errorf("invalid configuration. No workers requested but masters are not schedulable")
+		}
+
 		workerConfigs := make([]*machinev1beta1.GCPMachineProviderSpec, len(workers))
 		for i, w := range workers {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.GCPMachineProviderSpec)
