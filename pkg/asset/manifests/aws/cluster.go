@@ -151,7 +151,7 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 				},
 			},
 			S3Bucket: &capa.S3Bucket{
-				Name:                    fmt.Sprintf("openshift-bootstrap-data-%s", clusterID.InfraID),
+				Name:                    GetIgnitionBucketName(clusterID.InfraID),
 				PresignedURLDuration:    &metav1.Duration{Duration: 1 * time.Hour},
 				BestEffortDeleteObjects: ptr.To(ic.Config.AWS.BestEffortDeleteIgnition),
 			},
@@ -264,4 +264,9 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 			Namespace:  awsCluster.Namespace,
 		},
 	}, nil
+}
+
+// GetIgnitionBucketName returns the name of the bucket for the given cluster.
+func GetIgnitionBucketName(infraID string) string {
+	return fmt.Sprintf("openshift-bootstrap-data-%s", infraID)
 }
