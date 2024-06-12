@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elbv2"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
@@ -30,12 +31,15 @@ var (
 	_ clusterapi.PreProvider        = (*Provider)(nil)
 	_ clusterapi.InfraReadyProvider = (*Provider)(nil)
 	_ clusterapi.BootstrapDestroyer = (*Provider)(nil)
+	_ clusterapi.PostDestroyer      = (*Provider)(nil)
 
 	errNotFound = errors.New("not found")
 )
 
 // Provider implements AWS CAPI installation.
-type Provider struct{}
+type Provider struct {
+	bestEffortDeleteIgnition bool
+}
 
 // Name gives the name of the provider, AWS.
 func (*Provider) Name() string { return awstypes.Name }
@@ -220,8 +224,20 @@ func getHostedZoneIDForNLB(ctx context.Context, awsSession *session.Session, reg
 
 // DestroyBootstrap removes aws bootstrap resources not handled
 // by the deletion of the bootstrap machine by the capi controllers.
-func (*Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapDestroyInput) error {
-	if err := removeSSHRule(ctx, in.Client, in.Metadata.InfraID); err != nil {
+func (p *Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapDestroyInput) error {
+	awsCluster := &capa.AWSCluster{}
+	key := k8sClient.ObjectKey{
+		Name:      in.Metadata.InfraID,
+		Namespace: capiutils.Namespace,
+	}
+	if err := in.Client.Get(ctx, key, awsCluster); err != nil {
+		return fmt.Errorf("failed to get AWSCluster: %w", err)
+	}
+
+	// Save this value for use in the post-destroy hook since we don't have capi running anymore by that point.
+	p.bestEffortDeleteIgnition = ptr.Deref(awsCluster.Spec.S3Bucket.BestEffortDeleteObjects, false)
+
+	if err := removeSSHRule(ctx, in.Client, in.Metadata.InfraID, awsCluster); err != nil {
 		return fmt.Errorf("failed to remove bootstrap SSH rule: %w", err)
 	}
 	return nil
@@ -229,16 +245,7 @@ func (*Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapDe
 
 // removeSSHRule removes the SSH rule for accessing the bootstrap node
 // by removing the rule from the cluster spec and updating the object.
-func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string) error {
-	awsCluster := &capa.AWSCluster{}
-	key := k8sClient.ObjectKey{
-		Name:      infraID,
-		Namespace: capiutils.Namespace,
-	}
-	if err := cl.Get(ctx, key, awsCluster); err != nil {
-		return fmt.Errorf("failed to get AWSCluster: %w", err)
-	}
-
+func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string, awsCluster *capa.AWSCluster) error {
 	postBootstrapRules := []capa.IngressRule{}
 	for _, rule := range awsCluster.Spec.NetworkSpec.AdditionalControlPlaneIngressRules {
 		if strings.EqualFold(rule.Description, awsmanifest.BootstrapSSHDescription) {
@@ -254,6 +261,10 @@ func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string) err
 	}
 	logrus.Debug("Updated AWSCluster to remove bootstrap SSH rule")
 
+	key := k8sClient.ObjectKey{
+		Name:      infraID,
+		Namespace: capiutils.Namespace,
+	}
 	timeout := 15 * time.Minute
 	untilTime := time.Now().Add(timeout)
 	warnTime := time.Now().Add(5 * time.Minute)
@@ -297,5 +308,43 @@ func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string) err
 		return fmt.Errorf("unable to remove bootstrap ssh rule: %w", err)
 	}
 
+	return nil
+}
+
+// PostDestroy deletes the ignition bucket after capi stopped running, so it won't try to reconcile the bucket.
+func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerInput) error {
+	region := in.Metadata.AWS.Region
+	session, err := awsconfig.GetSessionWithOptions(
+		awsconfig.WithRegion(region),
+		awsconfig.WithServiceEndpoints(region, in.Metadata.AWS.ServiceEndpoints),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create aws session: %w", err)
+	}
+
+	bucketName := fmt.Sprintf("openshift-bootstrap-data-%s", in.Metadata.InfraID)
+	if err := removeS3Bucket(ctx, session, bucketName); err != nil {
+		if p.bestEffortDeleteIgnition {
+			logrus.Warnf("failed to delete ignition bucket %s: %v", bucketName, err)
+			return nil
+		}
+		return fmt.Errorf("failed to delete ignition bucket %s: %w", bucketName, err)
+	}
+
+	return nil
+}
+
+// removeS3Bucket deletes an s3 bucket given its name.
+func removeS3Bucket(ctx context.Context, session *session.Session, bucketName string) error {
+	client := s3.New(session)
+	_, err := client.DeleteBucketWithContext(ctx, &s3.DeleteBucketInput{Bucket: aws.String(bucketName)})
+	if err != nil {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == s3.ErrCodeNoSuchBucket {
+			logrus.Debugf("bucket %q already deleted", bucketName)
+			return nil
+		}
+		return err
+	}
 	return nil
 }
