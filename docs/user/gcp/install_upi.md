@@ -557,7 +557,7 @@ gcloud compute instance-groups unmanaged add-instances ${INFRA_ID}-bootstrap-ig 
 ### Add bootstrap instance group to the internal load balancer backend service
 
 ```sh
-gcloud compute backend-services add-backend ${INFRA_ID}-api-internal-backend-service --region=${REGION} --instance-group=${INFRA_ID}-bootstrap-ig --instance-group-zone=${ZONE_0}
+gcloud compute backend-services add-backend ${INFRA_ID}-api-internal --region=${REGION} --instance-group=${INFRA_ID}-bootstrap-ig --instance-group-zone=${ZONE_0}
 ```
 
 ## Launch permanent control plane
@@ -717,7 +717,7 @@ If you are installing into a [Shared VPC (XPN)][sharedvpc],
 it is safe to remove any bootstrap-specific firewall rules at this time.
 
 ```sh
-gcloud compute backend-services remove-backend ${INFRA_ID}-api-internal-backend-service --region=${REGION} --instance-group=${INFRA_ID}-bootstrap-instance-group --instance-group-zone=${ZONE_0}
+gcloud compute backend-services remove-backend ${INFRA_ID}-api-internal --region=${REGION} --instance-group=${INFRA_ID}-bootstrap-instance-group --instance-group-zone=${ZONE_0}
 gsutil rm gs://${INFRA_ID}-bootstrap-ignition/bootstrap.ign
 gsutil rb gs://${INFRA_ID}-bootstrap-ignition
 gcloud deployment-manager deployments delete ${INFRA_ID}-bootstrap
