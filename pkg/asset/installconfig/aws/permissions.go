@@ -202,8 +202,6 @@ var permissions = map[PermissionGroup][]string{
 		"iam:ListInstanceProfiles",
 		"iam:ListRolePolicies",
 		"iam:ListUserPolicies",
-		"s3:DeleteBucket",
-		"s3:DeleteObject",
 		"s3:ListBucketVersions",
 		"tag:GetResources",
 	},
