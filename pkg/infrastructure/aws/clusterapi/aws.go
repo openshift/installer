@@ -322,7 +322,7 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 		return fmt.Errorf("failed to create aws session: %w", err)
 	}
 
-	bucketName := fmt.Sprintf("openshift-bootstrap-data-%s", in.Metadata.InfraID)
+	bucketName := awsmanifest.GetIgnitionBucketName(in.Metadata.InfraID)
 	if err := removeS3Bucket(ctx, session, bucketName); err != nil {
 		if p.bestEffortDeleteIgnition {
 			logrus.Warnf("failed to delete ignition bucket %s: %v", bucketName, err)
