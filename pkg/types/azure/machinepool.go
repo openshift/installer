@@ -1,5 +1,7 @@
 package azure
 
+import "github.com/openshift/api/machine/v1beta1"
+
 // SecurityTypes represents the SecurityType of the virtual machine.
 type SecurityTypes string
 
@@ -58,6 +60,8 @@ type MachinePool struct {
 	// be set for Confidential VMs and Trusted Launch for VMs.
 	// +optional
 	Settings *SecuritySettings `json:"settings,omitempty"`
+
+	Diagnostics v1beta1.AzureDiagnostics `json:"diagnostics,omitempty"`
 }
 
 // SecuritySettings define the security type and the UEFI settings of the virtual machine.
@@ -167,6 +171,11 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 	if required.VMNetworkingType != "" {
 		a.VMNetworkingType = required.VMNetworkingType
+	}
+
+	var emptyDiagnostics v1beta1.AzureDiagnostics
+	if required.Diagnostics != emptyDiagnostics {
+		a.Diagnostics = required.Diagnostics
 	}
 
 	var emptyOSImage OSImage
