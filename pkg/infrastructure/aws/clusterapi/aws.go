@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
@@ -337,14 +338,44 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 // removeS3Bucket deletes an s3 bucket given its name.
 func removeS3Bucket(ctx context.Context, session *session.Session, bucketName string) error {
 	client := s3.New(session)
-	_, err := client.DeleteBucketWithContext(ctx, &s3.DeleteBucketInput{Bucket: aws.String(bucketName)})
-	if err != nil {
-		var awsErr awserr.Error
-		if errors.As(err, &awsErr) && awsErr.Code() == s3.ErrCodeNoSuchBucket {
+
+	iter := s3manager.NewDeleteListIterator(client, &s3.ListObjectsInput{
+		Bucket: aws.String(bucketName),
+	})
+	err := s3manager.NewBatchDeleteWithClient(client).Delete(ctx, iter)
+	if err != nil && !isBucketNotFound(err) {
+		return err
+	}
+	logrus.Debugf("bucket %q emptied", bucketName)
+
+	if _, err := client.DeleteBucketWithContext(ctx, &s3.DeleteBucketInput{Bucket: aws.String(bucketName)}); err != nil {
+		if isBucketNotFound(err) {
 			logrus.Debugf("bucket %q already deleted", bucketName)
 			return nil
 		}
 		return err
 	}
 	return nil
+}
+
+func isBucketNotFound(err interface{}) bool {
+	switch s3Err := err.(type) {
+	case awserr.Error:
+		if s3Err.Code() == s3.ErrCodeNoSuchBucket {
+			return true
+		}
+		origErr := s3Err.OrigErr()
+		if origErr != nil {
+			return isBucketNotFound(origErr)
+		}
+	case s3manager.Error:
+		if s3Err.OrigErr != nil {
+			return isBucketNotFound(s3Err.OrigErr)
+		}
+	case s3manager.Errors:
+		if len(s3Err) == 1 {
+			return isBucketNotFound(s3Err[0])
+		}
+	}
+	return false
 }
