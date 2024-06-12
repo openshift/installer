@@ -112,10 +112,6 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 		if in.Role == "bootstrap" {
 			awsMachine.Name = capiutils.GenerateBoostrapMachineName(clusterID)
 			awsMachine.Labels["install.openshift.io/bootstrap"] = ""
-			awsMachine.Spec.Ignition.StorageType = capa.IgnitionStorageTypeOptionClusterObjectStore
-		} else {
-			// master machines should get ignition from the MCS on the bootstrap node
-			awsMachine.Spec.Ignition.StorageType = capa.IgnitionStorageTypeOptionUnencryptedUserData
 		}
 
 		// Handle additional security groups.
