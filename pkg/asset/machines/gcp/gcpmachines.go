@@ -175,11 +175,13 @@ func createGCPMachine(name string, installConfig *installconfig.InstallConfig, i
 
 	if mpool.OSDisk.EncryptionKey != nil {
 		encryptionKey := &capg.CustomerEncryptionKey{
-			KeyType:              capg.CustomerManagedKey,
-			KMSKeyServiceAccount: ptr.To(mpool.OSDisk.EncryptionKey.KMSKeyServiceAccount),
+			KeyType: capg.CustomerManagedKey,
 			ManagedKey: &capg.ManagedKey{
 				KMSKeyName: generateDiskEncryptionKeyLink(mpool.OSDisk.EncryptionKey.KMSKey, installConfig.Config.GCP.ProjectID),
 			},
+		}
+		if mpool.OSDisk.EncryptionKey.KMSKeyServiceAccount != "" {
+			encryptionKey.KMSKeyServiceAccount = ptr.To(mpool.OSDisk.EncryptionKey.KMSKeyServiceAccount)
 		}
 		gcpMachine.Spec.RootDiskEncryptionKey = encryptionKey
 	}
