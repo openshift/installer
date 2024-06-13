@@ -106,3 +106,14 @@ type BootstrapDestroyInput struct {
 	Client   client.Client
 	Metadata types.ClusterMetadata
 }
+
+// PostDestroyer allows platform-specific behavior after bootstrap has been destroyed and
+// ClusterAPI has stopped running.
+type PostDestroyer interface {
+	PostDestroy(ctx context.Context, in PostDestroyerInput) error
+}
+
+// PostDestroyerInput collects args passed to the PostDestroyer hook.
+type PostDestroyerInput struct {
+	Metadata types.ClusterMetadata
+}
