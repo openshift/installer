@@ -17,6 +17,7 @@ import (
 	"github.com/gophercloud/gophercloud/v2/openstack/image/v2/images"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/layer3/floatingips"
 	networkquotasets "github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/quotas"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/security/groups"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/networks"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/subnets"
 	azutils "github.com/gophercloud/utils/v2/openstack/compute/v2/availabilityzones"
@@ -47,6 +48,7 @@ type CloudInfo struct {
 	NetworkExtensions       []extensions.Extension
 	Quotas                  []quota.Quota
 	Networks                []string
+	SecurityGroups          []string
 
 	clients *clients
 }
@@ -244,6 +246,11 @@ func (ci *CloudInfo) collectInfo(ctx context.Context, ic *types.InstallConfig) e
 		return err
 	}
 
+	ci.SecurityGroups, err = ci.getSecurityGroups(ctx)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -319,6 +326,26 @@ func (ci *CloudInfo) getNetworks(ctx context.Context) ([]string, error) {
 	}
 
 	return networkIDs, nil
+}
+
+// getSecurityGroups returns all the security group IDs available on the cloud.
+func (ci *CloudInfo) getSecurityGroups(ctx context.Context) ([]string, error) {
+	pages, err := groups.List(ci.clients.networkClient, groups.ListOpts{}).AllPages(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	groups, err := groups.ExtractGroups(pages)
+	if err != nil {
+		return nil, err
+	}
+
+	sgIDs := make([]string, len(groups))
+	for i := range groups {
+		sgIDs[i] = groups[i].ID
+	}
+
+	return sgIDs, nil
 }
 
 func (ci *CloudInfo) getNetworkByName(ctx context.Context, networkName string) (*networks.Network, error) {

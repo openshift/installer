@@ -69,6 +69,7 @@ func ValidateMachinePool(p *openstack.MachinePool, ci *CloudInfo, controlPlane b
 	allErrs = append(allErrs, validateUUIDV4s(p.AdditionalNetworkIDs, fldPath.Child("additionalNetworkIDs"))...)
 	allErrs = append(allErrs, validateUUIDV4s(p.AdditionalSecurityGroupIDs, fldPath.Child("additionalSecurityGroupIDs"))...)
 	allErrs = append(allErrs, validateAdditionalNetworks(p.AdditionalNetworkIDs, ci.Networks, fldPath.Child("additionalNetworkIDs"))...)
+	allErrs = append(allErrs, validateAdditionalSecurityGroups(p.AdditionalSecurityGroupIDs, ci.SecurityGroups, fldPath.Child("additionalSecurityGroupIDs"))...)
 
 	return allErrs
 }
@@ -82,6 +83,20 @@ func validateAdditionalNetworks(additionalNetworkIDs, availableNetworks []string
 	for i, n := range additionalNetworkIDs {
 		if _, ok := networkSet[n]; !ok {
 			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), n, "Network either does not exist in this cloud, or is not available"))
+		}
+	}
+	return allErrs
+}
+
+func validateAdditionalSecurityGroups(additionalSecurityGroupIDs, availableSecurityGroups []string, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	sgSet := make(map[string]struct{}, len(availableSecurityGroups))
+	for i := range availableSecurityGroups {
+		sgSet[availableSecurityGroups[i]] = struct{}{}
+	}
+	for i, n := range additionalSecurityGroupIDs {
+		if _, ok := sgSet[n]; !ok {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), n, "Security group either does not exist in this cloud, or is not available"))
 		}
 	}
 	return allErrs
