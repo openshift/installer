@@ -187,10 +187,10 @@ Thank you to all contributors and a special thanks to our current maintainers & 
 | [@richardcase](https://github.com/richardcase) (from 2020-12-04) | [@cnmcavoy](https://github.com/cnmcavoy) (from 2023-10-16)           |
 | [@Ankitasw](https://github.com/Ankitasw) (from 2022-10-19)       | [@AverageMarcus](https://github.com/AverageMarcus) (from 2022-10-19) |
 | [@dlipovetsky](https://github.com/dlipovetsky) (from 2021-10-31) | [@luthermonson](https://github.com/luthermonson ) (from 2023-03-08)  |
-| [@vincepri](https://github.com/vincepri) (og & from 2023-10-16)  | [@nrb](https://github.com/nrb) (from 2023-10-16)                     |
-|                                                                  | [@faiq](https://github.com/faiq) (from 2023-10-16)                   |
-|                                                                  | [@fiunchinho](https://github.com/fiunchinho) (from 2023-11-6)        |
+| [@vincepri](https://github.com/vincepri) (og & from 2023-10-16)  | [@faiq](https://github.com/faiq) (from 2023-10-16)                   |
+| [@nrb](https://github.com/nrb) (from 2024-05-24)                 | [@fiunchinho](https://github.com/fiunchinho) (from 2023-11-6)        |
 |                                                                  | [@AndiDog](https://github.com/AndiDog) (from 2023-12-13)             |
+|                                                                  | [@damdo](https://github.com/damdo) (from 2023-03-01)                 |
 
 and the previous/emeritus maintainers & reviewers:
 

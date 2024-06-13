@@ -30,6 +30,7 @@ type AWSMachinePoolBuilder struct {
 	availabilityZoneTypes      map[string]string
 	spotMarketOptions          *AWSSpotMarketOptionsBuilder
 	subnetOutposts             map[string]string
+	tags                       map[string]string
 }
 
 // NewAWSMachinePool creates a new builder of 'AWS_machine_pool' objects.
@@ -105,6 +106,17 @@ func (b *AWSMachinePoolBuilder) SubnetOutposts(value map[string]string) *AWSMach
 	return b
 }
 
+// Tags sets the value of the 'tags' attribute to the given value.
+func (b *AWSMachinePoolBuilder) Tags(value map[string]string) *AWSMachinePoolBuilder {
+	b.tags = value
+	if value != nil {
+		b.bitmap_ |= 128
+	} else {
+		b.bitmap_ &^= 128
+	}
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *AWSMachinePoolBuilder) Copy(object *AWSMachinePool) *AWSMachinePoolBuilder {
 	if object == nil {
@@ -140,6 +152,14 @@ func (b *AWSMachinePoolBuilder) Copy(object *AWSMachinePool) *AWSMachinePoolBuil
 	} else {
 		b.subnetOutposts = nil
 	}
+	if len(object.tags) > 0 {
+		b.tags = map[string]string{}
+		for k, v := range object.tags {
+			b.tags[k] = v
+		}
+	} else {
+		b.tags = nil
+	}
 	return b
 }
 
@@ -169,6 +189,12 @@ func (b *AWSMachinePoolBuilder) Build() (object *AWSMachinePool, err error) {
 		object.subnetOutposts = make(map[string]string)
 		for k, v := range b.subnetOutposts {
 			object.subnetOutposts[k] = v
+		}
+	}
+	if b.tags != nil {
+		object.tags = make(map[string]string)
+		for k, v := range b.tags {
+			object.tags[k] = v
 		}
 	}
 	return

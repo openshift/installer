@@ -269,6 +269,22 @@ func (r *AWSCluster) validateNetwork() field.ErrorList {
 		}
 	}
 
+	if r.Spec.NetworkSpec.VPC.ElasticIPPool != nil {
+		eipp := r.Spec.NetworkSpec.VPC.ElasticIPPool
+		if eipp.PublicIpv4Pool != nil {
+			if eipp.PublicIpv4PoolFallBackOrder == nil {
+				return append(allErrs, field.Invalid(field.NewPath("elasticIpPool.publicIpv4PoolFallbackOrder"), r.Spec.NetworkSpec.VPC.ElasticIPPool, "publicIpv4PoolFallbackOrder must be set when publicIpv4Pool is defined."))
+			}
+			awsPublicIpv4PoolPrefix := "ipv4pool-ec2-"
+			if !strings.HasPrefix(*eipp.PublicIpv4Pool, awsPublicIpv4PoolPrefix) {
+				return append(allErrs, field.Invalid(field.NewPath("elasticIpPool.publicIpv4Pool"), r.Spec.NetworkSpec.VPC.ElasticIPPool, fmt.Sprintf("publicIpv4Pool must start with %s.", awsPublicIpv4PoolPrefix)))
+			}
+		}
+		if eipp.PublicIpv4Pool == nil && eipp.PublicIpv4PoolFallBackOrder != nil {
+			return append(allErrs, field.Invalid(field.NewPath("elasticIpPool.publicIpv4PoolFallbackOrder"), r.Spec.NetworkSpec.VPC.ElasticIPPool, "publicIpv4Pool must be set when publicIpv4PoolFallbackOrder is defined."))
+		}
+	}
+
 	return allErrs
 }
 
