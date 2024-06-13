@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	configv1 "github.com/openshift/api/config/v1"
-	features "github.com/openshift/api/features"
+	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -208,7 +208,7 @@ type InstallConfig struct {
 	Capabilities *Capabilities `json:"capabilities,omitempty"`
 
 	// FeatureSet enables features that are not part of the default feature set.
-	// Valid values are "Default", "TechPreviewNoUpgrade" and "CustomNoUpgrade".
+	// Valid values are "Default", "TechPreviewNoUpgrade", "DevPreviewNoUpgrade", and "CustomNoUpgrade".
 	// When omitted, the "Default" feature set is used.
 	// +optional
 	FeatureSet configv1.FeatureSet `json:"featureSet,omitempty"`

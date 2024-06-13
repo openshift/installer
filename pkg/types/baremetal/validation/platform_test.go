@@ -190,6 +190,13 @@ func TestValidatePlatform(t *testing.T) {
 				FeatureSet(configv1.TechPreviewNoUpgrade).build(),
 		},
 		{
+			name: "allowed_feature_loadbalancer_openshift_managed_default_DevPreview",
+			config: installConfig().
+				BareMetalPlatform(
+					platform().LoadBalancerType("OpenShiftManagedDefault")).
+				FeatureSet(configv1.DevPreviewNoUpgrade).build(),
+		},
+		{
 			name: "allowed_feature_loadbalancer_user_managed",
 			config: installConfig().
 				BareMetalPlatform(
