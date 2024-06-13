@@ -68,7 +68,22 @@ func ValidateMachinePool(p *openstack.MachinePool, ci *CloudInfo, controlPlane b
 	allErrs = append(allErrs, validateZones(p.Zones, ci.ComputeZones, fldPath.Child("zones"))...)
 	allErrs = append(allErrs, validateUUIDV4s(p.AdditionalNetworkIDs, fldPath.Child("additionalNetworkIDs"))...)
 	allErrs = append(allErrs, validateUUIDV4s(p.AdditionalSecurityGroupIDs, fldPath.Child("additionalSecurityGroupIDs"))...)
+	allErrs = append(allErrs, validateAdditionalNetworks(p.AdditionalNetworkIDs, ci.Networks, fldPath.Child("additionalNetworkIDs"))...)
 
+	return allErrs
+}
+
+func validateAdditionalNetworks(additionalNetworkIDs, availableNetworks []string, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	networkSet := make(map[string]struct{}, len(availableNetworks))
+	for i := range availableNetworks {
+		networkSet[availableNetworks[i]] = struct{}{}
+	}
+	for i, n := range additionalNetworkIDs {
+		if _, ok := networkSet[n]; !ok {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), n, "Network either does not exist in this cloud, or is not available"))
+		}
+	}
 	return allErrs
 }
 

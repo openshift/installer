@@ -46,6 +46,7 @@ type CloudInfo struct {
 	VolumeTypes             []string
 	NetworkExtensions       []extensions.Extension
 	Quotas                  []quota.Quota
+	Networks                []string
 
 	clients *clients
 }
@@ -238,6 +239,11 @@ func (ci *CloudInfo) collectInfo(ctx context.Context, ic *types.InstallConfig) e
 		return fmt.Errorf("failed to fetch network extensions: %w", err)
 	}
 
+	ci.Networks, err = ci.getNetworks(ctx)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -293,6 +299,26 @@ func (ci *CloudInfo) getFlavor(ctx context.Context, flavorName string) (Flavor, 
 		Flavor:    *flavor,
 		Baremetal: baremetal,
 	}, nil
+}
+
+// getNetworks returns all the network IDs available on the cloud.
+func (ci *CloudInfo) getNetworks(ctx context.Context) ([]string, error) {
+	pages, err := networks.List(ci.clients.networkClient, nil).AllPages(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	networks, err := networks.ExtractNetworks(pages)
+	if err != nil {
+		return nil, err
+	}
+
+	networkIDs := make([]string, len(networks))
+	for i := range networks {
+		networkIDs[i] = networks[i].ID
+	}
+
+	return networkIDs, nil
 }
 
 func (ci *CloudInfo) getNetworkByName(ctx context.Context, networkName string) (*networks.Network, error) {
