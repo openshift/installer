@@ -59,6 +59,7 @@ type Interface interface {
 	State() SystemState
 	Client() client.Client
 	Teardown()
+	CleanEtcd()
 }
 
 // System returns the cluster-api system.
@@ -391,6 +392,21 @@ func (c *system) Teardown() {
 
 		c.logWriter.Close()
 	})
+}
+
+// CleanEtcd removes the etcd database from the host.
+func (c *system) CleanEtcd() {
+	c.Lock()
+	defer c.Unlock()
+
+	if c.lcp == nil {
+		return
+	}
+
+	// Clean up the etcd directory.
+	if err := os.RemoveAll(c.lcp.EtcdDataDir); err != nil {
+		logrus.Warnf("Unable to delete local etcd data directory %s. It is safe to remove the directory manually", c.lcp.EtcdDataDir)
+	}
 }
 
 // State returns the state of the cluster-api system.

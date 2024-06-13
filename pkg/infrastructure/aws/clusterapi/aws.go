@@ -238,7 +238,16 @@ func (p *Provider) DestroyBootstrap(ctx context.Context, in clusterapi.Bootstrap
 	// Save this value for use in the post-destroy hook since we don't have capi running anymore by that point.
 	p.bestEffortDeleteIgnition = ptr.Deref(awsCluster.Spec.S3Bucket.BestEffortDeleteObjects, false)
 
-	if err := removeSSHRule(ctx, in.Client, in.Metadata.InfraID, awsCluster); err != nil {
+	region := in.Metadata.ClusterPlatformMetadata.AWS.Region
+	session, err := awsconfig.GetSessionWithOptions(
+		awsconfig.WithRegion(region),
+		awsconfig.WithServiceEndpoints(region, in.Metadata.ClusterPlatformMetadata.AWS.ServiceEndpoints),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create aws session: %w", err)
+	}
+
+	if err := removeSSHRule(ctx, in.Client, in.Metadata.InfraID, region, session, awsCluster); err != nil {
 		return fmt.Errorf("failed to remove bootstrap SSH rule: %w", err)
 	}
 	return nil
@@ -246,7 +255,7 @@ func (p *Provider) DestroyBootstrap(ctx context.Context, in clusterapi.Bootstrap
 
 // removeSSHRule removes the SSH rule for accessing the bootstrap node
 // by removing the rule from the cluster spec and updating the object.
-func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string, awsCluster *capa.AWSCluster) error {
+func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID, region string, session *session.Session, awsCluster *capa.AWSCluster) error {
 	postBootstrapRules := []capa.IngressRule{}
 	for _, rule := range awsCluster.Spec.NetworkSpec.AdditionalControlPlaneIngressRules {
 		if strings.EqualFold(rule.Description, awsmanifest.BootstrapSSHDescription) {
@@ -262,52 +271,61 @@ func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string, aws
 	}
 	logrus.Debug("Updated AWSCluster to remove bootstrap SSH rule")
 
-	key := k8sClient.ObjectKey{
-		Name:      infraID,
-		Namespace: capiutils.Namespace,
-	}
-	timeout := 15 * time.Minute
-	untilTime := time.Now().Add(timeout)
-	warnTime := time.Now().Add(5 * time.Minute)
-	warned := false
-	timezone, _ := untilTime.Zone()
-	logrus.Infof("Waiting up to %v (until %v %s) for bootstrap SSH rule to be destroyed...", timeout, untilTime.Format(time.Kitchen), timezone)
-	if err := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
-		Duration: time.Second * 10,
-		Factor:   float64(1.5),
-		Steps:    32,
-		Cap:      timeout,
-	}, func(ctx context.Context) (bool, error) {
-		c := &capa.AWSCluster{}
-		if err := cl.Get(ctx, key, c); err != nil {
-			return false, err
-		}
-		if time.Now().After(warnTime) && !warned {
-			logrus.Warn("Deleting bootstrap SSH rule is still progressing but taking longer than expected")
-			warned = true
-		}
-		if sg, ok := c.Status.Network.SecurityGroups[capa.SecurityGroupControlPlane]; ok {
-			for _, r := range sg.IngressRules {
-				if r.Description == awsmanifest.BootstrapSSHDescription {
-					logrus.Debugf("Still waiting for bootstrap SSH security rule %s to be deleted from %s...", r.Description, sg.ID)
-					return false, nil
-				}
-			}
-			logrus.Debugf("The bootstrap SSH security rule %s has been removed from %s", awsmanifest.BootstrapSSHDescription, sg.ID)
-			return true, nil
-		}
-		// This shouldn't happen, but if control plane SG is not found, return an error.
-		keys := make([]capa.SecurityGroupRole, 0, len(c.Status.Network.SecurityGroups))
-		for sgr := range c.Status.Network.SecurityGroups {
+	var sgID string
+	if sg, ok := awsCluster.Status.Network.SecurityGroups[capa.SecurityGroupControlPlane]; ok && len(sg.ID) > 0 {
+		sgID = sg.ID
+	} else if ok {
+		return fmt.Errorf("control plane security group id is not populated in awscluster status")
+	} else {
+		keys := make([]capa.SecurityGroupRole, 0, len(awsCluster.Status.Network.SecurityGroups))
+		for sgr := range awsCluster.Status.Network.SecurityGroups {
 			keys = append(keys, sgr)
 		}
-		return false, fmt.Errorf("controlplane not found in cluster security groups: %v", keys)
-	}); err != nil {
+		return fmt.Errorf("controlplane not found in cluster security groups: %v", keys)
+	}
+
+	timeout := 15 * time.Minute
+	startTime := time.Now()
+	untilTime := startTime.Add(timeout)
+	timezone, _ := untilTime.Zone()
+	logrus.Debugf("Waiting up to %v (until %v %s) for bootstrap SSH rule to be destroyed...", timeout, untilTime.Format(time.Kitchen), timezone)
+	if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, timeout, true,
+		func(ctx context.Context) (bool, error) {
+			sgs, err := awsconfig.DescribeSecurityGroups(ctx, session, []string{sgID}, region)
+			if err != nil {
+				return false, fmt.Errorf("error getting security group: %w", err)
+			}
+
+			if len(sgs) != 1 {
+				ids := []string{}
+				for _, sg := range sgs {
+					ids = append(ids, *sg.GroupId)
+				}
+				return false, fmt.Errorf("expected exactly one security group with id %s, but got %v", sgID, ids)
+			}
+
+			sg := sgs[0]
+			publicSSHRulesFound := false
+			for _, rule := range sg.IpPermissions {
+				if ptr.Deref(rule.ToPort, 0) != 22 {
+					continue
+				}
+				for _, source := range rule.IpRanges {
+					if source.CidrIp != nil && *source.CidrIp == "0.0.0.0/0" {
+						publicSSHRulesFound = true
+						ruleDesc := ptr.Deref(source.Description, "[no description]")
+						logrus.Debugf("Found security group %s with source cidr %s. Still waiting for deletion...", ruleDesc, *source.CidrIp)
+					}
+				}
+			}
+			return !publicSSHRulesFound, nil
+		}); err != nil {
 		if wait.Interrupted(err) {
 			return fmt.Errorf("bootstrap ssh rule was not removed within %v: %w", timeout, err)
 		}
 		return fmt.Errorf("unable to remove bootstrap ssh rule: %w", err)
 	}
+	logrus.Debugf("Completed removing bootstrap SSH rule after %v", time.Since(startTime))
 
 	return nil
 }
