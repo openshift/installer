@@ -126,7 +126,7 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 						Protocol:                 capa.SecurityGroupProtocolTCP,
 						FromPort:                 22623,
 						ToPort:                   22623,
-						SourceSecurityGroupRoles: []capa.SecurityGroupRole{"node", "controlplane"},
+						SourceSecurityGroupRoles: []capa.SecurityGroupRole{"node", "controlplane", "apiserver-lb"},
 					},
 					{
 						Description:              "controller-manager",
