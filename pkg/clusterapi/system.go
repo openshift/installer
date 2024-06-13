@@ -149,7 +149,7 @@ func (c *system) Run(ctx context.Context) error {
 				"--health-addr={{suggestHealthHostPort}}",
 				"--webhook-port={{.WebhookPort}}",
 				"--webhook-cert-dir={{.WebhookCertDir}}",
-				"--feature-gates=BootstrapFormatIgnition=true,ExternalResourceGC=true",
+				"--feature-gates=BootstrapFormatIgnition=true,ExternalResourceGC=true,TagUnmanagedNetworkResources=false",
 			},
 			map[string]string{},
 		)
