@@ -189,25 +189,21 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	logrus.Infof("Waiting up to %v (until %v %s) for network infrastructure to become ready...", timeout, untilTime.Format(time.Kitchen), timezone)
 	var cluster *clusterv1.Cluster
 	{
-		if err := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
-			Duration: time.Second * 10,
-			Factor:   float64(1.5),
-			Steps:    32,
-			Cap:      timeout,
-		}, func(ctx context.Context) (bool, error) {
-			c := &clusterv1.Cluster{}
-			if err := cl.Get(ctx, client.ObjectKey{
-				Name:      clusterID.InfraID,
-				Namespace: capiutils.Namespace,
-			}, c); err != nil {
-				if apierrors.IsNotFound(err) {
-					return false, nil
+		if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, timeout, true,
+			func(ctx context.Context) (bool, error) {
+				c := &clusterv1.Cluster{}
+				if err := cl.Get(ctx, client.ObjectKey{
+					Name:      clusterID.InfraID,
+					Namespace: capiutils.Namespace,
+				}, c); err != nil {
+					if apierrors.IsNotFound(err) {
+						return false, nil
+					}
+					return false, err
 				}
-				return false, err
-			}
-			cluster = c
-			return cluster.Status.InfrastructureReady, nil
-		}); err != nil {
+				cluster = c
+				return cluster.Status.InfrastructureReady, nil
+			}); err != nil {
 			if wait.Interrupted(err) {
 				return fileList, fmt.Errorf("infrastructure was not ready within %v: %w", timeout, err)
 			}
@@ -289,38 +285,34 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		timezone, _ := untilTime.Zone()
 		reqBootstrapPubIP := installConfig.Config.Publish == types.ExternalPublishingStrategy && i.impl.BootstrapHasPublicIP()
 		logrus.Infof("Waiting up to %v (until %v %s) for machines %v to provision...", timeout, untilTime.Format(time.Kitchen), timezone, machineNames)
-		if err := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
-			Duration: time.Second * 10,
-			Factor:   float64(1.5),
-			Steps:    32,
-			Cap:      timeout,
-		}, func(ctx context.Context) (bool, error) {
-			allReady := true
-			for _, machineName := range machineNames {
-				machine := &clusterv1.Machine{}
-				if err := cl.Get(ctx, client.ObjectKey{
-					Name:      machineName,
-					Namespace: capiutils.Namespace,
-				}, machine); err != nil {
-					if apierrors.IsNotFound(err) {
-						logrus.Debugf("Not found")
-						return false, nil
+		if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, timeout, true,
+			func(ctx context.Context) (bool, error) {
+				allReady := true
+				for _, machineName := range machineNames {
+					machine := &clusterv1.Machine{}
+					if err := cl.Get(ctx, client.ObjectKey{
+						Name:      machineName,
+						Namespace: capiutils.Namespace,
+					}, machine); err != nil {
+						if apierrors.IsNotFound(err) {
+							logrus.Debugf("Not found")
+							return false, nil
+						}
+						return false, err
 					}
-					return false, err
+					reqPubIP := reqBootstrapPubIP && machineName == capiutils.GenerateBoostrapMachineName(clusterID.InfraID)
+					ready, err := checkMachineReady(machine, reqPubIP)
+					if err != nil {
+						return false, fmt.Errorf("failed waiting for machines: %w", err)
+					}
+					if !ready {
+						allReady = false
+					} else {
+						logrus.Debugf("Machine %s is ready. Phase: %s", machine.Name, machine.Status.Phase)
+					}
 				}
-				reqPubIP := reqBootstrapPubIP && machineName == capiutils.GenerateBoostrapMachineName(clusterID.InfraID)
-				ready, err := checkMachineReady(machine, reqPubIP)
-				if err != nil {
-					return false, fmt.Errorf("failed waiting for machines: %w", err)
-				}
-				if !ready {
-					allReady = false
-				} else {
-					logrus.Debugf("Machine %s is ready. Phase: %s", machine.Name, machine.Status.Phase)
-				}
-			}
-			return allReady, nil
-		}); err != nil {
+				return allReady, nil
+			}); err != nil {
 			if wait.Interrupted(err) {
 				return fileList, fmt.Errorf("control-plane machines were not provisioned within %v: %w", timeout, err)
 			}
