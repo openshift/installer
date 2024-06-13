@@ -175,6 +175,7 @@ var permissions = map[PermissionGroup][]string{
 		"s3:GetReplicationConfiguration",
 		"s3:ListBucket",
 		"s3:PutBucketAcl",
+		"s3:PutBucketPolicy",
 		"s3:PutBucketTagging",
 		"s3:PutEncryptionConfiguration",
 
