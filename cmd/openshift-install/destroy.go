@@ -22,7 +22,6 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/baremetal"
 	_ "github.com/openshift/installer/pkg/destroy/gcp"
 	_ "github.com/openshift/installer/pkg/destroy/ibmcloud"
-	_ "github.com/openshift/installer/pkg/destroy/libvirt"
 	_ "github.com/openshift/installer/pkg/destroy/nutanix"
 	_ "github.com/openshift/installer/pkg/destroy/openstack"
 	_ "github.com/openshift/installer/pkg/destroy/ovirt"

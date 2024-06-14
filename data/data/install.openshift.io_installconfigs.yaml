@@ -649,10 +649,6 @@ spec:
                             type: string
                           type: array
                       type: object
-                    libvirt:
-                      description: Libvirt is the configuration used when installing
-                        on libvirt.
-                      type: object
                     nutanix:
                       description: Nutanix is the configuration used when installing
                         on Nutanix.
@@ -1561,10 +1557,6 @@ spec:
                           type: string
                         type: array
                     type: object
-                  libvirt:
-                    description: Libvirt is the configuration used when installing
-                      on libvirt.
-                    type: object
                   nutanix:
                     description: Nutanix is the configuration used when installing
                       on Nutanix.
@@ -2099,8 +2091,8 @@ spec:
                 description: MachineNetwork is the list of IP address pools for machines.
                   This field replaces MachineCIDR, and if set MachineCIDR must be
                   empty or match the first entry in the list. Default is 10.0.0.0/16
-                  for all platforms other than libvirt and Power VS. For libvirt,
-                  the default is 192.168.126.0/24. For Power VS, the default is 192.168.0.0/24.
+                  for all platforms other than Power VS. For Power VS, the default
+                  is 192.168.0.0/24.
                 items:
                   description: MachineNetworkEntry is a single IP address block for
                     node IP blocks.
@@ -3384,51 +3376,6 @@ spec:
                     type: string
                 required:
                 - region
-                type: object
-              libvirt:
-                description: Libvirt is the configuration used when installing on
-                  libvirt.
-                properties:
-                  URI:
-                    default: qemu+tcp://192.168.122.1/system
-                    description: URI is the identifier for the libvirtd connection.  It
-                      must be reachable from both the host (where the installer is
-                      run) and the cluster (where the cluster-API controller pod will
-                      be running). Default is qemu+tcp://192.168.122.1/system
-                    type: string
-                  defaultMachinePlatform:
-                    description: DefaultMachinePlatform is the default configuration
-                      used when installing on libvirt for machine pools which do not
-                      define their own platform configuration. Default will set the
-                      image field to the latest RHCOS image.
-                    type: object
-                  network:
-                    description: Network
-                    properties:
-                      dnsmasqOptions:
-                        description: DnsmasqOptions is the dnsmasq options to be used
-                          when installing on libvirt.
-                        items:
-                          description: DnsmasqOption contains the name and value of
-                            the option to configure in the libvirt network.
-                          properties:
-                            name:
-                              description: The dnsmasq option name. A full list of
-                                options and an explanation for each can be found in
-                                /etc/dnsmasq.conf
-                              type: string
-                            value:
-                              description: The value that is being set for the particular
-                                option.
-                              type: string
-                          type: object
-                        type: array
-                      if:
-                        default: tt0
-                        description: The interface make used for the network. Default
-                          is tt0.
-                        type: string
-                    type: object
                 type: object
               none:
                 description: None is the empty configuration used when installing
