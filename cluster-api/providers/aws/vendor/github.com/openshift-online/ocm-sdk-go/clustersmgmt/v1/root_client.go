@@ -161,6 +161,16 @@ func (c *Client) LimitedSupportReasonTemplates() *LimitedSupportReasonTemplatesC
 	)
 }
 
+// LoadBalancerQuotaValues returns the target 'load_balancer_quota_values' resource.
+//
+// Reference to the resource that manages the load balancer quota values.
+func (c *Client) LoadBalancerQuotaValues() *LoadBalancerQuotaValuesClient {
+	return NewLoadBalancerQuotaValuesClient(
+		c.transport,
+		path.Join(c.path, "load_balancer_quota_values"),
+	)
+}
+
 // MachineTypes returns the target 'machine_types' resource.
 //
 // Reference to the resource that manage the collection of machine types.
@@ -218,6 +228,16 @@ func (c *Client) ProvisionShards() *ProvisionShardsClient {
 	return NewProvisionShardsClient(
 		c.transport,
 		path.Join(c.path, "provision_shards"),
+	)
+}
+
+// StorageQuotaValues returns the target 'storage_quota_values' resource.
+//
+// Reference to the resource that manages the storage quota values.
+func (c *Client) StorageQuotaValues() *StorageQuotaValuesClient {
+	return NewStorageQuotaValuesClient(
+		c.transport,
+		path.Join(c.path, "storage_quota_values"),
 	)
 }
 

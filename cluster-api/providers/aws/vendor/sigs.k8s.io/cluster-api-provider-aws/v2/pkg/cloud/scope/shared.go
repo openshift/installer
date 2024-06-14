@@ -122,6 +122,7 @@ func (p *defaultSubnetPlacementStrategy) getSubnetsForAZs(azs []string, controlP
 				subnets = subnets.FilterPublic()
 			case expinfrav1.AZSubnetTypePrivate:
 				subnets = subnets.FilterPrivate()
+				subnets = subnets.FilterNonCni()
 			}
 		}
 		if len(subnets) == 0 {

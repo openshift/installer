@@ -114,6 +114,7 @@ func (s *Service) reconcileSubnets() error {
 
 		for i, sub := range subnetCIDRs {
 			secondarySub := infrav1.SubnetSpec{
+				ID:               fmt.Sprintf("%s-subnet-%s-%s", s.scope.Name(), infrav1.SecondarySubnetTagValue, zones[i]),
 				CidrBlock:        sub.String(),
 				AvailabilityZone: zones[i],
 				IsPublic:         false,

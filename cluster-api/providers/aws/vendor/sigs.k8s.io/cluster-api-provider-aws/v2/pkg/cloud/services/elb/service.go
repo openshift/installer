@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/network"
 )
 
 // Service holds a collection of interfaces.
@@ -35,6 +36,7 @@ type Service struct {
 	ELBClient             elbiface.ELBAPI
 	ELBV2Client           elbv2iface.ELBV2API
 	ResourceTaggingClient resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
+	netService            *network.Service
 }
 
 // NewService returns a new service given the api clients.
@@ -45,5 +47,6 @@ func NewService(elbScope scope.ELBScope) *Service {
 		ELBClient:             scope.NewELBClient(elbScope, elbScope, elbScope, elbScope.InfraCluster()),
 		ELBV2Client:           scope.NewELBv2Client(elbScope, elbScope, elbScope, elbScope.InfraCluster()),
 		ResourceTaggingClient: scope.NewResourgeTaggingClient(elbScope, elbScope, elbScope, elbScope.InfraCluster()),
+		netService:            network.NewService(elbScope.(scope.NetworkScope)),
 	}
 }

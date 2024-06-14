@@ -140,6 +140,35 @@ func writeAWSMachinePool(object *AWSMachinePool, stream *jsoniter.Stream) {
 		} else {
 			stream.WriteNil()
 		}
+		count++
+	}
+	present_ = object.bitmap_&128 != 0 && object.tags != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("tags")
+		if object.tags != nil {
+			stream.WriteObjectStart()
+			keys := make([]string, len(object.tags))
+			i := 0
+			for key := range object.tags {
+				keys[i] = key
+				i++
+			}
+			sort.Strings(keys)
+			for i, key := range keys {
+				if i > 0 {
+					stream.WriteMore()
+				}
+				item := object.tags[key]
+				stream.WriteObjectField(key)
+				stream.WriteString(item)
+			}
+			stream.WriteObjectEnd()
+		} else {
+			stream.WriteNil()
+		}
 	}
 	stream.WriteObjectEnd()
 }
@@ -208,6 +237,18 @@ func readAWSMachinePool(iterator *jsoniter.Iterator) *AWSMachinePool {
 			}
 			object.subnetOutposts = value
 			object.bitmap_ |= 64
+		case "tags":
+			value := map[string]string{}
+			for {
+				key := iterator.ReadObject()
+				if key == "" {
+					break
+				}
+				item := iterator.ReadString()
+				value[key] = item
+			}
+			object.tags = value
+			object.bitmap_ |= 128
 		default:
 			iterator.ReadAny()
 		}
