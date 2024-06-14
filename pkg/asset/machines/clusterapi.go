@@ -196,12 +196,13 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		pool.Replicas = ptr.To[int64](1)
 		pool.Platform.AWS = &mpool
 		bootstrapAWSMachine, err := aws.GenerateMachines(clusterID.InfraID, &aws.MachineInput{
-			Role:     "bootstrap",
-			Subnets:  bootstrapSubnets,
-			Pool:     &pool,
-			Tags:     tags,
-			PublicIP: installConfig.Config.Publish == types.ExternalPublishingStrategy,
-			Ignition: ignition,
+			Role:           "bootstrap",
+			Subnets:        bootstrapSubnets,
+			Pool:           &pool,
+			Tags:           tags,
+			PublicIP:       installConfig.Config.Publish == types.ExternalPublishingStrategy,
+			PublicIpv4Pool: ic.Platform.AWS.PublicIpv4Pool,
+			Ignition:       ignition,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to create bootstrap machine object: %w", err)
