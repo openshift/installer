@@ -4,25 +4,25 @@ FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.22-openshift-4.17 AS 
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
-RUN CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 make -C terraform
+RUN CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 SKIP_TERRAFORM_PROVIDERS=libvirt make -C terraform
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.22-openshift-4.17 AS macarmbuilder
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
-RUN CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 make -C terraform
+RUN CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 SKIP_TERRAFORM_PROVIDERS=libvirt make -C terraform
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.22-openshift-4.17 AS linuxbuilder
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make -C terraform
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 SKIP_TERRAFORM_PROVIDERS=libvirt make -C terraform
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.22-openshift-4.17 AS linuxarmbuilder
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 make -C terraform
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 SKIP_TERRAFORM_PROVIDERS=libvirt make -C terraform
 
 FROM registry.ci.openshift.org/ocp/4.16:base-rhel9
 WORKDIR /go/src/github.com/openshift/installer
