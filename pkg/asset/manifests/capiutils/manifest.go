@@ -13,8 +13,8 @@ const (
 
 // GenerateClusterAssetsOutput is the output of GenerateClusterAssets.
 type GenerateClusterAssetsOutput struct {
-	Manifests         []*asset.RuntimeFile
-	InfrastructureRef *corev1.ObjectReference
+	Manifests          []*asset.RuntimeFile
+	InfrastructureRefs []*corev1.ObjectReference
 }
 
 // GenerateMachinesOutput is the output of GenerateMachines.
