@@ -220,6 +220,17 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 				},
 			},
 		}
+	} else {
+		awsCluster.Spec.ControlPlaneLoadBalancer.IngressRules = append(
+			awsCluster.Spec.ControlPlaneLoadBalancer.IngressRules,
+			capa.IngressRule{
+				Description: "Kubernetes API Server traffic",
+				Protocol:    capa.SecurityGroupProtocolTCP,
+				FromPort:    6443,
+				ToPort:      6443,
+				CidrBlocks:  []string{"0.0.0.0/0"},
+			},
+		)
 	}
 
 	// Set the NetworkSpec.Subnets from VPC and zones (managed)
