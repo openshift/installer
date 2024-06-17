@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/sirupsen/logrus"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -238,39 +239,6 @@ func (p *Provider) DestroyBootstrap(ctx context.Context, in clusterapi.Bootstrap
 	// Save this value for use in the post-destroy hook since we don't have capi running anymore by that point.
 	p.bestEffortDeleteIgnition = ptr.Deref(awsCluster.Spec.S3Bucket.BestEffortDeleteObjects, false)
 
-	region := in.Metadata.ClusterPlatformMetadata.AWS.Region
-	session, err := awsconfig.GetSessionWithOptions(
-		awsconfig.WithRegion(region),
-		awsconfig.WithServiceEndpoints(region, in.Metadata.ClusterPlatformMetadata.AWS.ServiceEndpoints),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create aws session: %w", err)
-	}
-
-	if err := removeSSHRule(ctx, in.Client, in.Metadata.InfraID, region, session, awsCluster); err != nil {
-		return fmt.Errorf("failed to remove bootstrap SSH rule: %w", err)
-	}
-	return nil
-}
-
-// removeSSHRule removes the SSH rule for accessing the bootstrap node
-// by removing the rule from the cluster spec and updating the object.
-func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID, region string, session *session.Session, awsCluster *capa.AWSCluster) error {
-	postBootstrapRules := []capa.IngressRule{}
-	for _, rule := range awsCluster.Spec.NetworkSpec.AdditionalControlPlaneIngressRules {
-		if strings.EqualFold(rule.Description, awsmanifest.BootstrapSSHDescription) {
-			continue
-		}
-		postBootstrapRules = append(postBootstrapRules, rule)
-	}
-
-	awsCluster.Spec.NetworkSpec.AdditionalControlPlaneIngressRules = postBootstrapRules
-
-	if err := cl.Update(ctx, awsCluster); err != nil {
-		return fmt.Errorf("failed to update AWSCluster during bootstrap destroy: %w", err)
-	}
-	logrus.Debug("Updated AWSCluster to remove bootstrap SSH rule")
-
 	var sgID string
 	if sg, ok := awsCluster.Status.Network.SecurityGroups[capa.SecurityGroupControlPlane]; ok && len(sg.ID) > 0 {
 		sgID = sg.ID
@@ -284,6 +252,15 @@ func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID, region str
 		return fmt.Errorf("controlplane not found in cluster security groups: %v", keys)
 	}
 
+	region := in.Metadata.ClusterPlatformMetadata.AWS.Region
+	session, err := awsconfig.GetSessionWithOptions(
+		awsconfig.WithRegion(region),
+		awsconfig.WithServiceEndpoints(region, in.Metadata.ClusterPlatformMetadata.AWS.ServiceEndpoints),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create aws session: %w", err)
+	}
+
 	timeout := 15 * time.Minute
 	startTime := time.Now()
 	untilTime := startTime.Add(timeout)
@@ -291,35 +268,18 @@ func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID, region str
 	logrus.Debugf("Waiting up to %v (until %v %s) for bootstrap SSH rule to be destroyed...", timeout, untilTime.Format(time.Kitchen), timezone)
 	if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, timeout, true,
 		func(ctx context.Context) (bool, error) {
-			sgs, err := awsconfig.DescribeSecurityGroups(ctx, session, []string{sgID}, region)
-			if err != nil {
-				return false, fmt.Errorf("error getting security group: %w", err)
-			}
-
-			if len(sgs) != 1 {
-				ids := []string{}
-				for _, sg := range sgs {
-					ids = append(ids, *sg.GroupId)
+			if err := removeSSHRule(ctx, in.Client, in.Metadata.InfraID); err != nil {
+				// If the cluster object has been modified between Get and Update, k8s client will refuse to update it.
+				// In that case, we need to retry.
+				if k8serrors.IsConflict(err) {
+					logrus.Debugf("AWSCluster update conflict during SSH rule removal: %v", err)
+					return false, nil
 				}
-				return false, fmt.Errorf("expected exactly one security group with id %s, but got %v", sgID, ids)
+				return true, fmt.Errorf("failed to remove bootstrap SSH rule: %w", err)
 			}
-
-			sg := sgs[0]
-			publicSSHRulesFound := false
-			for _, rule := range sg.IpPermissions {
-				if ptr.Deref(rule.ToPort, 0) != 22 {
-					continue
-				}
-				for _, source := range rule.IpRanges {
-					if source.CidrIp != nil && *source.CidrIp == "0.0.0.0/0" {
-						publicSSHRulesFound = true
-						ruleDesc := ptr.Deref(source.Description, "[no description]")
-						logrus.Debugf("Found security group %s with source cidr %s. Still waiting for deletion...", ruleDesc, *source.CidrIp)
-					}
-				}
-			}
-			return !publicSSHRulesFound, nil
-		}); err != nil {
+			return isSSHRuleGone(ctx, session, region, sgID)
+		},
+	); err != nil {
 		if wait.Interrupted(err) {
 			return fmt.Errorf("bootstrap ssh rule was not removed within %v: %w", timeout, err)
 		}
@@ -328,6 +288,71 @@ func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID, region str
 	logrus.Debugf("Completed removing bootstrap SSH rule after %v", time.Since(startTime))
 
 	return nil
+}
+
+// removeSSHRule removes the SSH rule for accessing the bootstrap node
+// by removing the rule from the cluster spec and updating the object.
+func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string) error {
+	awsCluster := &capa.AWSCluster{}
+	key := k8sClient.ObjectKey{
+		Name:      infraID,
+		Namespace: capiutils.Namespace,
+	}
+	if err := cl.Get(ctx, key, awsCluster); err != nil {
+		return fmt.Errorf("failed to get AWSCluster: %w", err)
+	}
+
+	postBootstrapRules := []capa.IngressRule{}
+	for _, rule := range awsCluster.Spec.NetworkSpec.AdditionalControlPlaneIngressRules {
+		if strings.EqualFold(rule.Description, awsmanifest.BootstrapSSHDescription) {
+			continue
+		}
+		postBootstrapRules = append(postBootstrapRules, rule)
+	}
+
+	// The spec has not been updated yet
+	if len(postBootstrapRules) < len(awsCluster.Spec.NetworkSpec.AdditionalControlPlaneIngressRules) {
+		awsCluster.Spec.NetworkSpec.AdditionalControlPlaneIngressRules = postBootstrapRules
+
+		if err := cl.Update(ctx, awsCluster); err != nil {
+			return fmt.Errorf("failed to update AWSCluster during bootstrap destroy: %w", err)
+		}
+		logrus.Debug("Updated AWSCluster to remove bootstrap SSH rule")
+	}
+
+	return nil
+}
+
+// isSSHRuleGone checks that the Public SSH rule has been removed from the security group.
+func isSSHRuleGone(ctx context.Context, session *session.Session, region, sgID string) (bool, error) {
+	sgs, err := awsconfig.DescribeSecurityGroups(ctx, session, []string{sgID}, region)
+	if err != nil {
+		return false, fmt.Errorf("error getting security group: %w", err)
+	}
+
+	if len(sgs) != 1 {
+		ids := []string{}
+		for _, sg := range sgs {
+			ids = append(ids, *sg.GroupId)
+		}
+		return false, fmt.Errorf("expected exactly one security group with id %s, but got %v", sgID, ids)
+	}
+
+	sg := sgs[0]
+	for _, rule := range sg.IpPermissions {
+		if ptr.Deref(rule.ToPort, 0) != 22 {
+			continue
+		}
+		for _, source := range rule.IpRanges {
+			if source.CidrIp != nil && *source.CidrIp == "0.0.0.0/0" {
+				ruleDesc := ptr.Deref(source.Description, "[no description]")
+				logrus.Debugf("Found ingress rule %s with source cidr %s. Still waiting for deletion...", ruleDesc, *source.CidrIp)
+				return false, nil
+			}
+		}
+	}
+
+	return true, nil
 }
 
 // PostDestroy deletes the ignition bucket after capi stopped running, so it won't try to reconcile the bucket.
