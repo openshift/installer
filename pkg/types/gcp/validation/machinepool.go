@@ -36,6 +36,10 @@ func ValidateMachinePool(platform *gcp.Platform, p *gcp.MachinePool, fldPath *fi
 		}
 	}
 
+	if p.ConfidentialCompute == string(gcp.EnabledFeature) && p.OnHostMaintenance != string(gcp.OnHostMaintenanceTerminate) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("OnHostMaintenance"), p.OnHostMaintenance, "OnHostMaintenace must be set to Terminate when ConfidentialCompute is Enabled"))
+	}
+
 	for i, tag := range p.Tags {
 		if tag == "" {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("tags").Index(i), tag, fmt.Sprintf("tag can not be empty")))
