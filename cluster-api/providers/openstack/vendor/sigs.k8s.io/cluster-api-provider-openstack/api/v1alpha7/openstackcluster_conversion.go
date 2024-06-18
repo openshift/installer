@@ -416,7 +416,10 @@ func restorev1beta1Bastion(previous **infrav1.Bastion, dst **infrav1.Bastion) {
 	restorev1beta1MachineSpec((*previous).Spec, (*dst).Spec)
 	optional.RestoreString(&(*previous).FloatingIP, &(*dst).FloatingIP)
 	optional.RestoreString(&(*previous).AvailabilityZone, &(*dst).AvailabilityZone)
-	optional.RestoreBool(&(*previous).Enabled, &(*dst).Enabled)
+
+	if (*dst).Enabled != nil && !*(*dst).Enabled {
+		(*dst).Enabled = (*previous).Enabled
+	}
 }
 
 func Convert_v1alpha7_Bastion_To_v1beta1_Bastion(in *Bastion, out *infrav1.Bastion, s apiconversion.Scope) error {

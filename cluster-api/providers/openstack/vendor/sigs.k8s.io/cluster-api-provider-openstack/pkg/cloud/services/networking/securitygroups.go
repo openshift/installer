@@ -297,10 +297,6 @@ func getAllNodesRules(remoteManagedGroups map[string]string, allNodesSecurityGro
 
 // validateRemoteManagedGroups validates that the remoteManagedGroups target existing managed security groups.
 func validateRemoteManagedGroups(remoteManagedGroups map[string]string, ruleRemoteManagedGroups []infrav1.ManagedSecurityGroupName) error {
-	if len(ruleRemoteManagedGroups) == 0 {
-		return fmt.Errorf("remoteManagedGroups is required")
-	}
-
 	for _, group := range ruleRemoteManagedGroups {
 		if _, ok := remoteManagedGroups[group.String()]; !ok {
 			return fmt.Errorf("remoteManagedGroups: %s is not a valid remote managed security group", group)

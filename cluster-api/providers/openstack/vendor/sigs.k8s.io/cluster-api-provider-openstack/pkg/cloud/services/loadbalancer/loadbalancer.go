@@ -92,9 +92,10 @@ func (s *Service) ReconcileLoadBalancer(openStackCluster *infrav1.OpenStackClust
 
 	if lb.ProvisioningStatus != loadBalancerProvisioningStatusActive {
 		var err error
-		lb, err = s.waitForLoadBalancerActive(lb.ID)
+		lbID := lb.ID
+		lb, err = s.waitForLoadBalancerActive(lbID)
 		if err != nil {
-			return false, fmt.Errorf("load balancer %q with id %s is not active after timeout: %v", loadBalancerName, lb.ID, err)
+			return false, fmt.Errorf("load balancer %q with id %s is not active after timeout: %v", loadBalancerName, lbID, err)
 		}
 	}
 

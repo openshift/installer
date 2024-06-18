@@ -306,7 +306,7 @@ generate-api-docs-%: $(GEN_CRD_API_REFERENCE_DOCS) FORCE
 
 .PHONY: docker-build
 docker-build: ## Build the docker image for controller-manager
-	docker build -f Dockerfile --build-arg goproxy=$(GOPROXY) --build-arg ARCH=$(ARCH) --build-arg LDFLAGS="$(LDFLAGS)" . -t $(CONTROLLER_IMG_TAG)
+	docker build -f Dockerfile --build-arg goproxy=$(GOPROXY) --build-arg ARCH=$(ARCH) --build-arg ldflags="$(LDFLAGS)" . -t $(CONTROLLER_IMG_TAG)
 
 .PHONY: docker-push
 docker-push: ## Push the docker image
@@ -523,17 +523,6 @@ verify-gen: generate
 	@if !(git diff --quiet HEAD); then \
 		git diff; \
 		echo "generated files are out of date, run make generate"; exit 1; \
-	fi
-
-.PHONY: vendor verify-vendoring
-vendor:
-	go mod vendor
-	cd $(TOOLS_DIR); go mod vendor
-
-verify-vendoring: vendor
-	@if !(git diff --quiet HEAD); then \
-		git diff; \
-		echo "vendored files are out of date, run go mod vendor"; exit 1; \
 	fi
 
 .PHONY: compile-e2e

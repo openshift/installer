@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -32,7 +33,6 @@ import (
 	"k8s.io/utils/ptr"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-openstack/internal/futures"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/record"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/scope"
 	capoerrors "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/errors"
@@ -192,7 +192,7 @@ func (s *Service) CreatePort(eventObject runtime.Object, portSpec *infrav1.Resol
 
 	port, err := s.client.CreatePort(builder)
 	if err != nil {
-		record.Warnf(eventObject, "FailedCreatePort", "Failed to create port %s: %v", port.Name, err)
+		record.Warnf(eventObject, "FailedCreatePort", "Failed to create port %s: %v", portSpec.Name, err)
 		return nil, err
 	}
 
@@ -427,7 +427,7 @@ func (s *Service) normalizePorts(ports []infrav1.PortOpts, clusterResourceName, 
 		}
 
 		// Tags are inherited base tags plus any port-specific tags
-		normalizedPort.Tags = futures.SlicesConcat(baseTags, port.Tags)
+		normalizedPort.Tags = slices.Concat(baseTags, port.Tags)
 
 		// No Trunk field specified for the port, inherit the machine default
 		if port.Trunk == nil {

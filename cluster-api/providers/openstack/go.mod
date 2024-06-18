@@ -2,7 +2,7 @@ module openshift/installer/cluster-api/providers/openstack
 
 go 1.22
 
-require sigs.k8s.io/cluster-api-provider-openstack v0.10.0
+require sigs.k8s.io/cluster-api-provider-openstack v0.10.3
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
@@ -114,5 +114,3 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
-
-replace sigs.k8s.io/cluster-api-provider-openstack => github.com/openshift/cluster-api-provider-openstack v0.9.1-0.20240426092531-c42a4659d6c0

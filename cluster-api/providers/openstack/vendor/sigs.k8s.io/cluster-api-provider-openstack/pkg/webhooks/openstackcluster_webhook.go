@@ -121,6 +121,10 @@ func (*openStackClusterWebhook) ValidateUpdate(_ context.Context, oldObjRaw, new
 
 	// Allow changes to the managed allNodesSecurityGroupRules.
 	if newObj.Spec.ManagedSecurityGroups != nil {
+		if oldObj.Spec.ManagedSecurityGroups == nil {
+			oldObj.Spec.ManagedSecurityGroups = &infrav1.ManagedSecurityGroups{}
+		}
+
 		oldObj.Spec.ManagedSecurityGroups.AllNodesSecurityGroupRules = []infrav1.SecurityGroupRuleSpec{}
 		newObj.Spec.ManagedSecurityGroups.AllNodesSecurityGroupRules = []infrav1.SecurityGroupRuleSpec{}
 
