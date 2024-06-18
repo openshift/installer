@@ -181,9 +181,8 @@ docs/book/book/
 # Development container files (https://containers.dev/)
 .devcontainer
 
-# Don't ignore anything in vendor directories
-!/vendor/**
-!/hack/tools/vendor/**
+# CAPO doesn't use vendorings
+vendor/
 
 # Ignore go workspaces
 go.work

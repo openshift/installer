@@ -795,7 +795,7 @@ type Bastion struct {
 	// waiting until the bastion has been deleted.
 	// +kubebuilder:default:=true
 	// +optional
-	Enabled optional.Bool `json:"enabled,omitempty"`
+	Enabled *bool `json:"enabled,omitempty"`
 
 	// Spec for the bastion itself
 	Spec *OpenStackMachineSpec `json:"spec,omitempty"`

@@ -489,7 +489,7 @@ func Convert_v1beta1_AddressPair_To_v1alpha5_AddressPair(in *v1beta1.AddressPair
 }
 
 func autoConvert_v1alpha5_Bastion_To_v1beta1_Bastion(in *Bastion, out *v1beta1.Bastion, s conversion.Scope) error {
-	if err := optional.Convert_bool_To_optional_Bool(&in.Enabled, &out.Enabled, s); err != nil {
+	if err := v1.Convert_bool_To_Pointer_bool(&in.Enabled, &out.Enabled, s); err != nil {
 		return err
 	}
 	// WARNING: in.Instance requires manual conversion: does not exist in peer-type
@@ -500,7 +500,7 @@ func autoConvert_v1alpha5_Bastion_To_v1beta1_Bastion(in *Bastion, out *v1beta1.B
 }
 
 func autoConvert_v1beta1_Bastion_To_v1alpha5_Bastion(in *v1beta1.Bastion, out *Bastion, s conversion.Scope) error {
-	if err := optional.Convert_optional_Bool_To_bool(&in.Enabled, &out.Enabled, s); err != nil {
+	if err := v1.Convert_Pointer_bool_To_bool(&in.Enabled, &out.Enabled, s); err != nil {
 		return err
 	}
 	// WARNING: in.Spec requires manual conversion: does not exist in peer-type

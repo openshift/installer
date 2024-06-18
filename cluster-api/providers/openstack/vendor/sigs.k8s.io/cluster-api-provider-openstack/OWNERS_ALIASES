@@ -24,4 +24,3 @@ aliases:
     - mdbooth
   cluster-api-openstack-reviewers:
     - emilienm
-    - dulek

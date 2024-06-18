@@ -16661,7 +16661,7 @@ spec:
         - --metrics-bind-addr=127.0.0.1:8080
         command:
         - /manager
-        image: gcr.io/k8s-staging-capi-openstack/capi-openstack-controller:v0.10.0
+        image: gcr.io/k8s-staging-capi-openstack/capi-openstack-controller:v0.10.3
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -16687,6 +16687,7 @@ spec:
           privileged: false
           runAsGroup: 65532
           runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert

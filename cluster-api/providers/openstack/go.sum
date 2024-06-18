@@ -203,8 +203,6 @@ github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.0.2 h1:9yCKha/T5XdGtO0q9Q9a6T5NUCsTn/DrBg0D7ufOcFM=
 github.com/opencontainers/image-spec v1.0.2/go.mod h1:BtxoFyWECRxE4U/7sNtV5W15zMzWCbyJoFRP3s7yZA0=
-github.com/openshift/cluster-api-provider-openstack v0.9.1-0.20240426092531-c42a4659d6c0 h1:e/o1uQYyapM0e/+R4HUB4Y+efEkRu1qWqn5sHeW9dck=
-github.com/openshift/cluster-api-provider-openstack v0.9.1-0.20240426092531-c42a4659d6c0/go.mod h1:PX3pVY7IPC/zmKJksYuvz779eyYHeP2ZW7PfnOllng8=
 github.com/pelletier/go-toml v1.9.5 h1:4yBQzkHv+7BHq2PQUZF3Mx0IYxG7LsP222s7Agd3ve8=
 github.com/pelletier/go-toml/v2 v2.1.0 h1:FnwAJ4oYMvbT/34k9zzHuZNrhlz48GB3/s6at6/MHO4=
 github.com/pelletier/go-toml/v2 v2.1.0/go.mod h1:tJU2Z3ZkXwnxa4DPO899bsyIoywizdUvyaeZurnPPDc=
@@ -451,6 +449,8 @@ sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.28.0 h1:TgtAeesdhpm2S
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.28.0/go.mod h1:VHVDI/KrK4fjnV61bE2g3sA7tiETLn8sooImelsCx3Y=
 sigs.k8s.io/cluster-api v1.6.0 h1:2bhVSnUbtWI8taCjd9lGiHExsRUpKf7Z1fXqi/IwYx4=
 sigs.k8s.io/cluster-api v1.6.0/go.mod h1:LB7u/WxiWj4/bbpHNOa1oQ8nq0MQ5iYlD0pGfRSBGLI=
+sigs.k8s.io/cluster-api-provider-openstack v0.10.3 h1:nVIIOHVbMfvcI6buc4MTqiRtkzZIjZkxixbYNN49rYU=
+sigs.k8s.io/cluster-api-provider-openstack v0.10.3/go.mod h1:/3VAIzFoAxX77QykzyE6tnHD9aC8lYiQVKbfKPoX20w=
 sigs.k8s.io/cluster-api/test v1.6.0 h1:hvqUpSYxXCvs4FiEfsDpFZAfZ7i4kkP/59mVdFHlzSI=
 sigs.k8s.io/cluster-api/test v1.6.0/go.mod h1:DJtbkrnrH77cd3PnXeKCQDMtCGVCrHZHPOjMvEsLB2U=
 sigs.k8s.io/controller-runtime v0.16.3 h1:2TuvuokmfXvDUamSx1SuAOO3eTyye+47mJCigwG62c4=

@@ -120,7 +120,7 @@ require (
 	sigs.k8s.io/cluster-api-provider-azure v1.14.2
 	sigs.k8s.io/cluster-api-provider-gcp v1.6.1-0.20240425114559-a1994e55ab7a
 	sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0
-	sigs.k8s.io/cluster-api-provider-openstack v0.10.0
+	sigs.k8s.io/cluster-api-provider-openstack v0.10.3
 	sigs.k8s.io/cluster-api-provider-vsphere v1.9.3
 	sigs.k8s.io/controller-runtime v0.17.3
 	sigs.k8s.io/controller-tools v0.12.0
@@ -323,5 +323,3 @@ replace github.com/containerd/containerd => github.com/containerd/containerd v1.
 replace golang.org/x/oauth2 => golang.org/x/oauth2 v0.15.0
 
 replace google.golang.org/api => google.golang.org/api v0.157.0
-
-replace sigs.k8s.io/cluster-api-provider-openstack => github.com/openshift/cluster-api-provider-openstack v0.9.1-0.20240426092531-c42a4659d6c0

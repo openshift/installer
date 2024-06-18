@@ -233,6 +233,7 @@ func main() {
 	cfg, err := config.GetConfigWithContext(os.Getenv("KUBECONTEXT"))
 	if err != nil {
 		setupLog.Error(err, "unable to get kubeconfig")
+		os.Exit(1)
 	}
 	cfg.QPS = restConfigQPS
 	cfg.Burst = restConfigBurst

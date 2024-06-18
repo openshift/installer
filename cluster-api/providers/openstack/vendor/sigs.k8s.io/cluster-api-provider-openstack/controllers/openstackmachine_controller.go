@@ -776,17 +776,22 @@ func (r *OpenStackMachineReconciler) getOrCreateInstance(logger logr.Logger, ope
 	}
 	if instanceStatus == nil {
 		// Check if there is an existing instance with machine name, in case where instance ID would not have been stored in machine status
-		if instanceStatus, err = computeService.GetInstanceStatusByName(openStackMachine, openStackMachine.Name); err == nil {
-			if instanceStatus != nil {
-				return instanceStatus, nil
-			}
-			if openStackMachine.Status.InstanceID != nil {
-				logger.Info("Not reconciling machine in failed state. The previously existing OpenStack instance is no longer available")
-				conditions.MarkFalse(openStackMachine, infrav1.InstanceReadyCondition, infrav1.InstanceNotFoundReason, clusterv1.ConditionSeverityError, "virtual machine no longer exists")
-				openStackMachine.SetFailure(capierrors.UpdateMachineError, errors.New("virtual machine no longer exists"))
-				return nil, nil
-			}
+		instanceStatus, err = computeService.GetInstanceStatusByName(openStackMachine, openStackMachine.Name)
+		if err != nil {
+			logger.Info("Unable to get OpenStack instance by name", "name", openStackMachine.Name)
+			conditions.MarkFalse(openStackMachine, infrav1.InstanceReadyCondition, infrav1.InstanceCreateFailedReason, clusterv1.ConditionSeverityError, err.Error())
+			return nil, err
 		}
+		if instanceStatus != nil {
+			return instanceStatus, nil
+		}
+		if openStackMachine.Status.InstanceID != nil {
+			logger.Info("Not reconciling machine in failed state. The previously existing OpenStack instance is no longer available")
+			conditions.MarkFalse(openStackMachine, infrav1.InstanceReadyCondition, infrav1.InstanceNotFoundReason, clusterv1.ConditionSeverityError, "virtual machine no longer exists")
+			openStackMachine.SetFailure(capierrors.UpdateMachineError, errors.New("virtual machine no longer exists"))
+			return nil, nil
+		}
+
 		instanceSpec, err := machineToInstanceSpec(openStackCluster, machine, openStackMachine, userData)
 		if err != nil {
 			return nil, err
