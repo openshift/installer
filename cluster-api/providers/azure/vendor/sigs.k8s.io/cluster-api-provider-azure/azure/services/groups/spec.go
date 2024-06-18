@@ -23,6 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/aso"
 )
 
@@ -39,7 +40,7 @@ type GroupSpec struct {
 func (s *GroupSpec) ResourceRef() *asoresourcesv1.ResourceGroup {
 	return &asoresourcesv1.ResourceGroup{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: s.Name,
+			Name: azure.GetNormalizedKubernetesName(s.Name),
 		},
 	}
 }

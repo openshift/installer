@@ -404,14 +404,14 @@ type ManagedClusters_AgentPool_Spec struct {
 	NetworkProfile *AgentPoolNetworkProfile `json:"networkProfile,omitempty"`
 
 	// NodeLabels: The node labels to be persisted across all nodes in agent pool.
-	NodeLabels map[string]string `json:"nodeLabels,omitempty"`
+	NodeLabels map[string]string `json:"nodeLabels,omitempty" serializationType:"explicitEmptyCollection"`
 
 	// NodePublicIPPrefixReference: This is of the form:
 	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPPrefixes/{publicIPPrefixName}
 	NodePublicIPPrefixReference *genruntime.ResourceReference `armReference:"NodePublicIPPrefixID" json:"nodePublicIPPrefixReference,omitempty"`
 
 	// NodeTaints: The taints added to new nodes during node pool create and scale. For example, key=value:NoSchedule.
-	NodeTaints []string `json:"nodeTaints,omitempty"`
+	NodeTaints []string `json:"nodeTaints,omitempty" serializationType:"explicitEmptyCollection"`
 
 	// OrchestratorVersion: Both patch version <major.minor.patch> (e.g. 1.20.13) and <major.minor> (e.g. 1.20) are supported.
 	// When <major.minor> is specified, the latest supported GA patch version is chosen automatically. Updating the cluster
@@ -471,7 +471,7 @@ type ManagedClusters_AgentPool_Spec struct {
 	SpotMaxPrice *float64 `json:"spotMaxPrice,omitempty"`
 
 	// Tags: The tags to be persisted on the agent pool virtual machine scale set.
-	Tags map[string]string `json:"tags,omitempty"`
+	Tags map[string]string `json:"tags,omitempty" serializationType:"explicitEmptyCollection"`
 
 	// Type: The type of Agent Pool.
 	Type *AgentPoolType `json:"type,omitempty"`

@@ -48,6 +48,9 @@ type AzureClusterIdentitySpec struct {
 	Type IdentityType `json:"type"`
 	// ResourceID is the Azure resource ID for the User Assigned MSI resource.
 	// Only applicable when type is UserAssignedMSI.
+	//
+	// Deprecated: This field no longer has any effect.
+	//
 	// +optional
 	ResourceID string `json:"resourceID,omitempty"`
 	// ClientID is the service principal client ID.

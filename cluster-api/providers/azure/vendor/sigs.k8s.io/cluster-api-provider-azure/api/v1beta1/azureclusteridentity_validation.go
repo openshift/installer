@@ -24,9 +24,7 @@ import (
 
 func (c *AzureClusterIdentity) validateClusterIdentity() (admission.Warnings, error) {
 	var allErrs field.ErrorList
-	if c.Spec.Type == UserAssignedMSI && c.Spec.ResourceID == "" {
-		allErrs = append(allErrs, field.Required(field.NewPath("spec", "resourceID"), c.Spec.ResourceID))
-	} else if c.Spec.Type != UserAssignedMSI && c.Spec.ResourceID != "" {
+	if c.Spec.Type != UserAssignedMSI && c.Spec.ResourceID != "" {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "resourceID"), c.Spec.ResourceID))
 	}
 	if len(allErrs) == 0 {

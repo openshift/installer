@@ -218,7 +218,7 @@ type ManagedCluster_Spec struct {
 	Sku                       *ManagedClusterSKU                       `json:"sku,omitempty"`
 	StorageProfile            *ManagedClusterStorageProfile            `json:"storageProfile,omitempty"`
 	SupportPlan               *string                                  `json:"supportPlan,omitempty"`
-	Tags                      map[string]string                        `json:"tags,omitempty"`
+	Tags                      map[string]string                        `json:"tags,omitempty" serializationType:"explicitEmptyCollection"`
 	UpgradeSettings           *ClusterUpgradeSettings                  `json:"upgradeSettings,omitempty"`
 	WindowsProfile            *ManagedClusterWindowsProfile            `json:"windowsProfile,omitempty"`
 	WorkloadAutoScalerProfile *ManagedClusterWorkloadAutoScalerProfile `json:"workloadAutoScalerProfile,omitempty"`
@@ -479,12 +479,12 @@ type ManagedClusterAgentPoolProfile struct {
 	Mode               *string                       `json:"mode,omitempty"`
 	Name               *string                       `json:"name,omitempty"`
 	NetworkProfile     *AgentPoolNetworkProfile      `json:"networkProfile,omitempty"`
-	NodeLabels         map[string]string             `json:"nodeLabels,omitempty"`
+	NodeLabels         map[string]string             `json:"nodeLabels,omitempty" serializationType:"explicitEmptyCollection"`
 
 	// NodePublicIPPrefixReference: This is of the form:
 	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPPrefixes/{publicIPPrefixName}
 	NodePublicIPPrefixReference *genruntime.ResourceReference `armReference:"NodePublicIPPrefixID" json:"nodePublicIPPrefixReference,omitempty"`
-	NodeTaints                  []string                      `json:"nodeTaints,omitempty"`
+	NodeTaints                  []string                      `json:"nodeTaints,omitempty" serializationType:"explicitEmptyCollection"`
 	OrchestratorVersion         *string                       `json:"orchestratorVersion,omitempty"`
 	OsDiskSizeGB                *int                          `json:"osDiskSizeGB,omitempty"`
 	OsDiskType                  *string                       `json:"osDiskType,omitempty"`
@@ -504,7 +504,7 @@ type ManagedClusterAgentPoolProfile struct {
 	ScaleSetEvictionPolicy           *string                       `json:"scaleSetEvictionPolicy,omitempty"`
 	ScaleSetPriority                 *string                       `json:"scaleSetPriority,omitempty"`
 	SpotMaxPrice                     *float64                      `json:"spotMaxPrice,omitempty"`
-	Tags                             map[string]string             `json:"tags,omitempty"`
+	Tags                             map[string]string             `json:"tags,omitempty" serializationType:"explicitEmptyCollection"`
 	Type                             *string                       `json:"type,omitempty"`
 	UpgradeSettings                  *AgentPoolUpgradeSettings     `json:"upgradeSettings,omitempty"`
 	VmSize                           *string                       `json:"vmSize,omitempty"`

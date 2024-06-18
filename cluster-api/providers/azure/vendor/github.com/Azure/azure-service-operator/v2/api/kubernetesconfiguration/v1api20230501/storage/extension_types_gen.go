@@ -151,11 +151,12 @@ type Extension_Spec struct {
 
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName             string            `json:"azureName,omitempty"`
-	ConfigurationSettings map[string]string `json:"configurationSettings,omitempty"`
-	ExtensionType         *string           `json:"extensionType,omitempty"`
-	Identity              *Identity         `json:"identity,omitempty"`
-	OriginalVersion       string            `json:"originalVersion,omitempty"`
+	AzureName                      string                         `json:"azureName,omitempty"`
+	ConfigurationProtectedSettings *genruntime.SecretMapReference `json:"configurationProtectedSettings,omitempty"`
+	ConfigurationSettings          map[string]string              `json:"configurationSettings,omitempty"`
+	ExtensionType                  *string                        `json:"extensionType,omitempty"`
+	Identity                       *Identity                      `json:"identity,omitempty"`
+	OriginalVersion                string                         `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -193,28 +194,29 @@ func (extension *Extension_Spec) ConvertSpecTo(destination genruntime.Convertibl
 // Storage version of v1api20230501.Extension_STATUS
 // The Extension object.
 type Extension_STATUS struct {
-	AksAssignedIdentity     *Extension_Properties_AksAssignedIdentity_STATUS `json:"aksAssignedIdentity,omitempty"`
-	AutoUpgradeMinorVersion *bool                                            `json:"autoUpgradeMinorVersion,omitempty"`
-	Conditions              []conditions.Condition                           `json:"conditions,omitempty"`
-	ConfigurationSettings   map[string]string                                `json:"configurationSettings,omitempty"`
-	CurrentVersion          *string                                          `json:"currentVersion,omitempty"`
-	CustomLocationSettings  map[string]string                                `json:"customLocationSettings,omitempty"`
-	ErrorInfo               *ErrorDetail_STATUS                              `json:"errorInfo,omitempty"`
-	ExtensionType           *string                                          `json:"extensionType,omitempty"`
-	Id                      *string                                          `json:"id,omitempty"`
-	Identity                *Identity_STATUS                                 `json:"identity,omitempty"`
-	IsSystemExtension       *bool                                            `json:"isSystemExtension,omitempty"`
-	Name                    *string                                          `json:"name,omitempty"`
-	PackageUri              *string                                          `json:"packageUri,omitempty"`
-	Plan                    *Plan_STATUS                                     `json:"plan,omitempty"`
-	PropertyBag             genruntime.PropertyBag                           `json:"$propertyBag,omitempty"`
-	ProvisioningState       *string                                          `json:"provisioningState,omitempty"`
-	ReleaseTrain            *string                                          `json:"releaseTrain,omitempty"`
-	Scope                   *Scope_STATUS                                    `json:"scope,omitempty"`
-	Statuses                []ExtensionStatus_STATUS                         `json:"statuses,omitempty"`
-	SystemData              *SystemData_STATUS                               `json:"systemData,omitempty"`
-	Type                    *string                                          `json:"type,omitempty"`
-	Version                 *string                                          `json:"version,omitempty"`
+	AksAssignedIdentity            *Extension_Properties_AksAssignedIdentity_STATUS `json:"aksAssignedIdentity,omitempty"`
+	AutoUpgradeMinorVersion        *bool                                            `json:"autoUpgradeMinorVersion,omitempty"`
+	Conditions                     []conditions.Condition                           `json:"conditions,omitempty"`
+	ConfigurationProtectedSettings map[string]string                                `json:"configurationProtectedSettings,omitempty"`
+	ConfigurationSettings          map[string]string                                `json:"configurationSettings,omitempty"`
+	CurrentVersion                 *string                                          `json:"currentVersion,omitempty"`
+	CustomLocationSettings         map[string]string                                `json:"customLocationSettings,omitempty"`
+	ErrorInfo                      *ErrorDetail_STATUS                              `json:"errorInfo,omitempty"`
+	ExtensionType                  *string                                          `json:"extensionType,omitempty"`
+	Id                             *string                                          `json:"id,omitempty"`
+	Identity                       *Identity_STATUS                                 `json:"identity,omitempty"`
+	IsSystemExtension              *bool                                            `json:"isSystemExtension,omitempty"`
+	Name                           *string                                          `json:"name,omitempty"`
+	PackageUri                     *string                                          `json:"packageUri,omitempty"`
+	Plan                           *Plan_STATUS                                     `json:"plan,omitempty"`
+	PropertyBag                    genruntime.PropertyBag                           `json:"$propertyBag,omitempty"`
+	ProvisioningState              *string                                          `json:"provisioningState,omitempty"`
+	ReleaseTrain                   *string                                          `json:"releaseTrain,omitempty"`
+	Scope                          *Scope_STATUS                                    `json:"scope,omitempty"`
+	Statuses                       []ExtensionStatus_STATUS                         `json:"statuses,omitempty"`
+	SystemData                     *SystemData_STATUS                               `json:"systemData,omitempty"`
+	Type                           *string                                          `json:"type,omitempty"`
+	Version                        *string                                          `json:"version,omitempty"`
 }
 
 var _ genruntime.ConvertibleStatus = &Extension_STATUS{}

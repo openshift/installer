@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"k8s.io/utils/ptr"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 func (mcp *AzureManagedControlPlaneTemplate) setDefaults() {
@@ -39,8 +40,10 @@ func (mcp *AzureManagedControlPlaneTemplate) setDefaults() {
 
 // setDefaultVirtualNetwork sets the default VirtualNetwork for an AzureManagedControlPlaneTemplate.
 func (mcp *AzureManagedControlPlaneTemplate) setDefaultVirtualNetwork() {
-	if mcp.Spec.Template.Spec.VirtualNetwork.Name == "" {
-		mcp.Spec.Template.Spec.VirtualNetwork.Name = mcp.Name
+	if mcp.Spec.Template.Spec.VirtualNetwork.Name != "" {
+		// Being able to set the vnet name in the template type is a bug, as vnet names cannot be reused across clusters.
+		// To avoid a breaking API change, a warning is logged.
+		ctrl.Log.WithName("AzureManagedControlPlaneTemplateWebHookLogger").Info("WARNING: VirtualNetwork.Name should not be set in the template. Virtual Network names cannot be shared across clusters.")
 	}
 	if mcp.Spec.Template.Spec.VirtualNetwork.CIDRBlock == "" {
 		mcp.Spec.Template.Spec.VirtualNetwork.CIDRBlock = defaultAKSVnetCIDR

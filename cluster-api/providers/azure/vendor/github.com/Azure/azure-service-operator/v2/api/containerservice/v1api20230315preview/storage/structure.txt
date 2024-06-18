@@ -3,7 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315pre
 ├── APIVersion: Enum (1 value)
 │   └── "2023-03-15-preview"
 ├── Fleet: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (8 properties)
 │   │   ├── AzureName: string
 │   │   ├── HubProfile: *Object (2 properties)
@@ -43,7 +43,7 @@ github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315pre
 │       ├── Tags: map[string]string
 │       └── Type: *string
 ├── FleetsMember: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315preview.Fleet
+│   ├── Owner: containerservice/v1api20230315preview.Fleet
 │   ├── Spec: Object (6 properties)
 │   │   ├── AzureName: string
 │   │   ├── ClusterResourceReference: *genruntime.ResourceReference
@@ -70,7 +70,7 @@ github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315pre
 │       │   └── PropertyBag: genruntime.PropertyBag
 │       └── Type: *string
 ├── FleetsUpdateRun: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315preview.Fleet
+│   ├── Owner: containerservice/v1api20230315preview.Fleet
 │   ├── Spec: Object (6 properties)
 │   │   ├── AzureName: string
 │   │   ├── ManagedClusterUpdate: *Object (2 properties)

@@ -335,6 +335,13 @@ func (in *Extension_STATUS) DeepCopyInto(out *Extension_STATUS) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.ConfigurationProtectedSettings != nil {
+		in, out := &in.ConfigurationProtectedSettings, &out.ConfigurationProtectedSettings
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.ConfigurationSettings != nil {
 		in, out := &in.ConfigurationSettings, &out.ConfigurationSettings
 		*out = make(map[string]string, len(*in))
@@ -461,6 +468,11 @@ func (in *Extension_Spec) DeepCopyInto(out *Extension_Spec) {
 	if in.AutoUpgradeMinorVersion != nil {
 		in, out := &in.AutoUpgradeMinorVersion, &out.AutoUpgradeMinorVersion
 		*out = new(bool)
+		**out = **in
+	}
+	if in.ConfigurationProtectedSettings != nil {
+		in, out := &in.ConfigurationProtectedSettings, &out.ConfigurationProtectedSettings
+		*out = new(genruntime.SecretMapReference)
 		**out = **in
 	}
 	if in.ConfigurationSettings != nil {
