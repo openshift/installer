@@ -127,9 +127,6 @@ func Test_PrintFields(t *testing.T) {
     ibmcloud <object>
       IBMCloud is the configuration used when installing on IBM Cloud.
 
-    libvirt <object>
-      Libvirt is the configuration used when installing on libvirt.
-
     none <object>
       None is the empty configuration used when installing on an unsupported platform.
 

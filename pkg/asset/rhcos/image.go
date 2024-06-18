@@ -21,7 +21,6 @@ import (
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
-	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -112,12 +111,6 @@ func osImage(config *types.InstallConfig) (string, error) {
 			return rhcos.FindArtifactURL(a)
 		}
 		return "", fmt.Errorf("%s: No ibmcloud build found", st.FormatPrefix(archName))
-	case libvirt.Name:
-		// 𝅘𝅥𝅮 Everything's going to be a-ok 𝅘𝅥𝅮
-		if a, ok := streamArch.Artifacts["qemu"]; ok {
-			return rhcos.FindArtifactURL(a)
-		}
-		return "", fmt.Errorf("%s: No qemu build found", st.FormatPrefix(archName))
 	case ovirt.Name, openstack.Name:
 		op := config.Platform.OpenStack
 		if op != nil {

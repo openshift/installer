@@ -84,17 +84,6 @@ func TestSetMahcinePoolDefaults(t *testing.T) {
 			}(),
 		},
 		{
-			name:     "libvirt replicas",
-			pool:     &types.MachinePool{},
-			platform: "libvirt",
-			expected: func() *types.MachinePool {
-				p := defaultMachinePool("")
-				repCount := int64(1)
-				p.Replicas = &repCount
-				return p
-			}(),
-		},
-		{
 			name: "non-default hyperthreading",
 			pool: func() *types.MachinePool {
 				p := defaultMachinePool("test-name")
