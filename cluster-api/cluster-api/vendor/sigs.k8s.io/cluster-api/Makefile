@@ -23,7 +23,7 @@ SHELL:=/usr/bin/env bash
 #
 # Go.
 #
-GO_VERSION ?= 1.21.9
+GO_VERSION ?= 1.21.11
 GO_DIRECTIVE_VERSION ?= 1.21
 GO_CONTAINER_IMAGE ?= docker.io/library/golang:$(GO_VERSION)
 
@@ -40,7 +40,7 @@ export GO111MODULE=on
 #
 # Kubebuilder.
 #
-export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.29.0
+export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.30.0
 export KUBEBUILDER_CONTROLPLANE_START_TIMEOUT ?= 60s
 export KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT ?= 60s
 
@@ -109,7 +109,11 @@ KUSTOMIZE_BIN := kustomize
 KUSTOMIZE := $(abspath $(TOOLS_BIN_DIR)/$(KUSTOMIZE_BIN)-$(KUSTOMIZE_VER))
 KUSTOMIZE_PKG := sigs.k8s.io/kustomize/kustomize/v4
 
-SETUP_ENVTEST_VER := v0.0.0-20240215143116-d0396a3d6f9f
+# This is a commit from CR main (22.05.2024).
+# Intentionally using a commit from main to use a setup-envtest version
+# that uses binaries from controller-tools, not GCS.
+# CR PR: https://github.com/kubernetes-sigs/controller-runtime/pull/2811
+SETUP_ENVTEST_VER := v0.0.0-20240522175850-2e9781e9fc60
 SETUP_ENVTEST_BIN := setup-envtest
 SETUP_ENVTEST := $(abspath $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)-$(SETUP_ENVTEST_VER))
 SETUP_ENVTEST_PKG := sigs.k8s.io/controller-runtime/tools/setup-envtest
