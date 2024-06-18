@@ -12,6 +12,7 @@ import (
 	awss "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -247,8 +248,14 @@ func (c *Client) CreateHostedZone(ctx context.Context, input *HostedZoneInput) (
 	cfg := GetR53ClientCfg(c.ssn, input.Role)
 	svc := route53.New(c.ssn, cfg)
 
+	// CallerReference needs to be a unique string. We include the infra id,
+	// which is unique, in case that is helpful for human debugging. A random
+	// string of an arbitrary length is appended in case the infra id is reused
+	// which is generally not supposed to happen but does in some edge cases.
+	callerRef := aws.String(fmt.Sprintf("%s-%s", input.InfraID, rand.String(5)))
+
 	res, err := svc.CreateHostedZoneWithContext(ctx, &route53.CreateHostedZoneInput{
-		CallerReference: aws.String(input.InfraID),
+		CallerReference: callerRef,
 		Name:            aws.String(input.Name),
 		HostedZoneConfig: &route53.HostedZoneConfig{
 			PrivateZone: aws.Bool(true),
