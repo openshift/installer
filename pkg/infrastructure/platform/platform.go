@@ -22,7 +22,6 @@ import (
 	"github.com/openshift/installer/pkg/terraform/stages/azure"
 	"github.com/openshift/installer/pkg/terraform/stages/gcp"
 	"github.com/openshift/installer/pkg/terraform/stages/ibmcloud"
-	"github.com/openshift/installer/pkg/terraform/stages/libvirt"
 	"github.com/openshift/installer/pkg/terraform/stages/nutanix"
 	"github.com/openshift/installer/pkg/terraform/stages/openstack"
 	"github.com/openshift/installer/pkg/terraform/stages/ovirt"
@@ -35,7 +34,6 @@ import (
 	"github.com/openshift/installer/pkg/types/featuregates"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
-	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
@@ -71,8 +69,6 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 			return clusterapi.InitializeProvider(ibmcloudcapi.Provider{}), nil
 		}
 		return terraform.InitializeProvider(ibmcloud.PlatformStages), nil
-	case libvirttypes.Name:
-		return terraform.InitializeProvider(libvirt.PlatformStages), nil
 	case nutanixtypes.Name:
 		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(nutanixcapi.Provider{}), nil

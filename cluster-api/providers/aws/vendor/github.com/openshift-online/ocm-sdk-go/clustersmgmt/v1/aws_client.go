@@ -49,3 +49,11 @@ func (c *AWSClient) PrivateLinkConfiguration() *PrivateLinkConfigurationClient {
 		path.Join(c.path, "private_link_configuration"),
 	)
 }
+
+// RolePolicyBindings returns the target 'role_policy_bindings' resource.
+func (c *AWSClient) RolePolicyBindings() *RolePolicyBindingsClient {
+	return NewRolePolicyBindingsClient(
+		c.transport,
+		path.Join(c.path, "role_policy_bindings"),
+	)
+}

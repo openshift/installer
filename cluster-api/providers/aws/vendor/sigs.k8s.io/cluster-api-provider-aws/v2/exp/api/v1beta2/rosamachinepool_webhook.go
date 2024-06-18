@@ -5,8 +5,11 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -127,4 +130,17 @@ func validateImmutable(old, updated interface{}, name string) field.ErrorList {
 
 // Default implements admission.Defaulter.
 func (r *ROSAMachinePool) Default() {
+	if r.Spec.NodeDrainGracePeriod == nil {
+		r.Spec.NodeDrainGracePeriod = &metav1.Duration{}
+	}
+
+	if r.Spec.UpdateConfig == nil {
+		r.Spec.UpdateConfig = &RosaUpdateConfig{}
+	}
+	if r.Spec.UpdateConfig.RollingUpdate == nil {
+		r.Spec.UpdateConfig.RollingUpdate = &RollingUpdate{
+			MaxUnavailable: ptr.To(intstr.FromInt32(0)),
+			MaxSurge:       ptr.To(intstr.FromInt32(1)),
+		}
+	}
 }

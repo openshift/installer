@@ -38,7 +38,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/baremetal"
 	"github.com/openshift/installer/pkg/asset/machines/gcp"
 	"github.com/openshift/installer/pkg/asset/machines/ibmcloud"
-	"github.com/openshift/installer/pkg/asset/machines/libvirt"
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
 	"github.com/openshift/installer/pkg/asset/machines/nutanix"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
@@ -56,7 +55,6 @@ import (
 	externaltypes "github.com/openshift/installer/pkg/types/external"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
-	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
@@ -112,10 +110,6 @@ func defaultAWSMachinePoolPlatform(poolName string) awstypes.MachinePool {
 			Size: decimalRootVolumeSize,
 		},
 	}
-}
-
-func defaultLibvirtMachinePoolPlatform() libvirttypes.MachinePool {
-	return libvirttypes.MachinePool{}
 }
 
 func defaultAzureMachinePoolPlatform() azuretypes.MachinePool {
@@ -564,18 +558,6 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
-		case libvirttypes.Name:
-			mpool := defaultLibvirtMachinePoolPlatform()
-			mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
-			mpool.Set(pool.Platform.Libvirt)
-			pool.Platform.Libvirt = &mpool
-			sets, err := libvirt.MachineSets(clusterID.InfraID, ic, &pool, "worker", workerUserDataSecretName)
-			if err != nil {
-				return errors.Wrap(err, "failed to create worker machine objects")
-			}
-			for _, set := range sets {
-				machineSets = append(machineSets, set)
-			}
 		case openstacktypes.Name:
 			mpool := defaultOpenStackMachinePoolPlatform()
 			mpool.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
@@ -584,15 +566,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 
 			imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
 
-			trunkSupport, err := openstack.CheckNetworkExtensionAvailability(
-				ic.Platform.OpenStack.Cloud,
-				"trunk",
-				nil,
-			)
-			if err != nil {
-				return fmt.Errorf("failed to check for trunk support: %w", err)
-			}
-			sets, err := openstack.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", workerUserDataSecretName, trunkSupport)
+			sets, err := openstack.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", workerUserDataSecretName)
 			if err != nil {
 				return fmt.Errorf("failed to create worker machine objects: %w", err)
 			}

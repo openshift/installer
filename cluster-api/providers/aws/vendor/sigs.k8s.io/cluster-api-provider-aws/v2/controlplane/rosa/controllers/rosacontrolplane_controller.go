@@ -39,6 +39,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/apiserver/pkg/storage/names"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -57,6 +58,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/rosa"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/utils"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
 	capiannotations "sigs.k8s.io/cluster-api/util/annotations"
@@ -316,6 +318,16 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 func (r *ROSAControlPlaneReconciler) reconcileDelete(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope) (res ctrl.Result, reterr error) {
 	rosaScope.Info("Reconciling ROSAControlPlane delete")
 
+	// Deleting MachinePools first.
+	deleted, err := r.deleteMachinePools(ctx, rosaScope)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	if !deleted {
+		// Reconcile after 1 min giving time for machinePools to be deleted.
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
+	}
+
 	ocmClient, err := rosa.NewOCMClient(ctx, rosaScope)
 	if err != nil {
 		// TODO: need to expose in status, as likely the credentials are invalid
@@ -332,8 +344,9 @@ func (r *ROSAControlPlaneReconciler) reconcileDelete(ctx context.Context, rosaSc
 		return ctrl.Result{}, err
 	}
 	if cluster == nil {
-		// cluster is fully deleted, remove finalizer.
+		// cluster and machinepools are deleted, removing finalizer.
 		controllerutil.RemoveFinalizer(rosaScope.ControlPlane, ROSAControlPlaneFinalizer)
+
 		return ctrl.Result{}, nil
 	}
 
@@ -364,6 +377,30 @@ func (r *ROSAControlPlaneReconciler) reconcileDelete(ctx context.Context, rosaSc
 	rosaScope.Info("waiting for cluster to be deleted")
 	// Requeue to remove the finalizer when the cluster is fully deleted.
 	return ctrl.Result{RequeueAfter: time.Second * 60}, nil
+}
+
+// deleteMachinePools check if the controlplane has related machinePools and delete them.
+func (r *ROSAControlPlaneReconciler) deleteMachinePools(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope) (bool, error) {
+	machinePools, err := utils.GetMachinePools(ctx, rosaScope.Client, rosaScope.Cluster.Name, rosaScope.Cluster.Namespace)
+	if err != nil {
+		return false, err
+	}
+
+	var errs []error
+	for id, mp := range machinePools {
+		if !mp.DeletionTimestamp.IsZero() {
+			continue
+		}
+		if err = rosaScope.Client.Delete(ctx, &machinePools[id]); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if len(errs) > 0 {
+		return false, kerrors.NewAggregate(errs)
+	}
+
+	return len(machinePools) == 0, nil
 }
 
 func (r *ROSAControlPlaneReconciler) reconcileClusterVersion(rosaScope *scope.ROSAControlPlaneScope, ocmClient *ocm.Client, cluster *cmv1.Cluster) error {
@@ -609,7 +646,7 @@ func (r *ROSAControlPlaneReconciler) reconcileExternalAuthBootstrapKubeconfig(ct
 
 	// kubeconfig doesn't exist, generate a new one.
 	breakGlassConfig, err := cmv1.NewBreakGlassCredential().
-		Username("capi-admin").
+		Username(names.SimpleNameGenerator.GenerateName("capi-admin-")). // OCM requires unique usernames
 		ExpirationTimestamp(time.Now().Add(time.Hour * 24)).
 		Build()
 	if err != nil {

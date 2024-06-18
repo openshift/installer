@@ -131,6 +131,10 @@ func DestroyStorage(ctx context.Context, clusterID string) error {
 	}
 	bucketName := GetBootstrapStorageName(clusterID)
 
+	if err := client.Bucket(bucketName).Object(bootstrapIgnitionBucketObjName).Delete(ctx); err != nil {
+		return fmt.Errorf("failed to delete bucket object %s: %w", bootstrapIgnitionBucketObjName, err)
+	}
+
 	// Deleting a bucket will delete the managed folders and bucket objects.
 	if err := client.Bucket(bucketName).Delete(ctx); err != nil {
 		return fmt.Errorf("failed to delete bucket %s: %w", bucketName, err)

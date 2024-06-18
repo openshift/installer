@@ -39,6 +39,7 @@ type KubeletConfig struct {
 	bitmap_      uint32
 	id           string
 	href         string
+	name         string
 	podPidsLimit int
 }
 
@@ -99,13 +100,38 @@ func (o *KubeletConfig) Empty() bool {
 	return o == nil || o.bitmap_&^1 == 0
 }
 
+// Name returns the value of the 'name' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Allows the user to specify the name to be used to identify this KubeletConfig.
+// Optional. A name will be generated if not provided.
+func (o *KubeletConfig) Name() string {
+	if o != nil && o.bitmap_&8 != 0 {
+		return o.name
+	}
+	return ""
+}
+
+// GetName returns the value of the 'name' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Allows the user to specify the name to be used to identify this KubeletConfig.
+// Optional. A name will be generated if not provided.
+func (o *KubeletConfig) GetName() (value string, ok bool) {
+	ok = o != nil && o.bitmap_&8 != 0
+	if ok {
+		value = o.name
+	}
+	return
+}
+
 // PodPidsLimit returns the value of the 'pod_pids_limit' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Allows user to specify the podPidsLimit to be applied via KubeletConfig.
+// Allows the user to specify the podPidsLimit to be applied via KubeletConfig.
 // Useful if workloads have greater PIDs limit requirements than the OCP default.
 func (o *KubeletConfig) PodPidsLimit() int {
-	if o != nil && o.bitmap_&8 != 0 {
+	if o != nil && o.bitmap_&16 != 0 {
 		return o.podPidsLimit
 	}
 	return 0
@@ -114,10 +140,10 @@ func (o *KubeletConfig) PodPidsLimit() int {
 // GetPodPidsLimit returns the value of the 'pod_pids_limit' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Allows user to specify the podPidsLimit to be applied via KubeletConfig.
+// Allows the user to specify the podPidsLimit to be applied via KubeletConfig.
 // Useful if workloads have greater PIDs limit requirements than the OCP default.
 func (o *KubeletConfig) GetPodPidsLimit() (value int, ok bool) {
-	ok = o != nil && o.bitmap_&8 != 0
+	ok = o != nil && o.bitmap_&16 != 0
 	if ok {
 		value = o.podPidsLimit
 	}

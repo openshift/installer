@@ -98,6 +98,19 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 		NetworkMapping: networkMappings,
 	}
 
+	switch diskProvisioningType {
+	case "":
+		// Disk provisioning type will be set according to the default storage policy of vsphere.
+	case "thin":
+		cisp.DiskProvisioning = string(types.OvfCreateImportSpecParamsDiskProvisioningTypeThin)
+	case "thick":
+		cisp.DiskProvisioning = string(types.OvfCreateImportSpecParamsDiskProvisioningTypeThick)
+	case "eagerZeroedThick":
+		cisp.DiskProvisioning = string(types.OvfCreateImportSpecParamsDiskProvisioningTypeEagerZeroedThick)
+	default:
+		return errors.Errorf("disk provisioning type %q is not supported", diskProvisioningType)
+	}
+
 	m := ovf.NewManager(session.Client.Client)
 	spec, err := m.CreateImportSpec(ctx,
 		string(ovfDescriptor),

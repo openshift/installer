@@ -133,6 +133,12 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 				AllocatePublicIP:       false,
 				EnableIPForwarding:     false,
 				SecurityProfile:        securityProfile,
+				NetworkInterfaces: []capz.NetworkInterface{
+					{
+						SubnetName:            subnet,
+						AcceleratedNetworking: ptr.To(mpool.VMNetworkingType == azure.AcceleratedNetworkingEnabled),
+					},
+				},
 			},
 		}
 		azureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))

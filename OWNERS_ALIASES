@@ -21,7 +21,6 @@ aliases:
   openstack-approvers:
     - EmilienM
     - MaysaMacedo
-    - dulek
     - gryf
     - mandre
     - mdbooth
@@ -30,7 +29,6 @@ aliases:
   openstack-reviewers:
     - EmilienM
     - MaysaMacedo
-    - dulek
     - gryf
     - mandre
     - mdbooth

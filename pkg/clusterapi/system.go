@@ -47,6 +47,10 @@ const (
 	SystemStateRunning SystemState = "running"
 	// SystemStateStopped indicates the system is stopped.
 	SystemStateStopped SystemState = "stopped"
+
+	// ArtifactsDir is the directory where output (manifests, kubeconfig, etc.)
+	// related to CAPI-based installs are stored.
+	ArtifactsDir = ".clusterapi_output"
 )
 
 // Interface is the interface for the cluster-api system.
@@ -55,6 +59,7 @@ type Interface interface {
 	State() SystemState
 	Client() client.Client
 	Teardown()
+	CleanEtcd()
 }
 
 // System returns the cluster-api system.
@@ -145,7 +150,7 @@ func (c *system) Run(ctx context.Context) error {
 				"--health-addr={{suggestHealthHostPort}}",
 				"--webhook-port={{.WebhookPort}}",
 				"--webhook-cert-dir={{.WebhookCertDir}}",
-				"--feature-gates=BootstrapFormatIgnition=true,ExternalResourceGC=true",
+				"--feature-gates=BootstrapFormatIgnition=true,ExternalResourceGC=true,TagUnmanagedNetworkResources=false",
 			},
 			map[string]string{},
 		)
@@ -365,6 +370,10 @@ func (c *system) Teardown() {
 	// Clean up the binary directory.
 	defer os.RemoveAll(c.lcp.BinDir)
 
+	// Clean up log file handles.
+	defer c.lcp.EtcdLog.Close()
+	defer c.lcp.APIServerLog.Close()
+
 	// Proceed to shutdown.
 	c.teardownOnce.Do(func() {
 		c.cancel()
@@ -383,6 +392,21 @@ func (c *system) Teardown() {
 
 		c.logWriter.Close()
 	})
+}
+
+// CleanEtcd removes the etcd database from the host.
+func (c *system) CleanEtcd() {
+	c.Lock()
+	defer c.Unlock()
+
+	if c.lcp == nil {
+		return
+	}
+
+	// Clean up the etcd directory.
+	if err := os.RemoveAll(c.lcp.EtcdDataDir); err != nil {
+		logrus.Warnf("Unable to delete local etcd data directory %s. It is safe to remove the directory manually", c.lcp.EtcdDataDir)
+	}
 }
 
 // State returns the state of the cluster-api system.
@@ -479,6 +503,13 @@ func (c *system) runController(ctx context.Context, ct *controller) error {
 		templateData := map[string]string{
 			"WebhookPort":    fmt.Sprintf("%d", wh.LocalServingPort),
 			"WebhookCertDir": wh.LocalServingCertDir,
+			"KubeconfigPath": c.lcp.KubeconfigPath,
+		}
+
+		// We cannot override KUBECONFIG, e.g., in case the user supplies a callback that needs to access the cluster,
+		// such as via credential_process in the AWS config file. The kubeconfig path is set in the controller instead.
+		if ct.Provider == nil || ct.Provider.Name != "azureaso" {
+			ct.Args = append(ct.Args, "--kubeconfig={{.KubeconfigPath}}")
 		}
 
 		args := make([]string, 0, len(ct.Args))
@@ -500,7 +531,10 @@ func (c *system) runController(ctx context.Context, ct *controller) error {
 			ct.Env = map[string]string{}
 		}
 		// Override KUBECONFIG to point to the local control plane.
-		ct.Env["KUBECONFIG"] = c.lcp.KubeconfigPath
+		// azureaso doesn't support the --kubeconfig parameter.
+		if ct.Provider != nil && ct.Provider.Name == "azureaso" {
+			ct.Env["KUBECONFIG"] = c.lcp.KubeconfigPath
+		}
 		for key, value := range ct.Env {
 			env = append(env, fmt.Sprintf("%s=%s", key, value))
 		}

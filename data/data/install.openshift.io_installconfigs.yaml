@@ -474,6 +474,7 @@ spec:
                         GCP
                       properties:
                         confidentialCompute:
+                          default: Disabled
                           description: ConfidentialCompute Defines whether the instance
                             should have confidential compute enabled. If enabled OnHostMaintenance
                             is required to be set to "Terminate". If omitted, the
@@ -484,6 +485,7 @@ spec:
                           - Disabled
                           type: string
                         onHostMaintenance:
+                          default: Migrate
                           description: OnHostMaintenance determines the behavior when
                             a maintenance event occurs that might cause the instance
                             to reboot. Allowed values are "Migrate" and "Terminate".
@@ -646,10 +648,6 @@ spec:
                           items:
                             type: string
                           type: array
-                      type: object
-                    libvirt:
-                      description: Libvirt is the configuration used when installing
-                        on libvirt.
                       type: object
                     nutanix:
                       description: Nutanix is the configuration used when installing
@@ -1385,6 +1383,7 @@ spec:
                       GCP
                     properties:
                       confidentialCompute:
+                        default: Disabled
                         description: ConfidentialCompute Defines whether the instance
                           should have confidential compute enabled. If enabled OnHostMaintenance
                           is required to be set to "Terminate". If omitted, the platform
@@ -1395,6 +1394,7 @@ spec:
                         - Disabled
                         type: string
                       onHostMaintenance:
+                        default: Migrate
                         description: OnHostMaintenance determines the behavior when
                           a maintenance event occurs that might cause the instance
                           to reboot. Allowed values are "Migrate" and "Terminate".
@@ -1556,10 +1556,6 @@ spec:
                         items:
                           type: string
                         type: array
-                    type: object
-                  libvirt:
-                    description: Libvirt is the configuration used when installing
-                      on libvirt.
                     type: object
                   nutanix:
                     description: Nutanix is the configuration used when installing
@@ -2095,8 +2091,8 @@ spec:
                 description: MachineNetwork is the list of IP address pools for machines.
                   This field replaces MachineCIDR, and if set MachineCIDR must be
                   empty or match the first entry in the list. Default is 10.0.0.0/16
-                  for all platforms other than libvirt and Power VS. For libvirt,
-                  the default is 192.168.126.0/24. For Power VS, the default is 192.168.0.0/24.
+                  for all platforms other than Power VS. For Power VS, the default
+                  is 192.168.0.0/24.
                 items:
                   description: MachineNetworkEntry is a single IP address block for
                     node IP blocks.
@@ -2163,6 +2159,14 @@ spec:
                       for the cluster. If set, the AMI should belong to the same region
                       as the cluster.
                     type: string
+                  bestEffortDeleteIgnition:
+                    description: BestEffortDeleteIgnition is an optional field that
+                      can be used to ignore errors from S3 deletion of ignition objects
+                      during cluster bootstrap. The default behavior is to fail the
+                      installation if ignition objects cannot be deleted. Enable this
+                      functionality when there are known reasons disallowing their
+                      deletion.
+                    type: boolean
                   defaultMachinePlatform:
                     description: DefaultMachinePlatform is the default configuration
                       used when installing on AWS for machine pools which do not define
@@ -2283,9 +2287,8 @@ spec:
                       \ This default is subject to change over time."
                     type: string
                   preserveBootstrapIgnition:
-                    description: PreserveBootstrapIgnition is an optional field that
-                      can be used to make the S3 deletion optional during bootstrap
-                      destroy.
+                    description: PreserveBootstrapIgnition is deprecated. Use bestEffortDeleteIgnition
+                      instead.
                     type: boolean
                   propagateUserTags:
                     description: PropagateUserTags is a flag that directs in-cluster
@@ -3012,6 +3015,7 @@ spec:
                       their own platform configuration.
                     properties:
                       confidentialCompute:
+                        default: Disabled
                         description: ConfidentialCompute Defines whether the instance
                           should have confidential compute enabled. If enabled OnHostMaintenance
                           is required to be set to "Terminate". If omitted, the platform
@@ -3022,6 +3026,7 @@ spec:
                         - Disabled
                         type: string
                       onHostMaintenance:
+                        default: Migrate
                         description: OnHostMaintenance determines the behavior when
                           a maintenance event occurs that might cause the instance
                           to reboot. Allowed values are "Migrate" and "Terminate".
@@ -3371,51 +3376,6 @@ spec:
                     type: string
                 required:
                 - region
-                type: object
-              libvirt:
-                description: Libvirt is the configuration used when installing on
-                  libvirt.
-                properties:
-                  URI:
-                    default: qemu+tcp://192.168.122.1/system
-                    description: URI is the identifier for the libvirtd connection.  It
-                      must be reachable from both the host (where the installer is
-                      run) and the cluster (where the cluster-API controller pod will
-                      be running). Default is qemu+tcp://192.168.122.1/system
-                    type: string
-                  defaultMachinePlatform:
-                    description: DefaultMachinePlatform is the default configuration
-                      used when installing on libvirt for machine pools which do not
-                      define their own platform configuration. Default will set the
-                      image field to the latest RHCOS image.
-                    type: object
-                  network:
-                    description: Network
-                    properties:
-                      dnsmasqOptions:
-                        description: DnsmasqOptions is the dnsmasq options to be used
-                          when installing on libvirt.
-                        items:
-                          description: DnsmasqOption contains the name and value of
-                            the option to configure in the libvirt network.
-                          properties:
-                            name:
-                              description: The dnsmasq option name. A full list of
-                                options and an explanation for each can be found in
-                                /etc/dnsmasq.conf
-                              type: string
-                            value:
-                              description: The value that is being set for the particular
-                                option.
-                              type: string
-                          type: object
-                        type: array
-                      if:
-                        default: tt0
-                        description: The interface make used for the network. Default
-                          is tt0.
-                        type: string
-                    type: object
                 type: object
               none:
                 description: None is the empty configuration used when installing
@@ -3984,7 +3944,8 @@ spec:
                   trunkSupport:
                     description: 'TrunkSupport holds a `0` or `1` value that indicates
                       whether or not to use trunk ports in your OpenShift cluster.
-                      Deprecated: this value is set by the installer automatically.'
+                      Deprecated: the machine manifest should be used to specify that
+                      trunk should be used.'
                     type: string
                 required:
                 - cloud
@@ -4677,7 +4638,7 @@ spec:
                       - server
                       - user
                       type: object
-                    maxItems: 1
+                    maxItems: 3
                     minItems: 1
                     type: array
                 type: object

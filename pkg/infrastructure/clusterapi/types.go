@@ -2,6 +2,7 @@ package clusterapi
 
 import (
 	"context"
+	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -18,6 +19,12 @@ import (
 type Provider interface {
 	// Name provides the name for the cloud platform.
 	Name() string
+
+	// BootstrapHasPublicIP indicates whether a public IP address
+	// is expected on the bootstrap node in a public cluster.
+	// When BootstrapHasPublicIP returns true, the machine ready checks
+	// wait for an ExternalIP address to be populated in the machine status.
+	BootstrapHasPublicIP() bool
 }
 
 // PreProvider defines the PreProvision hook, which is called prior to
@@ -99,4 +106,23 @@ type BootstrapDestroyer interface {
 type BootstrapDestroyInput struct {
 	Client   client.Client
 	Metadata types.ClusterMetadata
+}
+
+// PostDestroyer allows platform-specific behavior after bootstrap has been destroyed and
+// ClusterAPI has stopped running.
+type PostDestroyer interface {
+	PostDestroy(ctx context.Context, in PostDestroyerInput) error
+}
+
+// PostDestroyerInput collects args passed to the PostDestroyer hook.
+type PostDestroyerInput struct {
+	Metadata types.ClusterMetadata
+}
+
+// Timeouts allows platform provider to override the timeouts for certain phases.
+type Timeouts interface {
+	// When waiting for the network infrastructure to become ready.
+	NetworkTimeout() time.Duration
+	// When waiting for the machines to provision.
+	ProvisionTimeout() time.Duration
 }

@@ -24,7 +24,6 @@ import (
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
-	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -224,8 +223,6 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			ProviderType:      configv1.IBMCloudProviderTypeVPC,
 			ServiceEndpoints:  installConfig.Config.Platform.IBMCloud.ServiceEndpoints,
 		}
-	case libvirt.Name:
-		config.Spec.PlatformSpec.Type = configv1.LibvirtPlatformType
 	case external.Name:
 		config.Spec.PlatformSpec.Type = configv1.ExternalPlatformType
 		config.Spec.PlatformSpec.External = externalinfra.GetInfraPlatformSpec(installConfig)

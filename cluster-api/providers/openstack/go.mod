@@ -1,6 +1,6 @@
 module openshift/installer/cluster-api/providers/openstack
 
-go 1.21
+go 1.22
 
 require sigs.k8s.io/cluster-api-provider-openstack v0.10.0
 

@@ -182,19 +182,14 @@ func (s *Service) CreateInstance(scope *scope.MachineScope, userData []byte, use
 	}
 	input.SubnetID = subnetID
 
-	if ptr.Deref(scope.AWSMachine.Spec.PublicIP, false) {
-		subnets, err := s.getFilteredSubnets(&ec2.Filter{
-			Name:   aws.String("subnet-id"),
-			Values: aws.StringSlice([]string{subnetID}),
-		})
-		if err != nil {
-			return nil, fmt.Errorf("could not query if subnet has MapPublicIpOnLaunch set: %w", err)
-		}
-		if len(subnets) == 0 {
-			return nil, fmt.Errorf("expected to find subnet %q", subnetID)
-		}
-		// If the subnet does not assign public IPs, set that option in the instance's network interface
-		input.PublicIPOnLaunch = ptr.To(!aws.BoolValue(subnets[0].MapPublicIpOnLaunch))
+	// Preserve user-defined PublicIp option.
+	input.PublicIPOnLaunch = scope.AWSMachine.Spec.PublicIP
+
+	// Public address from BYO Public IPv4 Pools need to be associated after launch (main machine
+	// reconciliate loop) preventing duplicated public IP. The map on launch is explicitly
+	// disabled in instances with PublicIP defined to true.
+	if scope.AWSMachine.Spec.ElasticIPPool != nil && scope.AWSMachine.Spec.ElasticIPPool.PublicIpv4Pool != nil {
+		input.PublicIPOnLaunch = ptr.To(false)
 	}
 
 	if !scope.IsControlPlaneExternallyManaged() && !scope.IsExternallyManaged() && !scope.IsEKSManaged() && s.scope.Network().APIServerELB.DNSName == "" {
@@ -352,9 +347,17 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 					*subnet.SubnetId, *subnet.AvailabilityZone, *failureDomain)
 				continue
 			}
-			if scope.AWSMachine.Spec.PublicIP != nil && *scope.AWSMachine.Spec.PublicIP && !s.scope.Subnets().FindByID(*subnet.SubnetId).IsPublic {
-				errMessage += fmt.Sprintf(" subnet %q is a private subnet.", *subnet.SubnetId)
-				continue
+
+			if ptr.Deref(scope.AWSMachine.Spec.PublicIP, false) {
+				matchingSubnet := s.scope.Subnets().FindByID(*subnet.SubnetId)
+				if matchingSubnet == nil {
+					errMessage += fmt.Sprintf(" unable to find subnet %q among the AWSCluster subnets.", *subnet.SubnetId)
+					continue
+				}
+				if !matchingSubnet.IsPublic {
+					errMessage += fmt.Sprintf(" subnet %q is a private subnet.", *subnet.SubnetId)
+					continue
+				}
 			}
 			filtered = append(filtered, subnet)
 		}

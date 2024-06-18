@@ -115,7 +115,6 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 				{
 					Name: "tag:Name",
 					Values: []string{
-						fmt.Sprintf("%s-private-%s", clusterID, zone), // legacy Terraform config, TODO remove
 						fmt.Sprintf("%s-subnet-private-%s", clusterID, zone),
 					},
 				},
@@ -184,10 +183,6 @@ func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, e
 	}
 
 	sgFilters := []machineapi.Filter{
-		{
-			Name:   "tag:Name",
-			Values: []string{fmt.Sprintf("%s-%s-sg", in.clusterID, in.role)}, // legacy Terraform config, remove with Terraform
-		},
 		{
 			Name:   "tag:Name",
 			Values: []string{fmt.Sprintf("%s-node", in.clusterID)},
@@ -261,7 +256,6 @@ func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, e
 		{
 			Name: "tag:Name",
 			Values: []string{
-				fmt.Sprintf("%s-%s-%s", in.clusterID, visibility, in.zone), // legacy Terraform config, remove with Terraform
 				fmt.Sprintf("%s-subnet-%s-%s", in.clusterID, visibility, in.zone),
 			},
 		},

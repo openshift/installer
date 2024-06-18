@@ -1,6 +1,6 @@
 module openshift/installer/cluster-api/providers/gcp
 
-go 1.21
+go 1.22
 
 // CAPG replace block: these are taken directly from
 // https://github.com/kubernetes-sigs/cluster-api-provider-gcp/blob/main/go.mod

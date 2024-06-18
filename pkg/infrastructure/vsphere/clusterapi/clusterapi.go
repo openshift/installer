@@ -27,6 +27,10 @@ func (p Provider) Name() string {
 	return vsphere.Name
 }
 
+// BootstrapHasPublicIP indicates that an ExternalIP is not
+// required in the machine ready checks.
+func (Provider) BootstrapHasPublicIP() bool { return false }
+
 func initializeFoldersAndTemplates(ctx context.Context, cachedImage string, failureDomain vsphere.FailureDomain, session *session.Session, diskType vsphere.DiskType, clusterID, tagID string) error {
 	finder := session.Finder
 
@@ -51,6 +55,12 @@ func initializeFoldersAndTemplates(ctx context.Context, cachedImage string, fail
 	folderMo, err := createFolder(ctx, folderPath, session)
 	if err != nil {
 		return fmt.Errorf("unable to create folder: %w", err)
+	}
+
+	// attach tag to folder
+	err = session.TagManager.AttachTag(ctx, tagID, folderMo.Reference())
+	if err != nil {
+		return fmt.Errorf("unable to attach tag to folder: %w", err)
 	}
 
 	// if the template is empty, the ova must be imported

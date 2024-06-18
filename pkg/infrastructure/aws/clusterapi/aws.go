@@ -12,7 +12,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elbv2"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/sirupsen/logrus"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -29,15 +32,23 @@ var (
 	_ clusterapi.Provider           = (*Provider)(nil)
 	_ clusterapi.PreProvider        = (*Provider)(nil)
 	_ clusterapi.InfraReadyProvider = (*Provider)(nil)
+	_ clusterapi.BootstrapDestroyer = (*Provider)(nil)
+	_ clusterapi.PostDestroyer      = (*Provider)(nil)
 
 	errNotFound = errors.New("not found")
 )
 
 // Provider implements AWS CAPI installation.
-type Provider struct{}
+type Provider struct {
+	bestEffortDeleteIgnition bool
+}
 
 // Name gives the name of the provider, AWS.
 func (*Provider) Name() string { return awstypes.Name }
+
+// BootstrapHasPublicIP indicates that machine ready checks
+// should wait for an ExternalIP in the status.
+func (*Provider) BootstrapHasPublicIP() bool { return true }
 
 // PreProvision creates the IAM roles used by all nodes in the cluster.
 func (*Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInput) error {
@@ -45,13 +56,29 @@ func (*Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInp
 		return fmt.Errorf("failed to create IAM roles: %w", err)
 	}
 
-	amiID, err := copyAMIToRegion(ctx, in.InstallConfig, in.InfraID, string(*in.RhcosImage))
+	// The AWSMachine manifests might already have the AMI ID set from the machine pool which takes into account the
+	// ways in which the AMI can be specified: the default rhcos if already in the target region, a custom AMI ID set in
+	// platform.aws.amiID, and a custom AMI ID specified in the controlPlane stanza. So we just get the value from the
+	// first awsmachine manifest we find, instead of duplicating all the inheriting logic here.
+	for i := range in.MachineManifests {
+		if awsMachine, ok := in.MachineManifests[i].(*capa.AWSMachine); ok {
+			// Default/custom AMI already in target region, nothing else to do
+			if ptr.Deref(awsMachine.Spec.AMI.ID, "") != "" {
+				return nil
+			}
+		}
+	}
+
+	// Notice that we have to use the default RHCOS value because we set the AMI.ID to empty if the default RHCOS is not
+	// in the target region and it needs to be copied over. See pkg/asset/machines/clusterapi.go
+	amiID, err := copyAMIToRegion(ctx, in.InstallConfig, in.InfraID, in.RhcosImage)
 	if err != nil {
 		return fmt.Errorf("failed to copy AMI: %w", err)
 	}
+	// Update manifests with the new ID
 	for i := range in.MachineManifests {
 		if awsMachine, ok := in.MachineManifests[i].(*capa.AWSMachine); ok {
-			awsMachine.Spec.AMI = capa.AMIReference{ID: ptr.To(amiID)}
+			awsMachine.Spec.AMI.ID = ptr.To(amiID)
 		}
 	}
 	return nil
@@ -199,10 +226,67 @@ func getHostedZoneIDForNLB(ctx context.Context, awsSession *session.Session, reg
 
 // DestroyBootstrap removes aws bootstrap resources not handled
 // by the deletion of the bootstrap machine by the capi controllers.
-func (*Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapDestroyInput) error {
-	if err := removeSSHRule(ctx, in.Client, in.Metadata.InfraID); err != nil {
-		return fmt.Errorf("failed to remove bootstrap SSH rule: %w", err)
+func (p *Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapDestroyInput) error {
+	awsCluster := &capa.AWSCluster{}
+	key := k8sClient.ObjectKey{
+		Name:      in.Metadata.InfraID,
+		Namespace: capiutils.Namespace,
 	}
+	if err := in.Client.Get(ctx, key, awsCluster); err != nil {
+		return fmt.Errorf("failed to get AWSCluster: %w", err)
+	}
+
+	// Save this value for use in the post-destroy hook since we don't have capi running anymore by that point.
+	p.bestEffortDeleteIgnition = ptr.Deref(awsCluster.Spec.S3Bucket.BestEffortDeleteObjects, false)
+
+	var sgID string
+	if sg, ok := awsCluster.Status.Network.SecurityGroups[capa.SecurityGroupControlPlane]; ok && len(sg.ID) > 0 {
+		sgID = sg.ID
+	} else if ok {
+		return fmt.Errorf("control plane security group id is not populated in awscluster status")
+	} else {
+		keys := make([]capa.SecurityGroupRole, 0, len(awsCluster.Status.Network.SecurityGroups))
+		for sgr := range awsCluster.Status.Network.SecurityGroups {
+			keys = append(keys, sgr)
+		}
+		return fmt.Errorf("controlplane not found in cluster security groups: %v", keys)
+	}
+
+	region := in.Metadata.ClusterPlatformMetadata.AWS.Region
+	session, err := awsconfig.GetSessionWithOptions(
+		awsconfig.WithRegion(region),
+		awsconfig.WithServiceEndpoints(region, in.Metadata.ClusterPlatformMetadata.AWS.ServiceEndpoints),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create aws session: %w", err)
+	}
+
+	timeout := 15 * time.Minute
+	startTime := time.Now()
+	untilTime := startTime.Add(timeout)
+	timezone, _ := untilTime.Zone()
+	logrus.Debugf("Waiting up to %v (until %v %s) for bootstrap SSH rule to be destroyed...", timeout, untilTime.Format(time.Kitchen), timezone)
+	if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, timeout, true,
+		func(ctx context.Context) (bool, error) {
+			if err := removeSSHRule(ctx, in.Client, in.Metadata.InfraID); err != nil {
+				// If the cluster object has been modified between Get and Update, k8s client will refuse to update it.
+				// In that case, we need to retry.
+				if k8serrors.IsConflict(err) {
+					logrus.Debugf("AWSCluster update conflict during SSH rule removal: %v", err)
+					return false, nil
+				}
+				return true, fmt.Errorf("failed to remove bootstrap SSH rule: %w", err)
+			}
+			return isSSHRuleGone(ctx, session, region, sgID)
+		},
+	); err != nil {
+		if wait.Interrupted(err) {
+			return fmt.Errorf("bootstrap ssh rule was not removed within %v: %w", timeout, err)
+		}
+		return fmt.Errorf("unable to remove bootstrap ssh rule: %w", err)
+	}
+	logrus.Debugf("Completed removing bootstrap SSH rule after %v", time.Since(startTime))
+
 	return nil
 }
 
@@ -226,55 +310,115 @@ func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string) err
 		postBootstrapRules = append(postBootstrapRules, rule)
 	}
 
-	awsCluster.Spec.NetworkSpec.AdditionalControlPlaneIngressRules = postBootstrapRules
+	// The spec has not been updated yet
+	if len(postBootstrapRules) < len(awsCluster.Spec.NetworkSpec.AdditionalControlPlaneIngressRules) {
+		awsCluster.Spec.NetworkSpec.AdditionalControlPlaneIngressRules = postBootstrapRules
 
-	if err := cl.Update(ctx, awsCluster); err != nil {
-		return fmt.Errorf("failed to update AWSCluster during bootstrap destroy: %w", err)
-	}
-	logrus.Debug("Updated AWSCluster to remove bootstrap SSH rule")
-
-	timeout := 15 * time.Minute
-	untilTime := time.Now().Add(timeout)
-	warnTime := time.Now().Add(5 * time.Minute)
-	warned := false
-	timezone, _ := untilTime.Zone()
-	logrus.Infof("Waiting up to %v (until %v %s) for bootstrap SSH rule to be destroyed...", timeout, untilTime.Format(time.Kitchen), timezone)
-	if err := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
-		Duration: time.Second * 10,
-		Factor:   float64(1.5),
-		Steps:    32,
-		Cap:      timeout,
-	}, func(ctx context.Context) (bool, error) {
-		c := &capa.AWSCluster{}
-		if err := cl.Get(ctx, key, c); err != nil {
-			return false, err
+		if err := cl.Update(ctx, awsCluster); err != nil {
+			return fmt.Errorf("failed to update AWSCluster during bootstrap destroy: %w", err)
 		}
-		if time.Now().After(warnTime) && !warned {
-			logrus.Warn("Deleting bootstrap SSH rule is still progressing but taking longer than expected")
-			warned = true
-		}
-		if sg, ok := c.Status.Network.SecurityGroups[capa.SecurityGroupControlPlane]; ok {
-			for _, r := range sg.IngressRules {
-				if r.Description == awsmanifest.BootstrapSSHDescription {
-					logrus.Debugf("Still waiting for bootstrap SSH security rule %s to be deleted from %s...", r.Description, sg.ID)
-					return false, nil
-				}
-			}
-			logrus.Debugf("The bootstrap SSH security rule %s has been removed from %s", awsmanifest.BootstrapSSHDescription, sg.ID)
-			return true, nil
-		}
-		// This shouldn't happen, but if control plane SG is not found, return an error.
-		keys := make([]capa.SecurityGroupRole, 0, len(c.Status.Network.SecurityGroups))
-		for sgr := range c.Status.Network.SecurityGroups {
-			keys = append(keys, sgr)
-		}
-		return false, fmt.Errorf("controlplane not found in cluster security groups: %v", keys)
-	}); err != nil {
-		if wait.Interrupted(err) {
-			return fmt.Errorf("bootstrap ssh rule was not removed within %v: %w", timeout, err)
-		}
-		return fmt.Errorf("unable to remove bootstrap ssh rule: %w", err)
+		logrus.Debug("Updated AWSCluster to remove bootstrap SSH rule")
 	}
 
 	return nil
+}
+
+// isSSHRuleGone checks that the Public SSH rule has been removed from the security group.
+func isSSHRuleGone(ctx context.Context, session *session.Session, region, sgID string) (bool, error) {
+	sgs, err := awsconfig.DescribeSecurityGroups(ctx, session, []string{sgID}, region)
+	if err != nil {
+		return false, fmt.Errorf("error getting security group: %w", err)
+	}
+
+	if len(sgs) != 1 {
+		ids := []string{}
+		for _, sg := range sgs {
+			ids = append(ids, *sg.GroupId)
+		}
+		return false, fmt.Errorf("expected exactly one security group with id %s, but got %v", sgID, ids)
+	}
+
+	sg := sgs[0]
+	for _, rule := range sg.IpPermissions {
+		if ptr.Deref(rule.ToPort, 0) != 22 {
+			continue
+		}
+		for _, source := range rule.IpRanges {
+			if source.CidrIp != nil && *source.CidrIp == "0.0.0.0/0" {
+				ruleDesc := ptr.Deref(source.Description, "[no description]")
+				logrus.Debugf("Found ingress rule %s with source cidr %s. Still waiting for deletion...", ruleDesc, *source.CidrIp)
+				return false, nil
+			}
+		}
+	}
+
+	return true, nil
+}
+
+// PostDestroy deletes the ignition bucket after capi stopped running, so it won't try to reconcile the bucket.
+func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerInput) error {
+	region := in.Metadata.AWS.Region
+	session, err := awsconfig.GetSessionWithOptions(
+		awsconfig.WithRegion(region),
+		awsconfig.WithServiceEndpoints(region, in.Metadata.AWS.ServiceEndpoints),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create aws session: %w", err)
+	}
+
+	bucketName := awsmanifest.GetIgnitionBucketName(in.Metadata.InfraID)
+	if err := removeS3Bucket(ctx, session, bucketName); err != nil {
+		if p.bestEffortDeleteIgnition {
+			logrus.Warnf("failed to delete ignition bucket %s: %v", bucketName, err)
+			return nil
+		}
+		return fmt.Errorf("failed to delete ignition bucket %s: %w", bucketName, err)
+	}
+
+	return nil
+}
+
+// removeS3Bucket deletes an s3 bucket given its name.
+func removeS3Bucket(ctx context.Context, session *session.Session, bucketName string) error {
+	client := s3.New(session)
+
+	iter := s3manager.NewDeleteListIterator(client, &s3.ListObjectsInput{
+		Bucket: aws.String(bucketName),
+	})
+	err := s3manager.NewBatchDeleteWithClient(client).Delete(ctx, iter)
+	if err != nil && !isBucketNotFound(err) {
+		return err
+	}
+	logrus.Debugf("bucket %q emptied", bucketName)
+
+	if _, err := client.DeleteBucketWithContext(ctx, &s3.DeleteBucketInput{Bucket: aws.String(bucketName)}); err != nil {
+		if isBucketNotFound(err) {
+			logrus.Debugf("bucket %q already deleted", bucketName)
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
+func isBucketNotFound(err interface{}) bool {
+	switch s3Err := err.(type) {
+	case awserr.Error:
+		if s3Err.Code() == s3.ErrCodeNoSuchBucket {
+			return true
+		}
+		origErr := s3Err.OrigErr()
+		if origErr != nil {
+			return isBucketNotFound(origErr)
+		}
+	case s3manager.Error:
+		if s3Err.OrigErr != nil {
+			return isBucketNotFound(s3Err.OrigErr)
+		}
+	case s3manager.Errors:
+		if len(s3Err) == 1 {
+			return isBucketNotFound(s3Err[0])
+		}
+	}
+	return false
 }

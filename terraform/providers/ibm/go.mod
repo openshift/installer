@@ -1,6 +1,6 @@
 module github.com/openshift/installer/terraform/providers/ibm
 
-go 1.20
+go 1.22
 
 require github.com/IBM-Cloud/terraform-provider-ibm v1.61.0
 

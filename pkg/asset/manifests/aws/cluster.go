@@ -151,9 +151,9 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 				},
 			},
 			S3Bucket: &capa.S3Bucket{
-				Name:                    fmt.Sprintf("openshift-bootstrap-data-%s", clusterID.InfraID),
+				Name:                    GetIgnitionBucketName(clusterID.InfraID),
 				PresignedURLDuration:    &metav1.Duration{Duration: 1 * time.Hour},
-				BestEffortDeleteObjects: ptr.To(ic.Config.AWS.PreserveBootstrapIgnition),
+				BestEffortDeleteObjects: ptr.To(ic.Config.AWS.BestEffortDeleteIgnition),
 			},
 			ControlPlaneLoadBalancer: &capa.AWSLoadBalancerSpec{
 				Name:                   ptr.To(clusterID.InfraID + "-int"),
@@ -220,6 +220,17 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 				},
 			},
 		}
+	} else {
+		awsCluster.Spec.ControlPlaneLoadBalancer.IngressRules = append(
+			awsCluster.Spec.ControlPlaneLoadBalancer.IngressRules,
+			capa.IngressRule{
+				Description: "Kubernetes API Server traffic",
+				Protocol:    capa.SecurityGroupProtocolTCP,
+				FromPort:    6443,
+				ToPort:      6443,
+				CidrBlocks:  []string{"0.0.0.0/0"},
+			},
+		)
 	}
 
 	// Set the NetworkSpec.Subnets from VPC and zones (managed)
@@ -231,6 +242,14 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to set cluster zones or subnets: %w", err)
+	}
+
+	// Enable BYO Public IPv4 when defined on install-config.yaml
+	if len(ic.Config.Platform.AWS.PublicIpv4Pool) > 0 {
+		awsCluster.Spec.NetworkSpec.VPC.ElasticIPPool = &capa.ElasticIPPool{
+			PublicIpv4Pool:              ptr.To(ic.Config.Platform.AWS.PublicIpv4Pool),
+			PublicIpv4PoolFallBackOrder: ptr.To(capa.PublicIpv4PoolFallbackOrderAmazonPool),
+		}
 	}
 
 	manifests = append(manifests, &asset.RuntimeFile{
@@ -257,11 +276,18 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 
 	return &capiutils.GenerateClusterAssetsOutput{
 		Manifests: manifests,
-		InfrastructureRef: &corev1.ObjectReference{
-			APIVersion: capa.GroupVersion.String(),
-			Kind:       "AWSCluster",
-			Name:       awsCluster.Name,
-			Namespace:  awsCluster.Namespace,
+		InfrastructureRefs: []*corev1.ObjectReference{
+			{
+				APIVersion: capa.GroupVersion.String(),
+				Kind:       "AWSCluster",
+				Name:       awsCluster.Name,
+				Namespace:  awsCluster.Namespace,
+			},
 		},
 	}, nil
+}
+
+// GetIgnitionBucketName returns the name of the bucket for the given cluster.
+func GetIgnitionBucketName(infraID string) string {
+	return fmt.Sprintf("openshift-bootstrap-data-%s", infraID)
 }

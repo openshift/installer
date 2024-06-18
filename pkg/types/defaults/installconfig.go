@@ -10,7 +10,6 @@ import (
 	baremetaldefaults "github.com/openshift/installer/pkg/types/baremetal/defaults"
 	gcpdefaults "github.com/openshift/installer/pkg/types/gcp/defaults"
 	ibmclouddefaults "github.com/openshift/installer/pkg/types/ibmcloud/defaults"
-	libvirtdefaults "github.com/openshift/installer/pkg/types/libvirt/defaults"
 	nonedefaults "github.com/openshift/installer/pkg/types/none/defaults"
 	nutanixdefaults "github.com/openshift/installer/pkg/types/nutanix/defaults"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
@@ -36,11 +35,6 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 	if len(c.Networking.MachineNetwork) == 0 {
 		c.Networking.MachineNetwork = []types.MachineNetworkEntry{
 			{CIDR: *DefaultMachineCIDR},
-		}
-		if c.Platform.Libvirt != nil {
-			c.Networking.MachineNetwork = []types.MachineNetworkEntry{
-				{CIDR: *libvirtdefaults.DefaultMachineCIDR},
-			}
 		}
 	}
 	if c.Networking.NetworkType == "" {
@@ -101,8 +95,6 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		gcpdefaults.SetPlatformDefaults(c.Platform.GCP)
 	case c.Platform.IBMCloud != nil:
 		ibmclouddefaults.SetPlatformDefaults(c.Platform.IBMCloud)
-	case c.Platform.Libvirt != nil:
-		libvirtdefaults.SetPlatformDefaults(c.Platform.Libvirt)
 	case c.Platform.OpenStack != nil:
 		openstackdefaults.SetPlatformDefaults(c.Platform.OpenStack, c.Networking)
 	case c.Platform.VSphere != nil:

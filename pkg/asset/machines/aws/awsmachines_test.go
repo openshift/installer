@@ -30,7 +30,9 @@ var stubMachineInputManagedVpc = &MachineInput{
 	Subnets:  make(map[string]string, 0),
 	Tags:     capa.Tags{},
 	PublicIP: false,
-	Ignition: &capa.Ignition{},
+	Ignition: &capa.Ignition{
+		StorageType: capa.IgnitionStorageTypeOptionUnencryptedUserData,
+	},
 }
 
 func stubDeepCopyMachineInput(in *MachineInput) *MachineInput {
@@ -115,7 +117,9 @@ func TestGenerateMachines(t *testing.T) {
 								Encrypted: ptr.To(true),
 							},
 							UncompressedUserData: ptr.To(true),
-							Ignition:             &capa.Ignition{},
+							Ignition: &capa.Ignition{
+								StorageType: capa.IgnitionStorageTypeOptionUnencryptedUserData,
+							},
 						},
 					}
 					infraMachineFiles = append(infraMachineFiles, &asset.RuntimeFile{
@@ -169,7 +173,9 @@ func TestGenerateMachines(t *testing.T) {
 								Encrypted: ptr.To(true),
 							},
 							UncompressedUserData: ptr.To(true),
-							Ignition:             &capa.Ignition{},
+							Ignition: &capa.Ignition{
+								StorageType: capa.IgnitionStorageTypeOptionUnencryptedUserData,
+							},
 						},
 					}
 					infraMachineFiles = append(infraMachineFiles, &asset.RuntimeFile{

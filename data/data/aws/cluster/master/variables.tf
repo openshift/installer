@@ -101,3 +101,8 @@ variable "iam_role_name" {
   type = string
   description = "The name of the existing role to use for the instance profile"
 }
+
+variable "use_spot_instance" {
+  type = bool
+  description = "Whether to use Spot instances for masters"
+}

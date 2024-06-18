@@ -89,7 +89,6 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	}
 
 	a.Config.AWS = platform.AWS
-	a.Config.Libvirt = platform.Libvirt
 	a.Config.None = platform.None
 	a.Config.OpenStack = platform.OpenStack
 	a.Config.VSphere = platform.VSphere

@@ -187,7 +187,6 @@ func TFVars(
 		IngressFloatingIP                 string                            `json:"openstack_ingress_floating_ip,omitempty"`
 		APIVIPs                           []string                          `json:"openstack_api_int_ips,omitempty"`
 		IngressVIPs                       []string                          `json:"openstack_ingress_ips,omitempty"`
-		TrunkSupport                      bool                              `json:"openstack_trunk_support,omitempty"`
 		OctaviaSupport                    bool                              `json:"openstack_octavia_support,omitempty"`
 		RootVolumeSize                    int                               `json:"openstack_master_root_volume_size,omitempty"`
 		BootstrapShim                     string                            `json:"openstack_bootstrap_shim_ignition,omitempty"`
@@ -214,7 +213,6 @@ func TFVars(
 		IngressFloatingIP:                 installConfig.Config.Platform.OpenStack.IngressFloatingIP,
 		APIVIPs:                           installConfig.Config.Platform.OpenStack.APIVIPs,
 		IngressVIPs:                       installConfig.Config.Platform.OpenStack.IngressVIPs,
-		TrunkSupport:                      masterSpecs[0].Trunk,
 		OctaviaSupport:                    octaviaSupport,
 		RootVolumeSize:                    rootVolumeSize,
 		BootstrapShim:                     bootstrapIgn,

@@ -15,12 +15,12 @@ import (
 	coreosarch "github.com/coreos/stream-metadata-go/arch"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
-	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
@@ -46,7 +46,6 @@ import (
 	baremetaltfvars "github.com/openshift/installer/pkg/tfvars/baremetal"
 	gcptfvars "github.com/openshift/installer/pkg/tfvars/gcp"
 	ibmcloudtfvars "github.com/openshift/installer/pkg/tfvars/ibmcloud"
-	libvirttfvars "github.com/openshift/installer/pkg/tfvars/libvirt"
 	nutanixtfvars "github.com/openshift/installer/pkg/tfvars/nutanix"
 	openstacktfvars "github.com/openshift/installer/pkg/tfvars/openstack"
 	ovirttfvars "github.com/openshift/installer/pkg/tfvars/ovirt"
@@ -58,7 +57,6 @@ import (
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
-	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -82,7 +80,7 @@ const (
 	// https://www.terraform.io/docs/configuration/variables.html#variable-files
 	TfPlatformVarsFileName = "terraform.platform.auto.tfvars.json"
 
-	tfvarsAssetName = "Terraform Variables"
+	tfvarsAssetName = "Cluster Infrastructure Variables"
 )
 
 // TerraformVariables depends on InstallConfig, Manifests,
@@ -214,6 +212,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		return errors.Errorf("master slice cannot be empty")
 	}
 
+	numWorkers := int64(0)
+	for _, worker := range installConfig.Config.Compute {
+		numWorkers += ptr.Deref(worker.Replicas, 0)
+	}
+
 	switch platform {
 	case aws.Name:
 		var vpc string
@@ -267,13 +270,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		// Based on the number of workers, we could have the following outcomes:
-		// 1. workers > 0, masters not schedulable, valid cluster
-		// 2. workers = 0, masters schedulable, valid compact cluster but currently unsupported
-		// 3. workers = 0, masters not schedulable, invalid cluster
-		if len(workers) == 0 {
-			return errors.Errorf("compact clusters with 0 workers are not supported at this time")
-		}
+
 		workerConfigs := make([]*machinev1beta1.AWSMachineProviderConfig, len(workers))
 		for i, m := range workers {
 			workerConfigs[i] = m.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AWSMachineProviderConfig) //nolint:errcheck // legacy, pre-linter
@@ -334,7 +331,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			WorkerIAMRoleName:         workerIAMRoleName,
 			Architecture:              installConfig.Config.ControlPlane.Architecture,
 			Proxy:                     installConfig.Config.Proxy,
-			PreserveBootstrapIgnition: installConfig.Config.AWS.PreserveBootstrapIgnition,
+			PreserveBootstrapIgnition: installConfig.Config.AWS.BestEffortDeleteIgnition,
 			MasterSecurityGroups:      securityGroups,
 			PublicIpv4Pool:            installConfig.Config.AWS.PublicIpv4Pool,
 		})
@@ -371,13 +368,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		workers, err := workersAsset.MachineSets()
 		if err != nil {
 			return err
-		}
-		// Based on the number of workers, we could have the following outcomes:
-		// 1. workers > 0, masters not schedulable, valid cluster
-		// 2. workers = 0, masters schedulable, valid compact cluster but currently unsupported
-		// 3. workers = 0, masters not schedulable, invalid cluster
-		if len(workers) == 0 {
-			return errors.Errorf("compact clusters with 0 workers are not supported at this time")
 		}
 		workerConfigs := make([]*machinev1beta1.AzureMachineProviderSpec, len(workers))
 		for i, w := range workers {
@@ -495,12 +485,16 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return err
 		}
 		// Based on the number of workers, we could have the following outcomes:
-		// 1. workers > 0, masters not schedulable, valid cluster
-		// 2. workers = 0, masters schedulable, valid compact cluster but currently unsupported
-		// 3. workers = 0, masters not schedulable, invalid cluster
-		if len(workers) == 0 {
-			return errors.Errorf("compact clusters with 0 workers are not supported at this time")
+		// 1. compute replicas > 0, worker machinesets > 0, masters not schedulable, valid cluster
+		// 2. compute replicas > 0, worker machinesets = 0, invalid cluster
+		// 3. compute replicas = 0, masters schedulable, valid cluster
+		if numWorkers != 0 && len(workers) == 0 {
+			return fmt.Errorf("invalid configuration. No worker assets available for requested number of compute replicas (%d)", numWorkers)
 		}
+		if numWorkers == 0 && !mastersSchedulable {
+			return fmt.Errorf("invalid configuration. No workers requested but masters are not schedulable")
+		}
+
 		workerConfigs := make([]*machinev1beta1.GCPMachineProviderSpec, len(workers))
 		for i, w := range workers {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.GCPMachineProviderSpec) //nolint:errcheck // legacy, pre-linter
@@ -748,38 +742,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				VPCPermitted:               vpcPermitted,
 				WorkerConfigs:              workerConfigs,
 				WorkerDedicatedHosts:       workerDedicatedHosts,
-			},
-		)
-		if err != nil {
-			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
-		}
-		t.FileList = append(t.FileList, &asset.File{
-			Filename: TfPlatformVarsFileName,
-			Data:     data,
-		})
-	case libvirt.Name:
-		masters, err := mastersAsset.Machines()
-		if err != nil {
-			return err
-		}
-		// convert options list to a list of mappings which can be consumed by terraform
-		var dnsmasqoptions []map[string]string
-		for _, option := range installConfig.Config.Platform.Libvirt.Network.DnsmasqOptions {
-			dnsmasqoptions = append(dnsmasqoptions,
-				map[string]string{
-					"option_name":  option.Name,
-					"option_value": option.Value})
-		}
-
-		data, err = libvirttfvars.TFVars(
-			libvirttfvars.TFVarsSources{
-				MasterConfig:   masters[0].Spec.ProviderSpec.Value.Object.(*libvirtprovider.LibvirtMachineProviderConfig),
-				OsImage:        string(*rhcosImage),
-				MachineCIDR:    &installConfig.Config.Networking.MachineNetwork[0].CIDR.IPNet,
-				Bridge:         installConfig.Config.Platform.Libvirt.Network.IfName,
-				MasterCount:    masterCount,
-				Architecture:   installConfig.Config.ControlPlane.Architecture,
-				DnsmasqOptions: dnsmasqoptions,
 			},
 		)
 		if err != nil {

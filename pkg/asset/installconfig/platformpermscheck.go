@@ -17,7 +17,6 @@ import (
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
-	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -102,6 +101,10 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 			permissionGroups = append(permissionGroups, awsconfig.PermissionPublicIpv4Pool)
 		}
 
+		if !ic.Config.AWS.BestEffortDeleteIgnition {
+			permissionGroups = append(permissionGroups, awsconfig.PermissionDeleteIgnitionObjects)
+		}
+
 		ssn, err := ic.AWS.Session(ctx)
 		if err != nil {
 			return err
@@ -124,7 +127,7 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 		// TODO: IBM[#90]: platformpermscheck
 	case powervs.Name:
 		// Nothing needs to be done here
-	case azure.Name, baremetal.Name, libvirt.Name, external.Name, none.Name, openstack.Name, ovirt.Name, vsphere.Name, nutanix.Name:
+	case azure.Name, baremetal.Name, external.Name, none.Name, openstack.Name, ovirt.Name, vsphere.Name, nutanix.Name:
 		// no permissions to check
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)
