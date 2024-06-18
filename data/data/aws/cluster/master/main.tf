@@ -139,6 +139,16 @@ resource "aws_instance" "master" {
     device_index         = 0
   }
 
+  dynamic "instance_market_options" {
+    for_each = var.use_spot_instance ? [1] : []
+    content {
+      market_type = "spot"
+      spot_options {
+        spot_instance_type = "one-time"
+      }
+    }
+  }
+
   lifecycle {
     # Ignore changes in the AMI which force recreation of the resource. This
     # avoids accidental deletion of nodes whenever a new CoreOS Release comes
