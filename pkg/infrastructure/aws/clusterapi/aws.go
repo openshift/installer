@@ -147,9 +147,6 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		return fmt.Errorf("failed to find HostedZone ID for NLB: %w", err)
 	}
 	apiHost := awsCluster.Status.Network.SecondaryAPIServerELB.DNSName
-	if awsCluster.Status.Network.APIServerELB.Scheme == capa.ELBSchemeInternetFacing {
-		apiHost = awsCluster.Status.Network.APIServerELB.DNSName
-	}
 	apiIntHost := awsCluster.Spec.ControlPlaneEndpoint.Host
 	err = client.CreateOrUpdateRecord(ctx, in.InstallConfig.Config, apiHost, apiIntHost, phzID, aliasZoneID)
 	if err != nil {
