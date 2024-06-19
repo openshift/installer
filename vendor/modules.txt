@@ -140,7 +140,6 @@ github.com/BurntSushi/toml
 # github.com/IBM-Cloud/bluemix-go v0.0.0-20211102075456-ffc4e11dfb16
 ## explicit; go 1.13
 github.com/IBM-Cloud/bluemix-go
-github.com/IBM-Cloud/bluemix-go/api/account/accountv2
 github.com/IBM-Cloud/bluemix-go/api/resource/resourcev2/controllerv2
 github.com/IBM-Cloud/bluemix-go/authentication
 github.com/IBM-Cloud/bluemix-go/bmxerror
