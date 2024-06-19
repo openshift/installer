@@ -9,20 +9,12 @@ import (
 func Metadata(config *types.InstallConfig) *typesvsphere.Metadata {
 	terraformPlatform := "vsphere"
 
-	metadata := &typesvsphere.Metadata{
+	// Since currently we only support a single vCenter
+	// just use the first entry in the VCenters slice.
+	return &typesvsphere.Metadata{
+		VCenter:           config.VSphere.VCenters[0].Server,
+		Username:          config.VSphere.VCenters[0].Username,
+		Password:          config.VSphere.VCenters[0].Password,
 		TerraformPlatform: terraformPlatform,
 	}
-
-	vcenterList := []typesvsphere.VCenters{}
-	for _, vcenter := range config.VSphere.VCenters {
-		vcenterDef := typesvsphere.VCenters{
-			VCenter:  vcenter.Server,
-			Username: vcenter.Username,
-			Password: vcenter.Password,
-		}
-		vcenterList = append(vcenterList, vcenterDef)
-	}
-	metadata.VCenters = vcenterList
-
-	return metadata
 }

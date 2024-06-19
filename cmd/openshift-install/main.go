@@ -13,7 +13,6 @@ import (
 	terminal "golang.org/x/term"
 	"k8s.io/klog"
 	klogv2 "k8s.io/klog/v2"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
 	"github.com/openshift/installer/cmd/openshift-install/command"
@@ -33,8 +32,6 @@ func main() {
 	klogv2.InitFlags(&fsv2)
 	fsv2.Set("stderrthreshold", "4")
 	klogv2.SetOutput(io.Discard)
-
-	ctrl.SetLogger(klogv2.Background())
 
 	installerMain()
 }

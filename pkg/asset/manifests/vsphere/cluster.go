@@ -16,60 +16,55 @@ import (
 func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) (*capiutils.GenerateClusterAssetsOutput, error) {
 	manifests := []*asset.RuntimeFile{}
 
-	assetOutput := &capiutils.GenerateClusterAssetsOutput{}
+	vcenter := installConfig.Config.VSphere.VCenters[0]
 
-	for index, vcenter := range installConfig.Config.VSphere.VCenters {
-		vsphereCreds := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("vsphere-creds-%d", index),
-				Namespace: capiutils.Namespace,
-			},
-			Data: make(map[string][]byte),
-		}
-		vsphereCreds.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Secret"))
-
-		vsphereCreds.Data["username"] = []byte(vcenter.Username)
-		vsphereCreds.Data["password"] = []byte(vcenter.Password)
-
-		manifests = append(manifests, &asset.RuntimeFile{
-			Object: vsphereCreds,
-			File:   asset.File{Filename: fmt.Sprintf("01_%v.yaml", vsphereCreds.Name)},
-		})
-
-		vsphereCluster := &capv.VSphereCluster{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%v-%d", clusterID.InfraID, index),
-				Namespace: capiutils.Namespace,
-			},
-			Spec: capv.VSphereClusterSpec{
-				Server: fmt.Sprintf("https://%s", vcenter.Server),
-				ControlPlaneEndpoint: capv.APIEndpoint{
-					Host: fmt.Sprintf("api.%s.%s", installConfig.Config.ObjectMeta.Name, installConfig.Config.BaseDomain),
-					Port: 6443,
-				},
-				IdentityRef: &capv.VSphereIdentityReference{
-					Kind: capv.SecretKind,
-					Name: vsphereCreds.Name,
-				},
-			},
-		}
-		vsphereCluster.SetGroupVersionKind(capv.GroupVersion.WithKind("VSphereCluster"))
-		manifests = append(manifests, &asset.RuntimeFile{
-			Object: vsphereCluster,
-			File:   asset.File{Filename: fmt.Sprintf("01_vsphere-cluster-%d.yaml", index)},
-		})
-
-		infra := &corev1.ObjectReference{
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-			Kind:       "VSphereCluster",
-			Name:       vsphereCluster.Name,
-			Namespace:  capiutils.Namespace,
-		}
-
-		assetOutput.InfrastructureRefs = append(assetOutput.InfrastructureRefs, infra)
+	vsphereCreds := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "vsphere-creds",
+			Namespace: capiutils.Namespace,
+		},
+		Data: make(map[string][]byte),
 	}
+	vsphereCreds.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Secret"))
 
-	assetOutput.Manifests = manifests
+	vsphereCreds.Data["username"] = []byte(vcenter.Username)
+	vsphereCreds.Data["password"] = []byte(vcenter.Password)
 
-	return assetOutput, nil
+	manifests = append(manifests, &asset.RuntimeFile{
+		Object: vsphereCreds,
+		File:   asset.File{Filename: "01_vsphere-creds.yaml"},
+	})
+
+	vsphereCluster := &capv.VSphereCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      clusterID.InfraID,
+			Namespace: capiutils.Namespace,
+		},
+		Spec: capv.VSphereClusterSpec{
+			Server: fmt.Sprintf("https://%s", vcenter.Server),
+			ControlPlaneEndpoint: capv.APIEndpoint{
+				Host: fmt.Sprintf("api.%s.%s", installConfig.Config.ObjectMeta.Name, installConfig.Config.BaseDomain),
+				Port: 6443,
+			},
+			IdentityRef: &capv.VSphereIdentityReference{
+				Kind: capv.SecretKind,
+				Name: "vsphere-creds",
+			},
+		},
+	}
+	vsphereCluster.SetGroupVersionKind(capv.GroupVersion.WithKind("VSphereCluster"))
+	manifests = append(manifests, &asset.RuntimeFile{
+		Object: vsphereCluster,
+		File:   asset.File{Filename: "01_vsphere-cluster.yaml"},
+	})
+
+	return &capiutils.GenerateClusterAssetsOutput{
+		Manifests: manifests,
+		InfrastructureRef: &corev1.ObjectReference{
+			APIVersion: capv.GroupVersion.String(),
+			Kind:       "VSphereCluster",
+			Name:       clusterID.InfraID,
+			Namespace:  capiutils.Namespace,
+		},
+	}, nil
 }

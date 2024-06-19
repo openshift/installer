@@ -133,13 +133,11 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	return &capiutils.GenerateClusterAssetsOutput{
 		Manifests: manifests,
-		InfrastructureRefs: []*corev1.ObjectReference{
-			{
-				APIVersion: capg.GroupVersion.String(),
-				Kind:       "GCPCluster",
-				Name:       gcpCluster.Name,
-				Namespace:  gcpCluster.Namespace,
-			},
+		InfrastructureRef: &corev1.ObjectReference{
+			APIVersion: capg.GroupVersion.String(),
+			Kind:       "GCPCluster",
+			Name:       gcpCluster.Name,
+			Namespace:  gcpCluster.Namespace,
 		},
 	}, nil
 }

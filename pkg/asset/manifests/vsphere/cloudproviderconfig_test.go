@@ -39,7 +39,7 @@ zone = "openshift-zone"
   password: ""
   server: ""
   port: 0
-  insecureFlag: true
+  insecureFlag: false
   datacenters: []
   soapRoundtripCount: 0
   caFile: ""
@@ -57,7 +57,7 @@ vcenter:
     tenantref: ""
     server: test-vcenter
     port: 443
-    insecureFlag: true
+    insecureFlag: false
     datacenters:
     - test-datacenter
     - test-datacenter2

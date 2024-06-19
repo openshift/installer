@@ -84,23 +84,26 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 
 func validateVCenters(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+	if len(p.VCenters) > 1 {
+		return field.ErrorList{field.TooMany(fldPath, len(p.VCenters), 1)}
+	}
 
-	for index, vCenter := range p.VCenters {
+	for _, vCenter := range p.VCenters {
 		if len(vCenter.Server) == 0 {
-			allErrs = append(allErrs, field.Required(fldPath.Index(index).Child("server"), "must be the domain name or IP address of the vCenter"))
+			allErrs = append(allErrs, field.Required(fldPath.Child("server"), "must be the domain name or IP address of the vCenter"))
 		} else {
 			if err := validate.Host(vCenter.Server); err != nil {
-				allErrs = append(allErrs, field.Invalid(fldPath.Index(index).Child("server"), vCenter.Server, "must be the domain name or IP address of the vCenter"))
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("server"), vCenter.Server, "must be the domain name or IP address of the vCenter"))
 			}
 		}
 		if len(vCenter.Username) == 0 {
-			allErrs = append(allErrs, field.Required(fldPath.Index(index).Child("username"), "must specify the username"))
+			allErrs = append(allErrs, field.Required(fldPath.Child("username"), "must specify the username"))
 		}
 		if len(vCenter.Password) == 0 {
-			allErrs = append(allErrs, field.Required(fldPath.Index(index).Child("password"), "must specify the password"))
+			allErrs = append(allErrs, field.Required(fldPath.Child("password"), "must specify the password"))
 		}
 		if len(vCenter.Datacenters) == 0 {
-			allErrs = append(allErrs, field.Required(fldPath.Index(index).Child("datacenters"), "must specify at least one datacenter"))
+			allErrs = append(allErrs, field.Required(fldPath.Child("datacenters"), "must specify at least one datacenter"))
 		}
 	}
 	return allErrs

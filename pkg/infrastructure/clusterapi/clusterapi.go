@@ -96,17 +96,10 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		tfvarsAsset,
 	)
 
-	var clusterIDs []string
-
 	// Collect cluster and non-machine-related infra manifests
 	// to be applied during the initial stage.
 	infraManifests := []client.Object{}
 	for _, m := range capiManifestsAsset.RuntimeFiles() {
-		// Check for cluster definition so that we can collect the names.
-		if cluster, ok := m.Object.(*clusterv1.Cluster); ok {
-			clusterIDs = append(clusterIDs, cluster.GetName())
-		}
-
 		infraManifests = append(infraManifests, m.Object)
 	}
 
@@ -160,7 +153,6 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	i.appliedManifests = []client.Object{}
 
 	// Create the infra manifests.
-	logrus.Info("Creating infra manifests...")
 	for _, m := range infraManifests {
 		m.SetNamespace(capiutils.Namespace)
 		if err := cl.Create(ctx, m); err != nil {
@@ -169,13 +161,10 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		i.appliedManifests = append(i.appliedManifests, m)
 		logrus.Infof("Created manifest %+T, namespace=%s name=%s", m, m.GetNamespace(), m.GetName())
 	}
-	logrus.Info("Done creating infra manifests")
-
 	// Pass cluster kubeconfig and store it in; this is usually the role of a bootstrap provider.
-	for _, capiClusterID := range clusterIDs {
-		logrus.Infof("Creating kubeconfig entry for capi cluster %v", capiClusterID)
+	{
 		key := client.ObjectKey{
-			Name:      capiClusterID,
+			Name:      clusterID.InfraID,
 			Namespace: capiutils.Namespace,
 		}
 		cluster := &clusterv1.Cluster{}
@@ -206,28 +195,17 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, networkTimeout, true,
 			func(ctx context.Context) (bool, error) {
 				c := &clusterv1.Cluster{}
-				var clusters []*clusterv1.Cluster
-				for _, curClusterID := range clusterIDs {
-					if err := cl.Get(ctx, client.ObjectKey{
-						Name:      curClusterID,
-						Namespace: capiutils.Namespace,
-					}, c); err != nil {
-						if apierrors.IsNotFound(err) {
-							return false, nil
-						}
-						return false, err
-					}
-					clusters = append(clusters, c)
-				}
-
-				for _, curCluster := range clusters {
-					if !curCluster.Status.InfrastructureReady {
+				if err := cl.Get(ctx, client.ObjectKey{
+					Name:      clusterID.InfraID,
+					Namespace: capiutils.Namespace,
+				}, c); err != nil {
+					if apierrors.IsNotFound(err) {
 						return false, nil
 					}
+					return false, err
 				}
-
-				cluster = clusters[0]
-				return true, nil
+				cluster = c
+				return cluster.Status.InfrastructureReady, nil
 			}); err != nil {
 			if wait.Interrupted(err) {
 				return fileList, fmt.Errorf("infrastructure was not ready within %v: %w", networkTimeout, err)

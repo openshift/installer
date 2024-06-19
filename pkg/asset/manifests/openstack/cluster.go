@@ -116,13 +116,11 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	return &capiutils.GenerateClusterAssetsOutput{
 		Manifests: manifests,
-		InfrastructureRefs: []*corev1.ObjectReference{
-			{
-				APIVersion: capo.GroupVersion.String(),
-				Kind:       "OpenStackCluster",
-				Name:       openStackCluster.Name,
-				Namespace:  openStackCluster.Namespace,
-			},
+		InfrastructureRef: &corev1.ObjectReference{
+			APIVersion: capo.GroupVersion.String(),
+			Kind:       "OpenStackCluster",
+			Name:       openStackCluster.Name,
+			Namespace:  openStackCluster.Namespace,
 		},
 	}, nil
 }
