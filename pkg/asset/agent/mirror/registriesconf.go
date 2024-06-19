@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/containers/image/pkg/sysregistriesv2"
+	"github.com/containers/image/v5/pkg/sysregistriesv2"
 	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
