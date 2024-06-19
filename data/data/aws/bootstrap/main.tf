@@ -163,6 +163,16 @@ resource "aws_instance" "bootstrap" {
   vpc_security_group_ids      = [var.master_sg_id, aws_security_group.bootstrap.id]
   associate_public_ip_address = local.public_endpoints
 
+  dynamic "instance_market_options" {
+    for_each = var.aws_master_use_spot_instance ? [1] : []
+    content {
+      market_type = "spot"
+      spot_options {
+        spot_instance_type = "one-time"
+      }
+    }
+  }
+
   lifecycle {
     # Ignore changes in the AMI which force recreation of the resource. This
     # avoids accidental deletion of nodes whenever a new OS release comes out.
