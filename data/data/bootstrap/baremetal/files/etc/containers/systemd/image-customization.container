@@ -9,7 +9,7 @@ After=network-online.target ironic-volume.service build-ironic-env.service extra
 [Container]
 ContainerName=image-customization
 Image=$CUSTOMIZATION_IMAGE
-Exec=/image-customization-controller --namespace=openshift-machine-api --images-publish-addr=http://0.0.0.0:8084 --metrics-addr=0.0.0.0:7373
+Exec=/image-customization-controller --namespace=openshift-machine-api --images-publish-addr=http://127.0.0.1:8084 --metrics-addr=127.0.0.1:7373
 Network=host
 PodmanArgs=--secret pull-secret,mode=400
 Volume=ironic.volume:/shared:z
