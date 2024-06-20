@@ -1152,7 +1152,7 @@ sigs.k8s.io/cluster-api/util/predicates
 sigs.k8s.io/cluster-api/util/secret
 sigs.k8s.io/cluster-api/util/topology
 sigs.k8s.io/cluster-api/version
-# sigs.k8s.io/cluster-api-provider-aws/v2 v2.5.2-0.20240716201506-6e43273dd65d
+# sigs.k8s.io/cluster-api-provider-aws/v2 v2.5.2-0.20240716201506-6e43273dd65d => github.com/r4f4/cluster-api-provider-aws/v2 v2.0.0-20240620130542-af6d1661e59a
 ## explicit; go 1.21
 sigs.k8s.io/cluster-api-provider-aws/v2
 sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1
@@ -1312,3 +1312,4 @@ sigs.k8s.io/yaml/goyaml.v2
 # github.com/prometheus/common => github.com/prometheus/common v0.46.0
 # k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00
 # sigs.k8s.io/cluster-api => sigs.k8s.io/cluster-api v1.7.1
+# sigs.k8s.io/cluster-api-provider-aws/v2 => github.com/r4f4/cluster-api-provider-aws/v2 v2.0.0-20240620130542-af6d1661e59a
