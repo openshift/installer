@@ -100,6 +100,49 @@ func TestFeatureGates(t *testing.T) {
 			}(),
 			expected: `^platform.vsphere.hosts: Forbidden: this field is protected by the VSphereStaticIPs feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
 		},
+		{
+			name: "vSphere one vcenter is allowed with default Feature Gates",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.Default
+				c.VSphere = validVSpherePlatform()
+				c.VSphere.Hosts = []*vsphere.Host{{Role: "test"}}
+				return c
+			}(),
+		},
+		{
+			name: "vSphere two vcenters is not allowed with Feature Gates disabled",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.CustomNoUpgrade
+				c.FeatureGates = []string{"VSphereMultiVCenters=false"}
+				c.VSphere = validVSpherePlatform()
+				c.VSphere.VCenters = append(c.VSphere.VCenters, vsphere.VCenter{Server: "additional-vcenter"})
+				return c
+			}(),
+			expected: `^platform.vsphere.vcenters: Forbidden: this field is protected by the VSphereMultiVCenters feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set`,
+		},
+		{
+			name: "vSphere two vcenters is allowed with custom Feature Gate enabled",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.CustomNoUpgrade
+				c.FeatureGates = []string{"VSphereMultiVCenters=true"}
+				c.VSphere = validVSpherePlatform()
+				c.VSphere.VCenters = append(c.VSphere.VCenters, vsphere.VCenter{Server: "additional-vcenter"})
+				return c
+			}(),
+		},
+		{
+			name: "vSphere two vcenters is allowed with TechPreview Feature Set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.TechPreviewNoUpgrade
+				c.VSphere = validVSpherePlatform()
+				c.VSphere.VCenters = append(c.VSphere.VCenters, vsphere.VCenter{Server: "Number2"})
+				return c
+			}(),
+		},
 	}
 
 	for _, tc := range cases {

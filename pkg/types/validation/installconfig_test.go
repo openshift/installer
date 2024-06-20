@@ -711,7 +711,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.VSphere.VCenters[0].Server = ""
 				return c
 			}(),
-			expectedError: `platform\.vsphere\.vcenters\.server: Required value: must be the domain name or IP address of the vCenter(.*)`,
+			expectedError: `platform\.vsphere\.vcenters\[0]\.server: Required value: must be the domain name or IP address of the vCenter(.*)`,
 		},
 		{
 			name: "invalid vsphere folder",
