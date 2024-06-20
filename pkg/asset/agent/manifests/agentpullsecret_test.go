@@ -1,6 +1,8 @@
 package manifests
 
 import (
+	"encoding/base64"
+	"fmt"
 	"os"
 	"testing"
 
@@ -106,6 +108,25 @@ func TestAgentPullSecret_Generate(t *testing.T) {
 }
 
 func TestAgentPullSecret_LoadedFromDisk(t *testing.T) {
+	testPullSecretDataField := base64.StdEncoding.EncodeToString([]byte("foo"))
+	invalidTestDataInput := fmt.Sprintf(`
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pull-secret
+  namespace: cluster-0
+data: 
+  .dockerconfigjson: %s`, testPullSecretDataField)
+
+	testValidDataField := base64.StdEncoding.EncodeToString([]byte(`{"auths":{"cloud.test":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`))
+	validDataInput := fmt.Sprintf(`
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pull-secret
+  namespace: cluster-0
+data: 
+  .dockerconfigjson: "%s"`, testValidDataField)
 
 	cases := []struct {
 		name           string
@@ -141,6 +162,24 @@ stringData:
 			},
 		},
 		{
+			name:          "valid-data-config-file",
+			data:          validDataInput,
+			expectedFound: true,
+			expectedConfig: &corev1.Secret{
+				TypeMeta: v1.TypeMeta{
+					Kind:       "Secret",
+					APIVersion: "v1",
+				},
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "pull-secret",
+					Namespace: "cluster-0",
+				},
+				StringData: map[string]string{
+					".dockerconfigjson": "{\n  \"auths\": {\n    \"cloud.test\": {\n      \"auth\": \"c3VwZXItc2VjcmV0Cg==\"\n    }\n  }\n}",
+				},
+			},
+		},
+		{
 			name:          "not-yaml",
 			data:          `This is not a yaml file`,
 			expectedError: "failed to unmarshal cluster-manifests/pull-secret.yaml: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1.Secret",
@@ -148,7 +187,7 @@ stringData:
 		{
 			name:          "empty",
 			data:          "",
-			expectedError: "invalid PullSecret configuration: StringData: Required value: the pull secret is empty",
+			expectedError: "invalid PullSecret configuration: stringData: Required value: the pull secret is empty",
 		},
 		{
 			name: "missing-string-data",
@@ -158,7 +197,7 @@ kind: Secret
 metadata:
   name: pull-secret
   namespace: cluster-0`,
-			expectedError: "invalid PullSecret configuration: StringData: Required value: the pull secret is empty",
+			expectedError: "invalid PullSecret configuration: stringData: Required value: the pull secret is empty",
 		},
 		{
 			name: "missing-secret-key",
@@ -170,7 +209,7 @@ metadata:
   namespace: cluster-0
 stringData:
   .dockerconfigjson:`,
-			expectedError: "invalid PullSecret configuration: StringData: Required value: the pull secret does not contain any data",
+			expectedError: "invalid PullSecret configuration: stringData: Required value: the pull secret does not contain any data",
 		},
 		{
 			name: "bad-secret-format",
@@ -182,7 +221,12 @@ metadata:
   namespace: cluster-0
 stringData:
   .dockerconfigjson: 'foo'`,
-			expectedError: "invalid PullSecret configuration: StringData: Invalid value: \"foo\": invalid character 'o' in literal false (expecting 'a')",
+			expectedError: "invalid PullSecret configuration: stringData: Invalid value: \"foo\": invalid character 'o' in literal false (expecting 'a')",
+		},
+		{
+			name:          "bad-secret-format-data",
+			data:          invalidTestDataInput,
+			expectedError: "invalid PullSecret configuration: stringData: Invalid value: \"foo\": invalid character 'o' in literal false (expecting 'a')",
 		},
 		{
 			name:       "file-not-found",
