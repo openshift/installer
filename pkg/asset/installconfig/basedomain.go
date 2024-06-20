@@ -12,6 +12,7 @@ import (
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	ibmcloudconfig "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -23,6 +24,7 @@ import (
 
 type baseDomain struct {
 	BaseDomain string
+	Publish    types.PublishingStrategy
 }
 
 var _ asset.Asset = (*baseDomain)(nil)
@@ -86,6 +88,7 @@ func (a *baseDomain) Generate(parents asset.Parents) error {
 			return err
 		}
 		a.BaseDomain = zone.Name
+		a.Publish = zone.Publish
 		return nil
 	default:
 		//Do nothing

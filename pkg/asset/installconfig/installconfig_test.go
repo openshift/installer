@@ -20,7 +20,7 @@ import (
 
 func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 	sshPublicKey := &sshPublicKey{}
-	baseDomain := &baseDomain{"test-domain"}
+	baseDomain := &baseDomain{"test-domain", types.ExternalPublishingStrategy}
 	clusterName := &clusterName{"test-cluster"}
 	pullSecret := &pullSecret{`{"auths":{"example.com":{"auth":"authorization value"}}}`}
 	platform := &platform{
