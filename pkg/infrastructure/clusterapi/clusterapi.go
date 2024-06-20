@@ -141,6 +141,16 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	// Grab the client.
 	cl := capiSystem.Client()
 
+	// If we're skipping bootstrap destroy, shutdown the local control plane.
+	// Otherwise, we will shut it down after bootstrap destroy.
+	// This has to execute as the last defer in the stack since previous defers might still need the local controlplane.
+	if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP"); ok && oi != "" {
+		defer func() {
+			logrus.Warn("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP is set, shutting down local control plane.")
+			clusterapi.System().Teardown()
+		}()
+	}
+
 	// Make sure to always return generated manifests, even if errors happened
 	defer func(ctx context.Context, cl client.Client) {
 		var errs []error
@@ -337,13 +347,6 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	}
 
 	logrus.Infof("Cluster API resources have been created. Waiting for cluster to become ready...")
-
-	// If we're skipping bootstrap destroy, shutdown the local control plane.
-	// Otherwise, we will shut it down after bootstrap destroy.
-	if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP"); ok && oi != "" {
-		logrus.Warn("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP is set, shutting down local control plane.")
-		clusterapi.System().Teardown()
-	}
 
 	return fileList, nil
 }
