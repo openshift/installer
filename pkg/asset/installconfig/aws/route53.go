@@ -248,6 +248,7 @@ func (c *Client) CreateHostedZone(ctx context.Context, input *HostedZoneInput) (
 	// Tag the hosted zone
 	tags := mergeTags(input.UserTags, map[string]string{
 		"Name": fmt.Sprintf("%s-int", input.InfraID),
+		fmt.Sprintf("kubernetes.io/cluster/%s", input.InfraID): "owned",
 	})
 	_, err = svc.ChangeTagsForResourceWithContext(ctx, &route53.ChangeTagsForResourceInput{
 		ResourceType: aws.String("hostedzone"),
