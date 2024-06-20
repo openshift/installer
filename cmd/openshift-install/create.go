@@ -891,6 +891,7 @@ func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error 
 	}
 	switch installConfig.Config.Platform.Name() { //nolint:gocritic
 	case gcp.Name:
+		installConfig.Config.GCP.UserProvisionedDNS = gcp.UserProvisionedDNSEnabled
 		if installConfig.Config.GCP.UserProvisionedDNS != gcp.UserProvisionedDNSEnabled {
 			return nil
 		}
