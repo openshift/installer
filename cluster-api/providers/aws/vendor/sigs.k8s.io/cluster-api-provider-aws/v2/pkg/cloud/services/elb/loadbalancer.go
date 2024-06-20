@@ -64,6 +64,9 @@ const apiServerTargetGroupPrefix = "apiserver-target-"
 // listeners.
 const additionalTargetGroupPrefix = "additional-listener-"
 
+// cantAttachSGToNLBRegions is a set of regions that do not support Security Groups in NLBs.
+var cantAttachSGToNLBRegions = sets.New("us-iso-east-1", "us-iso-west-1", "us-isob-east-1")
+
 // ReconcileLoadbalancers reconciles the load balancers for the given cluster.
 func (s *Service) ReconcileLoadbalancers() error {
 	s.scope.Debug("Reconciling load balancers")
@@ -393,6 +396,11 @@ func (s *Service) createLB(spec *infrav1.LoadBalancer, lbSpec *infrav1.AWSLoadBa
 
 	if s.scope.VPC().IsIPv6Enabled() {
 		input.IpAddressType = aws.String("dualstack")
+	}
+
+	// TODO: remove when security groups on NLBs is supported in all regions.
+	if cantAttachSGToNLBRegions.Has(s.scope.Region()) {
+		input.SecurityGroups = nil
 	}
 
 	// Allocate custom addresses (Elastic IP) to internet-facing Load Balancers, when defined.
