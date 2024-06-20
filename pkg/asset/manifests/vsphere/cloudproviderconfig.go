@@ -47,10 +47,13 @@ func CloudProviderConfigYaml(infraID string, p *vspheretypes.Platform) (string, 
 			InsecureFlag:    true,
 		},
 		Vcenter: vCenters,
-		Labels: cloudconfig.LabelsYAML{
+	}
+
+	if len(p.FailureDomains) > 1 {
+		cloudProviderConfig.Labels = cloudconfig.LabelsYAML{
 			Zone:   vspheretypes.TagCategoryZone,
 			Region: vspheretypes.TagCategoryRegion,
-		},
+		}
 	}
 
 	cloudProviderConfigYaml, err := yaml.Marshal(cloudProviderConfig)
