@@ -161,6 +161,28 @@ func addFirewallRule(ctx context.Context, name, network, projectID string, ports
 	return nil
 }
 
+// deleteFirewallRule deletes the firewall rule identified by name.
+func deleteFirewallRule(ctx context.Context, name, projectID string) error {
+	service, err := NewComputeService()
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*3)
+	defer cancel()
+
+	op, err := service.Firewalls.Delete(projectID, name).Context(ctx).Do()
+	if err != nil {
+		return fmt.Errorf("failed to delete %s firewall rule: %w", name, err)
+	}
+
+	if err := WaitForOperationGlobal(ctx, projectID, op); err != nil {
+		return fmt.Errorf("failed to wait for delete %s firewall rule: %w", name, err)
+	}
+
+	return nil
+}
+
 // createFirewallRules creates the rules needed between the worker and master nodes.
 func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, network string) error {
 	projectID := in.InstallConfig.Config.Platform.GCP.ProjectID
@@ -220,4 +242,10 @@ func createBootstrapFirewallRules(ctx context.Context, in clusterapi.InfraReadyI
 		srcRanges = []string{machineCIDR}
 	}
 	return addFirewallRule(ctx, firewallName, network, projectID, getBootstrapSSHPorts(), srcTags, targetTags, srcRanges)
+}
+
+// removeBootstrapFirewallRules removes the rules created for the bootstrap node.
+func removeBootstrapFirewallRules(ctx context.Context, infraID, projectID string) error {
+	firewallName := fmt.Sprintf("%s-bootstrap-in-ssh", infraID)
+	return deleteFirewallRule(ctx, firewallName, projectID)
 }
