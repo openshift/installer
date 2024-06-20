@@ -32,9 +32,10 @@ func CloudProviderConfigYaml(infraID string, p *vspheretypes.Platform) (string, 
 			vCenterPort = vCenter.Port
 		}
 		vCenterConfig := cloudconfig.VirtualCenterConfigYAML{
-			VCenterIP:   vCenter.Server,
-			VCenterPort: uint(vCenterPort),
-			Datacenters: vCenter.Datacenters,
+			VCenterIP:    vCenter.Server,
+			VCenterPort:  uint(vCenterPort),
+			Datacenters:  vCenter.Datacenters,
+			InsecureFlag: true,
 		}
 		vCenters[vCenter.Server] = &vCenterConfig
 	}
@@ -43,6 +44,7 @@ func CloudProviderConfigYaml(infraID string, p *vspheretypes.Platform) (string, 
 		Global: cloudconfig.GlobalYAML{
 			SecretName:      "vsphere-creds",
 			SecretNamespace: "kube-system",
+			InsecureFlag:    true,
 		},
 		Vcenter: vCenters,
 		Labels: cloudconfig.LabelsYAML{

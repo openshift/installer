@@ -238,18 +238,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.VCenters[0].Server = ""
 				return p
 			}(),
-			expectedError: `test-path\.vcenters\.server: Required value: must be the domain name or IP address of the vCenter(.*)`,
-		},
-		{
-			name: "Multi-zone platform more than one vCenter",
-			platform: func() *vsphere.Platform {
-				p := validPlatform()
-				p.VCenters = append(p.VCenters, vsphere.VCenter{
-					Server: "additional-vcenter",
-				})
-				return p
-			}(),
-			expectedError: `^test-path\.vcenters: Too many: 2: must have at most 1 items`,
+			expectedError: `test-path\.vcenters\[0]\.server: Required value: must be the domain name or IP address of the vCenter(.*)`,
 		},
 		{
 			name: "Multi-zone platform Capital letters in vCenter",
@@ -258,7 +247,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.VCenters[0].Server = "tEsT-vCenter"
 				return p
 			}(),
-			expectedError: `(.*)test-path\.vcenters.server: Invalid value: "tEsT-vCenter": must be the domain name or IP address of the vCenter`,
+			expectedError: `(.*)test-path\.vcenters\[0].server: Invalid value: "tEsT-vCenter": must be the domain name or IP address of the vCenter`,
 		},
 		{
 			name: "Multi-zone missing username",
@@ -267,7 +256,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.VCenters[0].Username = ""
 				return p
 			}(),
-			expectedError: `^test-path\.vcenters.username: Required value: must specify the username$`,
+			expectedError: `^test-path\.vcenters\[0].username: Required value: must specify the username$`,
 		},
 		{
 			name: "Multi-zone missing password",
@@ -276,7 +265,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.VCenters[0].Password = ""
 				return p
 			}(),
-			expectedError: `^test-path\.vcenters.password: Required value: must specify the password$`,
+			expectedError: `^test-path\.vcenters\[0].password: Required value: must specify the password$`,
 		},
 		{
 			name: "Multi-zone missing datacenter",
@@ -285,7 +274,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.VCenters[0].Datacenters = []string{}
 				return p
 			}(),
-			expectedError: `^test-path\.vcenters.datacenters: Required value: must specify at least one datacenter$`,
+			expectedError: `^test-path\.vcenters\[0].datacenters: Required value: must specify at least one datacenter$`,
 		},
 		{
 			name: "Multi-zone platform wrong vCenter name in failureDomain zone",
