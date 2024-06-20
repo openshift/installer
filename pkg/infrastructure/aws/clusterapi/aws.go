@@ -123,20 +123,13 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 	if len(phzID) == 0 {
 		logrus.Debugln("Creating private Hosted Zone")
 
-		tags := map[string]string{
-			fmt.Sprintf("kubernetes.io/cluster/%s", in.InfraID): "owned",
-		}
-		for k, v := range awsCluster.Spec.AdditionalTags {
-			tags[k] = v
-		}
-
 		res, err := client.CreateHostedZone(ctx, &awsconfig.HostedZoneInput{
 			InfraID:  in.InfraID,
 			VpcID:    vpcID,
 			Region:   awsCluster.Spec.Region,
 			Name:     in.InstallConfig.Config.ClusterDomain(),
 			Role:     in.InstallConfig.Config.AWS.HostedZoneRole,
-			UserTags: tags,
+			UserTags: awsCluster.Spec.AdditionalTags,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to create private hosted zone: %w", err)
