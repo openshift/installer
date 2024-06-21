@@ -125,15 +125,16 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 				},
 			},
 			Spec: capz.AzureMachineSpec{
-				VMSize:                 mpool.InstanceType,
-				FailureDomain:          ptr.To(zone),
-				Image:                  image,
-				OSDisk:                 osDisk, // required
-				AdditionalTags:         tags,
-				AdditionalCapabilities: additionalCapabilities,
-				AllocatePublicIP:       false,
-				EnableIPForwarding:     false,
-				SecurityProfile:        securityProfile,
+				VMSize:                     mpool.InstanceType,
+				FailureDomain:              ptr.To(zone),
+				Image:                      image,
+				OSDisk:                     osDisk, // required
+				AdditionalTags:             tags,
+				AdditionalCapabilities:     additionalCapabilities,
+				DisableExtensionOperations: ptr.To(true),
+				AllocatePublicIP:           false,
+				EnableIPForwarding:         false,
+				SecurityProfile:            securityProfile,
 				NetworkInterfaces: []capz.NetworkInterface{
 					{
 						SubnetName:            subnet,
@@ -186,11 +187,12 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 			},
 		},
 		Spec: capz.AzureMachineSpec{
-			VMSize:         mpool.InstanceType,
-			Image:          image,
-			FailureDomain:  ptr.To(mpool.Zones[0]),
-			OSDisk:         osDisk,
-			AdditionalTags: tags,
+			VMSize:                     mpool.InstanceType,
+			Image:                      image,
+			FailureDomain:              ptr.To(mpool.Zones[0]),
+			OSDisk:                     osDisk,
+			AdditionalTags:             tags,
+			DisableExtensionOperations: ptr.To(true),
 			// Do not allocate a public IP since it isn't
 			// accessible as we are using an outbound LB for the
 			// control plane. This is temporary until we have a
