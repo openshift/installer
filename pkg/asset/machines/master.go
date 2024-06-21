@@ -152,9 +152,10 @@ func (m *Master) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the Master asset.
-func (m *Master) Generate(dependencies asset.Parents) error {
-	ctx := context.TODO()
+// GenerateWithContext generates the Master asset.
+//
+//nolint:gocyclo
+func (m *Master) GenerateWithContext(ctx context.Context, dependencies asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	rhcosImage := new(rhcos.Image)
@@ -320,7 +321,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 
 		imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
 
-		machines, controlPlaneMachineSet, err = openstack.Machines(clusterID.InfraID, ic, &pool, imageName, "master", masterUserDataSecretName)
+		machines, controlPlaneMachineSet, err = openstack.Machines(ctx, clusterID.InfraID, ic, &pool, imageName, "master", masterUserDataSecretName)
 		if err != nil {
 			return fmt.Errorf("failed to create master machine objects: %w", err)
 		}
@@ -346,7 +347,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 
 		client := icazure.NewClient(session)
 		if len(mpool.Zones) == 0 {
-			azs, err := client.GetAvailabilityZones(context.TODO(), ic.Platform.Azure.Region, mpool.InstanceType)
+			azs, err := client.GetAvailabilityZones(ctx, ic.Platform.Azure.Region, mpool.InstanceType)
 			if err != nil {
 				return errors.Wrap(err, "failed to fetch availability zones")
 			}
@@ -359,7 +360,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 
 		if mpool.OSImage.Publisher != "" {
-			img, ierr := client.GetMarketplaceImage(context.TODO(), ic.Platform.Azure.Region, mpool.OSImage.Publisher, mpool.OSImage.Offer, mpool.OSImage.SKU, mpool.OSImage.Version)
+			img, ierr := client.GetMarketplaceImage(ctx, ic.Platform.Azure.Region, mpool.OSImage.Publisher, mpool.OSImage.Offer, mpool.OSImage.SKU, mpool.OSImage.Version)
 			if ierr != nil {
 				return fmt.Errorf("failed to fetch marketplace image: %w", ierr)
 			}
@@ -372,7 +373,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 		pool.Platform.Azure = &mpool
 
-		capabilities, err := client.GetVMCapabilities(context.TODO(), mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
+		capabilities, err := client.GetVMCapabilities(ctx, mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
 		if err != nil {
 			return err
 		}
@@ -865,4 +866,10 @@ func createAssetFiles(objects []interface{}, fileName string) ([]*asset.File, er
 	}
 
 	return assetFiles, nil
+}
+
+// Generate is implemented so this asset maintains compatibility with the Asset
+// interface. It should never be called.
+func (*Master) Generate(_ asset.Parents) (err error) {
+	panic("Master.Generate was called instead of Master.GenerateWithContext")
 }

@@ -261,9 +261,10 @@ func (w *Worker) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the Worker asset.
-func (w *Worker) Generate(dependencies asset.Parents) error {
-	ctx := context.TODO()
+// GenerateWithContext generates the Worker asset.
+//
+//nolint:gocyclo
+func (w *Worker) GenerateWithContext(ctx context.Context, dependencies asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	rhcosImage := new(rhcos.Image)
@@ -455,7 +456,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 
 			client := icazure.NewClient(session)
 			if len(mpool.Zones) == 0 {
-				azs, err := client.GetAvailabilityZones(context.TODO(), ic.Platform.Azure.Region, mpool.InstanceType)
+				azs, err := client.GetAvailabilityZones(ctx, ic.Platform.Azure.Region, mpool.InstanceType)
 				if err != nil {
 					return errors.Wrap(err, "failed to fetch availability zones")
 				}
@@ -468,7 +469,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 
 			if mpool.OSImage.Publisher != "" {
-				img, ierr := client.GetMarketplaceImage(context.TODO(), ic.Platform.Azure.Region, mpool.OSImage.Publisher, mpool.OSImage.Offer, mpool.OSImage.SKU, mpool.OSImage.Version)
+				img, ierr := client.GetMarketplaceImage(ctx, ic.Platform.Azure.Region, mpool.OSImage.Publisher, mpool.OSImage.Offer, mpool.OSImage.SKU, mpool.OSImage.Version)
 				if ierr != nil {
 					return fmt.Errorf("failed to fetch marketplace image: %w", ierr)
 				}
@@ -481,7 +482,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 			pool.Platform.Azure = &mpool
 
-			capabilities, err := client.GetVMCapabilities(context.TODO(), mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
+			capabilities, err := client.GetVMCapabilities(ctx, mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
 			if err != nil {
 				return err
 			}
@@ -566,7 +567,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 
 			imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
 
-			sets, err := openstack.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", workerUserDataSecretName)
+			sets, err := openstack.MachineSets(ctx, clusterID.InfraID, ic, &pool, imageName, "worker", workerUserDataSecretName)
 			if err != nil {
 				return fmt.Errorf("failed to create worker machine objects: %w", err)
 			}
@@ -836,4 +837,10 @@ func (w *Worker) MachineSets() ([]machinev1beta1.MachineSet, error) {
 	}
 
 	return machineSets, nil
+}
+
+// Generate is implemented so this asset maintains compatibility with the Asset
+// interface. It should never be called.
+func (*Worker) Generate(_ asset.Parents) (err error) {
+	panic("Worker.Generate was called instead of Worker.GenerateWithContext")
 }

@@ -1,6 +1,7 @@
 package machines
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -173,7 +174,7 @@ spec:
 				},
 			)
 			master := &Master{}
-			if err := master.Generate(parents); err != nil {
+			if err := master.GenerateWithContext(context.Background(), parents); err != nil {
 				t.Fatalf("failed to generate master machines: %v", err)
 			}
 			expectedLen := len(tc.expectedMachineConfig)
@@ -232,7 +233,7 @@ func TestControlPlaneIsNotModified(t *testing.T) {
 		},
 	)
 	master := &Master{}
-	if err := master.Generate(parents); err != nil {
+	if err := master.GenerateWithContext(context.Background(), parents); err != nil {
 		t.Fatalf("failed to generate master machines: %v", err)
 	}
 
@@ -301,7 +302,7 @@ func TestBaremetalGeneratedAssetFiles(t *testing.T) {
 		},
 	)
 	master := &Master{}
-	assert.NoError(t, master.Generate(parents))
+	assert.NoError(t, master.GenerateWithContext(context.Background(), parents))
 
 	assert.Len(t, master.HostFiles, 2)
 	verifyHost(t, master.HostFiles[0], "openshift/99_openshift-cluster-api_hosts-0.yaml", "master-0")

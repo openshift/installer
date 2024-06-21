@@ -80,7 +80,7 @@ func (c *Cluster) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate launches the cluster and generates the terraform state file on disk.
+// GenerateWithContext launches the cluster and generates the terraform state file on disk.
 func (c *Cluster) GenerateWithContext(ctx context.Context, parents asset.Parents) (err error) {
 	if InstallDir == "" {
 		logrus.Fatalf("InstallDir has not been set for the %q asset", c.Name())
@@ -115,11 +115,11 @@ func (c *Cluster) GenerateWithContext(ctx context.Context, parents asset.Parents
 	logrus.Infof("Creating infrastructure resources...")
 	switch platform {
 	case typesaws.Name:
-		if err := aws.PreTerraform(context.TODO(), clusterID.InfraID, installConfig); err != nil {
+		if err := aws.PreTerraform(ctx, clusterID.InfraID, installConfig); err != nil {
 			return err
 		}
 	case typesazure.Name, typesazure.StackTerraformName:
-		if err := azure.PreTerraform(context.TODO(), clusterID.InfraID, installConfig); err != nil {
+		if err := azure.PreTerraform(ctx, clusterID.InfraID, installConfig); err != nil {
 			return err
 		}
 	case typesopenstack.Name:
@@ -130,7 +130,7 @@ func (c *Cluster) GenerateWithContext(ctx context.Context, parents asset.Parents
 				break
 			}
 		}
-		if err := openstack.PreTerraform(context.TODO(), tfvarsFile, installConfig, clusterID, rhcosImage); err != nil {
+		if err := openstack.PreTerraform(ctx, tfvarsFile, installConfig, clusterID, rhcosImage); err != nil {
 			return err
 		}
 	}

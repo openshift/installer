@@ -1,6 +1,7 @@
 package openstack
 
 import (
+	"context"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -14,13 +15,13 @@ import (
 )
 
 // Validate validates the given installconfig for OpenStack platform
-func Validate(ic *types.InstallConfig) error {
+func Validate(ctx context.Context, ic *types.InstallConfig) error {
 	if skip := os.Getenv("OPENSHIFT_INSTALL_SKIP_PREFLIGHT_VALIDATIONS"); skip == "1" {
 		logrus.Warnf("OVERRIDE: pre-flight validation disabled.")
 		return nil
 	}
 
-	ci, err := validation.GetCloudInfo(ic)
+	ci, err := validation.GetCloudInfo(ctx, ic)
 	if err != nil {
 		return err
 	}

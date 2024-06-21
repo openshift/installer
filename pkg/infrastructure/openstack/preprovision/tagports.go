@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/attributestags"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
-	"github.com/gophercloud/gophercloud/pagination"
-	network_utils "github.com/gophercloud/utils/openstack/networking/v2/networks"
+	"github.com/gophercloud/gophercloud/v2"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/attributestags"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/ports"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/subnets"
+	"github.com/gophercloud/gophercloud/v2/pagination"
+	network_utils "github.com/gophercloud/utils/v2/openstack/networking/v2/networks"
 
 	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -19,7 +19,7 @@ import (
 
 // TagVIPPorts tags the VIP Ports pre-created by the user.
 func TagVIPPorts(ctx context.Context, installConfig *installconfig.InstallConfig, infraID string) error {
-	networkClient, err := openstackdefaults.NewServiceClient("network", openstackdefaults.DefaultClientOpts(installConfig.Config.Platform.OpenStack.Cloud))
+	networkClient, err := openstackdefaults.NewServiceClient(ctx, "network", openstackdefaults.DefaultClientOpts(installConfig.Config.Platform.OpenStack.Cloud))
 	if err != nil {
 		return fmt.Errorf("failed to build an OpenStack service client: %w", err)
 	}
@@ -40,7 +40,7 @@ func TagVIPPorts(ctx context.Context, installConfig *installconfig.InstallConfig
 				}
 
 				if port != nil {
-					err := attributestags.Add(networkClient, "ports", port.ID, infraID+openstackdefaults.DualStackVIPsPortTag).ExtractErr()
+					err := attributestags.Add(ctx, networkClient, "ports", port.ID, infraID+openstackdefaults.DualStackVIPsPortTag).ExtractErr()
 					if err != nil {
 						return err
 					}
@@ -55,7 +55,7 @@ func getNetworkIDByPortTarget(ctx context.Context, networkClient *gophercloud.Se
 	networkID := portTarget.Network.ID
 	if networkID == "" && portTarget.Network.Name != "" {
 		var err error
-		networkID, err = network_utils.IDFromName(networkClient, portTarget.Network.Name)
+		networkID, err = network_utils.IDFromName(ctx, networkClient, portTarget.Network.Name)
 		if err != nil {
 			return "", fmt.Errorf("failed to resolve network ID for network name %q: %w", portTarget.Network.Name, err)
 		}
@@ -82,11 +82,11 @@ func getNetworkIDByPortTarget(ctx context.Context, networkClient *gophercloud.Se
 	return networkID, nil
 }
 
-func getPortByNetworkIDAndIP(_ context.Context, networkClient *gophercloud.ServiceClient, networkID, ipAddress string) (*ports.Port, error) {
+func getPortByNetworkIDAndIP(ctx context.Context, networkClient *gophercloud.ServiceClient, networkID, ipAddress string) (*ports.Port, error) {
 	allPagesPort, err := ports.List(networkClient, ports.ListOpts{
 		NetworkID: networkID,
 		FixedIPs:  []ports.FixedIPOpts{{IPAddress: ipAddress}},
-	}).AllPages()
+	}).AllPages(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func getPortByNetworkIDAndIP(_ context.Context, networkClient *gophercloud.Servi
 	}
 }
 
-func resolveSubnetFilter(_ context.Context, networkClient *gophercloud.ServiceClient, networkID string, subnetFilter machinev1alpha1.SubnetFilter) (resolvedSubnetID, resolvedNetworkID string, err error) {
+func resolveSubnetFilter(ctx context.Context, networkClient *gophercloud.ServiceClient, networkID string, subnetFilter machinev1alpha1.SubnetFilter) (resolvedSubnetID, resolvedNetworkID string, err error) {
 	if subnetFilter.ProjectID != "" {
 		subnetFilter.TenantID = ""
 	}
@@ -114,7 +114,7 @@ func resolveSubnetFilter(_ context.Context, networkClient *gophercloud.ServiceCl
 		NetworkID: networkID,
 		Name:      subnetFilter.Name,
 		ID:        subnetFilter.ID,
-	}).EachPage(func(page pagination.Page) (bool, error) {
+	}).EachPage(ctx, func(_ context.Context, page pagination.Page) (bool, error) {
 		returnedSubnets, err := subnets.ExtractSubnets(page)
 		if err != nil {
 			return false, err

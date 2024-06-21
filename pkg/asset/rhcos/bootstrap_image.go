@@ -35,15 +35,15 @@ func (i *BootstrapImage) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate the RHCOS Bootstrap image location.
-func (i *BootstrapImage) Generate(p asset.Parents) error {
+// GenerateWithContext the RHCOS Bootstrap image location.
+func (i *BootstrapImage) GenerateWithContext(ctx context.Context, p asset.Parents) error {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
 	ic := &installconfig.InstallConfig{}
 	rhcosImage := new(Image)
 	p.Get(ic, rhcosImage)
 	config := ic.Config
-
-	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
-	defer cancel()
 
 	switch config.Platform.Name() {
 	case baremetal.Name:
@@ -78,4 +78,10 @@ func (i *BootstrapImage) Generate(p asset.Parents) error {
 		*i = BootstrapImage(string(*rhcosImage))
 		return nil
 	}
+}
+
+// Generate is implemented so this asset maintains compatibility with the Asset
+// interface. It should never be called.
+func (*BootstrapImage) Generate(_ asset.Parents) (err error) {
+	panic("BootstrapImage.Generate was called instead of BootstrapImage.GenerateWithContext")
 }

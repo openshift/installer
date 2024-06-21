@@ -1,10 +1,11 @@
 package defaults
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/gophercloud/gophercloud/v2"
+	"github.com/gophercloud/utils/v2/openstack/clientconfig"
 
 	"github.com/openshift/installer/pkg/version"
 )
@@ -25,13 +26,13 @@ func getUserAgent() (gophercloud.UserAgent, error) {
 
 // NewServiceClient is a wrapper around Gophercloud's NewServiceClient that
 // ensures we consistently set a user-agent.
-func NewServiceClient(service string, opts *clientconfig.ClientOpts) (*gophercloud.ServiceClient, error) {
+func NewServiceClient(ctx context.Context, service string, opts *clientconfig.ClientOpts) (*gophercloud.ServiceClient, error) {
 	ua, err := getUserAgent()
 	if err != nil {
 		return nil, err
 	}
 
-	client, err := clientconfig.NewServiceClient(service, opts)
+	client, err := clientconfig.NewServiceClient(ctx, service, opts)
 	if err != nil {
 		return nil, err
 	}

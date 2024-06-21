@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -87,7 +88,7 @@ func TestGenerateInfrastructure(t *testing.T) {
 				&AdditionalTrustBundleConfig{},
 			)
 			infraAsset := &Infrastructure{}
-			err := infraAsset.Generate(parents)
+			err := infraAsset.GenerateWithContext(context.Background(), parents)
 			if !assert.NoError(t, err, "failed to generate asset") {
 				return
 			}

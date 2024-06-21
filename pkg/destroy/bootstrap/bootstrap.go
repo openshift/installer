@@ -41,7 +41,7 @@ func Destroy(ctx context.Context, dir string) (err error) {
 		}
 
 		imageName := metadata.InfraID + "-ignition"
-		if err := osp.DeleteGlanceImage(imageName, metadata.OpenStack.Cloud); err != nil {
+		if err := osp.DeleteGlanceImage(ctx, imageName, metadata.OpenStack.Cloud); err != nil {
 			return errors.Wrapf(err, "Failed to delete glance image %s", imageName)
 		}
 	}

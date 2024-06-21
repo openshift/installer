@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/servergroups"
-	"github.com/gophercloud/gophercloud/pagination"
+	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/servergroups"
+	"github.com/gophercloud/gophercloud/v2/pagination"
 	"github.com/sirupsen/logrus"
 	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 
@@ -19,9 +19,9 @@ import (
 // ServerGroups creates server groups referenced by name in the Machine
 // manifests if they don't exist already. The newly created server groups have
 // the policy defined in the install-config's machine-pools.
-func ServerGroups(_ context.Context, installConfig *installconfig.InstallConfig, capiMachines []capo.OpenStackMachine, mapoWorkerProviderSpecs []mapov1alpha1.OpenstackProviderSpec) error {
+func ServerGroups(ctx context.Context, installConfig *installconfig.InstallConfig, capiMachines []capo.OpenStackMachine, mapoWorkerProviderSpecs []mapov1alpha1.OpenstackProviderSpec) error {
 	logrus.Debugf("Creating the server groups")
-	computeClient, err := defaults.NewServiceClient("compute", defaults.DefaultClientOpts(installConfig.Config.Platform.OpenStack.Cloud))
+	computeClient, err := defaults.NewServiceClient(ctx, "compute", defaults.DefaultClientOpts(installConfig.Config.Platform.OpenStack.Cloud))
 	if err != nil {
 		return fmt.Errorf("failed to build an OpenStack client: %w", err)
 	}
@@ -73,7 +73,7 @@ func ServerGroups(_ context.Context, installConfig *installconfig.InstallConfig,
 	}
 
 	// Remove existing server groups from the list of resources to be created.
-	if err = servergroups.List(computeClient, nil).EachPage(func(p pagination.Page) (bool, error) {
+	if err = servergroups.List(computeClient, nil).EachPage(ctx, func(_ context.Context, p pagination.Page) (bool, error) {
 		sgs, err := servergroups.ExtractServerGroups(p)
 		if err != nil {
 			return false, err
@@ -90,7 +90,7 @@ func ServerGroups(_ context.Context, installConfig *installconfig.InstallConfig,
 	// Create the server groups referenced by name in the Machine manifests, that don't exist already.
 	for name, policy := range serverGroups {
 		logrus.Debugf("Creating server group %q with policy %q", name, policy)
-		if _, err := servergroups.Create(computeClient, servergroups.CreateOpts{
+		if _, err := servergroups.Create(ctx, computeClient, servergroups.CreateOpts{
 			Name:   name,
 			Policy: string(policy),
 		}).Extract(); err != nil {

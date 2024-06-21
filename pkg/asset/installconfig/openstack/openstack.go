@@ -2,6 +2,7 @@
 package openstack
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -17,7 +18,7 @@ const (
 )
 
 // Platform collects OpenStack-specific configuration.
-func Platform() (*openstack.Platform, error) {
+func Platform(ctx context.Context) (*openstack.Platform, error) {
 	cloudNames, err := getCloudNames()
 	if err != nil {
 		return nil, err
@@ -46,7 +47,7 @@ func Platform() (*openstack.Platform, error) {
 		return nil, fmt.Errorf("failed UserInput: %w", err)
 	}
 
-	networkNames, err := getExternalNetworkNames(cloud)
+	networkNames, err := getExternalNetworkNames(ctx, cloud)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +81,7 @@ func Platform() (*openstack.Platform, error) {
 
 	var apiFloatingIP string
 	if extNet != "" {
-		floatingIPs, err := getFloatingIPs(cloud, extNet)
+		floatingIPs, err := getFloatingIPs(ctx, cloud, extNet)
 		if err != nil {
 			return nil, err
 		}
@@ -106,7 +107,7 @@ func Platform() (*openstack.Platform, error) {
 		}
 	}
 
-	flavorNames, err := getFlavorNames(cloud)
+	flavorNames, err := getFlavorNames(ctx, cloud)
 	if err != nil {
 		return nil, err
 	}

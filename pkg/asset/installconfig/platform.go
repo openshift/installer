@@ -1,6 +1,7 @@
 package installconfig
 
 import (
+	"context"
 	"fmt"
 	"sort"
 
@@ -46,8 +47,8 @@ func (a *platform) Dependencies() []asset.Asset {
 	return []asset.Asset{}
 }
 
-// Generate queries for input from the user.
-func (a *platform) Generate(asset.Parents) error {
+// GenerateWithContext queries for input from the user.
+func (a *platform) GenerateWithContext(ctx context.Context, _ asset.Parents) error {
 	platform, err := a.queryUserForPlatform()
 	if err != nil {
 		return err
@@ -84,7 +85,7 @@ func (a *platform) Generate(asset.Parents) error {
 	case none.Name:
 		a.None = &none.Platform{}
 	case openstack.Name:
-		a.OpenStack, err = openstackconfig.Platform()
+		a.OpenStack, err = openstackconfig.Platform(ctx)
 		if err != nil {
 			return err
 		}
@@ -140,4 +141,10 @@ func (a *platform) queryUserForPlatform() (platform string, err error) {
 
 func (a *platform) CurrentName() string {
 	return a.Platform.Name()
+}
+
+// Generate is implemented so this asset maintains compatibility with the Asset
+// interface. It should never be called.
+func (*platform) Generate(_ asset.Parents) (err error) {
+	panic("platform.Generate was called instead of platform.GenerateWithContext")
 }

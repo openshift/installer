@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/gophercloud/utils/v2/openstack/clientconfig"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -75,8 +75,10 @@ func (o *Openshift) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the respective operator config.yml files
-func (o *Openshift) Generate(dependencies asset.Parents) error {
+// GenerateWithContext generates the respective operator config.yml files.
+//
+//nolint:gocyclo
+func (o *Openshift) GenerateWithContext(ctx context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
 	kubeadminPassword := &password.KubeadminPassword{}
@@ -87,7 +89,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
 	case awstypes.Name:
-		ssn, err := installConfig.AWS.Session(context.TODO())
+		ssn, err := installConfig.AWS.Session(ctx)
 		if err != nil {
 			return err
 		}
@@ -128,7 +130,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			},
 		}
 	case gcptypes.Name:
-		session, err := gcp.GetSession(context.TODO())
+		session, err := gcp.GetSession(ctx)
 		if err != nil {
 			return err
 		}
@@ -352,4 +354,10 @@ func (o *Openshift) Load(f asset.FileFetcher) (bool, error) {
 
 	asset.SortFiles(o.FileList)
 	return len(o.FileList) > 0, nil
+}
+
+// Generate is implemented so this asset maintains compatibility with the Asset
+// interface. It should never be called.
+func (*Openshift) Generate(_ asset.Parents) (err error) {
+	panic("Openshift.Generate was called instead of Openshift.GenerateWithContext")
 }

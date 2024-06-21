@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/gophercloud/gophercloud/openstack/common/extensions"
+	"github.com/gophercloud/gophercloud/v2/openstack/common/extensions"
 
 	"github.com/openshift/installer/pkg/types/openstack/validation/networkextensions"
 )
