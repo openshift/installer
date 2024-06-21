@@ -181,6 +181,7 @@ func (c *system) Run(ctx context.Context) error {
 					"--health-addr={{suggestHealthHostPort}}",
 					"--webhook-port={{.WebhookPort}}",
 					"--webhook-cert-dir={{.WebhookCertDir}}",
+					"--feature-gates=MachinePool=false",
 				},
 				map[string]string{},
 			),
