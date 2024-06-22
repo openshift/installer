@@ -266,6 +266,8 @@ github.com/prometheus/common v0.46.0 h1:doXzt5ybi1HBKpsZOL0sSkaNHJJqkyfEWZGGqqSc
 github.com/prometheus/common v0.46.0/go.mod h1:Tp0qkxpb9Jsg54QMe+EAmqXkSV7Evdy1BTn+g2pa/hQ=
 github.com/prometheus/procfs v0.13.0 h1:GqzLlQyfsPbaEHaQkO7tbDlriv/4o5Hudv6OXHGKX7o=
 github.com/prometheus/procfs v0.13.0/go.mod h1:cd4PFCR54QLnGKPaKGA6l+cfuNXtht43ZKY6tow0Y1g=
+github.com/r4f4/cluster-api-provider-aws/v2 v2.0.0-20240622094016-f21b9d4d3ac1 h1:7GAPJtE4LojqvffDdh2iiOKG/dQEZJyhk0546vO5S6k=
+github.com/r4f4/cluster-api-provider-aws/v2 v2.0.0-20240622094016-f21b9d4d3ac1/go.mod h1:IiScIRlLiMZw8J9SrppViva89l5dYpqeMyAqI+49lIw=
 github.com/rogpeppe/go-internal v1.10.0 h1:TMyTOH3F/DB16zRVcYyreMH6GnZZrwQVAoYjRBZyWFQ=
 github.com/rogpeppe/go-internal v1.10.0/go.mod h1:UQnix2H7Ngw/k4C5ijL5+65zddjncjaFoBhdsK/akog=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
@@ -491,8 +493,6 @@ sigs.k8s.io/aws-iam-authenticator v0.6.13 h1:QSQcAkpt/hF97Ogyoz6sj3WD2twTd2cmxFb
 sigs.k8s.io/aws-iam-authenticator v0.6.13/go.mod h1:CnvFyzR/xeLHmUY/BD0qW6q0wp6KIwXmFp4eTfrHdP8=
 sigs.k8s.io/cluster-api v1.7.1 h1:JkMAbAMzBM+WBHxXLTJXTiCisv1PAaHRzld/3qrmLYY=
 sigs.k8s.io/cluster-api v1.7.1/go.mod h1:V9ZhKLvQtsDODwjXOKgbitjyCmC71yMBwDcMyNNIov0=
-sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.2-0.20240613114012-888c6596e3a1 h1:Q6AjpSS4xKw1dhOoNGJh51EsQnRcVojmcOavTjZRTf0=
-sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.2-0.20240613114012-888c6596e3a1/go.mod h1:IiScIRlLiMZw8J9SrppViva89l5dYpqeMyAqI+49lIw=
 sigs.k8s.io/controller-runtime v0.17.3 h1:65QmN7r3FWgTxDMz9fvGnO1kbf2nu+acg9p2R9oYYYk=
 sigs.k8s.io/controller-runtime v0.17.3/go.mod h1:N0jpP5Lo7lMTF9aL56Z/B2oWBJjey6StQM0jRbKQXtY=
 sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd h1:EDPBXCAspyGV4jQlpZSudPeMmr1bNJefnuqLsRAsHZo=
