@@ -246,6 +246,36 @@ func (m *Metadata) IsVPCPermittedNetwork(ctx context.Context, vpcName string, ba
 	return false, nil
 }
 
+// EnsureVPCIsPermittedNetwork checks if a VPC is permitted to the DNS zone and adds it if it is not.
+func (m *Metadata) EnsureVPCIsPermittedNetwork(ctx context.Context, vpcName string) error {
+	dnsCRN, err := crn.Parse(m.dnsInstanceCRN)
+	if err != nil {
+		return fmt.Errorf("failed to parse DNSInstanceCRN: %w", err)
+	}
+
+	isVPCPermittedNetwork, err := m.IsVPCPermittedNetwork(ctx, vpcName, m.BaseDomain)
+	if err != nil {
+		return fmt.Errorf("failed to determine if VPC is permitted network: %w", err)
+	}
+
+	if !isVPCPermittedNetwork {
+		vpc, err := m.client.GetVPCByName(ctx, vpcName)
+		if err != nil {
+			return fmt.Errorf("failed to find VPC by name: %w", err)
+		}
+
+		zoneID, err := m.client.GetDNSZoneIDByName(ctx, m.BaseDomain, types.InternalPublishingStrategy)
+		if err != nil {
+			return fmt.Errorf("failed to get DNS zone ID: %w", err)
+		}
+		err = m.client.AddVPCToPermittedNetworks(ctx, *vpc.CRN, dnsCRN.ServiceInstance, zoneID)
+		if err != nil {
+			return fmt.Errorf("failed to add permitted network: %w", err)
+		}
+	}
+	return nil
+}
+
 // GetSubnetID gets the ID of a VPC subnet by name and region.
 func (m *Metadata) GetSubnetID(ctx context.Context, subnetName string, vpcRegion string) (string, error) {
 	subnet, err := m.client.GetSubnetByName(ctx, subnetName, vpcRegion)
@@ -281,7 +311,35 @@ func (m *Metadata) GetDNSServerIP(ctx context.Context, vpcName string) (string, 
 	}
 	dnsServerIP, err := m.client.GetDNSCustomResolverIP(ctx, dnsCRN.ServiceInstance, *vpc.ID)
 	if err != nil {
-		return "", err
+		// There is no custom resolver, try to create one.
+		customResolverName := fmt.Sprintf("%s-custom-resolver", vpcName)
+		customResolver, err := m.client.CreateDNSCustomResolver(ctx, customResolverName, dnsCRN.ServiceInstance, *vpc.ID)
+		if err != nil {
+			return "", err
+		}
+		// Wait for the custom resolver to be enabled.
+		backoff := wait.Backoff{
+			Duration: 15 * time.Second,
+			Factor:   1.1,
+			Cap:      leftInContext(ctx),
+			Steps:    math.MaxInt32}
+
+		customResolverID := *customResolver.ID
+		var lastErr error
+		err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
+			customResolver, lastErr = m.client.EnableDNSCustomResolver(ctx, dnsCRN.ServiceInstance, customResolverID)
+			if lastErr == nil {
+				return true, nil
+			}
+			return false, nil
+		})
+		if err != nil {
+			if lastErr != nil {
+				err = lastErr
+			}
+			return "", fmt.Errorf("failed to enable custom resolver %s: %w", *customResolver.ID, err)
+		}
+		dnsServerIP = *customResolver.Locations[0].DnsServerIp
 	}
 	return dnsServerIP, nil
 }
