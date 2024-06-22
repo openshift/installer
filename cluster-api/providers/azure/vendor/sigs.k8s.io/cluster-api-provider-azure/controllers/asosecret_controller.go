@@ -226,9 +226,9 @@ func (asos *ASOSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	// Return early if the ASO Secret Owner(AzureCluster or AzureManagedControlPlane) or Cluster is paused.
 	if annotations.IsPaused(cluster, asoSecretOwner) {
-		log.Info(fmt.Sprintf("%s or linked Cluster is marked as paused. Won't reconcile", asoSecretOwner.GetObjectKind()))
+		log.Info(fmt.Sprintf("%T or linked Cluster is marked as paused. Won't reconcile", asoSecretOwner))
 		asos.Recorder.Eventf(asoSecretOwner, corev1.EventTypeNormal, "ClusterPaused",
-			fmt.Sprintf("%s or linked Cluster is marked as paused. Won't reconcile", asoSecretOwner.GetObjectKind().GroupVersionKind().Kind))
+			fmt.Sprintf("%T or linked Cluster is marked as paused. Won't reconcile", asoSecretOwner))
 		return ctrl.Result{}, nil
 	}
 

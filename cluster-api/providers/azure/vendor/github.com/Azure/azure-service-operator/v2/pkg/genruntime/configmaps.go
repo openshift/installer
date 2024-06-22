@@ -120,7 +120,7 @@ func ValidateConfigMapDestinations(destinations []*ConfigMapDestination) (admiss
 }
 
 // LookupOptionalConfigMapReferenceValue looks up a ConfigMapReference if it's not nil, or else returns the provided value
-func LookupOptionalConfigMapReferenceValue(resolved Resolved[ConfigMapReference], ref *ConfigMapReference, value *string) (string, error) {
+func LookupOptionalConfigMapReferenceValue(resolved Resolved[ConfigMapReference, string], ref *ConfigMapReference, value *string) (string, error) {
 	if ref == nil && value == nil {
 		return "", errors.Errorf("ref and value are both nil")
 	}

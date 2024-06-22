@@ -3,7 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202pre
 ├── APIVersion: Enum (1 value)
 │   └── "2023-02-02-preview"
 ├── ManagedCluster: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (45 properties)
 │   │   ├── AadProfile: *Object (8 properties)
 │   │   │   ├── AdminGroupObjectIDs: string[]
@@ -868,7 +868,7 @@ github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202pre
 │               ├── PropertyBag: genruntime.PropertyBag
 │               └── UpdateMode: *string
 ├── ManagedClustersAgentPool: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202preview.ManagedCluster
+│   ├── Owner: containerservice/v1api20230202preview.ManagedCluster
 │   ├── Spec: Object (47 properties)
 │   │   ├── AvailabilityZones: string[]
 │   │   ├── AzureName: string
@@ -1100,7 +1100,7 @@ github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202pre
 │       │   └── PropertyBag: genruntime.PropertyBag
 │       └── WorkloadRuntime: *string
 ├── TrustedAccessRoleBinding: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202preview.ManagedCluster
+│   ├── Owner: containerservice/v1api20230202preview.ManagedCluster
 │   ├── Spec: Object (6 properties)
 │   │   ├── AzureName: string
 │   │   ├── OriginalVersion: string

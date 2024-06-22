@@ -3,7 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20220701
 ├── APIVersion: Enum (1 value)
 │   └── "2022-07-01"
 ├── ApplicationGateway: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (37 properties)
 │   │   ├── AuthenticationCertificates: Object (2 properties)[]
 │   │   │   ├── Data: *genruntime.SecretReference
@@ -1204,7 +1204,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20220701
 │   ├── Tags: map[string]string
 │   └── Zones: string[]
 ├── BastionHost: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (13 properties)
 │   │   ├── AzureName: string
 │   │   ├── DisableCopyPaste: *bool
@@ -1361,7 +1361,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20220701
 │       │   └── Port: *int
 │       └── Type: *string
 ├── DnsForwardingRuleset: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (5 properties)
 │   │   ├── AzureName: string
 │   │   ├── DnsResolverOutboundEndpoints: Object (1 property)[]
@@ -1490,7 +1490,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20220701
 │           ├── IpAddress: *string
 │           └── Port: *int
 ├── DnsResolver: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (5 properties)
 │   │   ├── AzureName: string
 │   │   ├── Location: *string
@@ -1762,7 +1762,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20220701
 │   │       └── Id: *string
 │   └── Tags: map[string]string
 ├── NatGateway: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (9 properties)
 │   │   ├── AzureName: string
 │   │   ├── IdleTimeoutInMinutes: *int
@@ -1842,7 +1842,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20220701
 │   ├── Tags: map[string]string
 │   └── Zones: string[]
 ├── PrivateEndpoint: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (11 properties)
 │   │   ├── ApplicationSecurityGroups: Object (1 property)[]
 │   │   │   └── Reference: *genruntime.ResourceReference
@@ -2124,7 +2124,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20220701
 │           └── Properties: *Object (1 property)
 │               └── PrivateDnsZoneId: *string
 ├── PrivateLinkService: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (12 properties)
 │   │   ├── AutoApproval: *Object (1 property)
 │   │   │   └── Subscriptions: string[]
@@ -2289,7 +2289,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20220701
 │   │       └── Subscriptions: string[]
 │   └── Tags: map[string]string
 ├── PublicIPPrefix: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (12 properties)
 │   │   ├── AzureName: string
 │   │   ├── CustomIPPrefix: *Object (1 property)

@@ -3,7 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001
 ├── APIVersion: Enum (1 value)
 │   └── "2023-10-01"
 ├── ManagedCluster: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (39 properties)
 │   │   ├── AadProfile: *Object (7 properties)
 │   │   │   ├── AdminGroupObjectIDs: string[]

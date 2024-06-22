@@ -96,23 +96,26 @@ var (
 	restConfigBurst             int
 	webhookPort                 int
 	webhookCertDir              string
+	webhookCertName             string
+	webhookKeyName              string
 	healthAddr                  string
 	tlsOptions                  = flags.TLSOptions{}
 	diagnosticsOptions          = flags.DiagnosticsOptions{}
 	logOptions                  = logs.NewOptions()
 	// core Cluster API specific flags.
-	clusterTopologyConcurrency     int
-	clusterCacheTrackerConcurrency int
-	clusterClassConcurrency        int
-	clusterConcurrency             int
-	extensionConfigConcurrency     int
-	machineConcurrency             int
-	machineSetConcurrency          int
-	machineDeploymentConcurrency   int
-	machinePoolConcurrency         int
-	clusterResourceSetConcurrency  int
-	machineHealthCheckConcurrency  int
-	nodeDrainClientTimeout         time.Duration
+	clusterTopologyConcurrency      int
+	clusterCacheTrackerConcurrency  int
+	clusterClassConcurrency         int
+	clusterConcurrency              int
+	extensionConfigConcurrency      int
+	machineConcurrency              int
+	machineSetConcurrency           int
+	machineDeploymentConcurrency    int
+	machinePoolConcurrency          int
+	clusterResourceSetConcurrency   int
+	machineHealthCheckConcurrency   int
+	nodeDrainClientTimeout          time.Duration
+	useDeprecatedInfraMachineNaming bool
 )
 
 func init() {
@@ -216,10 +219,20 @@ func InitFlags(fs *pflag.FlagSet) {
 		"Webhook Server port")
 
 	fs.StringVar(&webhookCertDir, "webhook-cert-dir", "/tmp/k8s-webhook-server/serving-certs/",
-		"Webhook cert dir, only used when webhook-port is specified.")
+		"Webhook cert dir.")
+
+	fs.StringVar(&webhookCertName, "webhook-cert-name", "tls.crt",
+		"Webhook cert name.")
+
+	fs.StringVar(&webhookKeyName, "webhook-key-name", "tls.key",
+		"Webhook key name.")
 
 	fs.StringVar(&healthAddr, "health-addr", ":9440",
 		"The address the health endpoint binds to.")
+
+	fs.BoolVar(&useDeprecatedInfraMachineNaming, "use-deprecated-infra-machine-naming", false,
+		"Use deprecated infrastructure machine naming")
+	_ = fs.MarkDeprecated("use-deprecated-infra-machine-naming", "This flag will be removed in v1.9.")
 
 	flags.AddDiagnosticsOptions(fs, &diagnosticsOptions)
 	flags.AddTLSOptions(fs, &tlsOptions)
@@ -325,9 +338,11 @@ func main() {
 		},
 		WebhookServer: webhook.NewServer(
 			webhook.Options{
-				Port:    webhookPort,
-				CertDir: webhookCertDir,
-				TLSOpts: tlsOptionOverrides,
+				Port:     webhookPort,
+				CertDir:  webhookCertDir,
+				CertName: webhookCertName,
+				KeyName:  webhookKeyName,
+				TLSOpts:  tlsOptionOverrides,
 			},
 		),
 	}
@@ -506,11 +521,12 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager) webhooks.ClusterCac
 		os.Exit(1)
 	}
 	if err := (&controllers.MachineSetReconciler{
-		Client:                    mgr.GetClient(),
-		UnstructuredCachingClient: unstructuredCachingClient,
-		APIReader:                 mgr.GetAPIReader(),
-		Tracker:                   tracker,
-		WatchFilterValue:          watchFilterValue,
+		Client:                       mgr.GetClient(),
+		UnstructuredCachingClient:    unstructuredCachingClient,
+		APIReader:                    mgr.GetAPIReader(),
+		Tracker:                      tracker,
+		WatchFilterValue:             watchFilterValue,
+		DeprecatedInfraMachineNaming: useDeprecatedInfraMachineNaming,
 	}).SetupWithManager(ctx, mgr, concurrency(machineSetConcurrency)); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MachineSet")
 		os.Exit(1)

@@ -24,6 +24,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/azure"
 )
 
 // AKSExtensionSpec defines the specification for an AKS Extension.
@@ -47,7 +48,7 @@ type AKSExtensionSpec struct {
 func (s *AKSExtensionSpec) ResourceRef() *asokubernetesconfigurationv1.Extension {
 	return &asokubernetesconfigurationv1.Extension{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      s.Name,
+			Name:      azure.GetNormalizedKubernetesName(s.Name),
 			Namespace: s.Namespace,
 		},
 	}

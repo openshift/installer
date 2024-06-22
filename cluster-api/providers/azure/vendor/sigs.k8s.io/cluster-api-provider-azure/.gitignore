@@ -86,3 +86,11 @@ release-*/manifests/calico-*.yaml
 # mentioned in the capz book
 /sp.json
 /cluster.yaml
+
+# CI workload-identity
+jwks.json
+*.pub
+*.key
+azure_identity_id
+azure_wi_back_compat
+openid-configuration.json

@@ -40,3 +40,10 @@ func (p userAgentPolicy) Do(req *policy.Request) (*http.Response, error) {
 	req.Raw().Header.Set("user-Agent", newUserAgent)
 	return req.Next()
 }
+
+// AddToUserAgent appends the given suffix to the default user agent.
+func AddToUserAgent(suffix string) {
+	if suffix != "" {
+		userAgent += " " + suffix
+	}
+}

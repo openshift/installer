@@ -24,6 +24,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
 )
 
@@ -42,7 +43,7 @@ type VNetSpec struct {
 func (s *VNetSpec) ResourceRef() *asonetworkv1.VirtualNetwork {
 	return &asonetworkv1.VirtualNetwork{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: s.Name,
+			Name: azure.GetNormalizedKubernetesName(s.Name),
 		},
 	}
 }
@@ -66,7 +67,7 @@ func (s *VNetSpec) Parameters(ctx context.Context, existing *asonetworkv1.Virtua
 
 	vnet.Spec.AzureName = s.Name
 	vnet.Spec.Owner = &genruntime.KnownResourceReference{
-		Name: s.ResourceGroup,
+		Name: azure.GetNormalizedKubernetesName(s.ResourceGroup),
 	}
 	vnet.Spec.Location = ptr.To(s.Location)
 	vnet.Spec.ExtendedLocation = converters.ExtendedLocationToNetworkASO(s.ExtendedLocation)

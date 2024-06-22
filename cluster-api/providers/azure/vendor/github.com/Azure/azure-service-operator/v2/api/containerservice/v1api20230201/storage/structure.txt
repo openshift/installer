@@ -3,7 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201/st
 ├── APIVersion: Enum (1 value)
 │   └── "2023-02-01"
 ├── ManagedCluster: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/resources/v1apiv20191001.ResourceGroup
+│   ├── Owner: resources/v1apiv20191001.ResourceGroup
 │   ├── Spec: Object (38 properties)
 │   │   ├── AadProfile: *Object (8 properties)
 │   │   │   ├── AdminGroupObjectIDs: string[]
@@ -707,7 +707,7 @@ github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201/st
 │           │   └── PropertyBag: genruntime.PropertyBag
 │           └── PropertyBag: genruntime.PropertyBag
 ├── ManagedClustersAgentPool: Resource
-│   ├── Owner: github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201.ManagedCluster
+│   ├── Owner: containerservice/v1api20230201.ManagedCluster
 │   ├── Spec: Object (42 properties)
 │   │   ├── AvailabilityZones: string[]
 │   │   ├── AzureName: string

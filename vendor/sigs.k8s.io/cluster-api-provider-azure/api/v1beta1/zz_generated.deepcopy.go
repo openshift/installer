@@ -934,6 +934,11 @@ func (in *AzureMachineSpec) DeepCopyInto(out *AzureMachineSpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.DisableExtensionOperations != nil {
+		in, out := &in.DisableExtensionOperations, &out.DisableExtensionOperations
+		*out = new(bool)
+		**out = **in
+	}
 	if in.VMExtensions != nil {
 		in, out := &in.VMExtensions, &out.VMExtensions
 		*out = make([]VMExtension, len(*in))
@@ -947,6 +952,11 @@ func (in *AzureMachineSpec) DeepCopyInto(out *AzureMachineSpec) {
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
+	}
+	if in.CapacityReservationGroupID != nil {
+		in, out := &in.CapacityReservationGroupID, &out.CapacityReservationGroupID
+		*out = new(string)
+		**out = **in
 	}
 }
 

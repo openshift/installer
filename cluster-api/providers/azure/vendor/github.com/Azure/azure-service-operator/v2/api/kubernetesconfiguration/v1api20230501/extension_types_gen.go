@@ -331,6 +331,10 @@ type Extension_Spec struct {
 	// doesn't have to be.
 	AzureName string `json:"azureName,omitempty"`
 
+	// ConfigurationProtectedSettings: Configuration settings that are sensitive, as name-value pairs for configuring this
+	// extension.
+	ConfigurationProtectedSettings *genruntime.SecretMapReference `json:"configurationProtectedSettings,omitempty"`
+
 	// ConfigurationSettings: Configuration settings, as name-value pairs for configuring this extension.
 	ConfigurationSettings map[string]string `json:"configurationSettings,omitempty"`
 
@@ -401,6 +405,7 @@ func (extension *Extension_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 	// Set property "Properties":
 	if extension.AksAssignedIdentity != nil ||
 		extension.AutoUpgradeMinorVersion != nil ||
+		extension.ConfigurationProtectedSettings != nil ||
 		extension.ConfigurationSettings != nil ||
 		extension.ExtensionType != nil ||
 		extension.ReleaseTrain != nil ||
@@ -419,6 +424,15 @@ func (extension *Extension_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 	if extension.AutoUpgradeMinorVersion != nil {
 		autoUpgradeMinorVersion := *extension.AutoUpgradeMinorVersion
 		result.Properties.AutoUpgradeMinorVersion = &autoUpgradeMinorVersion
+	}
+	if extension.ConfigurationProtectedSettings != nil {
+		var temp map[string]string
+		tempSecret, err := resolved.ResolvedSecretMaps.Lookup(*extension.ConfigurationProtectedSettings)
+		if err != nil {
+			return nil, errors.Wrap(err, "looking up secret for property temp")
+		}
+		temp = tempSecret
+		result.Properties.ConfigurationProtectedSettings = temp
 	}
 	if extension.ConfigurationSettings != nil {
 		result.Properties.ConfigurationSettings = make(map[string]string, len(extension.ConfigurationSettings))
@@ -496,6 +510,8 @@ func (extension *Extension_Spec) PopulateFromARM(owner genruntime.ArbitraryOwner
 
 	// Set property "AzureName":
 	extension.SetAzureName(genruntime.ExtractKubernetesResourceNameFromARMName(typedInput.Name))
+
+	// no assignment for property "ConfigurationProtectedSettings"
 
 	// Set property "ConfigurationSettings":
 	// copying flattened property:
@@ -665,6 +681,14 @@ func (extension *Extension_Spec) AssignProperties_From_Extension_Spec(source *v2
 	// AzureName
 	extension.AzureName = source.AzureName
 
+	// ConfigurationProtectedSettings
+	if source.ConfigurationProtectedSettings != nil {
+		configurationProtectedSetting := source.ConfigurationProtectedSettings.Copy()
+		extension.ConfigurationProtectedSettings = &configurationProtectedSetting
+	} else {
+		extension.ConfigurationProtectedSettings = nil
+	}
+
 	// ConfigurationSettings
 	extension.ConfigurationSettings = genruntime.CloneMapOfStringToString(source.ConfigurationSettings)
 
@@ -764,6 +788,14 @@ func (extension *Extension_Spec) AssignProperties_To_Extension_Spec(destination 
 
 	// AzureName
 	destination.AzureName = extension.AzureName
+
+	// ConfigurationProtectedSettings
+	if extension.ConfigurationProtectedSettings != nil {
+		configurationProtectedSetting := extension.ConfigurationProtectedSettings.Copy()
+		destination.ConfigurationProtectedSettings = &configurationProtectedSetting
+	} else {
+		destination.ConfigurationProtectedSettings = nil
+	}
 
 	// ConfigurationSettings
 	destination.ConfigurationSettings = genruntime.CloneMapOfStringToString(extension.ConfigurationSettings)
@@ -953,6 +985,10 @@ type Extension_STATUS struct {
 	// Conditions: The observed state of the resource
 	Conditions []conditions.Condition `json:"conditions,omitempty"`
 
+	// ConfigurationProtectedSettings: Configuration settings that are sensitive, as name-value pairs for configuring this
+	// extension.
+	ConfigurationProtectedSettings map[string]string `json:"configurationProtectedSettings,omitempty"`
+
 	// ConfigurationSettings: Configuration settings, as name-value pairs for configuring this extension.
 	ConfigurationSettings map[string]string `json:"configurationSettings,omitempty"`
 
@@ -1101,6 +1137,17 @@ func (extension *Extension_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwn
 	}
 
 	// no assignment for property "Conditions"
+
+	// Set property "ConfigurationProtectedSettings":
+	// copying flattened property:
+	if typedInput.Properties != nil {
+		if typedInput.Properties.ConfigurationProtectedSettings != nil {
+			extension.ConfigurationProtectedSettings = make(map[string]string, len(typedInput.Properties.ConfigurationProtectedSettings))
+			for key, value := range typedInput.Properties.ConfigurationProtectedSettings {
+				extension.ConfigurationProtectedSettings[key] = value
+			}
+		}
+	}
 
 	// Set property "ConfigurationSettings":
 	// copying flattened property:
@@ -1309,6 +1356,9 @@ func (extension *Extension_STATUS) AssignProperties_From_Extension_STATUS(source
 	// Conditions
 	extension.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
 
+	// ConfigurationProtectedSettings
+	extension.ConfigurationProtectedSettings = genruntime.CloneMapOfStringToString(source.ConfigurationProtectedSettings)
+
 	// ConfigurationSettings
 	extension.ConfigurationSettings = genruntime.CloneMapOfStringToString(source.ConfigurationSettings)
 
@@ -1464,6 +1514,9 @@ func (extension *Extension_STATUS) AssignProperties_To_Extension_STATUS(destinat
 
 	// Conditions
 	destination.Conditions = genruntime.CloneSliceOfCondition(extension.Conditions)
+
+	// ConfigurationProtectedSettings
+	destination.ConfigurationProtectedSettings = genruntime.CloneMapOfStringToString(extension.ConfigurationProtectedSettings)
 
 	// ConfigurationSettings
 	destination.ConfigurationSettings = genruntime.CloneMapOfStringToString(extension.ConfigurationSettings)
