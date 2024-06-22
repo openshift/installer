@@ -592,7 +592,12 @@ func (s *Service) getSecurityGroupIngressRules(role infrav1.SecurityGroupRole) (
 			rules = append(rules, s.defaultSSHIngressRule(s.scope.SecurityGroups()[infrav1.SecurityGroupBastion].ID))
 		}
 
-		rules = append(rules, s.processIngressRulesSGs(s.scope.AdditionalControlPlaneIngressRules())...)
+		additionalIngressRules, err := s.processIngressRulesSGs(s.scope.AdditionalControlPlaneIngressRules())
+		if err != nil {
+			return nil, err
+		}
+
+		rules = append(rules, additionalIngressRules...)
 
 		return append(cniRules, rules...), nil
 
@@ -639,7 +644,10 @@ func (s *Service) getSecurityGroupIngressRules(role infrav1.SecurityGroupRole) (
 		return infrav1.IngressRules{}, nil
 	case infrav1.SecurityGroupAPIServerLB:
 		kubeletRules := s.getIngressRulesToAllowKubeletToAccessTheControlPlaneLB()
-		customIngressRules := s.processIngressRulesSGs(s.getControlPlaneLBIngressRules())
+		customIngressRules, err := s.processIngressRulesSGs(s.getControlPlaneLBIngressRules())
+		if err != nil {
+			return nil, err
+		}
 		rulesToApply := customIngressRules.Difference(kubeletRules)
 		return append(kubeletRules, rulesToApply...), nil
 	case infrav1.SecurityGroupLB:
@@ -964,10 +972,25 @@ func (s *Service) getIngressRuleToAllowVPCCidrInTheAPIServer() infrav1.IngressRu
 	}
 }
 
-func (s *Service) processIngressRulesSGs(ingressRules []infrav1.IngressRule) infrav1.IngressRules {
+func (s *Service) processIngressRulesSGs(ingressRules []infrav1.IngressRule) (infrav1.IngressRules, error) {
 	output := []infrav1.IngressRule{}
 
 	for _, rule := range ingressRules {
+		if rule.NatGatewaysIPsSource { // if the rule has NatGatewaysIPsSource set to true, use the NAT Gateway IPs as the source
+			natGatewaysCidrs := []string{}
+			natGatewaysIPs := s.scope.GetNatGatewaysIPs()
+			for _, ip := range natGatewaysIPs {
+				natGatewaysCidrs = append(natGatewaysCidrs, fmt.Sprintf("%s/32", ip))
+			}
+			if len(natGatewaysIPs) > 0 {
+				rule.CidrBlocks = natGatewaysCidrs
+				output = append(output, rule)
+				continue
+			}
+
+			return nil, errors.New("NAT Gateway IPs are not available yet")
+		}
+
 		if len(rule.CidrBlocks) != 0 || len(rule.IPv6CidrBlocks) != 0 { // don't set source security group if cidr blocks are set
 			output = append(output, rule)
 			continue
@@ -988,5 +1011,5 @@ func (s *Service) processIngressRulesSGs(ingressRules []infrav1.IngressRule) inf
 		output = append(output, rule)
 	}
 
-	return output
+	return output, nil
 }

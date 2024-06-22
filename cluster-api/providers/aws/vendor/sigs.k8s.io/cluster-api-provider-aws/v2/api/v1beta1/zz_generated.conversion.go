@@ -1971,6 +1971,7 @@ func autoConvert_v1beta2_IngressRule_To_v1beta1_IngressRule(in *v1beta2.IngressR
 	out.IPv6CidrBlocks = *(*[]string)(unsafe.Pointer(&in.IPv6CidrBlocks))
 	out.SourceSecurityGroupIDs = *(*[]string)(unsafe.Pointer(&in.SourceSecurityGroupIDs))
 	// WARNING: in.SourceSecurityGroupRoles requires manual conversion: does not exist in peer-type
+	// WARNING: in.NatGatewaysIPsSource requires manual conversion: does not exist in peer-type
 	return nil
 }
 
