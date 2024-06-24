@@ -130,7 +130,12 @@ func (o *ClusterUninstaller) stopInstance(ctx context.Context, item cloudResourc
 	o.Logger.Debugf("Stopping compute instance %s in zone %s", item.name, item.zone)
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
-	op, err := o.computeSvc.Instances.Stop(o.ProjectID, item.zone, item.name).RequestId(o.requestID("stopinstance", item.zone, item.name)).Context(ctx).Do()
+	op, err := o.computeSvc.Instances.
+		Stop(o.ProjectID, item.zone, item.name).
+		RequestId(o.requestID("stopinstance", item.zone, item.name)).
+		DiscardLocalSsd(true).
+		Context(ctx).
+		Do()
 	if err != nil && !isNoOp(err) {
 		o.resetRequestID("stopinstance", item.zone, item.name)
 		return errors.Wrapf(err, "failed to stop instance %s in zone %s", item.name, item.zone)
