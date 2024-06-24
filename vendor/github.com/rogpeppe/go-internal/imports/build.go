@@ -32,7 +32,6 @@ var slashslash = []byte("//")
 // the purpose of satisfying build tags, in order to estimate
 // (conservatively) whether a file could ever possibly be used
 // in any build.
-//
 func ShouldBuild(content []byte, tags map[string]bool) bool {
 	// Pass 1. Identify leading run of // comments and blank lines,
 	// which must be followed by a blank line.
@@ -96,7 +95,6 @@ func ShouldBuild(content []byte, tags map[string]bool) bool {
 //	tag (if tags[tag] is true)
 //	!tag (if tags[tag] is false)
 //	a comma-separated list of any of these
-//
 func matchTags(name string, tags map[string]bool) bool {
 	if name == "" {
 		return false
@@ -145,12 +143,12 @@ func matchTag(name string, tags map[string]bool, want bool) bool {
 // suffix which does not match the current system.
 // The recognized name formats are:
 //
-//     name_$(GOOS).*
-//     name_$(GOARCH).*
-//     name_$(GOOS)_$(GOARCH).*
-//     name_$(GOOS)_test.*
-//     name_$(GOARCH)_test.*
-//     name_$(GOOS)_$(GOARCH)_test.*
+//	name_$(GOOS).*
+//	name_$(GOARCH).*
+//	name_$(GOOS)_$(GOARCH).*
+//	name_$(GOOS)_test.*
+//	name_$(GOARCH)_test.*
+//	name_$(GOOS)_$(GOARCH)_test.*
 //
 // An exception: if GOOS=android, then files with GOOS=linux are also matched.
 //
