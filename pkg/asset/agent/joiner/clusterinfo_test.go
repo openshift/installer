@@ -10,10 +10,12 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/assisted-service/api/hiveextension/v1beta1"
+	"github.com/openshift/assisted-service/models"
 	fakeclientconfig "github.com/openshift/client-go/config/clientset/versioned/fake"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
@@ -114,6 +116,17 @@ func TestClusterInfo_Generate(t *testing.T) {
 						"stream": makeCoreOsBootImages(t, buildStreamData()),
 					},
 				},
+				&corev1.Secret{
+					ObjectMeta: v1.ObjectMeta{
+						Name:      "worker-user-data-managed",
+						Namespace: "openshift-machine-api",
+					},
+					Data: map[string][]byte{
+						"userData": []byte(`{"ignition":{"config":{"merge":[{"source":"https://192.168.111.5:22623/config/worker","verification":{}}],
+"replace":{"verification":{}}},"proxy":{},"security":{"tls":{"certificateAuthorities":[{"source":"data:text/plain;charset=utf-8;base64,LS0tL_FakeCertificate_LS0tCg==",
+"verification":{}}]}},"timeouts":{},"version":"3.4.0"},"kernelArguments":{},"passwd":{},"storage":{},"systemd":{}}`),
+					},
+				},
 			},
 			expectedClusterInfo: ClusterInfo{
 				ClusterID:    "1b5ba46b-7e56-47b1-a326-a9eebddfb38c",
@@ -142,6 +155,10 @@ func TestClusterInfo_Generate(t *testing.T) {
 				SSHKey:          "my-ssh-key",
 				OSImage:         buildStreamData(),
 				OSImageLocation: "http://my-coreosimage-url/416.94.202402130130-0",
+				IgnitionEndpointWorker: &models.IgnitionEndpoint{
+					URL:           ptr.To("https://192.168.111.5:22623/config/worker"),
+					CaCertificate: ptr.To("LS0tL_FakeCertificate_LS0tCg=="),
+				},
 			},
 		},
 	}
@@ -179,6 +196,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 			assert.Equal(t, tc.expectedClusterInfo.SSHKey, clusterInfo.SSHKey)
 			assert.Equal(t, tc.expectedClusterInfo.OSImageLocation, clusterInfo.OSImageLocation)
 			assert.Equal(t, tc.expectedClusterInfo.OSImage, clusterInfo.OSImage)
+			assert.Equal(t, tc.expectedClusterInfo.IgnitionEndpointWorker, clusterInfo.IgnitionEndpointWorker)
 		})
 	}
 }
