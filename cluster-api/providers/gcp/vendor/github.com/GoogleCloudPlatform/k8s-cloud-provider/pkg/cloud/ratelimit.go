@@ -100,10 +100,12 @@ type MinimumRateLimiter struct {
 // Accept blocks on the minimum duration and context. Once the minimum duration is met,
 // the func is blocked on the underlying ratelimiter.
 func (m *MinimumRateLimiter) Accept(ctx context.Context, key *RateLimitKey) error {
+	t := time.NewTimer(m.Minimum)
 	select {
-	case <-time.After(m.Minimum):
+	case <-t.C:
 		return m.RateLimiter.Accept(ctx, key)
 	case <-ctx.Done():
+		t.Stop()
 		return ctx.Err()
 	}
 }
@@ -111,4 +113,133 @@ func (m *MinimumRateLimiter) Accept(ctx context.Context, key *RateLimitKey) erro
 // Observe just passes error to the underlying ratelimiter.
 func (m *MinimumRateLimiter) Observe(ctx context.Context, err error, key *RateLimitKey) {
 	m.RateLimiter.Observe(ctx, err, key)
+}
+
+// TickerRateLimiter uses time.Ticker to spread Accepts over time.
+//
+// Concurrent calls to Accept will block on the same channel. It is not
+// guaranteed what caller will be unblocked first.
+type TickerRateLimiter struct {
+	ticker *time.Ticker
+}
+
+// NewTickerRateLimiter creates a new TickerRateLimiter which will space Accept
+// calls at least interval/limit time apart.
+//
+// For example, limit=4 interval=time.Minute will unblock a single Accept call
+// every 15 seconds.
+func NewTickerRateLimiter(limit int, interval time.Duration) *TickerRateLimiter {
+	return &TickerRateLimiter{
+		ticker: time.NewTicker(interval / time.Duration(limit)),
+	}
+}
+
+// Accept will block until a time, specified when creating TickerRateLimiter,
+// passes since the last call to Accept.
+func (t *TickerRateLimiter) Accept(ctx context.Context, rlk *RateLimitKey) error {
+	select {
+	case <-t.ticker.C:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+// Observe does nothing.
+func (*TickerRateLimiter) Observe(context.Context, error, *RateLimitKey) {
+}
+
+// Make sure that TickerRateLimiter implements RateLimiter.
+var _ RateLimiter = new(TickerRateLimiter)
+
+// CompositeRateLimiter combines rate limiters based on RateLimitKey.
+type CompositeRateLimiter struct {
+	// map[resource name]map[operation name]RateLimiter
+	rateLimiters map[string]map[string]RateLimiter
+	// defaultRL is used when no matching RateLimiter was found.
+	defaultRL RateLimiter
+}
+
+// NewCompositeRateLimiter creates a new CompositeRateLimiter that will use
+// provided default rate limiter if no better match is found. It is intended to
+// be used for a single project.
+//
+// # Example
+//
+//	bsDefaultRL := /* backend service default rate limiter */
+//	bsGetListRL := /* backend service rate limiter for get and list operations */
+//
+//	rl := NewCompositeRateLimiter(defaultRL)
+//	rl.Register("BackendServices", "", bsDefaultRL)
+//	rl.Register("BackendServices", "Get", bsGetListRL)
+//	rl.Register("BackendServices", "List", bsGetListRL)
+//
+// This rate limiter is not nesting. Only one rate limiter is used for any
+// particular combination of: resource, operation. For the case above, rate
+// limiter registered at ("BackendServices", "") won't be applied to operation
+// ("BackendServices", "Get"), because a more specific rate limiter was
+// registered.
+func NewCompositeRateLimiter(defaultRL RateLimiter) *CompositeRateLimiter {
+	m := map[string]map[string]RateLimiter{
+		"": {
+			"": defaultRL,
+		},
+	}
+	return &CompositeRateLimiter{
+		rateLimiters: m,
+		defaultRL:    defaultRL,
+	}
+}
+
+// ensureExists creates sub-maps as needed.
+func (c *CompositeRateLimiter) ensureExists(service string) {
+	if _, ok := c.rateLimiters[service]; !ok {
+		c.rateLimiters[service] = map[string]RateLimiter{}
+	}
+}
+
+// fillMissing finds all combinations where resource and/or operation name
+// could be omitted and sets it to defaultRL.
+func (c *CompositeRateLimiter) fillMissing() {
+	for _, subService := range c.rateLimiters {
+		if subService[""] == nil {
+			subService[""] = c.defaultRL
+		}
+	}
+}
+
+// Register adds provided rl to the composite rate limiter. Service, operation
+// can be omitted by providing an empty string. In this case, the provided rate
+// limiter will be used only when there is no other rate limiter matching a
+// particular resource, or operation.
+//
+// It replaces previous rate limiter provided for the same service, operation
+// combination. Once a rate limiter is added, it can't be removed.
+//
+// Same rate limiter can be used for multiple Register calls.
+func (c *CompositeRateLimiter) Register(service, operation string, rl RateLimiter) {
+	c.ensureExists(service)
+	c.rateLimiters[service][operation] = rl
+	c.fillMissing()
+}
+
+// Accept either calls underlying rate limiter matching rlk or a default rate
+// limiter when none is found.
+func (c *CompositeRateLimiter) Accept(ctx context.Context, rlk *RateLimitKey) error {
+	if rlk == nil {
+		return c.defaultRL.Accept(ctx, rlk)
+	}
+	service := rlk.Service
+	if _, ok := c.rateLimiters[service]; !ok {
+		service = ""
+	}
+	operation := rlk.Operation
+	if _, ok := c.rateLimiters[service][operation]; !ok {
+		operation = ""
+	}
+	return c.rateLimiters[service][operation].Accept(ctx, rlk)
+}
+
+// Observe does nothing.
+func (*CompositeRateLimiter) Observe(context.Context, error, *RateLimitKey) {
 }

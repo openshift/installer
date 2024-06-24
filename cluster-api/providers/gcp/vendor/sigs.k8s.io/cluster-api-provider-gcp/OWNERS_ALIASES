@@ -25,3 +25,6 @@ aliases:
     - cpanato
     - dims
     - richardcase
+
+  cluster-api-gcp-reviewers:
+    - damdo
