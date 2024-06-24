@@ -71,13 +71,8 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 				logrus.Fatal(err)
 			}
 
-			authToken, err := agentpkg.FindAuthTokenFromAssetStore(assetDir)
-			if err != nil {
-				logrus.Fatal(err)
-			}
-
 			ctx := context.Background()
-			cluster, err := agentpkg.NewCluster(ctx, assetDir, rendezvousIP, kubeconfigPath, sshKey, authToken, workflow.AgentWorkflowTypeInstall)
+			cluster, err := agentpkg.NewCluster(ctx, assetDir, rendezvousIP, kubeconfigPath, sshKey, workflow.AgentWorkflowTypeInstall)
 			if err != nil {
 				logrus.Exit(exitCodeBootstrapFailed)
 			}
@@ -111,13 +106,8 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 				logrus.Fatal(err)
 			}
 
-			authToken, err := agentpkg.FindAuthTokenFromAssetStore(assetDir)
-			if err != nil {
-				logrus.Fatal(err)
-			}
-
 			ctx := context.Background()
-			cluster, err := agentpkg.NewCluster(ctx, assetDir, rendezvousIP, kubeconfigPath, sshKey, authToken, workflow.AgentWorkflowTypeInstall)
+			cluster, err := agentpkg.NewCluster(ctx, assetDir, rendezvousIP, kubeconfigPath, sshKey, workflow.AgentWorkflowTypeInstall)
 			if err != nil {
 				logrus.Exit(exitCodeBootstrapFailed)
 			}

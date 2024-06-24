@@ -66,9 +66,14 @@ type clusterInstallStatusHistory struct {
 }
 
 // NewCluster initializes a Cluster object
-func NewCluster(ctx context.Context, assetDir, rendezvousIP, kubeconfigPath, sshKey, authToken string, workflowType workflow.AgentWorkflowType) (*Cluster, error) {
+func NewCluster(ctx context.Context, assetDir, rendezvousIP, kubeconfigPath, sshKey string, workflowType workflow.AgentWorkflowType) (*Cluster, error) {
 	czero := &Cluster{}
 	capi := &clientSet{}
+
+	authToken, err := FindAuthTokenFromAssetStore(assetDir)
+	if err != nil {
+		logrus.Fatal(err)
+	}
 
 	restclient, err := NewNodeZeroRestClient(ctx, rendezvousIP, sshKey, authToken)
 	if err != nil {
