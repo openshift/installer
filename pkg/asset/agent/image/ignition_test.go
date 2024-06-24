@@ -393,6 +393,7 @@ func commonFiles() []string {
 		"/usr/local/bin/load-config-iso.sh",
 		"/etc/udev/rules.d/80-agent-config-image.rules",
 		"/usr/local/bin/add-node.sh",
+		"/usr/local/bin/common.sh",
 	}
 }
 
