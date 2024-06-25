@@ -77,10 +77,10 @@ ARG IBMCLI_URI=https://clis.cloud.ibm.com/install/linux
 RUN mkdir /output && HOME=/output && \ 
     echo "-4" > $HOME/.curlrc && \
     curl -fsSL ${IBMCLI_URI} | sh && \    
-    ibmcloud plugin install vpc-infrastructure -f && \
-    ibmcloud plugin install cloud-dns-services -f && \
-    ibmcloud plugin install cloud-internet-services -f && \
-    ibmcloud plugin install key-protect -f && \
+    ibmcloud plugin install vpc-infrastructure -f -v 11.3.0 && \
+    ibmcloud plugin install cloud-dns-services -f -v 0.7.3 && \
+    ibmcloud plugin install cloud-internet-services -f -v 1.16.2 && \
+    ibmcloud plugin install key-protect -f -v 0.10.0 && \
     cp /usr/local/bin/ibmcloud /bin/ibmcloud && \
     rm -f $HOME/.curlrc && \
     ibmcloud version && \
