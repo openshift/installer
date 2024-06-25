@@ -11,6 +11,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v3"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/msi/armmsi"
@@ -221,6 +222,33 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 	}
 	if err != nil {
 		return fmt.Errorf("failed to create role assignment: %w", err)
+	}
+
+	// Creating a dummy nsg for existing vnets installation to appease the ingress operator.
+	if in.InstallConfig.Config.Azure.VirtualNetwork != "" {
+		networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, tokenCredential, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create azure network factory: %w", err)
+		}
+		securityGroupName := in.InstallConfig.Config.Platform.Azure.NetworkSecurityGroupName(in.InfraID)
+		securityGroupsClient := networkClientFactory.NewSecurityGroupsClient()
+		pollerResp, err := securityGroupsClient.BeginCreateOrUpdate(
+			ctx,
+			resourceGroupName,
+			securityGroupName,
+			armnetwork.SecurityGroup{
+				Location: to.Ptr(platform.Region),
+				Tags:     tags,
+			},
+			nil)
+		if err != nil {
+			return fmt.Errorf("failed to create network security group: %w", err)
+		}
+		nsg, err := pollerResp.PollUntilDone(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create network security group: %w", err)
+		}
+		logrus.Infof("nsg=%s", *nsg.ID)
 	}
 
 	return nil
