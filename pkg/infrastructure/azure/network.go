@@ -15,9 +15,17 @@ type lbInput struct {
 	region         string
 	resourceGroup  string
 	subscriptionID string
-	pipClient      *armnetwork.PublicIPAddressesClient
 	lbClient       *armnetwork.LoadBalancersClient
 	tags           map[string]*string
+}
+
+type pipInput struct {
+	infraID       string
+	name          string
+	region        string
+	resourceGroup string
+	pipClient     *armnetwork.PublicIPAddressesClient
+	tags          map[string]*string
 }
 
 type vmInput struct {
@@ -29,15 +37,13 @@ type vmInput struct {
 	nicClient     *armnetwork.InterfacesClient
 }
 
-func createPublicIP(ctx context.Context, in *lbInput) (*armnetwork.PublicIPAddress, error) {
-	publicIPAddressName := fmt.Sprintf("%s-pip-v4", in.infraID)
-
+func createPublicIP(ctx context.Context, in *pipInput) (*armnetwork.PublicIPAddress, error) {
 	pollerResp, err := in.pipClient.BeginCreateOrUpdate(
 		ctx,
 		in.resourceGroup,
-		publicIPAddressName,
+		in.name,
 		armnetwork.PublicIPAddress{
-			Name:     to.Ptr(publicIPAddressName),
+			Name:     to.Ptr(in.name),
 			Location: to.Ptr(in.region),
 			SKU: &armnetwork.PublicIPAddressSKU{
 				Name: to.Ptr(armnetwork.PublicIPAddressSKUNameStandard),
@@ -65,12 +71,36 @@ func createPublicIP(ctx context.Context, in *lbInput) (*armnetwork.PublicIPAddre
 	return &resp.PublicIPAddress, nil
 }
 
-func createExternalLoadBalancer(ctx context.Context, pip *armnetwork.PublicIPAddress, in *lbInput) (*armnetwork.LoadBalancer, error) {
+func updateExternalLoadBalancer(ctx context.Context, pip *armnetwork.PublicIPAddress, in *lbInput) (*armnetwork.LoadBalancer, error) {
 	loadBalancerName := in.infraID
 	probeName := "api-probe"
 	frontEndIPConfigName := "public-lb-ip-v4"
 	backEndAddressPoolName := in.infraID
 	idPrefix := fmt.Sprintf("subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/loadBalancers", in.subscriptionID, in.resourceGroup)
+
+	// Get the CAPI-created outbound load balancer so we can modify it.
+	extLB, err := in.lbClient.Get(ctx, in.resourceGroup, loadBalancerName, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get external load balancer: %w", err)
+	}
+
+	// Get the existing frontend configuration and backend address pool and
+	// create an additional frontend configuration mand backend address
+	// pool. Use the newly created public IP address with the additional
+	// configuration so we can setup load balancing rules for the external
+	// API server.
+	extLB.Properties.FrontendIPConfigurations = append(extLB.Properties.FrontendIPConfigurations,
+		&armnetwork.FrontendIPConfiguration{
+			Name: &frontEndIPConfigName,
+			Properties: &armnetwork.FrontendIPConfigurationPropertiesFormat{
+				PrivateIPAllocationMethod: to.Ptr(armnetwork.IPAllocationMethodDynamic),
+				PublicIPAddress:           pip,
+			},
+		})
+	extLB.Properties.BackendAddressPools = append(extLB.Properties.BackendAddressPools,
+		&armnetwork.BackendAddressPool{
+			Name: &backEndAddressPoolName,
+		})
 
 	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx,
 		in.resourceGroup,
@@ -82,20 +112,8 @@ func createExternalLoadBalancer(ctx context.Context, pip *armnetwork.PublicIPAdd
 				Tier: to.Ptr(armnetwork.LoadBalancerSKUTierRegional),
 			},
 			Properties: &armnetwork.LoadBalancerPropertiesFormat{
-				FrontendIPConfigurations: []*armnetwork.FrontendIPConfiguration{
-					{
-						Name: &frontEndIPConfigName,
-						Properties: &armnetwork.FrontendIPConfigurationPropertiesFormat{
-							PrivateIPAllocationMethod: to.Ptr(armnetwork.IPAllocationMethodDynamic),
-							PublicIPAddress:           pip,
-						},
-					},
-				},
-				BackendAddressPools: []*armnetwork.BackendAddressPool{
-					{
-						Name: &backEndAddressPoolName,
-					},
-				},
+				FrontendIPConfigurations: extLB.Properties.FrontendIPConfigurations,
+				BackendAddressPools:      extLB.Properties.BackendAddressPools,
 				Probes: []*armnetwork.Probe{
 					{
 						Name: &probeName,
@@ -130,12 +148,13 @@ func createExternalLoadBalancer(ctx context.Context, pip *armnetwork.PublicIPAdd
 						},
 					},
 				},
+				OutboundRules: extLB.Properties.OutboundRules,
 			},
 			Tags: in.tags,
 		}, nil)
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot create load balancer: %w", err)
+		return nil, fmt.Errorf("cannot update load balancer: %w", err)
 	}
 
 	resp, err := pollerResp.PollUntilDone(ctx, nil)
