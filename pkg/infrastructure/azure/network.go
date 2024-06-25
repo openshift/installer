@@ -8,6 +8,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
+	"k8s.io/utils/ptr"
 )
 
 type lbInput struct {
@@ -35,6 +36,14 @@ type vmInput struct {
 	bap           *armnetwork.BackendAddressPool
 	vmClient      *armcompute.VirtualMachinesClient
 	nicClient     *armnetwork.InterfacesClient
+}
+
+type securityGroupInput struct {
+	resourceGroupName    string
+	securityGroupName    string
+	securityRuleName     string
+	securityRulePort     string
+	securityGroupsClient *armnetwork.SecurityGroupsClient
 }
 
 func createPublicIP(ctx context.Context, in *pipInput) (*armnetwork.PublicIPAddress, error) {
@@ -264,5 +273,67 @@ func associateVMToBackendPool(ctx context.Context, in vmInput) error {
 			return fmt.Errorf("vm %s does not have a single nic: %w", vmName, err)
 		}
 	}
+	return nil
+}
+
+func addSecurityGroupRule(ctx context.Context, in *securityGroupInput) error {
+	securityGroupResp, err := in.securityGroupsClient.Get(ctx, in.resourceGroupName, in.securityGroupName, nil)
+	if err != nil {
+		return fmt.Errorf("failed to get security group: %w", err)
+	}
+	securityGroup := securityGroupResp.SecurityGroup
+
+	priority := int32(100)
+	for _, securityRule := range securityGroup.Properties.SecurityRules {
+		if *securityRule.Properties.Priority >= priority {
+			priority = *securityRule.Properties.Priority + 1
+		}
+	}
+	// Assume inbound tcp connections from any port to destination port for now
+	securityGroup.Properties.SecurityRules = append(securityGroup.Properties.SecurityRules,
+		&armnetwork.SecurityRule{
+			Name: ptr.To(in.securityRuleName),
+			Properties: &armnetwork.SecurityRulePropertiesFormat{
+				Access:                   ptr.To(armnetwork.SecurityRuleAccessAllow),
+				Direction:                ptr.To(armnetwork.SecurityRuleDirectionInbound),
+				Protocol:                 ptr.To(armnetwork.SecurityRuleProtocolTCP),
+				DestinationAddressPrefix: ptr.To("*"),
+				DestinationPortRange:     ptr.To(in.securityRulePort),
+				Priority:                 ptr.To[int32](priority),
+				SourceAddressPrefix:      ptr.To("*"),
+				SourcePortRange:          ptr.To("*"),
+			},
+		},
+	)
+
+	_, err = in.securityGroupsClient.BeginCreateOrUpdate(ctx, in.resourceGroupName, in.securityGroupName, securityGroup, nil)
+	if err != nil {
+		return fmt.Errorf("failed to add security rule: %w", err)
+	}
+
+	return nil
+}
+
+func deleteSecurityGroupRule(ctx context.Context, in *securityGroupInput) error {
+	securityGroupResp, err := in.securityGroupsClient.Get(ctx, in.resourceGroupName, in.securityGroupName, nil)
+	if err != nil {
+		return fmt.Errorf("failed to get security group: %w", err)
+	}
+	securityGroup := securityGroupResp.SecurityGroup
+
+	var securityRules []*armnetwork.SecurityRule
+	for _, securityRule := range securityGroup.Properties.SecurityRules {
+		if *securityRule.Name == in.securityRuleName {
+			continue
+		}
+		securityRules = append(securityRules, securityRule)
+	}
+	securityGroup.Properties.SecurityRules = securityRules
+
+	_, err = in.securityGroupsClient.BeginCreateOrUpdate(ctx, in.resourceGroupName, in.securityGroupName, securityGroup, nil)
+	if err != nil {
+		return fmt.Errorf("failed to update security group: %w", err)
+	}
+
 	return nil
 }
