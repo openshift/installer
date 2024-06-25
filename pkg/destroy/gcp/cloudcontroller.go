@@ -76,7 +76,7 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 	loadBalancerNameFilter := fmt.Sprintf("name eq \"%s\"", loadBalancerName)
 
 	// Discover associated addresses: loadBalancerName
-	found, err := o.listAddressesWithFilter(ctx, "items(name),nextPageToken", loadBalancerNameFilter, nil, gcpRegionalResource)
+	found, err := o.listAddressesWithFilter(ctx, "regional address", "internal_address", "items(name),nextPageToken", loadBalancerNameFilter, o.addressList)
 	if err != nil {
 		return err
 	}

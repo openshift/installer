@@ -47,6 +47,29 @@ const (
 	// gcpRegionalResource is an identifier to indicate that the resource(s)
 	// that are being deleted are regionally scoped.
 	gcpRegionalResource resourceScope = "regional"
+
+	addressResource = iota + 1
+	backendServiceResource
+	bucketResource
+	bucketObjectResource
+	cloudControllerResource
+	diskResource
+	dnsResource
+	firewallResource
+	forwardingRuleResource
+	healthCheckResource
+	httpHealthCheckResource
+	imageResource
+	instanceResource
+	instanceGroupResource
+	networkResource
+	policyBindingResource
+	routeResource
+	routerResource
+	serviceAccountResource
+	subnetworkResource
+	targetPoolResource
+	targetTCPProxiesResource
 )
 
 // ClusterUninstaller holds the various options for the cluster we want to delete
@@ -176,7 +199,7 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 		{name: "Buckets", execute: o.destroyBuckets},
 		{name: "Routes", execute: o.destroyRoutes},
 		{name: "Firewalls", execute: o.destroyFirewalls},
-		{name: "Addresses", execute: o.destroyAddresses},
+		{name: "Addresses", execute: o.destroyResources},
 		{name: "Forwarding rules", execute: o.destroyForwardingRules},
 		{name: "Target Pools", execute: o.destroyTargetPools},
 		{name: "Instance groups", execute: o.destroyInstanceGroups},
@@ -384,4 +407,114 @@ func operationErrorMessage(op *compute.Operation) string {
 		return op.HttpErrorMessage
 	}
 	return strings.Join(errs, ", ")
+}
+
+type destroyFunc func(ctx context.Context, item cloudResource) (*compute.Operation, error)
+type destroyCloudResource func(ctx context.Context, item cloudResource, deleteFunc destroyFunc) error
+
+type uninstallerResource struct {
+	resourceType int
+	destroyFunc  destroyFunc
+
+	addressListFunc addressListFunc
+	// TODO: add other list functions below as they are implemented
+}
+
+type destroyer struct {
+	name         string
+	itemTypeName string
+	resource     uninstallerResource
+}
+
+func (o *ClusterUninstaller) listResources(ctx context.Context, resourceName, typeName string, resource uninstallerResource) ([]cloudResource, error) {
+	switch resource.resourceType {
+	case addressResource:
+		return o.listAddressesWithFilter(ctx, resourceName, typeName, "items(name,region,addressType),nextPageToken", o.clusterIDFilter(), resource.addressListFunc)
+	case backendServiceResource:
+	case bucketResource:
+	case bucketObjectResource:
+	case cloudControllerResource:
+	case diskResource:
+	case dnsResource:
+	case firewallResource:
+	case forwardingRuleResource:
+	case healthCheckResource:
+	case httpHealthCheckResource:
+	case imageResource:
+	case instanceResource:
+	case instanceGroupResource:
+	case networkResource:
+	case policyBindingResource:
+	case routeResource:
+	case routerResource:
+	case serviceAccountResource:
+	case subnetworkResource:
+	case targetPoolResource:
+	case targetTCPProxiesResource:
+	}
+
+	return nil, fmt.Errorf("failed to find matching resource type to destroy: %d", resource.resourceType)
+}
+
+func (o *ClusterUninstaller) destroyResources(ctx context.Context) error {
+	for _, resourceInfo := range []destroyer{
+		{
+			name:         "global address",
+			itemTypeName: "internal_address",
+			resource: uninstallerResource{
+				resourceType:    addressResource,
+				destroyFunc:     o.addressDelete,
+				addressListFunc: o.addressList,
+			},
+		},
+		{
+			name:         "regional address",
+			itemTypeName: "internal_address",
+			resource: uninstallerResource{
+				resourceType:    addressResource,
+				destroyFunc:     o.regionAddressDelete,
+				addressListFunc: o.regionAddressList,
+			},
+		},
+	} {
+		found, err := o.listResources(ctx, resourceInfo.name, resourceInfo.itemTypeName, resourceInfo.resource)
+		if err != nil {
+			return err
+		}
+		items := o.insertPendingItems(resourceInfo.itemTypeName, found)
+		for _, item := range items {
+			err := o.deleteResource(ctx, item, resourceInfo.resource.destroyFunc)
+			if err != nil {
+				o.errorTracker.suppressWarning(item.key, err, o.Logger)
+			}
+		}
+		if items = o.getPendingItems(resourceInfo.itemTypeName); len(items) > 0 {
+			return fmt.Errorf("%s: %d items pending", resourceInfo.name, len(items))
+		}
+	}
+	return nil
+}
+
+func (o *ClusterUninstaller) deleteResource(ctx context.Context, item cloudResource, deleteFunc destroyFunc) error {
+	// TODO: see if we can get the resource type here
+	o.Logger.Debugf("Deleting resource %s", item.name)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+	op, err := deleteFunc(ctx, item)
+	if err != nil && !isNoOp(err) {
+		o.resetRequestID(item.typeName, item.name)
+		// TODO: see if we can get the resource type here
+		return fmt.Errorf("failed to delete resource %s: %w", item.name, err)
+	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID(item.typeName, item.name)
+		// TODO: see if we can get the resource type here
+		return fmt.Errorf("failed to delete resource %s with error: %s", item.name, operationErrorMessage(op))
+	}
+	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
+		o.resetRequestID(item.typeName, item.name)
+		o.deletePendingItems(item.typeName, []cloudResource{item})
+		o.Logger.Infof("Deleted address %s", item.name)
+	}
+	return nil
 }
