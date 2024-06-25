@@ -45,6 +45,8 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 		return nil, fmt.Errorf("failed to create machineapi.TagSpecifications from UserTags: %w", err)
 	}
 
+	userAssignedIdentityID := fmt.Sprintf("/subscriptions/%s/resourcegroups/%s/providers/Microsoft.ManagedIdentity/userAssignedIdentities/%s-identity", subscriptionID, resourceGroup, clusterID)
+
 	var image *capz.Image
 	osImage := mpool.OSImage
 	galleryName := strings.ReplaceAll(clusterID, "-", "_")
@@ -141,6 +143,12 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 						AcceleratedNetworking: ptr.To(mpool.VMNetworkingType == azure.AcceleratedNetworkingEnabled),
 					},
 				},
+				Identity: capz.VMIdentityUserAssigned,
+				UserAssignedIdentities: []capz.UserAssignedIdentity{
+					{
+						ProviderID: userAssignedIdentityID,
+					},
+				},
 			},
 		}
 		azureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))
@@ -202,6 +210,12 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 			AllocatePublicIP:       false,
 			AdditionalCapabilities: additionalCapabilities,
 			SecurityProfile:        securityProfile,
+			Identity:               capz.VMIdentityUserAssigned,
+			UserAssignedIdentities: []capz.UserAssignedIdentity{
+				{
+					ProviderID: userAssignedIdentityID,
+				},
+			},
 		},
 	}
 	bootstrapAzureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))

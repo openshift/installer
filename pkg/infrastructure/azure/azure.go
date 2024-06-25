@@ -11,12 +11,14 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v3"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/msi/armmsi"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/coreos/stream-metadata-go/arch"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"k8s.io/utils/ptr"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
@@ -28,6 +30,11 @@ import (
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
+)
+
+const (
+	retryTime  = 10 * time.Second
+	retryCount = 6
 )
 
 // Provider implements Azure CAPI installation.
@@ -92,7 +99,7 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 		return fmt.Errorf("failed to get azure resource groups factory: %w", err)
 	}
 	resourceGroupsClient := resourcesClientFactory.NewResourceGroupsClient()
-	resourceGroup, err := resourceGroupsClient.CreateOrUpdate(
+	_, err = resourceGroupsClient.CreateOrUpdate(
 		ctx,
 		resourceGroupName,
 		armresources.ResourceGroup{
@@ -105,8 +112,116 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 	if err != nil {
 		return fmt.Errorf("error creating resource group %s: %w", resourceGroupName, err)
 	}
+	resourceGroup, err := resourceGroupsClient.Get(ctx, resourceGroupName, nil)
+	if err != nil {
+		return fmt.Errorf("error getting resource group %s: %w", resourceGroupName, err)
+	}
+
 	logrus.Debugf("ResourceGroup.ID=%s", *resourceGroup.ID)
 	p.ResourceGroupName = resourceGroupName
+
+	// Create user assigned identity
+	userAssignedIdentityName := fmt.Sprintf("%s-identity", in.InfraID)
+	armmsiClientFactory, err := armmsi.NewClientFactory(
+		subscriptionID,
+		tokenCredential,
+		&arm.ClientOptions{
+			ClientOptions: policy.ClientOptions{
+				Cloud: cloudConfiguration,
+			},
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create armmsi client: %w", err)
+	}
+	_, err = armmsiClientFactory.NewUserAssignedIdentitiesClient().CreateOrUpdate(
+		ctx,
+		resourceGroupName,
+		userAssignedIdentityName,
+		armmsi.Identity{
+			Location: ptr.To(platform.Region),
+			Tags:     tags,
+		},
+		nil,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create user assigned identity %s: %w", userAssignedIdentityName, err)
+	}
+	userAssignedIdentity, err := armmsiClientFactory.NewUserAssignedIdentitiesClient().Get(
+		ctx,
+		resourceGroupName,
+		userAssignedIdentityName,
+		nil,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to get user assigned identity %s: %w", userAssignedIdentityName, err)
+	}
+	principalID := *userAssignedIdentity.Properties.PrincipalID
+
+	logrus.Debugf("UserAssignedIdentity.ID=%s", *userAssignedIdentity.ID)
+	logrus.Debugf("PrinciapalID=%s", principalID)
+
+	clientFactory, err := armauthorization.NewClientFactory(
+		subscriptionID,
+		tokenCredential,
+		&arm.ClientOptions{
+			ClientOptions: policy.ClientOptions{
+				Cloud: cloudConfiguration,
+			},
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create armauthorization client: %w", err)
+	}
+
+	roleDefinitionsClient := clientFactory.NewRoleDefinitionsClient()
+
+	var contributor *armauthorization.RoleDefinition
+	roleDefinitionsPager := roleDefinitionsClient.NewListPager(*resourceGroup.ID, nil)
+	for roleDefinitionsPager.More() {
+		roleDefinitionsList, err := roleDefinitionsPager.NextPage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to find any role definitions: %w", err)
+		}
+		for _, roleDefinition := range roleDefinitionsList.Value {
+			if *roleDefinition.Properties.RoleName == "Contributor" {
+				contributor = roleDefinition
+				break
+			}
+		}
+	}
+	if contributor == nil {
+		return fmt.Errorf("failed to find contributor definition")
+	}
+
+	roleAssignmentsClient := clientFactory.NewRoleAssignmentsClient()
+	scope := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s", subscriptionID, resourceGroupName)
+	roleAssignmentUUID := uuid.New().String()
+
+	// XXX: Azure doesn't like creating an identity and immediately
+	// creating a role assignment for the identity. There can be
+	// replication delays. So, retry every 10 seconds for a minute until
+	// the role assignment gets created.
+	//
+	// See https://aka.ms/docs-principaltype
+	for i := 0; i < retryCount; i++ {
+		_, err = roleAssignmentsClient.Create(ctx, scope, roleAssignmentUUID,
+			armauthorization.RoleAssignmentCreateParameters{
+				Properties: &armauthorization.RoleAssignmentProperties{
+					PrincipalID:      ptr.To(principalID),
+					RoleDefinitionID: contributor.ID,
+				},
+			},
+			nil,
+		)
+		if err == nil {
+			break
+		}
+		time.Sleep(retryTime)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to create role assignment: %w", err)
+	}
 
 	return nil
 }
@@ -170,38 +285,6 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	tokenCredential := session.TokenCreds
 	storageURL := fmt.Sprintf("https://%s.blob.core.windows.net", storageAccountName)
 	blobURL := fmt.Sprintf("%s/%s/%s", storageURL, containerName, blobName)
-
-	// Create user assigned identity
-	userAssignedIdentityName := fmt.Sprintf("%s-identity", in.InfraID)
-	armmsiClientFactory, err := armmsi.NewClientFactory(
-		subscriptionID,
-		tokenCredential,
-		&arm.ClientOptions{
-			ClientOptions: policy.ClientOptions{
-				Cloud: cloudConfiguration,
-			},
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create armmsi client: %w", err)
-	}
-	userAssignedIdentity, err := armmsiClientFactory.NewUserAssignedIdentitiesClient().CreateOrUpdate(
-		ctx,
-		resourceGroupName,
-		userAssignedIdentityName,
-		armmsi.Identity{
-			Location: ptr.To(platform.Region),
-			Tags:     tags,
-		},
-		nil,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create user assigned identity %s: %w", userAssignedIdentityName, err)
-	}
-	principalID := *userAssignedIdentity.Properties.PrincipalID
-
-	logrus.Debugf("UserAssignedIdentity.ID=%s", *userAssignedIdentity.ID)
-	logrus.Debugf("PrinciapalID=%s", principalID)
 
 	// Create storage account
 	createStorageAccountOutput, err := CreateStorageAccount(ctx, &CreateStorageAccountInput{
