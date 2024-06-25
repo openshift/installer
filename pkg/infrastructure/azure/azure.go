@@ -45,6 +45,7 @@ type Provider struct {
 	StorageAccount       *armstorage.Account
 	StorageClientFactory *armstorage.ClientFactory
 	StorageAccountKeys   []armstorage.AccountKey
+	NetworkClientFactory *armnetwork.ClientFactory
 	Tags                 map[string]*string
 	lbBackendAddressPool *armnetwork.BackendAddressPool
 }
@@ -53,6 +54,7 @@ var _ clusterapi.PreProvider = (*Provider)(nil)
 var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
 var _ clusterapi.PostProvider = (*Provider)(nil)
 var _ clusterapi.IgnitionProvider = (*Provider)(nil)
+var _ clusterapi.PostDestroyer = (*Provider)(nil)
 
 // Name returns the name of the provider.
 func (p *Provider) Name() string {
@@ -486,6 +488,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	p.StorageAccount = storageAccount
 	p.StorageClientFactory = storageClientFactory
 	p.StorageAccountKeys = storageAccountKeys
+	p.NetworkClientFactory = networkClientFactory
 	p.lbBackendAddressPool = lbBap
 
 	if err := createDNSEntries(ctx, in, extLBFQDN, resourceGroupName); err != nil {
@@ -544,6 +547,33 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 		if err = associateVMToBackendPool(ctx, *vmInput); err != nil {
 			return fmt.Errorf("failed to associate control plane VMs with external load balancer: %w", err)
 		}
+
+		if err = addSecurityGroupRule(ctx, &securityGroupInput{
+			resourceGroupName:    p.ResourceGroupName,
+			securityGroupName:    fmt.Sprintf("%s-nsg", in.InfraID),
+			securityRuleName:     "ssh_in",
+			securityRulePort:     "22",
+			securityGroupsClient: p.NetworkClientFactory.NewSecurityGroupsClient(),
+		}); err != nil {
+			return fmt.Errorf("failed to add security rule: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// PostDestroy removes SSH access from the network security rules after the
+// bootstrap machine is destroyed.
+func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerInput) error {
+	err := deleteSecurityGroupRule(ctx, &securityGroupInput{
+		resourceGroupName:    p.ResourceGroupName,
+		securityGroupName:    fmt.Sprintf("%s-nsg", in.Metadata.InfraID),
+		securityRuleName:     "ssh_in",
+		securityRulePort:     "22",
+		securityGroupsClient: p.NetworkClientFactory.NewSecurityGroupsClient(),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete security rule: %w", err)
 	}
 
 	return nil
