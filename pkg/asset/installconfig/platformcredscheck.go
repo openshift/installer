@@ -20,7 +20,6 @@ import (
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
-	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -84,7 +83,7 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "creating OpenStack session")
 		}
-	case baremetal.Name, libvirt.Name, external.Name, none.Name, vsphere.Name, nutanix.Name:
+	case baremetal.Name, external.Name, none.Name, vsphere.Name, nutanix.Name:
 		// no creds to check
 	case azure.Name:
 		azureSession, err := ic.Azure.Session()

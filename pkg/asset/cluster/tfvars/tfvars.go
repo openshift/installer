@@ -21,7 +21,6 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
-	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
@@ -47,7 +46,6 @@ import (
 	baremetaltfvars "github.com/openshift/installer/pkg/tfvars/baremetal"
 	gcptfvars "github.com/openshift/installer/pkg/tfvars/gcp"
 	ibmcloudtfvars "github.com/openshift/installer/pkg/tfvars/ibmcloud"
-	libvirttfvars "github.com/openshift/installer/pkg/tfvars/libvirt"
 	nutanixtfvars "github.com/openshift/installer/pkg/tfvars/nutanix"
 	openstacktfvars "github.com/openshift/installer/pkg/tfvars/openstack"
 	ovirttfvars "github.com/openshift/installer/pkg/tfvars/ovirt"
@@ -59,7 +57,6 @@ import (
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
-	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -745,38 +742,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				VPCPermitted:               vpcPermitted,
 				WorkerConfigs:              workerConfigs,
 				WorkerDedicatedHosts:       workerDedicatedHosts,
-			},
-		)
-		if err != nil {
-			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
-		}
-		t.FileList = append(t.FileList, &asset.File{
-			Filename: TfPlatformVarsFileName,
-			Data:     data,
-		})
-	case libvirt.Name:
-		masters, err := mastersAsset.Machines()
-		if err != nil {
-			return err
-		}
-		// convert options list to a list of mappings which can be consumed by terraform
-		var dnsmasqoptions []map[string]string
-		for _, option := range installConfig.Config.Platform.Libvirt.Network.DnsmasqOptions {
-			dnsmasqoptions = append(dnsmasqoptions,
-				map[string]string{
-					"option_name":  option.Name,
-					"option_value": option.Value})
-		}
-
-		data, err = libvirttfvars.TFVars(
-			libvirttfvars.TFVarsSources{
-				MasterConfig:   masters[0].Spec.ProviderSpec.Value.Object.(*libvirtprovider.LibvirtMachineProviderConfig),
-				OsImage:        string(*rhcosImage),
-				MachineCIDR:    &installConfig.Config.Networking.MachineNetwork[0].CIDR.IPNet,
-				Bridge:         installConfig.Config.Platform.Libvirt.Network.IfName,
-				MasterCount:    masterCount,
-				Architecture:   installConfig.Config.ControlPlane.Architecture,
-				DnsmasqOptions: dnsmasqoptions,
 			},
 		)
 		if err != nil {
