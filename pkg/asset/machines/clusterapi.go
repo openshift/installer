@@ -258,13 +258,21 @@ func (c *ClusterAPI) GenerateWithContext(ctx context.Context, dependencies asset
 				mpool.OSImage.Publisher = *img.Plan.Publisher
 			}
 		}
-		pool.Platform.Azure = &mpool
-		subnet := ic.Azure.ControlPlaneSubnet
-
 		capabilities, err := client.GetVMCapabilities(ctx, mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
 		if err != nil {
 			return err
 		}
+		if mpool.VMNetworkingType == "" {
+			isAccelerated := icazure.GetVMNetworkingCapability(capabilities)
+			if isAccelerated {
+				mpool.VMNetworkingType = string(azuretypes.VMnetworkingTypeAccelerated)
+			} else {
+				logrus.Infof("Instance type %s does not support Accelerated Networking. Using Basic Networking instead.", mpool.InstanceType)
+			}
+		}
+		pool.Platform.Azure = &mpool
+		subnet := ic.Azure.ControlPlaneSubnet
+
 		hyperVGen, err := icazure.GetHyperVGenerationVersion(capabilities, "")
 		if err != nil {
 			return err
