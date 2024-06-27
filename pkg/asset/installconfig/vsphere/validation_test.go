@@ -361,27 +361,15 @@ func TestValidateFailureDomains(t *testing.T) {
 			checkTags:        false,
 			expectErr:        `^platform.vsphere.failureDomains.topology: Invalid value: "invalid-network": unable to find network provided$`,
 		}, {
-			name: "multi-zone validation - invalid folder",
+			name: "multi-zone validation - create missing folder",
 			failureDomain: func() *vsphere.FailureDomain {
 				failureDomain := &validMultiVCenterPlatform().FailureDomains[0]
-				failureDomain.Topology.Folder = "/DC0/vm/invalid-folder"
+				failureDomain.Topology.Folder = "/DC0/vm/create-missing-folder"
 				return failureDomain
 			}(),
 			validationMethod: validateFailureDomain,
 			checkTags:        false,
-			expectErr:        `^platform.vsphere.failureDomains.topology.folder: Invalid value: "/DC0/vm/invalid-folder": folder '/DC0/vm/invalid-folder' not found$`,
-		},
-
-		{
-			name: "multi-zone validation - invalid folder",
-			failureDomain: func() *vsphere.FailureDomain {
-				failureDomain := &validMultiVCenterPlatform().FailureDomains[0]
-				failureDomain.Topology.Folder = "/DC0/vm/invalid-folder"
-				return failureDomain
-			}(),
-			validationMethod: validateFailureDomain,
-			checkTags:        false,
-			expectErr:        `^platform.vsphere.failureDomains.topology.folder: Invalid value: "/DC0/vm/invalid-folder": folder '/DC0/vm/invalid-folder' not found$`,
+			expectErr:        ``,
 		}, {
 			name:             "multi-zone tag categories present and tags attached",
 			validationMethod: validateFailureDomain,
