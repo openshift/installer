@@ -184,7 +184,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		image.Version = mpool.OSImage.Version
 	} else if useImageGallery {
 		// image gallery names cannot have dashes
-		galleryName := strings.Replace(clusterID, "-", "_", -1)
+		galleryName := strings.ReplaceAll(clusterID, "-", "_")
 		id := clusterID
 		if hyperVGen == "V2" {
 			id += "-gen2"

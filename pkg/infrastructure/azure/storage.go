@@ -49,7 +49,7 @@ type CreateStorageAccountOutput struct {
 // CreateStorageAccount creates a new storage account.
 func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*CreateStorageAccountOutput, error) {
 	minimumTLSVersion := armstorage.MinimumTLSVersionTLS10
-	cloudConfiguration := cloud.AzurePublic
+	cloudConfiguration := in.CloudConfiguration
 
 	/* XXX: Do we support other clouds? */
 	switch in.CloudName {

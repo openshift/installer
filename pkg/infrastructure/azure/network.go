@@ -43,7 +43,19 @@ type securityGroupInput struct {
 	securityGroupName    string
 	securityRuleName     string
 	securityRulePort     string
-	securityGroupsClient *armnetwork.SecurityGroupsClient
+	securityRulePriority int32
+	networkClientFactory *armnetwork.ClientFactory
+}
+
+type inboundNatRuleInput struct {
+	resourceGroupName    string
+	loadBalancerName     string
+	bootstrapNicName     string
+	frontendIPConfigID   string
+	inboundNatRuleID     string
+	inboundNatRuleName   string
+	inboundNatRulePort   int32
+	networkClientFactory *armnetwork.ClientFactory
 }
 
 func createPublicIP(ctx context.Context, in *pipInput) (*armnetwork.PublicIPAddress, error) {
@@ -80,7 +92,7 @@ func createPublicIP(ctx context.Context, in *pipInput) (*armnetwork.PublicIPAddr
 	return &resp.PublicIPAddress, nil
 }
 
-func updateExternalLoadBalancer(ctx context.Context, pip *armnetwork.PublicIPAddress, in *lbInput) (*armnetwork.LoadBalancer, error) {
+func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip *armnetwork.PublicIPAddress, in *lbInput) (*armnetwork.LoadBalancer, error) {
 	loadBalancerName := in.infraID
 	probeName := "api-probe"
 	frontEndIPConfigName := "public-lb-ip-v4"
@@ -94,7 +106,7 @@ func updateExternalLoadBalancer(ctx context.Context, pip *armnetwork.PublicIPAdd
 	}
 
 	// Get the existing frontend configuration and backend address pool and
-	// create an additional frontend configuration mand backend address
+	// create an additional frontend configuration and backend address
 	// pool. Use the newly created public IP address with the additional
 	// configuration so we can setup load balancing rules for the external
 	// API server.
@@ -277,21 +289,14 @@ func associateVMToBackendPool(ctx context.Context, in vmInput) error {
 }
 
 func addSecurityGroupRule(ctx context.Context, in *securityGroupInput) error {
-	securityGroupResp, err := in.securityGroupsClient.Get(ctx, in.resourceGroupName, in.securityGroupName, nil)
-	if err != nil {
-		return fmt.Errorf("failed to get security group: %w", err)
-	}
-	securityGroup := securityGroupResp.SecurityGroup
+	securityRulesClient := in.networkClientFactory.NewSecurityRulesClient()
 
-	priority := int32(100)
-	for _, securityRule := range securityGroup.Properties.SecurityRules {
-		if *securityRule.Properties.Priority >= priority {
-			priority = *securityRule.Properties.Priority + 1
-		}
-	}
 	// Assume inbound tcp connections from any port to destination port for now
-	securityGroup.Properties.SecurityRules = append(securityGroup.Properties.SecurityRules,
-		&armnetwork.SecurityRule{
+	securityRuleResp, err := securityRulesClient.BeginCreateOrUpdate(ctx,
+		in.resourceGroupName,
+		in.securityGroupName,
+		in.securityRuleName,
+		armnetwork.SecurityRule{
 			Name: ptr.To(in.securityRuleName),
 			Properties: &armnetwork.SecurityRulePropertiesFormat{
 				Access:                   ptr.To(armnetwork.SecurityRuleAccessAllow),
@@ -299,14 +304,17 @@ func addSecurityGroupRule(ctx context.Context, in *securityGroupInput) error {
 				Protocol:                 ptr.To(armnetwork.SecurityRuleProtocolTCP),
 				DestinationAddressPrefix: ptr.To("*"),
 				DestinationPortRange:     ptr.To(in.securityRulePort),
-				Priority:                 ptr.To[int32](priority),
+				Priority:                 ptr.To[int32](in.securityRulePriority),
 				SourceAddressPrefix:      ptr.To("*"),
 				SourcePortRange:          ptr.To("*"),
 			},
 		},
+		nil,
 	)
-
-	_, err = in.securityGroupsClient.BeginCreateOrUpdate(ctx, in.resourceGroupName, in.securityGroupName, securityGroup, nil)
+	if err != nil {
+		return fmt.Errorf("failed to add security rule: %w", err)
+	}
+	_, err = securityRuleResp.PollUntilDone(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to add security rule: %w", err)
 	}
@@ -315,25 +323,109 @@ func addSecurityGroupRule(ctx context.Context, in *securityGroupInput) error {
 }
 
 func deleteSecurityGroupRule(ctx context.Context, in *securityGroupInput) error {
-	securityGroupResp, err := in.securityGroupsClient.Get(ctx, in.resourceGroupName, in.securityGroupName, nil)
+	securityRulesClient := in.networkClientFactory.NewSecurityRulesClient()
+	securityRulesPoller, err := securityRulesClient.BeginDelete(ctx, in.resourceGroupName, in.securityGroupName, in.securityRuleName, nil)
 	if err != nil {
-		return fmt.Errorf("failed to get security group: %w", err)
+		return fmt.Errorf("failed to delete security rule: %w", err)
 	}
-	securityGroup := securityGroupResp.SecurityGroup
-
-	var securityRules []*armnetwork.SecurityRule
-	for _, securityRule := range securityGroup.Properties.SecurityRules {
-		if *securityRule.Name == in.securityRuleName {
-			continue
-		}
-		securityRules = append(securityRules, securityRule)
-	}
-	securityGroup.Properties.SecurityRules = securityRules
-
-	_, err = in.securityGroupsClient.BeginCreateOrUpdate(ctx, in.resourceGroupName, in.securityGroupName, securityGroup, nil)
+	_, err = securityRulesPoller.PollUntilDone(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("failed to update security group: %w", err)
+		return fmt.Errorf("failed to delete security rule: %w", err)
 	}
-
 	return nil
+}
+
+func addInboundNatRuleToLoadBalancer(ctx context.Context, in *inboundNatRuleInput) (*armnetwork.InboundNatRule, error) {
+	inboundNatRulesClient := in.networkClientFactory.NewInboundNatRulesClient()
+	inboundNatRulesPoller, err := inboundNatRulesClient.BeginCreateOrUpdate(ctx,
+		in.resourceGroupName,
+		in.loadBalancerName,
+		in.inboundNatRuleName,
+		armnetwork.InboundNatRule{
+			Properties: &armnetwork.InboundNatRulePropertiesFormat{
+				BackendPort: to.Ptr[int32](in.inboundNatRulePort),
+				FrontendIPConfiguration: &armnetwork.SubResource{
+					ID: to.Ptr(in.frontendIPConfigID),
+				},
+				FrontendPort: to.Ptr[int32](in.inboundNatRulePort),
+				Protocol:     to.Ptr(armnetwork.TransportProtocolTCP), // assume TCP for now
+			},
+		},
+		nil,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to add inbound nat rule to load balancer: %w", err)
+	}
+	inboundNatRuleResp, err := inboundNatRulesPoller.PollUntilDone(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to add inbound nat rule to load balancer: %w", err)
+	}
+
+	return &inboundNatRuleResp.InboundNatRule, nil
+}
+
+func deleteInboundNatRule(ctx context.Context, in *inboundNatRuleInput) error {
+	inboundNatRulesClient := in.networkClientFactory.NewInboundNatRulesClient()
+	inboundNatRulesPoller, err := inboundNatRulesClient.BeginDelete(ctx,
+		in.resourceGroupName,
+		in.loadBalancerName,
+		in.inboundNatRuleName,
+		nil,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to delete inbound nat rule: %w", err)
+	}
+	_, err = inboundNatRulesPoller.PollUntilDone(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to delete inbound nat rule: %w", err)
+	}
+	return nil
+}
+
+func associateInboundNatRuleToInterface(ctx context.Context, in *inboundNatRuleInput) (*armnetwork.Interface, error) {
+	interfacesClient := in.networkClientFactory.NewInterfacesClient()
+	interfaceResp, err := interfacesClient.Get(ctx,
+		in.resourceGroupName,
+		in.bootstrapNicName,
+		nil,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get interface: %w", err)
+	}
+	bootstrapInterface := interfaceResp.Interface
+
+	inboundNatRulesClient := in.networkClientFactory.NewInboundNatRulesClient()
+	inboundNatRulesResp, err := inboundNatRulesClient.Get(ctx,
+		in.resourceGroupName,
+		in.loadBalancerName,
+		in.inboundNatRuleName,
+		nil,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get inbound nat rule: %w", err)
+	}
+	inboundNatRule := inboundNatRulesResp.InboundNatRule
+
+	for i, ipConfig := range bootstrapInterface.Properties.IPConfigurations {
+		ipConfig.Properties.LoadBalancerInboundNatRules = append(ipConfig.Properties.LoadBalancerInboundNatRules,
+			&inboundNatRule,
+		)
+		bootstrapInterface.Properties.IPConfigurations[i] = ipConfig
+	}
+
+	interfacesPollerResp, err := interfacesClient.BeginCreateOrUpdate(ctx,
+		in.resourceGroupName,
+		in.bootstrapNicName,
+		bootstrapInterface,
+		nil,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to add inbound nat rule to interface: %w", err)
+	}
+
+	interfacesResp, err := interfacesPollerResp.PollUntilDone(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to add inbound nat rule to interface: %w", err)
+	}
+	return &interfacesResp.Interface, nil
 }
