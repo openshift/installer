@@ -142,3 +142,8 @@ replace (
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00
 	sigs.k8s.io/cluster-api => sigs.k8s.io/cluster-api v1.7.1
 )
+
+// mtulio@OCPBUGS-36293-fix-byoip-eip
+replace sigs.k8s.io/cluster-api-provider-aws/v2 => github.com/mtulio/cluster-api-provider-aws/v2 v2.0.0-20240628042641-d5882fa6cf6f
+
+//replace sigs.k8s.io/cluster-api-provider-aws/v2 => /home/mtulio/go/src/github.com/mtulio/cluster-api-provider-aws

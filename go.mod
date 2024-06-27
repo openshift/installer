@@ -321,3 +321,8 @@ replace github.com/containerd/containerd => github.com/containerd/containerd v1.
 replace golang.org/x/oauth2 => golang.org/x/oauth2 v0.15.0
 
 replace google.golang.org/api => google.golang.org/api v0.157.0
+
+// mtulio@OCPBUGS-36293-fix-byoip-eip
+replace sigs.k8s.io/cluster-api-provider-aws/v2 => github.com/mtulio/cluster-api-provider-aws/v2 v2.0.0-20240628042641-d5882fa6cf6f
+
+//replace sigs.k8s.io/cluster-api-provider-aws/v2 => /home/mtulio/go/src/github.com/mtulio/cluster-api-provider-aws
