@@ -155,6 +155,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		fileList, errs = i.collectManifests(ctx, cl)
 		// If Provision returned an error, add it to the list
 		if err != nil {
+			capiSystem.CleanEtcd()
 			errs = append(errs, err)
 		}
 		err = utilerrors.NewAggregate(errs)
