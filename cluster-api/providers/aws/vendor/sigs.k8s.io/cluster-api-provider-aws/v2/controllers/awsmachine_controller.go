@@ -541,7 +541,7 @@ func (r *AWSMachineReconciler) reconcileNormal(_ context.Context, machineScope *
 	// a BYOIP without duplication.
 	if pool := machineScope.GetElasticIPPool(); pool != nil {
 		if err := ec2svc.ReconcileElasticIPFromPublicPool(pool, instance); err != nil {
-			machineScope.Error(err, "failed to associate elastic IP address")
+			machineScope.Error(err, "failed to reconcile BYO Public IPv4")
 			return ctrl.Result{}, err
 		}
 	}
