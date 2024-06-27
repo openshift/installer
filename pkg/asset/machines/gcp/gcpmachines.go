@@ -4,6 +4,7 @@ package gcp
 import (
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	compute "google.golang.org/api/compute/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -108,11 +109,10 @@ func GenerateBootstrapMachines(name string, installConfig *installconfig.Install
 // Create a CAPG-specific machine.
 func createGCPMachine(name string, installConfig *installconfig.InstallConfig, infraID string, mpool *gcptypes.MachinePool, imageName string) *capg.GCPMachine {
 	// Use the rhcosImage as image name if not defined
-	var osImage string
-	if mpool.OSImage == nil {
-		osImage = imageName
-	} else {
-		osImage = mpool.OSImage.Name
+	osImage := imageName
+	if mpool.OSImage != nil {
+		osImage = fmt.Sprintf("projects/%s/global/images/%s", mpool.OSImage.Project, mpool.OSImage.Name)
+		logrus.Debugf("overriding gcp machine image: %s", osImage)
 	}
 
 	masterSubnet := installConfig.Config.Platform.GCP.ControlPlaneSubnet
