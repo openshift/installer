@@ -51,6 +51,10 @@ func (cd *ClusterDeployment) Generate(dependencies asset.Parents) error {
 
 	// This manifest is not required for AddNodes workflow
 	if agentWorkflow.Workflow == workflow.AgentWorkflowTypeAddNodes {
+		// Add empty file to keep config ISO loader happy
+		cd.File = &asset.File{
+			Filename: clusterDeploymentFilename,
+		}
 		return nil
 	}
 
