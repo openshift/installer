@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 set -euoE pipefail ## -E option will cause functions to inherit trap
 
+# shellcheck source=bootstrap-service-record.sh
 . /usr/local/bin/bootstrap-service-record.sh
 
+# shellcheck source=release-image.sh.template
 . /usr/local/bin/release-image.sh
+# shellcheck source=bootstrap-cluster-gather.sh
 . /usr/local/bin/bootstrap-cluster-gather.sh
+# shellcheck source=bootstrap-verify-api-server-urls.sh
 . /usr/local/bin/bootstrap-verify-api-server-urls.sh
 
 mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
