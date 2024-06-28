@@ -132,6 +132,7 @@ func FindAuthTokenFromAssetStore(assetDir string) (string, error) {
 
 	if authConfigError != nil {
 		logrus.Debug(errors.Wrapf(authConfigError, "failed to load %s", authConfigAsset.Name()))
+		return "", errors.New("failed to load AuthConfig")
 	}
 
 	token := authConfig.(*gencrypto.AuthConfig).Token

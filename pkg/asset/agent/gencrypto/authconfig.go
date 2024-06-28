@@ -44,16 +44,16 @@ func (a *AuthConfig) Generate(dependencies asset.Parents) error {
 	infraEnvID := &common.InfraEnvID{}
 	dependencies.Get(infraEnvID)
 
-	PublicKey, PrivateKey, err := keyPairPEM()
+	publicKey, privateKey, err := keyPairPEM()
 	if err != nil {
 		return err
 	}
 	// Encode to Base64 (Standard encoding)
-	encodedPubKeyPEM := base64.StdEncoding.EncodeToString([]byte(PublicKey))
+	encodedPubKeyPEM := base64.StdEncoding.EncodeToString([]byte(publicKey))
 
 	a.PublicKey = encodedPubKeyPEM
 
-	token, err := localJWTForKey(infraEnvID.ID, PrivateKey)
+	token, err := localJWTForKey(infraEnvID.ID, privateKey)
 	if err != nil {
 		return err
 	}
