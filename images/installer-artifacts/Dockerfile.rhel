@@ -41,6 +41,7 @@ RUN GOOS=linux GOARCH=amd64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS linuxarmbuilder
 ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
+ARG SKIP_ENVTEST="y"
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/linux_arm64 terraform/bin/linux_arm64
