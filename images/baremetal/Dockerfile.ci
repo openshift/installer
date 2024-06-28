@@ -24,12 +24,11 @@ COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install
 RUN dnf upgrade -y && \
     dnf install --setopt=tsflags=nodocs -y \
     openssl unzip jq openssh-clients && \
+    nmstate openshift-clients && \
     dnf clean all && rm -rf /var/cache/yum/*
 
 # node-joiner requirements
 COPY --from=builder /go/src/github.com/openshift/installer/bin/node-joiner /bin/node-joiner
-RUN dnf install -y nmstate openshift-clients && \
-    dnf clean all && rm -rf /var/cache/yum/*
 
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
