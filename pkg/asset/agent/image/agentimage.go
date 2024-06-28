@@ -81,7 +81,8 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 		}
 	}
 
-	err = a.updateIgnitionImg(agentArtifacts.IgnitionByte)
+	// Update Ignition images
+	err = a.updateIgnitionContent(agentArtifacts)
 	if err != nil {
 		return err
 	}
@@ -94,38 +95,27 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	return nil
 }
 
-func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
-	ca := NewCpioArchive()
-	err := ca.StoreBytes("config.ign", ignition, 0o644)
-	if err != nil {
-		return err
-	}
-	ignitionBuff, err := ca.SaveBuffer()
-	if err != nil {
-		return err
-	}
-
-	ignitionImgPath := filepath.Join(a.tmpPath, "images", "ignition.img")
-	fi, err := os.Stat(ignitionImgPath)
+// updateIgnitionContent updates the ignition data into the corresponding images in the ISO.
+func (a *AgentImage) updateIgnitionContent(agentArtifacts *AgentArtifacts) error {
+	ignitionc := &isoeditor.IgnitionContent{}
+	ignitionc.Config = agentArtifacts.IgnitionByte
+	fileInfo, err := isoeditor.NewIgnitionImageReader(a.isoPath, ignitionc)
 	if err != nil {
 		return err
 	}
 
-	// Verify that the current compressed ignition archive does not exceed the
-	// embed area (usually 256 Kb)
-	if len(ignitionBuff) > int(fi.Size()) {
-		return fmt.Errorf("ignition content length (%d) exceeds embed area size (%d)", len(ignitionBuff), fi.Size())
-	}
+	for _, fileData := range fileInfo {
+		filename := filepath.Join(a.tmpPath, fileData.Filename)
+		file, err := os.Create(filename)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
 
-	ignitionImg, err := os.OpenFile(ignitionImgPath, os.O_WRONLY, 0)
-	if err != nil {
-		return err
-	}
-	defer ignitionImg.Close()
-
-	_, err = ignitionImg.Write(ignitionBuff)
-	if err != nil {
-		return err
+		_, err = io.Copy(file, fileData.Data)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

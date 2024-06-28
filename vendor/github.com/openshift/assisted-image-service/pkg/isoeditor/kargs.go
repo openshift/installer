@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"regexp"
 
 	"github.com/openshift/assisted-image-service/pkg/overlay"
@@ -45,6 +46,59 @@ func kargsFiles(isoPath string, fileReader FileReader) ([]string, error) {
 
 func KargsFiles(isoPath string) ([]string, error) {
 	return kargsFiles(isoPath, ReadFileFromISO)
+}
+
+func kargsFileData(isoPath string, file string, appendKargs []byte) (FileData, error) {
+	baseISO, err := os.Open(isoPath)
+	if err != nil {
+		return FileData{}, err
+	}
+
+	iso, err := readerForKargsContent(isoPath, file, baseISO, bytes.NewReader(appendKargs))
+	if err != nil {
+		baseISO.Close()
+		return FileData{}, err
+	}
+
+	fileData, _, err := isolateISOFile(isoPath, file, iso, 0)
+	if err != nil {
+		iso.Close()
+		return FileData{}, err
+	}
+
+	return fileData, nil
+}
+
+// NewKargsReader returns the filename within an ISO and the new content of
+// the file(s) containing the kernel arguments, with additional arguments
+// appended.
+func NewKargsReader(isoPath string, appendKargs string) ([]FileData, error) {
+	if appendKargs == "" || appendKargs == "\n" {
+		return nil, nil
+	}
+	appendData := []byte(appendKargs)
+	if appendData[len(appendData)-1] != '\n' {
+		appendData = append(appendData, '\n')
+	}
+
+	files, err := KargsFiles(isoPath)
+	if err != nil {
+		return nil, err
+	}
+
+	output := []FileData{}
+	for i, f := range files {
+		data, err := kargsFileData(isoPath, f, appendData)
+		if err != nil {
+			for _, fd := range output[:i] {
+				fd.Data.Close()
+			}
+			return nil, err
+		}
+
+		output = append(output, data)
+	}
+	return output, nil
 }
 
 func kargsEmbedAreaBoundariesFinder(isoPath, filePath string, fileBoundariesFinder BoundariesFinder, fileReader FileReader) (int64, int64, error) {
