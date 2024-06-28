@@ -37,6 +37,7 @@ type StaticNetworkConfig interface {
 	GenerateStaticNetworkConfigData(ctx context.Context, hostsYAMLS string) ([]StaticNetworkConfigData, error)
 	FormatStaticNetworkConfigForDB(staticNetworkConfig []*models.HostStaticNetworkConfig) (string, error)
 	ValidateStaticConfigParams(ctx context.Context, staticNetworkConfig []*models.HostStaticNetworkConfig) error
+	ValidateNMStateYaml(ctx context.Context, networkYaml string) error
 }
 
 type staticNetworkConfigGenerator struct {
@@ -219,7 +220,7 @@ func (s *staticNetworkConfigGenerator) ValidateStaticConfigParams(ctx context.Co
 	var err *multierror.Error
 	for i, hostConfig := range staticNetworkConfig {
 		err = multierror.Append(err, s.validateMacInterfaceName(i, hostConfig.MacInterfaceMap))
-		if validateErr := s.validateNMStateYaml(ctx, hostConfig.NetworkYaml); validateErr != nil {
+		if validateErr := s.ValidateNMStateYaml(ctx, hostConfig.NetworkYaml); validateErr != nil {
 			err = multierror.Append(err, fmt.Errorf("failed to validate network yaml for host %d, %w", i, validateErr))
 		}
 	}
@@ -239,7 +240,7 @@ func (s *staticNetworkConfigGenerator) validateMacInterfaceName(hostIdx int, mac
 	return nil
 }
 
-func (s *staticNetworkConfigGenerator) validateNMStateYaml(ctx context.Context, networkYaml string) error {
+func (s *staticNetworkConfigGenerator) ValidateNMStateYaml(ctx context.Context, networkYaml string) error {
 	result, err := s.executeNMStatectl(ctx, networkYaml)
 	if err != nil {
 		return err
