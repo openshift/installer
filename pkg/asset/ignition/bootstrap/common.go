@@ -303,12 +303,12 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	platformFirstAPIVIP := firstAPIVIP(&installConfig.Config.Platform)
 	APIIntVIPonIPv6 := utilsnet.IsIPv6String(platformFirstAPIVIP)
 
-	networkStack := 0
+	var hasIPv4, hasIPv6 bool
 	for _, snet := range installConfig.Config.ServiceNetwork {
-		if snet.IP.To4() != nil {
-			networkStack |= 1
+		if utilsnet.IsIPv4(snet.IP) {
+			hasIPv4 = true
 		} else {
-			networkStack |= 2
+			hasIPv6 = true
 		}
 	}
 
@@ -342,7 +342,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		ClusterProfile:        clusterProfile,
 		BootstrapInPlace:      bootstrapInPlaceConfig,
 		UseIPv6ForNodeIP:      APIIntVIPonIPv6,
-		UseDualForNodeIP:      networkStack == 3,
+		UseDualForNodeIP:      hasIPv4 && hasIPv6,
 		IsFCOS:                installConfig.Config.IsFCOS(),
 		IsSCOS:                installConfig.Config.IsSCOS(),
 		IsOKD:                 installConfig.Config.IsOKD(),
