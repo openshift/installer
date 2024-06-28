@@ -7,7 +7,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
+	"github.com/vmware/govmomi/find"
 
+	"github.com/openshift/installer/pkg/asset/installconfig/vsphere/mock"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -41,8 +43,8 @@ func validLegacyUpiInstallConfig() *types.InstallConfig {
 	installConfig.VSphere.DeprecatedVCenter = "test-server"
 	installConfig.VSphere.DeprecatedUsername = "test-username"
 	installConfig.VSphere.DeprecatedPassword = "test-password"
-	installConfig.VSphere.DeprecatedDefaultDatastore = "test-datastore"
-	installConfig.VSphere.DeprecatedDatacenter = "test-datacenter"
+	installConfig.VSphere.DeprecatedDefaultDatastore = "LocalDS_0"
+	installConfig.VSphere.DeprecatedDatacenter = "DC0"
 
 	return installConfig
 }
@@ -50,8 +52,8 @@ func validLegacyUpiInstallConfig() *types.InstallConfig {
 func validLegacyIpiInstallConfig() *types.InstallConfig {
 	installConfig := validLegacyUpiInstallConfig()
 
-	installConfig.VSphere.DeprecatedCluster = "test-cluster"
-	installConfig.VSphere.DeprecatedNetwork = "test-network"
+	installConfig.VSphere.DeprecatedCluster = "DC0_C0"
+	installConfig.VSphere.DeprecatedNetwork = "DC0_DVPG0"
 	installConfig.VSphere.DeprecatedFolder = ""
 	installConfig.VSphere.DeprecatedResourcePool = ""
 
@@ -64,8 +66,8 @@ func convertedLegacyUpiInstallConfig() *types.InstallConfig {
 		DeprecatedVCenter:          "test-server",
 		DeprecatedUsername:         "test-username",
 		DeprecatedPassword:         "test-password",
-		DeprecatedDatacenter:       "test-datacenter",
-		DeprecatedDefaultDatastore: "test-datastore",
+		DeprecatedDatacenter:       "DC0",
+		DeprecatedDefaultDatastore: "LocalDS_0",
 		DeprecatedFolder:           "",
 		DeprecatedCluster:          "",
 		DeprecatedResourcePool:     "",
@@ -82,7 +84,7 @@ func convertedLegacyUpiInstallConfig() *types.InstallConfig {
 			Port:        443,
 			Username:    "test-username",
 			Password:    "test-password",
-			Datacenters: []string{"test-datacenter"},
+			Datacenters: []string{"DC0"},
 		}},
 		FailureDomains: []vsphere.FailureDomain{{
 			Name:   "generated-failure-domain",
@@ -90,10 +92,10 @@ func convertedLegacyUpiInstallConfig() *types.InstallConfig {
 			Zone:   "generated-zone",
 			Server: "test-server",
 			Topology: vsphere.Topology{
-				Datacenter:     "test-datacenter",
+				Datacenter:     "DC0",
 				ComputeCluster: "",
 				Networks:       []string{""},
-				Datastore:      "/test-datacenter/datastore/test-datastore",
+				Datastore:      "/DC0/datastore/LocalDS_0",
 				ResourcePool:   "",
 				Folder:         "",
 			},
@@ -108,10 +110,10 @@ func convertedLegacyIpiInstallConfig() *types.InstallConfig {
 		DeprecatedVCenter:          "test-server",
 		DeprecatedUsername:         "test-username",
 		DeprecatedPassword:         "test-password",
-		DeprecatedDatacenter:       "test-datacenter",
-		DeprecatedDefaultDatastore: "test-datastore",
+		DeprecatedDatacenter:       "DC0",
+		DeprecatedDefaultDatastore: "LocalDS_0",
 		DeprecatedFolder:           "",
-		DeprecatedCluster:          "test-cluster",
+		DeprecatedCluster:          "DC0_C0",
 		DeprecatedResourcePool:     "",
 		ClusterOSImage:             "",
 		DeprecatedAPIVIP:           "",
@@ -119,14 +121,14 @@ func convertedLegacyIpiInstallConfig() *types.InstallConfig {
 		DeprecatedIngressVIP:       "",
 		IngressVIPs:                []string{"192.168.111.1"},
 		DefaultMachinePlatform:     nil,
-		DeprecatedNetwork:          "test-network",
+		DeprecatedNetwork:          "DC0_DVPG0",
 		DiskType:                   "",
 		VCenters: []vsphere.VCenter{{
 			Server:      "test-server",
 			Port:        443,
 			Username:    "test-username",
 			Password:    "test-password",
-			Datacenters: []string{"test-datacenter"},
+			Datacenters: []string{"DC0"},
 		}},
 		FailureDomains: []vsphere.FailureDomain{{
 			Name:   "generated-failure-domain",
@@ -134,10 +136,10 @@ func convertedLegacyIpiInstallConfig() *types.InstallConfig {
 			Zone:   "generated-zone",
 			Server: "test-server",
 			Topology: vsphere.Topology{
-				Datacenter:     "test-datacenter",
-				ComputeCluster: "/test-datacenter/host/test-cluster",
-				Networks:       []string{"test-network"},
-				Datastore:      "/test-datacenter/datastore/test-datastore",
+				Datacenter:     "DC0",
+				ComputeCluster: "/DC0/host/DC0_C0",
+				Networks:       []string{"DC0_DVPG0"},
+				Datastore:      "/DC0/datastore/LocalDS_0",
 				ResourcePool:   "",
 				Folder:         "",
 			},
@@ -157,8 +159,10 @@ func convertedLegacyIpiZonalInstallConfig() *types.InstallConfig {
 			Username: "test-username",
 			Password: "test-password",
 			Datacenters: []string{
-				"test-datacenter",
-				"test-datacenter4",
+				"DC0",
+				"DC1",
+				"DC2",
+				"DC3",
 			},
 		},
 	}
@@ -170,10 +174,10 @@ func convertedLegacyIpiZonalInstallConfig() *types.InstallConfig {
 			Zone:   "zone-1a",
 			Server: "test-server",
 			Topology: vsphere.Topology{
-				Datacenter:     "test-datacenter",
-				ComputeCluster: "/test-datacenter1/host/test-computecluster1",
-				Networks:       []string{"network1"},
-				Datastore:      "/test-datacenter/datastore/datastore1",
+				Datacenter:     "DC0",
+				ComputeCluster: "/DC0/host/DC0_C0",
+				Networks:       []string{"DC0_DVPG0"},
+				Datastore:      "/DC0/datastore/LocalDS_0",
 			},
 		},
 		{
@@ -182,10 +186,10 @@ func convertedLegacyIpiZonalInstallConfig() *types.InstallConfig {
 			Zone:   "zone-2a",
 			Server: "test-server",
 			Topology: vsphere.Topology{
-				Datacenter:     "test-datacenter",
-				ComputeCluster: "/test-datacenter1/host/test-computecluster2",
-				Networks:       []string{"network2"},
-				Datastore:      "/test-datacenter/datastore/datastore2",
+				Datacenter:     "DC1",
+				ComputeCluster: "/DC1/host/DC1_C0",
+				Networks:       []string{"DC1_DVPG0"},
+				Datastore:      "/DC1/datastore/LocalDS_0",
 			},
 		},
 		{
@@ -194,10 +198,10 @@ func convertedLegacyIpiZonalInstallConfig() *types.InstallConfig {
 			Zone:   "zone-3a",
 			Server: "test-server",
 			Topology: vsphere.Topology{
-				Datacenter:     "test-datacenter",
-				ComputeCluster: "/test-datacenter1/host/test-computecluster3",
-				Networks:       []string{"network3"},
-				Datastore:      "/test-datacenter/datastore/datastore3",
+				Datacenter:     "DC2",
+				ComputeCluster: "/DC2/host/DC2_C0",
+				Networks:       []string{"DC2_DVPG0"},
+				Datastore:      "/DC2/datastore/LocalDS_0",
 			},
 		},
 		{
@@ -206,10 +210,10 @@ func convertedLegacyIpiZonalInstallConfig() *types.InstallConfig {
 			Zone:   "zone-4a",
 			Server: "test-server",
 			Topology: vsphere.Topology{
-				Datacenter:     "test-datacenter4",
-				ComputeCluster: "/test-datacenter4/host/test-computecluster4",
-				Networks:       []string{"network4"},
-				Datastore:      "/test-datacenter4/datastore/datastore4",
+				Datacenter:     "DC3",
+				ComputeCluster: "/DC3/host/DC3_C0",
+				Networks:       []string{"DC3_DVPG0"},
+				Datastore:      "/DC3/datastore/LocalDS_0",
 			},
 		},
 	}
@@ -229,10 +233,10 @@ func validLegacyIpiZonalInstallConfig() *types.InstallConfig {
 			Zone:   "zone-1a",
 			Server: "",
 			Topology: vsphere.Topology{
-				Datacenter:     "",
-				ComputeCluster: "/test-datacenter1/host/test-computecluster1",
-				Networks:       []string{"network1"},
-				Datastore:      "datastore1",
+				Datacenter:     "DC0",
+				ComputeCluster: "/DC0/host/DC0_C0",
+				Networks:       []string{"DC0_DVPG0"},
+				Datastore:      "LocalDS_0",
 				ResourcePool:   "",
 				Folder:         "",
 			},
@@ -243,10 +247,10 @@ func validLegacyIpiZonalInstallConfig() *types.InstallConfig {
 			Zone:   "zone-2a",
 			Server: "",
 			Topology: vsphere.Topology{
-				Datacenter:     "",
-				ComputeCluster: "/test-datacenter1/host/test-computecluster2",
-				Networks:       []string{"network2"},
-				Datastore:      "datastore2",
+				Datacenter:     "DC1",
+				ComputeCluster: "/DC1/host/DC1_C0",
+				Networks:       []string{"DC1_DVPG0"},
+				Datastore:      "LocalDS_0",
 				ResourcePool:   "",
 				Folder:         "",
 			},
@@ -257,10 +261,10 @@ func validLegacyIpiZonalInstallConfig() *types.InstallConfig {
 			Zone:   "zone-3a",
 			Server: "",
 			Topology: vsphere.Topology{
-				Datacenter:     "",
-				ComputeCluster: "/test-datacenter1/host/test-computecluster3",
-				Networks:       []string{"network3"},
-				Datastore:      "datastore3",
+				Datacenter:     "DC2",
+				ComputeCluster: "/DC2/host/DC2_C0",
+				Networks:       []string{"DC2_DVPG0"},
+				Datastore:      "LocalDS_0",
 				ResourcePool:   "",
 				Folder:         "",
 			},
@@ -271,10 +275,10 @@ func validLegacyIpiZonalInstallConfig() *types.InstallConfig {
 			Zone:   "zone-4a",
 			Server: "",
 			Topology: vsphere.Topology{
-				Datacenter:     "test-datacenter4",
-				ComputeCluster: "/test-datacenter4/host/test-computecluster4",
-				Networks:       []string{"network4"},
-				Datastore:      "datastore4",
+				Datacenter:     "DC3",
+				ComputeCluster: "/DC3/host/DC3_C0",
+				Networks:       []string{"DC3_DVPG0"},
+				Datastore:      "LocalDS_0",
 				ResourcePool:   "",
 				Folder:         "",
 			},
@@ -309,7 +313,7 @@ func validIpiInstallConfig() *types.InstallConfig {
 			Port:        443,
 			Username:    "test-username",
 			Password:    "test-password",
-			Datacenters: []string{"test-datacenter1", "test-datacenter4"},
+			Datacenters: []string{"DC0", "DC1", "DC2", "DC3"},
 		}},
 		FailureDomains: []vsphere.FailureDomain{
 			{
@@ -318,10 +322,10 @@ func validIpiInstallConfig() *types.InstallConfig {
 				Zone:   "zone-1a",
 				Server: "test-server",
 				Topology: vsphere.Topology{
-					Datacenter:     "test-datacenter1",
-					ComputeCluster: "/test-datacenter1/host/test-computecluster1",
+					Datacenter:     "DC0",
+					ComputeCluster: "/DC0/host/DC0_C0",
 					Networks:       []string{"network1"},
-					Datastore:      "/test-datacenter1/datstore/test-datastore1",
+					Datastore:      "/DC0/datstore/test-datastore1",
 					ResourcePool:   "",
 					Folder:         "",
 				},
@@ -332,10 +336,10 @@ func validIpiInstallConfig() *types.InstallConfig {
 				Zone:   "zone-2a",
 				Server: "",
 				Topology: vsphere.Topology{
-					Datacenter:     "test-datacenter1",
-					ComputeCluster: "/test-datacenter1/host/test-computecluster2",
+					Datacenter:     "DC1",
+					ComputeCluster: "/DC1/host/DC1_C0",
 					Networks:       []string{"network2"},
-					Datastore:      "/test-datacenter1/datastore/test-datastore2",
+					Datastore:      "/DC0/datastore/test-datastore2",
 					ResourcePool:   "",
 					Folder:         "",
 				},
@@ -346,11 +350,11 @@ func validIpiInstallConfig() *types.InstallConfig {
 				Zone:   "zone-3a",
 				Server: "",
 				Topology: vsphere.Topology{
-					Datacenter:     "test-datacenter1",
-					ComputeCluster: "/test-datacenter1/host/test-computecluster3",
+					Datacenter:     "DC2",
+					ComputeCluster: "/DC2/host/test-computecluster3",
 					Networks:       []string{"network3"},
-					Datastore:      "/test-datacenter1/datastore/test-datastore3",
-					ResourcePool:   "/test-datacenter1/host/test-computecluster3/Resources/test-resourcepool4",
+					Datastore:      "/DC2/datastore/test-datastore3",
+					ResourcePool:   "/DC2/host/test-computecluster3/Resources/test-resourcepool4",
 					Folder:         "",
 				},
 			},
@@ -360,12 +364,12 @@ func validIpiInstallConfig() *types.InstallConfig {
 				Zone:   "zone-4a",
 				Server: "",
 				Topology: vsphere.Topology{
-					Datacenter:     "test-datacenter4",
-					ComputeCluster: "/test-datacenter4/host/test-computecluster4",
+					Datacenter:     "DC3",
+					ComputeCluster: "/DC3/host/DC3_C0",
 					Networks:       []string{"network4"},
-					Datastore:      "/test-datacenter4/datastore/datastore4",
+					Datastore:      "/DC3/datastore/LocalDS_0",
 					ResourcePool:   "",
-					Folder:         "/test-datacenter4/vm/test-folder4",
+					Folder:         "/DC3/vm/",
 				},
 			},
 		},
@@ -376,6 +380,13 @@ func validIpiInstallConfig() *types.InstallConfig {
 
 func TestConvertInstallConfig(t *testing.T) {
 	logger, hook := test.NewNullLogger()
+
+	sim, err := mock.StartSimulator(true)
+
+	if err != nil {
+		assert.NoError(t, err)
+	}
+
 	localLogger = logger
 	tests := []struct {
 		name                string
@@ -383,60 +394,141 @@ func TestConvertInstallConfig(t *testing.T) {
 		expectInstallConfig func() *types.InstallConfig
 		expectWarn          []string
 		expectLevel         logrus.Level
+		simulated           bool
 	}{
 		{
-			name:                "legacy upi conversion",
+			name:                "legacy upi conversion with simulator",
 			actualInstallConfig: validLegacyUpiInstallConfig,
 			expectInstallConfig: convertedLegacyUpiInstallConfig,
 			expectLevel:         logrus.WarnLevel,
 			expectWarn: []string{
 				"vsphere authentication fields are now deprecated; please use vcenters",
 				"vsphere topology fields are now deprecated; please use failureDomains",
-				"datastore as a non-path is now deprecated; please use the form: /test-datacenter/datastore/test-datastore",
+				"datastore as a non-path is now deprecated; please use the discovered form: /DC0/datastore/LocalDS_0",
 			},
+			simulated: true,
 		},
 		{
-			name:                "legacy ipi conversion",
+			name:                "legacy ipi conversion with simulator",
 			actualInstallConfig: validLegacyIpiInstallConfig,
 			expectInstallConfig: convertedLegacyIpiInstallConfig,
 			expectLevel:         logrus.WarnLevel,
 			expectWarn: []string{
 				"vsphere authentication fields are now deprecated; please use vcenters",
 				"vsphere topology fields are now deprecated; please use failureDomains",
-				"computeCluster as a non-path is now deprecated; please use the form: /test-datacenter/host/test-cluster",
-				"datastore as a non-path is now deprecated; please use the form: /test-datacenter/datastore/test-datastore",
+				"computeCluster as a non-path is now deprecated; please use the discovered form: /DC0/host/DC0_C0",
+				"datastore as a non-path is now deprecated; please use the discovered form: /DC0/datastore/LocalDS_0",
 			},
+			simulated: true,
 		},
 		{
-			name:                "legacy zonal ipi conversion",
-			actualInstallConfig: validLegacyIpiZonalInstallConfig,
-			expectInstallConfig: convertedLegacyIpiZonalInstallConfig,
-			expectLevel:         logrus.WarnLevel,
-			expectWarn: []string{
-				"vsphere authentication fields are now deprecated; please use vcenters",
-				"datastore as a non-path is now deprecated; please use the form: /test-datacenter/datastore/datastore1",
-				"datastore as a non-path is now deprecated; please use the form: /test-datacenter/datastore/datastore2",
-				"datastore as a non-path is now deprecated; please use the form: /test-datacenter/datastore/datastore3",
-				"datastore as a non-path is now deprecated; please use the form: /test-datacenter4/datastore/datastore4",
-			},
-		},
-		{
-			name:                "zonal ipi",
+			name:                "zonal ipi with simulator",
 			actualInstallConfig: validIpiInstallConfig,
 			expectInstallConfig: validIpiInstallConfig,
 			expectLevel:         logrus.WarnLevel,
 			expectWarn:          []string{""},
+			simulated:           true,
+		},
+		{
+			name: "legacy zonal ipi conversion with simulator",
+			actualInstallConfig: func() *types.InstallConfig {
+				installConfig := validLegacyIpiZonalInstallConfig()
+				return installConfig
+			},
+			expectInstallConfig: convertedLegacyIpiZonalInstallConfig,
+			expectLevel:         logrus.WarnLevel,
+			expectWarn: []string{
+				"vsphere authentication fields are now deprecated; please use vcenters",
+				"datastore as a non-path is now deprecated; please use the discovered form: /DC0/datastore/LocalDS_0",
+				"datastore as a non-path is now deprecated; please use the discovered form: /DC1/datastore/LocalDS_0",
+				"datastore as a non-path is now deprecated; please use the discovered form: /DC2/datastore/LocalDS_0",
+				"datastore as a non-path is now deprecated; please use the discovered form: /DC3/datastore/LocalDS_0",
+			},
+			simulated: true,
+		},
+		{
+			name:                "legacy upi conversion without simulator",
+			actualInstallConfig: validLegacyUpiInstallConfig,
+			expectInstallConfig: convertedLegacyUpiInstallConfig,
+			expectLevel:         logrus.WarnLevel,
+			expectWarn: []string{
+				"vsphere authentication fields are now deprecated; please use vcenters",
+				"vsphere topology fields are now deprecated; please use failureDomains",
+				"datastore as a non-path is now deprecated; please use the joined form: /DC0/datastore/LocalDS_0",
+			},
+			simulated: false,
+		},
+		{
+			name:                "legacy ipi conversion without simulator",
+			actualInstallConfig: validLegacyIpiInstallConfig,
+			expectInstallConfig: convertedLegacyIpiInstallConfig,
+			expectLevel:         logrus.WarnLevel,
+			expectWarn: []string{
+				"vsphere authentication fields are now deprecated; please use vcenters",
+				"vsphere topology fields are now deprecated; please use failureDomains",
+				"computeCluster as a non-path is now deprecated; please use the joined form: /DC0/host/DC0_C0",
+				"datastore as a non-path is now deprecated; please use the joined form: /DC0/datastore/LocalDS_0",
+			},
+			simulated: false,
+		},
+		{
+			name:                "zonal ipi without simulator",
+			actualInstallConfig: validIpiInstallConfig,
+			expectInstallConfig: validIpiInstallConfig,
+			expectLevel:         logrus.WarnLevel,
+			expectWarn:          []string{""},
+			simulated:           false,
+		},
+		{
+			name: "legacy zonal ipi conversion without simulator",
+			actualInstallConfig: func() *types.InstallConfig {
+				installConfig := validLegacyIpiZonalInstallConfig()
+				return installConfig
+			},
+			expectInstallConfig: convertedLegacyIpiZonalInstallConfig,
+			expectLevel:         logrus.WarnLevel,
+			expectWarn: []string{
+				"vsphere authentication fields are now deprecated; please use vcenters",
+				"datastore as a non-path is now deprecated; please use the joined form: /DC0/datastore/LocalDS_0",
+				"datastore as a non-path is now deprecated; please use the joined form: /DC1/datastore/LocalDS_0",
+				"datastore as a non-path is now deprecated; please use the joined form: /DC2/datastore/LocalDS_0",
+				"datastore as a non-path is now deprecated; please use the joined form: /DC3/datastore/LocalDS_0",
+			},
+			simulated: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			var finder *find.Finder
 			g := gomega.NewWithT(t)
 
 			actual := tt.actualInstallConfig()
 			expect := tt.expectInstallConfig()
 
-			if err := ConvertInstallConfig(actual); err != nil {
-				g.Expect(err).Should(gomega.Equal(nil))
+			platform := actual.Platform.VSphere
+
+			if tt.simulated {
+				finder, err = mock.GetFinder(sim)
+				if err != nil {
+					assert.NoError(t, err)
+				}
+			} else {
+				finder = nil
+			}
+
+			// This section is duplication from ConvertInstallConfig()
+			// which makes it easier to deal with the simulator and finder object.
+			fixNoVCentersScenario(platform)
+			if err != nil {
+				assert.NoError(t, err)
+			}
+			err = fixTechPreviewZonalFailureDomainsScenario(platform, finder)
+			if err != nil {
+				assert.NoError(t, err)
+			}
+			err = fixLegacyPlatformScenario(platform, finder)
+			if err != nil {
+				assert.NoError(t, err)
 			}
 
 			if tt.expectWarn[0] != "" {
@@ -479,13 +571,16 @@ func Test_setComputeClusterPath(t *testing.T) {
 			computeCluster: "C1",
 			datacenter:     "DC1",
 			expectLevel:    `warning`,
-			expectWarn:     `computeCluster as a non-path is now deprecated; please use the form: /DC1/host/C1`,
+			expectWarn:     `computeCluster as a non-path is now deprecated; please use the joined form: /DC1/host/C1`,
 			expectCluster:  "/DC1/host/C1",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := setComputeClusterPath(tt.computeCluster, tt.datacenter)
+			got, err := SetObjectPath(nil, "host", tt.computeCluster, tt.datacenter)
+
+			assert.NoError(t, err)
+
 			assert.Equal(t, tt.expectCluster, got)
 			if tt.expectWarn != "" {
 				entries := hook.AllEntries()
@@ -525,13 +620,15 @@ func Test_setDatastorePath(t *testing.T) {
 			datastore:      "DS1",
 			datacenter:     "DC1",
 			expectLevel:    `warning`,
-			expectWarn:     `datastore as a non-path is now deprecated; please use the form: /DC1/datastore/DS1`,
+			expectWarn:     `datastore as a non-path is now deprecated; please use the joined form: /DC1/datastore/DS1`,
 			expectDatstore: "/DC1/datastore/DS1",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := setDatastorePath(tt.datastore, tt.datacenter)
+			got, err := SetObjectPath(nil, "datastore", tt.datastore, tt.datacenter)
+
+			assert.NoError(t, err)
 			assert.Equal(t, tt.expectDatstore, got)
 			if tt.expectWarn != "" {
 				entries := hook.AllEntries()
@@ -571,13 +668,14 @@ func Test_setFolderPath(t *testing.T) {
 			folder:       "Folder1",
 			datacenter:   "DC1",
 			expectLevel:  `warning`,
-			expectWarn:   `folder as a non-path is now deprecated; please use the form: /DC1/vm/Folder1`,
+			expectWarn:   `folder as a non-path is now deprecated; please use the joined form: /DC1/vm/Folder1`,
 			expectFolder: "/DC1/vm/Folder1",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := setFolderPath(tt.folder, tt.datacenter)
+			got, err := SetObjectPath(nil, "vm", tt.folder, tt.datacenter)
+			assert.NoError(t, err)
 			assert.Equal(t, tt.expectFolder, got)
 			if tt.expectWarn != "" {
 				entries := hook.AllEntries()
