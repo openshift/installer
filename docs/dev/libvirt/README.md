@@ -1,3 +1,8 @@
+# Libvirt Support Update
+
+OpenShift Installer has stopped support for the libvirt platform starting 4.16. You can still use it with versions
+4.15 and older.
+
 # Libvirt HOWTO
 
 Launching clusters via libvirt is especially useful for operator development.
