@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/pkg/errors"
@@ -59,7 +60,7 @@ func (m *Metadata) Dependencies() []asset.Asset {
 }
 
 // Generate generates the metadata asset.
-func (m *Metadata) Generate(parents asset.Parents) (err error) {
+func (m *Metadata) Generate(_ context.Context, parents asset.Parents) (err error) {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	parents.Get(clusterID, installConfig)

@@ -1,6 +1,7 @@
 package image
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -83,7 +84,7 @@ func (a *UnconfiguredIgnition) Dependencies() []asset.Asset {
 }
 
 // Generate generates the agent installer unconfigured ignition.
-func (a *UnconfiguredIgnition) Generate(dependencies asset.Parents) error {
+func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Parents) error {
 	infraEnvAsset := &manifests.InfraEnv{}
 	infraEnvIDAsset := &common.InfraEnvID{}
 	clusterImageSetAsset := &manifests.ClusterImageSet{}

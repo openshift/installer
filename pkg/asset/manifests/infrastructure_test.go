@@ -88,7 +88,7 @@ func TestGenerateInfrastructure(t *testing.T) {
 				&AdditionalTrustBundleConfig{},
 			)
 			infraAsset := &Infrastructure{}
-			err := infraAsset.GenerateWithContext(context.Background(), parents)
+			err := infraAsset.Generate(context.Background(), parents)
 			if !assert.NoError(t, err, "failed to generate asset") {
 				return
 			}

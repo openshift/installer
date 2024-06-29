@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 
@@ -46,7 +47,7 @@ func (no *Networking) Dependencies() []asset.Asset {
 }
 
 // Generate generates the network operator config.
-func (no *Networking) Generate(dependencies asset.Parents) error {
+func (no *Networking) Generate(_ context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	dependencies.Get(installConfig)
 

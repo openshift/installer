@@ -1,6 +1,7 @@
 package image
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -48,7 +49,7 @@ func (a *AgentArtifacts) Dependencies() []asset.Asset {
 }
 
 // Generate generates the configurations for the agent ISO image and PXE assets.
-func (a *AgentArtifacts) Generate(dependencies asset.Parents) error {
+func (a *AgentArtifacts) Generate(_ context.Context, dependencies asset.Parents) error {
 	ignition := &Ignition{}
 	kargs := &Kargs{}
 	baseIso := &BaseIso{}

@@ -1,6 +1,7 @@
 package baremetal
 
 import (
+	"context"
 	"crypto/rand"
 	"math/big"
 
@@ -21,7 +22,7 @@ func (a *IronicCreds) Dependencies() []asset.Asset {
 }
 
 // Generate the ironic password
-func (a *IronicCreds) Generate(asset.Parents) error {
+func (a *IronicCreds) Generate(context.Context, asset.Parents) error {
 	pw, err := generateRandomPassword()
 	if err != nil {
 		return err

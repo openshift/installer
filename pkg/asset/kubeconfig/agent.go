@@ -1,6 +1,7 @@
 package kubeconfig
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -24,7 +25,7 @@ func (k *AgentAdminClient) Dependencies() []asset.Asset {
 }
 
 // Generate generates the kubeconfig.
-func (k *AgentAdminClient) Generate(parents asset.Parents) error {
+func (k *AgentAdminClient) Generate(_ context.Context, parents asset.Parents) error {
 	ca := &tls.KubeAPIServerCompleteCABundle{}
 	clientCertKey := &tls.AdminKubeConfigClientCertKey{}
 	parents.Get(ca, clientCertKey)

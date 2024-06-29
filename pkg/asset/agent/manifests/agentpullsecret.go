@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -50,8 +51,7 @@ func (*AgentPullSecret) Dependencies() []asset.Asset {
 }
 
 // Generate generates the AgentPullSecret manifest.
-func (a *AgentPullSecret) Generate(dependencies asset.Parents) error {
-
+func (a *AgentPullSecret) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	installConfig := &agent.OptionalInstallConfig{}
 	clusterInfo := &joiner.ClusterInfo{}

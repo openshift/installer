@@ -1,6 +1,7 @@
 package configimage
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -35,7 +36,7 @@ func (a *ConfigImage) Dependencies() []asset.Asset {
 }
 
 // Generate generates the configuration image file.
-func (a *ConfigImage) Generate(dependencies asset.Parents) error {
+func (a *ConfigImage) Generate(_ context.Context, dependencies asset.Parents) error {
 	ignition := &image.Ignition{}
 
 	dependencies.Get(ignition)

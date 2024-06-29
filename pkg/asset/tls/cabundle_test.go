@@ -1,6 +1,7 @@
 package tls
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -129,7 +130,7 @@ CjH8bTNT3u6KYZKRVH0A2/EpJHC+TSSe3A==
 			}
 
 			bundle := CertBundle{}
-			err := bundle.Generate("test-bundle", certkeys...)
+			err := bundle.Generate(context.Background(), "test-bundle", certkeys...)
 			if test.expErr == "" {
 				assert.NoError(t, err)
 				assert.Equal(t, string(bundle.BundleRaw), test.expBundle)

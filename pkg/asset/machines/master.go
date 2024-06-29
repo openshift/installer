@@ -152,10 +152,10 @@ func (m *Master) Dependencies() []asset.Asset {
 	}
 }
 
-// GenerateWithContext generates the Master asset.
+// Generate generates the Master asset.
 //
 //nolint:gocyclo
-func (m *Master) GenerateWithContext(ctx context.Context, dependencies asset.Parents) error {
+func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	rhcosImage := new(rhcos.Image)
@@ -866,10 +866,4 @@ func createAssetFiles(objects []interface{}, fileName string) ([]*asset.File, er
 	}
 
 	return assetFiles, nil
-}
-
-// Generate is implemented so this asset maintains compatibility with the Asset
-// interface. It should never be called.
-func (*Master) Generate(_ asset.Parents) (err error) {
-	panic("Master.Generate was called instead of Master.GenerateWithContext")
 }

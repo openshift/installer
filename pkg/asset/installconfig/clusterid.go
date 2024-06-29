@@ -1,6 +1,7 @@
 package installconfig
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -36,7 +37,7 @@ func (a *ClusterID) Dependencies() []asset.Asset {
 }
 
 // Generate generates a new ClusterID
-func (a *ClusterID) Generate(dep asset.Parents) error {
+func (a *ClusterID) Generate(_ context.Context, dep asset.Parents) error {
 	ica := &InstallConfig{}
 	dep.Get(ica)
 

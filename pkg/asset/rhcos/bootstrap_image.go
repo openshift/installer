@@ -35,8 +35,8 @@ func (i *BootstrapImage) Dependencies() []asset.Asset {
 	}
 }
 
-// GenerateWithContext the RHCOS Bootstrap image location.
-func (i *BootstrapImage) GenerateWithContext(ctx context.Context, p asset.Parents) error {
+// Generate the RHCOS Bootstrap image location.
+func (i *BootstrapImage) Generate(ctx context.Context, p asset.Parents) error {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
@@ -78,10 +78,4 @@ func (i *BootstrapImage) GenerateWithContext(ctx context.Context, p asset.Parent
 		*i = BootstrapImage(string(*rhcosImage))
 		return nil
 	}
-}
-
-// Generate is implemented so this asset maintains compatibility with the Asset
-// interface. It should never be called.
-func (*BootstrapImage) Generate(_ asset.Parents) (err error) {
-	panic("BootstrapImage.Generate was called instead of BootstrapImage.GenerateWithContext")
 }

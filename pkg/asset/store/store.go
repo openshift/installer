@@ -224,7 +224,7 @@ func (s *storeImpl) fetch(ctx context.Context, a asset.Asset, indent string) err
 		parents.Add(d)
 	}
 	logrus.Debugf("%sGenerating %s...", indent, a.Name())
-	if err := asAssetGenerator(a).GenerateWithContext(ctx, parents); err != nil {
+	if err := a.Generate(ctx, parents); err != nil {
 		return errors.Wrapf(err, "failed to generate asset %q", a.Name())
 	}
 	assetState.asset = a
@@ -371,15 +371,4 @@ func (s *storeImpl) Load(a asset.Asset) (asset.Asset, error) {
 	}
 
 	return s.assets[reflect.TypeOf(a)].asset, nil
-}
-
-// asAssetGenerator determines if an asset implements the
-// Generate with context function, or if it needs an adapter.
-func asAssetGenerator(a asset.Asset) asset.Generator {
-	switch v := a.(type) {
-	case asset.Generator:
-		return v
-	default:
-		return asset.NewDefaultGenerator(a)
-	}
 }

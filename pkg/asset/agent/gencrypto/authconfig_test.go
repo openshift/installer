@@ -1,6 +1,7 @@
 package gencrypto
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,7 +24,7 @@ func TestAuthConfig_Generate(t *testing.T) {
 			parents.Add(&common.InfraEnvID{})
 
 			authConfigAsset := &AuthConfig{}
-			err := authConfigAsset.Generate(parents)
+			err := authConfigAsset.Generate(context.Background(), parents)
 
 			assert.NoError(t, err)
 

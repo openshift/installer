@@ -73,7 +73,7 @@ func (*NMStateConfig) Dependencies() []asset.Asset {
 }
 
 // Generate generates the NMStateConfig manifest.
-func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
+func (n *NMStateConfig) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	clusterInfo := &joiner.ClusterInfo{}
 	agentHosts := &agentconfig.AgentHosts{}

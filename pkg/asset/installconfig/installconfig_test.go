@@ -36,7 +36,7 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 		pullSecret,
 		platform,
 	)
-	if err := installConfig.GenerateWithContext(context.Background(), parents); err != nil {
+	if err := installConfig.Generate(context.Background(), parents); err != nil {
 		t.Errorf("unexpected error generating install config: %v", err)
 	}
 	expected := &types.InstallConfig{

@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -94,7 +95,7 @@ func TestAgentManifests_Generate(t *testing.T) {
 				fakeParent.Add(a)
 			}
 
-			err := m.Generate(fakeParent)
+			err := m.Generate(context.Background(), fakeParent)
 			if tt.ExpectedError != "" {
 				assert.Equal(t, tt.ExpectedError, err.Error())
 			} else {

@@ -1,6 +1,7 @@
 package bootkube
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -30,7 +31,7 @@ func (t *MachineConfigServerTLSSecret) Name() string {
 }
 
 // Generate generates the actual files by this asset
-func (t *MachineConfigServerTLSSecret) Generate(parents asset.Parents) error {
+func (t *MachineConfigServerTLSSecret) Generate(_ context.Context, parents asset.Parents) error {
 	fileName := machineConfigServerTLSSecretFileName
 	data, err := content.GetBootkubeTemplate(fileName)
 	if err != nil {

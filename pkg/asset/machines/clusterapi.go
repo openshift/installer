@@ -68,10 +68,10 @@ func (c *ClusterAPI) Dependencies() []asset.Asset {
 	}
 }
 
-// GenerateWithContext generates Cluster API machine manifests.
+// Generate generates Cluster API machine manifests.
 //
 //nolint:gocyclo
-func (c *ClusterAPI) GenerateWithContext(ctx context.Context, dependencies asset.Parents) error {
+func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
 	rhcosImage := new(rhcos.Image)
@@ -519,10 +519,4 @@ func (c *ClusterAPI) Load(f asset.FileFetcher) (bool, error) {
 
 	asset.SortManifestFiles(c.FileList)
 	return len(c.FileList) > 0, nil
-}
-
-// Generate is implemented so this asset maintains compatibility with the Asset
-// interface. It should never be called.
-func (*ClusterAPI) Generate(_ asset.Parents) (err error) {
-	panic("ClusterAPI.Generate was called instead of ClusterAPI.GenerateWithContext")
 }

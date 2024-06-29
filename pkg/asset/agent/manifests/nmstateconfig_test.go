@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -228,7 +229,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 			parents.Add(tc.dependencies...)
 
 			asset := &NMStateConfig{}
-			err := asset.Generate(parents)
+			err := asset.Generate(context.Background(), parents)
 
 			// Check if the test failed because nmstatectl is not available in CI
 			if tc.requiresNmstatectl {

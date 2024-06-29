@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -35,7 +36,7 @@ func (*ImageDigestMirrorSet) Dependencies() []asset.Asset {
 }
 
 // Generate generates the ImageDigestMirrorSet config and its CR.
-func (p *ImageDigestMirrorSet) Generate(dependencies asset.Parents) error {
+func (p *ImageDigestMirrorSet) Generate(_ context.Context, dependencies asset.Parents) error {
 	installconfig := &installconfig.InstallConfig{}
 	dependencies.Get(installconfig)
 

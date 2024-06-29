@@ -1,6 +1,7 @@
 package tls
 
 import (
+	"context"
 	"crypto/x509"
 	"crypto/x509/pkix"
 
@@ -25,7 +26,7 @@ func (a *JournalCertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (a *JournalCertKey) Generate(dependencies asset.Parents) error {
+func (a *JournalCertKey) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ca := &RootCA{}
 	dependencies.Get(ca)
 
@@ -36,7 +37,7 @@ func (a *JournalCertKey) Generate(dependencies asset.Parents) error {
 		Validity:     ValidityTenYears,
 	}
 
-	return a.SignedCertKey.Generate(cfg, ca, "journal-gatewayd", DoNotAppendParent)
+	return a.SignedCertKey.Generate(ctx, cfg, ca, "journal-gatewayd", DoNotAppendParent)
 }
 
 // Name returns the human-friendly name of the asset.

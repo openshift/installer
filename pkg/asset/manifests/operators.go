@@ -3,6 +3,7 @@ package manifests
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"path/filepath"
 	"strings"
@@ -76,7 +77,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 }
 
 // Generate generates the respective operator config.yml files
-func (m *Manifests) Generate(dependencies asset.Parents) error {
+func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) error {
 	ingress := &Ingress{}
 	dns := &DNS{}
 	network := &Networking{}

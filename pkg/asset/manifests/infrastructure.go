@@ -60,10 +60,10 @@ func (*Infrastructure) Dependencies() []asset.Asset {
 	}
 }
 
-// GenerateWithContext generates the Infrastructure config and its CRD.
+// Generate generates the Infrastructure config and its CRD.
 //
 //nolint:gocyclo
-func (i *Infrastructure) GenerateWithContext(ctx context.Context, dependencies asset.Parents) error {
+func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parents) error {
 	cloudProviderConfigMapKey := cloudProviderConfigDataKey
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
@@ -361,10 +361,4 @@ func (i *Infrastructure) Files() []*asset.File {
 // Load returns false since this asset is not written to disk by the installer.
 func (i *Infrastructure) Load(f asset.FileFetcher) (bool, error) {
 	return false, nil
-}
-
-// Generate is implemented so this asset maintains compatibility with the Asset
-// interface. It should never be called.
-func (*Infrastructure) Generate(_ asset.Parents) (err error) {
-	panic("Infrastructure.Generate was called instead of Infrastructure.GenerateWithContext")
 }

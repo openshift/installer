@@ -1,6 +1,7 @@
 package openshiftinstall
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -36,7 +37,7 @@ func (*Config) Dependencies() []asset.Asset {
 }
 
 // Generate generates the openshift-install ConfigMap.
-func (i *Config) Generate(dependencies asset.Parents) error {
+func (i *Config) Generate(_ context.Context, dependencies asset.Parents) error {
 	cm, err := CreateInstallConfigMap("openshift-install-manifests")
 	if err != nil {
 		return err

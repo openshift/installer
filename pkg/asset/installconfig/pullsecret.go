@@ -1,6 +1,8 @@
 package installconfig
 
 import (
+	"context"
+
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/pkg/errors"
 
@@ -20,7 +22,7 @@ func (a *pullSecret) Dependencies() []asset.Asset {
 }
 
 // Generate queries for the pull secret from the user.
-func (a *pullSecret) Generate(asset.Parents) error {
+func (a *pullSecret) Generate(context.Context, asset.Parents) error {
 	if err := survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Password{

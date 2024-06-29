@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -259,7 +260,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 			parents.Add(tc.dependencies...)
 
 			asset := &AgentClusterInstall{}
-			err := asset.Generate(parents)
+			err := asset.Generate(context.Background(), parents)
 
 			if tc.expectedError != "" {
 				assert.Equal(t, tc.expectedError, err.Error())

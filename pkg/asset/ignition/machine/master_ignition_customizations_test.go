@@ -1,6 +1,7 @@
 package machine
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -48,14 +49,14 @@ func TestMasterIgnitionCustomizationsGenerate(t *testing.T) {
 				})
 
 			rootCA := &tls.RootCA{}
-			err := rootCA.Generate(nil)
+			err := rootCA.Generate(context.Background(), nil)
 			assert.NoError(t, err, "unexpected error generating root CA")
 
 			parents := asset.Parents{}
 			parents.Add(installConfig, rootCA)
 
 			master := &Master{}
-			err = master.Generate(parents)
+			err = master.Generate(context.Background(), parents)
 			assert.NoError(t, err, "unexpected error generating master asset")
 
 			if tc.customize == true {
@@ -66,7 +67,7 @@ func TestMasterIgnitionCustomizationsGenerate(t *testing.T) {
 
 			parents.Add(master)
 			masterIgnCheck := &MasterIgnitionCustomizations{}
-			err = masterIgnCheck.Generate(parents)
+			err = masterIgnCheck.Generate(context.Background(), parents)
 			assert.NoError(t, err, "unexpected error generating master ignition check asset")
 
 			actualFiles := masterIgnCheck.Files()

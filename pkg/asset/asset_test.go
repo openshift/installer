@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -19,7 +20,7 @@ func (a *persistAsset) Dependencies() []Asset {
 	return []Asset{}
 }
 
-func (a *persistAsset) Generate(Parents) error {
+func (a *persistAsset) Generate(context.Context, Parents) error {
 	return nil
 }
 

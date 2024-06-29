@@ -2,6 +2,7 @@ package tls
 
 import (
 	"bytes"
+	"context"
 	"crypto/rsa"
 	"crypto/x509"
 	"os"
@@ -121,7 +122,7 @@ type SignedCertKey struct {
 }
 
 // Generate generates a cert/key pair signed by the specified parent CA.
-func (c *SignedCertKey) Generate(
+func (c *SignedCertKey) Generate(_ context.Context,
 	cfg *CertCfg,
 	parentCA CertKeyInterface,
 	filenameBase string,
@@ -167,7 +168,7 @@ type SelfSignedCertKey struct {
 }
 
 // Generate generates a cert/key pair signed by the specified parent CA.
-func (c *SelfSignedCertKey) Generate(
+func (c *SelfSignedCertKey) Generate(_ context.Context,
 	cfg *CertCfg,
 	filenameBase string,
 ) error {

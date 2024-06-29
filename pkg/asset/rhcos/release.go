@@ -34,8 +34,8 @@ func (r *Release) Dependencies() []asset.Asset {
 	}
 }
 
-// GenerateWithContext the Release string.
-func (r *Release) GenerateWithContext(ctx context.Context, p asset.Parents) error {
+// Generate the Release string.
+func (r *Release) Generate(ctx context.Context, p asset.Parents) error {
 	ic := &installconfig.InstallConfig{}
 	p.Get(ic)
 	config := ic.Config
@@ -85,10 +85,4 @@ func (r *Release) GetAzureReleaseVersion() string {
 		imageVersion = imageVersion[:len(imageVersion)-6]
 	}
 	return imageVersion
-}
-
-// Generate is implemented so this asset maintains compatibility with the Asset
-// interface. It should never be called.
-func (*Release) Generate(_ asset.Parents) (err error) {
-	panic("Release.Generate was called instead of Release.GenerateWithContext")
 }

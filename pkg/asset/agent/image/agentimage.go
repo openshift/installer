@@ -1,6 +1,7 @@
 package image
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -52,7 +53,7 @@ func (a *AgentImage) Dependencies() []asset.Asset {
 }
 
 // Generate generates the image file for to ISO asset.
-func (a *AgentImage) Generate(dependencies asset.Parents) error {
+func (a *AgentImage) Generate(ctx context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	clusterInfo := &joiner.ClusterInfo{}
 	agentArtifacts := &AgentArtifacts{}
@@ -92,7 +93,7 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 			logrus.Debugf("Using custom rootfs URL: %s", a.rootFSURL)
 		} else {
 			// Default to the URL from the RHCOS streams file
-			defaultRootFSURL, err := baseIso.getRootFSURL(a.cpuArch)
+			defaultRootFSURL, err := baseIso.getRootFSURL(ctx, a.cpuArch)
 			if err != nil {
 				return err
 			}

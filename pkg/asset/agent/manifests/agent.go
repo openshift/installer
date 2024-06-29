@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -56,7 +57,7 @@ func (m *AgentManifests) Dependencies() []asset.Asset {
 }
 
 // Generate generates the respective manifest files.
-func (m *AgentManifests) Generate(dependencies asset.Parents) error {
+func (m *AgentManifests) Generate(_ context.Context, dependencies asset.Parents) error {
 	for _, a := range []asset.WritableAsset{
 		&AgentPullSecret{},
 		&InfraEnv{},

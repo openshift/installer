@@ -60,8 +60,8 @@ func (a *InstallConfig) Dependencies() []asset.Asset {
 	}
 }
 
-// GenerateWithContext generates the install-config.yaml file.
-func (a *InstallConfig) GenerateWithContext(ctx context.Context, parents asset.Parents) error {
+// Generate the install-config.yaml file.
+func (a *InstallConfig) Generate(ctx context.Context, parents asset.Parents) error {
 	sshPublicKey := &sshPublicKey{}
 	baseDomain := &baseDomain{}
 	clusterName := &clusterName{}
@@ -230,10 +230,4 @@ func (a *InstallConfig) platformValidation(ctx context.Context) error {
 		return icnutanix.Validate(a.Config)
 	}
 	return field.ErrorList{}.ToAggregate()
-}
-
-// Generate is implemented so this asset maintains compatibility with the Asset
-// interface. It should never be called.
-func (*InstallConfig) Generate(_ asset.Parents) (err error) {
-	panic("InstallConfig.Generate was called instead of InstallConfig.GenerateWithContext")
 }

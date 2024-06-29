@@ -1,6 +1,7 @@
 package joiner
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -160,7 +161,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 				Client:          fakeClient,
 				OpenshiftClient: fakeOCClient,
 			}
-			err := clusterInfo.Generate(parents)
+			err := clusterInfo.Generate(context.Background(), parents)
 
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expectedClusterInfo.ClusterID, clusterInfo.ClusterID)

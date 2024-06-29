@@ -47,8 +47,8 @@ func (a *platform) Dependencies() []asset.Asset {
 	return []asset.Asset{}
 }
 
-// GenerateWithContext queries for input from the user.
-func (a *platform) GenerateWithContext(ctx context.Context, _ asset.Parents) error {
+// Generate queries for input from the user.
+func (a *platform) Generate(ctx context.Context, _ asset.Parents) error {
 	platform, err := a.queryUserForPlatform()
 	if err != nil {
 		return err
@@ -141,10 +141,4 @@ func (a *platform) queryUserForPlatform() (platform string, err error) {
 
 func (a *platform) CurrentName() string {
 	return a.Platform.Name()
-}
-
-// Generate is implemented so this asset maintains compatibility with the Asset
-// interface. It should never be called.
-func (*platform) Generate(_ asset.Parents) (err error) {
-	panic("platform.Generate was called instead of platform.GenerateWithContext")
 }

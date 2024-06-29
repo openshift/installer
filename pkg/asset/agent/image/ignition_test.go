@@ -1,6 +1,7 @@
 package image
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"os"
@@ -512,7 +513,7 @@ metadata:
 			parents.Add(deps...)
 
 			ignitionAsset := &Ignition{}
-			err := ignitionAsset.Generate(parents)
+			err := ignitionAsset.Generate(context.Background(), parents)
 
 			if tc.expectedError != "" {
 				assert.Equal(t, tc.expectedError, err.Error())

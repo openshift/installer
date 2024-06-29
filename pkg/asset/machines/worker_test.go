@@ -170,7 +170,7 @@ spec:
 				},
 			)
 			worker := &Worker{}
-			if err := worker.GenerateWithContext(context.Background(), parents); err != nil {
+			if err := worker.Generate(context.Background(), parents); err != nil {
 				t.Fatalf("failed to generate worker machines: %v", err)
 			}
 			expectedLen := len(tc.expectedMachineConfig)
@@ -232,7 +232,7 @@ func TestComputeIsNotModified(t *testing.T) {
 		},
 	)
 	worker := &Worker{}
-	if err := worker.GenerateWithContext(context.Background(), parents); err != nil {
+	if err := worker.Generate(context.Background(), parents); err != nil {
 		t.Fatalf("failed to generate master machines: %v", err)
 	}
 
