@@ -9,6 +9,8 @@ import (
 	"github.com/sirupsen/logrus"
 
 	ccaws "github.com/openshift/cloud-credential-operator/pkg/aws"
+	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/aws"
 )
 
 // PermissionGroup is the group of permissions needed by cluster creation, operation, or teardown.
@@ -29,6 +31,9 @@ const (
 
 	// PermissionDeleteSharedNetworking is a set of permissions required when the installer destroys resources from a shared-network cluster.
 	PermissionDeleteSharedNetworking PermissionGroup = "delete-shared-networking"
+
+	// PermissionCreateInstanceRole is a set of permissions required when the installer creates instance roles.
+	PermissionCreateInstanceRole PermissionGroup = "create-instance-role"
 
 	// PermissionDeleteSharedInstanceRole is a set of permissions required when the installer destroys resources from a
 	// cluster with user-supplied IAM roles for instances.
@@ -129,10 +134,7 @@ var permissions = map[PermissionGroup][]string{
 		// IAM related perms
 		"iam:AddRoleToInstanceProfile",
 		"iam:CreateInstanceProfile",
-		"iam:CreateRole",
 		"iam:DeleteInstanceProfile",
-		"iam:DeleteRole",
-		"iam:DeleteRolePolicy",
 		"iam:GetInstanceProfile",
 		"iam:GetRole",
 		"iam:GetRolePolicy",
@@ -141,7 +143,6 @@ var permissions = map[PermissionGroup][]string{
 		"iam:ListRoles",
 		"iam:ListUsers",
 		"iam:PassRole",
-		"iam:PutRolePolicy",
 		"iam:RemoveRoleFromInstanceProfile",
 		"iam:SimulatePrincipalPolicy",
 		"iam:TagInstanceProfile",
@@ -246,6 +247,13 @@ var permissions = map[PermissionGroup][]string{
 	PermissionDeleteSharedNetworking: {
 		"tag:UnTagResources",
 	},
+	// Permissions required for creating an instance role
+	PermissionCreateInstanceRole: {
+		"iam:CreateRole",
+		"iam:DeleteRole",
+		"iam:DeleteRolePolicy",
+		"iam:PutRolePolicy",
+	},
 	// Permissions required for deleting a cluster with shared instance roles
 	PermissionDeleteSharedInstanceRole: {
 		"iam:UntagRole",
@@ -331,4 +339,52 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string
 	}
 
 	return errors.New("AWS credentials cannot be used to either create new creds or use as-is")
+}
+
+// IncludesExistingInstanceRole checks if at least one BYO instance role is included in the install-config.
+func IncludesExistingInstanceRole(installConfig *types.InstallConfig) bool {
+	mpool := aws.MachinePool{}
+	mpool.Set(installConfig.AWS.DefaultMachinePlatform)
+
+	if mp := installConfig.ControlPlane; mp != nil {
+		mpool.Set(mp.Platform.AWS)
+	}
+
+	for _, compute := range installConfig.Compute {
+		mpool.Set(compute.Platform.AWS)
+	}
+
+	return len(mpool.IAMRole) > 0
+}
+
+// IncludesCreateInstanceRole checks if at least one instance role will be created by the installer.
+func IncludesCreateInstanceRole(installConfig *types.InstallConfig) bool {
+	{
+		mpool := aws.MachinePool{}
+		mpool.Set(installConfig.AWS.DefaultMachinePlatform)
+		if mp := installConfig.ControlPlane; mp != nil {
+			mpool.Set(mp.Platform.AWS)
+		}
+		if len(mpool.IAMRole) == 0 {
+			return true
+		}
+	}
+
+	for _, compute := range installConfig.Compute {
+		mpool := aws.MachinePool{}
+		mpool.Set(installConfig.AWS.DefaultMachinePlatform)
+		mpool.Set(compute.Platform.AWS)
+		if len(mpool.IAMRole) == 0 {
+			return true
+		}
+	}
+
+	if len(installConfig.Compute) > 0 {
+		return false
+	}
+
+	// If compute stanza is not defined, we know it'll inherit the value from DefaultMachinePlatform
+	mpool := aws.MachinePool{}
+	mpool.Set(installConfig.AWS.DefaultMachinePlatform)
+	return len(mpool.IAMRole) == 0
 }
