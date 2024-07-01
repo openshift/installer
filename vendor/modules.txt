@@ -661,7 +661,7 @@ github.com/googleapis/gax-go/v2/apierror
 github.com/googleapis/gax-go/v2/apierror/internal/proto
 github.com/googleapis/gax-go/v2/callctx
 github.com/googleapis/gax-go/v2/internal
-# github.com/gophercloud/gophercloud/v2 v2.0.0-rc.3
+# github.com/gophercloud/gophercloud/v2 v2.0.0
 ## explicit; go 1.22
 github.com/gophercloud/gophercloud/v2
 github.com/gophercloud/gophercloud/v2/openstack
@@ -708,7 +708,7 @@ github.com/gophercloud/gophercloud/v2/openstack/sharedfilesystems/v2/shares
 github.com/gophercloud/gophercloud/v2/openstack/sharedfilesystems/v2/snapshots
 github.com/gophercloud/gophercloud/v2/openstack/utils
 github.com/gophercloud/gophercloud/v2/pagination
-# github.com/gophercloud/utils/v2 v2.0.0-20240606071537-ccde17eee9f1
+# github.com/gophercloud/utils/v2 v2.0.0-20240701101423-2401526caee5
 ## explicit; go 1.22
 github.com/gophercloud/utils/v2/env
 github.com/gophercloud/utils/v2/gnocchi

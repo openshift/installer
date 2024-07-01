@@ -51,8 +51,8 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/google/uuid v1.6.0
 	github.com/googleapis/gax-go/v2 v2.12.3
-	github.com/gophercloud/gophercloud/v2 v2.0.0-rc.3
-	github.com/gophercloud/utils/v2 v2.0.0-20240606071537-ccde17eee9f1
+	github.com/gophercloud/gophercloud/v2 v2.0.0
+	github.com/gophercloud/utils/v2 v2.0.0-20240701101423-2401526caee5
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.6.0
