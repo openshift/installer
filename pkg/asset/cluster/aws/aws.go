@@ -41,7 +41,11 @@ func PreTerraform(ctx context.Context, clusterID string, installConfig *installc
 		return err
 	}
 
-	return tagSharedIAMRoles(ctx, clusterID, installConfig)
+	if err := tagSharedIAMRoles(ctx, clusterID, installConfig); err != nil {
+		return err
+	}
+
+	return tagSharedIAMProfiles(ctx, clusterID, installConfig)
 }
 
 func tagSharedVPCResources(ctx context.Context, clusterID string, installConfig *installconfig.InstallConfig) error {
@@ -149,6 +153,67 @@ func tagSharedIAMRoles(ctx context.Context, clusterID string, installConfig *ins
 			},
 		}); err != nil {
 			return fmt.Errorf("could not tag %q instance role: %w", role, err)
+		}
+	}
+
+	return nil
+}
+
+// tagSharedIAMProfiles tags users BYO instance profiles so they are not destroyed by the Installer.
+func tagSharedIAMProfiles(ctx context.Context, clusterID string, installConfig *installconfig.InstallConfig) error {
+	iamProfileNames := sets.New[string]()
+
+	{
+		mpool := awstypes.MachinePool{}
+		mpool.Set(installConfig.Config.AWS.DefaultMachinePlatform)
+
+		if mp := installConfig.Config.ControlPlane; mp != nil {
+			mpool.Set(mp.Platform.AWS)
+		}
+		if len(mpool.IAMProfile) > 0 {
+			iamProfileNames.Insert(mpool.IAMProfile)
+		}
+	}
+
+	for _, compute := range installConfig.Config.Compute {
+		mpool := awstypes.MachinePool{}
+		mpool.Set(installConfig.Config.AWS.DefaultMachinePlatform)
+		mpool.Set(compute.Platform.AWS)
+		if len(mpool.IAMProfile) > 0 {
+			iamProfileNames.Insert(mpool.IAMProfile)
+		}
+	}
+
+	// If compute stanza was not defined in the install-config.yaml, it will inherit from the
+	// DefaultMachinePlatform later on.
+	if installConfig.Config.Compute == nil {
+		mpool := installConfig.Config.AWS.DefaultMachinePlatform
+		if mpool != nil && len(mpool.IAMProfile) > 0 {
+			iamProfileNames.Insert(mpool.IAMProfile)
+		}
+	}
+
+	if iamProfileNames.Len() == 0 {
+		return nil
+	}
+
+	logrus.Debugf("Tagging shared instance profiles: %v", sets.List(iamProfileNames))
+
+	session, err := installConfig.AWS.Session(ctx)
+	if err != nil {
+		return errors.Wrap(err, "could not create AWS session")
+	}
+	iamClient := iam.New(session, aws.NewConfig().WithRegion(installConfig.Config.AWS.Region))
+
+	tagKey, tagValue := sharedTag(clusterID)
+	for name := range iamProfileNames {
+		if _, err := iamClient.TagInstanceProfileWithContext(ctx, &iam.TagInstanceProfileInput{
+			InstanceProfileName: aws.String(name),
+			Tags: []*iam.Tag{
+				{Key: aws.String(tagKey), Value: aws.String(tagValue)},
+			},
+		}); err != nil {
+			return fmt.Errorf("could not tag %q instance profile: %w", name, err)
 		}
 	}
 

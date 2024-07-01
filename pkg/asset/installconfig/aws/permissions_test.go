@@ -227,6 +227,85 @@ func TestIncludesExistingInstanceRole(t *testing.T) {
 	})
 }
 
+func TestIncludesExistingInstanceProfile(t *testing.T) {
+	t.Run("Should be true when", func(t *testing.T) {
+		t.Run("instance profile specified for defaultMachinePlatform", func(t *testing.T) {
+			ic := basicInstallConfig()
+			ic.AWS.DefaultMachinePlatform = &aws.MachinePool{
+				IAMProfile: "custom-default-profile",
+			}
+			assert.True(t, includesExistingInstanceProfile(&ic))
+		})
+		t.Run("instance profile specified for controlPlane", func(t *testing.T) {
+			ic := basicInstallConfig()
+			ic.ControlPlane = &types.MachinePool{
+				Platform: types.MachinePoolPlatform{
+					AWS: &aws.MachinePool{
+						IAMProfile: "custom-master-profile",
+					},
+				},
+			}
+			assert.True(t, includesExistingInstanceProfile(&ic))
+		})
+		t.Run("instance profile specified for compute", func(t *testing.T) {
+			ic := basicInstallConfig()
+			ic.Compute = []types.MachinePool{
+				{
+					Platform: types.MachinePoolPlatform{
+						AWS: &aws.MachinePool{
+							IAMProfile: "custom-worker-profile",
+						},
+					},
+				},
+			}
+			assert.True(t, includesExistingInstanceProfile(&ic))
+		})
+		t.Run("instance profile specified for controlPlane and compute", func(t *testing.T) {
+			ic := basicInstallConfig()
+			ic.ControlPlane = &types.MachinePool{
+				Platform: types.MachinePoolPlatform{
+					AWS: &aws.MachinePool{
+						IAMProfile: "custom-master-profile",
+					},
+				},
+			}
+			ic.Compute = []types.MachinePool{
+				{
+					Platform: types.MachinePoolPlatform{
+						AWS: &aws.MachinePool{
+							IAMProfile: "custom-worker-profile",
+						},
+					},
+				},
+			}
+			assert.True(t, includesExistingInstanceProfile(&ic))
+		})
+	})
+	t.Run("Should be false when", func(t *testing.T) {
+		t.Run("no machine types specified", func(t *testing.T) {
+			ic := basicInstallConfig()
+			assert.False(t, includesExistingInstanceProfile(&ic))
+		})
+		t.Run("no instance profiles specified", func(t *testing.T) {
+			ic := basicInstallConfig()
+			ic.AWS.DefaultMachinePlatform = &aws.MachinePool{}
+			ic.ControlPlane = &types.MachinePool{
+				Platform: types.MachinePoolPlatform{
+					AWS: &aws.MachinePool{},
+				},
+			}
+			ic.Compute = []types.MachinePool{
+				{
+					Platform: types.MachinePoolPlatform{
+						AWS: &aws.MachinePool{},
+					},
+				},
+			}
+			assert.False(t, includesExistingInstanceProfile(&ic))
+		})
+	})
+}
+
 func TestIAMRolePermissions(t *testing.T) {
 	t.Run("Should include", func(t *testing.T) {
 		t.Run("create and delete shared IAM role permissions", func(t *testing.T) {
