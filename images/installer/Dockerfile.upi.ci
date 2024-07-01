@@ -97,6 +97,12 @@ RUN mkdir /output && HOME=/output && \
     ibmcloud plugin install cloud-dns-services -f && \
     ibmcloud plugin install cloud-internet-services -f && \
     ibmcloud plugin install key-protect -f && \
+    ibmcloud plugin install infrastructure-service -f && \
+    ibmcloud plugin install power-iaas -f && \
+    ibmcloud plugin install cloud-object-storage -f && \
+    ibmcloud plugin install dl-cli -f && \
+    ibmcloud plugin install dns -f && \
+    ibmcloud plugin install tg-cli -f && \
     cp /usr/local/bin/ibmcloud /bin/ibmcloud && \
     rm -f $HOME/.curlrc && \
     ibmcloud version && \
