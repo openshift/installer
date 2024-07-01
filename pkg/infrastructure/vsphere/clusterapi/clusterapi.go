@@ -6,6 +6,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/vmware/govmomi/object"
 	"sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
 
@@ -52,20 +53,26 @@ func initializeFoldersAndTemplates(ctx context.Context, cachedImage string, fail
 		folderPath = folder
 	}
 
-	folderMo, err := createFolder(ctx, folderPath, session)
-	if err != nil {
-		return fmt.Errorf("unable to create folder: %w", err)
-	}
+	var folderObj *object.Folder
 
-	// attach tag to folder
-	err = session.TagManager.AttachTag(ctx, tagID, folderMo.Reference())
-	if err != nil {
-		return fmt.Errorf("unable to attach tag to folder: %w", err)
+	// Only createFolder() and attach the tag if the folder does not exist prior to installing
+	if folderObj, err = folderExists(ctx, folderPath, session); folderObj == nil && err == nil {
+		folderObj, err = createFolder(ctx, folderPath, session)
+		if err != nil {
+			return fmt.Errorf("unable to create folder: %w", err)
+		}
+		// attach tag to folder
+		err = session.TagManager.AttachTag(ctx, tagID, folderObj.Reference())
+		if err != nil {
+			return fmt.Errorf("unable to attach tag to folder: %w", err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("unable to get folder: %w", err)
 	}
 
 	// if the template is empty, the ova must be imported
 	if len(failureDomain.Topology.Template) == 0 {
-		if err = importRhcosOva(ctx, session, folderMo,
+		if err = importRhcosOva(ctx, session, folderObj,
 			cachedImage, clusterID, tagID, string(diskType), failureDomain); err != nil {
 			return fmt.Errorf("failed to import ova: %w", err)
 		}
