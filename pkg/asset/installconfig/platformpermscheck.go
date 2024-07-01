@@ -112,6 +112,10 @@ func (a *PlatformPermsCheck) Generate(ctx context.Context, dependencies asset.Pa
 			permissionGroups = append(permissionGroups, awsconfig.PermissionDeleteSharedInstanceRole)
 		}
 
+		if awsconfig.IncludesExistingInstanceProfile(ic.Config) {
+			permissionGroups = append(permissionGroups, awsconfig.PermissionDeleteSharedInstanceProfile)
+		}
+
 		ssn, err := ic.AWS.Session(ctx)
 		if err != nil {
 			return err

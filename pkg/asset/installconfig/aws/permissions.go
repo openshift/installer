@@ -37,6 +37,10 @@ const (
 	// cluster with user-supplied IAM roles for instances.
 	PermissionDeleteSharedInstanceRole PermissionGroup = "delete-shared-instance-role"
 
+	// PermissionDeleteSharedInstanceProfile is a set of permissions required when the installer destroys resources from
+	// a cluster with user-supplied IAM instance profiles for instances.
+	PermissionDeleteSharedInstanceProfile PermissionGroup = "delete-shared-instance-profile"
+
 	// PermissionCreateHostedZone is a set of permissions required when the installer creates a route53 hosted zone.
 	PermissionCreateHostedZone PermissionGroup = "create-hosted-zone"
 
@@ -255,6 +259,10 @@ var permissions = map[PermissionGroup][]string{
 	// Permissions required for deleting a cluster with shared instance roles
 	PermissionDeleteSharedInstanceRole: {
 		"iam:UntagRole",
+	},
+	// Permissions required for deleting a cluster with shared instance profiles
+	PermissionDeleteSharedInstanceProfile: {
+		"iam:UntagInstanceProfile",
 	},
 	PermissionCreateHostedZone: {
 		"route53:CreateHostedZone",
