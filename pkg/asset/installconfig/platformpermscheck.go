@@ -105,6 +105,14 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 			permissionGroups = append(permissionGroups, awsconfig.PermissionDeleteIgnitionObjects)
 		}
 
+		if awsconfig.IncludesCreateInstanceRole(ic.Config) {
+			permissionGroups = append(permissionGroups, awsconfig.PermissionCreateInstanceRole)
+		}
+
+		if awsconfig.IncludesExistingInstanceRole(ic.Config) {
+			permissionGroups = append(permissionGroups, awsconfig.PermissionDeleteSharedInstanceRole)
+		}
+
 		ssn, err := ic.AWS.Session(ctx)
 		if err != nil {
 			return err
