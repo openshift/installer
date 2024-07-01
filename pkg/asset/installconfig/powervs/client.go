@@ -425,7 +425,7 @@ func (c *Client) GetDNSZones(ctx context.Context, publish types.PublishingStrate
 			}
 
 			for _, zone := range listZonesResponse.Dnszones {
-				if *zone.State == "ACTIVE" {
+				if *zone.State == "ACTIVE" || *zone.State == "PENDING_NETWORK_ADD" {
 					zoneStruct := DNSZoneResponse{
 						Name:            *zone.Name,
 						ID:              *zone.ID,
