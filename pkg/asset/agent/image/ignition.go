@@ -73,7 +73,7 @@ type agentTemplateData struct {
 	ConfigImageFiles          string
 	ImageTypeISO              string
 	PublicKeyPEM              string
-	PrivateKeyPEM             string
+	Token                     string
 	CaBundleMount             string
 }
 
@@ -255,8 +255,8 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 		osImage,
 		infraEnv.Spec.Proxy,
 		imageTypeISO,
-		keyPairAsset.PrivateKey,
 		keyPairAsset.PublicKey,
+		keyPairAsset.Token,
 		caBundleMount)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
@@ -266,7 +266,7 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 
 	rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath,
 		"root", 0644,
-		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, a.RendezvousIP, agentWorkflow.Workflow))
+		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, a.RendezvousIP, keyPairAsset.Token, agentWorkflow.Workflow))
 	config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 
 	err = addBootstrapScripts(&config, agentManifests.ClusterImageSet.Spec.ReleaseImage)
@@ -373,7 +373,7 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 	osImage *models.OsImage,
 	proxy *v1beta1.Proxy,
 	imageTypeISO,
-	privateKey, publicKey string,
+	publicKey, token string,
 	caBundleMount string) *agentTemplateData {
 	return &agentTemplateData{
 		ServiceProtocol:           "http",
@@ -390,13 +390,13 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 		OSImage:                   osImage,
 		Proxy:                     proxy,
 		ImageTypeISO:              imageTypeISO,
-		PrivateKeyPEM:             privateKey,
 		PublicKeyPEM:              publicKey,
+		Token:                     token,
 		CaBundleMount:             caBundleMount,
 	}
 }
 
-func getRendezvousHostEnv(serviceProtocol, nodeZeroIP string, workflowType workflow.AgentWorkflowType) string {
+func getRendezvousHostEnv(serviceProtocol, nodeZeroIP, token string, workflowType workflow.AgentWorkflowType) string {
 	serviceBaseURL := url.URL{
 		Scheme: serviceProtocol,
 		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
@@ -411,8 +411,10 @@ func getRendezvousHostEnv(serviceProtocol, nodeZeroIP string, workflowType workf
 	return fmt.Sprintf(`NODE_ZERO_IP=%s
 SERVICE_BASE_URL=%s
 IMAGE_SERVICE_BASE_URL=%s
+AGENT_AUTH_TOKEN=%s
+PULL_SECRET_TOKEN=%s
 WORKFLOW_TYPE=%s
-`, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String(), workflowType)
+`, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String(), token, token, workflowType)
 }
 
 func getAddNodesEnv(clusterInfo joiner.ClusterInfo) string {

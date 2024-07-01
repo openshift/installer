@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/assisted-service/client/installer"
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
 	"github.com/openshift/installer/pkg/asset/agent/image"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -32,7 +33,7 @@ type NodeZeroRestClient struct {
 }
 
 // NewNodeZeroRestClient Initialize a new rest client to interact with the Agent Rest API on node zero.
-func NewNodeZeroRestClient(ctx context.Context, rendezvousIP string, sshKey string) (*NodeZeroRestClient, error) {
+func NewNodeZeroRestClient(ctx context.Context, rendezvousIP, sshKey, token string) (*NodeZeroRestClient, error) {
 	restClient := &NodeZeroRestClient{}
 
 	// Get SSH Keys which can be used to determine if Rest API failures are due to network connectivity issues
@@ -46,6 +47,9 @@ func NewNodeZeroRestClient(ctx context.Context, rendezvousIP string, sshKey stri
 		Host:   net.JoinHostPort(rendezvousIP, "8090"),
 		Path:   client.DefaultBasePath,
 	}
+
+	config.AuthInfo = gencrypto.UserAuthHeaderWriter(token)
+
 	client := client.New(config)
 
 	restClient.Client = client
@@ -113,6 +117,26 @@ func FindRendezvouIPAndSSHKeyFromAssetStore(assetDir string) (string, string, er
 	}
 
 	return rendezvousIP, sshKey, nil
+}
+
+// FindAuthTokenFromAssetStore returns the auth token.
+func FindAuthTokenFromAssetStore(assetDir string) (string, error) {
+	authConfigAsset := &gencrypto.AuthConfig{}
+
+	assetStore, err := assetstore.NewStore(assetDir)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to create asset store")
+	}
+
+	authConfig, authConfigError := assetStore.Load(authConfigAsset)
+
+	if authConfigError != nil {
+		logrus.Debug(errors.Wrapf(authConfigError, "failed to load %s", authConfigAsset.Name()))
+	}
+
+	token := authConfig.(*gencrypto.AuthConfig).Token
+
+	return token, nil
 }
 
 // IsRestAPILive Determine if the Agent Rest API on node zero has initialized

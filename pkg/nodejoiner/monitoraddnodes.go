@@ -16,7 +16,8 @@ func NewMonitorAddNodesCommand(directory, kubeconfigPath string, ips []string) e
 		return err
 	}
 
-	cluster, err := agentpkg.NewCluster(context.Background(), "", ips[0], kubeconfigPath, "", workflow.AgentWorkflowTypeAddNodes)
+	var token string
+	cluster, err := agentpkg.NewCluster(context.Background(), "", ips[0], kubeconfigPath, "", token, workflow.AgentWorkflowTypeAddNodes)
 	if err != nil {
 		// TODO exit code enumerate
 		logrus.Exit(1)
