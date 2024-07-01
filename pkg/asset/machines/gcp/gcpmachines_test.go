@@ -55,6 +55,11 @@ func Test_GenerateMachines(t *testing.T) {
 			installConfig:     getICWithSecureBoot(),
 			expectedGCPConfig: getGCPMachineWithSecureBoot(),
 		},
+		{
+			name:              "usertags",
+			installConfig:     getICWithUserTags(),
+			expectedGCPConfig: getGCPMachineWithTags(),
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -149,6 +154,13 @@ func getICWithSecureBoot() *installconfig.InstallConfig {
 	return ic
 }
 
+func getICWithUserTags() *installconfig.InstallConfig {
+	ic := getBaseInstallConfig()
+	ic.Config.Platform.GCP.UserTags = []gcptypes.UserTag{{ParentID: "my-project", Key: "foo", Value: "bar"},
+		{ParentID: "other-project", Key: "id", Value: "1234"}}
+	return ic
+}
+
 func getBaseGCPMachine() *capg.GCPMachine {
 	subnet := "012345678-master-subnet"
 	image := "rhcos-415-92-202311241643-0-gcp-x86-64"
@@ -233,4 +245,16 @@ func getBaseCapiMachine() *capi.Machine {
 	}
 	capiMachine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
 	return capiMachine
+}
+
+func getGCPMachineWithTags() *capg.GCPMachine {
+	gcpMachine := getBaseGCPMachine()
+	gcpMachine.Spec.ResourceManagerTags = []capg.ResourceManagerTag{
+		{ParentID: "my-project",
+			Key:   "foo",
+			Value: "bar"},
+		{ParentID: "other-project",
+			Key:   "id",
+			Value: "1234"}}
+	return gcpMachine
 }
