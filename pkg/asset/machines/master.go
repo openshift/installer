@@ -51,6 +51,7 @@ import (
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/baremetal/validation"
 	externaltypes "github.com/openshift/installer/pkg/types/external"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
@@ -395,6 +396,10 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 		// Use managed user data secret, since we always have up to date images
 		// available in the cluster
 		masterUserDataSecretName = "master-user-data-managed"
+		enabledCaps := validation.GetEnabledCapabilities(installConfig.Config.Capabilities)
+		if !enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) {
+			break
+		}
 		machines, err = baremetal.Machines(clusterID.InfraID, ic, &pool, "master", masterUserDataSecretName)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
