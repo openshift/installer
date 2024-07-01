@@ -276,18 +276,6 @@ func terminateEC2InstanceByInstance(ctx context.Context, ec2Client *ec2.EC2, iam
 		return nil
 	}
 
-	if instance.IamInstanceProfile != nil {
-		parsed, err := arn.Parse(*instance.IamInstanceProfile.Arn)
-		if err != nil {
-			return errors.Wrap(err, "parse ARN for IAM instance profile")
-		}
-
-		err = deleteIAMInstanceProfile(ctx, iamClient, parsed, logger)
-		if err != nil {
-			return errors.Wrapf(err, "deleting %s", parsed.String())
-		}
-	}
-
 	_, err := ec2Client.TerminateInstancesWithContext(ctx, &ec2.TerminateInstancesInput{
 		InstanceIds: []*string{instance.InstanceId},
 	})
