@@ -103,6 +103,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					},
 				},
 				ControlPlaneOutboundLB: &capz.LoadBalancerSpec{
+					Name:             clusterID.InfraID,
 					FrontendIPsCount: to.Ptr(int32(1)),
 				},
 				Subnets: capz.Subnets{
