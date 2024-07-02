@@ -11,7 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	awss "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
-	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -156,43 +155,25 @@ func GetR53ClientCfg(sess *awss.Session, roleARN string) *aws.Config {
 	return &aws.Config{Credentials: creds}
 }
 
+// CreateRecordInput collects information for creating a record.
+type CreateRecordInput struct {
+	Name           string
+	Region         string
+	DNSTarget      string
+	ZoneID         string
+	AliasZoneID    string
+	HostedZoneRole string
+}
+
 // CreateOrUpdateRecord Creates or Updates the Route53 Record for the cluster endpoint.
-func (c *Client) CreateOrUpdateRecord(ctx context.Context, ic *types.InstallConfig, target string, intTarget string, phzID string, aliasZoneID string) error {
-	useCNAME := cnameRegions.Has(ic.AWS.Region)
+func (c *Client) CreateOrUpdateRecord(ctx context.Context, in *CreateRecordInput) error {
+	useCNAME := cnameRegions.Has(in.Region)
 
-	apiName := fmt.Sprintf("api.%s.", ic.ClusterDomain())
-	apiIntName := fmt.Sprintf("api-int.%s.", ic.ClusterDomain())
+	// Create service with assumed role, if set
+	svc := route53.New(c.ssn, GetR53ClientCfg(c.ssn, in.HostedZoneRole))
 
-	// Create api record in public zone
-	if ic.Publish == types.ExternalPublishingStrategy {
-		zone, err := c.GetBaseDomain(ic.BaseDomain)
-		if err != nil {
-			return err
-		}
-
-		svc := route53.New(c.ssn) // we dont want to assume role here
-		if _, err := createRecord(ctx, svc, aws.StringValue(zone.Id), apiName, target, aliasZoneID, useCNAME); err != nil {
-			return fmt.Errorf("failed to create records for api: %w", err)
-		}
-		logrus.Debugln("Created public API record in public zone")
-	}
-
-	// Create service with assumed role for PHZ
-	svc := route53.New(c.ssn, GetR53ClientCfg(c.ssn, ic.AWS.HostedZoneRole))
-
-	// Create api record in private zone
-	if _, err := createRecord(ctx, svc, phzID, apiName, intTarget, aliasZoneID, useCNAME); err != nil {
-		return fmt.Errorf("failed to create records for api: %w", err)
-	}
-	logrus.Debugln("Created public API record in private zone")
-
-	// Create api-int record in private zone
-	if _, err := createRecord(ctx, svc, phzID, apiIntName, intTarget, aliasZoneID, useCNAME); err != nil {
-		return fmt.Errorf("failed to create records for api-int: %w", err)
-	}
-	logrus.Debugln("Created private API record in private zone")
-
-	return nil
+	_, err := createRecord(ctx, svc, in.ZoneID, in.Name, in.DNSTarget, in.AliasZoneID, useCNAME)
+	return err
 }
 
 func createRecord(ctx context.Context, client *route53.Route53, zoneID, name, dnsName, aliasZoneID string, useCNAME bool) (*route53.ChangeInfo, error) {
@@ -277,6 +258,7 @@ func (c *Client) CreateHostedZone(ctx context.Context, input *HostedZoneInput) (
 	// Tag the hosted zone
 	tags := mergeTags(input.UserTags, map[string]string{
 		"Name": fmt.Sprintf("%s-int", input.InfraID),
+		fmt.Sprintf("kubernetes.io/cluster/%s", input.InfraID): "owned",
 	})
 	_, err = svc.ChangeTagsForResourceWithContext(ctx, &route53.ChangeTagsForResourceInput{
 		ResourceType: aws.String("hostedzone"),
