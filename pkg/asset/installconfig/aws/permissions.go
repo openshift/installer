@@ -30,9 +30,19 @@ const (
 	// PermissionDeleteSharedNetworking is a set of permissions required when the installer destroys resources from a shared-network cluster.
 	PermissionDeleteSharedNetworking PermissionGroup = "delete-shared-networking"
 
+	// PermissionCreateInstanceRole is a set of permissions required when the installer creates instance roles.
+	PermissionCreateInstanceRole PermissionGroup = "create-instance-role"
+
 	// PermissionDeleteSharedInstanceRole is a set of permissions required when the installer destroys resources from a
 	// cluster with user-supplied IAM roles for instances.
 	PermissionDeleteSharedInstanceRole PermissionGroup = "delete-shared-instance-role"
+
+	// PermissionCreateInstanceProfile is a set of permission required when the installer creates instance profiles.
+	PermissionCreateInstanceProfile PermissionGroup = "create-instance-profile"
+
+	// PermissionDeleteSharedInstanceProfile is a set of permissions required when the installer destroys resources from
+	// a cluster with user-supplied IAM instance profiles for instances.
+	PermissionDeleteSharedInstanceProfile PermissionGroup = "delete-shared-instance-profile"
 
 	// PermissionCreateHostedZone is a set of permissions required when the installer creates a route53 hosted zone.
 	PermissionCreateHostedZone PermissionGroup = "create-hosted-zone"
@@ -127,12 +137,6 @@ var permissions = map[PermissionGroup][]string{
 		"elasticloadbalancing:SetSecurityGroups",
 
 		// IAM related perms
-		"iam:AddRoleToInstanceProfile",
-		"iam:CreateInstanceProfile",
-		"iam:CreateRole",
-		"iam:DeleteInstanceProfile",
-		"iam:DeleteRole",
-		"iam:DeleteRolePolicy",
 		"iam:GetInstanceProfile",
 		"iam:GetRole",
 		"iam:GetRolePolicy",
@@ -141,8 +145,6 @@ var permissions = map[PermissionGroup][]string{
 		"iam:ListRoles",
 		"iam:ListUsers",
 		"iam:PassRole",
-		"iam:PutRolePolicy",
-		"iam:RemoveRoleFromInstanceProfile",
 		"iam:SimulatePrincipalPolicy",
 		"iam:TagInstanceProfile",
 		"iam:TagRole",
@@ -246,9 +248,27 @@ var permissions = map[PermissionGroup][]string{
 	PermissionDeleteSharedNetworking: {
 		"tag:UnTagResources",
 	},
+	// Permissions required for creating an instance role
+	PermissionCreateInstanceRole: {
+		"iam:CreateRole",
+		"iam:DeleteRole",
+		"iam:DeleteRolePolicy",
+		"iam:PutRolePolicy",
+	},
 	// Permissions required for deleting a cluster with shared instance roles
 	PermissionDeleteSharedInstanceRole: {
 		"iam:UntagRole",
+	},
+	// Permissions required for creating an instance profile
+	PermissionCreateInstanceProfile: {
+		"iam:AddRoleToInstanceProfile",
+		"iam:CreateInstanceProfile",
+		"iam:DeleteInstanceProfile",
+		"iam:RemoveRoleFromInstanceProfile",
+	},
+	// Permissions required for deleting a cluster with shared instance profiles
+	PermissionDeleteSharedInstanceProfile: {
+		"iam:UntagInstanceProfile",
 	},
 	PermissionCreateHostedZone: {
 		"route53:CreateHostedZone",

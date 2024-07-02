@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/route53"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -343,6 +344,15 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 		allErrs = append(allErrs, validateSecurityGroupIDs(ctx, meta, fldPath.Child("additionalSecurityGroupIDs"), platform, pool)...)
 	}
 
+	if len(pool.IAMProfile) > 0 {
+		if len(pool.IAMRole) > 0 {
+			allErrs = append(allErrs, field.Forbidden(fldPath.Child("iamRole"), "cannot be used with iamProfile"))
+		}
+		if err := validateInstanceProfile(ctx, meta, fldPath.Child("iamProfile"), pool); err != nil {
+			allErrs = append(allErrs, err)
+		}
+	}
+
 	return allErrs
 }
 
@@ -607,4 +617,24 @@ func isHostedZoneAssociatedWithVPC(hostedZone *route53.GetHostedZoneOutput, vpcI
 		}
 	}
 	return false
+}
+
+func validateInstanceProfile(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool) *field.Error {
+	session, err := meta.Session(ctx)
+	if err != nil {
+		return field.InternalError(fldPath, fmt.Errorf("unable to start a session: %w", err))
+	}
+	client := iam.New(session)
+	res, err := client.GetInstanceProfileWithContext(ctx, &iam.GetInstanceProfileInput{
+		InstanceProfileName: aws.String(pool.IAMProfile),
+	})
+	if err != nil {
+		msg := fmt.Errorf("unable to retrieve instance profile: %w", err).Error()
+		return field.Invalid(fldPath, pool.IAMProfile, msg)
+	}
+	if len(res.InstanceProfile.Roles) == 0 || res.InstanceProfile.Roles[0] == nil {
+		return field.Invalid(fldPath, pool.IAMProfile, "no role attached to instance profile")
+	}
+
+	return nil
 }

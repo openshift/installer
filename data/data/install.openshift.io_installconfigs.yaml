@@ -148,6 +148,12 @@ spec:
                             the ec2 instance. If set, the AMI should belong to the
                             same region as the cluster.
                           type: string
+                        iamProfile:
+                          description: IAMProfile is the name of the IAM instance
+                            profile to use for the machine. Leave unset to have the
+                            installer create the IAM Profile on your behalf. Cannot
+                            be specified together with iamRole.
+                          type: string
                         iamRole:
                           description: IAMRole is the name of the IAM Role to use
                             for the instance profile of the machine. Leave unset to
@@ -1060,6 +1066,12 @@ spec:
                         description: AMIID is the AMI that should be used to boot
                           the ec2 instance. If set, the AMI should belong to the same
                           region as the cluster.
+                        type: string
+                      iamProfile:
+                        description: IAMProfile is the name of the IAM instance profile
+                          to use for the machine. Leave unset to have the installer
+                          create the IAM Profile on your behalf. Cannot be specified
+                          together with iamRole.
                         type: string
                       iamRole:
                         description: IAMRole is the name of the IAM Role to use for
@@ -2184,6 +2196,12 @@ spec:
                         description: AMIID is the AMI that should be used to boot
                           the ec2 instance. If set, the AMI should belong to the same
                           region as the cluster.
+                        type: string
+                      iamProfile:
+                        description: IAMProfile is the name of the IAM instance profile
+                          to use for the machine. Leave unset to have the installer
+                          create the IAM Profile on your behalf. Cannot be specified
+                          together with iamRole.
                         type: string
                       iamRole:
                         description: IAMRole is the name of the IAM Role to use for

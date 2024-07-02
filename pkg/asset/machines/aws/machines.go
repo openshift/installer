@@ -28,6 +28,7 @@ type machineProviderInput struct {
 	zone             string
 	role             string
 	userDataSecret   string
+	instanceProfile  string
 	root             *aws.EC2RootVolume
 	imds             aws.EC2Metadata
 	userTags         map[string]string
@@ -46,6 +47,12 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
+
+	instanceProfile := mpool.IAMProfile
+	if len(instanceProfile) == 0 {
+		instanceProfile = fmt.Sprintf("%s-%s-profile", clusterID, role)
+	}
+
 	var machines []machineapi.Machine
 	machineSetProvider := &machineapi.AWSMachineProviderConfig{}
 	for idx := int64(0); idx < total; idx++ {
@@ -63,6 +70,7 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 			zone:             zone,
 			role:             role,
 			userDataSecret:   userDataSecret,
+			instanceProfile:  instanceProfile,
 			root:             &mpool.EC2RootVolume,
 			imds:             mpool.EC2Metadata,
 			userTags:         userTags,
@@ -238,7 +246,7 @@ func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, e
 		},
 		Tags: tags,
 		IAMInstanceProfile: &machineapi.AWSResourceReference{
-			ID: pointer.String(fmt.Sprintf("%s-%s-profile", in.clusterID, in.role)),
+			ID: pointer.String(in.instanceProfile),
 		},
 		UserDataSecret:    &corev1.LocalObjectReference{Name: in.userDataSecret},
 		CredentialsSecret: &corev1.LocalObjectReference{Name: "aws-cloud-credentials"},
