@@ -2,6 +2,7 @@ package image
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/url"
@@ -46,6 +47,7 @@ const nmConnectionsPath = "/etc/assisted/network"
 const extraManifestPath = "/etc/assisted/extra-manifests"
 const registriesConfPath = "/etc/containers/registries.conf"
 const registryCABundlePath = "/etc/pki/ca-trust/source/anchors/domain.crt"
+const clusterConfigPath = "/etc/assisted/clusterconfig"
 
 // Ignition is an asset that generates the agent installer ignition file.
 type Ignition struct {
@@ -193,6 +195,10 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 		openshiftVersion = clusterInfo.Version
 		streamGetter = func(ctx context.Context) (*stream.Stream, error) {
 			return clusterInfo.OSImage, nil
+		}
+		// If defined, add the ignition endpoints
+		if err := addDay2IgnitionEndpoints(&config, *clusterInfo); err != nil {
+			return err
 		}
 
 	default:
@@ -525,6 +531,35 @@ func addHostConfig(config *igntypes.Config, agentHosts *agentconfig.AgentHosts) 
 		hostConfigFile := ignition.FileFromBytes(filepath.Join("/etc/assisted/hostconfig", path), "root", 0644, content)
 		config.Storage.Files = append(config.Storage.Files, hostConfigFile)
 	}
+	return nil
+}
+
+func addDay2IgnitionEndpoints(config *igntypes.Config, clusterInfo joiner.ClusterInfo) error {
+	if clusterInfo.IgnitionEndpointWorker == nil {
+		return nil
+	}
+
+	user := "root"
+	mode := 0644
+	config.Storage.Directories = append(config.Storage.Directories, igntypes.Directory{
+		Node: igntypes.Node{
+			Path: clusterConfigPath,
+			User: igntypes.NodeUser{
+				Name: &user,
+			},
+			Overwrite: util.BoolToPtr(true),
+		},
+		DirectoryEmbedded1: igntypes.DirectoryEmbedded1{
+			Mode: &mode,
+		},
+	})
+
+	workerIgnitionBytes, err := json.Marshal(clusterInfo.IgnitionEndpointWorker)
+	if err != nil {
+		return err
+	}
+	workerIgnitionFile := ignition.FileFromBytes(path.Join(clusterConfigPath, "worker-ignition-endpoint.json"), user, mode, workerIgnitionBytes)
+	config.Storage.Files = append(config.Storage.Files, workerIgnitionFile)
 	return nil
 }
 
