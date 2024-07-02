@@ -45,6 +45,10 @@ build_terraform_and_providers() {
 	bindir="${PWD}/terraform/bin/${TARGET_OS_ARCH}"
 	find "${PWD}/terraform/providers/" -maxdepth 1 -mindepth 1 -type d | while read -r dir; do
 		provider="$(basename "${dir}")"
+		if [ "${SKIP_TERRAFORM_PROVIDERS}" = "${provider}" ]; then
+			echo "Not building Terraform ${provider}"
+			continue
+		fi
 		binpath="${bindir}/terraform-provider-${provider}"
 		if test -s "${binpath}" && test -s "${binpath}.zip" && check_module_changes "${binpath}" "terraform/providers/${provider}"; then
 			echo "${provider} is up-to-date"

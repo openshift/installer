@@ -1,11 +1,13 @@
 TARGET_OS_ARCH:=$(shell go env GOOS)_$(shell go env GOARCH)
+UNSUPPORTED_PROVIDERS:=$(shell echo $SKIP_TERRAFORM_PROVIDERS)
 
 TFSUBDIRS:=	$(foreach DIR,$(shell find providers -maxdepth 1 -mindepth 1 -type d),$(subst providers/,,$(DIR)))
+SUPPORTEDTFSUBDIRS:= $(filter-out $(UNSUPPORTED_PROVIDERS),$(TFSUBDIRS))
 
-GO_MOD_TIDY_TARGETS:=	$(foreach DIR,$(TFSUBDIRS), $(subst $(DIR),go-mod-tidy-vendor.$(DIR),$(DIR)))
-GO_BUILD_TARGETS:=	$(foreach DIR,$(TFSUBDIRS), $(subst $(DIR),go-build.$(DIR),$(DIR)))
-GO_CLEAN_TARGETS:=	$(foreach DIR,$(TFSUBDIRS), $(subst $(DIR),go-clean.$(DIR),$(DIR)))
-TERRAFORM_PROVIDER_TARGETS := $(foreach DIR,$(TFSUBDIRS), bin/$(TARGET_OS_ARCH)/terraform-provider-$(DIR).zip)
+GO_MOD_TIDY_TARGETS:=	$(foreach DIR,$(SUPPORTEDTFSUBDIRS), $(subst $(DIR),go-mod-tidy-vendor.$(DIR),$(DIR)))
+GO_BUILD_TARGETS:=	$(foreach DIR,$(SUPPORTEDTFSUBDIRS), $(subst $(DIR),go-build.$(DIR),$(DIR)))
+GO_CLEAN_TARGETS:=	$(foreach DIR,$(SUPPORTEDTFSUBDIRS), $(subst $(DIR),go-clean.$(DIR),$(DIR)))
+TERRAFORM_PROVIDER_TARGETS := $(foreach DIR,$(SUPPORTEDTFSUBDIRS), bin/$(TARGET_OS_ARCH)/terraform-provider-$(DIR).zip)
 
 LDFLAGS:= -s -w
 GCFLAGS:= ""
