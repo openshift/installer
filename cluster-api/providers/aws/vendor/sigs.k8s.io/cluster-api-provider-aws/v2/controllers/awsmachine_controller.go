@@ -945,6 +945,15 @@ func (r *AWSMachineReconciler) reconcileLBAttachment(machineScope *scope.Machine
 			continue
 		}
 
+		// See https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-register-targets.html#register-instances
+		if ptr.Deref(machineScope.GetInstanceState(), infrav1.InstanceStatePending) != infrav1.InstanceStateRunning {
+			const msg = "instance is not running"
+			r.Recorder.Eventf(machineScope.AWSMachine, corev1.EventTypeWarning, "FailedAttachControlPlaneELB",
+				"Cannot register control plane instance %q with load balancer: %s", i.ID, msg)
+			conditions.MarkFalse(machineScope.AWSMachine, infrav1.ELBAttachedCondition, infrav1.ELBAttachFailedReason, clusterv1.ConditionSeverityInfo, msg)
+			continue
+		}
+
 		if err := r.registerInstanceToLBs(machineScope, elbsvc, i, lbSpec); err != nil {
 			errs = append(errs, errors.Wrapf(err, "could not register machine to load balancer"))
 		}
