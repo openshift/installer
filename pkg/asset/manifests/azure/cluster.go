@@ -86,7 +86,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					PrivateDNSZoneName: installConfig.Config.ClusterDomain(),
 				},
 				Vnet: capz.VnetSpec{
-					ID: installConfig.Config.Azure.VirtualNetwork,
+					ResourceGroup: installConfig.Config.Azure.NetworkResourceGroupName,
+					Name:          installConfig.Config.Azure.VirtualNetwork,
 					VnetClassSpec: capz.VnetClassSpec{
 						CIDRBlocks: []string{
 							mainCIDR.String(),
