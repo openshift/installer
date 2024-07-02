@@ -34,6 +34,7 @@ import (
 	"github.com/pkg/errors"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
+	kwait "k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/storage/names"
 	"k8s.io/utils/ptr"
 
@@ -68,22 +69,34 @@ const additionalTargetGroupPrefix = "additional-listener-"
 func (s *Service) ReconcileLoadbalancers() error {
 	s.scope.Debug("Reconciling load balancers")
 
-	var errs []error
+	c := make(chan error, len(s.scope.ControlPlaneLoadBalancers()))
 
 	for _, lbSpec := range s.scope.ControlPlaneLoadBalancers() {
 		if lbSpec == nil {
 			continue
 		}
-		switch lbSpec.LoadBalancerType {
-		case infrav1.LoadBalancerTypeClassic:
-			errs = append(errs, s.reconcileClassicLoadBalancer())
-		case infrav1.LoadBalancerTypeNLB, infrav1.LoadBalancerTypeALB, infrav1.LoadBalancerTypeELB:
-			errs = append(errs, s.reconcileV2LB(lbSpec))
-		default:
-			errs = append(errs, fmt.Errorf("unknown or unsupported load balancer type on primary load balancer: %s", lbSpec.LoadBalancerType))
-		}
+		go func(c chan error, lbSpec *infrav1.AWSLoadBalancerSpec) {
+			switch lbSpec.LoadBalancerType {
+			case infrav1.LoadBalancerTypeClassic:
+				c <- s.reconcileClassicLoadBalancer()
+			case infrav1.LoadBalancerTypeNLB, infrav1.LoadBalancerTypeALB, infrav1.LoadBalancerTypeELB:
+				c <- s.reconcileV2LB(lbSpec)
+			default:
+				c <- fmt.Errorf("unknown or unsupported load balancer type on primary load balancer: %s", lbSpec.LoadBalancerType)
+			}
+		}(c, lbSpec)
 	}
 
+	var errs []error
+	for _, lbSpec := range s.scope.ControlPlaneLoadBalancers() {
+		if lbSpec == nil {
+			continue
+		}
+		lbErr := <-c
+		if lbErr != nil {
+			errs = append(errs, lbErr)
+		}
+	}
 	return kerrors.NewAggregate(errs)
 }
 
@@ -113,6 +126,16 @@ func (s *Service) reconcileV2LB(lbSpec *infrav1.AWSLoadBalancerSpec) error {
 		}
 
 		s.scope.Debug("Created new network load balancer for apiserver", "api-server-lb-name", lb.Name)
+
+		// Wait until the DNS name resolution is mostly likely to succeed
+		if lb.Name == *s.scope.ControlPlaneLoadBalancers()[0].Name {
+			_ = kwait.PollUntilContextTimeout(context.TODO(), 15*time.Second, 120*time.Second, true,
+				func(ctx context.Context) (done bool, err error) {
+					s.scope.Debug("Waiting for network load balancer dns name to propagate", "api-server-lb-name", lb.Name)
+					return false, nil
+				},
+			)
+		}
 	case err != nil:
 		// Failed to describe the classic ELB
 		return err
