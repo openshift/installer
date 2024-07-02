@@ -100,7 +100,6 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	for _, label := range installConfig.Config.GCP.UserLabels {
 		labels[label.Key] = label.Value
 	}
-
 	gcpCluster := &capg.GCPCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -122,6 +121,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			LoadBalancer: capg.LoadBalancerSpec{
 				APIServerInstanceGroupTagOverride: ptr.To(InstanceGroupRoleTag),
 			},
+			ResourceManagerTags: GetTagsFromInstallConfig(installConfig),
 		},
 	}
 	gcpCluster.SetGroupVersionKind(capg.GroupVersion.WithKind("GCPCluster"))
@@ -181,4 +181,20 @@ func findFailureDomains(installConfig *installconfig.InstallConfig) []string {
 	}
 
 	return zones.UnsortedList()
+}
+
+func GetTagsFromInstallConfig(installConfig *installconfig.InstallConfig) []capg.ResourceManagerTag {
+	var tags []capg.ResourceManagerTag
+	if len(installConfig.Config.Platform.GCP.UserTags) > 0 {
+		tags = make([]capg.ResourceManagerTag, len(installConfig.Config.Platform.GCP.UserTags))
+		for i, tag := range installConfig.Config.Platform.GCP.UserTags {
+			tags[i] = capg.ResourceManagerTag{
+				ParentID: tag.ParentID,
+				Key:      tag.Key,
+				Value:    tag.Value,
+			}
+		}
+	}
+
+	return tags
 }
