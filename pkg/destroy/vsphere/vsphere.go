@@ -9,8 +9,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/vim25/mo"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/openshift/installer/pkg/destroy/providers"
 	installertypes "github.com/openshift/installer/pkg/types"
@@ -22,8 +25,9 @@ type ClusterUninstaller struct {
 	InfraID           string
 	terraformPlatform string
 
-	Logger logrus.FieldLogger
-	client API
+	Logger        logrus.FieldLogger
+	client        API
+	KubeClientset *kubernetes.Clientset
 }
 
 // New returns an VSphere destroyer from ClusterMetadata.
@@ -36,14 +40,27 @@ func New(logger logrus.FieldLogger, metadata *installertypes.ClusterMetadata) (p
 }
 
 func newWithClient(logger logrus.FieldLogger, metadata *installertypes.ClusterMetadata, client API) *ClusterUninstaller {
-	return &ClusterUninstaller{
+	clusterUninstaller := &ClusterUninstaller{
 		ClusterID:         metadata.ClusterID,
 		InfraID:           metadata.InfraID,
 		terraformPlatform: metadata.VSphere.TerraformPlatform,
 
-		Logger: logger,
-		client: client,
+		Logger:        logger,
+		client:        client,
+		KubeClientset: nil,
 	}
+
+	if metadata.DeleteVolumes {
+		config, err := clientcmd.RESTConfigFromKubeConfig(*metadata.Auth)
+		if err == nil {
+			clientset, err := kubernetes.NewForConfig(config)
+
+			if clientset != nil && err == nil {
+				clusterUninstaller.KubeClientset = clientset
+			}
+		}
+	}
+	return clusterUninstaller
 }
 
 func (o *ClusterUninstaller) deleteFolder(ctx context.Context) error {
@@ -147,7 +164,7 @@ func (o *ClusterUninstaller) stopVirtualMachine(ctx context.Context, vmMO mo.Vir
 	return nil
 }
 
-func (o *ClusterUninstaller) stopVirtualMachines(ctx context.Context) error {
+func (o *ClusterUninstaller) stopVirtualMachines(ctx context.Context, nameContains string) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
 	defer cancel()
 
@@ -160,9 +177,12 @@ func (o *ClusterUninstaller) stopVirtualMachines(ctx context.Context) error {
 
 	var errs []error
 	for _, vmMO := range found {
-		if !isPoweredOff(vmMO) {
-			if err := o.stopVirtualMachine(ctx, vmMO); err != nil {
-				errs = append(errs, err)
+
+		if strings.Contains(vmMO.Name, nameContains) {
+			if !isPoweredOff(vmMO) {
+				if err := o.stopVirtualMachine(ctx, vmMO); err != nil {
+					errs = append(errs, err)
+				}
 			}
 		}
 	}
@@ -203,13 +223,53 @@ func (o *ClusterUninstaller) deleteVirtualMachines(ctx context.Context) error {
 	return utilerrors.NewAggregate(errs)
 }
 
+func (o *ClusterUninstaller) deleteVolumes(ctx context.Context) error {
+	if o.KubeClientset == nil {
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+
+	namespaces, err := o.KubeClientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		o.Logger.Warn(err)
+	}
+
+	for _, ns := range namespaces.Items {
+		pvcs, err := o.KubeClientset.CoreV1().PersistentVolumeClaims(ns.Name).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			o.Logger.Warn(err)
+		}
+
+		for _, pvc := range pvcs.Items {
+			if err = o.KubeClientset.CoreV1().PersistentVolumeClaims(ns.Name).Delete(ctx, pvc.Name, metav1.DeleteOptions{}); err != nil {
+				o.Logger.Warn(err)
+			}
+		}
+	}
+
+	return nil
+}
+
 func (o *ClusterUninstaller) destroyCluster(ctx context.Context) (bool, error) {
+	err := o.stopVirtualMachines(ctx, "worker")
+	if err != nil {
+		o.Logger.Debug(err)
+	}
+	err = o.deleteVolumes(ctx)
+	if err != nil {
+		o.Logger.Debug(err)
+	}
+	err = o.stopVirtualMachines(ctx, "master")
+	if err != nil {
+		o.Logger.Debug(err)
+	}
+
 	stagedFuncs := [][]struct {
 		name    string
 		execute func(context.Context) error
 	}{{
-		{name: "Stop virtual machines", execute: o.stopVirtualMachines},
-	}, {
 		{name: "Virtual Machines", execute: o.deleteVirtualMachines},
 	}, {
 		{name: "Folder", execute: o.deleteFolder},

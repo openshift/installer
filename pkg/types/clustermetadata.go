@@ -26,6 +26,8 @@ type ClusterMetadata struct {
 	ClusterPlatformMetadata `json:",inline"`
 	FeatureSet              configv1.FeatureSet          `json:"featureSet"`
 	CustomFeatureSet        *configv1.CustomFeatureGates `json:"customFeatureSet"`
+	Auth                    *[]byte
+	DeleteVolumes           bool
 }
 
 // ClusterPlatformMetadata contains metadata for platfrom.

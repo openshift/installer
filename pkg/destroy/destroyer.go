@@ -9,13 +9,21 @@ import (
 )
 
 // New returns a Destroyer based on `metadata.json` in `rootDir`.
-func New(logger logrus.FieldLogger, rootDir string) (providers.Destroyer, error) {
-	metadata, err := metadata.Load(rootDir)
+func New(logger logrus.FieldLogger, rootDir string, deleteVolumes bool) (providers.Destroyer, error) {
+	clusterMetadata, err := metadata.Load(rootDir)
 	if err != nil {
 		return nil, err
 	}
 
-	platform := metadata.Platform()
+	// todo: jcallen: need to think if this makes sense because we could
+	// todo: still remove cns volumes for the vSphere case
+	if len(*clusterMetadata.Auth) > 0 {
+		clusterMetadata.DeleteVolumes = deleteVolumes
+	} else {
+		clusterMetadata.DeleteVolumes = false
+	}
+
+	platform := clusterMetadata.Platform()
 	if platform == "" {
 		return nil, errors.New("no platform configured in metadata")
 	}
@@ -24,5 +32,5 @@ func New(logger logrus.FieldLogger, rootDir string) (providers.Destroyer, error)
 	if !ok {
 		return nil, errors.Errorf("no destroyers registered for %q", platform)
 	}
-	return creator(logger, metadata)
+	return creator(logger, clusterMetadata)
 }

@@ -29,6 +29,10 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/vsphere"
 )
 
+var (
+	deleteVolumes bool
+)
+
 func newDestroyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "destroy",
@@ -44,7 +48,7 @@ func newDestroyCmd() *cobra.Command {
 }
 
 func newDestroyClusterCmd() *cobra.Command {
-	return &cobra.Command{
+	destroyCmd := &cobra.Command{
 		Use:   "cluster",
 		Short: "Destroy an OpenShift cluster",
 		Args:  cobra.ExactArgs(0),
@@ -59,11 +63,16 @@ func newDestroyClusterCmd() *cobra.Command {
 			logrus.Infof("Uninstallation complete!")
 		},
 	}
+
+	// todo: jcallen: **** DO NOT MERGE ****, set to always delete...
+	destroyCmd.Flags().BoolVar(&deleteVolumes, "destroy-volumes", true, "Destroy persistent volumes before cluster destroy")
+
+	return destroyCmd
 }
 
 func runDestroyCmd(directory string, reportQuota bool) error {
 	timer.StartTimer(timer.TotalTimeElapsed)
-	destroyer, err := destroy.New(logrus.StandardLogger(), directory)
+	destroyer, err := destroy.New(logrus.StandardLogger(), directory, deleteVolumes)
 	if err != nil {
 		return errors.Wrap(err, "Failed while preparing to destroy cluster")
 	}

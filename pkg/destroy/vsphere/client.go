@@ -103,7 +103,7 @@ func (c *Client) getVirtualMachineManagedObjects(ctx context.Context, moRef []ty
 	var virtualMachineMoList []mo.VirtualMachine
 	if len(moRef) > 0 {
 		pc := property.DefaultCollector(c.client)
-		err := pc.Retrieve(ctx, moRef, nil, &virtualMachineMoList)
+		err := pc.Retrieve(ctx, moRef, []string{"name"}, &virtualMachineMoList)
 		if err != nil {
 			return nil, err
 		}
