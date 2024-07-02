@@ -32,7 +32,7 @@ type NodeZeroRestClient struct {
 }
 
 // NewNodeZeroRestClient Initialize a new rest client to interact with the Agent Rest API on node zero.
-func NewNodeZeroRestClient(ctx context.Context, rendezvousIP string, sshKey string) (*NodeZeroRestClient, error) {
+func NewNodeZeroRestClient(ctx context.Context, rendezvousIP string, sshKey string) *NodeZeroRestClient {
 	restClient := &NodeZeroRestClient{}
 
 	// Get SSH Keys which can be used to determine if Rest API failures are due to network connectivity issues
@@ -53,7 +53,7 @@ func NewNodeZeroRestClient(ctx context.Context, rendezvousIP string, sshKey stri
 	restClient.config = config
 	restClient.NodeZeroIP = rendezvousIP
 
-	return restClient, nil
+	return restClient
 }
 
 // FindRendezvouIPAndSSHKeyFromAssetStore returns the rendezvousIP and public ssh key.
