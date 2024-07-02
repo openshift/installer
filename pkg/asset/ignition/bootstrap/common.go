@@ -300,15 +300,15 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		bootstrapNodeIP = ""
 	}
 
-	platformFirstAPIVIP := firstAPIVIP(&installConfig.Config.Platform)
-	APIIntVIPonIPv6 := utilsnet.IsIPv6String(platformFirstAPIVIP)
-
-	networkStack := 0
-	for _, snet := range installConfig.Config.ServiceNetwork {
-		if snet.IP.To4() != nil {
-			networkStack |= 1
+	var hasIPv4, hasIPv6, ipv6Primary bool
+	for i, snet := range installConfig.Config.ServiceNetwork {
+		if utilsnet.IsIPv4(snet.IP) {
+			hasIPv4 = true
 		} else {
-			networkStack |= 2
+			hasIPv6 = true
+			if i == 0 {
+				ipv6Primary = true
+			}
 		}
 	}
 
@@ -341,8 +341,8 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		PlatformData:          platformData,
 		ClusterProfile:        clusterProfile,
 		BootstrapInPlace:      bootstrapInPlaceConfig,
-		UseIPv6ForNodeIP:      APIIntVIPonIPv6,
-		UseDualForNodeIP:      networkStack == 3,
+		UseIPv6ForNodeIP:      ipv6Primary,
+		UseDualForNodeIP:      hasIPv4 && hasIPv6,
 		IsFCOS:                installConfig.Config.IsFCOS(),
 		IsSCOS:                installConfig.Config.IsSCOS(),
 		IsOKD:                 installConfig.Config.IsOKD(),
@@ -702,35 +702,4 @@ func warnIfCertificatesExpired(config *igntypes.Config) {
 	if expiredCerts > 0 {
 		logrus.Warnf("Bootstrap Ignition-Config: %d certificates expired. Installation attempts with the created Ignition-Configs will possibly fail.", expiredCerts)
 	}
-}
-
-// APIVIPs returns the string representations of the platform's API VIPs
-// It returns nil if the platform does not configure VIPs
-func apiVIPs(p *types.Platform) []string {
-	switch {
-	case p == nil:
-		return nil
-	case p.BareMetal != nil:
-		return p.BareMetal.APIVIPs
-	case p.OpenStack != nil:
-		return p.OpenStack.APIVIPs
-	case p.VSphere != nil:
-		return p.VSphere.APIVIPs
-	case p.Ovirt != nil:
-		return p.Ovirt.APIVIPs
-	case p.Nutanix != nil:
-		return p.Nutanix.APIVIPs
-	default:
-		return nil
-	}
-}
-
-// firstAPIVIP returns the first VIP of the API server (e.g. in case of
-// dual-stack)
-func firstAPIVIP(p *types.Platform) string {
-	for _, vip := range apiVIPs(p) {
-		return vip
-	}
-
-	return ""
 }
