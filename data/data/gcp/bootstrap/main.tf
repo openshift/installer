@@ -114,6 +114,12 @@ resource "google_compute_instance" "bootstrap" {
     for_each = var.gcp_master_on_host_maintenance != "" ? [1] : []
     content {
       on_host_maintenance = var.gcp_master_on_host_maintenance
+      dynamic "on_instance_stop_action" {
+        for_each = var.gcp_master_on_host_maintenance == "Terminate"
+        content {
+          discard_local_ssd = true
+        }
+      }
     }
   }
 

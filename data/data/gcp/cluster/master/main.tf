@@ -75,6 +75,12 @@ resource "google_compute_instance" "master" {
     for_each = var.on_host_maintenance != "" ? [1] : []
     content {
       on_host_maintenance = var.on_host_maintenance
+      dynamic "on_instance_stop_action" {
+        for_each = var.on_host_maintenance == "Terminate"
+        content {
+          discard_local_ssd = true
+        }
+      }
     }
   }
 
