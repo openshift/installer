@@ -563,21 +563,13 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 
 		input.NetworkInterfaces = netInterfaces
 	} else {
-		if ptr.Deref(i.PublicIPOnLaunch, false) {
-			input.NetworkInterfaces = []*ec2.InstanceNetworkInterfaceSpecification{
-				{
-					DeviceIndex:              aws.Int64(0),
-					SubnetId:                 aws.String(i.SubnetID),
-					Groups:                   aws.StringSlice(i.SecurityGroupIDs),
-					AssociatePublicIpAddress: i.PublicIPOnLaunch,
-				},
-			}
-		} else {
-			input.SubnetId = aws.String(i.SubnetID)
-
-			if len(i.SecurityGroupIDs) > 0 {
-				input.SecurityGroupIds = aws.StringSlice(i.SecurityGroupIDs)
-			}
+		input.NetworkInterfaces = []*ec2.InstanceNetworkInterfaceSpecification{
+			{
+				DeviceIndex:              aws.Int64(0),
+				SubnetId:                 aws.String(i.SubnetID),
+				Groups:                   aws.StringSlice(i.SecurityGroupIDs),
+				AssociatePublicIpAddress: i.PublicIPOnLaunch,
+			},
 		}
 	}
 

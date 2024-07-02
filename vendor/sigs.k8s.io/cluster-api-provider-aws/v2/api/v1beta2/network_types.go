@@ -930,6 +930,10 @@ type IngressRule struct {
 	// The field will be combined with source security group IDs if specified.
 	// +optional
 	SourceSecurityGroupRoles []SecurityGroupRole `json:"sourceSecurityGroupRoles,omitempty"`
+
+	// NatGatewaysIPsSource use the NAT gateways IPs as the source for the ingress rule.
+	// +optional
+	NatGatewaysIPsSource bool `json:"natGatewaysIPsSource,omitempty"`
 }
 
 // String returns a string representation of the ingress rule.

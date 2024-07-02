@@ -264,9 +264,7 @@ func (r *AWSCluster) validateNetwork() field.ErrorList {
 	}
 
 	for _, rule := range r.Spec.NetworkSpec.AdditionalControlPlaneIngressRules {
-		if (rule.CidrBlocks != nil || rule.IPv6CidrBlocks != nil) && (rule.SourceSecurityGroupIDs != nil || rule.SourceSecurityGroupRoles != nil) {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("additionalControlPlaneIngressRules"), r.Spec.NetworkSpec.AdditionalControlPlaneIngressRules, "CIDR blocks and security group IDs or security group roles cannot be used together"))
-		}
+		allErrs = append(allErrs, r.validateIngressRule(rule)...)
 	}
 
 	if r.Spec.NetworkSpec.VPC.ElasticIPPool != nil {
@@ -323,9 +321,7 @@ func (r *AWSCluster) validateControlPlaneLBs() field.ErrorList {
 		}
 
 		for _, rule := range cp.IngressRules {
-			if (rule.CidrBlocks != nil || rule.IPv6CidrBlocks != nil) && (rule.SourceSecurityGroupIDs != nil || rule.SourceSecurityGroupRoles != nil) {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "ingressRules"), r.Spec.ControlPlaneLoadBalancer.IngressRules, "CIDR blocks and security group IDs or security group roles cannot be used together"))
-			}
+			allErrs = append(allErrs, r.validateIngressRule(rule)...)
 		}
 	}
 
@@ -367,11 +363,19 @@ func (r *AWSCluster) validateControlPlaneLBs() field.ErrorList {
 		}
 	}
 
-	for _, rule := range r.Spec.ControlPlaneLoadBalancer.IngressRules {
+	return allErrs
+}
+
+func (r *AWSCluster) validateIngressRule(rule IngressRule) field.ErrorList {
+	var allErrs field.ErrorList
+	if rule.NatGatewaysIPsSource {
+		if rule.CidrBlocks != nil || rule.IPv6CidrBlocks != nil || rule.SourceSecurityGroupIDs != nil || rule.SourceSecurityGroupRoles != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("additionalControlPlaneIngressRules"), r.Spec.NetworkSpec.AdditionalControlPlaneIngressRules, "CIDR blocks and security group IDs or security group roles cannot be used together"))
+		}
+	} else {
 		if (rule.CidrBlocks != nil || rule.IPv6CidrBlocks != nil) && (rule.SourceSecurityGroupIDs != nil || rule.SourceSecurityGroupRoles != nil) {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "ingressRules"), r.Spec.ControlPlaneLoadBalancer.IngressRules, "CIDR blocks and security group IDs or security group roles cannot be used together"))
 		}
 	}
-
 	return allErrs
 }
