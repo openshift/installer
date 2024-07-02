@@ -66,14 +66,6 @@ type InstallationConfig struct {
 	// +optional
 	NetworkConfig aiv1beta1.NetConfig `json:"networkConfig,omitempty"`
 
-	// PrecacheBestEffort is a flag to enable best effort precaching.
-	// +optional
-	PrecacheBestEffort bool `json:"precacheBestEffort,omitempty"`
-
-	// PrecacheDisabled is a flag to disable precaching.
-	// +optional
-	PrecacheDisabled bool `json:"precacheDisabled,omitempty"`
-
 	// Proxy defines the proxy settings for the cluster.
 	// If unset, the cluster will not be configured to use a proxy.
 	// +optional
@@ -102,8 +94,4 @@ type InstallationConfig struct {
 
 	// SSHKey is the public Secure Shell (SSH) key to provide access to instances.
 	SSHKey string `json:"sshKey,omitempty"`
-
-	// UseContainersFolder is a flag to use /var/lib/containers as a folder and not
-	// an extra partition. Defaults to false.
-	UseContainersFolder bool `json:"useContainersFolder,omitempty"`
 }

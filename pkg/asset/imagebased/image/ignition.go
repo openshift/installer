@@ -52,13 +52,10 @@ type ibiConfigurationFile struct {
 	ExtraPartitionNumber uint   `json:"extraPartitionNumber,omitempty"`
 	ExtraPartitionStart  string `json:"extraPartitionStart,omitempty"`
 	InstallationDisk     string `json:"installationDisk"`
-	PrecacheBestEffort   bool   `json:"precacheBestEffort,omitempty"`
-	PrecacheDisabled     bool   `json:"precacheDisabled,omitempty"`
 	SeedImage            string `json:"seedImage"`
 	SeedVersion          string `json:"seedVersion"`
 	Shutdown             bool   `json:"shutdown,omitempty"`
 	SkipDiskCleanup      bool   `json:"skipDiskCleanup,omitempty"`
-	UseContainersFolder  bool   `json:"useContainersFolder,omitempty"`
 }
 
 // Generate generates the image-based installer ignition.
@@ -98,13 +95,10 @@ func (i *Ignition) Generate(dependencies asset.Parents) error {
 		ExtraPartitionNumber: ibiConfig.ExtraPartitionNumber,
 		ExtraPartitionStart:  ibiConfig.ExtraPartitionStart,
 		InstallationDisk:     ibiConfig.InstallationDisk,
-		PrecacheDisabled:     ibiConfig.PrecacheDisabled,
-		PrecacheBestEffort:   ibiConfig.PrecacheBestEffort,
 		SeedVersion:          ibiConfig.SeedVersion,
 		SeedImage:            ibiConfig.SeedImage,
 		Shutdown:             ibiConfig.Shutdown,
 		SkipDiskCleanup:      ibiConfig.SkipDiskCleanup,
-		UseContainersFolder:  ibiConfig.UseContainersFolder,
 	}
 	marshaled, err := json.Marshal(ibiConfigFile)
 	if err != nil {

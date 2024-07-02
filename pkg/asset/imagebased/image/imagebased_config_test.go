@@ -52,9 +52,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 seedImage: quay.io/openshift-kni/seed-image:4.16.0
 seedVersion: 4.16.0
 installationDisk: /dev/vda
-useContainersFolder: false
-precacheBestEffort: false
-precacheDisabled: false
 networkConfig:
   interfaces:
     - name: eth0
@@ -379,13 +376,10 @@ func ibiConfig() *ImageBasedInstallationConfigBuilder {
 			SeedImage:            "quay.io/openshift-kni/seed-image:4.16.0",
 			SeedVersion:          "4.16.0",
 			InstallationDisk:     "/dev/vda",
-			PrecacheBestEffort:   false,
-			PrecacheDisabled:     false,
 			ExtraPartitionStart:  "",
 			ExtraPartitionLabel:  "",
 			ExtraPartitionNumber: 0,
 			Shutdown:             false,
-			UseContainersFolder:  false,
 			SSHKey:               "",
 			PullSecret:           "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}",
 			NetworkConfig: aiv1beta1.NetConfig{
