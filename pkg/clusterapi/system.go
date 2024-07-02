@@ -316,13 +316,6 @@ func (c *system) Run(ctx context.Context) error {
 	// We only show controller logs if the log level is DEBUG or above
 	c.logWriter = logrus.StandardLogger().WriterLevel(logrus.DebugLevel)
 
-	// Run the controllers.
-	for _, ct := range controllers {
-		if err := c.runController(ctx, ct); err != nil {
-			return fmt.Errorf("failed to run controller %q: %w", ct.Name, err)
-		}
-	}
-
 	// We create a wait group to wait for the controllers to stop,
 	// this waitgroup is a global, and is used by the Teardown function
 	// which is expected to be called when the program exits.
@@ -346,6 +339,13 @@ func (c *system) Run(ctx context.Context) error {
 			logrus.Warnf("Failed to stop local Cluster API control plane: %v", err)
 		}
 	}()
+
+	// Run the controllers.
+	for _, ct := range controllers {
+		if err := c.runController(ctx, ct); err != nil {
+			return fmt.Errorf("failed to run controller %q: %w", ct.Name, err)
+		}
+	}
 
 	return nil
 }
