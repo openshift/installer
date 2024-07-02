@@ -70,7 +70,12 @@ func NewCluster(ctx context.Context, assetDir, rendezvousIP, kubeconfigPath, ssh
 	czero := &Cluster{}
 	capi := &clientSet{}
 
-	restclient, err := NewNodeZeroRestClient(ctx, rendezvousIP, sshKey)
+	authToken, err := FindAuthTokenFromAssetStore(assetDir)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
+	restclient, err := NewNodeZeroRestClient(ctx, rendezvousIP, sshKey, authToken)
 	if err != nil {
 		logrus.Fatal(err)
 	}

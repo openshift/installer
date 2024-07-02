@@ -7,6 +7,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -17,8 +18,10 @@ import (
 
 // AuthConfig is an asset that generates ECDSA public/private keys, JWT token.
 type AuthConfig struct {
-	PublicKey, PrivateKey, Token string
+	PublicKey, Token string
 }
+
+var _ asset.Asset = (*AuthConfig)(nil)
 
 // LocalJWTKeyType suggests the key type to be used for the token.
 type LocalJWTKeyType string
@@ -41,14 +44,17 @@ func (a *AuthConfig) Dependencies() []asset.Asset {
 func (a *AuthConfig) Generate(_ context.Context, dependencies asset.Parents) error {
 	infraEnvID := &common.InfraEnvID{}
 	dependencies.Get(infraEnvID)
-	PublicKey, PrivateKey, err := keyPairPEM()
+
+	publicKey, privateKey, err := keyPairPEM()
 	if err != nil {
 		return err
 	}
-	a.PublicKey = PublicKey
-	a.PrivateKey = PrivateKey
+	// Encode to Base64 (Standard encoding)
+	encodedPubKeyPEM := base64.StdEncoding.EncodeToString([]byte(publicKey))
 
-	token, err := localJWTForKey(infraEnvID.ID, a.PrivateKey)
+	a.PublicKey = encodedPubKeyPEM
+
+	token, err := localJWTForKey(infraEnvID.ID, privateKey)
 	if err != nil {
 		return err
 	}
@@ -58,7 +64,7 @@ func (a *AuthConfig) Generate(_ context.Context, dependencies asset.Parents) err
 }
 
 // Name returns the human-friendly name of the asset.
-func (a *AuthConfig) Name() string {
+func (*AuthConfig) Name() string {
 	return "Agent Installer API Auth Config"
 }
 
