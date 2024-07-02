@@ -463,7 +463,7 @@ func (c *system) runController(ctx context.Context, ct *controller) error {
 	// If the provider is not empty, we extract it to the binaries directory.
 	if ct.Provider != nil {
 		if err := ct.Provider.Extract(c.lcp.BinDir); err != nil {
-			logrus.Fatal(err)
+			return fmt.Errorf("failed to extract provider %q: %w", ct.Name, err)
 		}
 	}
 
