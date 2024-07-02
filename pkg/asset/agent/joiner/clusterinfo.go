@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
+	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/coreos/stream-metadata-go/stream"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -15,6 +17,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
+	"github.com/openshift/assisted-service/models"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
@@ -45,6 +48,7 @@ type ClusterInfo struct {
 	SSHKey                        string
 	OSImage                       *stream.Stream
 	OSImageLocation               string
+	IgnitionEndpointWorker        *models.IgnitionEndpoint
 }
 
 var _ asset.WritableAsset = (*ClusterInfo)(nil)
@@ -103,6 +107,10 @@ func (ci *ClusterInfo) Generate(_ context.Context, dependencies asset.Parents) e
 		return err
 	}
 	err = ci.retrieveOsImage()
+	if err != nil {
+		return err
+	}
+	err = ci.retrieveIgnitionEndpointWorker()
 	if err != nil {
 		return err
 	}
@@ -265,6 +273,48 @@ func (ci *ClusterInfo) retrieveOsImage() error {
 		return fmt.Errorf("no ISO found to download for %s", clusterArch)
 	}
 	ci.OSImageLocation = format.Disk.Location
+
+	return nil
+}
+
+// This method retrieves, if present, the secured ignition endpoint - along with its ca certificate.
+// These information will be used to configure subsequently the imported Assisted Service cluster,
+// so that the secure port (22623) could be used by the nodes to fetch the worker ignition.
+func (ci *ClusterInfo) retrieveIgnitionEndpointWorker() error {
+	workerUserDataManaged, err := ci.Client.CoreV1().Secrets("openshift-machine-api").Get(context.Background(), "worker-user-data-managed", metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	userData := workerUserDataManaged.Data["userData"]
+
+	config := &igntypes.Config{}
+	err = json.Unmarshal(userData, config)
+	if err != nil {
+		return err
+	}
+
+	// Check if there is at least a CA certificate in the ignition
+	if len(config.Ignition.Security.TLS.CertificateAuthorities) == 0 {
+		return nil
+	}
+
+	// Get the first source and ca certificate (and strip the base64 data header)
+	ignEndpointURL := config.Ignition.Config.Merge[0].Source
+	caCertSource := *config.Ignition.Security.TLS.CertificateAuthorities[0].Source
+
+	hdrIndex := strings.Index(caCertSource, ",")
+	if hdrIndex == -1 {
+		return fmt.Errorf("error while parsing ignition endpoints ca certificate, invalid data url format")
+	}
+	caCert := caCertSource[hdrIndex+1:]
+
+	ci.IgnitionEndpointWorker = &models.IgnitionEndpoint{
+		URL:           ignEndpointURL,
+		CaCertificate: &caCert,
+	}
 
 	return nil
 }
