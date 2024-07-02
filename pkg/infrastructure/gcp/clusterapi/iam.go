@@ -148,6 +148,8 @@ func setPolicy(ctx context.Context, crmService *resourcemanager.Service, project
 
 // addMemberToRole adds a member to a role binding.
 func addMemberToRole(policy *resourcemanager.Policy, role, member string) error {
+	var policyBinding *resourcemanager.Binding
+
 	for _, binding := range policy.Bindings {
 		if binding.Role == role {
 			for _, m := range binding.Members {
@@ -156,11 +158,20 @@ func addMemberToRole(policy *resourcemanager.Policy, role, member string) error 
 					return nil
 				}
 			}
-			binding.Members = append(binding.Members, member)
-			logrus.Debugf("found %s role, added %s member", role, member)
-			return nil
+			policyBinding = binding
 		}
 	}
 
-	return fmt.Errorf("role %s not found, member %s not added", role, member)
+	if policyBinding == nil {
+		policyBinding = &resourcemanager.Binding{
+			Role:    role,
+			Members: []string{member},
+		}
+		logrus.Debugf("creating new policy binding for %s role and %s member", role, member)
+		policy.Bindings = append(policy.Bindings, policyBinding)
+	}
+
+	policyBinding.Members = append(policyBinding.Members, member)
+	logrus.Debugf("adding %s role, added %s member", role, member)
+	return nil
 }

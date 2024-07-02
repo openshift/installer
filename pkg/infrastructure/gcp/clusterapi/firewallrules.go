@@ -11,6 +11,30 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
+func getEtcdPorts() []*compute.FirewallAllowed {
+	return []*compute.FirewallAllowed{
+		{
+			IPProtocol: "tcp",
+			Ports: []string{
+				"2379-2380",
+			},
+		},
+	}
+}
+
+func getHealthChecksPorts() []*compute.FirewallAllowed {
+	return []*compute.FirewallAllowed{
+		{
+			IPProtocol: "tcp",
+			Ports: []string{
+				"6080",
+				"6443",
+				"22624",
+			},
+		},
+	}
+}
+
 func getControlPlanePorts() []*compute.FirewallAllowed {
 	return []*compute.FirewallAllowed{
 		{
@@ -186,6 +210,9 @@ func deleteFirewallRule(ctx context.Context, name, projectID string) error {
 // createFirewallRules creates the rules needed between the worker and master nodes.
 func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, network string) error {
 	projectID := in.InstallConfig.Config.Platform.GCP.ProjectID
+	if in.InstallConfig.Config.Platform.GCP.NetworkProjectID != "" {
+		projectID = in.InstallConfig.Config.Platform.GCP.NetworkProjectID
+	}
 	workerTag := fmt.Sprintf("%s-worker", in.InfraID)
 	masterTag := fmt.Sprintf("%s-control-plane", in.InfraID)
 
@@ -195,6 +222,29 @@ func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, net
 	targetTags := []string{masterTag}
 	srcRanges := []string{}
 	if err := addFirewallRule(ctx, firewallName, network, projectID, getControlPlanePorts(), srcTags, targetTags, srcRanges); err != nil {
+		return err
+	}
+
+	// etcd are needed for master communication for etcd nodes
+	firewallName = fmt.Sprintf("%s-etcd", in.InfraID)
+	srcTags = []string{masterTag}
+	targetTags = []string{masterTag}
+	srcRanges = []string{}
+	if err := addFirewallRule(ctx, firewallName, network, projectID, getEtcdPorts(), srcTags, targetTags, srcRanges); err != nil {
+		return err
+	}
+
+	// Add a single firewall rule to allow the Google Cloud Engine health checks to access all of the services.
+	// This rule enables the ingress load balancers to determine the health status of their instances.
+	firewallName = fmt.Sprintf("%s-health-checks", in.InfraID)
+	srcTags = []string{}
+	targetTags = []string{masterTag}
+	srcRanges = []string{"35.191.0.0/16", "130.211.0.0/22"}
+	if in.InstallConfig.Config.Publish == types.ExternalPublishingStrategy {
+		// public installs require additional google ip addresses for health checks
+		srcRanges = append(srcRanges, []string{"209.85.152.0/22", "209.85.204.0/22"}...)
+	}
+	if err := addFirewallRule(ctx, firewallName, network, projectID, getHealthChecksPorts(), srcTags, targetTags, srcRanges); err != nil {
 		return err
 	}
 
@@ -230,6 +280,9 @@ func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, net
 // createBootstrapFirewallRules creates the rules needed for the bootstrap node.
 func createBootstrapFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, network string) error {
 	projectID := in.InstallConfig.Config.Platform.GCP.ProjectID
+	if in.InstallConfig.Config.Platform.GCP.NetworkProjectID != "" {
+		projectID = in.InstallConfig.Config.Platform.GCP.NetworkProjectID
+	}
 	firewallName := fmt.Sprintf("%s-bootstrap-in-ssh", in.InfraID)
 	srcTags := []string{}
 	bootstrapTag := fmt.Sprintf("%s-control-plane", in.InfraID)

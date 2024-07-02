@@ -113,7 +113,7 @@ func (r *GCPManagedMachinePool) validateScaling() field.ErrorList {
 			}
 			// validates min <= max
 			if max != nil && *max < *min {
-				allErrs = append(allErrs, field.Invalid(maxField, *max, fmt.Sprintf("must be greater than field %s", minField.String())))
+				allErrs = append(allErrs, field.Invalid(maxField, *max, "must be greater than field "+minField.String()))
 			}
 		}
 	}

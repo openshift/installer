@@ -19,6 +19,8 @@ package subnets
 import (
 	"context"
 
+	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
+
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/meta"
 	"google.golang.org/api/compute/v1"
 
@@ -26,7 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-// Reconcile reconcile cluster network components.
+// Reconcile reconciles cluster network components.
 func (s *Service) Reconcile(ctx context.Context) error {
 	logger := log.FromContext(ctx)
 	logger.Info("Reconciling subnetwork resources")
@@ -42,13 +44,35 @@ func (s *Service) Reconcile(ctx context.Context) error {
 // Delete deletes cluster subnetwork components.
 func (s *Service) Delete(ctx context.Context) error {
 	logger := log.FromContext(ctx)
+	if s.scope.IsSharedVpc() {
+		logger.V(2).Info("Shared VPC enabled. Skip deleting subnet resources")
+		return nil
+	}
 	for _, subnetSpec := range s.scope.SubnetSpecs() {
-		logger.V(2).Info("Deleting a subnet", "name", subnetSpec.Name)
 		subnetKey := meta.RegionalKey(subnetSpec.Name, s.getSubnetRegion(subnetSpec))
-		err := s.subnets.Delete(ctx, subnetKey)
-		if err != nil && !gcperrors.IsNotFound(err) {
-			logger.Error(err, "Error deleting subnet", "name", subnetSpec.Name)
+		logger.V(2).Info("Looking for subnet before deleting it", "name", subnetSpec.Name)
+		subnet, err := s.subnets.Get(ctx, subnetKey)
+		if err != nil {
+			if gcperrors.IsNotFound(err) {
+				continue
+			}
+			logger.Error(err, "Error getting subnet", "name", subnetSpec.Name)
 			return err
+		}
+
+		// Skip delete if subnet was not created by CAPG.
+		// If subnet description is not set by the Spec, or by our default value, then assume it was created externally.
+		if subnet.Description != infrav1.ClusterTagKey(s.scope.Name()) && (subnetSpec.Description == "" || subnet.Description != subnetSpec.Description) {
+			logger.V(2).Info("Skipping subnet deletion as it was created outside of Cluster API", "name", subnetSpec.Name)
+			return nil
+		}
+
+		logger.V(2).Info("Deleting a subnet", "name", subnetSpec.Name)
+		if err := s.subnets.Delete(ctx, subnetKey); err != nil {
+			if !gcperrors.IsNotFound(err) {
+				logger.Error(err, "Error deleting subnet", "name", subnetSpec.Name)
+				return err
+			}
 		}
 	}
 
@@ -67,6 +91,11 @@ func (s *Service) createOrGetSubnets(ctx context.Context) ([]*compute.Subnetwork
 			if !gcperrors.IsNotFound(err) {
 				logger.Error(err, "Error looking for subnet", "name", subnetSpec.Name)
 				return subnets, err
+			}
+
+			if s.scope.IsSharedVpc() {
+				logger.Error(err, "Shared VPC is enabled, but could not find existing subnetwork", "name", subnetSpec.Name)
+				return nil, err
 			}
 
 			// Subnet was not found, let's create it

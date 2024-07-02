@@ -28,6 +28,10 @@ import (
 // Reconcile reconcile cluster firewall compoenents.
 func (s *Service) Reconcile(ctx context.Context) error {
 	log := log.FromContext(ctx)
+	if s.scope.IsSharedVpc() {
+		log.V(2).Info("Shared VPC enabled. Ignore Reconciling firewall resources")
+		return nil
+	}
 	log.Info("Reconciling firewall resources")
 	for _, spec := range s.scope.FirewallRulesSpec() {
 		log.V(2).Info("Looking firewall", "name", spec.Name)
@@ -50,6 +54,10 @@ func (s *Service) Reconcile(ctx context.Context) error {
 // Delete delete cluster firewall compoenents.
 func (s *Service) Delete(ctx context.Context) error {
 	log := log.FromContext(ctx)
+	if s.scope.IsSharedVpc() {
+		log.V(2).Info("Shared VPC enabled. Ignore Deleting firewall resources")
+		return nil
+	}
 	log.Info("Deleting firewall resources")
 	for _, spec := range s.scope.FirewallRulesSpec() {
 		log.V(2).Info("Deleting firewall", "name", spec.Name)

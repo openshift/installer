@@ -54,6 +54,12 @@ func (s *Service) Reconcile(ctx context.Context) error {
 // Delete delete cluster network components.
 func (s *Service) Delete(ctx context.Context) error {
 	log := log.FromContext(ctx)
+	if s.scope.IsSharedVpc() {
+		log.V(2).Info("Shared VPC enabled. Ignore Deleting network resources")
+		s.scope.Network().Router = nil
+		s.scope.Network().SelfLink = nil
+		return nil
+	}
 	log.Info("Deleting network resources")
 	networkKey := meta.GlobalKey(s.scope.NetworkName())
 	log.V(2).Info("Looking for network before deleting", "name", networkKey)
@@ -104,6 +110,11 @@ func (s *Service) createOrGetNetwork(ctx context.Context) (*compute.Network, err
 			return nil, err
 		}
 
+		if s.scope.IsSharedVpc() {
+			log.Error(err, "Shared VPC is enabled, but could not find existing network", "name", s.scope.NetworkName())
+			return nil, err
+		}
+
 		log.V(2).Info("Creating a network", "name", s.scope.NetworkName())
 		if err := s.networks.Insert(ctx, networkKey, s.scope.NetworkSpec()); err != nil {
 			log.Error(err, "Error creating a network", "name", s.scope.NetworkName())
@@ -129,6 +140,11 @@ func (s *Service) createOrGetRouter(ctx context.Context, network *compute.Networ
 	if err != nil {
 		if !gcperrors.IsNotFound(err) {
 			log.Error(err, "Error looking for cloudnat router", "name", spec.Name)
+			return nil, err
+		}
+
+		if s.scope.IsSharedVpc() {
+			log.Error(err, "Shared VPC is enabled, but could not find existing router", "name", routerKey)
 			return nil, err
 		}
 

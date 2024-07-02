@@ -93,6 +93,11 @@ func (s *ManagedClusterScope) Cloud() cloud.Cloud {
 	return newCloud(s.Project(), s.GCPServices)
 }
 
+// NetworkCloud returns initialized cloud.
+func (s *ManagedClusterScope) NetworkCloud() cloud.Cloud {
+	return newCloud(s.NetworkProject(), s.GCPServices)
+}
+
 // Project returns the current project name.
 func (s *ManagedClusterScope) Project() string {
 	return s.GCPManagedCluster.Spec.Project
@@ -118,9 +123,20 @@ func (s *ManagedClusterScope) NetworkName() string {
 	return ptr.Deref(s.GCPManagedCluster.Spec.Network.Name, "default")
 }
 
+// NetworkProject returns the project name where network resources should exist.
+// The network project defaults to the Project when one is not supplied.
+func (s *ManagedClusterScope) NetworkProject() string {
+	return ptr.Deref(s.GCPManagedCluster.Spec.Network.HostProject, s.Project())
+}
+
+// IsSharedVpc returns true If sharedVPC used else , returns false.
+func (s *ManagedClusterScope) IsSharedVpc() bool {
+	return s.NetworkProject() != s.Project()
+}
+
 // NetworkLink returns the partial URL for the network.
 func (s *ManagedClusterScope) NetworkLink() string {
-	return fmt.Sprintf("projects/%s/global/networks/%s", s.Project(), s.NetworkName())
+	return fmt.Sprintf("projects/%s/global/networks/%s", s.NetworkProject(), s.NetworkName())
 }
 
 // Network returns the cluster network object.
@@ -259,7 +275,7 @@ func (s *ManagedClusterScope) FirewallRulesSpec() []*compute.Firewall {
 				"130.211.0.0/22",
 			},
 			TargetTags: []string{
-				fmt.Sprintf("%s-control-plane", s.Name()),
+				s.Name() + "-control-plane",
 			},
 		},
 		{
@@ -272,12 +288,12 @@ func (s *ManagedClusterScope) FirewallRulesSpec() []*compute.Firewall {
 			},
 			Direction: "INGRESS",
 			SourceTags: []string{
-				fmt.Sprintf("%s-control-plane", s.Name()),
-				fmt.Sprintf("%s-node", s.Name()),
+				s.Name() + "-control-plane",
+				s.Name() + "-node",
 			},
 			TargetTags: []string{
-				fmt.Sprintf("%s-control-plane", s.Name()),
-				fmt.Sprintf("%s-node", s.Name()),
+				s.Name() + "-control-plane",
+				s.Name() + "-node",
 			},
 		},
 	}

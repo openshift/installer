@@ -46,6 +46,7 @@ type ReconcilerWithResult interface {
 // Client is an interface which can get cloud client.
 type Client interface {
 	Cloud() Cloud
+	NetworkCloud() Cloud
 }
 
 // ClusterGetter is an interface which can get cluster information.
@@ -56,6 +57,8 @@ type ClusterGetter interface {
 	Name() string
 	Namespace() string
 	NetworkName() string
+	NetworkProject() string
+	IsSharedVpc() bool
 	Network() *infrav1.Network
 	AdditionalLabels() infrav1.Labels
 	FailureDomains() clusterv1.FailureDomains

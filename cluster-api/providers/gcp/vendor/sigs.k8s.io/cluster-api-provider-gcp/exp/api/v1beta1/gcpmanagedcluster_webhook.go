@@ -118,7 +118,7 @@ func (r *GCPManagedCluster) validateCustomSubnet() error {
 	if r.Spec.Network.AutoCreateSubnetworks == nil || *r.Spec.Network.AutoCreateSubnetworks {
 		return nil
 	}
-	var isSubnetExistInClusterRegion = false
+	isSubnetExistInClusterRegion := false
 	for _, subnet := range r.Spec.Network.Subnets {
 		if subnet.Region == r.Spec.Region {
 			isSubnetExistInClusterRegion = true
