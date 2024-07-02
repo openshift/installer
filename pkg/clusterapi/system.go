@@ -324,6 +324,7 @@ func (c *system) Run(ctx context.Context) error {
 		defer c.wg.Done()
 		// Stop the controllers when the context is cancelled.
 		<-ctx.Done()
+		logrus.Info("Shutting down local Cluster API controllers...")
 		for _, ct := range controllers {
 			if ct.state != nil {
 				if err := ct.state.Stop(); err != nil {
@@ -332,11 +333,6 @@ func (c *system) Run(ctx context.Context) error {
 				}
 				logrus.Infof("Stopped controller: %s", ct.Name)
 			}
-		}
-
-		// Stop the local control plane.
-		if err := c.lcp.Stop(); err != nil {
-			logrus.Warnf("Failed to stop local Cluster API control plane: %v", err)
 		}
 	}()
 
@@ -377,10 +373,13 @@ func (c *system) Teardown() {
 	// Proceed to shutdown.
 	c.teardownOnce.Do(func() {
 		c.cancel()
-		logrus.Info("Shutting down local Cluster API control plane...")
 		ch := make(chan struct{})
 		go func() {
 			c.wg.Wait()
+			logrus.Info("Shutting down local Cluster API control plane...")
+			if err := c.lcp.Stop(); err != nil {
+				logrus.Warnf("Failed to stop local Cluster API control plane: %v", err)
+			}
 			close(ch)
 		}()
 		select {
