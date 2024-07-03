@@ -12,7 +12,6 @@ import (
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
-	coreosarch "github.com/coreos/stream-metadata-go/arch"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/utils/ptr"
@@ -39,7 +38,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
-	rhcospkg "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
 	awstfvars "github.com/openshift/installer/pkg/tfvars/aws"
 	azuretfvars "github.com/openshift/installer/pkg/tfvars/azure"
@@ -536,21 +534,6 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 		shim, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(url, installConfig.Config.AdditionalTrustBundle, installConfig.Config.Proxy)
 		if err != nil {
 			return fmt.Errorf("failed to create gcp ignition shim: %w", err)
-		}
-
-		archName := coreosarch.RpmArch(string(installConfig.Config.ControlPlane.Architecture))
-		st, err := rhcospkg.FetchCoreOSBuild(ctx)
-		if err != nil {
-			return err
-		}
-		streamArch, err := st.GetArchitecture(archName)
-		if err != nil {
-			return err
-		}
-
-		img := streamArch.Images.Gcp
-		if img == nil {
-			return fmt.Errorf("%s: No GCP build found", st.FormatPrefix(archName))
 		}
 
 		tags, err := gcpconfig.NewTagManager(client).GetUserTags(ctx,
