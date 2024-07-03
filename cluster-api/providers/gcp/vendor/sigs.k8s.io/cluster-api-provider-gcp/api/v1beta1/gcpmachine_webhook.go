@@ -126,14 +126,14 @@ func checkKeyType(key *CustomerEncryptionKey) error {
 	switch key.KeyType {
 	case CustomerManagedKey:
 		if key.ManagedKey == nil || key.SuppliedKey != nil {
-			return fmt.Errorf("CustomerEncryptionKey KeyType of Managed requires only ManagedKey to be set")
+			return errors.New("CustomerEncryptionKey KeyType of Managed requires only ManagedKey to be set")
 		}
 	case CustomerSuppliedKey:
 		if key.SuppliedKey == nil || key.ManagedKey != nil {
-			return fmt.Errorf("CustomerEncryptionKey KeyType of Supplied requires only SuppliedKey to be set")
+			return errors.New("CustomerEncryptionKey KeyType of Supplied requires only SuppliedKey to be set")
 		}
 		if len(key.SuppliedKey.RawKey) > 0 && len(key.SuppliedKey.RSAEncryptedKey) > 0 {
-			return fmt.Errorf("CustomerEncryptionKey KeyType of Supplied requires either RawKey or RSAEncryptedKey to be set, not both")
+			return errors.New("CustomerEncryptionKey KeyType of Supplied requires either RawKey or RSAEncryptedKey to be set, not both")
 		}
 	default:
 		return fmt.Errorf("invalid value for CustomerEncryptionKey KeyType %s", key.KeyType)

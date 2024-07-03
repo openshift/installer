@@ -51,7 +51,9 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	// ServiceAccount for masters
 	// Only create ServiceAccount for masters if a shared VPC install is not being done
 	if len(in.InstallConfig.Config.Platform.GCP.NetworkProjectID) == 0 ||
-		in.InstallConfig.Config.ControlPlane.Platform.GCP.ServiceAccount == "" {
+		(in.InstallConfig.Config.ControlPlane != nil &&
+			in.InstallConfig.Config.ControlPlane.Platform.GCP != nil &&
+			in.InstallConfig.Config.ControlPlane.Platform.GCP.ServiceAccount == "") {
 		masterSA, err := CreateServiceAccount(ctx, in.InfraID, projectID, "master")
 		if err != nil {
 			return fmt.Errorf("failed to create master serviceAccount: %w", err)
@@ -230,7 +232,11 @@ func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapD
 		return fmt.Errorf("failed to destroy storage: %w", err)
 	}
 
-	if err := removeBootstrapFirewallRules(ctx, in.Metadata.InfraID, in.Metadata.GCP.ProjectID); err != nil {
+	projectID := in.Metadata.GCP.ProjectID
+	if in.Metadata.GCP.NetworkProjectID != "" {
+		projectID = in.Metadata.GCP.NetworkProjectID
+	}
+	if err := removeBootstrapFirewallRules(ctx, in.Metadata.InfraID, projectID); err != nil {
 		return fmt.Errorf("failed to remove bootstrap firewall rules: %w", err)
 	}
 

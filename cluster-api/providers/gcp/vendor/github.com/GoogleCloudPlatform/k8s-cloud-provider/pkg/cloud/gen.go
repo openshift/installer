@@ -49685,6 +49685,7 @@ func (g *TDMeshes) Insert(ctx context.Context, key *meta.Key, obj *networkservic
 	obj.Name = key.Name
 	parent := fmt.Sprintf("projects/%s/locations/global", projectID)
 	call := g.s.NetworkServicesGA.Meshes.Create(parent, obj)
+	call.MeshId(obj.Name)
 	call.Context(ctx)
 
 	op, err := call.Do()
@@ -50105,6 +50106,7 @@ func (g *TDBetaMeshes) Insert(ctx context.Context, key *meta.Key, obj *networkse
 	obj.Name = key.Name
 	parent := fmt.Sprintf("projects/%s/locations/global", projectID)
 	call := g.s.NetworkServicesBeta.Meshes.Create(parent, obj)
+	call.MeshId(obj.Name)
 	call.Context(ctx)
 
 	op, err := call.Do()

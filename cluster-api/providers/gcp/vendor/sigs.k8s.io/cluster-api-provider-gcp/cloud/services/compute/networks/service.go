@@ -56,9 +56,14 @@ var _ cloud.Reconciler = &Service{}
 
 // New returns Service from given scope.
 func New(scope Scope) *Service {
+	scopeCloud := scope.Cloud()
+	if scope.IsSharedVpc() {
+		scopeCloud = scope.NetworkCloud()
+	}
+
 	return &Service{
 		scope:    scope,
-		networks: scope.Cloud().Networks(),
-		routers:  scope.Cloud().Routers(),
+		networks: scopeCloud.Networks(),
+		routers:  scopeCloud.Routers(),
 	}
 }
