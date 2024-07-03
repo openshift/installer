@@ -187,7 +187,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 
 		mpool := defaultAWSMachinePoolPlatform("master")
 
-		osImage := strings.SplitN(string(*rhcosImage), ",", 2)
+		osImage := strings.SplitN(rhcosImage.ControlPlane, ",", 2)
 		osImageID := osImage[0]
 		if len(osImage) == 2 {
 			osImageID = "" // the AMI will be generated later on
@@ -257,7 +257,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 			mpool.Zones = azs
 		}
 		pool.Platform.GCP = &mpool
-		machines, controlPlaneMachineSet, err = gcp.Machines(clusterID.InfraID, ic, &pool, string(*rhcosImage), "master", masterUserDataSecretName)
+		machines, controlPlaneMachineSet, err = gcp.Machines(clusterID.InfraID, ic, &pool, rhcosImage.ControlPlane, "master", masterUserDataSecretName)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
@@ -319,7 +319,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 		mpool.Set(pool.Platform.OpenStack)
 		pool.Platform.OpenStack = &mpool
 
-		imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
+		imageName, _ := rhcosutils.GenerateOpenStackImageName(rhcosImage.ControlPlane, clusterID.InfraID)
 
 		machines, controlPlaneMachineSet, err = openstack.Machines(ctx, clusterID.InfraID, ic, &pool, imageName, "master", masterUserDataSecretName)
 		if err != nil {
@@ -378,7 +378,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 			return err
 		}
 		useImageGallery := installConfig.Azure.CloudName != azuretypes.StackCloud
-		machines, controlPlaneMachineSet, err = azure.Machines(clusterID.InfraID, ic, &pool, string(*rhcosImage), "master", masterUserDataSecretName, capabilities, useImageGallery)
+		machines, controlPlaneMachineSet, err = azure.Machines(clusterID.InfraID, ic, &pool, rhcosImage.ControlPlane, "master", masterUserDataSecretName, capabilities, useImageGallery)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
@@ -430,7 +430,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 		mpool.Set(pool.Platform.Ovirt)
 		pool.Platform.Ovirt = &mpool
 
-		imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
+		imageName, _ := rhcosutils.GenerateOpenStackImageName(rhcosImage.ControlPlane, clusterID.InfraID)
 
 		machines, err = ovirt.Machines(clusterID.InfraID, ic, &pool, imageName, "master", masterUserDataSecretName)
 		if err != nil {

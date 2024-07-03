@@ -78,7 +78,7 @@ func (p Provider) PreProvision(ctx context.Context, in infracapi.PreProvisionInp
 
 	// upload the rhcos image.
 	imgName := nutanixtypes.RHCOSImageName(in.InfraID)
-	imgURI := string(*in.RhcosImage)
+	imgURI := in.RhcosImage.ControlPlane
 	imgReq := &nutanixclientv3.ImageIntentInput{}
 	imgSpec := &nutanixclientv3.Image{
 		Name:        &imgName,

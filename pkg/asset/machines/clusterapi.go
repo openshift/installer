@@ -117,7 +117,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 
 		mpool := defaultAWSMachinePoolPlatform("master")
 
-		osImage := strings.SplitN(string(*rhcosImage), ",", 2)
+		osImage := strings.SplitN(rhcosImage.ControlPlane, ",", 2)
 		osImageID := osImage[0]
 		if len(osImage) == 2 {
 			osImageID = "" // the AMI will be generated later on
@@ -298,7 +298,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 			installConfig,
 			clusterID.InfraID,
 			&pool,
-			string(*rhcosImage),
+			rhcosImage.ControlPlane,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to create master machine objects %w", err)
@@ -311,7 +311,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 			installConfig,
 			clusterID.InfraID,
 			&pool,
-			string(*rhcosImage),
+			rhcosImage.ControlPlane,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to create bootstrap machine objects %w", err)
@@ -394,7 +394,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		mpool.Set(pool.Platform.OpenStack)
 		pool.Platform.OpenStack = &mpool
 
-		imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
+		imageName, _ := rhcosutils.GenerateOpenStackImageName(rhcosImage.ControlPlane, clusterID.InfraID)
 
 		for _, role := range []string{"master", "bootstrap"} {
 			openStackMachines, err := openstack.GenerateMachines(
