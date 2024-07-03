@@ -124,7 +124,8 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("controlPlane"), "controlPlane is required"))
 	}
-	allErrs = append(allErrs, validateCompute(&c.Platform, c.ControlPlane, c.Compute, field.NewPath("compute"))...)
+	multiArchEnabled := types.MultiArchFeatureGateEnabled(c.Platform.Name(), c.EnabledFeatureGates())
+	allErrs = append(allErrs, validateCompute(&c.Platform, c.ControlPlane, c.Compute, field.NewPath("compute"), multiArchEnabled)...)
 	if err := validate.ImagePullSecret(c.PullSecret); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("pullSecret"), c.PullSecret, err.Error()))
 	}
@@ -606,7 +607,7 @@ func validateComputeEdge(platform *types.Platform, pName string, fldPath *field.
 	return allErrs
 }
 
-func validateCompute(platform *types.Platform, control *types.MachinePool, pools []types.MachinePool, fldPath *field.Path) field.ErrorList {
+func validateCompute(platform *types.Platform, control *types.MachinePool, pools []types.MachinePool, fldPath *field.Path, isMultiArchEnabled bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 	poolNames := map[string]bool{}
 	for i, p := range pools {
@@ -623,7 +624,7 @@ func validateCompute(platform *types.Platform, control *types.MachinePool, pools
 			allErrs = append(allErrs, field.Duplicate(poolFldPath.Child("name"), p.Name))
 		}
 		poolNames[p.Name] = true
-		if control != nil && control.Architecture != p.Architecture {
+		if control != nil && control.Architecture != p.Architecture && !isMultiArchEnabled {
 			allErrs = append(allErrs, field.Invalid(poolFldPath.Child("architecture"), p.Architecture, "heteregeneous multi-arch is not supported; compute pool architecture must match control plane"))
 		}
 		allErrs = append(allErrs, ValidateMachinePool(platform, &p, poolFldPath)...)
