@@ -140,6 +140,29 @@ spec:
                     maxLength: 16
                     pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
                     type: string
+                  internalLoadBalancer:
+                    description: InternalLoadBalancer is the configuration for an
+                      Internal Passthrough Network Load Balancer.
+                    properties:
+                      name:
+                        description: |-
+                          Name is the name of the Load Balancer. If not set a default name
+                          will be used. For an Internal Load Balancer service the default
+                          name is "api-internal".
+                        pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
+                        type: string
+                      subnet:
+                        description: |-
+                          Subnet is the name of the subnet to use for a regional Load Balancer. A subnet is
+                          required for the Load Balancer, if not defined the first configured subnet will be
+                          used.
+                        type: string
+                    type: object
+                  loadBalancerType:
+                    description: |-
+                      LoadBalancerType defines the type of Load Balancer that should be created.
+                      If not set, a Global External Proxy Load Balancer will be created by default.
+                    type: string
                 type: object
               network:
                 description: NetworkSpec encapsulates all things related to GCP network.
@@ -324,6 +347,26 @@ spec:
               network:
                 description: Network encapsulates GCP networking resources.
                 properties:
+                  apiInternalBackendService:
+                    description: |-
+                      APIInternalBackendService is the full reference to the backend service
+                      created for the internal Load Balancer.
+                    type: string
+                  apiInternalForwardingRule:
+                    description: |-
+                      APIInternalForwardingRule is the full reference to the forwarding rule
+                      created for the internal Load Balancer.
+                    type: string
+                  apiInternalHealthCheck:
+                    description: |-
+                      APIInternalHealthCheck is the full reference to the health check
+                      created for the internal Load Balancer.
+                    type: string
+                  apiInternalIpAddress:
+                    description: |-
+                      APIInternalAddress is the IPV4 regional address assigned to the
+                      internal Load Balancer.
+                    type: string
                   apiServerBackendService:
                     description: |-
                       APIServerBackendService is the full reference to the backend service
@@ -534,6 +577,29 @@ spec:
                               tag used when creating the API Server Instance Group.
                             maxLength: 16
                             pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
+                            type: string
+                          internalLoadBalancer:
+                            description: InternalLoadBalancer is the configuration
+                              for an Internal Passthrough Network Load Balancer.
+                            properties:
+                              name:
+                                description: |-
+                                  Name is the name of the Load Balancer. If not set a default name
+                                  will be used. For an Internal Load Balancer service the default
+                                  name is "api-internal".
+                                pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
+                                type: string
+                              subnet:
+                                description: |-
+                                  Subnet is the name of the subnet to use for a regional Load Balancer. A subnet is
+                                  required for the Load Balancer, if not defined the first configured subnet will be
+                                  used.
+                                type: string
+                            type: object
+                          loadBalancerType:
+                            description: |-
+                              LoadBalancerType defines the type of Load Balancer that should be created.
+                              If not set, a Global External Proxy Load Balancer will be created by default.
                             type: string
                         type: object
                       network:
@@ -1801,6 +1867,29 @@ spec:
                     maxLength: 16
                     pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
                     type: string
+                  internalLoadBalancer:
+                    description: InternalLoadBalancer is the configuration for an
+                      Internal Passthrough Network Load Balancer.
+                    properties:
+                      name:
+                        description: |-
+                          Name is the name of the Load Balancer. If not set a default name
+                          will be used. For an Internal Load Balancer service the default
+                          name is "api-internal".
+                        pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
+                        type: string
+                      subnet:
+                        description: |-
+                          Subnet is the name of the subnet to use for a regional Load Balancer. A subnet is
+                          required for the Load Balancer, if not defined the first configured subnet will be
+                          used.
+                        type: string
+                    type: object
+                  loadBalancerType:
+                    description: |-
+                      LoadBalancerType defines the type of Load Balancer that should be created.
+                      If not set, a Global External Proxy Load Balancer will be created by default.
+                    type: string
                 type: object
               network:
                 description: NetworkSpec encapsulates all things related to the GCP
@@ -2032,6 +2121,26 @@ spec:
               network:
                 description: Network encapsulates GCP networking resources.
                 properties:
+                  apiInternalBackendService:
+                    description: |-
+                      APIInternalBackendService is the full reference to the backend service
+                      created for the internal Load Balancer.
+                    type: string
+                  apiInternalForwardingRule:
+                    description: |-
+                      APIInternalForwardingRule is the full reference to the forwarding rule
+                      created for the internal Load Balancer.
+                    type: string
+                  apiInternalHealthCheck:
+                    description: |-
+                      APIInternalHealthCheck is the full reference to the health check
+                      created for the internal Load Balancer.
+                    type: string
+                  apiInternalIpAddress:
+                    description: |-
+                      APIInternalAddress is the IPV4 regional address assigned to the
+                      internal Load Balancer.
+                    type: string
                   apiServerBackendService:
                     description: |-
                       APIServerBackendService is the full reference to the backend service

@@ -85,6 +85,13 @@ func (c *GCPCluster) ValidateUpdate(oldRaw runtime.Object) (admission.Warnings, 
 		)
 	}
 
+	if !reflect.DeepEqual(c.Spec.LoadBalancer, old.Spec.LoadBalancer) {
+		allErrs = append(allErrs,
+			field.Invalid(field.NewPath("spec", "LoadBalancer"),
+				c.Spec.LoadBalancer, "field is immutable"),
+		)
+	}
+
 	if len(allErrs) == 0 {
 		return nil, nil
 	}

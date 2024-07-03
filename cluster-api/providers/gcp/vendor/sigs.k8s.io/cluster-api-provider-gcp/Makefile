@@ -98,7 +98,7 @@ KUBECTL := $(TOOLS_BIN_DIR)/$(KUBECTL_BIN)-$(KUBECTL_VER)
 
 TIMEOUT := $(shell command -v timeout || command -v gtimeout)
 
-SETUP_ENVTEST_VER := v0.0.0-20211110210527-619e6b92dab9
+SETUP_ENVTEST_VER := v0.0.0-20240522175850-2e9781e9fc60
 SETUP_ENVTEST_BIN := setup-envtest
 SETUP_ENVTEST := $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)
 
@@ -489,7 +489,7 @@ create-management-cluster: $(KUSTOMIZE) $(ENVSUBST) $(KIND) $(KUBECTL)
 	./hack/install-cert-manager.sh $(CERT_MANAGER_VER)
 
 	# Deploy CAPI
-	curl --retry $(CURL_RETRIES) -sSL https://github.com/kubernetes-sigs/cluster-api/releases/download/v1.7.2/cluster-api-components.yaml | $(ENVSUBST) | $(KUBECTL) apply -f -
+	curl --retry $(CURL_RETRIES) -sSL https://github.com/kubernetes-sigs/cluster-api/releases/download/v1.7.3/cluster-api-components.yaml | $(ENVSUBST) | $(KUBECTL) apply -f -
 
 	# Deploy CAPG
 	$(KIND) load docker-image $(CONTROLLER_IMG)-$(ARCH):$(TAG) --name=clusterapi

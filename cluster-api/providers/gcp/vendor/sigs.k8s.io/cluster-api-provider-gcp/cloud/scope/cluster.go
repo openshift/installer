@@ -306,18 +306,18 @@ func (s *ClusterScope) FirewallRulesSpec() []*compute.Firewall {
 // ANCHOR: ClusterControlPlaneSpec
 
 // AddressSpec returns google compute address spec.
-func (s *ClusterScope) AddressSpec() *compute.Address {
+func (s *ClusterScope) AddressSpec(lbname string) *compute.Address {
 	return &compute.Address{
-		Name:        fmt.Sprintf("%s-%s", s.Name(), infrav1.APIServerRoleTagValue),
+		Name:        fmt.Sprintf("%s-%s", s.Name(), lbname),
 		AddressType: "EXTERNAL",
 		IpVersion:   "IPV4",
 	}
 }
 
 // BackendServiceSpec returns google compute backend-service spec.
-func (s *ClusterScope) BackendServiceSpec() *compute.BackendService {
+func (s *ClusterScope) BackendServiceSpec(lbname string) *compute.BackendService {
 	return &compute.BackendService{
-		Name:                fmt.Sprintf("%s-%s", s.Name(), infrav1.APIServerRoleTagValue),
+		Name:                fmt.Sprintf("%s-%s", s.Name(), lbname),
 		LoadBalancingScheme: "EXTERNAL",
 		PortName:            "apiserver",
 		Protocol:            "TCP",
@@ -326,14 +326,14 @@ func (s *ClusterScope) BackendServiceSpec() *compute.BackendService {
 }
 
 // ForwardingRuleSpec returns google compute forwarding-rule spec.
-func (s *ClusterScope) ForwardingRuleSpec() *compute.ForwardingRule {
+func (s *ClusterScope) ForwardingRuleSpec(lbname string) *compute.ForwardingRule {
 	port := int32(443)
 	if c := s.Cluster.Spec.ClusterNetwork; c != nil {
 		port = ptr.Deref(c.APIServerPort, 443)
 	}
 	portRange := fmt.Sprintf("%d-%d", port, port)
 	return &compute.ForwardingRule{
-		Name:                fmt.Sprintf("%s-%s", s.Name(), infrav1.APIServerRoleTagValue),
+		Name:                fmt.Sprintf("%s-%s", s.Name(), lbname),
 		IPProtocol:          "TCP",
 		LoadBalancingScheme: "EXTERNAL",
 		PortRange:           portRange,
@@ -341,9 +341,9 @@ func (s *ClusterScope) ForwardingRuleSpec() *compute.ForwardingRule {
 }
 
 // HealthCheckSpec returns google compute health-check spec.
-func (s *ClusterScope) HealthCheckSpec() *compute.HealthCheck {
+func (s *ClusterScope) HealthCheckSpec(lbname string) *compute.HealthCheck {
 	return &compute.HealthCheck{
-		Name: fmt.Sprintf("%s-%s", s.Name(), infrav1.APIServerRoleTagValue),
+		Name: fmt.Sprintf("%s-%s", s.Name(), lbname),
 		Type: "HTTPS",
 		HttpsHealthCheck: &compute.HTTPSHealthCheck{
 			Port:              6443,

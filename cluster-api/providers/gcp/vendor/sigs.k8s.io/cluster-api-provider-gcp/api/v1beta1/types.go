@@ -85,6 +85,26 @@ type Network struct {
 	// created for the API Server.
 	// +optional
 	APIServerForwardingRule *string `json:"apiServerForwardingRule,omitempty"`
+
+	// APIInternalAddress is the IPV4 regional address assigned to the
+	// internal Load Balancer.
+	// +optional
+	APIInternalAddress *string `json:"apiInternalIpAddress,omitempty"`
+
+	// APIInternalHealthCheck is the full reference to the health check
+	// created for the internal Load Balancer.
+	// +optional
+	APIInternalHealthCheck *string `json:"apiInternalHealthCheck,omitempty"`
+
+	// APIInternalBackendService is the full reference to the backend service
+	// created for the internal Load Balancer.
+	// +optional
+	APIInternalBackendService *string `json:"apiInternalBackendService,omitempty"`
+
+	// APIInternalForwardingRule is the full reference to the forwarding rule
+	// created for the internal Load Balancer.
+	// +optional
+	APIInternalForwardingRule *string `json:"apiInternalForwardingRule,omitempty"`
 }
 
 // NetworkSpec encapsulates all things related to a GCP network.
@@ -118,6 +138,24 @@ type NetworkSpec struct {
 	HostProject *string `json:"hostProject,omitempty"`
 }
 
+// LoadBalancerType defines the Load Balancer that should be created.
+type LoadBalancerType string
+
+var (
+	// External creates a Global External Proxy Load Balancer
+	// to manage traffic to backends in multiple regions. This is the default Load
+	// Balancer and will be created if no LoadBalancerType is defined.
+	External = LoadBalancerType("External")
+
+	// Internal creates a Regional Internal Passthrough Load
+	// Balancer to manage traffic to backends in the configured region.
+	Internal = LoadBalancerType("Internal")
+
+	// InternalExternal creates both External and Internal Load Balancers to provide
+	// separate endpoints for managing both external and internal traffic.
+	InternalExternal = LoadBalancerType("InternalExternal")
+)
+
 // LoadBalancerSpec contains configuration for one or more LoadBalancers.
 type LoadBalancerSpec struct {
 	// APIServerInstanceGroupTagOverride overrides the default setting for the
@@ -127,6 +165,15 @@ type LoadBalancerSpec struct {
 	// +kubebuilder:validation:Pattern=`(^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)`
 	// +optional
 	APIServerInstanceGroupTagOverride *string `json:"apiServerInstanceGroupTagOverride,omitempty"`
+
+	// LoadBalancerType defines the type of Load Balancer that should be created.
+	// If not set, a Global External Proxy Load Balancer will be created by default.
+	// +optional
+	LoadBalancerType *LoadBalancerType `json:"loadBalancerType,omitempty"`
+
+	// InternalLoadBalancer is the configuration for an Internal Passthrough Network Load Balancer.
+	// +optional
+	InternalLoadBalancer *LoadBalancer `json:"internalLoadBalancer,omitempty"`
 }
 
 // SubnetSpec configures an GCP Subnet.
@@ -281,4 +328,20 @@ type ObjectReference struct {
 	// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
 	// +kubebuilder:validation:Required
 	Name string `json:"name"`
+}
+
+// LoadBalancer specifies the configuration of a LoadBalancer.
+type LoadBalancer struct {
+	// Name is the name of the Load Balancer. If not set a default name
+	// will be used. For an Internal Load Balancer service the default
+	// name is "api-internal".
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Pattern=`(^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)`
+	// +optional
+	Name *string `json:"name,omitempty"`
+
+	// Subnet is the name of the subnet to use for a regional Load Balancer. A subnet is
+	// required for the Load Balancer, if not defined the first configured subnet will be
+	// used.
+	Subnet *string `json:"subnet,omitempty"`
 }
