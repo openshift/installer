@@ -26,6 +26,8 @@ const (
 	InstallerApplicationName = "openshift-installer"
 	// AgentApplicationName is to use as application name used by agent.
 	AgentApplicationName = "agent"
+	// ImageBasedApplicationName is to use as application name used by image-based.
+	ImageBasedApplicationName = "imagebased"
 	// ImageDataType is used by installer.
 	ImageDataType = "image"
 	// FilesDataType is used by agent.
