@@ -1483,6 +1483,7 @@ google.golang.org/api/cloudresourcemanager/v1
 google.golang.org/api/cloudresourcemanager/v3
 google.golang.org/api/compute/v1
 google.golang.org/api/dns/v1
+google.golang.org/api/file/v1
 google.golang.org/api/googleapi
 google.golang.org/api/googleapi/transport
 google.golang.org/api/iam/v1
