@@ -1,6 +1,8 @@
 module github.com/openshift/installer
 
-go 1.22
+go 1.22.0
+
+toolchain go1.22.4
 
 require (
 	cloud.google.com/go/monitoring v1.19.0
@@ -67,12 +69,12 @@ require (
 	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.3.3-0.20240416171357-98239ba02cb2
 	github.com/nutanix-cloud-native/prism-go-client v0.3.4
 	github.com/onsi/gomega v1.33.1
-	github.com/openshift/api v0.0.0-20240517002838-931fa9860c01
+	github.com/openshift/api v0.0.0-20240704102751-33ed71ab039f
 	github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6
 	github.com/openshift/assisted-service/api v0.0.0
 	github.com/openshift/assisted-service/client v0.0.0
 	github.com/openshift/assisted-service/models v0.0.0
-	github.com/openshift/client-go v0.0.0-20231218140158-47f6d749b9d9
+	github.com/openshift/client-go v0.0.0-20240528061634-b054aa794d87
 	github.com/openshift/cloud-credential-operator v0.0.0-20240404165937-5e8812d64187
 	github.com/openshift/cluster-api-provider-baremetal v0.0.0-20220408122422-7a548effc26e
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20230308152226-83c0473d4429
@@ -97,7 +99,7 @@ require (
 	github.com/thedevsaddam/retry v0.0.0-20200324223450-9769a859cc6d
 	github.com/ulikunitz/xz v0.5.12
 	github.com/vincent-petithory/dataurl v1.0.0
-	github.com/vmware/govmomi v0.34.2
+	github.com/vmware/govmomi v0.37.2
 	golang.org/x/crypto v0.24.0
 	golang.org/x/oauth2 v0.21.0
 	golang.org/x/sync v0.7.0
@@ -108,11 +110,11 @@ require (
 	google.golang.org/grpc v1.64.0
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.29.5
-	k8s.io/apiextensions-apiserver v0.29.5
-	k8s.io/apimachinery v0.29.5
-	k8s.io/client-go v0.29.5
-	k8s.io/cloud-provider-vsphere v0.0.0
+	k8s.io/api v0.30.1
+	k8s.io/apiextensions-apiserver v0.30.1
+	k8s.io/apimachinery v0.30.1
+	k8s.io/client-go v0.30.1
+	k8s.io/cloud-provider-vsphere v1.30.1
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.120.1
 	k8s.io/utils v0.0.0-20240310230437-4693a0247e57
@@ -124,7 +126,7 @@ require (
 	sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0
 	sigs.k8s.io/cluster-api-provider-openstack v0.10.3
 	sigs.k8s.io/cluster-api-provider-vsphere v1.9.3
-	sigs.k8s.io/controller-runtime v0.17.5
+	sigs.k8s.io/controller-runtime v0.18.3
 	sigs.k8s.io/controller-tools v0.12.0
 	sigs.k8s.io/yaml v1.4.0
 )
@@ -240,7 +242,7 @@ require (
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/opencontainers/runtime-spec v1.2.0 // indirect
 	github.com/openshift/custom-resource-status v1.1.2 // indirect
-	github.com/openshift/machine-api-operator v0.2.1-0.20230929171041-2cc7fcf262f3 // indirect
+	github.com/openshift/machine-api-operator v0.2.1-0.20240702095949-e959540b5ab8 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
@@ -284,11 +286,11 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/gorm v1.24.5 // indirect
-	k8s.io/cli-runtime v0.29.3 // indirect
+	k8s.io/cli-runtime v0.30.0 // indirect
 	k8s.io/cluster-bootstrap v0.29.5 // indirect
-	k8s.io/component-base v0.29.5 // indirect
+	k8s.io/component-base v0.30.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
-	k8s.io/kubectl v0.29.3 // indirect
+	k8s.io/kubectl v0.30.0 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/kustomize/api v0.16.0 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.16.0 // indirect
