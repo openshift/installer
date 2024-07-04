@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	ccaws "github.com/openshift/cloud-credential-operator/pkg/aws"
 	"github.com/openshift/installer/pkg/types"
@@ -293,14 +294,9 @@ var permissions = map[PermissionGroup][]string{
 // as either capable of creating new credentials for components that interact with the cloud or
 // being able to be passed through as-is to the components that need cloud credentials
 func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string) error {
-	// Compile a list of permissions based on the permission groups provided
-	requiredPermissions := []string{}
-	for _, group := range groups {
-		groupPerms, ok := permissions[group]
-		if !ok {
-			return fmt.Errorf("unable to access permissions group %s", group)
-		}
-		requiredPermissions = append(requiredPermissions, groupPerms...)
+	requiredPermissions, err := PermissionsList(groups)
+	if err != nil {
+		return err
 	}
 
 	client := ccaws.NewClientFromSession(ssn)
@@ -341,8 +337,85 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string
 	return errors.New("AWS credentials cannot be used to either create new creds or use as-is")
 }
 
-// IncludesExistingInstanceRole checks if at least one BYO instance role is included in the install-config.
-func IncludesExistingInstanceRole(installConfig *types.InstallConfig) bool {
+// RequiredPermissionGroups returns a set of required permissions for a given cluster configuration.
+func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
+	permissionGroups := []PermissionGroup{PermissionCreateBase}
+	usingExistingVPC := len(ic.AWS.Subnets) != 0
+	usingExistingPrivateZone := len(ic.AWS.HostedZone) != 0
+
+	if !usingExistingVPC {
+		permissionGroups = append(permissionGroups, PermissionCreateNetworking)
+	}
+
+	if !usingExistingPrivateZone {
+		permissionGroups = append(permissionGroups, PermissionCreateHostedZone)
+	}
+
+	ec2RootVolume := aws.EC2RootVolume{}
+	var awsMachinePoolUsingKMS, masterMachinePoolUsingKMS bool
+	if ic.AWS.DefaultMachinePlatform != nil && ic.AWS.DefaultMachinePlatform.EC2RootVolume != ec2RootVolume {
+		awsMachinePoolUsingKMS = len(ic.AWS.DefaultMachinePlatform.EC2RootVolume.KMSKeyARN) != 0
+	}
+	if ic.ControlPlane != nil &&
+		ic.ControlPlane.Name == types.MachinePoolControlPlaneRoleName &&
+		ic.ControlPlane.Platform.AWS != nil &&
+		ic.ControlPlane.Platform.AWS.EC2RootVolume != ec2RootVolume {
+		masterMachinePoolUsingKMS = len(ic.ControlPlane.Platform.AWS.EC2RootVolume.KMSKeyARN) != 0
+	}
+	// Add KMS encryption keys, if provided.
+	if awsMachinePoolUsingKMS || masterMachinePoolUsingKMS {
+		logrus.Debugf("Adding %s to the group of permissions", PermissionKMSEncryptionKeys)
+		permissionGroups = append(permissionGroups, PermissionKMSEncryptionKeys)
+	}
+
+	// Add delete permissions for non-C2S installs.
+	if !aws.IsSecretRegion(ic.AWS.Region) {
+		permissionGroups = append(permissionGroups, PermissionDeleteBase)
+		if usingExistingVPC {
+			permissionGroups = append(permissionGroups, PermissionDeleteSharedNetworking)
+		} else {
+			permissionGroups = append(permissionGroups, PermissionDeleteNetworking)
+		}
+		if !usingExistingPrivateZone {
+			permissionGroups = append(permissionGroups, PermissionDeleteHostedZone)
+		}
+	}
+
+	if ic.AWS.PublicIpv4Pool != "" {
+		permissionGroups = append(permissionGroups, PermissionPublicIpv4Pool)
+	}
+
+	if !ic.AWS.BestEffortDeleteIgnition {
+		permissionGroups = append(permissionGroups, PermissionDeleteIgnitionObjects)
+	}
+
+	if includesCreateInstanceRole(ic) {
+		permissionGroups = append(permissionGroups, PermissionCreateInstanceRole)
+	}
+
+	if includesExistingInstanceRole(ic) {
+		permissionGroups = append(permissionGroups, PermissionDeleteSharedInstanceRole)
+	}
+
+	return permissionGroups
+}
+
+// PermissionsList compiles a list of permissions based on the permission groups provided.
+func PermissionsList(required []PermissionGroup) ([]string, error) {
+	requiredPermissions := sets.New[string]()
+	for _, group := range required {
+		groupPerms, ok := permissions[group]
+		if !ok {
+			return nil, fmt.Errorf("unable to access permissions group %s", group)
+		}
+		requiredPermissions.Insert(groupPerms...)
+	}
+
+	return sets.List(requiredPermissions), nil
+}
+
+// includesExistingInstanceRole checks if at least one BYO instance role is included in the install-config.
+func includesExistingInstanceRole(installConfig *types.InstallConfig) bool {
 	mpool := aws.MachinePool{}
 	mpool.Set(installConfig.AWS.DefaultMachinePlatform)
 
@@ -357,8 +430,8 @@ func IncludesExistingInstanceRole(installConfig *types.InstallConfig) bool {
 	return len(mpool.IAMRole) > 0
 }
 
-// IncludesCreateInstanceRole checks if at least one instance role will be created by the installer.
-func IncludesCreateInstanceRole(installConfig *types.InstallConfig) bool {
+// includesCreateInstanceRole checks if at least one instance role will be created by the installer.
+func includesCreateInstanceRole(installConfig *types.InstallConfig) bool {
 	{
 		mpool := aws.MachinePool{}
 		mpool.Set(installConfig.AWS.DefaultMachinePlatform)
