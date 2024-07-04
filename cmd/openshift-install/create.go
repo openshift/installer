@@ -150,7 +150,18 @@ var (
 		assets: targetassets.Cluster,
 	}
 
-	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget, singleNodeIgnitionConfigTarget}
+	permissionsTarget = target{
+		name: "Permissions",
+		command: &cobra.Command{
+			Use:   "permissions-policy",
+			Short: "Generates a list of required permissions asset",
+			// This is internal-only for now
+			Hidden: true,
+		},
+		assets: targetassets.Permissions,
+	}
+
+	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget, singleNodeIgnitionConfigTarget, permissionsTarget}
 )
 
 // clusterCreatePostRun is the main entrypoint for the cluster create command
