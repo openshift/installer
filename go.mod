@@ -3,7 +3,7 @@ module github.com/openshift/installer
 go 1.22
 
 require (
-	cloud.google.com/go/monitoring v1.18.1
+	cloud.google.com/go/monitoring v1.19.0
 	cloud.google.com/go/storage v1.40.0
 	github.com/AlecAivazis/survey/v2 v2.3.5
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible
@@ -99,12 +99,12 @@ require (
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/vmware/govmomi v0.34.2
 	golang.org/x/crypto v0.24.0
-	golang.org/x/oauth2 v0.20.0
+	golang.org/x/oauth2 v0.21.0
 	golang.org/x/sync v0.7.0
 	golang.org/x/sys v0.21.0
 	golang.org/x/term v0.21.0
-	google.golang.org/api v0.181.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20240513163218-0867130af1f8
+	google.golang.org/api v0.184.0
+	google.golang.org/genproto/googleapis/api v0.0.0-20240604185151-ef581f913117
 	google.golang.org/grpc v1.64.0
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -120,11 +120,11 @@ require (
 	sigs.k8s.io/cluster-api v1.7.3
 	sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.2-0.20240613114012-888c6596e3a1
 	sigs.k8s.io/cluster-api-provider-azure v1.15.1-0.20240617212811-a52056dfb88c
-	sigs.k8s.io/cluster-api-provider-gcp v1.6.1-0.20240528192722-cd4236ffcaa8
+	sigs.k8s.io/cluster-api-provider-gcp v1.7.0
 	sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0
 	sigs.k8s.io/cluster-api-provider-openstack v0.10.3
 	sigs.k8s.io/cluster-api-provider-vsphere v1.9.3
-	sigs.k8s.io/controller-runtime v0.17.3
+	sigs.k8s.io/controller-runtime v0.17.5
 	sigs.k8s.io/controller-tools v0.12.0
 	sigs.k8s.io/yaml v1.4.0
 )
@@ -274,8 +274,8 @@ require (
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto v0.0.0-20240401170217-c3f982113cda // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240521202816-d264139d666e // indirect
+	google.golang.org/genproto v0.0.0-20240604185151-ef581f913117 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240604185151-ef581f913117 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 	gopkg.in/evanphx/json-patch.v5 v5.6.0 // indirect
