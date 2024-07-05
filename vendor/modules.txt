@@ -414,7 +414,7 @@ github.com/coreos/ignition/v2/config/shared/errors
 github.com/coreos/ignition/v2/config/shared/parse
 github.com/coreos/ignition/v2/config/shared/validations
 github.com/coreos/ignition/v2/config/util
-github.com/coreos/ignition/v2/config/v3_2/types
+github.com/coreos/ignition/v2/config/v3_3/types
 # github.com/coreos/stream-metadata-go v0.1.8
 ## explicit; go 1.15
 github.com/coreos/stream-metadata-go/arch

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_3/types"
 	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/coreos/stream-metadata-go/stream"
 	"k8s.io/apimachinery/pkg/api/errors"

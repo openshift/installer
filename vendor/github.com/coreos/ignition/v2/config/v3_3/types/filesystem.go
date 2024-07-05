@@ -57,7 +57,7 @@ func (f Filesystem) validateFormat() error {
 		}
 	} else {
 		switch *f.Format {
-		case "ext4", "btrfs", "xfs", "swap", "vfat":
+		case "ext4", "btrfs", "xfs", "swap", "vfat", "none":
 		default:
 			return errors.ErrFilesystemInvalidFormat
 		}

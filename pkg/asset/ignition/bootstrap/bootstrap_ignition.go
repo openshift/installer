@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	ignutil "github.com/coreos/ignition/v2/config/util"
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_3/types"
 	"github.com/vincent-petithory/dataurl"
 
 	"github.com/openshift/installer/pkg/asset/ignition"

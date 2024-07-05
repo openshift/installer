@@ -68,12 +68,16 @@ func (s Storage) validateLinks(c vpath.ContextPath, r *report.Report) {
 				r.AddOnError(c.Append("links", i), errors.ErrLinkUsedSymlink)
 			}
 		}
+		if util.NilOrEmpty(l1.Target) {
+			r.AddOnError(c.Append("links", i, "target"), errors.ErrLinkTargetRequired)
+			continue
+		}
 		if !util.IsTrue(l1.Hard) {
 			continue
 		}
-		target := path.Clean(l1.Target)
+		target := path.Clean(*l1.Target)
 		if !path.IsAbs(target) {
-			target = path.Join(l1.Path, l1.Target)
+			target = path.Join(l1.Path, *l1.Target)
 		}
 		for _, d := range s.Directories {
 			if target == d.Path {

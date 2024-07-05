@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_3/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/vincent-petithory/dataurl"
 	v1 "k8s.io/api/core/v1"

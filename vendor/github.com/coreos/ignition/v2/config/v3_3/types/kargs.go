@@ -1,4 +1,4 @@
-// Copyright 2020 Red Hat, Inc.
+// Copyright 2021 Red Hat, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,24 +14,9 @@
 
 package types
 
-import (
-	"github.com/coreos/ignition/v2/config/shared/errors"
-
-	"github.com/coreos/vcontext/path"
-	"github.com/coreos/vcontext/report"
-)
-
-func (cu Custom) Validate(c path.ContextPath) (r report.Report) {
-	if cu.Pin == "" && cu.Config == "" {
-		return
+func (k KernelArguments) MergedKeys() map[string]string {
+	return map[string]string{
+		"ShouldExist":    "KernelArgument",
+		"ShouldNotExist": "KernelArgument",
 	}
-	switch cu.Pin {
-	case "tpm2", "tang", "sss":
-	default:
-		r.AddOnError(c.Append("pin"), errors.ErrUnknownClevisPin)
-	}
-	if cu.Config == "" {
-		r.AddOnError(c.Append("config"), errors.ErrClevisConfigRequired)
-	}
-	return
 }
