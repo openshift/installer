@@ -47,7 +47,7 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 			ignitionHost = net.JoinHostPort(installConfig.VSphere.APIVIPs[0], "22623")
 		}
 	}
-	return &igntypes.Config{
+	config := &igntypes.Config{
 		Ignition: igntypes.Ignition{
 			Version: igntypes.MaxVersion.String(),
 			Config: igntypes.IgnitionConfig{
@@ -70,6 +70,14 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 			},
 		},
 	}
+	if types.SCOS {
+		config.KernelArguments = igntypes.KernelArguments{
+			ShouldNotExist: []igntypes.KernelArgument{
+				"mitigations=auto,nosmt",
+			},
+		}
+	}
+	return config
 }
 
 // generatePointerMachineConfig generates a machineconfig when a user customizes
