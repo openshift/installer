@@ -29,7 +29,7 @@ if [ ! -f master-ignition.done ]; then
   record_service_stage_start "master-ignition"
   echo "Creating master ignition and writing it to disk"
   # Get the master ignition from MCS
-  curl --header 'Accept:application/vnd.coreos.ignition+json;version=3.2.0' \
+  curl --header 'Accept:application/vnd.coreos.ignition+json;version=3.3.0' \
     http://localhost:22624/config/master -o /opt/openshift/original-master.ign
 
   GATHER_ID="bootstrap"

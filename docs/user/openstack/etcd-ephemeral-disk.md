@@ -88,7 +88,7 @@ metadata:
 spec:
   config:
     ignition:
-      version: 3.2.0
+      version: 3.3.0
     systemd:
       units:
       - contents: |
@@ -193,7 +193,7 @@ metadata:
 spec:
   config:
     ignition:
-      version: 3.2.0
+      version: 3.3.0
     systemd:
       units:
       - contents: |
