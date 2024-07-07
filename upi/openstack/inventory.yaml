@@ -97,3 +97,6 @@ all:
       # An IPv6 address that will be assigned to the ingress VIP.
       # This value will be overwritten by the network.yaml playbook.
       os_ingressVIP6: ""
+
+      # If set to true, IPv6 address will be used as primary address.
+      ipv6_primary: false
