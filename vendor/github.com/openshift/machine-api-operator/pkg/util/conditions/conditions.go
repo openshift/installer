@@ -1,6 +1,7 @@
 package conditions
 
 import (
+	machinev1 "github.com/openshift/api/machine/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -23,4 +24,12 @@ func GetDeploymentCondition(deployment *appsv1.Deployment, conditionType appsv1.
 		}
 	}
 	return nil
+}
+
+func DeepCopyConditions(in []machinev1.Condition) []machinev1.Condition {
+	out := make([]machinev1.Condition, 0)
+	for _, cond := range in {
+		out = append(out, *cond.DeepCopy())
+	}
+	return out
 }

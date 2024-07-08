@@ -392,9 +392,10 @@ func init() {
 type CnsBlockBackingDetails struct {
 	CnsBackingObjectDetails
 
-	BackingDiskId       string `xml:"backingDiskId,omitempty"`
-	BackingDiskUrlPath  string `xml:"backingDiskUrlPath,omitempty"`
-	BackingDiskObjectId string `xml:"backingDiskObjectId,omitempty"`
+	BackingDiskId                  string `xml:"backingDiskId,omitempty"`
+	BackingDiskUrlPath             string `xml:"backingDiskUrlPath,omitempty"`
+	BackingDiskObjectId            string `xml:"backingDiskObjectId,omitempty"`
+	AggregatedSnapshotCapacityInMb int64  `xml:"aggregatedSnapshotCapacityInMb,omitempty"`
 }
 
 func init() {
@@ -534,9 +535,10 @@ type CnsRelocateVolumeResponse struct {
 type CnsVolumeRelocateSpec struct {
 	types.DynamicData
 
-	VolumeId  CnsVolumeId                           `xml:"volumeId"`
-	Datastore types.ManagedObjectReference          `xml:"datastore"`
-	Profile   []types.BaseVirtualMachineProfileSpec `xml:"profile,omitempty,typeattr"`
+	VolumeId       CnsVolumeId                           `xml:"volumeId"`
+	Datastore      types.ManagedObjectReference          `xml:"datastore"`
+	Profile        []types.BaseVirtualMachineProfileSpec `xml:"profile,omitempty,typeattr"`
+	ServiceLocator *types.ServiceLocator                 `xml:"serviceLocator,omitempty"`
 }
 
 func init() {
@@ -792,7 +794,8 @@ func init() {
 
 type CnsSnapshotCreateResult struct {
 	CnsSnapshotOperationResult
-	Snapshot CnsSnapshot `xml:"snapshot,omitempty"`
+	Snapshot                       CnsSnapshot `xml:"snapshot,omitempty"`
+	AggregatedSnapshotCapacityInMb int64       `xml:"aggregatedSnapshotCapacityInMb,omitempty"`
 }
 
 func init() {
@@ -801,7 +804,8 @@ func init() {
 
 type CnsSnapshotDeleteResult struct {
 	CnsSnapshotOperationResult
-	SnapshotId CnsSnapshotId `xml:"snapshotId,omitempty"`
+	SnapshotId                     CnsSnapshotId `xml:"snapshotId,omitempty"`
+	AggregatedSnapshotCapacityInMb int64         `xml:"aggregatedSnapshotCapacityInMb,omitempty"`
 }
 
 func init() {

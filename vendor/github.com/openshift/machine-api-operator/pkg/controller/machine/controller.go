@@ -76,9 +76,17 @@ const (
 var DefaultActuator Actuator
 
 func AddWithActuator(mgr manager.Manager, actuator Actuator) error {
-	if err := add(mgr, newReconciler(mgr, actuator), "machine-controller"); err != nil {
+	return AddWithActuatorOpts(mgr, actuator, controller.Options{})
+}
+
+func AddWithActuatorOpts(mgr manager.Manager, actuator Actuator, opts controller.Options) error {
+	machineControllerOpts := opts
+	machineControllerOpts.Reconciler = newReconciler(mgr, actuator)
+
+	if err := addWithOpts(mgr, machineControllerOpts, "machine-controller"); err != nil {
 		return err
 	}
+
 	if err := addWithOpts(mgr, controller.Options{
 		Reconciler:  newDrainController(mgr),
 		RateLimiter: newDrainRateLimiter(),
@@ -115,9 +123,9 @@ func addWithOpts(mgr manager.Manager, opts controller.Options, controllerName st
 
 	// Watch for changes to Machine
 	return c.Watch(
-		source.Kind(mgr.GetCache(), &machinev1.Machine{}),
-		&handler.EnqueueRequestForObject{},
-	)
+		source.Kind(mgr.GetCache(), &machinev1.Machine{},
+			&handler.TypedEnqueueRequestForObject[*machinev1.Machine]{},
+		))
 }
 
 // ReconcileMachine reconciles a Machine object
@@ -157,7 +165,7 @@ func (r *ReconcileMachine) Reconcile(ctx context.Context, request reconcile.Requ
 
 	// Get the original state of conditions now so that they can be used to calculate the patch later.
 	// This must be a copy otherwise the referenced slice will be modified by later machine conditions changes.
-	originalConditions := m.Status.Conditions.DeepCopy()
+	originalConditions := conditions.DeepCopyConditions(m.Status.Conditions)
 
 	if errList := validateMachine(m); len(errList) > 0 {
 		err := fmt.Errorf("%v: machine validation failed: %v", machineName, errList.ToAggregate().Error())
@@ -411,7 +419,7 @@ func (r *ReconcileMachine) updateStatus(ctx context.Context, machine *machinev1.
 
 	// Conditions need to be deep copied as they are set outside of this function.
 	// They will be restored after any updates to the base (done by patching annotations).
-	conditions := machine.Status.Conditions.DeepCopy()
+	conditions := conditions.DeepCopyConditions(machine.Status.Conditions)
 
 	// A call to Patch will mutate our local copy of the machine to match what is stored in the API.
 	// Before we make any changes to the status subresource on our local copy, we need to patch the object first,
