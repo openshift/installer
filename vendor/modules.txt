@@ -1838,7 +1838,7 @@ k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/netutil
 k8s.io/apimachinery/third_party/forked/golang/reflect
-# k8s.io/cli-runtime v0.30.0
+# k8s.io/cli-runtime v0.30.1
 ## explicit; go 1.22.0
 k8s.io/cli-runtime/pkg/genericclioptions
 k8s.io/cli-runtime/pkg/genericiooptions
@@ -2064,8 +2064,8 @@ k8s.io/client-go/util/workqueue
 # k8s.io/cloud-provider-vsphere v1.30.1 => github.com/openshift/cloud-provider-vsphere v1.19.1-0.20211222185833-7829863d0558
 ## explicit; go 1.17
 k8s.io/cloud-provider-vsphere/pkg/common/config
-# k8s.io/cluster-bootstrap v0.29.5
-## explicit; go 1.21
+# k8s.io/cluster-bootstrap v0.30.1
+## explicit; go 1.22.0
 k8s.io/cluster-bootstrap/token/api
 k8s.io/cluster-bootstrap/token/util
 # k8s.io/component-base v0.30.1
@@ -2100,7 +2100,7 @@ k8s.io/kube-openapi/pkg/spec3
 k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/util/proto/validation
 k8s.io/kube-openapi/pkg/validation/spec
-# k8s.io/kubectl v0.30.0
+# k8s.io/kubectl v0.30.1
 ## explicit; go 1.22.0
 k8s.io/kubectl/pkg/cmd/util
 k8s.io/kubectl/pkg/drain
