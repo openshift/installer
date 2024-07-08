@@ -27,7 +27,13 @@ type ClusterKubeAPIClient struct {
 func NewClusterKubeAPIClient(ctx context.Context, kubeconfigPath string) (*ClusterKubeAPIClient, error) {
 	kubeClient := &ClusterKubeAPIClient{}
 
-	kubeconfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
+	var kubeconfig *rest.Config
+	var err error
+	if kubeconfigPath != "" {
+		kubeconfig, err = clientcmd.BuildConfigFromFlags("", kubeconfigPath)
+	} else {
+		kubeconfig, err = rest.InClusterConfig()
+	}
 	if err != nil {
 		return nil, errors.Wrap(err, "error loading kubeconfig from assets")
 	}
