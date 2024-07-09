@@ -49,22 +49,16 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 		}
 		return nil, nil
 	case vspheretypes.Name:
-		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
-			return clusterapi.InitializeProvider(vspherecapi.Provider{}), nil
-		}
+		return clusterapi.InitializeProvider(vspherecapi.Provider{}), nil
 	case powervstypes.Name:
 		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(powervscapi.Provider{}), nil
 		}
 		return nil, nil
 	case openstacktypes.Name:
-		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
-			return clusterapi.InitializeProvider(openstackcapi.Provider{}), nil
-		}
+		return clusterapi.InitializeProvider(openstackcapi.Provider{}), nil
 	case nutanixtypes.Name:
-		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
-			return clusterapi.InitializeProvider(nutanixcapi.Provider{}), nil
-		}
+		return clusterapi.InitializeProvider(nutanixcapi.Provider{}), nil
 	}
 	return nil, fmt.Errorf("platform %q is not supported in the altinfra Installer build", platform)
 }
