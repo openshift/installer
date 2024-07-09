@@ -384,7 +384,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			CloudConfiguration:   cloudConfiguration,
 			OSType:               armcompute.OperatingSystemTypesLinux,
 			OSState:              armcompute.OperatingSystemStateTypesGeneralized,
-			HyperVGeneration:     armcompute.HyperVGenerationV1,
+			HyperVGeneration:     armcompute.HyperVGenerationV2,
 			Publisher:            "RedHat-gen2",
 			Offer:                "rhcos-gen2",
 			SKU:                  "gen2",
