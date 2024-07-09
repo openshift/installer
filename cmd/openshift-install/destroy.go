@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -111,6 +112,10 @@ func runDestroyCmd(directory string, reportQuota bool) error {
 
 	// ensure capi etcd data store is cleaned up
 	clusterapi.System().CleanEtcd()
+	// remove cluster api artifacts as well
+	if err := os.RemoveAll(filepath.Join(directory, clusterapi.ArtifactsDir)); err != nil {
+		return fmt.Errorf("failed to remove clusterapi artifacts: %w", err)
+	}
 
 	timer.StopTimer(timer.TotalTimeElapsed)
 	timer.LogSummary()
