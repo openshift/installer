@@ -17,10 +17,11 @@ func New(logger logrus.FieldLogger, rootDir string, deleteVolumes bool) (provide
 
 	// todo: jcallen: need to think if this makes sense because we could
 	// todo: still remove cns volumes for the vSphere case
-	if len(*clusterMetadata.Auth) > 0 {
-		clusterMetadata.DeleteVolumes = deleteVolumes
-	} else {
-		clusterMetadata.DeleteVolumes = false
+	clusterMetadata.DeleteVolumes = false
+	if clusterMetadata.Auth != nil {
+		if len(*clusterMetadata.Auth) > 0 {
+			clusterMetadata.DeleteVolumes = deleteVolumes
+		}
 	}
 
 	platform := clusterMetadata.Platform()

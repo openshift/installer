@@ -2,14 +2,18 @@ package vsphere
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/vim25/mo"
+	errorsutil "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -164,7 +168,7 @@ func (o *ClusterUninstaller) stopVirtualMachine(ctx context.Context, vmMO mo.Vir
 	return nil
 }
 
-func (o *ClusterUninstaller) stopVirtualMachines(ctx context.Context, nameContains string) error {
+func (o *ClusterUninstaller) stopVirtualMachines(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
 	defer cancel()
 
@@ -178,11 +182,9 @@ func (o *ClusterUninstaller) stopVirtualMachines(ctx context.Context, nameContai
 	var errs []error
 	for _, vmMO := range found {
 
-		if strings.Contains(vmMO.Name, nameContains) {
-			if !isPoweredOff(vmMO) {
-				if err := o.stopVirtualMachine(ctx, vmMO); err != nil {
-					errs = append(errs, err)
-				}
+		if !isPoweredOff(vmMO) {
+			if err := o.stopVirtualMachine(ctx, vmMO); err != nil {
+				errs = append(errs, err)
 			}
 		}
 	}
@@ -223,61 +225,148 @@ func (o *ClusterUninstaller) deleteVirtualMachines(ctx context.Context) error {
 	return utilerrors.NewAggregate(errs)
 }
 
+type jsonPatch struct {
+	Op    string `json:"op"`
+	Path  string `json:"path"`
+	Value string `json:"value"`
+}
+
+// isTransientConnectionError checks whether given error is "Connection refused" or
+// "Connection reset" error which usually means that apiserver is temporarily
+// unavailable.
+func isTransientConnectionError(err error) bool {
+	var errno syscall.Errno
+	if errors.As(err, &errno) {
+		return errno == syscall.ECONNREFUSED || errno == syscall.ECONNRESET
+	}
+	return false
+}
+
+func isTransientError(err error) bool {
+	if isTransientConnectionError(err) {
+		return true
+	}
+
+	if t, ok := err.(errorsutil.APIStatus); ok && t.Status().Code >= 500 {
+		return true
+	}
+
+	return errorsutil.IsTooManyRequests(err)
+}
+
 func (o *ClusterUninstaller) deleteVolumes(ctx context.Context) error {
 	if o.KubeClientset == nil {
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
 	defer cancel()
+	removeFinalizer := []jsonPatch{{
+		Op:    "remove",
+		Path:  "/metadata/finalizers",
+		Value: "kubernetes",
+	}}
 
-	namespaces, err := o.KubeClientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+	// todo: maybe the errors should be checked for cluster not available...
+
+	removeFinalizerBytes, err := json.Marshal(removeFinalizer)
 	if err != nil {
-		o.Logger.Warn(err)
+		return err
 	}
 
-	for _, ns := range namespaces.Items {
-		pvcs, err := o.KubeClientset.CoreV1().PersistentVolumeClaims(ns.Name).List(ctx, metav1.ListOptions{})
+	pvList, err := o.KubeClientset.CoreV1().PersistentVolumes().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		o.Logger.Warnf("Unable to list persistent volumes: %v", err)
+		return nil
+	}
+
+	if len(pvList.Items) == 0 {
+		return nil
+	}
+
+	for _, pv := range pvList.Items {
+		o.Logger.Debugf("deleting volume %s", pv.Name)
+		err = o.KubeClientset.CoreV1().PersistentVolumes().Delete(ctx, pv.Name, metav1.DeleteOptions{})
+
 		if err != nil {
-			o.Logger.Warn(err)
+			o.Logger.Warnf("Unable to delete persistent volumes: %v", err)
+			return nil
 		}
 
-		for _, pvc := range pvcs.Items {
-			if err = o.KubeClientset.CoreV1().PersistentVolumeClaims(ns.Name).Delete(ctx, pvc.Name, metav1.DeleteOptions{}); err != nil {
-				o.Logger.Warn(err)
-			}
+		_, err := o.KubeClientset.CoreV1().PersistentVolumes().Patch(ctx, pv.Name, types.JSONPatchType, removeFinalizerBytes, metav1.PatchOptions{})
+		if err != nil {
+			o.Logger.Warnf("Unable to patch persistent volumes: %v", err)
+			return nil
 		}
+	}
+
+	// todo: is there another way to know if a PV once deleted has been reconciled?
+	time.Sleep(time.Second * 30)
+
+	for {
+		pvList, err := o.KubeClientset.CoreV1().PersistentVolumes().List(ctx, metav1.ListOptions{})
+		if err != nil {
+			o.Logger.Warnf("Unable to list persistent volumes: %v", err)
+			return nil
+		}
+
+		o.Logger.Debugf("%d remaining persistent volumes", len(pvList.Items))
+
+		if len(pvList.Items) == 0 {
+			break
+		}
+
+		time.Sleep(time.Second * 30)
 	}
 
 	return nil
 }
 
+type StagedFunctions struct {
+	Name    string
+	Execute func(ctx context.Context) error
+}
+
 func (o *ClusterUninstaller) destroyCluster(ctx context.Context) (bool, error) {
-	err := o.stopVirtualMachines(ctx, "worker")
-	if err != nil {
-		o.Logger.Debug(err)
-	}
-	err = o.deleteVolumes(ctx)
-	if err != nil {
-		o.Logger.Debug(err)
-	}
-	err = o.stopVirtualMachines(ctx, "master")
-	if err != nil {
-		o.Logger.Debug(err)
+	var stagedFuncs [][]StagedFunctions
+
+	if o.KubeClientset != nil {
+		deleteVolumeStagedFunction := StagedFunctions{Name: "Delete Persistent Volumes", Execute: o.deleteVolumes}
+		stagedFuncs = append(stagedFuncs, []StagedFunctions{deleteVolumeStagedFunction})
 	}
 
-	stagedFuncs := [][]struct {
-		name    string
-		execute func(context.Context) error
-	}{{
-		{name: "Virtual Machines", execute: o.deleteVirtualMachines},
-	}, {
-		{name: "Folder", execute: o.deleteFolder},
-	}, {
-		{name: "Storage Policy", execute: o.deleteStoragePolicy},
-		{name: "Tag", execute: o.deleteTag},
-		{name: "Tag Category", execute: o.deleteTagCategory},
-	}}
+	deleteVirtualMachinesFuncs := []StagedFunctions{
+		{
+			Name: "Stop virtual machines", Execute: o.stopVirtualMachines,
+		},
+		{
+			Name: "Delete Virtual Machines", Execute: o.deleteVirtualMachines,
+		},
+	}
+
+	deleteVCenterObjectsFuncs := []StagedFunctions{
+		{
+			Name: "Folder", Execute: o.deleteFolder,
+		},
+		{
+			Name: "Storage Policy", Execute: o.deleteStoragePolicy,
+		},
+		{
+			Name: "Tag", Execute: o.deleteTag,
+		},
+		{
+			Name: "Tag Category", Execute: o.deleteTagCategory,
+		},
+	}
+
+	stagedFuncs = append(stagedFuncs, deleteVirtualMachinesFuncs)
+	stagedFuncs = append(stagedFuncs, deleteVCenterObjectsFuncs)
+
+	for _, sf := range stagedFuncs {
+		for _, f := range sf {
+			fmt.Print(f.Name)
+		}
+	}
 
 	stageFailed := false
 	for _, stage := range stagedFuncs {
@@ -285,9 +374,9 @@ func (o *ClusterUninstaller) destroyCluster(ctx context.Context) (bool, error) {
 			break
 		}
 		for _, f := range stage {
-			err := f.execute(ctx)
+			err := f.Execute(ctx)
 			if err != nil {
-				o.Logger.Debugf("%s: %v", f.name, err)
+				o.Logger.Debugf("%s: %v", f.Name, err)
 				stageFailed = true
 			}
 		}
