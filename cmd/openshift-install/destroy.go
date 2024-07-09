@@ -109,10 +109,8 @@ func runDestroyCmd(directory string, reportQuota bool) error {
 		}
 	}
 
-	// ensure capi etcd data store is cleaned up
-	clusterapi.System().CleanEtcd()
-
-	capiArtifactsDir := filepath.Join(command.RootOpts.Dir, clusterapi.ArtifactsDir)
+	// ensure capi etcd data store and capi artifacts are cleaned up
+	capiArtifactsDir := filepath.Join(directory, clusterapi.ArtifactsDir)
 	if err := os.RemoveAll(capiArtifactsDir); err != nil {
 		logrus.Warnf("failed to remove %s: %v", capiArtifactsDir, err)
 	}
