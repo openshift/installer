@@ -65,11 +65,11 @@ func runDestroyCmd(directory string, reportQuota bool) error {
 	timer.StartTimer(timer.TotalTimeElapsed)
 	destroyer, err := destroy.New(logrus.StandardLogger(), directory)
 	if err != nil {
-		return fmt.Errorf("Failed while preparing to destroy cluster: %w", err)
+		return fmt.Errorf("failed while preparing to destroy cluster: %w", err)
 	}
 	quota, err := destroyer.Run()
 	if err != nil {
-		return fmt.Errorf("Failed to destroy cluster: %w", err)
+		return fmt.Errorf("failed to destroy cluster: %w", err)
 	}
 
 	if reportQuota {
