@@ -17,6 +17,7 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=featuregates,scope=Cluster
 // +kubebuilder:subresource:status
+// +kubebuilder:metadata:annotations=release.openshift.io/bootstrap-required=true
 type FeatureGate struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -27,6 +28,7 @@ type FeatureGate struct {
 	// spec holds user settable values for configuration
 	// +kubebuilder:validation:Required
 	// +required
+	// +kubebuilder:validation:XValidation:rule="has(oldSelf.featureSet) ? has(self.featureSet) : true",message=".spec.featureSet cannot be removed"
 	Spec FeatureGateSpec `json:"spec"`
 	// status holds observed values from the cluster. They may not be overridden.
 	// +optional

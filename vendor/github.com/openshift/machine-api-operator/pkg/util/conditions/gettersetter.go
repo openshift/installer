@@ -16,10 +16,10 @@ type GetterSetter interface {
 	metav1.Object
 
 	// GetConditions returns the list of conditions for a machine API object.
-	GetConditions() machinev1.Conditions
+	GetConditions() []machinev1.Condition
 
 	// SetConditions sets the list of conditions for a machine API object.
-	SetConditions(machinev1.Conditions)
+	SetConditions([]machinev1.Condition)
 }
 
 // Get returns the condition with the given type, if the condition does not exists,
