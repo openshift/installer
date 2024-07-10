@@ -237,7 +237,7 @@ type jsonPatch struct {
 func isTransientConnectionError(err error) bool {
 	var errno syscall.Errno
 	if errors.As(err, &errno) {
-		return errno == syscall.ECONNREFUSED || errno == syscall.ECONNRESET
+		return errors.Is(errno, syscall.ECONNREFUSED) || errors.Is(errno, syscall.ECONNRESET)
 	}
 	return false
 }
@@ -322,6 +322,28 @@ func (o *ClusterUninstaller) deleteVolumes(ctx context.Context) error {
 	return nil
 }
 
+func (o *ClusterUninstaller) deleteCnsVolumes(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
+	defer cancel()
+	o.Logger.Debug("Delete CNS Volumes")
+
+	cnsVolumes, err := o.client.GetCnsVolumes(ctx, o.InfraID)
+	if err != nil {
+		return err
+	}
+
+	for _, cv := range cnsVolumes {
+		cnsVolumeLogger := o.Logger.WithField("CNS Volume", cv.VolumeId.Id)
+		err := o.client.DeleteCnsVolumes(ctx, cv)
+		if err != nil {
+			return err
+		}
+		cnsVolumeLogger.Info("Destroyed")
+	}
+
+	return nil
+}
+
 type StagedFunctions struct {
 	Name    string
 	Execute func(ctx context.Context) error
@@ -330,9 +352,23 @@ type StagedFunctions struct {
 func (o *ClusterUninstaller) destroyCluster(ctx context.Context) (bool, error) {
 	var stagedFuncs [][]StagedFunctions
 
+	// todo: jcallen: this need to change as well
+	// todo: jcallen: maybe we no longer have the kube auth file
+	// todo: jcallen: and just want to delete the associated
+	// todo: jcallen: cns volumes
 	if o.KubeClientset != nil {
-		deleteVolumeStagedFunction := StagedFunctions{Name: "Delete Persistent Volumes", Execute: o.deleteVolumes}
-		stagedFuncs = append(stagedFuncs, []StagedFunctions{deleteVolumeStagedFunction})
+		deleteVolumeStagedFunctions := []StagedFunctions{
+			{
+				Name:    "Delete Persistent Volumes",
+				Execute: o.deleteVolumes,
+			},
+			{
+				Name:    "Delete CNS Volumes",
+				Execute: o.deleteCnsVolumes,
+			},
+		}
+
+		stagedFuncs = append(stagedFuncs, deleteVolumeStagedFunctions)
 	}
 
 	deleteVirtualMachinesFuncs := []StagedFunctions{
