@@ -794,8 +794,8 @@ github.com/openshift/custom-resource-status v1.1.2 h1:C3DL44LEbvlbItfd8mT5jWrqPf
 github.com/openshift/custom-resource-status v1.1.2/go.mod h1:DB/Mf2oTeiAmVVX1gN+NEqweonAPY0TKUwADizj8+ZA=
 github.com/openshift/hive/apis v0.0.0-20220222213051-def9088fdb5a h1:E+XPJs/aVvYsrlJzo2ED38ZTR2RTNUlFMmOaFAAdMZg=
 github.com/openshift/hive/apis v0.0.0-20220222213051-def9088fdb5a/go.mod h1:E1bgquRiwfugdArdecPbpYIrAdve5kTzMaJb0+8jMXI=
-github.com/openshift/library-go v0.0.0-20240207105404-126b47137408 h1:Evg6GEvEuyj9toFX14YenXI6hGRnhLWqYx/rHO7VnQ4=
-github.com/openshift/library-go v0.0.0-20240207105404-126b47137408/go.mod h1:ePlaOqUiPplRc++6aYdMe+2FmXb2xTNS9Nz5laG2YmI=
+github.com/openshift/library-go v0.0.0-20240723172506-8bb8fe6cc56d h1:smjzDkp2p3wbZfn9W4+RivdoNqJm2ESmPemUyU237KU=
+github.com/openshift/library-go v0.0.0-20240723172506-8bb8fe6cc56d/go.mod h1:PdASVamWinll2BPxiUpXajTwZxV8A1pQbWEsCN1od7I=
 github.com/openshift/machine-api-operator v0.2.1-0.20240722145313-3a817c78946a h1:0TwU3J28sQTGy/ZMVSvi3sUolH92BwlIWcf+wCJLWKE=
 github.com/openshift/machine-api-operator v0.2.1-0.20240722145313-3a817c78946a/go.mod h1:2TUb0+EfkIj5fWhGy+oR3QiANCzHTWzkyNDEknxrQJI=
 github.com/openshift/machine-api-provider-gcp v0.0.1-0.20231014045125-6096cc86f3ba h1:q9VMvYHgKq1v+3E57HIdbR9hJPNSmHDfZpOHsXC27Nk=

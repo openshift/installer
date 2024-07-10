@@ -72,6 +72,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		&openshift.BaremetalConfig{},
 		new(rhcos.Image),
 		&openshift.AzureCloudProviderSecret{},
+		&openshift.IronicVirtualMediaTLS{},
 	}
 }
 
@@ -79,6 +80,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 //
 //nolint:gocyclo
 func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) error {
+	logrus.Debugf("OpenShift Generate() function")
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
 	kubeadminPassword := &password.KubeadminPassword{}
@@ -270,6 +272,31 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 			ProvisioningOSDownloadURL: rhcosImage.ControlPlane,
 		}
 		assetData["99_baremetal-provisioning-config.yaml"] = applyTemplateData(baremetalConfig.Files()[0].Data, bmTemplateData)
+
+		logrus.Debugf("Openshift Generate() before generating tls certificate")
+		// Create certificate to enable TLS for virtual media
+		cert, err := generateTLSCertificate(installConfig.Config.Platform.BareMetal.BootstrapProvisioningIP)
+		if err != nil {
+			return err
+		}
+
+		ironicVirtualMediaTLS := &openshift.IronicVirtualMediaTLS{}
+		dependencies.Get(ironicVirtualMediaTLS)
+		logrus.Debugf("Openshift Generate() - got deps for ironicVirtualMediaTLS")
+		type ironicVirtualMediaTLSTemplateData struct {
+			IronicVirtualMediaTLSCert string
+			IronicVirtualMediaTLSKey  string
+		}
+		ironicVMediaTLSTemplateData := ironicVirtualMediaTLSTemplateData{
+			IronicVirtualMediaTLSCert: string(cert.certificate),
+			IronicVirtualMediaTLSKey:  string(cert.privateKey),
+		}
+		for _, f := range ironicVirtualMediaTLS.Files() {
+			name := strings.TrimSuffix(filepath.Base(f.Filename), ".template")
+			logrus.Debugf("openshift Generate before calling applyTemplateData")
+			assetData[name] = applyTemplateData(f.Data, ironicVMediaTLSTemplateData)
+			logrus.Debugf("openshift Generate after calling applyTemplateData. assetData[name]: %q", assetData[name])
+		}
 	}
 
 	if platform == azuretypes.Name && installConfig.Config.Azure.IsARO() && installConfig.Config.CredentialsMode != types.ManualCredentialsMode {

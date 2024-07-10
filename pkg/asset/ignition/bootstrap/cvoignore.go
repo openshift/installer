@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
@@ -57,6 +58,7 @@ func (a *CVOIgnore) Generate(_ context.Context, dependencies asset.Parents) erro
 	for _, file := range files {
 		u := &unstructured.Unstructured{}
 		if err := yaml.Unmarshal(file.Data, u); err != nil {
+			logrus.Debug("oh noes!")
 			return errors.Wrapf(err, "could not unmarshal %q", file.Filename)
 		}
 		group := u.GetObjectKind().GroupVersionKind().Group
