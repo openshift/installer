@@ -161,6 +161,7 @@ func (a *Common) Dependencies() []asset.Asset {
 		&tls.MCSCertKey{},
 		&tls.RootCA{},
 		&tls.ServiceAccountKeyPair{},
+		&tls.IronicTLSCert{},
 		&releaseimage.Image{},
 		new(rhcos.Image),
 	}
@@ -311,6 +312,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 			*installConfig.Config.ControlPlane.Replicas,
 			ironicCreds.Username,
 			ironicCreds.Password,
+			dependencies,
 		)
 	case vspheretypes.Name:
 		platformData.VSphere = vsphere.GetTemplateData(installConfig.Config.Platform.VSphere)
@@ -634,6 +636,7 @@ func (a *Common) addParentFiles(dependencies asset.Parents) {
 		&tls.MCSCertKey{},
 		&tls.ServiceAccountKeyPair{},
 		&tls.JournalCertKey{},
+		&tls.IronicTLSCert{},
 	} {
 		dependencies.Get(asset)
 
