@@ -5,10 +5,18 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"google.golang.org/api/compute/v1"
 
+	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	"github.com/openshift/installer/pkg/types"
+)
+
+const (
+	// gcpFirewallPermission is the role/permission to create or skip the creation of
+	// firewall rules for GCP during a xpn installation.
+	gcpFirewallPermission = "compute.firewalls.create"
 )
 
 func getEtcdPorts() []*compute.FirewallAllowed {
@@ -209,6 +217,25 @@ func deleteFirewallRule(ctx context.Context, name, projectID string) error {
 
 // createFirewallRules creates the rules needed between the worker and master nodes.
 func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, network string) error {
+	if projID := in.InstallConfig.Config.GCP.NetworkProjectID; projID != "" {
+		client, err := gcpconfig.NewClient(context.Background())
+		if err != nil {
+			return fmt.Errorf("failed to create client during firewall rule creation: %w", err)
+		}
+
+		permissions, err := client.GetProjectPermissions(ctx, projID, []string{
+			gcpFirewallPermission,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to find project permissions during firewall creation: %w", err)
+		}
+
+		if !permissions.Has(gcpFirewallPermission) {
+			logrus.Warnf("failed to find permission %s, skipping firewall rule creation", gcpFirewallPermission)
+			return nil
+		}
+	}
+
 	projectID := in.InstallConfig.Config.Platform.GCP.ProjectID
 	if in.InstallConfig.Config.Platform.GCP.NetworkProjectID != "" {
 		projectID = in.InstallConfig.Config.Platform.GCP.NetworkProjectID
