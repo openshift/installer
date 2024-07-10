@@ -122,6 +122,7 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 			"unconfiguredIgnContains": unconfiguredIgnContains,
 			"unconfiguredIgnCmp":      unconfiguredIgnCmp,
 			"expandFile":              expandFile,
+			"isoContains":             isoContains,
 		},
 	})
 }
@@ -448,6 +449,27 @@ func initrdImgContains(ts *testscript.TestScript, neg bool, args []string) {
 	isoPathAbs := filepath.Join(workDir, isoPath)
 
 	err := checkFileFromInitrdImg(isoPathAbs, eFilePath)
+	ts.Check(err)
+}
+
+// [!] isoContains `isoPath` `file` check if the specified `file` is stored
+// within the ISO `isoPath` image.
+func isoContains(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 2 {
+		ts.Fatalf("usage: isoContains isoPath file")
+	}
+
+	workDir := ts.Getenv("WORK")
+	isoPath, filePath := args[0], args[1]
+	isoPathAbs := filepath.Join(workDir, isoPath)
+
+	disk, err := diskfs.Open(isoPathAbs, diskfs.WithOpenMode(diskfs.ReadOnly))
+	ts.Check(err)
+
+	fs, err := disk.GetFilesystem(0)
+	ts.Check(err)
+
+	_, err = fs.OpenFile(filePath, os.O_RDONLY)
 	ts.Check(err)
 }
 
