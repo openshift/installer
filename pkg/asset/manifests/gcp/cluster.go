@@ -39,12 +39,17 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		networkName = installConfig.Config.GCP.Network
 	}
 
+	networkProject := installConfig.Config.GCP.ProjectID
+	if installConfig.Config.GCP.NetworkProjectID != "" {
+		networkProject = installConfig.Config.GCP.NetworkProjectID
+	}
+
 	controlPlaneSubnetName := gcp.DefaultSubnetName(clusterID.InfraID, "master")
 	controlPlaneSubnetCidr := ""
 	if installConfig.Config.GCP.ControlPlaneSubnet != "" {
 		controlPlaneSubnetName = installConfig.Config.GCP.ControlPlaneSubnet
 
-		controlPlaneSubnet, err := getSubnet(context.TODO(), installConfig.Config.GCP.NetworkProjectID, installConfig.Config.GCP.Region, controlPlaneSubnetName)
+		controlPlaneSubnet, err := getSubnet(context.TODO(), networkProject, installConfig.Config.GCP.Region, controlPlaneSubnetName)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get control plane subnet: %w", err)
 		}
@@ -64,7 +69,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	if installConfig.Config.GCP.ComputeSubnet != "" {
 		computeSubnetName = installConfig.Config.GCP.ComputeSubnet
 
-		computeSubnet, err := getSubnet(context.TODO(), installConfig.Config.GCP.NetworkProjectID, installConfig.Config.GCP.Region, computeSubnetName)
+		computeSubnet, err := getSubnet(context.TODO(), networkProject, installConfig.Config.GCP.Region, computeSubnetName)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get compute subnet: %w", err)
 		}
