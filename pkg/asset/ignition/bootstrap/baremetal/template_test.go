@@ -5,6 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/baremetal"
 )
@@ -35,7 +37,12 @@ func TestTemplatingIPv4(t *testing.T) {
 		},
 	}
 
-	result := GetTemplateData(&bareMetalConfig, nil, 3, "bootstrap-ironic-user", "passw0rd")
+	openshiftDependency := []asset.Asset{
+		&manifests.Openshift{},
+	}
+	dependencies := asset.Parents{}
+	dependencies.Add(openshiftDependency...)
+	result := GetTemplateData(&bareMetalConfig, nil, 3, "bootstrap-ironic-user", "passw0rd", dependencies)
 
 	assert.Equal(t, result.ProvisioningDHCPRange, "172.22.0.10,172.22.0.100,24")
 	assert.Equal(t, result.ProvisioningCIDR, 24)
@@ -53,8 +60,13 @@ func TestTemplatingManagedIPv6(t *testing.T) {
 		BootstrapProvisioningIP: "fd2e:6f44:5dd8:b856::2",
 		ProvisioningNetwork:     baremetal.ManagedProvisioningNetwork,
 	}
+	openshiftDependency := []asset.Asset{
+		&manifests.Openshift{},
+	}
+	dependencies := asset.Parents{}
+	dependencies.Add(openshiftDependency...)
 
-	result := GetTemplateData(&bareMetalConfig, nil, 3, "bootstrap-ironic-user", "passw0rd")
+	result := GetTemplateData(&bareMetalConfig, nil, 3, "bootstrap-ironic-user", "passw0rd", dependencies)
 
 	assert.Equal(t, result.ProvisioningDHCPRange, "fd2e:6f44:5dd8:b856::1,fd2e:6f44:5dd8::ff,80")
 	assert.Equal(t, result.ProvisioningCIDR, 80)
@@ -70,8 +82,13 @@ func TestTemplatingUnmanagedIPv6(t *testing.T) {
 		BootstrapProvisioningIP: "fd2e:6f44:5dd8:b856::2",
 		ProvisioningNetwork:     baremetal.UnmanagedProvisioningNetwork,
 	}
+	openshiftDependency := []asset.Asset{
+		&manifests.Openshift{},
+	}
+	dependencies := asset.Parents{}
+	dependencies.Add(openshiftDependency...)
 
-	result := GetTemplateData(&bareMetalConfig, nil, 3, "bootstrap-ironic-user", "passw0rd")
+	result := GetTemplateData(&bareMetalConfig, nil, 3, "bootstrap-ironic-user", "passw0rd", dependencies)
 
 	assert.Equal(t, result.ProvisioningDHCPRange, "")
 	assert.Equal(t, result.ProvisioningCIDR, 64)
