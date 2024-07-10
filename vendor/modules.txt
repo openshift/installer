@@ -1137,11 +1137,12 @@ github.com/openshift/hive/apis/hive/v1/openstack
 github.com/openshift/hive/apis/hive/v1/ovirt
 github.com/openshift/hive/apis/hive/v1/vsphere
 github.com/openshift/hive/apis/scheme
-# github.com/openshift/library-go v0.0.0-20240207105404-126b47137408
-## explicit; go 1.21
+# github.com/openshift/library-go v0.0.0-20240723172506-8bb8fe6cc56d
+## explicit; go 1.22.0
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 github.com/openshift/library-go/pkg/config/clusterstatus
 github.com/openshift/library-go/pkg/config/leaderelection
+github.com/openshift/library-go/pkg/crypto
 github.com/openshift/library-go/pkg/route/routeapihelpers
 # github.com/openshift/machine-api-operator v0.2.1-0.20240722145313-3a817c78946a
 ## explicit; go 1.22.0
@@ -1865,6 +1866,9 @@ k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/netutil
 k8s.io/apimachinery/third_party/forked/golang/reflect
+# k8s.io/apiserver v0.30.1
+## explicit; go 1.22.0
+k8s.io/apiserver/pkg/authentication/user
 # k8s.io/cli-runtime v0.30.1
 ## explicit; go 1.22.0
 k8s.io/cli-runtime/pkg/genericclioptions

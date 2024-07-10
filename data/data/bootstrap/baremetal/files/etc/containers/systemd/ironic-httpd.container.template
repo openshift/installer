@@ -17,10 +17,15 @@ Network=host
 # podman (rather than systemd) redirect the logs to journald.
 PodmanArgs=--log-driver=journald
 Volume=ironic.volume:/shared:z
+{{ if eq .PlatformData.BareMetal.DisableIronicVirtualMediaTLS false }}
+Volume=ironicvmediatls.crt:/certs/vmedia/tls.crt:z
+Volume=ironicvmediatls.key:/certs/vmedia/tls.key:z
+{{ end }}
 Environment="IRONIC_RAMDISK_SSH_KEY=${IRONIC_RAMDISK_SSH_KEY}"
 Environment="PROVISIONING_INTERFACE=${PROVISIONING_INTERFACE}"
 Environment="HTTP_PORT=${HTTP_PORT}"
 Environment="USE_IRONIC_INSPECTOR=false"
+Environment="VMEDIA_TLS_PORT=6183"
 
 [Service]
 EnvironmentFile=/etc/ironic.env

@@ -72,6 +72,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		&openshift.BaremetalConfig{},
 		new(rhcos.Image),
 		&openshift.AzureCloudProviderSecret{},
+		&openshift.IronicVirtualMediaTLS{},
 	}
 }
 
@@ -270,6 +271,21 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 			ProvisioningOSDownloadURL: rhcosImage.ControlPlane,
 		}
 		assetData["99_baremetal-provisioning-config.yaml"] = applyTemplateData(baremetalConfig.Files()[0].Data, bmTemplateData)
+
+		// Create certificate to enable TLS for virtual media
+		cert, err := generateTLSCertificate(installConfig.Config.Platform.BareMetal.BootstrapProvisioningIP)
+		if err != nil {
+			return err
+		}
+		ironicVirtualMediaTLS := &openshift.IronicVirtualMediaTLS{}
+		dependencies.Get(ironicVirtualMediaTLS)
+		for _, f := range ironicVirtualMediaTLS.Files() {
+			name := strings.TrimSuffix(filepath.Base(f.Filename), ".template")
+			assetData[name] = applyTemplateData(f.Data, map[string]string{
+				"IronicVirtualMediaTLSCert": string(cert.certificate),
+				"IronicVirtualMediaTLSKey":  string(cert.privateKey),
+			})
+		}
 	}
 
 	if platform == azuretypes.Name && installConfig.Config.Azure.IsARO() && installConfig.Config.CredentialsMode != types.ManualCredentialsMode {
