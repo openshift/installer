@@ -32,6 +32,8 @@ type ClusterUninstaller struct {
 	Logger        logrus.FieldLogger
 	client        API
 	KubeClientset *kubernetes.Clientset
+
+	deleteVolumes bool
 }
 
 // New returns an VSphere destroyer from ClusterMetadata.
@@ -52,6 +54,7 @@ func newWithClient(logger logrus.FieldLogger, metadata *installertypes.ClusterMe
 		Logger:        logger,
 		client:        client,
 		KubeClientset: nil,
+		deleteVolumes: metadata.DeleteVolumes,
 	}
 
 	if metadata.DeleteVolumes {
@@ -254,7 +257,7 @@ func isTransientError(err error) bool {
 	return errorsutil.IsTooManyRequests(err)
 }
 
-func (o *ClusterUninstaller) deleteVolumes(ctx context.Context) error {
+func (o *ClusterUninstaller) deletePersistentVolumes(ctx context.Context) error {
 	if o.KubeClientset == nil {
 		return nil
 	}
@@ -352,22 +355,19 @@ type StagedFunctions struct {
 func (o *ClusterUninstaller) destroyCluster(ctx context.Context) (bool, error) {
 	var stagedFuncs [][]StagedFunctions
 
-	// todo: jcallen: this need to change as well
-	// todo: jcallen: maybe we no longer have the kube auth file
-	// todo: jcallen: and just want to delete the associated
-	// todo: jcallen: cns volumes
-	if o.KubeClientset != nil {
-		deleteVolumeStagedFunctions := []StagedFunctions{
-			{
-				Name:    "Delete Persistent Volumes",
-				Execute: o.deleteVolumes,
-			},
-			{
-				Name:    "Delete CNS Volumes",
-				Execute: o.deleteCnsVolumes,
-			},
-		}
+	if o.deleteVolumes {
+		var deleteVolumeStagedFunctions []StagedFunctions
 
+		if o.KubeClientset != nil {
+			deleteVolumeStagedFunctions = append(deleteVolumeStagedFunctions, StagedFunctions{
+				Name:    "Delete Persistent Volumes",
+				Execute: o.deletePersistentVolumes,
+			})
+		}
+		deleteVolumeStagedFunctions = append(deleteVolumeStagedFunctions, StagedFunctions{
+			Name:    "Delete CNS Volumes",
+			Execute: o.deleteCnsVolumes,
+		})
 		stagedFuncs = append(stagedFuncs, deleteVolumeStagedFunctions)
 	}
 
