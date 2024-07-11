@@ -480,3 +480,39 @@ func TestVPCPermissions(t *testing.T) {
 		})
 	})
 }
+
+func TestPrivateZonePermissions(t *testing.T) {
+	t.Run("Should include", func(t *testing.T) {
+		t.Run("create hosted zone permissions when PHZ not specified", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.AWS.HostedZone = ""
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.Contains(t, requiredPerms, PermissionCreateHostedZone)
+		})
+		t.Run("delete hosted zone permissions when PHZ not specified on standard regions", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.AWS.HostedZone = ""
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.Contains(t, requiredPerms, PermissionDeleteHostedZone)
+		})
+	})
+	t.Run("Should not include", func(t *testing.T) {
+		t.Run("create hosted zone permissions when PHZ specified", func(t *testing.T) {
+			ic := validInstallConfig()
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionCreateHostedZone)
+		})
+		t.Run("delete hosted zone permissions", func(t *testing.T) {
+			t.Run("on secret regions", func(t *testing.T) {
+				ic := validInstallConfig()
+				requiredPerms := RequiredPermissionGroups(ic)
+				assert.NotContains(t, requiredPerms, PermissionDeleteHostedZone)
+			})
+			t.Run("when PHZ specified", func(t *testing.T) {
+				ic := validInstallConfig()
+				requiredPerms := RequiredPermissionGroups(ic)
+				assert.NotContains(t, requiredPerms, PermissionDeleteHostedZone)
+			})
+		})
+	})
+}
