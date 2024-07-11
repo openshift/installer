@@ -411,3 +411,72 @@ func TestKMSKeyPermissions(t *testing.T) {
 		})
 	})
 }
+
+func TestVPCPermissions(t *testing.T) {
+	t.Run("Should include", func(t *testing.T) {
+		t.Run("create network permissions when VPC not specified", func(t *testing.T) {
+			t.Run("for standard regions", func(t *testing.T) {
+				ic := validInstallConfig()
+				ic.AWS.Subnets = nil
+				ic.AWS.HostedZone = ""
+				requiredPerms := RequiredPermissionGroups(ic)
+				assert.Contains(t, requiredPerms, PermissionCreateNetworking)
+			})
+			t.Run("for secret regions", func(t *testing.T) {
+				ic := validInstallConfig()
+				ic.AWS.Region = "us-iso-east-1"
+				ic.AWS.Subnets = nil
+				ic.AWS.HostedZone = ""
+				requiredPerms := RequiredPermissionGroups(ic)
+				assert.Contains(t, requiredPerms, PermissionCreateNetworking)
+			})
+		})
+		t.Run("delete network permissions when VPC not specified for standard region", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.AWS.Subnets = nil
+			ic.AWS.HostedZone = ""
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.Contains(t, requiredPerms, PermissionDeleteNetworking)
+		})
+		t.Run("delete shared network permissions when VPC specified for standard region", func(t *testing.T) {
+			ic := validInstallConfig()
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.Contains(t, requiredPerms, PermissionDeleteSharedNetworking)
+		})
+	})
+	t.Run("Should not include", func(t *testing.T) {
+		t.Run("create network permissions when VPC specified", func(t *testing.T) {
+			ic := validInstallConfig()
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionCreateNetworking)
+		})
+		t.Run("delete network permissions", func(t *testing.T) {
+			t.Run("when VPC specified", func(t *testing.T) {
+				ic := validInstallConfig()
+				requiredPerms := RequiredPermissionGroups(ic)
+				assert.NotContains(t, requiredPerms, PermissionDeleteNetworking)
+			})
+			t.Run("on secret regions", func(t *testing.T) {
+				ic := validInstallConfig()
+				ic.AWS.Region = "us-iso-east-1"
+				requiredPerms := RequiredPermissionGroups(ic)
+				assert.NotContains(t, requiredPerms, PermissionDeleteNetworking)
+			})
+		})
+		t.Run("delete shared network permissions", func(t *testing.T) {
+			t.Run("when VPC not specified", func(t *testing.T) {
+				ic := validInstallConfig()
+				ic.AWS.Subnets = nil
+				ic.AWS.HostedZone = ""
+				requiredPerms := RequiredPermissionGroups(ic)
+				assert.NotContains(t, requiredPerms, PermissionDeleteSharedNetworking)
+			})
+			t.Run("on secret regions", func(t *testing.T) {
+				ic := validInstallConfig()
+				ic.AWS.Region = "us-iso-east-1"
+				requiredPerms := RequiredPermissionGroups(ic)
+				assert.NotContains(t, requiredPerms, PermissionDeleteSharedNetworking)
+			})
+		})
+	})
+}
