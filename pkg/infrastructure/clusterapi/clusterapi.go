@@ -128,16 +128,6 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		logrus.Debugf("No pre-provisioning requirements for the %s provider", i.impl.Name())
 	}
 
-	// Run the CAPI system.
-	timer.StartTimer(infrastructureStage)
-	capiSystem := clusterapi.System()
-	if err := capiSystem.Run(ctx); err != nil {
-		return fileList, fmt.Errorf("failed to run cluster api system: %w", err)
-	}
-
-	// Grab the client.
-	cl := capiSystem.Client()
-
 	// If we're skipping bootstrap destroy, shutdown the local control plane.
 	// Otherwise, we will shut it down after bootstrap destroy.
 	// This has to execute as the last defer in the stack since previous defers might still need the local controlplane.
@@ -149,17 +139,27 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	}
 
 	// Make sure to always return generated manifests, even if errors happened
-	defer func(ctx context.Context, cl client.Client) {
+	defer func(ctx context.Context) {
 		var errs []error
 		// Overriding the named return with the generated list
-		fileList, errs = i.collectManifests(ctx, cl)
+		fileList, errs = i.collectManifests(ctx, clusterapi.System().Client())
 		// If Provision returned an error, add it to the list
 		if err != nil {
-			capiSystem.CleanEtcd()
+			clusterapi.System().CleanEtcd()
 			errs = append(errs, err)
 		}
 		err = utilerrors.NewAggregate(errs)
-	}(ctx, cl)
+	}(ctx)
+
+	// Run the CAPI system.
+	timer.StartTimer(infrastructureStage)
+	capiSystem := clusterapi.System()
+	if err := capiSystem.Run(ctx); err != nil {
+		return fileList, fmt.Errorf("failed to run cluster api system: %w", err)
+	}
+
+	// Grab the client.
+	cl := capiSystem.Client()
 
 	i.appliedManifests = []client.Object{}
 

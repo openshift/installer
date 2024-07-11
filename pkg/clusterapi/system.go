@@ -316,13 +316,6 @@ func (c *system) Run(ctx context.Context) error {
 	// We only show controller logs if the log level is DEBUG or above
 	c.logWriter = logrus.StandardLogger().WriterLevel(logrus.DebugLevel)
 
-	// Run the controllers.
-	for _, ct := range controllers {
-		if err := c.runController(ctx, ct); err != nil {
-			return fmt.Errorf("failed to run controller %q: %w", ct.Name, err)
-		}
-	}
-
 	// We create a wait group to wait for the controllers to stop,
 	// this waitgroup is a global, and is used by the Teardown function
 	// which is expected to be called when the program exits.
@@ -331,6 +324,7 @@ func (c *system) Run(ctx context.Context) error {
 		defer c.wg.Done()
 		// Stop the controllers when the context is cancelled.
 		<-ctx.Done()
+		logrus.Info("Shutting down local Cluster API controllers...")
 		for _, ct := range controllers {
 			if ct.state != nil {
 				if err := ct.state.Stop(); err != nil {
@@ -340,12 +334,14 @@ func (c *system) Run(ctx context.Context) error {
 				logrus.Infof("Stopped controller: %s", ct.Name)
 			}
 		}
-
-		// Stop the local control plane.
-		if err := c.lcp.Stop(); err != nil {
-			logrus.Warnf("Failed to stop local Cluster API control plane: %v", err)
-		}
 	}()
+
+	// Run the controllers.
+	for _, ct := range controllers {
+		if err := c.runController(ctx, ct); err != nil {
+			return fmt.Errorf("failed to run controller %q: %w", ct.Name, err)
+		}
+	}
 
 	return nil
 }
@@ -377,10 +373,13 @@ func (c *system) Teardown() {
 	// Proceed to shutdown.
 	c.teardownOnce.Do(func() {
 		c.cancel()
-		logrus.Info("Shutting down local Cluster API control plane...")
 		ch := make(chan struct{})
 		go func() {
 			c.wg.Wait()
+			logrus.Info("Shutting down local Cluster API control plane...")
+			if err := c.lcp.Stop(); err != nil {
+				logrus.Warnf("Failed to stop local Cluster API control plane: %v", err)
+			}
 			close(ch)
 		}()
 		select {
@@ -463,7 +462,7 @@ func (c *system) runController(ctx context.Context, ct *controller) error {
 	// If the provider is not empty, we extract it to the binaries directory.
 	if ct.Provider != nil {
 		if err := ct.Provider.Extract(c.lcp.BinDir); err != nil {
-			logrus.Fatal(err)
+			return fmt.Errorf("failed to extract provider %q: %w", ct.Name, err)
 		}
 	}
 
