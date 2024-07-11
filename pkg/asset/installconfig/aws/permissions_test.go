@@ -516,3 +516,17 @@ func TestPrivateZonePermissions(t *testing.T) {
 		})
 	})
 }
+
+func TestPublicIPv4PoolPermissions(t *testing.T) {
+	t.Run("Should include IPv4Pool permissions when IPv4 pool specified", func(t *testing.T) {
+		ic := validInstallConfig()
+		ic.AWS.PublicIpv4Pool = "custom-ipv4-pool"
+		requiredPerms := RequiredPermissionGroups(ic)
+		assert.Contains(t, requiredPerms, PermissionPublicIpv4Pool)
+	})
+	t.Run("Should not include IPv4Pool permissions when IPv4 pool not specified", func(t *testing.T) {
+		ic := validInstallConfig()
+		requiredPerms := RequiredPermissionGroups(ic)
+		assert.NotContains(t, requiredPerms, PermissionPublicIpv4Pool)
+	})
+}
