@@ -530,3 +530,32 @@ func TestPublicIPv4PoolPermissions(t *testing.T) {
 		assert.NotContains(t, requiredPerms, PermissionPublicIpv4Pool)
 	})
 }
+
+func TestBasePermissions(t *testing.T) {
+	t.Run("Should include", func(t *testing.T) {
+		t.Run("base create permissions", func(t *testing.T) {
+			t.Run("on standard regions", func(t *testing.T) {
+				ic := validInstallConfig()
+				requiredPerms := RequiredPermissionGroups(ic)
+				assert.Contains(t, requiredPerms, PermissionCreateBase)
+			})
+			t.Run("on secret regions", func(t *testing.T) {
+				ic := validInstallConfig()
+				ic.AWS.Region = "us-iso-east-1"
+				requiredPerms := RequiredPermissionGroups(ic)
+				assert.Contains(t, requiredPerms, PermissionCreateBase)
+			})
+		})
+		t.Run("base delete permissions on standard regions", func(t *testing.T) {
+			ic := validInstallConfig()
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.Contains(t, requiredPerms, PermissionDeleteBase)
+		})
+	})
+	t.Run("Should not include base delete permissions on secret regions", func(t *testing.T) {
+		ic := validInstallConfig()
+		ic.AWS.Region = "us-iso-east-1"
+		requiredPerms := RequiredPermissionGroups(ic)
+		assert.NotContains(t, requiredPerms, PermissionDeleteBase)
+	})
+}
