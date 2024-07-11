@@ -438,14 +438,12 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	}
 
 	lbClient := networkClientFactory.NewLoadBalancersClient()
-
 	lbInput := &lbInput{
 		infraID:        in.InfraID,
-		region:         in.InstallConfig.Config.Azure.Region,
+		region:         platform.Region,
 		resourceGroup:  resourceGroupName,
 		subscriptionID: session.Credentials.SubscriptionID,
 		lbClient:       lbClient,
-		pipClient:      networkClientFactory.NewPublicIPAddressesClient(),
 		tags:           p.Tags,
 	}
 
@@ -458,17 +456,25 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	var lbBap *armnetwork.BackendAddressPool
 	var extLBFQDN string
 	if in.InstallConfig.Config.Publish == types.ExternalPublishingStrategy {
-		publicIP, err := createPublicIP(ctx, lbInput)
+		publicIP, err := createPublicIP(ctx, &pipInput{
+			name:          fmt.Sprintf("%s-pip-v4", in.InfraID),
+			infraID:       in.InfraID,
+			region:        in.InstallConfig.Config.Azure.Region,
+			resourceGroup: resourceGroupName,
+			pipClient:     networkClientFactory.NewPublicIPAddressesClient(),
+			tags:          p.Tags,
+		})
 		if err != nil {
 			return fmt.Errorf("failed to create public ip: %w", err)
 		}
 		logrus.Debugf("created public ip: %s", *publicIP.ID)
 
-		loadBalancer, err := createExternalLoadBalancer(ctx, publicIP, lbInput)
+		loadBalancer, err := updateExternalLoadBalancer(ctx, publicIP, lbInput)
 		if err != nil {
-			return fmt.Errorf("failed to create load balancer: %w", err)
+			return fmt.Errorf("failed to update external load balancer: %w", err)
 		}
-		logrus.Debugf("created load balancer: %s", *loadBalancer.ID)
+
+		logrus.Debugf("updated external load balancer: %s", *loadBalancer.ID)
 		lbBap = loadBalancer.Properties.BackendAddressPools[0]
 		extLBFQDN = *publicIP.Properties.DNSSettings.Fqdn
 	}
