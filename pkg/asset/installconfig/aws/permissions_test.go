@@ -559,3 +559,17 @@ func TestBasePermissions(t *testing.T) {
 		assert.NotContains(t, requiredPerms, PermissionDeleteBase)
 	})
 }
+
+func TestDeleteIgnitionPermissions(t *testing.T) {
+	t.Run("Should include delete ignition permissions", func(t *testing.T) {
+		ic := validInstallConfig()
+		requiredPerms := RequiredPermissionGroups(ic)
+		assert.Contains(t, requiredPerms, PermissionDeleteIgnitionObjects)
+	})
+	t.Run("Should not include delete ignition permission when specified", func(t *testing.T) {
+		ic := validInstallConfig()
+		ic.AWS.BestEffortDeleteIgnition = true
+		requiredPerms := RequiredPermissionGroups(ic)
+		assert.NotContains(t, requiredPerms, PermissionDeleteIgnitionObjects)
+	})
+}
