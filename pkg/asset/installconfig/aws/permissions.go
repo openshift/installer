@@ -351,19 +351,7 @@ func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 		permissionGroups = append(permissionGroups, PermissionCreateHostedZone)
 	}
 
-	ec2RootVolume := aws.EC2RootVolume{}
-	var awsMachinePoolUsingKMS, masterMachinePoolUsingKMS bool
-	if ic.AWS.DefaultMachinePlatform != nil && ic.AWS.DefaultMachinePlatform.EC2RootVolume != ec2RootVolume {
-		awsMachinePoolUsingKMS = len(ic.AWS.DefaultMachinePlatform.EC2RootVolume.KMSKeyARN) != 0
-	}
-	if ic.ControlPlane != nil &&
-		ic.ControlPlane.Name == types.MachinePoolControlPlaneRoleName &&
-		ic.ControlPlane.Platform.AWS != nil &&
-		ic.ControlPlane.Platform.AWS.EC2RootVolume != ec2RootVolume {
-		masterMachinePoolUsingKMS = len(ic.ControlPlane.Platform.AWS.EC2RootVolume.KMSKeyARN) != 0
-	}
-	// Add KMS encryption keys, if provided.
-	if awsMachinePoolUsingKMS || masterMachinePoolUsingKMS {
+	if includesKMSEncryptionKey(ic) {
 		logrus.Debugf("Adding %s to the group of permissions", PermissionKMSEncryptionKeys)
 		permissionGroups = append(permissionGroups, PermissionKMSEncryptionKeys)
 	}
@@ -460,4 +448,20 @@ func includesCreateInstanceRole(installConfig *types.InstallConfig) bool {
 	mpool := aws.MachinePool{}
 	mpool.Set(installConfig.AWS.DefaultMachinePlatform)
 	return len(mpool.IAMRole) == 0
+}
+
+// includesKMSEncryptionKey checks if any KMS encryption keys are included in the install-config.
+func includesKMSEncryptionKey(installConfig *types.InstallConfig) bool {
+	mpool := aws.MachinePool{}
+	mpool.Set(installConfig.AWS.DefaultMachinePlatform)
+
+	if mp := installConfig.ControlPlane; mp != nil {
+		mpool.Set(mp.Platform.AWS)
+	}
+
+	for _, compute := range installConfig.Compute {
+		mpool.Set(compute.Platform.AWS)
+	}
+
+	return len(mpool.KMSKeyARN) > 0
 }
