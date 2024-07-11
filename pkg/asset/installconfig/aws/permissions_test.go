@@ -275,3 +275,139 @@ func TestIAMRolePermissions(t *testing.T) {
 		})
 	})
 }
+
+func TestIncludesKMSEncryptionKeys(t *testing.T) {
+	t.Run("Should be true when", func(t *testing.T) {
+		t.Run("KMS key specified for defaultMachinePlatform", func(t *testing.T) {
+			ic := basicInstallConfig()
+			ic.AWS.DefaultMachinePlatform = &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					KMSKeyARN: "custom-default-key",
+				},
+			}
+			assert.True(t, includesKMSEncryptionKey(&ic))
+		})
+		t.Run("KMS key specified for controlPlane", func(t *testing.T) {
+			ic := basicInstallConfig()
+			ic.ControlPlane = &types.MachinePool{
+				Platform: types.MachinePoolPlatform{
+					AWS: &aws.MachinePool{
+						EC2RootVolume: aws.EC2RootVolume{
+							KMSKeyARN: "custom-master-key",
+						},
+					},
+				},
+			}
+			assert.True(t, includesKMSEncryptionKey(&ic))
+		})
+		t.Run("KMS key specified for compute", func(t *testing.T) {
+			ic := basicInstallConfig()
+			ic.Compute = []types.MachinePool{
+				{
+					Platform: types.MachinePoolPlatform{
+						AWS: &aws.MachinePool{
+							EC2RootVolume: aws.EC2RootVolume{
+								KMSKeyARN: "custom-worker-key",
+							},
+						},
+					},
+				},
+			}
+			assert.True(t, includesKMSEncryptionKey(&ic))
+		})
+		t.Run("KMS key specified for controlPlane and compute", func(t *testing.T) {
+			ic := basicInstallConfig()
+			ic.ControlPlane = &types.MachinePool{
+				Platform: types.MachinePoolPlatform{
+					AWS: &aws.MachinePool{
+						EC2RootVolume: aws.EC2RootVolume{
+							KMSKeyARN: "custom-master-key",
+						},
+					},
+				},
+			}
+			ic.Compute = []types.MachinePool{
+				{
+					Platform: types.MachinePoolPlatform{
+						AWS: &aws.MachinePool{
+							EC2RootVolume: aws.EC2RootVolume{
+								KMSKeyARN: "custom-worker-key",
+							},
+						},
+					},
+				},
+			}
+			assert.True(t, includesKMSEncryptionKey(&ic))
+		})
+	})
+	t.Run("Should be false when", func(t *testing.T) {
+		t.Run("no machine types specified", func(t *testing.T) {
+			ic := basicInstallConfig()
+			assert.False(t, includesKMSEncryptionKey(&ic))
+		})
+		t.Run("no KMS keys specified", func(t *testing.T) {
+			ic := basicInstallConfig()
+			ic.AWS.DefaultMachinePlatform = &aws.MachinePool{}
+			ic.ControlPlane = &types.MachinePool{
+				Platform: types.MachinePoolPlatform{
+					AWS: &aws.MachinePool{},
+				},
+			}
+			ic.Compute = []types.MachinePool{
+				{
+					Platform: types.MachinePoolPlatform{
+						AWS: &aws.MachinePool{},
+					},
+				},
+			}
+			assert.False(t, includesKMSEncryptionKey(&ic))
+		})
+	})
+}
+
+func TestKMSKeyPermissions(t *testing.T) {
+	t.Run("Should include KMS key permissions", func(t *testing.T) {
+		t.Run("when KMS key specified for controlPlane", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.ControlPlane.Platform.AWS.EC2RootVolume = aws.EC2RootVolume{
+				KMSKeyARN: "custom-master-key",
+			}
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.Contains(t, requiredPerms, PermissionKMSEncryptionKeys)
+		})
+		t.Run("when KMS key specified for compute", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.Compute[0].Platform.AWS.EC2RootVolume = aws.EC2RootVolume{
+				KMSKeyARN: "custom-worker-key",
+			}
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.Contains(t, requiredPerms, PermissionKMSEncryptionKeys)
+		})
+		t.Run("when KMS key specified for defaultMachinePlatform", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.AWS.DefaultMachinePlatform = &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					KMSKeyARN: "custom-default-key",
+				},
+			}
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.Contains(t, requiredPerms, PermissionKMSEncryptionKeys)
+		})
+	})
+
+	t.Run("Should not include KMS key permissions", func(t *testing.T) {
+		t.Run("when no machine types specified", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.ControlPlane = nil
+			ic.Compute = nil
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionKMSEncryptionKeys)
+		})
+		t.Run("when no KMS keys specified", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.AWS.DefaultMachinePlatform = &aws.MachinePool{}
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionKMSEncryptionKeys)
+		})
+	})
+}
