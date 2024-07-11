@@ -161,3 +161,13 @@ aliases:
     - pawanpinjarkar
     - rwsu
     - zaneb
+  imagebased-reviewers:
+    - eranco74
+    - javipolo
+    - mresvanis
+    - tsorya
+  imagebased-approvers:
+    - eranco74
+    - patrickdillon
+    - tsorya
+    - zaneb
