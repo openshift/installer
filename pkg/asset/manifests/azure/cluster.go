@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils/cidr"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/azure"
 )
 
 // GenerateClusterAssets generates the manifests for the cluster-api.
@@ -68,6 +69,19 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 		},
 	}
+
+	// Setting ID on the Subnet disables natgw creation. See:
+	// https://github.com/kubernetes-sigs/cluster-api-provider-azure/blob/21479a9a4c640b43e0bef028487c522c55605d06/api/v1beta1/azurecluster_default.go#L160
+	// CAPZ enables NAT Gateways by default, so we are using this hack to disable
+	// nat gateways when we prefer to use load balancers for node egress.
+	nodeSubnetID := ""
+	if installConfig.Config.Platform.Azure.OutboundType != azure.NatGatewayOutboundType {
+		// Because the node subnet does not already exist, we are using an arbitrary value.
+		// We could populate this with the proper subnet ID in the case of BYO VNET, but
+		// the value currently has no practical effect.
+		nodeSubnetID = clusterID.InfraID
+	}
+
 	azureCluster := &capz.AzureCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -130,6 +144,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 						SecurityGroup: securityGroup,
 					},
 					{
+						ID: nodeSubnetID,
 						SubnetClassSpec: capz.SubnetClassSpec{
 							Name: computeSubnet,
 							Role: capz.SubnetNode,
