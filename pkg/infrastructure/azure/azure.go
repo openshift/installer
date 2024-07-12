@@ -9,7 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v3"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
@@ -25,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
+	azconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	"github.com/openshift/installer/pkg/rhcos"
@@ -45,14 +48,18 @@ type Provider struct {
 	StorageAccount       *armstorage.Account
 	StorageClientFactory *armstorage.ClientFactory
 	StorageAccountKeys   []armstorage.AccountKey
-	Tags                 map[string]*string
+	NetworkClientFactory *armnetwork.ClientFactory
 	lbBackendAddressPool *armnetwork.BackendAddressPool
+	CloudConfiguration   cloud.Configuration
+	TokenCredential      azcore.TokenCredential
+	Tags                 map[string]*string
 }
 
 var _ clusterapi.PreProvider = (*Provider)(nil)
 var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
 var _ clusterapi.PostProvider = (*Provider)(nil)
 var _ clusterapi.IgnitionProvider = (*Provider)(nil)
+var _ clusterapi.PostDestroyer = (*Provider)(nil)
 
 // Name returns the name of the provider.
 func (p *Provider) Name() string {
@@ -239,7 +246,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	cloudConfiguration := session.CloudConfig
 
 	resourceGroupName := p.ResourceGroupName
-	storageAccountName := fmt.Sprintf("cluster%s", randomString(5))
+	storageAccountName := fmt.Sprintf("%ssa", strings.ReplaceAll(in.InfraID, "-", ""))
 	containerName := "vhd"
 	blobName := fmt.Sprintf("rhcos%s.vhd", randomString(5))
 
@@ -469,7 +476,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		}
 		logrus.Debugf("created public ip: %s", *publicIP.ID)
 
-		loadBalancer, err := updateExternalLoadBalancer(ctx, publicIP, lbInput)
+		loadBalancer, err := updateOutboundLoadBalancerToAPILoadBalancer(ctx, publicIP, lbInput)
 		if err != nil {
 			return fmt.Errorf("failed to update external load balancer: %w", err)
 		}
@@ -484,8 +491,9 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	p.StorageAccountName = storageAccountName
 	p.StorageURL = storageURL
 	p.StorageAccount = storageAccount
-	p.StorageClientFactory = storageClientFactory
 	p.StorageAccountKeys = storageAccountKeys
+	p.StorageClientFactory = storageClientFactory
+	p.NetworkClientFactory = networkClientFactory
 	p.lbBackendAddressPool = lbBap
 
 	if err := createDNSEntries(ctx, in, extLBFQDN, resourceGroupName); err != nil {
@@ -516,16 +524,6 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 		if err != nil {
 			return fmt.Errorf("error creating vm client: %w", err)
 		}
-		nicClient, err := armnetwork.NewInterfacesClient(ssn.Credentials.SubscriptionID, ssn.TokenCreds,
-			&arm.ClientOptions{
-				ClientOptions: policy.ClientOptions{
-					Cloud: cloudConfiguration,
-				},
-			},
-		)
-		if err != nil {
-			return fmt.Errorf("error creating nic client: %w", err)
-		}
 
 		vmIDs, err := getControlPlaneIDs(in.Client, in.InstallConfig.Config.ControlPlane.Replicas, in.InfraID)
 		if err != nil {
@@ -536,7 +534,7 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 			infraID:       in.InfraID,
 			resourceGroup: p.ResourceGroupName,
 			vmClient:      vmClient,
-			nicClient:     nicClient,
+			nicClient:     p.NetworkClientFactory.NewInterfacesClient(),
 			ids:           vmIDs,
 			bap:           p.lbBackendAddressPool,
 		}
@@ -544,6 +542,105 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 		if err = associateVMToBackendPool(ctx, *vmInput); err != nil {
 			return fmt.Errorf("failed to associate control plane VMs with external load balancer: %w", err)
 		}
+
+		if err = addSecurityGroupRule(ctx, &securityGroupInput{
+			resourceGroupName:    p.ResourceGroupName,
+			securityGroupName:    fmt.Sprintf("%s-nsg", in.InfraID),
+			securityRuleName:     "ssh_in",
+			securityRulePort:     "22",
+			securityRulePriority: 220,
+			networkClientFactory: p.NetworkClientFactory,
+		}); err != nil {
+			return fmt.Errorf("failed to add security rule: %w", err)
+		}
+
+		loadBalancerName := in.InfraID
+		frontendIPConfigName := "public-lb-ip-v4"
+		frontendIPConfigID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/loadBalancers/%s/frontendIPConfigurations/%s",
+			subscriptionID,
+			p.ResourceGroupName,
+			loadBalancerName,
+			frontendIPConfigName,
+		)
+
+		// Create an inbound nat rule that forwards port 22 on the
+		// public load balancer to the bootstrap host. This takes 2
+		// stages to accomplish. First, the nat rule needs to be added
+		// to the frontend IP configuration on the public load
+		// balancer. Second, the nat rule needs to be addded to the
+		// bootstrap interface with the association to the rule on the
+		// public load balancer.
+		inboundNatRule, err := addInboundNatRuleToLoadBalancer(ctx, &inboundNatRuleInput{
+			resourceGroupName:    p.ResourceGroupName,
+			loadBalancerName:     loadBalancerName,
+			frontendIPConfigID:   frontendIPConfigID,
+			inboundNatRuleName:   "ssh_in",
+			inboundNatRulePort:   22,
+			networkClientFactory: p.NetworkClientFactory,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create inbound nat rule: %w", err)
+		}
+		_, err = associateInboundNatRuleToInterface(ctx, &inboundNatRuleInput{
+			resourceGroupName:    p.ResourceGroupName,
+			loadBalancerName:     loadBalancerName,
+			bootstrapNicName:     fmt.Sprintf("%s-bootstrap-nic", in.InfraID),
+			frontendIPConfigID:   frontendIPConfigID,
+			inboundNatRuleID:     *inboundNatRule.ID,
+			inboundNatRuleName:   "ssh_in",
+			inboundNatRulePort:   22,
+			networkClientFactory: p.NetworkClientFactory,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to associate inbound nat rule to interface: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// PostDestroy removes SSH access from the network security rules and removes
+// SSH port forwarding off the public load balancer when the bootstrap machine
+// is destroyed.
+func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerInput) error {
+	session, err := azconfig.GetSession(in.Metadata.Azure.CloudName, in.Metadata.Azure.ARMEndpoint)
+	if err != nil {
+		return fmt.Errorf("failed to get session: %w", err)
+	}
+
+	networkClientFactory, err := armnetwork.NewClientFactory(
+		session.Credentials.SubscriptionID,
+		session.TokenCreds,
+		&arm.ClientOptions{
+			ClientOptions: policy.ClientOptions{
+				Cloud: session.CloudConfig,
+			},
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("error creating network client factory: %w", err)
+	}
+
+	// XXX: why is in.Metadata.Azure.ResourceGroupName empty?
+	err = deleteSecurityGroupRule(ctx, &securityGroupInput{
+		resourceGroupName:    fmt.Sprintf("%s-rg", in.Metadata.InfraID),
+		securityGroupName:    fmt.Sprintf("%s-nsg", in.Metadata.InfraID),
+		securityRuleName:     "ssh_in",
+		securityRulePort:     "22",
+		networkClientFactory: networkClientFactory,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete security rule: %w", err)
+	}
+
+	err = deleteInboundNatRule(ctx, &inboundNatRuleInput{
+		resourceGroupName:    fmt.Sprintf("%s-rg", in.Metadata.InfraID),
+		loadBalancerName:     in.Metadata.InfraID,
+		inboundNatRuleName:   "ssh_in",
+		networkClientFactory: networkClientFactory,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete inbound nat rule: %w", err)
 	}
 
 	return nil
