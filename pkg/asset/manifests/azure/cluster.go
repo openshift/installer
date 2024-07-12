@@ -79,7 +79,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		// Because the node subnet does not already exist, we are using an arbitrary value.
 		// We could populate this with the proper subnet ID in the case of BYO VNET, but
 		// the value currently has no practical effect.
-		nodeSubnetID = clusterID.InfraID
+		nodeSubnetID = "UNKNOWN"
 	}
 
 	azureCluster := &capz.AzureCluster{
