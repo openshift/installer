@@ -504,9 +504,17 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		}
 		logrus.Debugf("created public ip: %s", *publicIP.ID)
 
-		loadBalancer, err := updateOutboundLoadBalancerToAPILoadBalancer(ctx, publicIP, lbInput)
-		if err != nil {
-			return fmt.Errorf("failed to update external load balancer: %w", err)
+		var loadBalancer *armnetwork.LoadBalancer
+		if platform.OutboundType == aztypes.UserDefinedRoutingOutboundType {
+			loadBalancer, err = createAPILoadBalancer(ctx, publicIP, lbInput)
+			if err != nil {
+				return fmt.Errorf("failed to create API load balancer: %w", err)
+			}
+		} else {
+			loadBalancer, err = updateOutboundLoadBalancerToAPILoadBalancer(ctx, publicIP, lbInput)
+			if err != nil {
+				return fmt.Errorf("failed to update external load balancer: %w", err)
+			}
 		}
 
 		logrus.Debugf("updated external load balancer: %s", *loadBalancer.ID)
