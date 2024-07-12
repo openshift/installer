@@ -474,12 +474,19 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 	lbClient := networkClientFactory.NewLoadBalancersClient()
 	lbInput := &lbInput{
-		infraID:        in.InfraID,
-		region:         platform.Region,
-		resourceGroup:  resourceGroupName,
-		subscriptionID: session.Credentials.SubscriptionID,
-		lbClient:       lbClient,
-		tags:           p.Tags,
+		loadBalancerName:       fmt.Sprintf("%s-internal", in.InfraID),
+		infraID:                in.InfraID,
+		region:                 platform.Region,
+		resourceGroup:          resourceGroupName,
+		subscriptionID:         session.Credentials.SubscriptionID,
+		frontendIPConfigName:   "public-lb-ip-v4",
+		backendAddressPoolName: fmt.Sprintf("%s-internal", in.InfraID),
+		idPrefix: fmt.Sprintf("subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/loadBalancers",
+			session.Credentials.SubscriptionID,
+			resourceGroupName,
+		),
+		lbClient: lbClient,
+		tags:     p.Tags,
 	}
 
 	intLoadBalancer, err := updateInternalLoadBalancer(ctx, lbInput)
@@ -503,6 +510,9 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			return fmt.Errorf("failed to create public ip: %w", err)
 		}
 		logrus.Debugf("created public ip: %s", *publicIP.ID)
+
+		lbInput.loadBalancerName = in.InfraID
+		lbInput.backendAddressPoolName = in.InfraID
 
 		var loadBalancer *armnetwork.LoadBalancer
 		if platform.OutboundType == aztypes.UserDefinedRoutingOutboundType {
