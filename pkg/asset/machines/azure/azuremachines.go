@@ -23,16 +23,29 @@ const (
 	genV2Suffix string = "-gen2"
 )
 
+// MachineInput defines the inputs needed to generate a machine asset.
+type MachineInput struct {
+	Subnet          string
+	Role            string
+	UserDataSecret  string
+	HyperVGen       string
+	UseImageGallery bool
+	Private         bool
+	UserTags        map[string]string
+	Platform        *azure.Platform
+	Pool            *types.MachinePool
+}
+
 // GenerateMachines returns manifests and runtime objects to provision the control plane (including bootstrap, if applicable) nodes using CAPI.
-func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDataSecret string, clusterID string, role string, capabilities map[string]string, useImageGallery bool, userTags map[string]string, hyperVGen string, subnet string, resourceGroup string, subscriptionID string) ([]*asset.RuntimeFile, error) {
-	if poolPlatform := pool.Platform.Name(); poolPlatform != azure.Name {
+func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *MachineInput) ([]*asset.RuntimeFile, error) {
+	if poolPlatform := in.Pool.Platform.Name(); poolPlatform != azure.Name {
 		return nil, fmt.Errorf("non-Azure machine-pool: %q", poolPlatform)
 	}
-	mpool := pool.Platform.Azure
+	mpool := in.Pool.Platform.Azure
 
 	total := int64(1)
-	if pool.Replicas != nil {
-		total = *pool.Replicas
+	if in.Pool.Replicas != nil {
+		total = *in.Pool.Replicas
 	}
 
 	if len(mpool.Zones) == 0 {
@@ -40,7 +53,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 		// It means no-zoned for the machine API
 		mpool.Zones = []string{""}
 	}
-	tags, err := CapzTagsFromUserTags(clusterID, userTags)
+	tags, err := CapzTagsFromUserTags(clusterID, in.UserTags)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create machineapi.TagSpecifications from UserTags: %w", err)
 	}
@@ -64,17 +77,17 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 				ThirdPartyImage: osImage.Plan != azure.ImageNoPurchasePlan,
 			},
 		}
-	case useImageGallery:
+	case in.UseImageGallery:
 		// image gallery names cannot have dashes
 		id := clusterID
-		if hyperVGen == "V2" {
+		if in.HyperVGen == "V2" {
 			id += genV2Suffix
 		}
 		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s/versions/latest", resourceGroup, galleryName, id)
 		image = &capz.Image{ID: &imageID}
 	default:
 		imageID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s", subscriptionID, resourceGroup, galleryName, clusterID)
-		if hyperVGen == "V2" && platform.CloudName != azure.StackCloud {
+		if in.HyperVGen == "V2" && in.Platform.CloudName != azure.StackCloud {
 			imageID += genV2Suffix
 		}
 		image = &capz.Image{ID: &imageID}
@@ -92,7 +105,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 	additionalCapabilities := &capz.AdditionalCapabilities{
 		UltraSSDEnabled: &ultrassd,
 	}
-	if pool.Platform.Azure.DiskEncryptionSet != nil {
+	if in.Pool.Platform.Azure.DiskEncryptionSet != nil {
 		osDisk.ManagedDisk.DiskEncryptionSet = &capz.DiskEncryptionSetParameters{
 			ID: mpool.OSDisk.DiskEncryptionSet.ToID(),
 		}
@@ -120,7 +133,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 		zone := mpool.Zones[int(idx)%len(mpool.Zones)]
 		azureMachine := &capz.AzureMachine{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx),
+				Name: fmt.Sprintf("%s-%s-%d", clusterID, in.Pool.Name, idx),
 				Labels: map[string]string{
 					"cluster.x-k8s.io/control-plane": "",
 					"cluster.x-k8s.io/cluster-name":  clusterID,
@@ -139,7 +152,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 				SecurityProfile:            securityProfile,
 				NetworkInterfaces: []capz.NetworkInterface{
 					{
-						SubnetName:            subnet,
+						SubnetName:            in.Subnet,
 						AcceleratedNetworking: ptr.To(mpool.VMNetworkingType == string(azure.VMnetworkingTypeAccelerated) || mpool.VMNetworkingType == string(azure.AcceleratedNetworkingEnabled)),
 					},
 				},
@@ -167,7 +180,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 			Spec: capi.MachineSpec{
 				ClusterName: clusterID,
 				Bootstrap: capi.Bootstrap{
-					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID, role)),
+					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID, in.Role)),
 				},
 				InfrastructureRef: v1.ObjectReference{
 					APIVersion: capz.GroupVersion.String(),
@@ -200,7 +213,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 			OSDisk:                     osDisk,
 			AdditionalTags:             tags,
 			DisableExtensionOperations: ptr.To(true),
-			AllocatePublicIP:           true,
+			AllocatePublicIP:           !in.Private,
 			AdditionalCapabilities:     additionalCapabilities,
 			SecurityProfile:            securityProfile,
 			Identity:                   capz.VMIdentityUserAssigned,

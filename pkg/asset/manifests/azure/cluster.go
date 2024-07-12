@@ -47,17 +47,17 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	computeSubnet := installConfig.Config.Platform.Azure.ComputeSubnetName(clusterID.InfraID)
 	networkSecurityGroup := installConfig.Config.Platform.Azure.NetworkSecurityGroupName(clusterID.InfraID)
 
-	source := "*"
-	if installConfig.Config.Publish == types.InternalPublishingStrategy {
-		source = mainCIDR.String()
-	}
-
 	controlPlaneOutboundLB := &capz.LoadBalancerSpec{
 		Name:             clusterID.InfraID,
 		FrontendIPsCount: to.Ptr(int32(1)),
 	}
 	if installConfig.Config.Platform.Azure.OutboundType == azure.UserDefinedRoutingOutboundType {
 		controlPlaneOutboundLB = nil
+	}
+
+	source := "*"
+	if installConfig.Config.Publish == types.InternalPublishingStrategy {
+		source = mainCIDR.String()
 	}
 
 	securityGroup := capz.SecurityGroup{
