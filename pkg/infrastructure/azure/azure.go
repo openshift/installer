@@ -667,26 +667,37 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 		return fmt.Errorf("error creating network client factory: %w", err)
 	}
 
-	// XXX: why is in.Metadata.Azure.ResourceGroupName empty?
-	err = deleteSecurityGroupRule(ctx, &securityGroupInput{
-		resourceGroupName:    fmt.Sprintf("%s-rg", in.Metadata.InfraID),
-		securityGroupName:    fmt.Sprintf("%s-nsg", in.Metadata.InfraID),
-		securityRuleName:     "ssh_in",
-		securityRulePort:     "22",
-		networkClientFactory: networkClientFactory,
-	})
+	// See if a load balancer named ${infraID}-internal-outbound-lb exists.
+	// If it does, this is a private cluster. If it does not, this is a
+	// public cluster and we need to delete the SSH forward rule and
+	// security group.
+	_, err = networkClientFactory.NewLoadBalancersClient().Get(
+		ctx,
+		fmt.Sprintf("%s-rg", in.Metadata.InfraID),
+		fmt.Sprintf("%s-internal-outbound-lb", in.Metadata.InfraID),
+		nil,
+	)
 	if err != nil {
-		return fmt.Errorf("failed to delete security rule: %w", err)
-	}
+		err = deleteSecurityGroupRule(ctx, &securityGroupInput{
+			resourceGroupName:    fmt.Sprintf("%s-rg", in.Metadata.InfraID),
+			securityGroupName:    fmt.Sprintf("%s-nsg", in.Metadata.InfraID),
+			securityRuleName:     "ssh_in",
+			securityRulePort:     "22",
+			networkClientFactory: networkClientFactory,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to delete security rule: %w", err)
+		}
 
-	err = deleteInboundNatRule(ctx, &inboundNatRuleInput{
-		resourceGroupName:    fmt.Sprintf("%s-rg", in.Metadata.InfraID),
-		loadBalancerName:     in.Metadata.InfraID,
-		inboundNatRuleName:   "ssh_in",
-		networkClientFactory: networkClientFactory,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to delete inbound nat rule: %w", err)
+		err = deleteInboundNatRule(ctx, &inboundNatRuleInput{
+			resourceGroupName:    fmt.Sprintf("%s-rg", in.Metadata.InfraID),
+			loadBalancerName:     in.Metadata.InfraID,
+			inboundNatRuleName:   "ssh_in",
+			networkClientFactory: networkClientFactory,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to delete inbound nat rule: %w", err)
+		}
 	}
 
 	return nil

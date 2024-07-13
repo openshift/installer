@@ -56,6 +56,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	source := "*"
 	if installConfig.Config.Publish == types.InternalPublishingStrategy {
+		controlPlaneOutboundLB.Name = fmt.Sprintf("%s-internal-outbound-lb", clusterID.InfraID)
 		source = mainCIDR.String()
 	}
 
