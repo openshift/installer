@@ -595,10 +595,11 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 			return fmt.Errorf("failed to associate control plane VMs with external load balancer: %w", err)
 		}
 
+		sshRuleName := fmt.Sprintf("%s_ssh_in", in.InfraID)
 		if err = addSecurityGroupRule(ctx, &securityGroupInput{
 			resourceGroupName:    p.ResourceGroupName,
 			securityGroupName:    fmt.Sprintf("%s-nsg", in.InfraID),
-			securityRuleName:     "ssh_in",
+			securityRuleName:     sshRuleName,
 			securityRulePort:     "22",
 			securityRulePriority: 220,
 			networkClientFactory: p.NetworkClientFactory,
@@ -626,7 +627,7 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 			resourceGroupName:    p.ResourceGroupName,
 			loadBalancerName:     loadBalancerName,
 			frontendIPConfigID:   frontendIPConfigID,
-			inboundNatRuleName:   "ssh_in",
+			inboundNatRuleName:   sshRuleName,
 			inboundNatRulePort:   22,
 			networkClientFactory: p.NetworkClientFactory,
 		})
@@ -639,7 +640,7 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 			bootstrapNicName:     fmt.Sprintf("%s-bootstrap-nic", in.InfraID),
 			frontendIPConfigID:   frontendIPConfigID,
 			inboundNatRuleID:     *inboundNatRule.ID,
-			inboundNatRuleName:   "ssh_in",
+			inboundNatRuleName:   sshRuleName,
 			inboundNatRulePort:   22,
 			networkClientFactory: p.NetworkClientFactory,
 		})
@@ -673,26 +674,41 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 		return fmt.Errorf("error creating network client factory: %w", err)
 	}
 
-	// XXX: why is in.Metadata.Azure.ResourceGroupName empty?
-	err = deleteSecurityGroupRule(ctx, &securityGroupInput{
-		resourceGroupName:    fmt.Sprintf("%s-rg", in.Metadata.InfraID),
-		securityGroupName:    fmt.Sprintf("%s-nsg", in.Metadata.InfraID),
-		securityRuleName:     "ssh_in",
-		securityRulePort:     "22",
-		networkClientFactory: networkClientFactory,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to delete security rule: %w", err)
-	}
+	resourceGroupName := fmt.Sprintf("%s-rg", in.Metadata.InfraID)
+	securityGroupName := fmt.Sprintf("%s-nsg", in.Metadata.InfraID)
+	sshRuleName := fmt.Sprintf("%s_ssh_in", in.Metadata.InfraID)
 
-	err = deleteInboundNatRule(ctx, &inboundNatRuleInput{
-		resourceGroupName:    fmt.Sprintf("%s-rg", in.Metadata.InfraID),
-		loadBalancerName:     in.Metadata.InfraID,
-		inboundNatRuleName:   "ssh_in",
-		networkClientFactory: networkClientFactory,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to delete inbound nat rule: %w", err)
+	// See if a security group rule exists with the name ${InfraID}_ssh_in.
+	// If it does, this is a private cluster. If it does not, this is a
+	// public cluster and we need to delete the SSH forward rule and
+	// security group rule.
+	_, err = networkClientFactory.NewSecurityRulesClient().Get(ctx,
+		resourceGroupName,
+		securityGroupName,
+		sshRuleName,
+		nil,
+	)
+	if err == nil {
+		err = deleteSecurityGroupRule(ctx, &securityGroupInput{
+			resourceGroupName:    resourceGroupName,
+			securityGroupName:    securityGroupName,
+			securityRuleName:     sshRuleName,
+			securityRulePort:     "22",
+			networkClientFactory: networkClientFactory,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to delete security rule: %w", err)
+		}
+
+		err = deleteInboundNatRule(ctx, &inboundNatRuleInput{
+			resourceGroupName:    resourceGroupName,
+			loadBalancerName:     in.Metadata.InfraID,
+			inboundNatRuleName:   sshRuleName,
+			networkClientFactory: networkClientFactory,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to delete inbound nat rule: %w", err)
+		}
 	}
 
 	return nil
