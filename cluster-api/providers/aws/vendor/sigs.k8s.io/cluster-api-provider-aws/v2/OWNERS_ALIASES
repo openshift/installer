@@ -22,7 +22,6 @@ aliases:
     - richardcase
     - Ankitasw
     - dlipovetsky
-    - vincepri
     - nrb
   cluster-api-aws-reviewers:
     - luthermonson
