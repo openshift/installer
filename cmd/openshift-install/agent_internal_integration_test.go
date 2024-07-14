@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/cavaliercoder/go-cpio"
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_3/types"
 	"github.com/diskfs/go-diskfs"
 	"github.com/go-openapi/errors"
 	"github.com/pkg/diff"

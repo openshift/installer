@@ -42,7 +42,7 @@ spec:
   baseOSExtensionsContainerImage: ""
   config:
     ignition:
-      version: 3.2.0
+      version: 3.3.0
     passwd:
       users:
       - name: core
@@ -69,7 +69,7 @@ spec:
   baseOSExtensionsContainerImage: ""
   config:
     ignition:
-      version: 3.2.0
+      version: 3.3.0
   extensions: null
   fips: false
   kernelArguments:
@@ -94,7 +94,7 @@ spec:
   baseOSExtensionsContainerImage: ""
   config:
     ignition:
-      version: 3.2.0
+      version: 3.3.0
   extensions: null
   fips: false
   kernelArguments:
@@ -113,7 +113,7 @@ spec:
   baseOSExtensionsContainerImage: ""
   config:
     ignition:
-      version: 3.2.0
+      version: 3.3.0
     passwd:
       users:
       - name: core

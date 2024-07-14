@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_3/types"
 	"github.com/gophercloud/gophercloud/v2"
 	gophercloud_openstack "github.com/gophercloud/gophercloud/v2/openstack"
 	"github.com/gophercloud/gophercloud/v2/openstack/identity/v3/tokens"

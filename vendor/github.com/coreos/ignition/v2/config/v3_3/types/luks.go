@@ -45,10 +45,8 @@ func (l Luks) Validate(c path.ContextPath) (r report.Report) {
 		r.AddOnError(c.Append("device"), validatePath(*l.Device))
 	}
 
-	if l.Clevis != nil {
-		if l.Clevis.Custom != nil && (len(l.Clevis.Tang) > 0 || util.IsTrue(l.Clevis.Tpm2) || (l.Clevis.Threshold != nil && *l.Clevis.Threshold != 0)) {
-			r.AddOnError(c.Append("clevis"), errors.ErrClevisCustomWithOthers)
-		}
+	if util.NotEmpty(l.Clevis.Custom.Pin) && (len(l.Clevis.Tang) > 0 || util.IsTrue(l.Clevis.Tpm2) || (l.Clevis.Threshold != nil && *l.Clevis.Threshold != 0)) {
+		r.AddOnError(c.Append("clevis"), errors.ErrClevisCustomWithOthers)
 	}
 
 	// fail if a key file is provided and is not valid

@@ -16,43 +16,34 @@ package types
 
 import (
 	"github.com/coreos/ignition/v2/config/shared/errors"
+	"github.com/coreos/ignition/v2/config/util"
 
 	"github.com/coreos/vcontext/path"
 	"github.com/coreos/vcontext/report"
 )
 
-func (r Raid) Key() string {
-	return r.Name
+func (c Clevis) IsPresent() bool {
+	return util.NotEmpty(c.Custom.Pin) ||
+		len(c.Tang) > 0 ||
+		util.IsTrue(c.Tpm2) ||
+		c.Threshold != nil && *c.Threshold != 0
 }
 
-func (r Raid) IgnoreDuplicates() map[string]struct{} {
-	return map[string]struct{}{
-		"Options": {},
+func (cu ClevisCustom) Validate(c path.ContextPath) (r report.Report) {
+	if util.NilOrEmpty(cu.Pin) && util.NilOrEmpty(cu.Config) && !util.IsTrue(cu.NeedsNetwork) {
+		return
 	}
-}
-
-func (ra Raid) Validate(c path.ContextPath) (r report.Report) {
-	r.AddOnError(c.Append("level"), ra.validateLevel())
-	if len(ra.Devices) == 0 {
-		r.AddOnError(c.Append("devices"), errors.ErrRaidDevicesRequired)
+	if util.NotEmpty(cu.Pin) {
+		switch *cu.Pin {
+		case "tpm2", "tang", "sss":
+		default:
+			r.AddOnError(c.Append("pin"), errors.ErrUnknownClevisPin)
+		}
+	} else {
+		r.AddOnError(c.Append("pin"), errors.ErrClevisPinRequired)
+	}
+	if util.NilOrEmpty(cu.Config) {
+		r.AddOnError(c.Append("config"), errors.ErrClevisConfigRequired)
 	}
 	return
-}
-
-func (r Raid) validateLevel() error {
-	switch r.Level {
-	case "linear", "raid0", "0", "stripe":
-		if r.Spares != nil && *r.Spares != 0 {
-			return errors.ErrSparesUnsupportedForLevel
-		}
-	case "raid1", "1", "mirror":
-	case "raid4", "4":
-	case "raid5", "5":
-	case "raid6", "6":
-	case "raid10", "10":
-	default:
-		return errors.ErrUnrecognizedRaidLevel
-	}
-
-	return nil
 }
