@@ -1,0 +1,31 @@
+[Unit]
+Wants=network-online.target
+After=network-online.target
+Description=SNO Image-based Installation
+
+[Service]
+Environment=SEED_IMAGE={{.SeedImage}}
+Environment=IBI_CONFIGURATION_FILE=/var/tmp/ibi-configuration.json
+Environment=PULL_SECRET_FILE=/var/tmp/pull-secret.json
+{{if .Proxy -}}
+{{if .Proxy.HTTPProxy -}}
+Environment=HTTP_PROXY="{{.Proxy.HTTPProxy}}"
+Environment=http_proxy="{{.Proxy.HTTPProxy}}"
+{{end -}}
+{{if .Proxy.HTTPSProxy -}}
+Environment=HTTPS_PROXY="{{.Proxy.HTTPSProxy}}"
+Environment=https_proxy="{{.Proxy.HTTPSProxy}}"
+{{end -}}
+{{if .Proxy.NoProxy -}}
+Environment=NO_PROXY="{{.Proxy.NoProxy}}"
+Environment=no_proxy="{{.Proxy.NoProxy}}"
+{{end -}}
+{{end -}}
+
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=/usr/bin/chcon -t install_exec_t /usr/local/bin/install-rhcos-and-restore-seed.sh
+ExecStart=/usr/local/bin/install-rhcos-and-restore-seed.sh
+
+[Install]
+WantedBy=multi-user.target
