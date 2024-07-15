@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/streaming"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
@@ -24,6 +26,11 @@ import (
 	aztypes "github.com/openshift/installer/pkg/types/azure"
 )
 
+var (
+	vaultsClient *armkeyvault.VaultsClient
+	keysClient   *armkeyvault.KeysClient
+)
+
 // CreateStorageAccountInput contains the input parameters for creating a
 // storage account.
 type CreateStorageAccountInput struct {
@@ -32,6 +39,7 @@ type CreateStorageAccountInput struct {
 	StorageAccountName string
 	Region             string
 	Tags               map[string]*string
+	CustomerManagedKey *aztypes.CustomerManagedKey
 	CloudName          aztypes.CloudEnvironment
 	TokenCredential    azcore.TokenCredential
 	CloudConfiguration cloud.Configuration
@@ -73,6 +81,33 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		return nil, fmt.Errorf("failed to get storage account factory %w", err)
 	}
 
+	logrus.Debugf("Generating Encrytption for Storage Account using Customer Managed Key")
+	encryption, err := GenerateStorageAccountEncryption(
+		ctx,
+		&CustomerManagedKeyInput{
+			SubscriptionID:     in.SubscriptionID,
+			ResourceGroupName:  in.ResourceGroupName,
+			CustomerManagedKey: in.CustomerManagedKey,
+			TokenCredential:    in.TokenCredential,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error generating encryption information for provided customer managed key: %w", err)
+	}
+
+	sku := armstorage.SKU{
+		Name: to.Ptr(armstorage.SKUNameStandardLRS),
+	}
+	if in.CustomerManagedKey != nil && in.CustomerManagedKey.KeyVault.Name != "" {
+		// When encryption is enabled, Ignition is is stored as a page blob
+		// (and not a block blob). To support this case, `Kind` can continue to be
+		// `StorageV2` and yhe `SKU` needs to be `Premium_LRS`.
+		//https://learn.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal
+		sku = armstorage.SKU{
+			Name: to.Ptr(armstorage.SKUNamePremiumLRS),
+		}
+	}
+
 	logrus.Debugf("Creating storage account")
 	accountsClient := storageClientFactory.NewAccountsClient()
 	pollerResponse, err := accountsClient.BeginCreate(
@@ -82,16 +117,15 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		armstorage.AccountCreateParameters{
 			Kind:     to.Ptr(armstorage.KindStorageV2),
 			Location: to.Ptr(in.Region),
-			SKU: &armstorage.SKU{
-				Name: to.Ptr(armstorage.SKUNameStandardLRS), // XXX Premium_LRS if disk encryption if used
-			},
+			SKU:      &sku,
 			Properties: &armstorage.AccountPropertiesCreateParameters{
-				AllowBlobPublicAccess: to.Ptr(true), // XXX true if using disk encryption
+				AllowBlobPublicAccess: to.Ptr(true),
 				AllowSharedKeyAccess:  to.Ptr(true),
 				IsLocalUserEnabled:    to.Ptr(true),
 				LargeFileSharesState:  to.Ptr(armstorage.LargeFileSharesStateEnabled),
 				PublicNetworkAccess:   to.Ptr(armstorage.PublicNetworkAccessEnabled),
 				MinimumTLSVersion:     &minimumTLSVersion,
+				Encryption:            encryption,
 			},
 			Tags: in.Tags,
 		},
@@ -383,4 +417,85 @@ func CreateBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, err
 	}
 
 	return sasURL, nil
+}
+
+// CustomerManagedKeyInput contains the input parameters for creating the
+// customer managed key and identity.
+type CustomerManagedKeyInput struct {
+	SubscriptionID     string
+	ResourceGroupName  string
+	CustomerManagedKey *aztypes.CustomerManagedKey
+	TokenCredential    azcore.TokenCredential
+}
+
+// GenerateStorageAccountEncryption generates all the Encryption information for the Storage Account
+// using the Customer Managed Key.
+func GenerateStorageAccountEncryption(ctx context.Context, in *CustomerManagedKeyInput) (*armstorage.Encryption, error) {
+	logrus.Debugf("Generating Encryption for Storage Account")
+
+	if in.CustomerManagedKey == nil {
+		logrus.Debugf("No Customer Managed Key. So, Encryption not enabled on storage account.")
+		return &armstorage.Encryption{}, nil
+	}
+
+	keyvaultClientFactory, err := armkeyvault.NewClientFactory(
+		in.SubscriptionID,
+		in.TokenCredential,
+		nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get key vault client factory %w", err)
+	}
+
+	keysClient = keyvaultClientFactory.NewKeysClient()
+
+	keysClientResponse, err := keysClient.Get(
+		ctx,
+		in.CustomerManagedKey.KeyVault.ResourceGroup,
+		in.CustomerManagedKey.KeyVault.Name,
+		in.CustomerManagedKey.KeyVault.KeyName,
+		&armkeyvault.KeysClientGetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get customer managed key %s from key vault %s: %w", in.CustomerManagedKey.KeyVault.KeyName, in.CustomerManagedKey.KeyVault.Name, err)
+	}
+
+	vaultsClient = keyvaultClientFactory.NewVaultsClient()
+
+	keyVault, err := vaultsClient.Get(
+		ctx,
+		in.CustomerManagedKey.KeyVault.ResourceGroup,
+		in.CustomerManagedKey.KeyVault.Name,
+		&armkeyvault.VaultsClientGetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get key vault %s which contains customer managed key: %w", in.CustomerManagedKey.KeyVault.Name, err)
+	}
+
+	keyType := armstorage.KeyTypeAccount
+	keySource := armstorage.KeySourceMicrosoftKeyvault
+
+	keyURIWithVersionSplit := strings.Split(*keysClientResponse.Key.Properties.KeyURIWithVersion, "/")
+	versionPosition := len(keyURIWithVersionSplit) - 1
+
+	encryption := &armstorage.Encryption{
+		Services: &armstorage.EncryptionServices{
+			Blob: &armstorage.EncryptionService{
+				Enabled: to.Ptr(true),
+				KeyType: &keyType,
+			},
+			File: &armstorage.EncryptionService{
+				Enabled: to.Ptr(true),
+				KeyType: &keyType,
+			},
+		},
+		EncryptionIdentity: &armstorage.EncryptionIdentity{
+			EncryptionUserAssignedIdentity: &in.CustomerManagedKey.UserAssignedIdentityKey,
+		},
+		KeySource: &keySource,
+		KeyVaultProperties: &armstorage.KeyVaultProperties{
+			KeyName:     keysClientResponse.Key.Name,
+			KeyVersion:  &keyURIWithVersionSplit[versionPosition],
+			KeyVaultURI: keyVault.Properties.VaultURI,
+		},
+	}
+
+	return encryption, nil
 }
