@@ -1,0 +1,12 @@
+# This is a separate unit because in the assisted-installer flow, we only want
+# `node-image-overlay.service`, not the isolating back to `multi-user.target`.
+
+[Unit]
+Description=Node Image Finish
+Requires=node-image-overlay.service
+After=node-image-overlay.service
+
+[Service]
+Type=oneshot
+# and now, back to our regularly scheduled programming...
+ExecStart=/usr/bin/systemctl --no-block isolate multi-user.target

@@ -1,0 +1,9 @@
+#!/bin/bash
+set -euo pipefail
+
+UNIT_DIR="${1:-/tmp}"
+
+if ! rpm -q openshift-clients &>/dev/null; then
+    ln -sf "/etc/systemd/system/node-image-overlay.target" \
+        "${UNIT_DIR}/default.target"
+fi
