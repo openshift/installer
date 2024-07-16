@@ -29,9 +29,9 @@ func TestClusterInfo_Generate(t *testing.T) {
 		name                string
 		workflow            workflow.AgentWorkflowType
 		nodesConfig         AddNodesConfig
-		objects             []runtime.Object
-		openshiftObjects    []runtime.Object
+		objs                func(t *testing.T) ([]runtime.Object, []runtime.Object)
 		expectedClusterInfo ClusterInfo
+		expectedError       string
 	}{
 		{
 			name:                "skip if not add-nodes workflow",
@@ -41,95 +41,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 		{
 			name:     "default",
 			workflow: workflow.AgentWorkflowTypeAddNodes,
-			openshiftObjects: []runtime.Object{
-				&configv1.ClusterVersion{
-					ObjectMeta: v1.ObjectMeta{
-						Name: "version",
-					},
-					Spec: configv1.ClusterVersionSpec{
-						ClusterID: "1b5ba46b-7e56-47b1-a326-a9eebddfb38c",
-					},
-					Status: configv1.ClusterVersionStatus{
-						History: []configv1.UpdateHistory{
-							{
-								Image:   "registry.ci.openshift.org/ocp/release@sha256:65d9b652d0d23084bc45cb66001c22e796d43f5e9e005c2bc2702f94397d596e",
-								Version: "4.15.0",
-							},
-						},
-					},
-				},
-				&configv1.Proxy{
-					ObjectMeta: v1.ObjectMeta{
-						Name: "cluster",
-					},
-					Spec: configv1.ProxySpec{
-						HTTPProxy:  "http://proxy",
-						HTTPSProxy: "https://proxy",
-						NoProxy:    "localhost",
-					},
-				},
-			},
-			objects: []runtime.Object{
-				&corev1.Secret{
-					ObjectMeta: v1.ObjectMeta{
-						Name:      "pull-secret",
-						Namespace: "openshift-config",
-					},
-					Data: map[string][]byte{
-						".dockerconfigjson": []byte("c3VwZXJzZWNyZXQK"),
-					},
-				},
-				&corev1.ConfigMap{
-					ObjectMeta: v1.ObjectMeta{
-						Name:      "user-ca-bundle",
-						Namespace: "openshift-config",
-					},
-					Data: map[string]string{
-						"ca-bundle.crt": "--- bundle ---",
-					},
-				},
-				&corev1.Node{
-					ObjectMeta: v1.ObjectMeta{
-						Labels: map[string]string{
-							"node-role.kubernetes.io/master": "",
-						},
-					},
-					Status: corev1.NodeStatus{
-						NodeInfo: corev1.NodeSystemInfo{
-							Architecture: "amd64",
-						},
-					},
-				},
-				&corev1.ConfigMap{
-					ObjectMeta: v1.ObjectMeta{
-						Name:      "cluster-config-v1",
-						Namespace: "kube-system",
-					},
-					Data: map[string]string{
-						"install-config": makeInstallConfig(t),
-					},
-				},
-				&corev1.ConfigMap{
-					ObjectMeta: v1.ObjectMeta{
-						Name:      "coreos-bootimages",
-						Namespace: "openshift-machine-config-operator",
-					},
-					Data: map[string]string{
-						"stream": makeCoreOsBootImages(t, buildStreamData()),
-					},
-				},
-				&corev1.Secret{
-					ObjectMeta: v1.ObjectMeta{
-						Name:      "worker-user-data-managed",
-						Namespace: "openshift-machine-api",
-					},
-					Data: map[string][]byte{
-						"userData": []byte(`{"ignition":{"config":{"merge":[{"source":"https://192.168.111.5:22623/config/worker","verification":{}}],
-"replace":{"verification":{}}},"proxy":{},"security":{"tls":{"certificateAuthorities":[{"source":"data:text/plain;charset=utf-8;base64,LS0tL_FakeCertificate_LS0tCg==",
-"verification":{}}]}},"timeouts":{},"version":"3.4.0"},"kernelArguments":{},"passwd":{},"storage":{},"systemd":{}}`),
-					},
-				},
-			},
+			objs:     defaultObjects(),
 			expectedClusterInfo: ClusterInfo{
 				ClusterID:    "1b5ba46b-7e56-47b1-a326-a9eebddfb38c",
 				ClusterName:  "ostest",
@@ -172,83 +84,16 @@ func TestClusterInfo_Generate(t *testing.T) {
 					CPUArchitecture: "arm64",
 				},
 			},
-			openshiftObjects: []runtime.Object{
-				&configv1.ClusterVersion{
-					ObjectMeta: v1.ObjectMeta{
-						Name: "version",
-					},
-					Spec: configv1.ClusterVersionSpec{
-						ClusterID: "1b5ba46b-7e56-47b1-a326-a9eebddfb38c",
-					},
-					Status: configv1.ClusterVersionStatus{
-						History: []configv1.UpdateHistory{
-							{
-								Image:   "registry.ci.openshift.org/ocp/release@sha256:65d9b652d0d23084bc45cb66001c22e796d43f5e9e005c2bc2702f94397d596e",
-								Version: "4.15.0",
-							},
-						},
-					},
-				},
-				&configv1.Proxy{
-					ObjectMeta: v1.ObjectMeta{
-						Name: "cluster",
-					},
-					Spec: configv1.ProxySpec{
-						HTTPProxy:  "http://proxy",
-						HTTPSProxy: "https://proxy",
-						NoProxy:    "localhost",
-					},
-				},
-			},
-			objects: []runtime.Object{
-				&corev1.Secret{
-					ObjectMeta: v1.ObjectMeta{
-						Name:      "pull-secret",
-						Namespace: "openshift-config",
-					},
-					Data: map[string][]byte{
-						".dockerconfigjson": []byte("c3VwZXJzZWNyZXQK"),
-					},
-				},
-				&corev1.ConfigMap{
-					ObjectMeta: v1.ObjectMeta{
-						Name:      "user-ca-bundle",
-						Namespace: "openshift-config",
-					},
-					Data: map[string]string{
-						"ca-bundle.crt": "--- bundle ---",
-					},
-				},
-				&corev1.Node{
-					ObjectMeta: v1.ObjectMeta{
-						Labels: map[string]string{
-							"node-role.kubernetes.io/master": "",
-						},
-					},
-					Status: corev1.NodeStatus{
-						NodeInfo: corev1.NodeSystemInfo{
-							Architecture: "amd64",
-						},
-					},
-				},
-				&corev1.ConfigMap{
-					ObjectMeta: v1.ObjectMeta{
-						Name:      "cluster-config-v1",
-						Namespace: "kube-system",
-					},
-					Data: map[string]string{
-						"install-config": makeInstallConfig(t),
-					},
-				},
-				&corev1.ConfigMap{
-					ObjectMeta: v1.ObjectMeta{
-						Name:      "coreos-bootimages",
-						Namespace: "openshift-machine-config-operator",
-					},
-					Data: map[string]string{
-						"stream": makeCoreOsBootImages(t, buildStreamData()),
-					},
-				},
+			objs: func(t *testing.T) ([]runtime.Object, []runtime.Object) {
+				objs, ocObjs := defaultObjects()(t)
+				for i, o := range objs {
+					if node, ok := o.(*corev1.Node); ok {
+						node.Status.NodeInfo.Architecture = "amd64"
+						objs[i] = node
+						break
+					}
+				}
+				return objs, ocObjs
 			},
 			expectedClusterInfo: ClusterInfo{
 				ClusterID:    "1b5ba46b-7e56-47b1-a326-a9eebddfb38c",
@@ -278,7 +123,27 @@ func TestClusterInfo_Generate(t *testing.T) {
 				OSImage:         buildStreamData(),
 				OSImageLocation: "http://my-coreosimage-url/416.94.202402130130-1",
 				FIPS:            true,
+				IgnitionEndpointWorker: &models.IgnitionEndpoint{
+					URL:           ptr.To("https://192.168.111.5:22623/config/worker"),
+					CaCertificate: ptr.To("LS0tL_FakeCertificate_LS0tCg=="),
+				},
 			},
+		},
+		{
+			name:     "not supported platform",
+			workflow: workflow.AgentWorkflowTypeAddNodes,
+			objs: func(t *testing.T) ([]runtime.Object, []runtime.Object) {
+				objs, ocObjs := defaultObjects()(t)
+				for i, o := range ocObjs {
+					if infra, ok := o.(*configv1.Infrastructure); ok {
+						infra.Spec.PlatformSpec.Type = configv1.AWSPlatformType
+						ocObjs[i] = infra
+						break
+					}
+				}
+				return objs, ocObjs
+			},
+			expectedError: "Platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"none\", \"external\"",
 		},
 	}
 	for _, tc := range cases {
@@ -289,34 +154,41 @@ func TestClusterInfo_Generate(t *testing.T) {
 			parents.Add(agentWorkflow)
 			parents.Add(addNodesConfig)
 
-			fakeClient := fake.NewSimpleClientset(tc.objects...)
-			fakeOCClient := fakeclientconfig.NewSimpleClientset(tc.openshiftObjects...)
+			var objects, openshiftObjects []runtime.Object
+			if tc.objs != nil {
+				objects, openshiftObjects = tc.objs(t)
+			}
+			fakeClient := fake.NewSimpleClientset(objects...)
+			fakeOCClient := fakeclientconfig.NewSimpleClientset(openshiftObjects...)
 
 			clusterInfo := &ClusterInfo{
 				Client:          fakeClient,
 				OpenshiftClient: fakeOCClient,
 			}
 			err := clusterInfo.Generate(context.Background(), parents)
-
-			assert.NoError(t, err)
-			assert.Equal(t, tc.expectedClusterInfo.ClusterID, clusterInfo.ClusterID)
-			assert.Equal(t, tc.expectedClusterInfo.ClusterName, clusterInfo.ClusterName)
-			assert.Equal(t, tc.expectedClusterInfo.Version, clusterInfo.Version)
-			assert.Equal(t, tc.expectedClusterInfo.ReleaseImage, clusterInfo.ReleaseImage)
-			assert.Equal(t, tc.expectedClusterInfo.APIDNSName, clusterInfo.APIDNSName)
-			assert.Equal(t, tc.expectedClusterInfo.PullSecret, clusterInfo.PullSecret)
-			assert.Equal(t, tc.expectedClusterInfo.Namespace, clusterInfo.Namespace)
-			assert.Equal(t, tc.expectedClusterInfo.UserCaBundle, clusterInfo.UserCaBundle)
-			assert.Equal(t, tc.expectedClusterInfo.Proxy, clusterInfo.Proxy)
-			assert.Equal(t, tc.expectedClusterInfo.Architecture, clusterInfo.Architecture)
-			assert.Equal(t, tc.expectedClusterInfo.ImageDigestSources, clusterInfo.ImageDigestSources)
-			assert.Equal(t, tc.expectedClusterInfo.DeprecatedImageContentSources, clusterInfo.DeprecatedImageContentSources)
-			assert.Equal(t, tc.expectedClusterInfo.PlatformType, clusterInfo.PlatformType)
-			assert.Equal(t, tc.expectedClusterInfo.SSHKey, clusterInfo.SSHKey)
-			assert.Equal(t, tc.expectedClusterInfo.OSImageLocation, clusterInfo.OSImageLocation)
-			assert.Equal(t, tc.expectedClusterInfo.OSImage, clusterInfo.OSImage)
-			assert.Equal(t, tc.expectedClusterInfo.IgnitionEndpointWorker, clusterInfo.IgnitionEndpointWorker)
-			assert.Equal(t, tc.expectedClusterInfo.FIPS, clusterInfo.FIPS)
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedClusterInfo.ClusterID, clusterInfo.ClusterID)
+				assert.Equal(t, tc.expectedClusterInfo.ClusterName, clusterInfo.ClusterName)
+				assert.Equal(t, tc.expectedClusterInfo.Version, clusterInfo.Version)
+				assert.Equal(t, tc.expectedClusterInfo.ReleaseImage, clusterInfo.ReleaseImage)
+				assert.Equal(t, tc.expectedClusterInfo.APIDNSName, clusterInfo.APIDNSName)
+				assert.Equal(t, tc.expectedClusterInfo.PullSecret, clusterInfo.PullSecret)
+				assert.Equal(t, tc.expectedClusterInfo.Namespace, clusterInfo.Namespace)
+				assert.Equal(t, tc.expectedClusterInfo.UserCaBundle, clusterInfo.UserCaBundle)
+				assert.Equal(t, tc.expectedClusterInfo.Proxy, clusterInfo.Proxy)
+				assert.Equal(t, tc.expectedClusterInfo.Architecture, clusterInfo.Architecture)
+				assert.Equal(t, tc.expectedClusterInfo.ImageDigestSources, clusterInfo.ImageDigestSources)
+				assert.Equal(t, tc.expectedClusterInfo.DeprecatedImageContentSources, clusterInfo.DeprecatedImageContentSources)
+				assert.Equal(t, tc.expectedClusterInfo.PlatformType, clusterInfo.PlatformType)
+				assert.Equal(t, tc.expectedClusterInfo.SSHKey, clusterInfo.SSHKey)
+				assert.Equal(t, tc.expectedClusterInfo.OSImageLocation, clusterInfo.OSImageLocation)
+				assert.Equal(t, tc.expectedClusterInfo.OSImage, clusterInfo.OSImage)
+				assert.Equal(t, tc.expectedClusterInfo.IgnitionEndpointWorker, clusterInfo.IgnitionEndpointWorker)
+				assert.Equal(t, tc.expectedClusterInfo.FIPS, clusterInfo.FIPS)
+			} else {
+				assert.Regexp(t, tc.expectedError, err.Error())
+			}
 		})
 	}
 }
@@ -393,4 +265,111 @@ func makeInstallConfig(t *testing.T) string {
 	}
 
 	return string(data)
+}
+
+func defaultObjects() func(t *testing.T) ([]runtime.Object, []runtime.Object) {
+	return func(t *testing.T) ([]runtime.Object, []runtime.Object) {
+		objects := []runtime.Object{
+			&corev1.Secret{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "pull-secret",
+					Namespace: "openshift-config",
+				},
+				Data: map[string][]byte{
+					".dockerconfigjson": []byte("c3VwZXJzZWNyZXQK"),
+				},
+			},
+			&corev1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "user-ca-bundle",
+					Namespace: "openshift-config",
+				},
+				Data: map[string]string{
+					"ca-bundle.crt": "--- bundle ---",
+				},
+			},
+			&corev1.Node{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{
+						"node-role.kubernetes.io/master": "",
+					},
+				},
+				Status: corev1.NodeStatus{
+					NodeInfo: corev1.NodeSystemInfo{
+						Architecture: "amd64",
+					},
+				},
+			},
+			&corev1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "cluster-config-v1",
+					Namespace: "kube-system",
+				},
+				Data: map[string]string{
+					"install-config": makeInstallConfig(t),
+				},
+			},
+			&corev1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "coreos-bootimages",
+					Namespace: "openshift-machine-config-operator",
+				},
+				Data: map[string]string{
+					"stream": makeCoreOsBootImages(t, buildStreamData()),
+				},
+			},
+			&corev1.Secret{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "worker-user-data-managed",
+					Namespace: "openshift-machine-api",
+				},
+				Data: map[string][]byte{
+					"userData": []byte(`{"ignition":{"config":{"merge":[{"source":"https://192.168.111.5:22623/config/worker","verification":{}}],
+"replace":{"verification":{}}},"proxy":{},"security":{"tls":{"certificateAuthorities":[{"source":"data:text/plain;charset=utf-8;base64,LS0tL_FakeCertificate_LS0tCg==",
+"verification":{}}]}},"timeouts":{},"version":"3.4.0"},"kernelArguments":{},"passwd":{},"storage":{},"systemd":{}}`),
+				},
+			},
+		}
+
+		openshiftObjects := []runtime.Object{
+			&configv1.ClusterVersion{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "version",
+				},
+				Spec: configv1.ClusterVersionSpec{
+					ClusterID: "1b5ba46b-7e56-47b1-a326-a9eebddfb38c",
+				},
+				Status: configv1.ClusterVersionStatus{
+					History: []configv1.UpdateHistory{
+						{
+							Image:   "registry.ci.openshift.org/ocp/release@sha256:65d9b652d0d23084bc45cb66001c22e796d43f5e9e005c2bc2702f94397d596e",
+							Version: "4.15.0",
+						},
+					},
+				},
+			},
+			&configv1.Proxy{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: configv1.ProxySpec{
+					HTTPProxy:  "http://proxy",
+					HTTPSProxy: "https://proxy",
+					NoProxy:    "localhost",
+				},
+			},
+			&configv1.Infrastructure{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: configv1.InfrastructureSpec{
+					PlatformSpec: configv1.PlatformSpec{
+						Type: configv1.BareMetalPlatformType,
+					},
+				},
+			},
+		}
+
+		return objects, openshiftObjects
+	}
 }
