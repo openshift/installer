@@ -1,0 +1,10 @@
+[Unit]
+Description=Node Image Pivot
+Requires=node-image-pull.service
+After=node-image-pull.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/node-image-pivot.sh
+# and now, back to our regularly scheduled programming...
+ExecStart=/usr/bin/systemctl --no-block isolate multi-user.target

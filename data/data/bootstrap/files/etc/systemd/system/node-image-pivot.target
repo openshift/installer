@@ -1,0 +1,5 @@
+[Unit]
+Description=Node Image Pivot Target
+Requires=basic.target
+
+Requires=node-image-pivot.service

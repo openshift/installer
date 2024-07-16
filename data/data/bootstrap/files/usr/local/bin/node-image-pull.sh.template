@@ -1,0 +1,66 @@
+#!/bin/bash
+set -euo pipefail
+
+# shellcheck source=release-image.sh.template
+. /usr/local/bin/release-image.sh
+
+# yuck... this is a good argument for renaming the node image to just `node` in both OCP and OKD
+coreos_img=rhel-coreos
+{{ if .IsOKD }}
+coreos_img=stream-coreos
+{{ end }}
+# XXX: Unset NOTIFY_SOCKET for podman to workaround an outstanding bug in
+# RHEL. When it sees the socket, it wants to keep extending the service start
+# timeout. It writes to stderr, but we use `--quiet` which leaves it null,
+# so it hits SIGSEGV. To work around not having timeout extensions; we use
+# TimeoutStartSec=infinity.
+# This is fixed upstream by https://github.com/containers/common/pull/1758.
+# Should request backport...
+COREOS_IMAGE=$(unset NOTIFY_SOCKET; image_for ${coreos_img})
+
+# try to do this in the system repo so we get hardlinks and the checkout is
+# read-only, but fallback to using /var if we're in the live environment since
+# that's truly read-only
+ostree_repo=/ostree/repo
+hardlink='-H'
+if grep -q coreos.liveiso= /proc/cmdline; then
+    ostree_repo=/var/ostree-container/repo
+    mkdir -p "${ostree_repo}"
+    ostree init --mode=bare --repo="${ostree_repo}"
+    # use the system repo as parent to still get layer deduping
+    ostree config --repo="${ostree_repo}" set core.parent /ostree/repo
+    # but we won't be able to force hardlinks cross-device
+    hardlink=''
+else
+    # (remember, we're MountFlags=slave)
+    mount -o rw,remount /sysroot
+fi
+
+# XXX: not sure why this is necessary given:
+# https://github.com/openshift/installer/blob/a3f5b449/pkg/asset/ignition/bootstrap/common.go#L411-L414
+chmod 0644 /etc/containers/registries.conf
+# https://docs.fedoraproject.org/en-US/bootc/container-pull-secrets/
+cp /root/.docker/config.json /etc/ostree/auth.json
+
+# XXX: this unit runs as unconfined_service_t and SELinux currently forbids the
+# transition to install_exec_t of ostree-container/rpm-ostree, which means we
+# can choke on labels unknown to the currently loaded policy
+setenforce 0
+
+# Use ostree stack to pull the container here. This gives us efficient
+# downloading with layers we already have, and also handles SELinux.
+ostree container unencapsulate --repo "${ostree_repo}" --write-ref coreos/node-image \
+  ostree-unverified-image:docker://"${COREOS_IMAGE}"
+
+# immediately go back to enforcing
+setenforce 1
+
+# get all state files in /etc; this is a cheap way to get "3-way /etc merge" semantics
+etc_keep=$(ostree admin config-diff | cut -f5 -d' ' | sed -e 's,^,/usr/etc/,')
+
+# check out the commit
+checkout="${ostree_repo}/tmp/node-image"
+ostree checkout --repo "${ostree_repo}" ${hardlink} coreos/node-image "${checkout}" --skip-list=<(cat <<< "$etc_keep")
+
+# see comment in unit file
+systemd-notify --ready

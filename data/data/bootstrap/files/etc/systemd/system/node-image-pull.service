@@ -1,0 +1,21 @@
+[Unit]
+Description=Node Image Pull
+Requires=network.target NetworkManager.service
+After=network.target
+
+# for easier debugging
+Requires=sshd.service getty.target systemd-user-sessions.service
+After=sshd.service getty.target systemd-user-sessions.service
+
+[Service]
+# we use Type=notify so that systemd keeps retrying until we succeed. With
+# Type=oneshot, it also keeps retrying, but will never start follow-up services
+# that depend on us if we fail once.
+Type=notify
+NotifyAccess=all
+ExecStart=/usr/local/bin/node-image-pull.sh
+# see related XXX in node-image-pull.sh
+TimeoutStartSec=infinity
+MountFlags=slave
+Restart=on-failure
+RestartSec=5s
