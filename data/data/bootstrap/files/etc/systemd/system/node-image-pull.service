@@ -1,0 +1,14 @@
+[Unit]
+Description=Node Image Pull
+Requires=network.target NetworkManager.service
+After=network.target
+
+[Service]
+Type=oneshot
+# we need to call ostree container (i.e. rpm-ostree), which has install_exec_t,
+# but by default, we'll run as unconfined_service_t, which is not allowed that
+# transition. Relabel the script itself.
+ExecStartPre=chcon --reference=/usr/bin/ostree /usr/local/bin/node-image-pull.sh
+ExecStart=/usr/local/bin/node-image-pull.sh
+MountFlags=slave
+RemainAfterExit=yes

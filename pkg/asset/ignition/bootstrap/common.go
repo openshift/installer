@@ -438,7 +438,7 @@ func AddStorageFiles(config *igntypes.Config, base string, uri string, templateD
 
 	var mode int
 	appendToFile := false
-	if parentDir == "bin" || parentDir == "dispatcher.d" {
+	if parentDir == "bin" || parentDir == "dispatcher.d" || parentDir == "system-generators" {
 		mode = 0555
 	} else if filename == "motd" || filename == "containers.conf" {
 		mode = 0644
