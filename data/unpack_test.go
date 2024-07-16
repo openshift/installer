@@ -16,7 +16,7 @@ func TestUnpack(t *testing.T) {
 	}
 
 	expected := "# Bootstrap Module"
-	content, err := os.ReadFile(filepath.Join(path, "baremetal", "bootstrap", "README.md"))
+	content, err := os.ReadFile(filepath.Join(path, "libvirt", "bootstrap", "README.md"))
 	if err != nil {
 		t.Fatal(err)
 	}
