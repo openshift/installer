@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils/cidr"
+	"github.com/openshift/installer/pkg/types"
 )
 
 // GenerateClusterAssets generates the manifests for the cluster-api.
@@ -41,8 +42,13 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	resourceGroup := installConfig.Config.Platform.Azure.ClusterResourceGroupName(clusterID.InfraID)
 	controlPlaneSubnet := installConfig.Config.Platform.Azure.ControlPlaneSubnetName(clusterID.InfraID)
-	networkSecurityGroup := installConfig.Config.Platform.Azure.NetworkSecurityGroupName(clusterID.InfraID)
 	computeSubnet := installConfig.Config.Platform.Azure.ComputeSubnetName(clusterID.InfraID)
+	networkSecurityGroup := installConfig.Config.Platform.Azure.NetworkSecurityGroupName(clusterID.InfraID)
+
+	source := "*"
+	if installConfig.Config.Publish == types.InternalPublishingStrategy {
+		source = mainCIDR.String()
+	}
 
 	securityGroup := capz.SecurityGroup{
 		Name: networkSecurityGroup,
@@ -55,14 +61,13 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					Priority:         101,
 					SourcePorts:      ptr.To("*"),
 					DestinationPorts: ptr.To("6443"),
-					Source:           ptr.To("*"),
+					Source:           ptr.To(source),
 					Destination:      ptr.To("*"),
 					Action:           capz.SecurityRuleActionAllow,
 				},
 			},
 		},
 	}
-
 	azureCluster := &capz.AzureCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -86,6 +91,13 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					PrivateDNSZoneName: installConfig.Config.ClusterDomain(),
 				},
 				Vnet: capz.VnetSpec{
+					ResourceGroup: installConfig.Config.Azure.NetworkResourceGroupName,
+					Name:          installConfig.Config.Azure.VirtualNetwork,
+					// The ID is set to virtual network here for existing vnets here. This is to force CAPZ to consider this resource as
+					// "not managed" which would prevent the creation of an additional nsg and route table in the network resource group.
+					// The ID field is not used for any other purpose in CAPZ except to set the "managed" status.
+					// See https://github.com/kubernetes-sigs/cluster-api-provider-azure/blob/main/azure/scope/cluster.go#L585
+					// https://github.com/kubernetes-sigs/cluster-api-provider-azure/commit/0f321e4089a3f4dc37f8420bf2ef6762c398c400
 					ID: installConfig.Config.Azure.VirtualNetwork,
 					VnetClassSpec: capz.VnetClassSpec{
 						CIDRBlocks: []string{
