@@ -444,7 +444,8 @@ func ValidateEnabledServices(ctx context.Context, client API, project string) er
 		"servicemanagement.googleapis.com",
 		"deploymentmanager.googleapis.com",
 		"storage-api.googleapis.com",
-		"storage-component.googleapis.com")
+		"storage-component.googleapis.com",
+		"file.googleapis.com")
 	projectServices, err := client.GetEnabledServices(ctx, project)
 	if err != nil {
 		if IsForbidden(err) {
