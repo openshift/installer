@@ -1,0 +1,14 @@
+! exec openshift-install image-based create image --dir $WORK
+
+stderr 'Required value: you must specify a seedImage'
+
+! exists $WORK/rhcos-ibi.iso
+
+-- image-based-installation-config.yaml --
+apiVersion: v1beta1
+kind: ImageBasedInstallationConfig
+metadata:
+  name: example-image-based-installation-config
+seedVersion: 4.16.0
+installationDisk: /dev/vda
+pullSecret: '{"auths": {"quay.io": {"auth": "c3VwZXItc2VjcmV0Cg=="}}}'
