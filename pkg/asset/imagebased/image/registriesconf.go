@@ -35,6 +35,10 @@ func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents)
 	ibiConfig := &ImageBasedInstallationConfig{}
 	dependencies.Get(ibiConfig)
 
+	if ibiConfig.Config == nil {
+		return nil
+	}
+
 	imageDigestSources := ibiConfig.Config.ImageDigestSources
 
 	if len(imageDigestSources) == 0 {
