@@ -78,9 +78,6 @@ func (a *OptionalInstallConfig) validateInstallConfig(ctx context.Context, insta
 	if err := a.validateSupportedPlatforms(installConfig); err != nil {
 		allErrs = append(allErrs, err...)
 	}
-	if err := a.validatePlatformsByName(installConfig); err != nil {
-		allErrs = append(allErrs, err...)
-	}
 
 	if err := a.validateSupportedArchs(installConfig); err != nil {
 		allErrs = append(allErrs, err...)
@@ -114,6 +111,7 @@ func (a *OptionalInstallConfig) validateSupportedPlatforms(installConfig *types.
 	return append(allErrs, a.validatePlatformsByName(installConfig)...)
 }
 
+// ValidateSupportedPlatforms verifies if the specified platform/arch is supported or not.
 func ValidateSupportedPlatforms(platform types.Platform, controlPlaneArch string) field.ErrorList {
 	var allErrs field.ErrorList
 

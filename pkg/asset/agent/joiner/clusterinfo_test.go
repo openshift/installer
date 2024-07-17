@@ -85,6 +85,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 				},
 			},
 			objs: func(t *testing.T) ([]runtime.Object, []runtime.Object) {
+				t.Helper()
 				objs, ocObjs := defaultObjects()(t)
 				for i, o := range objs {
 					if node, ok := o.(*corev1.Node); ok {
@@ -133,6 +134,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 			name:     "not supported platform",
 			workflow: workflow.AgentWorkflowTypeAddNodes,
 			objs: func(t *testing.T) ([]runtime.Object, []runtime.Object) {
+				t.Helper()
 				objs, ocObjs := defaultObjects()(t)
 				for i, o := range ocObjs {
 					if infra, ok := o.(*configv1.Infrastructure); ok {
@@ -269,6 +271,7 @@ func makeInstallConfig(t *testing.T) string {
 
 func defaultObjects() func(t *testing.T) ([]runtime.Object, []runtime.Object) {
 	return func(t *testing.T) ([]runtime.Object, []runtime.Object) {
+		t.Helper()
 		objects := []runtime.Object{
 			&corev1.Secret{
 				ObjectMeta: v1.ObjectMeta{

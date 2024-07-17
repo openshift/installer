@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
@@ -49,6 +50,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 				&joiner.ClusterInfo{
 					Namespace:   "cluster0",
 					ClusterName: "ostest",
+					Nodes:       &v1.NodeList{},
 				},
 				getAgentHostsWithSomeHostsWithoutNetworkConfig(),
 				&agentconfig.OptionalInstallConfig{},
@@ -79,6 +81,66 @@ func TestNMStateConfig_Generate(t *testing.T) {
 				},
 			},
 			expectedError: "",
+		},
+		{
+			name: "add-nodes workflow - invalid ip",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.ClusterInfo{
+					Namespace:   "cluster0",
+					ClusterName: "ostest",
+					Nodes: &v1.NodeList{
+						Items: []v1.Node{
+							{
+								ObjectMeta: metav1.ObjectMeta{
+									Name: "master-0",
+								},
+								Status: v1.NodeStatus{
+									Addresses: []v1.NodeAddress{
+										{
+											Address: "192.168.122.21", // configured by getValidAgentHostsConfig()
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				getValidAgentHostsConfig(),
+				&agentconfig.OptionalInstallConfig{},
+			},
+			requiresNmstatectl: false,
+			expectedError:      "address conflict found. The configured address 192.168.122.21 is already used by the cluster node master-0",
+		},
+		{
+			name: "add-nodes workflow - invalid hostname",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.ClusterInfo{
+					Namespace:   "cluster0",
+					ClusterName: "ostest",
+					Nodes: &v1.NodeList{
+						Items: []v1.Node{
+							{
+								ObjectMeta: metav1.ObjectMeta{
+									Name: "control-0.example.org",
+								},
+								Status: v1.NodeStatus{
+									Addresses: []v1.NodeAddress{
+										{
+											Address: "control-0.example.org", // configured by getValidAgentHostsConfig()
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				getValidAgentHostsConfig(),
+				&agentconfig.OptionalInstallConfig{},
+			},
+			requiresNmstatectl: false,
+			expectedError:      "hostname conflict found. The configured hostname control-0.example.org is already used in the cluster",
 		},
 		{
 			name: "agentHosts does not contain networkConfig",

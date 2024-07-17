@@ -10,6 +10,7 @@ import (
 	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/coreos/stream-metadata-go/stream"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -65,6 +66,7 @@ type ClusterInfo struct {
 	OSImageLocation               string
 	IgnitionEndpointWorker        *models.IgnitionEndpoint
 	FIPS                          bool
+	Nodes                         *corev1.NodeList
 }
 
 var _ asset.WritableAsset = (*ClusterInfo)(nil)
@@ -219,20 +221,26 @@ func (ci *ClusterInfo) retrieveUserTrustBundle() error {
 }
 
 func (ci *ClusterInfo) retrieveArchitecture(addNodesConfig *AddNodesConfig) error {
+	nodes, err := ci.Client.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+	ci.Nodes = nodes
+
 	if addNodesConfig.Config.CPUArchitecture != "" {
 		logrus.Infof("CPU architecture set to: %v", addNodesConfig.Config.CPUArchitecture)
 		ci.Architecture = addNodesConfig.Config.CPUArchitecture
-	} else {
-		nodes, err := ci.Client.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{
-			LabelSelector: "node-role.kubernetes.io/master",
-		})
-		if err != nil {
-			return err
-		}
-		ci.Architecture = nodes.Items[0].Status.NodeInfo.Architecture
+		return nil
 	}
 
-	return nil
+	for _, n := range ci.Nodes.Items {
+		if _, found := n.GetLabels()["node-role.kubernetes.io/master"]; found {
+			ci.Architecture = n.Status.NodeInfo.Architecture
+			return nil
+		}
+	}
+
+	return fmt.Errorf("unable to determine target cluster architecture")
 }
 
 func (ci *ClusterInfo) retrieveInstallConfigData() error {
