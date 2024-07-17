@@ -3,7 +3,6 @@ package image
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/coreos/ignition/v2/config/merge"
@@ -72,7 +71,7 @@ func (i *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 
 	ibiConfig := configAsset.Config
 	if ibiConfig == nil {
-		return errors.New("image-based-installation-config.yaml is required")
+		return nil
 	}
 
 	config := &igntypes.Config{
