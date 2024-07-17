@@ -81,23 +81,25 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		return nil, fmt.Errorf("failed to get storage account factory %w", err)
 	}
 
-	logrus.Debugf("Generating Encrytption for Storage Account using Customer Managed Key")
-	encryption, err := GenerateStorageAccountEncryption(
-		ctx,
-		&CustomerManagedKeyInput{
-			SubscriptionID:     in.SubscriptionID,
-			ResourceGroupName:  in.ResourceGroupName,
-			CustomerManagedKey: in.CustomerManagedKey,
-			TokenCredential:    in.TokenCredential,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error generating encryption information for provided customer managed key: %w", err)
-	}
-
 	sku := armstorage.SKU{
 		Name: to.Ptr(armstorage.SKUNameStandardLRS),
 	}
+	accountCreateParameters := armstorage.AccountCreateParameters{
+		Identity: nil,
+		Kind:     to.Ptr(armstorage.KindStorageV2),
+		Location: to.Ptr(in.Region),
+		SKU:      &sku,
+		Properties: &armstorage.AccountPropertiesCreateParameters{
+			AllowBlobPublicAccess: to.Ptr(true),
+			AllowSharedKeyAccess:  to.Ptr(true),
+			IsLocalUserEnabled:    to.Ptr(true),
+			LargeFileSharesState:  to.Ptr(armstorage.LargeFileSharesStateEnabled),
+			PublicNetworkAccess:   to.Ptr(armstorage.PublicNetworkAccessEnabled),
+			MinimumTLSVersion:     &minimumTLSVersion,
+		},
+		Tags: in.Tags,
+	}
+
 	if in.CustomerManagedKey != nil && in.CustomerManagedKey.KeyVault.Name != "" {
 		// When encryption is enabled, Ignition is is stored as a page blob
 		// (and not a block blob). To support this case, `Kind` can continue to be
@@ -106,6 +108,32 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		sku = armstorage.SKU{
 			Name: to.Ptr(armstorage.SKUNamePremiumLRS),
 		}
+		identity := armstorage.Identity{
+			Type: to.Ptr(armstorage.IdentityTypeUserAssigned),
+			UserAssignedIdentities: map[string]*armstorage.UserAssignedIdentity{
+				fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.ManagedIdentity/userAssignedIdentities/%s",
+					in.SubscriptionID,
+					in.CustomerManagedKey.KeyVault.ResourceGroup,
+					in.CustomerManagedKey.UserAssignedIdentityKey,
+				): {},
+			},
+		}
+		logrus.Debugf("Generating Encrytption for Storage Account using Customer Managed Key")
+		encryption, err := GenerateStorageAccountEncryption(
+			ctx,
+			&CustomerManagedKeyInput{
+				SubscriptionID:     in.SubscriptionID,
+				ResourceGroupName:  in.ResourceGroupName,
+				CustomerManagedKey: in.CustomerManagedKey,
+				TokenCredential:    in.TokenCredential,
+			},
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error generating encryption information for provided customer managed key: %w", err)
+		}
+		accountCreateParameters.Identity = &identity
+		accountCreateParameters.SKU = &sku
+		accountCreateParameters.Properties.Encryption = encryption
 	}
 
 	logrus.Debugf("Creating storage account")
@@ -114,21 +142,7 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		ctx,
 		in.ResourceGroupName,
 		in.StorageAccountName,
-		armstorage.AccountCreateParameters{
-			Kind:     to.Ptr(armstorage.KindStorageV2),
-			Location: to.Ptr(in.Region),
-			SKU:      &sku,
-			Properties: &armstorage.AccountPropertiesCreateParameters{
-				AllowBlobPublicAccess: to.Ptr(true),
-				AllowSharedKeyAccess:  to.Ptr(true),
-				IsLocalUserEnabled:    to.Ptr(true),
-				LargeFileSharesState:  to.Ptr(armstorage.LargeFileSharesStateEnabled),
-				PublicNetworkAccess:   to.Ptr(armstorage.PublicNetworkAccessEnabled),
-				MinimumTLSVersion:     &minimumTLSVersion,
-				Encryption:            encryption,
-			},
-			Tags: in.Tags,
-		},
+		accountCreateParameters,
 		nil,
 	)
 	if err != nil {
@@ -434,7 +448,7 @@ func GenerateStorageAccountEncryption(ctx context.Context, in *CustomerManagedKe
 	logrus.Debugf("Generating Encryption for Storage Account")
 
 	if in.CustomerManagedKey == nil {
-		logrus.Debugf("No Customer Managed Key. So, Encryption not enabled on storage account.")
+		logrus.Debugf("No Customer Managed Key provided. So, Encryption not enabled on storage account.")
 		return &armstorage.Encryption{}, nil
 	}
 
@@ -487,7 +501,11 @@ func GenerateStorageAccountEncryption(ctx context.Context, in *CustomerManagedKe
 			},
 		},
 		EncryptionIdentity: &armstorage.EncryptionIdentity{
-			EncryptionUserAssignedIdentity: &in.CustomerManagedKey.UserAssignedIdentityKey,
+			EncryptionUserAssignedIdentity: to.Ptr(fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.ManagedIdentity/userAssignedIdentities/%s",
+				in.SubscriptionID,
+				in.CustomerManagedKey.KeyVault.ResourceGroup,
+				in.CustomerManagedKey.UserAssignedIdentityKey,
+			)),
 		},
 		KeySource: &keySource,
 		KeyVaultProperties: &armstorage.KeyVaultProperties{
