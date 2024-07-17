@@ -15,7 +15,10 @@ import (
 	"github.com/sirupsen/logrus"
 	certificatesv1 "k8s.io/api/certificates/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
+)
+
+var (
+	timeout time.Duration = 1 * time.Minute
 )
 
 const (
@@ -73,13 +76,14 @@ func (mon *addNodeMonitor) logStatus(status string) {
 // added to a cluster. ipAddresses is an array of IP addresses to be
 // monitored. clusters is an array of their corresponding initialized Cluster
 // struct used to interact with the assisted-service and k8s APIs.
-func MonitorAddNodes(clusters []*Cluster, ipAddresses []string) {
+func MonitorAddNodes(ctx context.Context, clusters []*Cluster, ipAddresses []string) {
+	waitContext, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
 	var wg sync.WaitGroup
 
 	for i, ipAddress := range ipAddresses {
 		wg.Add(1)
-
-		go MonitorSingleNode(clusters[i], ipAddress, &wg)
+		go MonitorSingleNode(waitContext, clusters[i], ipAddress, &wg)
 	}
 
 	wg.Wait()
@@ -87,11 +91,8 @@ func MonitorAddNodes(clusters []*Cluster, ipAddresses []string) {
 
 // MonitorSingleNode waits for the a node to be added to the cluster
 // and reports its status until it becomes Ready.
-func MonitorSingleNode(cluster *Cluster, nodeIPAddress string, wg *sync.WaitGroup) {
+func MonitorSingleNode(waitContext context.Context, cluster *Cluster, nodeIPAddress string, wg *sync.WaitGroup) {
 	defer wg.Done()
-	timeout := 90 * time.Minute
-	waitContext, cancel := context.WithTimeout(cluster.Ctx, timeout)
-	defer cancel()
 
 	mon, err := newAddNodeMonitor(nodeIPAddress, cluster)
 	if err != nil {
@@ -99,7 +100,7 @@ func MonitorSingleNode(cluster *Cluster, nodeIPAddress string, wg *sync.WaitGrou
 		return
 	}
 
-	wait.Until(func() {
+	for {
 		if !mon.status.RestAPISeen &&
 			mon.cluster.API.Rest.IsRestAPILive() {
 			mon.status.RestAPISeen = true
@@ -140,13 +141,17 @@ func MonitorSingleNode(cluster *Cluster, nodeIPAddress string, wg *sync.WaitGrou
 
 		if !mon.status.NodeIsReady && isReady {
 			mon.status.NodeIsReady = true
-			mon.logStatus("Node is Ready")
-			// TODO: There appears to be a bug where the node becomes Ready
-			// before second CSR is approved. Log Pending CSRs for now, so users
-			// are aware there are still some waiting their approval even
-			// though the node status is Ready.
-			mon.logCSRsPendingApproval(secondCSRSignerName)
-			cancel()
+			if !mon.clusterHasSecondCSRPending() {
+				mon.logStatus("Node is Ready")
+			} else {
+				// TODO: There appears to be a bug where the node becomes Ready
+				// before second CSR is approved. Log Pending CSRs for now, so users
+				// are aware there are still some waiting their approval even
+				// though the node status is Ready.
+				mon.logStatus("Node is Ready but has CSRs pending approval. Until all CSRs are approved, the node may not be fully functional.")
+				mon.logCSRsPendingApproval(secondCSRSignerName)
+			}
+			return
 		}
 
 		if mon.cluster.API.Rest.IsRestAPILive() {
@@ -155,16 +160,20 @@ func MonitorSingleNode(cluster *Cluster, nodeIPAddress string, wg *sync.WaitGrou
 				logrus.Warnf("error fetching status from assisted-service for node %s: %s", nodeIPAddress, err)
 			}
 		}
-	}, 5*time.Second, waitContext.Done())
 
-	waitErr := waitContext.Err()
-	if waitErr != nil {
-		if errors.Is(waitErr, context.Canceled) {
-			cancel()
+		waitErr := waitContext.Err()
+		if waitErr != nil {
+			if errors.Is(waitErr, context.Canceled) {
+				mon.logStatus(fmt.Sprintf("Node monitoring cancelled: %v", waitErr))
+				return
+			}
+			if errors.Is(waitErr, context.DeadlineExceeded) {
+				mon.logStatus(fmt.Sprintf("Node monitoring timed out after %v minutes", timeout))
+				return
+			}
 		}
-		if errors.Is(waitErr, context.DeadlineExceeded) {
-			mon.logStatus(fmt.Sprintf("Node monitoring timed out after %v minutes", timeout))
-		}
+
+		time.Sleep(5 * time.Second)
 	}
 }
 

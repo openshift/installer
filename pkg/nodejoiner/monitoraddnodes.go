@@ -18,14 +18,15 @@ func NewMonitorAddNodesCommand(directory, kubeconfigPath string, ips []string) e
 	sshKey := ""
 
 	clusters := []*agentpkg.Cluster{}
+	ctx := context.Background()
 	for _, ip := range ips {
-		cluster, err := agentpkg.NewCluster(context.Background(), directory, ip, kubeconfigPath, sshKey, workflow.AgentWorkflowTypeAddNodes)
+		cluster, err := agentpkg.NewCluster(ctx, directory, ip, kubeconfigPath, sshKey, workflow.AgentWorkflowTypeAddNodes)
 		if err != nil {
 			return err
 		}
 		clusters = append(clusters, cluster)
 	}
-	agentpkg.MonitorAddNodes(clusters, ips)
+	agentpkg.MonitorAddNodes(ctx, clusters, ips)
 
 	return nil
 }
