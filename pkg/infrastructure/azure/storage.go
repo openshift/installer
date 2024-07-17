@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -462,7 +461,7 @@ func GenerateStorageAccountEncryption(ctx context.Context, in *CustomerManagedKe
 
 	keysClient = keyvaultClientFactory.NewKeysClient()
 
-	keysClientResponse, err := keysClient.Get(
+	_, err = keysClient.Get(
 		ctx,
 		in.CustomerManagedKey.KeyVault.ResourceGroup,
 		in.CustomerManagedKey.KeyVault.Name,
@@ -483,21 +482,15 @@ func GenerateStorageAccountEncryption(ctx context.Context, in *CustomerManagedKe
 		return nil, fmt.Errorf("failed to get key vault %s which contains customer managed key: %w", in.CustomerManagedKey.KeyVault.Name, err)
 	}
 
-	keyType := armstorage.KeyTypeAccount
-	keySource := armstorage.KeySourceMicrosoftKeyvault
-
-	keyURIWithVersionSplit := strings.Split(*keysClientResponse.Key.Properties.KeyURIWithVersion, "/")
-	versionPosition := len(keyURIWithVersionSplit) - 1
-
 	encryption := &armstorage.Encryption{
 		Services: &armstorage.EncryptionServices{
 			Blob: &armstorage.EncryptionService{
 				Enabled: to.Ptr(true),
-				KeyType: &keyType,
+				KeyType: to.Ptr(armstorage.KeyTypeAccount),
 			},
 			File: &armstorage.EncryptionService{
 				Enabled: to.Ptr(true),
-				KeyType: &keyType,
+				KeyType: to.Ptr(armstorage.KeyTypeAccount),
 			},
 		},
 		EncryptionIdentity: &armstorage.EncryptionIdentity{
@@ -507,10 +500,10 @@ func GenerateStorageAccountEncryption(ctx context.Context, in *CustomerManagedKe
 				in.CustomerManagedKey.UserAssignedIdentityKey,
 			)),
 		},
-		KeySource: &keySource,
+		KeySource: to.Ptr(armstorage.KeySourceMicrosoftKeyvault),
 		KeyVaultProperties: &armstorage.KeyVaultProperties{
-			KeyName:     keysClientResponse.Key.Name,
-			KeyVersion:  &keyURIWithVersionSplit[versionPosition],
+			KeyName:     to.Ptr(in.CustomerManagedKey.KeyVault.KeyName),
+			KeyVersion:  to.Ptr(""),
 			KeyVaultURI: keyVault.Properties.VaultURI,
 		},
 	}
