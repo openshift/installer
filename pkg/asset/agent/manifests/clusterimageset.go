@@ -189,7 +189,7 @@ func (a *ClusterImageSet) validateReleaseVersion(ctx context.Context, workflowTy
 	}
 
 	if a.Config.Spec.ReleaseImage != releaseImage.PullSpec {
-		allErrs = append(allErrs, field.Forbidden(fieldPath, fmt.Sprintf("value must be equal to %s", releaseImage.PullSpec)))
+		allErrs = append(allErrs, field.Invalid(fieldPath, a.Config.Spec.ReleaseImage, fmt.Sprintf("value must be equal to %s", releaseImage.PullSpec)))
 	}
 
 	return allErrs
