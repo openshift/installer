@@ -28,8 +28,8 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
 		}
 	}
 
-	if c.OpenStack.ControlPlanePort != nil {
-		allErrs = append(allErrs, validateControlPlanePort(c, fldPath)...)
+	if controlPlanePort := c.OpenStack.ControlPlanePort; controlPlanePort != nil {
+		allErrs = append(allErrs, validateControlPlanePort(controlPlanePort, fldPath.Child("controlPlanePort"))...)
 	}
 
 	return allErrs
@@ -46,20 +46,31 @@ func validateLoadBalancer(lbType configv1.PlatformLoadBalancerType) bool {
 }
 
 // validateControlPlanePort returns all the errors found when the control plane port is not valid.
-func validateControlPlanePort(c *types.InstallConfig, fldPath *field.Path) field.ErrorList {
-	controlPlanePort := c.OpenStack.ControlPlanePort
+func validateControlPlanePort(controlPlanePort *openstack.PortTarget, fldPath *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
-	if len(controlPlanePort.FixedIPs) <= 2 {
-		for _, fixedIP := range controlPlanePort.FixedIPs {
+
+	if controlPlanePort.Network.ID != "" && !validation.ValidUUIDv4(controlPlanePort.Network.ID) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("network"), controlPlanePort.Network.ID, "invalid network ID: must be a UUIDv4"))
+	}
+
+	fixedIPsField := fldPath.Child("fixedIPs")
+
+	switch l := len(controlPlanePort.FixedIPs); l {
+	case 0:
+		allErrs = append(allErrs, field.Required(fixedIPsField, "it is required to set a subnet filter to the controlPlanePort"))
+	case 1, 2:
+		for i, fixedIP := range controlPlanePort.FixedIPs {
+			subnetField := fixedIPsField.Index(i).Child("subnet")
 			if fixedIP.Subnet.ID != "" && !validation.ValidUUIDv4(fixedIP.Subnet.ID) {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("controlPlanePort").Child("fixedIPs"), fixedIP.Subnet.ID, "invalid subnet ID"))
+				allErrs = append(allErrs, field.Invalid(subnetField.Child("id"), fixedIP.Subnet.ID, "invalid subnet ID: must be a UUIDv4"))
+			}
+			if fixedIP.Subnet.ID == "" && fixedIP.Subnet.Name == "" {
+				allErrs = append(allErrs, field.Required(subnetField, "either ID or Name must be set on the subnet filter"))
 			}
 		}
-		if controlPlanePort.Network.ID != "" && !validation.ValidUUIDv4(controlPlanePort.Network.ID) {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("controlPlanePort").Child("network"), controlPlanePort.Network.ID, "invalid network ID"))
-		}
-	} else {
-		allErrs = append(allErrs, field.TooMany(fldPath.Child("fixedIPs"), len(controlPlanePort.FixedIPs), 2))
+	default:
+		allErrs = append(allErrs, field.TooMany(fixedIPsField, l, 2))
 	}
+
 	return allErrs
 }

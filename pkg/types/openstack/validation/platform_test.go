@@ -141,7 +141,7 @@ func TestValidatePlatform(t *testing.T) {
 				return p
 			}(),
 			networking:    validNetworking(),
-			expectedError: `^test-path\.controlPlanePort.fixedIPs: Invalid value: "fake": invalid subnet ID`,
+			expectedError: `^test-path\.controlPlanePort.fixedIPs\[0\]\.subnet.id: Invalid value: "fake": invalid subnet ID`,
 		},
 	}
 	for _, tc := range cases {
