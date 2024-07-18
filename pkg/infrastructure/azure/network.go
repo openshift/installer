@@ -25,12 +25,14 @@ type lbInput struct {
 }
 
 type pipInput struct {
-	infraID       string
-	name          string
-	region        string
-	resourceGroup string
-	pipClient     *armnetwork.PublicIPAddressesClient
-	tags          map[string]*string
+	infraID         string
+	name            string
+	region          string
+	resourceGroup   string
+	createDNSRecord bool
+	ipVersion       armnetwork.IPVersion
+	pipClient       *armnetwork.PublicIPAddressesClient
+	tags            map[string]*string
 }
 
 type vmInput struct {
@@ -63,6 +65,13 @@ type inboundNatRuleInput struct {
 }
 
 func createPublicIP(ctx context.Context, in *pipInput) (*armnetwork.PublicIPAddress, error) {
+	var dnsSettings *armnetwork.PublicIPAddressDNSSettings
+	if in.createDNSRecord {
+		dnsSettings = &armnetwork.PublicIPAddressDNSSettings{
+			DomainNameLabel: to.Ptr(in.infraID),
+		}
+	}
+
 	pollerResp, err := in.pipClient.BeginCreateOrUpdate(
 		ctx,
 		in.resourceGroup,
@@ -75,11 +84,9 @@ func createPublicIP(ctx context.Context, in *pipInput) (*armnetwork.PublicIPAddr
 				Tier: to.Ptr(armnetwork.PublicIPAddressSKUTierRegional),
 			},
 			Properties: &armnetwork.PublicIPAddressPropertiesFormat{
-				PublicIPAddressVersion:   to.Ptr(armnetwork.IPVersionIPv4),
+				PublicIPAddressVersion:   to.Ptr(in.ipVersion),
 				PublicIPAllocationMethod: to.Ptr(armnetwork.IPAllocationMethodStatic),
-				DNSSettings: &armnetwork.PublicIPAddressDNSSettings{
-					DomainNameLabel: to.Ptr(in.infraID),
-				},
+				DNSSettings:              dnsSettings,
 			},
 			Tags: in.tags,
 		},
@@ -501,4 +508,124 @@ func associateInboundNatRuleToInterface(ctx context.Context, in *inboundNatRuleI
 		return nil, fmt.Errorf("failed to add inbound nat rule to interface: %w", err)
 	}
 	return &interfacesResp.Interface, nil
+}
+
+// CreateNatGatewayInput contains input parameters for NAT gateway creation.
+type CreateNatGatewayInput struct {
+	InfraID                string
+	SubscriptionID         string
+	ResourceGroupName      string
+	VirtualNetworkName     string
+	ControlPlaneSubnetName string
+	WorkerSubnetName       string
+	Region                 string
+	Tags                   map[string]*string
+	NetworkClientFactory   *armnetwork.ClientFactory
+}
+
+// CreateNatGateway creates a NAT gateway and associated resources.
+func CreateNatGateway(ctx context.Context, in *CreateNatGatewayInput) (*armnetwork.NatGateway, error) {
+	// Create a public IPv4 address.
+	publicIPv4Address, err := createPublicIP(ctx, &pipInput{
+		name:            fmt.Sprintf("%s-natgw-pip-v4", in.InfraID),
+		infraID:         in.InfraID,
+		region:          in.Region,
+		resourceGroup:   in.ResourceGroupName,
+		createDNSRecord: false,
+		ipVersion:       armnetwork.IPVersionIPv4,
+		pipClient:       in.NetworkClientFactory.NewPublicIPAddressesClient(),
+		tags:            in.Tags,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the NAT gateway.
+	natGatewaysClient := in.NetworkClientFactory.NewNatGatewaysClient()
+	natGatewayPollerResp, err := natGatewaysClient.BeginCreateOrUpdate(
+		ctx,
+		in.ResourceGroupName,
+		fmt.Sprintf("%s-natgw", in.InfraID),
+		armnetwork.NatGateway{
+			Location: to.Ptr(in.Region),
+			Properties: &armnetwork.NatGatewayPropertiesFormat{
+				IdleTimeoutInMinutes: to.Ptr[int32](10),
+				PublicIPAddresses: []*armnetwork.SubResource{
+					{
+						ID: publicIPv4Address.ID,
+					},
+				},
+			},
+			SKU: &armnetwork.NatGatewaySKU{
+				Name: ptr.To(armnetwork.NatGatewaySKUNameStandard),
+			},
+			Tags: in.Tags,
+		},
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+	natGatewaysResp, err := natGatewayPollerResp.PollUntilDone(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	natGateway := natGatewaysResp.NatGateway
+
+	// Update the control plane subnet to use the NAT gateway.
+	subnetsClient := in.NetworkClientFactory.NewSubnetsClient()
+
+	// Get the control plane subnet.
+	subnetResp, err := subnetsClient.Get(ctx, in.ResourceGroupName, in.VirtualNetworkName, in.ControlPlaneSubnetName, nil)
+	if err != nil {
+		return nil, err
+	}
+	controlPlaneSubnet := subnetResp.Subnet
+
+	// Update the control plane subnet to use the NAT gateway.
+	controlPlaneSubnet.Properties.NatGateway = &armnetwork.SubResource{
+		ID: natGateway.ID,
+	}
+	subnetsPollerResp, err := subnetsClient.BeginCreateOrUpdate(ctx,
+		in.ResourceGroupName,
+		in.VirtualNetworkName,
+		in.ControlPlaneSubnetName,
+		controlPlaneSubnet,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+	_, err = subnetsPollerResp.PollUntilDone(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the worker subnet.
+	subnetResp, err = subnetsClient.Get(ctx, in.ResourceGroupName, in.VirtualNetworkName, in.WorkerSubnetName, nil)
+	if err != nil {
+		return nil, err
+	}
+	workerSubnet := subnetResp.Subnet
+
+	// Update the worker subnet to use the NAT gateway.
+	workerSubnet.Properties.NatGateway = &armnetwork.SubResource{
+		ID: natGateway.ID,
+	}
+	subnetsPollerResp, err = subnetsClient.BeginCreateOrUpdate(ctx,
+		in.ResourceGroupName,
+		in.VirtualNetworkName,
+		in.WorkerSubnetName,
+		workerSubnet,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+	_, err = subnetsPollerResp.PollUntilDone(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return &natGateway, nil
 }

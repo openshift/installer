@@ -51,7 +51,9 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		Name:             clusterID.InfraID,
 		FrontendIPsCount: to.Ptr(int32(1)),
 	}
-	if installConfig.Config.Platform.Azure.OutboundType == azure.UserDefinedRoutingOutboundType {
+	switch installConfig.Config.Platform.Azure.OutboundType {
+	case azure.UserDefinedRoutingOutboundType:
+	case azure.NatGatewayOutboundType:
 		controlPlaneOutboundLB = nil
 	}
 
