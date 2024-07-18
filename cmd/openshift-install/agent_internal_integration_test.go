@@ -103,11 +103,20 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 				}
 			}
 
-			// Let's get the current release version, so that
-			// it could be used within the tests
-			pullspec, err := releaseimage.Default()
-			if err != nil {
-				return err
+			var pullspec string
+			// If set, let's use $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to replace test data
+			// and also pass it to the testscript environment. It will be usually set in a CI job
+			// to reference the ephemeral payload release.
+			if releaseImageOverride, ok := os.LookupEnv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"); ok && releaseImageOverride != "" {
+				pullspec = releaseImageOverride
+				e.Vars = append(e.Vars, fmt.Sprintf("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE=%s", pullspec))
+			} else {
+				// Let's get the current release version, so that
+				// it could be used within the tests
+				pullspec, err = releaseimage.Default()
+				if err != nil {
+					return err
+				}
 			}
 			e.Vars = append(e.Vars, fmt.Sprintf("RELEASE_IMAGE=%s", pullspec))
 
