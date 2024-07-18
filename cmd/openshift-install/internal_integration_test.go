@@ -19,6 +19,7 @@ import (
 	"github.com/rogpeppe/go-internal/testscript"
 	"github.com/stretchr/testify/assert"
 	"github.com/vincent-petithory/dataurl"
+	"gopkg.in/yaml.v2"
 
 	"github.com/openshift/installer/pkg/asset/releaseimage"
 )
@@ -103,13 +104,31 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 				}
 			}
 
-			// Let's get the current release version, so that
-			// it could be used within the tests
-			pullspec, err := releaseimage.Default()
-			if err != nil {
-				return err
+			var pullspec string
+			// If set, let's use $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to replace test data
+			// and also pass it to the testscript environment. It will be usually set in a CI job
+			// to reference the ephemeral payload release.
+			if releaseImageOverride, ok := os.LookupEnv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"); ok && releaseImageOverride != "" {
+				pullspec = releaseImageOverride
+				e.Vars = append(e.Vars, fmt.Sprintf("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE=%s", pullspec))
+			} else {
+				// Let's get the current release version, so that
+				// it could be used within the tests
+				pullspec, err = releaseimage.Default()
+				if err != nil {
+					return err
+				}
 			}
 			e.Vars = append(e.Vars, fmt.Sprintf("RELEASE_IMAGE=%s", pullspec))
+			// When AUTH_FILE is set in the CI integration-tests job
+			if authFilePath, ok := os.LookupEnv("AUTH_FILE"); ok && authFilePath != "" {
+				workDir := e.Getenv("WORK")
+				err := updatePullSecret(workDir, authFilePath)
+				if err != nil {
+					return err
+				}
+				t.Log("PullSecret updated successfully")
+			}
 
 			return nil
 		},
@@ -123,6 +142,7 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 			"unconfiguredIgnCmp":      unconfiguredIgnCmp,
 			"expandFile":              expandFile,
 			"isoContains":             isoContains,
+			"existsInIso":             existsInIso,
 		},
 	})
 }
@@ -259,6 +279,7 @@ func ignitionStorageCmp(ts *testscript.TestScript, neg bool, args []string) {
 
 	workDir := ts.Getenv("WORK")
 	ignPath, aFilePath, eFilePath := args[0], args[1], args[2]
+
 	ignPathAbs := filepath.Join(workDir, ignPath)
 
 	config, err := readIgnition(ts, ignPathAbs)
@@ -473,6 +494,25 @@ func isoContains(ts *testscript.TestScript, neg bool, args []string) {
 	ts.Check(err)
 }
 
+// [!] existsInIso `isoPath` `file` check if the specified `file` is stored
+// within the ISO `isoPath` image.
+func existsInIso(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 2 {
+		ts.Fatalf("usage: isoContains isoPath file")
+	}
+
+	workDir := ts.Getenv("WORK")
+	isoPath, filePath := args[0], args[1]
+	isoPathAbs := filepath.Join(workDir, isoPath)
+
+	archiveFile, ignitionFile, err := archiveFileNames(isoPath)
+	if err != nil {
+		ts.Check(err)
+	}
+	_, err = readFileFromISO(isoPathAbs, archiveFile, ignitionFile, filePath)
+	ts.Check(err)
+}
+
 func checkFileFromInitrdImg(isoPath string, fileName string) error {
 	disk, err := diskfs.Open(isoPath, diskfs.WithOpenMode(diskfs.ReadOnly))
 	if err != nil {
@@ -569,4 +609,37 @@ func lookForCpioFiles(r io.Reader) ([]string, error) {
 	}
 
 	return files, nil
+}
+
+func updatePullSecret(workDir, authFilePath string) error {
+	authFile, err := os.ReadFile(authFilePath)
+	if err != nil {
+		return err
+	}
+	ciPullSecret := string(authFile)
+	expectedInstallConfigPathAbs := filepath.Join(workDir, "install-config.yaml")
+	_, err = os.Stat(expectedInstallConfigPathAbs)
+	if err == nil {
+		installConfigFile, err := os.ReadFile(expectedInstallConfigPathAbs)
+		if err != nil {
+			return err
+		}
+		var config map[string]interface{}
+		if err := yaml.Unmarshal(installConfigFile, &config); err != nil {
+			return err
+		}
+
+		config["pullSecret"] = ciPullSecret
+
+		updatedConfig, err := yaml.Marshal(&config)
+		if err != nil {
+			return err
+		}
+		if err := os.WriteFile(expectedInstallConfigPathAbs, updatedConfig, 0600); err != nil {
+			return err
+		}
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+	return nil
 }
