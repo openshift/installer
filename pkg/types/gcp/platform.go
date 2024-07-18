@@ -114,3 +114,21 @@ type UserTag struct {
 func DefaultSubnetName(infraID, role string) string {
 	return fmt.Sprintf("%s-%s-subnet", infraID, role)
 }
+
+// GetConfiguredServiceAccount returns the service account email from a configured service account for
+// a control plane or compute node. Returns empty string if not configured.
+func GetConfiguredServiceAccount(platform *Platform, mpool *MachinePool) string {
+	if mpool != nil && mpool.ServiceAccount != "" {
+		return mpool.ServiceAccount
+	} else if platform.DefaultMachinePlatform != nil {
+		return platform.DefaultMachinePlatform.ServiceAccount
+	}
+
+	return ""
+}
+
+// GetDefaultServiceAccount returns the default service account email to use based on role.
+// The default should be used when an existing service account is not configured.
+func GetDefaultServiceAccount(platform *Platform, clusterID string, role string) string {
+	return fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", clusterID, role[0:1], platform.ProjectID)
+}

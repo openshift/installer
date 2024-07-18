@@ -55,6 +55,16 @@ func Test_GenerateMachines(t *testing.T) {
 			installConfig:     getICWithSecureBoot(),
 			expectedGCPConfig: getGCPMachineWithSecureBoot(),
 		},
+		{
+			name:              "serviceaccount",
+			installConfig:     getICWithServiceAccount(),
+			expectedGCPConfig: getGCPMachineWithServiceAccount(),
+		},
+		{
+			name:              "serviceaccount-controlplane-machine",
+			installConfig:     getICWithServiceAccountControlPlaneMachine(),
+			expectedGCPConfig: getGCPMachineWithServiceAccountControlPlaneMachine(),
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -149,6 +159,26 @@ func getICWithSecureBoot() *installconfig.InstallConfig {
 	return ic
 }
 
+func getICWithServiceAccount() *installconfig.InstallConfig {
+	ic := getBaseInstallConfig()
+	ic.Config.Platform.GCP.DefaultMachinePlatform = &gcptypes.MachinePool{ServiceAccount: "user-service-account@some-project.iam.gserviceaccount.com"}
+	return ic
+}
+
+func getICWithServiceAccountControlPlaneMachine() *installconfig.InstallConfig {
+	ic := getBaseInstallConfig()
+	ic.Config.Platform.GCP.DefaultMachinePlatform = &gcptypes.MachinePool{ServiceAccount: "user-service-account@some-project.iam.gserviceaccount.com"}
+	ic.Config.ControlPlane = &types.MachinePool{
+		Name:     "master",
+		Replicas: ptr.To(int64(numReplicas)),
+		Platform: types.MachinePoolPlatform{
+			GCP: &gcptypes.MachinePool{
+				ServiceAccount: "other-service-account@some-project.iam.gserviceaccount.com"},
+		},
+	}
+	return ic
+}
+
 func getBaseGCPMachine() *capg.GCPMachine {
 	subnet := "012345678-master-subnet"
 	image := "rhcos-415-92-202311241643-0-gcp-x86-64"
@@ -206,6 +236,24 @@ func getGCPMachineWithSecureBoot() *capg.GCPMachine {
 	gcpMachine := getBaseGCPMachine()
 	secureBoot := capg.GCPShieldedInstanceConfig{SecureBoot: capg.SecureBootPolicy("Enabled")}
 	gcpMachine.Spec.ShieldedInstanceConfig = &secureBoot
+	return gcpMachine
+}
+
+func getGCPMachineWithServiceAccount() *capg.GCPMachine {
+	gcpMachine := getBaseGCPMachine()
+	gcpMachine.Spec.ServiceAccount = &capg.ServiceAccount{
+		Email:  "user-service-account@some-project.iam.gserviceaccount.com",
+		Scopes: []string{compute.CloudPlatformScope},
+	}
+	return gcpMachine
+}
+
+func getGCPMachineWithServiceAccountControlPlaneMachine() *capg.GCPMachine {
+	gcpMachine := getBaseGCPMachine()
+	gcpMachine.Spec.ServiceAccount = &capg.ServiceAccount{
+		Email:  "other-service-account@some-project.iam.gserviceaccount.com",
+		Scopes: []string{compute.CloudPlatformScope},
+	}
 	return gcpMachine
 }
 
