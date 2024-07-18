@@ -1825,6 +1825,7 @@ func TestValidateInstallConfig(t *testing.T) {
 
 				return c
 			}(),
+			expectedError: `platform.vsphere.apiVIPs: Invalid value: "192.168.1.0": IP expected to be in one of the machine networks: 10.0.0.0/16,fe80::/10, platform.vsphere.ingressVIPs: Invalid value: "192.168.222.4": IP expected to be in one of the machine networks: 10.0.0.0/16,fe80::/10`,
 		},
 		{
 			name: "too_many_ingressvips",

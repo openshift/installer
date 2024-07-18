@@ -682,7 +682,7 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 			lbType = platform.Nutanix.LoadBalancer.Type
 		}
 
-		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, false, lbType, network, fldPath.Child(nutanix.Name))...)
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, true, lbType, network, fldPath.Child(nutanix.Name))...)
 	case platform.OpenStack != nil:
 		virtualIPs = vips{
 			API:     platform.OpenStack.APIVIPs,
@@ -704,7 +704,7 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 			lbType = platform.VSphere.LoadBalancer.Type
 		}
 
-		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, false, lbType, network, fldPath.Child(vsphere.Name))...)
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, true, lbType, network, fldPath.Child(vsphere.Name))...)
 	case platform.Ovirt != nil:
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.APIVIPs, fldPath.Child(ovirt.Name, newVIPsFields.APIVIPs))...)
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.IngressVIPs, fldPath.Child(ovirt.Name, newVIPsFields.IngressVIPs))...)
