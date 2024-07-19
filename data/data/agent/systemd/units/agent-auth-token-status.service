@@ -11,4 +11,4 @@ ExecStart=/usr/local/bin/agent-auth-token-status.sh
 Restart=no
 
 [Install]
-WantedBy=multi-user.target agent-add-node.service
+WantedBy=agent-add-node.service
