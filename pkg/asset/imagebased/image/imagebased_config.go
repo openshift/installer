@@ -94,10 +94,12 @@ pullSecret: '<your-pull-secret>'
 
 // PersistToFile writes the image-based-installation-config.yaml file to the assets folder.
 func (i *ImageBasedInstallationConfig) PersistToFile(directory string) error {
-	templatePath := filepath.Join(directory, configFilename)
-	templateByte := []byte(i.Template)
+	if i.File == nil {
+		return nil
+	}
 
-	err := os.WriteFile(templatePath, templateByte, 0o600)
+	configPath := filepath.Join(directory, configFilename)
+	err := os.WriteFile(configPath, i.File.Data, 0o600)
 	if err != nil {
 		return err
 	}
