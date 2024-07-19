@@ -2155,9 +2155,9 @@ spec:
                 description: AWS is the configuration used when installing on AWS.
                 properties:
                   amiID:
-                    description: AMIID is the AMI that should be used to boot machines
-                      for the cluster. If set, the AMI should belong to the same region
-                      as the cluster.
+                    description: The field is deprecated. AMIID is the AMI that should
+                      be used to boot machines for the cluster. If set, the AMI should
+                      belong to the same region as the cluster.
                     type: string
                   bestEffortDeleteIgnition:
                     description: BestEffortDeleteIgnition is an optional field that

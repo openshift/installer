@@ -5,7 +5,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 ## Cluster-scoped properties
 
 * `amiID` (optional string): The AMI that should be used to boot machines for the cluster.
-    If set, the AMI should belong to the same region as the cluster.
+    If set, the AMI should belong to the same region as the cluster. This field is now deprecated and `defaultMachinePlatform` should be used instead.
 * `region` (required string): The AWS region where the cluster will be created.
 * `subnets` (optional array of strings): Existing subnets (by ID) where cluster resources will be created.
     Leave unset to have the installer create subnets in a new VPC on your behalf.
