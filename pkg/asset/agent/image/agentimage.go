@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
@@ -36,6 +37,7 @@ type AgentImage struct {
 	bootArtifactsBaseURL string
 	platform             hiveext.PlatformType
 	isoFilename          string
+	imageExpiresAt       string
 }
 
 var _ asset.WritableAsset = (*AgentImage)(nil)
@@ -48,6 +50,7 @@ func (a *AgentImage) Dependencies() []asset.Asset {
 		&AgentArtifacts{},
 		&manifests.AgentManifests{},
 		&BaseIso{},
+		&gencrypto.AuthConfig{},
 	}
 }
 
@@ -66,8 +69,12 @@ func (a *AgentImage) Generate(ctx context.Context, dependencies asset.Parents) e
 		a.isoFilename = agentISOFilename
 
 	case workflow.AgentWorkflowTypeAddNodes:
+		authConfig := &gencrypto.AuthConfig{}
+		dependencies.Get(authConfig)
+
 		a.platform = clusterInfo.PlatformType
 		a.isoFilename = agentAddNodesISOFilename
+		a.imageExpiresAt = authConfig.AgentAuthTokenExpiry
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
@@ -218,6 +225,7 @@ func (a *AgentImage) PersistToFile(directory string) error {
 		return err
 	}
 
+	var msg string
 	// For external platform when the bootArtifactsBaseURL is specified,
 	// output the rootfs file alongside the minimal ISO
 	if a.platform == hiveext.ExternalPlatformType {
@@ -237,15 +245,19 @@ func (a *AgentImage) PersistToFile(directory string) error {
 		if err != nil {
 			return err
 		}
-		logrus.Infof("Generated minimal ISO at %s", agentIsoFile)
+		msg = fmt.Sprintf("Generated minimal ISO at %s", agentIsoFile)
 	} else {
 		// Generate full ISO
 		err = isoeditor.Create(agentIsoFile, a.tmpPath, a.volumeID)
 		if err != nil {
 			return err
 		}
-		logrus.Infof("Generated ISO at %s", agentIsoFile)
+		msg = fmt.Sprintf("Generated ISO at %s.", agentIsoFile)
 	}
+	if a.imageExpiresAt != "" {
+		msg = fmt.Sprintf("%s. The ISO is valid up to %s", msg, a.imageExpiresAt)
+	}
+	logrus.Info(msg)
 
 	err = os.WriteFile(filepath.Join(directory, "rendezvousIP"), []byte(a.rendezvousIP), 0o644) //nolint:gosec // no sensitive info
 	if err != nil {

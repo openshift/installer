@@ -232,7 +232,7 @@ func (a *AuthConfig) createOrUpdateAuthTokenSecret(kubeconfigPath string) error 
 		return err
 	}
 	// Calculate 24 hours before the expiration time
-	thresholdTime := expiryTime.Add(-24 * time.Hour)
+	thresholdTime := expiryTime.UTC().Add(-24 * time.Hour)
 	// Check if current time is past the thresholdTime time of 24 hours
 	if time.Now().UTC().After(thresholdTime) {
 		// update the secret in the cluster with a new token from asset store
@@ -240,10 +240,11 @@ func (a *AuthConfig) createOrUpdateAuthTokenSecret(kubeconfigPath string) error 
 		if err != nil {
 			return err
 		}
-		logrus.Debug("Auth token secret regenerated and updated in the cluster")
 	} else {
 		// Update the token in asset store with the retrieved token from the cluster
 		a.AgentAuthToken = retrievedToken
+		// get the token expiry time of the retrieved token from the cluster
+		a.AgentAuthTokenExpiry = expiryTime.UTC().Format(time.RFC3339)
 
 		retrievedPublicKey, err := extractPublicKeyFromSecret(retrievedSecret)
 		if err != nil {
@@ -251,7 +252,7 @@ func (a *AuthConfig) createOrUpdateAuthTokenSecret(kubeconfigPath string) error 
 		}
 		// Update the asset store with the retrieved public key associated with the valid token from the cluster
 		a.PublicKey = retrievedPublicKey
-		logrus.Debugf("Reusing existing auth token (valid up to %s)", expiryTime)
+		logrus.Infof("Reusing existing auth token (valid up to %s)", a.AgentAuthTokenExpiry)
 	}
 	return err
 }
@@ -261,8 +262,10 @@ func (a *AuthConfig) createSecret(k8sclientset kubernetes.Interface) error {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: authTokenSecretName,
+			// only for informational purposes
 			Annotations: map[string]string{
 				"updatedAt": "", // Initially set to empty
+				"expiresAt": a.AgentAuthTokenExpiry,
 			},
 		},
 		Type: corev1.SecretTypeOpaque,
@@ -273,9 +276,10 @@ func (a *AuthConfig) createSecret(k8sclientset kubernetes.Interface) error {
 	}
 	_, err := k8sclientset.CoreV1().Secrets(authTokenSecretNamespace).Create(context.Background(), secret, metav1.CreateOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to create auth token secret: %w", err)
+		return fmt.Errorf("failed to create secret: %w", err)
 	}
-	logrus.Debugf("Created auth token secret %s/%s", authTokenSecretNamespace, authTokenSecretName)
+	logrus.Infof("Generated auth token (valid up to %s)", a.AgentAuthTokenExpiry)
+	logrus.Infof("Created secret %s/%s", authTokenSecretNamespace, authTokenSecretName)
 
 	return nil
 }
@@ -285,12 +289,14 @@ func (a *AuthConfig) refreshAuthTokenSecret(k8sclientset kubernetes.Interface, r
 	retrievedSecret.Data[authTokenPublicDataKey] = []byte(a.PublicKey)
 	// only for informational purposes
 	retrievedSecret.Annotations["updatedAt"] = time.Now().UTC().Format(time.RFC3339)
+	retrievedSecret.Annotations["expiresAt"] = a.AgentAuthTokenExpiry
 
 	_, err := k8sclientset.CoreV1().Secrets(authTokenSecretNamespace).Update(context.TODO(), retrievedSecret, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
-	logrus.Debugf("Updated auth token secret %s/%s", authTokenSecretNamespace, authTokenSecretName)
+	logrus.Infof("Auth token regenerated (valid up to %s)", a.AgentAuthTokenExpiry)
+	logrus.Infof("Updated secret %s/%s", authTokenSecretNamespace, authTokenSecretName)
 	return nil
 }
 
