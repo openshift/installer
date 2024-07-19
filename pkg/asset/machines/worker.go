@@ -358,7 +358,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			}
 			mpool := defaultAWSMachinePoolPlatform(pool.Name)
 
-			osImage := strings.SplitN(string(*rhcosImage), ",", 2)
+			osImage := strings.SplitN(rhcosImage.Compute, ",", 2)
 			osImageID := osImage[0]
 			if len(osImage) == 2 {
 				osImageID = "" // the AMI will be generated later on
@@ -399,7 +399,11 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			}
 
 			if mpool.InstanceType == "" {
-				instanceTypes := awsdefaults.InstanceTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture, configv1.HighlyAvailableTopologyMode)
+				arch := installConfig.Config.ControlPlane.Architecture
+				if len(installConfig.Config.Compute) > 0 {
+					arch = installConfig.Config.Compute[0].Architecture
+				}
+				instanceTypes := awsdefaults.InstanceTypes(installConfig.Config.Platform.AWS.Region, arch, configv1.HighlyAvailableTopologyMode)
 				switch pool.Name {
 				case types.MachinePoolEdgeRoleName:
 					ok := awsSetPreferredInstanceByEdgeZone(ctx, instanceTypes, installConfig.AWS, zones)
@@ -488,7 +492,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			}
 
 			useImageGallery := ic.Platform.Azure.CloudName != azuretypes.StackCloud
-			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", workerUserDataSecretName, capabilities, useImageGallery)
+			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, rhcosImage.Compute, "worker", workerUserDataSecretName, capabilities, useImageGallery)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -523,7 +527,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				mpool.Zones = azs
 			}
 			pool.Platform.GCP = &mpool
-			sets, err := gcp.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", workerUserDataSecretName)
+			sets, err := gcp.MachineSets(clusterID.InfraID, ic, &pool, rhcosImage.Compute, "worker", workerUserDataSecretName)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -565,7 +569,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			mpool.Set(pool.Platform.OpenStack)
 			pool.Platform.OpenStack = &mpool
 
-			imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
+			imageName, _ := rhcosutils.GenerateOpenStackImageName(rhcosImage.Compute, clusterID.InfraID)
 
 			sets, err := openstack.MachineSets(ctx, clusterID.InfraID, ic, &pool, imageName, "worker", workerUserDataSecretName)
 			if err != nil {
@@ -615,7 +619,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			mpool.Set(pool.Platform.Ovirt)
 			pool.Platform.Ovirt = &mpool
 
-			imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
+			imageName, _ := rhcosutils.GenerateOpenStackImageName(rhcosImage.Compute, clusterID.InfraID)
 
 			sets, err := ovirt.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", workerUserDataSecretName)
 			if err != nil {

@@ -1414,6 +1414,16 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^compute\[0\].architecture: Invalid value: "arm64": heteregeneous multi-arch is not supported; compute pool architecture must match control plane$`,
 		},
 		{
+			name: "aws cluster is heteregeneous",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute[0].Architecture = types.ArchitectureARM64
+				c.FeatureSet = "CustomNoUpgrade"
+				c.FeatureGates = []string{"MultiArchInstallAWS=true"}
+				return c
+			}(),
+		},
+		{
 			name: "valid cloud credentials mode",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()

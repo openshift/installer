@@ -337,7 +337,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		EtcdCluster:           strings.Join(etcdEndpoints, ","),
 		Proxy:                 &proxy.Config.Status,
 		Registries:            registries,
-		BootImage:             string(*rhcosImage),
+		BootImage:             rhcosImage.ControlPlane,
 		PlatformData:          platformData,
 		ClusterProfile:        clusterProfile,
 		BootstrapInPlace:      bootstrapInPlaceConfig,

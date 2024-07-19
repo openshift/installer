@@ -43,7 +43,7 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	var (
 		infraID          = in.InfraID
 		installConfig    = in.InstallConfig
-		rhcosImage       = string(*in.RhcosImage)
+		rhcosImage       = in.RhcosImage.ControlPlane
 		manifestsAsset   = in.ManifestsAsset
 		machineManifests = in.MachineManifests
 		workersAsset     = in.WorkersAsset

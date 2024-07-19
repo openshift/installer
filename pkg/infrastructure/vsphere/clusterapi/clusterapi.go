@@ -92,7 +92,7 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	clusterID := &installconfig.ClusterID{InfraID: in.InfraID}
 	var tagID string
 
-	cachedImage, err := cache.DownloadImageFile(string(*in.RhcosImage), cache.InstallerApplicationName)
+	cachedImage, err := cache.DownloadImageFile(in.RhcosImage.ControlPlane, cache.InstallerApplicationName)
 	if err != nil {
 		return fmt.Errorf("failed to use cached vsphere image: %w", err)
 	}

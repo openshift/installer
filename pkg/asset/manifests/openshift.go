@@ -267,7 +267,7 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 	case baremetaltypes.Name:
 		bmTemplateData := baremetalTemplateData{
 			Baremetal:                 installConfig.Config.Platform.BareMetal,
-			ProvisioningOSDownloadURL: string(*rhcosImage),
+			ProvisioningOSDownloadURL: rhcosImage.ControlPlane,
 		}
 		assetData["99_baremetal-provisioning-config.yaml"] = applyTemplateData(baremetalConfig.Files()[0].Data, bmTemplateData)
 	}

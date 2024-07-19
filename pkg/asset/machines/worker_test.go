@@ -160,7 +160,7 @@ spec:
 							},
 						},
 					}),
-				(*rhcos.Image)(pointer.StringPtr("test-image")),
+				rhcos.MakeAsset("test-image"),
 				(*rhcos.Release)(pointer.StringPtr("412.86.202208101040-0")),
 				&machine.Worker{
 					File: &asset.File{
@@ -222,7 +222,7 @@ func TestComputeIsNotModified(t *testing.T) {
 			InfraID: "test-infra-id",
 		},
 		installConfig,
-		(*rhcos.Image)(pointer.StringPtr("test-image")),
+		rhcos.MakeAsset("test-image"),
 		(*rhcos.Release)(pointer.StringPtr("412.86.202208101040-0")),
 		&machine.Worker{
 			File: &asset.File{

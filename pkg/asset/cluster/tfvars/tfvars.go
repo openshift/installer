@@ -274,7 +274,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 		for i, m := range workers {
 			workerConfigs[i] = m.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AWSMachineProviderConfig) //nolint:errcheck // legacy, pre-linter
 		}
-		osImage := strings.SplitN(string(*rhcosImage), ",", 2)
+		osImage := strings.SplitN(rhcosImage.ControlPlane, ",", 2)
 		osImageID := osImage[0]
 		osImageRegion := installConfig.Config.AWS.Region
 		if len(osImage) == 2 {
@@ -416,7 +416,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 				BaseDomainResourceGroupName:     installConfig.Config.Azure.BaseDomainResourceGroupName,
 				MasterConfigs:                   masterConfigs,
 				WorkerConfigs:                   workerConfigs,
-				ImageURL:                        string(*rhcosImage),
+				ImageURL:                        rhcosImage.ControlPlane,
 				ImageRelease:                    rhcosRelease.GetAzureReleaseVersion(),
 				PreexistingNetwork:              preexistingnetwork,
 				Publish:                         installConfig.Config.Publish,
@@ -730,7 +730,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 				CISInstanceCRN:             cisCRN,
 				DNSInstanceID:              dnsID,
 				EndpointsJSONFile:          endpointsJSONFile,
-				ImageURL:                   string(*rhcosImage),
+				ImageURL:                   rhcosImage.ControlPlane,
 				MasterConfigs:              masterConfigs,
 				MasterDedicatedHosts:       masterDedicatedHosts,
 				NetworkResourceGroupName:   installConfig.Config.Platform.IBMCloud.NetworkResourceGroupName,
@@ -756,7 +756,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 			installConfig,
 			mastersAsset,
 			workersAsset,
-			string(*rhcosImage),
+			rhcosImage.ControlPlane,
 			clusterID,
 			bootstrapIgn,
 		)
@@ -828,7 +828,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 			installConfig.Config.Platform.Ovirt.StorageDomainID,
 			installConfig.Config.Platform.Ovirt.NetworkName,
 			installConfig.Config.Platform.Ovirt.VNICProfileID,
-			string(*rhcosImage),
+			rhcosImage.ControlPlane,
 			clusterID.InfraID,
 			masters[0].Spec.ProviderSpec.Value.Object.(*ovirtprovider.OvirtMachineProviderSpec),
 			installConfig.Config.Platform.Ovirt.AffinityGroups,
@@ -966,7 +966,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 			return err
 		}
 
-		osImage := strings.SplitN(string(*rhcosImage), "/", 2)
+		osImage := strings.SplitN(rhcosImage.ControlPlane, "/", 2)
 		data, err = powervstfvars.TFVars(
 			powervstfvars.TFVarsSources{
 				MasterConfigs:          masterConfigs,
@@ -1015,7 +1015,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1.NutanixMachineProviderConfig) //nolint:errcheck // legacy, pre-linter
 		}
 
-		imgURI := string(*rhcosImage)
+		imgURI := rhcosImage.ControlPlane
 		if installConfig.Config.Nutanix.ClusterOSImage != "" {
 			imgURI = installConfig.Config.Nutanix.ClusterOSImage
 		}

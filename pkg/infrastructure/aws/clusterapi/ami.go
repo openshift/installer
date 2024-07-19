@@ -15,7 +15,7 @@ import (
 
 // copyAMIToRegion copies the AMI to the region configured in the installConfig if needed.
 func copyAMIToRegion(ctx context.Context, installConfig *installconfig.InstallConfig, infraID string, rhcosImage *rhcos.Image) (string, error) {
-	osImage := strings.SplitN(string(*rhcosImage), ",", 2)
+	osImage := strings.SplitN(rhcosImage.ControlPlane, ",", 2)
 	amiID, amiRegion := osImage[0], osImage[1]
 
 	logrus.Infof("Copying AMI %s to region %s", amiID, installConfig.AWS.Region)
