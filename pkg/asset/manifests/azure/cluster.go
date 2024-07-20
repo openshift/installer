@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils/cidr"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/azure"
 )
 
 // GenerateClusterAssets generates the manifests for the cluster-api.
@@ -48,6 +49,14 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	source := "*"
 	if installConfig.Config.Publish == types.InternalPublishingStrategy {
 		source = mainCIDR.String()
+	}
+
+	controlPlaneOutboundLB := &capz.LoadBalancerSpec{
+		Name:             clusterID.InfraID,
+		FrontendIPsCount: to.Ptr(int32(1)),
+	}
+	if installConfig.Config.Platform.Azure.OutboundType == azure.UserDefinedRoutingOutboundType {
+		controlPlaneOutboundLB = nil
 	}
 
 	securityGroup := capz.SecurityGroup{
@@ -114,10 +123,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 						Type: capz.Internal,
 					},
 				},
-				ControlPlaneOutboundLB: &capz.LoadBalancerSpec{
-					Name:             clusterID.InfraID,
-					FrontendIPsCount: to.Ptr(int32(1)),
-				},
+				ControlPlaneOutboundLB: controlPlaneOutboundLB,
 				Subnets: capz.Subnets{
 					{
 						SubnetClassSpec: capz.SubnetClassSpec{

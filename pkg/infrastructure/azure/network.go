@@ -12,12 +12,16 @@ import (
 )
 
 type lbInput struct {
-	infraID        string
-	region         string
-	resourceGroup  string
-	subscriptionID string
-	lbClient       *armnetwork.LoadBalancersClient
-	tags           map[string]*string
+	loadBalancerName       string
+	infraID                string
+	region                 string
+	resourceGroup          string
+	subscriptionID         string
+	frontendIPConfigName   string
+	backendAddressPoolName string
+	idPrefix               string
+	lbClient               *armnetwork.LoadBalancersClient
+	tags                   map[string]*string
 }
 
 type pipInput struct {
@@ -92,15 +96,87 @@ func createPublicIP(ctx context.Context, in *pipInput) (*armnetwork.PublicIPAddr
 	return &resp.PublicIPAddress, nil
 }
 
-func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip *armnetwork.PublicIPAddress, in *lbInput) (*armnetwork.LoadBalancer, error) {
-	loadBalancerName := in.infraID
+func createAPILoadBalancer(ctx context.Context, pip *armnetwork.PublicIPAddress, in *lbInput) (*armnetwork.LoadBalancer, error) {
 	probeName := "api-probe"
-	frontEndIPConfigName := "public-lb-ip-v4"
-	backEndAddressPoolName := in.infraID
-	idPrefix := fmt.Sprintf("subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/loadBalancers", in.subscriptionID, in.resourceGroup)
+
+	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx,
+		in.resourceGroup,
+		in.loadBalancerName,
+		armnetwork.LoadBalancer{
+			Location: to.Ptr(in.region),
+			SKU: &armnetwork.LoadBalancerSKU{
+				Name: to.Ptr(armnetwork.LoadBalancerSKUNameStandard),
+				Tier: to.Ptr(armnetwork.LoadBalancerSKUTierRegional),
+			},
+			Properties: &armnetwork.LoadBalancerPropertiesFormat{
+				FrontendIPConfigurations: []*armnetwork.FrontendIPConfiguration{
+					{
+						Name: &in.frontendIPConfigName,
+						Properties: &armnetwork.FrontendIPConfigurationPropertiesFormat{
+							PrivateIPAllocationMethod: to.Ptr(armnetwork.IPAllocationMethodDynamic),
+							PublicIPAddress:           pip,
+						},
+					},
+				},
+				BackendAddressPools: []*armnetwork.BackendAddressPool{
+					{
+						Name: &in.backendAddressPoolName,
+					},
+				},
+				Probes: []*armnetwork.Probe{
+					{
+						Name: &probeName,
+						Properties: &armnetwork.ProbePropertiesFormat{
+							Protocol:          to.Ptr(armnetwork.ProbeProtocolHTTPS),
+							Port:              to.Ptr[int32](6443),
+							IntervalInSeconds: to.Ptr[int32](5),
+							NumberOfProbes:    to.Ptr[int32](2),
+							RequestPath:       to.Ptr("/readyz"),
+						},
+					},
+				},
+				LoadBalancingRules: []*armnetwork.LoadBalancingRule{
+					{
+						Name: to.Ptr("api-v4"),
+						Properties: &armnetwork.LoadBalancingRulePropertiesFormat{
+							Protocol:             to.Ptr(armnetwork.TransportProtocolTCP),
+							FrontendPort:         to.Ptr[int32](6443),
+							BackendPort:          to.Ptr[int32](6443),
+							IdleTimeoutInMinutes: to.Ptr[int32](30),
+							EnableFloatingIP:     to.Ptr(false),
+							LoadDistribution:     to.Ptr(armnetwork.LoadDistributionDefault),
+							FrontendIPConfiguration: &armnetwork.SubResource{
+								ID: to.Ptr(fmt.Sprintf("/%s/%s/frontendIPConfigurations/%s", in.idPrefix, in.loadBalancerName, in.frontendIPConfigName)),
+							},
+							BackendAddressPool: &armnetwork.SubResource{
+								ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, in.backendAddressPoolName)),
+							},
+							Probe: &armnetwork.SubResource{
+								ID: to.Ptr(fmt.Sprintf("/%s/%s/probes/%s", in.idPrefix, in.loadBalancerName, probeName)),
+							},
+						},
+					},
+				},
+			},
+			Tags: in.tags,
+		}, nil)
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot create load balancer: %w", err)
+	}
+
+	resp, err := pollerResp.PollUntilDone(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &resp.LoadBalancer, nil
+}
+
+func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip *armnetwork.PublicIPAddress, in *lbInput) (*armnetwork.LoadBalancer, error) {
+	probeName := "api-probe"
 
 	// Get the CAPI-created outbound load balancer so we can modify it.
-	extLB, err := in.lbClient.Get(ctx, in.resourceGroup, loadBalancerName, nil)
+	extLB, err := in.lbClient.Get(ctx, in.resourceGroup, in.loadBalancerName, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get external load balancer: %w", err)
 	}
@@ -112,7 +188,7 @@ func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip *armne
 	// API server.
 	extLB.Properties.FrontendIPConfigurations = append(extLB.Properties.FrontendIPConfigurations,
 		&armnetwork.FrontendIPConfiguration{
-			Name: &frontEndIPConfigName,
+			Name: &in.frontendIPConfigName,
 			Properties: &armnetwork.FrontendIPConfigurationPropertiesFormat{
 				PrivateIPAllocationMethod: to.Ptr(armnetwork.IPAllocationMethodDynamic),
 				PublicIPAddress:           pip,
@@ -120,12 +196,12 @@ func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip *armne
 		})
 	extLB.Properties.BackendAddressPools = append(extLB.Properties.BackendAddressPools,
 		&armnetwork.BackendAddressPool{
-			Name: &backEndAddressPoolName,
+			Name: &in.backendAddressPoolName,
 		})
 
 	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx,
 		in.resourceGroup,
-		loadBalancerName,
+		in.loadBalancerName,
 		armnetwork.LoadBalancer{
 			Location: to.Ptr(in.region),
 			SKU: &armnetwork.LoadBalancerSKU{
@@ -158,13 +234,13 @@ func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip *armne
 							EnableFloatingIP:     to.Ptr(false),
 							LoadDistribution:     to.Ptr(armnetwork.LoadDistributionDefault),
 							FrontendIPConfiguration: &armnetwork.SubResource{
-								ID: to.Ptr(fmt.Sprintf("/%s/%s/frontendIPConfigurations/%s", idPrefix, loadBalancerName, frontEndIPConfigName)),
+								ID: to.Ptr(fmt.Sprintf("/%s/%s/frontendIPConfigurations/%s", in.idPrefix, in.loadBalancerName, in.frontendIPConfigName)),
 							},
 							BackendAddressPool: &armnetwork.SubResource{
-								ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", idPrefix, loadBalancerName, backEndAddressPoolName)),
+								ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, in.backendAddressPoolName)),
 							},
 							Probe: &armnetwork.SubResource{
-								ID: to.Ptr(fmt.Sprintf("/%s/%s/probes/%s", idPrefix, loadBalancerName, probeName)),
+								ID: to.Ptr(fmt.Sprintf("/%s/%s/probes/%s", in.idPrefix, in.loadBalancerName, probeName)),
 							},
 						},
 					},
@@ -186,13 +262,10 @@ func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip *armne
 }
 
 func updateInternalLoadBalancer(ctx context.Context, in *lbInput) (*armnetwork.LoadBalancer, error) {
-	loadBalancerName := fmt.Sprintf("%s-internal", in.infraID)
 	mcsProbeName := "sint-probe"
-	backEndAddressPoolName := fmt.Sprintf("%s-internal", in.infraID)
-	idPrefix := fmt.Sprintf("subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/loadBalancers", in.subscriptionID, in.resourceGroup)
 
 	// Get the CAPI-created internal load balancer so we can modify it.
-	lbResp, err := in.lbClient.Get(ctx, in.resourceGroup, loadBalancerName, nil)
+	lbResp, err := in.lbClient.Get(ctx, in.resourceGroup, in.loadBalancerName, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not get internal load balancer: %w", err)
 	}
@@ -225,13 +298,13 @@ func updateInternalLoadBalancer(ctx context.Context, in *lbInput) (*armnetwork.L
 			EnableFloatingIP:     to.Ptr(false),
 			LoadDistribution:     to.Ptr(armnetwork.LoadDistributionDefault),
 			FrontendIPConfiguration: &armnetwork.SubResource{
-				ID: to.Ptr(fmt.Sprintf("/%s/%s/frontendIPConfigurations/%s", idPrefix, loadBalancerName, existingFrontEndIPConfigName)),
+				ID: to.Ptr(fmt.Sprintf("/%s/%s/frontendIPConfigurations/%s", in.idPrefix, in.loadBalancerName, existingFrontEndIPConfigName)),
 			},
 			BackendAddressPool: &armnetwork.SubResource{
-				ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", idPrefix, loadBalancerName, backEndAddressPoolName)),
+				ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, in.backendAddressPoolName)),
 			},
 			Probe: &armnetwork.SubResource{
-				ID: to.Ptr(fmt.Sprintf("/%s/%s/probes/%s", idPrefix, loadBalancerName, mcsProbeName)),
+				ID: to.Ptr(fmt.Sprintf("/%s/%s/probes/%s", in.idPrefix, in.loadBalancerName, mcsProbeName)),
 			},
 		},
 	}
@@ -240,7 +313,7 @@ func updateInternalLoadBalancer(ctx context.Context, in *lbInput) (*armnetwork.L
 	intLB.Properties.LoadBalancingRules = append(intLB.Properties.LoadBalancingRules, mcsRule)
 	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx,
 		in.resourceGroup,
-		loadBalancerName,
+		in.loadBalancerName,
 		intLB,
 		nil)
 	if err != nil {
