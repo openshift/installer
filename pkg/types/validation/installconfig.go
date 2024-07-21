@@ -201,9 +201,9 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 
 		if c.Capabilities.BaselineCapabilitySet == configv1.ClusterVersionCapabilitySetNone {
 			enabledCaps := sets.New[configv1.ClusterVersionCapability](c.Capabilities.AdditionalEnabledCapabilities...)
-			if enabledCaps.Has(configv1.ClusterVersionCapabilityBaremetal) && !enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) {
+			if enabledCaps.Has(configv1.ClusterVersionCapabilityMarketplace) && !enabledCaps.Has(configv1.ClusterVersionCapabilityOperatorLifecycleManager) {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("additionalEnabledCapabilities"), c.Capabilities.AdditionalEnabledCapabilities,
-					"the baremetal capability requires the MachineAPI capability"))
+					"the marketplace capability requires the OperatorLifecycleManager capability"))
 			}
 			if c.Platform.BareMetal != nil && !enabledCaps.Has(configv1.ClusterVersionCapabilityBaremetal) {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("additionalEnabledCapabilities"), c.Capabilities.AdditionalEnabledCapabilities,

@@ -505,15 +505,18 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			mpool.Set(pool.Platform.BareMetal)
 			pool.Platform.BareMetal = &mpool
 
-			// Use managed user data secret, since images used by MachineSet
-			// are always up to date
-			workerUserDataSecretName = "worker-user-data-managed"
-			sets, err := baremetal.MachineSets(clusterID.InfraID, ic, &pool, "", "worker", workerUserDataSecretName)
-			if err != nil {
-				return errors.Wrap(err, "failed to create worker machine objects")
-			}
-			for _, set := range sets {
-				machineSets = append(machineSets, set)
+			enabledCaps := installConfig.Config.GetEnabledCapabilities()
+			if enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) {
+				// Use managed user data secret, since images used by MachineSet
+				// are always up to date
+				workerUserDataSecretName = "worker-user-data-managed"
+				sets, err := baremetal.MachineSets(clusterID.InfraID, ic, &pool, "", "worker", workerUserDataSecretName)
+				if err != nil {
+					return errors.Wrap(err, "failed to create worker machine objects")
+				}
+				for _, set := range sets {
+					machineSets = append(machineSets, set)
+				}
 			}
 		case gcptypes.Name:
 			mpool := defaultGCPMachinePoolPlatform(pool.Architecture)

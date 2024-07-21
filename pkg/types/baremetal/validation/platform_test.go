@@ -52,6 +52,15 @@ func TestValidatePlatform(t *testing.T) {
 			expected: "bare metal hosts are missing",
 		},
 		{
+			name: "no_hosts_machineapi_disabled",
+			config: installConfig().
+				Capabilities(types.Capabilities{BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityIngress,
+						configv1.ClusterVersionCapabilityBaremetal}}).
+				BareMetalPlatform(
+					platform().Hosts()).build(),
+		},
+		{
 			name: "toofew_masters_norole",
 			config: installConfig().
 				BareMetalPlatform(
@@ -1001,6 +1010,11 @@ func (icb *installConfigBuilder) BareMetalPlatform(builder *platformBuilder) *in
 	icb.InstallConfig.Platform = types.Platform{
 		BareMetal: builder.build(),
 	}
+	return icb
+}
+
+func (icb *installConfigBuilder) Capabilities(capabilities types.Capabilities) *installConfigBuilder {
+	icb.InstallConfig.Capabilities = &capabilities
 	return icb
 }
 

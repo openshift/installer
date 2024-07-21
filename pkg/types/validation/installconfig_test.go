@@ -683,6 +683,8 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "valid baremetal platform",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
+				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "v4.11"}
+				c.Capabilities.AdditionalEnabledCapabilities = append(c.Capabilities.AdditionalEnabledCapabilities, configv1.ClusterVersionCapabilityIngress, configv1.ClusterVersionCapabilityCloudCredential, configv1.ClusterVersionCapabilityCloudControllerManager, configv1.ClusterVersionCapabilityOperatorLifecycleManager)
 				c.Platform = types.Platform{
 					BareMetal: validBareMetalPlatform(),
 				}
@@ -1436,6 +1438,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Platform = types.Platform{BareMetal: validBareMetalPlatform()}
+				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetCurrent}
 				c.CredentialsMode = types.PassthroughCredentialsMode
 				return c
 			}(),
@@ -1557,16 +1560,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `additionalEnabledCapabilities: Invalid value: \[\]v1.ClusterVersionCapability{"marketplace"}: the marketplace capability requires the OperatorLifecycleManager capability`,
-		},
-		{
-			name: "invalid capability baremetal specified without MachineAPI",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "None",
-					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{"baremetal"}}
-				return c
-			}(),
-			expectedError: `additionalEnabledCapabilities: Invalid value: \[\]v1.ClusterVersionCapability{"baremetal"}: the baremetal capability requires the MachineAPI capability`,
 		},
 		{
 			name: "valid additional enabled capability specified",
@@ -2211,16 +2204,15 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: "featureGates: Forbidden: featureGates can only be used with the CustomNoUpgrade feature set",
 		},
 		{
-			name: "return error when MAPI disabled w/o baremetal with baseline none",
+			name: "valid disabled MAPI with baseline none and baremetal enabled",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Capabilities = &types.Capabilities{
 					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
-					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityBaremetal},
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityBaremetal, configv1.ClusterVersionCapabilityIngress, configv1.ClusterVersionCapabilityCloudCredential, configv1.ClusterVersionCapabilityCloudControllerManager},
 				}
 				return c
 			}(),
-			expectedError: `the baremetal capability requires the MachineAPI capability`,
 		},
 		{
 			name: "valid disabled MAPI capability configuration",
