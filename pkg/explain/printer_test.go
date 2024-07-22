@@ -172,6 +172,9 @@ func Test_PrintFields(t *testing.T) {
  * "NLB": A Network Load Balancer that makes routing decisions at the transport layer (TCP/SSL). See the following for additional details: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#nlb 
  If this field is not set explicitly, it defaults to "Classic".  This default is subject to change over time.
 
+    networkLoadBalancer <object>
+      networkLoadBalancerParameters holds configuration parameters for an AWS network load balancer. Present only if type is NLB.
+
     preserveBootstrapIgnition <boolean>
       PreserveBootstrapIgnition is deprecated. Use bestEffortDeleteIgnition instead.
 

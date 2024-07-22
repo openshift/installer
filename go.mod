@@ -324,3 +324,5 @@ replace github.com/containerd/containerd => github.com/containerd/containerd v1.
 replace golang.org/x/oauth2 => golang.org/x/oauth2 v0.15.0
 
 replace google.golang.org/api => google.golang.org/api v0.157.0
+
+replace github.com/openshift/api => github.com/miheer/api v0.0.0-20240710112315-29206896bc26
