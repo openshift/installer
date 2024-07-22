@@ -9,6 +9,7 @@ import (
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/coreos/stream-metadata-go/stream"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -98,10 +99,12 @@ func (ci *ClusterInfo) Generate(_ context.Context, dependencies asset.Parents) e
 	if err != nil {
 		return err
 	}
-	err = ci.retrieveArchitecture()
+
+	err = ci.retrieveArchitecture(addNodesConfig)
 	if err != nil {
 		return err
 	}
+
 	err = ci.retrieveInstallConfigData()
 	if err != nil {
 		return err
@@ -200,14 +203,19 @@ func (ci *ClusterInfo) retrieveUserTrustBundle() error {
 	return nil
 }
 
-func (ci *ClusterInfo) retrieveArchitecture() error {
-	nodes, err := ci.Client.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{
-		LabelSelector: "node-role.kubernetes.io/master",
-	})
-	if err != nil {
-		return err
+func (ci *ClusterInfo) retrieveArchitecture(addNodesConfig *AddNodesConfig) error {
+	if addNodesConfig.Config.CPUArchitecture != "" {
+		logrus.Infof("CPU architecture set to: %v", addNodesConfig.Config.CPUArchitecture)
+		ci.Architecture = addNodesConfig.Config.CPUArchitecture
+	} else {
+		nodes, err := ci.Client.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{
+			LabelSelector: "node-role.kubernetes.io/master",
+		})
+		if err != nil {
+			return err
+		}
+		ci.Architecture = nodes.Items[0].Status.NodeInfo.Architecture
 	}
-	ci.Architecture = nodes.Items[0].Status.NodeInfo.Architecture
 
 	return nil
 }
