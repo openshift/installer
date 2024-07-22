@@ -176,7 +176,8 @@ ingresscontrollers.operator.openshift.io:
   CRDName: ingresscontrollers.operator.openshift.io
   Capability: Ingress
   Category: ""
-  FeatureGates: []
+  FeatureGates:
+  - IngressControllerLBSubnetsAWS
   FilenameOperatorName: ingress
   FilenameOperatorOrdering: "00"
   FilenameRunLevel: "0000_50"
