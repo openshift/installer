@@ -1426,6 +1426,17 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 		},
 		{
+			name: "gcp cluster is heteregeneous",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{GCP: validGCPPlatform()}
+				c.Compute[0].Architecture = types.ArchitectureARM64
+				c.FeatureSet = "CustomNoUpgrade"
+				c.FeatureGates = []string{"MultiArchInstallGCP=true"}
+				return c
+			}(),
+		},
+		{
 			name: "valid cloud credentials mode",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()

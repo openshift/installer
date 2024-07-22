@@ -610,6 +610,8 @@ func MultiArchFeatureGateEnabled(platform string, fgs featuregates.FeatureGate) 
 	switch platform {
 	case aws.Name:
 		return fgs.Enabled(features.FeatureGateMultiArchInstallAWS)
+	case gcp.Name:
+		return fgs.Enabled(features.FeatureGateMultiArchInstallGCP)
 	default:
 		return false
 	}
