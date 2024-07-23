@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	timeout time.Duration = 1 * time.Minute
+	timeout = 1 * time.Minute
 )
 
 const (
