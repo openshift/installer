@@ -44,6 +44,11 @@ then
 	GOOS='' GOARCH='' go generate ./data
 fi
 
+if (echo "${TAGS}" | grep -q '\bfipscapable\b')
+then
+	export CGO_ENABLED=1
+fi
+
 echo "building node-joiner"
 
 # shellcheck disable=SC2086
