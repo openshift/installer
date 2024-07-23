@@ -144,9 +144,8 @@ func MonitorSingleNode(waitContext context.Context, cluster *Cluster, nodeIPAddr
 			if !mon.clusterHasSecondCSRPending() {
 				mon.logStatus("Node is Ready")
 			} else {
-				// TODO: There appears to be a bug where the node becomes Ready
-				// before second CSR is approved. Log Pending CSRs for now, so users
-				// are aware there are still some waiting their approval even
+				// The node becomes Ready before second CSR is approved. Log Pending CSRs
+				// so users are aware there are still some waiting their approval even
 				// though the node status is Ready.
 				mon.logStatus("Node is Ready but has CSRs pending approval. Until all CSRs are approved, the node may not be fully functional.")
 				mon.logCSRsPendingApproval(secondCSRSignerName)
