@@ -631,7 +631,11 @@ func (s *Service) getSubnetTagParams(unmanagedVPC bool, id string, public bool, 
 			}
 		}
 		// Add tag needed for Service type=LoadBalancer
-		additionalTags[infrav1.ClusterAWSCloudProviderTagKey(s.scope.KubernetesClusterName())] = string(infrav1.ResourceLifecycleShared)
+		if unmanagedVPC {
+			additionalTags[infrav1.ClusterAWSCloudProviderTagKey(s.scope.KubernetesClusterName())] = string(infrav1.ResourceLifecycleShared)
+		} else {
+			additionalTags[infrav1.ClusterAWSCloudProviderTagKey(s.scope.KubernetesClusterName())] = string(infrav1.ResourceLifecycleOwned)
+		}
 	}
 
 	if !unmanagedVPC {
