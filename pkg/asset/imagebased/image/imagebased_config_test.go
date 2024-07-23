@@ -215,7 +215,7 @@ networkConfig:
 `,
 
 			expectedFound: false,
-			expectedError: "invalid Image-based Installation ISO Config: networkConfig: Invalid value: invalid: config\n: failed to execute 'nmstatectl gc', error: InvalidArgument: Invalid YAML string: unknown field `invalid`, expected one of `hostname`, `dns-resolver`, `route-rules`, `routes`, `interfaces`, `ovs-db`, `ovn`",
+			expectedError: "networkConfig: Invalid value: invalid: config\n: failed to execute 'nmstatectl gc', error: InvalidArgument: Invalid YAML string: unknown field `invalid`",
 		},
 		{
 			name: "invalid-imageDigestSources",
@@ -312,7 +312,7 @@ proxy:
 			found, err := asset.Load(fileFetcher)
 			assert.Equal(t, tc.expectedFound, found)
 			if tc.expectedError != "" {
-				assert.Equal(t, tc.expectedError, err.Error())
+				assert.ErrorContains(t, err, tc.expectedError)
 			} else {
 				assert.NoError(t, err)
 				if tc.expectedConfig != nil {

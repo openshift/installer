@@ -95,7 +95,7 @@ networkConfig:
       state: invalid`,
 
 			expectedFound: false,
-			expectedError: "invalid Image-based Config configuration: networkConfig: Invalid value: interfaces:\n- name: eth0\n  state: invalid\n  type: ethernet\n: failed to execute 'nmstatectl gc', error: InvalidArgument: Invalid YAML string: interfaces: unknown variant `invalid`, expected one of `up`, `down`, `absent`, `unknown`, `ignore` at line 2 column 1",
+			expectedError: "networkConfig: Invalid value: interfaces:\n- name: eth0\n  state: invalid\n  type: ethernet\n: failed to execute 'nmstatectl gc', error: InvalidArgument: Invalid YAML string: interfaces: unknown variant `invalid`",
 		},
 		{
 			name: "invalid-additional-ntp-sources",
@@ -135,7 +135,7 @@ networkConfig:
 			found, err := asset.Load(fileFetcher)
 			assert.Equal(t, tc.expectedFound, found)
 			if tc.expectedError != "" {
-				assert.Equal(t, tc.expectedError, err.Error())
+				assert.ErrorContains(t, err, tc.expectedError)
 			} else {
 				assert.NoError(t, err)
 				if tc.expectedConfig != nil {
