@@ -71,7 +71,7 @@ func (i *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 
 	ibiConfig := configAsset.Config
 	if ibiConfig == nil {
-		return nil
+		return fmt.Errorf("%s is required", configFilename)
 	}
 
 	config := &igntypes.Config{

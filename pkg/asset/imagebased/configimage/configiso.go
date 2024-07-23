@@ -91,14 +91,14 @@ func (ci *ConfigImage) Generate(_ context.Context, dependencies asset.Parents) e
 	return nil
 }
 
-// PersistToFile writes the iso image in the assets folder.
+// PersistToFile writes the ISO image in the assets folder.
 func (ci *ConfigImage) PersistToFile(directory string) error {
 	defer os.RemoveAll(ci.tmpPath)
 
 	// If the tmpPath is not set then it means that either one of the Config
 	// dependencies or the asset itself failed for some reason
 	if ci.tmpPath == "" {
-		return errors.New("cannot generate Config image due to configuration errors")
+		return errors.New("cannot generate config image due to configuration errors")
 	}
 
 	configImageFile := filepath.Join(directory, configImageFilename)

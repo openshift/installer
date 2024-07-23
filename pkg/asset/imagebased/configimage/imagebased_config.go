@@ -85,10 +85,12 @@ networkConfig:
 
 // PersistToFile writes the image-based-config.yaml file to the assets folder.
 func (i *ImageBasedConfig) PersistToFile(directory string) error {
-	templatePath := filepath.Join(directory, imageBasedConfigFilename)
-	templateByte := []byte(i.Template)
+	if i.File == nil {
+		return nil
+	}
 
-	err := os.WriteFile(templatePath, templateByte, 0o600)
+	configPath := filepath.Join(directory, imageBasedConfigFilename)
+	err := os.WriteFile(configPath, i.File.Data, 0o600)
 	if err != nil {
 		return err
 	}

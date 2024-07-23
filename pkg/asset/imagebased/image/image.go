@@ -60,8 +60,8 @@ func (i *Image) Generate(_ context.Context, dependencies asset.Parents) error {
 
 // PersistToFile writes the ISO image in the assets folder.
 func (i *Image) PersistToFile(directory string) error {
-	if i.Config == nil {
-		return fmt.Errorf("imagebased installation configuration is nil")
+	if i.Config == nil || len(i.IgnitionByte) == 0 {
+		return fmt.Errorf("could not generate image because of configuration errors")
 	}
 
 	// Create a tmp folder to store all the pieces required to generate the image-based installer artifacts.
