@@ -2,13 +2,17 @@ package clusterapi
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/sirupsen/logrus"
 	resourcemanager "google.golang.org/api/cloudresourcemanager/v1"
+	"google.golang.org/api/googleapi"
 	iam "google.golang.org/api/iam/v1"
 	"google.golang.org/api/option"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	gcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 )
@@ -102,36 +106,58 @@ func AddServiceAccountRoles(ctx context.Context, projectID, serviceAccountID str
 		return fmt.Errorf("failed to create resourcemanager service: %w", err)
 	}
 
-	policy, err := getPolicy(ctx, service, projectID)
-	if err != nil {
-		return err
+	backoff := wait.Backoff{
+		Duration: 2 * time.Second,
+		Jitter:   1.0,
+		Steps:    5,
 	}
-
-	member := fmt.Sprintf("serviceAccount:%s", serviceAccountID)
-	for _, role := range roles {
-		err = addMemberToRole(policy, role, member)
-		if err != nil {
-			return fmt.Errorf("failed to add role %s to %s: %w", role, member, err)
+	// Get and set the policy in a backoff loop.
+	// If the policy set fails, the policy must be retrieved again via the get before retrying the set.
+	var lastErr error
+	if waitErr := wait.ExponentialBackoffWithContext(ctx, backoff, func(ctx context.Context) (bool, error) {
+		policy, err := getPolicy(ctx, service, projectID)
+		if isQuotaExceededError(err) {
+			lastErr = err
+			logrus.Debugf("Failed to get IAM policy, retrying after backoff")
+			return false, nil
+		} else if err != nil {
+			return false, fmt.Errorf("failed to get IAM policy, unexpected error: %w", err)
 		}
-	}
 
-	err = setPolicy(ctx, service, projectID, policy)
-	if err != nil {
-		return err
-	}
+		member := fmt.Sprintf("serviceAccount:%s", serviceAccountID)
+		for _, role := range roles {
+			err = addMemberToRole(policy, role, member)
+			if err != nil {
+				return false, fmt.Errorf("failed to add role %s to %s: %w", role, member, err)
+			}
+		}
 
+		err = setPolicy(ctx, service, projectID, policy)
+		if err != nil {
+			if isConflictError(err) {
+				lastErr = err
+				logrus.Debugf("Concurrent IAM policy changes, restarting read/modify/write")
+				return false, nil
+			}
+			return false, fmt.Errorf("failed to set IAM policy, unexpected error: %w", err)
+		}
+		logrus.Debugf("Successfully set IAM policy")
+		return true, nil
+	}); waitErr != nil {
+		if wait.Interrupted(waitErr) {
+			return fmt.Errorf("failed to set IAM policy: %w", lastErr)
+		}
+		return waitErr
+	}
 	return nil
 }
 
 // getPolicy gets the project's IAM policy.
 func getPolicy(ctx context.Context, crmService *resourcemanager.Service, projectID string) (*resourcemanager.Policy, error) {
+	logrus.Debugf("Getting policy for %s", projectID)
 	request := &resourcemanager.GetIamPolicyRequest{}
 	policy, err := crmService.Projects.GetIamPolicy(projectID, request).Context(ctx).Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch project IAM policy: %w", err)
-	}
-
-	return policy, nil
+	return policy, err
 }
 
 // setPolicy sets the project's IAM policy.
@@ -139,11 +165,7 @@ func setPolicy(ctx context.Context, crmService *resourcemanager.Service, project
 	request := &resourcemanager.SetIamPolicyRequest{}
 	request.Policy = policy
 	_, err := crmService.Projects.SetIamPolicy(projectID, request).Context(ctx).Do()
-	if err != nil {
-		return fmt.Errorf("failed to set project IAM policy: %w", err)
-	}
-
-	return nil
+	return err
 }
 
 // addMemberToRole adds a member to a role binding.
@@ -174,4 +196,22 @@ func addMemberToRole(policy *resourcemanager.Policy, role, member string) error 
 	policyBinding.Members = append(policyBinding.Members, member)
 	logrus.Debugf("adding %s role, added %s member", role, member)
 	return nil
+}
+
+// isConflictError returns true if error matches conflict on concurrent policy sets.
+func isConflictError(err error) bool {
+	var ae *googleapi.Error
+	if errors.As(err, &ae) && (ae.Code == http.StatusConflict || ae.Code == http.StatusPreconditionFailed) {
+		return true
+	}
+	return false
+}
+
+// isQuotaExceededError returns true if the error matches quota exceeded.
+func isQuotaExceededError(err error) bool {
+	var ae *googleapi.Error
+	if errors.As(err, &ae) && (ae.Code == http.StatusTooManyRequests) {
+		return true
+	}
+	return false
 }
