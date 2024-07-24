@@ -38,6 +38,8 @@ module "master" {
   gcp_extra_tags       = var.gcp_extra_tags
 
   tags = var.gcp_control_plane_tags
+
+  user_provisioned_dns = var.gcp_user_provisioned_dns
 }
 
 module "iam" {
