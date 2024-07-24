@@ -179,6 +179,7 @@ type CreateBlobContainerInput struct {
 	ResourceGroupName    string
 	StorageAccountName   string
 	ContainerName        string
+	PublicAccess         *armstorage.PublicAccess
 	StorageClientFactory *armstorage.ClientFactory
 }
 
@@ -200,7 +201,7 @@ func CreateBlobContainer(ctx context.Context, in *CreateBlobContainerInput) (*Cr
 		in.ContainerName,
 		armstorage.BlobContainer{
 			ContainerProperties: &armstorage.ContainerProperties{
-				PublicAccess: to.Ptr(armstorage.PublicAccessContainer),
+				PublicAccess: in.PublicAccess,
 			},
 		},
 		nil,

@@ -344,11 +344,16 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	logrus.Debugf("StorageAccount.ID=%s", *storageAccount.ID)
 
 	// Create blob storage container
+	publicAccess := armstorage.PublicAccessContainer
+	if platform.CustomerManagedKey != nil {
+		publicAccess = armstorage.PublicAccessNone
+	}
 	createBlobContainerOutput, err := CreateBlobContainer(ctx, &CreateBlobContainerInput{
 		SubscriptionID:       subscriptionID,
 		ResourceGroupName:    resourceGroupName,
 		StorageAccountName:   storageAccountName,
 		ContainerName:        containerName,
+		PublicAccess:         to.Ptr(publicAccess),
 		StorageClientFactory: storageClientFactory,
 	})
 	if err != nil {
@@ -743,13 +748,17 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	ignitionContainerName := "ignition"
 	blobName := "bootstrap.ign"
 	blobURL := fmt.Sprintf("%s/%s/%s", p.StorageURL, ignitionContainerName, blobName)
-
+	publicAccess := armstorage.PublicAccessContainer
+	if in.InstallConfig.Config.Azure.CustomerManagedKey != nil {
+		publicAccess = armstorage.PublicAccessNone
+	}
 	// Create ignition blob storage container
 	createBlobContainerOutput, err := CreateBlobContainer(ctx, &CreateBlobContainerInput{
 		ContainerName:        ignitionContainerName,
 		SubscriptionID:       subscriptionID,
 		ResourceGroupName:    p.ResourceGroupName,
 		StorageAccountName:   p.StorageAccountName,
+		PublicAccess:         to.Ptr(publicAccess),
 		StorageClientFactory: p.StorageClientFactory,
 	})
 	if err != nil {
