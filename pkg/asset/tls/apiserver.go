@@ -337,7 +337,7 @@ func (c *KubeAPIServerLBSignerCertKey) Generate(ctx context.Context, parents ass
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "kube-apiserver-lb-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityTenYears,
+		Validity:  ValidityOneDay/48,
 		IsCA:      true,
 	}
 
