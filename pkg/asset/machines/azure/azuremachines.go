@@ -184,7 +184,6 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 		})
 	}
 
-	osDisk.ManagedDisk.DiskEncryptionSet = nil
 	bootstrapAzureMachine := &capz.AzureMachine{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: capiutils.GenerateBoostrapMachineName(clusterID),
