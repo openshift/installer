@@ -2007,8 +2007,8 @@ github.com/openshift/hive/apis v0.0.0-20220222213051-def9088fdb5a h1:E+XPJs/aVvY
 github.com/openshift/hive/apis v0.0.0-20220222213051-def9088fdb5a/go.mod h1:E1bgquRiwfugdArdecPbpYIrAdve5kTzMaJb0+8jMXI=
 github.com/openshift/library-go v0.0.0-20240207105404-126b47137408 h1:Evg6GEvEuyj9toFX14YenXI6hGRnhLWqYx/rHO7VnQ4=
 github.com/openshift/library-go v0.0.0-20240207105404-126b47137408/go.mod h1:ePlaOqUiPplRc++6aYdMe+2FmXb2xTNS9Nz5laG2YmI=
-github.com/openshift/machine-api-operator v0.2.1-0.20240702095949-e959540b5ab8 h1:l3gj7u1YqFPHE1kftlNtslHddG6RBFsAnGD/xRCohGo=
-github.com/openshift/machine-api-operator v0.2.1-0.20240702095949-e959540b5ab8/go.mod h1:0hQJFbHS+qy1WY1/lmQpb1tizytRws+IJxGwbtHBqt4=
+github.com/openshift/machine-api-operator v0.2.1-0.20240722145313-3a817c78946a h1:0TwU3J28sQTGy/ZMVSvi3sUolH92BwlIWcf+wCJLWKE=
+github.com/openshift/machine-api-operator v0.2.1-0.20240722145313-3a817c78946a/go.mod h1:2TUb0+EfkIj5fWhGy+oR3QiANCzHTWzkyNDEknxrQJI=
 github.com/openshift/machine-api-provider-gcp v0.0.1-0.20231014045125-6096cc86f3ba h1:q9VMvYHgKq1v+3E57HIdbR9hJPNSmHDfZpOHsXC27Nk=
 github.com/openshift/machine-api-provider-gcp v0.0.1-0.20231014045125-6096cc86f3ba/go.mod h1:G1BYMrC49dMOkCEjG+LPoe0rRXFRv8o/jqLuN4fgfGM=
 github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20231207164151-6b0b8ea7b16d h1:ELypg5zkw9jXCbp2jZ6iwYWTCtSqZVrxcKBQqwIgd2Y=
