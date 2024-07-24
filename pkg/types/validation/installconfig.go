@@ -48,6 +48,7 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 	vspherevalidation "github.com/openshift/installer/pkg/types/vsphere/validation"
 	"github.com/openshift/installer/pkg/validate"
+	"github.com/openshift/installer/pkg/version"
 )
 
 // hostCryptBypassedAnnotation is set if the host crypt check was bypassed via environment variable.
@@ -126,6 +127,9 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 	}
 	multiArchEnabled := types.MultiArchFeatureGateEnabled(c.Platform.Name(), c.EnabledFeatureGates())
 	allErrs = append(allErrs, validateCompute(&c.Platform, c.ControlPlane, c.Compute, field.NewPath("compute"), multiArchEnabled)...)
+	if multiArchEnabled {
+		allErrs = append(allErrs, validateMultiReleasePayload(c.ControlPlane, c.Compute)...)
+	}
 	if err := validate.ImagePullSecret(c.PullSecret); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("pullSecret"), c.PullSecret, err.Error()))
 	}
@@ -1294,6 +1298,43 @@ func validateGatedFeatures(c *types.InstallConfig) field.ErrorList {
 
 	for _, gf := range gatedFeatures {
 		fgCheck(gf)
+	}
+
+	return allErrs
+}
+
+// validateMultiReleasePayload ensures a multi payload is used when a multi-arch cluster config is enabled.
+func validateMultiReleasePayload(controlPlanePool *types.MachinePool, computePool []types.MachinePool) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	releaseArch, err := version.ReleaseArchitecture()
+	if err != nil {
+		return append(allErrs, field.InternalError(field.NewPath(""), err))
+	}
+
+	switch releaseArch {
+	case "multi":
+		// All good
+	case "unknown":
+		for _, p := range computePool {
+			if controlPlanePool != nil && controlPlanePool.Architecture != p.Architecture {
+				// Overriding release architecture is a must during dev/CI so just log a warning instead of erroring out
+				logrus.Warnln("Could not determine release architecture for multi arch cluster configuration. Make sure the release is a multi architecture payload.")
+				break
+			}
+		}
+	default:
+		if controlPlanePool != nil && controlPlanePool.Architecture != types.Architecture(releaseArch) {
+			errMsg := fmt.Sprintf("cannot create %s controlPlane node from a single architecture %s release payload", controlPlanePool.Architecture, releaseArch)
+			allErrs = append(allErrs, field.Invalid(field.NewPath("controlPlane", "architecture"), controlPlanePool.Architecture, errMsg))
+		}
+		for i, p := range computePool {
+			poolFldPath := field.NewPath("compute").Index(i)
+			if p.Architecture != types.Architecture(releaseArch) {
+				errMsg := fmt.Sprintf("cannot create %s compute node from a single architecture %s release payload", p.Architecture, releaseArch)
+				allErrs = append(allErrs, field.Invalid(poolFldPath.Child("architecture"), p.Architecture, errMsg))
+			}
+		}
 	}
 
 	return allErrs
