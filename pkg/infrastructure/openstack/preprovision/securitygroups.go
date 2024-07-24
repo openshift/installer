@@ -64,7 +64,16 @@ func SecurityGroups(ctx context.Context, installConfig *installconfig.InstallCon
 			return fmt.Errorf("failed to create the Control plane security group: %w", err)
 		}
 
-		if err := attributestags.Add(ctx, networkClient, "security-groups", masterGroup.ID, "openshiftClusterID="+infraID).ExtractErr(); err != nil {
+		// The Neutron call to add a tag
+		// (https://docs.openstack.org/api-ref/network/v2/#add-a-tag)
+		// doesn't accept all special characters. Here we use the
+		// "replace-all-tags" call instead, because it accepts a more
+		// robust JSON body.
+		//
+		// see: https://bugzilla.redhat.com/show_bug.cgi?id=2299208
+		if _, err := attributestags.ReplaceAll(ctx, networkClient, "security-groups", masterGroup.ID, attributestags.ReplaceAllOpts{
+			Tags: []string{"openshiftClusterID=" + infraID},
+		}).Extract(); err != nil {
 			return fmt.Errorf("failed to tag the Control plane security group: %w", err)
 		}
 
@@ -76,7 +85,10 @@ func SecurityGroups(ctx context.Context, installConfig *installconfig.InstallCon
 			return fmt.Errorf("failed to create the Compute security group: %w", err)
 		}
 
-		if err := attributestags.Add(ctx, networkClient, "security-groups", workerGroup.ID, "openshiftClusterID="+infraID).ExtractErr(); err != nil {
+		// See comment above
+		if _, err := attributestags.ReplaceAll(ctx, networkClient, "security-groups", workerGroup.ID, attributestags.ReplaceAllOpts{
+			Tags: []string{"openshiftClusterID=" + infraID},
+		}).Extract(); err != nil {
 			return fmt.Errorf("failed to tag the Compute security group: %w", err)
 		}
 	}
