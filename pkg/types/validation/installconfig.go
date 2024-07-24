@@ -148,7 +148,7 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		allErrs = append(allErrs, field.Invalid(field.NewPath("imageContentSources"), c.Publish, "cannot set imageContentSources and imageDigestSources at the same time"))
 	}
 	if len(c.DeprecatedImageContentSources) != 0 {
-		logrus.Warningln("imageContentSources is deprecated, please use ImageDigestSource")
+		logrus.Warningln("imageContentSources is deprecated, please use ImageDigestSources")
 	}
 	allErrs = append(allErrs, validateCloudCredentialsMode(c.CredentialsMode, field.NewPath("credentialsMode"), c.Platform)...)
 	if c.Capabilities != nil {
