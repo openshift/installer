@@ -76,6 +76,7 @@ type agentTemplateData struct {
 	ImageTypeISO              string
 	PublicKeyPEM              string
 	Token                     string
+	TokenExpiry               string
 	AuthType                  string
 	CaBundleMount             string
 }
@@ -188,11 +189,16 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 		// that all the hosts defined are workers.
 		numMasters = 0
 		numWorkers = len(addNodesConfig.Config.Hosts)
+
 		// Enable add-nodes specific services
 		enabledServices = append(enabledServices, "agent-add-node.service")
 		// Generate add-nodes.env file
-		addNodesEnvFile := ignition.FileFromString(addNodesEnvPath, "root", 0644, getAddNodesEnv(*clusterInfo))
+		addNodesEnvFile := ignition.FileFromString(addNodesEnvPath, "root", 0644, getAddNodesEnv(*clusterInfo, authConfig.AgentAuthTokenExpiry))
 		config.Storage.Files = append(config.Storage.Files, addNodesEnvFile)
+
+		// Enable auth token service
+		enabledServices = append(enabledServices, "agent-auth-token-status.service")
+
 		// Version matches the source cluster one
 		openshiftVersion = clusterInfo.Version
 		streamGetter = func(ctx context.Context) (*stream.Stream, error) {
@@ -260,11 +266,13 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 		authConfig.PublicKey,
 		authConfig.AuthType,
 		authConfig.AgentAuthToken,
+		authConfig.AgentAuthTokenExpiry,
 		caBundleMount,
 		len(registriesConfig.MirrorConfig) > 0,
 		numMasters, numWorkers,
 		osImage,
-		infraEnv.Spec.Proxy)
+		infraEnv.Spec.Proxy,
+	)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
 	if err != nil {
@@ -374,7 +382,7 @@ func addBootstrapScripts(config *igntypes.Config, releaseImage string) (err erro
 }
 
 func getTemplateData(name, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries,
-	imageTypeISO, infraEnvID, publicKey, authType, token, caBundleMount string,
+	imageTypeISO, infraEnvID, publicKey, authType, token, tokenExpiry, caBundleMount string,
 	haveMirrorConfig bool,
 	numMasters, numWorkers int,
 	osImage *models.OsImage,
@@ -397,6 +405,7 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage, releaseIm
 		PublicKeyPEM:              publicKey,
 		AuthType:                  authType,
 		Token:                     token,
+		TokenExpiry:               tokenExpiry,
 		CaBundleMount:             caBundleMount,
 	}
 }
@@ -431,11 +440,12 @@ WORKFLOW_TYPE=%s
 `, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String(), token, token, workflowType)
 }
 
-func getAddNodesEnv(clusterInfo joiner.ClusterInfo) string {
+func getAddNodesEnv(clusterInfo joiner.ClusterInfo, authTokenExpiry string) string {
 	return fmt.Sprintf(`CLUSTER_ID=%s
 CLUSTER_NAME=%s
 CLUSTER_API_VIP_DNS_NAME=%s
-`, clusterInfo.ClusterID, clusterInfo.ClusterName, clusterInfo.APIDNSName)
+AGENT_AUTH_TOKEN_EXPIRY=%s
+`, clusterInfo.ClusterID, clusterInfo.ClusterName, clusterInfo.APIDNSName, authTokenExpiry)
 }
 
 func addStaticNetworkConfig(config *igntypes.Config, staticNetworkConfig []*models.HostStaticNetworkConfig) (err error) {

@@ -93,7 +93,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 
 	publicKey := "-----BEGIN EC PUBLIC KEY-----\nMHcCAQEEIOSCfDNmx0qe6dncV4tg==\n-----END EC PUBLIC KEY-----\n"
 	token := "someToken"
-	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries, "minimal-iso", infraEnvID, publicKey, gencrypto.AuthType, token, "", haveMirrorConfig, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, osImage, proxy)
+	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries, "minimal-iso", infraEnvID, publicKey, gencrypto.AuthType, token, "", "", haveMirrorConfig, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, osImage, proxy)
 	assert.Equal(t, clusterName, templateData.ClusterName)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
@@ -395,6 +395,7 @@ func commonFiles() []string {
 		"/usr/local/bin/load-config-iso.sh",
 		"/etc/udev/rules.d/80-agent-config-image.rules",
 		"/usr/local/bin/add-node.sh",
+		"/usr/local/bin/agent-auth-token-status.sh",
 		"/usr/local/bin/common.sh",
 	}
 }
