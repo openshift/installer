@@ -204,7 +204,7 @@ func TestValidateMachinePool(t *testing.T) {
 				}
 				return p
 			}(),
-			valid: false,
+			valid: true,
 		},
 		{
 			name:     "invalid GCP service account non xpn install",
@@ -218,7 +218,7 @@ func TestValidateMachinePool(t *testing.T) {
 				}
 				return p
 			}(),
-			valid: false,
+			valid: true,
 		},
 	}
 	for _, tc := range cases {

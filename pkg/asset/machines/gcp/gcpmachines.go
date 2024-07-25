@@ -2,8 +2,6 @@
 package gcp
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -16,7 +14,6 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
 	"github.com/openshift/installer/pkg/types"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
@@ -160,45 +157,17 @@ func createGCPMachine(name string, installConfig *installconfig.InstallConfig, i
 		gcpMachine.Spec.ShieldedInstanceConfig = ptr.To(shieldedInstanceConfig)
 	}
 
+	serviceAccountEmail := gcptypes.GetConfiguredServiceAccount(installConfig.Config.Platform.GCP, mpool)
+	if serviceAccountEmail == "" {
+		serviceAccountEmail = gcptypes.GetDefaultServiceAccount(installConfig.Config.Platform.GCP, infraID, masterRole[0:1])
+	}
 	serviceAccount := &capg.ServiceAccount{
+		Email: serviceAccountEmail,
 		// Set scopes to value defined at
 		// https://cloud.google.com/compute/docs/access/service-accounts#scopes_best_practice
 		Scopes: []string{compute.CloudPlatformScope},
 	}
 
-	projectID := installConfig.Config.Platform.GCP.ProjectID
-	serviceAccount.Email = fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", infraID, masterRole[0:1], projectID)
-	// The installer will create a service account for compute nodes with the above naming convention.
-	// The same service account will be used for control plane nodes during a vanilla installation. During a
-	// xpn installation, the installer will attempt to use an existing service account from a user supplied
-	// value in install-config.
-	// Note - the derivation of the ServiceAccount from credentials will no longer be supported.
-	if len(installConfig.Config.Platform.GCP.NetworkProjectID) > 0 {
-		serviceAccount.Email = mpool.ServiceAccount
-		if serviceAccount.Email == "" {
-			sess, err := gcpconfig.GetSession(context.TODO())
-			if err != nil {
-				return nil, fmt.Errorf("gcp machine creation failed to get session: %w", err)
-			}
-
-			// The JSON can be `nil` if auth is provided from env
-			// https://pkg.go.dev/golang.org/x/oauth2@v0.17.0/google#Credentials
-			if len(sess.Credentials.JSON) == 0 {
-				return nil, fmt.Errorf("could not extract service account from loaded credentials. Please specify a service account to be used for shared vpc installations in the install-config.yaml")
-			}
-
-			var found bool
-			sa := make(map[string]interface{})
-			err = json.Unmarshal(sess.Credentials.JSON, &sa)
-			if err != nil {
-				return nil, fmt.Errorf("failed to unmarshal gcp session: %w", err)
-			}
-			serviceAccount.Email, found = sa["client_email"].(string)
-			if !found {
-				return nil, fmt.Errorf("could not find google service account")
-			}
-		}
-	}
 	gcpMachine.Spec.ServiceAccount = serviceAccount
 
 	if mpool.OSDisk.EncryptionKey != nil {

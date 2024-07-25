@@ -54,20 +54,10 @@ func ValidateMachinePool(platform *gcp.Platform, p *gcp.MachinePool, fldPath *fi
 	return allErrs
 }
 
-// ValidateServiceAccount checks that the service account is only supplied for control plane nodes and during
-// a shared vpn installation.
+// ValidateServiceAccount does not do any checks on the service account since it can be set for all nodes and
+// in non-shared vpn installations.
 func ValidateServiceAccount(platform *gcp.Platform, p *types.MachinePool, fldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	if p.Platform.GCP.ServiceAccount != "" {
-		if p.Name != "master" {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceAccount"), p.Platform.GCP.ServiceAccount, fmt.Sprintf("service accounts only valid for master nodes, provided for %s nodes", p.Name)))
-		}
-		if platform.NetworkProjectID == "" {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceAccount"), p.Platform.GCP.ServiceAccount, "service accounts only valid for xpn installs"))
-		}
-	}
-	return allErrs
+	return field.ErrorList{}
 }
 
 // ValidateMasterDiskType checks that the specified disk type is valid for control plane.

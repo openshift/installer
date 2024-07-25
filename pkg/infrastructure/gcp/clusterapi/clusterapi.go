@@ -46,14 +46,21 @@ func (Provider) BootstrapHasPublicIP() bool { return true }
 // created here using the gcp sdk.
 func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInput) error {
 	// Create ServiceAccounts which will be used for machines
-	projectID := in.InstallConfig.Config.Platform.GCP.ProjectID
+	platform := in.InstallConfig.Config.Platform.GCP
+	projectID := platform.ProjectID
 
-	// ServiceAccount for masters
-	// Only create ServiceAccount for masters if a shared VPC install is not being done
-	if len(in.InstallConfig.Config.Platform.GCP.NetworkProjectID) == 0 ||
-		(in.InstallConfig.Config.ControlPlane != nil &&
-			in.InstallConfig.Config.ControlPlane.Platform.GCP != nil &&
-			in.InstallConfig.Config.ControlPlane.Platform.GCP.ServiceAccount == "") {
+	// Only create ServiceAccounts for machines if a pre-created Service Account is not defined
+	controlPlaneMpool := &gcptypes.MachinePool{}
+	controlPlaneMpool.Set(in.InstallConfig.Config.GCP.DefaultMachinePlatform)
+	if in.InstallConfig.Config.ControlPlane != nil {
+		controlPlaneMpool.Set(in.InstallConfig.Config.ControlPlane.Platform.GCP)
+	}
+
+	if controlPlaneMpool.ServiceAccount != "" {
+		logrus.Debugf("Using pre-created ServiceAccount for control plane nodes")
+	} else {
+		// Create ServiceAccount for control plane nodes
+		logrus.Debugf("Creating ServiceAccount for control plane nodes")
 		masterSA, err := CreateServiceAccount(ctx, in.InfraID, projectID, "master")
 		if err != nil {
 			return fmt.Errorf("failed to create master serviceAccount: %w", err)
@@ -63,13 +70,24 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		}
 	}
 
-	// ServiceAccount for workers
-	workerSA, err := CreateServiceAccount(ctx, in.InfraID, projectID, "worker")
-	if err != nil {
-		return fmt.Errorf("failed to create worker serviceAccount: %w", err)
+	createSA := false
+	for _, compute := range in.InstallConfig.Config.Compute {
+		computeMpool := compute.Platform.GCP
+		if gcptypes.GetConfiguredServiceAccount(platform, computeMpool) == "" {
+			// If any compute nodes aren't using defined service account then create the service account
+			createSA = true
+		}
 	}
-	if err = AddServiceAccountRoles(ctx, projectID, workerSA, GetWorkerRoles()); err != nil {
-		return fmt.Errorf("failed to add worker roles: %w", err)
+	if createSA {
+		// Create ServiceAccount for workers
+		logrus.Debugf("Creating ServiceAccount for compute nodes")
+		workerSA, err := CreateServiceAccount(ctx, in.InfraID, projectID, "worker")
+		if err != nil {
+			return fmt.Errorf("failed to create worker serviceAccount: %w", err)
+		}
+		if err = AddServiceAccountRoles(ctx, projectID, workerSA, GetWorkerRoles()); err != nil {
+			return fmt.Errorf("failed to add worker roles: %w", err)
+		}
 	}
 
 	return nil
