@@ -2,7 +2,9 @@ package validation
 
 import (
 	"fmt"
+	"path"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -202,6 +204,30 @@ func TestValidatePlatform(t *testing.T) {
 					"urn:vmomi:InventoryServiceTag:5736bf56-49f5-4667-b38c-b97e09dc9578:GLOBAL",
 					"urn:vmomi:InventoryServiceTag:5736bf56-49f5-4667-b38c-b97e09dc9579:GLOBAL",
 				}
+				return p
+			}(),
+		},
+		{
+			name: "Datacenter as a child of a folder",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+
+				for i, v := range p.VCenters {
+					for j, dc := range v.Datacenters {
+						p.VCenters[i].Datacenters[j] = path.Join("/dcfolder", dc)
+					}
+				}
+
+				for i, fd := range p.FailureDomains {
+					dcAsChild := path.Join("/dcfolder", fd.Topology.Datacenter)
+
+					p.FailureDomains[i].Topology.Datacenter = dcAsChild
+					p.FailureDomains[i].Topology.ResourcePool = strings.ReplaceAll(fd.Topology.ResourcePool, fd.Topology.Datacenter, dcAsChild)
+					p.FailureDomains[i].Topology.Folder = strings.ReplaceAll(fd.Topology.Folder, fd.Topology.Datacenter, dcAsChild)
+					p.FailureDomains[i].Topology.ComputeCluster = strings.ReplaceAll(fd.Topology.ComputeCluster, fd.Topology.Datacenter, dcAsChild)
+					p.FailureDomains[i].Topology.Datastore = strings.ReplaceAll(fd.Topology.Datastore, fd.Topology.Datacenter, dcAsChild)
+				}
+
 				return p
 			}(),
 		},
