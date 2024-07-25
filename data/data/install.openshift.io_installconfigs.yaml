@@ -512,6 +512,7 @@ spec:
                               - pd-balanced
                               - pd-ssd
                               - pd-standard
+                              - hyperdisk-balanced
                               type: string
                             encryptionKey:
                               description: EncryptionKey defines the KMS key to be
@@ -1419,6 +1420,7 @@ spec:
                             - pd-balanced
                             - pd-ssd
                             - pd-standard
+                            - hyperdisk-balanced
                             type: string
                           encryptionKey:
                             description: EncryptionKey defines the KMS key to be used
@@ -3050,6 +3052,7 @@ spec:
                             - pd-balanced
                             - pd-ssd
                             - pd-standard
+                            - hyperdisk-balanced
                             type: string
                           encryptionKey:
                             description: EncryptionKey defines the KMS key to be used
