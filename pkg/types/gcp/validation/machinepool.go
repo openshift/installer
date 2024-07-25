@@ -30,7 +30,7 @@ func ValidateMachinePool(platform *gcp.Platform, p *gcp.MachinePool, fldPath *fi
 	}
 
 	if p.OSDisk.DiskType != "" {
-		diskTypes := sets.NewString("pd-balanced", "pd-ssd", "pd-standard")
+		diskTypes := sets.NewString("pd-balanced", "pd-ssd", "pd-standard", "hyperdisk-balanced")
 		if !diskTypes.Has(p.OSDisk.DiskType) {
 			allErrs = append(allErrs, field.NotSupported(fldPath.Child("diskType"), p.OSDisk.DiskType, diskTypes.List()))
 		}
