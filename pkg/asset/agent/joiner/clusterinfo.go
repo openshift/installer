@@ -50,6 +50,7 @@ type ClusterInfo struct {
 	OSImage                       *stream.Stream
 	OSImageLocation               string
 	IgnitionEndpointWorker        *models.IgnitionEndpoint
+	FIPS                          bool
 }
 
 var _ asset.WritableAsset = (*ClusterInfo)(nil)
@@ -244,6 +245,7 @@ func (ci *ClusterInfo) retrieveInstallConfigData() error {
 	ci.SSHKey = installConfig.SSHKey
 	ci.ClusterName = installConfig.ObjectMeta.Name
 	ci.APIDNSName = fmt.Sprintf("api.%s.%s", ci.ClusterName, installConfig.BaseDomain)
+	ci.FIPS = installConfig.FIPS
 
 	return nil
 }

@@ -161,6 +161,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 					URL:           ptr.To("https://192.168.111.5:22623/config/worker"),
 					CaCertificate: ptr.To("LS0tL_FakeCertificate_LS0tCg=="),
 				},
+				FIPS: true,
 			},
 		},
 		{
@@ -276,6 +277,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 				SSHKey:          "my-ssh-key",
 				OSImage:         buildStreamData(),
 				OSImageLocation: "http://my-coreosimage-url/416.94.202402130130-1",
+				FIPS:            true,
 			},
 		},
 	}
@@ -314,6 +316,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 			assert.Equal(t, tc.expectedClusterInfo.OSImageLocation, clusterInfo.OSImageLocation)
 			assert.Equal(t, tc.expectedClusterInfo.OSImage, clusterInfo.OSImage)
 			assert.Equal(t, tc.expectedClusterInfo.IgnitionEndpointWorker, clusterInfo.IgnitionEndpointWorker)
+			assert.Equal(t, tc.expectedClusterInfo.FIPS, clusterInfo.FIPS)
 		})
 	}
 }
@@ -382,6 +385,7 @@ func makeInstallConfig(t *testing.T) string {
 			BareMetal: &baremetal.Platform{},
 		},
 		SSHKey: "my-ssh-key",
+		FIPS:   true,
 	}
 	data, err := yaml.Marshal(ic)
 	if err != nil {

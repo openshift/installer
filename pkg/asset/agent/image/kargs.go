@@ -2,12 +2,14 @@ package image
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sirupsen/logrus"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
@@ -22,6 +24,7 @@ type Kargs struct {
 func (a *Kargs) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&workflow.AgentWorkflow{},
+		&joiner.ClusterInfo{},
 		&manifests.AgentClusterInstall{},
 	}
 }
@@ -29,21 +32,25 @@ func (a *Kargs) Dependencies() []asset.Asset {
 // Generate generates the kernel args configurations for the agent ISO image and PXE assets.
 func (a *Kargs) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
+	clusterInfo := &joiner.ClusterInfo{}
 	agentClusterInstall := &manifests.AgentClusterInstall{}
-	dependencies.Get(agentClusterInstall, agentWorkflow)
+	dependencies.Get(agentClusterInstall, agentWorkflow, clusterInfo)
 
-	// Not required for AddNodes workflow
-	if agentWorkflow.Workflow == workflow.AgentWorkflowTypeAddNodes {
-		return nil
+	switch agentWorkflow.Workflow {
+	case workflow.AgentWorkflowTypeInstall:
+		a.fips = agentClusterInstall.FIPSEnabled()
+		// Add kernel args for external oci platform
+		if agentClusterInstall.GetExternalPlatformName() == string(models.PlatformTypeOci) {
+			logrus.Debugf("Added kernel args to enable serial console for %s %s platform", hiveext.ExternalPlatformType, string(models.PlatformTypeOci))
+			a.consoleArgs = " console=ttyS0"
+		}
+
+	case workflow.AgentWorkflowTypeAddNodes:
+		a.fips = clusterInfo.FIPS
+
+	default:
+		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
 	}
-
-	// Add kernel args for external oci platform
-	if agentClusterInstall.GetExternalPlatformName() == string(models.PlatformTypeOci) {
-		logrus.Debugf("Added kernel args to enable serial console for %s %s platform", hiveext.ExternalPlatformType, string(models.PlatformTypeOci))
-		a.consoleArgs = " console=ttyS0"
-	}
-
-	a.fips = agentClusterInstall.FIPSEnabled()
 
 	return nil
 }
