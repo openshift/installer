@@ -307,7 +307,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 	imageLength := headResponse.ContentLength
 	if imageLength%512 != 0 {
-		return fmt.Errorf("image length is not alisnged on a 512 byte boundary")
+		return fmt.Errorf("image length is not aligned on a 512 byte boundary")
 	}
 
 	userTags := platform.UserTags
@@ -768,16 +768,41 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	blobIgnitionContainer := createBlobContainerOutput.BlobContainer
 	logrus.Debugf("BlobIgnitionContainer.ID=%s", *blobIgnitionContainer.ID)
 
-	sasURL, err := CreateBlockBlob(ctx, &CreateBlockBlobInput{
-		StorageURL:         p.StorageURL,
-		BlobURL:            blobURL,
-		StorageAccountName: p.StorageAccountName,
-		StorageAccountKeys: p.StorageAccountKeys,
-		CloudConfiguration: cloudConfiguration,
-		BootstrapIgnData:   bootstrapIgnData,
-	})
-	if err != nil {
-		return nil, err
+	sasURL := ""
+
+	if in.InstallConfig.Config.Azure.CustomerManagedKey == nil {
+		logrus.Debugf("Creating a Block Blob for ignition shim")
+		sasURL, err = CreateBlockBlob(ctx, &CreateBlockBlobInput{
+			StorageURL:         p.StorageURL,
+			BlobURL:            blobURL,
+			StorageAccountName: p.StorageAccountName,
+			StorageAccountKeys: p.StorageAccountKeys,
+			CloudConfiguration: cloudConfiguration,
+			BootstrapIgnData:   bootstrapIgnData,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create BlockBlob for ignition shim: %w", err)
+		}
+	} else {
+		logrus.Debugf("Creating a Page Blob for ignition shim because Customer Managed Key is provided")
+		lengthBootstrapFile := int64(len(bootstrapIgnData))
+		if lengthBootstrapFile%512 != 0 {
+			lengthBootstrapFile = (((lengthBootstrapFile / 512) + 1) * 512)
+		}
+
+		sasURL, err = CreatePageBlob(ctx, &CreatePageBlobInput{
+			StorageURL:         p.StorageURL,
+			BlobURL:            blobURL,
+			ImageURL:           "",
+			StorageAccountName: p.StorageAccountName,
+			BootstrapIgnData:   bootstrapIgnData,
+			ImageLength:        lengthBootstrapFile,
+			StorageAccountKeys: p.StorageAccountKeys,
+			CloudConfiguration: cloudConfiguration,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create PageBlob for ignition shim: %w", err)
+		}
 	}
 	ignShim, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(sasURL, in.InstallConfig.Config.AdditionalTrustBundle, in.InstallConfig.Config.Proxy)
 	if err != nil {

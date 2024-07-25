@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -222,6 +223,7 @@ type CreatePageBlobInput struct {
 	BlobURL            string
 	ImageURL           string
 	StorageAccountName string
+	BootstrapIgnData   []byte
 	ImageLength        int64
 	StorageAccountKeys []armstorage.AccountKey
 	CloudConfiguration cloud.Configuration
@@ -234,13 +236,13 @@ type CreatePageBlobOutput struct {
 }
 
 // CreatePageBlob creates a blob and uploads a file from a URL to it.
-func CreatePageBlob(ctx context.Context, in *CreatePageBlobInput) (*CreatePageBlobOutput, error) {
+func CreatePageBlob(ctx context.Context, in *CreatePageBlobInput) (string, error) {
 	logrus.Debugf("Getting page blob credentials")
 
 	// XXX: Should try all of them until one is successful
 	sharedKeyCredential, err := azblob.NewSharedKeyCredential(in.StorageAccountName, *in.StorageAccountKeys[0].Value)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get shared credentials for storage account: %w", err)
+		return "", fmt.Errorf("failed to get shared credentials for storage account: %w", err)
 	}
 
 	logrus.Debugf("Getting page blob client")
@@ -254,30 +256,88 @@ func CreatePageBlob(ctx context.Context, in *CreatePageBlobInput) (*CreatePageBl
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get page blob client: %w", err)
+		return "", fmt.Errorf("failed to get page blob client: %w", err)
 	}
 
-	// This is used in terraform, not sure if it matters
-	metadata := make(map[string]*string, 1)
-	metadata["source_uri"] = to.Ptr(in.ImageURL)
+	logrus.Debugf("Creating Page blob and uploading image to it")
+	if in.ImageURL == "" {
+		_, err = pageBlobClient.Create(ctx, in.ImageLength, nil)
+		if err != nil {
+			return "", fmt.Errorf("failed to create page blob with image contents: %w", err)
+		}
+		// This image (example: ignition shim) needs to be uploaded from a local file.
+		err = doUploadPages(ctx, pageBlobClient, in.BootstrapIgnData, in.ImageLength)
+		if err != nil {
+			return "", fmt.Errorf("failed to upload page blob image contents: %w", err)
+		}
+	} else {
+		// This is used in terraform, not sure if it matters
+		metadata := map[string]*string{
+			"source_uri": to.Ptr(in.ImageURL),
+		}
 
-	logrus.Debugf("Creating blob")
-	_, err = pageBlobClient.Create(ctx, in.ImageLength, &pageblob.CreateOptions{
-		Metadata: metadata,
-	})
+		_, err = pageBlobClient.Create(ctx, in.ImageLength, &pageblob.CreateOptions{
+			Metadata: metadata,
+		})
+		if err != nil {
+			return "", fmt.Errorf("failed to create page blob with image URL: %w", err)
+		}
+
+		err = doUploadPagesFromURL(ctx, pageBlobClient, in.ImageURL, in.ImageLength)
+		if err != nil {
+			return "", fmt.Errorf("failed to upload page blob image from URL %s: %w", in.ImageURL, err)
+		}
+	}
+
+	// Is this addition OK for when CreatePageBlob() is called from InfraReady()
+	sasURL, err := pageBlobClient.GetSASURL(sas.BlobPermissions{Read: true}, time.Now().Add(time.Minute*60), &blob.GetSASURLOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create blob: %w", err)
+		return "", fmt.Errorf("failed to get Page Blob SAS URL: %w", err)
 	}
+	return sasURL, nil
+}
 
-	logrus.Debugf("Uploading to blob")
-	err = doUploadPagesFromURL(ctx, pageBlobClient, in.ImageURL, in.ImageLength)
-	if err != nil {
-		return nil, fmt.Errorf("failed to upload blob image %s: %w", in.ImageURL, err)
+func doUploadPages(ctx context.Context, pageBlobClient *pageblob.Client, imageData []byte, imageLength int64) error {
+	logrus.Debugf("Uploading to Page Blob with Image of length :%d", imageLength)
+
+	// Page blobs file size must be a multiple of 512, hence a little padding is needed to push the file.
+	// imageLength has already been adjusted to the next highest size divisible by 512.
+	// So, here we are padding the image to match this size.
+	// Bootstrap Ignition is a json file. For parsing of this file to succeed with the padding, the
+	// file needs to end with a }.
+	logrus.Debugf("Original Image length: %d", int64(len(imageData)))
+	padding := imageLength - int64(len(imageData))
+	paddingString := strings.Repeat(" ", int(padding)) + string(imageData[len(imageData)-1])
+	imageData = append(imageData[0:len(imageData)-1], paddingString...)
+	logrus.Debugf("New Image length (after padding): %d", int64(len(imageData)))
+
+	pageSize := int64(1024 * 1024 * 4)
+	newOffset := int64(0)
+	remainingImageLength := imageLength
+
+	for remainingImageLength > 0 {
+		if remainingImageLength < pageSize {
+			pageSize = remainingImageLength
+		}
+
+		logrus.Debugf("Uploading pages with Offset :%d and Count :%d", newOffset, pageSize)
+
+		_, err := pageBlobClient.UploadPages(
+			ctx,
+			streaming.NopCloser(bytes.NewReader(imageData)),
+			blob.HTTPRange{
+				Offset: newOffset,
+				Count:  pageSize,
+			},
+			nil)
+		if err != nil {
+			return fmt.Errorf("failed uploading Image to page blob: %w", err)
+		}
+		newOffset += pageSize
+		remainingImageLength -= pageSize
+		logrus.Debugf("newOffset :%d and remainingImageLength :%d", newOffset, remainingImageLength)
 	}
-	return &CreatePageBlobOutput{
-		PageBlobClient:      pageBlobClient,
-		SharedKeyCredential: sharedKeyCredential,
-	}, nil
+	return nil
 }
 
 func doUploadPagesFromURL(ctx context.Context, pageBlobClient *pageblob.Client, imageURL string, imageLength int64) error {
