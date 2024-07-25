@@ -107,23 +107,35 @@ func (a *OptionalInstallConfig) validateInstallConfig(ctx context.Context, insta
 }
 
 func (a *OptionalInstallConfig) validateSupportedPlatforms(installConfig *types.InstallConfig) field.ErrorList {
+	allErrs := ValidateSupportedPlatforms(installConfig.Platform, string(installConfig.ControlPlane.Architecture))
+	return append(allErrs, a.validatePlatformsByName(installConfig)...)
+}
+
+// ValidateSupportedPlatforms verifies if the specified platform/arch is supported or not.
+func ValidateSupportedPlatforms(platform types.Platform, controlPlaneArch string) field.ErrorList {
 	var allErrs field.ErrorList
 
 	fieldPath := field.NewPath("Platform")
 
-	if installConfig.Platform.Name() != "" && !IsSupportedPlatform(HivePlatformType(installConfig.Platform)) {
-		allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.Platform.Name(), SupportedInstallerPlatforms()))
+	if platform.Name() != "" && !IsSupportedPlatform(HivePlatformType(platform)) {
+		allErrs = append(allErrs, field.NotSupported(fieldPath, platform.Name(), SupportedInstallerPlatforms()))
 	}
-	if installConfig.Platform.Name() != none.Name && installConfig.ControlPlane.Architecture == types.ArchitecturePPC64LE {
-		allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.Platform.Name(), fmt.Sprintf("CPU architecture \"%s\" only supports platform \"%s\".", types.ArchitecturePPC64LE, none.Name)))
+	if platform.Name() != none.Name && controlPlaneArch == types.ArchitecturePPC64LE {
+		allErrs = append(allErrs, field.Invalid(fieldPath, platform.Name(), fmt.Sprintf("CPU architecture \"%s\" only supports platform \"%s\".", types.ArchitecturePPC64LE, none.Name)))
 	}
-	if installConfig.Platform.Name() != none.Name && installConfig.ControlPlane.Architecture == types.ArchitectureS390X {
-		allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.Platform.Name(), fmt.Sprintf("CPU architecture \"%s\" only supports platform \"%s\".", types.ArchitectureS390X, none.Name)))
+	if platform.Name() != none.Name && controlPlaneArch == types.ArchitectureS390X {
+		allErrs = append(allErrs, field.Invalid(fieldPath, platform.Name(), fmt.Sprintf("CPU architecture \"%s\" only supports platform \"%s\".", types.ArchitectureS390X, none.Name)))
 	}
+	return allErrs
+}
+
+func (a *OptionalInstallConfig) validatePlatformsByName(installConfig *types.InstallConfig) field.ErrorList {
+	var allErrs field.ErrorList
+
 	if installConfig.Platform.Name() == external.Name {
 		if installConfig.Platform.External.PlatformName == string(models.PlatformTypeOci) &&
 			installConfig.Platform.External.CloudControllerManager != external.CloudControllerManagerTypeExternal {
-			fieldPath = field.NewPath("Platform", "External", "CloudControllerManager")
+			fieldPath := field.NewPath("Platform", "External", "CloudControllerManager")
 			allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.Platform.External.CloudControllerManager, fmt.Sprintf("When using external %s platform, %s must be set to %s", string(models.PlatformTypeOci), fieldPath, external.CloudControllerManagerTypeExternal)))
 		}
 	}

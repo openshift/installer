@@ -10,13 +10,16 @@ import (
 	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/coreos/stream-metadata-go/stream"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/yaml"
 
+	configv1 "github.com/openshift/api/config/v1"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
@@ -24,6 +27,18 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/external"
+	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/ibmcloud"
+	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/nutanix"
+	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/ovirt"
+	"github.com/openshift/installer/pkg/types/powervs"
+	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // ClusterInfo it's an asset used to retrieve config info
@@ -51,6 +66,7 @@ type ClusterInfo struct {
 	OSImageLocation               string
 	IgnitionEndpointWorker        *models.IgnitionEndpoint
 	FIPS                          bool
+	Nodes                         *corev1.NodeList
 }
 
 var _ asset.WritableAsset = (*ClusterInfo)(nil)
@@ -121,7 +137,7 @@ func (ci *ClusterInfo) Generate(_ context.Context, dependencies asset.Parents) e
 
 	ci.Namespace = "cluster0"
 
-	return nil
+	return ci.validate().ToAggregate()
 }
 
 func (ci *ClusterInfo) initClients(kubeconfig string) error {
@@ -205,20 +221,26 @@ func (ci *ClusterInfo) retrieveUserTrustBundle() error {
 }
 
 func (ci *ClusterInfo) retrieveArchitecture(addNodesConfig *AddNodesConfig) error {
+	nodes, err := ci.Client.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+	ci.Nodes = nodes
+
 	if addNodesConfig.Config.CPUArchitecture != "" {
 		logrus.Infof("CPU architecture set to: %v", addNodesConfig.Config.CPUArchitecture)
 		ci.Architecture = addNodesConfig.Config.CPUArchitecture
-	} else {
-		nodes, err := ci.Client.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{
-			LabelSelector: "node-role.kubernetes.io/master",
-		})
-		if err != nil {
-			return err
-		}
-		ci.Architecture = nodes.Items[0].Status.NodeInfo.Architecture
+		return nil
 	}
 
-	return nil
+	for _, n := range ci.Nodes.Items {
+		if _, found := n.GetLabels()["node-role.kubernetes.io/master"]; found {
+			ci.Architecture = n.Status.NodeInfo.Architecture
+			return nil
+		}
+	}
+
+	return fmt.Errorf("unable to determine target cluster architecture")
 }
 
 func (ci *ClusterInfo) retrieveInstallConfigData() error {
@@ -337,4 +359,63 @@ func (*ClusterInfo) Files() []*asset.File {
 // Load returns agent config asset from the disk.
 func (*ClusterInfo) Load(f asset.FileFetcher) (bool, error) {
 	return false, nil
+}
+
+func (ci *ClusterInfo) validate() field.ErrorList {
+	var allErrs field.ErrorList
+
+	if err := ci.validateSupportedPlatforms(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
+	return allErrs
+}
+
+func (ci *ClusterInfo) validateSupportedPlatforms() field.ErrorList {
+	var allErrs field.ErrorList
+
+	infra, err := ci.OpenshiftClient.ConfigV1().Infrastructures().Get(context.Background(), "cluster", metav1.GetOptions{})
+	if err != nil {
+		return append(allErrs, field.InternalError(nil, err))
+	}
+	platform, err := ci.toTypesPlatform(infra.Spec.PlatformSpec.Type)
+	if err != nil {
+		return append(allErrs, field.InternalError(nil, err))
+	}
+	return agent.ValidateSupportedPlatforms(platform, ci.Architecture)
+}
+
+func (ci *ClusterInfo) toTypesPlatform(platformType configv1.PlatformType) (types.Platform, error) {
+	platform := types.Platform{}
+
+	switch platformType {
+	case configv1.AWSPlatformType:
+		platform.AWS = &aws.Platform{}
+	case configv1.AzurePlatformType:
+		platform.Azure = &azure.Platform{}
+	case configv1.BareMetalPlatformType:
+		platform.BareMetal = &baremetal.Platform{}
+	case configv1.GCPPlatformType:
+		platform.GCP = &gcp.Platform{}
+	case configv1.OpenStackPlatformType:
+		platform.OpenStack = &openstack.Platform{}
+	case configv1.NonePlatformType:
+		platform.None = &none.Platform{}
+	case configv1.VSpherePlatformType:
+		platform.VSphere = &vsphere.Platform{}
+	case configv1.OvirtPlatformType:
+		platform.Ovirt = &ovirt.Platform{}
+	case configv1.IBMCloudPlatformType:
+		platform.IBMCloud = &ibmcloud.Platform{}
+	case configv1.PowerVSPlatformType:
+		platform.PowerVS = &powervs.Platform{}
+	case configv1.NutanixPlatformType:
+		platform.Nutanix = &nutanix.Platform{}
+	case configv1.ExternalPlatformType:
+		platform.External = &external.Platform{}
+	default:
+		return platform, fmt.Errorf("unable to convert platform type %v", platformType)
+	}
+
+	return platform, nil
 }
