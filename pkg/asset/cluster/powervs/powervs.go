@@ -24,5 +24,6 @@ func Metadata(config *types.InstallConfig, meta *icpowervs.Metadata) *powervs.Me
 		Zone:                 config.Platform.PowerVS.Zone,
 		ServiceInstanceGUID:  config.Platform.PowerVS.ServiceInstanceGUID,
 		ServiceEndpoints:     config.Platform.PowerVS.ServiceEndpoints,
+		TransitGatewayName:   config.Platform.PowerVS.TGName,
 	}
 }

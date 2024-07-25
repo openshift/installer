@@ -4821,6 +4821,10 @@ spec:
                       is completed.  Leave unset to allow the installer to create
                       a service instance during cluster creation.
                     type: string
+                  tgName:
+                    description: TGName is the name of a pre-created TransitGateway
+                      inside IBM Cloud.
+                    type: string
                   userID:
                     description: UserID is the login for the user's IBM Cloud account.
                     type: string

@@ -307,3 +307,26 @@ func ValidateServiceInstance(client API, ic *types.InstallConfig) error {
 
 	return nil
 }
+
+// ValidateTransitGateway validates the optional transit gateway name in our install config.
+func ValidateTransitGateway(client API, ic *types.InstallConfig) error {
+	var (
+		id  string
+		err error
+	)
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Minute)
+	defer cancel()
+
+	if len(ic.PowerVS.TGName) > 0 {
+		id, err = client.TransitGatewayID(ctx, ic.PowerVS.TGName)
+		if err != nil {
+			return err
+		}
+		if id == "" {
+			return errors.New("platform:powervs:tgName has an invalid name")
+		}
+	}
+
+	return nil
+}

@@ -54,6 +54,7 @@ type API interface {
 	GetVPCSubnets(ctx context.Context, vpcID string) ([]vpcv1.Subnet, error)
 
 	// TG
+	TransitGatewayID(ctx context.Context, name string) (string, error)
 	GetTGConnectionVPC(ctx context.Context, gatewayID string, vpcSubnetID string) (string, error)
 	GetAttachedTransitGateway(ctx context.Context, svcInsID string) (string, error)
 
@@ -1092,6 +1093,27 @@ func (c *Client) GetDatacenterCapabilities(ctx context.Context, region string) (
 		return nil, fmt.Errorf("failed to get datacenter capabilities: %w", err)
 	}
 	return getOk.Payload.Capabilities, nil
+}
+
+// TransitGatewayID checks to see if the name is an existing transit gateway name.
+func (c *Client) TransitGatewayID(ctx context.Context, name string) (string, error) {
+	var (
+		gateways []transitgatewayapisv1.TransitGateway
+		gateway  transitgatewayapisv1.TransitGateway
+		err      error
+	)
+
+	gateways, err = c.getTransitGateways(ctx)
+	if err != nil {
+		return "", err
+	}
+	for _, gateway = range gateways {
+		if *gateway.Name == name {
+			return *gateway.ID, nil
+		}
+	}
+
+	return "", nil
 }
 
 // GetAttachedTransitGateway finds an existing Transit Gateway attached to the provided PowerVS cloud instance.
