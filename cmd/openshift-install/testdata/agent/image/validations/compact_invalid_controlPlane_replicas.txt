@@ -1,6 +1,6 @@
 ! exec openshift-install agent create image --dir $WORK
 
-stderr 'ControlPlane.Replicas can only be set to 3 or 1. Found 2'
+stderr 'ControlPlane.Replicas can only be set to 5, 4, 3, or 1. Found 2'
 
 ! exists $WORK/agent.x86_64.iso
 ! exists $WORK/auth/kubeconfig
