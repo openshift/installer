@@ -452,3 +452,17 @@ func (mr *MockAPIMockRecorder) SetVPCServiceURLForRegion(ctx, region interface{}
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetVPCServiceURLForRegion", reflect.TypeOf((*MockAPI)(nil).SetVPCServiceURLForRegion), ctx, region)
 }
+
+// TransitGatewayNameValid mocks base method.
+func (m *MockAPI) TransitGatewayNameValid(ctx context.Context, name string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TransitGatewayNameValid", ctx, name)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// TransitGatewayNameValid indicates an expected call of TransitGatewayNameValid.
+func (mr *MockAPIMockRecorder) TransitGatewayNameValid(ctx, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TransitGatewayNameValid", reflect.TypeOf((*MockAPI)(nil).TransitGatewayNameValid), ctx, name)
+}
