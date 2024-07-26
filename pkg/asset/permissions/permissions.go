@@ -10,10 +10,11 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 )
 
-const awsPolicyFilename = "aws-permissions-policy.json"
+const awsPolicyFilename = "aws-permissions-policy-creds.json"
 
 // Permissions has the permissions needed for a given cluster configuration.
 type Permissions struct {
@@ -44,31 +45,51 @@ func (o *Permissions) Generate(ctx context.Context, dependencies asset.Parents) 
 	switch platform {
 	case aws.Name:
 		reqGroups := awsconfig.RequiredPermissionGroups(ic.Config)
-		perms, err := awsconfig.PermissionsList(reqGroups)
-		if err != nil {
-			return fmt.Errorf("failed to generate permissions list: %w", err)
+		switch ic.Config.CredentialsMode {
+		case types.ManualCredentialsMode:
+			// Don't include any CCO perms, only the installer ones
+		case types.PassthroughCredentialsMode:
+			// Include permissions needed by CCO/cluster for passthrough creds mode
+			reqGroups = append(reqGroups, awsconfig.PermissionPassthroughCreds)
+		default:
+			// Include permissions needed by CCO/cluster for mint creds mode
+			reqGroups = append(reqGroups, awsconfig.PermissionMintCreds)
 		}
-		policy := iamv1.PolicyDocument{
-			Version: "2012-10-17",
-			Statement: []iamv1.StatementEntry{
-				{
-					Effect:   "Allow",
-					Action:   perms,
-					Resource: iamv1.Resources{"*"},
-				},
-			},
+		if err := o.writePolicy(reqGroups, awsPolicyFilename); err != nil {
+			return fmt.Errorf("failed to generate credentials permissions: %w", err)
 		}
-		policyBytes, err := json.Marshal(policy)
-		if err != nil {
-			return fmt.Errorf("failed to marshal permissions policy: %w", err)
-		}
-		o.FileList = append(o.FileList, &asset.File{
-			Filename: awsPolicyFilename,
-			Data:     policyBytes,
-		})
 	default:
 		return fmt.Errorf("platform %q does not support fine-grained permissions", platform)
 	}
+
+	return nil
+}
+
+func (o *Permissions) writePolicy(groups []awsconfig.PermissionGroup, filename string) error {
+	perms, err := awsconfig.PermissionsList(groups)
+	if err != nil {
+		return fmt.Errorf("failed to generate permissions list: %w", err)
+	}
+
+	policy := iamv1.PolicyDocument{
+		Version: "2012-10-17",
+		Statement: []iamv1.StatementEntry{
+			{
+				Effect:   "Allow",
+				Action:   perms,
+				Resource: iamv1.Resources{"*"},
+			},
+		},
+	}
+	policyBytes, err := json.Marshal(policy)
+	if err != nil {
+		return fmt.Errorf("failed to marshal permissions policy: %w", err)
+	}
+
+	o.FileList = append(o.FileList, &asset.File{
+		Filename: filename,
+		Data:     policyBytes,
+	})
 
 	return nil
 }

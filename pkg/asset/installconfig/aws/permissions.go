@@ -61,6 +61,12 @@ const (
 
 	// PermissionDeleteIgnitionObjects is a permission set required when `preserveBootstrapIgnition` is not set.
 	PermissionDeleteIgnitionObjects PermissionGroup = "delete-ignition-objects"
+
+	// PermissionMintCreds is a permission set required when minting credentials.
+	PermissionMintCreds PermissionGroup = "permission-mint-creds"
+
+	// PermissionPassthroughCreds is a permission set required when using passthrough credentials.
+	PermissionPassthroughCreds PermissionGroup = "permission-passthrough-creds"
 )
 
 var permissions = map[PermissionGroup][]string{
@@ -300,6 +306,79 @@ var permissions = map[PermissionGroup][]string{
 		"s3:DeleteBucket",
 		// Needed by capa which always deletes the ignition objects once the VMs are up.
 		"s3:DeleteObject",
+	},
+	// From: https://github.com/openshift/cloud-credential-operator/blob/master/pkg/aws/utils.go
+	// TODO: export these in CCO so we don't have to duplicate them here.
+	PermissionMintCreds: {
+		"iam:CreateAccessKey",
+		"iam:CreateUser",
+		"iam:DeleteAccessKey",
+		"iam:DeleteUser",
+		"iam:DeleteUserPolicy",
+		"iam:GetUser",
+		"iam:GetUserPolicy",
+		"iam:ListAccessKeys",
+		"iam:PutUserPolicy",
+		"iam:TagUser",
+		"iam:SimulatePrincipalPolicy", // needed so we can verify the above list of course
+	},
+	PermissionPassthroughCreds: {
+		// so we can query whether we have the below list of creds
+		"iam:GetUser",
+		"iam:SimulatePrincipalPolicy",
+
+		// openshift-ingress
+		"elasticloadbalancing:DescribeLoadBalancers",
+		"route53:ListHostedZones",
+		"route53:ChangeResourceRecordSets",
+		"tag:GetResources",
+
+		// openshift-image-registry
+		"s3:CreateBucket",
+		"s3:DeleteBucket",
+		"s3:PutBucketTagging",
+		"s3:GetBucketTagging",
+		"s3:PutEncryptionConfiguration",
+		"s3:GetEncryptionConfiguration",
+		"s3:PutLifecycleConfiguration",
+		"s3:GetLifecycleConfiguration",
+		"s3:GetBucketLocation",
+		"s3:ListBucket",
+		"s3:GetObject",
+		"s3:PutObject",
+		"s3:DeleteObject",
+		"s3:ListBucketMultipartUploads",
+		"s3:AbortMultipartUpload",
+
+		// openshift-cluster-api
+		"ec2:DescribeImages",
+		"ec2:DescribeVpcs",
+		"ec2:DescribeSubnets",
+		"ec2:DescribeAvailabilityZones",
+		"ec2:DescribeSecurityGroups",
+		"ec2:RunInstances",
+		"ec2:DescribeInstances",
+		"ec2:TerminateInstances",
+		"elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+		"elasticloadbalancing:DescribeLoadBalancers",
+		"elasticloadbalancing:DescribeTargetGroups",
+		"elasticloadbalancing:RegisterTargets",
+		"ec2:DescribeVpcs",
+		"ec2:DescribeSubnets",
+		"ec2:DescribeAvailabilityZones",
+		"ec2:DescribeSecurityGroups",
+		"ec2:RunInstances",
+		"ec2:DescribeInstances",
+		"ec2:TerminateInstances",
+		"elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+		"elasticloadbalancing:DescribeLoadBalancers",
+		"elasticloadbalancing:DescribeTargetGroups",
+		"elasticloadbalancing:RegisterTargets",
+
+		// iam-ro
+		"iam:GetUser",
+		"iam:GetUserPolicy",
+		"iam:ListAccessKeys",
 	},
 }
 
