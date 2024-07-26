@@ -334,7 +334,7 @@ func validIpiInstallConfig() *types.InstallConfig {
 				Name:   "region-2-zone-2a",
 				Region: "region-2",
 				Zone:   "zone-2a",
-				Server: "",
+				Server: "test-server",
 				Topology: vsphere.Topology{
 					Datacenter:     "DC1",
 					ComputeCluster: "/DC1/host/DC1_C0",
@@ -348,7 +348,7 @@ func validIpiInstallConfig() *types.InstallConfig {
 				Name:   "region-3-zone-3a",
 				Region: "region-3",
 				Zone:   "zone-3a",
-				Server: "",
+				Server: "test-server",
 				Topology: vsphere.Topology{
 					Datacenter:     "DC2",
 					ComputeCluster: "/DC2/host/test-computecluster3",
@@ -362,7 +362,7 @@ func validIpiInstallConfig() *types.InstallConfig {
 				Name:   "region-4-zone-4a",
 				Region: "region-4",
 				Zone:   "zone-4a",
-				Server: "",
+				Server: "test-server",
 				Topology: vsphere.Topology{
 					Datacenter:     "DC3",
 					ComputeCluster: "/DC3/host/DC3_C0",
@@ -518,15 +518,18 @@ func TestConvertInstallConfig(t *testing.T) {
 
 			// This section is duplication from ConvertInstallConfig()
 			// which makes it easier to deal with the simulator and finder object.
+			finders := make(map[string]*find.Finder)
+
 			fixNoVCentersScenario(platform)
+			finders[platform.VCenters[0].Server] = finder
 			if err != nil {
 				assert.NoError(t, err)
 			}
-			err = fixTechPreviewZonalFailureDomainsScenario(platform, finder)
+			err = fixTechPreviewZonalFailureDomainsScenario(platform, finders)
 			if err != nil {
 				assert.NoError(t, err)
 			}
-			err = fixLegacyPlatformScenario(platform, finder)
+			err = fixLegacyPlatformScenario(platform, finders)
 			if err != nil {
 				assert.NoError(t, err)
 			}
