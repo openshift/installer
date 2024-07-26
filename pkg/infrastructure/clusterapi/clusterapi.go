@@ -448,32 +448,33 @@ type machineManifest struct {
 // extractIPAddress extracts the IP address from a machine manifest file in a
 // provider-agnostic way by reading only the "status" stanza, which should be
 // present in all providers.
-func extractIPAddress(manifestPath string) (string, error) {
+func extractIPAddress(manifestPath string) ([]string, error) {
 	data, err := os.ReadFile(manifestPath)
 	if err != nil {
-		return "", fmt.Errorf("failed to read machine manifest %s: %w", manifestPath, err)
+		return []string{}, fmt.Errorf("failed to read machine manifest %s: %w", manifestPath, err)
 	}
 	var manifest machineManifest
 	if err := yaml.Unmarshal(data, &manifest); err != nil {
-		return "", fmt.Errorf("failed to unmarshal manifest %s: %w", manifestPath, err)
+		return []string{}, fmt.Errorf("failed to unmarshal manifest %s: %w", manifestPath, err)
 	}
 
-	var ipAddr string
+	var externalIPAddrs []string
+	var internalIPAddrs []string
 	for _, addr := range manifest.Status.Addresses {
 		switch addr.Type {
 		case clusterv1.MachineExternalIP:
-			ipAddr = addr.Address
+			externalIPAddrs = append(externalIPAddrs, addr.Address)
 		case clusterv1.MachineInternalIP:
-			// Prefer external IP when present
-			if len(ipAddr) == 0 {
-				ipAddr = addr.Address
-			}
+			internalIPAddrs = append(internalIPAddrs, addr.Address)
 		default:
 			continue
 		}
 	}
 
-	return ipAddr, nil
+	// prioritize the external address in the front of the list
+	externalIPAddrs = append(externalIPAddrs, internalIPAddrs...)
+
+	return externalIPAddrs, nil
 }
 
 // ExtractHostAddresses extracts the IPs of the bootstrap and control plane machines.
@@ -490,13 +491,13 @@ func (i *InfraProvider) ExtractHostAddresses(dir string, config *types.InstallCo
 	if len(bootstrapFiles) != 1 {
 		return fmt.Errorf("wrong number of bootstrap manifests found: %v. Expected exactly one", bootstrapFiles)
 	}
-	addr, err := extractIPAddress(bootstrapFiles[0])
+	addrs, err := extractIPAddress(bootstrapFiles[0])
 	if err != nil {
 		return fmt.Errorf("failed to extract IP address for bootstrap: %w", err)
 	}
-	logrus.Debugf("found bootstrap address: %s", addr)
-	ha.Bootstrap = addr
+	logrus.Debugf("found bootstrap address: %s", addrs)
 
+	ha.Bootstrap = prioritizeIPv4(config, addrs)
 	masterFiles, err := filepath.Glob(filepath.Join(manifestsDir, "Machine\\-openshift\\-cluster\\-api\\-guests\\-*\\-master\\-?.yaml"))
 	if err != nil {
 		return fmt.Errorf("failed to list master machine manifests: %w", err)
@@ -507,14 +508,15 @@ func (i *InfraProvider) ExtractHostAddresses(dir string, config *types.InstallCo
 		logrus.Warnf("not all master manifests found: %d. Expected %d.", len(masterFiles), replicas)
 	}
 	for _, manifest := range masterFiles {
-		addr, err := extractIPAddress(manifest)
+		addrs, err := extractIPAddress(manifest)
 		if err != nil {
 			// Log the error but keep parsing the remaining files
 			logrus.Warnf("failed to extract IP address for %s: %v", manifest, err)
 			continue
 		}
-		logrus.Debugf("found master address: %s", addr)
-		ha.Masters = append(ha.Masters, addr)
+		logrus.Debugf("found master address: %s", addrs)
+
+		ha.Masters = append(ha.Masters, prioritizeIPv4(config, addrs))
 	}
 
 	return nil
