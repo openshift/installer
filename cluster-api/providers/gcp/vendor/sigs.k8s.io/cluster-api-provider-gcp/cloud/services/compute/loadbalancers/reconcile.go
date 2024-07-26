@@ -579,6 +579,18 @@ func (s *Service) createOrGetForwardingRule(ctx context.Context, lbname string, 
 		}
 	}
 
+	// Labels on ForwardingRules must be added after resource is created
+	labels := s.scope.AdditionalLabels()
+	if !labels.Equals(forwarding.Labels) {
+		setLabelsRequest := &compute.GlobalSetLabelsRequest{
+			LabelFingerprint: forwarding.LabelFingerprint,
+			Labels:           labels,
+		}
+		if err = s.forwardingrules.SetLabels(ctx, key, setLabelsRequest); err != nil {
+			return nil, err
+		}
+	}
+
 	return forwarding, nil
 }
 
@@ -618,6 +630,18 @@ func (s *Service) createOrGetRegionalForwardingRule(ctx context.Context, lbname 
 
 		forwarding, err = s.regionalforwardingrules.Get(ctx, key)
 		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Labels on ForwardingRules must be added after resource is created
+	labels := s.scope.AdditionalLabels()
+	if !labels.Equals(forwarding.Labels) {
+		setLabelsRequest := &compute.RegionSetLabelsRequest{
+			LabelFingerprint: forwarding.LabelFingerprint,
+			Labels:           labels,
+		}
+		if err = s.regionalforwardingrules.SetLabels(ctx, key, setLabelsRequest); err != nil {
 			return nil, err
 		}
 	}

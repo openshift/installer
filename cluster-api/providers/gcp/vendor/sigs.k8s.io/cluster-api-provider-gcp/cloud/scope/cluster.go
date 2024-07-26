@@ -131,6 +131,21 @@ func (s *ClusterScope) NetworkName() string {
 	return ptr.Deref(s.GCPCluster.Spec.Network.Name, "default")
 }
 
+// NetworkMtu returns the Network MTU of 1440 which is the default, otherwise returns back what is being set.
+// Mtu: Maximum Transmission Unit in bytes. The minimum value for this field is
+// 1300 and the maximum value is 8896. The suggested value is 1500, which is
+// the default MTU used on the Internet, or 8896 if you want to use Jumbo
+// frames. If unspecified, the value defaults to 1460.
+// More info
+// - https://pkg.go.dev/google.golang.org/api/compute/v1#Network
+// - https://cloud.google.com/vpc/docs/mtu
+func (s *ClusterScope) NetworkMtu() int64 {
+	if s.GCPCluster.Spec.Network.Mtu == 0 {
+		return int64(1460)
+	}
+	return s.GCPCluster.Spec.Network.Mtu
+}
+
 // NetworkLink returns the partial URL for the network.
 func (s *ClusterScope) NetworkLink() string {
 	return fmt.Sprintf("projects/%s/global/networks/%s", s.NetworkProject(), s.NetworkName())
@@ -206,6 +221,7 @@ func (s *ClusterScope) NetworkSpec() *compute.Network {
 		Description:           infrav1.ClusterTagKey(s.Name()),
 		AutoCreateSubnetworks: createSubnet,
 		ForceSendFields:       []string{"AutoCreateSubnetworks"},
+		Mtu:                   s.NetworkMtu(),
 	}
 
 	return network
@@ -337,6 +353,7 @@ func (s *ClusterScope) ForwardingRuleSpec(lbname string) *compute.ForwardingRule
 		IPProtocol:          "TCP",
 		LoadBalancingScheme: "EXTERNAL",
 		PortRange:           portRange,
+		Labels:              s.AdditionalLabels(),
 	}
 }
 

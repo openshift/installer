@@ -251,9 +251,10 @@ func (s *Service) createCluster(ctx context.Context, log *logr.Logger) error {
 
 	isRegional := shared.IsRegional(s.scope.Region())
 	cluster := &containerpb.Cluster{
-		Name:       s.scope.ClusterName(),
-		Network:    *s.scope.GCPManagedCluster.Spec.Network.Name,
-		Subnetwork: s.getSubnetNameInClusterRegion(),
+		Name:        s.scope.ClusterName(),
+		Description: s.scope.GCPManagedControlPlane.Spec.Description,
+		Network:     *s.scope.GCPManagedCluster.Spec.Network.Name,
+		Subnetwork:  s.getSubnetNameInClusterRegion(),
 		Autopilot: &containerpb.Autopilot{
 			Enabled: s.scope.GCPManagedControlPlane.Spec.EnableAutopilot,
 		},
@@ -264,6 +265,34 @@ func (s *Service) createCluster(ctx context.Context, log *logr.Logger) error {
 	}
 	if s.scope.GCPManagedControlPlane.Spec.ControlPlaneVersion != nil {
 		cluster.InitialClusterVersion = convertToSdkMasterVersion(*s.scope.GCPManagedControlPlane.Spec.ControlPlaneVersion)
+	}
+	if s.scope.GCPManagedControlPlane.Spec.ClusterNetwork != nil {
+		cn := s.scope.GCPManagedControlPlane.Spec.ClusterNetwork
+		if cn.UseIPAliases {
+			cluster.IpAllocationPolicy = &containerpb.IPAllocationPolicy{}
+			cluster.IpAllocationPolicy.UseIpAliases = cn.UseIPAliases
+		}
+		if cn.PrivateCluster != nil {
+			cluster.PrivateClusterConfig = &containerpb.PrivateClusterConfig{}
+			cluster.PrivateClusterConfig.EnablePrivateEndpoint = cn.PrivateCluster.EnablePrivateEndpoint
+			if cn.PrivateCluster.EnablePrivateEndpoint {
+				cluster.MasterAuthorizedNetworksConfig = &containerpb.MasterAuthorizedNetworksConfig{
+					Enabled: true,
+				}
+			}
+			cluster.PrivateClusterConfig.EnablePrivateNodes = cn.PrivateCluster.EnablePrivateNodes
+
+			cluster.PrivateClusterConfig.MasterIpv4CidrBlock = cn.PrivateCluster.ControlPlaneCidrBlock
+			cluster.PrivateClusterConfig.MasterGlobalAccessConfig = &containerpb.PrivateClusterMasterGlobalAccessConfig{
+				Enabled: cn.PrivateCluster.ControlPlaneGlobalAccess,
+			}
+
+			cluster.NetworkConfig = &containerpb.NetworkConfig{
+				DefaultSnatStatus: &containerpb.DefaultSnatStatus{
+					Disabled: cn.PrivateCluster.DisableDefaultSNAT,
+				},
+			}
+		}
 	}
 	if !s.scope.IsAutopilotCluster() {
 		cluster.NodePools = scope.ConvertToSdkNodePools(nodePools, machinePools, isRegional, cluster.GetName())

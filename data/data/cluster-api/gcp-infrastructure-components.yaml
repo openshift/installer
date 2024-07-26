@@ -190,6 +190,18 @@ spec:
                       (useful for changing apiserver port)
                     format: int32
                     type: integer
+                  mtu:
+                    default: 1460
+                    description: |-
+                      Mtu: Maximum Transmission Unit in bytes. The minimum value for this field is
+                      1300 and the maximum value is 8896. The suggested value is 1500, which is
+                      the default MTU used on the Internet, or 8896 if you want to use Jumbo
+                      frames. If unspecified, the value defaults to 1460.
+                      More info: https://pkg.go.dev/google.golang.org/api/compute/v1#Network
+                    format: int64
+                    maximum: 8896
+                    minimum: 1300
+                    type: integer
                   name:
                     description: Name is the name of the network to be used.
                     type: string
@@ -628,6 +640,18 @@ spec:
                             description: Allow for configuration of load balancer
                               backend (useful for changing apiserver port)
                             format: int32
+                            type: integer
+                          mtu:
+                            default: 1460
+                            description: |-
+                              Mtu: Maximum Transmission Unit in bytes. The minimum value for this field is
+                              1300 and the maximum value is 8896. The suggested value is 1500, which is
+                              the default MTU used on the Internet, or 8896 if you want to use Jumbo
+                              frames. If unspecified, the value defaults to 1460.
+                              More info: https://pkg.go.dev/google.golang.org/api/compute/v1#Network
+                            format: int64
+                            maximum: 8896
+                            minimum: 1300
                             type: integer
                           name:
                             description: Name is the name of the network to be used.
@@ -1918,6 +1942,18 @@ spec:
                       (useful for changing apiserver port)
                     format: int32
                     type: integer
+                  mtu:
+                    default: 1460
+                    description: |-
+                      Mtu: Maximum Transmission Unit in bytes. The minimum value for this field is
+                      1300 and the maximum value is 8896. The suggested value is 1500, which is
+                      the default MTU used on the Internet, or 8896 if you want to use Jumbo
+                      frames. If unspecified, the value defaults to 1460.
+                      More info: https://pkg.go.dev/google.golang.org/api/compute/v1#Network
+                    format: int64
+                    maximum: 8896
+                    minimum: 1300
+                    type: integer
                   name:
                     description: Name is the name of the network to be used.
                     type: string
@@ -2272,11 +2308,74 @@ spec:
                   If you don't specify a name then a default name will be created
                   based on the namespace and name of the managed control plane.
                 type: string
+              clusterNetwork:
+                description: ClusterNetwork define the cluster network.
+                properties:
+                  pod:
+                    description: Pod defines the range of CIDRBlock list from where
+                      it gets the IP address.
+                    properties:
+                      cidrBlock:
+                        description: |-
+                          CidrBlock is where all pods in the cluster are assigned an IP address from this range. Enter a range
+                          (in CIDR notation) within a network range, a mask, or leave this field blank to use a default range.
+                          This setting is permanent.
+                        type: string
+                    type: object
+                  privateCluster:
+                    description: PrivateCluster defines the private cluster spec.
+                    properties:
+                      controlPlaneCidrBlock:
+                        description: |-
+                          ControlPlaneCidrBlock is the IP range in CIDR notation to use for the hosted master network. This range must not
+                          overlap with any other ranges in use within the cluster's network. Honored when enabled is true.
+                        type: string
+                      controlPlaneGlobalAccess:
+                        description: ControlPlaneGlobalAccess is whenever master is
+                          accessible globally or not. Honored when enabled is true.
+                        type: boolean
+                      disableDefaultSNAT:
+                        description: DisableDefaultSNAT disables cluster default sNAT
+                          rules. Honored when enabled is true.
+                        type: boolean
+                      enablePrivateEndpoint:
+                        description: |-
+                          EnablePrivateEndpoint: Whether the master's internal IP
+                          address is used as the cluster endpoint.
+                        type: boolean
+                      enablePrivateNodes:
+                        description: |-
+                          EnablePrivateNodes: Whether nodes have internal IP
+                          addresses only. If enabled, all nodes are given only RFC
+                          1918 private addresses and communicate with the master via
+                          private networking.
+                        type: boolean
+                    type: object
+                  service:
+                    description: Service defines the range of CIDRBlock list from
+                      where it gets the IP address.
+                    properties:
+                      cidrBlock:
+                        description: |-
+                          CidrBlock is where cluster services will be assigned an IP address from this IP address range. Enter a range
+                          (in CIDR notation) within a network range, a mask, or leave this field blank to use a default range.
+                          This setting is permanent.
+                        type: string
+                    type: object
+                  useIPAliases:
+                    description: |-
+                      UseIPAliases is whether alias IPs will be used for pod IPs in the cluster. If false, routes will be used for
+                      pod IPs in the cluster.
+                    type: boolean
+                type: object
               controlPlaneVersion:
                 description: |-
                   ControlPlaneVersion represents the control plane version of the GKE cluster.
                   If not specified, the default version currently supported by GKE will be
                   used.
+                type: string
+              description:
+                description: Description describe the cluster.
                 type: string
               enableAutopilot:
                 description: EnableAutopilot indicates whether to enable autopilot
