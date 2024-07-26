@@ -122,7 +122,7 @@ func (ci *ClusterInfo) Generate(_ context.Context, dependencies asset.Parents) e
 		return err
 	}
 
-	err = ci.retrieveInstallConfigData()
+	err = ci.retrieveInstallConfigData(addNodesConfig)
 	if err != nil {
 		return err
 	}
@@ -243,7 +243,7 @@ func (ci *ClusterInfo) retrieveArchitecture(addNodesConfig *AddNodesConfig) erro
 	return fmt.Errorf("unable to determine target cluster architecture")
 }
 
-func (ci *ClusterInfo) retrieveInstallConfigData() error {
+func (ci *ClusterInfo) retrieveInstallConfigData(addNodesConfig *AddNodesConfig) error {
 	clusterConfig, err := ci.Client.CoreV1().ConfigMaps("kube-system").Get(context.Background(), "cluster-config-v1", metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -268,6 +268,10 @@ func (ci *ClusterInfo) retrieveInstallConfigData() error {
 	ci.ClusterName = installConfig.ObjectMeta.Name
 	ci.APIDNSName = fmt.Sprintf("api.%s.%s", ci.ClusterName, installConfig.BaseDomain)
 	ci.FIPS = installConfig.FIPS
+
+	if addNodesConfig.Config.SSHKey != "" {
+		ci.SSHKey = addNodesConfig.Config.SSHKey
+	}
 
 	return nil
 }

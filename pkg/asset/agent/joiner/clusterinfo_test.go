@@ -49,7 +49,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 				Version:      "4.15.0",
 				APIDNSName:   "api.ostest.test.metalkube.org",
 				Namespace:    "cluster0",
-				PullSecret:   "c3VwZXJzZWNyZXQK",
+				PullSecret:   "c3VwZXJzZWNyZXQK", // notsecret
 				UserCaBundle: "--- bundle ---",
 				Architecture: "amd64",
 				Proxy: &types.Proxy{
@@ -103,7 +103,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 				Version:      "4.15.0",
 				APIDNSName:   "api.ostest.test.metalkube.org",
 				Namespace:    "cluster0",
-				PullSecret:   "c3VwZXJzZWNyZXQK",
+				PullSecret:   "c3VwZXJzZWNyZXQK", // notsecret
 				UserCaBundle: "--- bundle ---",
 				Architecture: "arm64",
 				Proxy: &types.Proxy{
@@ -146,6 +146,49 @@ func TestClusterInfo_Generate(t *testing.T) {
 				return objs, ocObjs
 			},
 			expectedError: "Platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"none\", \"external\"",
+		},
+		{
+			name:     "sshKey from nodes-config.yaml",
+			workflow: workflow.AgentWorkflowTypeAddNodes,
+			objs:     defaultObjects(),
+			nodesConfig: AddNodesConfig{
+				Config: Config{
+					SSHKey: "ssh-key-from-config",
+				},
+			},
+			expectedClusterInfo: ClusterInfo{
+				ClusterID:    "1b5ba46b-7e56-47b1-a326-a9eebddfb38c",
+				ClusterName:  "ostest",
+				ReleaseImage: "registry.ci.openshift.org/ocp/release@sha256:65d9b652d0d23084bc45cb66001c22e796d43f5e9e005c2bc2702f94397d596e",
+				Version:      "4.15.0",
+				APIDNSName:   "api.ostest.test.metalkube.org",
+				Namespace:    "cluster0",
+				PullSecret:   "c3VwZXJzZWNyZXQK", // notsecret
+				UserCaBundle: "--- bundle ---",
+				Architecture: "amd64",
+				Proxy: &types.Proxy{
+					HTTPProxy:  "http://proxy",
+					HTTPSProxy: "https://proxy",
+					NoProxy:    "localhost",
+				},
+				ImageDigestSources: []types.ImageDigestSource{
+					{
+						Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
+						Mirrors: []string{
+							"registry.example.com:5000/ocp4/openshift4",
+						},
+					},
+				},
+				PlatformType:    v1beta1.BareMetalPlatformType,
+				SSHKey:          "ssh-key-from-config",
+				OSImage:         buildStreamData(),
+				OSImageLocation: "http://my-coreosimage-url/416.94.202402130130-0",
+				IgnitionEndpointWorker: &models.IgnitionEndpoint{
+					URL:           ptr.To("https://192.168.111.5:22623/config/worker"),
+					CaCertificate: ptr.To("LS0tL_FakeCertificate_LS0tCg=="),
+				},
+				FIPS: true,
+			},
 		},
 	}
 	for _, tc := range cases {
