@@ -25,6 +25,7 @@ func (bc BmhCacheListerWatcher) List(options metav1.ListOptions) (runtime.Object
 	list, err := bc.Resource.List(context.TODO(), options)
 	if apierrors.IsNotFound(err) {
 		logrus.Debug("    baremetalhost resource not yet available, will retry")
+		time.Sleep(time.Second * 5)
 		return &unstructured.UnstructuredList{}, nil
 	}
 
@@ -42,7 +43,7 @@ func (bc BmhCacheListerWatcher) Watch(options metav1.ListOptions) (watch.Interfa
 		// watch.  To avoid errors, we introduce an artificial delay of one
 		// second.
 		w := watch.NewEmptyWatch()
-		time.Sleep(time.Second)
+		time.Sleep(time.Second * 5)
 		return w, nil
 	}
 	return w, err
