@@ -2,11 +2,10 @@ package azure
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
-	"net/http"
-	"os"
-	"strings"
+	"sync"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -20,7 +19,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
-	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"k8s.io/utils/ptr"
@@ -31,7 +29,6 @@ import (
 	azconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
-	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
 )
@@ -54,6 +51,10 @@ type Provider struct {
 	CloudConfiguration   cloud.Configuration
 	TokenCredential      azcore.TokenCredential
 	Tags                 map[string]*string
+
+	// For async image upload & gallery creation.
+	imageWaitGroup sync.WaitGroup
+	imageErrors    chan error
 }
 
 var _ clusterapi.PreProvider = (*Provider)(nil)
@@ -127,6 +128,11 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 
 	logrus.Debugf("ResourceGroup.ID=%s", *resourceGroup.ID)
 	p.ResourceGroupName = resourceGroupName
+
+	err = p.createImages(ctx, in)
+	if err != nil {
+		return fmt.Errorf("failed when running create images: %w")
+	}
 
 	// Create user assigned identity
 	userAssignedIdentityName := fmt.Sprintf("%s-identity", in.InfraID)
@@ -272,194 +278,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	platform := installConfig.Platform.Azure
 	subscriptionID := session.Credentials.SubscriptionID
 	cloudConfiguration := session.CloudConfig
-
 	resourceGroupName := p.ResourceGroupName
-	storageAccountName := fmt.Sprintf("%ssa", strings.ReplaceAll(in.InfraID, "-", ""))
-	containerName := "vhd"
-	blobName := fmt.Sprintf("rhcos%s.vhd", randomString(5))
-
-	stream, err := rhcos.FetchCoreOSBuild(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get rhcos stream: %w", err)
-	}
-	archName := arch.RpmArch(string(installConfig.ControlPlane.Architecture))
-	streamArch, err := stream.GetArchitecture(archName)
-	if err != nil {
-		return fmt.Errorf("failed to get rhcos architecture: %w", err)
-	}
-
-	azureDisk := streamArch.RHELCoreOSExtensions.AzureDisk
-	imageURL := azureDisk.URL
-
-	rawImageVersion := strings.ReplaceAll(azureDisk.Release, "-", "_")
-	imageVersion := rawImageVersion[:len(rawImageVersion)-6]
-
-	galleryName := fmt.Sprintf("gallery_%s", strings.ReplaceAll(in.InfraID, "-", "_"))
-	galleryImageName := in.InfraID
-	galleryImageVersionName := imageVersion
-	galleryGen2ImageName := fmt.Sprintf("%s-gen2", in.InfraID)
-	galleryGen2ImageVersionName := imageVersion
-
-	headResponse, err := http.Head(imageURL) // nolint:gosec
-	if err != nil {
-		return fmt.Errorf("failed HEAD request for image URL %s: %w", imageURL, err)
-	}
-
-	imageLength := headResponse.ContentLength
-	if imageLength%512 != 0 {
-		return fmt.Errorf("image length is not alisnged on a 512 byte boundary")
-	}
-
-	userTags := platform.UserTags
-	tags := make(map[string]*string, len(userTags)+1)
-	tags[fmt.Sprintf("kubernetes.io_cluster.%s", in.InfraID)] = ptr.To("owned")
-	for k, v := range userTags {
-		tags[k] = ptr.To(v)
-	}
-
-	tokenCredential := session.TokenCreds
-	storageURL := fmt.Sprintf("https://%s.blob.core.windows.net", storageAccountName)
-	blobURL := fmt.Sprintf("%s/%s/%s", storageURL, containerName, blobName)
-
-	// Create storage account
-	createStorageAccountOutput, err := CreateStorageAccount(ctx, &CreateStorageAccountInput{
-		SubscriptionID:     subscriptionID,
-		ResourceGroupName:  resourceGroupName,
-		StorageAccountName: storageAccountName,
-		CloudName:          platform.CloudName,
-		Region:             platform.Region,
-		Tags:               tags,
-		TokenCredential:    tokenCredential,
-		CloudConfiguration: cloudConfiguration,
-	})
-	if err != nil {
-		return err
-	}
-
-	storageAccount := createStorageAccountOutput.StorageAccount
-	storageClientFactory := createStorageAccountOutput.StorageClientFactory
-	storageAccountKeys := createStorageAccountOutput.StorageAccountKeys
-
-	logrus.Debugf("StorageAccount.ID=%s", *storageAccount.ID)
-
-	// Create blob storage container
-	createBlobContainerOutput, err := CreateBlobContainer(ctx, &CreateBlobContainerInput{
-		SubscriptionID:       subscriptionID,
-		ResourceGroupName:    resourceGroupName,
-		StorageAccountName:   storageAccountName,
-		ContainerName:        containerName,
-		StorageClientFactory: storageClientFactory,
-	})
-	if err != nil {
-		return err
-	}
-
-	blobContainer := createBlobContainerOutput.BlobContainer
-	logrus.Debugf("BlobContainer.ID=%s", *blobContainer.ID)
-
-	// Upload the image to the container
-	if _, ok := os.LookupEnv("OPENSHIFT_INSTALL_SKIP_IMAGE_UPLOAD"); !ok {
-		_, err = CreatePageBlob(ctx, &CreatePageBlobInput{
-			StorageURL:         storageURL,
-			BlobURL:            blobURL,
-			ImageURL:           imageURL,
-			ImageLength:        imageLength,
-			StorageAccountName: storageAccountName,
-			StorageAccountKeys: storageAccountKeys,
-			CloudConfiguration: cloudConfiguration,
-		})
-		if err != nil {
-			return err
-		}
-
-		// Create image gallery
-		createImageGalleryOutput, err := CreateImageGallery(ctx, &CreateImageGalleryInput{
-			SubscriptionID:     subscriptionID,
-			ResourceGroupName:  resourceGroupName,
-			GalleryName:        galleryName,
-			Region:             platform.Region,
-			Tags:               tags,
-			TokenCredential:    tokenCredential,
-			CloudConfiguration: cloudConfiguration,
-		})
-		if err != nil {
-			return err
-		}
-
-		computeClientFactory := createImageGalleryOutput.ComputeClientFactory
-
-		// Create gallery images
-		_, err = CreateGalleryImage(ctx, &CreateGalleryImageInput{
-			ResourceGroupName:    resourceGroupName,
-			GalleryName:          galleryName,
-			GalleryImageName:     galleryImageName,
-			Region:               platform.Region,
-			Tags:                 tags,
-			TokenCredential:      tokenCredential,
-			CloudConfiguration:   cloudConfiguration,
-			OSType:               armcompute.OperatingSystemTypesLinux,
-			OSState:              armcompute.OperatingSystemStateTypesGeneralized,
-			HyperVGeneration:     armcompute.HyperVGenerationV1,
-			Publisher:            "RedHat",
-			Offer:                "rhcos",
-			SKU:                  "basic",
-			ComputeClientFactory: computeClientFactory,
-		})
-		if err != nil {
-			return err
-		}
-
-		_, err = CreateGalleryImage(ctx, &CreateGalleryImageInput{
-			ResourceGroupName:    resourceGroupName,
-			GalleryName:          galleryName,
-			GalleryImageName:     galleryGen2ImageName,
-			Region:               platform.Region,
-			Tags:                 tags,
-			TokenCredential:      tokenCredential,
-			CloudConfiguration:   cloudConfiguration,
-			OSType:               armcompute.OperatingSystemTypesLinux,
-			OSState:              armcompute.OperatingSystemStateTypesGeneralized,
-			HyperVGeneration:     armcompute.HyperVGenerationV2,
-			Publisher:            "RedHat-gen2",
-			Offer:                "rhcos-gen2",
-			SKU:                  "gen2",
-			ComputeClientFactory: computeClientFactory,
-		})
-		if err != nil {
-			return err
-		}
-
-		// Create gallery image versions
-		_, err = CreateGalleryImageVersion(ctx, &CreateGalleryImageVersionInput{
-			ResourceGroupName:       resourceGroupName,
-			StorageAccountID:        *storageAccount.ID,
-			GalleryName:             galleryName,
-			GalleryImageName:        galleryImageName,
-			GalleryImageVersionName: galleryImageVersionName,
-			Region:                  platform.Region,
-			BlobURL:                 blobURL,
-			RegionalReplicaCount:    int32(1),
-			ComputeClientFactory:    computeClientFactory,
-		})
-		if err != nil {
-			return err
-		}
-
-		_, err = CreateGalleryImageVersion(ctx, &CreateGalleryImageVersionInput{
-			ResourceGroupName:       resourceGroupName,
-			StorageAccountID:        *storageAccount.ID,
-			GalleryName:             galleryName,
-			GalleryImageName:        galleryGen2ImageName,
-			GalleryImageVersionName: galleryGen2ImageVersionName,
-			Region:                  platform.Region,
-			BlobURL:                 blobURL,
-			RegionalReplicaCount:    int32(1),
-			ComputeClientFactory:    computeClientFactory,
-		})
-		if err != nil {
-			return err
-		}
-	}
 
 	networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, session.TokenCreds,
 		&arm.ClientOptions{
@@ -532,13 +351,6 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		extLBFQDN = *publicIP.Properties.DNSSettings.Fqdn
 	}
 
-	// Save context for other hooks
-	p.ResourceGroupName = resourceGroupName
-	p.StorageAccountName = storageAccountName
-	p.StorageURL = storageURL
-	p.StorageAccount = storageAccount
-	p.StorageAccountKeys = storageAccountKeys
-	p.StorageClientFactory = storageClientFactory
 	p.NetworkClientFactory = networkClientFactory
 	p.lbBackendAddressPool = lbBap
 
@@ -546,6 +358,17 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		return fmt.Errorf("error creating DNS records: %w", err)
 	}
 
+	// Wait for all image upload operations to finish.
+	logrus.Debug("Waiting for image gallery creation to complete")
+	p.imageWaitGroup.Wait()
+	if len(p.imageErrors) > 0 {
+		imageErrs := []error{}
+		for chanErr := range p.imageErrors {
+			imageErrs = append(imageErrs, chanErr)
+		}
+		return fmt.Errorf("image creation failed with the following error(s): %w", errors.Join(imageErrs...))
+	}
+	logrus.Debug("Image galleries have been successfully created")
 	return nil
 }
 
