@@ -244,7 +244,7 @@ require (
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/opencontainers/runtime-spec v1.2.0 // indirect
 	github.com/openshift/custom-resource-status v1.1.2 // indirect
-	github.com/openshift/machine-api-operator v0.2.1-0.20240702095949-e959540b5ab8 // indirect
+	github.com/openshift/machine-api-operator v0.2.1-0.20240722145313-3a817c78946a // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect

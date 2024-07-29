@@ -48,7 +48,7 @@ func TestValidateMachinePool(t *testing.T) {
 					DiskType: "pd-",
 				},
 			},
-			expected: `^test-path\.diskType: Unsupported value: "pd-": supported values: "pd-balanced", "pd-ssd", "pd-standard"$`,
+			expected: `^test-path\.diskType: Unsupported value: "pd-": supported values: "hyperdisk-balanced", "pd-balanced", "pd-ssd", "pd-standard"$`,
 		},
 		{
 			name: "valid disk size",

@@ -113,6 +113,7 @@ var (
 		"n2-standard-1":  {GuestCpus: 1, MemoryMb: 8192},
 		"n2-standard-2":  {GuestCpus: 2, MemoryMb: 16384},
 		"n2-standard-4":  {GuestCpus: 4, MemoryMb: 32768},
+		"n4-standard-4":  {GuestCpus: 4, MemoryMb: 32768},
 		"t2a-standard-4": {GuestCpus: 4, MemoryMb: 16384},
 	}
 
@@ -749,6 +750,7 @@ func TestValidateInstanceType(t *testing.T) {
 	cases := []struct {
 		name           string
 		zones          []string
+		diskType       string
 		instanceType   string
 		arch           string
 		expectedError  bool
@@ -758,6 +760,7 @@ func TestValidateInstanceType(t *testing.T) {
 			name:           "Valid instance type with min requirements and no zones specified",
 			zones:          []string{},
 			instanceType:   "n1-standard-4",
+			diskType:       "pd-ssd",
 			expectedError:  false,
 			expectedErrMsg: "",
 		},
@@ -765,6 +768,7 @@ func TestValidateInstanceType(t *testing.T) {
 			name:           "Valid instance type with min requirements and valid zones specified",
 			zones:          []string{"a", "b"},
 			instanceType:   "n1-standard-4",
+			diskType:       "pd-ssd",
 			arch:           "amd64",
 			expectedError:  false,
 			expectedErrMsg: "",
@@ -773,6 +777,7 @@ func TestValidateInstanceType(t *testing.T) {
 			name:           "Valid instance type with min requirements and invalid zones specified",
 			zones:          []string{"a", "b", "d", "x", "y"},
 			instanceType:   "n1-standard-4",
+			diskType:       "pd-ssd",
 			expectedError:  true,
 			expectedErrMsg: `\[instance.type: Invalid value: "n1\-standard\-4": instance type not available in zones: \[x y\]\]$`,
 		},
@@ -780,6 +785,7 @@ func TestValidateInstanceType(t *testing.T) {
 			name:           "Valid instance fails min requirements and no zones specified",
 			zones:          []string{},
 			instanceType:   "n1-standard-2",
+			diskType:       "pd-ssd",
 			expectedError:  true,
 			expectedErrMsg: `^\[instance.type: Invalid value: "n1\-standard\-2": instance type does not meet minimum resource requirements of 4 vCPUs instance.type: Invalid value: "n1\-standard\-2": instance type does not meet minimum resource requirements of 15360 MB Memory\]$`,
 		},
@@ -787,12 +793,14 @@ func TestValidateInstanceType(t *testing.T) {
 			name:           "Valid instance fails min requirements and valid zones specified",
 			zones:          []string{"a", "b"},
 			instanceType:   "n1-standard-1",
+			diskType:       "pd-ssd",
 			expectedError:  true,
 			expectedErrMsg: ``,
 		},
 		{
 			name:           "Valid instance fails min requirements and invalid zones specified",
 			zones:          []string{"a", "x", "y"},
+			diskType:       "pd-ssd",
 			expectedError:  true,
 			expectedErrMsg: ``,
 		},
@@ -800,6 +808,7 @@ func TestValidateInstanceType(t *testing.T) {
 			name:           "Invalid instance and no zones specified",
 			zones:          []string{},
 			instanceType:   "invalid-instance-1",
+			diskType:       "pd-ssd",
 			expectedError:  true,
 			expectedErrMsg: `^\[<nil>: Internal error: 404\]$`,
 		},
@@ -807,6 +816,7 @@ func TestValidateInstanceType(t *testing.T) {
 			name:           "Invalid instance and valid zones specified",
 			zones:          []string{"a", "b"},
 			instanceType:   "invalid-instance-1",
+			diskType:       "pd-ssd",
 			expectedError:  true,
 			expectedErrMsg: `^\[<nil>: Internal error: 404\]$`,
 		},
@@ -814,6 +824,7 @@ func TestValidateInstanceType(t *testing.T) {
 			name:           "Invalid instance and invalid zones specified",
 			zones:          []string{"a", "x", "y", "z"},
 			instanceType:   "invalid-instance-1",
+			diskType:       "pd-ssd",
 			expectedError:  true,
 			expectedErrMsg: `^\[<nil>: Internal error: 404\]$`,
 		},
@@ -821,9 +832,26 @@ func TestValidateInstanceType(t *testing.T) {
 			name:           "Invalid instance architecture",
 			zones:          []string{"a", "b"},
 			instanceType:   "t2a-standard-4",
+			diskType:       "pd-ssd",
 			arch:           "amd64",
 			expectedError:  true,
 			expectedErrMsg: `^\[instance.type: Invalid value: "t2a\-standard\-4": instance type architecture arm64 does not match specified architecture amd64\]$`,
+		},
+		{
+			name:           "Valid special instance type with min requirements",
+			zones:          []string{"a"},
+			instanceType:   "n4-standard-4",
+			diskType:       "hyperdisk-balanced",
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Invalid special instance type with min requirements",
+			zones:          []string{"a"},
+			instanceType:   "n2-standard-4",
+			diskType:       "hyperdisk-balanced",
+			expectedError:  true,
+			expectedErrMsg: `^\[instance.diskType: Unsupported value: \"n2\": supported values: \"c3\", \"c3d\", \"m1\", \"n4\"\]$`,
 		},
 	}
 
@@ -840,7 +868,7 @@ func TestValidateInstanceType(t *testing.T) {
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			errs := ValidateInstanceType(gcpClient, field.NewPath("instance"), "project-id", "region", test.zones, test.instanceType, controlPlaneReq, test.arch)
+			errs := ValidateInstanceType(gcpClient, field.NewPath("instance"), "project-id", "region", test.zones, test.diskType, test.instanceType, controlPlaneReq, test.arch)
 			if test.expectedError {
 				assert.Regexp(t, test.expectedErrMsg, errs)
 			} else {
