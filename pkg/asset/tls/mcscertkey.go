@@ -43,7 +43,7 @@ func (a *MCSCertKey) Generate(ctx context.Context, dependencies asset.Parents) e
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:machine-config-server"},
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		Validity:     ValidityTenYears,
+		Validity:     ValidityTenYears(),
 	}
 
 	var vips []string
@@ -81,7 +81,7 @@ func RegenerateMCSCertKey(ic *installconfig.InstallConfig, ca *RootCA, privateLB
 	cfg := &CertCfg{
 		Subject:      pkix.Name{CommonName: "system:machine-config-server"},
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		Validity:     ValidityTenYears,
+		Validity:     ValidityTenYears(),
 	}
 	cfg.IPAddresses = []net.IP{}
 	cfg.DNSNames = []string{hostname}
