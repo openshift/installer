@@ -15,6 +15,7 @@ import (
 
 	"github.com/openshift/assisted-service/client/installer"
 	"github.com/openshift/assisted-service/models"
+	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/gather/ssh"
 )
@@ -70,9 +71,22 @@ func NewCluster(ctx context.Context, assetDir, rendezvousIP, kubeconfigPath, ssh
 	czero := &Cluster{}
 	capi := &clientSet{}
 
-	authToken, err := FindAuthTokenFromAssetStore(assetDir)
-	if err != nil {
-		logrus.Fatal(err)
+	var authToken string
+	var err error
+
+	switch workflowType {
+	case workflow.AgentWorkflowTypeInstall:
+		authToken, err = FindAuthTokenFromAssetStore(assetDir)
+		if err != nil {
+			return nil, err
+		}
+	case workflow.AgentWorkflowTypeAddNodes:
+		authToken, err = gencrypto.GetAuthTokenFromCluster(ctx, kubeconfigPath)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("AgentWorkflowType value not supported: %s", workflowType)
 	}
 
 	restclient := NewNodeZeroRestClient(ctx, rendezvousIP, sshKey, authToken)

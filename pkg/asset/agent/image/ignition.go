@@ -262,7 +262,7 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 		infraEnv.Spec.Proxy,
 		imageTypeISO,
 		keyPairAsset.PublicKey,
-		keyPairAsset.Token,
+		keyPairAsset.AgentAuthToken,
 		caBundleMount)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
@@ -272,7 +272,7 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 
 	rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath,
 		"root", 0644,
-		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, a.RendezvousIP, keyPairAsset.Token, agentWorkflow.Workflow))
+		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, a.RendezvousIP, keyPairAsset.AgentAuthToken, agentWorkflow.Workflow))
 	config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 
 	err = addBootstrapScripts(&config, agentManifests.ClusterImageSet.Spec.ReleaseImage)

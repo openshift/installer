@@ -119,7 +119,7 @@ func FindRendezvouIPAndSSHKeyFromAssetStore(assetDir string) (string, string, er
 	return rendezvousIP, sshKey, nil
 }
 
-// FindAuthTokenFromAssetStore returns the auth token.
+// FindAuthTokenFromAssetStore returns the auth token from asset store.
 func FindAuthTokenFromAssetStore(assetDir string) (string, error) {
 	authConfigAsset := &gencrypto.AuthConfig{}
 
@@ -135,9 +135,12 @@ func FindAuthTokenFromAssetStore(assetDir string) (string, error) {
 		return "", errors.New("failed to load AuthConfig")
 	}
 
-	token := authConfig.(*gencrypto.AuthConfig).Token
+	var authToken string
+	if authConfig != nil {
+		authToken = authConfig.(*gencrypto.AuthConfig).AgentAuthToken
+	}
 
-	return token, nil
+	return authToken, nil
 }
 
 // IsRestAPILive Determine if the Agent Rest API on node zero has initialized

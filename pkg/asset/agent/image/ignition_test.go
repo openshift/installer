@@ -110,6 +110,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	assert.Equal(t, proxy, templateData.Proxy)
 	assert.Equal(t, publicKey, templateData.PublicKeyPEM)
 	assert.Equal(t, token, templateData.Token)
+
 }
 
 func TestIgnition_getRendezvousHostEnv(t *testing.T) {
