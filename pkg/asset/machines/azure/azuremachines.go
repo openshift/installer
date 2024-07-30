@@ -140,7 +140,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 				NetworkInterfaces: []capz.NetworkInterface{
 					{
 						SubnetName:            subnet,
-						AcceleratedNetworking: ptr.To(mpool.VMNetworkingType == azure.AcceleratedNetworkingEnabled),
+						AcceleratedNetworking: ptr.To(mpool.VMNetworkingType == string(azure.VMnetworkingTypeAccelerated) || mpool.VMNetworkingType == string(azure.AcceleratedNetworkingEnabled)),
 					},
 				},
 				Identity: capz.VMIdentityUserAssigned,
