@@ -619,8 +619,14 @@ func (r *AWSMachineReconciler) reconcileNormal(_ context.Context, machineScope *
 		}
 
 		if err := r.reconcileLBAttachment(machineScope, elbScope, instance); err != nil {
-			machineScope.Error(err, "failed to reconcile LB attachment")
-			return ctrl.Result{}, err
+			// We are tolerating InstanceNotRunning error, so we don't report it as an error condition.
+			// Because we are reconciling all load balancers, attempt to treat the error as a list of errors.
+			if err := kerrors.FilterOut(err, elb.IsInstanceNotRunning); err != nil {
+				machineScope.Error(err, "failed to reconcile LB attachment")
+				return ctrl.Result{}, err
+			}
+			// Cannot attach non-running instances to LB
+			shouldRequeue = true
 		}
 	}
 
@@ -1000,6 +1006,14 @@ func (r *AWSMachineReconciler) registerInstanceToV2LB(machineScope *scope.Machin
 	if registered {
 		machineScope.Logger.Debug("Instance is already registered.", "instance", instance.ID)
 		return nil
+	}
+
+	// See https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-register-targets.html#register-instances
+	if ptr.Deref(machineScope.GetInstanceState(), infrav1.InstanceStatePending) != infrav1.InstanceStateRunning {
+		r.Recorder.Eventf(machineScope.AWSMachine, corev1.EventTypeWarning, "FailedAttachControlPlaneELB",
+			"Cannot register control plane instance %q with load balancer: instance is not running", instance.ID)
+		conditions.MarkFalse(machineScope.AWSMachine, infrav1.ELBAttachedCondition, infrav1.ELBAttachFailedReason, clusterv1.ConditionSeverityInfo, "instance not running")
+		return elb.NewInstanceNotRunning("instance is not running")
 	}
 
 	if err := elbsvc.RegisterInstanceWithAPIServerLB(instance, lb); err != nil {

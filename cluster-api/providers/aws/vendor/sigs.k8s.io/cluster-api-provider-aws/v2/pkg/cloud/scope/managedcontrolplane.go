@@ -407,6 +407,11 @@ func (s *ManagedControlPlaneScope) VpcCni() ekscontrolplanev1.VpcCni {
 	return s.ControlPlane.Spec.VpcCni
 }
 
+// RestrictPrivateSubnets returns whether Control Plane should be restricted to Private subnets.
+func (s *ManagedControlPlaneScope) RestrictPrivateSubnets() bool {
+	return s.ControlPlane.Spec.RestrictPrivateSubnets
+}
+
 // OIDCIdentityProviderConfig returns the OIDC identity provider config.
 func (s *ManagedControlPlaneScope) OIDCIdentityProviderConfig() *ekscontrolplanev1.OIDCIdentityProviderConfig {
 	return s.ControlPlane.Spec.OIDCIdentityProviderConfig

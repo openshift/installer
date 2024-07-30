@@ -8,6 +8,7 @@ aliases:
     - vincepri
   cluster-api-admins:
     - fabriziopandini
+    - sbueringer
     - vincepri
   cluster-api-maintainers:
     - chrischdi
@@ -23,10 +24,10 @@ aliases:
     - Ankitasw
     - dlipovetsky
     - nrb
+    - AndiDog
   cluster-api-aws-reviewers:
     - luthermonson
     - cnmcavoy
     - faiq
     - fiunchinho
-    - AndiDog
     - damdo

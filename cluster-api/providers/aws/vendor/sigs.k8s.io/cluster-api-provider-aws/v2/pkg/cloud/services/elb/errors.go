@@ -56,6 +56,15 @@ func NewConflict(msg string) error {
 	}
 }
 
+// NewInstanceNotRunning returns an error which indicates that the request cannot be processed due to the instance not
+// being in a running state.
+func NewInstanceNotRunning(msg string) error {
+	return &ELBError{
+		msg:  msg,
+		Code: http.StatusTooEarly,
+	}
+}
+
 // IsNotFound returns true if the error was created by NewNotFound.
 func IsNotFound(err error) bool {
 	if ReasonForError(err) == http.StatusNotFound {
@@ -88,6 +97,11 @@ func IsConflict(err error) bool {
 func IsSDKError(err error) (ok bool) {
 	_, ok = errors.Cause(err).(awserr.Error)
 	return
+}
+
+// IsInstanceNotRunning returns true if the error was created by NewInstanceNotRunning.
+func IsInstanceNotRunning(err error) (ok bool) {
+	return ReasonForError(err) == http.StatusTooEarly
 }
 
 // ReasonForError returns the HTTP status for a particular error.
