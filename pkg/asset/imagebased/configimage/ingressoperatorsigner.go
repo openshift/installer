@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
 )
 
@@ -26,17 +27,20 @@ var _ asset.Asset = (*IngressOperatorSignerCertKey)(nil)
 
 // Dependencies returns the dependency of the the cert/key pair.
 func (a *IngressOperatorSignerCertKey) Dependencies() []asset.Asset {
-	return []asset.Asset{}
+	return []asset.Asset{&installconfig.InstallConfig{}}
 }
 
 // Generate generates the cert/key pair based on its dependencies.
 func (a *IngressOperatorSignerCertKey) Generate(ctx context.Context, dependencies asset.Parents) error {
 	signerName := fmt.Sprintf("%s@%d", "ingress-operator", time.Now().Unix())
 
+	installConfig := &installconfig.InstallConfig{}
+	dependencies.Get(installConfig)
+
 	cfg := &tls.CertCfg{
 		Subject:   pkix.Name{CommonName: signerName, OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  tls.ValidityOneYear * 2,
+		Validity:  tls.ValidityOneYear(installConfig) * 2,
 		IsCA:      true,
 	}
 
