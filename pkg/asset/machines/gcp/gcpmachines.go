@@ -14,6 +14,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
 	"github.com/openshift/installer/pkg/types"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
@@ -141,6 +142,7 @@ func createGCPMachine(name string, installConfig *installconfig.InstallConfig, i
 			RootDeviceType:        ptr.To(capg.DiskType(mpool.OSDisk.DiskType)),
 			RootDeviceSize:        mpool.OSDisk.DiskSizeGB,
 			AdditionalNetworkTags: mpool.Tags,
+			ResourceManagerTags:   gcpmanifests.GetTagsFromInstallConfig(installConfig),
 		},
 	}
 	gcpMachine.SetGroupVersionKind(capg.GroupVersion.WithKind("GCPMachine"))

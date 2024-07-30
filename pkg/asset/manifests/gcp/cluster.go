@@ -155,6 +155,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				APIServerInstanceGroupTagOverride: ptr.To(InstanceGroupRoleTag),
 				LoadBalancerType:                  ptr.To(capgLoadBalancerType),
 			},
+			ResourceManagerTags: GetTagsFromInstallConfig(installConfig),
 		},
 	}
 	gcpCluster.SetGroupVersionKind(capg.GroupVersion.WithKind("GCPCluster"))
@@ -246,4 +247,18 @@ func getSubnet(ctx context.Context, project, region, subnetName string) (*comput
 	}
 
 	return subnet, nil
+}
+
+// GetTagsFromInstallConfig will return a slice of ResourceManagerTags from UserTags in install-config.
+func GetTagsFromInstallConfig(installConfig *installconfig.InstallConfig) []capg.ResourceManagerTag {
+	tags := make([]capg.ResourceManagerTag, len(installConfig.Config.Platform.GCP.UserTags))
+	for i, tag := range installConfig.Config.Platform.GCP.UserTags {
+		tags[i] = capg.ResourceManagerTag{
+			ParentID: tag.ParentID,
+			Key:      tag.Key,
+			Value:    tag.Value,
+		}
+	}
+
+	return tags
 }
