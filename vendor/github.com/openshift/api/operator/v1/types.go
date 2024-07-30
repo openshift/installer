@@ -147,17 +147,27 @@ type GenerationStatus struct {
 	// group is the group of the thing you're tracking
 	// +kubebuilder:validation:Required
 	Group string `json:"group"`
+
 	// resource is the resource type of the thing you're tracking
 	// +kubebuilder:validation:Required
 	Resource string `json:"resource"`
+
 	// namespace is where the thing you're tracking is
 	// +kubebuilder:validation:Required
 	Namespace string `json:"namespace"`
+
 	// name is the name of the thing you're tracking
 	// +kubebuilder:validation:Required
 	Name string `json:"name"`
+
+	// TODO: Add validation for lastGeneration. The value for this field should generally increase, except when the associated
+	// resource has been deleted and re-created. To accurately validate this field, we should introduce a new UID field and only
+	// enforce an increasing value in lastGeneration when the UID remains unchanged. A change in the UID indicates that the resource
+	// was re-created, allowing the lastGeneration value to reset or decrease.
+
 	// lastGeneration is the last generation of the workload controller involved
 	LastGeneration int64 `json:"lastGeneration"`
+
 	// hash is an optional field set for resources without generation that are content sensitive like secrets and configmaps
 	Hash string `json:"hash"`
 }
