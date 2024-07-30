@@ -120,7 +120,7 @@ require (
 	k8s.io/utils v0.0.0-20240310230437-4693a0247e57
 	libvirt.org/go/libvirtxml v1.10002.0
 	sigs.k8s.io/cluster-api v1.7.3
-	sigs.k8s.io/cluster-api-provider-aws/v2 v2.5.2-0.20240716201506-6e43273dd65d
+	sigs.k8s.io/cluster-api-provider-aws/v2 v2.6.1
 	sigs.k8s.io/cluster-api-provider-azure v1.15.1-0.20240617212811-a52056dfb88c
 	sigs.k8s.io/cluster-api-provider-gcp v1.7.0
 	sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0
