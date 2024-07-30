@@ -136,6 +136,17 @@ type NetworkSpec struct {
 	// HostProject is the name of the project hosting the shared VPC network resources.
 	// +optional
 	HostProject *string `json:"hostProject,omitempty"`
+
+	// Mtu: Maximum Transmission Unit in bytes. The minimum value for this field is
+	// 1300 and the maximum value is 8896. The suggested value is 1500, which is
+	// the default MTU used on the Internet, or 8896 if you want to use Jumbo
+	// frames. If unspecified, the value defaults to 1460.
+	// More info: https://pkg.go.dev/google.golang.org/api/compute/v1#Network
+	// +kubebuilder:validation:Minimum:=1300
+	// +kubebuilder:validation:Maximum:=8896
+	// +kubebuilder:default:=1460
+	// +optional
+	Mtu int64 `json:"mtu,omitempty"`
 }
 
 // LoadBalancerType defines the Load Balancer that should be created.

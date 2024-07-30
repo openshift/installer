@@ -44,6 +44,14 @@ type forwardingrulesInterface interface {
 	Get(ctx context.Context, key *meta.Key, options ...k8scloud.Option) (*compute.ForwardingRule, error)
 	Insert(ctx context.Context, key *meta.Key, obj *compute.ForwardingRule, options ...k8scloud.Option) error
 	Delete(ctx context.Context, key *meta.Key, options ...k8scloud.Option) error
+	SetLabels(ctx context.Context, key *meta.Key, obj *compute.GlobalSetLabelsRequest, options ...k8scloud.Option) error
+}
+
+type regionalforwardingrulesInterface interface {
+	Get(ctx context.Context, key *meta.Key, options ...k8scloud.Option) (*compute.ForwardingRule, error)
+	Insert(ctx context.Context, key *meta.Key, obj *compute.ForwardingRule, options ...k8scloud.Option) error
+	Delete(ctx context.Context, key *meta.Key, options ...k8scloud.Option) error
+	SetLabels(ctx context.Context, key *meta.Key, obj *compute.RegionSetLabelsRequest, options ...k8scloud.Option) error
 }
 
 type healthchecksInterface interface {
@@ -89,7 +97,7 @@ type Service struct {
 	backendservices         backendservicesInterface
 	regionalbackendservices backendservicesInterface
 	forwardingrules         forwardingrulesInterface
-	regionalforwardingrules forwardingrulesInterface
+	regionalforwardingrules regionalforwardingrulesInterface
 	healthchecks            healthchecksInterface
 	regionalhealthchecks    healthchecksInterface
 	instancegroups          instancegroupsInterface
@@ -101,6 +109,11 @@ var _ cloud.Reconciler = &Service{}
 
 // New returns Service from given scope.
 func New(scope Scope) *Service {
+	cloudScope := scope.Cloud()
+	if scope.IsSharedVpc() {
+		cloudScope = scope.NetworkCloud()
+	}
+
 	return &Service{
 		scope:                   scope,
 		addresses:               scope.Cloud().GlobalAddresses(),
@@ -113,6 +126,6 @@ func New(scope Scope) *Service {
 		regionalhealthchecks:    scope.Cloud().RegionHealthChecks(),
 		instancegroups:          scope.Cloud().InstanceGroups(),
 		targettcpproxies:        scope.Cloud().TargetTcpProxies(),
-		subnets:                 scope.Cloud().Subnetworks(),
+		subnets:                 cloudScope.Subnetworks(),
 	}
 }

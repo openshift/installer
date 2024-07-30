@@ -249,6 +249,7 @@ func (m *MachineScope) InstanceImageSpec() *compute.AttachedDisk {
 			DiskType:            path.Join("zones", m.Zone(), "diskTypes", string(diskType)),
 			ResourceManagerTags: shared.ResourceTagConvert(context.TODO(), m.GCPMachine.Spec.ResourceManagerTags),
 			SourceImage:         sourceImage,
+			Labels:              m.ClusterGetter.AdditionalLabels().AddLabels(m.GCPMachine.Spec.AdditionalLabels),
 		},
 	}
 

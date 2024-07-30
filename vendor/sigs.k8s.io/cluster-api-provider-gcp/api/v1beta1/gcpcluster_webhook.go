@@ -92,6 +92,20 @@ func (c *GCPCluster) ValidateUpdate(oldRaw runtime.Object) (admission.Warnings, 
 		)
 	}
 
+	if c.Spec.Network.Mtu < int64(1300) {
+		allErrs = append(allErrs,
+			field.Invalid(field.NewPath("spec", "Network", "Mtu"),
+				c.Spec.Network.Mtu, "field cannot be lesser than 1300"),
+		)
+	}
+
+	if c.Spec.Network.Mtu > int64(8896) {
+		allErrs = append(allErrs,
+			field.Invalid(field.NewPath("spec", "Network", "Mtu"),
+				c.Spec.Network.Mtu, "field cannot be greater than 8896"),
+		)
+	}
+
 	if len(allErrs) == 0 {
 		return nil, nil
 	}
