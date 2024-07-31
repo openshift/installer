@@ -19,6 +19,7 @@ import (
 	"github.com/rogpeppe/go-internal/testscript"
 	"github.com/stretchr/testify/assert"
 	"github.com/vincent-petithory/dataurl"
+	"gopkg.in/yaml.v2"
 
 	"github.com/openshift/installer/pkg/asset/releaseimage"
 )
@@ -110,6 +111,49 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 			if releaseImageOverride, ok := os.LookupEnv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"); ok && releaseImageOverride != "" {
 				pullspec = releaseImageOverride
 				e.Vars = append(e.Vars, fmt.Sprintf("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE=%s", pullspec))
+				if authFilePath, ok := os.LookupEnv("AUTH_FILE"); ok && authFilePath != "" {
+					// Read the new pull secret from auth.json
+					authFile, err := os.ReadFile(authFilePath)
+					if err != nil {
+						return err
+					}
+					var auths map[string]interface{}
+					if err := json.Unmarshal(authFile, &auths); err != nil {
+						t.Logf("Error unmarshalling auth.json: %v\n", err)
+						return err
+					}
+					newPullSecret, err := json.Marshal(auths)
+					if err != nil {
+						return err
+					}
+
+					// Read the existing install-config.yaml
+					workDir := e.Getenv("WORK")
+					installConfigPathAbs := filepath.Join(workDir, "install-config.yaml")
+					installConfigFile, err := os.ReadFile(installConfigPathAbs)
+					if err != nil {
+						return err
+					}
+					var config map[string]interface{}
+					if err := yaml.Unmarshal(installConfigFile, &config); err != nil {
+						t.Logf("Error unmarshalling install-config.yaml: %v\n", err)
+						return err
+					}
+
+					// Update the pullSecret
+					config["pullSecret"] = string(newPullSecret)
+
+					// Write the updated config back to install-config.yaml
+					updatedConfig, err := yaml.Marshal(&config)
+					if err != nil {
+						return err
+					}
+					if err := os.WriteFile(installConfigPathAbs, updatedConfig, 0600); err != nil {
+						t.Logf("Error writing updated install-config.yaml: %v\n", err)
+						return err
+					}
+					t.Log("PullSecret replaced successfully.")
+				}
 			} else {
 				// Let's get the current release version, so that
 				// it could be used within the tests
