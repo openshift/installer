@@ -44,6 +44,7 @@ func analyzeGatherBundle(bundleFile io.Reader) error {
 	// read through the tar for relevant files
 	tarReader := tar.NewReader(uncompressedStream)
 	serviceAnalyses := make(map[string]analysis)
+	servicesFound := make([]string, 0)
 	for {
 		header, err := tarReader.Next()
 		if err == io.EOF {
@@ -61,6 +62,7 @@ func analyzeGatherBundle(bundleFile io.Reader) error {
 			continue
 		}
 		serviceName := serviceEntriesFileSubmatch[1]
+		servicesFound = append(servicesFound, serviceName)
 
 		serviceAnalysis, err := analyzeService(tarReader)
 		if err != nil {
@@ -69,6 +71,11 @@ func analyzeGatherBundle(bundleFile io.Reader) error {
 		}
 
 		serviceAnalyses[serviceName] = serviceAnalysis
+	}
+
+	if len(servicesFound) == 0 {
+		logrus.Error("Invalid log bundle or the bootstrap machine could not be reached and bootstrap logs were not collected")
+		return nil
 	}
 
 	analysisChecks := []struct {
