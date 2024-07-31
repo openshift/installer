@@ -4,12 +4,13 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"os"
 	"regexp"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,7 +28,7 @@ func AnalyzeGatherBundle(bundlePath string) error {
 	// open the bundle file for reading
 	bundleFile, err := os.Open(bundlePath)
 	if err != nil {
-		return errors.Wrap(err, "could not open the gather bundle")
+		return fmt.Errorf("could not open the gather bundle: %w", err)
 	}
 	defer bundleFile.Close()
 	return analyzeGatherBundle(bundleFile)
@@ -37,7 +38,7 @@ func analyzeGatherBundle(bundleFile io.Reader) error {
 	// decompress the bundle
 	uncompressedStream, err := gzip.NewReader(bundleFile)
 	if err != nil {
-		return errors.Wrap(err, "could not decompress the gather bundle")
+		return fmt.Errorf("could not decompress the gather bundle: %w", err)
 	}
 	defer uncompressedStream.Close()
 
@@ -51,7 +52,7 @@ func analyzeGatherBundle(bundleFile io.Reader) error {
 			break
 		}
 		if err != nil {
-			return errors.Wrap(err, "encountered an error reading from the gather bundle")
+			return fmt.Errorf("encountered an error reading from the gather bundle: %w", err)
 		}
 		if header.Typeflag != tar.TypeReg {
 			continue
@@ -145,7 +146,7 @@ func analyzeService(r io.Reader) (analysis, error) {
 	decoder := json.NewDecoder(r)
 	t, err := decoder.Token()
 	if err != nil {
-		return a, errors.Wrap(err, "service entries file does not begin with a token")
+		return a, fmt.Errorf("service entries file does not begin with a token: %w", err)
 	}
 	delim, isDelim := t.(json.Delim)
 	if !isDelim {
@@ -158,7 +159,7 @@ func analyzeService(r io.Reader) (analysis, error) {
 	for decoder.More() {
 		entry := &Entry{}
 		if err := decoder.Decode(entry); err != nil {
-			return a, errors.Wrap(err, "could not decode an entry in the service entries file")
+			return a, fmt.Errorf("could not decode an entry in the service entries file: %w", err)
 		}
 
 		// record a new start of the service
