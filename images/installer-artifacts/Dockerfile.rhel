@@ -55,6 +55,7 @@ ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN go run -mod=vendor hack/coreos/build-coreos-manifest.go
+RUN go run -mod=vendor hack/permissions/build-platform-permissions.go
 
 FROM registry.ci.openshift.org/ocp/4.17:base-rhel9
 COPY --from=macbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/mac/openshift-install
