@@ -450,7 +450,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		mpool.NumCPUs = 8
 		mpool.Set(ic.Platform.Nutanix.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Nutanix)
-		if err = mpool.ValidateConfig(ic.Platform.Nutanix); err != nil {
+		if err = mpool.ValidateConfig(ic.Platform.Nutanix, "master"); err != nil {
 			return fmt.Errorf("failed to generate Cluster API machine manifests for control-plane: %w", err)
 		}
 		pool.Platform.Nutanix = &mpool

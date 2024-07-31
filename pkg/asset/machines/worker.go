@@ -648,8 +648,8 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			mpool := defaultNutanixMachinePoolPlatform()
 			mpool.Set(ic.Platform.Nutanix.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.Nutanix)
-			if err = mpool.ValidateConfig(ic.Platform.Nutanix); err != nil {
-				return errors.Wrap(err, "failed to create master machine objects")
+			if err = mpool.ValidateConfig(ic.Platform.Nutanix, "worker"); err != nil {
+				return errors.Wrap(err, "failed to create worker machine objects")
 			}
 			pool.Platform.Nutanix = &mpool
 			imageName := nutanixtypes.RHCOSImageName(clusterID.InfraID)

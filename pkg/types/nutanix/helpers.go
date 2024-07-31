@@ -14,6 +14,8 @@ import (
 	"github.com/nutanix-cloud-native/prism-go-client/utils"
 	nutanixclientv3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 	"github.com/pkg/errors"
+
+	machinev1 "github.com/openshift/api/machine/v1"
 )
 
 const (
@@ -193,4 +195,95 @@ func RHCOSImageName(infraID string) string {
 func CategoryKey(infraID string) string {
 	categoryKey := fmt.Sprintf("%s%s", categoryKeyPrefix, infraID)
 	return categoryKey
+}
+
+// GetGPUList returns a list of VMGpus for the given list of GPU identifiers in the Prism Element (uuid).
+func GetGPUList(ctx context.Context, client *nutanixclientv3.Client, gpus []machinev1.NutanixGPU, peUUID string) ([]*nutanixclientv3.VMGpu, error) {
+	vmGPUs := make([]*nutanixclientv3.VMGpu, 0)
+
+	if len(gpus) == 0 {
+		return vmGPUs, nil
+	}
+
+	peGPUs, err := GetGPUsForPE(ctx, client, peUUID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve GPUs of the Prism Element cluster (uuid: %v): %w", peUUID, err)
+	}
+	if len(peGPUs) == 0 {
+		return nil, fmt.Errorf("no available GPUs found in Prism Element cluster (uuid: %s)", peUUID)
+	}
+
+	for _, gpu := range gpus {
+		foundGPU, err := GetGPUFromList(ctx, client, gpu, peGPUs)
+		if err != nil {
+			return nil, err
+		}
+		vmGPUs = append(vmGPUs, foundGPU)
+	}
+
+	return vmGPUs, nil
+}
+
+// GetGPUFromList returns the VMGpu matching the input reqirements from the provided list of GPU devices.
+func GetGPUFromList(ctx context.Context, client *nutanixclientv3.Client, gpu machinev1.NutanixGPU, gpuDevices []*nutanixclientv3.GPU) (*nutanixclientv3.VMGpu, error) {
+	for _, gd := range gpuDevices {
+		if gd.Status != "UNUSED" {
+			continue
+		}
+
+		if (gpu.Type == machinev1.NutanixGPUIdentifierDeviceID && gd.DeviceID != nil && *gpu.DeviceID == int32(*gd.DeviceID)) ||
+			(gpu.Type == machinev1.NutanixGPUIdentifierName && *gpu.Name == gd.Name) {
+			return &nutanixclientv3.VMGpu{
+				DeviceID: gd.DeviceID,
+				Mode:     &gd.Mode,
+				Vendor:   &gd.Vendor,
+			}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no available GPU found that matches required GPU inputs")
+}
+
+// GetGPUsForPE returns all the GPU devices for the given Prism Element (uuid).
+func GetGPUsForPE(ctx context.Context, client *nutanixclientv3.Client, peUUID string) ([]*nutanixclientv3.GPU, error) {
+	gpus := make([]*nutanixclientv3.GPU, 0)
+	hosts, err := client.V3.ListAllHost(ctx)
+	if err != nil {
+		return gpus, fmt.Errorf("failed to get hosts from Prism Central: %w", err)
+	}
+
+	for _, host := range hosts.Entities {
+		if host == nil ||
+			host.Status == nil ||
+			host.Status.ClusterReference == nil ||
+			host.Status.ClusterReference.UUID != peUUID ||
+			host.Status.Resources == nil ||
+			len(host.Status.Resources.GPUList) == 0 {
+			continue
+		}
+
+		for _, peGpu := range host.Status.Resources.GPUList {
+			if peGpu != nil {
+				gpus = append(gpus, peGpu)
+			}
+		}
+	}
+
+	return gpus, nil
+}
+
+// FindImageUUIDByName retrieves the image resource uuid by the given image name from PC.
+func FindImageUUIDByName(ctx context.Context, ntnxclient *nutanixclientv3.Client, imageName string) (*string, error) {
+	res, err := ntnxclient.V3.ListImage(ctx, &nutanixclientv3.DSMetadata{
+		Filter: utils.StringPtr(fmt.Sprintf("name==%s", imageName)),
+	})
+	if err != nil || len(res.Entities) == 0 {
+		return nil, fmt.Errorf("failed to find image by name %q. err: %w", imageName, err)
+	}
+
+	if len(res.Entities) > 1 {
+		return nil, fmt.Errorf("found more than one (%v) images with name %q", len(res.Entities), imageName)
+	}
+
+	return res.Entities[0].Metadata.UUID, nil
 }

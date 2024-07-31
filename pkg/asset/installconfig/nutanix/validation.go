@@ -77,6 +77,26 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 					fmt.Sprintf("the failure domain %s configured subnet UUID does not correspond to a valid subnet in Prism: %v", fd.Name, err)))
 			}
 		}
+
+		// validate each configured dataSource image exists
+		for _, dsImgRef := range fd.DataSourceImages {
+			switch {
+			case dsImgRef.UUID != "":
+				if _, err = nc.V3.GetImage(ctx, dsImgRef.UUID); err != nil {
+					errMsg := fmt.Sprintf("failureDomain %q: failed to find the dataSource image with uuid %s: %v", fd.Name, dsImgRef.UUID, err)
+					errList = append(errList, field.Invalid(parentPath.Child("failureDomains", "dataSourceImage", "uuid"), dsImgRef.UUID, errMsg))
+				}
+			case dsImgRef.Name != "":
+				if dsImgUUID, err := nutanixtypes.FindImageUUIDByName(ctx, nc, dsImgRef.Name); err != nil {
+					errMsg := fmt.Sprintf("failureDomain %q: failed to find the dataSource image with name %q: %v", fd.Name, dsImgRef.UUID, err)
+					errList = append(errList, field.Invalid(parentPath.Child("failureDomains", "dataSourceImage", "name"), dsImgRef.Name, errMsg))
+				} else {
+					dsImgRef.UUID = *dsImgUUID
+				}
+			default:
+				errList = append(errList, field.Required(parentPath.Child("failureDomains", "dataSourceImage"), "both the dataSourceImage's uuid and name are empty, you need to configure one."))
+			}
+		}
 	}
 
 	return errList.ToAggregate()
