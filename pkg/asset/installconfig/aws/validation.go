@@ -57,6 +57,7 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 		allErrs = append(allErrs, validateMachinePool(ctx, meta, field.NewPath("controlPlane", "platform", "aws"), config.Platform.AWS, pool, controlPlaneReq, "", arch)...)
 	}
 
+	var archSeen string
 	for idx, compute := range config.Compute {
 		fldPath := field.NewPath("compute").Index(idx)
 		if compute.Name == types.MachinePoolEdgeRoleName {
@@ -68,6 +69,17 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 		}
 
 		arch := string(compute.Architecture)
+		if arch == "" {
+			arch = string(config.ControlPlane.Architecture)
+		}
+		switch {
+		case archSeen == "":
+			archSeen = arch
+		case arch != archSeen:
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("architecture"), arch, "all compute machine pools must be of the same architecture"))
+		default:
+			// compute machine pools have the same arch so far
+		}
 		pool := &awstypes.MachinePool{}
 		pool.Set(config.AWS.DefaultMachinePlatform)
 		pool.Set(compute.Platform.AWS)
