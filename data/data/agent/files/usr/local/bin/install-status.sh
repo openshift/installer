@@ -4,8 +4,21 @@
 source "issue_status.sh"
 
 inactive_services() {
-    local services="assisted-service.service agent-register-cluster.service agent-register-infraenv.service apply-host-config.service start-cluster-installation.service"
-    for s in ${services}; do
+    local services=("assisted-service.service")
+    if [ -e /etc/assisted/workflow/add-nodes.env ]; then
+        services+=("agent-import-cluster.service")
+    else
+        services+=("agent-register-cluster.service")
+    fi
+    services+=("agent-register-infraenv.service")
+    services+=("apply-host-config.service")
+    if [ -e /etc/assisted/workflow/add-nodes.env ]; then
+        services+=("agent-add-node.service")
+    else
+        services+=("start-cluster-installation.service")
+    fi
+
+    for s in "${services[@]}"; do
         if ! systemctl is-active "${s}" >/dev/null; then
             printf "%s " "${s}"
         fi
