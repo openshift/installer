@@ -7,13 +7,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types/agent"
+	"github.com/openshift/installer/pkg/validate"
 )
 
 const (
@@ -37,6 +37,7 @@ type Config struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	CPUArchitecture string       `json:"cpuArchitecture,omitempty"`
+	SSHKey          string       `json:"sshKey,omitempty"`
 	Hosts           []agent.Host `json:"hosts,omitempty"`
 }
 
@@ -114,10 +115,16 @@ func (a *AddNodesConfig) Load(f asset.FileFetcher) (bool, error) {
 }
 
 func (a *AddNodesConfig) finish() error {
-	if err := a.validateHosts().ToAggregate(); err != nil {
-		return errors.Wrapf(err, "invalid nodes configuration")
+	allErrs := field.ErrorList{}
+
+	if err := a.validateHosts(); err != nil {
+		allErrs = append(allErrs, err...)
 	}
-	return nil
+	if err := a.validateSSHKey(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
+	return allErrs.ToAggregate()
 }
 
 func (a *AddNodesConfig) validateHosts() field.ErrorList {
@@ -128,5 +135,18 @@ func (a *AddNodesConfig) validateHosts() field.ErrorList {
 		allErrs = append(allErrs, field.Required(fieldPath, "at least one host must be defined"))
 	}
 
+	return allErrs
+}
+
+func (a *AddNodesConfig) validateSSHKey() field.ErrorList {
+	var allErrs field.ErrorList
+
+	if a.Config.SSHKey == "" {
+		return nil
+	}
+
+	if err := validate.SSHPublicKey(a.Config.SSHKey); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), a.Config.SSHKey, err.Error()))
+	}
 	return allErrs
 }
