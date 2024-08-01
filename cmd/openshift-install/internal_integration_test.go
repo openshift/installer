@@ -274,6 +274,12 @@ func isoCmp(ts *testscript.TestScript, neg bool, args []string) {
 	isoPath, aFilePath, eFilePath := args[0], args[1], args[2]
 	isoPathAbs := filepath.Join(workDir, isoPath)
 
+	// Skip comparing pull-secrets when OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE is set.
+	if os.Getenv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE") != "" && (strings.Contains(aFilePath, "pull-secret.yaml") || strings.Contains(eFilePath, "pull-secret.yaml")) {
+		ts.Logf("Skipping pull-secret.yaml comparison due to 'OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE' environment variable being set.")
+		return
+	}
+
 	archiveFile, ignitionFile, err := archiveFileNames(isoPath)
 	if err != nil {
 		ts.Check(err)
