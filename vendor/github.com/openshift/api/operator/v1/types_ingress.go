@@ -391,6 +391,7 @@ var (
 type CIDR string
 
 // LoadBalancerStrategy holds parameters for a load balancer.
+// +kubebuilder:validation:XValidation:rule="!has(self.scope) || self.scope != 'Internal' || !has(self.providerParameters) || !has(self.providerParameters.aws) || !has(self.providerParameters.aws.networkLoadBalancer) || !has(self.providerParameters.aws.networkLoadBalancer.eipAllocations)",message="eipAllocations are forbidden when the scope is Internal."
 type LoadBalancerStrategy struct {
 	// scope indicates the scope at which the load balancer is exposed.
 	// Possible values are "External" and "Internal".
@@ -698,7 +699,10 @@ type AWSClassicLoadBalancerParameters struct {
 }
 
 // AWSNetworkLoadBalancerParameters holds configuration parameters for an
-// AWS Network load balancer.
+// AWS Network load balancer. For Example: Setting AWS EIPs https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html
+// +kubebuilder:validation:XValidation:rule=`has(self.subnets) && has(self.subnets.ids) && has(self.subnets.names) && has(self.eipAllocations) ? size(self.subnets.ids + self.subnets.names) == size(self.eipAllocations) : true`,message="number of subnets must be equal to number of eipAllocations"
+// +kubebuilder:validation:XValidation:rule=`has(self.subnets) && has(self.subnets.ids) && !has(self.subnets.names) && has(self.eipAllocations) ? size(self.subnets.ids) == size(self.eipAllocations) : true`,message="number of subnets must be equal to number of eipAllocations"
+// +kubebuilder:validation:XValidation:rule=`has(self.subnets) && has(self.subnets.names) && !has(self.subnets.ids) && has(self.eipAllocations) ? size(self.subnets.names) == size(self.eipAllocations) : true`,message="number of subnets must be equal to number of eipAllocations"
 type AWSNetworkLoadBalancerParameters struct {
 	// subnets specifies the subnets to which the load balancer will
 	// attach. The subnets may be specified by either their
@@ -716,7 +720,47 @@ type AWSNetworkLoadBalancerParameters struct {
 	// +optional
 	// +openshift:enable:FeatureGate=IngressControllerLBSubnetsAWS
 	Subnets *AWSSubnets `json:"subnets,omitempty"`
+
+	// eipAllocations is a list of IDs for Elastic IP (EIP) addresses that
+	// are assigned to the Network Load Balancer.
+	// The following restrictions apply:
+	//
+	// eipAllocations can only be used with external scope, not internal.
+	// An EIP can be allocated to only a single IngressController.
+	// The number of EIP allocations must match the number of subnets that are used for the load balancer.
+	// Each EIP allocation must be unique.
+	// A maximum of 10 EIP allocations are permitted.
+	//
+	// See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html for general
+	// information about configuration, characteristics, and limitations of Elastic IP addresses.
+	//
+	// +openshift:enable:FeatureGate=SetEIPForNLBIngressController
+	// +optional
+	// +listType=atomic
+	// +kubebuilder:validation:XValidation:rule=`self.all(x, self.exists_one(y, x == y))`,message="eipAllocations cannot contain duplicates"
+	// +kubebuilder:validation:MaxItems=10
+	EIPAllocations []EIPAllocation `json:"eipAllocations"`
 }
+
+// EIPAllocation is an ID for an Elastic IP (EIP) address that can be allocated to an ELB in the AWS environment.
+// Values must begin with `eipalloc-` followed by exactly 17 hexadecimal (`[0-9a-fA-F]`) characters.
+// + Explanation of the regex `^eipalloc-[0-9a-fA-F]{17}$` for validating value of the EIPAllocation:
+// + ^eipalloc- ensures the string starts with "eipalloc-".
+// + [0-9a-fA-F]{17} matches exactly 17 hexadecimal characters (0-9, a-f, A-F).
+// + $ ensures the string ends after the 17 hexadecimal characters.
+// + Example of Valid and Invalid values:
+// + eipalloc-1234567890abcdef1 is valid.
+// + eipalloc-1234567890abcde is not valid (too short).
+// + eipalloc-1234567890abcdefg is not valid (contains a non-hex character 'g').
+// + Max length is calculated as follows:
+// + eipalloc- = 9 chars and 17 hexadecimal chars after `-`
+// + So, total is 17 + 9 = 26 chars required for value of an EIPAllocation.
+//
+// +kubebuilder:validation:MinLength=26
+// +kubebuilder:validation:MaxLength=26
+// +kubebuilder:validation:XValidation:rule=`self.startsWith('eipalloc-')`,message="eipAllocations should start with 'eipalloc-'"
+// +kubebuilder:validation:XValidation:rule=`self.split("-", 2)[1].matches('[0-9a-fA-F]{17}$')`,message="eipAllocations must be 'eipalloc-' followed by exactly 17 hexadecimal characters (0-9, a-f, A-F)"
+type EIPAllocation string
 
 // HostNetworkStrategy holds parameters for the HostNetwork endpoint publishing
 // strategy.
