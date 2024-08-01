@@ -291,24 +291,29 @@ func (c *system) Run(ctx context.Context) error {
 		}
 		APIKey := bxClient.GetBxClientAPIKey()
 
-		controllers = append(controllers,
-			c.getInfrastructureController(
-				&IBMCloud,
-				[]string{
-					"--provider-id-fmt=v2",
-					"--v=5",
-					"--health-addr={{suggestHealthHostPort}}",
-					"--webhook-port={{.WebhookPort}}",
-					"--webhook-cert-dir={{.WebhookCertDir}}",
-				},
-				map[string]string{
-					"IBMCLOUD_AUTH_TYPE": "iam",
-					"IBMCLOUD_APIKEY":    APIKey,
-					"IBMCLOUD_AUTH_URL":  "https://iam.cloud.ibm.com",
-					"LOGLEVEL":           "5",
-				},
-			),
+		controller := c.getInfrastructureController(
+			&IBMCloud,
+			[]string{
+				"--provider-id-fmt=v2",
+				"--v=5",
+				"--health-addr={{suggestHealthHostPort}}",
+				"--webhook-port={{.WebhookPort}}",
+				"--webhook-cert-dir={{.WebhookCertDir}}",
+			},
+			map[string]string{
+				"IBMCLOUD_AUTH_TYPE": "iam",
+				"IBMCLOUD_APIKEY":    APIKey,
+				"IBMCLOUD_AUTH_URL":  "https://iam.cloud.ibm.com",
+				"LOGLEVEL":           "5",
+			},
 		)
+		if cfg := metadata.PowerVS; cfg != nil && len(cfg.ServiceEndpoints) > 0 {
+			overrides := bxClient.FilterServiceEndpoints(cfg)
+			if len(overrides) > 0 {
+				controller.Args = append(controller.Args, fmt.Sprintf("--service-endpoint=%s:%s", cfg.Region, strings.Join(overrides, ",")))
+			}
+		}
+		controllers = append(controllers, controller)
 	default:
 		return fmt.Errorf("unsupported platform %q", platform)
 	}

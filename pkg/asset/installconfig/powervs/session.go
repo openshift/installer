@@ -15,6 +15,9 @@ import (
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/form3tech-oss/jwt-go"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/sets"
+
+	"github.com/openshift/installer/pkg/types/powervs"
 )
 
 var (
@@ -422,4 +425,19 @@ func getEnv(envs []string) string {
 		}
 	}
 	return ""
+}
+
+// FilterServiceEndpoints drops service endpoint overrides that are not supported by PowerVS CAPI provider.
+func (c *BxClient) FilterServiceEndpoints(cfg *powervs.Metadata) []string {
+	capiSupported := sets.New("cos", "powervs", "rc", "rm", "vpc") // see serviceIDs array definition in https://github.com/kubernetes-sigs/cluster-api-provider-ibmcloud/blob/main/pkg/endpoints/endpoints.go
+	overrides := make([]string, 0, len(cfg.ServiceEndpoints))
+	// CAPI expects name=url pairs of service endpoints
+	for _, endpoint := range cfg.ServiceEndpoints {
+		if capiSupported.Has(endpoint.Name) {
+			overrides = append(overrides, fmt.Sprintf("%s=%s", endpoint.Name, endpoint.URL))
+		} else {
+			logrus.Infof("Unsupported service endpoint skipped: %s", endpoint.Name)
+		}
+	}
+	return overrides
 }
