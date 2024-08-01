@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"path"
 	"strings"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	capg "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
@@ -80,15 +79,13 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, error) {
 	// Create the bucket and presigned url. The url is generated using a known/expected name so that the
 	// url can be retrieved from the api by this name.
-	ctx, cancel := context.WithTimeout(ctx, time.Minute*2)
-	defer cancel()
-
 	bucketName := gcp.GetBootstrapStorageName(in.InfraID)
-	bucketHandle, err := gcp.CreateBucketHandle(ctx, bucketName)
+	storageClient, err := gcp.NewStorageClient(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create bucket handle %s: %w", bucketName, err)
+		return nil, fmt.Errorf("failed to create storage client: %w", err)
 	}
 
+	bucketHandle := storageClient.Bucket(bucketName)
 	if err := gcp.CreateStorage(ctx, in.InstallConfig, bucketHandle, in.InfraID); err != nil {
 		return nil, fmt.Errorf("failed to create bucket %s: %w", bucketName, err)
 	}
