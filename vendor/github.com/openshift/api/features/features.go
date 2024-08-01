@@ -57,6 +57,13 @@ var (
 				enableIn(configv1.DevPreviewNoUpgrade).
 				mustRegister()
 
+	FeatureGateSetEIPForNLBIngressController = newFeatureGate("SetEIPForNLBIngressController").
+							reportProblemsToJiraComponent("Networking / router").
+							contactPerson("miheer").
+							productScope(ocpSpecific).
+							enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+							mustRegister()
+
 	FeatureGateOpenShiftPodSecurityAdmission = newFeatureGate("OpenShiftPodSecurityAdmission").
 							reportProblemsToJiraComponent("auth").
 							contactPerson("stlaz").
@@ -348,6 +355,13 @@ var (
 					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 					mustRegister()
 
+	FeatureGateBootcNodeManagement = newFeatureGate("BootcNodeManagement").
+					reportProblemsToJiraComponent("MachineConfigOperator").
+					contactPerson("inesqyx").
+					productScope(ocpSpecific).
+					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+					mustRegister()
+
 	FeatureGateSignatureStores = newFeatureGate("SignatureStores").
 					reportProblemsToJiraComponent("Cluster Version Operator").
 					contactPerson("lmohanty").
@@ -554,6 +568,7 @@ var (
 					reportProblemsToJiraComponent("Installer").
 					contactPerson("r4f4").
 					productScope(ocpSpecific).
+					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 					mustRegister()
 
 	FeatureGateMultiArchInstallAzure = newFeatureGate("MultiArchInstallAzure").
@@ -566,6 +581,7 @@ var (
 					reportProblemsToJiraComponent("Installer").
 					contactPerson("r4f4").
 					productScope(ocpSpecific).
+					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 					mustRegister()
 
 	FeatureGateIngressControllerLBSubnetsAWS = newFeatureGate("IngressControllerLBSubnetsAWS").
