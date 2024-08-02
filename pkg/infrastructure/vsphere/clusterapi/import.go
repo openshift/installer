@@ -125,7 +125,7 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 		return errors.New(spec.Error[0].LocalizedMessage)
 	}
 
-	hostSystem, err := findAvailableHostSystems(ctx, session, clusterHostSystems)
+	hostSystem, err := findAvailableHostSystems(ctx, session, clusterHostSystems, networkRef)
 	if err != nil {
 		return fmt.Errorf("failed to find available host system: %w", err)
 	}
@@ -175,16 +175,34 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 	return nil
 }
 
-func findAvailableHostSystems(ctx context.Context, session *session.Session, clusterHostSystems []*object.HostSystem) (*object.HostSystem, error) {
+func findAvailableHostSystems(ctx context.Context, session *session.Session, clusterHostSystems []*object.HostSystem, networkObjectRef object.NetworkReference) (*object.HostSystem, error) {
 	var hostSystemManagedObject mo.HostSystem
 	for _, hostObj := range clusterHostSystems {
 		err := hostObj.Properties(ctx, hostObj.Reference(), []string{"config.product", "network", "datastore", "runtime"}, &hostSystemManagedObject)
 		if err != nil {
 			return nil, err
 		}
-		if hostSystemManagedObject.Runtime.InMaintenanceMode {
+
+		// if distributed port group the cast will fail
+		networkFound := true
+		// If the object.NetworkReference is a standard portgroup make
+		// sure that it exists on esxi host that the OVA will be imported to.
+		if _, ok := networkObjectRef.(*object.Network); ok {
+			networkFound = false
+			for _, n := range hostSystemManagedObject.Network {
+				if n.Value == networkObjectRef.Reference().Value {
+					networkFound = true
+					break
+				}
+			}
+		}
+
+		// if the network is not found and the ESXi host is in maintenance mode continue the loop
+		if !networkFound || hostSystemManagedObject.Runtime.InMaintenanceMode {
 			continue
 		}
+
+		logrus.Debugf("using ESXi %s to import the OVA image", hostObj.Name())
 		return hostObj, nil
 	}
 	return nil, errors.New("all hosts unavailable")
