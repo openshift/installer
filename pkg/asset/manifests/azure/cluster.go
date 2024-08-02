@@ -12,6 +12,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	azic "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils/cidr"
 	"github.com/openshift/installer/pkg/types"
@@ -199,6 +200,10 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 			TenantID: session.Credentials.TenantID,
 		},
+	}
+	if session.AuthType == azic.ManagedIdentityAuth {
+		id.Spec.Type = capz.UserAssignedMSI
+		id.Spec.ClientSecret = corev1.SecretReference{}
 	}
 	id.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureClusterIdentity"))
 	manifests = append(manifests, &asset.RuntimeFile{
