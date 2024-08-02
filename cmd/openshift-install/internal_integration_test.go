@@ -132,6 +132,11 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 					installConfigPathAbs := filepath.Join(workDir, "install-config.yaml")
 					installConfigFile, err := os.ReadFile(installConfigPathAbs)
 					if err != nil {
+						if os.IsNotExist(err) {
+							// skip the error when test does not required reading the install-config.yaml
+							return nil
+						}
+						// For other errors, return them
 						return err
 					}
 					var config map[string]interface{}
