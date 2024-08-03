@@ -277,12 +277,22 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		if err != nil {
 			return err
 		}
-		// useImageGallery := installConfig.Azure.CloudName != azuretypes.StackCloud
-		useImageGallery := false
-		masterUserDataSecretName := "master-user-data"
-		resourceGroupName := installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID)
 
-		azureMachines, err := azure.GenerateMachines(installConfig.Config.Platform.Azure, &pool, masterUserDataSecretName, clusterID.InfraID, "master", capabilities, useImageGallery, installConfig.Config.Platform.Azure.UserTags, hyperVGen, subnet, resourceGroupName, session.Credentials.SubscriptionID)
+		azureMachines, err := azure.GenerateMachines(clusterID.InfraID,
+			installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID),
+			session.Credentials.SubscriptionID,
+			&azure.MachineInput{
+				Subnet:          subnet,
+				Role:            "master",
+				UserDataSecret:  "master-user-data",
+				HyperVGen:       hyperVGen,
+				UseImageGallery: false,
+				Private:         installConfig.Config.Publish == types.InternalPublishingStrategy,
+				UserTags:        installConfig.Config.Platform.Azure.UserTags,
+				Platform:        installConfig.Config.Platform.Azure,
+				Pool:            &pool,
+			},
+		)
 		if err != nil {
 			return fmt.Errorf("failed to create master machine objects: %w", err)
 		}
