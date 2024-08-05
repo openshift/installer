@@ -227,6 +227,85 @@ func TestIncludesExistingInstanceRole(t *testing.T) {
 	})
 }
 
+func TestIncludesExistingInstanceProfile(t *testing.T) {
+	t.Run("Should be true when", func(t *testing.T) {
+		t.Run("instance profile specified for defaultMachinePlatform", func(t *testing.T) {
+			ic := basicInstallConfig()
+			ic.AWS.DefaultMachinePlatform = &aws.MachinePool{
+				IAMProfile: "custom-default-profile",
+			}
+			assert.True(t, includesExistingInstanceProfile(&ic))
+		})
+		t.Run("instance profile specified for controlPlane", func(t *testing.T) {
+			ic := basicInstallConfig()
+			ic.ControlPlane = &types.MachinePool{
+				Platform: types.MachinePoolPlatform{
+					AWS: &aws.MachinePool{
+						IAMProfile: "custom-master-profile",
+					},
+				},
+			}
+			assert.True(t, includesExistingInstanceProfile(&ic))
+		})
+		t.Run("instance profile specified for compute", func(t *testing.T) {
+			ic := basicInstallConfig()
+			ic.Compute = []types.MachinePool{
+				{
+					Platform: types.MachinePoolPlatform{
+						AWS: &aws.MachinePool{
+							IAMProfile: "custom-worker-profile",
+						},
+					},
+				},
+			}
+			assert.True(t, includesExistingInstanceProfile(&ic))
+		})
+		t.Run("instance profile specified for controlPlane and compute", func(t *testing.T) {
+			ic := basicInstallConfig()
+			ic.ControlPlane = &types.MachinePool{
+				Platform: types.MachinePoolPlatform{
+					AWS: &aws.MachinePool{
+						IAMProfile: "custom-master-profile",
+					},
+				},
+			}
+			ic.Compute = []types.MachinePool{
+				{
+					Platform: types.MachinePoolPlatform{
+						AWS: &aws.MachinePool{
+							IAMProfile: "custom-worker-profile",
+						},
+					},
+				},
+			}
+			assert.True(t, includesExistingInstanceProfile(&ic))
+		})
+	})
+	t.Run("Should be false when", func(t *testing.T) {
+		t.Run("no machine types specified", func(t *testing.T) {
+			ic := basicInstallConfig()
+			assert.False(t, includesExistingInstanceProfile(&ic))
+		})
+		t.Run("no instance profiles specified", func(t *testing.T) {
+			ic := basicInstallConfig()
+			ic.AWS.DefaultMachinePlatform = &aws.MachinePool{}
+			ic.ControlPlane = &types.MachinePool{
+				Platform: types.MachinePoolPlatform{
+					AWS: &aws.MachinePool{},
+				},
+			}
+			ic.Compute = []types.MachinePool{
+				{
+					Platform: types.MachinePoolPlatform{
+						AWS: &aws.MachinePool{},
+					},
+				},
+			}
+			assert.False(t, includesExistingInstanceProfile(&ic))
+		})
+	})
+}
+
 func TestIAMRolePermissions(t *testing.T) {
 	t.Run("Should include", func(t *testing.T) {
 		t.Run("create and delete shared IAM role permissions", func(t *testing.T) {
@@ -237,6 +316,13 @@ func TestIAMRolePermissions(t *testing.T) {
 				assert.Contains(t, requiredPerms, PermissionCreateInstanceRole)
 				assert.Contains(t, requiredPerms, PermissionDeleteSharedInstanceRole)
 			})
+			t.Run("when instance profile specified for controlPlane", func(t *testing.T) {
+				ic := validInstallConfig()
+				ic.ControlPlane.Platform.AWS.IAMProfile = "custom-master-profile"
+				requiredPerms := RequiredPermissionGroups(ic)
+				assert.Contains(t, requiredPerms, PermissionCreateInstanceRole)
+				assert.NotContains(t, requiredPerms, PermissionDeleteSharedInstanceRole)
+			})
 			t.Run("when role specified for compute", func(t *testing.T) {
 				ic := validInstallConfig()
 				ic.Compute[0].Platform.AWS.IAMRole = "custom-worker-role"
@@ -244,9 +330,16 @@ func TestIAMRolePermissions(t *testing.T) {
 				assert.Contains(t, requiredPerms, PermissionCreateInstanceRole)
 				assert.Contains(t, requiredPerms, PermissionDeleteSharedInstanceRole)
 			})
+			t.Run("when instance profile specified for compute", func(t *testing.T) {
+				ic := validInstallConfig()
+				ic.Compute[0].Platform.AWS.IAMProfile = "custom-worker-profile"
+				requiredPerms := RequiredPermissionGroups(ic)
+				assert.Contains(t, requiredPerms, PermissionCreateInstanceRole)
+				assert.NotContains(t, requiredPerms, PermissionDeleteSharedInstanceRole)
+			})
 		})
 		t.Run("create IAM role permissions", func(t *testing.T) {
-			t.Run("when no existing roles are specified", func(t *testing.T) {
+			t.Run("when no existing roles and instance profiles are specified", func(t *testing.T) {
 				ic := validInstallConfig()
 				requiredPerms := RequiredPermissionGroups(ic)
 				assert.Contains(t, requiredPerms, PermissionCreateInstanceRole)
@@ -272,6 +365,72 @@ func TestIAMRolePermissions(t *testing.T) {
 			requiredPerms := RequiredPermissionGroups(ic)
 			assert.NotContains(t, requiredPerms, PermissionCreateInstanceRole)
 			assert.Contains(t, requiredPerms, PermissionDeleteSharedInstanceRole)
+		})
+		t.Run("when instance profile specified for defaultMachinePlatform", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.AWS.DefaultMachinePlatform = &aws.MachinePool{
+				IAMProfile: "custom-default-profile",
+			}
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionCreateInstanceRole)
+			assert.NotContains(t, requiredPerms, PermissionDeleteSharedInstanceRole)
+		})
+		t.Run("when instance profile specified for controlPlane and compute", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.ControlPlane.Platform.AWS.IAMProfile = "custom-master-profile"
+			ic.Compute[0].Platform.AWS.IAMProfile = "custom-worker-profile"
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionCreateInstanceRole)
+			assert.NotContains(t, requiredPerms, PermissionDeleteSharedInstanceRole)
+		})
+	})
+}
+
+func TestIAMProfilePermissions(t *testing.T) {
+	t.Run("Should include", func(t *testing.T) {
+		t.Run("create and delete shared instance profile permissions", func(t *testing.T) {
+			t.Run("when instance profile specified for controlPlane", func(t *testing.T) {
+				ic := validInstallConfig()
+				ic.ControlPlane.Platform.AWS.IAMProfile = "custom-master-profile"
+				requiredPerms := RequiredPermissionGroups(ic)
+				assert.Contains(t, requiredPerms, PermissionCreateInstanceProfile)
+				assert.Contains(t, requiredPerms, PermissionDeleteSharedInstanceProfile)
+			})
+			t.Run("when instance profile specified for compute", func(t *testing.T) {
+				ic := validInstallConfig()
+				ic.Compute[0].Platform.AWS.IAMProfile = "custom-worker-profile"
+				requiredPerms := RequiredPermissionGroups(ic)
+				assert.Contains(t, requiredPerms, PermissionCreateInstanceProfile)
+				assert.Contains(t, requiredPerms, PermissionDeleteSharedInstanceProfile)
+			})
+		})
+		t.Run("create instance profile permissions", func(t *testing.T) {
+			t.Run("when no existing instance profiles are specified", func(t *testing.T) {
+				ic := validInstallConfig()
+				requiredPerms := RequiredPermissionGroups(ic)
+				assert.Contains(t, requiredPerms, PermissionCreateInstanceProfile)
+				assert.NotContains(t, requiredPerms, PermissionDeleteSharedInstanceProfile)
+			})
+		})
+	})
+
+	t.Run("Should not include create instance profile permissions", func(t *testing.T) {
+		t.Run("when instance profile specified for defaultMachinePlatform", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.AWS.DefaultMachinePlatform = &aws.MachinePool{
+				IAMProfile: "custom-default-profile",
+			}
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionCreateInstanceProfile)
+			assert.Contains(t, requiredPerms, PermissionDeleteSharedInstanceProfile)
+		})
+		t.Run("when instance profile specified for controlPlane and compute", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.ControlPlane.Platform.AWS.IAMProfile = "custom-master-profile"
+			ic.Compute[0].Platform.AWS.IAMProfile = "custom-worker-profile"
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionCreateInstanceProfile)
+			assert.Contains(t, requiredPerms, PermissionDeleteSharedInstanceProfile)
 		})
 	})
 }

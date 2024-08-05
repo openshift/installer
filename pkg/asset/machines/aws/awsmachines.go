@@ -49,6 +49,11 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 		imds = capa.HTTPTokensStateRequired
 	}
 
+	instanceProfile := in.Pool.Platform.AWS.IAMProfile
+	if len(instanceProfile) == 0 {
+		instanceProfile = fmt.Sprintf("%s-master-profile", clusterID)
+	}
+
 	var result []*asset.RuntimeFile
 
 	for idx := int64(0); idx < total; idx++ {
@@ -91,7 +96,7 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 				InstanceType:         mpool.InstanceType,
 				AMI:                  capa.AMIReference{ID: ptr.To(mpool.AMIID)},
 				SSHKeyName:           ptr.To(""),
-				IAMInstanceProfile:   fmt.Sprintf("%s-master-profile", clusterID),
+				IAMInstanceProfile:   instanceProfile,
 				Subnet:               subnet,
 				PublicIP:             ptr.To(in.PublicIP),
 				AdditionalTags:       in.Tags,

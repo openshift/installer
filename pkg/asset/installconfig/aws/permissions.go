@@ -40,6 +40,13 @@ const (
 	// cluster with user-supplied IAM roles for instances.
 	PermissionDeleteSharedInstanceRole PermissionGroup = "delete-shared-instance-role"
 
+	// PermissionCreateInstanceProfile is a set of permission required when the installer creates instance profiles.
+	PermissionCreateInstanceProfile PermissionGroup = "create-instance-profile"
+
+	// PermissionDeleteSharedInstanceProfile is a set of permissions required when the installer destroys resources from
+	// a cluster with user-supplied IAM instance profiles for instances.
+	PermissionDeleteSharedInstanceProfile PermissionGroup = "delete-shared-instance-profile"
+
 	// PermissionCreateHostedZone is a set of permissions required when the installer creates a route53 hosted zone.
 	PermissionCreateHostedZone PermissionGroup = "create-hosted-zone"
 
@@ -133,9 +140,6 @@ var permissions = map[PermissionGroup][]string{
 		"elasticloadbalancing:SetSecurityGroups",
 
 		// IAM related perms
-		"iam:AddRoleToInstanceProfile",
-		"iam:CreateInstanceProfile",
-		"iam:DeleteInstanceProfile",
 		"iam:GetInstanceProfile",
 		"iam:GetRole",
 		"iam:GetRolePolicy",
@@ -144,7 +148,6 @@ var permissions = map[PermissionGroup][]string{
 		"iam:ListRoles",
 		"iam:ListUsers",
 		"iam:PassRole",
-		"iam:RemoveRoleFromInstanceProfile",
 		"iam:SimulatePrincipalPolicy",
 		"iam:TagInstanceProfile",
 		"iam:TagRole",
@@ -258,6 +261,17 @@ var permissions = map[PermissionGroup][]string{
 	// Permissions required for deleting a cluster with shared instance roles
 	PermissionDeleteSharedInstanceRole: {
 		"iam:UntagRole",
+	},
+	// Permissions required for creating an instance profile
+	PermissionCreateInstanceProfile: {
+		"iam:AddRoleToInstanceProfile",
+		"iam:CreateInstanceProfile",
+		"iam:DeleteInstanceProfile",
+		"iam:RemoveRoleFromInstanceProfile",
+	},
+	// Permissions required for deleting a cluster with shared instance profiles
+	PermissionDeleteSharedInstanceProfile: {
+		"iam:UntagInstanceProfile",
 	},
 	PermissionCreateHostedZone: {
 		"route53:CreateHostedZone",
@@ -385,6 +399,14 @@ func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 		permissionGroups = append(permissionGroups, PermissionDeleteSharedInstanceRole)
 	}
 
+	if includesExistingInstanceProfile(ic) {
+		permissionGroups = append(permissionGroups, PermissionDeleteSharedInstanceProfile)
+	}
+
+	if includesCreateInstanceProfile(ic) {
+		permissionGroups = append(permissionGroups, PermissionCreateInstanceProfile)
+	}
+
 	return permissionGroups
 }
 
@@ -419,6 +441,7 @@ func includesExistingInstanceRole(installConfig *types.InstallConfig) bool {
 }
 
 // includesCreateInstanceRole checks if at least one instance role will be created by the installer.
+// Note: instance profiles have a role attached to them.
 func includesCreateInstanceRole(installConfig *types.InstallConfig) bool {
 	{
 		mpool := aws.MachinePool{}
@@ -426,7 +449,7 @@ func includesCreateInstanceRole(installConfig *types.InstallConfig) bool {
 		if mp := installConfig.ControlPlane; mp != nil {
 			mpool.Set(mp.Platform.AWS)
 		}
-		if len(mpool.IAMRole) == 0 {
+		if len(mpool.IAMRole) == 0 && len(mpool.IAMProfile) == 0 {
 			return true
 		}
 	}
@@ -435,7 +458,7 @@ func includesCreateInstanceRole(installConfig *types.InstallConfig) bool {
 		mpool := aws.MachinePool{}
 		mpool.Set(installConfig.AWS.DefaultMachinePlatform)
 		mpool.Set(compute.Platform.AWS)
-		if len(mpool.IAMRole) == 0 {
+		if len(mpool.IAMRole) == 0 && len(mpool.IAMProfile) == 0 {
 			return true
 		}
 	}
@@ -447,7 +470,7 @@ func includesCreateInstanceRole(installConfig *types.InstallConfig) bool {
 	// If compute stanza is not defined, we know it'll inherit the value from DefaultMachinePlatform
 	mpool := aws.MachinePool{}
 	mpool.Set(installConfig.AWS.DefaultMachinePlatform)
-	return len(mpool.IAMRole) == 0
+	return len(mpool.IAMRole) == 0 && len(mpool.IAMProfile) == 0
 }
 
 // includesKMSEncryptionKey checks if any KMS encryption keys are included in the install-config.
@@ -464,4 +487,52 @@ func includesKMSEncryptionKey(installConfig *types.InstallConfig) bool {
 	}
 
 	return len(mpool.KMSKeyARN) > 0
+}
+
+// includesExistingInstanceProfile checks if at least one BYO instance profile is included in the install-config.
+func includesExistingInstanceProfile(installConfig *types.InstallConfig) bool {
+	mpool := aws.MachinePool{}
+	mpool.Set(installConfig.AWS.DefaultMachinePlatform)
+
+	if mp := installConfig.ControlPlane; mp != nil {
+		mpool.Set(mp.Platform.AWS)
+	}
+
+	for _, compute := range installConfig.Compute {
+		mpool.Set(compute.Platform.AWS)
+	}
+
+	return len(mpool.IAMProfile) > 0
+}
+
+// includesCreateInstanceProfile checks if at least one instance profile will be created by the Installer.
+func includesCreateInstanceProfile(installConfig *types.InstallConfig) bool {
+	{
+		mpool := aws.MachinePool{}
+		mpool.Set(installConfig.AWS.DefaultMachinePlatform)
+		if mp := installConfig.ControlPlane; mp != nil {
+			mpool.Set(mp.Platform.AWS)
+		}
+		if len(mpool.IAMProfile) == 0 {
+			return true
+		}
+	}
+
+	for _, compute := range installConfig.Compute {
+		mpool := aws.MachinePool{}
+		mpool.Set(installConfig.AWS.DefaultMachinePlatform)
+		mpool.Set(compute.Platform.AWS)
+		if len(mpool.IAMProfile) == 0 {
+			return true
+		}
+	}
+
+	if len(installConfig.Compute) > 0 {
+		return false
+	}
+
+	// If compute stanza is not defined, we know it'll inherit the value from DefaultMachinePlatform
+	mpool := aws.MachinePool{}
+	mpool.Set(installConfig.AWS.DefaultMachinePlatform)
+	return len(mpool.IAMProfile) == 0
 }

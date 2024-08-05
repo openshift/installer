@@ -379,7 +379,7 @@ KIND:     InstallConfig
 VERSION:  v1
 
 RESOURCE: <string>
-  IAMRole is the name of the IAM Role to use for the instance profile of the machine. Leave unset to have the installer create the IAM Role on your behalf.
+  IAMRole is the name of the IAM Role to use for the instance profile of the machine. Leave unset to have the installer create the IAM Role on your behalf. Cannot be specified together with iamProfile.
 	`,
 	}, {
 		path: []string{"controlPlane", "platform", "aws", "iamRole"},
@@ -388,7 +388,7 @@ KIND:     InstallConfig
 VERSION:  v1
 
 RESOURCE: <string>
-  IAMRole is the name of the IAM Role to use for the instance profile of the machine. Leave unset to have the installer create the IAM Role on your behalf.
+  IAMRole is the name of the IAM Role to use for the instance profile of the machine. Leave unset to have the installer create the IAM Role on your behalf. Cannot be specified together with iamProfile.
 	`,
 	}, {
 		path: []string{"platform", "aws", "defaultMachinePlatform", "iamRole"},
@@ -397,7 +397,34 @@ KIND:     InstallConfig
 VERSION:  v1
 
 RESOURCE: <string>
-  IAMRole is the name of the IAM Role to use for the instance profile of the machine. Leave unset to have the installer create the IAM Role on your behalf.
+  IAMRole is the name of the IAM Role to use for the instance profile of the machine. Leave unset to have the installer create the IAM Role on your behalf. Cannot be specified together with iamProfile.
+	`,
+	}, {
+		path: []string{"compute", "platform", "aws", "iamProfile"},
+		desc: `
+KIND:     InstallConfig
+VERSION:  v1
+
+RESOURCE: <string>
+  IAMProfile is the name of the IAM instance profile to use for the machine. Leave unset to have the installer create the IAM Profile on your behalf. Cannot be specified together with iamRole.
+	`,
+	}, {
+		path: []string{"controlPlane", "platform", "aws", "iamProfile"},
+		desc: `
+KIND:     InstallConfig
+VERSION:  v1
+
+RESOURCE: <string>
+  IAMProfile is the name of the IAM instance profile to use for the machine. Leave unset to have the installer create the IAM Profile on your behalf. Cannot be specified together with iamRole.
+	`,
+	}, {
+		path: []string{"platform", "aws", "defaultMachinePlatform", "iamProfile"},
+		desc: `
+KIND:     InstallConfig
+VERSION:  v1
+
+RESOURCE: <string>
+  IAMProfile is the name of the IAM instance profile to use for the machine. Leave unset to have the installer create the IAM Profile on your behalf. Cannot be specified together with iamRole.
 	`,
 	}}
 	for _, test := range cases {
