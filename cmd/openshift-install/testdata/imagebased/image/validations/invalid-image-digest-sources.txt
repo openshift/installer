@@ -1,0 +1,18 @@
+! exec openshift-install image-based create image --dir $WORK
+
+stderr 'imageDigestSources\[0\].source: Invalid value: "": failed to parse: invalid reference format'
+
+! exists $WORK/rhcos-ibi.iso
+
+-- image-based-installation-config.yaml --
+apiVersion: v1beta1
+kind: ImageBasedInstallationConfig
+metadata:
+  name: example-image-based-installation-config
+seedImage: quay.io/openshift-kni/seed-image:4.16.0
+seedVersion: 4.16.0
+installationDisk: /dev/vda
+pullSecret: '{"auths": {"quay.io": {"auth": "c3VwZXItc2VjcmV0Cg=="}}}'
+imageDigestSources:
+  - source: ""
+    mirrors: []

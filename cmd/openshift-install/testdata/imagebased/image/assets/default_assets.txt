@@ -1,0 +1,17 @@
+# Verify that the most relevant assets are properly generated in the installation ISO
+
+exec openshift-install image-based create image --dir $WORK
+
+exists $WORK/rhcos-ibi.iso
+
+ignitionImgContains rhcos-ibi.iso config.ign
+
+-- image-based-installation-config.yaml --
+apiVersion: v1beta1
+kind: ImageBasedInstallationConfig
+metadata:
+  name: example-image-based-installation-config
+seedImage: quay.io/openshift-kni/seed-image:4.16.0
+seedVersion: 4.16.0
+installationDisk: /dev/vda
+pullSecret: '{"auths": {"quay.io": {"auth": "c3VwZXItc2VjcmV0Cg=="}}}'
