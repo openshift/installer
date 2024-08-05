@@ -273,6 +273,13 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	subscriptionID := session.Credentials.SubscriptionID
 	cloudConfiguration := session.CloudConfig
 
+	var architecture armcompute.Architecture
+	if installConfig.ControlPlane.Architecture == types.ArchitectureARM64 {
+		architecture = armcompute.ArchitectureArm64
+	} else {
+		architecture = armcompute.ArchitectureX64
+	}
+
 	resourceGroupName := p.ResourceGroupName
 	storageAccountName := fmt.Sprintf("%ssa", strings.ReplaceAll(in.InfraID, "-", ""))
 	containerName := "vhd"
@@ -400,15 +407,16 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			GalleryName:          galleryName,
 			GalleryImageName:     galleryImageName,
 			Region:               platform.Region,
-			Tags:                 tags,
-			TokenCredential:      tokenCredential,
-			CloudConfiguration:   cloudConfiguration,
-			OSType:               armcompute.OperatingSystemTypesLinux,
-			OSState:              armcompute.OperatingSystemStateTypesGeneralized,
-			HyperVGeneration:     armcompute.HyperVGenerationV1,
 			Publisher:            "RedHat",
 			Offer:                "rhcos",
 			SKU:                  "basic",
+			Tags:                 tags,
+			TokenCredential:      tokenCredential,
+			CloudConfiguration:   cloudConfiguration,
+			Architecture:         architecture,
+			OSType:               armcompute.OperatingSystemTypesLinux,
+			OSState:              armcompute.OperatingSystemStateTypesGeneralized,
+			HyperVGeneration:     armcompute.HyperVGenerationV1,
 			ComputeClientFactory: computeClientFactory,
 		})
 		if err != nil {
@@ -420,15 +428,16 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			GalleryName:          galleryName,
 			GalleryImageName:     galleryGen2ImageName,
 			Region:               platform.Region,
-			Tags:                 tags,
-			TokenCredential:      tokenCredential,
-			CloudConfiguration:   cloudConfiguration,
-			OSType:               armcompute.OperatingSystemTypesLinux,
-			OSState:              armcompute.OperatingSystemStateTypesGeneralized,
-			HyperVGeneration:     armcompute.HyperVGenerationV2,
 			Publisher:            "RedHat-gen2",
 			Offer:                "rhcos-gen2",
 			SKU:                  "gen2",
+			Tags:                 tags,
+			TokenCredential:      tokenCredential,
+			CloudConfiguration:   cloudConfiguration,
+			Architecture:         architecture,
+			OSType:               armcompute.OperatingSystemTypesLinux,
+			OSState:              armcompute.OperatingSystemStateTypesGeneralized,
+			HyperVGeneration:     armcompute.HyperVGenerationV2,
 			ComputeClientFactory: computeClientFactory,
 		})
 		if err != nil {

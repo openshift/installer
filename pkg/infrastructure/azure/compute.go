@@ -88,15 +88,16 @@ type CreateGalleryImageInput struct {
 	GalleryName          string
 	GalleryImageName     string
 	Region               string
-	Tags                 map[string]*string
-	TokenCredential      azcore.TokenCredential
-	CloudConfiguration   cloud.Configuration
-	OSType               armcompute.OperatingSystemTypes
-	OSState              armcompute.OperatingSystemStateTypes
-	HyperVGeneration     armcompute.HyperVGeneration
 	Publisher            string
 	Offer                string
 	SKU                  string
+	Tags                 map[string]*string
+	TokenCredential      azcore.TokenCredential
+	CloudConfiguration   cloud.Configuration
+	Architecture         armcompute.Architecture
+	OSType               armcompute.OperatingSystemTypes
+	OSState              armcompute.OperatingSystemStateTypes
+	HyperVGeneration     armcompute.HyperVGeneration
 	ComputeClientFactory *armcompute.ClientFactory
 }
 
@@ -119,6 +120,7 @@ func CreateGalleryImage(ctx context.Context, in *CreateGalleryImageInput) (*Crea
 		armcompute.GalleryImage{
 			Location: to.Ptr(in.Region),
 			Properties: &armcompute.GalleryImageProperties{
+				Architecture:     to.Ptr(in.Architecture),
 				OSType:           to.Ptr(in.OSType),
 				OSState:          to.Ptr(in.OSState),
 				HyperVGeneration: to.Ptr(in.HyperVGeneration),
