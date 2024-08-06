@@ -83,7 +83,7 @@ func MachineSets(in *MachineSetInput) ([]*machineapi.MachineSet, error) {
 
 		instanceProfile := mpool.IAMProfile
 		if len(instanceProfile) == 0 {
-			instanceProfile = fmt.Sprintf("%s-%s-profile", in.ClusterID, in.Role)
+			instanceProfile = fmt.Sprintf("%s-worker-profile", in.ClusterID)
 		}
 
 		provider, err := provider(&machineProviderInput{
