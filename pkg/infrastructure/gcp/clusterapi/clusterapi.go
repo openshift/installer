@@ -244,6 +244,14 @@ func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapD
 	projectID := in.Metadata.GCP.ProjectID
 	if in.Metadata.GCP.NetworkProjectID != "" {
 		projectID = in.Metadata.GCP.NetworkProjectID
+
+		createFwRules, err := hasFirewallPermission(ctx, projectID)
+		if err != nil {
+			return fmt.Errorf("failed to remove bootstrap firewall rules: %w", err)
+		}
+		if !createFwRules {
+			return nil
+		}
 	}
 	if err := removeBootstrapFirewallRules(ctx, in.Metadata.InfraID, projectID); err != nil {
 		return fmt.Errorf("failed to remove bootstrap firewall rules: %w", err)

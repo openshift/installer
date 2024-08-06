@@ -215,31 +215,42 @@ func deleteFirewallRule(ctx context.Context, name, projectID string) error {
 	return nil
 }
 
+func hasFirewallPermission(ctx context.Context, projectID string) (bool, error) {
+	client, err := gcpconfig.NewClient(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to create client during firewall permission check: %w", err)
+	}
+
+	permissions, err := client.GetProjectPermissions(ctx, projectID, []string{
+		gcpFirewallPermission,
+	})
+	if err != nil {
+		return false, fmt.Errorf("failed to find project permissions during firewall permission check: %w", err)
+	}
+
+	hasPermission := permissions.Has(gcpFirewallPermission)
+	if !hasPermission {
+		logrus.Warnf("failed to find permission %s, skipping firewall rule creation", gcpFirewallPermission)
+	}
+
+	return hasPermission, nil
+}
+
 // createFirewallRules creates the rules needed between the worker and master nodes.
 func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, network string) error {
-	if projID := in.InstallConfig.Config.GCP.NetworkProjectID; projID != "" {
-		client, err := gcpconfig.NewClient(context.Background())
-		if err != nil {
-			return fmt.Errorf("failed to create client during firewall rule creation: %w", err)
-		}
+	projectID := in.InstallConfig.Config.Platform.GCP.ProjectID
+	if in.InstallConfig.Config.GCP.NetworkProjectID != "" {
+		projectID = in.InstallConfig.Config.GCP.NetworkProjectID
 
-		permissions, err := client.GetProjectPermissions(ctx, projID, []string{
-			gcpFirewallPermission,
-		})
+		createFwRules, err := hasFirewallPermission(ctx, projectID)
 		if err != nil {
-			return fmt.Errorf("failed to find project permissions during firewall creation: %w", err)
+			return fmt.Errorf("failed to create cluster firewall rules: %w", err)
 		}
-
-		if !permissions.Has(gcpFirewallPermission) {
-			logrus.Warnf("failed to find permission %s, skipping firewall rule creation", gcpFirewallPermission)
+		if !createFwRules {
 			return nil
 		}
 	}
 
-	projectID := in.InstallConfig.Config.Platform.GCP.ProjectID
-	if in.InstallConfig.Config.Platform.GCP.NetworkProjectID != "" {
-		projectID = in.InstallConfig.Config.Platform.GCP.NetworkProjectID
-	}
 	workerTag := fmt.Sprintf("%s-worker", in.InfraID)
 	masterTag := fmt.Sprintf("%s-control-plane", in.InfraID)
 
@@ -309,7 +320,16 @@ func createBootstrapFirewallRules(ctx context.Context, in clusterapi.InfraReadyI
 	projectID := in.InstallConfig.Config.Platform.GCP.ProjectID
 	if in.InstallConfig.Config.Platform.GCP.NetworkProjectID != "" {
 		projectID = in.InstallConfig.Config.Platform.GCP.NetworkProjectID
+
+		createFwRules, err := hasFirewallPermission(ctx, projectID)
+		if err != nil {
+			return fmt.Errorf("failed to create bootstrap firewall rules: %w", err)
+		}
+		if !createFwRules {
+			return nil
+		}
 	}
+
 	firewallName := fmt.Sprintf("%s-bootstrap-in-ssh", in.InfraID)
 	srcTags := []string{}
 	bootstrapTag := fmt.Sprintf("%s-control-plane", in.InfraID)
