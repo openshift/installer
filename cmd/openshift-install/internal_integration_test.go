@@ -277,13 +277,10 @@ func isoCmp(ts *testscript.TestScript, neg bool, args []string) {
 
 	workDir := ts.Getenv("WORK")
 	isoPath, aFilePath, eFilePath := args[0], args[1], args[2]
-	isoPathAbs := filepath.Join(workDir, isoPath)
-
-	// Skip comparing pull-secrets when OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE is set.
-	if os.Getenv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE") != "" && (strings.Contains(aFilePath, "pull-secret.yaml") || strings.Contains(eFilePath, "pull-secret.yaml")) {
-		ts.Logf("Skipping pull-secret.yaml comparison due to 'OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE' environment variable being set.")
+	if skipPullSecretCmp(ts, aFilePath, eFilePath) {
 		return
 	}
+	isoPathAbs := filepath.Join(workDir, isoPath)
 
 	archiveFile, ignitionFile, err := archiveFileNames(isoPath)
 	if err != nil {
@@ -323,6 +320,9 @@ func ignitionStorageCmp(ts *testscript.TestScript, neg bool, args []string) {
 
 	workDir := ts.Getenv("WORK")
 	ignPath, aFilePath, eFilePath := args[0], args[1], args[2]
+	if skipPullSecretCmp(ts, aFilePath, eFilePath) {
+		return
+	}
 	ignPathAbs := filepath.Join(workDir, ignPath)
 
 	config, err := readIgnition(ts, ignPathAbs)
@@ -335,6 +335,8 @@ func ignitionStorageCmp(ts *testscript.TestScript, neg bool, args []string) {
 	eData, err := os.ReadFile(eFilePathAbs)
 	ts.Check(err)
 
+	eData = replaceReleaseImage(string(eData))
+	aData = replaceReleaseImage(string(aData))
 	byteCompare(ts, neg, aData, eData, aFilePath, eFilePath)
 }
 
@@ -357,6 +359,7 @@ func expandFile(ts *testscript.TestScript, neg bool, args []string) {
 		fileName := filepath.Join(workDir, f)
 		data, err := os.ReadFile(fileName)
 		ts.Check(err)
+		data = replaceReleaseImage(string(data))
 
 		newData := expand(ts, data)
 		err = os.WriteFile(fileName, []byte(newData), 0)
@@ -633,4 +636,28 @@ func lookForCpioFiles(r io.Reader) ([]string, error) {
 	}
 
 	return files, nil
+}
+
+// In the CI environment, a dynamically generated pull secret is used to access the release image,
+// which is necessary for running integration tests. Since the value of this pull secret cannot be
+// known or hardcoded in the test data, comparisons involving the pull secret are skipped when OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE is set.
+func skipPullSecretCmp(ts *testscript.TestScript, aFilePath, eFilePath string) bool {
+	if os.Getenv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE") != "" && (strings.Contains(aFilePath, "pull-secret.yaml") || strings.Contains(eFilePath, "pull-secret.yaml")) {
+		ts.Logf("Skipping pull-secret.yaml comparison due to 'OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE' environment variable being set.")
+		return true
+	}
+	return false
+}
+
+// In the CI environment, the release image URL is dynamically set using the
+// OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE environment variable. Replace any
+// "$RELEASE_IMAGE" placeholder in the test data with this value to ensure the tests
+// use the correct release image. This substitution accommodates the dynamic nature
+// of the release image URL, maintaining consistency between expected and actual
+// outputs during integration tests.
+func replaceReleaseImage(inputData string) []byte {
+	if releaseImageOverride, ok := os.LookupEnv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"); ok && releaseImageOverride != "" {
+		return []byte(strings.ReplaceAll(inputData, "$RELEASE_IMAGE", releaseImageOverride))
+	}
+	return []byte(inputData)
 }
