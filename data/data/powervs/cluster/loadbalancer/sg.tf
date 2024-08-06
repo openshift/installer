@@ -1,5 +1,5 @@
 locals {
-  tcp_ports = [22623, 10258, 6443, 22]
+  tcp_ports = concat([22623, 10258, 6443, 22], var.enable_snat ? [] : [5000])
 }
 
 resource "ibm_is_security_group" "ocp_security_group" {
