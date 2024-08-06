@@ -93,8 +93,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 
 	publicKey := "-----BEGIN EC PUBLIC KEY-----\nMHcCAQEEIOSCfDNmx0qe6dncV4tg==\n-----END EC PUBLIC KEY-----\n"
 	token := "someToken"
-
-	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, infraEnvID, osImage, proxy, "minimal-iso", publicKey, token, "")
+	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries, "minimal-iso", infraEnvID, publicKey, gencrypto.AuthType, token, "", haveMirrorConfig, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, osImage, proxy)
 	assert.Equal(t, clusterName, templateData.ClusterName)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
@@ -109,6 +108,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	assert.Equal(t, osImage, templateData.OSImage)
 	assert.Equal(t, proxy, templateData.Proxy)
 	assert.Equal(t, publicKey, templateData.PublicKeyPEM)
+	assert.Equal(t, gencrypto.AuthType, templateData.AuthType)
 	assert.Equal(t, token, templateData.Token)
 
 }
