@@ -27,6 +27,7 @@ of this method of installation.
   - [OpenShift Configuration Directory](#openshift-configuration-directory)
   - [Red Hat Enterprise Linux CoreOS (RHCOS)](#red-hat-enterprise-linux-coreos-rhcos)
   - [API and Ingress Floating IP Addresses](#api-and-ingress-floating-ip-addresses)
+  - [Network identifier](#network-identifier)
   - [Create network, API and ingress ports](#create-network-api-and-ingress-ports)
   - [Install Config](#install-config)
     - [Configure the machineNetwork.CIDR apiVIP and ingressVIP](#configure-the-machinenetworkcidr-apivip-and-ingressvip)
@@ -270,6 +271,23 @@ api.openshift.example.com.    A 203.0.113.23
 
 They will need to be available to your developers, end users as well as the OpenShift installer process later in this guide.
 
+## Network identifier
+
+Resources like network, subnet (or subnets), router and API and ingress ports need to have unique name to not interfere with other deployments running on the same OpenStack cloud.
+Please, keep in mind, those OpenStack resources will have different name scheme then all the other resources which will be created on next steps, although they will be tagged by the infraID later on.
+Let's create environment variable `OS_NET_ID` and `netid.json` file, which will be used by ansible playbooks later on.
+
+<!--- e2e-openstack-upi: INCLUDE START --->
+```sh
+$ export OS_NET_ID="openshift-$(dd if=/dev/urandom count=4 bs=1 2>/dev/null |hexdump -e '"%02x"')"
+$ echo "{\"os_net_id\": \"$OS_NET_ID\"}" | tee netid.json
+```
+<!--- e2e-openstack-upi: INCLUDE END --->
+
+Make sure your shell session has the `$OS_NET_ID` environment variable set when you run the commands later in this document.
+
+Note, this identifier has nothing in common with OpenShift `infraID` defined later on.
+
 ## Create network, API and ingress ports
 
 Please note that value of the API and Ingress VIPs fields will be overwritten in the `inventory.yaml` with the respective addresses assigned to the Ports. Run the following playbook to create necessary resources:
@@ -336,22 +354,39 @@ values:
 
 <!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
-$ python -c 'import yaml
+$ python -c 'import os
+import sys
+import yaml
+import re
+re_os_net_id = re.compile(r"{{\s*os_net_id\s*}}")
+os_net_id = os.getenv("OS_NET_ID")
+path = "common.yaml"
+facts = None
+for _dict in yaml.safe_load(open(path))[0]["tasks"]:
+    if "os_network" in _dict.get("set_fact", {}):
+        facts = _dict["set_fact"]
+        break
+if not facts:
+    print("Cannot find `os_network` in common.yaml file. Make sure OpenStack resource names are defined in one of the tasks.")
+    sys.exit(1)
+os_network = re_os_net_id.sub(os_net_id, facts["os_network"])
+os_subnet = re_os_net_id.sub(os_net_id, facts["os_subnet"])
 path = "install-config.yaml"
 data = yaml.safe_load(open(path))
 inventory = yaml.safe_load(open("inventory.yaml"))["all"]["hosts"]["localhost"]
 machine_net = [{"cidr": inventory["os_subnet_range"]}]
 api_vips = [inventory["os_apiVIP"]]
 ingress_vips = [inventory["os_ingressVIP"]]
-ctrl_plane_port = {"network": {"name": inventory["os_network"]}, "fixedIPs": [{"subnet": {"name": inventory["os_subnet"]}}]}
-if inventory.get("os_subnet6"):
+ctrl_plane_port = {"network": {"name": os_network}, "fixedIPs": [{"subnet": {"name": os_subnet}}]}
+if inventory.get("os_subnet6_range"):
+    os_subnet6 = re_os_net_id.sub(os_net_id, facts["os_subnet6"])
     machine_net.append({"cidr": inventory["os_subnet6_range"]})
     api_vips.append(inventory["os_apiVIP6"])
     ingress_vips.append(inventory["os_ingressVIP6"])
     data["networking"]["networkType"] = "OVNKubernetes"
     data["networking"]["clusterNetwork"].append({"cidr": inventory["cluster_network6_cidr"], "hostPrefix": inventory["cluster_network6_prefix"]})
     data["networking"]["serviceNetwork"].append(inventory["service_subnet6_range"])
-    ctrl_plane_port["fixedIPs"].append({"subnet": {"name": inventory["os_subnet6"]}})
+    ctrl_plane_port["fixedIPs"].append({"subnet": {"name": os_subnet6}})
 data["networking"]["machineNetwork"] = machine_net
 data["platform"]["openstack"]["apiVIPs"] = api_vips
 data["platform"]["openstack"]["ingressVIPs"] = ingress_vips
