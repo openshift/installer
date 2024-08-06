@@ -331,7 +331,7 @@ var (
 					reportProblemsToJiraComponent("MachineConfigOperator").
 					contactPerson("djoshy").
 					productScope(ocpSpecific).
-					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+					enableIn(configv1.Default, configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 					mustRegister()
 
 	FeatureGateManagedBootImagesAWS = newFeatureGate("ManagedBootImagesAWS").
@@ -465,7 +465,7 @@ var (
 					reportProblemsToJiraComponent("MachineConfigOperator").
 					contactPerson("jerzhang").
 					productScope(ocpSpecific).
-					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+					enableIn(configv1.Default, configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 					mustRegister()
 
 	FeatureGateMetricsCollectionProfiles = newFeatureGate("MetricsCollectionProfiles").
@@ -500,7 +500,7 @@ var (
 					reportProblemsToJiraComponent("Installer").
 					contactPerson("bfournie").
 					productScope(ocpSpecific).
-					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+					enableIn(configv1.Default, configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 					mustRegister()
 
 	FeatureGateClusterAPIInstallIBMCloud = newFeatureGate("ClusterAPIInstallIBMCloud").

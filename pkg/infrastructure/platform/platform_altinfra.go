@@ -39,10 +39,7 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 		}
 		return nil, nil
 	case gcptypes.Name:
-		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
-			return clusterapi.InitializeProvider(gcpcapi.Provider{}), nil
-		}
-		return nil, nil
+		return clusterapi.InitializeProvider(gcpcapi.Provider{}), nil
 	case ibmcloudtypes.Name:
 		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(ibmcloudcapi.Provider{}), nil
