@@ -10,6 +10,7 @@ import (
 
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -702,6 +703,32 @@ func TestConvertInstallConfig(t *testing.T) {
 					Nutanix: &nutanix.Platform{
 						DeprecatedIngressVIP: "1.2.3.4",
 						IngressVIPs:          []string{"1.2.3.4"},
+					},
+				},
+			},
+		},
+		{
+			name: "aws deprecated platform amiID",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					AWS: &aws.Platform{
+						AMIID: "deprec-id",
+					},
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					AWS: &aws.Platform{
+						AMIID: "deprec-id",
+						DefaultMachinePlatform: &aws.MachinePool{
+							AMIID: "deprec-id",
+						},
 					},
 				},
 			},

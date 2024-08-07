@@ -95,9 +95,6 @@ func osImage(ctx context.Context, config *types.InstallConfig, nodeArch types.Ar
 	}
 	switch config.Platform.Name() {
 	case aws.Name:
-		if len(config.Platform.AWS.AMIID) > 0 {
-			return config.Platform.AWS.AMIID, nil
-		}
 		region := config.Platform.AWS.Region
 		if !rhcos.AMIRegions(nodeArch).Has(region) {
 			const globalResourceRegion = "us-east-1"

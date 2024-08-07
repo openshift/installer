@@ -148,7 +148,7 @@ func Test_PrintFields(t *testing.T) {
 		path: []string{"platform", "aws"},
 		desc: `FIELDS:
     amiID <string>
-      AMIID is the AMI that should be used to boot machines for the cluster. If set, the AMI should belong to the same region as the cluster.
+      The field is deprecated. AMIID is the AMI that should be used to boot machines for the cluster. If set, the AMI should belong to the same region as the cluster.
 
     bestEffortDeleteIgnition <boolean>
       BestEffortDeleteIgnition is an optional field that can be used to ignore errors from S3 deletion of ignition objects during cluster bootstrap. The default behavior is to fail the installation if ignition objects cannot be deleted. Enable this functionality when there are known reasons disallowing their deletion.
