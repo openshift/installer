@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/find"
+	"github.com/vmware/govmomi/object"
 	vapitags "github.com/vmware/govmomi/vapi/tags"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -162,8 +163,14 @@ func validateFailureDomain(validationCtx *validationContext, failureDomain *vsph
 		if err != nil {
 			allErrs = append(allErrs, field.InternalError(vsphereField, err))
 		}
+
 		validationCtx.regionTagCategoryID = regionTagCategoryID
 		validationCtx.zoneTagCategoryID = zoneTagCategoryID
+		if failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
+			if err = validateHostTagAttachments(validationCtx, failureDomain.Topology.ComputeCluster, failureDomain.Zone); err != nil {
+				allErrs = append(allErrs, field.InternalError(vsphereField, err))
+			}
+		}
 	}
 
 	allErrs = append(allErrs, resourcePoolExists(validationCtx, resourcePool, topologyField.Child("resourcePool"))...)
@@ -171,6 +178,10 @@ func validateFailureDomain(validationCtx *validationContext, failureDomain *vsph
 	if len(failureDomain.Topology.Folder) > 0 {
 		allErrs = append(allErrs, folderExists(validationCtx, failureDomain.Topology.Folder, topologyField.Child("folder"))...)
 		checkDatacenterPrivileges = false
+	}
+
+	if failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
+		allErrs = append(allErrs, validateHostGroups(validationCtx, failureDomain.Topology.ComputeCluster, failureDomain.Topology.HostGroup, topologyField.Child("hostGroup"))...)
 	}
 
 	allErrs = append(allErrs, validateESXiVersion(validationCtx, failureDomain.Topology.ComputeCluster, vsphereField, topologyField.Child("computeCluster"))...)
@@ -185,6 +196,32 @@ func validateFailureDomain(validationCtx *validationContext, failureDomain *vsph
 
 	for _, network := range failureDomain.Topology.Networks {
 		allErrs = append(allErrs, validateNetwork(validationCtx, failureDomain.Topology.Datacenter, failureDomain.Topology.ComputeCluster, network, topologyField)...)
+	}
+
+	return allErrs
+}
+
+func validateHostGroups(validationCtx *validationContext, cluster, hostGroup string, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	defer cancel()
+
+	ccr, err := validationCtx.Finder.ClusterComputeResource(ctx, cluster)
+	if err != nil {
+		allErrs = append(allErrs, field.InternalError(fldPath, err))
+	}
+
+	configInfoEx, err := ccr.Configuration(ctx)
+	if err != nil {
+		allErrs = append(allErrs, field.InternalError(fldPath, err))
+	}
+
+	for _, g := range configInfoEx.Group {
+		if hg, ok := g.(*vim25types.ClusterHostGroup); ok {
+			if hg.Name == hostGroup {
+				return nil
+			}
+		}
 	}
 
 	return allErrs
@@ -355,10 +392,13 @@ func computeClusterExists(validationCtx *validationContext, computeCluster strin
 	}
 
 	if checkTagAttachment {
+		/* TODO: jcallen: fix me...
 		err = validateTagAttachment(validationCtx, computeClusterMo.Reference())
 		if err != nil {
 			return field.ErrorList{field.InternalError(fldPath, err)}
 		}
+
+		*/
 	}
 
 	return field.ErrorList{}
@@ -567,7 +607,80 @@ func validateTagCategories(validationCtx *validationContext) (string, string, er
 	return regionTagCategoryID, zoneTagCategoryID, nil
 }
 
+func validateHostTagAttachments(validationCtx *validationContext, cluster, zoneName string) error {
+	if validationCtx.TagManager == nil {
+		// todo: jcallen: should this really return nil?
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	defer cancel()
+
+	ccr, err := validationCtx.Finder.ClusterComputeResource(ctx, cluster)
+	if err != nil {
+		return err
+	}
+
+	hosts, err := ccr.Hosts(ctx)
+	if err != nil {
+		return err
+	}
+
+	references := make([]mo.Reference, 0, len(hosts))
+
+	for _, h := range hosts {
+		references = append(references, h.Reference())
+	}
+
+	attachedTags, err := validationCtx.TagManager.GetAttachedTagsOnObjects(ctx, references)
+	if err != nil {
+		return err
+	}
+
+	// todo: jcallen: this isn't enough
+	// todo: the zonal tag attached to the host _must_ be the
+	// todo: the one defined in the capv failure domain
+
+	for _, ta := range attachedTags {
+		if findHostReference(hosts, ta.ObjectID) {
+			found := false
+			for _, ta := range ta.Tags {
+				if ta.CategoryID == validationCtx.zoneTagCategoryID {
+					if ta.Name == zoneName {
+						found = true
+					}
+				}
+			}
+			if !found {
+				return errors.Errorf("host %s does not have a zone tag attachment", ta.ObjectID)
+			}
+		}
+
+		/*
+			else {
+				// todo: fix this later, obv we don't just want the obj id
+				return errors.Errorf("host %s does not have a zone tag attachment", ta.ObjectID)
+			}
+
+		*/
+	}
+
+	return nil
+}
+
+func findHostReference(hosts []*object.HostSystem, hostRef mo.Reference) bool {
+	for _, h := range hosts {
+		if h.Reference() == hostRef {
+			return true
+		}
+	}
+	return false
+}
+
 func validateTagAttachment(validationCtx *validationContext, reference vim25types.ManagedObjectReference) error {
+	// todo: jcallen: currently this is unused but will need this to make sure that the esxi hosts have the correct tags attached
+	// todo: jcallen: while it doesn't really matter for the installer make sure the performance
+	// todo: jcallen: suggested query of tags is used.
+
 	if validationCtx.TagManager == nil {
 		return nil
 	}
