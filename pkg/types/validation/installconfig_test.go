@@ -1410,6 +1410,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "cluster is not heteregenous",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
+				c.Platform = types.Platform{Azure: validAzureStackPlatform()}
 				c.Compute[0].Architecture = types.ArchitectureARM64
 				return c
 			}(),
@@ -1420,8 +1421,6 @@ func TestValidateInstallConfig(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Compute[0].Architecture = types.ArchitectureARM64
-				c.FeatureSet = "CustomNoUpgrade"
-				c.FeatureGates = []string{"MultiArchInstallAWS=true"}
 				return c
 			}(),
 		},
@@ -1431,8 +1430,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				c := validInstallConfig()
 				c.Platform = types.Platform{GCP: validGCPPlatform()}
 				c.Compute[0].Architecture = types.ArchitectureARM64
-				c.FeatureSet = "CustomNoUpgrade"
-				c.FeatureGates = []string{"MultiArchInstallGCP=true"}
 				return c
 			}(),
 		},
