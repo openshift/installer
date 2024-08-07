@@ -30,7 +30,7 @@ type AgentArtifacts struct {
 	RendezvousIP         string
 	TmpPath              string
 	IgnitionByte         []byte
-	Kargs                []byte
+	Kargs                string
 	ISOPath              string
 	BootArtifactsBaseURL string
 }

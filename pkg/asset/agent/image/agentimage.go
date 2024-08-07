@@ -8,7 +8,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
 
 	"github.com/sirupsen/logrus"
 
@@ -125,66 +124,41 @@ func (a *AgentImage) updateIgnitionContent(agentArtifacts *AgentArtifacts) error
 		return err
 	}
 
+	return a.overwriteFileData(fileInfo)
+}
+
+func (a *AgentImage) overwriteFileData(fileInfo []isoeditor.FileData) error {
+	var errs []error
 	for _, fileData := range fileInfo {
+		defer fileData.Data.Close()
+
 		filename := filepath.Join(a.tmpPath, fileData.Filename)
 		file, err := os.Create(filename)
 		if err != nil {
-			return err
+			errs = append(errs, err)
+			continue
 		}
 		defer file.Close()
 
 		_, err = io.Copy(file, fileData.Data)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
-func updateKargsFile(tmpPath, filename string, embedArea *regexp.Regexp, kargs []byte) error {
-	file, err := os.OpenFile(filepath.Join(tmpPath, filename), os.O_RDWR, 0)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	content, err := io.ReadAll(file)
-	if err != nil {
-		return err
-	}
-	indices := embedArea.FindSubmatchIndex(content)
-	if len(indices) != 4 {
-		return fmt.Errorf("failed to find COREOS_KARG_EMBED_AREA in %s", filename)
-	}
-
-	if size := (indices[3] - indices[2]); len(kargs) > size {
-		return fmt.Errorf("kernel args content length (%d) exceeds embed area size (%d)", len(kargs), size)
-	}
-
-	if _, err := file.WriteAt(append(kargs, '\n'), int64(indices[2])); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (a *AgentImage) appendKargs(kargs []byte) error {
-	if len(kargs) == 0 {
+func (a *AgentImage) appendKargs(kargs string) error {
+	if kargs == "" {
 		return nil
 	}
 
-	kargsFiles, err := isoeditor.KargsFiles(a.isoPath)
+	fileInfo, err := isoeditor.NewKargsReader(a.isoPath, kargs)
 	if err != nil {
 		return err
 	}
-
-	embedArea := regexp.MustCompile(`(\n#*)# COREOS_KARG_EMBED_AREA`)
-	for _, f := range kargsFiles {
-		if err := updateKargsFile(a.tmpPath, f, embedArea, kargs); err != nil {
-			return err
-		}
-	}
-	return nil
+	return a.overwriteFileData(fileInfo)
 }
 
 // normalizeFilesExtension scans the extracted ISO files and trims
