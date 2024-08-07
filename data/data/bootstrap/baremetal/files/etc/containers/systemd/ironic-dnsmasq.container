@@ -24,4 +24,3 @@ ExecStopPost=/usr/local/bin/dhcp-filter.sh remove
 Restart=on-failure
 
 [Install]
-WantedBy=multi-user.target
