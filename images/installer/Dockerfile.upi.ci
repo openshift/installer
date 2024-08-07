@@ -11,6 +11,8 @@ RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/4.10:cli as cli
 FROM quay.io/ocp-splat/govc:v0.29.0 as govc
+FROM quay.io/multi-arch/yq:3.3.0 as yq3
+FROM quay.io/multi-arch/yq:4.30.5 as yq4
 
 FROM registry.ci.openshift.org/ocp/4.10:base
 
@@ -43,12 +45,8 @@ RUN yum update -y && \
     rm -rf /var/cache/yum/* && \
     chmod g+w /etc/passwd
 
-ARG YQ_URI=https://github.com/mikefarah/yq/releases/download/3.3.0/yq_linux_amd64
-ARG YQ_HASH=e70e482e7ddb9cf83b52f5e83b694a19e3aaf36acf6b82512cbe66e41d569201
-RUN echo "${YQ_HASH} -" > /tmp/sum.txt && \
-  curl -L --fail "${YQ_URI}" | tee /bin/yq-go | sha256sum -c /tmp/sum.txt >/dev/null && \
-  chmod +x /bin/yq-go && \
-  rm /tmp/sum.txt
+COPY --from=yq3 /yq /bin/yq-go
+COPY --from=yq4 /usr/bin/yq /bin/yq-v4
 
 ARG ALIYUN_URI=https://aliyuncli.alicdn.com/aliyun-cli-linux-latest-amd64.tgz
 RUN curl -sSL "${ALIYUN_URI}" --output /tmp/aliyun-cli-linux-latest-amd64.tgz && \
