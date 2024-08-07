@@ -21,22 +21,12 @@ func (o *ClusterUninstaller) listCloudControllerInstanceGroups(ctx context.Conte
 // It list all backend services matching the cloud controller name convention that contain
 // only cluster instance groups.
 func (o *ClusterUninstaller) listCloudControllerBackendServices(ctx context.Context, instanceGroups []cloudResource) ([]cloudResource, error) {
-	urls := sets.NewString()
+	urls := sets.Set[string]{}
 	for _, instanceGroup := range instanceGroups {
 		urls.Insert(instanceGroup.url)
 	}
 	filter := "name eq \"a[0-9a-f]{30,50}\""
-	return o.listBackendServicesWithFilter(ctx, "items(name,backends),nextPageToken", filter, func(item *compute.BackendService) bool {
-		if len(item.Backends) == 0 {
-			return false
-		}
-		for _, backend := range item.Backends {
-			if !urls.Has(backend.Group) {
-				return false
-			}
-		}
-		return true
-	}, gcpRegionalResource)
+	return o.listBackendServicesWithFilter(ctx, regionBackendServiceResource, "items(name,backends),nextPageToken", filter, urls)
 }
 
 // listCloudControllerTargetPools returns target pools created by the cloud controller or owned by the cloud controller.
@@ -76,7 +66,7 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 	loadBalancerNameFilter := fmt.Sprintf("name eq \"%s\"", loadBalancerName)
 
 	// Discover associated addresses: loadBalancerName
-	found, err := o.listAddressesWithFilter(ctx, "items(name),nextPageToken", loadBalancerNameFilter, nil, gcpRegionalResource)
+	found, err := o.listAddressesWithFilter(ctx, "regionaddress", "items(name),nextPageToken", loadBalancerNameFilter)
 	if err != nil {
 		return err
 	}
@@ -119,6 +109,13 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 		return err
 	}
 	o.insertPendingItems("forwardingrule", found)
+
+	// Discover associated target tcp proxies: loadBalancerName
+	found, err = o.listTargetTCPProxiesWithFilter(ctx, globalTargetTCPProxyResource, "items(name),nextPageToken", loadBalancerNameFilter)
+	if err != nil {
+		return err
+	}
+	o.insertPendingItems(globalTargetTCPProxyResource, found)
 
 	// Discover associated health checks: loadBalancerName
 	found, err = o.listHealthChecksWithFilter(ctx, "healthcheck", "items(name),nextPageToken", loadBalancerNameFilter, o.healthCheckList)
