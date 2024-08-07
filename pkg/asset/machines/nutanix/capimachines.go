@@ -61,7 +61,7 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 			Spec: capv1.MachineSpec{
 				ClusterName: clusterID,
 				Bootstrap: capv1.Bootstrap{
-					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID, role)),
+					DataSecretName: ptr.To(ntxMachine.Name),
 				},
 				InfrastructureRef: v1.ObjectReference{
 					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
