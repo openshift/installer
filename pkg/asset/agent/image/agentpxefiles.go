@@ -133,7 +133,7 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 	}
 
 	if a.bootArtifactsBaseURL != "" {
-		err = a.createiPXEScript(a.cpuArch, a.bootArtifactsBaseURL, bootArtifactsFullPath, a.kernelArgs)
+		err = a.createiPXEScript(bootArtifactsFullPath)
 		if err != nil {
 			return err
 		}
@@ -178,17 +178,17 @@ func copyfile(filepath string, src io.Reader) error {
 	return nil
 }
 
-func (a *AgentPXEFiles) createiPXEScript(cpuArch, bootArtifactsBaseURL, pxeAssetsFullPath, kernelArgs string) error {
+func (a *AgentPXEFiles) createiPXEScript(pxeAssetsFullPath string) error {
 	iPXEScriptTemplate := `#!ipxe
 initrd --name initrd %s/%s
 kernel %s/%s initrd=initrd coreos.live.rootfs_url=%s/%s %s
 boot
 `
 
-	iPXEScript := fmt.Sprintf(iPXEScriptTemplate, bootArtifactsBaseURL,
-		fmt.Sprintf("agent.%s-initrd.img", a.cpuArch), bootArtifactsBaseURL,
-		fmt.Sprintf("agent.%s-vmlinuz", a.cpuArch), bootArtifactsBaseURL,
-		fmt.Sprintf("agent.%s-rootfs.img", a.cpuArch), kernelArgs)
+	iPXEScript := fmt.Sprintf(iPXEScriptTemplate, a.bootArtifactsBaseURL,
+		fmt.Sprintf("agent.%s-initrd.img", a.cpuArch), a.bootArtifactsBaseURL,
+		fmt.Sprintf("agent.%s-vmlinuz", a.cpuArch), a.bootArtifactsBaseURL,
+		fmt.Sprintf("agent.%s-rootfs.img", a.cpuArch), a.kernelArgs)
 
 	iPXEFile := fmt.Sprintf("agent.%s.ipxe", a.cpuArch)
 
