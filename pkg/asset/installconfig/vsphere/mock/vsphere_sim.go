@@ -44,6 +44,7 @@ func StartSimulator(setVersionToSupported bool) (*simulator.Server, error) {
 		model.ServiceContent.About.Version = vcenter7U2Version
 	}
 
+	model.ClusterHost = 6
 	model.Folder = 1
 	model.Datacenter = 5
 	model.OpaqueNetwork = 1

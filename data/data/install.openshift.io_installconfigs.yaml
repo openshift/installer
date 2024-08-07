@@ -900,7 +900,7 @@ spec:
                               description: name is the resource name in the PC
                               type: string
                             type:
-                              description: Type is the identifier type to use for
+                              description: type is the identifier type to use for
                                 this resource.
                               enum:
                               - uuid
@@ -1967,7 +1967,7 @@ spec:
                             description: name is the resource name in the PC
                             type: string
                           type:
-                            description: Type is the identifier type to use for this
+                            description: type is the identifier type to use for this
                               resource.
                             enum:
                             - uuid
@@ -4071,7 +4071,7 @@ spec:
                             description: name is the resource name in the PC
                             type: string
                           type:
-                            description: Type is the identifier type to use for this
+                            description: type is the identifier type to use for this
                               resource.
                             enum:
                             - uuid
@@ -5056,9 +5056,26 @@ spec:
                           type: string
                         region:
                           description: |-
-                            region defines a FailureDomainCoordinate which
-                            includes the name of the vCenter tag, the failure domain type
-                            and the name of the vCenter tag category.
+                            The region is the name of the tag in vCenter that is associated with the
+                            tag category `openshift-region`. The region name must match the tag name
+                            and must exist prior to installation. When the regionType is Datacenter
+                            the tag must be attached to the toplogy.datacenter object in vCenter.
+                            When the regionType is ComputeCluster the tag must be attached to the topology.computeCluster
+                            object in vCenter.
+                          type: string
+                        regionType:
+                          allOf:
+                          - enum:
+                            - HostGroup
+                            - Datacenter
+                            - ComputeCluster
+                          - enum:
+                            - Datacenter
+                            - ComputeCluster
+                          description: |-
+                            regionType is the type of failure domain region, the current values are "Datacenter" and "ComputeCluster"
+                            When regionType is Datacenter the zoneType must be ComputeCluster.
+                            When regionType is ComputeCluster the zoneType must be HostGroup
                           type: string
                         server:
                           description: server is the fully-qualified domain name or
@@ -5099,6 +5116,13 @@ spec:
                               minLength: 1
                               pattern: ^/.*?/vm/.*?
                               type: string
+                            hostGroup:
+                              description: |-
+                                hostGroup is the name of the vm-host group of type host within vCenter for this failure domain.
+                                hostGroup is limited to 80 characters.
+                                This field is required when the ZoneType is HostGroup
+                              maxLength: 80
+                              type: string
                             networks:
                               description: networks is the list of networks within
                                 this failure domain
@@ -5136,9 +5160,27 @@ spec:
                           type: object
                         zone:
                           description: |-
-                            zone defines a VSpherePlatformFailureDomain which
-                            includes the name of the vCenter tag, the failure domain type
-                            and the name of the vCenter tag category.
+                            The zone is the name of the tag in vCenter that is associated with
+                            the tag category `openshift-zone`. The zone name must match the tag name
+                            and must exist prior to installation. When zoneType is HostGroup the
+                            ESXi hosts defined in the provided in the topology.hostGroup field must be tagged.
+                            When the zoneType is ComputeCluster the tag must be attached to the topology.computeCluster
+                            object in vCenter.
+                          type: string
+                        zoneType:
+                          allOf:
+                          - enum:
+                            - HostGroup
+                            - Datacenter
+                            - ComputeCluster
+                          - enum:
+                            - ComputeCluster
+                            - HostGroup
+                          description: |-
+                            When zoneType is ComputeCluster the regionType must be Datacenter
+                            When zoneType is HostGroup the regionType must be ComputeCluster
+                            If the zoneType is HostGroup topology.hostGroup must be defined and exist in vCenter
+                            prior to installation.
                           type: string
                       required:
                       - name

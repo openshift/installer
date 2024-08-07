@@ -230,6 +230,20 @@ func (o *ClusterUninstaller) deleteVirtualMachines(ctx context.Context) error {
 	return utilerrors.NewAggregate(errs)
 }
 
+func (o *ClusterUninstaller) deleteHostZoneObjects(ctx context.Context) error {
+	var errs []error
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+	o.Logger.Debug("Deleting VM Groups and VM Host Rules")
+	for _, client := range o.clients {
+		if err := client.DeleteHostZoneObjects(ctx, o.InfraID); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return utilerrors.NewAggregate(errs)
+}
+
 func (o *ClusterUninstaller) destroyCluster(ctx context.Context) (bool, error) {
 	stagedFuncs := [][]struct {
 		name    string
@@ -244,6 +258,8 @@ func (o *ClusterUninstaller) destroyCluster(ctx context.Context) (bool, error) {
 		{name: "Storage Policy", execute: o.deleteStoragePolicy},
 		{name: "Tag", execute: o.deleteTag},
 		{name: "Tag Category", execute: o.deleteTagCategory},
+	}, {
+		{name: "VM Groups and VM Host Rules", execute: o.deleteHostZoneObjects},
 	}}
 
 	stageFailed := false

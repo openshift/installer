@@ -21,7 +21,7 @@ type Provider struct {
 	clusterapi.InfraProvider
 }
 
-var _ clusterapi.PreProvider = Provider{}
+var _ clusterapi.PreProvider = (*Provider)(nil)
 
 // Name returns the vsphere provider name.
 func (p Provider) Name() string {
@@ -123,6 +123,20 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		for _, failureDomain := range installConfig.Config.VSphere.FailureDomains {
 			if failureDomain.Server != server {
 				continue
+			}
+
+			if failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
+				vmGroupAndRuleName := fmt.Sprintf("%s-%s", clusterID.InfraID, failureDomain.Name)
+
+				err = createVMGroup(ctx, vctrSession, failureDomain.Topology.ComputeCluster, vmGroupAndRuleName)
+				if err != nil {
+					return err
+				}
+
+				err = createVMHostAffinityRule(ctx, vctrSession, failureDomain.Topology.ComputeCluster, failureDomain.Topology.HostGroup, vmGroupAndRuleName, vmGroupAndRuleName)
+				if err != nil {
+					return err
+				}
 			}
 
 			if err = initializeFoldersAndTemplates(ctx, cachedImage, failureDomain, vctrSession, installConfig.Config.VSphere.DiskType, clusterID.InfraID, tagID); err != nil {
