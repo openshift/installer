@@ -91,6 +91,7 @@ func (r *AWSManagedControlPlane) ValidateCreate() (admission.Warnings, error) {
 	allErrs = append(allErrs, r.validateSecondaryCIDR()...)
 	allErrs = append(allErrs, r.validateEKSAddons()...)
 	allErrs = append(allErrs, r.validateDisableVPCCNI()...)
+	allErrs = append(allErrs, r.validateRestrictPrivateSubnets()...)
 	allErrs = append(allErrs, r.validateKubeProxy()...)
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
 	allErrs = append(allErrs, r.validateNetwork()...)
@@ -126,6 +127,7 @@ func (r *AWSManagedControlPlane) ValidateUpdate(old runtime.Object) (admission.W
 	allErrs = append(allErrs, r.validateSecondaryCIDR()...)
 	allErrs = append(allErrs, r.validateEKSAddons()...)
 	allErrs = append(allErrs, r.validateDisableVPCCNI()...)
+	allErrs = append(allErrs, r.validateRestrictPrivateSubnets()...)
 	allErrs = append(allErrs, r.validateKubeProxy()...)
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
 	allErrs = append(allErrs, r.validatePrivateDNSHostnameTypeOnLaunch()...)
@@ -383,6 +385,22 @@ func (r *AWSManagedControlPlane) validateDisableVPCCNI() field.ErrorList {
 					break
 				}
 			}
+		}
+	}
+
+	if len(allErrs) == 0 {
+		return nil
+	}
+	return allErrs
+}
+
+func (r *AWSManagedControlPlane) validateRestrictPrivateSubnets() field.ErrorList {
+	var allErrs field.ErrorList
+
+	if r.Spec.RestrictPrivateSubnets && r.Spec.NetworkSpec.VPC.IsUnmanaged(r.Spec.EKSClusterName) {
+		boolField := field.NewPath("spec", "restrictPrivateSubnets")
+		if len(r.Spec.NetworkSpec.Subnets.FilterPrivate()) == 0 {
+			allErrs = append(allErrs, field.Invalid(boolField, r.Spec.RestrictPrivateSubnets, "cannot enable private subnets restriction when no private subnets are specified"))
 		}
 	}
 

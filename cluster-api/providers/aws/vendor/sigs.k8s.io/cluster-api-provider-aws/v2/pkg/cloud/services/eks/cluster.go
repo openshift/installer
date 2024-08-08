@@ -359,9 +359,18 @@ func makeEksLogging(loggingSpec *ekscontrolplanev1.ControlPlaneLoggingSpec) *eks
 }
 
 func (s *Service) createCluster(eksClusterName string) (*eks.Cluster, error) {
+	var (
+		vpcConfig *eks.VpcConfigRequest
+		err       error
+	)
 	logging := makeEksLogging(s.scope.ControlPlane.Spec.Logging)
 	encryptionConfigs := makeEksEncryptionConfigs(s.scope.ControlPlane.Spec.EncryptionConfig)
-	vpcConfig, err := makeVpcConfig(s.scope.Subnets(), s.scope.ControlPlane.Spec.EndpointAccess, s.scope.SecurityGroups())
+	if s.scope.ControlPlane.Spec.RestrictPrivateSubnets {
+		s.scope.Info("Filtering private subnets")
+		vpcConfig, err = makeVpcConfig(s.scope.Subnets().FilterPrivate(), s.scope.ControlPlane.Spec.EndpointAccess, s.scope.SecurityGroups())
+	} else {
+		vpcConfig, err = makeVpcConfig(s.scope.Subnets(), s.scope.ControlPlane.Spec.EndpointAccess, s.scope.SecurityGroups())
+	}
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't create vpc config for cluster")
 	}
@@ -542,8 +551,16 @@ func publicAccessCIDRsEqual(as []*string, bs []*string) bool {
 }
 
 func (s *Service) reconcileVpcConfig(vpcConfig *eks.VpcConfigResponse) (*eks.VpcConfigRequest, error) {
+	var (
+		updatedVpcConfig *eks.VpcConfigRequest
+		err              error
+	)
 	endpointAccess := s.scope.ControlPlane.Spec.EndpointAccess
-	updatedVpcConfig, err := makeVpcConfig(s.scope.Subnets(), endpointAccess, s.scope.SecurityGroups())
+	if s.scope.ControlPlane.Spec.RestrictPrivateSubnets {
+		updatedVpcConfig, err = makeVpcConfig(s.scope.Subnets().FilterPrivate(), endpointAccess, s.scope.SecurityGroups())
+	} else {
+		updatedVpcConfig, err = makeVpcConfig(s.scope.Subnets(), endpointAccess, s.scope.SecurityGroups())
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -393,6 +393,7 @@ func autoConvert_v1beta2_AWSManagedControlPlaneSpec_To_v1beta1_AWSManagedControl
 	if err := Convert_v1beta2_VpcCni_To_v1beta1_VpcCni(&in.VpcCni, &out.VpcCni, s); err != nil {
 		return err
 	}
+	// WARNING: in.RestrictPrivateSubnets requires manual conversion: does not exist in peer-type
 	if err := Convert_v1beta2_KubeProxy_To_v1beta1_KubeProxy(&in.KubeProxy, &out.KubeProxy, s); err != nil {
 		return err
 	}

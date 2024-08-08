@@ -2295,6 +2295,18 @@ spec:
                         - ip-name
                         - resource-name
                         type: string
+                      subnetSchema:
+                        default: PreferPrivate
+                        description: |-
+                          SubnetSchema specifies how CidrBlock should be divided on subnets in the VPC depending on the number of AZs.
+                          PreferPrivate - one private subnet for each AZ plus one other subnet that will be further sub-divided for the public subnets.
+                          PreferPublic - have the reverse logic of PreferPrivate, one public subnet for each AZ plus one other subnet
+                          that will be further sub-divided for the private subnets.
+                          Defaults to PreferPrivate
+                        enum:
+                        - PreferPrivate
+                        - PreferPublic
+                        type: string
                       tags:
                         additionalProperties:
                           type: string
@@ -2670,6 +2682,10 @@ spec:
                     type: array
                   availabilityZone:
                     description: Availability zone of instance
+                    type: string
+                  capacityReservationId:
+                    description: CapacityReservationID specifies the target Capacity
+                      Reservation into which the instance should be launched.
                     type: string
                   ebsOptimized:
                     description: Indicates whether the instance is optimized for Amazon
@@ -5104,6 +5120,18 @@ spec:
                                 enum:
                                 - ip-name
                                 - resource-name
+                                type: string
+                              subnetSchema:
+                                default: PreferPrivate
+                                description: |-
+                                  SubnetSchema specifies how CidrBlock should be divided on subnets in the VPC depending on the number of AZs.
+                                  PreferPrivate - one private subnet for each AZ plus one other subnet that will be further sub-divided for the public subnets.
+                                  PreferPublic - have the reverse logic of PreferPrivate, one public subnet for each AZ plus one other subnet
+                                  that will be further sub-divided for the private subnets.
+                                  Defaults to PreferPrivate
+                                enum:
+                                - PreferPrivate
+                                - PreferPublic
                                 type: string
                               tags:
                                 additionalProperties:
@@ -7664,6 +7692,10 @@ spec:
                     description: ID of resource
                     type: string
                 type: object
+              capacityReservationId:
+                description: CapacityReservationID specifies the target Capacity Reservation
+                  into which the instance should be launched.
+                type: string
               cloudInit:
                 description: |-
                   CloudInit defines options related to the bootstrapping systems where
@@ -8837,6 +8869,10 @@ spec:
                             description: ID of resource
                             type: string
                         type: object
+                      capacityReservationId:
+                        description: CapacityReservationID specifies the target Capacity
+                          Reservation into which the instance should be launched.
+                        type: string
                       cloudInit:
                         description: |-
                           CloudInit defines options related to the bootstrapping systems where
@@ -10235,6 +10271,18 @@ spec:
                         - ip-name
                         - resource-name
                         type: string
+                      subnetSchema:
+                        default: PreferPrivate
+                        description: |-
+                          SubnetSchema specifies how CidrBlock should be divided on subnets in the VPC depending on the number of AZs.
+                          PreferPrivate - one private subnet for each AZ plus one other subnet that will be further sub-divided for the public subnets.
+                          PreferPublic - have the reverse logic of PreferPrivate, one public subnet for each AZ plus one other subnet
+                          that will be further sub-divided for the private subnets.
+                          Defaults to PreferPrivate
+                        enum:
+                        - PreferPrivate
+                        - PreferPublic
+                        type: string
                       tags:
                         additionalProperties:
                           type: string
@@ -10565,6 +10613,10 @@ spec:
                     type: array
                   availabilityZone:
                     description: Availability zone of instance
+                    type: string
+                  capacityReservationId:
+                    description: CapacityReservationID specifies the target Capacity
+                      Reservation into which the instance should be launched.
                     type: string
                   ebsOptimized:
                     description: Indicates whether the instance is optimized for Amazon
@@ -12226,6 +12278,18 @@ spec:
                         - ip-name
                         - resource-name
                         type: string
+                      subnetSchema:
+                        default: PreferPrivate
+                        description: |-
+                          SubnetSchema specifies how CidrBlock should be divided on subnets in the VPC depending on the number of AZs.
+                          PreferPrivate - one private subnet for each AZ plus one other subnet that will be further sub-divided for the public subnets.
+                          PreferPublic - have the reverse logic of PreferPrivate, one public subnet for each AZ plus one other subnet
+                          that will be further sub-divided for the private subnets.
+                          Defaults to PreferPrivate
+                        enum:
+                        - PreferPrivate
+                        - PreferPublic
+                        type: string
                       tags:
                         additionalProperties:
                           type: string
@@ -12308,6 +12372,11 @@ spec:
               region:
                 description: The AWS Region the cluster lives in.
                 type: string
+              restrictPrivateSubnets:
+                default: false
+                description: RestrictPrivateSubnets indicates that the EKS control
+                  plane should only use private subnets.
+                type: boolean
               roleAdditionalPolicies:
                 description: |-
                   RoleAdditionalPolicies allows you to attach additional polices to
@@ -12569,6 +12638,10 @@ spec:
                     type: array
                   availabilityZone:
                     description: Availability zone of instance
+                    type: string
+                  capacityReservationId:
+                    description: CapacityReservationID specifies the target Capacity
+                      Reservation into which the instance should be launched.
                     type: string
                   ebsOptimized:
                     description: Indicates whether the instance is optimized for Amazon
@@ -17514,7 +17587,7 @@ spec:
         env:
         - name: AWS_SHARED_CREDENTIALS_FILE
           value: /home/.aws/credentials
-        image: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller:v2.5.1
+        image: registry.k8s.io/cluster-api-aws/cluster-api-aws-controller:v2.6.1
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
