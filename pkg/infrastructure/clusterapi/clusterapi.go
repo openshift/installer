@@ -303,7 +303,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	{
 		untilTime := time.Now().Add(provisionTimeout)
 		timezone, _ := untilTime.Zone()
-		reqBootstrapPubIP := installConfig.Config.Publish == types.ExternalPublishingStrategy && i.impl.BootstrapHasPublicIP()
+		reqBootstrapPubIP := installConfig.Config.Publish == types.ExternalPublishingStrategy && i.impl.PublicGatherEndpoint() == ExternalIP
 		logrus.Infof("Waiting up to %v (until %v %s) for machines %v to provision...", provisionTimeout, untilTime.Format(time.Kitchen), timezone, machineNames)
 		if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, provisionTimeout, true,
 			func(ctx context.Context) (bool, error) {

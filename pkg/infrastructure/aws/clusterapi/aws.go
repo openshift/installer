@@ -46,9 +46,9 @@ type Provider struct {
 // Name gives the name of the provider, AWS.
 func (*Provider) Name() string { return awstypes.Name }
 
-// BootstrapHasPublicIP indicates that machine ready checks
-// should wait for an ExternalIP in the status.
-func (*Provider) BootstrapHasPublicIP() bool { return true }
+// PublicGatherEndpoint indicates that machine ready checks should wait for an ExternalIP
+// in the status and use that when gathering bootstrap log bundles.
+func (*Provider) PublicGatherEndpoint() clusterapi.GatherEndpoint { return clusterapi.ExternalIP }
 
 // PreProvision creates the IAM roles used by all nodes in the cluster.
 func (*Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInput) error {
