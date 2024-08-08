@@ -321,3 +321,5 @@ replace github.com/openshift/assisted-service/models => github.com/openshift/ass
 // https://issues.redhat.com/browse/OCPBUGS-8119
 // https://issues.redhat.com/browse/OCPBUGS-27507
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
+
+replace github.com/openshift/api => github.com/vrutkovs/api v0.0.0-20240808063235-05089ce690c4

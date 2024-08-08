@@ -391,7 +391,7 @@ var (
 type CIDR string
 
 // LoadBalancerStrategy holds parameters for a load balancer.
-// +kubebuilder:validation:XValidation:rule="!has(self.scope) || self.scope != 'Internal' || !has(self.providerParameters) || !has(self.providerParameters.aws) || !has(self.providerParameters.aws.networkLoadBalancer) || !has(self.providerParameters.aws.networkLoadBalancer.eipAllocations)",message="eipAllocations are forbidden when the scope is Internal."
+// +openshift:validation:FeatureGateAwareXValidation:featureGate=SetEIPForNLBIngressController,rule="!has(self.scope) || self.scope != 'Internal' || !has(self.providerParameters) || !has(self.providerParameters.aws) || !has(self.providerParameters.aws.networkLoadBalancer) || !has(self.providerParameters.aws.networkLoadBalancer.eipAllocations)",message="eipAllocations are forbidden when the scope is Internal."
 type LoadBalancerStrategy struct {
 	// scope indicates the scope at which the load balancer is exposed.
 	// Possible values are "External" and "Internal".
@@ -700,9 +700,9 @@ type AWSClassicLoadBalancerParameters struct {
 
 // AWSNetworkLoadBalancerParameters holds configuration parameters for an
 // AWS Network load balancer. For Example: Setting AWS EIPs https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html
-// +kubebuilder:validation:XValidation:rule=`has(self.subnets) && has(self.subnets.ids) && has(self.subnets.names) && has(self.eipAllocations) ? size(self.subnets.ids + self.subnets.names) == size(self.eipAllocations) : true`,message="number of subnets must be equal to number of eipAllocations"
-// +kubebuilder:validation:XValidation:rule=`has(self.subnets) && has(self.subnets.ids) && !has(self.subnets.names) && has(self.eipAllocations) ? size(self.subnets.ids) == size(self.eipAllocations) : true`,message="number of subnets must be equal to number of eipAllocations"
-// +kubebuilder:validation:XValidation:rule=`has(self.subnets) && has(self.subnets.names) && !has(self.subnets.ids) && has(self.eipAllocations) ? size(self.subnets.names) == size(self.eipAllocations) : true`,message="number of subnets must be equal to number of eipAllocations"
+// +openshift:validation:FeatureGateAwareXValidation:featureGate=SetEIPForNLBIngressController,rule=`has(self.subnets) && has(self.subnets.ids) && has(self.subnets.names) && has(self.eipAllocations) ? size(self.subnets.ids + self.subnets.names) == size(self.eipAllocations) : true`,message="number of subnets must be equal to number of eipAllocations"
+// +openshift:validation:FeatureGateAwareXValidation:featureGate=SetEIPForNLBIngressController,rule=`has(self.subnets) && has(self.subnets.ids) && !has(self.subnets.names) && has(self.eipAllocations) ? size(self.subnets.ids) == size(self.eipAllocations) : true`,message="number of subnets must be equal to number of eipAllocations"
+// +openshift:validation:FeatureGateAwareXValidation:featureGate=SetEIPForNLBIngressController,rule=`has(self.subnets) && has(self.subnets.names) && !has(self.subnets.ids) && has(self.eipAllocations) ? size(self.subnets.names) == size(self.eipAllocations) : true`,message="number of subnets must be equal to number of eipAllocations"
 type AWSNetworkLoadBalancerParameters struct {
 	// subnets specifies the subnets to which the load balancer will
 	// attach. The subnets may be specified by either their
