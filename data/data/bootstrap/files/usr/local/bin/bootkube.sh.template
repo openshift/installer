@@ -163,7 +163,8 @@ then
 		"${RELEASE_IMAGE_DIGEST}" \
 		render \
 			--output-dir=/assets/cvo-bootstrap \
-			--release-image="${RELEASE_IMAGE_DIGEST}"
+			--release-image="${RELEASE_IMAGE_DIGEST}" \
+			--feature-gate-manifest-path=/assets/manifests/99_feature-gate.yaml
 
 	cp cvo-bootstrap/bootstrap/* bootstrap-manifests/
 	cp cvo-bootstrap/manifests/* manifests/
