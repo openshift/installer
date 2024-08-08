@@ -21,7 +21,6 @@ import (
 	"github.com/openshift/installer/pkg/terraform/stages/azure"
 	"github.com/openshift/installer/pkg/terraform/stages/ibmcloud"
 	"github.com/openshift/installer/pkg/terraform/stages/ovirt"
-	"github.com/openshift/installer/pkg/terraform/stages/powervs"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
@@ -59,10 +58,7 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 	case nutanixtypes.Name:
 		return clusterapi.InitializeProvider(nutanixcapi.Provider{}), nil
 	case powervstypes.Name:
-		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
-			return clusterapi.InitializeProvider(&powervscapi.Provider{}), nil
-		}
-		return terraform.InitializeProvider(powervs.PlatformStages), nil
+		return clusterapi.InitializeProvider(&powervscapi.Provider{}), nil
 	case openstacktypes.Name:
 		return clusterapi.InitializeProvider(openstackcapi.Provider{}), nil
 	case ovirttypes.Name:
