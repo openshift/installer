@@ -68,6 +68,16 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		if err = AddServiceAccountRoles(ctx, projectID, masterSA, GetMasterRoles()); err != nil {
 			return fmt.Errorf("failed to add master roles: %w", err)
 		}
+
+		// Add additional roles for shared VPC
+		if len(in.InstallConfig.Config.Platform.GCP.NetworkProjectID) > 0 {
+			projID := in.InstallConfig.Config.Platform.GCP.NetworkProjectID
+			// Add roles needed for creating firewalls
+			roles := GetSharedVPCRoles()
+			if err = AddServiceAccountRoles(ctx, projID, masterSA, roles); err != nil {
+				return fmt.Errorf("failed to add roles for shared VPC: %w", err)
+			}
+		}
 	}
 
 	createSA := false
