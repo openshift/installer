@@ -61,7 +61,7 @@ var (
 							reportProblemsToJiraComponent("Networking / router").
 							contactPerson("miheer").
 							productScope(ocpSpecific).
-							enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+							enableIn(configv1.Default, configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 							mustRegister()
 
 	FeatureGateOpenShiftPodSecurityAdmission = newFeatureGate("OpenShiftPodSecurityAdmission").
@@ -231,6 +231,20 @@ var (
 					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 					mustRegister()
 
+	FeatureGateAdditionalRoutingCapabilities = newFeatureGate("AdditionalRoutingCapabilities").
+							reportProblemsToJiraComponent("Networking/cluster-network-operator").
+							contactPerson("jcaamano").
+							productScope(ocpSpecific).
+							enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+							mustRegister()
+
+	FeatureGateRouteAdvertisements = newFeatureGate("RouteAdvertisements").
+					reportProblemsToJiraComponent("Networking/ovn-kubernetes").
+					contactPerson("jcaamano").
+					productScope(ocpSpecific).
+					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+					mustRegister()
+
 	FeatureGateNetworkLiveMigration = newFeatureGate("NetworkLiveMigration").
 					reportProblemsToJiraComponent("Networking/ovn-kubernetes").
 					contactPerson("pliu").
@@ -244,6 +258,13 @@ var (
 						productScope(ocpSpecific).
 						enableIn(configv1.Default, configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 						mustRegister()
+
+	FeatureGateOVNObservability = newFeatureGate("OVNObservability").
+					reportProblemsToJiraComponent("Networking").
+					contactPerson("npinaeva").
+					productScope(ocpSpecific).
+					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+					mustRegister()
 
 	FeatureGateHardwareSpeed = newFeatureGate("HardwareSpeed").
 					reportProblemsToJiraComponent("etcd").
@@ -493,7 +514,7 @@ var (
 						reportProblemsToJiraComponent("Installer").
 						contactPerson("jhixson74").
 						productScope(ocpSpecific).
-						enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+						enableIn(configv1.Default, configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 						mustRegister()
 
 	FeatureGateClusterAPIInstallGCP = newFeatureGate("ClusterAPIInstallGCP").
@@ -541,7 +562,7 @@ var (
 				reportProblemsToJiraComponent("Image Registry").
 				contactPerson("flavianmissi").
 				productScope(ocpSpecific).
-				enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+				enableIn(configv1.Default, configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 				mustRegister()
 
 	FeatureGateMachineAPIMigration = newFeatureGate("MachineAPIMigration").
@@ -588,6 +609,13 @@ var (
 							reportProblemsToJiraComponent("Routing").
 							contactPerson("miciah").
 							productScope(ocpSpecific).
-							enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+							enableIn(configv1.Default, configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 							mustRegister()
+
+	FeatureGateAWSEFSDriverVolumeMetrics = newFeatureGate("AWSEFSDriverVolumeMetrics").
+						reportProblemsToJiraComponent("Storage / Kubernetes External Components").
+						contactPerson("fbertina").
+						productScope(ocpSpecific).
+						enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+						mustRegister()
 )
