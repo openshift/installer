@@ -156,6 +156,16 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			Object: vsphereMachine,
 		})
 
+		// Need to determine the infrastructure ref since there may be multi vcenters.
+		clusterName := clusterID
+		for index, vcenter := range config.Platform.VSphere.VCenters {
+			if vcenter.Server == providerSpec.Workspace.Server {
+				clusterName = fmt.Sprintf("%v-%d", clusterID, index)
+				break
+			}
+		}
+
+		// Create capi machine for vspheremachine
 		machine := &capi.Machine{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: capiutils.Namespace,
@@ -165,7 +175,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 				},
 			},
 			Spec: capi.MachineSpec{
-				ClusterName: clusterID,
+				ClusterName: clusterName,
 				Bootstrap: capi.Bootstrap{
 					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID, role)),
 				},
@@ -215,6 +225,15 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			Object: bootstrapVSphereMachine,
 		})
 
+		// Need to determine the infrastructure ref since there may be multi vcenters.
+		clusterName := clusterID
+		for index, vcenter := range config.Platform.VSphere.VCenters {
+			if vcenter.Server == bootstrapSpec.Server {
+				clusterName = fmt.Sprintf("%v-%d", clusterID, index)
+				break
+			}
+		}
+
 		bootstrapMachine := &capi.Machine{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: bootstrapVSphereMachine.Name,
@@ -223,7 +242,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 				},
 			},
 			Spec: capi.MachineSpec{
-				ClusterName: clusterID,
+				ClusterName: clusterName,
 				Bootstrap: capi.Bootstrap{
 					DataSecretName: ptr.To(fmt.Sprintf("%s-bootstrap", clusterID)),
 				},

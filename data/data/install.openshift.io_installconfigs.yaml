@@ -5201,7 +5201,7 @@ spec:
                       - server
                       - user
                       type: object
-                    maxItems: 1
+                    maxItems: 3
                     minItems: 1
                     type: array
                 type: object

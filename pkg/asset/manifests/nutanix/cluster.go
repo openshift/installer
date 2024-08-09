@@ -102,11 +102,13 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	return &capiutils.GenerateClusterAssetsOutput{
 		Manifests: manifests,
-		InfrastructureRef: &corev1.ObjectReference{
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-			Kind:       "NutanixCluster",
-			Name:       clusterID.InfraID,
-			Namespace:  capiutils.Namespace,
+		InfrastructureRefs: []*corev1.ObjectReference{
+			{
+				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+				Kind:       "NutanixCluster",
+				Name:       clusterID.InfraID,
+				Namespace:  capiutils.Namespace,
+			},
 		},
 	}, nil
 }

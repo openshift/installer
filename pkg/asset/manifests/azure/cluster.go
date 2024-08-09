@@ -213,11 +213,13 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	return &capiutils.GenerateClusterAssetsOutput{
 		Manifests: manifests,
-		InfrastructureRef: &corev1.ObjectReference{
-			APIVersion: capz.GroupVersion.String(),
-			Kind:       "AzureCluster",
-			Name:       azureCluster.Name,
-			Namespace:  azureCluster.Namespace,
+		InfrastructureRefs: []*corev1.ObjectReference{
+			{
+				APIVersion: capz.GroupVersion.String(),
+				Kind:       "AzureCluster",
+				Name:       azureCluster.Name,
+				Namespace:  azureCluster.Namespace,
+			},
 		},
 	}, nil
 }
