@@ -39,7 +39,7 @@ const AuthType = "agent-installer-local"
 
 // AuthConfig is an asset that generates ECDSA public/private keys, JWT token.
 type AuthConfig struct {
-	PublicKey, AgentAuthToken, AuthType string
+	PublicKey, AgentAuthToken, AgentAuthTokenExpiry, AuthType string
 }
 
 var _ asset.Asset = (*AuthConfig)(nil)
@@ -93,6 +93,7 @@ func (a *AuthConfig) Generate(_ context.Context, dependencies asset.Parents) err
 
 		// Auth tokens expires after 48 hours
 		expiry := time.Now().UTC().Add(48 * time.Hour)
+		a.AgentAuthTokenExpiry = expiry.Format(time.RFC3339)
 		token, err := generateToken(infraEnvID.ID, privateKey, expiry)
 		if err != nil {
 			return err
@@ -239,7 +240,7 @@ func (a *AuthConfig) createOrUpdateAuthTokenSecret(kubeconfigPath string) error 
 		if err != nil {
 			return err
 		}
-		logrus.Debug("auth token secret regenerated and updated in the cluster")
+		logrus.Debug("Auth token secret regenerated and updated in the cluster")
 	} else {
 		// Update the token in asset store with the retrieved token from the cluster
 		a.AgentAuthToken = retrievedToken
@@ -250,7 +251,7 @@ func (a *AuthConfig) createOrUpdateAuthTokenSecret(kubeconfigPath string) error 
 		}
 		// Update the asset store with the retrieved public key associated with the valid token from the cluster
 		a.PublicKey = retrievedPublicKey
-		logrus.Debugf("reusing existing auth token (valid up to %s)", expiryTime)
+		logrus.Debugf("Reusing existing auth token (valid up to %s)", expiryTime)
 	}
 	return err
 }
