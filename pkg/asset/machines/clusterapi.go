@@ -228,23 +228,17 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		client := icazure.NewClient(session)
 
 		if len(mpool.Zones) == 0 {
-			// if no azs are given we set to []string{""} for convenience over later operations.
-			// It means no-zoned for the machine API
-			mpool.Zones = []string{""}
-		}
-		if len(mpool.Zones) == 0 {
 			azs, err := client.GetAvailabilityZones(ctx, ic.Platform.Azure.Region, mpool.InstanceType)
 			if err != nil {
 				return fmt.Errorf("failed to fetch availability zones: %w", err)
 			}
 			mpool.Zones = azs
-			if len(azs) == 0 {
-				// if no azs are given we set to []string{""} for convenience over later operations.
-				// It means no-zoned for the machine API
-				mpool.Zones = []string{""}
-			}
 		}
-		// client.GetControlPlaneSubnet(ctx, ic.Platform.Azure.ResourceGroupName, ic.Platform.Azure.VirtualNetwork, )
+		if len(mpool.Zones) == 0 {
+			// if no azs are given we set to []string{""} for convenience over later operations.
+			// It means no-zoned for the machine API
+			mpool.Zones = []string{""}
+		}
 
 		if mpool.OSImage.Publisher != "" {
 			img, ierr := client.GetMarketplaceImage(ctx, ic.Platform.Azure.Region, mpool.OSImage.Publisher, mpool.OSImage.Offer, mpool.OSImage.SKU, mpool.OSImage.Version)
