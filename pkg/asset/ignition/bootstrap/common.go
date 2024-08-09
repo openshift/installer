@@ -39,6 +39,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/gcp"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -193,9 +194,11 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 	directory, err := data.Assets.Open(platformFilePath)
 	if err == nil {
 		directory.Close()
-		err = AddStorageFiles(a.Config, "/", platformFilePath, templateData)
-		if err != nil {
-			return err
+		if platform == gcp.Name && installConfig.Config.GCP != nil && installConfig.Config.GCP.UserProvisionedDNS == gcp.UserProvisionedDNSEnabled {
+			err = AddStorageFiles(a.Config, "/", platformFilePath, templateData)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
