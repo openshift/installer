@@ -35,7 +35,6 @@ func GetMasterRoles() []string {
 	return []string{
 		"roles/compute.instanceAdmin",
 		"roles/compute.networkAdmin",
-		"roles/compute.securityAdmin",
 		"roles/storage.admin",
 	}
 }
@@ -45,6 +44,14 @@ func GetWorkerRoles() []string {
 	return []string{
 		"roles/compute.viewer",
 		"roles/storage.admin",
+	}
+}
+
+// GetSharedVPCRoles returns the pre-defined roles for a shared VPC installation.
+func GetSharedVPCRoles() []string {
+	return []string{
+		"roles/compute.networkAdmin",
+		"roles/compute.securityAdmin",
 	}
 }
 
