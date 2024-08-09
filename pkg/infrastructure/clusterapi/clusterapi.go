@@ -36,6 +36,7 @@ import (
 	"github.com/openshift/installer/pkg/infrastructure"
 	"github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/types"
+	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 )
 
 // Ensure that clusterapi.InfraProvider implements
@@ -295,9 +296,27 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	} else {
 		logrus.Debugf("No Ignition requirements for the %s provider", i.impl.Name())
 	}
-	bootstrapIgnSecret := IgnitionSecret(bootstrapIgnData, clusterID.InfraID, "bootstrap")
-	masterIgnSecret := IgnitionSecret(masterIgnAsset.Files()[0].Data, clusterID.InfraID, "master")
-	machineManifests = append(machineManifests, bootstrapIgnSecret, masterIgnSecret)
+
+	switch i.impl.Name() {
+	case nutanixtypes.Name:
+		bootstrapIgnSecret := IgnitionSecret(bootstrapIgnData, clusterID.InfraID, "bootstrap")
+		machineManifests = append(machineManifests, bootstrapIgnSecret)
+
+		// Inserts the file "/etc/hostname" with each of the master machine name to the master ignition data
+		for i := 0; i < int(*installConfig.Config.ControlPlane.Replicas); i++ {
+			hostname := fmt.Sprintf("%s-master-%v", clusterID.InfraID, i)
+			masterIgnData, err := nutanixtypes.InsertHostnameIgnition(masterIgnAsset.Files()[0].Data, hostname)
+			if err != nil {
+				return fileList, fmt.Errorf("failed to insert the file '/etc/hostname' to the master ignition: %w", err)
+			}
+			masterIgnSecret := IgnitionSecret(masterIgnData, clusterID.InfraID, fmt.Sprintf("master-%v", i))
+			machineManifests = append(machineManifests, masterIgnSecret)
+		}
+	default:
+		bootstrapIgnSecret := IgnitionSecret(bootstrapIgnData, clusterID.InfraID, "bootstrap")
+		masterIgnSecret := IgnitionSecret(masterIgnAsset.Files()[0].Data, clusterID.InfraID, "master")
+		machineManifests = append(machineManifests, bootstrapIgnSecret, masterIgnSecret)
+	}
 
 	// Create the machine manifests.
 	timer.StartTimer(machineStage)

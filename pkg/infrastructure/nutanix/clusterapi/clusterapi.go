@@ -130,8 +130,15 @@ func (p Provider) Ignition(ctx context.Context, in infracapi.IgnitionInput) ([]b
 		return nil, fmt.Errorf("failed to create nutanix client: %w", err)
 	}
 
+	// Inserts the file "/etc/hostname" with the bootstrap machine name to the bootstrap ignition data
+	hostname := fmt.Sprintf("%s-bootstrap", in.InfraID)
+	bootstrapIgnData, err := nutanixtypes.InsertHostnameIgnition(in.BootstrapIgnData, hostname)
+	if err != nil {
+		return in.BootstrapIgnData, fmt.Errorf("failed to insert the file '/etc/hostname' to the bootstrap ignition: %w", err)
+	}
+
 	imgName := nutanixtypes.BootISOImageName(in.InfraID)
-	imgPath, err := nutanixtypes.CreateBootstrapISO(in.InfraID, string(in.BootstrapIgnData))
+	imgPath, err := nutanixtypes.CreateBootstrapISO(in.InfraID, string(bootstrapIgnData))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create bootstrap ignition iso: %w", err)
 	}
@@ -207,11 +214,11 @@ func (p Provider) Ignition(ctx context.Context, in infracapi.IgnitionInput) ([]b
 			err = fmt.Errorf("failed to create/upload the bootstrap image object %s in PC: %w", imgName, err)
 		}
 
-		return in.BootstrapIgnData, err
+		return bootstrapIgnData, err
 	}
 	logrus.Infof("Successfully created the bootstrap image object %s and uploaded its image data", imgName)
 
-	return in.BootstrapIgnData, nil
+	return bootstrapIgnData, nil
 }
 
 // createImage creates the image object in PC, with the provided request input.
