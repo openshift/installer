@@ -325,7 +325,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	{
 		untilTime := time.Now().Add(provisionTimeout)
 		timezone, _ := untilTime.Zone()
-		reqBootstrapPubIP := installConfig.Config.Publish == types.ExternalPublishingStrategy && i.impl.BootstrapHasPublicIP()
+		reqBootstrapPubIP := installConfig.Config.Publish == types.ExternalPublishingStrategy && i.impl.PublicGatherEndpoint() == ExternalIP
 		logrus.Infof("Waiting up to %v (until %v %s) for machines %v to provision...", provisionTimeout, untilTime.Format(time.Kitchen), timezone, machineNames)
 		if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, provisionTimeout, true,
 			func(ctx context.Context) (bool, error) {
@@ -504,22 +504,12 @@ func (i *InfraProvider) ExtractHostAddresses(dir string, config *types.InstallCo
 	manifestsDir := filepath.Join(dir, clusterapi.ArtifactsDir)
 	logrus.Debugf("Looking for machine manifests in %s", manifestsDir)
 
-	bootstrapFiles, err := filepath.Glob(filepath.Join(manifestsDir, "Machine\\-openshift\\-cluster\\-api\\-guests\\-*\\-bootstrap.yaml"))
+	addr, err := i.getBootstrapAddress(config, manifestsDir)
 	if err != nil {
-		return fmt.Errorf("failed to list bootstrap manifests: %w", err)
+		return fmt.Errorf("failed to get bootstrap address: %w", err)
 	}
-	logrus.Debugf("bootstrap manifests found: %v", bootstrapFiles)
+	ha.Bootstrap = addr
 
-	if len(bootstrapFiles) != 1 {
-		return fmt.Errorf("wrong number of bootstrap manifests found: %v. Expected exactly one", bootstrapFiles)
-	}
-	addrs, err := extractIPAddress(bootstrapFiles[0])
-	if err != nil {
-		return fmt.Errorf("failed to extract IP address for bootstrap: %w", err)
-	}
-	logrus.Debugf("found bootstrap address: %s", addrs)
-
-	ha.Bootstrap = prioritizeIPv4(config, addrs)
 	masterFiles, err := filepath.Glob(filepath.Join(manifestsDir, "Machine\\-openshift\\-cluster\\-api\\-guests\\-*\\-master\\-?.yaml"))
 	if err != nil {
 		return fmt.Errorf("failed to list master machine manifests: %w", err)
@@ -542,6 +532,30 @@ func (i *InfraProvider) ExtractHostAddresses(dir string, config *types.InstallCo
 	}
 
 	return nil
+}
+
+func (i *InfraProvider) getBootstrapAddress(config *types.InstallConfig, manifestsDir string) (string, error) {
+	// If the bootstrap node cannot have a public IP address, we
+	// SSH through the load balancer, as is this case on Azure.
+	if i.impl.PublicGatherEndpoint() == APILoadBalancer && config.Publish != types.InternalPublishingStrategy {
+		return fmt.Sprintf("api.%s", config.ClusterDomain()), nil
+	}
+
+	bootstrapFiles, err := filepath.Glob(filepath.Join(manifestsDir, "Machine\\-openshift\\-cluster\\-api\\-guests\\-*\\-bootstrap.yaml"))
+	if err != nil {
+		return "", fmt.Errorf("failed to list bootstrap manifests: %w", err)
+	}
+	logrus.Debugf("bootstrap manifests found: %v", bootstrapFiles)
+
+	if len(bootstrapFiles) != 1 {
+		return "", fmt.Errorf("wrong number of bootstrap manifests found: %v. Expected exactly one", bootstrapFiles)
+	}
+	addrs, err := extractIPAddress(bootstrapFiles[0])
+	if err != nil {
+		return "", fmt.Errorf("failed to extract IP address for bootstrap: %w", err)
+	}
+	logrus.Debugf("found bootstrap address: %s", addrs)
+	return prioritizeIPv4(config, addrs), nil
 }
 
 // IgnitionSecret provides the basic formatting for creating the

@@ -67,9 +67,9 @@ func (p *Provider) Name() string {
 	return aztypes.Name
 }
 
-// BootstrapHasPublicIP indicates that an ExternalIP is not
-// required in the machine ready checks.
-func (*Provider) BootstrapHasPublicIP() bool { return false }
+// PublicGatherEndpoint indicates that machine ready checks should NOT wait for an ExternalIP
+// in the status and should use the API load balancer when gathering bootstrap log bundles.
+func (*Provider) PublicGatherEndpoint() clusterapi.GatherEndpoint { return clusterapi.APILoadBalancer }
 
 // PreProvision is called before provisioning using CAPI controllers has begun.
 func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInput) error {

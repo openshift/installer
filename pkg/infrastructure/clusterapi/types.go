@@ -20,11 +20,14 @@ type Provider interface {
 	// Name provides the name for the cloud platform.
 	Name() string
 
-	// BootstrapHasPublicIP indicates whether a public IP address
-	// is expected on the bootstrap node in a public cluster.
-	// When BootstrapHasPublicIP returns true, the machine ready checks
-	// wait for an ExternalIP address to be populated in the machine status.
-	BootstrapHasPublicIP() bool
+	// PublicGatherEndpoint returns how the cloud platform expects the installer
+	// to connect to the bootstrap node for log gathering. CAPI providers are not
+	// consistent in how public IP addresses are represented in the machine status.
+	// Furthermore, Azure cannot attach a public IP to the bootstrap node, so SSH
+	// must be performed through the API load balancer.
+	// When a platform returns ExternalIP, the installer will require an ExternalIP
+	// to be present in the status, before it declares the machine ready.
+	PublicGatherEndpoint() GatherEndpoint
 }
 
 // PreProvider defines the PreProvision hook, which is called prior to
@@ -126,3 +129,18 @@ type Timeouts interface {
 	// When waiting for the machines to provision.
 	ProvisionTimeout() time.Duration
 }
+
+// GatherEndpoint represents the valid values for connecting to the bootstrap nude
+// in a public cluster to gather logs.
+type GatherEndpoint string
+
+const (
+	// ExternalIP indicates that the machine status will include an ExternalIP that can be used for gather.
+	ExternalIP GatherEndpoint = "ExternalIP"
+
+	// InternalIP indicates that the machine status will only include InternalIPs.
+	InternalIP GatherEndpoint = "InternalIP"
+
+	// APILoadBalancer indicates that gather bootstrap should connect to the API load balancer.
+	APILoadBalancer GatherEndpoint = "APILoadBalancer"
+)
