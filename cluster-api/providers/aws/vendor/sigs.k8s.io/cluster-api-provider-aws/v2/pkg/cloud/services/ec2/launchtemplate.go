@@ -114,9 +114,7 @@ func (s *Service) ReconcileLaunchTemplate(
 			return err
 		}
 		scope.SetLaunchTemplateLatestVersionStatus(launchTemplateVersion)
-		if err := scope.PatchObject(); err != nil {
-			return err
-		}
+		return scope.PatchObject()
 	}
 
 	annotation, err := MachinePoolAnnotationJSON(scope, TagsLastAppliedAnnotation)
