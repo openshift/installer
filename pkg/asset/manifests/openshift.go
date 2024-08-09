@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -79,6 +80,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 //
 //nolint:gocyclo
 func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) error {
+	logrus.Debugf("OpenShift Generate() function")
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
 	kubeadminPassword := &password.KubeadminPassword{}
@@ -270,6 +272,46 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 			ProvisioningOSDownloadURL: rhcosImage.ControlPlane,
 		}
 		assetData["99_baremetal-provisioning-config.yaml"] = applyTemplateData(baremetalConfig.Files()[0].Data, bmTemplateData)
+
+		logrus.Debugf("------Openshift Generate() before generating tls certificate")
+		// Create certificate to enable TLS for virtual media
+		cert, err := generateTLSCertificate(installConfig.Config.Platform.BareMetal.BootstrapProvisioningIP)
+		if err != nil {
+			return err
+		}
+
+		logrus.Debugf("-------Openshift Generate() - writing TLS certificate contents for ironic to be used in case TLS for virtual media is enabled")
+		_, filename, _, ok := runtime.Caller(0) // /home/mdevscripts/installer/pkg/asset/manifests/openshift.go
+		if ok {
+			path := filepath.Dir(filepath.Dir(filename))
+			path += "/store/data/bootstrap/baremetal/files"
+			logrus.Debugf("------Openshift Generate() - path: %q", path)
+			certfile, err := os.Create(path + "/ironic-virtualmedia-tls.crt")
+			if err != nil {
+				logrus.Debugf("-------Error in creating ironic-virtualmedia-tls.crt")
+				return err
+			}
+			_, err = certfile.Write(cert.certificate)
+			if err != nil {
+				logrus.Debugf("-------Error in writing to ironic-virtualmedia-tls.crt")
+				return err
+			}
+			certfile.Close()
+
+			keyfile, err := os.Create(path + "/ironic-virtualmedia-tls.key")
+			if err != nil {
+				logrus.Debugf("------Error in creating ironic-virtualmedia-tls.key")
+				return err
+			}
+			_, err = keyfile.Write(cert.privateKey)
+			if err != nil {
+				logrus.Debugf("-------Error in writing to ironic-virtualmedia-tls.key")
+				return err
+			}
+			keyfile.Close()
+		} else {
+			logrus.Debugf("Unable to get information about function invocations from the goroutine stack while generating Openshift asset.")
+		}
 	}
 
 	if platform == azuretypes.Name && installConfig.Config.Azure.IsARO() && installConfig.Config.CredentialsMode != types.ManualCredentialsMode {

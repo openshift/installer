@@ -111,6 +111,7 @@ func SetupFileHook(baseDir string) func() {
 	logrus.Debugf(versionString)
 	if version.Commit != "" {
 		logrus.Debugf("Built from commit %s", version.Commit)
+		logrus.Debugf("Hello!")
 	}
 
 	return func() {
