@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -250,6 +251,12 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 			PublicIpv4Pool:              ptr.To(ic.Config.Platform.AWS.PublicIpv4Pool),
 			PublicIpv4PoolFallBackOrder: ptr.To(capa.PublicIpv4PoolFallbackOrderAmazonPool),
 		}
+	}
+
+	if len(os.Getenv("OPENSHIFT_INSTALL_AWS_PUBLIC_ONLY")) > 0 {
+		// If we don't set the subnets for the internal LB, CAPA will try to use private subnets but there aren't any in
+		// public-only mode.
+		awsCluster.Spec.ControlPlaneLoadBalancer.Subnets = awsCluster.Spec.NetworkSpec.Subnets.IDs()
 	}
 
 	manifests = append(manifests, &asset.RuntimeFile{
