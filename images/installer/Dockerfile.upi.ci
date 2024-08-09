@@ -63,7 +63,8 @@ RUN yum update -y && \
       python3-pyyaml \
       bind-utils \
       util-linux \
-      xz && \
+      xz \
+      qemu-img && \
     yum clean all && \
     rm -rf /var/cache/yum/* && \
     chmod g+w /etc/passwd
@@ -77,6 +78,9 @@ RUN pip-3 install cryptography pyOpenSSL==23.2.0
 
 ENV CLOUDSDK_PYTHON=/usr/bin/python
 ENV CLOUDSDK_PYTHON_SITEPACKAGES=1
+
+# aicli
+RUN pip-3 install aicli==99.0.202407291433
 
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
     unzip awscliv2.zip && \
