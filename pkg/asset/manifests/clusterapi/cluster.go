@@ -23,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/manifests/gcp"
+	"github.com/openshift/installer/pkg/asset/manifests/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/manifests/nutanix"
 	"github.com/openshift/installer/pkg/asset/manifests/openstack"
 	"github.com/openshift/installer/pkg/asset/manifests/powervs"
@@ -33,6 +34,7 @@ import (
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
@@ -132,6 +134,12 @@ func (c *Cluster) Generate(_ context.Context, dependencies asset.Parents) error 
 		out, err = nutanix.GenerateClusterAssets(installConfig, clusterID)
 		if err != nil {
 			return errors.Wrap(err, "failed to generate Nutanix manifests")
+		}
+	case ibmcloudtypes.Name:
+		var err error
+		out, err = ibmcloud.GenerateClusterAssets(installConfig, clusterID, rhcosImage.Name())
+		if err != nil {
+			return fmt.Errorf("failed to generate IBM Cloud VPC manifests: %w", err)
 		}
 	default:
 		return fmt.Errorf("unsupported platform %q", platform)
