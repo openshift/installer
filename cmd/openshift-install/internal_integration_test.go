@@ -19,6 +19,7 @@ import (
 	"github.com/rogpeppe/go-internal/testscript"
 	"github.com/stretchr/testify/assert"
 	"github.com/vincent-petithory/dataurl"
+	"gopkg.in/yaml.v2"
 
 	"github.com/openshift/installer/pkg/asset/releaseimage"
 )
@@ -103,11 +104,68 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 				}
 			}
 
-			// Let's get the current release version, so that
-			// it could be used within the tests
-			pullspec, err := releaseimage.Default()
-			if err != nil {
-				return err
+			var pullspec string
+			// If set, let's use $OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE to replace test data
+			// and also pass it to the testscript environment. It will be usually set in a CI job
+			// to reference the ephemeral payload release.
+			if releaseImageOverride, ok := os.LookupEnv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"); ok && releaseImageOverride != "" {
+				pullspec = releaseImageOverride
+				e.Vars = append(e.Vars, fmt.Sprintf("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE=%s", pullspec))
+				if authFilePath, ok := os.LookupEnv("AUTH_FILE"); ok && authFilePath != "" {
+					// Read the new pull secret from auth.json
+					authFile, err := os.ReadFile(authFilePath)
+					if err != nil {
+						return err
+					}
+					var auths map[string]interface{}
+					if err := json.Unmarshal(authFile, &auths); err != nil {
+						t.Logf("Error unmarshalling auth.json: %v\n", err)
+						return err
+					}
+					newPullSecret, err := json.Marshal(auths)
+					if err != nil {
+						return err
+					}
+
+					// Read the existing install-config.yaml
+					workDir := e.Getenv("WORK")
+					installConfigPathAbs := filepath.Join(workDir, "install-config.yaml")
+					installConfigFile, err := os.ReadFile(installConfigPathAbs)
+					if err != nil {
+						if os.IsNotExist(err) {
+							// skip the error when test does not required reading the install-config.yaml
+							return nil
+						}
+						// For other errors, return them
+						return err
+					}
+					var config map[string]interface{}
+					if err := yaml.Unmarshal(installConfigFile, &config); err != nil {
+						t.Logf("Error unmarshalling install-config.yaml: %v\n", err)
+						return err
+					}
+
+					// Update the pullSecret
+					config["pullSecret"] = string(newPullSecret)
+
+					// Write the updated config back to install-config.yaml
+					updatedConfig, err := yaml.Marshal(&config)
+					if err != nil {
+						return err
+					}
+					if err := os.WriteFile(installConfigPathAbs, updatedConfig, 0600); err != nil {
+						t.Logf("Error writing updated install-config.yaml: %v\n", err)
+						return err
+					}
+					t.Log("PullSecret replaced successfully.")
+				}
+			} else {
+				// Let's get the current release version, so that
+				// it could be used within the tests
+				pullspec, err = releaseimage.Default()
+				if err != nil {
+					return err
+				}
 			}
 			e.Vars = append(e.Vars, fmt.Sprintf("RELEASE_IMAGE=%s", pullspec))
 
@@ -219,6 +277,9 @@ func isoCmp(ts *testscript.TestScript, neg bool, args []string) {
 
 	workDir := ts.Getenv("WORK")
 	isoPath, aFilePath, eFilePath := args[0], args[1], args[2]
+	if skipPullSecretCmp(ts, aFilePath, eFilePath) {
+		return
+	}
 	isoPathAbs := filepath.Join(workDir, isoPath)
 
 	archiveFile, ignitionFile, err := archiveFileNames(isoPath)
@@ -259,6 +320,9 @@ func ignitionStorageCmp(ts *testscript.TestScript, neg bool, args []string) {
 
 	workDir := ts.Getenv("WORK")
 	ignPath, aFilePath, eFilePath := args[0], args[1], args[2]
+	if skipPullSecretCmp(ts, aFilePath, eFilePath) {
+		return
+	}
 	ignPathAbs := filepath.Join(workDir, ignPath)
 
 	config, err := readIgnition(ts, ignPathAbs)
@@ -271,6 +335,8 @@ func ignitionStorageCmp(ts *testscript.TestScript, neg bool, args []string) {
 	eData, err := os.ReadFile(eFilePathAbs)
 	ts.Check(err)
 
+	eData = replaceReleaseImage(string(eData))
+	aData = replaceReleaseImage(string(aData))
 	byteCompare(ts, neg, aData, eData, aFilePath, eFilePath)
 }
 
@@ -293,6 +359,7 @@ func expandFile(ts *testscript.TestScript, neg bool, args []string) {
 		fileName := filepath.Join(workDir, f)
 		data, err := os.ReadFile(fileName)
 		ts.Check(err)
+		data = replaceReleaseImage(string(data))
 
 		newData := expand(ts, data)
 		err = os.WriteFile(fileName, []byte(newData), 0)
@@ -569,4 +636,28 @@ func lookForCpioFiles(r io.Reader) ([]string, error) {
 	}
 
 	return files, nil
+}
+
+// In the CI environment, a dynamically generated pull secret is used to access the release image,
+// which is necessary for running integration tests. Since the value of this pull secret cannot be
+// known or hardcoded in the test data, comparisons involving the pull secret are skipped when OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE is set.
+func skipPullSecretCmp(ts *testscript.TestScript, aFilePath, eFilePath string) bool {
+	if os.Getenv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE") != "" && (strings.Contains(aFilePath, "pull-secret.yaml") || strings.Contains(eFilePath, "pull-secret.yaml")) {
+		ts.Logf("Skipping pull-secret.yaml comparison due to 'OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE' environment variable being set.")
+		return true
+	}
+	return false
+}
+
+// In the CI environment, the release image URL is dynamically set using the
+// OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE environment variable. Replace any
+// "$RELEASE_IMAGE" placeholder in the test data with this value to ensure the tests
+// use the correct release image. This substitution accommodates the dynamic nature
+// of the release image URL, maintaining consistency between expected and actual
+// outputs during integration tests.
+func replaceReleaseImage(inputData string) []byte {
+	if releaseImageOverride, ok := os.LookupEnv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"); ok && releaseImageOverride != "" {
+		return []byte(strings.ReplaceAll(inputData, "$RELEASE_IMAGE", releaseImageOverride))
+	}
+	return []byte(inputData)
 }
