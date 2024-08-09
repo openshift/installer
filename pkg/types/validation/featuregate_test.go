@@ -18,19 +18,21 @@ func TestFeatureGates(t *testing.T) {
 		expected      string
 	}{
 		{
-			name: "GCP UserTags is allowed with Feature Gates enabled",
+			name: "GCP UserTags is allowed with default enabled Feature Gates",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.FeatureSet = v1.TechPreviewNoUpgrade
+				c.FeatureSet = v1.Default
 				c.GCP = validGCPPlatform()
 				c.GCP.UserTags = []gcp.UserTag{{ParentID: "a", Key: "b", Value: "c"}}
 				return c
 			}(),
 		},
 		{
-			name: "GCP UserTags is not allowed without Feature Gates",
+			name: "GCP UserTags is not allowed when GCPLabelsTags Feature Gate is disabled",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
+				c.FeatureSet = v1.CustomNoUpgrade
+				c.FeatureGates = []string{"GCPLabelsTags=false"}
 				c.GCP = validGCPPlatform()
 				c.GCP.UserTags = []gcp.UserTag{{ParentID: "a", Key: "b", Value: "c"}}
 				return c
@@ -38,14 +40,26 @@ func TestFeatureGates(t *testing.T) {
 			expected: `^platform.gcp.userTags: Forbidden: this field is protected by the GCPLabelsTags feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
 		},
 		{
-			name: "GCP UserLabels is allowed with Feature Gates enabled",
+			name: "GCP UserLabels is allowed with default enabled Feature Gates",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.FeatureSet = v1.TechPreviewNoUpgrade
+				c.FeatureSet = v1.Default
 				c.GCP = validGCPPlatform()
 				c.GCP.UserLabels = []gcp.UserLabel{{Key: "a", Value: "b"}}
 				return c
 			}(),
+		},
+		{
+			name: "GCP UserLabels is not allowed when GCPLabelsTags Feature Gate is disabled",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.CustomNoUpgrade
+				c.FeatureGates = []string{"GCPLabelsTags=false"}
+				c.GCP = validGCPPlatform()
+				c.GCP.UserLabels = []gcp.UserLabel{{Key: "a", Value: "b"}}
+				return c
+			}(),
+			expected: `^platform.gcp.userLabels: Forbidden: this field is protected by the GCPLabelsTags feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
 		},
 		{
 			name: "GCP UserProvisionedDNS is not allowed without Feature Gates",
@@ -56,16 +70,6 @@ func TestFeatureGates(t *testing.T) {
 				return c
 			}(),
 			expected: `^platform.gcp.userProvisionedDNS: Forbidden: this field is protected by the GCPClusterHostedDNS feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
-		},
-		{
-			name: "GCP UserLabels is not allowed without Feature Gates",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.GCP = validGCPPlatform()
-				c.GCP.UserLabels = []gcp.UserLabel{{Key: "a", Value: "b"}}
-				return c
-			}(),
-			expected: `^platform.gcp.userLabels: Forbidden: this field is protected by the GCPLabelsTags feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
 		},
 		{
 			name: "vSphere hosts is allowed with Feature Gates enabled",
