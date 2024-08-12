@@ -251,6 +251,8 @@ func (s *Service) CreateInstance(scope *scope.MachineScope, userData []byte, use
 
 	input.PrivateDNSName = scope.AWSMachine.Spec.PrivateDNSName
 
+	input.CapacityReservationID = scope.AWSMachine.Spec.CapacityReservationID
+
 	s.scope.Debug("Running instance", "machine-role", scope.Role())
 	s.scope.Debug("Running instance with instance metadata options", "metadata options", input.InstanceMetadataOptions)
 	out, err := s.runInstance(scope.Role(), input)
@@ -359,6 +361,13 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 					continue
 				}
 			}
+
+			tags := converters.TagsToMap(subnet.Tags)
+			if tags[infrav1.NameAWSSubnetAssociation] == infrav1.SecondarySubnetTagValue {
+				errMessage += fmt.Sprintf(" subnet %q belongs to a secondary CIDR block which won't be used to create instances.", *subnet.SubnetId)
+				continue
+			}
+
 			filtered = append(filtered, subnet)
 		}
 		// prefer a subnet in the cluster VPC if multiple match
@@ -375,7 +384,7 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 		return *filtered[0].SubnetId, nil
 	case failureDomain != nil:
 		if scope.AWSMachine.Spec.PublicIP != nil && *scope.AWSMachine.Spec.PublicIP {
-			subnets := s.scope.Subnets().FilterPublic().FilterByZone(*failureDomain)
+			subnets := s.scope.Subnets().FilterPublic().FilterNonCni().FilterByZone(*failureDomain)
 			if len(subnets) == 0 {
 				errMessage := fmt.Sprintf("failed to run machine %q with public IP, no public subnets available in availability zone %q",
 					scope.Name(), *failureDomain)
@@ -385,7 +394,7 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 			return subnets[0].GetResourceID(), nil
 		}
 
-		subnets := s.scope.Subnets().FilterPrivate().FilterByZone(*failureDomain)
+		subnets := s.scope.Subnets().FilterPrivate().FilterNonCni().FilterByZone(*failureDomain)
 		if len(subnets) == 0 {
 			errMessage := fmt.Sprintf("failed to run machine %q, no subnets available in availability zone %q",
 				scope.Name(), *failureDomain)
@@ -394,7 +403,7 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 		}
 		return subnets[0].GetResourceID(), nil
 	case scope.AWSMachine.Spec.PublicIP != nil && *scope.AWSMachine.Spec.PublicIP:
-		subnets := s.scope.Subnets().FilterPublic()
+		subnets := s.scope.Subnets().FilterPublic().FilterNonCni()
 		if len(subnets) == 0 {
 			errMessage := fmt.Sprintf("failed to run machine %q with public IP, no public subnets available", scope.Name())
 			record.Eventf(scope.AWSMachine, "FailedCreate", errMessage)
@@ -406,7 +415,7 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 		// with control plane machines.
 
 	default:
-		sns := s.scope.Subnets().FilterPrivate()
+		sns := s.scope.Subnets().FilterPrivate().FilterNonCni()
 		if len(sns) == 0 {
 			errMessage := fmt.Sprintf("failed to run machine %q, no subnets available", scope.Name())
 			record.Eventf(s.scope.InfraCluster(), "FailedCreateInstance", errMessage)
@@ -616,26 +625,31 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 	}
 
 	if len(i.Tags) > 0 {
-		spec := &ec2.TagSpecification{ResourceType: aws.String(ec2.ResourceTypeInstance)}
-		// We need to sort keys for tests to work
-		keys := make([]string, 0, len(i.Tags))
-		for k := range i.Tags {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		for _, key := range keys {
-			spec.Tags = append(spec.Tags, &ec2.Tag{
-				Key:   aws.String(key),
-				Value: aws.String(i.Tags[key]),
-			})
-		}
+		resources := []string{ec2.ResourceTypeInstance, ec2.ResourceTypeVolume, ec2.ResourceTypeNetworkInterface}
+		for _, r := range resources {
+			spec := &ec2.TagSpecification{ResourceType: aws.String(r)}
 
-		input.TagSpecifications = append(input.TagSpecifications, spec)
+			// We need to sort keys for tests to work
+			keys := make([]string, 0, len(i.Tags))
+			for k := range i.Tags {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			for _, key := range keys {
+				spec.Tags = append(spec.Tags, &ec2.Tag{
+					Key:   aws.String(key),
+					Value: aws.String(i.Tags[key]),
+				})
+			}
+
+			input.TagSpecifications = append(input.TagSpecifications, spec)
+		}
 	}
 
 	input.InstanceMarketOptions = getInstanceMarketOptionsRequest(i.SpotMarketOptions)
 	input.MetadataOptions = getInstanceMetadataOptionsRequest(i.InstanceMetadataOptions)
 	input.PrivateDnsNameOptions = getPrivateDNSNameOptionsRequest(i.PrivateDNSName)
+	input.CapacityReservationSpecification = getCapacityReservationSpecification(i.CapacityReservationID)
 
 	if i.Tenancy != "" {
 		input.Placement = &ec2.Placement{
@@ -1117,6 +1131,19 @@ func filterGroups(list []string, strToFilter string) (newList []string) {
 		}
 	}
 	return
+}
+
+func getCapacityReservationSpecification(capacityReservationID *string) *ec2.CapacityReservationSpecification {
+	if capacityReservationID == nil {
+		//  Not targeting any specific Capacity Reservation
+		return nil
+	}
+
+	return &ec2.CapacityReservationSpecification{
+		CapacityReservationTarget: &ec2.CapacityReservationTarget{
+			CapacityReservationId: capacityReservationID,
+		},
+	}
 }
 
 func getInstanceMarketOptionsRequest(spotMarketOptions *infrav1.SpotMarketOptions) *ec2.InstanceMarketOptionsRequest {

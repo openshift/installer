@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"net"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -288,13 +287,6 @@ func (r *AWSClusterReconciler) reconcileLoadBalancer(clusterScope *scope.Cluster
 		return &retryAfterDuration, nil
 	}
 
-	clusterScope.Debug("Looking up IP address for DNS", "dns", awsCluster.Status.Network.APIServerELB.DNSName)
-	if _, err := net.LookupIP(awsCluster.Status.Network.APIServerELB.DNSName); err != nil {
-		clusterScope.Error(err, "failed to get IP address for dns name", "dns", awsCluster.Status.Network.APIServerELB.DNSName)
-		conditions.MarkFalse(awsCluster, infrav1.LoadBalancerReadyCondition, infrav1.WaitForDNSNameResolveReason, clusterv1.ConditionSeverityInfo, "")
-		clusterScope.Info("Waiting on API server ELB DNS name to resolve")
-		return &retryAfterDuration, nil
-	}
 	conditions.MarkTrue(awsCluster, infrav1.LoadBalancerReadyCondition)
 
 	awsCluster.Spec.ControlPlaneEndpoint = clusterv1.APIEndpoint{

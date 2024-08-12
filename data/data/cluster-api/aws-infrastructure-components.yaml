@@ -2295,6 +2295,37 @@ spec:
                         - ip-name
                         - resource-name
                         type: string
+                      secondaryCidrBlocks:
+                        description: |-
+                          SecondaryCidrBlocks are additional CIDR blocks to be associated when the provider creates a managed VPC.
+                          Defaults to none. Mutually exclusive with IPAMPool. This makes sense to use if, for example, you want to use
+                          a separate IP range for pods (e.g. Cilium ENI mode).
+                        items:
+                          description: VpcCidrBlock defines the CIDR block and settings
+                            to associate with the managed VPC. Currently, only IPv4
+                            is supported.
+                          properties:
+                            ipv4CidrBlock:
+                              description: IPv4CidrBlock is the IPv4 CIDR block to
+                                associate with the managed VPC.
+                              minLength: 1
+                              type: string
+                          required:
+                          - ipv4CidrBlock
+                          type: object
+                        type: array
+                      subnetSchema:
+                        default: PreferPrivate
+                        description: |-
+                          SubnetSchema specifies how CidrBlock should be divided on subnets in the VPC depending on the number of AZs.
+                          PreferPrivate - one private subnet for each AZ plus one other subnet that will be further sub-divided for the public subnets.
+                          PreferPublic - have the reverse logic of PreferPrivate, one public subnet for each AZ plus one other subnet
+                          that will be further sub-divided for the private subnets.
+                          Defaults to PreferPrivate
+                        enum:
+                        - PreferPrivate
+                        - PreferPublic
+                        type: string
                       tags:
                         additionalProperties:
                           type: string
@@ -2670,6 +2701,10 @@ spec:
                     type: array
                   availabilityZone:
                     description: Availability zone of instance
+                    type: string
+                  capacityReservationId:
+                    description: CapacityReservationID specifies the target Capacity
+                      Reservation into which the instance should be launched.
                     type: string
                   ebsOptimized:
                     description: Indicates whether the instance is optimized for Amazon
@@ -5104,6 +5139,37 @@ spec:
                                 enum:
                                 - ip-name
                                 - resource-name
+                                type: string
+                              secondaryCidrBlocks:
+                                description: |-
+                                  SecondaryCidrBlocks are additional CIDR blocks to be associated when the provider creates a managed VPC.
+                                  Defaults to none. Mutually exclusive with IPAMPool. This makes sense to use if, for example, you want to use
+                                  a separate IP range for pods (e.g. Cilium ENI mode).
+                                items:
+                                  description: VpcCidrBlock defines the CIDR block
+                                    and settings to associate with the managed VPC.
+                                    Currently, only IPv4 is supported.
+                                  properties:
+                                    ipv4CidrBlock:
+                                      description: IPv4CidrBlock is the IPv4 CIDR
+                                        block to associate with the managed VPC.
+                                      minLength: 1
+                                      type: string
+                                  required:
+                                  - ipv4CidrBlock
+                                  type: object
+                                type: array
+                              subnetSchema:
+                                default: PreferPrivate
+                                description: |-
+                                  SubnetSchema specifies how CidrBlock should be divided on subnets in the VPC depending on the number of AZs.
+                                  PreferPrivate - one private subnet for each AZ plus one other subnet that will be further sub-divided for the public subnets.
+                                  PreferPublic - have the reverse logic of PreferPrivate, one public subnet for each AZ plus one other subnet
+                                  that will be further sub-divided for the private subnets.
+                                  Defaults to PreferPrivate
+                                enum:
+                                - PreferPrivate
+                                - PreferPublic
                                 type: string
                               tags:
                                 additionalProperties:
@@ -7664,6 +7730,10 @@ spec:
                     description: ID of resource
                     type: string
                 type: object
+              capacityReservationId:
+                description: CapacityReservationID specifies the target Capacity Reservation
+                  into which the instance should be launched.
+                type: string
               cloudInit:
                 description: |-
                   CloudInit defines options related to the bootstrapping systems where
@@ -8837,6 +8907,10 @@ spec:
                             description: ID of resource
                             type: string
                         type: object
+                      capacityReservationId:
+                        description: CapacityReservationID specifies the target Capacity
+                          Reservation into which the instance should be launched.
+                        type: string
                       cloudInit:
                         description: |-
                           CloudInit defines options related to the bootstrapping systems where
@@ -10235,6 +10309,37 @@ spec:
                         - ip-name
                         - resource-name
                         type: string
+                      secondaryCidrBlocks:
+                        description: |-
+                          SecondaryCidrBlocks are additional CIDR blocks to be associated when the provider creates a managed VPC.
+                          Defaults to none. Mutually exclusive with IPAMPool. This makes sense to use if, for example, you want to use
+                          a separate IP range for pods (e.g. Cilium ENI mode).
+                        items:
+                          description: VpcCidrBlock defines the CIDR block and settings
+                            to associate with the managed VPC. Currently, only IPv4
+                            is supported.
+                          properties:
+                            ipv4CidrBlock:
+                              description: IPv4CidrBlock is the IPv4 CIDR block to
+                                associate with the managed VPC.
+                              minLength: 1
+                              type: string
+                          required:
+                          - ipv4CidrBlock
+                          type: object
+                        type: array
+                      subnetSchema:
+                        default: PreferPrivate
+                        description: |-
+                          SubnetSchema specifies how CidrBlock should be divided on subnets in the VPC depending on the number of AZs.
+                          PreferPrivate - one private subnet for each AZ plus one other subnet that will be further sub-divided for the public subnets.
+                          PreferPublic - have the reverse logic of PreferPrivate, one public subnet for each AZ plus one other subnet
+                          that will be further sub-divided for the private subnets.
+                          Defaults to PreferPrivate
+                        enum:
+                        - PreferPrivate
+                        - PreferPublic
+                        type: string
                       tags:
                         additionalProperties:
                           type: string
@@ -10565,6 +10670,10 @@ spec:
                     type: array
                   availabilityZone:
                     description: Availability zone of instance
+                    type: string
+                  capacityReservationId:
+                    description: CapacityReservationID specifies the target Capacity
+                      Reservation into which the instance should be launched.
                     type: string
                   ebsOptimized:
                     description: Indicates whether the instance is optimized for Amazon
@@ -12226,6 +12335,37 @@ spec:
                         - ip-name
                         - resource-name
                         type: string
+                      secondaryCidrBlocks:
+                        description: |-
+                          SecondaryCidrBlocks are additional CIDR blocks to be associated when the provider creates a managed VPC.
+                          Defaults to none. Mutually exclusive with IPAMPool. This makes sense to use if, for example, you want to use
+                          a separate IP range for pods (e.g. Cilium ENI mode).
+                        items:
+                          description: VpcCidrBlock defines the CIDR block and settings
+                            to associate with the managed VPC. Currently, only IPv4
+                            is supported.
+                          properties:
+                            ipv4CidrBlock:
+                              description: IPv4CidrBlock is the IPv4 CIDR block to
+                                associate with the managed VPC.
+                              minLength: 1
+                              type: string
+                          required:
+                          - ipv4CidrBlock
+                          type: object
+                        type: array
+                      subnetSchema:
+                        default: PreferPrivate
+                        description: |-
+                          SubnetSchema specifies how CidrBlock should be divided on subnets in the VPC depending on the number of AZs.
+                          PreferPrivate - one private subnet for each AZ plus one other subnet that will be further sub-divided for the public subnets.
+                          PreferPublic - have the reverse logic of PreferPrivate, one public subnet for each AZ plus one other subnet
+                          that will be further sub-divided for the private subnets.
+                          Defaults to PreferPrivate
+                        enum:
+                        - PreferPrivate
+                        - PreferPublic
+                        type: string
                       tags:
                         additionalProperties:
                           type: string
@@ -12308,6 +12448,11 @@ spec:
               region:
                 description: The AWS Region the cluster lives in.
                 type: string
+              restrictPrivateSubnets:
+                default: false
+                description: RestrictPrivateSubnets indicates that the EKS control
+                  plane should only use private subnets.
+                type: boolean
               roleAdditionalPolicies:
                 description: |-
                   RoleAdditionalPolicies allows you to attach additional polices to
@@ -12569,6 +12714,10 @@ spec:
                     type: array
                   availabilityZone:
                     description: Availability zone of instance
+                    type: string
+                  capacityReservationId:
+                    description: CapacityReservationID specifies the target Capacity
+                      Reservation into which the instance should be launched.
                     type: string
                   ebsOptimized:
                     description: Indicates whether the instance is optimized for Amazon
