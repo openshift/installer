@@ -3,7 +3,8 @@
 # pull spec for a specific image in a release.
 
 # Convert the release image pull spec to an "absolute" form if a digest is available
-if ! RELEASE_IMAGE_DIGEST=$( podman inspect {{.ReleaseImage}} --format '{{"{{"}} index .RepoDigests 0 {{"}}"}}' ) || [[ -z "${RELEASE_IMAGE_DIGEST}" ]]; then
+# Multi Release Payloads have 2 RepoDigests, we need the one that matches the Digest.
+if ! RELEASE_IMAGE_DIGEST=$( podman inspect {{.ReleaseImage}}  --format json | jq -r '.[].Digest as $digest | .[].RepoDigests[] | select(contains($digest))' ) || [[ -z "${RELEASE_IMAGE_DIGEST}" ]]; then
 	echo "Warning: Could not resolve release image to pull by digest" 2>&1
 	RELEASE_IMAGE_DIGEST="{{.ReleaseImage}}"
 fi
