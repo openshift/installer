@@ -197,7 +197,7 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			Email:  serviceAccountEmail,
 			Scopes: []string{"https://www.googleapis.com/auth/cloud-platform"},
 		}},
-		Tags:                   append(mpool.Tags, []string{fmt.Sprintf("%s-%s", clusterID, role)}...),
+		Tags:                   append(mpool.Tags, getTags(clusterID, role)...),
 		MachineType:            mpool.InstanceType,
 		Region:                 platform.Region,
 		Zone:                   az,
@@ -241,5 +241,16 @@ func getNetworks(platform *gcp.Platform, clusterID, role string) (string, string
 		return platform.Network, platform.ControlPlaneSubnet, nil
 	default:
 		return "", "", fmt.Errorf("unrecognized machine role %s", role)
+	}
+}
+
+func getTags(clusterID, role string) []string {
+	switch role {
+	case "worker":
+		return []string{fmt.Sprintf("%s-%s", clusterID, role)}
+	case "master":
+		return []string{fmt.Sprintf("%s-%s", clusterID, "control-plane"), clusterID}
+	default:
+		panic(fmt.Sprintf("unrecognized machine role %s", role))
 	}
 }
