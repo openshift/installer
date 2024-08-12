@@ -387,6 +387,42 @@ func TestValidate(t *testing.T) {
 		instanceTypes: validInstanceTypes(),
 		expectErr:     `^\[controlPlane.platform.aws.type: Invalid value: "m5.xlarge": instance type supported architectures \[amd64\] do not match specified architecture arm64, compute\[0\].platform.aws.type: Invalid value: "m6g.xlarge": instance type supported architectures \[arm64\] do not match specified architecture amd64\]$`,
 	}, {
+		name: "mismatched compute pools architectures",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfigEdgeSubnets()
+			c.Compute[0].Architecture = types.ArchitectureAMD64
+			c.Compute[1].Architecture = types.ArchitectureARM64
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		edgeSubnets:    validEdgeSubnets(),
+		expectErr:      `^compute\[1\].architecture: Invalid value: "arm64": all compute machine pools must be of the same architecture$`,
+	}, {
+		name: "valid compute pools architectures",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfigEdgeSubnets()
+			c.Compute[0].Architecture = types.ArchitectureAMD64
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		edgeSubnets:    validEdgeSubnets(),
+	}, {
+		name: "mismatched compute pools architectures 2",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfigEdgeSubnets()
+			c.Compute[1].Architecture = types.ArchitectureARM64
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		edgeSubnets:    validEdgeSubnets(),
+		expectErr:      `^compute\[1\].architecture: Invalid value: "arm64": all compute machine pools must be of the same architecture$`,
+	}, {
 		name: "invalid no private subnets",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
