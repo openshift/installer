@@ -20,30 +20,30 @@ COPY --from=builder /go/src/github.com/openshift/installer/hack/openstack/test-m
 
 # Install Dependendencies for tests
 # https://github.com/openshift/origin/blob/6114cbc507bf18890f009f16ee424a62007bc390/images/tests/Dockerfile.rhel
-RUN yum install --setopt=tsflags=nodocs -y gettext make git gzip util-linux glibc-locale-source && \
+RUN yum update -y && \
+    yum install --setopt=tsflags=nodocs -y \
+    ansible-collection-ansible-utils \
+    ansible-collection-community-general \
+    ansible-collections-openstack \
+    gettext \
+    git \
+    glibc-locale-source \
+    gzip \
+    jq \
+    make \
+    nmap \
+    python3-netaddr \
+    python3-openstackclient \
+    python3-pip \
+    unzip \
+    util-linux && \
     yum clean all && rm -rf /var/cache/yum/* && \
     localedef -c -f UTF-8 -i en_US en_US.UTF-8 && \
     git config --system user.name test && \
     git config --system user.email test@example.com && \
     chmod g+w /etc/passwd
 
-RUN yum update -y && \
-    yum install --setopt=tsflags=nodocs -y \
-    python38 unzip jq nmap && \
-    yum erase -y python36 && \
-    yum clean all && rm -rf /var/cache/yum/*
-
-RUN python3 -m pip install --upgrade pip
-
-# ansible 2.9 is EOL in September 2023, so we need to install ansible-core and get the collections from source
-# until we have a package available.
-RUN python3 -m pip install ansible-core
-RUN ansible-galaxy collection install openstack.cloud ansible.utils community.general && \
-    mkdir -p /usr/share/ansible/collections/ansible_collections && \
-    cp -r /root/.ansible/collections/ansible_collections/* /usr/share/ansible/collections/ansible_collections/
-
-# ansible-core comes with python3.8 but openstacksdk comes with python3.6 so let's install them from pip.
-RUN python3 -m pip install yq openstackclient openstacksdk netaddr
+RUN python3 -m pip install yq
 
 # The Continuous Integration machinery relies on Route53 for DNS while testing the cluster.
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
