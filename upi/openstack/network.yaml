@@ -32,23 +32,27 @@
       ipv6_ra_mode: "{{ os_subnet6_router_advertisements_mode }}"
     when: os_subnet6 is defined
 
-  - name: 'Create external router'
+  - name: 'Create external router for IPv4'
+    openstack.cloud.router:
+      name: "{{ os_router }}"
+      network: "{{ os_external_network }}"
+      interfaces: "{{ os_subnet }}"
+    when:
+    - os_external_network is defined
+    - os_external_network|length>0
+    - os_subnet6 is not defined
+
+  - name: 'Create external router for dualstack'
     openstack.cloud.router:
       name: "{{ os_router }}"
       network: "{{ os_external_network }}"
       interfaces:
       - "{{ os_subnet }}"
-    when: os_external_network is defined and os_external_network|length>0
-
-  - name: 'Add IPv6 subnet to the external router'
-    openstack.cloud.router:
-      name: "{{ os_router }}"
-      interfaces:
-      - "{{ os_subnet }}"
       - "{{ os_subnet6 }}"
     when:
+    - os_external_network is defined
+    - os_external_network|length>0
     - os_subnet6 is defined
-    - os_external_network is defined and os_external_network|length>0
 
   - name: 'Create the API port'
     openstack.cloud.port:
