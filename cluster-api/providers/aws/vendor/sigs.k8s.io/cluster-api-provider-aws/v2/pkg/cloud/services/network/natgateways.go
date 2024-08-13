@@ -46,7 +46,7 @@ func (s *Service) reconcileNatGateways() error {
 
 	s.scope.Debug("Reconciling NAT gateways")
 
-	if len(s.scope.Subnets().FilterPrivate()) == 0 {
+	if len(s.scope.Subnets().FilterPrivate().FilterNonCni()) == 0 {
 		s.scope.Debug("No private subnets available, skipping NAT gateways")
 		conditions.MarkFalse(
 			s.scope.InfraCluster(),
@@ -55,7 +55,7 @@ func (s *Service) reconcileNatGateways() error {
 			clusterv1.ConditionSeverityWarning,
 			"No private subnets available, skipping NAT gateways")
 		return nil
-	} else if len(s.scope.Subnets().FilterPublic()) == 0 {
+	} else if len(s.scope.Subnets().FilterPublic().FilterNonCni()) == 0 {
 		s.scope.Debug("No public subnets available. Cannot create NAT gateways for private subnets, this might be a configuration error.")
 		conditions.MarkFalse(
 			s.scope.InfraCluster(),
@@ -74,7 +74,7 @@ func (s *Service) reconcileNatGateways() error {
 	natGatewaysIPs := []string{}
 	subnetIDs := []string{}
 
-	for _, sn := range s.scope.Subnets().FilterPublic() {
+	for _, sn := range s.scope.Subnets().FilterPublic().FilterNonCni() {
 		if sn.GetResourceID() == "" {
 			continue
 		}

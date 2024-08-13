@@ -839,6 +839,8 @@ github.com/prometheus/common v0.52.2 h1:LW8Vk7BccEdONfrJBDffQGRtpSzi5CQaRZGtboOO
 github.com/prometheus/common v0.52.2/go.mod h1:lrWtQx+iDfn2mbH5GUzlH9TSHyfZpHkSiG1W7y3sF2Q=
 github.com/prometheus/procfs v0.13.0 h1:GqzLlQyfsPbaEHaQkO7tbDlriv/4o5Hudv6OXHGKX7o=
 github.com/prometheus/procfs v0.13.0/go.mod h1:cd4PFCR54QLnGKPaKGA6l+cfuNXtht43ZKY6tow0Y1g=
+github.com/r4f4/cluster-api-provider-aws/v2 v2.0.0-20240812160252-665e6e500041 h1:IcJ8O0pNHGarE2wa85RJJ4qfZ9JzeTYJP/prmXiBttE=
+github.com/r4f4/cluster-api-provider-aws/v2 v2.0.0-20240812160252-665e6e500041/go.mod h1:jIthGQUjTKxqTv69NrjMPSfRZ1xdqu9q3svEg/3HxjI=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
 github.com/rogpeppe/go-internal v1.1.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rogpeppe/go-internal v1.2.2/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
@@ -1537,8 +1539,6 @@ rsc.io/quote/v3 v3.1.0/go.mod h1:yEA65RcK8LyAZtP9Kv3t0HmxON59tX3rD+tICJqUlj0=
 rsc.io/sampler v1.3.0/go.mod h1:T1hPZKmBbMNahiBKFy5HrXp6adAjACjK9JXDnKaTXpA=
 sigs.k8s.io/cluster-api v1.7.3 h1:DsSRxsA+18jxLqPAo29abZ9kOPK1/xwhSuQb/MROzSs=
 sigs.k8s.io/cluster-api v1.7.3/go.mod h1:V9ZhKLvQtsDODwjXOKgbitjyCmC71yMBwDcMyNNIov0=
-sigs.k8s.io/cluster-api-provider-aws/v2 v2.5.2-0.20240716201506-6e43273dd65d h1:HrWzMINO46RXkCMpVHQLDKK8KOcrkJN8UhE5MGj4kVs=
-sigs.k8s.io/cluster-api-provider-aws/v2 v2.5.2-0.20240716201506-6e43273dd65d/go.mod h1:IiScIRlLiMZw8J9SrppViva89l5dYpqeMyAqI+49lIw=
 sigs.k8s.io/cluster-api-provider-azure v1.15.1-0.20240617212811-a52056dfb88c h1:ujrGTddl9yRXaqVPJ81+aBCGUAQtrlmGg+uCRJHE7vU=
 sigs.k8s.io/cluster-api-provider-azure v1.15.1-0.20240617212811-a52056dfb88c/go.mod h1:dqGwr0KL+jdgqnHPTCfCI5TccFtH1MgTnv1vx3wXEak=
 sigs.k8s.io/cluster-api-provider-gcp v1.7.1-0.20240724153512-c3b8b533143c h1:ynsoxyNN9W0iXJzBYflyj6KGFciLRyjwBBin8e/oeSo=

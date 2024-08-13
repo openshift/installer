@@ -48,12 +48,12 @@ archives:
 - id: clusterctl-aws
   builds:
   - clusterctl-aws
-  name_template: "clusterctl-aws_{{ .Tag }}_{{ .Os }}_{{ .Arch }}"
+  name_template: "clusterctl-aws-{{ .Os }}-{{ .Arch }}"
   format: binary
 - id: clusterawsadm
   builds:
   - clusterawsadm
-  name_template: "clusterawsadm_{{ .Tag }}_{{ .Os }}_{{ .Arch }}"
+  name_template: "clusterawsadm-{{ .Os }}-{{ .Arch }}"
   format: binary
 
 release:

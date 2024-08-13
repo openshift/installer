@@ -1433,6 +1433,7 @@ func autoConvert_v1beta2_AWSMachineSpec_To_v1beta1_AWSMachineSpec(in *v1beta2.AW
 	// WARNING: in.PlacementGroupPartition requires manual conversion: does not exist in peer-type
 	out.Tenancy = in.Tenancy
 	// WARNING: in.PrivateDNSName requires manual conversion: does not exist in peer-type
+	// WARNING: in.CapacityReservationID requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -2034,6 +2035,7 @@ func autoConvert_v1beta2_Instance_To_v1beta1_Instance(in *v1beta2.Instance, out 
 	// WARNING: in.InstanceMetadataOptions requires manual conversion: does not exist in peer-type
 	// WARNING: in.PrivateDNSName requires manual conversion: does not exist in peer-type
 	// WARNING: in.PublicIPOnLaunch requires manual conversion: does not exist in peer-type
+	// WARNING: in.CapacityReservationID requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -2298,6 +2300,7 @@ func Convert_v1beta1_VPCSpec_To_v1beta2_VPCSpec(in *VPCSpec, out *v1beta2.VPCSpe
 func autoConvert_v1beta2_VPCSpec_To_v1beta1_VPCSpec(in *v1beta2.VPCSpec, out *VPCSpec, s conversion.Scope) error {
 	out.ID = in.ID
 	out.CidrBlock = in.CidrBlock
+	// WARNING: in.SecondaryCidrBlocks requires manual conversion: does not exist in peer-type
 	// WARNING: in.IPAMPool requires manual conversion: does not exist in peer-type
 	if in.IPv6 != nil {
 		in, out := &in.IPv6, &out.IPv6
@@ -2316,6 +2319,7 @@ func autoConvert_v1beta2_VPCSpec_To_v1beta1_VPCSpec(in *v1beta2.VPCSpec, out *VP
 	// WARNING: in.EmptyRoutesDefaultVPCSecurityGroup requires manual conversion: does not exist in peer-type
 	// WARNING: in.PrivateDNSHostnameTypeOnLaunch requires manual conversion: does not exist in peer-type
 	// WARNING: in.ElasticIPPool requires manual conversion: does not exist in peer-type
+	// WARNING: in.SubnetSchema requires manual conversion: does not exist in peer-type
 	return nil
 }
 

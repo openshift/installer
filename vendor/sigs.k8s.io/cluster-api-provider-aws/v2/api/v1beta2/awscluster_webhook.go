@@ -283,6 +283,14 @@ func (r *AWSCluster) validateNetwork() field.ErrorList {
 		}
 	}
 
+	secondaryCidrBlocks := r.Spec.NetworkSpec.VPC.SecondaryCidrBlocks
+	secondaryCidrBlocksField := field.NewPath("spec", "network", "vpc", "secondaryCidrBlocks")
+	for _, cidrBlock := range secondaryCidrBlocks {
+		if r.Spec.NetworkSpec.VPC.CidrBlock != "" && r.Spec.NetworkSpec.VPC.CidrBlock == cidrBlock.IPv4CidrBlock {
+			allErrs = append(allErrs, field.Invalid(secondaryCidrBlocksField, secondaryCidrBlocks, fmt.Sprintf("AWSCluster.spec.network.vpc.secondaryCidrBlocks must not contain the primary AWSCluster.spec.network.vpc.cidrBlock %v", r.Spec.NetworkSpec.VPC.CidrBlock)))
+		}
+	}
+
 	return allErrs
 }
 

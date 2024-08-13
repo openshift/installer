@@ -91,6 +91,7 @@ func (r *AWSManagedControlPlane) ValidateCreate() (admission.Warnings, error) {
 	allErrs = append(allErrs, r.validateSecondaryCIDR()...)
 	allErrs = append(allErrs, r.validateEKSAddons()...)
 	allErrs = append(allErrs, r.validateDisableVPCCNI()...)
+	allErrs = append(allErrs, r.validateRestrictPrivateSubnets()...)
 	allErrs = append(allErrs, r.validateKubeProxy()...)
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
 	allErrs = append(allErrs, r.validateNetwork()...)
@@ -126,6 +127,7 @@ func (r *AWSManagedControlPlane) ValidateUpdate(old runtime.Object) (admission.W
 	allErrs = append(allErrs, r.validateSecondaryCIDR()...)
 	allErrs = append(allErrs, r.validateEKSAddons()...)
 	allErrs = append(allErrs, r.validateDisableVPCCNI()...)
+	allErrs = append(allErrs, r.validateRestrictPrivateSubnets()...)
 	allErrs = append(allErrs, r.validateKubeProxy()...)
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
 	allErrs = append(allErrs, r.validatePrivateDNSHostnameTypeOnLaunch()...)
@@ -164,7 +166,7 @@ func (r *AWSManagedControlPlane) ValidateUpdate(old runtime.Object) (admission.W
 
 	if oldAWSManagedControlplane.Spec.NetworkSpec.VPC.IsIPv6Enabled() != r.Spec.NetworkSpec.VPC.IsIPv6Enabled() {
 		allErrs = append(allErrs,
-			field.Invalid(field.NewPath("spec", "networkSpec", "vpc", "enableIPv6"), r.Spec.NetworkSpec.VPC.IsIPv6Enabled(), "changing IP family is not allowed after it has been set"))
+			field.Invalid(field.NewPath("spec", "network", "vpc", "enableIPv6"), r.Spec.NetworkSpec.VPC.IsIPv6Enabled(), "changing IP family is not allowed after it has been set"))
 	}
 
 	if len(allErrs) == 0 {
@@ -392,6 +394,22 @@ func (r *AWSManagedControlPlane) validateDisableVPCCNI() field.ErrorList {
 	return allErrs
 }
 
+func (r *AWSManagedControlPlane) validateRestrictPrivateSubnets() field.ErrorList {
+	var allErrs field.ErrorList
+
+	if r.Spec.RestrictPrivateSubnets && r.Spec.NetworkSpec.VPC.IsUnmanaged(r.Spec.EKSClusterName) {
+		boolField := field.NewPath("spec", "restrictPrivateSubnets")
+		if len(r.Spec.NetworkSpec.Subnets.FilterPrivate()) == 0 {
+			allErrs = append(allErrs, field.Invalid(boolField, r.Spec.RestrictPrivateSubnets, "cannot enable private subnets restriction when no private subnets are specified"))
+		}
+	}
+
+	if len(allErrs) == 0 {
+		return nil
+	}
+	return allErrs
+}
+
 func (r *AWSManagedControlPlane) validatePrivateDNSHostnameTypeOnLaunch() field.ErrorList {
 	var allErrs field.ErrorList
 
@@ -406,23 +424,53 @@ func (r *AWSManagedControlPlane) validatePrivateDNSHostnameTypeOnLaunch() field.
 func (r *AWSManagedControlPlane) validateNetwork() field.ErrorList {
 	var allErrs field.ErrorList
 
+	// If only `AWSManagedControlPlane.spec.secondaryCidrBlock` is set, no additional checks are done to remain
+	// backward-compatible. The `VPCSpec.SecondaryCidrBlocks` field was added later - if that list is not empty, we
+	// require `AWSManagedControlPlane.spec.secondaryCidrBlock` to be listed in there as well. This may allow merging
+	// the fields later on.
+	podSecondaryCidrBlock := r.Spec.SecondaryCidrBlock
+	secondaryCidrBlocks := r.Spec.NetworkSpec.VPC.SecondaryCidrBlocks
+	secondaryCidrBlocksField := field.NewPath("spec", "network", "vpc", "secondaryCidrBlocks")
+	if podSecondaryCidrBlock != nil && len(secondaryCidrBlocks) > 0 {
+		found := false
+		for _, cidrBlock := range secondaryCidrBlocks {
+			if cidrBlock.IPv4CidrBlock == *podSecondaryCidrBlock {
+				found = true
+				break
+			}
+		}
+		if !found {
+			allErrs = append(allErrs, field.Invalid(secondaryCidrBlocksField, secondaryCidrBlocks, fmt.Sprintf("AWSManagedControlPlane.spec.secondaryCidrBlock %v must be listed in AWSManagedControlPlane.spec.network.vpc.secondaryCidrBlocks (required if both fields are filled)", *podSecondaryCidrBlock)))
+		}
+	}
+
+	if podSecondaryCidrBlock != nil && r.Spec.NetworkSpec.VPC.CidrBlock != "" && r.Spec.NetworkSpec.VPC.CidrBlock == *podSecondaryCidrBlock {
+		secondaryCidrBlockField := field.NewPath("spec", "vpc", "secondaryCidrBlock")
+		allErrs = append(allErrs, field.Invalid(secondaryCidrBlockField, secondaryCidrBlocks, fmt.Sprintf("AWSManagedControlPlane.spec.secondaryCidrBlock %v must not be equal to the primary AWSManagedControlPlane.spec.network.vpc.cidrBlock", *podSecondaryCidrBlock)))
+	}
+	for _, cidrBlock := range secondaryCidrBlocks {
+		if r.Spec.NetworkSpec.VPC.CidrBlock != "" && r.Spec.NetworkSpec.VPC.CidrBlock == cidrBlock.IPv4CidrBlock {
+			allErrs = append(allErrs, field.Invalid(secondaryCidrBlocksField, secondaryCidrBlocks, fmt.Sprintf("AWSManagedControlPlane.spec.network.vpc.secondaryCidrBlocks must not contain the primary AWSManagedControlPlane.spec.network.vpc.cidrBlock %v", r.Spec.NetworkSpec.VPC.CidrBlock)))
+		}
+	}
+
 	if r.Spec.NetworkSpec.VPC.IsIPv6Enabled() && r.Spec.NetworkSpec.VPC.IPv6.CidrBlock != "" && r.Spec.NetworkSpec.VPC.IPv6.PoolID == "" {
-		poolField := field.NewPath("spec", "networkSpec", "vpc", "ipv6", "poolId")
+		poolField := field.NewPath("spec", "network", "vpc", "ipv6", "poolId")
 		allErrs = append(allErrs, field.Invalid(poolField, r.Spec.NetworkSpec.VPC.IPv6.PoolID, "poolId cannot be empty if cidrBlock is set"))
 	}
 
 	if r.Spec.NetworkSpec.VPC.IsIPv6Enabled() && r.Spec.NetworkSpec.VPC.IPv6.PoolID != "" && r.Spec.NetworkSpec.VPC.IPv6.IPAMPool != nil {
-		poolField := field.NewPath("spec", "networkSpec", "vpc", "ipv6", "poolId")
+		poolField := field.NewPath("spec", "network", "vpc", "ipv6", "poolId")
 		allErrs = append(allErrs, field.Invalid(poolField, r.Spec.NetworkSpec.VPC.IPv6.PoolID, "poolId and ipamPool cannot be used together"))
 	}
 
 	if r.Spec.NetworkSpec.VPC.IsIPv6Enabled() && r.Spec.NetworkSpec.VPC.IPv6.CidrBlock != "" && r.Spec.NetworkSpec.VPC.IPv6.IPAMPool != nil {
-		cidrBlockField := field.NewPath("spec", "networkSpec", "vpc", "ipv6", "cidrBlock")
+		cidrBlockField := field.NewPath("spec", "network", "vpc", "ipv6", "cidrBlock")
 		allErrs = append(allErrs, field.Invalid(cidrBlockField, r.Spec.NetworkSpec.VPC.IPv6.CidrBlock, "cidrBlock and ipamPool cannot be used together"))
 	}
 
 	if r.Spec.NetworkSpec.VPC.IsIPv6Enabled() && r.Spec.NetworkSpec.VPC.IPv6.IPAMPool != nil && r.Spec.NetworkSpec.VPC.IPv6.IPAMPool.ID == "" && r.Spec.NetworkSpec.VPC.IPv6.IPAMPool.Name == "" {
-		ipamPoolField := field.NewPath("spec", "networkSpec", "vpc", "ipv6", "ipamPool")
+		ipamPoolField := field.NewPath("spec", "network", "vpc", "ipv6", "ipamPool")
 		allErrs = append(allErrs, field.Invalid(ipamPoolField, r.Spec.NetworkSpec.VPC.IPv6.IPAMPool, "ipamPool must have either id or name"))
 	}
 

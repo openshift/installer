@@ -542,6 +542,12 @@ func (s *Service) SubnetIDs(scope *scope.MachinePoolScope) ([]string, error) {
 		}
 
 		for _, subnet := range out.Subnets {
+			tags := converters.TagsToMap(subnet.Tags)
+			if tags[infrav1.NameAWSSubnetAssociation] == infrav1.SecondarySubnetTagValue {
+				// Subnet belongs to a secondary CIDR block which won't be used to create instances
+				continue
+			}
+
 			subnetIDs = append(subnetIDs, *subnet.SubnetId)
 		}
 

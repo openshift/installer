@@ -208,6 +208,28 @@ func (s *ManagedControlPlaneScope) SecondaryCidrBlock() *string {
 	return s.ControlPlane.Spec.SecondaryCidrBlock
 }
 
+// SecondaryCidrBlocks returns the additional CIDR blocks to be associated with the managed VPC.
+func (s *ManagedControlPlaneScope) SecondaryCidrBlocks() []infrav1.VpcCidrBlock {
+	return s.ControlPlane.Spec.NetworkSpec.VPC.SecondaryCidrBlocks
+}
+
+// AllSecondaryCidrBlocks returns all secondary CIDR blocks (combining `SecondaryCidrBlock` and `SecondaryCidrBlocks`).
+func (s *ManagedControlPlaneScope) AllSecondaryCidrBlocks() []infrav1.VpcCidrBlock {
+	secondaryCidrBlocks := s.ControlPlane.Spec.NetworkSpec.VPC.SecondaryCidrBlocks
+
+	// If only `AWSManagedControlPlane.spec.secondaryCidrBlock` is set, no additional checks are done to remain
+	// backward-compatible. The `VPCSpec.SecondaryCidrBlocks` field was added later - if that list is not empty, we
+	// require `AWSManagedControlPlane.spec.secondaryCidrBlock` to be listed in there as well (validation done in
+	// webhook).
+	if s.ControlPlane.Spec.SecondaryCidrBlock != nil && len(secondaryCidrBlocks) == 0 {
+		secondaryCidrBlocks = []infrav1.VpcCidrBlock{{
+			IPv4CidrBlock: *s.ControlPlane.Spec.SecondaryCidrBlock,
+		}}
+	}
+
+	return secondaryCidrBlocks
+}
+
 // SecurityGroupOverrides returns the security groups that are overrides in the ControlPlane spec.
 func (s *ManagedControlPlaneScope) SecurityGroupOverrides() map[infrav1.SecurityGroupRole]string {
 	return s.ControlPlane.Spec.NetworkSpec.SecurityGroupOverrides
@@ -405,6 +427,11 @@ func (s *ManagedControlPlaneScope) DisableVPCCNI() bool {
 // VpcCni returns a list of environment variables to apply to the `aws-node` DaemonSet.
 func (s *ManagedControlPlaneScope) VpcCni() ekscontrolplanev1.VpcCni {
 	return s.ControlPlane.Spec.VpcCni
+}
+
+// RestrictPrivateSubnets returns whether Control Plane should be restricted to Private subnets.
+func (s *ManagedControlPlaneScope) RestrictPrivateSubnets() bool {
+	return s.ControlPlane.Spec.RestrictPrivateSubnets
 }
 
 // OIDCIdentityProviderConfig returns the OIDC identity provider config.
