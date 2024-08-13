@@ -281,7 +281,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	}
 
 	resourceGroupName := p.ResourceGroupName
-	storageAccountName := fmt.Sprintf("%ssa", strings.ReplaceAll(in.InfraID, "-", ""))
+	storageAccountName := fmt.Sprintf("cluster%s", randomString(5))
 	containerName := "vhd"
 	blobName := fmt.Sprintf("rhcos%s.vhd", randomString(5))
 
