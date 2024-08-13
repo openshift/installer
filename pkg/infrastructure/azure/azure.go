@@ -335,6 +335,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		StorageAccountName: storageAccountName,
 		CloudName:          platform.CloudName,
 		Region:             platform.Region,
+		AuthType:           session.AuthType,
 		Tags:               tags,
 		CustomerManagedKey: platform.CustomerManagedKey,
 		TokenCredential:    tokenCredential,
