@@ -98,6 +98,8 @@ func fixNoVCentersScenario(platform *vsphere.Platform) {
 				}
 			}
 		}
+	} else if platform.DeprecatedVCenter != "" {
+		localLogger.Warn("vcenter field is deprecated please avoid using both vcenter and vcenters fields together")
 	}
 }
 
@@ -173,7 +175,10 @@ func fixLegacyPlatformScenario(platform *vsphere.Platform, finders map[string]*f
 		if err != nil {
 			return err
 		}
+	} else if platform.DeprecatedDatacenter != "" || platform.DeprecatedFolder != "" || platform.DeprecatedCluster != "" || platform.DeprecatedDefaultDatastore != "" || platform.DeprecatedResourcePool != "" || platform.DeprecatedNetwork != "" {
+		localLogger.Warn("vsphere topology fields are now deprecated; please avoid using failureDomains and the vsphere topology fields together")
 	}
+
 	return nil
 }
 
