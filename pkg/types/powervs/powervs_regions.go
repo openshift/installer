@@ -51,7 +51,7 @@ var Regions = map[string]Region{
 		VPCRegion:   "eu-es",
 		COSRegion:   "eu-de", // @HACK - PowerVS says COS not supported in this region
 		Zones:       []string{"mad02", "mad04"},
-		SysTypes:    []string{"s1022"},
+		SysTypes:    []string{"e980", "s1022"},
 		VPCZones:    []string{"eu-es-1", "eu-es-2"},
 	},
 	"osa": {
