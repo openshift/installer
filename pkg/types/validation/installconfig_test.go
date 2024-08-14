@@ -2462,3 +2462,138 @@ func Test_ensureIPv4IsFirstInDualStackSlice(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateReleaseArchitecture(t *testing.T) {
+	t.Run("multi arch payload is always valid", func(t *testing.T) {
+		releaseArch := types.Architecture("multi")
+		t.Run("for default single arch cluster", func(t *testing.T) {
+			controlplanePool := validMachinePool("master")
+			controlplanePool.Architecture = ""
+			computePool := []types.MachinePool{*validMachinePool("worker")}
+			computePool[0].Architecture = ""
+			errs := validateReleaseArchitecture(controlplanePool, computePool, releaseArch)
+			assert.Len(t, errs, 0, "expected no errors")
+		})
+		t.Run("for amd64 single arch cluster", func(t *testing.T) {
+			controlplanePool := validMachinePool("master")
+			computePool := []types.MachinePool{*validMachinePool("worker")}
+			errs := validateReleaseArchitecture(controlplanePool, computePool, releaseArch)
+			assert.Len(t, errs, 0, "expected no errors")
+		})
+		t.Run("for arm64 single arch cluster", func(t *testing.T) {
+			controlplanePool := validMachinePool("master")
+			controlplanePool.Architecture = types.ArchitectureARM64
+			computePool := []types.MachinePool{*validMachinePool("worker")}
+			computePool[0].Architecture = types.ArchitectureARM64
+			errs := validateReleaseArchitecture(controlplanePool, computePool, releaseArch)
+			assert.Len(t, errs, 0, "expected no errors")
+		})
+		t.Run("for mixed arch cluster", func(t *testing.T) {
+			controlplanePool := validMachinePool("master")
+			computePool := []types.MachinePool{*validMachinePool("worker")}
+			computePool[0].Architecture = types.ArchitectureARM64
+			errs := validateReleaseArchitecture(controlplanePool, computePool, releaseArch)
+			assert.Len(t, errs, 0, "expected no errors")
+		})
+	})
+	t.Run("unknown arch payload is always valid", func(t *testing.T) {
+		releaseArch := types.Architecture("unknown")
+		t.Run("for default single arch cluster", func(t *testing.T) {
+			controlplanePool := validMachinePool("master")
+			controlplanePool.Architecture = ""
+			computePool := []types.MachinePool{*validMachinePool("worker")}
+			computePool[0].Architecture = ""
+			errs := validateReleaseArchitecture(controlplanePool, computePool, releaseArch)
+			assert.Len(t, errs, 0, "expected no errors")
+		})
+		t.Run("for amd64 single arch cluster", func(t *testing.T) {
+			controlplanePool := validMachinePool("master")
+			computePool := []types.MachinePool{*validMachinePool("worker")}
+			errs := validateReleaseArchitecture(controlplanePool, computePool, releaseArch)
+			assert.Len(t, errs, 0, "expected no errors")
+		})
+		t.Run("for arm64 single arch cluster", func(t *testing.T) {
+			controlplanePool := validMachinePool("master")
+			controlplanePool.Architecture = types.ArchitectureARM64
+			computePool := []types.MachinePool{*validMachinePool("worker")}
+			computePool[0].Architecture = types.ArchitectureARM64
+			errs := validateReleaseArchitecture(controlplanePool, computePool, releaseArch)
+			assert.Len(t, errs, 0, "expected no errors")
+		})
+		t.Run("for mixed arch cluster", func(t *testing.T) {
+			controlplanePool := validMachinePool("master")
+			computePool := []types.MachinePool{*validMachinePool("worker")}
+			computePool[0].Architecture = types.ArchitectureARM64
+			errs := validateReleaseArchitecture(controlplanePool, computePool, releaseArch)
+			assert.Len(t, errs, 0, "expected no errors")
+		})
+	})
+	t.Run("amd64 arch payload", func(t *testing.T) {
+		releaseArch := types.Architecture("amd64")
+		t.Run("for default single arch amd64 cluster", func(t *testing.T) {
+			controlplanePool := validMachinePool("master")
+			controlplanePool.Architecture = ""
+			computePool := []types.MachinePool{*validMachinePool("worker")}
+			computePool[0].Architecture = ""
+			errs := validateReleaseArchitecture(controlplanePool, computePool, releaseArch)
+			assert.Len(t, errs, 0, "expected no errors")
+		})
+		t.Run("is valid for amd64 cluster", func(t *testing.T) {
+			controlplanePool := validMachinePool("master")
+			computePool := []types.MachinePool{*validMachinePool("worker")}
+			errs := validateReleaseArchitecture(controlplanePool, computePool, releaseArch)
+			assert.Len(t, errs, 0, "expected no errors")
+		})
+		t.Run("is not valid for arm64 cluster", func(t *testing.T) {
+			controlplanePool := validMachinePool("master")
+			controlplanePool.Architecture = types.ArchitectureARM64
+			computePool := []types.MachinePool{*validMachinePool("worker")}
+			computePool[0].Architecture = types.ArchitectureARM64
+			errs := validateReleaseArchitecture(controlplanePool, computePool, releaseArch)
+			assert.Len(t, errs, 2)
+			assert.Regexp(t, `^\[controlPlane\.architecture: Invalid value: \"arm64\": .*compute\[0\]\.architecture: Invalid value: \"arm64\": .*\]$`, errs.ToAggregate())
+		})
+		t.Run("is not valid for mixed arch cluster", func(t *testing.T) {
+			controlplanePool := validMachinePool("master")
+			computePool := []types.MachinePool{*validMachinePool("worker")}
+			computePool[0].Architecture = types.ArchitectureARM64
+			errs := validateReleaseArchitecture(controlplanePool, computePool, releaseArch)
+			assert.Len(t, errs, 1)
+			assert.Regexp(t, `^compute\[0\]\.architecture: Invalid value: \"arm64\": .*$`, errs.ToAggregate())
+		})
+	})
+	t.Run("arm64 arch payload", func(t *testing.T) {
+		releaseArch := types.Architecture("arm64")
+		t.Run("is valid for arm64 cluster", func(t *testing.T) {
+			controlplanePool := validMachinePool("master")
+			controlplanePool.Architecture = types.ArchitectureARM64
+			computePool := []types.MachinePool{*validMachinePool("worker")}
+			computePool[0].Architecture = types.ArchitectureARM64
+			errs := validateReleaseArchitecture(controlplanePool, computePool, releaseArch)
+			assert.Len(t, errs, 0, "expected no errors")
+		})
+		t.Run("is not valid for default single arch amd64 cluster", func(t *testing.T) {
+			controlplanePool := validMachinePool("master")
+			controlplanePool.Architecture = ""
+			computePool := []types.MachinePool{*validMachinePool("worker")}
+			computePool[0].Architecture = ""
+			errs := validateReleaseArchitecture(controlplanePool, computePool, releaseArch)
+			assert.Regexp(t, `^controlPlane\.architecture: Invalid value: \"amd64\": .*$`, errs.ToAggregate())
+		})
+		t.Run("is not valid for amd64 cluster", func(t *testing.T) {
+			controlplanePool := validMachinePool("master")
+			computePool := []types.MachinePool{*validMachinePool("worker")}
+			errs := validateReleaseArchitecture(controlplanePool, computePool, releaseArch)
+			assert.Len(t, errs, 2)
+			assert.Regexp(t, `^\[controlPlane\.architecture: Invalid value: \"amd64\": .*compute\[0\]\.architecture: Invalid value: \"amd64\": .*\]$`, errs.ToAggregate())
+		})
+		t.Run("is not valid for mixed arch cluster", func(t *testing.T) {
+			controlplanePool := validMachinePool("master")
+			computePool := []types.MachinePool{*validMachinePool("worker")}
+			computePool[0].Architecture = types.ArchitectureARM64
+			errs := validateReleaseArchitecture(controlplanePool, computePool, releaseArch)
+			assert.Len(t, errs, 1)
+			assert.Regexp(t, `^controlPlane\.architecture: Invalid value: \"amd64\": .*$`, errs.ToAggregate())
+		})
+	})
+}
