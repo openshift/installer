@@ -149,7 +149,7 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 		return errors.New(spec.Error[0].LocalizedMessage)
 	}
 
-	hostSystem, err := findAvailableHostSystems(ctx, session, clusterHostSystems)
+	hostSystem, err := findAvailableHostSystems(ctx, clusterHostSystems, networkRef, datastore)
 	if err != nil {
 		return fmt.Errorf("failed to find available host system: %w", err)
 	}
@@ -212,19 +212,53 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 	return nil
 }
 
-func findAvailableHostSystems(ctx context.Context, session *session.Session, clusterHostSystems []*object.HostSystem) (*object.HostSystem, error) {
+func findAvailableHostSystems(ctx context.Context, clusterHostSystems []*object.HostSystem, networkObjectRef object.NetworkReference, datastore *object.Datastore) (*object.HostSystem, error) {
 	var hostSystemManagedObject mo.HostSystem
 	for _, hostObj := range clusterHostSystems {
 		err := hostObj.Properties(ctx, hostObj.Reference(), []string{"config.product", "network", "datastore", "runtime"}, &hostSystemManagedObject)
 		if err != nil {
 			return nil, err
 		}
-		if hostSystemManagedObject.Runtime.InMaintenanceMode {
+
+		// if distributed port group the cast will fail
+		networkFound := isNetworkAvailable(networkObjectRef, hostSystemManagedObject.Network)
+		datastoreFound := isDatastoreAvailable(datastore, hostSystemManagedObject.Datastore)
+
+		// if the network or datastore is not found or the ESXi host is in maintenance mode continue the loop
+		if !networkFound || !datastoreFound || hostSystemManagedObject.Runtime.InMaintenanceMode {
 			continue
 		}
+
+		logrus.Debugf("using ESXi %s to import the OVA image", hostObj.Name())
 		return hostObj, nil
 	}
 	return nil, errors.New("all hosts unavailable")
+}
+
+func isDatastoreAvailable(datastore *object.Datastore, hostDatastoreManagedObjectRefs []types.ManagedObjectReference) bool {
+	for _, dsMoRef := range hostDatastoreManagedObjectRefs {
+		if dsMoRef.Value == datastore.Reference().Value {
+			return true
+		}
+	}
+	return false
+}
+
+func isNetworkAvailable(networkObjectRef object.NetworkReference, hostNetworkManagedObjectRefs []types.ManagedObjectReference) bool {
+	// If the object.NetworkReference is a standard portgroup make
+	// sure that it exists on esxi host that the OVA will be imported to.
+	if _, ok := networkObjectRef.(*object.Network); ok {
+		for _, n := range hostNetworkManagedObjectRefs {
+			if n.Value == networkObjectRef.Reference().Value {
+				return true
+			}
+		}
+	} else {
+		// networkObjectReference is not a standard port group
+		// and the other types are distributed so return true
+		return true
+	}
+	return false
 }
 
 // Used govc/importx/ovf.go as an example to implement
