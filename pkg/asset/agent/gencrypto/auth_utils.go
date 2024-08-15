@@ -9,22 +9,32 @@ import (
 	"github.com/pkg/errors"
 )
 
-// UserAuthHeaderWriter sets the JWT authorization token.
-func UserAuthHeaderWriter(token string) runtime.ClientAuthInfoWriter {
+// WatcherAuthHeaderWriter sets the JWT authorization token.
+func WatcherAuthHeaderWriter(token string) runtime.ClientAuthInfoWriter {
 	return runtime.ClientAuthInfoWriterFunc(func(r runtime.ClientRequest, _ strfmt.Registry) error {
-		return r.SetHeaderParam("Authorization", token)
+		return r.SetHeaderParam("Watcher-Authorization", token)
 	})
 }
 
-// ParseExpirationFromToken checks if the token is expired or not.
-func ParseExpirationFromToken(tokenString string) (time.Time, error) {
+// ParseToken checks if the token string is valid or not and returns JWT token claim.
+func ParseToken(tokenString string) (jwt.MapClaims, error) {
 	token, _, err := new(jwt.Parser).ParseUnverified(tokenString, jwt.MapClaims{})
 	if err != nil {
-		return time.Time{}, err
+		return nil, err
 	}
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return time.Time{}, errors.Errorf("malformed token claims in url")
+		return nil, errors.Errorf("malformed token claims in url")
+	}
+	return claims, nil
+}
+
+
+// ParseExpirationFromToken checks if the token is expired or not.
+func ParseExpirationFromToken(tokenString string) (time.Time, error) {
+	claims, err := ParseToken(tokenString)
+	if err != nil {
+		return time.Time{}, err
 	}
 	exp, ok := claims["exp"].(float64)
 	if !ok {

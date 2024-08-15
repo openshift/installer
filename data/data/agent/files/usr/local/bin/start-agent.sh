@@ -8,7 +8,7 @@ INFRA_ENV_ID=""
 until [[ $INFRA_ENV_ID != "" && $INFRA_ENV_ID != "null" ]]; do
     sleep 5
     >&2 echo "Querying assisted-service for infra-env-id..."
-    INFRA_ENV_ID=$(curl_assisted_service "/infra-envs" GET | jq -r .[0].id)
+    INFRA_ENV_ID=$(curl_assisted_service "/infra-envs" GET $USER_AUTH_TOKEN | jq -r '.[0].id')
 done
 echo "Fetched infra-env-id and found: $INFRA_ENV_ID"
 
