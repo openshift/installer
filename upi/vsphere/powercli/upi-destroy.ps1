@@ -5,7 +5,8 @@
 $ErrorActionPreference = "Stop"
 
 # since we do not have ca for vsphere certs, we'll just set insecure
-Set-PowerCLIConfiguration -InvalidCertificateAction:Ignore -Confirm:$false | Out-Null
+# we will also set default vi server mode to multiple for multi vcenter support
+Set-PowerCLIConfiguration -InvalidCertificateAction:Ignore -DefaultVIServerMode Multiple -ParticipateInCEIP:$false -Confirm:$false | Out-Null
 $Env:GOVC_INSECURE = 1
 
 # Connect to vCenter
