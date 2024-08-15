@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -166,13 +167,15 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 			return fmt.Errorf("failed to create CAPA tags from UserTags: %w", err)
 		}
 
+		publicOnlySubnets := os.Getenv("OPENSHIFT_INSTALL_AWS_PUBLIC_ONLY") != ""
+
 		pool.Platform.AWS = &mpool
 		awsMachines, err := aws.GenerateMachines(clusterID.InfraID, &aws.MachineInput{
 			Role:     "master",
 			Pool:     &pool,
 			Subnets:  subnets,
 			Tags:     tags,
-			PublicIP: false,
+			PublicIP: publicOnlySubnets,
 			Ignition: &v1beta2.Ignition{
 				Version: "3.2",
 				// master machines should get ignition from the MCS on the bootstrap node
@@ -199,7 +202,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 			Subnets:        bootstrapSubnets,
 			Pool:           &pool,
 			Tags:           tags,
-			PublicIP:       installConfig.Config.Publish == types.ExternalPublishingStrategy,
+			PublicIP:       publicOnlySubnets || (installConfig.Config.Publish == types.ExternalPublishingStrategy),
 			PublicIpv4Pool: ic.Platform.AWS.PublicIpv4Pool,
 			Ignition:       ignition,
 		})
