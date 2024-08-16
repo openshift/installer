@@ -45,24 +45,22 @@ func (o *ClusterUninstaller) listAddressesWithFilter(ctx context.Context, typeNa
 
 	result := []cloudResource{}
 	for _, item := range list.Items {
-		o.Logger.Debugf("Found address: %s", item.Name)
-		if item.AddressType == "INTERNAL" {
-			result = append(result, cloudResource{
-				key:      item.Name,
-				name:     item.Name,
-				typeName: typeName,
-				quota: []gcp.QuotaUsage{{
-					Metric: &gcp.Metric{
-						Service: gcp.ServiceComputeEngineAPI,
-						Limit:   "internal_addresses",
-						Dimensions: map[string]string{
-							"region": getNameFromURL("regions", item.Region),
-						},
+		o.Logger.Debugf("Found address: %s, type: %s", item.Name, item.AddressType)
+		result = append(result, cloudResource{
+			key:      item.Name,
+			name:     item.Name,
+			typeName: typeName,
+			quota: []gcp.QuotaUsage{{
+				Metric: &gcp.Metric{
+					Service: gcp.ServiceComputeEngineAPI,
+					Limit:   "addresses",
+					Dimensions: map[string]string{
+						"region": getNameFromURL("regions", item.Region),
 					},
-					Amount: 1,
-				}},
-			})
-		}
+				},
+				Amount: 1,
+			}},
+		})
 	}
 	return result, nil
 }
