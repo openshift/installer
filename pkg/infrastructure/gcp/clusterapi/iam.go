@@ -48,6 +48,14 @@ func GetWorkerRoles() []string {
 	}
 }
 
+// GetSharedVPCRoles returns the pre-defined roles for a shared VPC installation.
+func GetSharedVPCRoles() []string {
+	return []string{
+		"roles/compute.networkAdmin",
+		"roles/compute.securityAdmin",
+	}
+}
+
 // CreateServiceAccount is used to create a service account for a compute instance.
 func CreateServiceAccount(ctx context.Context, infraID, projectID, role string) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
