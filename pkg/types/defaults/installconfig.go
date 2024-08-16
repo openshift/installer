@@ -32,7 +32,7 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 	if c.Networking == nil {
 		c.Networking = &types.Networking{}
 	}
-	if len(c.Networking.MachineNetwork) == 0 {
+	if len(c.Networking.MachineNetwork) == 0 && c.Platform.VSphere == nil {
 		c.Networking.MachineNetwork = []types.MachineNetworkEntry{
 			{CIDR: *DefaultMachineCIDR},
 		}
