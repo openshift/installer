@@ -5,6 +5,7 @@ import (
 	"path"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
@@ -47,6 +48,7 @@ func createFolder(ctx context.Context, fullpath string, session *session.Session
 	}
 
 	if folder != nil && err == nil {
+		logrus.Debugf("creating folder %s in vcenter", base)
 		return folder.CreateFolder(ctx, base)
 	}
 	return folder, err
