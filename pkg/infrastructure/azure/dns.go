@@ -14,7 +14,6 @@ import (
 
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
-	"github.com/openshift/installer/pkg/types"
 )
 
 type recordListType string
@@ -39,7 +38,6 @@ type recordPrivateList struct {
 
 // Create DNS entries for azure.
 func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBFQDN string, resourceGroup string) error {
-	private := in.InstallConfig.Config.Publish == types.InternalPublishingStrategy
 	baseDomainResourceGroup := in.InstallConfig.Config.Azure.BaseDomainResourceGroupName
 	zone := in.InstallConfig.Config.BaseDomain
 	privatezone := in.InstallConfig.Config.ClusterDomain()
@@ -111,7 +109,7 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 
 	// Create the records for api and api-int in the private zone and api.<clustername> for public zone.
 	// CAPI currently creates a record called "apiserver" instead of "api" so creating "api" for the installer in the private zone.
-	if !private {
+	if in.InstallConfig.Config.PublicAPI() {
 		cnameRecordName := apiExternalName
 		// apiExternalNameV6 := fmt.Sprintf("v6-api.%s", infraID)
 		// if useIPv6 {
