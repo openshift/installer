@@ -8,6 +8,7 @@ import (
 
 	nutanixclientv3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
 
@@ -123,7 +124,7 @@ func (p Provider) PreProvision(ctx context.Context, in infracapi.PreProvisionInp
 // Ignition handles preconditions for bootstrap ignition and
 // generates ignition data for the CAPI bootstrap ignition secret.
 // Load the ignition iso image to prism_central.
-func (p Provider) Ignition(ctx context.Context, in infracapi.IgnitionInput) ([]byte, error) {
+func (p Provider) Ignition(ctx context.Context, in infracapi.IgnitionInput) ([]*corev1.Secret, error) {
 	ic := in.InstallConfig.Config
 	nutanixCl, err := nutanixtypes.CreateNutanixClientFromPlatform(ic.Platform.Nutanix)
 	if err != nil {
@@ -207,11 +208,16 @@ func (p Provider) Ignition(ctx context.Context, in infracapi.IgnitionInput) ([]b
 			err = fmt.Errorf("failed to create/upload the bootstrap image object %s in PC: %w", imgName, err)
 		}
 
-		return in.BootstrapIgnData, err
+		return nil, err
 	}
 	logrus.Infof("Successfully created the bootstrap image object %s and uploaded its image data", imgName)
 
-	return in.BootstrapIgnData, nil
+	ignSecrets := []*corev1.Secret{
+		infracapi.IgnitionSecret(in.BootstrapIgnData, in.InfraID, "bootstrap"),
+		infracapi.IgnitionSecret(in.MasterIgnData, in.InfraID, "master"),
+	}
+
+	return ignSecrets, nil
 }
 
 // createImage creates the image object in PC, with the provided request input.
