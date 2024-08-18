@@ -267,6 +267,15 @@ func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapD
 		return fmt.Errorf("failed to remove bootstrap firewall rules: %w", err)
 	}
 
+	if in.Metadata.GCP.NetworkProjectID == "" {
+		// Remove the overly permissive firewall rules created by CAPG that are redundant with those created by installer
+		// These are not created in a shared VPC installation
+		logrus.Infof("Removing firewall rules created by cluster-api-provider-gcp")
+		if err := removeCAPGFirewallRules(ctx, in.Metadata.InfraID, in.Metadata.GCP.ProjectID); err != nil {
+			return fmt.Errorf("failed to remove firewall rules created by cluster-api-provider-gcp: %w", err)
+		}
+	}
+
 	return nil
 }
 

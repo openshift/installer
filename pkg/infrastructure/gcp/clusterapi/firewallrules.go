@@ -349,3 +349,14 @@ func removeBootstrapFirewallRules(ctx context.Context, infraID, projectID string
 	firewallName := fmt.Sprintf("%s-bootstrap-in-ssh", infraID)
 	return deleteFirewallRule(ctx, firewallName, projectID)
 }
+
+// removeCAPGFirewallRules removes the overly permissive firewall rules created by cluster-api-provider-gcp.
+func removeCAPGFirewallRules(ctx context.Context, infraID, projectID string) error {
+	firewallName := fmt.Sprintf("allow-%s-cluster", infraID)
+	if err := deleteFirewallRule(ctx, firewallName, projectID); err != nil {
+		return err
+	}
+
+	firewallName = fmt.Sprintf("allow-%s-healthchecks", infraID)
+	return deleteFirewallRule(ctx, firewallName, projectID)
+}
