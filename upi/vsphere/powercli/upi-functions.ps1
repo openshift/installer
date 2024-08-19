@@ -4,7 +4,6 @@ function New-OpenShiftVM {
     param(
         [Parameter(Mandatory=$true)]
         $Datastore,
-        $FailureDomain,
         [Parameter(Mandatory=$true)]
         [string]$IgnitionData,
         [switch]$LinkedClone,
@@ -18,6 +17,8 @@ function New-OpenShiftVM {
         $ReferenceSnapshot,
         $ResourcePool,
         $SecureBoot,
+        [Parameter(Mandatory=$true)]
+        $Server,
         $StoragePolicy,
         [Parameter(Mandatory=$true)]
         $Tag,
@@ -47,28 +48,28 @@ function New-OpenShiftVM {
     # If storage policy is set, lets pull the mo ref
     if ($NULL -ne $StoragePolicy -and $StoragePolicy -ne "")
     {
-        $storagePolicyRef = Get-SpbmStoragePolicy -Id $StoragePolicy
+        $storagePolicyRef = Get-SpbmStoragePolicy -Server $Server -Id $StoragePolicy
         $args["StoragePolicy"] = $storagePolicyRef
     }
 
     # Clone the virtual machine from the imported template
     # $vm = New-VM -VM $Template -Name $Name -Datastore $Datastore -ResourcePool $ResourcePool #-Location $Folder #-LinkedClone -ReferenceSnapshot $Snapshot
-    $vm = New-VM -VM $Template @args
+    $vm = New-VM -Server $Server -VM $Template @args
 
     # Assign tag so we can later clean up
-    New-TagAssignment -Entity $vm -Tag $Tag > $null
+    New-TagAssignment -Server $Server -Entity $vm -Tag $Tag > $null
 
     # Update VM specs.  New-VM does not honor the passed in parameters due to Template being used.
     if ($null -ne $MemoryMB -And $null -ne $NumCpu)
     {
-        Set-VM -VM $vm -MemoryMB $MemoryMB -NumCpu $NumCpu -CoresPerSocket 4 -Confirm:$false > $null
+        Set-VM -Server $Server -VM $vm -MemoryMB $MemoryMB -NumCpu $NumCpu -CoresPerSocket 4 -Confirm:$false > $null
     }
     #Get-HardDisk -VM $vm | Select-Object -First 1 | Set-HardDisk -CapacityGB 120 -Confirm:$false > $null
     updateDisk -VM $vm -CapacityGB 120
 
     # Configure Network (Assuming template networking may not be correct if shared across clusters)
-    $pg = Get-VirtualPortgroup -Name $Network -VMHost $(Get-VMHost -VM $vm) 2> $null
-    $vm | Get-NetworkAdapter | Set-NetworkAdapter -Portgroup $pg -confirm:$false > $null
+    $pg = Get-VirtualPortgroup -Server $Server -Name $Network -VMHost $(Get-VMHost -VM $vm) 2> $null
+    $vm | Get-NetworkAdapter -Server $Server | Set-NetworkAdapter -Server $Server -Portgroup $pg -confirm:$false > $null
 
     # Assign advanced settings
     New-AdvancedSetting -Entity $vm -name "disk.enableUUID" -value "TRUE" -confirm:$false -Force > $null
@@ -136,18 +137,18 @@ function New-VMConfigs {
     $fds = ConvertFrom-Json $failure_domains
 
     # Generate Bootstrap
-    $vm = createNode -FailureDomain $fds[0] -Type "bootstrap" -VCenter $vcenter -IPAddress $bootstrap_ip_address
+    $vm = createNode -FailureDomain $fds[0] -Type "bootstrap" -IPAddress $bootstrap_ip_address
     add-member -Name "bootstrap" -value $vm -MemberType NoteProperty -InputObject $virtualMachines.virtualmachines
 
     # Generate Control Plane
     for (($i =0); $i -lt $control_plane_count; $i++) {
-        $vm = createNode -FailureDomain $fds[$i % $fds.Length] -Type "master" -VCenter $vcenter -IPAddress $control_plane_ip_addresses[$i]
+        $vm = createNode -FailureDomain $fds[$i % $fds.Length] -Type "master" -IPAddress $control_plane_ip_addresses[$i]
         add-member -Name $control_plane_hostnames[$i] -value $vm -MemberType NoteProperty -InputObject $virtualMachines.virtualmachines
     }
 
     # Generate Compute
     for (($i =0); $i -lt $compute_count; $i++) {
-        $vm = createNode -FailureDomain $fds[$i % $fds.Length] -Type "worker" -VCenter $vcenter -IPAddress $compute_ip_addresses[$i]
+        $vm = createNode -FailureDomain $fds[$i % $fds.Length] -Type "worker" -IPAddress $compute_ip_addresses[$i]
         add-member -Name $compute_hostnames[$i] -value $vm -MemberType NoteProperty -InputObject $virtualMachines.virtualmachines
     }
 
@@ -158,14 +159,13 @@ function createNode {
     param (
         $FailureDomain,
         $IPAddress,
-        $Type,
-        $VCenter
+        $Type
     )
 
     $vmConfig = @"
 {
-    "server": "$($VCenter)",
-    "datacenter": "$($FailureDomain. datacenter)",
+    "server": "$($FailureDomain.server)",
+    "datacenter": "$($FailureDomain.datacenter)",
     "cluster": "$($FailureDomain.cluster)",
     "network": "$($FailureDomain.network)",
     "datastore": "$($FailureDomain.datastore)",
@@ -276,9 +276,9 @@ function New-OpenshiftVMs {
             $name = "$($metadata.infraID)-$($key)"
             Write-Output "Creating $($name)"
 
-            $rp = Get-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Name $($node.cluster)) -Server $vcenter
+            $rp = Get-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Name $($node.cluster)) -Server $node.server
             ##$datastore = Get-Datastore -Name $node.datastore -Server $node.server
-            $datastoreInfo = Get-Datastore -Name $node.datastore -Location $node.datacenter
+            $datastoreInfo = Get-Datastore -Name $node.datastore -Location $node.datacenter -Server $node.server
 
             # Pull network config for each node
             if ($node.type -eq "master") {
@@ -293,19 +293,23 @@ function New-OpenshiftVMs {
                 $memory = $control_plane_memory
             }
             $ip = $node.ip
-            $network = New-VMNetworkConfig -Hostname $name -IPAddress $ip -Netmask $netmask -Gateway $gateway -DNS $dns
+            $network = New-VMNetworkConfig -Server $node.server -Hostname $name -IPAddress $ip -Netmask $netmask -Gateway $gateway -DNS $dns
 
             # Get the content of the ignition file per machine type (bootstrap, master, worker)
             $bytes = Get-Content -Path "./$($node.type).ign" -AsByteStream
             $ignition = [Convert]::ToBase64String($bytes)
 
+            # Get correct tag
+            $tagCategory = Get-TagCategory -Server $node.server -Name "openshift-$($metadata.infraID)" -ErrorAction continue 2>$null
+            $tag = Get-Tag -Server $node.server -Category $tagCategory -Name "$($metadata.infraID)" -ErrorAction continue 2>$null
+
             # Get correct template / folder
-            $folder = Get-Folder -Name $clustername -Location $node.datacenter
-            $template = Get-VM -Name $vm_template -Location $($node.datacenter)
+            $folder = Get-Folder -Server $node.server -Name $clustername -Location $node.datacenter
+            $template = Get-VM -Server $node.server -Name $vm_template -Location $($node.datacenter)
 
             # Clone the virtual machine from the imported template
             #$vm = New-OpenShiftVM -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -LinkedClone -ReferenceSnapshot $snapshot -IgnitionData $ignition -Tag $tag -Networking $network -NumCPU $numCPU -MemoryMB $memory
-            $vm = New-OpenShiftVM -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -IgnitionData $ignition -Tag $tag -Networking $network -Network $node.network -SecureBoot $secureboot -StoragePolicy $storagepolicy -NumCPU $numCPU -MemoryMB $memory
+            $vm = New-OpenShiftVM -Server $node.server -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -IgnitionData $ignition -Tag $tag -Networking $network -Network $node.network -SecureBoot $secureboot -StoragePolicy $storagepolicy -NumCPU $numCPU -MemoryMB $memory
 
             # Assign tag so we can later clean up
             # New-TagAssignment -Entity $vm -Tag $tag
