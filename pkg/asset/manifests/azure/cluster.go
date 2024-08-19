@@ -1,6 +1,7 @@
 package azure
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
@@ -91,6 +92,22 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		nodeSubnetID = "UNKNOWN"
 	}
 
+	virtualNetworkID := ""
+	if installConfig.Config.Azure.VirtualNetwork != "" {
+		client, err := installConfig.Azure.Client()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get azure client: %w", err)
+		}
+
+		virtualNetwork, err := client.GetVirtualNetwork(context.TODO(), installConfig.Config.Azure.NetworkResourceGroupName, installConfig.Config.Azure.VirtualNetwork)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get azure virtual network: %w", err)
+		}
+		if virtualNetwork != nil {
+			virtualNetworkID = *virtualNetwork.ID
+		}
+	}
+
 	azureCluster := &capz.AzureCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -121,7 +138,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					// The ID field is not used for any other purpose in CAPZ except to set the "managed" status.
 					// See https://github.com/kubernetes-sigs/cluster-api-provider-azure/blob/main/azure/scope/cluster.go#L585
 					// https://github.com/kubernetes-sigs/cluster-api-provider-azure/commit/0f321e4089a3f4dc37f8420bf2ef6762c398c400
-					ID: installConfig.Config.Azure.VirtualNetwork,
+					ID: virtualNetworkID,
 					VnetClassSpec: capz.VnetClassSpec{
 						CIDRBlocks: []string{
 							mainCIDR.String(),
