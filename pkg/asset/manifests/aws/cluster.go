@@ -3,7 +3,6 @@ package aws
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -15,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
+	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
 
 // BootstrapSSHDescription is the description for the
@@ -253,7 +253,7 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 		}
 	}
 
-	if len(os.Getenv("OPENSHIFT_INSTALL_AWS_PUBLIC_ONLY")) > 0 {
+	if awstypes.IsPublicOnlySubnetsEnabled() {
 		// If we don't set the subnets for the internal LB, CAPA will try to use private subnets but there aren't any in
 		// public-only mode.
 		awsCluster.Spec.ControlPlaneLoadBalancer.Subnets = awsCluster.Spec.NetworkSpec.Subnets.IDs()
