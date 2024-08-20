@@ -1,0 +1,15 @@
+[Unit]
+Description=Configure secondary NIC on OCI when using iSCSI boot drive
+After=NetworkManager.service
+
+[Service]
+StandardOutput=syslog
+StandardError=syslog
+ExecStart=/usr/local/bin/iscsi-oci-configure-secondary-nic.sh
+Type=oneshot
+RemainAfterExit=yes
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
