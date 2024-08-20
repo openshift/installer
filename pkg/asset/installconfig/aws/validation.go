@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -48,6 +49,13 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 	allErrs = append(allErrs, validateAMI(ctx, config)...)
 	allErrs = append(allErrs, validatePublicIpv4Pool(ctx, meta, field.NewPath("platform", "aws", "publicIpv4PoolId"), config)...)
 	allErrs = append(allErrs, validatePlatform(ctx, meta, field.NewPath("platform", "aws"), config.Platform.AWS, config.Networking, config.Publish)...)
+
+	if awstypes.IsPublicOnlySubnetsEnabled() {
+		logrus.Warnln("Public-only subnets install. Please be warned this is not supported")
+		if config.Publish == types.InternalPublishingStrategy {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("publish"), config.Publish, "cluster cannot be private with public subnets"))
+		}
+	}
 
 	if config.ControlPlane != nil {
 		arch := string(config.ControlPlane.Architecture)
@@ -88,6 +96,8 @@ func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, 
 
 	if len(platform.Subnets) > 0 {
 		allErrs = append(allErrs, validateSubnets(ctx, meta, fldPath.Child("subnets"), platform.Subnets, networking, publish)...)
+	} else if awstypes.IsPublicOnlySubnetsEnabled() {
+		allErrs = append(allErrs, field.Required(fldPath.Child("subnets"), "subnets must be specified for public-only subnets clusters"))
 	}
 	if platform.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, validateMachinePool(ctx, meta, fldPath.Child("defaultMachinePlatform"), platform, platform.DefaultMachinePlatform, controlPlaneReq, "", "")...)
@@ -208,6 +218,9 @@ func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, s
 		if _, ok := publicSubnets[id]; ok {
 			publicSubnetsIdx[id] = idx
 		}
+	}
+	if len(publicSubnets) == 0 && awstypes.IsPublicOnlySubnetsEnabled() {
+		allErrs = append(allErrs, field.Required(fldPath, "public subnets are required for a public-only subnets cluster"))
 	}
 
 	edgeSubnets, err := meta.EdgeSubnets(ctx)
