@@ -179,6 +179,34 @@ func TestValidateMachinePool(t *testing.T) {
 			valid: false,
 		},
 		{
+			name:     "valid GCP disk type master",
+			platform: &types.Platform{GCP: &gcp.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("master")
+				p.Platform = types.MachinePoolPlatform{
+					GCP: &gcp.MachinePool{},
+				}
+				p.Platform.GCP.OSDisk.DiskSizeGB = 100
+				p.Platform.GCP.OSDisk.DiskType = "hyperdisk-balanced"
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name:     "invalid GCP disk type master",
+			platform: &types.Platform{GCP: &gcp.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("master")
+				p.Platform = types.MachinePoolPlatform{
+					GCP: &gcp.MachinePool{},
+				}
+				p.Platform.GCP.OSDisk.DiskSizeGB = 100
+				p.Platform.GCP.OSDisk.DiskType = "pd-standard"
+				return p
+			}(),
+			valid: false,
+		},
+		{
 			name:     "valid GCP service account use",
 			platform: &types.Platform{GCP: &gcp.Platform{Region: "us-east-1", NetworkProjectID: "ExampleNetworkProject"}},
 			pool: func() *types.MachinePool {
