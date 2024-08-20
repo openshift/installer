@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"os"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -14,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	utilscidr "github.com/openshift/installer/pkg/asset/manifests/capiutils/cidr"
 	"github.com/openshift/installer/pkg/types"
+	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
 
 // subnetsInput handles subnets information gathered from metadata.
@@ -166,7 +166,7 @@ func setSubnetsBYOVPC(in *zonesInput) error {
 	// Skip adding private subnets if this is a public-only subnets install.
 	// We need to skip because the Installer is tricked into thinking the public subnets are also private and we would
 	// end up adding public subnets twice to the cluster manifest, causing a duplicate error.
-	if len(os.Getenv("OPENSHIFT_INSTALL_AWS_PUBLIC_ONLY")) == 0 {
+	if !awstypes.IsPublicOnlySubnetsEnabled() {
 		for _, subnet := range in.Subnets.privateSubnets {
 			in.Cluster.Spec.NetworkSpec.Subnets = append(in.Cluster.Spec.NetworkSpec.Subnets, capa.SubnetSpec{
 				ID:               subnet.ID,
