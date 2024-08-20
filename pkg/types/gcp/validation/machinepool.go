@@ -29,11 +29,8 @@ func ValidateMachinePool(platform *gcp.Platform, p *gcp.MachinePool, fldPath *fi
 		}
 	}
 
-	if p.OSDisk.DiskType != "" {
-		diskTypes := sets.NewString("pd-balanced", "pd-ssd", "pd-standard", "hyperdisk-balanced")
-		if !diskTypes.Has(p.OSDisk.DiskType) {
-			allErrs = append(allErrs, field.NotSupported(fldPath.Child("diskType"), p.OSDisk.DiskType, diskTypes.List()))
-		}
+	if diskType := p.OSDisk.DiskType; diskType != "" && !gcp.ComputeSupportedDisks.Has(diskType) {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("diskType"), diskType, sets.List(gcp.ComputeSupportedDisks)))
 	}
 
 	if p.ConfidentialCompute == string(gcp.EnabledFeature) && p.OnHostMaintenance != string(gcp.OnHostMaintenanceTerminate) {
@@ -64,9 +61,8 @@ func ValidateServiceAccount(platform *gcp.Platform, p *types.MachinePool, fldPat
 func ValidateMasterDiskType(p *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if p.Name == "master" && p.Platform.GCP.OSDisk.DiskType != "" {
-		diskTypes := sets.NewString("pd-ssd")
-		if !diskTypes.Has(p.Platform.GCP.OSDisk.DiskType) {
-			allErrs = append(allErrs, field.NotSupported(fldPath.Child("diskType"), p.Platform.GCP.OSDisk.DiskType, diskTypes.List()))
+		if !gcp.ControlPlaneSupportedDisks.Has(p.Platform.GCP.OSDisk.DiskType) {
+			allErrs = append(allErrs, field.NotSupported(fldPath.Child("diskType"), p.Platform.GCP.OSDisk.DiskType, sets.List(gcp.ControlPlaneSupportedDisks)))
 		}
 	}
 	return allErrs
@@ -77,10 +73,8 @@ func ValidateDefaultDiskType(p *gcp.MachinePool, fldPath *field.Path) field.Erro
 	allErrs := field.ErrorList{}
 
 	if p != nil && p.OSDisk.DiskType != "" {
-		diskTypes := sets.NewString("pd-ssd")
-
-		if !diskTypes.Has(p.OSDisk.DiskType) {
-			allErrs = append(allErrs, field.NotSupported(fldPath.Child("diskType"), p.OSDisk.DiskType, diskTypes.List()))
+		if !gcp.ControlPlaneSupportedDisks.Has(p.OSDisk.DiskType) {
+			allErrs = append(allErrs, field.NotSupported(fldPath.Child("diskType"), p.OSDisk.DiskType, sets.List(gcp.ControlPlaneSupportedDisks)))
 		}
 	}
 

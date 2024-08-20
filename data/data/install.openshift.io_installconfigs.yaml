@@ -514,7 +514,8 @@ spec:
                               type: integer
                             diskType:
                               description: DiskType defines the type of disk. For
-                                control plane nodes, the valid value is pd-ssd.
+                                control plane nodes, the valid values are pd-balanced,
+                                pd-ssd, and hyperdisk-balanced.
                               enum:
                               - pd-balanced
                               - pd-ssd
@@ -1594,7 +1595,8 @@ spec:
                             type: integer
                           diskType:
                             description: DiskType defines the type of disk. For control
-                              plane nodes, the valid value is pd-ssd.
+                              plane nodes, the valid values are pd-balanced, pd-ssd,
+                              and hyperdisk-balanced.
                             enum:
                             - pd-balanced
                             - pd-ssd
@@ -3396,7 +3398,8 @@ spec:
                             type: integer
                           diskType:
                             description: DiskType defines the type of disk. For control
-                              plane nodes, the valid value is pd-ssd.
+                              plane nodes, the valid values are pd-balanced, pd-ssd,
+                              and hyperdisk-balanced.
                             enum:
                             - pd-balanced
                             - pd-ssd

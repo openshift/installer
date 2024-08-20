@@ -181,6 +181,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 	zones := defaultZones
 	instanceType := defaultInstanceType
 	arch := types.ArchitectureAMD64
+	cpDiskType := ""
 	if ic.ControlPlane != nil {
 		arch = string(ic.ControlPlane.Architecture)
 		if instanceType == "" {
@@ -193,6 +194,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			if len(ic.ControlPlane.Platform.GCP.Zones) > 0 {
 				zones = ic.ControlPlane.Platform.GCP.Zones
 			}
+			cpDiskType = ic.ControlPlane.Platform.GCP.DiskType
 		}
 	}
 	allErrs = append(allErrs,
@@ -202,7 +204,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			ic.GCP.ProjectID,
 			ic.GCP.Region,
 			zones,
-			"", // the control plane nodes only support one disk type currently
+			cpDiskType,
 			instanceType,
 			controlPlaneReq,
 			arch,

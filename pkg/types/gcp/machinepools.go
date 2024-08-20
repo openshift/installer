@@ -1,11 +1,21 @@
 package gcp
 
+import "k8s.io/apimachinery/pkg/util/sets"
+
 // FeatureSwitch indicates whether the feature is enabled or disabled.
 type FeatureSwitch string
 
 // OnHostMaintenanceType indicates the setting for the OnHostMaintenance feature, but this is only
 // applicable when ConfidentialCompute is Enabled.
 type OnHostMaintenanceType string
+
+var (
+	// ControlPlaneSupportedDisks contains the supported disk types for control plane nodes.
+	ControlPlaneSupportedDisks = sets.New("hyperdisk-balanced", "pd-balanced", "pd-ssd")
+
+	// ComputeSupportedDisks contains the supported disk types for control plane nodes.
+	ComputeSupportedDisks = sets.New("hyperdisk-balanced", "pd-balanced", "pd-ssd", "pd-standard")
+)
 
 const (
 	// EnabledFeature indicates that the feature is configured as enabled.
@@ -85,7 +95,7 @@ type MachinePool struct {
 // OSDisk defines the disk for machines on GCP.
 type OSDisk struct {
 	// DiskType defines the type of disk.
-	// For control plane nodes, the valid value is pd-ssd.
+	// For control plane nodes, the valid values are pd-balanced, pd-ssd, and hyperdisk-balanced.
 	// +optional
 	// +kubebuilder:validation:Enum=pd-balanced;pd-ssd;pd-standard;hyperdisk-balanced
 	DiskType string `json:"diskType"`
