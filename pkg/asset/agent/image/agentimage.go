@@ -255,7 +255,7 @@ func (a *AgentImage) PersistToFile(directory string) error {
 		msg = fmt.Sprintf("Generated ISO at %s.", agentIsoFile)
 	}
 	if a.imageExpiresAt != "" {
-		msg = fmt.Sprintf("%s. The ISO is valid up to %s", msg, a.imageExpiresAt)
+		msg = fmt.Sprintf("%s The ISO is valid up to %s", msg, a.imageExpiresAt)
 	}
 	logrus.Info(msg)
 
