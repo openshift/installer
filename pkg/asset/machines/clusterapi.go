@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -168,7 +167,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			return fmt.Errorf("failed to create CAPA tags from UserTags: %w", err)
 		}
 
-		publicOnlySubnets := os.Getenv("OPENSHIFT_INSTALL_AWS_PUBLIC_ONLY") != ""
+		publicOnlySubnets := awstypes.IsPublicOnlySubnetsEnabled()
 
 		pool.Platform.AWS = &mpool
 		awsMachines, err := aws.GenerateMachines(clusterID.InfraID, &aws.MachineInput{
