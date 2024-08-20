@@ -203,6 +203,8 @@ func (c *system) Run(ctx context.Context) error {
 					"AZURE_CLIENT_CERTIFICATE_PASSWORD": session.Credentials.ClientCertificatePassword,
 					"AZURE_TENANT_ID":                   session.Credentials.TenantID,
 					"AZURE_SUBSCRIPTION_ID":             session.Credentials.SubscriptionID,
+					"AZURE_RESOURCE_MANAGER_ENDPOINT":   session.Environment.ResourceManagerEndpoint,
+					"AZURE_RESOURCE_MANAGER_AUDIENCE":   session.Environment.ServiceManagementEndpoint,
 				},
 			),
 		)
