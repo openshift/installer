@@ -267,6 +267,7 @@ func TestValidate(t *testing.T) {
 		edgeSubnets    Subnets
 		instanceTypes  map[string]InstanceType
 		proxy          string
+		publicOnly     string
 		expectErr      string
 	}{{
 		name: "valid no byo",
@@ -818,6 +819,42 @@ func TestValidate(t *testing.T) {
 		}(),
 		availZones: validAvailZones(),
 		expectErr:  `^platform.aws.publicIpv4PoolId: Invalid value: "ipv4pool-ec2-123": publish strategy Internal can't be used with custom Public IPv4 Pools$`,
+	}, {
+		name: "invalid publish method for public-only subnets install",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Publish = types.InternalPublishingStrategy
+			return c
+		}(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		publicOnly:     "true",
+		expectErr:      `^publish: Invalid value: \"Internal\": cluster cannot be private with public subnets$`,
+	}, {
+		name: "no subnets specified for public-only subnets cluster",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Subnets = []string{}
+			return c
+		}(),
+		privateSubnets: validPrivateSubnets(),
+		availZones:     validAvailZones(),
+		publicOnly:     "true",
+		expectErr:      `^platform\.aws\.subnets: Required value: subnets must be specified for public-only subnets clusters$`,
+	}, {
+		name:           "no public subnets specified for public-only subnets cluster",
+		installConfig:  validInstallConfig(),
+		privateSubnets: validPrivateSubnets(),
+		availZones:     validAvailZones(),
+		publicOnly:     "true",
+		expectErr:      `platform\.aws\.subnets: Required value: public subnets are required for a public-only subnets cluster`,
+	}, {
+		name:           "valid public-only subnets install config",
+		installConfig:  validInstallConfig(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets:  validPublicSubnets(),
+		availZones:     validAvailZones(),
+		publicOnly:     "true",
 	}}
 
 	for _, test := range tests {
@@ -834,6 +871,11 @@ func TestValidate(t *testing.T) {
 				os.Setenv("HTTP_PROXY", test.proxy)
 			} else {
 				os.Unsetenv("HTTP_PROXY")
+			}
+			if test.publicOnly != "" {
+				os.Setenv("OPENSHIFT_INSTALL_AWS_PUBLIC_ONLY", test.publicOnly)
+			} else {
+				os.Unsetenv("OPENSHIFT_INSTALL_AWS_PUBLIC_ONLY")
 			}
 			err := Validate(context.TODO(), meta, test.installConfig)
 			if test.expectErr == "" {
