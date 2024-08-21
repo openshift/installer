@@ -5139,6 +5139,78 @@ spec:
                     description: 'Network specifies the name of the network to be
                       used by the cluster. Deprecated: Use FailureDomains.Topology.Network'
                     type: string
+                  nodeNetworking:
+                    description: nodeNetworking contains the definition of internal
+                      and external network constraints for assigning the node's networking.
+                      If this field is omitted, networking defaults to the legacy
+                      address selection behavior which is to only support a single
+                      address and return the first one found.
+                    properties:
+                      external:
+                        description: external represents the network configuration
+                          of the node that is externally routable.
+                        properties:
+                          excludeNetworkSubnetCidr:
+                            description: excludeNetworkSubnetCidr IP addresses in
+                              subnet ranges will be excluded when selecting the IP
+                              address from the VirtualMachine's VM for use in the
+                              status.addresses fields. ---
+                            items:
+                              type: string
+                            type: array
+                            x-kubernetes-list-type: atomic
+                          network:
+                            description: network VirtualMachine's VM Network names
+                              that will be used to when searching for status.addresses
+                              fields. Note that if internal.networkSubnetCIDR and
+                              external.networkSubnetCIDR are not set, then the vNIC
+                              associated to this network must only have a single IP
+                              address assigned to it. The available networks (port
+                              groups) can be listed using `govc ls 'network/*'`
+                            type: string
+                          networkSubnetCidr:
+                            description: networkSubnetCidr IP address on VirtualMachine's
+                              network interfaces included in the fields' CIDRs that
+                              will be used in respective status.addresses fields.
+                              ---
+                            items:
+                              type: string
+                            type: array
+                            x-kubernetes-list-type: set
+                        type: object
+                      internal:
+                        description: internal represents the network configuration
+                          of the node that is routable only within the cluster.
+                        properties:
+                          excludeNetworkSubnetCidr:
+                            description: excludeNetworkSubnetCidr IP addresses in
+                              subnet ranges will be excluded when selecting the IP
+                              address from the VirtualMachine's VM for use in the
+                              status.addresses fields. ---
+                            items:
+                              type: string
+                            type: array
+                            x-kubernetes-list-type: atomic
+                          network:
+                            description: network VirtualMachine's VM Network names
+                              that will be used to when searching for status.addresses
+                              fields. Note that if internal.networkSubnetCIDR and
+                              external.networkSubnetCIDR are not set, then the vNIC
+                              associated to this network must only have a single IP
+                              address assigned to it. The available networks (port
+                              groups) can be listed using `govc ls 'network/*'`
+                            type: string
+                          networkSubnetCidr:
+                            description: networkSubnetCidr IP address on VirtualMachine's
+                              network interfaces included in the fields' CIDRs that
+                              will be used in respective status.addresses fields.
+                              ---
+                            items:
+                              type: string
+                            type: array
+                            x-kubernetes-list-type: set
+                        type: object
+                    type: object
                   password:
                     description: 'Password is the password for the user to use to
                       connect to the vCenter. Deprecated: Use VCenters.Password'

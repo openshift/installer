@@ -2,6 +2,7 @@ package vsphere
 
 import (
 	"fmt"
+	"github.com/openshift/api/features"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -51,5 +52,10 @@ func GetInfraPlatformSpec(ic *installconfig.InstallConfig, clusterID string) *co
 	platformSpec.IngressIPs = types.StringsToIPs(icPlatformSpec.IngressVIPs)
 	platformSpec.MachineNetworks = types.MachineNetworksToCIDRs(ic.Config.MachineNetwork)
 
+	if ic.Config.EnabledFeatureGates().Enabled(features.FeatureGateMultiVSphereNetworks) {
+		if icPlatformSpec.NodeNetworking != nil {
+			icPlatformSpec.NodeNetworking.DeepCopyInto(&platformSpec.NodeNetworking)
+		}
+	}
 	return &platformSpec
 }

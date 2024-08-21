@@ -130,6 +130,14 @@ type Platform struct {
 	// +kubebuilder:validation:Optional
 	FailureDomains []FailureDomain `json:"failureDomains,omitempty"`
 
+	// nodeNetworking contains the definition of internal and external network constraints for
+	// assigning the node's networking.
+	// If this field is omitted, networking defaults to the legacy
+	// address selection behavior which is to only support a single address and
+	// return the first one found.
+	// +optional
+	NodeNetworking *configv1.VSpherePlatformNodeNetworking `json:"nodeNetworking,omitempty"`
+
 	// LoadBalancer defines how the load balancer used by the cluster is configured.
 	// LoadBalancer is available in TechPreview.
 	// +optional
