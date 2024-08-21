@@ -34,7 +34,7 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 			expectedFiles: generatedFilesUnconfiguredIgnition("/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/iscsi-oci-configure-secondary-nic.sh"),
 			serviceEnabledMap: map[string]bool{
 				"pre-network-manager-config.service":        false,
-				"iscsi-oci-configure-secondary-nic.service": false,
+				"iscsi-oci-configure-secondary-nic.service": true,
 				"agent-check-config-image.service":          true},
 		},
 		{
@@ -63,7 +63,7 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 				registryCABundlePath, "/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/iscsi-oci-configure-secondary-nic.sh"),
 			serviceEnabledMap: map[string]bool{
 				"pre-network-manager-config.service":        false,
-				"iscsi-oci-configure-secondary-nic.service": false,
+				"iscsi-oci-configure-secondary-nic.service": true,
 				"agent-check-config-image.service":          true},
 		},
 		{
@@ -75,7 +75,7 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 				"/etc/assisted/network/host0/mac_interface.ini", "/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/iscsi-oci-configure-secondary-nic.sh"),
 			serviceEnabledMap: map[string]bool{
 				"pre-network-manager-config.service":        true,
-				"iscsi-oci-configure-secondary-nic.service": false,
+				"iscsi-oci-configure-secondary-nic.service": true,
 				"agent-check-config-image.service":          true},
 		},
 	}
