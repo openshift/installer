@@ -17,9 +17,17 @@ limitations under the License.
 package v1beta2
 
 import (
+	"strings"
+
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+)
+
+const (
+	// PreventDeletionLabel can be used in situations where preventing delation is allowed. The docs
+	// and the CRD will call this out where its allowed.
+	PreventDeletionLabel = "aws.cluster.x-k8s.io/prevent-deletion"
 )
 
 // AWSResourceReference is a reference to a specific AWS resource by ID or filters.
@@ -249,6 +257,10 @@ type Instance struct {
 	// PublicIPOnLaunch is the option to associate a public IP on instance launch
 	// +optional
 	PublicIPOnLaunch *bool `json:"publicIPOnLaunch,omitempty"`
+
+	// CapacityReservationID specifies the target Capacity Reservation into which the instance should be launched.
+	// +optional
+	CapacityReservationID *string `json:"capacityReservationId,omitempty"`
 }
 
 // InstanceMetadataState describes the state of InstanceMetadataOptions.HttpEndpoint and InstanceMetadataOptions.InstanceMetadataTags
@@ -439,3 +451,19 @@ type PrivateDNSName struct {
 	// +kubebuilder:validation:Enum:=ip-name;resource-name
 	HostnameType *string `json:"hostnameType,omitempty"`
 }
+
+// SubnetSchemaType specifies how given network should be divided on subnets
+// in the VPC depending on the number of AZs.
+type SubnetSchemaType string
+
+// Name returns subnet schema type name without prefix.
+func (s *SubnetSchemaType) Name() string {
+	return strings.ToLower(strings.TrimPrefix(string(*s), "Prefer"))
+}
+
+var (
+	// SubnetSchemaPreferPrivate allocates more subnets in the VPC to private subnets.
+	SubnetSchemaPreferPrivate = SubnetSchemaType("PreferPrivate")
+	// SubnetSchemaPreferPublic allocates more subnets in the VPC to public subnets.
+	SubnetSchemaPreferPublic = SubnetSchemaType("PreferPublic")
+)
