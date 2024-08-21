@@ -58,7 +58,7 @@ type NetworkSpec struct {
 	OperatorSpec `json:",inline"`
 
 	// clusterNetwork is the IP address pool to use for pod IPs.
-	// Some network providers, e.g. OpenShift SDN, support multiple ClusterNetworks.
+	// Some network providers support multiple ClusterNetworks.
 	// Others only support one. This is equivalent to the cluster-cidr.
 	// +listType=atomic
 	ClusterNetwork []ClusterNetworkEntry `json:"clusterNetwork"`
@@ -96,8 +96,8 @@ type NetworkSpec struct {
 	// deployKubeProxy specifies whether or not a standalone kube-proxy should
 	// be deployed by the operator. Some network providers include kube-proxy
 	// or similar functionality. If unset, the plugin will attempt to select
-	// the correct value, which is false when OpenShift SDN and ovn-kubernetes are
-	// used and true otherwise.
+	// the correct value, which is false when ovn-kubernetes is used and true
+	// otherwise.
 	// +optional
 	DeployKubeProxy *bool `json:"deployKubeProxy,omitempty"`
 
@@ -109,9 +109,9 @@ type NetworkSpec struct {
 	// +kubebuilder:default:=false
 	DisableNetworkDiagnostics bool `json:"disableNetworkDiagnostics"`
 
-	// kubeProxyConfig lets us configure desired proxy configuration.
-	// If not specified, sensible defaults will be chosen by OpenShift directly.
-	// Not consumed by all network providers - currently only openshift-sdn.
+	// kubeProxyConfig lets us configure desired proxy configuration, if
+	// deployKubeProxy is true. If not specified, sensible defaults will be chosen by
+	// OpenShift directly.
 	KubeProxyConfig *ProxyConfig `json:"kubeProxyConfig,omitempty"`
 
 	// exportNetworkFlows enables and configures the export of network flow metadata from the pod network
@@ -120,8 +120,8 @@ type NetworkSpec struct {
 	// +optional
 	ExportNetworkFlows *ExportNetworkFlows `json:"exportNetworkFlows,omitempty"`
 
-	// migration enables and configures the cluster network migration. The
-	// migration procedure allows to change the network type and the MTU.
+	// migration enables and configures cluster network migration, for network changes
+	// that cannot be made instantly.
 	// +optional
 	Migration *NetworkMigration `json:"migration,omitempty"`
 
@@ -141,71 +141,70 @@ type NetworkSpec struct {
 
 // NetworkMigrationMode is an enumeration of the possible mode of the network migration
 // Valid values are "Live", "Offline" and omitted.
+// DEPRECATED: network type migration is no longer supported.
 // +kubebuilder:validation:Enum:=Live;Offline;""
 type NetworkMigrationMode string
 
 const (
 	// A "Live" migration operation will not cause service interruption by migrating the CNI of each node one by one. The cluster network will work as normal during the network migration.
+	// DEPRECATED: network type migration is no longer supported.
 	LiveNetworkMigrationMode NetworkMigrationMode = "Live"
 	// An "Offline" migration operation will cause service interruption. During an "Offline" migration, two rounds of node reboots are required. The cluster network will be malfunctioning during the network migration.
+	// DEPRECATED: network type migration is no longer supported.
 	OfflineNetworkMigrationMode NetworkMigrationMode = "Offline"
 )
 
-// NetworkMigration represents the cluster network configuration.
+// NetworkMigration represents the cluster network migration configuration.
 // +openshift:validation:FeatureGateAwareXValidation:featureGate=NetworkLiveMigration,rule="!has(self.mtu) || !has(self.networkType) || self.networkType == \"\" || has(self.mode) && self.mode == 'Live'",message="networkType migration in mode other than 'Live' may not be configured at the same time as mtu migration"
 type NetworkMigration struct {
-	// networkType is the target type of network migration. Set this to the
-	// target network type to allow changing the default network. If unset, the
-	// operation of changing cluster default network plugin will be rejected.
-	// The supported values are OpenShiftSDN, OVNKubernetes
-	// +optional
-	NetworkType string `json:"networkType,omitempty"`
-
 	// mtu contains the MTU migration configuration. Set this to allow changing
 	// the MTU values for the default network. If unset, the operation of
 	// changing the MTU for the default network will be rejected.
 	// +optional
 	MTU *MTUMigration `json:"mtu,omitempty"`
 
-	// features contains the features migration configuration. Set this to migrate
-	// feature configuration when changing the cluster default network provider.
-	// if unset, the default operation is to migrate all the configuration of
-	// supported features.
+	// networkType was previously used when changing the default network type.
+	// DEPRECATED: network type migration is no longer supported, and setting
+	// this to a non-empty value will result in the network operator rejecting
+	// the configuration.
+	// +optional
+	NetworkType string `json:"networkType,omitempty"`
+
+	// features was previously used to configure which network plugin features
+	// would be migrated in a network type migration.
+	// DEPRECATED: network type migration is no longer supported, and setting
+	// this to a non-empty value will result in the network operator rejecting
+	// the configuration.
 	// +optional
 	Features *FeaturesMigration `json:"features,omitempty"`
 
-	// mode indicates the mode of network migration.
-	// The supported values are "Live", "Offline" and omitted.
-	// A "Live" migration operation will not cause service interruption by migrating the CNI of each node one by one. The cluster network will work as normal during the network migration.
-	// An "Offline" migration operation will cause service interruption. During an "Offline" migration, two rounds of node reboots are required. The cluster network will be malfunctioning during the network migration.
-	// When omitted, this means no opinion and the platform is left to choose a reasonable default which is subject to change over time.
-	// The current default value is "Offline".
+	// mode indicates the mode of network type migration.
+	// DEPRECATED: network type migration is no longer supported, and setting
+	// this to a non-empty value will result in the network operator rejecting
+	// the configuration.
 	// +optional
-	Mode NetworkMigrationMode `json:"mode"`
+	Mode NetworkMigrationMode `json:"mode,omitempty"`
 }
 
 type FeaturesMigration struct {
-	// egressIP specifies whether or not the Egress IP configuration is migrated
-	// automatically when changing the cluster default network provider.
-	// If unset, this property defaults to 'true' and Egress IP configure is migrated.
+	// egressIP specified whether or not the Egress IP configuration was migrated.
+	// DEPRECATED: network type migration is no longer supported.
 	// +optional
 	// +kubebuilder:default:=true
 	EgressIP bool `json:"egressIP,omitempty"`
-	// egressFirewall specifies whether or not the Egress Firewall configuration is migrated
-	// automatically when changing the cluster default network provider.
-	// If unset, this property defaults to 'true' and Egress Firewall configure is migrated.
+	// egressFirewall specified whether or not the Egress Firewall configuration was migrated.
+	// DEPRECATED: network type migration is no longer supported.
 	// +optional
 	// +kubebuilder:default:=true
 	EgressFirewall bool `json:"egressFirewall,omitempty"`
-	// multicast specifies whether or not the multicast configuration is migrated
-	// automatically when changing the cluster default network provider.
-	// If unset, this property defaults to 'true' and multicast configure is migrated.
+	// multicast specified whether or not the multicast configuration was migrated.
+	// DEPRECATED: network type migration is no longer supported.
 	// +optional
 	// +kubebuilder:default:=true
 	Multicast bool `json:"multicast,omitempty"`
 }
 
-// MTUMigration MTU contains infomation about MTU migration.
+// MTUMigration contains infomation about MTU migration.
 type MTUMigration struct {
 	// network contains information about MTU migration for the default network.
 	// Migrations are only allowed to MTU values lower than the machine's uplink
@@ -250,7 +249,8 @@ type DefaultNetworkDefinition struct {
 	// All NetworkTypes are supported except for NetworkTypeRaw
 	Type NetworkType `json:"type"`
 
-	// openShiftSDNConfig configures the openshift-sdn plugin
+	// openShiftSDNConfig was previously used to configure the openshift-sdn plugin.
+	// DEPRECATED: OpenShift SDN is no longer supported.
 	// +optional
 	OpenShiftSDNConfig *OpenShiftSDNConfig `json:"openshiftSDNConfig,omitempty"`
 
@@ -368,7 +368,7 @@ type AdditionalNetworkDefinition struct {
 	SimpleMacvlanConfig *SimpleMacvlanConfig `json:"simpleMacvlanConfig,omitempty"`
 }
 
-// OpenShiftSDNConfig configures the three openshift-sdn plugins
+// OpenShiftSDNConfig was used to configure the OpenShift SDN plugin. It is no longer used.
 type OpenShiftSDNConfig struct {
 	// mode is one of "Multitenant", "Subnet", or "NetworkPolicy"
 	Mode SDNMode `json:"mode"`
@@ -387,7 +387,6 @@ type OpenShiftSDNConfig struct {
 	// useExternalOpenvswitch used to control whether the operator would deploy an OVS
 	// DaemonSet itself or expect someone else to start OVS. As of 4.6, OVS is always
 	// run as a system service, and this flag is ignored.
-	// DEPRECATED: non-functional as of 4.6
 	// +optional
 	UseExternalOpenvswitch *bool `json:"useExternalOpenvswitch,omitempty"`
 
@@ -760,11 +759,11 @@ type EgressIPConfig struct {
 }
 
 const (
-	// NetworkTypeOpenShiftSDN means the openshift-sdn plugin will be configured
+	// NetworkTypeOpenShiftSDN means the openshift-sdn plugin will be configured.
+	// DEPRECATED: OpenShift SDN is no longer supported
 	NetworkTypeOpenShiftSDN NetworkType = "OpenShiftSDN"
 
-	// NetworkTypeOVNKubernetes means the ovn-kubernetes project will be configured.
-	// This is currently not implemented.
+	// NetworkTypeOVNKubernetes means the ovn-kubernetes plugin will be configured.
 	NetworkTypeOVNKubernetes NetworkType = "OVNKubernetes"
 
 	// NetworkTypeRaw
@@ -774,19 +773,23 @@ const (
 	NetworkTypeSimpleMacvlan NetworkType = "SimpleMacvlan"
 )
 
-// SDNMode is the Mode the openshift-sdn plugin is in
+// SDNMode is the Mode the openshift-sdn plugin is in.
+// DEPRECATED: OpenShift SDN is no longer supported
 type SDNMode string
 
 const (
 	// SDNModeSubnet is a simple mode that offers no isolation between pods
+	// DEPRECATED: OpenShift SDN is no longer supported
 	SDNModeSubnet SDNMode = "Subnet"
 
 	// SDNModeMultitenant is a special "multitenant" mode that offers limited
 	// isolation configuration between namespaces
+	// DEPRECATED: OpenShift SDN is no longer supported
 	SDNModeMultitenant SDNMode = "Multitenant"
 
 	// SDNModeNetworkPolicy is a full NetworkPolicy implementation that allows
 	// for sophisticated network isolation and segmenting. This is the default.
+	// DEPRECATED: OpenShift SDN is no longer supported
 	SDNModeNetworkPolicy SDNMode = "NetworkPolicy"
 )
 

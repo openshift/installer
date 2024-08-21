@@ -34,12 +34,12 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 			Field:           field.NewPath("platform", "vsphere", "vcenters"),
 		},
 		{
-			FeatureGateName: features.FeatureGateMultiVSphereNetworks,
+			FeatureGateName: features.FeatureGateVSphereMultiNetworks,
 			Condition:       multiNetworksFound,
 			Field:           field.NewPath("platform", "vsphere", "failureDomains", "topology", "networks"),
 		},
 		{
-			FeatureGateName: features.FeatureGateMultiVSphereNetworks,
+			FeatureGateName: features.FeatureGateVSphereMultiNetworks,
 			Condition:       nodeNetworkingDefined,
 			Field:           field.NewPath("platform", "vsphere", "nodeNetworking"),
 		},
