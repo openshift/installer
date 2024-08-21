@@ -31,10 +31,11 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 	}{
 		{
 			name:          "default-configs-and-no-nmstateconfigs",
-			expectedFiles: generatedFilesUnconfiguredIgnition("/usr/local/bin/pre-network-manager-config.sh"),
+			expectedFiles: generatedFilesUnconfiguredIgnition("/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/iscsi-oci-configure-secondary-nic.sh"),
 			serviceEnabledMap: map[string]bool{
-				"pre-network-manager-config.service": false,
-				"agent-check-config-image.service":   true},
+				"pre-network-manager-config.service":        false,
+				"iscsi-oci-configure-secondary-nic.service": false,
+				"agent-check-config-image.service":          true},
 		},
 		{
 			name: "with-mirror-configs",
@@ -59,10 +60,11 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 				},
 			},
 			expectedFiles: generatedFilesUnconfiguredIgnition(registriesConfPath,
-				registryCABundlePath, "/usr/local/bin/pre-network-manager-config.sh"),
+				registryCABundlePath, "/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/iscsi-oci-configure-secondary-nic.sh"),
 			serviceEnabledMap: map[string]bool{
-				"pre-network-manager-config.service": false,
-				"agent-check-config-image.service":   true},
+				"pre-network-manager-config.service":        false,
+				"iscsi-oci-configure-secondary-nic.service": false,
+				"agent-check-config-image.service":          true},
 		},
 		{
 			name: "with-nmstateconfigs",
@@ -70,10 +72,11 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 				&nmStateConfig,
 			},
 			expectedFiles: generatedFilesUnconfiguredIgnition("/etc/assisted/network/host0/eth0.nmconnection",
-				"/etc/assisted/network/host0/mac_interface.ini", "/usr/local/bin/pre-network-manager-config.sh"),
+				"/etc/assisted/network/host0/mac_interface.ini", "/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/iscsi-oci-configure-secondary-nic.sh"),
 			serviceEnabledMap: map[string]bool{
-				"pre-network-manager-config.service": true,
-				"agent-check-config-image.service":   true},
+				"pre-network-manager-config.service":        true,
+				"iscsi-oci-configure-secondary-nic.service": false,
+				"agent-check-config-image.service":          true},
 		},
 	}
 	for _, tc := range cases {
