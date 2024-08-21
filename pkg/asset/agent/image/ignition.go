@@ -372,6 +372,8 @@ func getDefaultEnabledServices() []string {
 		"multipathd.service",
 		"selinux.service",
 		"install-status.service",
+		"iscsi-oci-configure-secondary-nic.service",
+		"iscsistart.service",
 		"set-hostname.service",
 	}
 }
