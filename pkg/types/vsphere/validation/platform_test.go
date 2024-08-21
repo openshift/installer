@@ -180,6 +180,146 @@ func TestValidatePlatform(t *testing.T) {
 		expectedError string
 	}{
 		{
+			name: "Valid nodeNetworking",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.NodeNetworking = &configv1.VSpherePlatformNodeNetworking{
+					External: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"10.0.0.0/24"},
+						ExcludeNetworkSubnetCIDR: []string{"10.8.0.0/24"},
+					},
+					Internal: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"10.0.0.0/24"},
+						ExcludeNetworkSubnetCIDR: []string{"10.8.0.0/24"},
+					},
+				}
+				return p
+			}(),
+		},
+		{
+			name: "Valid IPv6 nodeNetworking",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.NodeNetworking = &configv1.VSpherePlatformNodeNetworking{
+					External: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"2002::1234:abcd:ffff:c0a8:101/64"},
+						ExcludeNetworkSubnetCIDR: []string{"2008::1234:abcd:ffff:c0a8:101/64"},
+					},
+					Internal: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"2002::1234:abcd:ffff:c0a8:101/64"},
+						ExcludeNetworkSubnetCIDR: []string{"2008::1234:abcd:ffff:c0a8:101/64"},
+					},
+				}
+				return p
+			}(),
+		},
+		{
+			name: "Invalid nodeNetworking -- invalid NetworkSubnetCIDR",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.NodeNetworking = &configv1.VSpherePlatformNodeNetworking{
+					External: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"10..0.0/24"},
+						ExcludeNetworkSubnetCIDR: []string{"10.8.0.0/24"},
+					},
+					Internal: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"10..0.0/24"},
+						ExcludeNetworkSubnetCIDR: []string{"10.8.0.0/24"},
+					},
+				}
+				return p
+			}(),
+			expectedError: `test-path.nodeNetworking.internal.networkSubnetCidr: Invalid value: "10..0.0/24": invalid CIDR address: 10..0.0/24, test-path.nodeNetworking.external.networkSubnetCidr: Invalid value: "10..0.0/24": invalid CIDR address: 10..0.0/24`,
+		},
+		{
+			name: "Invalid nodeNetworking -- invalid IPv6 NetworkSubnetCIDR",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.NodeNetworking = &configv1.VSpherePlatformNodeNetworking{
+					External: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"2T02::1234:abcd:ffff:c0a8:101/64"},
+						ExcludeNetworkSubnetCIDR: []string{"2008::1234:abcd:ffff:c0a8:101/64"},
+					},
+					Internal: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"2T02::1234:abcd:ffff:c0a8:101/64"},
+						ExcludeNetworkSubnetCIDR: []string{"2008::1234:abcd:ffff:c0a8:101/64"},
+					},
+				}
+				return p
+			}(),
+			expectedError: `test-path.nodeNetworking.internal.networkSubnetCidr: Invalid value: "2T02::1234:abcd:ffff:c0a8:101/64": invalid CIDR address: 2T02::1234:abcd:ffff:c0a8:101/64, test-path.nodeNetworking.external.networkSubnetCidr: Invalid value: "2T02::1234:abcd:ffff:c0a8:101/64": invalid CIDR address: 2T02::1234:abcd:ffff:c0a8:101/64`,
+		},
+		{
+			name: "Invalid nodeNetworking -- invalid ExcludeNetworkSubnetCIDR",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.NodeNetworking = &configv1.VSpherePlatformNodeNetworking{
+					External: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"10.0.0.0/24"},
+						ExcludeNetworkSubnetCIDR: []string{"10..0.0/24"},
+					},
+					Internal: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"10.0.0.0/24"},
+						ExcludeNetworkSubnetCIDR: []string{"10..0.0/24"},
+					},
+				}
+				return p
+			}(),
+			expectedError: `test-path.nodeNetworking.internal.excludeNetworkSubnetCidr: Invalid value: "10..0.0/24": invalid CIDR address: 10..0.0/24, test-path.nodeNetworking.external.excludeNetworkSubnetCidr: Invalid value: "10..0.0/24": invalid CIDR address: 10..0.0/24`,
+		},
+		{
+			name: "Invalid nodeNetworking -- invalid IPv6 ExcludeNetworkSubnetCIDR",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.NodeNetworking = &configv1.VSpherePlatformNodeNetworking{
+					External: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"2002::1234:abcd:ffff:c0a8:101/64"},
+						ExcludeNetworkSubnetCIDR: []string{"2T08::1234:abcd:ffff:c0a8:101/64"},
+					},
+					Internal: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"2002::1234:abcd:ffff:c0a8:101/64"},
+						ExcludeNetworkSubnetCIDR: []string{"2T08::1234:abcd:ffff:c0a8:101/64"},
+					},
+				}
+
+				return p
+			}(),
+			expectedError: `test-path.nodeNetworking.internal.excludeNetworkSubnetCidr: Invalid value: "2T08::1234:abcd:ffff:c0a8:101/64": invalid CIDR address: 2T08::1234:abcd:ffff:c0a8:101/64, test-path.nodeNetworking.external.excludeNetworkSubnetCidr: Invalid value: "2T08::1234:abcd:ffff:c0a8:101/64": invalid CIDR address: 2T08::1234:abcd:ffff:c0a8:101/64`,
+		},
+		{
+			name: "Invalid nodeNetworking -- invalid network name",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.NodeNetworking = &configv1.VSpherePlatformNodeNetworking{
+					External: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup-99",
+						NetworkSubnetCIDR:        []string{"10.0.0.0/24"},
+						ExcludeNetworkSubnetCIDR: []string{"10.8.0.0/24"},
+					},
+					Internal: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup-99",
+						NetworkSubnetCIDR:        []string{"10.0.0.0/24"},
+						ExcludeNetworkSubnetCIDR: []string{"10.8.0.0/24"},
+					},
+				}
+				return p
+			}(),
+			expectedError: `test-path.nodeNetworking.internal.network: Invalid value: "test-portgroup-99": network must be defined in topology, test-path.nodeNetworking.external.network: Invalid value: "test-portgroup-99": network must be defined in topology`,
+		},
+
+		{
 			name: "Valid diskType",
 			platform: func() *vsphere.Platform {
 				p := validPlatform()
