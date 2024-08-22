@@ -325,7 +325,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	}
 
 	tokenCredential := session.TokenCreds
-	storageURL := fmt.Sprintf("https://%s.blob.core.windows.net", storageAccountName)
+	storageURL := fmt.Sprintf("https://%s.blob.%s", storageAccountName, session.Environment.StorageEndpointSuffix)
 	blobURL := fmt.Sprintf("%s/%s/%s", storageURL, containerName, blobName)
 
 	// Create storage account
