@@ -52,15 +52,13 @@ type Platform struct {
 
 	// userLabels has additional keys and values that the installer will add as
 	// labels to all resources that it creates on GCP. Resources created by the
-	// cluster itself may not include these labels. GCPLabelsTags featureGate is
-	// defined for managing this feature and is enabled by default.
+	// cluster itself may not include these labels.
 	UserLabels []UserLabel `json:"userLabels,omitempty"`
 
 	// userTags has additional keys and values that the installer will add as
 	// tags to all resources that it creates on GCP. Resources created by the
 	// cluster itself may not include these tags. Tag key and tag value should
-	// be the shortnames of the tag key and tag value resource. GCPLabelsTags featureGate
-	// is defined for managing this feature and is enabled by default.
+	// be the shortnames of the tag key and tag value resource.
 	UserTags []UserTag `json:"userTags,omitempty"`
 
 	// UserProvisionedDNS indicates if the customer is providing their own DNS solution in place of the default
