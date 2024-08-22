@@ -384,6 +384,7 @@ func addRouterCAToClusterCA(ctx context.Context, config *rest.Config, directory 
 }
 
 func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *clusterCreateError {
+	return newClientError(errors.Wrap(err, "-----TEST----"))
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return newClientError(errors.Wrap(err, "creating a Kubernetes client"))
