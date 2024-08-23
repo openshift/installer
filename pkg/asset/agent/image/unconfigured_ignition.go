@@ -11,8 +11,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	"github.com/openshift/assisted-service/api/v1beta1"
+	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/common"
+	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/ignition"
@@ -60,9 +63,12 @@ func GetConfigImageFiles() []string {
 // UnconfiguredIgnition is an asset that generates the agent installer unconfigured
 // ignition file which excludes any cluster configuration.
 type UnconfiguredIgnition struct {
-	Config  *igntypes.Config
-	CPUArch string
-	File    *asset.File
+	Config       *igntypes.Config
+	CPUArch      string
+	PublicKeyPEM string
+	Token        string
+	AuthType     string
+	File         *asset.File
 }
 
 // Name returns the human-friendly name of the asset.
@@ -80,6 +86,7 @@ func (a *UnconfiguredIgnition) Dependencies() []asset.Asset {
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
 		&common.InfraEnvID{},
+		&gencrypto.AuthConfig{},
 	}
 }
 
@@ -90,7 +97,8 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 	clusterImageSetAsset := &manifests.ClusterImageSet{}
 	pullSecretAsset := &manifests.AgentPullSecret{}
 	nmStateConfigs := &manifests.NMStateConfig{}
-	dependencies.Get(infraEnvAsset, clusterImageSetAsset, pullSecretAsset, nmStateConfigs, infraEnvIDAsset)
+	authConfig := &gencrypto.AuthConfig{}
+	dependencies.Get(infraEnvAsset, clusterImageSetAsset, pullSecretAsset, nmStateConfigs, infraEnvIDAsset, authConfig)
 
 	infraEnv := infraEnvAsset.Config
 	clusterImageSet := clusterImageSetAsset.Config
@@ -140,18 +148,21 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 
 	configImageFiles := strings.Join(GetConfigImageFiles(), ",")
 
-	agentTemplateData := &agentTemplateData{
-		PullSecret:                pullSecretAsset.GetPullSecretData(),
-		ReleaseImages:             releaseImageList,
-		ReleaseImage:              clusterImageSet.Spec.ReleaseImage,
-		ReleaseImageMirror:        mirror.GetMirrorFromRelease(clusterImageSet.Spec.ReleaseImage, registriesConfig),
-		HaveMirrorConfig:          len(registriesConfig.MirrorConfig) > 0,
-		PublicContainerRegistries: getPublicContainerRegistries(registriesConfig),
-		InfraEnvID:                infraEnvID,
-		OSImage:                   osImage,
-		Proxy:                     infraEnv.Spec.Proxy,
-		ConfigImageFiles:          configImageFiles,
-	}
+	agentTemplateData := getUnconfiguredIgnitionTemplateData(
+		pullSecretAsset.GetPullSecretData(),
+		releaseImageList,
+		clusterImageSet.Spec.ReleaseImage,
+		mirror.GetMirrorFromRelease(clusterImageSet.Spec.ReleaseImage, registriesConfig),
+		getPublicContainerRegistries(registriesConfig),
+		infraEnvID,
+		authConfig.PublicKey,
+		authConfig.AuthType,
+		authConfig.AgentAuthToken,
+		configImageFiles,
+		len(registriesConfig.MirrorConfig) > 0,
+		osImage,
+		infraEnv.Spec.Proxy,
+	)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
 	if err != nil {
@@ -235,6 +246,25 @@ func (a *UnconfiguredIgnition) generateFile(filename string) error {
 		Data:     data,
 	}
 	return nil
+}
+
+func getUnconfiguredIgnitionTemplateData(pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries, infraEnvID, publicKey, authType, agentAuthToken, configImageFiles string,
+	haveMirrorConfig bool, osImage *models.OsImage, proxy *v1beta1.Proxy) *agentTemplateData {
+	return &agentTemplateData{
+		PullSecret:                pullSecret,
+		ReleaseImages:             releaseImageList,
+		ReleaseImage:              releaseImage,
+		ReleaseImageMirror:        releaseImageMirror,
+		PublicContainerRegistries: publicContainerRegistries,
+		InfraEnvID:                infraEnvID,
+		PublicKeyPEM:              publicKey,
+		AuthType:                  authType,
+		Token:                     agentAuthToken,
+		ConfigImageFiles:          configImageFiles,
+		HaveMirrorConfig:          haveMirrorConfig,
+		OSImage:                   osImage,
+		Proxy:                     proxy,
+	}
 }
 
 // Load returns the UnconfiguredIgnition from disk.

@@ -17,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
+	"github.com/openshift/assisted-service/api/v1beta1"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
@@ -41,6 +42,31 @@ import (
 // func TestIgnition_Generate(t *testing.T) {}
 
 func TestIgnition_getTemplateData(t *testing.T) {
+	pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries, infraEnvID, publicKey, token, haveMirrorConfig, osImage, proxy, agentClusterInstall, err := getTestData()
+	assert.NoError(t, err)
+
+	clusterName := "test-agent-cluster-install.test"
+
+	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries, "minimal-iso", infraEnvID, publicKey, gencrypto.AuthType, token, "", "", haveMirrorConfig, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, osImage, proxy)
+	assert.Equal(t, clusterName, templateData.ClusterName)
+	assert.Equal(t, "http", templateData.ServiceProtocol)
+	assert.Equal(t, pullSecret, templateData.PullSecret)
+	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, templateData.ControlPlaneAgents)
+	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, templateData.WorkerAgents)
+	assert.Equal(t, releaseImageList, templateData.ReleaseImages)
+	assert.Equal(t, releaseImage, templateData.ReleaseImage)
+	assert.Equal(t, releaseImageMirror, templateData.ReleaseImageMirror)
+	assert.Equal(t, haveMirrorConfig, templateData.HaveMirrorConfig)
+	assert.Equal(t, publicContainerRegistries, templateData.PublicContainerRegistries)
+	assert.Equal(t, infraEnvID, templateData.InfraEnvID)
+	assert.Equal(t, osImage, templateData.OSImage)
+	assert.Equal(t, proxy, templateData.Proxy)
+	assert.Equal(t, publicKey, templateData.PublicKeyPEM)
+	assert.Equal(t, gencrypto.AuthType, templateData.AuthType)
+	assert.Equal(t, token, templateData.Token)
+}
+
+func getTestData() (string, string, string, string, string, string, string, string, bool, *models.OsImage, *v1beta1.Proxy, *hiveext.AgentClusterInstall, error) {
 	clusterImageSet := &hivev1.ClusterImageSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "openshift-v4.10.0",
@@ -69,10 +95,6 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	infraEnvID := "random-infra-env-id"
 	haveMirrorConfig := true
 	publicContainerRegistries := "quay.io,registry.ci.openshift.org"
-
-	releaseImageList, err := releaseImageList(clusterImageSet.Spec.ReleaseImage, "x86_64", []string{"86_64"})
-	assert.NoError(t, err)
-
 	arch := "x86_64"
 	ov := "4.12"
 	isoURL := "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.12/412.86.202208101039-0/x86_64/rhcos-412.86.202208101039-0-live.x86_64.iso"
@@ -83,36 +105,20 @@ func TestIgnition_getTemplateData(t *testing.T) {
 		URL:              &isoURL,
 		Version:          &ver,
 	}
-
 	proxy := &aiv1beta1.Proxy{
 		HTTPProxy:  "http://1.1.1.1:80",
 		HTTPSProxy: "https://1.1.1.1:443",
 		NoProxy:    "valid-proxy.com,172.30.0.0/16",
 	}
-	clusterName := "test-agent-cluster-install.test"
-
 	publicKey := "-----BEGIN EC PUBLIC KEY-----\nMHcCAQEEIOSCfDNmx0qe6dncV4tg==\n-----END EC PUBLIC KEY-----\n"
 	token := "someToken"
-	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries, "minimal-iso", infraEnvID, publicKey, gencrypto.AuthType, token, "", "", haveMirrorConfig, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, osImage, proxy)
-	assert.Equal(t, clusterName, templateData.ClusterName)
-	assert.Equal(t, "http", templateData.ServiceProtocol)
-	assert.Equal(t, pullSecret, templateData.PullSecret)
-	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, templateData.ControlPlaneAgents)
-	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, templateData.WorkerAgents)
-	assert.Equal(t, releaseImageList, templateData.ReleaseImages)
-	assert.Equal(t, releaseImage, templateData.ReleaseImage)
-	assert.Equal(t, releaseImageMirror, templateData.ReleaseImageMirror)
-	assert.Equal(t, haveMirrorConfig, templateData.HaveMirrorConfig)
-	assert.Equal(t, publicContainerRegistries, templateData.PublicContainerRegistries)
-	assert.Equal(t, infraEnvID, templateData.InfraEnvID)
-	assert.Equal(t, osImage, templateData.OSImage)
-	assert.Equal(t, proxy, templateData.Proxy)
-	assert.Equal(t, publicKey, templateData.PublicKeyPEM)
-	assert.Equal(t, gencrypto.AuthType, templateData.AuthType)
-	assert.Equal(t, token, templateData.Token)
 
+	releaseImageList, err := releaseImageList(clusterImageSet.Spec.ReleaseImage, "x86_64", []string{"86_64"})
+	if err != nil {
+		return "", "", "", "", "", "", "", "", false, nil, nil, nil, err
+	}
+	return pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries, infraEnvID, publicKey, token, haveMirrorConfig, osImage, proxy, agentClusterInstall, nil
 }
-
 func TestIgnition_getRendezvousHostEnv(t *testing.T) {
 	nodeZeroIP := "2001:db8::dead:beef"
 	token := "someToken"

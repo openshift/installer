@@ -3,6 +3,7 @@ package image
 import (
 	"context"
 	"encoding/base64"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,9 +14,31 @@ import (
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/common"
+	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 )
+
+func TestIgnition_getUnconfiguredIgnitionTemplateData(t *testing.T) {
+	pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries, infraEnvID, publicKey, token, haveMirrorConfig, osImage, proxy, _, err := getTestData()
+	assert.NoError(t, err)
+	configImageFiles := strings.Join(GetConfigImageFiles(), ",")
+
+	templateData := getUnconfiguredIgnitionTemplateData(pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries, infraEnvID, publicKey, gencrypto.AuthType, token, configImageFiles, haveMirrorConfig, osImage, proxy)
+	assert.Equal(t, pullSecret, templateData.PullSecret)
+	assert.Equal(t, releaseImageList, templateData.ReleaseImages)
+	assert.Equal(t, releaseImage, templateData.ReleaseImage)
+	assert.Equal(t, releaseImageMirror, templateData.ReleaseImageMirror)
+	assert.Equal(t, haveMirrorConfig, templateData.HaveMirrorConfig)
+	assert.Equal(t, publicContainerRegistries, templateData.PublicContainerRegistries)
+	assert.Equal(t, infraEnvID, templateData.InfraEnvID)
+	assert.Equal(t, publicKey, templateData.PublicKeyPEM)
+	assert.Equal(t, gencrypto.AuthType, templateData.AuthType)
+	assert.Equal(t, configImageFiles, templateData.ConfigImageFiles)
+	assert.Equal(t, token, templateData.Token)
+	assert.Equal(t, osImage, templateData.OSImage)
+	assert.Equal(t, proxy, templateData.Proxy)
+}
 
 func TestUnconfiguredIgnition_Generate(t *testing.T) {
 	skipTestIfnmstatectlIsMissing(t)
