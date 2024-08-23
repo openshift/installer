@@ -8,6 +8,7 @@ import (
 
 	nutanixclientv3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
 
@@ -120,10 +121,10 @@ func (p Provider) PreProvision(ctx context.Context, in infracapi.PreProvisionInp
 	return nil
 }
 
-// Ignition handles preconditions for bootstrap ignition and
-// generates ignition data for the CAPI bootstrap ignition secret.
+// Ignition handles preconditions for bootstrap and master ignition and
+// generates the CAPI ignition data secrets.
 // Load the ignition iso image to prism_central.
-func (p Provider) Ignition(ctx context.Context, in infracapi.IgnitionInput) ([]byte, error) {
+func (p Provider) Ignition(ctx context.Context, in infracapi.IgnitionInput) ([]*corev1.Secret, error) {
 	ic := in.InstallConfig.Config
 	nutanixCl, err := nutanixtypes.CreateNutanixClientFromPlatform(ic.Platform.Nutanix)
 	if err != nil {
@@ -207,11 +208,25 @@ func (p Provider) Ignition(ctx context.Context, in infracapi.IgnitionInput) ([]b
 			err = fmt.Errorf("failed to create/upload the bootstrap image object %s in PC: %w", imgName, err)
 		}
 
-		return in.BootstrapIgnData, err
+		return nil, err
 	}
 	logrus.Infof("Successfully created the bootstrap image object %s and uploaded its image data", imgName)
 
-	return in.BootstrapIgnData, nil
+	ignSecrets := []*corev1.Secret{
+		infracapi.IgnitionSecret(in.BootstrapIgnData, in.InfraID, "bootstrap"),
+	}
+
+	for i := 0; i < int(*in.InstallConfig.Config.ControlPlane.Replicas); i++ {
+		// Inserts the file "/etc/hostname" with the master machine name to the ignition data
+		hostname := fmt.Sprintf("%s-master-%v", in.InfraID, i)
+		masterIgnData, err := nutanixtypes.InsertHostnameIgnition(in.MasterIgnData, hostname)
+		if err != nil {
+			return nil, fmt.Errorf("failed to insert the file '/etc/hostname' to the ignition data for machine %q: %w", hostname, err)
+		}
+		ignSecrets = append(ignSecrets, infracapi.IgnitionSecret(masterIgnData, in.InfraID, fmt.Sprintf("master-%v", i)))
+	}
+
+	return ignSecrets, nil
 }
 
 // createImage creates the image object in PC, with the provided request input.

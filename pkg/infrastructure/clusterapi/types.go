@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/openshift/installer/pkg/asset/cluster/tfvars"
@@ -49,18 +50,20 @@ type PreProvisionInput struct {
 	WorkersAsset     *machines.Worker
 }
 
-// IgnitionProvider handles preconditions for bootstrap ignition and
-// generates ignition data for the CAPI bootstrap ignition secret.
+// IgnitionProvider handles preconditions for bootstrap ignition,
+// such as pushing to cloud storage. Returns bootstrap and master
+// ignition secrets.
 //
 // WARNING! Low-level primitive. Use only if absolutely necessary.
 type IgnitionProvider interface {
-	Ignition(ctx context.Context, in IgnitionInput) ([]byte, error)
+	Ignition(ctx context.Context, in IgnitionInput) ([]*corev1.Secret, error)
 }
 
 // IgnitionInput collects the args passed to the IgnitionProvider call.
 type IgnitionInput struct {
 	Client           client.Client
 	BootstrapIgnData []byte
+	MasterIgnData    []byte
 	InfraID          string
 	InstallConfig    *installconfig.InstallConfig
 	TFVarsAsset      *tfvars.TerraformVariables
