@@ -18,7 +18,6 @@ import (
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/assisted-service/api/v1beta1"
-	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
@@ -105,7 +104,7 @@ func getTestData() (string, string, string, string, string, string, string, stri
 		URL:              &isoURL,
 		Version:          &ver,
 	}
-	proxy := &aiv1beta1.Proxy{
+	proxy := &v1beta1.Proxy{
 		HTTPProxy:  "http://1.1.1.1:80",
 		HTTPSProxy: "https://1.1.1.1:443",
 		NoProxy:    "valid-proxy.com,172.30.0.0/16",
@@ -206,7 +205,7 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 	cases := []struct {
 		Name                 string
 		agentConfig          *agent.Config
-		nmStateConfigs       []*aiv1beta1.NMStateConfig
+		nmStateConfigs       []*v1beta1.NMStateConfig
 		expectedRendezvousIP string
 		expectedError        string
 	}{
@@ -225,10 +224,10 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 		},
 		{
 			Name: "no-agent-config-provided-so-read-from-nmstateconfig",
-			nmStateConfigs: []*aiv1beta1.NMStateConfig{
+			nmStateConfigs: []*v1beta1.NMStateConfig{
 				{
-					Spec: aiv1beta1.NMStateConfigSpec{
-						NetConfig: aiv1beta1.NetConfig{
+					Spec: v1beta1.NMStateConfigSpec{
+						NetConfig: v1beta1.NetConfig{
 							Raw: []byte(rawConfig),
 						},
 					},
@@ -477,8 +476,8 @@ metadata:
 			name: "no nmstateconfigs defined, pre-network-manager-config.service should not be enabled",
 			overrideDeps: []asset.Asset{
 				&manifests.AgentManifests{
-					InfraEnv: &aiv1beta1.InfraEnv{
-						Spec: aiv1beta1.InfraEnvSpec{
+					InfraEnv: &v1beta1.InfraEnv{
+						Spec: v1beta1.InfraEnvSpec{
 							SSHAuthorizedKey: "my-ssh-key",
 						},
 					},
@@ -612,8 +611,8 @@ func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 		&joiner.ClusterInfo{},
 		&joiner.AddNodesConfig{},
 		&manifests.AgentManifests{
-			InfraEnv: &aiv1beta1.InfraEnv{
-				Spec: aiv1beta1.InfraEnvSpec{
+			InfraEnv: &v1beta1.InfraEnv{
+				Spec: v1beta1.InfraEnvSpec{
 					SSHAuthorizedKey: "my-ssh-key",
 				},
 			},
@@ -642,10 +641,10 @@ func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 					},
 				},
 			},
-			NMStateConfigs: []*aiv1beta1.NMStateConfig{
+			NMStateConfigs: []*v1beta1.NMStateConfig{
 				{
-					Spec: aiv1beta1.NMStateConfigSpec{
-						Interfaces: []*aiv1beta1.Interface{
+					Spec: v1beta1.NMStateConfigSpec{
+						Interfaces: []*v1beta1.Interface{
 							{
 								Name:       "eth0",
 								MacAddress: "00:01:02:03:04:05",
