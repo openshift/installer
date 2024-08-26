@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,14 +13,12 @@ func TestParseExpirationFromToken(t *testing.T) {
 	assert.NotEmpty(t, privateKey)
 	assert.NoError(t, err)
 
-	infraEnvID := uuid.New().String()
-
-	tokenNoExp, err := generateToken(infraEnvID, privateKey)
+	tokenNoExp, err := generateToken(privateKey)
 	assert.NotEmpty(t, tokenNoExp)
 	assert.NoError(t, err)
 
 	expiry := time.Now().UTC().Add(30 * time.Second)
-	tokenWithExp, err := generateToken(infraEnvID, privateKey, expiry)
+	tokenWithExp, err := generateToken(privateKey, expiry)
 	assert.NotEmpty(t, tokenWithExp)
 	assert.NoError(t, err)
 
