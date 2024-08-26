@@ -249,10 +249,12 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		logrus.Debugf("No infrastructure ready requirements for the %s provider", i.impl.Name())
 	}
 
+	masterIgnData := masterIgnAsset.Files()[0].Data
 	bootstrapIgnData, err := injectInstallInfo(bootstrapIgnAsset.Files()[0].Data)
 	if err != nil {
 		return fileList, fmt.Errorf("unable to inject installation info: %w", err)
 	}
+	ignitionSecrets := []*corev1.Secret{}
 
 	// The cloud-platform may need to override the default
 	// bootstrap ignition behavior.
@@ -260,22 +262,27 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		ignInput := IgnitionInput{
 			Client:           cl,
 			BootstrapIgnData: bootstrapIgnData,
+			MasterIgnData:    masterIgnData,
 			InfraID:          clusterID.InfraID,
 			InstallConfig:    installConfig,
 			TFVarsAsset:      tfvarsAsset,
 		}
 
 		timer.StartTimer(ignitionStage)
-		if bootstrapIgnData, err = p.Ignition(ctx, ignInput); err != nil {
+		if ignitionSecrets, err = p.Ignition(ctx, ignInput); err != nil {
 			return fileList, fmt.Errorf("failed preparing ignition data: %w", err)
 		}
 		timer.StopTimer(ignitionStage)
 	} else {
-		logrus.Debugf("No Ignition requirements for the %s provider", i.impl.Name())
+		logrus.Debugf("Using default ignition for the %s provider", i.impl.Name())
+		bootstrapIgnSecret := IgnitionSecret(bootstrapIgnData, clusterID.InfraID, "bootstrap")
+		masterIgnSecret := IgnitionSecret(masterIgnData, clusterID.InfraID, "master")
+		ignitionSecrets = append(ignitionSecrets, bootstrapIgnSecret, masterIgnSecret)
 	}
-	bootstrapIgnSecret := IgnitionSecret(bootstrapIgnData, clusterID.InfraID, "bootstrap")
-	masterIgnSecret := IgnitionSecret(masterIgnAsset.Files()[0].Data, clusterID.InfraID, "master")
-	machineManifests = append(machineManifests, bootstrapIgnSecret, masterIgnSecret)
+
+	for _, secret := range ignitionSecrets {
+		machineManifests = append(machineManifests, secret)
+	}
 
 	// Create the machine manifests.
 	timer.StartTimer(machineStage)
