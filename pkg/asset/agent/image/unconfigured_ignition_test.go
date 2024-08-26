@@ -141,6 +141,7 @@ func buildUnconfiguredIgnitionAssetDefaultDependencies(t *testing.T) []asset.Ass
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
 		&common.InfraEnvID{},
+		&gencrypto.AuthConfig{},
 	}
 }
 
