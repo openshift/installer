@@ -82,6 +82,31 @@ func (r *AWSMachinePool) validateRootVolume() field.ErrorList {
 	return allErrs
 }
 
+func (r *AWSMachinePool) validateNonRootVolumes() field.ErrorList {
+	var allErrs field.ErrorList
+
+	for _, volume := range r.Spec.AWSLaunchTemplate.NonRootVolumes {
+		if v1beta2.VolumeTypesProvisioned.Has(string(volume.Type)) && volume.IOPS == 0 {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec.template.spec.nonRootVolumes.iops"), "iops required if type is 'io1' or 'io2'"))
+		}
+
+		if volume.Throughput != nil {
+			if volume.Type != v1beta2.VolumeTypeGP3 {
+				allErrs = append(allErrs, field.Required(field.NewPath("spec.template.spec.nonRootVolumes.throughput"), "throughput is valid only for type 'gp3'"))
+			}
+			if *volume.Throughput < 0 {
+				allErrs = append(allErrs, field.Required(field.NewPath("spec.template.spec.nonRootVolumes.throughput"), "throughput must be nonnegative"))
+			}
+		}
+
+		if volume.DeviceName == "" {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec.template.spec.nonRootVolumes.deviceName"), "non root volume should have device name"))
+		}
+	}
+
+	return allErrs
+}
+
 func (r *AWSMachinePool) validateSubnets() field.ErrorList {
 	var allErrs field.ErrorList
 
@@ -124,6 +149,7 @@ func (r *AWSMachinePool) ValidateCreate() (admission.Warnings, error) {
 
 	allErrs = append(allErrs, r.validateDefaultCoolDown()...)
 	allErrs = append(allErrs, r.validateRootVolume()...)
+	allErrs = append(allErrs, r.validateNonRootVolumes()...)
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
 	allErrs = append(allErrs, r.validateSubnets()...)
 	allErrs = append(allErrs, r.validateAdditionalSecurityGroups()...)

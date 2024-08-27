@@ -191,12 +191,17 @@ func (s *Service) GetOrAllocateAddresses(pool *infrav1.ElasticIPPool, num int, r
 	return s.getOrAllocateAddresses(num, role, pool)
 }
 
+// GetAddresses returns the address associated to a given role.
+func (s *Service) GetAddresses(role string) (*ec2.DescribeAddressesOutput, error) {
+	return s.describeAddresses(role)
+}
+
 // ReleaseAddressByRole releases EIP addresses filtering by tag CAPA provider role.
 func (s *Service) ReleaseAddressByRole(role string) error {
-	clusterFilter := []*ec2.Filter{filter.EC2.Cluster(s.scope.Name())}
-	clusterFilter = append(clusterFilter, filter.EC2.ProviderRole(role))
-
-	return s.releaseAddressesWithFilter(clusterFilter)
+	return s.releaseAddressesWithFilter([]*ec2.Filter{
+		filter.EC2.ClusterOwned(s.scope.Name()),
+		filter.EC2.ProviderRole(role),
+	})
 }
 
 // setByoPublicIpv4 check if the config has Public IPv4 Pool defined, then
