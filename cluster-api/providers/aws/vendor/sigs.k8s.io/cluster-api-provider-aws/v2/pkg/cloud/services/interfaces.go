@@ -82,7 +82,7 @@ type EC2Interface interface {
 	DeleteBastion() error
 	ReconcileBastion() error
 	// ReconcileElasticIPFromPublicPool reconciles the elastic IP from a custom Public IPv4 Pool.
-	ReconcileElasticIPFromPublicPool(pool *infrav1.ElasticIPPool, instance *infrav1.Instance) error
+	ReconcileElasticIPFromPublicPool(pool *infrav1.ElasticIPPool, instance *infrav1.Instance) (bool, error)
 
 	// ReleaseElasticIP reconciles the elastic IP from a custom Public IPv4 Pool.
 	ReleaseElasticIP(instanceID string) error

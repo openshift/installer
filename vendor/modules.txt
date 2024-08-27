@@ -1248,7 +1248,7 @@ github.com/shurcooL/vfsgen
 ## explicit; go 1.13
 github.com/sirupsen/logrus
 github.com/sirupsen/logrus/hooks/test
-# github.com/spf13/cobra v1.8.0
+# github.com/spf13/cobra v1.8.1
 ## explicit; go 1.15
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace
@@ -2171,8 +2171,8 @@ sigs.k8s.io/cluster-api/util/kubeconfig
 sigs.k8s.io/cluster-api/util/labels/format
 sigs.k8s.io/cluster-api/util/secret
 sigs.k8s.io/cluster-api/util/topology
-# sigs.k8s.io/cluster-api-provider-aws/v2 v2.6.1
-## explicit; go 1.21
+# sigs.k8s.io/cluster-api-provider-aws/v2 v2.6.1-0.20240910142813-3f3ce5610204
+## explicit; go 1.21.0
 sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1
 sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2
 sigs.k8s.io/cluster-api-provider-aws/v2/feature

@@ -106,6 +106,7 @@ func (src *AWSCluster) ConvertTo(dstRaw conversion.Hub) error {
 	dst.Spec.NetworkSpec.VPC.PrivateDNSHostnameTypeOnLaunch = restored.Spec.NetworkSpec.VPC.PrivateDNSHostnameTypeOnLaunch
 	dst.Spec.NetworkSpec.VPC.CarrierGatewayID = restored.Spec.NetworkSpec.VPC.CarrierGatewayID
 	dst.Spec.NetworkSpec.VPC.SubnetSchema = restored.Spec.NetworkSpec.VPC.SubnetSchema
+	dst.Spec.NetworkSpec.VPC.SecondaryCidrBlocks = restored.Spec.NetworkSpec.VPC.SecondaryCidrBlocks
 
 	if restored.Spec.NetworkSpec.VPC.ElasticIPPool != nil {
 		if dst.Spec.NetworkSpec.VPC.ElasticIPPool == nil {
