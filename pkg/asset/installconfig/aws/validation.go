@@ -226,6 +226,9 @@ func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, s
 	if err != nil {
 		return append(allErrs, field.Invalid(fldPath, subnets, err.Error()))
 	}
+	if publish == types.InternalPublishingStrategy && len(publicSubnets) > 0 {
+		logrus.Warnf("Public subnets should not be provided when publish is set to %s", types.InternalPublishingStrategy)
+	}
 	publicSubnetsIdx := map[string]int{}
 	for idx, id := range subnets {
 		if _, ok := publicSubnets[id]; ok {
