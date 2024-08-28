@@ -79,12 +79,6 @@ type Platform struct {
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
 
-	// The field is deprecated. ExperimentalPropagateUserTags is an experimental
-	// flag that directs in-cluster operators to include the specified
-	// user tags in the tags of the AWS resources that the operators create.
-	// +optional
-	ExperimentalPropagateUserTag *bool `json:"experimentalPropagateUserTags,omitempty"`
-
 	// PropagateUserTags is a flag that directs in-cluster operators
 	// to include the specified user tags in the tags of the
 	// AWS resources that the operators create.

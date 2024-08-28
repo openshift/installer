@@ -285,10 +285,6 @@ func upconvertVIP(newVIPValues *[]string, oldVIPValue, newFieldName, oldFieldNam
 
 // convertAWS upconverts deprecated fields in the AWS platform.
 func convertAWS(config *types.InstallConfig) error {
-	// Deprecated ExperimentalPropagateUserTag takes precedence when set
-	if config.Platform.AWS.ExperimentalPropagateUserTag != nil {
-		config.Platform.AWS.PropagateUserTag = *config.Platform.AWS.ExperimentalPropagateUserTag
-	}
 	// BestEffortDeleteIgnition takes precedence when set
 	if !config.AWS.BestEffortDeleteIgnition {
 		config.AWS.BestEffortDeleteIgnition = config.AWS.PreserveBootstrapIgnition
