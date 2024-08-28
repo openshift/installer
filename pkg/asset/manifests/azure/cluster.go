@@ -1,7 +1,9 @@
 package azure
 
 import (
+	"context"
 	"fmt"
+	"net"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/pkg/errors"
@@ -47,14 +49,6 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	computeSubnet := installConfig.Config.Platform.Azure.ComputeSubnetName(clusterID.InfraID)
 	networkSecurityGroup := installConfig.Config.Platform.Azure.NetworkSecurityGroupName(clusterID.InfraID)
 
-	controlPlaneOutboundLB := &capz.LoadBalancerSpec{
-		Name:             clusterID.InfraID,
-		FrontendIPsCount: to.Ptr(int32(1)),
-	}
-	if installConfig.Config.Platform.Azure.OutboundType == azure.UserDefinedRoutingOutboundType {
-		controlPlaneOutboundLB = nil
-	}
-
 	source := "*"
 	if installConfig.Config.Publish == types.InternalPublishingStrategy {
 		source = mainCIDR.String()
@@ -91,6 +85,51 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		nodeSubnetID = "UNKNOWN"
 	}
 
+	apiServerLB := capz.LoadBalancerSpec{
+		Name: fmt.Sprintf("%s-internal", clusterID.InfraID),
+		BackendPool: capz.BackendPool{
+			Name: fmt.Sprintf("%s-internal", clusterID.InfraID),
+		},
+		LoadBalancerClassSpec: capz.LoadBalancerClassSpec{
+			Type: capz.Internal,
+		},
+	}
+
+	controlPlaneOutboundLB := &capz.LoadBalancerSpec{
+		Name:             clusterID.InfraID,
+		FrontendIPsCount: to.Ptr(int32(1)),
+	}
+	if installConfig.Config.Platform.Azure.OutboundType == azure.UserDefinedRoutingOutboundType {
+		controlPlaneOutboundLB = nil
+	}
+
+	virtualNetworkID := ""
+	if installConfig.Config.Azure.VirtualNetwork != "" {
+		client, err := installConfig.Azure.Client()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get azure client: %w", err)
+		}
+		ctx := context.TODO()
+		virtualNetwork, err := client.GetVirtualNetwork(ctx, installConfig.Config.Azure.NetworkResourceGroupName, installConfig.Config.Azure.VirtualNetwork)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get azure virtual network: %w", err)
+		}
+		if virtualNetwork != nil {
+			virtualNetworkID = *virtualNetwork.ID
+		}
+		lbip, err := getNextAvailableIP(ctx, installConfig)
+		if err != nil {
+			return nil, err
+		}
+		apiServerLB.FrontendIPs = []capz.FrontendIP{{
+			Name: fmt.Sprintf("%s-internal-frontEnd", clusterID.InfraID),
+			FrontendIPClass: capz.FrontendIPClass{
+				PrivateIPAddress: lbip,
+			},
+		},
+		}
+	}
+
 	azureCluster := &capz.AzureCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -121,22 +160,14 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					// The ID field is not used for any other purpose in CAPZ except to set the "managed" status.
 					// See https://github.com/kubernetes-sigs/cluster-api-provider-azure/blob/main/azure/scope/cluster.go#L585
 					// https://github.com/kubernetes-sigs/cluster-api-provider-azure/commit/0f321e4089a3f4dc37f8420bf2ef6762c398c400
-					ID: installConfig.Config.Azure.VirtualNetwork,
+					ID: virtualNetworkID,
 					VnetClassSpec: capz.VnetClassSpec{
 						CIDRBlocks: []string{
 							mainCIDR.String(),
 						},
 					},
 				},
-				APIServerLB: capz.LoadBalancerSpec{
-					Name: fmt.Sprintf("%s-internal", clusterID.InfraID),
-					BackendPool: capz.BackendPool{
-						Name: fmt.Sprintf("%s-internal", clusterID.InfraID),
-					},
-					LoadBalancerClassSpec: capz.LoadBalancerClassSpec{
-						Type: capz.Internal,
-					},
-				},
+				APIServerLB:            apiServerLB,
 				ControlPlaneOutboundLB: controlPlaneOutboundLB,
 				Subnets: capz.Subnets{
 					{
@@ -222,4 +253,48 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 		},
 	}, nil
+}
+
+func getNextAvailableIP(ctx context.Context, installConfig *installconfig.InstallConfig) (string, error) {
+	lbip := capz.DefaultInternalLBIPAddress
+	machineCidr := installConfig.Config.MachineNetwork
+	client, err := installConfig.Azure.Client()
+	if err != nil {
+		return "", fmt.Errorf("failed to get azure client: %w", err)
+	}
+	vClient, err := client.GetVirtualNetworksClient(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get azure virtual network client: %w", err)
+	}
+
+	availableIP, err := vClient.CheckIPAddressAvailability(ctx, installConfig.Config.Azure.NetworkResourceGroupName, installConfig.Config.Azure.VirtualNetwork, lbip)
+	if err != nil {
+		return "", fmt.Errorf("failed to get azure ip availability: %w", err)
+	}
+	if *availableIP.Available {
+		for _, cidrRange := range machineCidr {
+			_, ipnet, err := net.ParseCIDR(cidrRange.CIDR.String())
+			if err != nil {
+				return "", fmt.Errorf("failed to get machine network CIDR: %w", err)
+			}
+			if ipnet.Contains(net.ParseIP(lbip)) {
+				return lbip, nil
+			}
+		}
+	}
+	if *availableIP.AvailableIPAddresses == nil || len(*availableIP.AvailableIPAddresses) == 0 {
+		return "", fmt.Errorf("failed to get an available IP in given virtual network for LB: %w", err)
+	}
+	for _, ip := range *availableIP.AvailableIPAddresses {
+		for _, cidrRange := range machineCidr {
+			_, ipnet, err := net.ParseCIDR(cidrRange.CIDR.String())
+			if err != nil {
+				return "", fmt.Errorf("failed to get machine network CIDR: %w", err)
+			}
+			if ipnet.Contains(net.ParseIP(ip)) {
+				return ip, nil
+			}
+		}
+	}
+	return "", fmt.Errorf("failed to get available IP in given machine network: %w", err)
 }
