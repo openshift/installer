@@ -41,6 +41,7 @@ type config struct {
 	EnableSNAT             bool   `json:"powervs_enable_snat"`
 	AttachedTransitGateway string `json:"powervs_attached_transit_gateway"`
 	TGConnectionVPCID      string `json:"powervs_tg_connection_vpc_id"`
+	TGName                 string `json:"powervs_tg_name"`
 	ServiceInstanceName    string `json:"powervs_service_instance_name"`
 }
 
@@ -67,6 +68,7 @@ type TFVarsSources struct {
 	EnableSNAT             bool
 	AttachedTransitGateway string
 	TGConnectionVPCID      string
+	TGName                 string
 	ServiceInstanceName    string
 }
 
@@ -125,6 +127,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		AttachedTransitGateway: sources.AttachedTransitGateway,
 		TGConnectionVPCID:      sources.TGConnectionVPCID,
 		ServiceInstanceName:    sources.ServiceInstanceName,
+		TGName:                 sources.TGName,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

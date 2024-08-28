@@ -943,9 +943,13 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			}
 		}
 
+		tgName := ""
+		if installConfig.Config.PowerVS.TGName != "" {
+			tgName = installConfig.Config.PowerVS.TGName
+		}
 		attachedTG := ""
 		tgConnectionVPCID := ""
-		if installConfig.Config.PowerVS.ServiceInstanceGUID != "" {
+		if installConfig.Config.PowerVS.ServiceInstanceGUID != "" && installConfig.Config.PowerVS.TGName == "" {
 			attachedTG, err = client.GetAttachedTransitGateway(ctx, installConfig.Config.PowerVS.ServiceInstanceGUID)
 			if err != nil {
 				return err
@@ -988,6 +992,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				DNSInstanceCRN:         dnsCRN,
 				PublishStrategy:        installConfig.Config.Publish,
 				EnableSNAT:             len(installConfig.Config.DeprecatedImageContentSources) == 0 && len(installConfig.Config.ImageDigestSources) == 0,
+				TGName:                 tgName,
 				AttachedTransitGateway: attachedTG,
 				TGConnectionVPCID:      tgConnectionVPCID,
 				ServiceInstanceName:    serviceInstanceName,

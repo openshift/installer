@@ -134,6 +134,12 @@ variable "powervs_attached_transit_gateway" {
   default     = ""
 }
 
+variable "powervs_tg_name" {
+  type        = string
+  description = "Name of an existing Transit Gateway"
+  default     = ""
+}
+
 ################################################################
 # Configure instances
 ################################################################

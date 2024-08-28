@@ -10,4 +10,5 @@ type Metadata struct {
 	VPCRegion            string `json:"vpcRegion"`
 	Zone                 string `json:"zone"`
 	ServiceInstanceGUID  string `json:"serviceInstanceGUID"`
+	TransitGatewayName   string `json:"transitGatewayName"`
 }

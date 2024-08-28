@@ -19,13 +19,13 @@ const loadBalancerTypeName = "load balancer"
 func (o *ClusterUninstaller) listLoadBalancers() (cloudResources, error) {
 	o.Logger.Debugf("Listing load balancers")
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	select {
 	case <-ctx.Done():
 		o.Logger.Debugf("listLoadBalancers: case <-ctx.Done()")
-		return nil, o.Context.Err() // we're cancelled, abort
+		return nil, ctx.Err() // we're cancelled, abort
 	default:
 	}
 
@@ -68,13 +68,13 @@ func (o *ClusterUninstaller) deleteLoadBalancer(item cloudResource) error {
 	var response *core.DetailedResponse
 	var err error
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	select {
 	case <-ctx.Done():
 		o.Logger.Debugf("deleteLoadBalancer: case <-ctx.Done()")
-		return o.Context.Err() // we're cancelled, abort
+		return ctx.Err() // we're cancelled, abort
 	default:
 	}
 
@@ -134,14 +134,14 @@ func (o *ClusterUninstaller) destroyLoadBalancers() error {
 
 	items := o.insertPendingItems(loadBalancerTypeName, firstPassList.list())
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	for _, item := range items {
 		select {
 		case <-ctx.Done():
 			o.Logger.Debugf("destroyLoadBalancers: case <-ctx.Done()")
-			return o.Context.Err() // we're cancelled, abort
+			return ctx.Err() // we're cancelled, abort
 		default:
 		}
 

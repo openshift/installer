@@ -19,13 +19,13 @@ const securityGroupTypeName = "security group"
 func (o *ClusterUninstaller) listSecurityGroups() (cloudResources, error) {
 	o.Logger.Debugf("Listing security groups")
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	select {
 	case <-ctx.Done():
 		o.Logger.Debugf("listSecurityGroups: case <-ctx.Done()")
-		return nil, o.Context.Err() // we're cancelled, abort
+		return nil, ctx.Err() // we're cancelled, abort
 	default:
 	}
 
@@ -67,13 +67,13 @@ func (o *ClusterUninstaller) deleteSecurityGroup(item cloudResource) error {
 	var response *core.DetailedResponse
 	var err error
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	select {
 	case <-ctx.Done():
 		o.Logger.Debugf("deleteSecurityGroup: case <-ctx.Done()")
-		return o.Context.Err() // we're cancelled, abort
+		return ctx.Err() // we're cancelled, abort
 	default:
 	}
 
@@ -118,14 +118,14 @@ func (o *ClusterUninstaller) destroySecurityGroups() error {
 
 	items := o.insertPendingItems(securityGroupTypeName, firstPassList.list())
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	for _, item := range items {
 		select {
 		case <-ctx.Done():
 			o.Logger.Debugf("destroySecurityGroups: case <-ctx.Done()")
-			return o.Context.Err() // we're cancelled, abort
+			return ctx.Err() // we're cancelled, abort
 		default:
 		}
 

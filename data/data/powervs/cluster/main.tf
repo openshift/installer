@@ -151,6 +151,7 @@ module "transit_gateway" {
   resource_group           = var.powervs_resource_group
   service_instance_crn     = module.iaas.si_crn
   attached_transit_gateway = var.powervs_attached_transit_gateway
+  tg_name                  = var.powervs_tg_name
   tg_connection_vpc_id     = var.powervs_tg_connection_vpc_id
   vpc_crn                  = module.vpc.vpc_crn
   vpc_region               = var.powervs_vpc_region

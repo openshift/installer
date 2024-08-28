@@ -69,19 +69,19 @@ type User struct {
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
 type ClusterUninstaller struct {
-	APIKey         string
-	BaseDomain     string
-	CISInstanceCRN string
-	ClusterName    string
-	Context        context.Context
-	DNSInstanceCRN string
-	DNSZone        string
-	InfraID        string
-	Logger         logrus.FieldLogger
-	Region         string
-	ServiceGUID    string
-	VPCRegion      string
-	Zone           string
+	APIKey             string
+	BaseDomain         string
+	CISInstanceCRN     string
+	ClusterName        string
+	DNSInstanceCRN     string
+	DNSZone            string
+	InfraID            string
+	Logger             logrus.FieldLogger
+	Region             string
+	ServiceGUID        string
+	VPCRegion          string
+	Zone               string
+	TransitGatewayName string
 
 	managementSvc      *resourcemanagerv2.ResourceManagerV2
 	controllerSvc      *resourcecontrollerv2.ResourceControllerV2
@@ -134,6 +134,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.VPCRegion = %v", metadata.ClusterPlatformMetadata.PowerVS.VPCRegion)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.Zone = %v", metadata.ClusterPlatformMetadata.PowerVS.Zone)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID = %v", metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID)
+	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.TransitGatewayName = %v", metadata.ClusterPlatformMetadata.PowerVS.TransitGatewayName)
 
 	// Handle an optional setting in install-config.yaml
 	if metadata.ClusterPlatformMetadata.PowerVS.VPCRegion == "" {
@@ -149,7 +150,6 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		APIKey:             APIKey,
 		BaseDomain:         metadata.ClusterPlatformMetadata.PowerVS.BaseDomain,
 		ClusterName:        metadata.ClusterName,
-		Context:            context.Background(),
 		Logger:             logger,
 		InfraID:            metadata.InfraID,
 		CISInstanceCRN:     metadata.ClusterPlatformMetadata.PowerVS.CISInstanceCRN,
@@ -160,6 +160,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		pendingItemTracker: newPendingItemTracker(),
 		resourceGroupID:    metadata.ClusterPlatformMetadata.PowerVS.PowerVSResourceGroup,
 		ServiceGUID:        metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID,
+		TransitGatewayName: metadata.ClusterPlatformMetadata.PowerVS.TransitGatewayName,
 	}, nil
 }
 
@@ -172,7 +173,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	var ok bool
 	var err error
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	if ctx == nil {
@@ -306,7 +307,7 @@ func (o *ClusterUninstaller) executeStageFunction(f struct {
 	var ok bool
 	var err error
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	if ctx == nil {
@@ -497,7 +498,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 			return fmt.Errorf("loadSDKServices: creating zonesSvc: %w", err)
 		}
 
-		ctx, cancel := o.contextWithTimeout()
+		ctx, cancel := contextWithTimeout()
 		defer cancel()
 
 		// Get the Zone ID
@@ -717,8 +718,8 @@ func (o *ClusterUninstaller) ServiceInstanceNameToGUID(ctx context.Context, name
 	return "", nil
 }
 
-func (o *ClusterUninstaller) contextWithTimeout() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(o.Context, defaultTimeout)
+func contextWithTimeout() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), defaultTimeout)
 }
 
 func (o *ClusterUninstaller) timeout(ctx context.Context) bool {

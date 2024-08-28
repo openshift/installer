@@ -32,3 +32,9 @@ variable "vpc_region" {
   type        = string
   description = "The IBM Cloud region in which the VPC is created."
 }
+
+variable "tg_name" {
+  type        = string
+  description = "Name of an existing Transit Gateway"
+  default     = ""
+}
