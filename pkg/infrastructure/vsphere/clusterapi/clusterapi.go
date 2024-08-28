@@ -39,12 +39,10 @@ func initializeFoldersAndTemplates(ctx context.Context, cachedImage string, fail
 	if err != nil {
 		return err
 	}
-	dcFolders, err := dc.Folders(ctx)
-	if err != nil {
-		return fmt.Errorf("unable to get datacenter folder: %w", err)
-	}
 
-	folderPath := path.Join(dcFolders.VmFolder.InventoryPath, clusterID)
+	// Upstream govmomi bug, workaround
+	// https://github.com/vmware/govmomi/issues/3523
+	folderPath := path.Join(dc.InventoryPath, "vm", clusterID)
 
 	// we must set the Folder to the infraId somewhere, we will need to remove that.
 	// if we are overwriting folderPath it needs to have a slash (path)
