@@ -16,7 +16,6 @@ import (
 	azic "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils/cidr"
-	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 )
 
@@ -48,16 +47,28 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	computeSubnet := installConfig.Config.Platform.Azure.ComputeSubnetName(clusterID.InfraID)
 	networkSecurityGroup := installConfig.Config.Platform.Azure.NetworkSecurityGroupName(clusterID.InfraID)
 
+	// Create Control Plane Outbound Load Balancer.
+	// Set the Outbound Load Balancer type to `Public` if APIServer needs to be public.
+	lbType := capz.Internal
+	if installConfig.Config.PublicAPI() {
+		lbType = capz.Public
+	}
+
 	controlPlaneOutboundLB := &capz.LoadBalancerSpec{
 		Name:             clusterID.InfraID,
 		FrontendIPsCount: to.Ptr(int32(1)),
+		LoadBalancerClassSpec: capz.LoadBalancerClassSpec{
+			Type: lbType,
+		},
 	}
+
+	// Control Plane Outbound Load Balancer not needed when UserDefinedRouting is configured
 	if installConfig.Config.Platform.Azure.OutboundType == azure.UserDefinedRoutingOutboundType {
 		controlPlaneOutboundLB = nil
 	}
 
 	source := "*"
-	if installConfig.Config.Publish == types.InternalPublishingStrategy {
+	if !installConfig.Config.PublicAPI() {
 		source = mainCIDR.String()
 	}
 
