@@ -13,6 +13,7 @@ provider "azurerm" {
   client_certificate_path     = var.azure_certificate_path
   tenant_id                   = var.azure_tenant_id
   use_msi                     = var.azure_use_msi
+  storage_use_azuread         = var.azure_use_msi
   environment                 = var.azure_environment
 }
 
