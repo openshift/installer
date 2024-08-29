@@ -21,7 +21,6 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/baremetal"
 )
 
 func TestClusterInfo_Generate(t *testing.T) {
@@ -297,9 +296,6 @@ func makeInstallConfig(t *testing.T) string {
 					"registry.example.com:5000/ocp4/openshift4",
 				},
 			},
-		},
-		Platform: types.Platform{
-			BareMetal: &baremetal.Platform{},
 		},
 		SSHKey: "my-ssh-key",
 		FIPS:   true,
