@@ -34,7 +34,8 @@ done
 
 echo "Gathering bootstrap journals ..."
 mkdir -p "${ARTIFACTS}/bootstrap/journals"
-for service in approve-csr bootkube crio crio-configure image-customization ironic ironic-dnsmasq ironic-httpd ironic-ramdisk-logs \
+for service in approve-csr bootkube crio crio-configure \
+    extract-machine-os image-customization ironic ironic-dnsmasq ironic-httpd ironic-ramdisk-logs \
     kubelet master-bmh-update metal3-baremetal-operator release-image release-image-download sssd
 do
     journalctl --boot --no-pager --output=short --unit="${service}" > "${ARTIFACTS}/bootstrap/journals/${service}.log"
