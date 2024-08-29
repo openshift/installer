@@ -18,6 +18,11 @@ import (
 // FloatingIPs creates or gets the API and Ingress ports and attaches the Floating IPs to them.
 func FloatingIPs(ctx context.Context, cluster *capo.OpenStackCluster, installConfig *installconfig.InstallConfig, infraID string) error {
 	platformOpenstack := installConfig.Config.OpenStack
+	// Single-stack IPv6 doesn't require a Floating IP
+	machineNetwork := installConfig.Config.Networking.MachineNetwork
+	if platformOpenstack.ControlPlanePort != nil && len(machineNetwork) == 1 && machineNetwork[0].CIDR.IPNet.IP.To4() == nil {
+		return nil
+	}
 	if lb := platformOpenstack.LoadBalancer; lb != nil && lb.Type == configv1.LoadBalancerTypeUserManaged {
 		return nil
 	}

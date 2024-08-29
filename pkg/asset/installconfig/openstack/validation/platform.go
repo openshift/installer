@@ -73,10 +73,10 @@ func validateControlPlanePort(p *openstack.Platform, n *types.Networking, ci *Cl
 			networkID = subnet.NetworkID
 		}
 	}
-	if !hasIPv4Subnet && hasIPv6Subnet {
-		allErrs = append(allErrs, field.InternalError(fldPath.Child("controlPlanePort").Child("fixedIPs"), fmt.Errorf("one IPv4 subnet must be specified")))
-	} else if hasIPv4Subnet && !hasIPv6Subnet && len(p.ControlPlanePort.FixedIPs) == 2 {
-		allErrs = append(allErrs, field.InternalError(fldPath.Child("controlPlanePort").Child("fixedIPs"), fmt.Errorf("multiple IPv4 subnets is not supported")))
+	if len(p.ControlPlanePort.FixedIPs) == 2 {
+		if (!hasIPv4Subnet && hasIPv6Subnet) || (hasIPv4Subnet && !hasIPv6Subnet) {
+			allErrs = append(allErrs, field.InternalError(fldPath.Child("controlPlanePort").Child("fixedIPs"), fmt.Errorf("one IPv4 subnet and one IPv6 subnet must be specified")))
+		}
 	}
 	controlPlaneNetwork := p.ControlPlanePort.Network
 	if controlPlaneNetwork.ID != "" || controlPlaneNetwork.Name != "" {
@@ -153,8 +153,9 @@ func validateFloatingIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Pa
 // validateAPIAndIngressVIPs().
 func validateVIPs(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {
 	// If the subnet is not found in the CloudInfo object, abandon validation.
-	// For dual-stack the user needs to pre-create the Port for API and Ingress, so no need for validation.
-	if len(ci.ControlPlanePortSubnets) == 1 {
+	// For dual-stack and single-stack IPv6 the user needs to pre-create the Port for API and Ingress, so no need for validation.
+
+	if len(ci.ControlPlanePortSubnets) == 1 && ci.ControlPlanePortSubnets[0].IPVersion == 4 {
 		for _, allocationPool := range ci.ControlPlanePortSubnets[0].AllocationPools {
 			start := net.ParseIP(allocationPool.Start)
 			end := net.ParseIP(allocationPool.End)
