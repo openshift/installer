@@ -3075,6 +3075,13 @@ spec:
                     maxItems: 2
                     type: array
                     uniqueItems: true
+                  additionalNTPServers:
+                    description: additionalNTPServers is a list of additional NTP servers
+                      to use for provisioning
+                    format: ip
+                    items:
+                      type: string
+                    type: array
                   bootstrapExternalStaticDNS:
                     description: BootstrapExternalStaticDNS is the static network
                       DNS of the bootstrap node. This can be useful in environments

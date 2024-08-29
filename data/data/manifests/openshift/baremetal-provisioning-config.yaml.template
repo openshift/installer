@@ -9,4 +9,5 @@ spec:
   provisioningNetwork: "{{.Baremetal.ProvisioningNetwork}}"
   provisioningDHCPRange: "{{.Baremetal.ProvisioningDHCPRange}}"
   provisioningOSDownloadURL: "{{.ProvisioningOSDownloadURL}}"
+  additionalNTPServers: "{{.Baremetal.AdditionalNTPServers}}"
   watchAllNamespaces: false
