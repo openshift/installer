@@ -114,7 +114,7 @@ networkConfig:
       state: up`,
 
 			expectedFound: false,
-			expectedError: "invalid Image-based Config configuration: additionalNTPSources[0]: Invalid value: \"invalid-domain@\": NTP source is not a valid domain name nor a valid IP",
+			expectedError: "invalid Image-based Config configuration: AdditionalNTPSources: Invalid value: \"invalid-domain@\": NTP server is not a valid IP or domain name",
 		},
 	}
 	for _, tc := range cases {

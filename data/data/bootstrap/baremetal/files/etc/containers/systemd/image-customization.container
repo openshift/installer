@@ -24,6 +24,7 @@ Environment="IRONIC_AGENT_IMAGE=${IRONIC_AGENT_IMAGE}"
 Environment="IP_OPTIONS=${EXTERNAL_IP_OPTIONS}"
 Environment="REGISTRIES_CONF_PATH=/tmp/containers/registries.conf"
 Environment="KUBECONFIG=/opt/openshift/auth/kubeconfig-loopback"
+Environment="ADDITIONAL_NTP_SERVERS=${ADDITIONAL_NTP_SERVERS}"
 
 [Service]
 EnvironmentFile=/etc/ironic.env

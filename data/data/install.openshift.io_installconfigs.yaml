@@ -3079,6 +3079,14 @@ spec:
                 description: BareMetal is the configuration used when installing on
                   bare metal.
                 properties:
+                  additionalNTPServers:
+                    description: |-
+                      AdditionalNTPServers defines a list of additional NTP servers
+                      to use for provisioning
+                    items:
+                      type: string
+                    type: array
+                    uniqueItems: true
                   apiVIP:
                     description: |-
                       DeprecatedAPIVIP is the VIP to use for internal API communication

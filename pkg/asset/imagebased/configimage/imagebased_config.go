@@ -12,8 +12,8 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/manifests/staticnetworkconfig"
+	"github.com/openshift/installer/pkg/types/baremetal/validation"
 	"github.com/openshift/installer/pkg/types/imagebased"
-	"github.com/openshift/installer/pkg/validate"
 )
 
 const (
@@ -140,7 +140,7 @@ func (i *ImageBasedConfig) finish() error {
 func (i *ImageBasedConfig) validateImageBasedConfig() field.ErrorList {
 	var allErrs field.ErrorList
 
-	if err := i.validateAdditionalNTPSources(); err != nil {
+	if err := validation.ValidateNTPServers(i.Config.AdditionalNTPSources, field.NewPath("AdditionalNTPSources")); err != nil {
 		allErrs = append(allErrs, err...)
 	}
 
@@ -166,22 +166,6 @@ func (i *ImageBasedConfig) validateNetworkConfig() field.ErrorList {
 	// Validate the network config using nmstatectl
 	if err := staticNetworkConfigGenerator.ValidateNMStateYaml(context.Background(), i.Config.NetworkConfig.String()); err != nil {
 		allErrs = append(allErrs, field.Invalid(networkConfig, i.Config.NetworkConfig, err.Error()))
-	}
-
-	return allErrs
-}
-
-func (i *ImageBasedConfig) validateAdditionalNTPSources() field.ErrorList {
-	var allErrs field.ErrorList
-
-	additionalNTPSourcesPath := field.NewPath("additionalNTPSources")
-
-	for i, source := range i.Config.AdditionalNTPSources {
-		if domainNameErr := validate.DomainName(source, true); domainNameErr != nil {
-			if ipErr := validate.IP(source); ipErr != nil {
-				allErrs = append(allErrs, field.Invalid(additionalNTPSourcesPath.Index(i), source, "NTP source is not a valid domain name nor a valid IP"))
-			}
-		}
 	}
 
 	return allErrs

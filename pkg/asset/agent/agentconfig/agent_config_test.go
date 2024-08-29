@@ -123,7 +123,7 @@ additionalNTPSources:
   - invalid_pool.ntp.org
 rendezvousIP: 192.168.111.80`,
 			expectedFound: false,
-			expectedError: "invalid Agent Config configuration: AdditionalNTPSources[4]: Invalid value: \"invalid_pool.ntp.org\": NTP source is not a valid domain name nor a valid IP",
+			expectedError: "invalid Agent Config configuration: AdditionalNTPSources: Invalid value: \"invalid_pool.ntp.org\": NTP server is not a valid IP or domain name",
 		},
 	}
 	for _, tc := range cases {

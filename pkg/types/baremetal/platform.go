@@ -238,4 +238,10 @@ type Platform struct {
 	// +kubebuilder:validation:Format=ip
 	// +optional
 	BootstrapExternalStaticDNS string `json:"bootstrapExternalStaticDNS,omitempty"`
+
+	// AdditionalNTPServers defines a list of additional NTP servers
+	// to use for provisioning
+	// +kubebuilder:validation:UniqueItems=true
+	//  +optional
+	AdditionalNTPServers []string `json:"additionalNTPServers,omitempty"`
 }

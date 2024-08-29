@@ -228,6 +228,7 @@ func getValidOptionalInstallConfigWithProvisioning() *agent.OptionalInstallConfi
 	installConfig.Config.Platform.BareMetal.ProvisioningNetworkInterface = "eth0"
 	installConfig.Config.Platform.BareMetal.ProvisioningNetworkCIDR = ipnet.MustParseCIDR("172.22.0.0/24")
 	installConfig.Config.Platform.BareMetal.ProvisioningDHCPRange = "172.22.0.10,172.22.0.254"
+	installConfig.Config.Platform.BareMetal.AdditionalNTPServers = []string{"10.0.1.1", "10.0.1.2"}
 	return installConfig
 }
 
