@@ -62,7 +62,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateNetworks(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateInstanceTypes(client, ic)...)
 	allErrs = append(allErrs, ValidateCredentialMode(client, ic)...)
-	allErrs = append(allErrs, validatePreexistingServiceAccountXpn(client, ic)...)
+	allErrs = append(allErrs, validatePreexistingServiceAccount(client, ic)...)
 	allErrs = append(allErrs, validateServiceAccountPresent(client, ic)...)
 	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
 
@@ -249,21 +249,19 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 	return allErrs
 }
 
-func validatePreexistingServiceAccountXpn(client API, ic *types.InstallConfig) field.ErrorList {
+func validatePreexistingServiceAccount(client API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if ic.GCP.NetworkProjectID != "" {
-		if ic.ControlPlane.Platform.GCP != nil && ic.ControlPlane.Platform.GCP.ServiceAccount != "" {
-			fldPath := field.NewPath("controlPlane").Child("platform").Child("gcp").Child("serviceAccount")
+	if ic.ControlPlane.Platform.GCP != nil && ic.ControlPlane.Platform.GCP.ServiceAccount != "" {
+		fldPath := field.NewPath("controlPlane").Child("platform").Child("gcp").Child("serviceAccount")
 
-			// The service account is required for resources in the host project.
-			serviceAccount, err := client.GetServiceAccount(context.Background(), ic.GCP.ProjectID, ic.ControlPlane.Platform.GCP.ServiceAccount)
-			if err != nil {
-				return append(allErrs, field.InternalError(fldPath, err))
-			}
-			if serviceAccount == "" {
-				return append(allErrs, field.NotFound(fldPath, ic.ControlPlane.Platform.GCP.ServiceAccount))
-			}
+		// The service account is required for resources in the host project.
+		serviceAccount, err := client.GetServiceAccount(context.Background(), ic.GCP.ProjectID, ic.ControlPlane.Platform.GCP.ServiceAccount)
+		if err != nil {
+			return append(allErrs, field.InternalError(fldPath, err))
+		}
+		if serviceAccount == "" {
+			return append(allErrs, field.NotFound(fldPath, ic.ControlPlane.Platform.GCP.ServiceAccount))
 		}
 	}
 
