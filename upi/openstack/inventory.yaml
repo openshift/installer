@@ -54,13 +54,13 @@ all:
       # Be aware that the 10 and 11 of the machineNetwork will
       # be taken by neutron dhcp by default, and wont be available.
       # This value will be overwritten by the network.yaml playbook.
-      os_apiVIP: "{{ os_subnet_range | ansible.utils.next_nth_usable(5) }}"
+      os_apiVIP: "{{ os_subnet_range | next_nth_usable(5) }}"
 
       # An IPv4 address that will be assigned to the ingress VIP.
       # Be aware that the 10 and 11 of the machineNetwork will
       # be taken by neutron dhcp by default, and wont be available.
       # This value will be overwritten by the network.yaml playbook.
-      os_ingressVIP: "{{ os_subnet_range | ansible.utils.next_nth_usable(7) }}"
+      os_ingressVIP: "{{ os_subnet_range | next_nth_usable(7) }}"
 
       # Set control-plane nodes to schedule workloads when number of compute
       # nodes is zero
