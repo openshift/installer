@@ -74,7 +74,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 }
 
 // ValidateInstanceType ensures the instance type has sufficient Vcpu and Memory.
-func ValidateInstanceType(client API, fieldPath *field.Path, project, region string, zones []string, instanceType string, req resourceRequirements, arch string) field.ErrorList {
+func ValidateInstanceType(client API, fieldPath *field.Path, project, region string, zones []string, diskType string, instanceType string, req resourceRequirements, arch string) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	typeMeta, typeZones, err := client.GetMachineTypeWithZones(context.TODO(), project, region, instanceType)
@@ -83,6 +83,14 @@ func ValidateInstanceType(client API, fieldPath *field.Path, project, region str
 			return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, err.Error()))
 		}
 		return append(allErrs, field.InternalError(nil, err))
+	}
+
+	if diskType == "hyperdisk-balanced" {
+		family, _, _ := strings.Cut(instanceType, "-")
+		families := sets.NewString("c3", "c3d", "m1", "n4")
+		if !families.Has(family) {
+			allErrs = append(allErrs, field.NotSupported(fieldPath.Child("diskType"), family, families.List()))
+		}
 	}
 
 	userZones := sets.New(zones...)
@@ -153,6 +161,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 	if ic.GCP.DefaultMachinePlatform != nil {
 		defaultZones = ic.GCP.DefaultMachinePlatform.Zones
 		defaultInstanceType = ic.GCP.DefaultMachinePlatform.InstanceType
+
 		if ic.GCP.DefaultMachinePlatform.InstanceType != "" {
 			allErrs = append(allErrs,
 				ValidateInstanceType(
@@ -161,6 +170,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 					ic.GCP.ProjectID,
 					ic.GCP.Region,
 					ic.GCP.DefaultMachinePlatform.Zones,
+					ic.GCP.DefaultMachinePlatform.DiskType,
 					ic.GCP.DefaultMachinePlatform.InstanceType,
 					defaultInstanceReq,
 					unknownArchitecture,
@@ -171,6 +181,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 	zones := defaultZones
 	instanceType := defaultInstanceType
 	arch := types.ArchitectureAMD64
+	cpDiskType := ""
 	if ic.ControlPlane != nil {
 		arch = string(ic.ControlPlane.Architecture)
 		if instanceType == "" {
@@ -183,6 +194,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			if len(ic.ControlPlane.Platform.GCP.Zones) > 0 {
 				zones = ic.ControlPlane.Platform.GCP.Zones
 			}
+			cpDiskType = ic.ControlPlane.Platform.GCP.DiskType
 		}
 	}
 	allErrs = append(allErrs,
@@ -192,6 +204,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			ic.GCP.ProjectID,
 			ic.GCP.Region,
 			zones,
+			cpDiskType,
 			instanceType,
 			controlPlaneReq,
 			arch,
@@ -213,6 +226,12 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 				zones = compute.Platform.GCP.Zones
 			}
 		}
+
+		diskType := ""
+		if compute.Platform.GCP != nil && compute.Platform.GCP.DiskType != "" {
+			diskType = compute.Platform.GCP.DiskType
+		}
+
 		allErrs = append(allErrs,
 			ValidateInstanceType(
 				client,
@@ -220,6 +239,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 				ic.GCP.ProjectID,
 				ic.GCP.Region,
 				zones,
+				diskType,
 				instanceType,
 				computeReq,
 				string(arch),
