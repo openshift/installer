@@ -60,7 +60,7 @@ var tableRegexp = regexp.MustCompile(`(?i)(?:.+? AS (\w+)\s*(?:$|,)|^\w+\s+(\w+)
 // Table specify the table you would like to run db operations
 //
 //	// Get a user
-//	db.Table("users").take(&result)
+//	db.Table("users").Take(&result)
 func (db *DB) Table(name string, args ...interface{}) (tx *DB) {
 	tx = db.getInstance()
 	if strings.Contains(name, " ") || strings.Contains(name, "`") || len(args) > 0 {
@@ -253,7 +253,10 @@ func joins(db *DB, joinType clause.JoinType, query string, args ...interface{}) 
 
 	if len(args) == 1 {
 		if db, ok := args[0].(*DB); ok {
-			j := join{Name: query, Conds: args, Selects: db.Statement.Selects, Omits: db.Statement.Omits}
+			j := join{
+				Name: query, Conds: args, Selects: db.Statement.Selects,
+				Omits: db.Statement.Omits, JoinType: joinType,
+			}
 			if where, ok := db.Statement.Clauses["WHERE"].Expression.(clause.Where); ok {
 				j.On = &where
 			}
@@ -361,6 +364,15 @@ func (db *DB) Scopes(funcs ...func(*DB) *DB) (tx *DB) {
 	tx = db.getInstance()
 	tx.Statement.scopes = append(tx.Statement.scopes, funcs...)
 	return tx
+}
+
+func (db *DB) executeScopes() (tx *DB) {
+	scopes := db.Statement.scopes
+	db.Statement.scopes = nil
+	for _, scope := range scopes {
+		db = scope(db)
+	}
+	return db
 }
 
 // Preload preload associations with given conditions

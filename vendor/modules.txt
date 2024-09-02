@@ -758,7 +758,7 @@ github.com/gophercloud/utils/v2/openstack/networking/v2/networks
 # github.com/gorilla/websocket v1.5.0
 ## explicit; go 1.12
 github.com/gorilla/websocket
-# github.com/gregjones/httpcache v0.0.0-20190212212710-3befbb6ad0cc
+# github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 ## explicit
 github.com/gregjones/httpcache
 # github.com/h2non/filetype v1.0.12
@@ -802,10 +802,10 @@ github.com/inconshreveable/mousetrap
 # github.com/jinzhu/inflection v1.0.0
 ## explicit
 github.com/jinzhu/inflection
-# github.com/jinzhu/now v1.1.4
+# github.com/jinzhu/now v1.1.5
 ## explicit; go 1.12
 github.com/jinzhu/now
-# github.com/jmespath/go-jmespath v0.4.0
+# github.com/jmespath/go-jmespath v0.4.1-0.20220621161143-b0104c826a24
 ## explicit; go 1.14
 github.com/jmespath/go-jmespath
 # github.com/jongio/azidext/go/azidext v0.5.0
@@ -1260,7 +1260,7 @@ github.com/stretchr/testify/assert
 # github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635
 ## explicit
 github.com/syndtr/gocapability/capability
-# github.com/thedevsaddam/retry v0.0.0-20200324223450-9769a859cc6d
+# github.com/thedevsaddam/retry v1.2.1
 ## explicit; go 1.13
 github.com/thedevsaddam/retry
 # github.com/ulikunitz/xz v0.5.12
@@ -1723,8 +1723,8 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
-# gorm.io/gorm v1.24.5
-## explicit; go 1.16
+# gorm.io/gorm v1.25.7
+## explicit; go 1.18
 gorm.io/gorm
 gorm.io/gorm/clause
 gorm.io/gorm/logger

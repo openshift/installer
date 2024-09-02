@@ -35,12 +35,10 @@ The fantastic ORM library for Golang, aims to be developer friendly.
 
 ## Contributors
 
-Thank you for contributing to the GORM framework!
-
-[![Contributors](https://contrib.rocks/image?repo=go-gorm/gorm)](https://github.com/go-gorm/gorm/graphs/contributors)
+[Thank you](https://github.com/go-gorm/gorm/graphs/contributors) for contributing to the GORM framework!
 
 ## License
 
 © Jinzhu, 2013~time.Now
 
-Released under the [MIT License](https://github.com/go-gorm/gorm/blob/master/License)
+Released under the [MIT License](https://github.com/go-gorm/gorm/blob/master/LICENSE)

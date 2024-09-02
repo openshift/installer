@@ -75,11 +75,7 @@ func (cs *callbacks) Raw() *processor {
 func (p *processor) Execute(db *DB) *DB {
 	// call scopes
 	for len(db.Statement.scopes) > 0 {
-		scopes := db.Statement.scopes
-		db.Statement.scopes = nil
-		for _, scope := range scopes {
-			db = scope(db)
-		}
+		db = db.executeScopes()
 	}
 
 	var (
@@ -253,7 +249,7 @@ func sortCallbacks(cs []*callback) (fns []func(*DB), err error) {
 		names, sorted []string
 		sortCallback  func(*callback) error
 	)
-	sort.Slice(cs, func(i, j int) bool {
+	sort.SliceStable(cs, func(i, j int) bool {
 		if cs[j].before == "*" && cs[i].before != "*" {
 			return true
 		}
