@@ -170,7 +170,7 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 	logrus.Debugf("UserAssignedIdentity.ID=%s", *userAssignedIdentity.ID)
 	logrus.Debugf("PrinciapalID=%s", principalID)
 
-	clientFactory, err := armauthorization.NewClientFactory(
+	armauthClientFactory, err := armauthorization.NewClientFactory(
 		subscriptionID,
 		tokenCredential,
 		&arm.ClientOptions{
@@ -183,7 +183,7 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 		return fmt.Errorf("failed to create armauthorization client: %w", err)
 	}
 
-	roleDefinitionsClient := clientFactory.NewRoleDefinitionsClient()
+	roleDefinitionsClient := armauthClientFactory.NewRoleDefinitionsClient()
 
 	var contributor *armauthorization.RoleDefinition
 	roleDefinitionsPager := roleDefinitionsClient.NewListPager(*resourceGroup.ID, nil)
@@ -203,7 +203,7 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 		return fmt.Errorf("failed to find contributor definition")
 	}
 
-	roleAssignmentsClient := clientFactory.NewRoleAssignmentsClient()
+	roleAssignmentsClient := armauthClientFactory.NewRoleAssignmentsClient()
 	scope := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s", subscriptionID, resourceGroupName)
 	roleAssignmentUUID := uuid.New().String()
 
@@ -232,12 +232,21 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 		return fmt.Errorf("failed to create role assignment: %w", err)
 	}
 
+	networkClientFactory, err := armnetwork.NewClientFactory(
+		subscriptionID,
+		tokenCredential,
+		&arm.ClientOptions{
+			ClientOptions: policy.ClientOptions{
+				Cloud: cloudConfiguration,
+			},
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create azure network factory: %w", err)
+	}
+
 	// Creating a dummy nsg for existing vnets installation to appease the ingress operator.
 	if in.InstallConfig.Config.Azure.VirtualNetwork != "" {
-		networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, tokenCredential, nil)
-		if err != nil {
-			return fmt.Errorf("failed to create azure network factory: %w", err)
-		}
 		securityGroupName := in.InstallConfig.Config.Platform.Azure.NetworkSecurityGroupName(in.InfraID)
 		securityGroupsClient := networkClientFactory.NewSecurityGroupsClient()
 		pollerResp, err := securityGroupsClient.BeginCreateOrUpdate(
@@ -259,6 +268,7 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 		logrus.Infof("nsg=%s", *nsg.ID)
 	}
 
+	p.NetworkClientFactory = networkClientFactory
 	return nil
 }
 
@@ -328,6 +338,25 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	tokenCredential := session.TokenCreds
 	storageURL := fmt.Sprintf("https://%s.blob.%s", storageAccountName, session.Environment.StorageEndpointSuffix)
 	blobURL := fmt.Sprintf("%s/%s/%s", storageURL, containerName, blobName)
+
+	// Create NAT gateway
+	if in.InstallConfig.Config.Azure.OutboundType == aztypes.NatGatewayOutboundType {
+		natGateway, err := CreateNatGateway(ctx, &CreateNatGatewayInput{
+			InfraID:                in.InfraID,
+			SubscriptionID:         subscriptionID,
+			ResourceGroupName:      resourceGroupName,
+			VirtualNetworkName:     platform.VirtualNetworkName(in.InfraID),
+			ControlPlaneSubnetName: platform.ControlPlaneSubnetName(in.InfraID),
+			WorkerSubnetName:       platform.ComputeSubnetName(in.InfraID),
+			Region:                 platform.Region,
+			Tags:                   tags,
+			NetworkClientFactory:   p.NetworkClientFactory,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create NAT gateway: %w", err)
+		}
+		logrus.Debugf("NatGatewway.ID=%s", *natGateway.ID)
+	}
 
 	// Create storage account
 	createStorageAccountOutput, err := CreateStorageAccount(ctx, &CreateStorageAccountInput{
@@ -478,18 +507,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		}
 	}
 
-	networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, session.TokenCreds,
-		&arm.ClientOptions{
-			ClientOptions: policy.ClientOptions{
-				Cloud: cloudConfiguration,
-			},
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("error creating network client factory: %w", err)
-	}
-
-	lbClient := networkClientFactory.NewLoadBalancersClient()
+	lbClient := p.NetworkClientFactory.NewLoadBalancersClient()
 	lbInput := &lbInput{
 		loadBalancerName:       fmt.Sprintf("%s-internal", in.InfraID),
 		infraID:                in.InfraID,
@@ -516,12 +534,14 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	var extLBFQDN string
 	if in.InstallConfig.Config.PublicAPI() {
 		publicIP, err := createPublicIP(ctx, &pipInput{
-			name:          fmt.Sprintf("%s-pip-v4", in.InfraID),
-			infraID:       in.InfraID,
-			region:        in.InstallConfig.Config.Azure.Region,
-			resourceGroup: resourceGroupName,
-			pipClient:     networkClientFactory.NewPublicIPAddressesClient(),
-			tags:          p.Tags,
+			name:            fmt.Sprintf("%s-pip-v4", in.InfraID),
+			infraID:         in.InfraID,
+			region:          in.InstallConfig.Config.Azure.Region,
+			resourceGroup:   resourceGroupName,
+			createDNSRecord: true,
+			ipVersion:       armnetwork.IPVersionIPv4,
+			pipClient:       p.NetworkClientFactory.NewPublicIPAddressesClient(),
+			tags:            p.Tags,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to create public ip: %w", err)
@@ -532,12 +552,14 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		lbInput.backendAddressPoolName = in.InfraID
 
 		var loadBalancer *armnetwork.LoadBalancer
-		if platform.OutboundType == aztypes.UserDefinedRoutingOutboundType {
+		switch platform.OutboundType {
+		case aztypes.UserDefinedRoutingOutboundType:
+		case aztypes.NatGatewayOutboundType:
 			loadBalancer, err = createAPILoadBalancer(ctx, publicIP, lbInput)
 			if err != nil {
 				return fmt.Errorf("failed to create API load balancer: %w", err)
 			}
-		} else {
+		default:
 			loadBalancer, err = updateOutboundLoadBalancerToAPILoadBalancer(ctx, publicIP, lbInput)
 			if err != nil {
 				return fmt.Errorf("failed to update external load balancer: %w", err)
@@ -556,7 +578,6 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	p.StorageAccount = storageAccount
 	p.StorageAccountKeys = storageAccountKeys
 	p.StorageClientFactory = storageClientFactory
-	p.NetworkClientFactory = networkClientFactory
 	p.lbBackendAddressPool = lbBap
 
 	if err := createDNSEntries(ctx, in, extLBFQDN, resourceGroupName); err != nil {
