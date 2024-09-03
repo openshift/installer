@@ -53,6 +53,7 @@ func withControlPlanePortSubnets(subnetCIDR, allocationPoolStart, allocationPool
 			AllocationPools: []subnets.AllocationPool{
 				{Start: allocationPoolStart, End: allocationPoolEnd},
 			},
+			IPVersion: 4,
 		}
 		Allsubnets := []*subnets.Subnet{&subnet}
 		ci.ControlPlanePortSubnets = Allsubnets
@@ -588,7 +589,7 @@ func TestMachineSubnet(t *testing.T) {
 				n.MachineNetwork = []types.MachineNetworkEntry{*machineNetworkEntry}
 				return n
 			}(),
-			expectedErrMsg: `[platform.openstack.controlPlanePort.fixedIPs: Internal error: controlPlanePort CIDRs does not match machineNetwork, platform.openstack.controlPlanePort.fixedIPs: Internal error: multiple IPv4 subnets is not supported]`,
+			expectedErrMsg: `[platform.openstack.controlPlanePort.fixedIPs: Invalid value: "10.0.0.0/16": controlPlanePort CIDR does not match machineNetwork, platform.openstack.controlPlanePort.fixedIPs: Internal error: one IPv4 subnet and one IPv6 subnet must be specified]`,
 		},
 		{
 			name: "control plane port no ipv4 subnets",
@@ -621,7 +622,7 @@ func TestMachineSubnet(t *testing.T) {
 				n.MachineNetwork = []types.MachineNetworkEntry{*machineNetworkEntry}
 				return n
 			}(),
-			expectedErrMsg: `platform.openstack.controlPlanePort.fixedIPs: Internal error: one IPv4 subnet must be specified`,
+			expectedErrMsg: "",
 		},
 	}
 
