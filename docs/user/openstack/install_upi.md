@@ -22,8 +22,6 @@ of this method of installation.
   - [Table of Contents](#table-of-contents)
   - [Prerequisites](#prerequisites)
   - [Install Ansible](#install-ansible)
-    - [RHEL](#rhel)
-    - [Fedora](#fedora)
   - [OpenShift Configuration Directory](#openshift-configuration-directory)
   - [Red Hat Enterprise Linux CoreOS (RHCOS)](#red-hat-enterprise-linux-coreos-rhcos)
   - [API and Ingress Floating IP Addresses](#api-and-ingress-floating-ip-addresses)
@@ -106,64 +104,44 @@ accordingly (e.g. `release-4.12`).
 
 **Requirements:**
 
-* Python (>=3.8 for ansible-core, currently tested by CI or lower if using Ansible 2.9)
-* Ansible (>=2.10 is currently tested by CI, 2.9 is EOL soon)
+* Python
+* Ansible
 * Python modules required in the playbooks. Namely:
   * openstackclient
   * openstacksdk
   * netaddr
 * Ansible collections required in the playbooks. Namely:
   * openstack.cloud
-  * ansible.utils
   * community.general
 
-### RHEL
-
-From a RHEL box, make sure that the repository origins are all set:
+From a RHEL-9 box, make sure that the repository origins are all set:
 
 ```sh
 sudo subscription-manager register # if not done already
 sudo subscription-manager attach --pool=$YOUR_POOLID # if not done already
 sudo subscription-manager repos --disable=* # if not done already
 sudo subscription-manager repos \
-  --enable=rhel-8-for-x86_64-baseos-rpms \ # change RHEL version if needed
-  --enable=rhel-8-for-x86_64-appstream-rpms # change RHEL version if needed
+  --enable=rhel-9-for-x86_64-appstream-rpms \
+  --enable=rhel-9-for-x86_64-baseos-rpms \
+  --enable=openstack-17.1-for-rhel-9-x86_64-rpms
 ```
 
 Then install the package:
 ```sh
-sudo dnf install ansible-core
+sudo dnf install ansible-collection-ansible-netcommon \
+    ansible-collection-community-general \
+    ansible-collections-openstack \
+    python3-netaddr \
+    python3-openstackclient \
+    python3-pip
 ```
 
-Make sure that `python` points to Python3:
+Followed by:
 ```sh
-sudo alternatives --set python /usr/bin/python3
-```
-
-To avoid packages not found or mismatches, we use pip to install the dependencies:
-```sh
-python3 -m pip install --upgrade pip
-python3 -m pip install yq openstackclient openstacksdk netaddr
-```
-
-### Fedora
-
-This command installs all required dependencies on Fedora:
-
-```sh
-sudo dnf install python3-openstackclient ansible-core python3-openstacksdk python3-netaddr
+python -m pip install yq
 ```
 
 [ansible-upi]: ../../../upi/openstack "Ansible Playbooks for Openstack UPI"
-
-## Ansible Collections
-
-The Ansible Collections are not packaged (yet) on recent versions of OSP and RHEL when `ansible-core` is
-installed instead of Ansible 2.9. So the collections need to be installed from `ansible-galaxy`.
-
-```sh
-ansible-galaxy collection install openstack.cloud ansible.utils community.general
-```
 
 ## OpenShift Configuration Directory
 
