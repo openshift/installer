@@ -34,6 +34,13 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 		total = *pool.Replicas
 	}
 
+	machineNetwork := config.Networking.MachineNetwork
+	configDrive := ptr.To(false)
+	// Only enable config drive when using single stack IPv6
+	if len(machineNetwork) == 1 && machineNetwork[0].CIDR.IPNet.IP.To4() == nil {
+		configDrive = ptr.To(true)
+	}
+
 	var result []*asset.RuntimeFile
 	failureDomains := failureDomainsFromSpec(*mpool)
 	for idx := int64(0); idx < total; idx++ {
@@ -45,6 +52,7 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 			osImage,
 			role,
 			failureDomain,
+			configDrive,
 		)
 		if err != nil {
 			return nil, err
@@ -109,7 +117,7 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 	return result, nil
 }
 
-func generateMachineSpec(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role string, failureDomain machinev1.OpenStackFailureDomain) (*capo.OpenStackMachineSpec, error) {
+func generateMachineSpec(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role string, failureDomain machinev1.OpenStackFailureDomain, configDrive *bool) (*capo.OpenStackMachineSpec, error) {
 	port := capo.PortOpts{}
 
 	addressPairs := populateAllowedAddressPairs(platform)
@@ -195,6 +203,7 @@ func generateMachineSpec(clusterID string, platform *openstack.Platform, mpool *
 		Tags: []string{
 			fmt.Sprintf("openshiftClusterID=%s", clusterID),
 		},
+		ConfigDrive: configDrive,
 	}
 
 	if role != "bootstrap" {
