@@ -1,0 +1,387 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: |-
+  CloudFormation Template to deploy network resource to setup
+  the profile BYO VPC with multi CIDR block when deploying OpenShift on AWS.
+  The template creates a VPC with 3 CIDR blocks, and one subnet pair
+  using each CIDR block.
+  You can pick any of public/private subnet ID pair,
+  and the respective VpcCidr block to be added to
+  the install-config.yaml configuration.
+
+Parameters:
+  VpcCidr1:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-4]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-24.
+    Default: 10.0.0.0/16
+    Description: CIDR block for VPC.
+    Type: String
+  VpcCidr2:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-4]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-24.
+    Default: 10.134.0.0/16
+    Description: CIDR2 block for VPC.
+    Type: String
+  VpcCidr3:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-4]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-24.
+    Default: 10.190.0.0/16
+    Description: CIDR3 block for VPC.
+    Type: String
+  AvailabilityZoneCount:
+    ConstraintDescription: "The number of availability zones. (Min: 1, Max: 3)"
+    MinValue: 2
+    MaxValue: 3
+    Default: 3
+    Description: "How many AZs to create VPC subnets for. (Min: 1, Max: 3)"
+    Type: Number
+  SubnetBits:
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/19-27.
+    MinValue: 5
+    MaxValue: 13
+    Default: 12
+    Description: "Size of each subnet to create within the availability zones. (Min: 5 = /27, Max: 13 = /19)"
+    Type: Number
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "Network Configuration"
+      Parameters:
+      - VpcCidr1
+      - SubnetBits
+    - Label:
+        default: "Availability Zones"
+      Parameters:
+      - AvailabilityZoneCount
+    ParameterLabels:
+      AvailabilityZoneCount:
+        default: "Availability Zone Count"
+      VpcCidr1:
+        default: "VPC CIDR"
+      SubnetBits:
+        default: "Bits Per Subnet"
+
+Conditions:
+  DoAz3: !Equals [3, !Ref AvailabilityZoneCount]
+  DoAz2: !Or [!Equals [2, !Ref AvailabilityZoneCount], Condition: DoAz3]
+
+Resources:
+  #
+  # VPC setup
+  #
+  VPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      EnableDnsSupport: "true"
+      EnableDnsHostnames: "true"
+      CidrBlock: !Ref VpcCidr1
+  Cidr2:
+    Type: "AWS::EC2::VPCCidrBlock"
+    Condition: DoAz2
+    Properties:
+      CidrBlock: !Ref VpcCidr2
+      VpcId: !Ref VPC
+  Cidr3:
+    Type: "AWS::EC2::VPCCidrBlock"
+    Condition: DoAz3
+    Properties:
+      CidrBlock: !Ref VpcCidr3
+      VpcId: !Ref VPC
+  InternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+  GatewayToInternet:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+  PublicRouteTable:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref VPC
+  PublicRoute:
+    Type: "AWS::EC2::Route"
+    DependsOn: GatewayToInternet
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  #
+  # Primary VPC CIDR's subnet setup
+  #
+  PublicSubnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [2, !Cidr [!Ref VpcCidr1, 6, !Ref SubnetBits]]
+      AvailabilityZone: !Select
+      - 0
+      - Fn::GetAZs: !Ref "AWS::Region"
+  PublicSubnetRouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+  PrivateSubnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [1, !Cidr [!Ref VpcCidr1, 6, !Ref SubnetBits]]
+      AvailabilityZone: !Select
+      - 0
+      - Fn::GetAZs: !Ref "AWS::Region"
+  PrivateRouteTable:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref VPC
+  PrivateSubnetRouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+  NAT:
+    DependsOn:
+    - GatewayToInternet
+    Type: "AWS::EC2::NatGateway"
+    Properties:
+      AllocationId:
+        "Fn::GetAtt":
+        - EIP
+        - AllocationId
+      SubnetId: !Ref PublicSubnet1
+  EIP:
+    Type: "AWS::EC2::EIP"
+    Properties:
+      Domain: vpc
+  Route:
+    Type: "AWS::EC2::Route"
+    Properties:
+      RouteTableId:
+        Ref: PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: NAT
+  #
+  # Second VPC CIDR's subnet setup
+  #
+  # Setup public subnet
+  PublicSubnet2:
+    Type: "AWS::EC2::Subnet"
+    DependsOn: Cidr2
+    Condition: DoAz2
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [2, !Cidr [!Ref VpcCidr2, 6, !Ref SubnetBits]]
+      AvailabilityZone: !Select
+      - 1
+      - Fn::GetAZs: !Ref "AWS::Region"
+  PublicSubnetRouteTableAssociation2:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Condition: DoAz2
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+  # Setup private subnet
+  PrivateSubnet2:
+    Type: "AWS::EC2::Subnet"
+    Condition: DoAz2
+    DependsOn: Cidr2
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [1, !Cidr [!Ref VpcCidr2, 6, !Ref SubnetBits]]
+      AvailabilityZone: !Select
+      - 1
+      - Fn::GetAZs: !Ref "AWS::Region"
+  PrivateRouteTable2:
+    Type: "AWS::EC2::RouteTable"
+    Condition: DoAz2
+    Properties:
+      VpcId: !Ref VPC
+  PrivateSubnetRouteTableAssociation2:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Condition: DoAz2
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable2
+  NAT2:
+    DependsOn:
+    - GatewayToInternet
+    Type: "AWS::EC2::NatGateway"
+    Condition: DoAz2
+    Properties:
+      AllocationId:
+        "Fn::GetAtt":
+        - EIP2
+        - AllocationId
+      SubnetId: !Ref PublicSubnet2
+  EIP2:
+    Type: "AWS::EC2::EIP"
+    Condition: DoAz2
+    Properties:
+      Domain: vpc
+  Route2:
+    Type: "AWS::EC2::Route"
+    Condition: DoAz2
+    Properties:
+      RouteTableId:
+        Ref: PrivateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: NAT2
+  #
+  # Third VPC CIDR's subnet setup
+  #
+  # Setup public subnet
+  PublicSubnet3:
+    Type: "AWS::EC2::Subnet"
+    DependsOn: Cidr3
+    Condition: DoAz3
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [2, !Cidr [!Ref VpcCidr3, 6, !Ref SubnetBits]]
+      AvailabilityZone: !Select
+      - 2
+      - Fn::GetAZs: !Ref "AWS::Region"
+  PublicSubnetRouteTableAssociation3:
+    Condition: DoAz3
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref PublicSubnet3
+      RouteTableId: !Ref PublicRouteTable
+  # Setup private subnet
+  PrivateSubnet3:
+    Type: "AWS::EC2::Subnet"
+    Condition: DoAz3
+    DependsOn: Cidr3
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [1, !Cidr [!Ref VpcCidr3, 6, !Ref SubnetBits]]
+      AvailabilityZone: !Select
+      - 2
+      - Fn::GetAZs: !Ref "AWS::Region"
+  PrivateRouteTable3:
+    Type: "AWS::EC2::RouteTable"
+    Condition: DoAz3
+    Properties:
+      VpcId: !Ref VPC
+  PrivateSubnetRouteTableAssociation3:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Condition: DoAz3
+    Properties:
+      SubnetId: !Ref PrivateSubnet3
+      RouteTableId: !Ref PrivateRouteTable3
+  NAT3:
+    DependsOn:
+    - GatewayToInternet
+    Type: "AWS::EC2::NatGateway"
+    Condition: DoAz3
+    Properties:
+      AllocationId:
+        "Fn::GetAtt":
+        - EIP3
+        - AllocationId
+      SubnetId: !Ref PublicSubnet3
+  EIP3:
+    Type: "AWS::EC2::EIP"
+    Condition: DoAz3
+    Properties:
+      Domain: vpc
+  Route3:
+    Type: "AWS::EC2::Route"
+    Condition: DoAz3
+    Properties:
+      RouteTableId:
+        Ref: PrivateRouteTable3
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: NAT3
+  #
+  # Service endpoints
+  #
+  S3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Principal: '*'
+          Action:
+          - '*'
+          Resource:
+          - '*'
+      RouteTableIds:
+      - !Ref PublicRouteTable
+      - !Ref PrivateRouteTable
+      - !If [DoAz2, !Ref PrivateRouteTable2, !Ref "AWS::NoValue"]
+      - !If [DoAz3, !Ref PrivateRouteTable3, !Ref "AWS::NoValue"]
+      ServiceName: !Join
+      - ''
+      - - com.amazonaws.
+        - !Ref 'AWS::Region'
+        - .s3
+      VpcId: !Ref VPC
+#
+# Outputs
+#
+Outputs:
+  VpcId:
+    Description: ID of the new VPC.
+    Value: !Ref VPC
+  CIDRs:
+    Description: CIDRs.
+    Value:
+      !Join [
+        ",",
+        [!Ref VpcCidr1, !If [DoAz2, !Ref VpcCidr2, !Ref "AWS::NoValue"], !If [DoAz3, !Ref VpcCidr3, !Ref "AWS::NoValue"]]
+      ]
+  #
+  # All subnets.
+  #
+  AllPublicSubnetIds:
+    Description: Subnet IDs of the public subnets.
+    Value:
+      !Join [
+        ",",
+        [!Ref PublicSubnet1, !If [DoAz2, !Ref PublicSubnet2, !Ref "AWS::NoValue"], !If [DoAz3, !Ref PublicSubnet3, !Ref "AWS::NoValue"]]
+      ]
+  AllPrivateSubnetIds:
+    Description: Subnet IDs of the private subnets.
+    Value:
+      !Join [
+        ",",
+        [!Ref PrivateSubnet1, !If [DoAz2, !Ref PrivateSubnet2, !Ref "AWS::NoValue"], !If [DoAz3, !Ref PrivateSubnet3, !Ref "AWS::NoValue"]]
+      ]
+  # Network resources for VPC CIDR 1.
+  VpcCidrBlock1:
+    Description: VPC CIDR block 1.
+    Value: !Ref VpcCidr1
+  SubnetsIdsForCidr1:
+    Description: Subnet IDs for Cidr1, the first is private subnet, the second is public subnet
+    Value:
+      !Join [
+        ",",
+        [!Ref PrivateSubnet1, !Ref PublicSubnet1]
+      ]
+  # Network resources for VPC CIDR 2.
+  VpcCidrBlock2:
+    Description: VPC CIDR block 2.
+    Value: !Ref VpcCidr2
+  SubnetsIdsForCidr2:
+    Description: Subnet IDs for Cidr2, the first is private subnet, the second is public subnet
+    Value:
+      !Join [
+        ",",
+        [!If [DoAz2, !Ref PrivateSubnet2, !Ref "AWS::NoValue"], !If [DoAz2, !Ref PublicSubnet2, !Ref "AWS::NoValue"]]
+      ]
+  # Network resources for VPC CIDR 3.
+  VpcCidrBlock3:
+    Description: VPC CIDR block 3.
+    Value: !Ref VpcCidr3
+  SubnetsIdsForCidr3:
+    Description: Subnet IDs for Cidr3, the first is private subnet, the second is public subnet
+    Value:
+      !Join [
+        ",",
+        [!If [DoAz3, !Ref PrivateSubnet3, !Ref "AWS::NoValue"], !If [DoAz3, !Ref PublicSubnet3, !Ref "AWS::NoValue"]]
+      ]
