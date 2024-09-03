@@ -19,7 +19,6 @@ COPY --from=builder /go/src/github.com/openshift/installer/docs/user/openstack /
 COPY --from=builder /go/src/github.com/openshift/installer/hack/openstack/test-manifests.sh /go/src/github.com/openshift/installer/scripts/openstack/manifest-tests /var/lib/openshift-install/manifest-tests
 
 # Install Dependendencies for tests
-# https://github.com/openshift/origin/blob/6114cbc507bf18890f009f16ee424a62007bc390/images/tests/Dockerfile.rhel
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
     ansible-collection-ansible-netcommon \
