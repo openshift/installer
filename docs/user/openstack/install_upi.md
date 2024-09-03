@@ -93,23 +93,12 @@ The requirements for UPI are broadly similar to the [ones for OpenStack IPI][ipi
 
 This repository contains [Ansible playbooks][ansible-upi] to deploy OpenShift on OpenStack.
 
-They can be downloaded from Github with this script:
+They can be downloaded from Github with this script, using the `curl` and `jq` tools:
 
 ```sh
-RELEASE="release-4.14"; xargs -n 1 curl -O <<< "
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/bootstrap.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/common.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/compute-nodes.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/control-plane.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-bootstrap.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-compute-nodes.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-control-plane.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-network.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-security-groups.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-containers.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/inventory.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/network.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/security-groups.yaml"
+RELEASE="release-4.14"; curl -L "https://api.github.com/repos/openshift/installer/contents/upi/openstack?ref=$RELEASE" | \
+    jq -r '.[]|select(.download_url | endswith("yaml")).download_url'| \
+    xargs -n 1 curl -O
 ```
 
 For installing a different version, change the branch (`release-4.14`)
