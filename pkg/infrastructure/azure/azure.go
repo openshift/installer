@@ -44,17 +44,17 @@ const (
 
 // Provider implements Azure CAPI installation.
 type Provider struct {
-	ResourceGroupName    string
-	StorageAccountName   string
-	StorageURL           string
-	StorageAccount       *armstorage.Account
-	StorageClientFactory *armstorage.ClientFactory
-	StorageAccountKeys   []armstorage.AccountKey
-	NetworkClientFactory *armnetwork.ClientFactory
-	lbBackendAddressPool *armnetwork.BackendAddressPool
-	CloudConfiguration   cloud.Configuration
-	TokenCredential      azcore.TokenCredential
-	Tags                 map[string]*string
+	ResourceGroupName     string
+	StorageAccountName    string
+	StorageURL            string
+	StorageAccount        *armstorage.Account
+	StorageClientFactory  *armstorage.ClientFactory
+	StorageAccountKeys    []armstorage.AccountKey
+	NetworkClientFactory  *armnetwork.ClientFactory
+	lbBackendAddressPools []*armnetwork.BackendAddressPool
+	CloudConfiguration    cloud.Configuration
+	TokenCredential       azcore.TokenCredential
+	Tags                  map[string]*string
 }
 
 var _ clusterapi.PreProvider = (*Provider)(nil)
@@ -511,7 +511,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	}
 	logrus.Debugf("updated internal load balancer: %s", *intLoadBalancer.ID)
 
-	var lbBap *armnetwork.BackendAddressPool
+	var lbBaps []*armnetwork.BackendAddressPool
 	var extLBFQDN string
 	if in.InstallConfig.Config.Publish == types.ExternalPublishingStrategy {
 		publicIP, err := createPublicIP(ctx, &pipInput{
@@ -544,7 +544,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		}
 
 		logrus.Debugf("updated external load balancer: %s", *loadBalancer.ID)
-		lbBap = loadBalancer.Properties.BackendAddressPools[0]
+		lbBaps = loadBalancer.Properties.BackendAddressPools
 		extLBFQDN = *publicIP.Properties.DNSSettings.Fqdn
 	}
 
@@ -556,7 +556,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	p.StorageAccountKeys = storageAccountKeys
 	p.StorageClientFactory = storageClientFactory
 	p.NetworkClientFactory = networkClientFactory
-	p.lbBackendAddressPool = lbBap
+	p.lbBackendAddressPools = lbBaps
 
 	if err := createDNSEntries(ctx, in, extLBFQDN, resourceGroupName); err != nil {
 		return fmt.Errorf("error creating DNS records: %w", err)
@@ -593,12 +593,12 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 		}
 
 		vmInput := &vmInput{
-			infraID:       in.InfraID,
-			resourceGroup: p.ResourceGroupName,
-			vmClient:      vmClient,
-			nicClient:     p.NetworkClientFactory.NewInterfacesClient(),
-			ids:           vmIDs,
-			bap:           p.lbBackendAddressPool,
+			infraID:             in.InfraID,
+			resourceGroup:       p.ResourceGroupName,
+			vmClient:            vmClient,
+			nicClient:           p.NetworkClientFactory.NewInterfacesClient(),
+			ids:                 vmIDs,
+			backendAddressPools: p.lbBackendAddressPools,
 		}
 
 		if err = associateVMToBackendPool(ctx, *vmInput); err != nil {
