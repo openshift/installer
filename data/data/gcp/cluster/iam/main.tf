@@ -19,3 +19,9 @@ resource "google_project_iam_member" "worker-storage-admin" {
   role    = "roles/storage.admin"
   member  = "serviceAccount:${google_service_account.worker-node-sa.email}"
 }
+
+resource "google_project_iam_member" "worker-artifactregistry-reader" {
+  project = var.project_id
+  role    = "roles/artifactregistry.reader"
+  member  = "serviceAccount:${google_service_account.worker-node-sa.email}"
+}
