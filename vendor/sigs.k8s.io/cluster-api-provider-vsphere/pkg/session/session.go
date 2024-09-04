@@ -263,9 +263,6 @@ func newClient(ctx context.Context, sessionKey string, url *url.URL, thumbprint 
 			_, err := methods.GetCurrentTime(ctx, tripper)
 			if err != nil {
 				log.Error(err, "Failed to keep alive govmomi client, Clearing the session now")
-				if errLogout := c.Logout(ctx); errLogout != nil {
-					log.Error(err, "Failed to logout keepalive failed session")
-				}
 				sessionCache.Delete(sessionKey)
 			}
 			return err
@@ -296,9 +293,6 @@ func newManager(ctx context.Context, sessionKey string, client *vim25.Client, us
 			}
 
 			log.Info("REST client session expired, clearing session")
-			if errLogout := rc.Logout(ctx); errLogout != nil {
-				log.Error(err, "Failed to logout keepalive failed REST session")
-			}
 			sessionCache.Delete(sessionKey)
 			return errors.New("REST client session expired")
 		})
@@ -327,7 +321,7 @@ func (s *Session) GetVersion() (infrav1.VCenterVersion, error) {
 
 // Clear is meant to destroy all the cached sessions.
 func Clear() {
-	sessionCache.Range(func(key, s any) bool {
+	sessionCache.Range(func(_, s any) bool {
 		cachedSession := s.(*Session)
 		_ = cachedSession.Logout(context.Background())
 		return true

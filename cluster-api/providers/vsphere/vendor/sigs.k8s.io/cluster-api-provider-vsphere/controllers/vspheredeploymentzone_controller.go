@@ -105,7 +105,7 @@ func (r vsphereDeploymentZoneReconciler) Reconcile(ctx context.Context, request 
 
 	patchHelper, err := patch.NewHelper(vsphereDeploymentZone, r.Client)
 	if err != nil {
-		return reconcile.Result{}, errors.Wrap(err, "failed to initialize patch helper")
+		return reconcile.Result{}, err
 	}
 
 	vsphereDeploymentZoneContext := &capvcontext.VSphereDeploymentZoneContext{
@@ -287,17 +287,14 @@ func (r vsphereDeploymentZoneReconciler) reconcileDelete(ctx context.Context, de
 func updateOwnerReferences(ctx context.Context, obj client.Object, client client.Client, ownerRefFunc func() []metav1.OwnerReference) error {
 	patchHelper, err := patch.NewHelper(obj, client)
 	if err != nil {
-		return errors.Wrapf(err, "failed to init patch helper for %s %s",
-			obj.GetObjectKind(),
-			obj.GetName())
+		return err
 	}
 
 	obj.SetOwnerReferences(ownerRefFunc())
 	if err := patchHelper.Patch(ctx, obj); err != nil {
-		return errors.Wrapf(err, "failed to patch object %s %s",
-			obj.GetObjectKind(),
-			obj.GetName())
+		return errors.Wrapf(err, "failed to update OwnerReferences")
 	}
+
 	return nil
 }
 

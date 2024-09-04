@@ -71,6 +71,9 @@ type NetworkProvider interface {
 	// HasLoadBalancer indicates whether this provider has a load balancer for Services.
 	HasLoadBalancer() bool
 
+	// SupportsVMReadinessProbe indicates whether this provider support vm readiness probe.
+	SupportsVMReadinessProbe() bool
+
 	// ProvisionClusterNetwork creates network resource for a given cluster
 	// This operation should be idempotent
 	ProvisionClusterNetwork(ctx context.Context, clusterCtx *vmware.ClusterContext) error

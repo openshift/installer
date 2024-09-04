@@ -1,4 +1,4 @@
-// Copyright (c) 2020 VMware, Inc. All Rights Reserved.
+// Copyright (c) 2020-2024 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 package v1alpha1
@@ -48,6 +48,18 @@ type NetworkSpec struct {
 
 // NetworkStatus is unused. This is because Network is purely a configuration resource.
 type NetworkStatus struct {
+}
+
+// NetworkReference is an object that points to a Network.
+type NetworkReference struct {
+	// Kind is the type of resource being referenced.
+	Kind string `json:"kind"`
+	// Name is the name of resource being referenced.
+	Name string `json:"name"`
+	// APIVersion of the referent.
+	//
+	// +optional
+	APIVersion string `json:"apiVersion,omitempty"`
 }
 
 // +genclient

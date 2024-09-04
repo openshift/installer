@@ -113,7 +113,7 @@ func (o *Options) defaults() {
 	if ns, ok := os.LookupEnv("POD_NAMESPACE"); ok {
 		o.PodNamespace = ns
 	} else if data, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace"); err == nil {
-		if ns := strings.TrimSpace(string(data)); len(ns) > 0 {
+		if ns := strings.TrimSpace(string(data)); ns != "" {
 			o.PodNamespace = ns
 		}
 	} else {

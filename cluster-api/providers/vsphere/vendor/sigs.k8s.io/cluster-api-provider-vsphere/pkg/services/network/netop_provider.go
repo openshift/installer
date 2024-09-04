@@ -48,6 +48,10 @@ func (np *netopNetworkProvider) HasLoadBalancer() bool {
 	return true
 }
 
+func (np *netopNetworkProvider) SupportsVMReadinessProbe() bool {
+	return true
+}
+
 // ProvisionClusterNetwork marks the ClusterNetworkReadyCondition true.
 func (np *netopNetworkProvider) ProvisionClusterNetwork(_ context.Context, clusterCtx *vmware.ClusterContext) error {
 	conditions.MarkTrue(clusterCtx.VSphereCluster, vmwarev1.ClusterNetworkReadyCondition)

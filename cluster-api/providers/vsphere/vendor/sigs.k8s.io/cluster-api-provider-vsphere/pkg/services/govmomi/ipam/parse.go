@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"net/netip"
 
-	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1alpha1"
+	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
 )
 
 // prefixesAsStrings converts []netip.Prefix to []string.

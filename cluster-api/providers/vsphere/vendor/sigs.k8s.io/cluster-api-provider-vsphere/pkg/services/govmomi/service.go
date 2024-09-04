@@ -251,7 +251,7 @@ func (vms *VMService) DestroyVM(ctx context.Context, vmCtx *capvcontext.VMContex
 
 		virtualMachineCtx.VSphereVM.Status.TaskRef = task.Reference().Value
 		if err = virtualMachineCtx.Patch(ctx); err != nil {
-			return reconcile.Result{}, vm, errors.Wrapf(err, "failed to patch VSphereVM")
+			return reconcile.Result{}, vm, err
 		}
 
 		log.Info("Wait for VM to be powered off")
@@ -363,7 +363,7 @@ func (vms *VMService) reconcilePowerState(ctx context.Context, virtualMachineCtx
 		// Update the VSphereVM.Status.TaskRef to track the power-on task.
 		virtualMachineCtx.VSphereVM.Status.TaskRef = task.Reference().Value
 		if err = virtualMachineCtx.Patch(ctx); err != nil {
-			return false, errors.Wrapf(err, "failed to patch VSphereVM")
+			return false, err
 		}
 
 		// Once the VM is successfully powered on, a reconcile request should be

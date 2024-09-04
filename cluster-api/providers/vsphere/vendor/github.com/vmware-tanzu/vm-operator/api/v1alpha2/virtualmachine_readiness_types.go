@@ -11,6 +11,9 @@ import (
 // is in a ready state. All probe actions are mutually exclusive.
 type VirtualMachineReadinessProbeSpec struct {
 	// TCPSocket specifies an action involving a TCP port.
+	//
+	// Deprecated: The TCPSocket action requires network connectivity that is not supported in all environments.
+	// This field will be removed in a later API version.
 	// +optional
 	TCPSocket *TCPSocketAction `json:"tcpSocket,omitempty"`
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2020 VMware, Inc. All Rights Reserved.
+// Copyright (c) 2020-2024 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 package v1alpha1
@@ -134,6 +134,18 @@ type NetworkInterfaceSpec struct {
 	// of attaching a network interface to a network and should be left unset. This is used primarily when
 	// attachment of network interface to the network is done without vCenter Server's knowledge.
 	PortAllocation *NetworkInterfacePortAllocation `json:"portAllocation,omitempty"`
+}
+
+// NetworkInterfaceReference is an object that points to a NetworkInterface.
+type NetworkInterfaceReference struct {
+	// Kind is the type of resource being referenced.
+	Kind string `json:"kind"`
+	// Name is the name of resource being referenced.
+	Name string `json:"name"`
+	// APIVersion of the referent.
+	//
+	// +optional
+	APIVersion string `json:"apiVersion,omitempty"`
 }
 
 // +genclient

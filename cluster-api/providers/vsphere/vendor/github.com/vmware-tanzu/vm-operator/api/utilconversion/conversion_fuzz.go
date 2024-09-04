@@ -15,18 +15,17 @@ package utilconversion
 
 import (
 	"math/rand"
-	"testing"
+
+	"github.com/onsi/gomega"
 
 	"github.com/google/go-cmp/cmp"
 	fuzz "github.com/google/gofuzz"
-	"github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/apitesting/fuzzer"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	metafuzzer "k8s.io/apimachinery/pkg/apis/meta/fuzzer"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	runtimeserializer "k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
@@ -74,69 +73,57 @@ type FuzzTestFuncInput struct {
 	FuzzerFuncs []fuzzer.FuzzerFuncs
 }
 
-// FuzzTestFunc returns a new testing function to be used in tests to make sure conversions between
-// the Hub version of an object and an older version aren't lossy.
-func FuzzTestFunc(input FuzzTestFuncInput) func(*testing.T) {
-	if input.Scheme == nil {
-		input.Scheme = scheme.Scheme
+func SpokeHubSpoke(input FuzzTestFuncInput) {
+	fuzzer := GetFuzzer(input.Scheme, input.FuzzerFuncs...)
+
+	for i := 0; i < 10000; i++ {
+		// Create the spoke and fuzz it
+		spokeBefore := input.Spoke.DeepCopyObject().(conversion.Convertible)
+		fuzzer.Fuzz(spokeBefore)
+
+		// First convert spoke to hub
+		hubCopy := input.Hub.DeepCopyObject().(conversion.Hub)
+		gomega.ExpectWithOffset(1, spokeBefore.ConvertTo(hubCopy)).To(gomega.Succeed())
+
+		// Convert hub back to spoke and check if the resulting spoke is equal to the spoke before the round trip
+		spokeAfter := input.Spoke.DeepCopyObject().(conversion.Convertible)
+		gomega.ExpectWithOffset(1, spokeAfter.ConvertFrom(hubCopy)).To(gomega.Succeed())
+
+		// Remove data annotation eventually added by ConvertFrom for avoiding data loss in hub-spoke-hub round trips
+		// NOTE: There are use case when we want to skip this operation, e.g. if the spoke object does not have ObjectMeta (e.g. kubeadm types).
+		if !input.SkipSpokeAnnotationCleanup {
+			metaAfter := spokeAfter.(metav1.Object)
+			delete(metaAfter.GetAnnotations(), AnnotationKey)
+		}
+
+		if input.SpokeAfterMutation != nil {
+			input.SpokeAfterMutation(spokeAfter)
+		}
+
+		gomega.ExpectWithOffset(1, apiequality.Semantic.DeepEqual(spokeBefore, spokeAfter)).To(gomega.BeTrue(), cmp.Diff(spokeBefore, spokeAfter))
 	}
+}
 
-	return func(t *testing.T) {
-		t.Helper()
-		t.Run("spoke-hub-spoke", func(t *testing.T) {
-			g := gomega.NewWithT(t)
-			fuzzer := GetFuzzer(input.Scheme, input.FuzzerFuncs...)
+func HubSpokeHub(input FuzzTestFuncInput) {
+	fuzzer := GetFuzzer(input.Scheme, input.FuzzerFuncs...)
 
-			for i := 0; i < 10000; i++ {
-				// Create the spoke and fuzz it
-				spokeBefore := input.Spoke.DeepCopyObject().(conversion.Convertible)
-				fuzzer.Fuzz(spokeBefore)
+	for i := 0; i < 10000; i++ {
+		// Create the hub and fuzz it
+		hubBefore := input.Hub.DeepCopyObject().(conversion.Hub)
+		fuzzer.Fuzz(hubBefore)
 
-				// First convert spoke to hub
-				hubCopy := input.Hub.DeepCopyObject().(conversion.Hub)
-				g.Expect(spokeBefore.ConvertTo(hubCopy)).To(gomega.Succeed())
+		// First convert hub to spoke
+		dstCopy := input.Spoke.DeepCopyObject().(conversion.Convertible)
+		gomega.ExpectWithOffset(1, dstCopy.ConvertFrom(hubBefore)).To(gomega.Succeed())
 
-				// Convert hub back to spoke and check if the resulting spoke is equal to the spoke before the round trip
-				spokeAfter := input.Spoke.DeepCopyObject().(conversion.Convertible)
-				g.Expect(spokeAfter.ConvertFrom(hubCopy)).To(gomega.Succeed())
+		// Convert spoke back to hub and check if the resulting hub is equal to the hub before the round trip
+		hubAfter := input.Hub.DeepCopyObject().(conversion.Hub)
+		gomega.ExpectWithOffset(1, dstCopy.ConvertTo(hubAfter)).To(gomega.Succeed())
 
-				// Remove data annotation eventually added by ConvertFrom for avoiding data loss in hub-spoke-hub round trips
-				// NOTE: There are use case when we want to skip this operation, e.g. if the spoke object does not have ObjectMeta (e.g. kubeadm types).
-				if !input.SkipSpokeAnnotationCleanup {
-					metaAfter := spokeAfter.(metav1.Object)
-					delete(metaAfter.GetAnnotations(), AnnotationKey)
-				}
+		if input.HubAfterMutation != nil {
+			input.HubAfterMutation(hubAfter)
+		}
 
-				if input.SpokeAfterMutation != nil {
-					input.SpokeAfterMutation(spokeAfter)
-				}
-
-				g.Expect(apiequality.Semantic.DeepEqual(spokeBefore, spokeAfter)).To(gomega.BeTrue(), cmp.Diff(spokeBefore, spokeAfter))
-			}
-		})
-		t.Run("hub-spoke-hub", func(t *testing.T) {
-			g := gomega.NewWithT(t)
-			fuzzer := GetFuzzer(input.Scheme, input.FuzzerFuncs...)
-
-			for i := 0; i < 10000; i++ {
-				// Create the hub and fuzz it
-				hubBefore := input.Hub.DeepCopyObject().(conversion.Hub)
-				fuzzer.Fuzz(hubBefore)
-
-				// First convert hub to spoke
-				dstCopy := input.Spoke.DeepCopyObject().(conversion.Convertible)
-				g.Expect(dstCopy.ConvertFrom(hubBefore)).To(gomega.Succeed())
-
-				// Convert spoke back to hub and check if the resulting hub is equal to the hub before the round trip
-				hubAfter := input.Hub.DeepCopyObject().(conversion.Hub)
-				g.Expect(dstCopy.ConvertTo(hubAfter)).To(gomega.Succeed())
-
-				if input.HubAfterMutation != nil {
-					input.HubAfterMutation(hubAfter)
-				}
-
-				g.Expect(apiequality.Semantic.DeepEqual(hubBefore, hubAfter)).To(gomega.BeTrue(), cmp.Diff(hubBefore, hubAfter))
-			}
-		})
+		gomega.ExpectWithOffset(1, apiequality.Semantic.DeepEqual(hubBefore, hubAfter)).To(gomega.BeTrue(), cmp.Diff(hubBefore, hubAfter))
 	}
 }

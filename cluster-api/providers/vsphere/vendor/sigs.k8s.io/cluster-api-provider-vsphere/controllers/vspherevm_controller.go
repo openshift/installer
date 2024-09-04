@@ -33,7 +33,7 @@ import (
 	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/controllers/remote"
-	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1alpha1"
+	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
 	clusterutilv1 "sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/conditions"
@@ -120,9 +120,9 @@ func AddVMControllerToManager(ctx context.Context, controllerManagerCtx *capvcon
 						newCluster := e.ObjectNew.(*infrav1.VSphereCluster)
 						return !clustermodule.Compare(oldCluster.Spec.ClusterModules, newCluster.Spec.ClusterModules)
 					},
-					CreateFunc:  func(e event.CreateEvent) bool { return false },
-					DeleteFunc:  func(e event.DeleteEvent) bool { return false },
-					GenericFunc: func(e event.GenericEvent) bool { return false },
+					CreateFunc:  func(event.CreateEvent) bool { return false },
+					DeleteFunc:  func(event.DeleteEvent) bool { return false },
+					GenericFunc: func(event.GenericEvent) bool { return false },
 				}),
 		).
 		Watches(
@@ -172,7 +172,7 @@ func (r vmReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.R
 	// Create the patch helper.
 	patchHelper, err := patch.NewHelper(vsphereVM, r.Client)
 	if err != nil {
-		return reconcile.Result{}, errors.Wrap(err, "failed to initialize patch helper")
+		return reconcile.Result{}, err
 	}
 
 	authSession, err := r.retrieveVcenterSession(ctx, vsphereVM)
@@ -473,8 +473,18 @@ func (r vmReconciler) reconcileNormal(ctx context.Context, vmCtx *capvcontext.VM
 func (r vmReconciler) isWaitingForStaticIPAllocation(vmCtx *capvcontext.VMContext) bool {
 	devices := vmCtx.VSphereVM.Spec.Network.Devices
 	for _, dev := range devices {
-		if !dev.DHCP4 && !dev.DHCP6 && len(dev.IPAddrs) == 0 && len(dev.AddressesFromPools) == 0 {
-			// Static IP is not available yet
+		// Ignore device if SkipIPAllocation is set.
+		if dev.SkipIPAllocation {
+			continue
+		}
+
+		// Ignore device if it is configured to use DHCP.
+		if dev.DHCP4 || dev.DHCP6 {
+			continue
+		}
+
+		if len(dev.IPAddrs) == 0 && len(dev.AddressesFromPools) == 0 {
+			// One or more IPs are expected for the device but are not set yet.
 			return true
 		}
 	}

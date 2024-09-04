@@ -47,6 +47,7 @@ func (src *VSphereMachineTemplate) ConvertTo(dstRaw conversion.Hub) error {
 		dst.Spec.Template.Spec.Network.Devices[i].AddressesFromPools = restored.Spec.Template.Spec.Network.Devices[i].AddressesFromPools
 		dst.Spec.Template.Spec.Network.Devices[i].DHCP4Overrides = restored.Spec.Template.Spec.Network.Devices[i].DHCP4Overrides
 		dst.Spec.Template.Spec.Network.Devices[i].DHCP6Overrides = restored.Spec.Template.Spec.Network.Devices[i].DHCP6Overrides
+		dst.Spec.Template.Spec.Network.Devices[i].SkipIPAllocation = restored.Spec.Template.Spec.Network.Devices[i].SkipIPAllocation
 	}
 
 	return nil
