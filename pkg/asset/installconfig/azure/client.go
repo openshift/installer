@@ -57,7 +57,7 @@ func (c *Client) GetVirtualNetwork(ctx context.Context, resourceGroupName, virtu
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	vnetClient, err := c.getVirtualNetworksClient(ctx)
+	vnetClient, err := c.GetVirtualNetworksClient(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (c *Client) GetControlPlaneSubnet(ctx context.Context, resourceGroupName, v
 }
 
 // getVnetsClient sets up a new client to retrieve vnets
-func (c *Client) getVirtualNetworksClient(ctx context.Context) (*aznetwork.VirtualNetworksClient, error) {
+func (c *Client) GetVirtualNetworksClient(ctx context.Context) (*aznetwork.VirtualNetworksClient, error) {
 	vnetsClient := aznetwork.NewVirtualNetworksClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
 	vnetsClient.Authorizer = c.ssn.Authorizer
 	return &vnetsClient, nil
