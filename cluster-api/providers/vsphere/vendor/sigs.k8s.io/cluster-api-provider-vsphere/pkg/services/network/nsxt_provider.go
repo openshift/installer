@@ -56,23 +56,38 @@ func (np *nsxtNetworkProvider) HasLoadBalancer() bool {
 	return true
 }
 
+func (np *nsxtNetworkProvider) SupportsVMReadinessProbe() bool {
+	return true
+}
+
 // GetNSXTVirtualNetworkName returns the name of the NSX-T vnet object.
 func GetNSXTVirtualNetworkName(clusterName string) string {
 	return fmt.Sprintf("%s-vnet", clusterName)
 }
 
-func (np *nsxtNetworkProvider) verifyNSXTVirtualNetworkStatus(ctx *vmware.ClusterContext, vnet *ncpv1.VirtualNetwork) error {
-	clusterName := ctx.VSphereCluster.Name
-	namespace := ctx.VSphereCluster.Namespace
+func (np *nsxtNetworkProvider) verifyNSXTVirtualNetworkStatus(vspherecluster *vmwarev1.VSphereCluster, vnet *ncpv1.VirtualNetwork) error {
+	clusterName := vspherecluster.Name
+	namespace := vspherecluster.Namespace
+	hasReadyCondition := false
+
 	for _, condition := range vnet.Status.Conditions {
-		if condition.Type == "Ready" && condition.Status != "True" {
-			conditions.MarkFalse(ctx.VSphereCluster, vmwarev1.ClusterNetworkReadyCondition, vmwarev1.ClusterNetworkProvisionFailedReason, clusterv1.ConditionSeverityWarning, condition.Message)
+		if condition.Type != "Ready" {
+			continue
+		}
+		hasReadyCondition = true
+		if condition.Status != "True" {
+			conditions.MarkFalse(vspherecluster, vmwarev1.ClusterNetworkReadyCondition, vmwarev1.ClusterNetworkProvisionFailedReason, clusterv1.ConditionSeverityWarning, condition.Message)
 			return errors.Errorf("virtual network ready status is: '%s' in cluster %s. reason: %s, message: %s",
 				condition.Status, types.NamespacedName{Namespace: namespace, Name: clusterName}, condition.Reason, condition.Message)
 		}
 	}
 
-	conditions.MarkTrue(ctx.VSphereCluster, vmwarev1.ClusterNetworkReadyCondition)
+	if !hasReadyCondition {
+		conditions.MarkFalse(vspherecluster, vmwarev1.ClusterNetworkReadyCondition, vmwarev1.ClusterNetworkProvisionFailedReason, clusterv1.ConditionSeverityWarning, "No Ready status for virtual network")
+		return errors.Errorf("virtual network ready status in cluster %s has not been set", types.NamespacedName{Namespace: namespace, Name: clusterName})
+	}
+
+	conditions.MarkTrue(vspherecluster, vmwarev1.ClusterNetworkReadyCondition)
 	return nil
 }
 
@@ -82,7 +97,7 @@ func (np *nsxtNetworkProvider) VerifyNetworkStatus(_ context.Context, clusterCtx
 		return fmt.Errorf("expected NCP VirtualNetwork but got %T", obj)
 	}
 
-	return np.verifyNSXTVirtualNetworkStatus(clusterCtx, vnet)
+	return np.verifyNSXTVirtualNetworkStatus(clusterCtx.VSphereCluster, vnet)
 }
 
 func (np *nsxtNetworkProvider) ProvisionClusterNetwork(ctx context.Context, clusterCtx *vmware.ClusterContext) error {
@@ -143,7 +158,7 @@ func (np *nsxtNetworkProvider) ProvisionClusterNetwork(ctx context.Context, clus
 		return errors.Wrap(err, "Failed to provision network")
 	}
 
-	return np.verifyNSXTVirtualNetworkStatus(clusterCtx, vnet)
+	return np.verifyNSXTVirtualNetworkStatus(clusterCtx.VSphereCluster, vnet)
 }
 
 // GetClusterNetworkName returns the name of a valid cluster network if one exists.

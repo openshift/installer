@@ -704,6 +704,7 @@ func autoConvert_v1beta1_NetworkDeviceSpec_To_v1alpha4_NetworkDeviceSpec(in *v1b
 	// WARNING: in.AddressesFromPools requires manual conversion: does not exist in peer-type
 	// WARNING: in.DHCP4Overrides requires manual conversion: does not exist in peer-type
 	// WARNING: in.DHCP6Overrides requires manual conversion: does not exist in peer-type
+	// WARNING: in.SkipIPAllocation requires manual conversion: does not exist in peer-type
 	return nil
 }
 

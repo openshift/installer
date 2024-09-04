@@ -5,10 +5,6 @@
 
 package sysprep
 
-import (
-	"github.com/vmware-tanzu/vm-operator/api/v1alpha2/common"
-)
-
 // Sysprep describes the object representation of a Windows sysprep.xml answer
 // file.
 //
@@ -25,10 +21,10 @@ type Sysprep struct {
 	GUIRunOnce GUIRunOnce `json:"guiRunOnce,omitempty"`
 
 	// GUIUnattended is a representation of the Sysprep GUIUnattended key.
-	GUIUnattended GUIUnattended `json:"guiUnattended"`
+	GUIUnattended *GUIUnattended `json:"guiUnattended,omitempty"`
 
 	// Identification is a representation of the Sysprep Identification key.
-	Identification Identification `json:"identification"`
+	Identification *Identification `json:"identification,omitempty"`
 
 	// LicenseFilePrintData is a representation of the Sysprep
 	// LicenseFilePrintData key.
@@ -40,7 +36,7 @@ type Sysprep struct {
 	LicenseFilePrintData *LicenseFilePrintData `json:"licenseFilePrintData,omitempty"`
 
 	// UserData is a representation of the Sysprep UserData key.
-	UserData UserData `json:"userData"`
+	UserData *UserData `json:"userData"`
 }
 
 // GUIRunOnce maps to the GuiRunOnce key in the sysprep.xml answer file.
@@ -55,10 +51,10 @@ type GUIRunOnce struct {
 // GUIUnattended maps to the GuiUnattended key in the sysprep.xml answer file.
 type GUIUnattended struct {
 
-	// AutoLogon determine whether or not the machine automatically logs on as
+	// AutoLogon determine whether the machine automatically logs on as
 	// Administrator.
 	//
-	// Please note if AutoLogin is true, then Password must be set or guest
+	// Please note if AutoLogon is true, then Password must be set or guest
 	// customization will fail.
 	//
 	// +optional
@@ -71,7 +67,7 @@ type GUIUnattended struct {
 	// you may want to increase it. This number may be determined by the list of
 	// commands executed by the GuiRunOnce command.
 	//
-	// Please note this field only matters if AutoLogin is true.
+	// Please note this field must be specified with a non-zero positive integer if AutoLogon is true.
 	//
 	// +optional
 	AutoLogonCount int32 `json:"autoLogonCount,omitempty"`
@@ -90,8 +86,11 @@ type GUIUnattended struct {
 	// plainText attribute to true, so that the customization process does not
 	// attempt to decrypt the string.
 	//
+	// When not explicitly specified, the Key field for the selector defaults to
+	// `password`.
+	//
 	// +optional
-	Password *common.SecretKeySelector `json:"password,omitempty"`
+	Password *PasswordSecretKeySelector `json:"password,omitempty"`
 
 	// TimeZone is the time zone index for the virtual machine.
 	//
@@ -100,6 +99,16 @@ type GUIUnattended struct {
 	//
 	// +optional
 	TimeZone int32 `json:"timeZone,omitempty"`
+}
+
+// PasswordSecretKeySelector references the password value from a Secret resource
+type PasswordSecretKeySelector struct {
+	// Name is the name of the secret.
+	Name string `json:"name"`
+
+	// Key is the key in the secret that specifies the requested data.
+	// +kubebuilder:default=password
+	Key string `json:"key"`
 }
 
 // Identification maps to the Identification key in the sysprep.xml answer file
@@ -117,8 +126,11 @@ type Identification struct {
 	// DomainAdminPassword is the password for the domain user account used for
 	// authentication if the virtual machine is joining a domain.
 	//
+	// When not explicitly specified, the Key field for the selector defaults to
+	// `domain_admin_password`.
+	//
 	// +optional
-	DomainAdminPassword *common.SecretKeySelector `json:"domainAdminPassword,omitempty"`
+	DomainAdminPassword *DomainPasswordSecretKeySelector `json:"domainAdminPassword,omitempty"`
 
 	// JoinDomain is the domain that the virtual machine should join. If this
 	// value is supplied, then DomainAdmin and DomainAdminPassword must also be
@@ -133,6 +145,16 @@ type Identification struct {
 	//
 	// +optional
 	JoinWorkgroup string `json:"joinWorkgroup,omitempty"`
+}
+
+// DomainPasswordSecretKeySelector references the password value from a Secret resource
+type DomainPasswordSecretKeySelector struct {
+	// Name is the name of the secret.
+	Name string `json:"name"`
+
+	// Key is the key in the secret that specifies the requested data.
+	// +kubebuilder:default=domain_admin_password
+	Key string `json:"key"`
 }
 
 // CustomizationLicenseDataMode is an enumeration of the different license
@@ -174,20 +196,29 @@ type LicenseFilePrintData struct {
 type UserData struct {
 
 	// FullName is the user's full name.
-	//
-	// +optional
-	FullName string `json:"fullName,omitempty"`
+	FullName string `json:"fullName"`
 
 	// OrgName is the name of the user's organization.
-	//
-	// +optional
-	OrgName string `json:"orgName,omitempty"`
+	OrgName string `json:"orgName"`
 
 	// ProductID is a valid serial number.
 	//
 	// Please note unless the VirtualMachineImage was installed with a volume
 	// license key, ProductID must be set or guest customization will fail.
 	//
+	// When not explicitly specified, the Key field for the selector defaults to
+	// `domain_admin_password`.
+	//
 	// +optional
-	ProductID *common.SecretKeySelector `json:"productID,omitempty"`
+	ProductID *ProductIDSecretKeySelector `json:"productID,omitempty"`
+}
+
+// ProductIDSecretKeySelector references the ProductID value from a Secret resource
+type ProductIDSecretKeySelector struct {
+	// Name is the name of the secret.
+	Name string `json:"name"`
+
+	// Key is the key in the secret that specifies the requested data.
+	// +kubebuilder:default=product_id
+	Key string `json:"key"`
 }

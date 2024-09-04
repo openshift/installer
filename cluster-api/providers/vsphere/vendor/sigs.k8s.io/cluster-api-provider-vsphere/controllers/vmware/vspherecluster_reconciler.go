@@ -62,6 +62,7 @@ type ClusterReconciler struct {
 // +kubebuilder:rbac:groups=vmware.infrastructure.cluster.x-k8s.io,resources=vsphereclusters,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=vmware.infrastructure.cluster.x-k8s.io,resources=vsphereclusters/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=vmware.infrastructure.cluster.x-k8s.io,resources=vsphereclustertemplates,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=nsx.vmware.com,resources=subnetsets;subnetsets/status,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=vmware.com,resources=virtualnetworks;virtualnetworks/status,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=vmoperator.vmware.com,resources=virtualmachinesetresourcepolicies;virtualmachinesetresourcepolicies/status,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=vmoperator.vmware.com,resources=virtualmachineservices;virtualmachineservices/status,verbs=get;list;watch;create;update;patch;delete
@@ -102,7 +103,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 	// Build the patch helper.
 	patchHelper, err := patch.NewHelper(vsphereCluster, r.Client)
 	if err != nil {
-		return reconcile.Result{}, errors.Wrap(err, "failed to initialize patch helper")
+		return reconcile.Result{}, err
 	}
 
 	// Build the cluster context.

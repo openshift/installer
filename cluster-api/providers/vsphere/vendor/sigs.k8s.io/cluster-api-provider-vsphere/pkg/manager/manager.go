@@ -22,6 +22,7 @@ import (
 
 	"github.com/pkg/errors"
 	netopv1 "github.com/vmware-tanzu/net-operator-api/api/v1alpha1"
+	nsxopv1 "github.com/vmware-tanzu/nsx-operator/pkg/apis/v1alpha1"
 	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha1"
 	ncpv1 "github.com/vmware-tanzu/vm-operator/external/ncp/api/v1alpha1"
 	topologyv1 "github.com/vmware-tanzu/vm-operator/external/tanzu-topology/api/v1alpha1"
@@ -30,7 +31,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
-	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1alpha1"
+	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	infrav1alpha3 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1alpha3"
@@ -64,6 +65,7 @@ func New(ctx context.Context, opts Options) (Manager, error) {
 	_ = vmoprv1.AddToScheme(opts.Scheme)
 	_ = ncpv1.AddToScheme(opts.Scheme)
 	_ = netopv1.AddToScheme(opts.Scheme)
+	_ = nsxopv1.AddToScheme(opts.Scheme)
 	_ = topologyv1.AddToScheme(opts.Scheme)
 	_ = ipamv1.AddToScheme(opts.Scheme)
 

@@ -52,8 +52,8 @@ const (
 	// cluster are in maintenance mode.
 	MaintenanceAnnotationLabel = "capv." + infrav1.GroupName + "/maintenance"
 
-	// DefaultEnableKeepAlive is true by default.
-	DefaultEnableKeepAlive = true
+	// DefaultEnableKeepAlive is false by default.
+	DefaultEnableKeepAlive = false
 
 	// DefaultKeepAliveDuration unit minutes.
 	DefaultKeepAliveDuration = time.Minute * 5

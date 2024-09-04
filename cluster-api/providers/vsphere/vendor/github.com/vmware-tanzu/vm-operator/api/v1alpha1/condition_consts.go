@@ -1,4 +1,4 @@
-// Copyright (c) 2021 VMware, Inc. All Rights Reserved.
+// Copyright (c) 2021-2024 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 package v1alpha1
@@ -39,6 +39,12 @@ const (
 	// VirtualMachineImageNotReadyReason (Severity=Error) documents that the VirtualMachineImage specified in the VirtualMachineSpec
 	// is not ready.
 	VirtualMachineImageNotReadyReason = "VirtualMachineImageNotReady"
+)
+
+const (
+	// GuestBootstrapCondition exposes the status of guest bootstrap from within
+	// the guest OS, when available.
+	GuestBootstrapCondition ConditionType = "GuestBootstrap"
 )
 
 const (

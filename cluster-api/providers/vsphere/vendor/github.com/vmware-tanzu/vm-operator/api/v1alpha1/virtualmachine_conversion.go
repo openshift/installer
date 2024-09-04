@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiconversion "k8s.io/apimachinery/pkg/conversion"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	"github.com/vmware-tanzu/vm-operator/api/utilconversion"
@@ -163,14 +163,15 @@ func convert_v1alpha1_VmMetadata_To_v1alpha2_BootstrapSpec(
 
 	switch in.Transport {
 	case VirtualMachineMetadataExtraConfigTransport:
-		out.LinuxPrep = &v1alpha2.VirtualMachineBootstrapLinuxPrepSpec{
-			HardwareClockIsUTC: true,
-		}
+		// This transport is obsolete. It should be combined with LinuxPrep but in v1a2 we don't
+		// allow CloudInit w/ LinuxPrep.
+		// out.LinuxPrep = &v1alpha2.VirtualMachineBootstrapLinuxPrepSpec{HardwareClockIsUTC: true}
+
 		out.CloudInit = &v1alpha2.VirtualMachineBootstrapCloudInitSpec{}
 		if objectName != "" {
 			out.CloudInit.RawCloudConfig = &common.SecretKeySelector{
 				Name: objectName,
-				Key:  "guestinfo.userdata", // TODO: Is this good enough? v1a1 would include everything with the "guestinfo" prefix
+				Key:  "guestinfo.userdata",
 			}
 		}
 	case VirtualMachineMetadataOvfEnvTransport:
@@ -225,8 +226,11 @@ func convert_v1alpha2_BootstrapSpec_To_v1alpha1_VmMetadata(
 				out.Transport = VirtualMachineMetadataExtraConfigTransport
 			case "user-data":
 				out.Transport = VirtualMachineMetadataCloudInitTransport
+			default:
+				// Best approx we can do.
+				out.Transport = VirtualMachineMetadataCloudInitTransport
 			}
-		} else if cloudInit.CloudConfig != nil {
+		} else {
 			out.Transport = VirtualMachineMetadataCloudInitTransport
 		}
 	} else if sysprep := in.Sysprep; sysprep != nil {
@@ -261,6 +265,12 @@ func convert_v1alpha1_NetworkInterface_To_v1alpha2_NetworkInterfaceSpec(
 	case "nsx-t":
 		out.Network.TypeMeta.APIVersion = "vmware.com/v1alpha1"
 		out.Network.TypeMeta.Kind = "VirtualNetwork"
+	case "nsx-t-subnet":
+		out.Network.TypeMeta.APIVersion = "nsx.vmware.com/v1alpha1"
+		out.Network.TypeMeta.Kind = "Subnet"
+	case "nsx-t-subnetset":
+		out.Network.TypeMeta.APIVersion = "nsx.vmware.com/v1alpha1"
+		out.Network.TypeMeta.Kind = "SubnetSet"
 	}
 
 	return out
@@ -278,6 +288,10 @@ func convert_v1alpha2_NetworkInterfaceSpec_To_v1alpha1_NetworkInterface(
 		out.NetworkType = "vsphere-distributed"
 	case "VirtualNetwork":
 		out.NetworkType = "nsx-t"
+	case "SubnetSet":
+		out.NetworkType = "nsx-t-subnetset"
+	case "Subnet":
+		out.NetworkType = "nsx-t-subnet"
 	}
 
 	return out
@@ -358,34 +372,39 @@ func convert_v1alpha2_ReadinessProbeSpec_To_v1alpha1_Probe(in *v1alpha2.VirtualM
 }
 
 func convert_v1alpha1_VirtualMachineAdvancedOptions_To_v1alpha2_VirtualMachineAdvancedSpec(
-	in *VirtualMachineAdvancedOptions) *v1alpha2.VirtualMachineAdvancedSpec {
+	in *VirtualMachineAdvancedOptions, inVolumes []VirtualMachineVolume) *v1alpha2.VirtualMachineAdvancedSpec {
 
-	if in == nil || apiequality.Semantic.DeepEqual(*in, VirtualMachineAdvancedOptions{}) {
+	bootDiskCapacity := convert_v1alpha1_VsphereVolumes_To_v1alpha2_BootDiskCapacity(inVolumes)
+
+	if (in == nil || apiequality.Semantic.DeepEqual(*in, VirtualMachineAdvancedOptions{})) && bootDiskCapacity == nil {
 		return nil
 	}
 
 	out := v1alpha2.VirtualMachineAdvancedSpec{}
+	out.BootDiskCapacity = bootDiskCapacity
 
-	if opts := in.DefaultVolumeProvisioningOptions; opts != nil {
-		if opts.ThinProvisioned != nil {
-			if *opts.ThinProvisioned {
-				out.DefaultVolumeProvisioningMode = v1alpha2.VirtualMachineVolumeProvisioningModeThin
-			} else {
-				out.DefaultVolumeProvisioningMode = v1alpha2.VirtualMachineVolumeProvisioningModeThick
+	if in != nil {
+		if opts := in.DefaultVolumeProvisioningOptions; opts != nil {
+			if opts.ThinProvisioned != nil {
+				if *opts.ThinProvisioned {
+					out.DefaultVolumeProvisioningMode = v1alpha2.VirtualMachineVolumeProvisioningModeThin
+				} else {
+					out.DefaultVolumeProvisioningMode = v1alpha2.VirtualMachineVolumeProvisioningModeThick
+				}
+			} else if opts.EagerZeroed != nil && *opts.EagerZeroed {
+				out.DefaultVolumeProvisioningMode = v1alpha2.VirtualMachineVolumeProvisioningModeThickEagerZero
 			}
-		} else if opts.EagerZeroed != nil && *opts.EagerZeroed {
-			out.DefaultVolumeProvisioningMode = v1alpha2.VirtualMachineVolumeProvisioningModeThickEagerZero
 		}
-	}
 
-	if in.ChangeBlockTracking != nil {
-		out.ChangeBlockTracking = *in.ChangeBlockTracking
+		if in.ChangeBlockTracking != nil {
+			out.ChangeBlockTracking = *in.ChangeBlockTracking
+		}
 	}
 
 	return &out
 }
 
-func convert_v1alpha1_VsphereVolumes_To_v1alpah2_BootDiskCapacity(volumes []VirtualMachineVolume) *resource.Quantity {
+func convert_v1alpha1_VsphereVolumes_To_v1alpha2_BootDiskCapacity(volumes []VirtualMachineVolume) *resource.Quantity {
 	// The v1a1 VsphereVolume was never a great API as you had to know the DeviceKey upfront; at the time our
 	// API was private - only used by CAPW - and predates the "VM Service" VMs; In v1a2, we only support resizing
 	// the boot disk via an explicit field. As good as we can here, map v1a1 volume into the v1a2 specific field.
@@ -415,21 +434,21 @@ func convert_v1alpha2_VirtualMachineAdvancedSpec_To_v1alpha1_VirtualMachineAdvan
 	out := &VirtualMachineAdvancedOptions{}
 
 	if in.ChangeBlockTracking {
-		out.ChangeBlockTracking = pointer.Bool(true)
+		out.ChangeBlockTracking = ptr.To(true)
 	}
 
 	switch in.DefaultVolumeProvisioningMode {
 	case v1alpha2.VirtualMachineVolumeProvisioningModeThin:
 		out.DefaultVolumeProvisioningOptions = &VirtualMachineVolumeProvisioningOptions{
-			ThinProvisioned: pointer.Bool(true),
+			ThinProvisioned: ptr.To(true),
 		}
 	case v1alpha2.VirtualMachineVolumeProvisioningModeThick:
 		out.DefaultVolumeProvisioningOptions = &VirtualMachineVolumeProvisioningOptions{
-			ThinProvisioned: pointer.Bool(false),
+			ThinProvisioned: ptr.To(false),
 		}
 	case v1alpha2.VirtualMachineVolumeProvisioningModeThickEagerZero:
 		out.DefaultVolumeProvisioningOptions = &VirtualMachineVolumeProvisioningOptions{
-			EagerZeroed: pointer.Bool(true),
+			EagerZeroed: ptr.To(true),
 		}
 	}
 
@@ -441,7 +460,7 @@ func convert_v1alpha2_VirtualMachineAdvancedSpec_To_v1alpha1_VirtualMachineAdvan
 }
 
 func convert_v1alpha2_BootDiskCapacity_To_v1alpha1_VirtualMachineVolume(capacity *resource.Quantity) *VirtualMachineVolume {
-	if capacity == nil || capacity.IsZero() {
+	if capacity == nil {
 		return nil
 	}
 
@@ -453,7 +472,7 @@ func convert_v1alpha2_BootDiskCapacity_To_v1alpha1_VirtualMachineVolume(capacity
 			Capacity: corev1.ResourceList{
 				corev1.ResourceEphemeralStorage: *capacity,
 			},
-			DeviceKey: pointer.Int(bootDiskDeviceKey),
+			DeviceKey: ptr.To(bootDiskDeviceKey),
 		},
 	}
 }
@@ -483,7 +502,7 @@ func convert_v1alpha1_Network_To_v1alpha2_NetworkStatus(
 
 	for _, inI := range in {
 		interfaceStatus := v1alpha2.VirtualMachineNetworkInterfaceStatus{
-			IP: v1alpha2.VirtualMachineNetworkInterfaceIPStatus{
+			IP: &v1alpha2.VirtualMachineNetworkInterfaceIPStatus{
 				Addresses: ipAddrsToAddrStatus(inI.IpAddresses),
 				MACAddr:   inI.MacAddress,
 			},
@@ -517,9 +536,11 @@ func convert_v1alpha2_NetworkStatus_To_v1alpha1_Network(
 	out := make([]NetworkInterfaceStatus, 0, len(in.Interfaces))
 	for _, i := range in.Interfaces {
 		interfaceStatus := NetworkInterfaceStatus{
-			Connected:   true,
-			MacAddress:  i.IP.MACAddr,
-			IpAddresses: addrStatusToIPAddrs(i.IP.Addresses),
+			Connected: true,
+		}
+		if i.IP != nil {
+			interfaceStatus.MacAddress = i.IP.MACAddr
+			interfaceStatus.IpAddresses = addrStatusToIPAddrs(i.IP.Addresses)
 		}
 		out = append(out, interfaceStatus)
 	}
@@ -577,10 +598,7 @@ func Convert_v1alpha1_VirtualMachineSpec_To_v1alpha2_VirtualMachineSpec(
 	}
 
 	out.ReadinessProbe = convert_v1alpha1_Probe_To_v1alpha2_ReadinessProbeSpec(in.ReadinessProbe)
-	out.Advanced = convert_v1alpha1_VirtualMachineAdvancedOptions_To_v1alpha2_VirtualMachineAdvancedSpec(in.AdvancedOptions)
-	if out.Advanced != nil {
-		out.Advanced.BootDiskCapacity = convert_v1alpha1_VsphereVolumes_To_v1alpah2_BootDiskCapacity(in.Volumes)
-	}
+	out.Advanced = convert_v1alpha1_VirtualMachineAdvancedOptions_To_v1alpha2_VirtualMachineAdvancedSpec(in.AdvancedOptions, in.Volumes)
 
 	if in.ResourcePolicyName != "" {
 		if out.Reserved == nil {
@@ -610,6 +628,7 @@ func Convert_v1alpha2_VirtualMachineSpec_To_v1alpha1_VirtualMachineSpec(
 	out.VmMetadata = convert_v1alpha2_BootstrapSpec_To_v1alpha1_VmMetadata(in.Bootstrap)
 
 	if in.Network != nil {
+		out.NetworkInterfaces = make([]VirtualMachineNetworkInterface, 0, len(in.Network.Interfaces))
 		for _, networkInterfaceSpec := range in.Network.Interfaces {
 			networkInterface := convert_v1alpha2_NetworkInterfaceSpec_To_v1alpha1_NetworkInterface(networkInterfaceSpec)
 			out.NetworkInterfaces = append(out.NetworkInterfaces, networkInterface)
@@ -662,7 +681,6 @@ func Convert_v1alpha1_VirtualMachineStatus_To_v1alpha2_VirtualMachineStatus(
 
 	out.PowerState = convert_v1alpha1_VirtualMachinePowerState_To_v1alpha2_VirtualMachinePowerState(in.PowerState)
 	out.Network = convert_v1alpha1_Network_To_v1alpha2_NetworkStatus(in.VmIp, in.NetworkInterfaces)
-	out.LastRestartTime = in.LastRestartTime
 
 	// WARNING: in.Phase requires manual conversion: does not exist in peer-type
 
@@ -670,7 +688,7 @@ func Convert_v1alpha1_VirtualMachineStatus_To_v1alpha2_VirtualMachineStatus(
 }
 
 func translate_v1alpha2_Conditions_To_v1alpha1_Conditions(conditions []Condition) []Condition {
-	var preReqCond, vmClassCond, vmImageCond, vmSetResourcePolicy, vmBootstrap *Condition
+	var preReqCond, vmClassCond, vmImageCond, vmSetResourcePolicyCond, vmBootstrapCond *Condition
 
 	for i := range conditions {
 		c := &conditions[i]
@@ -683,9 +701,9 @@ func translate_v1alpha2_Conditions_To_v1alpha1_Conditions(conditions []Condition
 		case v1alpha2.VirtualMachineConditionImageReady:
 			vmImageCond = c
 		case v1alpha2.VirtualMachineConditionVMSetResourcePolicyReady:
-			vmSetResourcePolicy = c
+			vmSetResourcePolicyCond = c
 		case v1alpha2.VirtualMachineConditionBootstrapReady:
-			vmBootstrap = c
+			vmBootstrapCond = c
 		}
 	}
 
@@ -694,8 +712,8 @@ func translate_v1alpha2_Conditions_To_v1alpha1_Conditions(conditions []Condition
 	// the v1a1 prereqs, and are optional.
 	if vmClassCond != nil && vmClassCond.Status == corev1.ConditionTrue &&
 		vmImageCond != nil && vmImageCond.Status == corev1.ConditionTrue &&
-		(vmSetResourcePolicy == nil || vmSetResourcePolicy.Status == corev1.ConditionTrue) &&
-		(vmBootstrap == nil || vmBootstrap.Status == corev1.ConditionTrue) {
+		(vmSetResourcePolicyCond == nil || vmSetResourcePolicyCond.Status == corev1.ConditionTrue) &&
+		(vmBootstrapCond == nil || vmBootstrapCond.Status == corev1.ConditionTrue) {
 
 		p := Condition{
 			Type:   VirtualMachinePrereqReadyCondition,
@@ -737,8 +755,8 @@ func translate_v1alpha2_Conditions_To_v1alpha1_Conditions(conditions []Condition
 		return append(conditions, p)
 	}
 
-	if vmSetResourcePolicy != nil && vmSetResourcePolicy.Status == corev1.ConditionFalse &&
-		vmBootstrap != nil && vmBootstrap.Status == corev1.ConditionFalse {
+	if vmSetResourcePolicyCond != nil && vmSetResourcePolicyCond.Status == corev1.ConditionFalse &&
+		vmBootstrapCond != nil && vmBootstrapCond.Status == corev1.ConditionFalse {
 
 		// These are not a part of the v1a1 Prereqs. If either is false, the v1a1 provider would not
 		// update the prereqs condition, but we don't set the condition to true either until all these
@@ -773,10 +791,22 @@ func Convert_v1alpha2_VirtualMachineStatus_To_v1alpha1_VirtualMachineStatus(
 func restore_v1alpha2_VirtualMachineBootstrapSpec(
 	dst, src *v1alpha2.VirtualMachine) {
 
-	dstBootstrap := dst.Spec.Bootstrap
 	srcBootstrap := src.Spec.Bootstrap
+	if srcBootstrap == nil {
+		// Nothing to restore from.
+		return
+	}
 
-	if dstBootstrap == nil || srcBootstrap == nil {
+	dstBootstrap := dst.Spec.Bootstrap
+	if dstBootstrap == nil {
+		// v1a1 doesn't have a way to represent standalone LinuxPrep. If we didn't do a
+		// conversion in convert_v1alpha1_VmMetadata_To_v1alpha2_BootstrapSpec() but we
+		// saved a LinuxPrep in the conversion annotation, restore that here.
+		if srcBootstrap.LinuxPrep != nil {
+			dst.Spec.Bootstrap = &v1alpha2.VirtualMachineBootstrapSpec{
+				LinuxPrep: srcBootstrap.LinuxPrep,
+			}
+		}
 		return
 	}
 
@@ -809,7 +839,14 @@ func restore_v1alpha2_VirtualMachineBootstrapSpec(
 	if dstSysPrep := dstBootstrap.Sysprep; dstSysPrep != nil {
 		if srcSysPrep := srcBootstrap.Sysprep; srcSysPrep != nil {
 			dstSysPrep.Sysprep = srcSysPrep.Sysprep
-			dstSysPrep.RawSysprep = mergeSecretKeySelector(srcSysPrep.RawSysprep, dstSysPrep.RawSysprep)
+			dstSysPrep.RawSysprep = mergeSecretKeySelector(dstSysPrep.RawSysprep, srcSysPrep.RawSysprep)
+
+			// In v1a1 we don't have way to denote Sysprep with vAppConfig. LinuxPrep with vAppConfig works
+			// because that translates to OvfEnvTransport. If we have a saved vAppConfig initialize the field
+			// so we'll restore it next.
+			if dstBootstrap.VAppConfig == nil && srcBootstrap.VAppConfig != nil {
+				dstBootstrap.VAppConfig = &v1alpha2.VirtualMachineBootstrapVAppConfigSpec{}
+			}
 		}
 	}
 
@@ -821,42 +858,197 @@ func restore_v1alpha2_VirtualMachineBootstrapSpec(
 	}
 }
 
-func restore_v1alpha2_VirtualMachineNetwork(
+func restore_v1alpha2_VirtualMachineNetworkSpec(
 	dst, src *v1alpha2.VirtualMachine) {
 
-	dstNetwork := dst.Spec.Network
 	srcNetwork := src.Spec.Network
-
-	if dstNetwork == nil || srcNetwork == nil {
+	if srcNetwork == nil || apiequality.Semantic.DeepEqual(*srcNetwork, v1alpha2.VirtualMachineNetworkSpec{}) {
+		// Nothing to restore.
 		return
 	}
 
+	if dst.Spec.Network == nil {
+		dst.Spec.Network = &v1alpha2.VirtualMachineNetworkSpec{}
+	}
+	dstNetwork := dst.Spec.Network
+
 	dstNetwork.HostName = srcNetwork.HostName
 	dstNetwork.Disabled = srcNetwork.Disabled
+	dstNetwork.Nameservers = srcNetwork.Nameservers
+	dstNetwork.SearchDomains = srcNetwork.SearchDomains
 
 	if len(dstNetwork.Interfaces) == 0 {
 		// No interfaces so nothing to fixup (the interfaces were removed): we ignore the restored interfaces.
 		return
 	}
 
-	// The exceedingly common case is there was and still is just one interface, and for the same
-	// network. With multiple interfaces it gets much harder to line things up. We really just
-	// don't have info in v1a1 so this is a little best effort. The API supports it, but  we really
-	// never supported-supported it yet.
-	//
-	// Do the about the easiest thing and zip the interfaces together, using the network name to
-	// determine if it is the "same" interface. v1a1 could not support multiple interfaces on the
-	// same network, and it probably won't be common place in v1a2, so we could try to refine this
-	// a little more later.
+	// In v1a2 we made the network interfaces immutable. In v1a1 one could, in theory, add, remove,
+	// reorder network interfaces, but it hardly would have "worked". The exceedingly common case is
+	// just one interface and the list will never change post-create. Here, we overlay the saved
+	// source on to the destination, and restore the network Name and Kind. If those were changed in
+	// v1a1, then we expect the VM validation webhook to fail.
+	// For truly mutable network interfaces, we'll have to get a little creative on how to line the
+	// src and dst network interfaces together in the face of changes.
 	for i := range dstNetwork.Interfaces {
 		if i >= len(srcNetwork.Interfaces) {
 			break
 		}
 
-		if dstNetwork.Interfaces[i].Network.Name == srcNetwork.Interfaces[i].Network.Name {
-			dstNetwork.Interfaces[i] = srcNetwork.Interfaces[i]
+		networkName := dstNetwork.Interfaces[i].Network.Name
+		networkType := dstNetwork.Interfaces[i].Network.TypeMeta
+		dstNetwork.Interfaces[i] = srcNetwork.Interfaces[i]
+		dstNetwork.Interfaces[i].Network.Name = networkName
+		dstNetwork.Interfaces[i].Network.TypeMeta = networkType
+	}
+}
+
+func restore_v1alpha2_VirtualMachineReadinessProbeSpec(
+	dst, src *v1alpha2.VirtualMachine) {
+
+	if src.Spec.ReadinessProbe != nil {
+		if dst.Spec.ReadinessProbe == nil {
+			dst.Spec.ReadinessProbe = &v1alpha2.VirtualMachineReadinessProbeSpec{}
+		}
+		dst.Spec.ReadinessProbe.GuestInfo = src.Spec.ReadinessProbe.GuestInfo
+	}
+}
+
+func convert_v1alpha1_PreReqsReadyCondition_to_v1alpha2_Conditions(
+	dst *v1alpha2.VirtualMachine) []metav1.Condition {
+
+	var preReqCond, vmClassCond, vmImageCond, vmSetResourcePolicyCond, vmBootstrapCond *metav1.Condition
+	var preReqCondIdx int
+
+	for i := range dst.Status.Conditions {
+		c := &dst.Status.Conditions[i]
+
+		switch c.Type {
+		case string(VirtualMachinePrereqReadyCondition):
+			preReqCond = c
+			preReqCondIdx = i
+		case v1alpha2.VirtualMachineConditionClassReady:
+			vmClassCond = c
+		case v1alpha2.VirtualMachineConditionImageReady:
+			vmImageCond = c
+		case v1alpha2.VirtualMachineConditionVMSetResourcePolicyReady:
+			vmSetResourcePolicyCond = c
+		case v1alpha2.VirtualMachineConditionBootstrapReady:
+			vmBootstrapCond = c
 		}
 	}
+
+	// If we didn't find the v1a1 PrereqReady condition then there is nothing to do.
+	if preReqCond == nil {
+		return dst.Status.Conditions
+	}
+
+	// Remove the v1a1 PrereqReady condition if not nil
+	dst.Status.Conditions = append(dst.Status.Conditions[:preReqCondIdx], dst.Status.Conditions[preReqCondIdx+1:]...)
+
+	// If any of the v1a2 conditions were already evaluated, v1a1 PrereqReady condition has been removed, so move on.
+	if vmClassCond != nil || vmImageCond != nil || vmSetResourcePolicyCond != nil || vmBootstrapCond != nil {
+		return dst.Status.Conditions
+	}
+
+	var conditions []metav1.Condition
+	// If we don't have any of the new v1a2 conditions, use the v1a1 PrereqReady condition to fill
+	// that in. This means that this was originally a v1a1 VM.
+	if preReqCond.Status == metav1.ConditionTrue {
+		// The class and image are always required fields.
+		conditions = append(conditions, metav1.Condition{
+			Type:               v1alpha2.VirtualMachineConditionClassReady,
+			Status:             metav1.ConditionTrue,
+			LastTransitionTime: preReqCond.LastTransitionTime,
+			Reason:             string(metav1.ConditionTrue),
+		})
+		conditions = append(conditions, metav1.Condition{
+			Type:               v1alpha2.VirtualMachineConditionImageReady,
+			Status:             metav1.ConditionTrue,
+			LastTransitionTime: preReqCond.LastTransitionTime,
+			Reason:             string(metav1.ConditionTrue),
+		})
+
+		if dst.Spec.Reserved != nil && dst.Spec.Reserved.ResourcePolicyName != "" {
+			conditions = append(conditions, metav1.Condition{
+				Type:               v1alpha2.VirtualMachineConditionVMSetResourcePolicyReady,
+				Status:             metav1.ConditionTrue,
+				LastTransitionTime: preReqCond.LastTransitionTime,
+				Reason:             string(metav1.ConditionTrue),
+			})
+		}
+		if dst.Spec.Bootstrap != nil {
+			conditions = append(conditions, metav1.Condition{
+				Type:               v1alpha2.VirtualMachineConditionBootstrapReady,
+				Status:             metav1.ConditionTrue,
+				LastTransitionTime: preReqCond.LastTransitionTime,
+				Reason:             string(metav1.ConditionTrue),
+			})
+		}
+
+	} else if preReqCond.Status == metav1.ConditionFalse {
+		// Infer what v1a2 conditions need to be true/false from preReq reason.
+		// Order of evaluation of objects for v1a1 PreReq Condition:
+		// 1. VM Class (which includes VM Class Bindings)
+		// 2. VM Image (which includes ContentSourceBindings and ContentSourceProviders)
+
+		if preReqCond.Reason == VirtualMachineClassNotFoundReason ||
+			preReqCond.Reason == VirtualMachineClassBindingNotFoundReason {
+			conditions = append(conditions, metav1.Condition{
+				Type:               v1alpha2.VirtualMachineConditionClassReady,
+				Status:             metav1.ConditionFalse,
+				LastTransitionTime: preReqCond.LastTransitionTime,
+				Reason:             preReqCond.Reason,
+			})
+			// v1a1 Image preReq hasn't been evaluated yet -- mark unknown
+			conditions = append(conditions, metav1.Condition{
+				Type:               v1alpha2.VirtualMachineConditionImageReady,
+				Status:             metav1.ConditionUnknown,
+				LastTransitionTime: preReqCond.LastTransitionTime,
+				Reason:             string(metav1.ConditionUnknown),
+			})
+		} else if preReqCond.Reason == VirtualMachineImageNotFoundReason ||
+			preReqCond.Reason == VirtualMachineImageNotReadyReason ||
+			preReqCond.Reason == ContentSourceBindingNotFoundReason ||
+			preReqCond.Reason == ContentLibraryProviderNotFoundReason {
+
+			conditions = append(conditions, metav1.Condition{
+				Type:               v1alpha2.VirtualMachineConditionClassReady,
+				Status:             metav1.ConditionTrue,
+				LastTransitionTime: preReqCond.LastTransitionTime,
+				Reason:             string(metav1.ConditionTrue),
+			})
+			conditions = append(conditions, metav1.Condition{
+				Type:               v1alpha2.VirtualMachineConditionImageReady,
+				Status:             metav1.ConditionFalse,
+				LastTransitionTime: preReqCond.LastTransitionTime,
+				Reason:             preReqCond.Reason,
+			})
+		}
+
+		// v1a1 setPolicy has not been evaluated when preReq condition is false. Mark unknown in v1a2 when
+		// resourcePolicy is specified in VM Spec.
+		if dst.Spec.Reserved != nil && dst.Spec.Reserved.ResourcePolicyName != "" {
+			conditions = append(conditions, metav1.Condition{
+				Type:               v1alpha2.VirtualMachineConditionVMSetResourcePolicyReady,
+				Status:             metav1.ConditionUnknown,
+				LastTransitionTime: preReqCond.LastTransitionTime,
+				Reason:             string(metav1.ConditionUnknown),
+			})
+		}
+
+		// v1a1 vmMetadata has not been evaluated when preReq condition is false. Mark unknown in v1a2 when
+		// bootstrap is specified in VM Spec.
+		if dst.Spec.Bootstrap != nil {
+			conditions = append(conditions, metav1.Condition{
+				Type:               v1alpha2.VirtualMachineConditionBootstrapReady,
+				Status:             metav1.ConditionUnknown,
+				LastTransitionTime: preReqCond.LastTransitionTime,
+				Reason:             string(metav1.ConditionUnknown),
+			})
+		}
+	}
+
+	return append(dst.Status.Conditions, conditions...)
 }
 
 // ConvertTo converts this VirtualMachine to the Hub version.
@@ -869,18 +1061,17 @@ func (src *VirtualMachine) ConvertTo(dstRaw conversion.Hub) error {
 	// Manually restore data.
 	restored := &v1alpha2.VirtualMachine{}
 	if ok, err := utilconversion.UnmarshalData(src, restored); err != nil || !ok {
+		// If there is no v1a2 object to restore, this was originally a v1a1 VM
+		// Make sure the v1a1 PreReq conditions are translated over to v1a2 correctly
+		dst.Status.Conditions = convert_v1alpha1_PreReqsReadyCondition_to_v1alpha2_Conditions(dst)
 		return err
 	}
 
 	restore_v1alpha2_VirtualMachineBootstrapSpec(dst, restored)
-	restore_v1alpha2_VirtualMachineNetwork(dst, restored)
+	restore_v1alpha2_VirtualMachineNetworkSpec(dst, restored)
+	restore_v1alpha2_VirtualMachineReadinessProbeSpec(dst, restored)
 
-	if restored.Spec.ReadinessProbe != nil {
-		if dst.Spec.ReadinessProbe == nil {
-			dst.Spec.ReadinessProbe = &v1alpha2.VirtualMachineReadinessProbeSpec{}
-		}
-		dst.Spec.ReadinessProbe.GuestInfo = restored.Spec.ReadinessProbe.GuestInfo
-	}
+	dst.Status = restored.Status
 
 	return nil
 }

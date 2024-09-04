@@ -90,12 +90,12 @@ func AddMachineControllerToManager(ctx context.Context, controllerManagerContext
 	}
 
 	if supervisorBased {
-		r.VMService = &vmoperator.VmopMachineService{Client: controllerManagerContext.Client}
 		networkProvider, err := inframanager.GetNetworkProvider(ctx, controllerManagerContext.Client, controllerManagerContext.NetworkProvider)
 		if err != nil {
 			return errors.Wrap(err, "failed to create a network provider")
 		}
 		r.networkProvider = networkProvider
+		r.VMService = &vmoperator.VmopMachineService{Client: controllerManagerContext.Client, ConfigureControlPlaneVMReadinessProbe: r.networkProvider.SupportsVMReadinessProbe()}
 
 		return ctrl.NewControllerManagedBy(mgr).
 			// Watch the controlled, infrastructure resource.
@@ -154,7 +154,7 @@ func AddMachineControllerToManager(ctx context.Context, controllerManagerContext
 			ctrlbldr.WithPredicates(predicate.Funcs{
 				// ignore creation events since this controller is responsible for
 				// the creation of the type.
-				CreateFunc: func(e event.CreateEvent) bool {
+				CreateFunc: func(event.CreateEvent) bool {
 					return false
 				},
 			}),
@@ -231,7 +231,7 @@ func (r *machineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 	// Create the patch helper.
 	patchHelper, err := patch.NewHelper(machineContext.GetVSphereMachine(), r.Client)
 	if err != nil {
-		return reconcile.Result{}, errors.Wrap(err, "failed to initialize patch helper")
+		return reconcile.Result{}, err
 	}
 	machineContext.SetBaseMachineContext(&capvcontext.BaseMachineContext{
 		Cluster:     cluster,

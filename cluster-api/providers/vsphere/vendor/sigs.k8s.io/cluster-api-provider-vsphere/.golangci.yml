@@ -1,6 +1,6 @@
 run:
   timeout: 10m
-  go: "1.21"
+  go: "1.22"
   skip-files:
     - "zz_generated.*\\.go$"
     - "_conversion\\.go$"
@@ -137,6 +137,9 @@ linters-settings:
       # CAPI exp addons
       - pkg: sigs.k8s.io/cluster-api/exp/addons/api/v1beta1
         alias: addonsv1
+      # CAPI IPAM 
+      - pkg: sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1
+        alias: ipamv1
   nolintlint:
     allow-unused: false
     allow-leading-space: false
@@ -229,6 +232,11 @@ issues:
     - revive
     - stylecheck
     path: test/e2e/.*.go
+    text: should not use dot imports
+  - linters:
+      - revive
+      - stylecheck
+    path: test/framework/.*.go
     text: should not use dot imports
   - linters:
     - revive

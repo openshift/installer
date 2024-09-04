@@ -90,7 +90,7 @@ func (r clusterIdentityReconciler) Reconcile(ctx context.Context, req reconcile.
 	// Create the patch helper.
 	patchHelper, err := patch.NewHelper(identity, r.Client)
 	if err != nil {
-		return reconcile.Result{}, errors.Wrap(err, "failed to initialize patch helper")
+		return reconcile.Result{}, err
 	}
 
 	defer func() {

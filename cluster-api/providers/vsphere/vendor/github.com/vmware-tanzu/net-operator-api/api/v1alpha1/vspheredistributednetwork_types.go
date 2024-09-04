@@ -1,4 +1,4 @@
-// Copyright (c) 2020 VMware, Inc. All Rights Reserved.
+// Copyright (c) 2020-2024 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 package v1alpha1
@@ -11,7 +11,7 @@ import (
 type VSphereDistributedNetworkConditionType string
 
 const (
-	// VSphereDistributedNetworkFailure is added when PortGroupID specified either doesn't exist, or
+	// VSphereDistributedNetworkPortGroupFailure is added when PortGroupID specified either doesn't exist, or
 	// there was an error in communicating with vCenter Server.
 	VSphereDistributedNetworkPortGroupFailure VSphereDistributedNetworkConditionType = "PortGroupFailure"
 	// VSphereDistributedNetworkIPPoolInvalid is added when no valid IPPool references exists.

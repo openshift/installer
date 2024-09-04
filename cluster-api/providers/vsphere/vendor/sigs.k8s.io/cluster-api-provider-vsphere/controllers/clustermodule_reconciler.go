@@ -221,10 +221,10 @@ func (r Reconciler) PopulateWatchesOnController(mgr manager.Manager, controller 
 		source.Kind(mgr.GetCache(), &controlplanev1.KubeadmControlPlane{}),
 		handler.EnqueueRequestsFromMapFunc(r.toAffinityInput),
 		predicate.Funcs{
-			GenericFunc: func(genericEvent event.GenericEvent) bool {
+			GenericFunc: func(event.GenericEvent) bool {
 				return false
 			},
-			UpdateFunc: func(updateEvent event.UpdateEvent) bool {
+			UpdateFunc: func(event.UpdateEvent) bool {
 				return false
 			},
 		},
@@ -236,10 +236,10 @@ func (r Reconciler) PopulateWatchesOnController(mgr manager.Manager, controller 
 		source.Kind(mgr.GetCache(), &clusterv1.MachineDeployment{}),
 		handler.EnqueueRequestsFromMapFunc(r.toAffinityInput),
 		predicate.Funcs{
-			GenericFunc: func(genericEvent event.GenericEvent) bool {
+			GenericFunc: func(event.GenericEvent) bool {
 				return false
 			},
-			UpdateFunc: func(updateEvent event.UpdateEvent) bool {
+			UpdateFunc: func(event.UpdateEvent) bool {
 				return false
 			},
 		},

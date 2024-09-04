@@ -27,12 +27,12 @@ type VirtualMachineNetworkInterfaceSpec struct {
 	// Name describes the unique name of this network interface, used to
 	// distinguish it from other network interfaces attached to this VM.
 	//
-	// This value is also used to rename the device inside the guest when the
-	// bootstrap provider is CloudInit. Please note it is up to the user to
-	// ensure the provided device name does not conflict with any other devices
-	// inside the guest, ex. dvd, cdrom, sda, etc.
+	// When the bootstrap provider is Cloud-Init and GuestDeviceName is not
+	// specified, the device inside the guest will be renamed to this value.
+	// Please note it is up to the user to ensure the provided name does not
+	// conflict with any other devices inside the guest, ex. dvd, cdrom, sda, etc.
 	//
-	// +kubebuilder:validation:Pattern=^\w\w+$
+	// +kubebuilder:validation:Pattern="^[a-z0-9]{2,}$"
 	Name string `json:"name"`
 
 	// Network is the name of the network resource to which this interface is
@@ -43,6 +43,15 @@ type VirtualMachineNetworkInterfaceSpec struct {
 	//
 	// +optional
 	Network common.PartialObjectRef `json:"network,omitempty"`
+
+	// GuestDeviceName is used to rename the device inside the guest when the
+	// bootstrap provider is Cloud-Init. Please note it is up to the user to
+	// ensure the provided device name does not conflict with any other devices
+	// inside the guest, ex. dvd, cdrom, sda, etc.
+	//
+	// +optional
+	// +kubebuilder:validation:Pattern=^\w\w+$
+	GuestDeviceName string `json:"guestDeviceName,omitempty"`
 
 	// Addresses is an optional list of IP4 or IP6 addresses to assign to this
 	// interface.
@@ -132,7 +141,7 @@ type VirtualMachineNetworkInterfaceSpec struct {
 	// nameservers.
 	//
 	// Please note this feature is available only with the following bootstrap
-	// providers: CloudInit, LinuxPrep, and Sysprep (except for RawSysprep).
+	// providers: CloudInit and Sysprep.
 	//
 	// Please note that Linux allows only three nameservers
 	// (https://linux.die.net/man/5/resolv.conf).
@@ -152,7 +161,7 @@ type VirtualMachineNetworkInterfaceSpec struct {
 	// addresses with DNS.
 	//
 	// Please note this feature is available only with the following bootstrap
-	// providers: CloudInit, LinuxPrep, and Sysprep (except for RawSysprep).
+	// providers: CloudInit.
 	//
 	// +optional
 	SearchDomains []string `json:"searchDomains,omitempty"`
@@ -166,6 +175,9 @@ type VirtualMachineNetworkSpec struct {
 	// Please note this feature is available only with the following bootstrap
 	// providers: CloudInit, LinuxPrep, and Sysprep (except for RawSysprep).
 	//
+	// When the bootstrap provider is Sysprep (except for RawSysprep) this is
+	// used as the Computer Name.
+	//
 	// +optional
 	HostName string `json:"hostName,omitempty"`
 
@@ -178,14 +190,41 @@ type VirtualMachineNetworkSpec struct {
 	// +optional
 	Disabled bool `json:"disabled,omitempty"`
 
+	// Nameservers is a list of IP4 and/or IP6 addresses used as DNS
+	// nameservers. These are applied globally.
+	//
+	// Please note global nameservers are only available with the following
+	// bootstrap providers: LinuxPrep and Sysprep. The Cloud-Init bootstrap
+	// provider supports per-interface nameservers.
+	//
+	// Please note that Linux allows only three nameservers
+	// (https://linux.die.net/man/5/resolv.conf).
+	//
+	// +optional
+	Nameservers []string `json:"nameservers,omitempty"`
+
+	// SearchDomains is a list of search domains used when resolving IP
+	// addresses with DNS. These are applied globally.
+	//
+	// Please note global search domains are only available with the following
+	// bootstrap providers: LinuxPrep and Sysprep. The Cloud-Init bootstrap
+	// provider supports per-interface search domains.
+	//
+	// +optional
+	SearchDomains []string `json:"searchDomains,omitempty"`
+
 	// Interfaces is the list of network interfaces used by this VM.
 	//
 	// If the Interfaces field is empty and the Disabled field is false, then
 	// a default interface with the name eth0 will be created.
 	//
+	// The maximum number of network interface allowed is 10 because of the limit
+	// built into vSphere.
+	//
 	// +optional
 	// +listType=map
 	// +listMapKey=name
+	// +kubebuilder:validation:MaxItems=10
 	Interfaces []VirtualMachineNetworkInterfaceSpec `json:"interfaces,omitempty"`
 }
 
@@ -204,6 +243,36 @@ type VirtualMachineNetworkDNSStatus struct {
 	// +optional
 	DomainName string `json:"domainName,omitempty"`
 
+	// HostName is the host name portion of the DNS name. For example,
+	// the "my-vm" part of "my-vm.domain.local".
+	//
+	// +optional
+	HostName string `json:"hostName,omitempty"`
+
+	// Nameservers is a list of the IP addresses for the DNS servers to use.
+	//
+	// IP4 addresses are specified using dotted decimal notation. For example,
+	// "192.0.2.1".
+	//
+	// IP6 addresses are 128-bit addresses represented as eight fields of up to
+	// four hexadecimal digits. A colon separates each field (:). For example,
+	// 2001:DB8:101::230:6eff:fe04:d9ff. The address can also consist of the
+	// symbol '::' to represent multiple 16-bit groups of contiguous 0's only
+	// once in an address as described in RFC 2373.
+	//
+	// +optional
+	Nameservers []string `json:"nameservers,omitempty"`
+
+	// SearchDomains is a list of domains in which to search for hosts, in the
+	// order of preference.
+	//
+	// +optional
+	SearchDomains []string `json:"searchDomains,omitempty"`
+}
+
+// VirtualMachineNetworkConfigDNSStatus describes the configured state of the
+// RFC 1034 client-side DNS settings.
+type VirtualMachineNetworkConfigDNSStatus struct {
 	// HostName is the host name portion of the DNS name. For example,
 	// the "my-vm" part of "my-vm.domain.local".
 	//
@@ -254,6 +323,14 @@ type VirtualMachineNetworkDHCPOptionsStatus struct {
 	Enabled bool `json:"enabled,omitempty"`
 }
 
+// VirtualMachineNetworkConfigDHCPOptionsStatus describes the configured
+// DHCP options.
+type VirtualMachineNetworkConfigDHCPOptionsStatus struct {
+	// Enabled describes whether DHCP is enabled.
+	// +omitempty
+	Enabled bool `json:"enabled,omitempty"`
+}
+
 // VirtualMachineNetworkDHCPStatus describes the observed state of the
 // client-side, system-wide DHCP settings for IP4 and IP6.
 type VirtualMachineNetworkDHCPStatus struct {
@@ -267,6 +344,21 @@ type VirtualMachineNetworkDHCPStatus struct {
 	//
 	// +optional
 	IP6 VirtualMachineNetworkDHCPOptionsStatus `json:"ip6,omitempty"`
+}
+
+// VirtualMachineNetworkConfigDHCPStatus describes the configured state of the
+// system-wide DHCP settings for IP4 and IP6.
+type VirtualMachineNetworkConfigDHCPStatus struct {
+
+	// IP4 describes the configured state of the IP4 DHCP settings.
+	//
+	// +optional
+	IP4 *VirtualMachineNetworkConfigDHCPOptionsStatus `json:"ip4,omitempty"`
+
+	// IP6 describes the configured state of the IP6 DHCP settings.
+	//
+	// +optional
+	IP6 *VirtualMachineNetworkConfigDHCPOptionsStatus `json:"ip6,omitempty"`
 }
 
 // VirtualMachineNetworkIPRouteGatewayStatus describes the observed state of
@@ -363,7 +455,7 @@ type VirtualMachineNetworkInterfaceIPStatus struct {
 	// options.
 	//
 	// +optional
-	DHCP VirtualMachineNetworkDHCPStatus `json:"dhcp,omitempty"`
+	DHCP *VirtualMachineNetworkDHCPStatus `json:"dhcp,omitempty"`
 
 	// Addresses describes observed IP addresses for this interface.
 	//
@@ -376,25 +468,87 @@ type VirtualMachineNetworkInterfaceIPStatus struct {
 	MACAddr string `json:"macAddr,omitempty"`
 }
 
+// VirtualMachineNetworkConfigInterfaceIPStatus describes the configured state
+// of a VM's network interface's IP configuration.
+type VirtualMachineNetworkConfigInterfaceIPStatus struct {
+	// DHCP describes the interface's configured DHCP options.
+	//
+	// +optional
+	DHCP *VirtualMachineNetworkConfigDHCPStatus `json:"dhcp,omitempty"`
+
+	// Addresses describes configured IP addresses for this interface.
+	// Addresses include the network's prefix length, ex. 192.168.0.0/24 or
+	// 2001:DB8:101::230:6eff:fe04:d9ff::/64.
+	//
+	// +optional
+	Addresses []string `json:"addresses,omitempty"`
+
+	// Gateway4 describes the interface's configured, default, IP4 gateway.
+	//
+	// Please note the IP address include the network prefix length, ex.
+	// 192.168.0.1/24.
+	//
+	// +optional
+	Gateway4 string `json:"gateway4,omitempty"`
+
+	// Gateway6 describes the interface's configured, default, IP6 gateway.
+	//
+	// Please note the IP address includes the network prefix length, ex.
+	// 2001:db8:101::1/64.
+	//
+	// +optional
+	Gateway6 string `json:"gateway6,omitempty"`
+}
+
 // VirtualMachineNetworkInterfaceStatus describes the observed state of a
 // VM's network interface.
 type VirtualMachineNetworkInterfaceStatus struct {
-	// Name describes the unique name of this network interface, used to
-	// distinguish it from other network interfaces attached to this VM.
+	// Name describes the corresponding network interface with the same name
+	// in the VM's desired network interface list. If unset, then there is no
+	// corresponding entry for this interface.
 	//
-	// Please note this name is not related to the name of the device as it is
-	// surfaced inside of the guest.
-	Name string `json:"name"`
+	// Please note this name is not necessarily related to the name of the
+	// device as it is surfaced inside of the guest.
+	//
+	// +optional
+	Name string `json:"name,omitempty"`
+
+	// DeviceKey describes the unique hardware device key of this network
+	// interface.
+	//
+	// +optional
+	DeviceKey int32 `json:"deviceKey,omitempty"`
 
 	// IP describes the observed state of the interface's IP configuration.
 	//
 	// +optional
-	IP VirtualMachineNetworkInterfaceIPStatus `json:"ip,omitempty"`
+	IP *VirtualMachineNetworkInterfaceIPStatus `json:"ip,omitempty"`
 
 	// DNS describes the observed state of the interface's DNS configuration.
 	//
 	// +optional
-	DNS VirtualMachineNetworkDNSStatus `json:"dns,omitempty"`
+	DNS *VirtualMachineNetworkDNSStatus `json:"dns,omitempty"`
+}
+
+// VirtualMachineNetworkConfigInterfaceStatus describes the configured state of
+// network interface.
+type VirtualMachineNetworkConfigInterfaceStatus struct {
+	// Name describes the corresponding network interface with the same name
+	// in the VM's desired network interface list.
+	//
+	// Please note this name is not necessarily related to the name of the
+	// device as it is surfaced inside of the guest.
+	Name string `json:"name"`
+
+	// IP describes the interface's configured IP information.
+	//
+	// +optional
+	IP *VirtualMachineNetworkConfigInterfaceIPStatus `json:"ip,omitempty"`
+
+	// DNS describes the interface's configured DNS information.
+	//
+	// +optional
+	DNS *VirtualMachineNetworkConfigDNSStatus `json:"dns,omitempty"`
 }
 
 // VirtualMachineNetworkIPStackStatus describes the observed state of a
@@ -403,12 +557,12 @@ type VirtualMachineNetworkIPStackStatus struct {
 	// DHCP describes the VM's observed, client-side, system-wide DHCP options.
 	//
 	// +optional
-	DHCP VirtualMachineNetworkDHCPStatus `json:"dhcp,omitempty"`
+	DHCP *VirtualMachineNetworkDHCPStatus `json:"dhcp,omitempty"`
 
 	// DNS describes the VM's observed, client-side DNS configuration.
 	//
 	// +optional
-	DNS VirtualMachineNetworkDNSStatus `json:"dns,omitempty"`
+	DNS *VirtualMachineNetworkDNSStatus `json:"dns,omitempty"`
 
 	// IPRoutes contain the VM's routing tables for all address families.
 	//
@@ -432,13 +586,28 @@ type VirtualMachineNetworkIPStackStatus struct {
 // VirtualMachineNetworkStatus defines the observed state of a VM's
 // network configuration.
 type VirtualMachineNetworkStatus struct {
+	// Config describes the resolved, configured network settings for the VM,
+	// such as an interface's IP address obtained from IPAM, or global DNS
+	// settings.
+	//
+	// Please note this information does *not* represent the *observed* network
+	// state of the VM, but is intended for situations where someone boots a VM
+	// with no appropriate bootstrap engine and needs to know the network config
+	// valid for the deployed VM.
+	//
+	// +optional
+	Config *VirtualMachineNetworkConfigStatus `json:"config,omitempty"`
 
 	// Interfaces describes the status of the VM's network interfaces.
 	//
 	// +optional
-	// +listType=map
-	// +listMapKey=name
 	Interfaces []VirtualMachineNetworkInterfaceStatus `json:"interfaces,omitempty"`
+
+	// IPStacks describes information about the guest's configured IP networking
+	// stacks.
+	//
+	// +optional
+	IPStacks []VirtualMachineNetworkIPStackStatus `json:"ipStacks,omitempty"`
 
 	// PrimaryIP4 describes the VM's primary IP4 address.
 	//
@@ -467,6 +636,16 @@ type VirtualMachineNetworkStatus struct {
 	//
 	// +optional
 	PrimaryIP6 string `json:"primaryIP6,omitempty"`
+}
 
-	VirtualMachineNetworkIPStackStatus `json:",inline"`
+type VirtualMachineNetworkConfigStatus struct {
+	// Interfaces describes the configured state of the network interfaces.
+	//
+	// +optional
+	Interfaces []VirtualMachineNetworkConfigInterfaceStatus `json:"interfaces,omitempty"`
+
+	// DNS describes the configured state of client-side DNS.
+	//
+	// +optional
+	DNS *VirtualMachineNetworkConfigDNSStatus `json:"dns,omitempty"`
 }

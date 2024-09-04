@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 VMware, Inc. All Rights Reserved.
+// Copyright (c) 2020-2024 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 package v1alpha1
@@ -112,26 +112,12 @@ const (
 	FirstBootDoneAnnotation = "virtualmachine." + GroupName + "/first-boot-done"
 )
 
-// VirtualMachine backup/restore related constants.
 const (
 	// ManagedByExtensionKey and ManagedByExtensionType represent the ManagedBy
 	// field on the VM. They are used to differentiate VM Service managed VMs
 	// from traditional vSphere VMs.
 	ManagedByExtensionKey  = "com.vmware.vcenter.wcp"
 	ManagedByExtensionType = "VirtualMachine"
-
-	// VMBackupKubeDataExtraConfigKey is the ExtraConfig key to persist the VM's
-	// Kubernetes resource spec data, compressed using gzip and base64-encoded.
-	VMBackupKubeDataExtraConfigKey = "vmservice.virtualmachine.kubedata"
-	// VMBackupBootstrapDataExtraConfigKey is the ExtraConfig key to persist the
-	// VM's bootstrap data object, compressed using gzip and base64-encoded.
-	VMBackupBootstrapDataExtraConfigKey = "vmservice.virtualmachine.bootstrapdata"
-	// VMBackupDiskDataExtraConfigKey is the ExtraConfig key to persist the VM's
-	// attached disk info in JSON, compressed using gzip and base64-encoded.
-	VMBackupDiskDataExtraConfigKey = "vmservice.virtualmachine.diskdata"
-	// VMBackupCloudInitInstanceIDExtraConfigKey is the ExtraConfig key to persist
-	// the VM's Cloud-Init instance ID, compressed using gzip and base64-encoded.
-	VMBackupCloudInitInstanceIDExtraConfigKey = "vmservice.virtualmachine.cloudinit.instanceid"
 )
 
 // VirtualMachinePort is unused and can be considered deprecated.
@@ -156,12 +142,12 @@ type NetworkInterfaceProviderReference struct {
 
 // VirtualMachineNetworkInterface defines the properties of a network interface to attach to a VirtualMachine
 // instance.  A VirtualMachineNetworkInterface describes network interface configuration that is used by the
-// VirtualMachine controller when integrating the VirtualMachine into a VirtualNetwork.  Currently, only NSX-T
+// VirtualMachine controller when integrating the VirtualMachine into a VirtualNetwork. Currently, only NSX-T
 // and vSphere Distributed Switch (VDS) type network integrations are supported using this VirtualMachineNetworkInterface
 // structure.
 type VirtualMachineNetworkInterface struct {
-	// NetworkType describes the type of VirtualNetwork that is referenced by the NetworkName.  Currently, the only
-	// supported NetworkTypes are "nsx-t" and "vsphere-distributed".
+	// NetworkType describes the type of VirtualNetwork that is referenced by the NetworkName. Currently, the supported
+	// NetworkTypes are "nsx-t", "nsx-t-subnet", "nsx-t-subnetset" and "vsphere-distributed".
 	// +optional
 	NetworkType string `json:"networkType,omitempty"`
 
@@ -321,6 +307,9 @@ type VsphereVolumeSource struct {
 // alive or ready to receive traffic. Only one probe action can be specified.
 type Probe struct {
 	// TCPSocket specifies an action involving a TCP port.
+	//
+	// Deprecated: The TCPSocket action requires network connectivity that is not supported in all environments.
+	// This field will be removed in a later API version.
 	// +optional
 	TCPSocket *TCPSocketAction `json:"tcpSocket,omitempty"`
 
@@ -381,9 +370,24 @@ type GuestHeartbeatAction struct {
 
 // VirtualMachineSpec defines the desired state of a VirtualMachine.
 type VirtualMachineSpec struct {
-	// ImageName describes the name of a VirtualMachineImage that is to be used as the base Operating System image of
-	// the desired VirtualMachine instances.  The VirtualMachineImage resources can be introspected to discover identifying
-	// attributes that may help users to identify the desired image to use.
+	// ImageName describes the name of the image resource used to deploy this
+	// VM.
+	//
+	// This field may be used to specify the name of a VirtualMachineImage
+	// or ClusterVirtualMachineImage resource. The resolver first checks to see
+	// if there is a VirtualMachineImage with the specified name. If no
+	// such resource exists, the resolver then checks to see if there is a
+	// ClusterVirtualMachineImage resource with the specified name in the same
+	// Namespace as the VM being deployed.
+	//
+	// This field may also be used to specify the display name (vSphere name) of
+	// a VirtualMachineImage or ClusterVirtualMachineImage resource. If the
+	// display name unambiguously resolves to a distinct VM image (among all
+	// existing VirtualMachineImages in the VM's namespace and all existing
+	// ClusterVirtualMachineImages), then a mutation webhook updates this field
+	// with the VM image resource name. If the display name resolves to multiple
+	// or no VM images, then the mutation webhook denies the request and outputs
+	// an error message accordingly.
 	ImageName string `json:"imageName"`
 
 	// ClassName describes the name of a VirtualMachineClass that is to be used as the overlaid resource configuration
@@ -485,7 +489,11 @@ type VirtualMachineSpec struct {
 	// NetworkInterfaces describes a list of VirtualMachineNetworkInterfaces to be configured on the VirtualMachine instance.
 	// Each of these VirtualMachineNetworkInterfaces describes external network integration configurations that are to be
 	// used by the VirtualMachine controller when integrating the VirtualMachine into one or more external networks.
+	//
+	// The maximum number of network interface allowed is 10 because of the limit built into vSphere.
+	//
 	// +optional
+	// +kubebuilder:validation:MaxItems=10
 	NetworkInterfaces []VirtualMachineNetworkInterface `json:"networkInterfaces,omitempty"`
 
 	// ResourcePolicyName describes the name of a VirtualMachineSetResourcePolicy to be used when creating the
@@ -531,7 +539,7 @@ type VirtualMachineSpec struct {
 	//
 	// Several features are hardware version dependent, for example:
 	//
-	// * NVMe Controllers        		 >= 14
+	// * NVMe Controllers                >= 14
 	// * Dynamic Direct Path I/O devices >= 17
 	//
 	// Please refer to https://kb.vmware.com/s/article/1003746 for a list of VM
