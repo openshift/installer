@@ -851,7 +851,7 @@ func TestValidateInstanceType(t *testing.T) {
 			instanceType:   "n2-standard-4",
 			diskType:       "hyperdisk-balanced",
 			expectedError:  true,
-			expectedErrMsg: `^\[instance.diskType: Unsupported value: \"n2\": supported values: \"c3\", \"c3d\", \"m1\", \"n4\"\]$`,
+			expectedErrMsg: `[instance.diskType: Unsupported value: "n2": supported values: "c3", "c3d", "c4", m1", "n4"]`,
 		},
 	}
 
