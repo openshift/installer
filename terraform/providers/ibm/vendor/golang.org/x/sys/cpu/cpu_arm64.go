@@ -6,7 +6,10 @@ package cpu
 
 import "runtime"
 
-const cacheLineSize = 64
+// cacheLineSize is used to prevent false sharing of cache lines.
+// We choose 128 because Apple Silicon, a.k.a. M1, has 128-byte cache line size.
+// It doesn't cost much and is much more future-proof.
+const cacheLineSize = 128
 
 func initOptions() {
 	options = []option{
@@ -25,6 +28,7 @@ func initOptions() {
 		{Name: "sm3", Feature: &ARM64.HasSM3},
 		{Name: "sm4", Feature: &ARM64.HasSM4},
 		{Name: "sve", Feature: &ARM64.HasSVE},
+		{Name: "sve2", Feature: &ARM64.HasSVE2},
 		{Name: "crc32", Feature: &ARM64.HasCRC32},
 		{Name: "atomics", Feature: &ARM64.HasATOMICS},
 		{Name: "asimdhp", Feature: &ARM64.HasASIMDHP},
@@ -161,6 +165,15 @@ func parseARM64SystemRegisters(isar0, isar1, pfr0 uint64) {
 	switch extractBits(pfr0, 32, 35) {
 	case 1:
 		ARM64.HasSVE = true
+
+		parseARM64SVERegister(getzfr0())
+	}
+}
+
+func parseARM64SVERegister(zfr0 uint64) {
+	switch extractBits(zfr0, 0, 3) {
+	case 1:
+		ARM64.HasSVE2 = true
 	}
 }
 
