@@ -444,7 +444,7 @@ func (c *Client) getServiceUsageService(ctx context.Context) (*serviceusage.Serv
 
 // GetServiceAccount retrieves a service account from a project if it exists.
 func (c *Client) GetServiceAccount(ctx context.Context, project, serviceAccount string) (string, error) {
-	svc, err := iam.NewService(ctx)
+	svc, err := iam.NewService(ctx, option.WithCredentials(c.ssn.Credentials))
 	if err != nil {
 		return "", errors.Wrapf(err, "failed create IAM service")
 	}
