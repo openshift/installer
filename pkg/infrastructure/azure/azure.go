@@ -234,7 +234,15 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 
 	// Creating a dummy nsg for existing vnets installation to appease the ingress operator.
 	if in.InstallConfig.Config.Azure.VirtualNetwork != "" {
-		networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, tokenCredential, nil)
+		networkClientFactory, err := armnetwork.NewClientFactory(
+			subscriptionID,
+			tokenCredential,
+			&arm.ClientOptions{
+				ClientOptions: policy.ClientOptions{
+					Cloud: cloudConfiguration,
+				},
+			},
+		)
 		if err != nil {
 			return fmt.Errorf("failed to create azure network factory: %w", err)
 		}
