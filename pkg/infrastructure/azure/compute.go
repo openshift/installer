@@ -99,6 +99,7 @@ type CreateGalleryImageInput struct {
 	OSState              armcompute.OperatingSystemStateTypes
 	HyperVGeneration     armcompute.HyperVGeneration
 	ComputeClientFactory *armcompute.ClientFactory
+	SecurityType         string
 }
 
 // CreateGalleryImageOutput contains the return values after creating a gallery
@@ -110,6 +111,17 @@ type CreateGalleryImageOutput struct {
 // CreateGalleryImage creates a gallery image.
 func CreateGalleryImage(ctx context.Context, in *CreateGalleryImageInput) (*CreateGalleryImageOutput, error) {
 	logrus.Debugf("Creating gallery image: %s", in.GalleryImageName)
+
+	// Set `Features` within the image properties of Gen V2 images
+	// so that they can be used when encryptionAtHost is enabled.
+	var features []*armcompute.GalleryImageFeature
+	if in.SecurityType != "" {
+		feature := armcompute.GalleryImageFeature{
+			Name:  to.Ptr("SecurityType"),
+			Value: to.Ptr(in.SecurityType),
+		}
+		features = append(features, to.Ptr(feature))
+	}
 
 	galleryImagesClient := in.ComputeClientFactory.NewGalleryImagesClient()
 	galleryImagesPoller, err := galleryImagesClient.BeginCreateOrUpdate(
@@ -129,6 +141,7 @@ func CreateGalleryImage(ctx context.Context, in *CreateGalleryImageInput) (*Crea
 					Offer:     to.Ptr(in.Offer),
 					SKU:       to.Ptr(in.SKU),
 				},
+				Features: features,
 			},
 			Tags: in.Tags,
 		},
