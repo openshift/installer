@@ -89,6 +89,7 @@ elif [ -f $IDMS_MANIFEST_FILE ]; then
 fi
 
 VERSION="$(oc adm release info -o 'jsonpath={.metadata.version}' "${MIRROR_FLAG}" "${RELEASE_IMAGE_DIGEST}")"
+KUBERNETES_VERSION="$(oc adm release info -o 'jsonpath={.displayVersions.kubernetes.Version}' "${MIRROR_FLAG}" "${RELEASE_IMAGE_DIGEST}")"
 
 if [ ! -f api-bootstrap.done ]
 then
@@ -228,7 +229,8 @@ then
 		--cluster-auth-file=/assets/manifests/cluster-authentication-02-config.yaml \
 		--infra-config-file=/assets/manifests/cluster-infrastructure-02-config.yml \
 		--rendered-manifest-files=/assets/manifests \
-		--payload-version=$VERSION
+		--payload-version=$VERSION \
+		--operand-kubernetes-version="${KUBERNETES_VERSION}"
 
 	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
 	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
