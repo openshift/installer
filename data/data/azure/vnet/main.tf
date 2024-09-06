@@ -73,6 +73,7 @@ resource "azurerm_storage_account" "cluster" {
   account_replication_type        = "LRS"
   min_tls_version                 = contains(local.environments_with_min_tls_version, var.azure_environment) ? "TLS1_2" : null
   allow_nested_items_to_be_public = var.azure_keyvault_name != "" ? true : false
+  shared_access_key_enabled       = var.azure_use_msi ? false : true
   tags                            = var.azure_extra_tags
 
   dynamic "customer_managed_key" {

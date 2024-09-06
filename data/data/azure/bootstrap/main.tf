@@ -71,7 +71,7 @@ resource "azurerm_storage_blob" "ignition" {
 
 data "ignition_config" "redirect" {
   replace {
-    source = "${azurerm_storage_blob.ignition.url}${data.azurerm_storage_account_sas.ignition.sas}"
+    source = var.azure_use_msi ?  "${azurerm_storage_blob.ignition.url}" : "${azurerm_storage_blob.ignition.url}${data.azurerm_storage_account_sas.ignition.sas}"
   }
 }
 
