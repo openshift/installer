@@ -22,6 +22,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/vincent-petithory/dataurl"
 	utilsnet "k8s.io/utils/net"
+	"k8s.io/utils/ptr"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/data"
@@ -39,6 +40,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -111,6 +113,7 @@ func (a *Common) Dependencies() []asset.Asset {
 		&baremetal.IronicCreds{},
 		&CVOIgnore{},
 		&installconfig.InstallConfig{},
+		&installconfig.ClusterID{},
 		&kubeconfig.AdminInternalClient{},
 		&kubeconfig.Kubelet{},
 		&kubeconfig.LoopbackClient{},
@@ -168,7 +171,8 @@ func (a *Common) Dependencies() []asset.Asset {
 func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootstrapTemplateData) error {
 	installConfig := &installconfig.InstallConfig{}
 	bootstrapSSHKeyPair := &tls.BootstrapSSHKeyPair{}
-	dependencies.Get(installConfig, bootstrapSSHKeyPair)
+	clusterID := &installconfig.ClusterID{}
+	dependencies.Get(installConfig, bootstrapSSHKeyPair, clusterID)
 
 	a.Config = &igntypes.Config{
 		Ignition: igntypes.Ignition{
@@ -218,6 +222,24 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 			igntypes.SSHAuthorizedKey(string(bootstrapSSHKeyPair.Public())),
 		}},
 	)
+
+	if platform == nutanixtypes.Name {
+		// Inserts the file "/etc/hostname" with the bootstrap machine name to the bootstrap ignition data
+		hostname := fmt.Sprintf("%s-bootstrap", clusterID.InfraID)
+		hostnameFile := igntypes.File{
+			Node: igntypes.Node{
+				Path:      "/etc/hostname",
+				Overwrite: ptr.To(true),
+			},
+			FileEmbedded1: igntypes.FileEmbedded1{
+				Mode: ptr.To(420),
+				Contents: igntypes.Resource{
+					Source: ptr.To(dataurl.EncodeBytes([]byte(hostname))),
+				},
+			},
+		}
+		a.Config.Storage.Files = append(a.Config.Storage.Files, hostnameFile)
+	}
 
 	return nil
 }

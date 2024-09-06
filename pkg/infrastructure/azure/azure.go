@@ -17,6 +17,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -512,7 +513,7 @@ func randomString(length int) string {
 
 // Ignition provisions the Azure container that holds the bootstrap ignition
 // file.
-func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, error) {
+func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]*corev1.Secret, error) {
 	session, err := in.InstallConfig.Azure.Session()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %w", err)
@@ -557,5 +558,10 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		return nil, fmt.Errorf("failed to create ignition shim: %w", err)
 	}
 
-	return ignShim, nil
+	ignSecrets := []*corev1.Secret{
+		clusterapi.IgnitionSecret(ignShim, in.InfraID, "bootstrap"),
+		clusterapi.IgnitionSecret(in.MasterIgnData, in.InfraID, "master"),
+	}
+
+	return ignSecrets, nil
 }
