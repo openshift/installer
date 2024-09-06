@@ -34,6 +34,9 @@ func MachineSets(ctx context.Context, clusterID string, config *types.InstallCon
 	}
 	mpool := pool.Platform.OpenStack
 
+	// Only enable config drive when using single stack IPv6
+	configDrive := isSingleStackIPv6(config.MachineNetwork)
+
 	// In installer CLI code paths, the replica number is set to 3 by default
 	// when install-config does not have any Compute machine-pool, or when the
 	// Compute machine-pool does not have the `replicas` property.
@@ -68,6 +71,7 @@ func MachineSets(ctx context.Context, clusterID string, config *types.InstallCon
 			role,
 			userDataSecret,
 			failureDomains[idx],
+			&configDrive,
 		)
 		if err != nil {
 			return nil, err

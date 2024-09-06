@@ -45,6 +45,9 @@ func Machines(ctx context.Context, clusterID string, config *types.InstallConfig
 		return nil, nil, fmt.Errorf("non-OpenStack machine-pool: %q", poolPlatform)
 	}
 
+	// Only enable config drive when using single stack IPv6
+	configDrive := isSingleStackIPv6(config.Networking.MachineNetwork)
+
 	mpool := pool.Platform.OpenStack
 
 	total := int64(1)
@@ -65,6 +68,7 @@ func Machines(ctx context.Context, clusterID string, config *types.InstallConfig
 			role,
 			userDataSecret,
 			failureDomain,
+			&configDrive,
 		)
 		if err != nil {
 			return nil, nil, err
@@ -103,6 +107,7 @@ func Machines(ctx context.Context, clusterID string, config *types.InstallConfig
 		role,
 		userDataSecret,
 		machinev1.OpenStackFailureDomain{RootVolume: &machinev1.RootVolume{}},
+		&configDrive,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -161,7 +166,7 @@ func Machines(ctx context.Context, clusterID string, config *types.InstallConfig
 	return machines, controlPlaneMachineSet, nil
 }
 
-func generateProviderSpec(ctx context.Context, clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role, userDataSecret string, failureDomain machinev1.OpenStackFailureDomain) (*machinev1alpha1.OpenstackProviderSpec, error) {
+func generateProviderSpec(ctx context.Context, clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role, userDataSecret string, failureDomain machinev1.OpenStackFailureDomain, configDrive *bool) (*machinev1alpha1.OpenstackProviderSpec, error) {
 	var controlPlaneNetwork machinev1alpha1.NetworkParam
 	additionalNetworks := make([]machinev1alpha1.NetworkParam, 0, len(mpool.AdditionalNetworkIDs))
 	primarySubnet := ""
@@ -259,6 +264,7 @@ func generateProviderSpec(ctx context.Context, clusterID string, platform *opens
 			"Name":               fmt.Sprintf("%s-%s", clusterID, role),
 			"openshiftClusterID": clusterID,
 		},
+		ConfigDrive: configDrive,
 	}
 	if mpool.RootVolume != nil {
 		spec.RootVolume = &machinev1alpha1.RootVolume{

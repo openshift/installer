@@ -34,12 +34,8 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 		total = *pool.Replicas
 	}
 
-	machineNetwork := config.Networking.MachineNetwork
-	configDrive := ptr.To(false)
 	// Only enable config drive when using single stack IPv6
-	if len(machineNetwork) == 1 && machineNetwork[0].CIDR.IPNet.IP.To4() == nil {
-		configDrive = ptr.To(true)
-	}
+	configDrive := isSingleStackIPv6(config.Networking.MachineNetwork)
 
 	var result []*asset.RuntimeFile
 	failureDomains := failureDomainsFromSpec(*mpool)
@@ -52,7 +48,7 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 			osImage,
 			role,
 			failureDomain,
-			configDrive,
+			&configDrive,
 		)
 		if err != nil {
 			return nil, err
@@ -238,4 +234,9 @@ func populateAllowedAddressPairs(platform *openstack.Platform) []capo.AddressPai
 		addressPairs = append(addressPairs, capo.AddressPair{IPAddress: ingressVIP})
 	}
 	return addressPairs
+}
+
+// isSingleStackIPv6 returns true if the machineNetwork contains a single IPv6 CIDR.
+func isSingleStackIPv6(machineNetwork []types.MachineNetworkEntry) bool {
+	return len(machineNetwork) == 1 && machineNetwork[0].CIDR.IPNet.IP.To4() == nil
 }
