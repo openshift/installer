@@ -177,18 +177,9 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 		templateData.ExternalSubnetCIDR = externalMaskLen
 	}
 
-	if config.ProvisioningNetwork != baremetal.DisabledProvisioningNetwork {
-		cidr, _ := config.ProvisioningNetworkCIDR.Mask.Size()
-		templateData.ProvisioningCIDR = cidr
-		templateData.ProvisioningIPv6 = config.ProvisioningNetworkCIDR.IP.To4() == nil
-		templateData.ProvisioningInterfaceMAC = config.ProvisioningMACAddress
-		templateData.ProvisioningDNSMasq = true
-	}
-
 	switch config.ProvisioningNetwork {
 	case baremetal.ManagedProvisioningNetwork:
 		cidr, _ := config.ProvisioningNetworkCIDR.Mask.Size()
-
 		// When provisioning network is managed, we set a DHCP range including
 		// netmask for dnsmasq.
 		templateData.ProvisioningDHCPRange = fmt.Sprintf("%s,%d", config.ProvisioningDHCPRange, cidr)
@@ -200,6 +191,13 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 			}
 		}
 		templateData.ProvisioningDHCPAllowList = strings.Join(dhcpAllowList, " ")
+		fallthrough
+	case baremetal.UnmanagedProvisioningNetwork:
+		templateData.ProvisioningDNSMasq = true
+		cidr, _ := config.ProvisioningNetworkCIDR.Mask.Size()
+		templateData.ProvisioningCIDR = cidr
+		templateData.ProvisioningIPv6 = config.ProvisioningNetworkCIDR.IP.To4() == nil
+		templateData.ProvisioningInterfaceMAC = config.ProvisioningMACAddress
 	case baremetal.DisabledProvisioningNetwork:
 		templateData.ProvisioningInterfaceMAC = config.ExternalMACAddress
 		templateData.ProvisioningDNSMasq = false
