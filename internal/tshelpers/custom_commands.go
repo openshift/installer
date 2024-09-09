@@ -18,7 +18,7 @@ import (
 	"github.com/vincent-petithory/dataurl"
 )
 
-// [!] IgnitionImgContains `isoPath` `file` check if the specified file `file`
+// IgnitionImgContains `isoPath` `file` check if the specified file `file`
 // is stored within /images/ignition.img archive in the ISO `isoPath` image.
 func IgnitionImgContains(ts *testscript.TestScript, neg bool, args []string) {
 	if len(args) != 2 {
@@ -33,7 +33,7 @@ func IgnitionImgContains(ts *testscript.TestScript, neg bool, args []string) {
 	ts.Check(err)
 }
 
-// [!] ConfigImgContains `isoPath` `file` check if the specified file `file`
+// ConfigImgContains `isoPath` `file` check if the specified file `file`
 // is stored within the config image ISO.
 func ConfigImgContains(ts *testscript.TestScript, neg bool, args []string) {
 	if len(args) != 2 {
@@ -60,7 +60,7 @@ func archiveFileNames(isoPath string) (string, string, error) {
 	return "", "", errors.NotFound(fmt.Sprintf("ISO %s has unrecognized prefix", isoPath))
 }
 
-// [!] UnconfiguredIgnContains `file` check if the specified file `file`
+// UnconfiguredIgnContains `file` check if the specified file `file`
 // is stored within the unconfigured ignition Storage Files.
 func UnconfiguredIgnContains(ts *testscript.TestScript, neg bool, args []string) {
 	if len(args) != 1 {
@@ -69,7 +69,7 @@ func UnconfiguredIgnContains(ts *testscript.TestScript, neg bool, args []string)
 	IgnitionStorageContains(ts, neg, []string{"unconfigured-agent.ign", args[0]})
 }
 
-// [!] IgnitionStorageContains `ignPath` `file` check if the specified file `file`
+// IgnitionStorageContains `ignPath` `file` check if the specified file `file`
 // is stored within the ignition Storage Files.
 func IgnitionStorageContains(ts *testscript.TestScript, neg bool, args []string) {
 	if len(args) != 2 {
@@ -99,7 +99,7 @@ func IgnitionStorageContains(ts *testscript.TestScript, neg bool, args []string)
 	}
 }
 
-// [!] IsoIgnitionContains `isoPath` `file` checks that the file
+// IsoIgnitionContains `isoPath` `file` checks that the file
 // `isoFile` - extracted from the ISO embedded configuration file
 //
 //	referenced by `isoPath` - exists.
@@ -121,7 +121,7 @@ func IsoIgnitionContains(ts *testscript.TestScript, neg bool, args []string) {
 	ts.Check(err)
 }
 
-// [!] IsoCmp `isoPath` `isoFile` `expectedFile` check that the content of the file
+// IsoCmp `isoPath` `isoFile` `expectedFile` check that the content of the file
 // `isoFile` - extracted from the ISO embedded configuration file referenced
 // by `isoPath` - matches the content of the local file `expectedFile`.
 // Environment variables in `expectedFile` are substituted before the comparison.
@@ -149,7 +149,7 @@ func IsoCmp(ts *testscript.TestScript, neg bool, args []string) {
 	byteCompare(ts, neg, aData, eData, aFilePath, eFilePath)
 }
 
-// [!] UnconfiguredIgnCmp `fileInIgn` `expectedFile` check that the content
+// UnconfiguredIgnCmp `fileInIgn` `expectedFile` check that the content
 // of the file `fileInIgn` extracted from the unconfigured ignition
 // configuration file matches the content of the local file `expectedFile`.
 // Environment variables in in `expectedFile` are substituted before the comparison.
@@ -161,7 +161,7 @@ func UnconfiguredIgnCmp(ts *testscript.TestScript, neg bool, args []string) {
 	ignitionStorageCmp(ts, neg, argsNext)
 }
 
-// [!] ignitionStorageCmp `ignPath` `ignFile` `expectedFile` check that the content of the file
+// ignitionStorageCmp `ignPath` `ignFile` `expectedFile` check that the content of the file
 // `ignFile` - extracted from the ignition configuration file referenced
 // by `ignPath` - matches the content of the local file `expectedFile`.
 // Environment variables in in `expectedFile` are substituted before the comparison.
@@ -194,7 +194,7 @@ func readIgnition(ts *testscript.TestScript, ignPath string) (config igntypes.Co
 	return config, err
 }
 
-// [!] ExpandFile `file...` can be used to substitute environment variables
+// ExpandFile `file...` can be used to substitute environment variables
 // references for each file specified.
 func ExpandFile(ts *testscript.TestScript, neg bool, args []string) {
 	if len(args) != 1 {
@@ -348,7 +348,7 @@ func extractCfgData(isoPath, archiveFile, ignitionFile, nodePath string) ([]byte
 	return nil, errors.NotFound(fmt.Sprintf("File %s not found within the %s archive", nodePath, archiveFile))
 }
 
-// [!] InitrdImgContains `isoPath` `file` check if the specified file `file`
+// InitrdImgContains `isoPath` `file` check if the specified file `file`
 // is stored within a compressed cpio archive by scanning the content of
 // /images/ignition.img archive in the ISO `isoPath` image (note: plain cpio
 // archives are ignored).
@@ -365,7 +365,7 @@ func InitrdImgContains(ts *testscript.TestScript, neg bool, args []string) {
 	ts.Check(err)
 }
 
-// [!] IsoContains `isoPath` `file` check if the specified `file` is stored
+// IsoContains `isoPath` `file` check if the specified `file` is stored
 // within the ISO `isoPath` image.
 func IsoContains(ts *testscript.TestScript, neg bool, args []string) {
 	if len(args) != 2 {
