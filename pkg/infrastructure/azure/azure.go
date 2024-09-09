@@ -521,7 +521,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 	var lbBap *armnetwork.BackendAddressPool
 	var extLBFQDN string
-	if in.InstallConfig.Config.Publish == types.ExternalPublishingStrategy {
+	if in.InstallConfig.Config.PublicAPI() {
 		publicIP, err := createPublicIP(ctx, &pipInput{
 			name:          fmt.Sprintf("%s-pip-v4", in.InfraID),
 			infraID:       in.InfraID,
@@ -583,7 +583,7 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 	subscriptionID := ssn.Credentials.SubscriptionID
 	cloudConfiguration := ssn.CloudConfig
 
-	if in.InstallConfig.Config.Publish == types.ExternalPublishingStrategy {
+	if in.InstallConfig.Config.PublicAPI() {
 		vmClient, err := armcompute.NewVirtualMachinesClient(subscriptionID, ssn.TokenCreds,
 			&arm.ClientOptions{
 				ClientOptions: policy.ClientOptions{
