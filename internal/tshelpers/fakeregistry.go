@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"log"
 	"math/big"
 	"net"
 	"net/http"
@@ -23,11 +24,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	imageapi "github.com/openshift/api/image/v1"
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/library-go/pkg/image/dockerv1client"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // FakeOCPRegistry creates a very minimal Docker registry for publishing
@@ -44,14 +47,16 @@ type FakeOCPRegistry struct {
 	tags      map[string]string
 
 	releaseDigest string
+	tmpDir        string
 }
 
 // NewFakeOCPRegistry creates a new instance of the fake registry.
-func NewFakeOCPRegistry() *FakeOCPRegistry {
+func NewFakeOCPRegistry(tmpDir string) *FakeOCPRegistry {
 	return &FakeOCPRegistry{
 		blobs:     make(map[string][]byte),
 		manifests: make(map[string][]byte),
 		tags:      make(map[string]string),
+		tmpDir:    tmpDir,
 	}
 }
 
@@ -77,7 +82,9 @@ func (fr *FakeOCPRegistry) Start() error {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		w.Write(manifest)
+		if _, err := w.Write(manifest); err != nil {
+			log.Println(err)
+		}
 	})
 
 	// Generic blobs handler used to serve both the image config and data
@@ -89,7 +96,9 @@ func (fr *FakeOCPRegistry) Start() error {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		w.Write(blob)
+		if _, err := w.Write(blob); err != nil {
+			log.Println(err)
+		}
 	})
 
 	// Catch all
@@ -120,20 +129,24 @@ func (fr *FakeOCPRegistry) ReleasePullspec() string {
 	return fr.pullSpec(fr.releaseDigest)
 }
 
-func addTarFile(tw *tar.Writer, name string, data []byte) {
+func (fr *FakeOCPRegistry) addTarFile(tw *tar.Writer, name string, data []byte) {
 	header := &tar.Header{
 		Name: name,
 		Mode: 0600,
 		Size: int64(len(data)),
 	}
-	tw.WriteHeader(header)
-	tw.Write(data)
+	if err := tw.WriteHeader(header); err != nil {
+		log.Println(err)
+	}
+	if _, err := tw.Write(data); err != nil {
+		log.Println(err)
+	}
 }
 
 // Creates a small ISO but good enough to be processed
 // by ABI.
-func makeMinimalISO() ([]byte, error) {
-	tempDir, err := os.MkdirTemp("", "nodejoiner-it")
+func (fr *FakeOCPRegistry) makeMinimalISO() ([]byte, error) {
+	tempDir, err := os.MkdirTemp(fr.tmpDir, "nodejoiner-it")
 	if err != nil {
 		return nil, err
 	}
@@ -179,8 +192,8 @@ func (fr *FakeOCPRegistry) setupReleasePayload() error {
 	// agent-installer-utils image
 	if _, err := fr.PushImage("agent-installer-utils", func(tw *tar.Writer) error {
 		// fake agent-tui files
-		addTarFile(tw, "usr/bin/agent-tui", []byte("foo-data"))
-		addTarFile(tw, "usr/lib64/libnmstate.so.2", []byte("foo-data"))
+		fr.addTarFile(tw, "usr/bin/agent-tui", []byte("foo-data"))
+		fr.addTarFile(tw, "usr/lib64/libnmstate.so.2", []byte("foo-data"))
 		return nil
 	}); err != nil {
 		return err
@@ -189,11 +202,11 @@ func (fr *FakeOCPRegistry) setupReleasePayload() error {
 	// machine-os-images image
 	if _, err := fr.PushImage("machine-os-images", func(tw *tar.Writer) error {
 		// fake base ISO
-		isoData, err := makeMinimalISO()
+		isoData, err := fr.makeMinimalISO()
 		if err != nil {
 			return err
 		}
-		addTarFile(tw, "coreos/coreos-x86_64.iso", isoData)
+		fr.addTarFile(tw, "coreos/coreos-x86_64.iso", isoData)
 		return nil
 	}); err != nil {
 		return err
@@ -223,8 +236,11 @@ func (fr *FakeOCPRegistry) setupReleasePayload() error {
 				},
 			})
 		}
-		data, _ := json.Marshal(&imageReferences)
-		addTarFile(tw, "release-manifests/image-references", data)
+		data, err := json.Marshal(&imageReferences)
+		if err != nil {
+			return err
+		}
+		fr.addTarFile(tw, "release-manifests/image-references", data)
 
 		// release-metadata file
 		type CincinnatiMetadata struct {
@@ -240,8 +256,11 @@ func (fr *FakeOCPRegistry) setupReleasePayload() error {
 			Kind:    "cincinnati-metadata-v0",
 			Version: "99.0.0",
 		}
-		data, _ = json.Marshal(releaseMetadata)
-		addTarFile(tw, "release-manifests/release-metadata", data)
+		data, err = json.Marshal(releaseMetadata)
+		if err != nil {
+			return err
+		}
+		fr.addTarFile(tw, "release-manifests/release-metadata", data)
 
 		return nil
 	})
@@ -257,14 +276,16 @@ func (fr *FakeOCPRegistry) newTLSServer(handler http.HandlerFunc) error {
 	fr.server = httptest.NewUnstartedServer(handler)
 	cert, err := fr.generateSelfSignedCert()
 	if err != nil {
-		return fmt.Errorf("error configuring server cert: %s", err)
+		return fmt.Errorf("error configuring server cert: %w", err)
 	}
 	fr.server.TLS = &tls.Config{
+		MinVersion:   tls.VersionTLS13,
 		Certificates: []tls.Certificate{cert},
 	}
 	return nil
 }
 
+// Close shutdowns the fake registry server.
 func (fr *FakeOCPRegistry) Close() {
 	fr.server.Close()
 }
@@ -316,7 +337,7 @@ func (fr *FakeOCPRegistry) PushImage(tag string, blobFn func(tw *tar.Writer) err
 	if err != nil {
 		return "", err
 	}
-	configDigest := fr.SHA(configData)
+	configDigest := fr.sha(configData)
 	fr.blobs[configDigest] = configData
 
 	// Create the image blob data, as a gzipped tar content.
@@ -330,7 +351,7 @@ func (fr *FakeOCPRegistry) PushImage(tag string, blobFn func(tw *tar.Writer) err
 	tw.Close()
 	gw.Close()
 	blobData := buf.Bytes()
-	blobDigest := fr.SHA(blobData)
+	blobDigest := fr.sha(blobData)
 	fr.blobs[blobDigest] = blobData
 
 	// Create the image manifest.
@@ -354,7 +375,7 @@ func (fr *FakeOCPRegistry) PushImage(tag string, blobFn func(tw *tar.Writer) err
 	if err != nil {
 		return "", err
 	}
-	manifestDigest := fr.SHA(manifestData)
+	manifestDigest := fr.sha(manifestData)
 	fr.manifests[manifestDigest] = manifestData
 
 	fr.tags[tag] = manifestDigest
@@ -362,7 +383,7 @@ func (fr *FakeOCPRegistry) PushImage(tag string, blobFn func(tw *tar.Writer) err
 	return manifestDigest, nil
 }
 
-func (fr *FakeOCPRegistry) SHA(data []byte) string {
+func (fr *FakeOCPRegistry) sha(data []byte) string {
 	hash := sha256.Sum256(data)
 	return fmt.Sprintf("sha256:%s", hex.EncodeToString(hash[:]))
 }

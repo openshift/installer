@@ -1,7 +1,7 @@
 
 # Verify that the add-nodes command generates correctly the ISO image
 
-node-joiner add-nodes --kubeconfig=$WORK/kubeconfig --log-level=debug --dir=$WORK
+exec node-joiner add-nodes --kubeconfig=$WORK/kubeconfig --log-level=debug --dir=$WORK
 
 exists $WORK/node.x86_64.iso
 isoIgnitionContains node.x86_64.iso /etc/assisted/add-nodes.env

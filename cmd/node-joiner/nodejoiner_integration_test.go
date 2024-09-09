@@ -82,9 +82,16 @@ func TestNodeJoinerIntegration(t *testing.T) {
 				}
 			}
 
+			// Reuse the current test tmp folder for envTest and fakeRegistry.
+			tmpDir := e.Getenv("TMPDIR")
+
 			// Create the fake registry
-			fakeRegistry := tshelpers.NewFakeOCPRegistry()
+			fakeRegistry := tshelpers.NewFakeOCPRegistry(tmpDir)
+
 			// Creates a new temporary cluster.
+			etcdDataDir, _ := os.MkdirTemp(tmpDir, "etcd")
+			apiServerDataDir, _ := os.MkdirTemp(tmpDir, "api-server")
+
 			testEnv := &envtest.Environment{
 				CRDDirectoryPaths: []string{
 					// Preload OpenShift specific CRDs.
@@ -95,10 +102,19 @@ func TestNodeJoinerIntegration(t *testing.T) {
 				// Uncomment the following line if you wish to run the test without
 				// using the hack/go-integration-test-nodejoiner.sh script.
 				// BinaryAssetsDirectory: "/tmp/k8s/1.31.0-linux-amd64",
+
+				ControlPlane: envtest.ControlPlane{
+					Etcd: &envtest.Etcd{
+						DataDir: etcdDataDir,
+					},
+					APIServer: &envtest.APIServer{
+						CertDir: apiServerDataDir,
+					},
+				},
 			}
 			// Ensures they are cleaned up on test completion.
 			e.Defer(func() {
-				testEnv.Stop()
+				assert.NoError(t, testEnv.Stop())
 				fakeRegistry.Close()
 			})
 			// Starts the registry and cluster.
