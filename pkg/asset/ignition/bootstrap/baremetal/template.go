@@ -163,11 +163,18 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 	}
 
 	if config.BootstrapExternalStaticIP != "" {
-		for _, network := range networks {
-			cidr, _ := network.CIDR.Mask.Size()
-			templateData.ExternalSubnetCIDR = cidr
-			break
+		bootstrapExternalIP := net.ParseIP(config.BootstrapExternalStaticIP)
+		externalMaskLen := 64
+		if defaultMask := bootstrapExternalIP.DefaultMask(); defaultMask != nil {
+			externalMaskLen, _ = defaultMask.Size()
 		}
+		for _, network := range networks {
+			if network.CIDR.Contains(bootstrapExternalIP) {
+				externalMaskLen, _ = network.CIDR.Mask.Size()
+				break
+			}
+		}
+		templateData.ExternalSubnetCIDR = externalMaskLen
 	}
 
 	if config.ProvisioningNetwork != baremetal.DisabledProvisioningNetwork {
