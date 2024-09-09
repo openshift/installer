@@ -89,8 +89,10 @@ func TestNodeJoinerIntegration(t *testing.T) {
 			fakeRegistry := tshelpers.NewFakeOCPRegistry(tmpDir)
 
 			// Creates a new temporary cluster.
-			etcdDataDir, _ := os.MkdirTemp(tmpDir, "etcd")
-			apiServerDataDir, _ := os.MkdirTemp(tmpDir, "api-server")
+			etcdDataDir, err := os.MkdirTemp(tmpDir, "etcd")
+			assert.NoError(t, err)
+			apiServerDataDir, err := os.MkdirTemp(tmpDir, "api-server")
+			assert.NoError(t, err)
 
 			testEnv := &envtest.Environment{
 				CRDDirectoryPaths: []string{

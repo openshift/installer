@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -70,7 +69,9 @@ func (fr *FakeOCPRegistry) Start() error {
 	fr.mux.HandleFunc("/v2/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Docker-Distribution-Api-Version", "registry/2.0")
-		json.NewEncoder(w).Encode(make(map[string]interface{}))
+		if err := json.NewEncoder(w).Encode(make(map[string]interface{})); err != nil {
+			log.Println(err)
+		}
 	})
 
 	// This handler is invoked when retrieving the image manifest
