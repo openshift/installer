@@ -90,7 +90,7 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		Location: to.Ptr(in.Region),
 		SKU:      &sku,
 		Properties: &armstorage.AccountPropertiesCreateParameters{
-			AllowBlobPublicAccess: to.Ptr(true),
+			AllowBlobPublicAccess: to.Ptr(false),
 			AllowSharedKeyAccess:  to.Ptr(true),
 			IsLocalUserEnabled:    to.Ptr(true),
 			LargeFileSharesState:  to.Ptr(armstorage.LargeFileSharesStateEnabled),
@@ -134,6 +134,7 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		accountCreateParameters.Identity = &identity
 		accountCreateParameters.SKU = &sku
 		accountCreateParameters.Properties.Encryption = encryption
+		accountCreateParameters.Properties.AllowBlobPublicAccess = to.Ptr(true)
 	}
 
 	logrus.Debugf("Creating storage account")
