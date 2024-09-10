@@ -1,8 +1,8 @@
 [Unit]
 Description=Metal3 deployment service
-Requires=build-metal3-env.service image-customization.service ironic.service
-Wants=network-online.target
-After=network-online.target image-customization.service build-metal3-env.service
+Requires=build-metal3-env.service ironic.service
+Wants=network-online.target image-customization.service
+After=network-online.target build-metal3-env.service
 
 [Container]
 ContainerName=baremetal-operator
