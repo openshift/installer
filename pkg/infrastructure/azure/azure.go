@@ -427,7 +427,16 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			OSState:              armcompute.OperatingSystemStateTypesGeneralized,
 			HyperVGeneration:     armcompute.HyperVGenerationV1,
 			ComputeClientFactory: computeClientFactory,
+			SecurityType:         "",
 		})
+		if err != nil {
+			return err
+		}
+
+		// If Control Plane Security Type is provided, then pass that along
+		// during Gen V2 Gallery Image creation. It will be added as a
+		// supported feature of the image.
+		securityType, err := getControlPlaneSecurityType(in)
 		if err != nil {
 			return err
 		}
@@ -448,6 +457,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			OSState:              armcompute.OperatingSystemStateTypesGeneralized,
 			HyperVGeneration:     armcompute.HyperVGenerationV2,
 			ComputeClientFactory: computeClientFactory,
+			SecurityType:         securityType,
 		})
 		if err != nil {
 			return err
@@ -880,4 +890,27 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	}
 
 	return ignSecrets, nil
+}
+
+func getControlPlaneSecurityType(in clusterapi.InfraReadyInput) (string, error) {
+	var securityType aztypes.SecurityTypes
+	if in.InstallConfig.Config.ControlPlane != nil {
+		pool := in.InstallConfig.Config.ControlPlane.Platform.Azure
+		if pool.EncryptionAtHost && pool.Settings != nil {
+			securityType = pool.Settings.SecurityType
+		}
+	}
+	if securityType == "" && in.InstallConfig.Config.Platform.Azure.DefaultMachinePlatform != nil {
+		pool := in.InstallConfig.Config.Platform.Azure.DefaultMachinePlatform
+		if pool.EncryptionAtHost && pool.Settings != nil {
+			securityType = pool.Settings.SecurityType
+		}
+	}
+	switch securityType {
+	case aztypes.SecurityTypesTrustedLaunch:
+		return "TrustedLaunch", nil
+	case aztypes.SecurityTypesConfidentialVM:
+		return "ConfidentialVM", nil
+	}
+	return "", nil
 }
