@@ -1,9 +1,8 @@
 [Unit]
 Description=Metal3 deployment service
-BindsTo=ironic-volume.service
-Requires=build-metal3-env.service wait-iptables-init.service image-customization.service build-ironic-env.service
-Wants=network-online.target ironic-httpd.service ironic-ramdisk-logs.service
-After=network-online.target ironic-volume.service build-ironic-env.service image-customization.service build-metal3-env.service
+Requires=build-metal3-env.service image-customization.service ironic.service
+Wants=network-online.target
+After=network-online.target image-customization.service build-metal3-env.service
 
 [Container]
 ContainerName=baremetal-operator
@@ -15,8 +14,6 @@ Volume=/opt/openshift:/opt/openshift:z,ro
 Environment="XDG_RUNTIME_DIR=/run/user/${UID}"
 Environment="KUBECONFIG=/opt/openshift/auth/kubeconfig-loopback"
 Environment="DEPLOY_KERNEL_URL=file:///shared/html/images/ironic-python-agent.kernel"
-Environment="IRONIC_KERNEL_PARAMS=${IRONIC_KERNEL_PARAMS}"
-Environment="HTTP_PORT=${HTTP_PORT}"
 Environment="IRONIC_ENDPOINT=${IRONIC_ENDPOINT}"
 Environment="IRONIC_EXTERNAL_URL_V6=${IRONIC_EXTERNAL_URL_V6}"
 Environment="LEASE_DURATION_SECONDS=137"
