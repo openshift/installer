@@ -16,6 +16,7 @@ import (
 	tokensv3 "github.com/gophercloud/gophercloud/v2/openstack/identity/v3/tokens"
 	"github.com/gophercloud/gophercloud/v2/openstack/image/v2/images"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/layer3/floatingips"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/mtu"
 	networkquotasets "github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/quotas"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/security/groups"
 	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/networks"
@@ -36,11 +37,11 @@ import (
 // CloudInfo caches data fetched from the user's openstack cloud
 type CloudInfo struct {
 	APIFIP                  *floatingips.FloatingIP
-	ExternalNetwork         *networks.Network
+	ExternalNetwork         *Network
 	Flavors                 map[string]Flavor
 	IngressFIP              *floatingips.FloatingIP
 	ControlPlanePortSubnets []*subnets.Subnet
-	ControlPlanePortNetwork *networks.Network
+	ControlPlanePortNetwork *Network
 	OSImage                 *images.Image
 	ComputeZones            []string
 	VolumeZones             []string
@@ -51,6 +52,12 @@ type CloudInfo struct {
 	SecurityGroups          []string
 
 	clients *clients
+}
+
+// Network holds a gophercloud network with additional info such as MTU.
+type Network struct {
+	networks.Network
+	mtu.NetworkMTUExt
 }
 
 type clients struct {
@@ -348,7 +355,7 @@ func (ci *CloudInfo) getSecurityGroups(ctx context.Context) ([]string, error) {
 	return sgIDs, nil
 }
 
-func (ci *CloudInfo) getNetworkByName(ctx context.Context, networkName string) (*networks.Network, error) {
+func (ci *CloudInfo) getNetworkByName(ctx context.Context, networkName string) (*Network, error) {
 	if networkName == "" {
 		return nil, nil
 	}
@@ -360,15 +367,16 @@ func (ci *CloudInfo) getNetworkByName(ctx context.Context, networkName string) (
 		return nil, err
 	}
 
-	network, err := networks.Get(ctx, ci.clients.networkClient, networkID).Extract()
+	var network Network
+	err = networks.Get(ctx, ci.clients.networkClient, networkID).ExtractInto(&network)
 	if err != nil {
 		return nil, err
 	}
 
-	return network, nil
+	return &network, nil
 }
 
-func (ci *CloudInfo) getNetwork(ctx context.Context, controlPlanePort *openstack.PortTarget) (*networks.Network, error) {
+func (ci *CloudInfo) getNetwork(ctx context.Context, controlPlanePort *openstack.PortTarget) (*Network, error) {
 	networkName := controlPlanePort.Network.Name
 	networkID := controlPlanePort.Network.ID
 	if networkName == "" && networkID == "" {
@@ -386,7 +394,8 @@ func (ci *CloudInfo) getNetwork(ctx context.Context, controlPlanePort *openstack
 		return nil, err
 	}
 
-	allNetworks, err := networks.ExtractNetworks(allPages)
+	var allNetworks []Network
+	err = networks.ExtractNetworksInto(allPages, &allNetworks)
 	if err != nil {
 		return nil, err
 	}
