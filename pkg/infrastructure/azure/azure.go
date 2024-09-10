@@ -893,18 +893,24 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 }
 
 func getControlPlaneSecurityType(in clusterapi.InfraReadyInput) (string, error) {
-	p := in.InstallConfig.Config.ControlPlane.Platform.Azure
-	if p.EncryptionAtHost {
-		if p.Settings != nil {
-			switch p.Settings.SecurityType {
-			case aztypes.SecurityTypesTrustedLaunch:
-				return "TrustedLaunch", nil
-			case aztypes.SecurityTypesConfidentialVM:
-				return "ConfidentialVM", nil
-			default:
-				return "", fmt.Errorf("invalid iControl Plane SecurityType %s found", p.Settings.SecurityType)
-			}
+	var securityType aztypes.SecurityTypes
+	if in.InstallConfig.Config.ControlPlane != nil {
+		pool := in.InstallConfig.Config.ControlPlane.Platform.Azure
+		if pool.EncryptionAtHost && pool.Settings != nil {
+			securityType = pool.Settings.SecurityType
 		}
+	}
+	if securityType == "" && in.InstallConfig.Config.Platform.Azure.DefaultMachinePlatform != nil {
+		pool := in.InstallConfig.Config.Platform.Azure.DefaultMachinePlatform
+		if pool.EncryptionAtHost && pool.Settings != nil {
+			securityType = pool.Settings.SecurityType
+		}
+	}
+	switch securityType {
+	case aztypes.SecurityTypesTrustedLaunch:
+		return "TrustedLaunch", nil
+	case aztypes.SecurityTypesConfidentialVM:
+		return "ConfidentialVM", nil
 	}
 	return "", nil
 }
