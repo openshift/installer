@@ -34,12 +34,12 @@ type pipInput struct {
 }
 
 type vmInput struct {
-	infraID       string
-	resourceGroup string
-	ids           []string
-	bap           *armnetwork.BackendAddressPool
-	vmClient      *armcompute.VirtualMachinesClient
-	nicClient     *armnetwork.InterfacesClient
+	infraID             string
+	resourceGroup       string
+	ids                 []string
+	backendAddressPools []*armnetwork.BackendAddressPool
+	vmClient            *armcompute.VirtualMachinesClient
+	nicClient           *armnetwork.InterfacesClient
 }
 
 type securityGroupInput struct {
@@ -344,7 +344,7 @@ func associateVMToBackendPool(ctx context.Context, in vmInput) error {
 				return fmt.Errorf("failed to get nic for vm %s: %w", vmName, err)
 			}
 			for _, ipconfig := range nic.Properties.IPConfigurations {
-				ipconfig.Properties.LoadBalancerBackendAddressPools = append(ipconfig.Properties.LoadBalancerBackendAddressPools, in.bap)
+				ipconfig.Properties.LoadBalancerBackendAddressPools = append(ipconfig.Properties.LoadBalancerBackendAddressPools, in.backendAddressPools...)
 			}
 			pollerResp, err := in.nicClient.BeginCreateOrUpdate(ctx, in.resourceGroup, nicName, nic.Interface, nil)
 			if err != nil {
