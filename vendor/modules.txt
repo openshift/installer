@@ -730,6 +730,7 @@ github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/attribu
 github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/external
 github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/layer3/floatingips
 github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/layer3/routers
+github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/mtu
 github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/quotas
 github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/security/groups
 github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/security/rules
