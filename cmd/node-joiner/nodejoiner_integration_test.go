@@ -14,6 +14,7 @@ import (
 	"github.com/rogpeppe/go-internal/testscript"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -58,12 +59,14 @@ func TestNodeJoinerIntegration(t *testing.T) {
 		Dir: "testdata",
 
 		// Uncomment below line to help debug the testcases
-		// TestWork: true,
+		TestWork: true,
 
 		Deadline: time.Now().Add(10 * time.Minute),
 
 		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
+			"isoCmp":              tshelpers.IsoCmp,
 			"isoIgnitionContains": tshelpers.IsoIgnitionContains,
+			"isoIgnitionUser":     tshelpers.IsoIgnitionUser,
 		},
 
 		Setup: func(e *testscript.Env) error {
@@ -194,9 +197,20 @@ func setupInitialResources(config *rest.Config, setupPath string, envArgs []stri
 		if err != nil {
 			return fmt.Errorf("Error while getting resource gvr from %s: %w", fName, err)
 		}
-		updObj, err := csDynamic.Resource(gvr).Namespace(obj.GetNamespace()).Create(context.Background(), obj, metav1.CreateOptions{})
+		// Create or update the resource (if it already exists).
+		updObj, err := csDynamic.Resource(gvr).Namespace(obj.GetNamespace()).Get(context.Background(), obj.GetName(), metav1.GetOptions{})
 		if err != nil {
-			return fmt.Errorf("Error while creating resource from %s: %w", fName, err)
+			if errors.IsNotFound(err) {
+				updObj, err = csDynamic.Resource(gvr).Namespace(obj.GetNamespace()).Create(context.Background(), obj, metav1.CreateOptions{})
+				if err != nil {
+					return fmt.Errorf("Error while creating resource from %s: %w", fName, err)
+				}
+			}
+		} else {
+			updObj, err = csDynamic.Resource(gvr).Namespace(obj.GetNamespace()).Update(context.Background(), obj, metav1.UpdateOptions{})
+			if err != nil {
+				return fmt.Errorf("Error while updating resource from %s: %w", fName, err)
+			}
 		}
 		// Take care of a resource status, in case it was configured.
 		if status, ok := obj.Object["status"]; ok {

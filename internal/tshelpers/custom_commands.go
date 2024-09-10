@@ -18,6 +18,24 @@ import (
 	"github.com/vincent-petithory/dataurl"
 )
 
+// Command				   | Short description																	   | Usage example
+// ------------------------|---------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------
+// IgnitionImgContains     | checks if the specified file is stored within /images/ignition.img                    | ignitionImgContains agent.x86_64.iso config.ign
+// IsoIgnitionUser 		   | checks if the ignition file extracted from the ISO contains the specified user with   | isoIgnitionUser node.x86_64.iso core my-sshKey
+//						   | the given `authKey`.																   |
+// IsoIgnitionContains     | checks that the file extracted from the ISO embedded configuration file exists        | isoIgnitionContains node.x86_64.iso /usr/local/bin/add-node.sh
+// IsoCmp                  | check that the content of the file extracted from the ISO embedded configuration file | isocmp agent.x86_64.iso /etc/assisted/manifests/infraenv.yaml expected/infraenv.yaml
+//                         | matches the content of the local file                                                 |
+// InitrdImgContains       | check if the specified file is stored within a compressed cpio archive by scanning the| initrdImgContains agent.x86_64.iso /agent-files/agent-tui
+//                         | content of /images/ignition.img archive in the ISO                                    |
+// ------------------------|---------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------
+// ConfigImgContains       | check if the specified file is stored within the config image ISO                     | configImgContains agentconfig.noarch.iso /config.gz
+// UnconfiguredIgnContains | check if the specified file is stored within the unconfigured ignition Storage Files  | unconfiguredIgnContains /etc/assisted/manifests/infraenv.yaml
+// IgnitionStorageContains | check if the specified file is stored within the ignition Storage Files               | - (note: works directly on a ignition file)
+// UnconfiguredIgnCmp      | check that the content extracted from the unconfigured ignition configuration file    | unconfiguredIgnCmp /etc/assisted/manifests/infraenv.yaml expected/infraenv.yaml
+//                         | matches the content of the local file                                                 |
+// IsoContains             | check if the specified is stored within the ISO                                       | isoContains imagebasedconfig.iso /cluster-configuration/manifest.json
+
 // IgnitionImgContains `isoPath` `file` check if the specified file `file`
 // is stored within /images/ignition.img archive in the ISO `isoPath` image.
 func IgnitionImgContains(ts *testscript.TestScript, neg bool, args []string) {
@@ -30,6 +48,122 @@ func IgnitionImgContains(ts *testscript.TestScript, neg bool, args []string) {
 	isoPathAbs := filepath.Join(workDir, isoPath)
 
 	_, err := extractArchiveFile(isoPathAbs, "/images/ignition.img", eFilePath)
+	ts.Check(err)
+}
+
+// IsoIgnitionContains `isoPath` `file` checks that the file
+// `isoFile` - extracted from the ISO embedded configuration file
+// referenced by `isoPath` - exists.
+func IsoIgnitionContains(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 2 {
+		ts.Fatalf("usage: isoIgnitionContains isoPath")
+	}
+
+	workDir := ts.Getenv("WORK")
+	isoPath, eFilePath := args[0], args[1]
+	isoPathAbs := filepath.Join(workDir, isoPath)
+
+	archiveFile, ignitionFile, err := archiveFileNames(isoPath)
+	if err != nil {
+		ts.Check(err)
+	}
+
+	_, err = readFileFromISO(isoPathAbs, archiveFile, ignitionFile, eFilePath)
+	ts.Check(err)
+}
+
+// IsoIgnitionUser `isoPath` `user` `authKey` checks if the ignition file extracted
+// from the ISO `isoPath` contains the specified `user` with the given `authKey`.
+func IsoIgnitionUser(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 3 {
+		ts.Fatalf("usage: IsoIgnitionUser isoPath user authKey")
+	}
+
+	workDir := ts.Getenv("WORK")
+	isoPath, eUser, eAuthKey := args[0], args[1], args[2]
+	isoPathAbs := filepath.Join(workDir, isoPath)
+
+	archiveFile, ignitionFile, err := archiveFileNames(isoPath)
+	if err != nil {
+		ts.Check(err)
+	}
+
+	ignition, err := extractIgnition(isoPathAbs, archiveFile, ignitionFile)
+	ts.Check(err)
+
+	for _, user := range ignition.Passwd.Users {
+		if user.Name != eUser {
+			continue
+		}
+		if len(user.SSHAuthorizedKeys) == 0 || user.SSHAuthorizedKeys[0] != igntypes.SSHAuthorizedKey(eAuthKey) {
+			continue
+		}
+		return
+	}
+	ts.Fatalf("expected user '%s' with SSH auth key '%s' not found", eUser, eAuthKey)
+}
+
+// IsoCmp `isoPath` `isoFile` `expectedFile` check that the content of the file
+// `isoFile` - extracted from the ISO embedded configuration file referenced
+// by `isoPath` - matches the content of the local file `expectedFile`.
+// Environment variables in `expectedFile` are substituted before the comparison.
+func IsoCmp(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 3 {
+		ts.Fatalf("usage: isocmp isoPath file1 file2")
+	}
+
+	workDir := ts.Getenv("WORK")
+	isoPath, aFilePath, eFilePath := args[0], args[1], args[2]
+	isoPathAbs := filepath.Join(workDir, isoPath)
+
+	archiveFile, ignitionFile, err := archiveFileNames(isoPath)
+	if err != nil {
+		ts.Check(err)
+	}
+
+	aData, err := readFileFromISO(isoPathAbs, archiveFile, ignitionFile, aFilePath)
+	ts.Check(err)
+
+	eFilePathAbs := filepath.Join(workDir, eFilePath)
+	eData, err := os.ReadFile(eFilePathAbs)
+	ts.Check(err)
+
+	byteCompare(ts, neg, aData, eData, aFilePath, eFilePath)
+}
+
+// InitrdImgContains `isoPath` `file` check if the specified file `file`
+// is stored within a compressed cpio archive by scanning the content of
+// /images/ignition.img archive in the ISO `isoPath` image (note: plain cpio
+// archives are ignored).
+func InitrdImgContains(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 2 {
+		ts.Fatalf("usage: initrdImgContains isoPath file")
+	}
+
+	workDir := ts.Getenv("WORK")
+	isoPath, eFilePath := args[0], args[1]
+	isoPathAbs := filepath.Join(workDir, isoPath)
+
+	err := checkFileFromInitrdImg(isoPathAbs, eFilePath)
+	ts.Check(err)
+}
+
+// [!] existsInIso `isoPath` `file` check if the specified `file` is stored
+// within the ISO `isoPath` image.
+func ExistsInIso(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 2 {
+		ts.Fatalf("usage: isoContains isoPath file")
+	}
+
+	workDir := ts.Getenv("WORK")
+	isoPath, filePath := args[0], args[1]
+	isoPathAbs := filepath.Join(workDir, isoPath)
+
+	archiveFile, ignitionFile, err := archiveFileNames(isoPath)
+	if err != nil {
+		ts.Check(err)
+	}
+	_, err = readFileFromISO(isoPathAbs, archiveFile, ignitionFile, filePath)
 	ts.Check(err)
 }
 
@@ -46,18 +180,6 @@ func ConfigImgContains(ts *testscript.TestScript, neg bool, args []string) {
 
 	_, err := extractArchiveFile(isoPathAbs, eFilePath, "")
 	ts.Check(err)
-}
-
-// archiveFileNames `isoPath` get the names of the archive files to use
-// based on the name of the ISO image.
-func archiveFileNames(isoPath string) (string, string, error) {
-	if strings.HasPrefix(isoPath, "agent.") || strings.HasPrefix(isoPath, "node.") {
-		return "/images/ignition.img", "config.ign", nil
-	} else if strings.HasPrefix(isoPath, "agentconfig.") {
-		return "/config.gz", "", nil
-	}
-
-	return "", "", errors.NotFound(fmt.Sprintf("ISO %s has unrecognized prefix", isoPath))
 }
 
 // UnconfiguredIgnContains `file` check if the specified file `file`
@@ -99,56 +221,6 @@ func IgnitionStorageContains(ts *testscript.TestScript, neg bool, args []string)
 	}
 }
 
-// IsoIgnitionContains `isoPath` `file` checks that the file
-// `isoFile` - extracted from the ISO embedded configuration file
-//
-//	referenced by `isoPath` - exists.
-func IsoIgnitionContains(ts *testscript.TestScript, neg bool, args []string) {
-	if len(args) != 2 {
-		ts.Fatalf("usage: isoIgnitionContains isoPath")
-	}
-
-	workDir := ts.Getenv("WORK")
-	isoPath, eFilePath := args[0], args[1]
-	isoPathAbs := filepath.Join(workDir, isoPath)
-
-	archiveFile, ignitionFile, err := archiveFileNames(isoPath)
-	if err != nil {
-		ts.Check(err)
-	}
-
-	_, err = readFileFromISO(isoPathAbs, archiveFile, ignitionFile, eFilePath)
-	ts.Check(err)
-}
-
-// IsoCmp `isoPath` `isoFile` `expectedFile` check that the content of the file
-// `isoFile` - extracted from the ISO embedded configuration file referenced
-// by `isoPath` - matches the content of the local file `expectedFile`.
-// Environment variables in `expectedFile` are substituted before the comparison.
-func IsoCmp(ts *testscript.TestScript, neg bool, args []string) {
-	if len(args) != 3 {
-		ts.Fatalf("usage: isocmp isoPath file1 file2")
-	}
-
-	workDir := ts.Getenv("WORK")
-	isoPath, aFilePath, eFilePath := args[0], args[1], args[2]
-	isoPathAbs := filepath.Join(workDir, isoPath)
-
-	archiveFile, ignitionFile, err := archiveFileNames(isoPath)
-	if err != nil {
-		ts.Check(err)
-	}
-
-	aData, err := readFileFromISO(isoPathAbs, archiveFile, ignitionFile, aFilePath)
-	ts.Check(err)
-
-	eFilePathAbs := filepath.Join(workDir, eFilePath)
-	eData, err := os.ReadFile(eFilePathAbs)
-	ts.Check(err)
-
-	byteCompare(ts, neg, aData, eData, aFilePath, eFilePath)
-}
-
 // UnconfiguredIgnCmp `fileInIgn` `expectedFile` check that the content
 // of the file `fileInIgn` extracted from the unconfigured ignition
 // configuration file matches the content of the local file `expectedFile`.
@@ -159,6 +231,46 @@ func UnconfiguredIgnCmp(ts *testscript.TestScript, neg bool, args []string) {
 	}
 	argsNext := []string{"unconfigured-agent.ign", args[0], args[1]}
 	ignitionStorageCmp(ts, neg, argsNext)
+}
+
+// IsoContains `isoPath` `file` check if the specified `file` is stored
+// within the ISO `isoPath` image.
+func IsoContains(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 2 {
+		ts.Fatalf("usage: isoContains isoPath file")
+	}
+
+	workDir := ts.Getenv("WORK")
+	isoPath, filePath := args[0], args[1]
+	isoPathAbs := filepath.Join(workDir, isoPath)
+
+	disk, err := diskfs.Open(isoPathAbs, diskfs.WithOpenMode(diskfs.ReadOnly))
+	ts.Check(err)
+
+	fs, err := disk.GetFilesystem(0)
+	ts.Check(err)
+
+	_, err = fs.OpenFile(filePath, os.O_RDONLY)
+	ts.Check(err)
+}
+
+// ExpandFile `file...` can be used to substitute environment variables
+// references for each file specified.
+func ExpandFile(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 1 {
+		ts.Fatalf("usage: expandFile file...")
+	}
+
+	workDir := ts.Getenv("WORK")
+	for _, f := range args {
+		fileName := filepath.Join(workDir, f)
+		data, err := os.ReadFile(fileName)
+		ts.Check(err)
+
+		newData := expand(ts, data)
+		err = os.WriteFile(fileName, []byte(newData), 0)
+		ts.Check(err)
+	}
 }
 
 // ignitionStorageCmp `ignPath` `ignFile` `expectedFile` check that the content of the file
@@ -194,23 +306,16 @@ func readIgnition(ts *testscript.TestScript, ignPath string) (config igntypes.Co
 	return config, err
 }
 
-// ExpandFile `file...` can be used to substitute environment variables
-// references for each file specified.
-func ExpandFile(ts *testscript.TestScript, neg bool, args []string) {
-	if len(args) != 1 {
-		ts.Fatalf("usage: expandFile file...")
+// archiveFileNames `isoPath` get the names of the archive files to use
+// based on the name of the ISO image.
+func archiveFileNames(isoPath string) (string, string, error) {
+	if strings.HasPrefix(isoPath, "agent.") || strings.HasPrefix(isoPath, "node.") {
+		return "/images/ignition.img", "config.ign", nil
+	} else if strings.HasPrefix(isoPath, "agentconfig.") {
+		return "/config.gz", "", nil
 	}
 
-	workDir := ts.Getenv("WORK")
-	for _, f := range args {
-		fileName := filepath.Join(workDir, f)
-		data, err := os.ReadFile(fileName)
-		ts.Check(err)
-
-		newData := expand(ts, data)
-		err = os.WriteFile(fileName, []byte(newData), 0)
-		ts.Check(err)
-	}
+	return "", "", errors.NotFound(fmt.Sprintf("ISO %s has unrecognized prefix", isoPath))
 }
 
 func expand(ts *testscript.TestScript, s []byte) string {
@@ -246,7 +351,7 @@ func byteCompare(ts *testscript.TestScript, neg bool, aData, eData []byte, aFile
 }
 
 func readFileFromISO(isoPath, archiveFile, ignitionFile, nodePath string) ([]byte, error) {
-	config, err := extractCfgData(isoPath, archiveFile, ignitionFile, nodePath)
+	config, err := extractCfgStorageData(isoPath, archiveFile, ignitionFile, nodePath)
 	if err != nil {
 		return nil, err
 	}
@@ -314,7 +419,23 @@ func extractArchiveFile(isoPath, archive, fileName string) ([]byte, error) {
 	return nil, errors.NotFound(fmt.Sprintf("File %s not found within the %s archive", fileName, archive))
 }
 
-func extractCfgData(isoPath, archiveFile, ignitionFile, nodePath string) ([]byte, error) {
+func extractIgnition(isoPath, archiveFile, ignitionFile string) (igntypes.Config, error) {
+	var config igntypes.Config
+
+	rawContent, err := extractArchiveFile(isoPath, archiveFile, ignitionFile)
+	if err != nil {
+		return config, err
+	}
+
+	err = json.Unmarshal(rawContent, &config)
+	if err != nil {
+		return config, err
+	}
+
+	return config, nil
+}
+
+func extractCfgStorageData(isoPath, archiveFile, ignitionFile, nodePath string) ([]byte, error) {
 	if ignitionFile == "" {
 		// If the archive is not part of an ignition file return the archive data
 		rawContent, err := extractArchiveFile(isoPath, archiveFile, nodePath)
@@ -324,17 +445,10 @@ func extractCfgData(isoPath, archiveFile, ignitionFile, nodePath string) ([]byte
 		return rawContent, nil
 	}
 
-	rawContent, err := extractArchiveFile(isoPath, archiveFile, ignitionFile)
+	config, err := extractIgnition(isoPath, archiveFile, ignitionFile)
 	if err != nil {
 		return nil, err
 	}
-
-	var config igntypes.Config
-	err = json.Unmarshal(rawContent, &config)
-	if err != nil {
-		return nil, err
-	}
-
 	for _, f := range config.Storage.Files {
 		if f.Node.Path == nodePath {
 			actualData, err := dataurl.DecodeString(*f.FileEmbedded1.Contents.Source)
@@ -346,63 +460,6 @@ func extractCfgData(isoPath, archiveFile, ignitionFile, nodePath string) ([]byte
 	}
 
 	return nil, errors.NotFound(fmt.Sprintf("File %s not found within the %s archive", nodePath, archiveFile))
-}
-
-// InitrdImgContains `isoPath` `file` check if the specified file `file`
-// is stored within a compressed cpio archive by scanning the content of
-// /images/ignition.img archive in the ISO `isoPath` image (note: plain cpio
-// archives are ignored).
-func InitrdImgContains(ts *testscript.TestScript, neg bool, args []string) {
-	if len(args) != 2 {
-		ts.Fatalf("usage: initrdImgContains isoPath file")
-	}
-
-	workDir := ts.Getenv("WORK")
-	isoPath, eFilePath := args[0], args[1]
-	isoPathAbs := filepath.Join(workDir, isoPath)
-
-	err := checkFileFromInitrdImg(isoPathAbs, eFilePath)
-	ts.Check(err)
-}
-
-// IsoContains `isoPath` `file` check if the specified `file` is stored
-// within the ISO `isoPath` image.
-func IsoContains(ts *testscript.TestScript, neg bool, args []string) {
-	if len(args) != 2 {
-		ts.Fatalf("usage: isoContains isoPath file")
-	}
-
-	workDir := ts.Getenv("WORK")
-	isoPath, filePath := args[0], args[1]
-	isoPathAbs := filepath.Join(workDir, isoPath)
-
-	disk, err := diskfs.Open(isoPathAbs, diskfs.WithOpenMode(diskfs.ReadOnly))
-	ts.Check(err)
-
-	fs, err := disk.GetFilesystem(0)
-	ts.Check(err)
-
-	_, err = fs.OpenFile(filePath, os.O_RDONLY)
-	ts.Check(err)
-}
-
-// [!] existsInIso `isoPath` `file` check if the specified `file` is stored
-// within the ISO `isoPath` image.
-func ExistsInIso(ts *testscript.TestScript, neg bool, args []string) {
-	if len(args) != 2 {
-		ts.Fatalf("usage: isoContains isoPath file")
-	}
-
-	workDir := ts.Getenv("WORK")
-	isoPath, filePath := args[0], args[1]
-	isoPathAbs := filepath.Join(workDir, isoPath)
-
-	archiveFile, ignitionFile, err := archiveFileNames(isoPath)
-	if err != nil {
-		ts.Check(err)
-	}
-	_, err = readFileFromISO(isoPathAbs, archiveFile, ignitionFile, filePath)
-	ts.Check(err)
 }
 
 func checkFileFromInitrdImg(isoPath string, fileName string) error {

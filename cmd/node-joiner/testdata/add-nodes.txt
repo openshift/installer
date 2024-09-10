@@ -1,11 +1,12 @@
 
-# Verify that the add-nodes command generates correctly the ISO image
+# Verify that the add-nodes command generates correctly the ISO image, using the default values.
 
 exec node-joiner add-nodes --kubeconfig=$WORK/kubeconfig --log-level=debug --dir=$WORK
 
 exists $WORK/node.x86_64.iso
 isoIgnitionContains node.x86_64.iso /etc/assisted/add-nodes.env
 isoIgnitionContains node.x86_64.iso /usr/local/bin/add-node.sh
+isoIgnitionUser node.x86_64.iso core my-sshKey
 
 -- nodes-config.yaml --
 hosts:
