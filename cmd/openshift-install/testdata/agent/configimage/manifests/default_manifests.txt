@@ -8,7 +8,7 @@ isocmp agentconfig.noarch.iso /etc/assisted/manifests/agent-cluster-install.yaml
 isocmp agentconfig.noarch.iso /etc/assisted/manifests/cluster-image-set.yaml expected/cluster-image-set.yaml
 isocmp agentconfig.noarch.iso /etc/assisted/manifests/cluster-deployment.yaml expected/cluster-deployment.yaml
 
-existsInIso agentconfig.noarch.iso /etc/assisted/manifests/pull-secret.yaml
+isoIgnitionContains agentconfig.noarch.iso /etc/assisted/manifests/pull-secret.yaml
 
 -- install-config.yaml --
 apiVersion: v1

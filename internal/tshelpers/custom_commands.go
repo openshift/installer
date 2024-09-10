@@ -148,25 +148,6 @@ func InitrdImgContains(ts *testscript.TestScript, neg bool, args []string) {
 	ts.Check(err)
 }
 
-// [!] existsInIso `isoPath` `file` check if the specified `file` is stored
-// within the ISO `isoPath` image.
-func ExistsInIso(ts *testscript.TestScript, neg bool, args []string) {
-	if len(args) != 2 {
-		ts.Fatalf("usage: isoContains isoPath file")
-	}
-
-	workDir := ts.Getenv("WORK")
-	isoPath, filePath := args[0], args[1]
-	isoPathAbs := filepath.Join(workDir, isoPath)
-
-	archiveFile, ignitionFile, err := archiveFileNames(isoPath)
-	if err != nil {
-		ts.Check(err)
-	}
-	_, err = readFileFromISO(isoPathAbs, archiveFile, ignitionFile, filePath)
-	ts.Check(err)
-}
-
 // ConfigImgContains `isoPath` `file` check if the specified file `file`
 // is stored within the config image ISO.
 func ConfigImgContains(ts *testscript.TestScript, neg bool, args []string) {

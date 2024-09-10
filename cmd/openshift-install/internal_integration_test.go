@@ -134,7 +134,7 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 			"unconfiguredIgnCmp":      tshelpers.UnconfiguredIgnCmp,
 			"expandFile":              tshelpers.ExpandFile,
 			"isoContains":             tshelpers.IsoContains,
-			"existsInIso":             tshelpers.ExistsInIso,
+			"isoIgnitionContains":     tshelpers.IsoIgnitionContains,
 		},
 	})
 }

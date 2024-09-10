@@ -59,7 +59,7 @@ func TestNodeJoinerIntegration(t *testing.T) {
 		Dir: "testdata",
 
 		// Uncomment below line to help debug the testcases
-		TestWork: true,
+		// TestWork: true,
 
 		Deadline: time.Now().Add(10 * time.Minute),
 
