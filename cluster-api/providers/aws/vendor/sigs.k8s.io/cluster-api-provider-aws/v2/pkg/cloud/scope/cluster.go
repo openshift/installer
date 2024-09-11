@@ -153,6 +153,17 @@ func (s *ClusterScope) SecondaryCidrBlock() *string {
 	return nil
 }
 
+// SecondaryCidrBlocks returns the additional CIDR blocks to be associated with the managed VPC.
+func (s *ClusterScope) SecondaryCidrBlocks() []infrav1.VpcCidrBlock {
+	return s.AWSCluster.Spec.NetworkSpec.VPC.SecondaryCidrBlocks
+}
+
+// AllSecondaryCidrBlocks returns all secondary CIDR blocks (combining `SecondaryCidrBlock` and `SecondaryCidrBlocks`).
+func (s *ClusterScope) AllSecondaryCidrBlocks() []infrav1.VpcCidrBlock {
+	// Non-EKS clusters don't have anything in `SecondaryCidrBlock()`
+	return s.SecondaryCidrBlocks()
+}
+
 // Name returns the CAPI cluster name.
 func (s *ClusterScope) Name() string {
 	return s.Cluster.Name

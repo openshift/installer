@@ -312,7 +312,7 @@ func (r *ROSAMachinePoolReconciler) reconcileDelete(
 		if err := ocmClient.DeleteNodePool(machinePoolScope.ControlPlane.Status.ID, nodePool.ID()); err != nil {
 			return err
 		}
-		machinePoolScope.Info("Successfully deleted NodePool %s", nodePool.ID())
+		machinePoolScope.Info("Successfully deleted NodePool")
 	}
 
 	controllerutil.RemoveFinalizer(machinePoolScope.RosaMachinePool, expinfrav1.RosaMachinePoolFinalizer)
@@ -360,21 +360,14 @@ func (r *ROSAMachinePoolReconciler) updateNodePool(machinePoolScope *scope.RosaM
 	machinePool := machinePoolScope.RosaMachinePool.DeepCopy()
 	// default all fields before comparing, so that nil/unset fields don't cause an unnecessary update call.
 	machinePool.Default()
-
 	desiredSpec := machinePool.Spec
-	currentSpec := nodePoolToRosaMachinePoolSpec(nodePool)
 
-	ignoredFields := []string{
-		"ProviderIDList", // providerIDList is set by the controller.
-		"Version",        // Version changes are reconciled separately.
-		"AdditionalTags", // AdditionalTags day2 changes not supported.
-	}
-	if cmp.Equal(desiredSpec, currentSpec,
-		cmpopts.EquateEmpty(), // ensures empty non-nil slices and nil slices are considered equal.
-		cmpopts.IgnoreFields(currentSpec, ignoredFields...)) {
+	specDiff := computeSpecDiff(desiredSpec, nodePool)
+	if specDiff == "" {
 		// no changes detected.
 		return nodePool, nil
 	}
+	machinePoolScope.Info("MachinePool spec diff detected", "diff", specDiff)
 
 	// zero-out fields that shouldn't be part of the update call.
 	desiredSpec.Version = ""
@@ -398,6 +391,21 @@ func (r *ROSAMachinePoolReconciler) updateNodePool(machinePoolScope *scope.RosaM
 	}
 
 	return updatedNodePool, nil
+}
+
+func computeSpecDiff(desiredSpec expinfrav1.RosaMachinePoolSpec, nodePool *cmv1.NodePool) string {
+	currentSpec := nodePoolToRosaMachinePoolSpec(nodePool)
+
+	ignoredFields := []string{
+		"ProviderIDList",           // providerIDList is set by the controller.
+		"Version",                  // Version changes are reconciled separately.
+		"AdditionalTags",           // AdditionalTags day2 changes not supported.
+		"AdditionalSecurityGroups", // AdditionalSecurityGroups day2 changes not supported.
+	}
+
+	return cmp.Diff(desiredSpec, currentSpec,
+		cmpopts.EquateEmpty(), // ensures empty non-nil slices and nil slices are considered equal.
+		cmpopts.IgnoreFields(currentSpec, ignoredFields...))
 }
 
 func validateMachinePoolSpec(machinePoolScope *scope.RosaMachinePoolScope) (*string, error) {
@@ -517,7 +525,7 @@ func nodePoolToRosaMachinePoolSpec(nodePool *cmv1.NodePool) expinfrav1.RosaMachi
 		}
 	}
 	if nodePool.Taints() != nil {
-		rosaTaints := make([]expinfrav1.RosaTaint, len(nodePool.Taints()))
+		rosaTaints := make([]expinfrav1.RosaTaint, 0, len(nodePool.Taints()))
 		for _, taint := range nodePool.Taints() {
 			rosaTaints = append(rosaTaints, expinfrav1.RosaTaint{
 				Key:    taint.Key(),
