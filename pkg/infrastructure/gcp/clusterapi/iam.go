@@ -45,6 +45,7 @@ func GetWorkerRoles() []string {
 	return []string{
 		"roles/compute.viewer",
 		"roles/storage.admin",
+		"roles/artifactregistry.reader",
 	}
 }
 
