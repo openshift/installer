@@ -226,13 +226,19 @@ func (c *Client) GetDNSZone(ctx context.Context, project, baseDomain string, isP
 	if !strings.HasSuffix(baseDomain, ".") {
 		baseDomain = fmt.Sprintf("%s.", baseDomain)
 	}
+
+	// currently, only private and public are supported. All peering zones are private.
+	visibility := "private"
+	if isPublic {
+		visibility = "public"
+	}
+
 	req := svc.ManagedZones.List(project).DnsName(baseDomain).Context(ctx)
 	var res *dns.ManagedZone
 	if err := req.Pages(ctx, func(page *dns.ManagedZonesListResponse) error {
 		for idx, v := range page.ManagedZones {
-			if v.Visibility != "private" && isPublic {
-				res = page.ManagedZones[idx]
-			} else if v.Visibility == "private" && !isPublic {
+			// Peering zones are not allowed during the installation process.
+			if v.Visibility == visibility && v.PeeringConfig == nil {
 				res = page.ManagedZones[idx]
 			}
 		}
