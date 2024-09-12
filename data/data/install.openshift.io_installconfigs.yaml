@@ -3517,8 +3517,7 @@ spec:
                     description: userLabels has additional keys and values that the
                       installer will add as labels to all resources that it creates
                       on GCP. Resources created by the cluster itself may not include
-                      these labels. GCPLabelsTags featureGate is defined for managing
-                      this feature and is enabled by default.
+                      these labels.
                     items:
                       description: UserLabel is a label to apply to GCP resources
                         created for the cluster.
@@ -3555,8 +3554,7 @@ spec:
                       installer will add as tags to all resources that it creates
                       on GCP. Resources created by the cluster itself may not include
                       these tags. Tag key and tag value should be the shortnames of
-                      the tag key and tag value resource. GCPLabelsTags featureGate
-                      is defined for managing this feature and is enabled by default.
+                      the tag key and tag value resource.
                     items:
                       description: UserTag is a tag to apply to GCP resources created
                         for the cluster.
