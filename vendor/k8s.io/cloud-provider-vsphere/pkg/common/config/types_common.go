@@ -53,12 +53,6 @@ type Global struct {
 	// 2) we are not in a k8s env, namely DC/OS, since CSI is CO agnostic
 	// Default: /etc/cloud/credentials
 	SecretsDirectory string
-	// Disable the vSphere CCM API
-	// Default: true
-	APIDisable bool
-	// Configurable vSphere CCM API port
-	// Default: 43001
-	APIBinding string
 }
 
 // VirtualCenterConfig struct

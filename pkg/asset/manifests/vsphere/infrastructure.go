@@ -3,7 +3,10 @@ package vsphere
 import (
 	"fmt"
 
+	"github.com/sirupsen/logrus"
+
 	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -51,5 +54,25 @@ func GetInfraPlatformSpec(ic *installconfig.InstallConfig, clusterID string) *co
 	platformSpec.IngressIPs = types.StringsToIPs(icPlatformSpec.IngressVIPs)
 	platformSpec.MachineNetworks = types.MachineNetworksToCIDRs(ic.Config.MachineNetwork)
 
+	if ic.Config.EnabledFeatureGates().Enabled(features.FeatureGateVSphereMultiNetworks) {
+		logrus.Debug("Multi-networks feature gate enabled")
+		if icPlatformSpec.NodeNetworking != nil {
+			logrus.Debug("Multi-networks: node networking defined, copying to infrastructure spec")
+			icPlatformSpec.NodeNetworking.DeepCopyInto(&platformSpec.NodeNetworking)
+		} else {
+			logrus.Debug("Multi-networks: node networking not defined, deriving from machineNetwork")
+			var cidrs []string
+			for _, machineNetwork := range ic.Config.MachineNetwork {
+				cidrs = append(cidrs, machineNetwork.CIDR.String())
+			}
+
+			// if NodeNetworking is not defined, use the machine cidrs. the machine cidrs
+			// should align with the VIP and should be a safe choice for inclusion in NodeNetworking.
+			platformSpec.NodeNetworking.External.NetworkSubnetCIDR = cidrs
+			platformSpec.NodeNetworking.Internal.NetworkSubnetCIDR = cidrs
+
+			logrus.Debugf("Multi-networks appending cidrs: %v", cidrs)
+		}
+	}
 	return &platformSpec
 }

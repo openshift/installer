@@ -207,7 +207,7 @@ func (AddPage) SwaggerDoc() map[string]string {
 
 var map_Capability = map[string]string{
 	"":           "Capabilities contains set of UI capabilities and their state in the console UI.",
-	"name":       "name is the unique name of a capability. Available capabilities are LightspeedButton.",
+	"name":       "name is the unique name of a capability. Available capabilities are LightspeedButton and GettingStartedBanner.",
 	"visibility": "visibility defines the visibility state of the capability.",
 }
 
@@ -245,7 +245,7 @@ func (ConsoleConfigRoute) SwaggerDoc() map[string]string {
 
 var map_ConsoleCustomization = map[string]string{
 	"":                     "ConsoleCustomization defines a list of optional configuration for the console UI.",
-	"capabilities":         "capabilities defines an array of capabilities that can be interacted with in the console UI. Each capability defines a visual state that can be interacted with the console to render in the UI. Available capabilities are LightspeedButton. Each of the available capabilities may appear only once in the list.",
+	"capabilities":         "capabilities defines an array of capabilities that can be interacted with in the console UI. Each capability defines a visual state that can be interacted with the console to render in the UI. Available capabilities are LightspeedButton and GettingStartedBanner. Each of the available capabilities may appear only once in the list.",
 	"brand":                "brand is the default branding of the web console which can be overridden by providing the brand field.  There is a limited set of specific brand options. This field controls elements of the console such as the logo. Invalid value will prevent a console rollout.",
 	"documentationBaseURL": "documentationBaseURL links to external documentation are shown in various sections of the web console.  Providing documentationBaseURL will override the default documentation URL. Invalid value will prevent a console rollout.",
 	"customProductName":    "customProductName is the name that will be displayed in page titles, logo alt text, and the about dialog instead of the normal OpenShift product name.",
@@ -1559,7 +1559,7 @@ func (ClusterNetworkEntry) SwaggerDoc() map[string]string {
 var map_DefaultNetworkDefinition = map[string]string{
 	"":                    "DefaultNetworkDefinition represents a single network plugin's configuration. type must be specified, along with exactly one \"Config\" that matches the type.",
 	"type":                "type is the type of network All NetworkTypes are supported except for NetworkTypeRaw",
-	"openshiftSDNConfig":  "openShiftSDNConfig configures the openshift-sdn plugin",
+	"openshiftSDNConfig":  "openShiftSDNConfig was previously used to configure the openshift-sdn plugin. DEPRECATED: OpenShift SDN is no longer supported.",
 	"ovnKubernetesConfig": "ovnKubernetesConfig configures the ovn-kubernetes plugin.",
 }
 
@@ -1587,9 +1587,9 @@ func (ExportNetworkFlows) SwaggerDoc() map[string]string {
 }
 
 var map_FeaturesMigration = map[string]string{
-	"egressIP":       "egressIP specifies whether or not the Egress IP configuration is migrated automatically when changing the cluster default network provider. If unset, this property defaults to 'true' and Egress IP configure is migrated.",
-	"egressFirewall": "egressFirewall specifies whether or not the Egress Firewall configuration is migrated automatically when changing the cluster default network provider. If unset, this property defaults to 'true' and Egress Firewall configure is migrated.",
-	"multicast":      "multicast specifies whether or not the multicast configuration is migrated automatically when changing the cluster default network provider. If unset, this property defaults to 'true' and multicast configure is migrated.",
+	"egressIP":       "egressIP specified whether or not the Egress IP configuration was migrated. DEPRECATED: network type migration is no longer supported.",
+	"egressFirewall": "egressFirewall specified whether or not the Egress Firewall configuration was migrated. DEPRECATED: network type migration is no longer supported.",
+	"multicast":      "multicast specified whether or not the multicast configuration was migrated. DEPRECATED: network type migration is no longer supported.",
 }
 
 func (FeaturesMigration) SwaggerDoc() map[string]string {
@@ -1680,7 +1680,7 @@ func (IPv6OVNKubernetesConfig) SwaggerDoc() map[string]string {
 }
 
 var map_MTUMigration = map[string]string{
-	"":        "MTUMigration MTU contains infomation about MTU migration.",
+	"":        "MTUMigration contains infomation about MTU migration.",
 	"network": "network contains information about MTU migration for the default network. Migrations are only allowed to MTU values lower than the machine's uplink MTU by the minimum appropriate offset.",
 	"machine": "machine contains MTU migration configuration for the machine's uplink. Needs to be migrated along with the default network MTU unless the current uplink MTU already accommodates the default network MTU.",
 }
@@ -1726,11 +1726,11 @@ func (NetworkList) SwaggerDoc() map[string]string {
 }
 
 var map_NetworkMigration = map[string]string{
-	"":            "NetworkMigration represents the cluster network configuration.",
-	"networkType": "networkType is the target type of network migration. Set this to the target network type to allow changing the default network. If unset, the operation of changing cluster default network plugin will be rejected. The supported values are OpenShiftSDN, OVNKubernetes",
+	"":            "NetworkMigration represents the cluster network migration configuration.",
 	"mtu":         "mtu contains the MTU migration configuration. Set this to allow changing the MTU values for the default network. If unset, the operation of changing the MTU for the default network will be rejected.",
-	"features":    "features contains the features migration configuration. Set this to migrate feature configuration when changing the cluster default network provider. if unset, the default operation is to migrate all the configuration of supported features.",
-	"mode":        "mode indicates the mode of network migration. The supported values are \"Live\", \"Offline\" and omitted. A \"Live\" migration operation will not cause service interruption by migrating the CNI of each node one by one. The cluster network will work as normal during the network migration. An \"Offline\" migration operation will cause service interruption. During an \"Offline\" migration, two rounds of node reboots are required. The cluster network will be malfunctioning during the network migration. When omitted, this means no opinion and the platform is left to choose a reasonable default which is subject to change over time. The current default value is \"Offline\".",
+	"networkType": "networkType was previously used when changing the default network type. DEPRECATED: network type migration is no longer supported, and setting this to a non-empty value will result in the network operator rejecting the configuration.",
+	"features":    "features was previously used to configure which network plugin features would be migrated in a network type migration. DEPRECATED: network type migration is no longer supported, and setting this to a non-empty value will result in the network operator rejecting the configuration.",
+	"mode":        "mode indicates the mode of network type migration. DEPRECATED: network type migration is no longer supported, and setting this to a non-empty value will result in the network operator rejecting the configuration.",
 }
 
 func (NetworkMigration) SwaggerDoc() map[string]string {
@@ -1739,17 +1739,17 @@ func (NetworkMigration) SwaggerDoc() map[string]string {
 
 var map_NetworkSpec = map[string]string{
 	"":                              "NetworkSpec is the top-level network configuration object.",
-	"clusterNetwork":                "clusterNetwork is the IP address pool to use for pod IPs. Some network providers, e.g. OpenShift SDN, support multiple ClusterNetworks. Others only support one. This is equivalent to the cluster-cidr.",
+	"clusterNetwork":                "clusterNetwork is the IP address pool to use for pod IPs. Some network providers support multiple ClusterNetworks. Others only support one. This is equivalent to the cluster-cidr.",
 	"serviceNetwork":                "serviceNetwork is the ip address pool to use for Service IPs Currently, all existing network providers only support a single value here, but this is an array to allow for growth.",
 	"defaultNetwork":                "defaultNetwork is the \"default\" network that all pods will receive",
 	"additionalNetworks":            "additionalNetworks is a list of extra networks to make available to pods when multiple networks are enabled.",
 	"disableMultiNetwork":           "disableMultiNetwork specifies whether or not multiple pod network support should be disabled. If unset, this property defaults to 'false' and multiple network support is enabled.",
 	"useMultiNetworkPolicy":         "useMultiNetworkPolicy enables a controller which allows for MultiNetworkPolicy objects to be used on additional networks as created by Multus CNI. MultiNetworkPolicy are similar to NetworkPolicy objects, but NetworkPolicy objects only apply to the primary interface. With MultiNetworkPolicy, you can control the traffic that a pod can receive over the secondary interfaces. If unset, this property defaults to 'false' and MultiNetworkPolicy objects are ignored. If 'disableMultiNetwork' is 'true' then the value of this field is ignored.",
-	"deployKubeProxy":               "deployKubeProxy specifies whether or not a standalone kube-proxy should be deployed by the operator. Some network providers include kube-proxy or similar functionality. If unset, the plugin will attempt to select the correct value, which is false when OpenShift SDN and ovn-kubernetes are used and true otherwise.",
+	"deployKubeProxy":               "deployKubeProxy specifies whether or not a standalone kube-proxy should be deployed by the operator. Some network providers include kube-proxy or similar functionality. If unset, the plugin will attempt to select the correct value, which is false when ovn-kubernetes is used and true otherwise.",
 	"disableNetworkDiagnostics":     "disableNetworkDiagnostics specifies whether or not PodNetworkConnectivityCheck CRs from a test pod to every node, apiserver and LB should be disabled or not. If unset, this property defaults to 'false' and network diagnostics is enabled. Setting this to 'true' would reduce the additional load of the pods performing the checks.",
-	"kubeProxyConfig":               "kubeProxyConfig lets us configure desired proxy configuration. If not specified, sensible defaults will be chosen by OpenShift directly. Not consumed by all network providers - currently only openshift-sdn.",
+	"kubeProxyConfig":               "kubeProxyConfig lets us configure desired proxy configuration, if deployKubeProxy is true. If not specified, sensible defaults will be chosen by OpenShift directly.",
 	"exportNetworkFlows":            "exportNetworkFlows enables and configures the export of network flow metadata from the pod network by using protocols NetFlow, SFlow or IPFIX. Currently only supported on OVN-Kubernetes plugin. If unset, flows will not be exported to any collector.",
-	"migration":                     "migration enables and configures the cluster network migration. The migration procedure allows to change the network type and the MTU.",
+	"migration":                     "migration enables and configures cluster network migration, for network changes that cannot be made instantly.",
 	"additionalRoutingCapabilities": "additionalRoutingCapabilities describes components and relevant configuration providing additional routing capabilities. When set, it enables such components and the usage of the routing capabilities they provide for the machine network. Upstream operators, like MetalLB operator, requiring these capabilities may rely on, or automatically set this attribute. Network plugins may leverage advanced routing capabilities acquired through the enablement of these components but may require specific configuration on their side to do so; refer to their respective documentation and configuration options.",
 }
 
@@ -1786,11 +1786,11 @@ func (OVNKubernetesConfig) SwaggerDoc() map[string]string {
 }
 
 var map_OpenShiftSDNConfig = map[string]string{
-	"":                       "OpenShiftSDNConfig configures the three openshift-sdn plugins",
+	"":                       "OpenShiftSDNConfig was used to configure the OpenShift SDN plugin. It is no longer used.",
 	"mode":                   "mode is one of \"Multitenant\", \"Subnet\", or \"NetworkPolicy\"",
 	"vxlanPort":              "vxlanPort is the port to use for all vxlan packets. The default is 4789.",
 	"mtu":                    "mtu is the mtu to use for the tunnel interface. Defaults to 1450 if unset. This must be 50 bytes smaller than the machine's uplink.",
-	"useExternalOpenvswitch": "useExternalOpenvswitch used to control whether the operator would deploy an OVS DaemonSet itself or expect someone else to start OVS. As of 4.6, OVS is always run as a system service, and this flag is ignored. DEPRECATED: non-functional as of 4.6",
+	"useExternalOpenvswitch": "useExternalOpenvswitch used to control whether the operator would deploy an OVS DaemonSet itself or expect someone else to start OVS. As of 4.6, OVS is always run as a system service, and this flag is ignored.",
 	"enableUnidling":         "enableUnidling controls whether or not the service proxy will support idling and unidling of services. By default, unidling is enabled.",
 }
 

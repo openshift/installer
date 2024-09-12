@@ -73,11 +73,56 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 		}
 	}
 
+	if c.VSphere.NodeNetworking != nil {
+		allErrs = append(allErrs, validateNodeNetworking(c.VSphere, fldPath.Child("nodeNetworking"))...)
+	}
 	if c.VSphere.LoadBalancer != nil {
 		if !validateLoadBalancer(c.VSphere.LoadBalancer.Type) {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("loadBalancer", "type"), c.VSphere.LoadBalancer.Type, "invalid load balancer type"))
 		}
 	}
+
+	return allErrs
+}
+
+func validatePlaformNetworking(p *vsphere.Platform, n configv1.VSpherePlatformNodeNetworkingSpec, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	var knownNetworks []string
+	for _, fd := range p.FailureDomains {
+		knownNetworks = append(knownNetworks, fd.Topology.Networks...)
+	}
+
+	for _, cidr := range n.NetworkSubnetCIDR {
+		allErrs = append(allErrs, validateIPWithCidr(cidr, true, fldPath.Child("networkSubnetCidr"))...)
+	}
+
+	for _, cidr := range n.ExcludeNetworkSubnetCIDR {
+		allErrs = append(allErrs, validateIPWithCidr(cidr, true, fldPath.Child("excludeNetworkSubnetCidr"))...)
+	}
+
+	if len(n.Network) > 0 {
+		found := false
+		for _, network := range knownNetworks {
+			if network == n.Network {
+				found = true
+				break
+			}
+		}
+		if !found {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("network"), n.Network, "network must be defined in topology"))
+		}
+	}
+
+	return allErrs
+}
+
+func validateNodeNetworking(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
+	var allErrs field.ErrorList
+	nodeNetworking := p.NodeNetworking
+
+	allErrs = validatePlaformNetworking(p, nodeNetworking.Internal, fldPath.Child("internal"))
+	allErrs = append(allErrs, validatePlaformNetworking(p, nodeNetworking.External, fldPath.Child("external"))...)
 
 	return allErrs
 }
@@ -181,10 +226,6 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path, isLegacyUp
 			} else {
 				allErrs = append(allErrs, field.Required(topologyFld.Child("networks"), "must specify a network"))
 			}
-		}
-
-		if len(failureDomain.Topology.Networks) > 1 {
-			allErrs = append(allErrs, field.Required(topologyFld.Child("networks"), "must specify a single network"))
 		}
 
 		// Folder in failuredomain is optional
