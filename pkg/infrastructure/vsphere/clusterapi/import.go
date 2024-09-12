@@ -17,10 +17,45 @@ import (
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
 
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
+
+func debugCorruptOva(cachedImage string, err error) error {
+	// Open the corrupt OVA file
+	f, ferr := os.Open(cachedImage)
+	if ferr != nil {
+		err = fmt.Errorf("%s, %w", err.Error(), ferr)
+	}
+	defer f.Close()
+
+	// Get a sha256 on the corrupt OVA file
+	// and the size of the file
+	h := sha256.New()
+	written, cerr := io.Copy(h, f)
+	if cerr != nil {
+		err = fmt.Errorf("%s, %w", err.Error(), cerr)
+	}
+
+	return fmt.Errorf("ova %s has a sha256 of %x and a size of %d bytes, failed to read the ovf descriptor %w", cachedImage, h.Sum(nil), written, err)
+}
+
+func checkOvaSecureBoot(ovfEnvelope *ovf.Envelope) bool {
+	if ovfEnvelope.VirtualSystem != nil {
+		for _, vh := range ovfEnvelope.VirtualSystem.VirtualHardware {
+			for _, c := range vh.Config {
+				if c.Key == "bootOptions.efiSecureBootEnabled" {
+					if c.Value == "true" {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
+}
 
 func importRhcosOva(ctx context.Context, session *session.Session, folder *object.Folder, cachedImage, clusterID, tagID, diskProvisioningType string, failureDomain vsphere.FailureDomain) error {
 	name := fmt.Sprintf("%s-rhcos-%s-%s", clusterID, failureDomain.Region, failureDomain.Zone)
@@ -29,28 +64,17 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 
 	ovfDescriptor, err := archive.ReadOvf("*.ovf")
 	if err != nil {
-		// Open the corrupt OVA file
-		f, ferr := os.Open(cachedImage)
-		if ferr != nil {
-			err = fmt.Errorf("%s, %w", err.Error(), ferr)
-		}
-		defer f.Close()
-
-		// Get a sha256 on the corrupt OVA file
-		// and the size of the file
-		h := sha256.New()
-		written, cerr := io.Copy(h, f)
-		if cerr != nil {
-			err = fmt.Errorf("%s, %w", err.Error(), cerr)
-		}
-
-		return fmt.Errorf("ova %s has a sha256 of %x and a size of %d bytes, failed to read the ovf descriptor %w", cachedImage, h.Sum(nil), written, err)
+		return debugCorruptOva(cachedImage, err)
 	}
 
 	ovfEnvelope, err := archive.ReadEnvelope(ovfDescriptor)
 	if err != nil {
 		return fmt.Errorf("failed to parse ovf: %w", err)
 	}
+
+	// The fcos ova enables secure boot by default, this causes
+	// scos to fail once
+	secureBoot := checkOvaSecureBoot(ovfEnvelope)
 
 	// The RHCOS OVA only has one network defined by default
 	// The OVF envelope defines this.  We need a 1:1 mapping
@@ -162,11 +186,24 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 	if vm == nil {
 		return fmt.Errorf("error VirtualMachine not found, managed object id: %s", info.Entity.Value)
 	}
+	if secureBoot {
+		bootOptions, err := vm.BootOptions(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get boot options: %w", err)
+		}
+		bootOptions.EfiSecureBootEnabled = ptr.To(false)
+
+		err = vm.SetBootOptions(ctx, bootOptions)
+		if err != nil {
+			return fmt.Errorf("failed to set boot options: %w", err)
+		}
+	}
 
 	err = vm.MarkAsTemplate(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to mark vm as template: %w", err)
 	}
+
 	err = attachTag(ctx, session, vm.Reference().Value, tagID)
 	if err != nil {
 		return fmt.Errorf("failed to attach tag: %w", err)
