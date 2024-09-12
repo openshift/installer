@@ -93,6 +93,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 		image = &capz.Image{ID: &imageID}
 	}
 
+	// Set up OSDisk
 	osDisk := capz.OSDisk{
 		OSType:     "Linux",
 		DiskSizeGB: &mpool.DiskSizeGB,
@@ -101,14 +102,29 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 		},
 		CachingType: "ReadWrite",
 	}
-	ultrassd := mpool.UltraSSDCapability == "Enabled"
-	additionalCapabilities := &capz.AdditionalCapabilities{
-		UltraSSDEnabled: &ultrassd,
-	}
 	if in.Pool.Platform.Azure.DiskEncryptionSet != nil {
 		osDisk.ManagedDisk.DiskEncryptionSet = &capz.DiskEncryptionSetParameters{
 			ID: mpool.OSDisk.DiskEncryptionSet.ToID(),
 		}
+	}
+
+	var diskSecurityProfile capz.VMDiskSecurityProfile
+	if mpool.OSDisk.SecurityProfile != nil && mpool.OSDisk.SecurityProfile.SecurityEncryptionType != "" {
+		diskSecurityProfile = capz.VMDiskSecurityProfile{
+			SecurityEncryptionType: capz.SecurityEncryptionType(mpool.OSDisk.SecurityProfile.SecurityEncryptionType),
+		}
+
+		if mpool.OSDisk.SecurityProfile.DiskEncryptionSet != nil {
+			diskSecurityProfile.DiskEncryptionSet = &capz.DiskEncryptionSetParameters{
+				ID: mpool.OSDisk.SecurityProfile.DiskEncryptionSet.ToID(),
+			}
+		}
+		osDisk.ManagedDisk.SecurityProfile = &diskSecurityProfile
+	}
+
+	ultrassd := mpool.UltraSSDCapability == "Enabled"
+	additionalCapabilities := &capz.AdditionalCapabilities{
+		UltraSSDEnabled: &ultrassd,
 	}
 
 	machineProfile := generateSecurityProfile(mpool)
