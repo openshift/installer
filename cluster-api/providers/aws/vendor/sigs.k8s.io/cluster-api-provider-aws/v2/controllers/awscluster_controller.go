@@ -358,6 +358,7 @@ func (r *AWSClusterReconciler) reconcileNormal(clusterScope *scope.ClusterScope)
 		conditions.MarkFalse(awsCluster, infrav1.S3BucketReadyCondition, infrav1.S3BucketFailedReason, clusterv1.ConditionSeverityError, err.Error())
 		return reconcile.Result{}, errors.Wrapf(err, "failed to reconcile S3 Bucket for AWSCluster %s/%s", awsCluster.Namespace, awsCluster.Name)
 	}
+	conditions.MarkTrue(awsCluster, infrav1.S3BucketReadyCondition)
 
 	for _, subnet := range clusterScope.Subnets().FilterPrivate() {
 		found := false

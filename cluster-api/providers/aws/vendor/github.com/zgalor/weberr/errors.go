@@ -1,6 +1,7 @@
 package weberr
 
 import (
+	goerrors "errors"
 	"fmt"
 	"net/http"
 
@@ -11,7 +12,9 @@ import (
 type ErrorType uint
 
 const (
-	// NoType error - Default placeholder for un-typed errors
+	// NoType error - Default placeholder for un-typed errors.
+	// Methods on NoType behave differently than other types - they
+	// will preserve an existing type when wrapping a typed error.
 	NoType ErrorType = iota
 
 	// 4xx Client errors
@@ -99,7 +102,7 @@ const (
 	NetworkAuthenticationRequired ErrorType = http.StatusNetworkAuthenticationRequired
 )
 
-// customError wraps an error with type and user message
+// customError wraps an error with type, separate user message, and details.
 type customError struct {
 	error
 	errorType   ErrorType
@@ -113,7 +116,7 @@ type causer interface {
 	Cause() error
 }
 
-// Cause unwrappes error
+// Cause unwraps error
 func (c *customError) Cause() error { return c.error }
 
 // typed interface identifies error with a type
@@ -124,8 +127,8 @@ type typed interface {
 // Type returns the error type
 func (c *customError) Type() ErrorType { return c.errorType }
 
-// GetType returns the error type for all errors
-// if error is not `typed` - it returns NoType
+// GetType returns the error type for all errors.
+// If error is not `typed` - it returns NoType.
 func GetType(err error) ErrorType {
 	if typeErr, ok := err.(typed); ok {
 		return typeErr.Type()
@@ -142,8 +145,8 @@ type userMessager interface {
 // UserMessage returns the user message
 func (c *customError) UserMessage() string { return c.userMessage }
 
-// GetUserMessage returns user readable error message for all errors
-// If error is not `userMessager` returns empty string
+// GetUserMessage returns user readable error message for all errors.
+// If error is not `userMessager` returns empty string.
 func GetUserMessage(err error) string {
 	if msgErr, ok := err.(userMessager); ok {
 		return msgErr.UserMessage()
@@ -151,7 +154,6 @@ func GetUserMessage(err error) string {
 
 	return ""
 }
-
 
 // errorDetailer identifies an error with details
 type errorDetailer interface {
@@ -161,8 +163,8 @@ type errorDetailer interface {
 // Details returns the error details
 func (c *customError) Details() []interface{} { return c.details }
 
-// GetDetails returns a slice of arbitrary details for all errors
-// If error is not `errorDetailer` returns nil
+// GetDetails returns a slice of arbitrary details for all errors.
+// If error is not `errorDetailer` returns nil.
 func GetDetails(err error) []interface{} {
 	if detailedError, ok := err.(errorDetailer); ok {
 		return detailedError.Details()
@@ -171,7 +173,7 @@ func GetDetails(err error) []interface{} {
 	return nil
 }
 
-// Errorf creates a new customError with formatted message
+// Errorf creates a new error of this type with formatted string.
 func (errorType ErrorType) Errorf(msg string, args ...interface{}) error {
 	return &customError{
 		error:     errors.WithStack(errors.Errorf(msg, args...)),
@@ -179,7 +181,9 @@ func (errorType ErrorType) Errorf(msg string, args ...interface{}) error {
 	}
 }
 
-// Wrapf creates a new wrapped error with formatted message
+// Wrapf creates a wrapping error of this type, with formatted string.
+// The relation to the wrapped err is implicit, do not add a %s for it (like you would with fmt.Errorf).
+// If wrapped err is nil, still returns a new error.
 func (errorType ErrorType) Wrapf(err error, msg string, args ...interface{}) error {
 	if err == nil {
 		return errorType.Errorf(msg, args...)
@@ -199,7 +203,10 @@ func (errorType ErrorType) Wrapf(err error, msg string, args ...interface{}) err
 	return c
 }
 
-// UserWrapf adds a user readable to an error
+// UserWrapf adds a formatted user readable message to an error.
+// If wrapped err already had a user message, combines them with a colon, you should not add a %s for it.
+// Also sets error type (or preserves existing type if called on NoType).
+// If wrapped err is nil, still returns a new error.
 func (errorType ErrorType) UserWrapf(err error, msg string, args ...interface{}) error {
 	if err == nil {
 		return errorType.UserErrorf(msg, args...)
@@ -226,7 +233,7 @@ func (errorType ErrorType) UserWrapf(err error, msg string, args ...interface{})
 	return c
 }
 
-// UserErrorf creates a new error with a user message
+// UserErrorf creates a new error with a user readable message.
 func (errorType ErrorType) UserErrorf(msg string, args ...interface{}) error {
 	message := fmt.Sprintf(msg, args...)
 	return &customError{
@@ -236,7 +243,8 @@ func (errorType ErrorType) UserErrorf(msg string, args ...interface{}) error {
 	}
 }
 
-// AddDetails adds a details element to an error
+// AddDetails adds a details element to an error.
+// Also sets error type (or preserves existing type if called on NoType).
 func (errorType ErrorType) AddDetails(err error, details interface{}) error {
 	if details == nil {
 		return err
@@ -304,27 +312,29 @@ func (errorType ErrorType) SetUserMessage(err error, msg string) error {
 	}
 }
 
-// Errorf returns an error with format string
+// Errorf returns a new NoType error with formatted string.
 func Errorf(msg string, args ...interface{}) error {
 	return NoType.Errorf(msg, args...)
 }
 
-// Wrapf return an error with format string
+// Wrapf creates a wrapping error, with unmodified type and formatted string.
+// The relation to the wrapped err is implicit, do not add a %s for it (like you would with fmt.Errorf).
+// If wrapped err is nil, still returns a new error.
 func Wrapf(err error, msg string, args ...interface{}) error {
 	return NoType.Wrapf(err, msg, args...)
 }
 
-// UserErrorf returns an error with format string
+// UserErrorf returns an error with formatted user message.
 func UserErrorf(msg string, args ...interface{}) error {
 	return NoType.UserErrorf(msg, args...)
 }
 
-// UserWrapf adds a user readable to an error
+// UserWrapf adds a user readable message to an error.
 func UserWrapf(err error, msg string, args ...interface{}) error {
 	return NoType.UserWrapf(err, msg, args...)
 }
 
-// AddDetails adds arbitrary details to an error
+// AddDetails adds arbitrary details to an error.
 func AddDetails(err error, details interface{}) error {
 	return NoType.AddDetails(err, details)
 }
@@ -373,4 +383,16 @@ func GetStackTrace(err error) string {
 
 	st := x.StackTrace()
 	return fmt.Sprintf("%+v\n", st[1:])
+}
+
+// As finds the first error in err's chain that matches target,
+// and if so, sets target to that error value and returns true. Otherwise, it returns false.
+func As(err error, target interface{}) bool {
+	return goerrors.As(err, target)
+}
+
+// Is finds the first error in err's chain that matches target,
+// and if so, sets target to that error value and returns true. Otherwise, it returns false.
+func Is(err error, target error) bool {
+	return goerrors.Is(err, target)
 }

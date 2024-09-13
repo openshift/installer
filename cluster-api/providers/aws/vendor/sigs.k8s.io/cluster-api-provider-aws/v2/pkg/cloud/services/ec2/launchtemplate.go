@@ -522,6 +522,8 @@ func (s *Service) createLaunchTemplateData(scope scope.LaunchTemplateScope, imag
 	data.InstanceMarketOptions = getLaunchTemplateInstanceMarketOptionsRequest(scope.GetLaunchTemplate().SpotMarketOptions)
 	data.PrivateDnsNameOptions = getLaunchTemplatePrivateDNSNameOptionsRequest(scope.GetLaunchTemplate().PrivateDNSName)
 
+	blockDeviceMappings := []*ec2.LaunchTemplateBlockDeviceMappingRequest{}
+
 	// Set up root volume
 	if lt.RootVolume != nil {
 		rootDeviceName, err := s.checkRootVolume(lt.RootVolume, *data.ImageId)
@@ -532,9 +534,18 @@ func (s *Service) createLaunchTemplateData(scope scope.LaunchTemplateScope, imag
 		lt.RootVolume.DeviceName = aws.StringValue(rootDeviceName)
 
 		req := volumeToLaunchTemplateBlockDeviceMappingRequest(lt.RootVolume)
-		data.BlockDeviceMappings = []*ec2.LaunchTemplateBlockDeviceMappingRequest{
-			req,
-		}
+		blockDeviceMappings = append(blockDeviceMappings, req)
+	}
+
+	for vi := range lt.NonRootVolumes {
+		nonRootVolume := lt.NonRootVolumes[vi]
+
+		blockDeviceMapping := volumeToLaunchTemplateBlockDeviceMappingRequest(&nonRootVolume)
+		blockDeviceMappings = append(blockDeviceMappings, blockDeviceMapping)
+	}
+
+	if len(blockDeviceMappings) > 0 {
+		data.BlockDeviceMappings = blockDeviceMappings
 	}
 
 	data.TagSpecifications = s.buildLaunchTemplateTagSpecificationRequest(scope, userDataSecretKey)

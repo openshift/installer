@@ -2300,6 +2300,7 @@ func Convert_v1beta1_VPCSpec_To_v1beta2_VPCSpec(in *VPCSpec, out *v1beta2.VPCSpe
 func autoConvert_v1beta2_VPCSpec_To_v1beta1_VPCSpec(in *v1beta2.VPCSpec, out *VPCSpec, s conversion.Scope) error {
 	out.ID = in.ID
 	out.CidrBlock = in.CidrBlock
+	// WARNING: in.SecondaryCidrBlocks requires manual conversion: does not exist in peer-type
 	// WARNING: in.IPAMPool requires manual conversion: does not exist in peer-type
 	if in.IPv6 != nil {
 		in, out := &in.IPv6, &out.IPv6

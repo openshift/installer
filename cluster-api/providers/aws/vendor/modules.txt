@@ -451,7 +451,7 @@ github.com/sirupsen/logrus
 # github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 ## explicit
 github.com/skratchdot/open-golang/open
-# github.com/spf13/cobra v1.8.0
+# github.com/spf13/cobra v1.8.1
 ## explicit; go 1.15
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace
@@ -463,7 +463,7 @@ github.com/stoewer/go-strcase
 # github.com/vincent-petithory/dataurl v1.0.0
 ## explicit
 github.com/vincent-petithory/dataurl
-# github.com/zgalor/weberr v0.6.0
+# github.com/zgalor/weberr v0.8.2
 ## explicit
 github.com/zgalor/weberr
 # gitlab.com/c0b/go-ordered-json v0.0.0-20171130231205-49bbdab258c2
@@ -563,7 +563,7 @@ golang.org/x/oauth2/internal
 # golang.org/x/sync v0.6.0
 ## explicit; go 1.18
 golang.org/x/sync/singleflight
-# golang.org/x/sys v0.19.0
+# golang.org/x/sys v0.22.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
 golang.org/x/sys/plan9
@@ -1149,8 +1149,8 @@ sigs.k8s.io/cluster-api/util/predicates
 sigs.k8s.io/cluster-api/util/secret
 sigs.k8s.io/cluster-api/util/topology
 sigs.k8s.io/cluster-api/version
-# sigs.k8s.io/cluster-api-provider-aws/v2 v2.6.1
-## explicit; go 1.21
+# sigs.k8s.io/cluster-api-provider-aws/v2 v2.6.1-0.20240910142813-3f3ce5610204
+## explicit; go 1.21.0
 sigs.k8s.io/cluster-api-provider-aws/v2
 sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1
 sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2

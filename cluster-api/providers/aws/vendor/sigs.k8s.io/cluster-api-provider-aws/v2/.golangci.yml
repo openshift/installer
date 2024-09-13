@@ -211,9 +211,9 @@ linters-settings:
     allow-leading-space: false
     require-specific: true
   staticcheck:
-    go: "1.21"
+    go: "1.22"
   stylecheck:
-    go: "1.21"
+    go: "1.22"
   depguard:
     rules:
       main:
