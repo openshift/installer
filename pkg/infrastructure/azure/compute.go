@@ -170,6 +170,7 @@ type CreateGalleryImageVersionInput struct {
 	ResourceGroupName       string
 	GalleryName             string
 	GalleryImageName        string
+	GalleryImageID          *string
 	GalleryImageVersionName string
 	Region                  string
 	StorageAccountID        string
@@ -207,6 +208,11 @@ func CreateGalleryImageVersion(ctx context.Context, in *CreateGalleryImageVersio
 				},
 			},
 		},
+	}
+
+	// GalleryImageID needs to be passed in only when securityType is set to "ConfidentialVM"
+	if in.GalleryImageID != nil {
+		galleryImageVersionProperties.StorageProfile.OSDiskImage.Source.ID = in.GalleryImageID
 	}
 
 	galleryImageVersionPoller, err := galleryImageVersionsClient.BeginCreateOrUpdate(
