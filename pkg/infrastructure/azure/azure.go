@@ -361,9 +361,6 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 	// Create blob storage container
 	publicAccess := armstorage.PublicAccessNone
-	if platform.CustomerManagedKey != nil {
-		publicAccess = armstorage.PublicAccessContainer
-	}
 	createBlobContainerOutput, err := CreateBlobContainer(ctx, &CreateBlobContainerInput{
 		SubscriptionID:       subscriptionID,
 		ResourceGroupName:    resourceGroupName,
@@ -825,9 +822,6 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	blobURL := fmt.Sprintf("%s/%s/%s", p.StorageURL, ignitionContainerName, blobName)
 
 	publicAccess := armstorage.PublicAccessNone
-	if in.InstallConfig.Config.Azure.CustomerManagedKey != nil {
-		publicAccess = armstorage.PublicAccessContainer
-	}
 	// Create ignition blob storage container
 	createBlobContainerOutput, err := CreateBlobContainer(ctx, &CreateBlobContainerInput{
 		ContainerName:        ignitionContainerName,
