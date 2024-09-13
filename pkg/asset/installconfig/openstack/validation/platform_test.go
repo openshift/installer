@@ -601,7 +601,11 @@ func TestMachineSubnet(t *testing.T) {
 		{
 			name: "control plane port no ipv4 subnets",
 			platform: func() *openstack.Platform {
-				p := validPlatform()
+				p := &openstack.Platform{
+					APIVIPs:     []string{"2001:db8:2222:5555:f816:3eff:fe4d:2f08"},
+					Cloud:       validCloud,
+					IngressVIPs: []string{"2001:db8:2222:5555:f816:3eff:fe72:18cf"},
+				}
 				fixedIPv6 := openstack.FixedIP{
 					Subnet: openstack.SubnetFilter{ID: "00000000-1111-4465-8d54-3517ec2bad48"},
 				}
@@ -630,6 +634,39 @@ func TestMachineSubnet(t *testing.T) {
 				return n
 			}(),
 			expectedErrMsg: "",
+		},
+		{
+			name: "external network specified on single stack IPv6 cluster",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				fixedIPv6 := openstack.FixedIP{
+					Subnet: openstack.SubnetFilter{ID: "00000000-1111-4465-8d54-3517ec2bad48"},
+				}
+				p.ControlPlanePort = &openstack.PortTarget{
+					FixedIPs: []openstack.FixedIP{fixedIPv6},
+				}
+				return p
+			}(),
+			cloudInfo: func() *CloudInfo {
+				ci := validPlatformCloudInfo()
+				subnetv6 := subnets.Subnet{
+					ID:        "00000000-1111-4465-8d54-3517ec2bad48",
+					CIDR:      "2001:db8::/64",
+					IPVersion: 6,
+				}
+				allSubnets := []*subnets.Subnet{&subnetv6}
+				ci.ControlPlanePortSubnets = allSubnets
+				return ci
+			}(),
+			networking: func() *types.Networking {
+				n := validNetworking()
+				machineNetworkEntry := &types.MachineNetworkEntry{
+					CIDR: *ipnet.MustParseCIDR("2001:db8::/64"),
+				}
+				n.MachineNetwork = []types.MachineNetworkEntry{*machineNetworkEntry}
+				return n
+			}(),
+			expectedErrMsg: `platform.openstack.externalNetwork: Invalid value: "valid-external-network": Cannot set external network on Single Stack IPv6 cluster`,
 		},
 		{
 			name: "MTU too low",

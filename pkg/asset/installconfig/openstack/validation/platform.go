@@ -33,7 +33,7 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, ci *CloudInfo)
 	}
 
 	// validate the externalNetwork
-	allErrs = append(allErrs, validateExternalNetwork(p, ci, fldPath)...)
+	allErrs = append(allErrs, validateExternalNetwork(p, ci, n, fldPath)...)
 
 	// validate floating ips
 	allErrs = append(allErrs, validateFloatingIPs(p, ci, fldPath)...)
@@ -124,10 +124,13 @@ func getSubnet(controlPlaneSubnets []*subnets.Subnet, subnetID, subnetName strin
 }
 
 // validateExternalNetwork validates the user's input for the externalNetwork and returns a list of all validation errors
-func validateExternalNetwork(p *openstack.Platform, ci *CloudInfo, fldPath *field.Path) (allErrs field.ErrorList) {
+func validateExternalNetwork(p *openstack.Platform, ci *CloudInfo, n *types.Networking, fldPath *field.Path) (allErrs field.ErrorList) {
 	// Return an error if external network was specified in the install config, but hasn't been found
 	if p.ExternalNetwork != "" && ci.ExternalNetwork == nil {
 		allErrs = append(allErrs, field.NotFound(fldPath.Child("externalNetwork"), p.ExternalNetwork))
+	}
+	if p.ExternalNetwork != "" && len(n.MachineNetwork) == 1 && n.MachineNetwork[0].CIDR.IPNet.IP.To4() == nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("externalNetwork"), p.ExternalNetwork, "Cannot set external network on Single Stack IPv6 cluster"))
 	}
 	return allErrs
 }
