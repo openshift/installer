@@ -3,6 +3,7 @@ package clusterapi
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -14,6 +15,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -212,6 +214,13 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 			return fmt.Errorf("unable to retrieve azure session: %w", err)
 		}
 
+		b, err := json.Marshal(session.Environment)
+		if err != nil {
+			return errors.Wrap(err, "could not serialize Azure Stack endpoints")
+		}
+		ashFN := filepath.Join(c.componentDir, "azurestackcloud.json") // TODO make const
+		os.WriteFile(ashFN, b, 0644)
+
 		controllers = append(controllers,
 			c.getInfrastructureController(
 				&Azure,
@@ -222,7 +231,9 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 					"--webhook-cert-dir={{.WebhookCertDir}}",
 					"--feature-gates=MachinePool=false",
 				},
-				map[string]string{},
+				map[string]string{
+					"AZURE_ENVIRONMENT_FILEPATH": ashFN,
+				},
 			),
 			c.getInfrastructureController(
 				&AzureASO,
@@ -244,6 +255,7 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 					"AZURE_SUBSCRIPTION_ID":             session.Credentials.SubscriptionID,
 					"AZURE_RESOURCE_MANAGER_ENDPOINT":   session.Environment.ResourceManagerEndpoint,
 					"AZURE_RESOURCE_MANAGER_AUDIENCE":   session.Environment.TokenAudience,
+					"AZURE_ENVIRONMENT_FILEPATH":        ashFN, // TODO: not sure if needed on this controller or just CAPZ
 				},
 			),
 		)
