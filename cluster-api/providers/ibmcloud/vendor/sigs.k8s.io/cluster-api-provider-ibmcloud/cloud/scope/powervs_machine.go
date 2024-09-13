@@ -32,6 +32,7 @@ import (
 	"github.com/blang/semver/v4"
 	ignV3Types "github.com/coreos/ignition/v2/config/v3_4/types"
 	"github.com/go-logr/logr"
+	regionUtil "github.com/ppc64le-cloud/powervs-utils"
 
 	"github.com/IBM-Cloud/power-go-client/ibmpisession"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_p_vm_instances"
@@ -66,7 +67,6 @@ import (
 	ignV2Types "sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/ignition"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/options"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/record"
-	genUtil "sigs.k8s.io/cluster-api-provider-ibmcloud/util"
 )
 
 const cosURLDomain = "cloud-object-storage.appdomain.cloud"
@@ -180,7 +180,7 @@ func NewPowerVSMachineScope(params PowerVSMachineScopeParams) (scope *PowerVSMac
 			serviceInstanceName = *params.IBMPowerVSCluster.Spec.ServiceInstance.Name
 		}
 	}
-	serviceInstance, err := rc.GetServiceInstance(serviceInstanceID, serviceInstanceName)
+	serviceInstance, err := rc.GetServiceInstance(serviceInstanceID, serviceInstanceName, params.IBMPowerVSCluster.Spec.Zone)
 	if err != nil {
 		params.Logger.Error(err, "failed to get PowerVS service instance details", "name", serviceInstanceName, "id", serviceInstanceID)
 		return nil, err
@@ -221,13 +221,13 @@ func NewPowerVSMachineScope(params PowerVSMachineScopeParams) (scope *PowerVSMac
 	scope.IBMPowerVSClient = c
 	scope.DHCPIPCacheStore = params.DHCPIPCacheStore
 
-	if !genUtil.CheckCreateInfraAnnotation(*params.IBMPowerVSCluster) {
+	if !CheckCreateInfraAnnotation(*params.IBMPowerVSCluster) {
 		return scope, nil
 	}
 
 	var vpcRegion string
 	if params.IBMPowerVSCluster.Spec.VPC == nil || params.IBMPowerVSCluster.Spec.VPC.Region == nil {
-		vpcRegion, err = genUtil.VPCRegionForPowerVSRegion(scope.GetRegion())
+		vpcRegion, err = regionUtil.VPCRegionForPowerVSRegion(scope.GetRegion())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create VPC client, error getting VPC region %v", err)
 		}
@@ -422,6 +422,12 @@ func (m *PowerVSMachineScope) createIgnitionData(data []byte) (string, error) {
 	}
 
 	objHost := fmt.Sprintf("%s.s3.%s.%s", bucket, region, cosURLDomain)
+
+	cosServiceEndpoint := endpoints.FetchEndpoints(string(endpoints.COS), m.ServiceEndpoint)
+	if cosServiceEndpoint != "" {
+		m.Logger.V(3).Info("Overriding the default COS endpoint in ignition URL", "cosEndpoint", cosServiceEndpoint)
+		objHost = fmt.Sprintf("%s.%s", bucket, cosServiceEndpoint)
+	}
 	objectURL := &url.URL{
 		Scheme: "https",
 		Host:   objHost,
@@ -922,10 +928,16 @@ func (m *PowerVSMachineScope) GetZone() string {
 
 // GetServiceInstanceID returns the service instance id.
 func (m *PowerVSMachineScope) GetServiceInstanceID() string {
-	if m.IBMPowerVSCluster.Status.ServiceInstance == nil || m.IBMPowerVSCluster.Status.ServiceInstance.ID == nil {
-		return ""
+	if m.IBMPowerVSCluster.Status.ServiceInstance != nil && m.IBMPowerVSCluster.Status.ServiceInstance.ID != nil {
+		return *m.IBMPowerVSCluster.Status.ServiceInstance.ID
 	}
-	return *m.IBMPowerVSCluster.Status.ServiceInstance.ID
+	if m.IBMPowerVSCluster.Spec.ServiceInstanceID != "" {
+		return m.IBMPowerVSCluster.Spec.ServiceInstanceID
+	}
+	if m.IBMPowerVSCluster.Spec.ServiceInstance != nil && m.IBMPowerVSCluster.Spec.ServiceInstance.ID != nil {
+		return *m.IBMPowerVSCluster.Spec.ServiceInstance.ID
+	}
+	return ""
 }
 
 // SetProviderID will set the provider id for the machine.

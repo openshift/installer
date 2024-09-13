@@ -23,6 +23,8 @@ const (
 	// ProviderIDFormatV1 will set provider id to machine as follows
 	// For VPC machines: ibmvpc://<cluster_name>/<vm_hostname>
 	// For Power VS machines: ibmpowervs://<cluster_name>/<vm_hostname>
+	// Deprecated: ProviderIDFormatV1 is deprecated and will be removed in a future release. see https://github.com/kubernetes-sigs/cluster-api-provider-ibmcloud/issues/1868 for more details.
+	// use ProviderIDFormatV2 instead ProviderIDFormatV1.
 	ProviderIDFormatV1 ProviderIDFormatType = "v1"
 
 	// ProviderIDFormatV2 will set provider id to machine as follows
