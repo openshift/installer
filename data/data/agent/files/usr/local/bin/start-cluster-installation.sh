@@ -58,7 +58,8 @@ clear_issue "${status_issue}"
 while [[ "${cluster_status}" != "installed" ]]
 do
     sleep 5
-    cluster_status=$(curl_assisted_service "/clusters" GET | jq -r .[].status)
+    cluster_info="$(curl_assisted_service "/clusters" GET)"
+    cluster_status=$(printf '%s' "${cluster_info}" | jq -r .[].status)
     echo "Cluster status: ${cluster_status}" 1>&2
     # Start the cluster install, if it transitions back to Ready due to a failure,
     # then it will be restarted
@@ -75,6 +76,7 @@ do
             ;;
         *)
             printf '\\e{lightred}Installation cannot proceed:\\e{reset} Cluster status: %s' "${cluster_status}" | set_issue "${status_issue}"
+            printf '%s\n' "${cluster_info}"
             ;;
     esac
 done
