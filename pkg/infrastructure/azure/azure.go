@@ -433,7 +433,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		// If Control Plane Security Type is provided, then pass that along
 		// during Gen V2 Gallery Image creation. It will be added as a
 		// supported feature of the image.
-		securityType, err := getControlPlaneSecurityType(in)
+		securityType, err := getMachinePoolSecurityType(in)
 		if err != nil {
 			return err
 		}
@@ -887,17 +887,17 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	return ignSecrets, nil
 }
 
-func getControlPlaneSecurityType(in clusterapi.InfraReadyInput) (string, error) {
+func getMachinePoolSecurityType(in clusterapi.InfraReadyInput) (string, error) {
 	var securityType aztypes.SecurityTypes
-	if in.InstallConfig.Config.ControlPlane != nil {
+	if in.InstallConfig.Config.ControlPlane != nil && in.InstallConfig.Config.ControlPlane.Platform.Azure != nil {
 		pool := in.InstallConfig.Config.ControlPlane.Platform.Azure
-		if pool.EncryptionAtHost && pool.Settings != nil {
+		if pool.Settings != nil {
 			securityType = pool.Settings.SecurityType
 		}
 	}
 	if securityType == "" && in.InstallConfig.Config.Platform.Azure.DefaultMachinePlatform != nil {
 		pool := in.InstallConfig.Config.Platform.Azure.DefaultMachinePlatform
-		if pool.EncryptionAtHost && pool.Settings != nil {
+		if pool.Settings != nil {
 			securityType = pool.Settings.SecurityType
 		}
 	}
