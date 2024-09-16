@@ -25,6 +25,8 @@ We require at least Go 1.22.
 - Run `go mod tidy` to tidy `go.mod` and update `go.sum`, then commit the changes.
 - Run `go mod vendor` to re-vendor and then commit updated vendored code separately.
 
+If your vendor bump touched `github.com/openshift/api`, also run `go generate ./pkg/types/installconfig.go` to update [`data/data/install.openshift.io_installconfigs.yaml`](/data/data/install.openshift.io_installconfigs.yaml).
+
 This [guide](https://github.com/golang/go/wiki/Modules#how-to-use-modules) is a great source to learn more about using `go mod`.
 
 For the sake of your fellow reviewers, commit vendored code separately from any other changes.
