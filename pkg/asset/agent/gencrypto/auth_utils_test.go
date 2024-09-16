@@ -13,12 +13,12 @@ func TestParseExpirationFromToken(t *testing.T) {
 	assert.NotEmpty(t, privateKey)
 	assert.NoError(t, err)
 
-	tokenNoExp, err := generateToken(privateKey)
+	tokenNoExp, err := generateToken(privateKey, nil)
 	assert.NotEmpty(t, tokenNoExp)
 	assert.NoError(t, err)
 
 	expiry := time.Now().UTC().Add(30 * time.Second)
-	tokenWithExp, err := generateToken(privateKey, expiry)
+	tokenWithExp, err := generateToken(privateKey, &expiry)
 	assert.NotEmpty(t, tokenWithExp)
 	assert.NoError(t, err)
 

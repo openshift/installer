@@ -69,7 +69,7 @@ func (a *AuthConfig) Generate(_ context.Context, dependencies asset.Parents) err
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
 		// Auth tokens do not expire
-		token, err := generateToken(privateKey)
+		token, err := generateToken(privateKey, nil)
 		if err != nil {
 			return err
 		}
@@ -81,7 +81,7 @@ func (a *AuthConfig) Generate(_ context.Context, dependencies asset.Parents) err
 		// Auth tokens expires after 48 hours
 		expiry := time.Now().UTC().Add(48 * time.Hour)
 		a.AgentAuthTokenExpiry = expiry.Format(time.RFC3339)
-		token, err := generateToken(privateKey, expiry)
+		token, err := generateToken(privateKey, &expiry)
 		if err != nil {
 			return err
 		}
@@ -147,13 +147,13 @@ func keyPairPEM() (string, string, error) {
 }
 
 // generateToken returns a JWT token based on the private key.
-func generateToken(privateKkeyPem string, expiry ...time.Time) (string, error) {
+func generateToken(privateKkeyPem string, expiry *time.Time) (string, error) {
 	// Create the JWT claims
 	claims := jwt.MapClaims{}
 
 	// Set the expiry time if provided
-	if len(expiry) > 0 {
-		claims["exp"] = expiry[0].Unix()
+	if expiry != nil {
+		claims["exp"] = expiry.Unix()
 	}
 
 	// Create the token using the ES256 signing method and the claims
