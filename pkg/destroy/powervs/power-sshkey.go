@@ -23,13 +23,13 @@ func (o *ClusterUninstaller) listPowerSSHKeys() (cloudResources, error) {
 		return cloudResources{}.insert(result...), nil
 	}
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	select {
 	case <-ctx.Done():
 		o.Logger.Debugf("listPowerSSHKeys: case <-ctx.Done()")
-		return nil, o.Context.Err() // we're cancelled, abort
+		return nil, ctx.Err() // we're cancelled, abort
 	default:
 	}
 
@@ -71,13 +71,13 @@ func (o *ClusterUninstaller) listPowerSSHKeys() (cloudResources, error) {
 func (o *ClusterUninstaller) deletePowerSSHKey(item cloudResource) error {
 	var err error
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	select {
 	case <-ctx.Done():
 		o.Logger.Debugf("deletePowerSSHKey: case <-ctx.Done()")
-		return o.Context.Err() // we're cancelled, abort
+		return ctx.Err() // we're cancelled, abort
 	default:
 	}
 
@@ -113,14 +113,14 @@ func (o *ClusterUninstaller) destroyPowerSSHKeys() error {
 
 	items := o.insertPendingItems(powerSSHKeyTypeName, firstPassList.list())
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	for _, item := range items {
 		select {
 		case <-ctx.Done():
 			o.Logger.Debugf("destroyPowerSSHKeys: case <-ctx.Done()")
-			return o.Context.Err() // we're cancelled, abort
+			return ctx.Err() // we're cancelled, abort
 		default:
 		}
 

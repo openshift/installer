@@ -157,14 +157,14 @@ func (o *ClusterUninstaller) destroyTransitGateway(item cloudResource) error {
 
 	items = o.insertPendingItems(transitGatewayConnectionTypeName, firstPassList.list())
 
-	ctx, cancel = o.contextWithTimeout()
+	ctx, cancel = contextWithTimeout()
 	defer cancel()
 
 	for _, item := range items {
 		select {
-		case <-o.Context.Done():
-			o.Logger.Debugf("destroyTransitGateway: case <-o.Context.Done()")
-			return o.Context.Err() // we're cancelled, abort
+		case <-ctx.Done():
+			o.Logger.Debugf("destroyTransitGateway: case <-ctx.Done()")
+			return ctx.Err() // we're cancelled, abort
 		default:
 		}
 
@@ -238,7 +238,7 @@ func (o *ClusterUninstaller) destroyTransitConnection(item cloudResource) error 
 		err                                   error
 	)
 
-	ctx, cancel = o.contextWithTimeout()
+	ctx, cancel = contextWithTimeout()
 	defer cancel()
 
 	// ...Options(transitGatewayID string, id string)
@@ -273,7 +273,7 @@ func (o *ClusterUninstaller) listTransitConnections(item cloudResource) (cloudRe
 		moreData                           = true
 	)
 
-	ctx, cancel = o.contextWithTimeout()
+	ctx, cancel = contextWithTimeout()
 	defer cancel()
 
 	listConnectionsOptions = o.tgClient.NewListConnectionsOptions()
@@ -398,14 +398,14 @@ func (o *ClusterUninstaller) destroyTransitGateways() error {
 
 	items = o.insertPendingItems(transitGatewayTypeName, firstPassList.list())
 
-	ctx, cancel = o.contextWithTimeout()
+	ctx, cancel = contextWithTimeout()
 	defer cancel()
 
 	for _, item := range items {
 		select {
-		case <-o.Context.Done():
-			o.Logger.Debugf("destroyTransitGateways: case <-o.Context.Done()")
-			return o.Context.Err() // we're cancelled, abort
+		case <-ctx.Done():
+			o.Logger.Debugf("destroyTransitGateways: case <-ctx.Done()")
+			return ctx.Err() // we're cancelled, abort
 		default:
 		}
 
