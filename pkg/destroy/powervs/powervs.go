@@ -73,7 +73,6 @@ type ClusterUninstaller struct {
 	BaseDomain     string
 	CISInstanceCRN string
 	ClusterName    string
-	Context        context.Context
 	DNSInstanceCRN string
 	DNSZone        string
 	InfraID        string
@@ -149,7 +148,6 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		APIKey:             APIKey,
 		BaseDomain:         metadata.ClusterPlatformMetadata.PowerVS.BaseDomain,
 		ClusterName:        metadata.ClusterName,
-		Context:            context.Background(),
 		Logger:             logger,
 		InfraID:            metadata.InfraID,
 		CISInstanceCRN:     metadata.ClusterPlatformMetadata.PowerVS.CISInstanceCRN,
@@ -172,7 +170,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	var ok bool
 	var err error
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	if ctx == nil {
@@ -306,7 +304,7 @@ func (o *ClusterUninstaller) executeStageFunction(f struct {
 	var ok bool
 	var err error
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	if ctx == nil {
@@ -497,7 +495,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 			return fmt.Errorf("loadSDKServices: creating zonesSvc: %w", err)
 		}
 
-		ctx, cancel := o.contextWithTimeout()
+		ctx, cancel := contextWithTimeout()
 		defer cancel()
 
 		// Get the Zone ID
@@ -717,8 +715,8 @@ func (o *ClusterUninstaller) ServiceInstanceNameToGUID(ctx context.Context, name
 	return "", nil
 }
 
-func (o *ClusterUninstaller) contextWithTimeout() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(o.Context, defaultTimeout)
+func contextWithTimeout() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), defaultTimeout)
 }
 
 func (o *ClusterUninstaller) timeout(ctx context.Context) bool {

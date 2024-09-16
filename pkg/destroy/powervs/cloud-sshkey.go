@@ -33,13 +33,13 @@ func (o *ClusterUninstaller) listCloudSSHKeys() (cloudResources, error) {
 		sshKey           vpcv1.Key
 	)
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	select {
 	case <-ctx.Done():
 		o.Logger.Debugf("listCloudSSHKeys: case <-ctx.Done()")
-		return nil, o.Context.Err() // we're cancelled, abort
+		return nil, ctx.Err() // we're cancelled, abort
 	default:
 	}
 
@@ -139,13 +139,13 @@ func (o *ClusterUninstaller) deleteCloudSSHKey(item cloudResource) error {
 		err              error
 	)
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	select {
 	case <-ctx.Done():
 		o.Logger.Debugf("deleteCloudSSHKey: case <-ctx.Done()")
-		return o.Context.Err() // we're cancelled, abort
+		return ctx.Err() // we're cancelled, abort
 	default:
 	}
 
@@ -185,14 +185,14 @@ func (o *ClusterUninstaller) destroyCloudSSHKeys() error {
 
 	items := o.insertPendingItems(cloudSSHKeyTypeName, firstPassList.list())
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	for _, item := range items {
 		select {
 		case <-ctx.Done():
 			o.Logger.Debugf("destroyCloudSSHKeys: case <-ctx.Done()")
-			return o.Context.Err() // we're cancelled, abort
+			return ctx.Err() // we're cancelled, abort
 		default:
 		}
 
