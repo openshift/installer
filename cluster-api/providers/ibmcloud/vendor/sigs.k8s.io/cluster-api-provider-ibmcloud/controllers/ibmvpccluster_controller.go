@@ -71,6 +71,11 @@ func (r *IBMVPCClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
+	// Determine whether the Cluster is designed for extended Infrastructure support, implemented in a separate path.
+	if ibmCluster.Spec.Network != nil {
+		return r.reconcileV2(ctx, req)
+	}
+
 	// Fetch the Cluster.
 	cluster, err := util.GetOwnerCluster(ctx, r.Client, ibmCluster.ObjectMeta)
 	if err != nil {
@@ -107,6 +112,57 @@ func (r *IBMVPCClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return reconcile.Result{}, fmt.Errorf("failed to create scope: %w", err)
 	}
 	return r.reconcile(clusterScope)
+}
+
+func (r *IBMVPCClusterReconciler) reconcileV2(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
+	log := r.Log.WithValues("ibmvpccluster", req.NamespacedName)
+
+	// Fetch the IBMVPCCluster instance.
+	ibmCluster := &infrav1beta2.IBMVPCCluster{}
+	err := r.Get(ctx, req.NamespacedName, ibmCluster)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, err
+	}
+
+	// Fetch the Cluster.
+	cluster, err := util.GetOwnerCluster(ctx, r.Client, ibmCluster.ObjectMeta)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	if cluster == nil {
+		log.Info("Cluster Controller has not yet set OwnerRef")
+		return ctrl.Result{}, nil
+	}
+
+	clusterScope, err := scope.NewVPCClusterScope(scope.VPCClusterScopeParams{
+		Client:          r.Client,
+		Logger:          log,
+		Cluster:         cluster,
+		IBMVPCCluster:   ibmCluster,
+		ServiceEndpoint: r.ServiceEndpoint,
+	})
+
+	// Always close the scope when exiting this function so we can persist any IBMVPCCluster changes.
+	defer func() {
+		if clusterScope != nil {
+			if err := clusterScope.Close(); err != nil && reterr == nil {
+				reterr = err
+			}
+		}
+	}()
+
+	// Handle deleted clusters.
+	if !ibmCluster.DeletionTimestamp.IsZero() {
+		return r.reconcileDeleteV2(clusterScope)
+	}
+
+	if err != nil {
+		return reconcile.Result{}, fmt.Errorf("failed to create scope: %w", err)
+	}
+	return r.reconcileCluster(clusterScope)
 }
 
 func (r *IBMVPCClusterReconciler) reconcile(clusterScope *scope.ClusterScope) (ctrl.Result, error) {
@@ -173,6 +229,31 @@ func (r *IBMVPCClusterReconciler) reconcile(clusterScope *scope.ClusterScope) (c
 	return ctrl.Result{}, nil
 }
 
+func (r *IBMVPCClusterReconciler) reconcileCluster(clusterScope *scope.VPCClusterScope) (ctrl.Result, error) {
+	// If the IBMVPCCluster doesn't have our finalizer, add it.
+	if controllerutil.AddFinalizer(clusterScope.IBMVPCCluster, infrav1beta2.ClusterFinalizer) {
+		return ctrl.Result{}, nil
+	}
+
+	// Reconcile the cluster's VPC.
+	clusterScope.Info("Reconciling VPC")
+	if requeue, err := clusterScope.ReconcileVPC(); err != nil {
+		clusterScope.Error(err, "failed to reconcile VPC")
+		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.VPCReadyCondition, infrav1beta2.VPCReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
+		return reconcile.Result{}, err
+	} else if requeue {
+		clusterScope.Info("VPC creation is pending, requeuing")
+		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
+	}
+	conditions.MarkTrue(clusterScope.IBMVPCCluster, infrav1beta2.VPCReadyCondition)
+
+	// TODO(cjschaef): add remaining resource reconciliation.
+
+	// Mark cluster as ready.
+	clusterScope.IBMVPCCluster.Status.Ready = true
+	return ctrl.Result{}, nil
+}
+
 func (r *IBMVPCClusterReconciler) reconcileDelete(clusterScope *scope.ClusterScope) (ctrl.Result, error) {
 	// check if still have existing VSIs.
 	listVSIOpts := &vpcv1.ListInstancesOptions{
@@ -225,6 +306,10 @@ func (r *IBMVPCClusterReconciler) reconcileDelete(clusterScope *scope.ClusterSco
 		return ctrl.Result{}, fmt.Errorf("failed to delete VPC: %w", err)
 	}
 	return handleFinalizerRemoval(clusterScope)
+}
+
+func (r *IBMVPCClusterReconciler) reconcileDeleteV2(_ *scope.VPCClusterScope) (ctrl.Result, error) {
+	return ctrl.Result{}, fmt.Errorf("not implemented")
 }
 
 func (r *IBMVPCClusterReconciler) getOrCreate(clusterScope *scope.ClusterScope) (*vpcv1.LoadBalancer, error) {

@@ -85,6 +85,8 @@ var (
 	ErrInvalidProxy              = errors.New("proxies must be http(s)")
 	ErrInsecureProxy             = errors.New("insecure plaintext HTTP proxy specified for HTTPS resources")
 	ErrPathConflictsSystemd      = errors.New("path conflicts with systemd unit or dropin")
+	ErrCexWithClevis             = errors.New("cannot use cex with clevis")
+	ErrCexWithKeyFile            = errors.New("cannot use key file with cex")
 
 	// Systemd section errors
 	ErrInvalidSystemdExt       = errors.New("invalid systemd unit extension")
