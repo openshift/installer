@@ -14,8 +14,12 @@ import (
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/installer/cmd/openshift-install/command"
+	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/lbconfig"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
@@ -45,24 +49,51 @@ func EditIgnition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, err
 			return nil, fmt.Errorf("failed to get GCP cluster: %w", err)
 		}
 
-		// public load balancer and health check are created by capi gcp provider.
-		// TODO: this is currently a global address
-		apiIPAddress := *gcpCluster.Status.Network.APIServerAddress
+		svc, err := NewComputeService()
+		if err != nil {
+			return nil, err
+		}
+
+		project := in.InstallConfig.Config.GCP.ProjectID
+		if in.InstallConfig.Config.GCP.NetworkProjectID != "" {
+			project = in.InstallConfig.Config.GCP.NetworkProjectID
+		}
+
+		computeAddress := ""
+		if in.InstallConfig.Config.Publish == types.ExternalPublishingStrategy {
+			apiIPAddress := *gcpCluster.Status.Network.APIServerAddress
+			addressCut := apiIPAddress[strings.LastIndex(apiIPAddress, "/")+1:]
+			computeAddressObj, err := svc.GlobalAddresses.Get(project, addressCut).Context(ctx).Do()
+			if err != nil {
+				return nil, fmt.Errorf("failed to get global compute address: %w", err)
+			}
+			computeAddress = computeAddressObj.Address
+		}
+
+		apiIntIPAddress := *gcpCluster.Status.Network.APIInternalAddress
+		addressIntCut := apiIntIPAddress[strings.LastIndex(apiIntIPAddress, "/")+1:]
+		computeIntAddress, err := svc.Addresses.Get(project, in.InstallConfig.Config.GCP.Region, addressIntCut).Context(ctx).Do()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get compute address: %w", err)
+		}
 
 		ignData := &igntypes.Config{}
-		err := json.Unmarshal(in.BootstrapIgnData, ignData)
+		err = json.Unmarshal(in.BootstrapIgnData, ignData)
 		if err != nil {
 			return nil, fmt.Errorf("failed to unmarshal bootstrap ignition: %w", err)
 		}
 
-		apiIntIPAddress, err := getInternalLBAddress(ctx, in.InstallConfig.Config.GCP.ProjectID, in.InstallConfig.Config.GCP.Region, getAPIAddressName(in.InfraID))
-		if err != nil {
-			return nil, fmt.Errorf("failed to create the internal load balancer address: %w", err)
-		}
-
-		err = addLoadBalancersToInfra(gcp.Name, ignData, []string{apiIPAddress}, []string{apiIntIPAddress})
+		err = addLoadBalancersToInfra(gcp.Name, ignData, []string{computeAddress}, []string{computeIntAddress.Address})
 		if err != nil {
 			return nil, fmt.Errorf("failed to add load balancers to ignition config: %w", err)
+		}
+
+		lbConfig, err := lbconfig.GenerateLBConfigOverride(computeIntAddress.Address, computeAddress)
+		if err != nil {
+			return nil, err
+		}
+		if err := asset.NewDefaultFileWriter(lbConfig).PersistToFile(command.RootOpts.Dir); err != nil {
+			return nil, fmt.Errorf("failed to save %s to state file: %w", lbConfig.Name(), err)
 		}
 
 		editedIgnBytes, err := json.Marshal(ignData)
