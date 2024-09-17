@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	resourcemanager "google.golang.org/api/cloudresourcemanager/v3"
@@ -318,7 +318,7 @@ func (t requestIDTracker) requestID(identifier ...string) string {
 	key := strings.Join(identifier, "/")
 	id, exists := t.requestIDs[key]
 	if !exists {
-		id = uuid.New()
+		id = uuid.NewString()
 		t.requestIDs[key] = id
 	}
 	return id
