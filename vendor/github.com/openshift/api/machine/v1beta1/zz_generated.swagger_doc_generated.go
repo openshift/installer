@@ -783,6 +783,16 @@ func (NetworkSpec) SwaggerDoc() map[string]string {
 	return map_NetworkSpec
 }
 
+var map_VSphereDisk = map[string]string{
+	"":           "VSphereDisk describes additional disks for vSphere.",
+	"deviceName": "deviceName is a name to be used to identify the disk definition. If deviceName is not specified, the disk will still be created.  The deviceName should be unique so that it can be used to clearly identify purpose of the disk, but is not required to be unique.",
+	"sizeGb":     "sizeGB is the size of the disk (in GiB).",
+}
+
+func (VSphereDisk) SwaggerDoc() map[string]string {
+	return map_VSphereDisk
+}
+
 var map_VSphereMachineProviderSpec = map[string]string{
 	"":                  "VSphereMachineProviderSpec is the type that will be embedded in a Machine.Spec.ProviderSpec field for an VSphere virtual machine. It is used by the vSphere machine actuator to create a single Machine. Compatibility level 2: Stable within a major release for a minimum of 9 months or 3 minor releases (whichever is longer).",
 	"userDataSecret":    "UserDataSecret contains a local reference to a secret that contains the UserData to apply to the instance",
@@ -797,6 +807,7 @@ var map_VSphereMachineProviderSpec = map[string]string{
 	"tagIDs":            "tagIDs is an optional set of tags to add to an instance. Specified tagIDs must use URN-notation instead of display names. A maximum of 10 tag IDs may be specified.",
 	"snapshot":          "Snapshot is the name of the snapshot from which the VM was cloned",
 	"cloneMode":         "CloneMode specifies the type of clone operation. The LinkedClone mode is only support for templates that have at least one snapshot. If the template has no snapshots, then CloneMode defaults to FullClone. When LinkedClone mode is enabled the DiskGiB field is ignored as it is not possible to expand disks of linked clones. Defaults to FullClone. When using LinkedClone, if no snapshots exist for the source template, falls back to FullClone.",
+	"disks":             "disks is a list of non OS disks to be created and attached to the VM.  The max number of disk allowed to be attached is currently 15.  This limitation is being applied to allow no more than 16 disks on the default scsi controller for the VM. The first disk on that SCSI controller will be the OS disk from the template.",
 }
 
 func (VSphereMachineProviderSpec) SwaggerDoc() map[string]string {
