@@ -1,11 +1,17 @@
 - hosts: localhost
   gather_facts: no
 
-  vars_files:
-  - metadata.json
-  - netid.json
+  vars:
+    var_files:
+    - metadata.json
+    - netid.json
 
   tasks:
+  - name: "Include external vars"
+    include_vars: "{{ item }}"
+    when: item is exists
+    loop: "{{ var_files|flatten(levels=1) }}"
+
   - name: "Check if metadata.json exists"
     ansible.builtin.stat:
       path: metadata.json
