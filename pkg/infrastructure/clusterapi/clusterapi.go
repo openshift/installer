@@ -373,9 +373,10 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 
 	if p, ok := i.impl.(PostProvider); ok {
 		postMachineInput := PostProvisionInput{
-			Client:        cl,
-			InstallConfig: installConfig,
-			InfraID:       clusterID.InfraID,
+			Client:           cl,
+			InstallConfig:    installConfig,
+			InfraID:          clusterID.InfraID,
+			MachineManifests: machineManifests,
 		}
 
 		timer.StartTimer(postProvisionStage)
