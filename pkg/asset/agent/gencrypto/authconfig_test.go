@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/agent/common"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
 
@@ -25,7 +24,7 @@ func TestAuthConfig_Generate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			agentWorkflow := &workflow.AgentWorkflow{Workflow: tc.workflow}
 			parents := asset.Parents{}
-			parents.Add(&common.InfraEnvID{}, agentWorkflow)
+			parents.Add(agentWorkflow)
 
 			authConfigAsset := &AuthConfig{}
 			err := authConfigAsset.Generate(context.Background(), parents)

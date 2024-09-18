@@ -22,7 +22,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/agent/common"
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
@@ -44,20 +43,9 @@ type AuthConfig struct {
 
 var _ asset.Asset = (*AuthConfig)(nil)
 
-// LocalJWTKeyType suggests the key type to be used for the token.
-type LocalJWTKeyType string
-
-const (
-	// InfraEnvKey is used to generate token using infra env id.
-	InfraEnvKey LocalJWTKeyType = "infra_env_id"
-)
-
-var _ asset.Asset = (*AuthConfig)(nil)
-
 // Dependencies returns the assets on which the AuthConfig asset depends.
 func (a *AuthConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&common.InfraEnvID{},
 		&workflow.AgentWorkflow{},
 		&joiner.AddNodesConfig{},
 	}
@@ -65,9 +53,8 @@ func (a *AuthConfig) Dependencies() []asset.Asset {
 
 // Generate generates the auth config for agent installer APIs.
 func (a *AuthConfig) Generate(_ context.Context, dependencies asset.Parents) error {
-	infraEnvID := &common.InfraEnvID{}
 	agentWorkflow := &workflow.AgentWorkflow{}
-	dependencies.Get(infraEnvID, agentWorkflow)
+	dependencies.Get(agentWorkflow)
 	a.AuthType = AuthType
 
 	publicKey, privateKey, err := keyPairPEM()
@@ -82,7 +69,7 @@ func (a *AuthConfig) Generate(_ context.Context, dependencies asset.Parents) err
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
 		// Auth tokens do not expire
-		token, err := generateToken(infraEnvID.ID, privateKey)
+		token, err := generateToken(privateKey, nil)
 		if err != nil {
 			return err
 		}
@@ -94,7 +81,7 @@ func (a *AuthConfig) Generate(_ context.Context, dependencies asset.Parents) err
 		// Auth tokens expires after 48 hours
 		expiry := time.Now().UTC().Add(48 * time.Hour)
 		a.AgentAuthTokenExpiry = expiry.Format(time.RFC3339)
-		token, err := generateToken(infraEnvID.ID, privateKey, expiry)
+		token, err := generateToken(privateKey, &expiry)
 		if err != nil {
 			return err
 		}
@@ -160,15 +147,13 @@ func keyPairPEM() (string, string, error) {
 }
 
 // generateToken returns a JWT token based on the private key.
-func generateToken(id string, privateKkeyPem string, expiry ...time.Time) (string, error) {
+func generateToken(privateKkeyPem string, expiry *time.Time) (string, error) {
 	// Create the JWT claims
-	claims := jwt.MapClaims{
-		string(InfraEnvKey): id,
-	}
+	claims := jwt.MapClaims{}
 
 	// Set the expiry time if provided
-	if len(expiry) > 0 {
-		claims["exp"] = expiry[0].Unix()
+	if expiry != nil {
+		claims["exp"] = expiry.Unix()
 	}
 
 	// Create the token using the ES256 signing method and the claims
