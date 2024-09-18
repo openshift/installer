@@ -2,10 +2,12 @@ package clusterapi
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/object"
 	"sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
@@ -134,6 +136,50 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	return nil
 }
 
+// InfraReady is called once cluster.Status.InfrastructureReady
+// is true, typically after load balancers have been provisioned. It can be used
+// to create DNS records.
+func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
+	return nil
+}
+
+// PostProvision should be called to add or update and vSphere resources after provisioning has completed.
+func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisionInput) error {
+	// We will want to check to see if ControlPlane machines need additional disks
+	cpPool := in.InstallConfig.Config.ControlPlane.Platform.VSphere
+
+	// If not set, nothing to do here.
+	if cpPool == nil {
+		return nil
+	}
+
+	// If we have any additional disks defined, we'll need to create them here
+	if len(cpPool.AdditionalDisks) > 0 {
+		logrus.Info("Adding additional disks to control plane machines")
+
+		for i := range in.MachineManifests {
+			if vm, ok := in.MachineManifests[i].(*v1beta1.VSphereMachine); ok {
+				if !strings.HasSuffix(vm.Name, "bootstrap") {
+					logrus.Infof("Adding additional disks to vm %s", vm.Name)
+					server := vm.Spec.Server
+					vctrSession, err := in.InstallConfig.VSphere.Session(context.TODO(), server)
+
+					if err != nil {
+						return err
+					}
+					err = addAdditionalDisks(ctx, vm, cpPool, vctrSession)
+
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 // downloadImage if any failure domains don't have a defined template, this function
 // returns true.
 func downloadImage(installConfig *installconfig.InstallConfig) bool {
@@ -143,4 +189,59 @@ func downloadImage(installConfig *installconfig.InstallConfig) bool {
 		}
 	}
 	return false
+}
+
+func addAdditionalDisks(ctx context.Context, machine *v1beta1.VSphereMachine, pool *vsphere.MachinePool, session *session.Session) error {
+	logrus.Debugf("Getting vm %v", machine.Name)
+	vm, err := session.Finder.VirtualMachine(ctx, fmt.Sprintf("%s/%s", machine.Spec.Folder, machine.Name))
+	offset := 1 // For now, we assume only one disk is current attached to VM.
+
+	if err != nil {
+		return err
+	}
+
+	logrus.Debugf("Getting VM devices")
+	devices, err := vm.Device(ctx)
+	if err != nil {
+		return err
+	}
+
+	logrus.Debugf("Getting datastore %v", machine.Spec.Datastore)
+	ds, err := session.Finder.Datastore(ctx, machine.Spec.Datastore)
+	if err != nil {
+		return err
+	}
+
+	// For now, we only do the active scsi controller
+	logrus.Debug("Getting scsi controller")
+	controller, err := devices.FindSCSIController("")
+	if err != nil {
+		return err
+	}
+
+	for diskIndex, newDisk := range pool.AdditionalDisks {
+		logrus.Debugf("Attempting to add disk %d with size %dGB", diskIndex, newDisk.DiskSizeGB)
+
+		disk := devices.CreateDisk(controller, ds.Reference(), "")
+
+		existing := devices.SelectByBackingInfo(disk.Backing)
+
+		if len(existing) > 0 {
+			logrus.Warningf("Disk already present for index %d", diskIndex)
+			return errors.New("disk already present")
+		}
+
+		disk.CapacityInKB = int64(newDisk.DiskSizeGB) * 1024 * 1024
+		unitNumber := int32(offset + diskIndex)
+		disk.VirtualDevice.UnitNumber = &unitNumber
+
+		// Add disk using default profile of VM.
+		logrus.Infof("Adding disk device to vm %v", disk)
+		err = vm.AddDevice(ctx, disk)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

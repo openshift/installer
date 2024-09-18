@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ovirt/go-ovirt"
+	ovirtsdk "github.com/ovirt/go-ovirt"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/ovirt"
