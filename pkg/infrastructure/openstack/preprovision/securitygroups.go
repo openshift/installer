@@ -168,7 +168,14 @@ func SecurityGroups(ctx context.Context, installConfig *installconfig.InstallCon
 
 		// In this loop: security groups with a catch-all remote IP
 		for ipVersion, anyIP := range map[rules.RuleEtherType][]string{
-			rules.EtherType4: {"0.0.0.0/0"},
+			rules.EtherType4: func() []string {
+				switch len(machineV4CIDRs) {
+				case 0:
+					return []string{}
+				default:
+					return []string{"0.0.0.0/0"}
+				}
+			}(),
 			rules.EtherType6: func() []string {
 				switch len(machineV6CIDRs) {
 				case 0:
