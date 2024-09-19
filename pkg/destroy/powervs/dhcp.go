@@ -166,14 +166,14 @@ func (o *ClusterUninstaller) destroyDHCPNetworks() error {
 
 	items := o.insertPendingItems(dhcpTypeName, firstPassList.list())
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	for _, item := range items {
 		select {
 		case <-ctx.Done():
 			o.Logger.Debugf("destroyDHCPNetworks: case <-ctx.Done()")
-			return o.Context.Err() // we're cancelled, abort
+			return ctx.Err() // we're cancelled, abort
 		default:
 		}
 
