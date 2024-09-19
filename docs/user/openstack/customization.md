@@ -173,14 +173,14 @@ In the `install-config.yaml` file, the value of the `controlPlanePort` property 
 
 * Any subnet used by `controlPlanePort` have DHCP enabled.
 * The CIDR of any subnet listed in `controlPlanePort.fixedIPs` matches the CIDRs listed on `networks.machineNetwork`.
-* When using dual-stack Network the api and ingress Ports needs to be pre-created by the user. Also, the installer user must have permission to add tags and security groups to those pre-created Ports. The value of the fixed IPs of the Ports needs to be specified at the `apiVIPs` and `ingressVIPs` options in the `install-config.yaml`.
-* If not using dual-stack, the installer user must have permission to create ports on this network, including ports with fixed IP addresses.
+* When using dual-stack or single stack IPv6 Network the api and ingress Ports needs to be pre-created by the user. Also, the installer user must have permission to add tags and security groups to those pre-created Ports. The value of the fixed IPs of the Ports needs to be specified at the `apiVIPs` and `ingressVIPs` options in the `install-config.yaml`.
+* If not using dual-stack or single stack IPv6, the installer user must have permission to create ports on this network, including ports with fixed IP addresses.
 
 You should also be aware of the following limitations:
 
 * If you plan to install a cluster that uses floating IPs, the `controlPlanePort` must be attached to a router that is connected to the `externalNetwork`.
 * The installer will not create a private network or subnet for your OpenShift machines if the `controlPlanePort` is set in the `install-config.yaml`.
-* By default when not using dual-stack, the API and Ingress VIPs use the .5 and .7 of your network CIDR. To prevent other services from taking the ports that are assigned to the API and Ingress VIPs, set the `apiVIP` and `ingressVIP` options in the `install-config.yaml` to addresses that are outside of the DHCP allocation pool.
+* By default when not using dual-stack or single stack IPv6, the API and Ingress VIPs use the .5 and .7 of your network CIDR. To prevent other services from taking the ports that are assigned to the API and Ingress VIPs, set the `apiVIP` and `ingressVIP` options in the `install-config.yaml` to addresses that are outside of the DHCP allocation pool.
 * You cannot use the `externalDNS` property at the same time as a custom `controlPlanePort`. If you want to add a DNS to your cluster while using a custom subnet, [add it to the subnet in OpenStack](https://docs.openstack.org/neutron/rocky/admin/config-dns-res.html).
 
 ## Additional Networks
