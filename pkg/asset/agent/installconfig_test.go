@@ -254,6 +254,7 @@ apiVersion: v1
 metadata:
   name: test-cluster
 baseDomain: test-domain
+bootstrapInPlace: {}
 networking:
   networkType: OVNKubernetes
 controlPlane:
