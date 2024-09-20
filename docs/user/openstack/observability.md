@@ -37,6 +37,25 @@ sum by (vm_instance) (
 
 ## Using remote-write to send RHOSO and OCP metrics to an external storage
 
+<!--
+
+To generate test certificates:
+
+```bash
+# Generate a CA if you don't have one already
+openssl genrsa -out ca.key 4096
+openssl req -batch -new -x509 -key ca.key -out ca.crt
+
+# Generate the client certificates and sign them:
+for target in server ocp-client osp-client; do
+    openssl genrsa -out "${target}.key" 4096
+    openssl req -batch -new -key "${target}.key" -out "${target}.csr"
+    openssl x509 -req -CA ca.crt -CAkey ca.key -CAcreateserial -in "${target}.csr" -out "${target}.crt"
+done
+```
+
+-->
+
 ### Step 1: Set up the external storage
 
 In this example, we'll assume that the external storage is another Prometheus instance.
@@ -133,7 +152,7 @@ Look for the `metricStorage` stanza. It can be found at this path: `.spec.teleme
           logLevel: info
           prometheusConfig:
             remoteWrite:
-            - url: https://prometheus.k-orc.cloud/api/v1/write
+            - url: https://external-prometheus.example/api/v1/write
               tlsConfig:
                 ca:
                   secret:
@@ -164,7 +183,14 @@ Look for the `metricStorage` stanza. It can be found at this path: `.spec.teleme
         prometheusTls: {}
 ```
 
+## Querying OCP metrics together with RHOSO's
 
-## Collecting all metrics on RHOSO's telemetry operator
+OpenShift exposes a federation endpoint to enable queries originating from
+outside the cluster to include OpenShift cluster monitoring data. You can
+follow [these instructions][federation] to set it up.
 
-//TODO
+[federation]: https://docs.redhat.com/en/documentation/openshift_container_platform/4.16/html/monitoring/accessing-third-party-monitoring-apis#monitoring-querying-metrics-by-using-the-federation-endpoint-for-prometheus_accessing-monitoring-apis-by-using-the-cli "OpenShift documentation: Querying metrics by using the federation endpoint for Prometheus"
+
+
+
+use metrics rather than openstack commands to gather state.
