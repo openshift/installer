@@ -22,7 +22,7 @@
       - ip_address: "{{ os_ingressVIP }}"
     with_indexed_items: "{{ [os_port_master] * os_cp_nodes_number }}"
     register: ports
-    when: os_subnet6 is not defined
+    when: os_subnet6_range is not defined
 
   - name: 'Create the dualstack Control Plane ports'
     openstack.cloud.port:
@@ -37,7 +37,7 @@
       - ip_address: "{{ os_ingressVIP6 }}"
     with_indexed_items: "{{ [os_port_master] * os_cp_nodes_number }}"
     register: ports
-    when: os_subnet6 is defined
+    when: os_subnet6_range is defined
 
   - name: 'Set Control Plane ports tag'
     ansible.builtin.command:
