@@ -14,7 +14,7 @@ func TestAuthConfig_Generate(t *testing.T) {
 		name string
 	}{
 		{
-			name: "generate-public-private-keys",
+			name: "generate-public-key-and-token",
 		},
 	}
 	for _, tc := range cases {
@@ -27,8 +27,7 @@ func TestAuthConfig_Generate(t *testing.T) {
 
 			assert.NoError(t, err)
 
-			assert.Contains(t, authConfigAsset.PrivateKey, "BEGIN EC PRIVATE KEY")
-			assert.Contains(t, authConfigAsset.PublicKey, "BEGIN EC PUBLIC KEY")
+			assert.NotEmpty(t, authConfigAsset.PublicKey)
 			assert.NotEmpty(t, authConfigAsset.Token)
 		})
 	}
