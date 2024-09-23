@@ -80,7 +80,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		},
 		Spec: machinev1.ControlPlaneMachineSetSpec{
 			Replicas: &replicas,
-			State:    machinev1.ControlPlaneMachineSetStateInactive,
+			State:    machinev1.ControlPlaneMachineSetStateActive,
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"machine.openshift.io/cluster-api-machine-role": role,
