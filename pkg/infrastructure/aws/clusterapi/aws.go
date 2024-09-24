@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
@@ -31,6 +33,7 @@ import (
 var (
 	_ clusterapi.Provider           = (*Provider)(nil)
 	_ clusterapi.PreProvider        = (*Provider)(nil)
+	_ clusterapi.IgnitionProvider   = (*Provider)(nil)
 	_ clusterapi.InfraReadyProvider = (*Provider)(nil)
 	_ clusterapi.BootstrapDestroyer = (*Provider)(nil)
 	_ clusterapi.PostDestroyer      = (*Provider)(nil)
@@ -156,6 +159,63 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 	}
 
 	return nil
+}
+
+// Ignition finds the security group IDs provided in the AWS cluster status. The security group IDs are used
+// to query and filter the network interfaces. The network interfaces should contain the public and private
+// IP Addresses that must be provided during ignition for custom DNS solution.
+func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]*corev1.Secret, error) {
+	awsCluster := &capa.AWSCluster{}
+	key := k8sClient.ObjectKey{
+		Name:      in.InfraID,
+		Namespace: capiutils.Namespace,
+	}
+	if err := in.Client.Get(ctx, key, awsCluster); err != nil {
+		return nil, fmt.Errorf("failed to get AWSCluster: %w", err)
+	}
+
+	awsSession, err := in.InstallConfig.AWS.Session(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get aws session: %w", err)
+	}
+
+	securityGroupIDs := []*string{}
+	for _, securityGroup := range awsCluster.Status.Network.SecurityGroups {
+		logrus.Warnf("Found Security Group ID: %s", securityGroup.ID)
+		securityGroupIDs = append(securityGroupIDs, aws.String(securityGroup.ID))
+	}
+	nicInput := ec2.DescribeNetworkInterfacesInput{
+		Filters: []*ec2.Filter{
+			{
+				Name:   aws.String("group-id"),
+				Values: securityGroupIDs,
+			},
+		},
+	}
+	nicOutput, err := ec2.New(awsSession).DescribeNetworkInterfacesWithContext(ctx, &nicInput)
+	if err != nil {
+		return nil, fmt.Errorf("failed to describe network interfaces: %w", err)
+	}
+
+	publicIPAddresses := []string{}
+	privateIPAddresses := []string{}
+	for _, nic := range nicOutput.NetworkInterfaces {
+		if nic.Association != nil && nic.Association.PublicIp != nil {
+			logrus.Debugf("found public IP address %s from %s", *nic.Association.PublicIp, *nic.Description)
+			publicIPAddresses = append(publicIPAddresses, *nic.Association.PublicIp)
+		} else if nic.PrivateIpAddress != nil {
+			logrus.Debugf("found private IP address %s from %s", *nic.PrivateIpAddress, *nic.Description)
+			privateIPAddresses = append(privateIPAddresses, *nic.PrivateIpAddress)
+		}
+	}
+
+	// TODO: this wont do anything, just shows us that the data is available
+	logrus.Warnf("public load balancer addresses: %+v", publicIPAddresses)
+	logrus.Warnf("private load balancer addresses: %+v", privateIPAddresses)
+
+	os.Exit(1)
+
+	return nil, nil
 }
 
 func getVPCFromSubnets(ctx context.Context, awsSession *session.Session, region string, subnetIDs []string) (string, error) {
