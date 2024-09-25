@@ -121,7 +121,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		return nil, fmt.Errorf("failed to create bucket %s: %w", bucketName, err)
 	}
 
-	editedIgnitionBytes, err := EditIgnition(ctx, in)
+	editedIgnitionBytes, err := editIgnition(ctx, in)
 	if err != nil {
 		return nil, fmt.Errorf("failed to edit bootstrap ignition: %w", err)
 	}

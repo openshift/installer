@@ -52,6 +52,7 @@ type Config struct {
 	MasterSecurityGroups            []string          `json:"aws_master_security_groups,omitempty"`
 	PublicIpv4Pool                  string            `json:"aws_public_ipv4_pool"`
 	MasterUseSpotInstance           bool              `json:"aws_master_use_spot_instance,omitempty"`
+	IgnitionShim                    string            `json:"aws_ignition_shim,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -68,7 +69,7 @@ type TFVarsSources struct {
 
 	MasterConfigs, WorkerConfigs []*machinev1beta1.AWSMachineProviderConfig
 
-	IgnitionBucket, IgnitionPresignedURL string
+	IgnitionBucket, IgnitionPresignedURL, IgnitionShim string
 
 	AdditionalTrustBundle string
 
@@ -219,6 +220,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		MasterSecurityGroups:      sources.MasterSecurityGroups,
 		PublicIpv4Pool:            sources.PublicIpv4Pool,
 		MasterUseSpotInstance:     useSpotInstances,
+		IgnitionShim:              sources.IgnitionShim,
 	}
 
 	stubIgn, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(sources.IgnitionPresignedURL, sources.AdditionalTrustBundle, sources.Proxy)

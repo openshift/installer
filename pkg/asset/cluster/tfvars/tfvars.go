@@ -302,6 +302,14 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 			}
 		}
 
+		ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
+		defer cancel()
+
+		shim, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(url, installConfig.Config.AdditionalTrustBundle, installConfig.Config.Proxy)
+		if err != nil {
+			return fmt.Errorf("failed to create aws ignition shim: %w", err)
+		}
+
 		// AWS Zones is used to determine which route table the edge zone will be associated.
 		allZones, err := installConfig.AWS.AllZones(ctx)
 		if err != nil {
@@ -331,6 +339,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 			PreserveBootstrapIgnition: installConfig.Config.AWS.BestEffortDeleteIgnition,
 			MasterSecurityGroups:      securityGroups,
 			PublicIpv4Pool:            installConfig.Config.AWS.PublicIpv4Pool,
+			IgnitionShim:              string(shim),
 		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

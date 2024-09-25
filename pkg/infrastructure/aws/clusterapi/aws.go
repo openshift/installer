@@ -1,10 +1,11 @@
 package clusterapi
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -23,6 +24,7 @@ import (
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	k8sClient "sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/openshift/installer/pkg/asset/cluster/tfvars"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	awsmanifest "github.com/openshift/installer/pkg/asset/manifests/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
@@ -165,57 +167,61 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 // to query and filter the network interfaces. The network interfaces should contain the public and private
 // IP Addresses that must be provided during ignition for custom DNS solution.
 func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]*corev1.Secret, error) {
-	awsCluster := &capa.AWSCluster{}
-	key := k8sClient.ObjectKey{
-		Name:      in.InfraID,
-		Namespace: capiutils.Namespace,
-	}
-	if err := in.Client.Get(ctx, key, awsCluster); err != nil {
-		return nil, fmt.Errorf("failed to get AWSCluster: %w", err)
-	}
-
 	awsSession, err := in.InstallConfig.AWS.Session(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get aws session: %w", err)
 	}
 
-	securityGroupIDs := []*string{}
-	for _, securityGroup := range awsCluster.Status.Network.SecurityGroups {
-		logrus.Warnf("Found Security Group ID: %s", securityGroup.ID)
-		securityGroupIDs = append(securityGroupIDs, aws.String(securityGroup.ID))
-	}
-	nicInput := ec2.DescribeNetworkInterfacesInput{
-		Filters: []*ec2.Filter{
-			{
-				Name:   aws.String("group-id"),
-				Values: securityGroupIDs,
-			},
+	client := s3.New(awsSession, aws.NewConfig().WithRegion(in.InstallConfig.Config.GCP.Region))
+	if _, err = client.CreateBucketWithContext(ctx, &s3.CreateBucketInput{
+		Bucket: aws.String(fmt.Sprintf("%s-bootstrap", in.InfraID)),
+		CreateBucketConfiguration: &s3.CreateBucketConfiguration{
+			LocationConstraint: aws.String(in.InstallConfig.Config.GCP.Region),
 		},
-	}
-	nicOutput, err := ec2.New(awsSession).DescribeNetworkInterfacesWithContext(ctx, &nicInput)
-	if err != nil {
-		return nil, fmt.Errorf("failed to describe network interfaces: %w", err)
+	}); err != nil {
+		return nil, fmt.Errorf("failed to create s3 bucket: %w", err)
 	}
 
-	publicIPAddresses := []string{}
-	privateIPAddresses := []string{}
-	for _, nic := range nicOutput.NetworkInterfaces {
-		if nic.Association != nil && nic.Association.PublicIp != nil {
-			logrus.Debugf("found public IP address %s from %s", *nic.Association.PublicIp, *nic.Description)
-			publicIPAddresses = append(publicIPAddresses, *nic.Association.PublicIp)
-		} else if nic.PrivateIpAddress != nil {
-			logrus.Debugf("found private IP address %s from %s", *nic.PrivateIpAddress, *nic.Description)
-			privateIPAddresses = append(privateIPAddresses, *nic.PrivateIpAddress)
+	editedIgnitionBytes, err := editIgnition(ctx, in)
+	if err != nil {
+		return nil, fmt.Errorf("failed to edit bootstrap ignition: %w", err)
+	}
+
+	ignitionBytes := in.BootstrapIgnData
+	if editedIgnitionBytes != nil {
+		ignitionBytes = editedIgnitionBytes
+	}
+
+	if _, err = client.PutObject(&s3.PutObjectInput{
+		Bucket: aws.String(fmt.Sprintf("%s-bootstrap", in.InfraID)),
+		Key:    aws.String("bootstrap.ign"),
+		Body:   bytes.NewReader(ignitionBytes),
+	}); err != nil {
+		return nil, fmt.Errorf("failed to upload ignition to bucket: %w", err)
+	}
+
+	var ignShim string
+	for _, file := range in.TFVarsAsset.Files() {
+		if file.Filename == tfvars.TfPlatformVarsFileName {
+			var found bool
+			tfvarsData := make(map[string]interface{})
+			if err := json.Unmarshal(file.Data, &tfvarsData); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal %s to json: %w", tfvars.TfPlatformVarsFileName, err)
+			}
+
+			ignShim, found = tfvarsData["aws_ignition_shim"].(string)
+			if !found {
+				return nil, fmt.Errorf("failed to find ignition shim")
+			}
 		}
 	}
 
-	// TODO: this wont do anything, just shows us that the data is available
-	logrus.Warnf("public load balancer addresses: %+v", publicIPAddresses)
-	logrus.Warnf("private load balancer addresses: %+v", privateIPAddresses)
+	ignSecrets := []*corev1.Secret{
+		clusterapi.IgnitionSecret([]byte(ignShim), in.InfraID, "bootstrap"),
+		clusterapi.IgnitionSecret(in.MasterIgnData, in.InfraID, "master"),
+	}
 
-	os.Exit(1)
-
-	return nil, nil
+	return ignSecrets, nil
 }
 
 func getVPCFromSubnets(ctx context.Context, awsSession *session.Session, region string, subnetIDs []string) (string, error) {
