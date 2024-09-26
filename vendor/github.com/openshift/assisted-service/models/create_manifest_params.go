@@ -26,7 +26,7 @@ type CreateManifestParams struct {
 
 	// The name of the manifest to customize the installed OCP cluster.
 	// Required: true
-	// Pattern: ^[^/]*\.(yaml|yml|json)$
+	// Pattern: ^[^\/]*\.(json|ya?ml(\.patch_?[a-zA-Z0-9_]*)?)$
 	FileName *string `json:"file_name"`
 
 	// The folder that contains the files. Manifests can be placed in 'manifests' or 'openshift' directories.
@@ -71,7 +71,7 @@ func (m *CreateManifestParams) validateFileName(formats strfmt.Registry) error {
 		return err
 	}
 
-	if err := validate.Pattern("file_name", "body", *m.FileName, `^[^/]*\.(yaml|yml|json)$`); err != nil {
+	if err := validate.Pattern("file_name", "body", *m.FileName, `^[^\/]*\.(json|ya?ml(\.patch_?[a-zA-Z0-9_]*)?)$`); err != nil {
 		return err
 	}
 

@@ -51,11 +51,17 @@ type Disk struct {
 	// Whether the disk appears to be an installation media or not
 	IsInstallationMedia bool `json:"is_installation_media,omitempty"`
 
+	// iscsi
+	Iscsi *Iscsi `json:"iscsi,omitempty"`
+
 	// model
 	Model string `json:"model,omitempty"`
 
 	// name
 	Name string `json:"name,omitempty"`
+
+	// partition types
+	PartitionTypes string `json:"partitionTypes,omitempty"`
 
 	// path
 	Path string `json:"path,omitempty"`
@@ -92,6 +98,10 @@ func (m *Disk) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateIoPerf(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateIscsi(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -154,6 +164,25 @@ func (m *Disk) validateIoPerf(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *Disk) validateIscsi(formats strfmt.Registry) error {
+	if swag.IsZero(m.Iscsi) { // not required
+		return nil
+	}
+
+	if m.Iscsi != nil {
+		if err := m.Iscsi.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("iscsi")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("iscsi")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
 // ContextValidate validate this disk based on the context it is used
 func (m *Disk) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
@@ -167,6 +196,10 @@ func (m *Disk) ContextValidate(ctx context.Context, formats strfmt.Registry) err
 	}
 
 	if err := m.contextValidateIoPerf(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateIscsi(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -212,6 +245,22 @@ func (m *Disk) contextValidateIoPerf(ctx context.Context, formats strfmt.Registr
 				return ve.ValidateName("io_perf")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
 				return ce.ValidateName("io_perf")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *Disk) contextValidateIscsi(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Iscsi != nil {
+		if err := m.Iscsi.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("iscsi")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("iscsi")
 			}
 			return err
 		}

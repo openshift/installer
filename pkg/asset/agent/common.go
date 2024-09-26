@@ -11,6 +11,10 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
+const (
+	ExternalPlatformNameOci = "oci"
+)
+
 // SupportedInstallerPlatforms lists the supported platforms for agent installer.
 func SupportedInstallerPlatforms() []string {
 	return []string{baremetal.Name, vsphere.Name, none.Name, external.Name}

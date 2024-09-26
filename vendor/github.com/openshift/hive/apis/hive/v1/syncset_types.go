@@ -106,6 +106,16 @@ type SecretMapping struct {
 // SyncConditionType is a valid value for SyncCondition.Type
 type SyncConditionType string
 
+// ConditionType satisfies the conditions.Condition interface
+func (c SyncCondition) ConditionType() ConditionType {
+	return c.Type
+}
+
+// String satisfies the conditions.ConditionType interface
+func (t SyncConditionType) String() string {
+	return string(t)
+}
+
 const (
 	// ApplySuccessSyncCondition indicates whether the resource or patch has been applied.
 	ApplySuccessSyncCondition SyncConditionType = "ApplySuccess"

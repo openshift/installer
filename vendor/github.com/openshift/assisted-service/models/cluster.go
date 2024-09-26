@@ -30,10 +30,6 @@ type Cluster struct {
 	// Format: uuid
 	AmsSubscriptionID strfmt.UUID `json:"ams_subscription_id,omitempty"`
 
-	// (DEPRECATED) The virtual IP used to reach the OpenShift cluster's API.
-	// Pattern: ^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3})|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,}))$
-	APIVip string `json:"api_vip,omitempty"`
-
 	// The domain name used to reach the OpenShift cluster API.
 	APIVipDNSName *string `json:"api_vip_dns_name,omitempty"`
 
@@ -147,10 +143,6 @@ type Cluster struct {
 	// reflect the actual cluster they represent
 	Imported *bool `json:"imported,omitempty"`
 
-	// (DEPRECATED) The virtual IP used for cluster ingress traffic.
-	// Pattern: ^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3})|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,}))$
-	IngressVip string `json:"ingress_vip,omitempty"`
-
 	// The virtual IPs used for cluster ingress traffic. Enter one IP address for single-stack clusters, or up to two for dual-stack clusters (at most one IP address per IP stack used). The order of stacks should be the same as order of subnets in Cluster Networks, Service Networks, and Machine Networks.
 	IngressVips []*IngressVip `json:"ingress_vips" gorm:"foreignkey:ClusterID;references:ID"`
 
@@ -175,6 +167,9 @@ type Cluster struct {
 	// Required: true
 	// Enum: [Cluster AddHostsCluster]
 	Kind *string `json:"kind"`
+
+	// last installation preparation
+	LastInstallationPreparation LastInstallationPreparation `json:"last-installation-preparation,omitempty" gorm:"embedded;embeddedPrefix:last_installation_preparation_"`
 
 	// The progress of log collection or empty if logs are not applicable
 	LogsInfo LogsState `json:"logs_info,omitempty" gorm:"type:varchar(2048)"`
@@ -211,6 +206,9 @@ type Cluster struct {
 
 	// org id
 	OrgID string `json:"org_id,omitempty"`
+
+	// Indication if organization soft timeouts is enabled for the cluster.
+	OrgSoftTimeoutsEnabled bool `json:"org_soft_timeouts_enabled,omitempty"`
 
 	// platform
 	Platform *Platform `json:"platform,omitempty" gorm:"embedded;embeddedPrefix:platform_"`
@@ -286,10 +284,6 @@ func (m *Cluster) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateAPIVip(formats); err != nil {
-		res = append(res, err)
-	}
-
 	if err := m.validateAPIVips(formats); err != nil {
 		res = append(res, err)
 	}
@@ -358,10 +352,6 @@ func (m *Cluster) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateIngressVip(formats); err != nil {
-		res = append(res, err)
-	}
-
 	if err := m.validateIngressVips(formats); err != nil {
 		res = append(res, err)
 	}
@@ -375,6 +365,10 @@ func (m *Cluster) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateKind(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateLastInstallationPreparation(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -446,18 +440,6 @@ func (m *Cluster) validateAmsSubscriptionID(formats strfmt.Registry) error {
 	}
 
 	if err := validate.FormatOf("ams_subscription_id", "body", "uuid", m.AmsSubscriptionID.String(), formats); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Cluster) validateAPIVip(formats strfmt.Registry) error {
-	if swag.IsZero(m.APIVip) { // not required
-		return nil
-	}
-
-	if err := validate.Pattern("api_vip", "body", m.APIVip, `^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3})|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,}))$`); err != nil {
 		return err
 	}
 
@@ -856,18 +838,6 @@ func (m *Cluster) validateImageInfo(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Cluster) validateIngressVip(formats strfmt.Registry) error {
-	if swag.IsZero(m.IngressVip) { // not required
-		return nil
-	}
-
-	if err := validate.Pattern("ingress_vip", "body", m.IngressVip, `^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3})|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,}))$`); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (m *Cluster) validateIngressVips(formats strfmt.Registry) error {
 	if swag.IsZero(m.IngressVips) { // not required
 		return nil
@@ -955,6 +925,23 @@ func (m *Cluster) validateKind(formats strfmt.Registry) error {
 
 	// value enum
 	if err := m.validateKindEnum("kind", "body", *m.Kind); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *Cluster) validateLastInstallationPreparation(formats strfmt.Registry) error {
+	if swag.IsZero(m.LastInstallationPreparation) { // not required
+		return nil
+	}
+
+	if err := m.LastInstallationPreparation.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("last-installation-preparation")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("last-installation-preparation")
+		}
 		return err
 	}
 
@@ -1311,6 +1298,10 @@ func (m *Cluster) ContextValidate(ctx context.Context, formats strfmt.Registry) 
 		res = append(res, err)
 	}
 
+	if err := m.contextValidateLastInstallationPreparation(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateLogsInfo(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -1484,6 +1475,20 @@ func (m *Cluster) contextValidateIngressVips(ctx context.Context, formats strfmt
 			}
 		}
 
+	}
+
+	return nil
+}
+
+func (m *Cluster) contextValidateLastInstallationPreparation(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.LastInstallationPreparation.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("last-installation-preparation")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("last-installation-preparation")
+		}
+		return err
 	}
 
 	return nil

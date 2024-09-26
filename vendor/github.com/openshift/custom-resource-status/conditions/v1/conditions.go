@@ -8,7 +8,8 @@ import (
 )
 
 // SetStatusCondition sets the corresponding condition in conditions to newCondition.
-func SetStatusCondition(conditions *[]Condition, newCondition Condition) {
+// The return value indicates if this resulted in any changes *other than* LastHeartbeatTime.
+func SetStatusCondition(conditions *[]Condition, newCondition Condition) bool {
 	if conditions == nil {
 		conditions = &[]Condition{}
 	}
@@ -17,22 +18,18 @@ func SetStatusCondition(conditions *[]Condition, newCondition Condition) {
 		newCondition.LastTransitionTime = metav1.NewTime(time.Now())
 		newCondition.LastHeartbeatTime = metav1.NewTime(time.Now())
 		*conditions = append(*conditions, newCondition)
-		return
+		return true
 	}
 
-	if existingCondition.Status != newCondition.Status {
-		existingCondition.Status = newCondition.Status
-		existingCondition.LastTransitionTime = metav1.NewTime(time.Now())
-	}
-
-	existingCondition.Reason = newCondition.Reason
-	existingCondition.Message = newCondition.Message
+	changed := updateCondition(existingCondition, newCondition)
 	existingCondition.LastHeartbeatTime = metav1.NewTime(time.Now())
+	return changed
 }
 
 // SetStatusConditionNoHearbeat sets the corresponding condition in conditions to newCondition
 // without setting lastHeartbeatTime.
-func SetStatusConditionNoHeartbeat(conditions *[]Condition, newCondition Condition) {
+// The return value indicates if this resulted in any changes.
+func SetStatusConditionNoHeartbeat(conditions *[]Condition, newCondition Condition) bool {
 	if conditions == nil {
 		conditions = &[]Condition{}
 	}
@@ -40,16 +37,10 @@ func SetStatusConditionNoHeartbeat(conditions *[]Condition, newCondition Conditi
 	if existingCondition == nil {
 		newCondition.LastTransitionTime = metav1.NewTime(time.Now())
 		*conditions = append(*conditions, newCondition)
-		return
+		return true
 	}
 
-	if existingCondition.Status != newCondition.Status {
-		existingCondition.Status = newCondition.Status
-		existingCondition.LastTransitionTime = metav1.NewTime(time.Now())
-	}
-
-	existingCondition.Reason = newCondition.Reason
-	existingCondition.Message = newCondition.Message
+	return updateCondition(existingCondition, newCondition)
 }
 
 // RemoveStatusCondition removes the corresponding conditionType from conditions.
@@ -65,6 +56,25 @@ func RemoveStatusCondition(conditions *[]Condition, conditionType ConditionType)
 	}
 
 	*conditions = newConditions
+}
+
+func updateCondition(existingCondition *Condition, newCondition Condition) bool {
+	changed := false
+	if existingCondition.Status != newCondition.Status {
+		changed = true
+		existingCondition.Status = newCondition.Status
+		existingCondition.LastTransitionTime = metav1.NewTime(time.Now())
+	}
+
+	if existingCondition.Reason != newCondition.Reason {
+		changed = true
+		existingCondition.Reason = newCondition.Reason
+	}
+	if existingCondition.Message != newCondition.Message {
+		changed = true
+		existingCondition.Message = newCondition.Message
+	}
+	return changed
 }
 
 // FindStatusCondition finds the conditionType in conditions.

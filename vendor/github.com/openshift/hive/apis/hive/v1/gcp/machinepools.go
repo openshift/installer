@@ -13,6 +13,18 @@ type MachinePool struct {
 	//
 	// +optional
 	OSDisk OSDisk `json:"osDisk"`
+
+	// NetworkProjectID specifies which project the network and subnets exist in when
+	// they are not in the main ProjectID.
+	// +optional
+	NetworkProjectID string `json:"networkProjectID,omitempty"`
+
+	// SecureBoot Defines whether the instance should have secure boot enabled.
+	// Verifies the digital signature of all boot components, and halts the boot process if signature verification fails.
+	// If omitted, the platform chooses a default, which is subject to change over time. Currently that default is "Disabled".
+	// +kubebuilder:validation:Enum=Enabled;Disabled
+	// +optional
+	SecureBoot string `json:"secureBoot,omitempty"`
 }
 
 // OSDisk defines the disk for machines on GCP.
