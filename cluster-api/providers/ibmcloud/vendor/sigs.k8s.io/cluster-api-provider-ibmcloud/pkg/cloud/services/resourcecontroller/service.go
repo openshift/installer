@@ -88,7 +88,7 @@ func (s *Service) DeleteResourceInstance(options *resourcecontrollerv2.DeleteRes
 
 // GetServiceInstance returns service instance with given name or id. If not found, returns nil.
 // TODO: Combine GetSreviceInstance() and GetInstanceByName().
-func (s *Service) GetServiceInstance(id, name string) (*resourcecontrollerv2.ResourceInstance, error) {
+func (s *Service) GetServiceInstance(id, name string, zone *string) (*resourcecontrollerv2.ResourceInstance, error) {
 	var serviceInstancesList []resourcecontrollerv2.ResourceInstance
 	f := func(start string) (bool, string, error) {
 		listServiceInstanceOptions := &resourcecontrollerv2.ListResourceInstancesOptions{
@@ -110,7 +110,16 @@ func (s *Service) GetServiceInstance(id, name string) (*resourcecontrollerv2.Res
 			return false, "", err
 		}
 		if serviceInstances != nil {
-			serviceInstancesList = append(serviceInstancesList, serviceInstances.Resources...)
+			if zone != nil && *zone != "" {
+				for _, resource := range serviceInstances.Resources {
+					if *resource.RegionID == *zone {
+						serviceInstancesList = append(serviceInstancesList, resource)
+					}
+				}
+			} else {
+				serviceInstancesList = append(serviceInstancesList, serviceInstances.Resources...)
+			}
+
 			nextURL, err := serviceInstances.GetNextStart()
 			if err != nil {
 				return false, "", err
@@ -188,7 +197,7 @@ func (s *Service) CreateResourceKey(options *resourcecontrollerv2.CreateResource
 }
 
 // NewService returns a new service for the IBM Cloud Resource Controller api client.
-func NewService(options ServiceOptions) (*Service, error) {
+func NewService(options ServiceOptions) (ResourceController, error) {
 	if options.ResourceControllerV2Options == nil {
 		options.ResourceControllerV2Options = &resourcecontrollerv2.ResourceControllerV2Options{}
 	}

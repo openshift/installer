@@ -223,3 +223,11 @@ func Convert_Slice_Pointer_v1beta2_IBMVPCResourceReference_To_Slice_Pointer_stri
 func Convert_v1beta2_VPCLoadBalancerSpec_To_v1beta1_VPCLoadBalancerSpec(in *infrav1beta2.VPCLoadBalancerSpec, out *VPCLoadBalancerSpec, s apiconversion.Scope) error {
 	return autoConvert_v1beta2_VPCLoadBalancerSpec_To_v1beta1_VPCLoadBalancerSpec(in, out, s)
 }
+
+func Convert_v1beta2_IBMVPCClusterSpec_To_v1beta1_IBMVPCClusterSpec(in *infrav1beta2.IBMVPCClusterSpec, out *IBMVPCClusterSpec, s apiconversion.Scope) error {
+	return autoConvert_v1beta2_IBMVPCClusterSpec_To_v1beta1_IBMVPCClusterSpec(in, out, s)
+}
+
+func Convert_v1beta2_IBMVPCClusterStatus_To_v1beta1_IBMVPCClusterStatus(in *infrav1beta2.IBMVPCClusterStatus, out *IBMVPCClusterStatus, s apiconversion.Scope) error {
+	return autoConvert_v1beta2_IBMVPCClusterStatus_To_v1beta1_IBMVPCClusterStatus(in, out, s)
+}

@@ -45,7 +45,6 @@ import (
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/powervs"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/endpoints"
 	capibmrecord "sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/record"
-	genUtil "sigs.k8s.io/cluster-api-provider-ibmcloud/util"
 )
 
 // IBMPowerVSMachineReconciler reconciles a IBMPowerVSMachine object.
@@ -280,7 +279,7 @@ func (r *IBMPowerVSMachineReconciler) reconcileNormal(machineScope *scope.PowerV
 		return ctrl.Result{RequeueAfter: 2 * time.Minute}, nil
 	}
 
-	if !genUtil.CheckCreateInfraAnnotation(*machineScope.IBMPowerVSCluster) {
+	if !scope.CheckCreateInfraAnnotation(*machineScope.IBMPowerVSCluster) {
 		return ctrl.Result{}, nil
 	}
 	// Register instance with load balancer
