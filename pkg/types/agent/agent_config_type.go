@@ -27,6 +27,9 @@ type Config struct {
 	RendezvousIP         string `json:"rendezvousIP,omitempty"`
 	BootArtifactsBaseURL string `json:"bootArtifactsBaseURL,omitempty"`
 	Hosts                []Host `json:"hosts,omitempty"`
+	// When MinimalISO is set to true, a minimal ISO that does not contain the rootfs will be generated.
+	// By default a full ISO will be created, unless the platform is External, which generates a minimal ISO.
+	MinimalISO bool `json:"minimalISO,omitempty"`
 }
 
 // Host defines per host configurations
