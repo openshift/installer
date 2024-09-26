@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
+	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	config "github.com/openshift/installer/pkg/asset/agent/agentconfig"
@@ -33,6 +34,7 @@ type AgentArtifacts struct {
 	Kargs                string
 	ISOPath              string
 	BootArtifactsBaseURL string
+	MinimalISO           bool
 }
 
 // Dependencies returns the assets on which the AgentArtifacts asset depends.
@@ -73,6 +75,8 @@ func (a *AgentArtifacts) Generate(_ context.Context, dependencies asset.Parents)
 
 	if agentconfig.Config != nil {
 		a.BootArtifactsBaseURL = strings.Trim(agentconfig.Config.BootArtifactsBaseURL, "/")
+		// External platform will always create a minimal ISO
+		a.MinimalISO = agentconfig.Config.MinimalISO || agentManifests.AgentClusterInstall.Spec.PlatformType == hiveext.ExternalPlatformType
 	}
 
 	var agentTuiFiles []string
