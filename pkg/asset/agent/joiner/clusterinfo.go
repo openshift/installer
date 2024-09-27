@@ -73,6 +73,7 @@ type ClusterInfo struct {
 	FIPS                          bool
 	Nodes                         *corev1.NodeList
 	ChronyConf                    *igntypes.File
+	BootArtifactsBaseURL          string
 }
 
 var _ asset.WritableAsset = (*ClusterInfo)(nil)
@@ -121,6 +122,7 @@ func (ci *ClusterInfo) Generate(_ context.Context, dependencies asset.Parents) e
 		ci.retrieveSSHKey,
 		ci.retrieveFIPS,
 		ci.retrieveWorkerChronyConfig,
+		ci.retrieveBootArtifactsBaseURL,
 		ci.retrieveNamespace,
 	} {
 		if err := f(); err != nil {
@@ -297,6 +299,13 @@ func (ci *ClusterInfo) retrieveWorkerChronyConfig() error {
 		chronyConf := f
 		ci.ChronyConf = &chronyConf
 		break
+	}
+	return nil
+}
+
+func (ci *ClusterInfo) retrieveBootArtifactsBaseURL() error {
+	if ci.addNodesConfig.Config.BootArtifactsBaseURL != "" {
+		ci.BootArtifactsBaseURL = ci.addNodesConfig.Config.BootArtifactsBaseURL
 	}
 	return nil
 }
