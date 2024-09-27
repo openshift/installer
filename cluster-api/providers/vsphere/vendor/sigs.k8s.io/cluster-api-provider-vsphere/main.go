@@ -51,9 +51,10 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-vsphere/controllers"
+	"sigs.k8s.io/cluster-api-provider-vsphere/controllers/vmware"
 	"sigs.k8s.io/cluster-api-provider-vsphere/feature"
 	"sigs.k8s.io/cluster-api-provider-vsphere/internal/webhooks"
-	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/constants"
+	vmwarewebhooks "sigs.k8s.io/cluster-api-provider-vsphere/internal/webhooks/vmware"
 	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/manager"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
@@ -65,36 +66,36 @@ var (
 	logOptions     = logs.NewOptions()
 	controllerName = "cluster-api-vsphere-manager"
 
-	enableContentionProfiling   bool
-	leaderElectionLeaseDuration time.Duration
-	leaderElectionRenewDeadline time.Duration
-	leaderElectionRetryPeriod   time.Duration
-	managerOpts                 manager.Options
-	restConfigBurst             int
-	restConfigQPS               float32
-	syncPeriod                  time.Duration
-	webhookOpts                 webhook.Options
-	watchNamespace              string
+	enableContentionProfiling      bool
+	leaderElectionLeaseDuration    time.Duration
+	leaderElectionRenewDeadline    time.Duration
+	leaderElectionRetryPeriod      time.Duration
+	managerOpts                    manager.Options
+	restConfigBurst                int
+	restConfigQPS                  float32
+	clusterCacheTrackerClientQPS   float32
+	clusterCacheTrackerClientBurst int
+	syncPeriod                     time.Duration
+	webhookOpts                    webhook.Options
+	watchNamespace                 string
 
 	clusterCacheTrackerConcurrency    int
 	vSphereClusterConcurrency         int
 	vSphereMachineConcurrency         int
+	vSphereMachineTemplateConcurrency int
 	providerServiceAccountConcurrency int
 	serviceDiscoveryConcurrency       int
 	vSphereVMConcurrency              int
 	vSphereClusterIdentityConcurrency int
 	vSphereDeploymentZoneConcurrency  int
 
-	tlsOptions         = capiflags.TLSOptions{}
-	diagnosticsOptions = capiflags.DiagnosticsOptions{}
+	managerOptions = capiflags.ManagerOptions{}
 
-	defaultProfilerAddr      = os.Getenv("PROFILER_ADDR")
-	defaultSyncPeriod        = manager.DefaultSyncPeriod
-	defaultLeaderElectionID  = manager.DefaultLeaderElectionID
-	defaultPodName           = manager.DefaultPodName
-	defaultWebhookPort       = manager.DefaultWebhookServiceContainerPort
-	defaultEnableKeepAlive   = constants.DefaultEnableKeepAlive
-	defaultKeepAliveDuration = constants.DefaultKeepAliveDuration
+	defaultProfilerAddr     = os.Getenv("PROFILER_ADDR")
+	defaultSyncPeriod       = manager.DefaultSyncPeriod
+	defaultLeaderElectionID = manager.DefaultLeaderElectionID
+	defaultPodName          = manager.DefaultPodName
+	defaultWebhookPort      = manager.DefaultWebhookServiceContainerPort
 )
 
 // InitFlags initializes the flags.
@@ -115,6 +116,9 @@ func InitFlags(fs *pflag.FlagSet) {
 
 	fs.IntVar(&vSphereMachineConcurrency, "vspheremachine-concurrency", 10,
 		"Number of vSphere machines to process simultaneously")
+
+	fs.IntVar(&vSphereMachineTemplateConcurrency, "vspheremachinetemplate-concurrency", 10,
+		"Number of vSphere machine templates to process simultaneously")
 
 	fs.IntVar(&providerServiceAccountConcurrency, "providerserviceaccount-concurrency", 10,
 		"Number of provider service accounts to process simultaneously")
@@ -143,21 +147,7 @@ func InitFlags(fs *pflag.FlagSet) {
 		"/etc/capv/credentials.yaml",
 		"path to CAPV's credentials file",
 	)
-	fs.BoolVar(
-		&managerOpts.EnableKeepAlive,
-		"enable-keep-alive",
-		defaultEnableKeepAlive,
-		"feature to enable keep alive handler in vsphere sessions. This functionality is disabled by default.")
-	_ = fs.MarkDeprecated("enable-keep-alive", "This flag has been deprecated and will be removed in a "+
-		"future release. Note: This feature has been disabled per default because we determined that we already keep alive "+
-		"sessions just by our regular reconciles. So we don't need an additional keep alive handler. Enabling "+
-		"this feature may lead to a deadlock in controllers communicating with vCenter.")
-	fs.DurationVar(
-		&managerOpts.KeepAliveDuration,
-		"keep-alive-duration",
-		defaultKeepAliveDuration,
-		"idle time interval(minutes) in between send() requests in keepalive handler",
-	)
+
 	fs.StringVar(
 		&managerOpts.NetworkProvider,
 		"network-provider",
@@ -197,10 +187,16 @@ func InitFlags(fs *pflag.FlagSet) {
 		"The minimum interval at which watched resources are reconciled (e.g. 15m)")
 
 	fs.Float32Var(&restConfigQPS, "kube-api-qps", 20,
-		"Maximum queries per second from the controller client to the Kubernetes API server. Defaults to 20")
+		"Maximum queries per second from the controller client to the Kubernetes API server.")
 
 	fs.IntVar(&restConfigBurst, "kube-api-burst", 30,
-		"Maximum number of queries that should be allowed in one burst from the controller client to the Kubernetes API server. Default 30")
+		"Maximum number of queries that should be allowed in one burst from the controller client to the Kubernetes API server.")
+
+	fs.Float32Var(&clusterCacheTrackerClientQPS, "clustercachetracker-client-qps", 20,
+		"Maximum queries per second from the cluster cache tracker clients to the Kubernetes API server of workload clusters.")
+
+	fs.IntVar(&clusterCacheTrackerClientBurst, "clustercachetracker-client-burst", 30,
+		"Maximum number of queries that should be allowed in one burst from the cluster cache tracker clients to the Kubernetes API server of workload clusters.")
 
 	fs.IntVar(&webhookOpts.Port, "webhook-port", defaultWebhookPort,
 		"Webhook Server port")
@@ -212,8 +208,7 @@ func InitFlags(fs *pflag.FlagSet) {
 		"The address the health endpoint binds to.",
 	)
 
-	capiflags.AddTLSOptions(fs, &tlsOptions)
-	capiflags.AddDiagnosticsOptions(fs, &diagnosticsOptions)
+	capiflags.AddManagerOptions(fs, &managerOptions)
 	feature.MutableGates.AddFlag(fs)
 }
 
@@ -314,15 +309,15 @@ func main() {
 		return nil
 	}
 
-	tlsOptionOverrides, err := capiflags.GetTLSOptionOverrideFuncs(tlsOptions)
+	tlsOptions, metricsOptions, err := capiflags.GetManagerOptions(managerOptions)
 	if err != nil {
-		setupLog.Error(err, "unable to add TLS settings to the webhook server")
+		setupLog.Error(err, "Unable to start manager: invalid flags")
 		os.Exit(1)
 	}
-	webhookOpts.TLSOpts = tlsOptionOverrides
+	webhookOpts.TLSOpts = tlsOptions
 	managerOpts.WebhookServer = webhook.NewServer(webhookOpts)
 	managerOpts.AddToManager = addToManager
-	managerOpts.Metrics = capiflags.GetDiagnosticsOptions(diagnosticsOptions)
+	managerOpts.Metrics = *metricsOptions
 
 	// Set up the context that's going to be used in controllers and for the manager.
 	ctx := ctrl.SetupSignalHandler()
@@ -395,11 +390,21 @@ func setupVAPIControllers(ctx context.Context, controllerCtx *capvcontext.Contro
 }
 
 func setupSupervisorControllers(ctx context.Context, controllerCtx *capvcontext.ControllerManagerContext, mgr ctrlmgr.Manager, tracker *remote.ClusterCacheTracker) error {
+	if err := (&vmwarewebhooks.VSphereMachineTemplateWebhook{}).SetupWebhookWithManager(mgr); err != nil {
+		return err
+	}
+	if err := (&vmwarewebhooks.VSphereMachineWebhook{}).SetupWebhookWithManager(mgr); err != nil {
+		return err
+	}
 	if err := controllers.AddClusterControllerToManager(ctx, controllerCtx, mgr, true, concurrency(vSphereClusterConcurrency)); err != nil {
 		return err
 	}
 
 	if err := controllers.AddMachineControllerToManager(ctx, controllerCtx, mgr, true, concurrency(vSphereMachineConcurrency)); err != nil {
+		return err
+	}
+
+	if err := vmware.AddVSphereMachineTemplateControllerToManager(ctx, controllerCtx, mgr, concurrency(vSphereMachineTemplateConcurrency)); err != nil {
 		return err
 	}
 
@@ -456,6 +461,8 @@ func setupRemoteClusterCacheTracker(ctx context.Context, mgr ctrlmgr.Manager) (*
 			SecretCachingClient: secretCachingClient,
 			ControllerName:      controllerName,
 			Log:                 &ctrl.Log,
+			ClientQPS:           clusterCacheTrackerClientQPS,
+			ClientBurst:         clusterCacheTrackerClientBurst,
 		},
 	)
 	if err != nil {

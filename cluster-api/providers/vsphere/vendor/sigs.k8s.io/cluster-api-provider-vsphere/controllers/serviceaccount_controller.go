@@ -19,9 +19,8 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"os"
 	"reflect"
-	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -183,14 +182,15 @@ func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, req reconcile.
 		}
 	}()
 
-	if !vsphereCluster.DeletionTimestamp.IsZero() {
-		return ctrl.Result{}, r.reconcileDelete(ctx, clusterContext)
+	// Always remove the deprecated finalizer if it exists.
+	// This code needs to be kept for a while to cleanup the finalizer.
+	//nolint:staticcheck
+	if controllerutil.ContainsFinalizer(clusterContext.VSphereCluster, vmwarev1.ProviderServiceAccountFinalizer) {
+		controllerutil.RemoveFinalizer(clusterContext.VSphereCluster, vmwarev1.ProviderServiceAccountFinalizer) //nolint:staticcheck
 	}
 
-	// Add finalizer first if not set to avoid the race condition between init and delete.
-	// Note: Finalizers in general can only be added when the deletionTimestamp is not set.
-	if !controllerutil.ContainsFinalizer(clusterContext.VSphereCluster, vmwarev1.ProviderServiceAccountFinalizer) {
-		controllerutil.AddFinalizer(clusterContext.VSphereCluster, vmwarev1.ProviderServiceAccountFinalizer)
+	// Nothing to do when vsphereCluster is getting deleted.
+	if !vsphereCluster.DeletionTimestamp.IsZero() {
 		return ctrl.Result{}, nil
 	}
 
@@ -213,30 +213,6 @@ func (r *ServiceAccountReconciler) Reconcile(ctx context.Context, req reconcile.
 		ClusterContext: clusterContext,
 		GuestClient:    guestClient,
 	})
-}
-
-// reconcileDelete handles delete events for ProviderServiceAccounts.
-func (r *ServiceAccountReconciler) reconcileDelete(ctx context.Context, clusterCtx *vmwarecontext.ClusterContext) error {
-	log := ctrl.LoggerFrom(ctx)
-
-	pSvcAccounts, err := r.getProviderServiceAccounts(ctx, clusterCtx)
-	if err != nil {
-		return errors.Wrap(err, "failed to get ProviderServiceAccounts")
-	}
-
-	for _, pSvcAccount := range pSvcAccounts {
-		// Note: We have to use := here to not overwrite log & ctx outside the for loop.
-		log := log.WithValues("ProviderServiceAccount", klog.KRef(pSvcAccount.Namespace, pSvcAccount.Name))
-		ctx := ctrl.LoggerInto(ctx, log)
-
-		// Delete entries for configmap with serviceaccount
-		if err := r.deleteServiceAccountConfigMap(ctx, pSvcAccount); err != nil {
-			return errors.Wrapf(err, "failed to delete ServiceAccount %s from ServiceAccounts ConfigMap", pSvcAccount.Name)
-		}
-	}
-
-	controllerutil.RemoveFinalizer(clusterCtx.VSphereCluster, vmwarev1.ProviderServiceAccountFinalizer)
-	return nil
 }
 
 // reconcileNormal handles create and update events for ProviderServiceAccounts.
@@ -267,6 +243,12 @@ func (r *ServiceAccountReconciler) reconcileNormal(ctx context.Context, guestClu
 func (r *ServiceAccountReconciler) ensureProviderServiceAccounts(ctx context.Context, guestClusterCtx *vmwarecontext.GuestClusterContext, pSvcAccounts []vmwarev1.ProviderServiceAccount) error {
 	log := ctrl.LoggerFrom(ctx)
 
+	pSvcAccountNames := []string{}
+	for _, pSvcAccount := range pSvcAccounts {
+		pSvcAccountNames = append(pSvcAccountNames, pSvcAccount.Name)
+	}
+	log.V(5).Info(fmt.Sprintf("Reconcile ProviderServiceAccounts: %v", strings.Join(pSvcAccountNames, ",")))
+
 	for i, pSvcAccount := range pSvcAccounts {
 		// Note: We have to use := here to not overwrite log & ctx outside the for loop.
 		log := log.WithValues("ProviderServiceAccount", klog.KRef(pSvcAccount.Namespace, pSvcAccount.Name))
@@ -282,27 +264,22 @@ func (r *ServiceAccountReconciler) ensureProviderServiceAccounts(ctx context.Con
 			return errors.Wrapf(err, "failed to ensure ServiceAccount %s", pSvcAccount.Name)
 		}
 
-		// 2. Add ServiceAccount to ServiceAccounts ConfigMap
-		if err := r.ensureServiceAccountConfigMap(ctx, pSvcAccount); err != nil {
-			return errors.Wrapf(err, "failed to add ServiceAccount %s to ServiceAccounts ConfigMap", pSvcAccount.Name)
-		}
-
-		// 3. Ensure secret of ServiceAccountToken type for the ServiceAccount
+		// 2. Ensure secret of ServiceAccountToken type for the ServiceAccount
 		if err := r.ensureServiceAccountSecret(ctx, pSvcAccount); err != nil {
 			return errors.Wrapf(err, "failed to ensure ServiceAcountToken secret %s", getServiceAccountSecretName(pSvcAccount))
 		}
 
-		// 4. Ensure the associated Role for the ServiceAccount
+		// 3. Ensure the associated Role for the ServiceAccount
 		if err := r.ensureRole(ctx, pSvcAccount); err != nil {
 			return errors.Wrapf(err, "failed to ensure Role for ServiceAccount %s", pSvcAccount.Name)
 		}
 
-		// 5. Ensure the associated RoleBinding for the ServiceAccount
+		// 4. Ensure the associated RoleBinding for the ServiceAccount
 		if err := r.ensureRoleBinding(ctx, pSvcAccount); err != nil {
 			return errors.Wrapf(err, "failed to ensure RoleBinding for ServiceAccount %s", pSvcAccount.Name)
 		}
 
-		// 6. Sync the ServiceAccount secret to the workload cluster
+		// 5. Sync the ServiceAccount secret to the workload cluster
 		if err := r.syncServiceAccountSecret(ctx, guestClusterCtx, pSvcAccount); err != nil {
 			return errors.Wrapf(err, "failed to sync secret for ProviderServiceAccount %s to workload cluster", pSvcAccount.Name)
 		}
@@ -520,64 +497,6 @@ func (r *ServiceAccountReconciler) syncServiceAccountSecret(ctx context.Context,
 	return err
 }
 
-func (r *ServiceAccountReconciler) getConfigMapAndBuffer(ctx context.Context) (*corev1.ConfigMap, *corev1.ConfigMap, error) {
-	configMap := &corev1.ConfigMap{}
-
-	if err := r.Client.Get(ctx, GetCMNamespaceName(), configMap); err != nil {
-		return nil, nil, err
-	}
-
-	configMapBuffer := &corev1.ConfigMap{}
-	configMapBuffer.Name = configMap.Name
-	configMapBuffer.Namespace = configMap.Namespace
-	return configMapBuffer, configMap, nil
-}
-
-func (r *ServiceAccountReconciler) deleteServiceAccountConfigMap(ctx context.Context, svcAccount vmwarev1.ProviderServiceAccount) error {
-	log := ctrl.LoggerFrom(ctx)
-
-	svcAccountName := getSystemServiceAccountFullName(svcAccount)
-	configMapBuffer, configMap, err := r.getConfigMapAndBuffer(ctx)
-	if err != nil {
-		return err
-	}
-	if valid, exist := configMap.Data[svcAccountName]; !exist || valid != strconv.FormatBool(true) {
-		// Service account name is not in the config map
-		return nil
-	}
-	log.Info("Patching ServiceAccounts ConfigMap to ensure ServiceAccount is deleted")
-	_, err = controllerutil.CreateOrPatch(ctx, r.Client, configMapBuffer, func() error {
-		configMapBuffer.Data = configMap.Data
-		delete(configMapBuffer.Data, svcAccountName)
-		return nil
-	})
-	return err
-}
-
-func (r *ServiceAccountReconciler) ensureServiceAccountConfigMap(ctx context.Context, svcAccount vmwarev1.ProviderServiceAccount) error {
-	log := ctrl.LoggerFrom(ctx)
-
-	svcAccountName := getSystemServiceAccountFullName(svcAccount)
-	configMapBuffer, configMap, err := r.getConfigMapAndBuffer(ctx)
-	if err != nil {
-		return err
-	}
-	if configMap.Data == nil {
-		configMap.Data = map[string]string{}
-	}
-	if valid, exist := configMap.Data[svcAccountName]; exist && valid == strconv.FormatBool(true) {
-		// Service account name is already in the config map
-		return nil
-	}
-	log.Info("Patching ServiceAccounts ConfigMap to ensure ServiceAccount is added")
-	_, err = controllerutil.CreateOrPatch(ctx, r.Client, configMapBuffer, func() error {
-		configMapBuffer.Data = configMap.Data
-		configMapBuffer.Data[svcAccountName] = "true"
-		return nil
-	})
-	return err
-}
-
 func (r *ServiceAccountReconciler) getProviderServiceAccounts(ctx context.Context, clusterCtx *vmwarecontext.ClusterContext) ([]vmwarev1.ProviderServiceAccount, error) {
 	var pSvcAccounts []vmwarev1.ProviderServiceAccount
 
@@ -615,22 +534,6 @@ func getServiceAccountName(pSvcAccount vmwarev1.ProviderServiceAccount) string {
 
 func getServiceAccountSecretName(pSvcAccount vmwarev1.ProviderServiceAccount) string {
 	return fmt.Sprintf("%s-secret", pSvcAccount.Name)
-}
-
-func getSystemServiceAccountFullName(pSvcAccount vmwarev1.ProviderServiceAccount) string {
-	return fmt.Sprintf("%s.%s.%s", systemServiceAccountPrefix, getServiceAccountNamespace(pSvcAccount), getServiceAccountName(pSvcAccount))
-}
-
-func getServiceAccountNamespace(pSvcAccount vmwarev1.ProviderServiceAccount) string {
-	return pSvcAccount.Namespace
-}
-
-// GetCMNamespaceName gets capi valid modifier configmap metadata.
-func GetCMNamespaceName() types.NamespacedName {
-	return types.NamespacedName{
-		Namespace: os.Getenv("SERVICE_ACCOUNTS_CM_NAMESPACE"),
-		Name:      os.Getenv("SERVICE_ACCOUNTS_CM_NAME"),
-	}
 }
 
 // secretToVSphereCluster is a mapper function used to enqueue reconcile.Request objects.

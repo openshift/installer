@@ -72,8 +72,10 @@ func AddVSphereDeploymentZoneControllerToManager(ctx context.Context, controller
 		// should cause a resource to be synchronized, such as a goroutine
 		// waiting on some asynchronous, external task to complete.
 		WatchesRawSource(
-			&source.Channel{Source: controllerManagerCtx.GetGenericEventChannelFor(infrav1.GroupVersion.WithKind("VSphereDeploymentZone"))},
-			&handler.EnqueueRequestForObject{},
+			source.Channel(
+				controllerManagerCtx.GetGenericEventChannelFor(infrav1.GroupVersion.WithKind("VSphereDeploymentZone")),
+				&handler.EnqueueRequestForObject{},
+			),
 		).
 		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), controllerManagerCtx.WatchFilterValue)).
 		Complete(reconciler)
@@ -191,11 +193,7 @@ func (r vsphereDeploymentZoneReconciler) getVCenterSession(ctx context.Context, 
 	params := session.NewParams().
 		WithServer(deploymentZoneCtx.VSphereDeploymentZone.Spec.Server).
 		WithDatacenter(datacenter).
-		WithUserInfo(r.ControllerManagerContext.Username, r.ControllerManagerContext.Password).
-		WithFeatures(session.Feature{
-			EnableKeepAlive:   r.EnableKeepAlive,
-			KeepAliveDuration: r.KeepAliveDuration,
-		})
+		WithUserInfo(r.ControllerManagerContext.Username, r.ControllerManagerContext.Password)
 
 	clusterList := &infrav1.VSphereClusterList{}
 	if err := r.Client.List(ctx, clusterList); err != nil {

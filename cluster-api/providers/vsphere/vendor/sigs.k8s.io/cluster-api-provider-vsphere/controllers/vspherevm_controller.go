@@ -89,8 +89,10 @@ func AddVMControllerToManager(ctx context.Context, controllerManagerCtx *capvcon
 		// should cause a resource to be synchronized, such as a goroutine
 		// waiting on some asynchronous, external task to complete.
 		WatchesRawSource(
-			&source.Channel{Source: controllerManagerCtx.GetGenericEventChannelFor(infrav1.GroupVersion.WithKind("VSphereVM"))},
-			&handler.EnqueueRequestForObject{},
+			source.Channel(
+				controllerManagerCtx.GetGenericEventChannelFor(infrav1.GroupVersion.WithKind("VSphereVM")),
+				&handler.EnqueueRequestForObject{},
+			),
 		).
 		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), controllerManagerCtx.WatchFilterValue)).
 		Watches(
@@ -587,11 +589,8 @@ func (r vmReconciler) retrieveVcenterSession(ctx context.Context, vsphereVM *inf
 		WithServer(vsphereVM.Spec.Server).
 		WithDatacenter(vsphereVM.Spec.Datacenter).
 		WithUserInfo(r.ControllerManagerContext.Username, r.ControllerManagerContext.Password).
-		WithThumbprint(vsphereVM.Spec.Thumbprint).
-		WithFeatures(session.Feature{
-			EnableKeepAlive:   r.ControllerManagerContext.EnableKeepAlive,
-			KeepAliveDuration: r.ControllerManagerContext.KeepAliveDuration,
-		})
+		WithThumbprint(vsphereVM.Spec.Thumbprint)
+
 	cluster, err := clusterutilv1.GetClusterFromMetadata(ctx, r.Client, vsphereVM.ObjectMeta)
 	if err != nil {
 		log.V(4).Info("Using credentials provided to the manager to create the authenticated session, VSphereVM is missing cluster label or cluster does not exist")

@@ -33,6 +33,11 @@ const (
 	//
 	// alpha: v1.4
 	NodeAntiAffinity featuregate.Feature = "NodeAntiAffinity"
+
+	// NamespaceScopedZones is a feature gate for the NamespaceScopedZones functionality for supervisor.
+	//
+	// alpha: v1.11
+	NamespaceScopedZones featuregate.Feature = "NamespaceScopedZones"
 )
 
 func init() {
@@ -43,5 +48,6 @@ func init() {
 // To add a new feature, define a key for it above and add it here.
 var defaultCAPVFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	// Every feature should be initiated here:
-	NodeAntiAffinity: {Default: false, PreRelease: featuregate.Alpha},
+	NodeAntiAffinity:     {Default: false, PreRelease: featuregate.Alpha},
+	NamespaceScopedZones: {Default: false, PreRelease: featuregate.Alpha},
 }

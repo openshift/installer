@@ -22,7 +22,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-func aggregateObjErrors(gk schema.GroupKind, name string, allErrs field.ErrorList) error {
+// AggregateObjErrors aggregates a list of field errors into a single Invalid API error.
+func AggregateObjErrors(gk schema.GroupKind, name string, allErrs field.ErrorList) error {
 	if len(allErrs) == 0 {
 		return nil
 	}

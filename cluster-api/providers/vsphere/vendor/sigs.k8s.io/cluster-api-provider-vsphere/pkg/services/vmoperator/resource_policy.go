@@ -20,7 +20,7 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha1"
+	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -78,16 +78,10 @@ func (s *RPService) createVirtualMachineSetResourcePolicy(ctx context.Context, c
 			ResourcePool: vmoprv1.ResourcePoolSpec{
 				Name: clusterCtx.Cluster.Name,
 			},
-			Folder: vmoprv1.FolderSpec{
-				Name: clusterCtx.Cluster.Name,
-			},
-			ClusterModules: []vmoprv1.ClusterModuleSpec{
-				{
-					GroupName: ControlPlaneVMClusterModuleGroupName,
-				},
-				{
-					GroupName: getMachineDeploymentNameForCluster(clusterCtx.Cluster),
-				},
+			Folder: clusterCtx.Cluster.Name,
+			ClusterModuleGroups: []string{
+				ControlPlaneVMClusterModuleGroupName,
+				getMachineDeploymentNameForCluster(clusterCtx.Cluster),
 			},
 		}
 		// Ensure that the VirtualMachineSetResourcePolicy is owned by the VSphereCluster
