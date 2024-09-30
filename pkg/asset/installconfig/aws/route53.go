@@ -157,11 +157,17 @@ func GetR53ClientCfg(sess *awss.Session, roleARN string) *aws.Config {
 
 // CreateRecordInput collects information for creating a record.
 type CreateRecordInput struct {
-	Name           string
-	Region         string
-	DNSTarget      string
-	ZoneID         string
-	AliasZoneID    string
+	// Fully qualified record domain name.
+	Name string
+	// Cluster Region.
+	Region string
+	// Where to route the DNS queries to.
+	DNSTarget string
+	// ID of the Hosted Zone.
+	ZoneID string
+	// ID of the Hosted Zone for Alias record.
+	AliasZoneID string
+	// Role to assume to create the record. Leave empty to not assume role.
 	HostedZoneRole string
 }
 
