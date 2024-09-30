@@ -103,7 +103,7 @@ func imageBasedConfig() *ImageBasedConfig {
 			},
 			Hostname:        "somehostname",
 			ReleaseRegistry: "quay.io",
-			NetworkConfig: aiv1beta1.NetConfig{
+			NetworkConfig: &aiv1beta1.NetConfig{
 				Raw: unmarshalJSON([]byte(rawNMStateConfig)),
 			},
 		},

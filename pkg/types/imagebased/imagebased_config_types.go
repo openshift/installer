@@ -28,7 +28,7 @@ type Config struct {
 	// NetworkConfig is a YAML manifest that can be processed by nmstate, using custom
 	// marshaling/unmarshaling that will allow to populate nmstate config as plain yaml.
 	// +optional
-	NetworkConfig aiv1beta1.NetConfig `json:"networkConfig,omitempty"`
+	NetworkConfig *aiv1beta1.NetConfig `json:"networkConfig,omitempty"`
 
 	// ReleaseRegistry is the container registry used to host the release image of the seed cluster.
 	// +optional
@@ -84,7 +84,7 @@ type InstallationConfig struct {
 	// custom marshaling/unmarshaling that will allow to populate nmstate config
 	// as plain yaml.
 	// +optional
-	NetworkConfig aiv1beta1.NetConfig `json:"networkConfig,omitempty"`
+	NetworkConfig *aiv1beta1.NetConfig `json:"networkConfig,omitempty"`
 
 	// Proxy defines the proxy settings for the cluster.
 	// If unset, the cluster will not be configured to use a proxy.

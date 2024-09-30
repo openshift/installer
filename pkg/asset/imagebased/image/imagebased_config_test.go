@@ -218,6 +218,21 @@ networkConfig:
 			expectedError: "networkConfig: Invalid value: invalid: config\n: failed to execute 'nmstatectl gc', error: InvalidArgument: Invalid YAML string: unknown field `invalid`",
 		},
 		{
+			name: "empty networkConfig",
+			data: `
+apiVersion: v1beta1
+metadata:
+  name: image-based-installation-config
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+seedVersion: 4.16.0
+seedImage: quay.io/openshift-kni/seed-image:4.16.0
+installationDisk: /dev/vda
+networkConfig: null
+`,
+			expectedFound: true,
+			expectedError: "",
+		},
+		{
 			name: "invalid-imageDigestSources",
 			data: `
 apiVersion: v1beta1
@@ -347,7 +362,7 @@ func ibiConfig() *ImageBasedInstallationConfigBuilder {
 			Shutdown:             false,
 			SSHKey:               "",
 			PullSecret:           "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}",
-			NetworkConfig: aiv1beta1.NetConfig{
+			NetworkConfig: &aiv1beta1.NetConfig{
 				Raw: unmarshalJSON([]byte(rawNMStateConfig)),
 			},
 		},
@@ -363,7 +378,7 @@ func (icb *ImageBasedInstallationConfigBuilder) additionalTrustBundle(atb string
 	return icb
 }
 
-func (icb *ImageBasedInstallationConfigBuilder) networkConfig(nc aiv1beta1.NetConfig) *ImageBasedInstallationConfigBuilder {
+func (icb *ImageBasedInstallationConfigBuilder) networkConfig(nc *aiv1beta1.NetConfig) *ImageBasedInstallationConfigBuilder {
 	icb.InstallationConfig.NetworkConfig = nc
 	return icb
 }
