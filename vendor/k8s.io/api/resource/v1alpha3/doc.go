@@ -1,5 +1,9 @@
 /*
+<<<<<<<< HEAD:vendor/k8s.io/api/resource/v1alpha3/doc.go
 Copyright 2022 The Kubernetes Authors.
+========
+Copyright 2016 The Kubernetes Authors.
+>>>>>>>> 4e32654a50 (Changed logic to use CAPI for data disks):cluster-api/providers/vsphere/vendor/k8s.io/apimachinery/pkg/util/portforward/constants.go
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,6 +18,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+<<<<<<<< HEAD:vendor/k8s.io/api/resource/v1alpha3/doc.go
 // +k8s:openapi-gen=true
 // +k8s:deepcopy-gen=package
 // +k8s:protobuf-gen=package
@@ -22,3 +27,13 @@ limitations under the License.
 
 // Package v1alpha3 is the v1alpha3 version of the resource API.
 package v1alpha3 // import "k8s.io/api/resource/v1alpha3"
+========
+package portforward
+
+const (
+	PortForwardV1Name                    = "portforward.k8s.io"
+	WebsocketsSPDYTunnelingPrefix        = "SPDY/3.1+"
+	KubernetesSuffix                     = ".k8s.io"
+	WebsocketsSPDYTunnelingPortForwardV1 = WebsocketsSPDYTunnelingPrefix + PortForwardV1Name
+)
+>>>>>>>> 4e32654a50 (Changed logic to use CAPI for data disks):cluster-api/providers/vsphere/vendor/k8s.io/apimachinery/pkg/util/portforward/constants.go

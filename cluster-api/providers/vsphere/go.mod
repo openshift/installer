@@ -20,6 +20,8 @@ require (
 	github.com/vmware/govmomi v0.43.0 // indirect
 )
 
+replace sigs.k8s.io/cluster-api-provider-vsphere => github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241001154255-1469f6482074
+
 require (
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230305170008-8188dc5388df // indirect

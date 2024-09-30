@@ -932,6 +932,8 @@ github.com/vmware/govmomi v0.43.0 h1:7Kg3Bkdly+TrE67BYXzRq7ZrDnn7xqpKX95uEh2f9Go
 github.com/vmware/govmomi v0.43.0/go.mod h1:IOv5nTXCPqH9qVJAlRuAGffogaLsNs8aF+e7vLgsHJU=
 github.com/vr4manta/api v0.0.0-20240924150740-ec5392903387 h1:WDXPgFYRTEmlo3wKeo3/9idb42JbckSd75GyfjpgLPU=
 github.com/vr4manta/api v0.0.0-20240924150740-ec5392903387/go.mod h1:OOh6Qopf21pSzqNVCB5gomomBXb8o5sGKZxG2KNpaXM=
+github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241001154255-1469f6482074 h1:7LvmgO6YNMEEpH6dkJgM6ZkDGIiC4d3JvtHw8O2HRxs=
+github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241001154255-1469f6482074/go.mod h1:9WD2xjNc8mGctPk03kMS0t8NH0eaFBnAkO+cIcS0qr0=
 github.com/xanzy/ssh-agent v0.3.0 h1:wUMzuKtKilRgBAD1sUb8gOwwRr2FGoBVumcjoOACClI=
 github.com/xanzy/ssh-agent v0.3.0/go.mod h1:3s9xbODqPuuhK9JV1R321M/FlMZSBvE5aY6eAcqrDh0=
 github.com/xdg-go/pbkdf2 v1.0.0/go.mod h1:jrpuAogTd400dnrH08LKmI/xc1MbPOebTwRqcT5RDeI=

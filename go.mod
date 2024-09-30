@@ -328,3 +328,5 @@ replace github.com/containerd/containerd => github.com/containerd/containerd v1.
 replace github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
 
 replace github.com/openshift/api => github.com/vr4manta/api v0.0.0-20240924150740-ec5392903387
+
+replace sigs.k8s.io/cluster-api-provider-vsphere => github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241001154255-1469f6482074

@@ -172,8 +172,3 @@ func clusterToInfrastructureMapFunc(ctx context.Context, controllerCtx *capvcont
 	gvk := infrav1.GroupVersion.WithKind(reflect.TypeOf(&infrav1.VSphereCluster{}).Elem().Name())
 	return clusterutilv1.ClusterToInfrastructureMapFunc(ctx, gvk, controllerCtx.Client, &infrav1.VSphereCluster{})
 }
-
-func clusterToVMwareInfrastructureMapFunc(ctx context.Context, controllerCtx *capvcontext.ControllerManagerContext) handler.MapFunc {
-	gvk := vmwarev1.GroupVersion.WithKind(reflect.TypeOf(&vmwarev1.VSphereCluster{}).Elem().Name())
-	return clusterutilv1.ClusterToInfrastructureMapFunc(ctx, gvk, controllerCtx.Client, &vmwarev1.VSphereCluster{})
-}

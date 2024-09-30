@@ -18,4 +18,8 @@ limitations under the License.
 
 package v1alpha1
 
+<<<<<<<< HEAD:vendor/k8s.io/client-go/kubernetes/typed/coordination/v1alpha1/generated_expansion.go
 type LeaseCandidateExpansion interface{}
+========
+type StorageVersionMigrationExpansion interface{}
+>>>>>>>> 4e32654a50 (Changed logic to use CAPI for data disks):cluster-api/providers/vsphere/vendor/k8s.io/client-go/kubernetes/typed/storagemigration/v1alpha1/generated_expansion.go

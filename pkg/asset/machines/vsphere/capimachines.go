@@ -148,6 +148,20 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 				},
 			},
 		}
+
+		// If we have additional disks to add to VM, lets iterate through them and add to CAPV machine
+		if len(providerSpec.Disks) > 0 {
+			dataDisks := []capv.VSphereDisk{}
+			for _, disk := range providerSpec.Disks {
+				newDisk := capv.VSphereDisk{
+					DeviceName: disk.DeviceName,
+					SizeGiB:    disk.SizeGiB,
+				}
+				dataDisks = append(dataDisks, newDisk)
+			}
+			vsphereMachine.Spec.DataDisks = dataDisks
+		}
+
 		vsphereMachine.SetGroupVersionKind(capv.GroupVersion.WithKind("VSphereMachine"))
 		capvMachines = append(capvMachines, vsphereMachine)
 
