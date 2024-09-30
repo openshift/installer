@@ -220,7 +220,7 @@ func addAdditionalDisks(ctx context.Context, machine *v1beta1.VSphereMachine, po
 	}
 
 	for diskIndex, newDisk := range pool.AdditionalDisks {
-		logrus.Debugf("Attempting to add disk %d with size %dGB", diskIndex, newDisk.DiskSizeGB)
+		logrus.Debugf("Attempting to add disk %d with size %dGiB", diskIndex, newDisk.DiskSizeGB)
 
 		disk := devices.CreateDisk(controller, ds.Reference(), "")
 
@@ -236,7 +236,7 @@ func addAdditionalDisks(ctx context.Context, machine *v1beta1.VSphereMachine, po
 		disk.VirtualDevice.UnitNumber = &unitNumber
 
 		// Add disk using default profile of VM.
-		logrus.Infof("Adding disk device to vm %v", disk)
+		logrus.Infof("Adding disk device to vm %s", machine.Name)
 		err = vm.AddDevice(ctx, disk)
 		if err != nil {
 			return err
