@@ -18,7 +18,16 @@ limitations under the License.
 package v1beta1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+const (
+	// VSphereResourceCPU defines Resource type CPU for VSphereMachines.
+	VSphereResourceCPU corev1.ResourceName = "cpu"
+
+	// VSphereResourceMemory defines Resource type memory for VSphereMachines.
+	VSphereResourceMemory corev1.ResourceName = "memory"
 )
 
 // VSphereMachineTemplateSpec defines the desired state of VSphereMachineTemplate.
@@ -26,16 +35,27 @@ type VSphereMachineTemplateSpec struct {
 	Template VSphereMachineTemplateResource `json:"template"`
 }
 
+// VSphereMachineTemplateStatus defines the observed state of VSphereMachineTemplate.
+type VSphereMachineTemplateStatus struct {
+	// Capacity defines the resource capacity for this VSphereMachineTemplate.
+	// This value is used for autoscaling from zero operations as defined in:
+	// https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20210310-opt-in-autoscaling-from-zero.md
+	// +optional
+	Capacity corev1.ResourceList `json:"capacity,omitempty"`
+}
+
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=vspheremachinetemplates,scope=Namespaced,categories=cluster-api
 // +kubebuilder:storageversion
+// +kubebuilder:subresource:status
 
 // VSphereMachineTemplate is the Schema for the vspheremachinetemplates API.
 type VSphereMachineTemplate struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec VSphereMachineTemplateSpec `json:"spec,omitempty"`
+	Spec   VSphereMachineTemplateSpec   `json:"spec,omitempty"`
+	Status VSphereMachineTemplateStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true

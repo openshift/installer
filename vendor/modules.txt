@@ -502,9 +502,6 @@ github.com/diskfs/go-diskfs/util
 # github.com/docker/go-units v0.5.0
 ## explicit
 github.com/docker/go-units
-# github.com/dougm/pretty v0.0.0-20171025230240-2ee9d7453c02
-## explicit
-github.com/dougm/pretty
 # github.com/elliotwutingfeng/asciiset v0.0.0-20230602022725-51bbb787efab
 ## explicit; go 1.11
 github.com/elliotwutingfeng/asciiset
@@ -827,9 +824,6 @@ github.com/kdomanski/iso9660
 # github.com/kr/fs v0.1.0
 ## explicit
 github.com/kr/fs
-# github.com/kr/text v0.2.0
-## explicit
-github.com/kr/text
 # github.com/kylelemons/godebug v1.1.0
 ## explicit; go 1.11
 github.com/kylelemons/godebug/diff
@@ -1015,8 +1009,8 @@ github.com/nutanix-cloud-native/prism-go-client/v3
 # github.com/oklog/ulid v1.3.1
 ## explicit
 github.com/oklog/ulid
-# github.com/onsi/gomega v1.34.0
-## explicit; go 1.20
+# github.com/onsi/gomega v1.34.2
+## explicit; go 1.22
 github.com/onsi/gomega
 github.com/onsi/gomega/format
 github.com/onsi/gomega/internal
@@ -1273,16 +1267,10 @@ github.com/ulikunitz/xz/lzma
 # github.com/vincent-petithory/dataurl v1.0.0
 ## explicit
 github.com/vincent-petithory/dataurl
-# github.com/vmware/govmomi v0.37.2
-## explicit; go 1.19
+# github.com/vmware/govmomi v0.43.0
+## explicit; go 1.21
 github.com/vmware/govmomi
-github.com/vmware/govmomi/cns
-github.com/vmware/govmomi/cns/methods
-github.com/vmware/govmomi/cns/types
 github.com/vmware/govmomi/find
-github.com/vmware/govmomi/govc/cli
-github.com/vmware/govmomi/govc/flags
-github.com/vmware/govmomi/govc/importx
 github.com/vmware/govmomi/history
 github.com/vmware/govmomi/internal
 github.com/vmware/govmomi/internal/version
@@ -1290,12 +1278,12 @@ github.com/vmware/govmomi/list
 github.com/vmware/govmomi/nfc
 github.com/vmware/govmomi/object
 github.com/vmware/govmomi/ovf
+github.com/vmware/govmomi/ovf/importer
 github.com/vmware/govmomi/pbm
 github.com/vmware/govmomi/pbm/methods
 github.com/vmware/govmomi/pbm/types
 github.com/vmware/govmomi/property
 github.com/vmware/govmomi/session
-github.com/vmware/govmomi/session/cache
 github.com/vmware/govmomi/session/keepalive
 github.com/vmware/govmomi/simulator
 github.com/vmware/govmomi/simulator/esx
@@ -1309,7 +1297,6 @@ github.com/vmware/govmomi/units
 github.com/vmware/govmomi/vapi
 github.com/vmware/govmomi/vapi/internal
 github.com/vmware/govmomi/vapi/library
-github.com/vmware/govmomi/vapi/library/finder
 github.com/vmware/govmomi/vapi/rest
 github.com/vmware/govmomi/vapi/simulator
 github.com/vmware/govmomi/vapi/tags
@@ -1326,8 +1313,6 @@ github.com/vmware/govmomi/vim25/progress
 github.com/vmware/govmomi/vim25/soap
 github.com/vmware/govmomi/vim25/types
 github.com/vmware/govmomi/vim25/xml
-github.com/vmware/govmomi/vmdk
-github.com/vmware/govmomi/vsan/vsanfs/types
 # github.com/xlab/treeprint v1.2.0
 ## explicit; go 1.13
 github.com/xlab/treeprint
@@ -1439,13 +1424,13 @@ golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/agent
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 golang.org/x/crypto/ssh/knownhosts
-# golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
+# golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 ## explicit; go 1.20
 golang.org/x/exp/constraints
 golang.org/x/exp/maps
 golang.org/x/exp/slices
-# golang.org/x/mod v0.19.0
-## explicit; go 1.18
+# golang.org/x/mod v0.21.0
+## explicit; go 1.22.0
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/modfile
 golang.org/x/mod/module
@@ -1492,6 +1477,7 @@ golang.org/x/sys/windows/registry
 golang.org/x/term
 # golang.org/x/text v0.18.0
 ## explicit; go 1.18
+golang.org/x/text/cases
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/htmlindex
@@ -1502,6 +1488,7 @@ golang.org/x/text/encoding/korean
 golang.org/x/text/encoding/simplifiedchinese
 golang.org/x/text/encoding/traditionalchinese
 golang.org/x/text/encoding/unicode
+golang.org/x/text/internal
 golang.org/x/text/internal/language
 golang.org/x/text/internal/language/compact
 golang.org/x/text/internal/tag
@@ -1516,11 +1503,10 @@ golang.org/x/text/width
 # golang.org/x/time v0.5.0
 ## explicit; go 1.18
 golang.org/x/time/rate
-# golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d
-## explicit; go 1.19
+# golang.org/x/tools v0.25.0
+## explicit; go 1.22.0
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/go/gcexportdata
-golang.org/x/tools/go/internal/packagesdriver
 golang.org/x/tools/go/packages
 golang.org/x/tools/go/types/objectpath
 golang.org/x/tools/imports
@@ -1731,7 +1717,7 @@ gorm.io/gorm/clause
 gorm.io/gorm/logger
 gorm.io/gorm/schema
 gorm.io/gorm/utils
-# k8s.io/api v0.30.3
+# k8s.io/api v0.30.5
 ## explicit; go 1.22.0
 k8s.io/api/admission/v1
 k8s.io/api/admission/v1beta1
@@ -1790,7 +1776,7 @@ k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
 k8s.io/api/storagemigration/v1alpha1
-# k8s.io/apiextensions-apiserver v0.30.3
+# k8s.io/apiextensions-apiserver v0.30.5
 ## explicit; go 1.22.0
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
@@ -1801,7 +1787,7 @@ k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset
 k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme
 k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1
 k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1
-# k8s.io/apimachinery v0.30.3
+# k8s.io/apimachinery v0.30.5
 ## explicit; go 1.22.0
 k8s.io/apimachinery/pkg/api/apitesting
 k8s.io/apimachinery/pkg/api/apitesting/fuzzer
@@ -1872,7 +1858,7 @@ k8s.io/cli-runtime/pkg/genericclioptions
 k8s.io/cli-runtime/pkg/genericiooptions
 k8s.io/cli-runtime/pkg/printers
 k8s.io/cli-runtime/pkg/resource
-# k8s.io/client-go v0.30.3
+# k8s.io/client-go v0.30.5
 ## explicit; go 1.22.0
 k8s.io/client-go/applyconfigurations/admissionregistration/v1
 k8s.io/client-go/applyconfigurations/admissionregistration/v1alpha1
@@ -2092,11 +2078,11 @@ k8s.io/client-go/util/workqueue
 # k8s.io/cloud-provider-vsphere v1.30.1 => github.com/openshift/cloud-provider-vsphere v1.19.1-0.20240626105621-6464d0bb4928
 ## explicit; go 1.22.0
 k8s.io/cloud-provider-vsphere/pkg/common/config
-# k8s.io/cluster-bootstrap v0.30.3
+# k8s.io/cluster-bootstrap v0.30.5
 ## explicit; go 1.22.0
 k8s.io/cluster-bootstrap/token/api
 k8s.io/cluster-bootstrap/token/util
-# k8s.io/component-base v0.30.3
+# k8s.io/component-base v0.30.5
 ## explicit; go 1.22.0
 k8s.io/component-base/featuregate
 k8s.io/component-base/metrics
@@ -2198,10 +2184,9 @@ sigs.k8s.io/cluster-api-provider-ibmcloud/util
 ## explicit; go 1.22
 sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1
 sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/optional
-# sigs.k8s.io/cluster-api-provider-vsphere v1.10.2
-## explicit; go 1.21
+# sigs.k8s.io/cluster-api-provider-vsphere v1.10.2 => github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241001154255-1469f6482074
+## explicit; go 1.22.0
 sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1
-sigs.k8s.io/cluster-api-provider-vsphere/pkg/constants
 sigs.k8s.io/cluster-api-provider-vsphere/pkg/session
 # sigs.k8s.io/controller-runtime v0.18.5
 ## explicit; go 1.22.0
@@ -2272,7 +2257,7 @@ sigs.k8s.io/controller-tools/pkg/webhook
 ## explicit; go 1.18
 sigs.k8s.io/json
 sigs.k8s.io/json/internal/golang/encoding/json
-# sigs.k8s.io/kustomize/api v0.17.1
+# sigs.k8s.io/kustomize/api v0.17.3
 ## explicit; go 1.21
 sigs.k8s.io/kustomize/api/filters/annotations
 sigs.k8s.io/kustomize/api/filters/fieldspec
@@ -2318,7 +2303,7 @@ sigs.k8s.io/kustomize/api/provider
 sigs.k8s.io/kustomize/api/resmap
 sigs.k8s.io/kustomize/api/resource
 sigs.k8s.io/kustomize/api/types
-# sigs.k8s.io/kustomize/kyaml v0.17.0
+# sigs.k8s.io/kustomize/kyaml v0.17.2
 ## explicit; go 1.21
 sigs.k8s.io/kustomize/kyaml/comments
 sigs.k8s.io/kustomize/kyaml/errors
@@ -2377,3 +2362,4 @@ sigs.k8s.io/yaml/goyaml.v3
 # github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
 # github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
 # github.com/openshift/api => github.com/vr4manta/api v0.0.0-20240924150740-ec5392903387
+# sigs.k8s.io/cluster-api-provider-vsphere => github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241001154255-1469f6482074

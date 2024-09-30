@@ -203,6 +203,21 @@ type VirtualMachineCloneSpec struct {
 	// Check the compatibility with the ESXi version before setting the value.
 	// +optional
 	HardwareVersion string `json:"hardwareVersion,omitempty"`
+	// DataDisks holds information for additional disks to add to the VM that are not part of the VM's OVA template.
+	// +optional
+	DataDisks []VSphereDisk `json:"dataDisks,omitempty"`
+}
+
+// VSphereDisk describes additional disks for vSphere to be added to VM that are not part of the VM OVA template.
+type VSphereDisk struct {
+	// DeviceName is a name to be used to identify the disk definition. If deviceName is not specified,
+	// the disk will still be created.  The deviceName should be unique so that it can be used to clearly
+	// identify purpose of the disk, but is not required to be unique.
+	// +optional
+	DeviceName string `json:"deviceName,omitempty"`
+	// SizeGiB is the size of the disk (in GiB).
+	// +kubebuilder:validation:Required
+	SizeGiB int64 `json:"sizeGiB"`
 }
 
 // VSphereMachineTemplateResource describes the data needed to create a VSphereMachine from a template.
@@ -251,13 +266,24 @@ type PCIDeviceSpec struct {
 	// DeviceID is the device ID of a virtual machine's PCI, in integer.
 	// Defaults to the eponymous property value in the template from which the
 	// virtual machine is cloned.
-	// +kubebuilder:validation:Required
+	// Mutually exclusive with VGPUProfile as VGPUProfile and DeviceID + VendorID
+	// are two independent ways to define PCI devices.
+	// +optional
 	DeviceID *int32 `json:"deviceId,omitempty"`
 	// VendorId is the vendor ID of a virtual machine's PCI, in integer.
 	// Defaults to the eponymous property value in the template from which the
 	// virtual machine is cloned.
-	// +kubebuilder:validation:Required
+	// Mutually exclusive with VGPUProfile as VGPUProfile and DeviceID + VendorID
+	// are two independent ways to define PCI devices.
+	// +optional
 	VendorID *int32 `json:"vendorId,omitempty"`
+	// VGPUProfile is the profile name of a virtual machine's vGPU, in string.
+	// Defaults to the eponymous property value in the template from which the
+	// virtual machine is cloned.
+	// Mutually exclusive with DeviceID and VendorID as VGPUProfile and DeviceID + VendorID
+	// are two independent ways to define PCI devices.
+	// +optional
+	VGPUProfile string `json:"vGPUProfile,omitempty"`
 	// CustomLabel is the hardware label of a virtual machine's PCI device.
 	// Defaults to the eponymous property value in the template from which the
 	// virtual machine is cloned.
