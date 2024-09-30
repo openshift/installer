@@ -167,19 +167,68 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-cluster",
 				},
-				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
-				BaseDomain:                  "test-domain",
+				BaseDomain: "test-domain",
 				Networking: &types.Networking{
-					MachineNetwork: []types.MachineNetworkEntry{
-						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+					NetworkType: "OVNKubernetes",
+				},
+				ControlPlane: &types.MachinePool{
+					Name:           "master",
+					Replicas:       ptr.To[int64](1),
+					Hyperthreading: types.HyperthreadingEnabled,
+					Architecture:   types.ArchitectureAMD64,
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:           "worker",
+						Replicas:       ptr.To[int64](0),
+						Hyperthreading: types.HyperthreadingEnabled,
+						Architecture:   types.ArchitectureAMD64,
 					},
-					NetworkType:    "OVNKubernetes",
-					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
-					ClusterNetwork: []types.ClusterNetworkEntry{
-						{
-							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
-							HostPrefix: 23,
-						},
+				},
+				Platform:   types.Platform{None: &none.Platform{}},
+				PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+			},
+		},
+		{
+			name: "valid configuration for none platform for sno with machine network",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 10.0.0.0/24
+compute:
+  - architecture: amd64
+    hyperthreading: Enabled
+    name: worker
+    platform: {}
+    replicas: 0
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 1
+platform:
+  none : {}
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: true,
+			expectedConfig: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				BaseDomain: "test-domain",
+				Networking: &types.Networking{
+					NetworkType: "OVNKubernetes",
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/24")},
 					},
 				},
 				ControlPlane: &types.MachinePool{
@@ -198,7 +247,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 				},
 				Platform:   types.Platform{None: &none.Platform{}},
 				PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
-				Publish:    types.ExternalPublishingStrategy,
 			},
 		},
 	}

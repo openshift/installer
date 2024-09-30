@@ -142,7 +142,9 @@ func (cc *ClusterConfiguration) Generate(_ context.Context, dependencies asset.P
 	}
 
 	// validation for the length of the MachineNetwork is performed in the InstallConfig
-	cc.Config.MachineNetwork = installConfig.Config.Networking.MachineNetwork[0].CIDR.String()
+	if len(installConfig.Config.Networking.MachineNetwork) > 0 {
+		cc.Config.MachineNetwork = installConfig.Config.Networking.MachineNetwork[0].CIDR.String()
+	}
 
 	clusterConfigurationData, err := json.Marshal(cc.Config)
 	if err != nil {

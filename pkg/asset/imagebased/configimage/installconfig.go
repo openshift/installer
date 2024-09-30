@@ -2,15 +2,22 @@ package configimage
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-
-	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/util/validation/field"
+	"os"
+	"strings"
 
 	configv1 "github.com/openshift/api/config/v1"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+	"sigs.k8s.io/yaml"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/conversion"
+	"github.com/openshift/installer/pkg/types/defaults"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/validation"
 )
@@ -43,11 +50,51 @@ func (i *InstallConfig) Generate(_ context.Context, parents asset.Parents) error
 	return nil
 }
 
+// adding custom loadFromFile method to load the install-config.yaml file
+// as default one adds many default values that are not needed for image-based install config and can break our logic
+// such as machine network for example
+func (i *InstallConfig) loadFromFile(f asset.FileFetcher) (found bool, err error) {
+	file, err := f.FetchByName(InstallConfigFilename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, errors.Wrap(err, asset.InstallConfigError)
+	}
+
+	config := &types.InstallConfig{}
+	if err := yaml.UnmarshalStrict(file.Data, config, yaml.DisallowUnknownFields); err != nil {
+		err = errors.Wrapf(err, "failed to unmarshal %s", InstallConfigFilename)
+		if !strings.Contains(err.Error(), "unknown field") {
+			return false, errors.Wrap(err, asset.InstallConfigError)
+		}
+		err = errors.Wrapf(err, "failed to parse first occurrence of unknown field")
+		logrus.Warnf(err.Error())
+		logrus.Info("Attempting to unmarshal while ignoring unknown keys because strict unmarshaling failed")
+		if err = yaml.Unmarshal(file.Data, config); err != nil {
+			err = errors.Wrapf(err, "failed to unmarshal %s", InstallConfigFilename)
+			return false, errors.Wrap(err, asset.InstallConfigError)
+		}
+	}
+	i.Config = config
+
+	// Upconvert any deprecated fields
+	if err := conversion.ConvertInstallConfig(i.Config); err != nil {
+		return false, errors.Wrap(errors.Wrap(err, "failed to upconvert install config"), asset.InstallConfigError)
+	}
+
+	return true, nil
+}
+
 // Load returns the installconfig from disk.
 func (i *InstallConfig) Load(f asset.FileFetcher) (bool, error) {
-	found, err := i.LoadFromFile(f)
+	found, err := i.loadFromFile(f)
 	if found && err == nil {
-		if err := i.validateInstallConfig(i.Config).ToAggregate(); err != nil {
+		installConfig := &types.InstallConfig{}
+		if err := deepCopy(i.Config, installConfig); err != nil {
+			return false, fmt.Errorf("invalid install-config configuration: %w", err)
+		}
+		if err := i.validateInstallConfig(installConfig).ToAggregate(); err != nil {
 			return false, fmt.Errorf("invalid install-config configuration: %w", err)
 		}
 		if err := i.RecordFile(); err != nil {
@@ -57,9 +104,13 @@ func (i *InstallConfig) Load(f asset.FileFetcher) (bool, error) {
 	return found, err
 }
 
+// in order to avoid the validation errors, we need to set the defaults and validate the configuration
+// though those defaults are not used in the image-based install config
 func (i *InstallConfig) validateInstallConfig(installConfig *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
-	if err := validation.ValidateInstallConfig(i.Config, true); err != nil {
+
+	defaults.SetInstallConfigDefaults(installConfig)
+	if err := validation.ValidateInstallConfig(installConfig, true); err != nil {
 		allErrs = append(allErrs, err...)
 	}
 
@@ -76,7 +127,6 @@ func (i *InstallConfig) validateInstallConfig(installConfig *types.InstallConfig
 	if err := i.validateSNOConfiguration(installConfig); err != nil {
 		allErrs = append(allErrs, err...)
 	}
-
 	return allErrs
 }
 
@@ -117,7 +167,7 @@ func (i *InstallConfig) validateSNOConfiguration(installConfig *types.InstallCon
 	}
 
 	machineNetworksCount := len(installConfig.Networking.MachineNetwork)
-	if machineNetworksCount != 1 {
+	if machineNetworksCount > 1 {
 		fieldPath = field.NewPath("Networking", "MachineNetwork")
 		allErrs = append(allErrs, field.TooMany(fieldPath, machineNetworksCount, 1))
 	}
@@ -170,4 +220,12 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 		fieldPath := field.NewPath("ControlPlane", "Platform")
 		logrus.Warnf(fmt.Sprintf("%s is ignored", fieldPath))
 	}
+}
+
+func deepCopy(src, dst interface{}) error {
+	bytes, err := json.Marshal(src)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(bytes, dst)
 }
