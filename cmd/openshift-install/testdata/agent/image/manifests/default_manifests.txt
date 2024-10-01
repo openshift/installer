@@ -9,7 +9,7 @@ isocmp agent.x86_64.iso /etc/assisted/manifests/cluster-deployment.yaml expected
 isocmp agent.x86_64.iso /etc/assisted/manifests/cluster-image-set.yaml expected/cluster-image-set.yaml
 isocmp agent.x86_64.iso /etc/assisted/manifests/infraenv.yaml expected/infraenv.yaml
 
-existsInIso agent.x86_64.iso /etc/assisted/manifests/pull-secret.yaml
+isoIgnitionContains agent.x86_64.iso /etc/assisted/manifests/pull-secret.yaml
 
 -- install-config.yaml --
 apiVersion: v1

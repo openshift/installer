@@ -216,6 +216,7 @@ func (r *release) extractFileFromImage(image, file, cacheDir string, architectur
 	archName := arch.GoArch(architecture)
 	extractpath := "--path=" + file + ":" + cacheDir
 	filterbyos := "--filter-by-os=linux/" + archName
+	insecure := "--insecure=true"
 
 	var cmd = []string{
 		"oc",
@@ -223,6 +224,7 @@ func (r *release) extractFileFromImage(image, file, cacheDir string, architectur
 		"extract",
 		extractpath,
 		filterbyos,
+		insecure,
 		"--confirm",
 	}
 

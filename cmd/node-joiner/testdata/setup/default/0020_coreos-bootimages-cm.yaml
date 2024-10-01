@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coreos-bootimages
+  namespace: openshift-machine-config-operator
+data:
+  stream: |
+      {
+        "stream": "stable",
+        "architectures": {
+          "x86_64": {
+            "artifacts": {
+              "metal": {
+                "release": "39.20231101.3.0",
+                "formats": {
+                  "iso": {
+                    "disk": {
+                      "location": "<not-used>",
+                      "sha256": "0c19997ca0170a2d8634b5942c9437a18b6d354b020c7e24aa9fe41f1458f33e"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }

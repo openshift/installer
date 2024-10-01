@@ -1043,6 +1043,9 @@ github.com/openshift/api/annotations
 github.com/openshift/api/config/v1
 github.com/openshift/api/config/v1alpha1
 github.com/openshift/api/features
+github.com/openshift/api/image/docker10
+github.com/openshift/api/image/dockerpre012
+github.com/openshift/api/image/v1
 github.com/openshift/api/machine/v1
 github.com/openshift/api/machine/v1alpha1
 github.com/openshift/api/machine/v1beta1
@@ -1143,6 +1146,7 @@ github.com/openshift/hive/apis/scheme
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 github.com/openshift/library-go/pkg/config/clusterstatus
 github.com/openshift/library-go/pkg/config/leaderelection
+github.com/openshift/library-go/pkg/image/dockerv1client
 github.com/openshift/library-go/pkg/route/routeapihelpers
 # github.com/openshift/machine-api-operator v0.2.1-0.20240722145313-3a817c78946a
 ## explicit; go 1.22.0
