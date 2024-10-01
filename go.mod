@@ -324,4 +324,4 @@ replace github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.c
 
 replace github.com/openshift/api => github.com/vr4manta/api v0.0.0-20240924150740-ec5392903387
 
-replace sigs.k8s.io/cluster-api-provider-vsphere => github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241001170338-41e14f66ebd5
+replace sigs.k8s.io/cluster-api-provider-vsphere => github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241001192000-bafddc79a4f8

@@ -12,7 +12,7 @@ replace github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.c
 
 replace github.com/vmware-tanzu/nsx-operator/pkg/apis => github.com/vmware-tanzu/nsx-operator/pkg/apis v0.0.0-20240827061921-8f0982975508
 
-replace sigs.k8s.io/cluster-api-provider-vsphere => github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241001170338-41e14f66ebd5
+replace sigs.k8s.io/cluster-api-provider-vsphere => github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241001192000-bafddc79a4f8
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1 // indirect

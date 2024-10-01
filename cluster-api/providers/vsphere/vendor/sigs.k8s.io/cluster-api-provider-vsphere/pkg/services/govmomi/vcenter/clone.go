@@ -143,6 +143,7 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 		if err != nil {
 			return errors.Wrapf(err, "error getting disk spec for %q", ctx)
 		}
+		log.Info("Got the following disks", "disk", diskSpecs)
 		deviceSpecs = append(deviceSpecs, diskSpecs...)
 	}
 
