@@ -145,38 +145,6 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 
 // PostProvision should be called to add or update and vSphere resources after provisioning has completed.
 func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisionInput) error {
-	// We will want to check to see if ControlPlane machines need additional disks
-	cpPool := in.InstallConfig.Config.ControlPlane.Platform.VSphere
-
-	// If not set, nothing to do here.
-	if cpPool == nil {
-		return nil
-	}
-
-	// If we have any additional disks defined, we'll need to create them here
-	if len(cpPool.AdditionalDisks) > 0 {
-		logrus.Info("Adding additional disks to control plane machines")
-
-		for i := range in.MachineManifests {
-			if vm, ok := in.MachineManifests[i].(*v1beta1.VSphereMachine); ok {
-				if !strings.HasSuffix(vm.Name, "bootstrap") {
-					logrus.Infof("Adding additional disks to vm %s", vm.Name)
-					server := vm.Spec.Server
-					vctrSession, err := in.InstallConfig.VSphere.Session(context.TODO(), server)
-
-					if err != nil {
-						return err
-					}
-					err = addAdditionalDisks(ctx, vm, cpPool, vctrSession)
-
-					if err != nil {
-						return err
-					}
-				}
-			}
-		}
-	}
-
 	return nil
 }
 
@@ -191,7 +159,7 @@ func downloadImage(installConfig *installconfig.InstallConfig) bool {
 	return false
 }
 
-func addAdditionalDisks(ctx context.Context, machine *v1beta1.VSphereMachine, pool *vsphere.MachinePool, session *session.Session) error {
+func addDataDisks(ctx context.Context, machine *v1beta1.VSphereMachine, pool *vsphere.MachinePool, session *session.Session) error {
 	logrus.Debugf("Getting vm %v", machine.Name)
 	vm, err := session.Finder.VirtualMachine(ctx, fmt.Sprintf("%s/%s", machine.Spec.Folder, machine.Name))
 	offset := 1 // For now, we assume only one disk is current attached to VM.
@@ -219,8 +187,8 @@ func addAdditionalDisks(ctx context.Context, machine *v1beta1.VSphereMachine, po
 		return err
 	}
 
-	for diskIndex, newDisk := range pool.AdditionalDisks {
-		logrus.Debugf("Attempting to add disk %d with size %dGiB", diskIndex, newDisk.DiskSizeGB)
+	for diskIndex, newDisk := range pool.DataDisks {
+		logrus.Debugf("Attempting to add disk %d with size %dGiB", diskIndex, newDisk.DiskSizeGiB)
 
 		disk := devices.CreateDisk(controller, ds.Reference(), "")
 
@@ -231,7 +199,7 @@ func addAdditionalDisks(ctx context.Context, machine *v1beta1.VSphereMachine, po
 			return errors.New("disk already present")
 		}
 
-		disk.CapacityInKB = int64(newDisk.DiskSizeGB) * 1024 * 1024
+		disk.CapacityInKB = int64(newDisk.DiskSizeGiB) * 1024 * 1024
 		unitNumber := int32(offset + diskIndex)
 		disk.VirtualDevice.UnitNumber = &unitNumber
 

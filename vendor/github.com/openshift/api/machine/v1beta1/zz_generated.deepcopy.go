@@ -1816,8 +1816,8 @@ func (in *VSphereMachineProviderSpec) DeepCopyInto(out *VSphereMachineProviderSp
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	if in.Disks != nil {
-		in, out := &in.Disks, &out.Disks
+	if in.DataDisks != nil {
+		in, out := &in.DataDisks, &out.DataDisks
 		*out = make([]VSphereDisk, len(*in))
 		copy(*out, *in)
 	}

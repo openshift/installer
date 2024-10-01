@@ -75,7 +75,7 @@ type VSphereMachineProviderSpec struct {
 	// The first disk on that SCSI controller will be the OS disk from the template.
 	// +openshift:enable:FeatureGate=VSphereMultiDisk
 	// +optional
-	Disks []VSphereDisk `json:"disks,omitempty"`
+	DataDisks []VSphereDisk `json:"dataDisks,omitempty"`
 }
 
 // CloneMode is the type of clone operation used to clone a VM from a template.
@@ -180,12 +180,7 @@ type NetworkDeviceSpec struct {
 
 // VSphereDisk describes additional disks for vSphere.
 type VSphereDisk struct {
-	// deviceName is a name to be used to identify the disk definition. If deviceName is not specified,
-	// the disk will still be created.  The deviceName should be unique so that it can be used to clearly
-	// identify purpose of the disk, but is not required to be unique.
-	// +optional
-	DeviceName string `json:"deviceName,omitempty"`
-	// sizeGB is the size of the disk (in GiB).
+	// sizeGiB is the size of the disk (in GiB).
 	// +kubebuilder:validation:Required
 	SizeGiB int64 `json:"sizeGiB"`
 }

@@ -48,24 +48,24 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 		},
 		{
 			FeatureGateName: features.FeatureGateVSphereMultiDisk,
-			Condition:       cpDef != nil && len(cpDef.AdditionalDisks) > 0, // Here we need to check disk count
-			Field:           field.NewPath("controlPlane", "platform", "vsphere", "additionalDisks"),
+			Condition:       cpDef != nil && len(cpDef.DataDisks) > 0, // Here we need to check disk count
+			Field:           field.NewPath("controlPlane", "platform", "vsphere", "dataDisks"),
 		},
 		{
 			FeatureGateName: features.FeatureGateVSphereMultiDisk,
-			Condition:       hasAdditionalDisks(computeDefs), // Here we need to check disk count
-			Field:           field.NewPath("compute", "platform", "vsphere", "additionalDisks"),
+			Condition:       hasDataDisks(computeDefs), // Here we need to check disk count
+			Field:           field.NewPath("compute", "platform", "vsphere", "dataDisks"),
 		},
 	}
 }
 
-func hasAdditionalDisks(pool []types.MachinePool) bool {
-	foundAdditionalDisks := false
+func hasDataDisks(pool []types.MachinePool) bool {
+	foundDataDisks := false
 	for _, machine := range pool {
-		if machine.Platform.VSphere != nil && len(machine.Platform.VSphere.AdditionalDisks) > 0 {
-			foundAdditionalDisks = true
+		if machine.Platform.VSphere != nil && len(machine.Platform.VSphere.DataDisks) > 0 {
+			foundDataDisks = true
 			break
 		}
 	}
-	return foundAdditionalDisks
+	return foundDataDisks
 }

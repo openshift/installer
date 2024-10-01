@@ -335,14 +335,12 @@ func provider(clusterID string, vcenter *vsphere.VCenter, failureDomain vsphere.
 		networkDeviceSpec[i] = machineapi.NetworkDeviceSpec{NetworkName: network}
 	}
 
-	additionalDisks := []machineapi.VSphereDisk{}
-	for i, curDisk := range mpool.AdditionalDisks {
-		diskName := fmt.Sprintf("Disk_%d", (i + 1))
+	dataDisks := []machineapi.VSphereDisk{}
+	for _, curDisk := range mpool.DataDisks {
 		newDisk := machineapi.VSphereDisk{
-			DeviceName: diskName,
-			SizeGiB:    int64(curDisk.DiskSizeGB),
+			SizeGiB: int64(curDisk.DiskSizeGiB),
 		}
-		additionalDisks = append(additionalDisks, newDisk)
+		dataDisks = append(dataDisks, newDisk)
 	}
 
 	return &machineapi.VSphereMachineProviderSpec{
@@ -368,7 +366,7 @@ func provider(clusterID string, vcenter *vsphere.VCenter, failureDomain vsphere.
 		NumCoresPerSocket: mpool.NumCoresPerSocket,
 		MemoryMiB:         mpool.MemoryMiB,
 		DiskGiB:           mpool.OSDisk.DiskSizeGB,
-		Disks:             additionalDisks,
+		DataDisks:         dataDisks,
 	}, nil
 }
 

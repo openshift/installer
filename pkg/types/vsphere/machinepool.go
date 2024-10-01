@@ -24,10 +24,10 @@ type MachinePool struct {
 	// +optional
 	OSDisk `json:"osDisk"`
 
-	// AdditionalDisks defines additional disks to add to vm that are not part of the template.
+	// DataDisks defines additional disks to add to vm that are not part of the template.
 	//
 	// +optional
-	AdditionalDisks []AdditionalDisks `json:"additionalDisks"`
+	DataDisks []DataDisks `json:"dataDisks"`
 
 	// Zones defines available zones
 	// Zones is available in TechPreview.
@@ -44,12 +44,12 @@ type OSDisk struct {
 	DiskSizeGB int32 `json:"diskSizeGB"`
 }
 
-// AdditionalDisks defines the disk for a virtual machine.
-type AdditionalDisks struct {
-	// DiskSizeGB defines the size of disk in GB.
+// DataDisks defines the disk for a virtual machine.
+type DataDisks struct {
+	// DiskSizeGiB defines the size of disk in GiB.
 	//
 	// +optional
-	DiskSizeGB int32 `json:"diskSizeGB"`
+	DiskSizeGiB int32 `json:"diskSizeGiB"`
 }
 
 // Set sets the values from `required` to `p`.
@@ -78,7 +78,7 @@ func (p *MachinePool) Set(required *MachinePool) {
 		p.Zones = required.Zones
 	}
 
-	if len(required.AdditionalDisks) > 0 {
-		p.AdditionalDisks = required.AdditionalDisks
+	if len(required.DataDisks) > 0 {
+		p.DataDisks = required.DataDisks
 	}
 }

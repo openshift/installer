@@ -71,7 +71,7 @@ require (
 	github.com/microsoftgraph/msgraph-sdk-go v0.59.0
 	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.3.3-0.20240416171357-98239ba02cb2
 	github.com/nutanix-cloud-native/prism-go-client v0.3.4
-	github.com/onsi/gomega v1.34.1
+	github.com/onsi/gomega v1.34.2
 	github.com/openshift/api v0.0.0-20241001152557-e415140e5d5f
 	github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6
 	github.com/openshift/assisted-service/api v0.0.0
@@ -103,7 +103,7 @@ require (
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/vmware/govmomi v0.43.0
 	golang.org/x/crypto v0.27.0
-	golang.org/x/oauth2 v0.21.0
+	golang.org/x/oauth2 v0.23.0
 	golang.org/x/sync v0.8.0
 	golang.org/x/sys v0.25.0
 	golang.org/x/term v0.24.0
@@ -113,7 +113,7 @@ require (
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.31.1
-	k8s.io/apiextensions-apiserver v0.31.0
+	k8s.io/apiextensions-apiserver v0.31.1
 	k8s.io/apimachinery v0.31.1
 	k8s.io/client-go v0.31.1
 	k8s.io/cloud-provider-vsphere v1.31.0
@@ -188,7 +188,7 @@ require (
 	github.com/go-openapi/validate v0.24.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/gobuffalo/flect v1.0.2 // indirect
+	github.com/gobuffalo/flect v1.0.3 // indirect
 	github.com/gofrs/uuid/v5 v5.2.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
@@ -277,11 +277,11 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
-	golang.org/x/mod v0.20.0 // indirect
+	golang.org/x/mod v0.21.0 // indirect
 	golang.org/x/net v0.29.0 // indirect
 	golang.org/x/text v0.18.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	golang.org/x/tools v0.24.0 // indirect
+	golang.org/x/tools v0.25.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20240722135656-d784300faade // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240722135656-d784300faade // indirect
@@ -294,7 +294,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/gorm v1.24.5 // indirect
 	k8s.io/cli-runtime v0.31.1 // indirect
-	k8s.io/cluster-bootstrap v0.30.3 // indirect
+	k8s.io/cluster-bootstrap v0.31.1 // indirect
 	k8s.io/component-base v0.31.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
 	k8s.io/kubectl v0.31.1 // indirect
@@ -327,6 +327,12 @@ replace github.com/containerd/containerd => github.com/containerd/containerd v1.
 
 replace github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
 
-replace github.com/openshift/api => github.com/vr4manta/api v0.0.0-20240924150740-ec5392903387
+//replace k8s.io/api => k8s.io/api v0.30.5
 
-replace sigs.k8s.io/cluster-api-provider-vsphere => github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241001154255-1469f6482074
+// github.com/vr4manta/api@vsphere_disk
+replace github.com/openshift/api => github.com/vr4manta/api v0.0.0-20241011151817-acc042bfc491
+
+//replace github.com/openshift/api => github.com/vr4manta/api v0.0.0-20240924150740-ec5392903387
+
+// github.com/vr4manta/cluster-api-provider-vsphere@multi_disk
+replace sigs.k8s.io/cluster-api-provider-vsphere => github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241011200348-df5d3979816e

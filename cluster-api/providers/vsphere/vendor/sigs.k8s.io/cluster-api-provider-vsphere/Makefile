@@ -369,7 +369,7 @@ generate-doctoc:
 	TRACE=$(TRACE) ./hack/generate-doctoc.sh
 
 .PHONY: generate-e2e-templates
-generate-e2e-templates: $(KUSTOMIZE) $(addprefix generate-e2e-templates-, v1.9 v1.10 main) ## Generate test templates for all branches
+generate-e2e-templates: $(KUSTOMIZE) $(addprefix generate-e2e-templates-, v1.9 v1.10 v1.11 main) ## Generate test templates for all branches
 
 .PHONY: generate-e2e-templates-main
 generate-e2e-templates-main: $(KUSTOMIZE) ## Generate test templates for the main branch
@@ -413,6 +413,15 @@ generate-e2e-templates-main: $(KUSTOMIZE) ## Generate test templates for the mai
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/conformance" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/cluster-template-conformance-supervisor.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/fast-rollout" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/cluster-template-fast-rollout-supervisor.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/ownerrefs-finalizers" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/cluster-template-ownerrefs-finalizers-supervisor.yaml"
+
+.PHONY: generate-e2e-templates-v1.11
+generate-e2e-templates-v1.11: $(KUSTOMIZE)
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.11/clusterclass" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.11/clusterclass-quick-start.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.11/workload" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.11/cluster-template-workload.yaml"
+
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.11/clusterclass" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.11/clusterclass-quick-start-supervisor.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.11/workload" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.11/cluster-template-workload-supervisor.yaml"
+
 
 .PHONY: generate-e2e-templates-v1.10
 generate-e2e-templates-v1.10: $(KUSTOMIZE)
