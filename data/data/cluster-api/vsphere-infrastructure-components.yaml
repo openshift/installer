@@ -7077,7 +7077,6 @@ spec:
         - --diagnostics-address=${CAPI_DIAGNOSTICS_ADDRESS:=:8443}
         - --insecure-diagnostics=${CAPI_INSECURE_DIAGNOSTICS:=false}
         - --v=4
-        - --enable-keep-alive
         - --feature-gates=NodeAntiAffinity=${EXP_NODE_ANTI_AFFINITY:=false}
         image: registry.k8s.io/cluster-api-vsphere/cluster-api-vsphere-controller:v1.9.3
         imagePullPolicy: IfNotPresent
