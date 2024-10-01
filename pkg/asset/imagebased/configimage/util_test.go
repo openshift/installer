@@ -111,6 +111,13 @@ func imageBasedConfig() *ImageBasedConfig {
 	return ibConfig
 }
 
+func imageBasedConfigWithSetClusterID(clusterID string, infraID string) *ImageBasedConfig {
+	ibConfig := imageBasedConfig()
+	ibConfig.Config.ClusterID = clusterID
+	ibConfig.Config.InfraID = infraID
+	return ibConfig
+}
+
 func unmarshalJSON(b []byte) []byte {
 	output, err := yaml.JSONToYAML(b)
 	if err != nil {

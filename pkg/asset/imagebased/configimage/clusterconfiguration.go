@@ -90,6 +90,12 @@ func (cc *ClusterConfiguration) Generate(_ context.Context, dependencies asset.P
 	if installConfig.Config == nil || imageBasedConfig.Config == nil {
 		return cc.finish()
 	}
+	if imageBasedConfig.Config.ClusterID != "" {
+		clusterID.UUID = imageBasedConfig.Config.ClusterID
+	}
+	if imageBasedConfig.Config.InfraID != "" {
+		clusterID.InfraID = imageBasedConfig.Config.InfraID
+	}
 
 	cc.Config = &imagebased.SeedReconfiguration{
 		APIVersion:            imagebased.SeedReconfigurationVersion,

@@ -65,6 +65,22 @@ func TestClusterConfiguration_Generate(t *testing.T) {
 			expectedConfig: clusterConfiguration().build().Config,
 		},
 		{
+			name: "valid configuration with cluster and infra ID",
+			dependencies: []asset.Asset{
+				clusterID(),
+				kubeadminPassword(),
+				lbCertKey(),
+				localhostCertKey(),
+				serviceNetworkCertKey(),
+				adminKubeConfigCertKey(),
+				ingressCertKey(),
+				installConfig().build(),
+				imageBasedConfigWithSetClusterID("some-id", "some-infra-id"),
+			},
+
+			expectedConfig: clusterConfigurationWithProvidedIDs("some-id", "some-infra-id").build().Config,
+		},
+		{
 			name: "valid configuration with proxy",
 			dependencies: []asset.Asset{
 				clusterID(),
@@ -337,6 +353,13 @@ func clusterConfiguration() *ClusterConfigurationBuilder {
 	cc.Config.MachineNetwork = installConfig.Config.Networking.MachineNetwork[0].CIDR.String()
 
 	ccb.ClusterConfiguration = *cc
+	return ccb
+}
+
+func clusterConfigurationWithProvidedIDs(clusterID string, infraID string) *ClusterConfigurationBuilder {
+	ccb := clusterConfiguration()
+	ccb.ClusterConfiguration.Config.ClusterID = clusterID
+	ccb.ClusterConfiguration.Config.InfraID = infraID
 	return ccb
 }
 

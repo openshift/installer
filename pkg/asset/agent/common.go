@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	// ExternalPlatformNameOci is the name of the external platform for OCP.
 	ExternalPlatformNameOci = "oci"
 )
 
