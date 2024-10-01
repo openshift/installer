@@ -2184,7 +2184,7 @@ sigs.k8s.io/cluster-api-provider-ibmcloud/util
 ## explicit; go 1.22
 sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1
 sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/optional
-# sigs.k8s.io/cluster-api-provider-vsphere v1.10.2 => github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241001154255-1469f6482074
+# sigs.k8s.io/cluster-api-provider-vsphere v1.10.2 => github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241001170338-41e14f66ebd5
 ## explicit; go 1.22.0
 sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1
 sigs.k8s.io/cluster-api-provider-vsphere/pkg/session
@@ -2362,4 +2362,4 @@ sigs.k8s.io/yaml/goyaml.v3
 # github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
 # github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
 # github.com/openshift/api => github.com/vr4manta/api v0.0.0-20240924150740-ec5392903387
-# sigs.k8s.io/cluster-api-provider-vsphere => github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241001154255-1469f6482074
+# sigs.k8s.io/cluster-api-provider-vsphere => github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241001170338-41e14f66ebd5

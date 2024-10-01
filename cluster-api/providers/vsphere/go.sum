@@ -248,8 +248,8 @@ github.com/vmware-tanzu/vm-operator/external/ncp v0.0.0-20240404200847-de75746a9
 github.com/vmware-tanzu/vm-operator/external/ncp v0.0.0-20240404200847-de75746a9505/go.mod h1:5rqRJ9zGR+KnKbkGx373WgN8xJpvAj99kHnfoDYRO5I=
 github.com/vmware/govmomi v0.43.0 h1:7Kg3Bkdly+TrE67BYXzRq7ZrDnn7xqpKX95uEh2f9Go=
 github.com/vmware/govmomi v0.43.0/go.mod h1:IOv5nTXCPqH9qVJAlRuAGffogaLsNs8aF+e7vLgsHJU=
-github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241001154255-1469f6482074 h1:7LvmgO6YNMEEpH6dkJgM6ZkDGIiC4d3JvtHw8O2HRxs=
-github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241001154255-1469f6482074/go.mod h1:9WD2xjNc8mGctPk03kMS0t8NH0eaFBnAkO+cIcS0qr0=
+github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241001170338-41e14f66ebd5 h1:oD/NUTxaW/QtnJKGu5gdw9ttbtFpYwlwfBtXgsh9jHQ=
+github.com/vr4manta/cluster-api-provider-vsphere v0.0.0-20241001170338-41e14f66ebd5/go.mod h1:9WD2xjNc8mGctPk03kMS0t8NH0eaFBnAkO+cIcS0qr0=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 h1:eY9dn8+vbi4tKz5Qo6v2eYzo7kUS51QINcR5jNpbZS8=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
