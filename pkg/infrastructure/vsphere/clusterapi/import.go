@@ -4,13 +4,13 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"github.com/vmware/govmomi/ovf/importer"
 	"io"
 	"os"
 	"path"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/vmware/govmomi/govc/importx"
 	"github.com/vmware/govmomi/nfc"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/ovf"
@@ -60,14 +60,20 @@ func checkOvaSecureBoot(ovfEnvelope *ovf.Envelope) bool {
 func importRhcosOva(ctx context.Context, session *session.Session, folder *object.Folder, cachedImage, clusterID, tagID, diskProvisioningType string, failureDomain vsphere.FailureDomain) error {
 	name := fmt.Sprintf("%s-rhcos-%s-%s", clusterID, failureDomain.Region, failureDomain.Zone)
 	logrus.Infof("Importing OVA %v into failure domain %v.", name, failureDomain.Name)
-	archive := &importx.ArchiveFlag{Archive: &importx.TapeArchive{Path: cachedImage}}
 
-	ovfDescriptor, err := archive.ReadOvf("*.ovf")
+	//archive := &importx.ArchiveFlag{Archive: &importx.TapeArchive{Path: cachedImage}}
+
+	archive := &importer.TapeArchive{Path: cachedImage}
+
+	//ovfDescriptor, err := archive.ReadOvf("*.ovf")
+	//ovfDescriptor, _, err := archive.Open("*.ovf")
+	ovfDescriptor, err := importer.ReadOvf("*.ovf", archive)
 	if err != nil {
 		return debugCorruptOva(cachedImage, err)
 	}
 
-	ovfEnvelope, err := archive.ReadEnvelope(ovfDescriptor)
+	//ovfEnvelope, err := archive.ReadEnvelope(ovfDescriptor)
+	ovfEnvelope, err := importer.ReadEnvelope(ovfDescriptor)
 	if err != nil {
 		return fmt.Errorf("failed to parse ovf: %w", err)
 	}
@@ -212,6 +218,25 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 	return nil
 }
 
+/*func (f *ArchiveFlag) ReadOvf(fpath string) ([]byte, error) {
+	r, _, err := f.Open(fpath)
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+
+	return io.ReadAll(r)
+}
+
+func (f *ArchiveFlag) ReadEnvelope(data []byte) (*ovf.Envelope, error) {
+	e, err := ovf.Unmarshal(bytes.NewReader(data))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse ovf: %s", err)
+	}
+
+	return e, nil
+}*/
+
 func findAvailableHostSystems(ctx context.Context, clusterHostSystems []*object.HostSystem, networkObjectRef object.NetworkReference, datastore *object.Datastore) (*object.HostSystem, error) {
 	var hostSystemManagedObject mo.HostSystem
 	for _, hostObj := range clusterHostSystems {
@@ -264,7 +289,7 @@ func isNetworkAvailable(networkObjectRef object.NetworkReference, hostNetworkMan
 // Used govc/importx/ovf.go as an example to implement
 // resourceVspherePrivateImportOvaCreate and upload functions
 // See: https://github.com/vmware/govmomi/blob/cc10a0758d5b4d4873388bcea417251d1ad03e42/govc/importx/ovf.go#L196-L324
-func upload(ctx context.Context, archive *importx.ArchiveFlag, lease *nfc.Lease, item nfc.FileItem) error {
+func upload(ctx context.Context, archive *importer.TapeArchive, lease *nfc.Lease, item nfc.FileItem) error {
 	file := item.Path
 
 	f, size, err := archive.Open(file)

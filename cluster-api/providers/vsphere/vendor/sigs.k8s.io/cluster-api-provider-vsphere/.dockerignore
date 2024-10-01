@@ -5,7 +5,6 @@
 .golangci.yml
 bin/
 **/*.yaml
-hack/
 out/
 docs/
 packaging/
@@ -17,6 +16,9 @@ templates/
 _artifacts
 Makefile
 **/Makefile
+
+# add yaml files from internal/kubevip which are required for embedding.
+!internal/kubevip/*.yaml
 
 # ignores changes to test-only code to avoid extra rebuilds
 test/e2e/**

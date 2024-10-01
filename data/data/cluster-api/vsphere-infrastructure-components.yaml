@@ -3171,6 +3171,27 @@ spec:
                 description: CustomVMXKeys is a dictionary of advanced VMX options
                   that can be set on VM Defaults to empty map
                 type: object
+              dataDisks:
+                description: DataDisks holds information for additional disks to add
+                  to the VM that are not part of the VM's OVA template.
+                items:
+                  description: VSphereDisk describes additional disks for vSphere
+                    to be added to VM that are not part of the VM OVA template.
+                  properties:
+                    deviceName:
+                      description: |-
+                        DeviceName is a name to be used to identify the disk definition. If deviceName is not specified,
+                        the disk will still be created.  The deviceName should be unique so that it can be used to clearly
+                        identify purpose of the disk, but is not required to be unique.
+                      type: string
+                    sizeGiB:
+                      description: SizeGiB is the size of the disk (in GiB).
+                      format: int64
+                      type: integer
+                  required:
+                    - sizeGiB
+                  type: object
+                type: array
               datacenter:
                 description: Datacenter is the name or inventory path of the datacenter
                   in which the virtual machine is created/located. Defaults to * which
@@ -4484,6 +4505,27 @@ spec:
                         description: CustomVMXKeys is a dictionary of advanced VMX
                           options that can be set on VM Defaults to empty map
                         type: object
+                      dataDisks:
+                        description: DataDisks holds information for additional disks to add
+                          to the VM that are not part of the VM's OVA template.
+                        items:
+                          description: VSphereDisk describes additional disks for vSphere
+                            to be added to VM that are not part of the VM OVA template.
+                          properties:
+                            deviceName:
+                              description: |-
+                                DeviceName is a name to be used to identify the disk definition. If deviceName is not specified,
+                                the disk will still be created.  The deviceName should be unique so that it can be used to clearly
+                                identify purpose of the disk, but is not required to be unique.
+                              type: string
+                            sizeGiB:
+                              description: SizeGiB is the size of the disk (in GiB).
+                              format: int64
+                              type: integer
+                          required:
+                            - sizeGiB
+                          type: object
+                        type: array
                       datacenter:
                         description: Datacenter is the name or inventory path of the
                           datacenter in which the virtual machine is created/located.
@@ -5869,6 +5911,27 @@ spec:
                 description: CustomVMXKeys is a dictionary of advanced VMX options
                   that can be set on VM Defaults to empty map
                 type: object
+              dataDisks:
+                description: DataDisks holds information for additional disks to add
+                  to the VM that are not part of the VM's OVA template.
+                items:
+                  description: VSphereDisk describes additional disks for vSphere
+                    to be added to VM that are not part of the VM OVA template.
+                  properties:
+                    deviceName:
+                      description: |-
+                        DeviceName is a name to be used to identify the disk definition. If deviceName is not specified,
+                        the disk will still be created.  The deviceName should be unique so that it can be used to clearly
+                        identify purpose of the disk, but is not required to be unique.
+                      type: string
+                    sizeGiB:
+                      description: SizeGiB is the size of the disk (in GiB).
+                      format: int64
+                      type: integer
+                  required:
+                    - sizeGiB
+                  type: object
+                type: array
               datacenter:
                 description: Datacenter is the name or inventory path of the datacenter
                   in which the virtual machine is created/located. Defaults to * which
@@ -7077,7 +7140,6 @@ spec:
         - --diagnostics-address=${CAPI_DIAGNOSTICS_ADDRESS:=:8443}
         - --insecure-diagnostics=${CAPI_INSECURE_DIAGNOSTICS:=false}
         - --v=4
-        - --enable-keep-alive
         - --feature-gates=NodeAntiAffinity=${EXP_NODE_ANTI_AFFINITY:=false}
         image: registry.k8s.io/cluster-api-vsphere/cluster-api-vsphere-controller:v1.9.3
         imagePullPolicy: IfNotPresent

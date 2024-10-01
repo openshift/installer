@@ -278,7 +278,6 @@ func (c *system) Run(ctx context.Context) error {
 					"--webhook-port={{.WebhookPort}}",
 					"--webhook-cert-dir={{.WebhookCertDir}}",
 					"--leader-elect=false",
-					"--enable-keep-alive=false",
 				},
 				map[string]string{
 					"EXP_KUBEADM_BOOTSTRAP_FORMAT_IGNITION": "true",
