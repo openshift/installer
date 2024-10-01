@@ -73,20 +73,30 @@ func Validate(client API, ic *types.InstallConfig) error {
 	return allErrs.ToAggregate()
 }
 
-func validateInstanceType(fldPath *field.Path, instanceType string, validInstanceTypes []string, arch string) *field.Error {
-	if len(validInstanceTypes) == 0 {
-		return field.InternalError(fldPath, fmt.Errorf("no valid instance types found"))
+func validateInstanceAndDiskType(fldPath *field.Path, diskType, instanceType, arch string) *field.Error {
+	if instanceType == "" {
+		// nothing to validate
+		return nil
 	}
 
-	if instanceType != "" {
-		family, _, _ := strings.Cut(instanceType, "-")
-		acceptedInstanceTypes := sets.New(validInstanceTypes...)
-		if !acceptedInstanceTypes.Has(family) {
-			return field.NotSupported(fldPath.Child("type"), family, sets.List(acceptedInstanceTypes))
-		}
+	family, _, _ := strings.Cut(instanceType, "-")
+	diskTypes, ok := gcp.InstanceTypeToDiskTypeMap[family]
+	if !ok {
+		return field.NotFound(fldPath.Child("type"), family)
+	}
 
-		if arch == types.ArchitectureARM64 && family != "t2a" {
-			return field.InternalError(fldPath, fmt.Errorf("instance type %s requires %s architecture", instanceType, types.ArchitectureARM64))
+	acceptedArmFamilies := sets.New("t2a")
+	if arch == types.ArchitectureARM64 && !acceptedArmFamilies.Has(family) {
+		return field.NotSupported(fldPath.Child("type"), family, sets.List(acceptedArmFamilies))
+	}
+
+	if diskType != "" {
+		if !sets.New(diskTypes...).Has(diskType) {
+			return field.Invalid(
+				fldPath.Child("diskType"),
+				diskType,
+				fmt.Sprintf("%s instance requires one of the following disk types: %v", instanceType, diskTypes),
+			)
 		}
 	}
 	return nil
@@ -104,16 +114,8 @@ func ValidateInstanceType(client API, fieldPath *field.Path, project, region str
 		return append(allErrs, field.InternalError(nil, err))
 	}
 
-	instanceTypes := []string{}
-	ok := false
-	if diskType != "" {
-		instanceTypes, ok = gcp.DiskTypeToInstanceTypeMap[diskType]
-		if !ok {
-			return append(allErrs, field.NotFound(fieldPath.Child("diskType"), diskType))
-		}
-	}
-	if err := validateInstanceType(fieldPath, instanceType, instanceTypes, arch); err != nil {
-		allErrs = append(allErrs, err)
+	if fieldErr := validateInstanceAndDiskType(fieldPath, diskType, instanceType, arch); fieldErr != nil {
+		return append(allErrs, fieldErr)
 	}
 
 	userZones := sets.New(zones...)
@@ -226,18 +228,28 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			}
 		}
 	}
-	allErrs = append(allErrs,
-		ValidateInstanceType(
-			client,
-			field.NewPath("controlPlane", "platform", "gcp"),
-			ic.GCP.ProjectID,
-			ic.GCP.Region,
-			zones,
-			cpDiskType,
-			instanceType,
-			controlPlaneReq,
-			arch,
-		)...)
+
+	// The IOPS minimum Control plane requirements are not met for pd-standard machines.
+	if cpDiskType == "pd-standard" {
+		allErrs = append(allErrs,
+			field.NotSupported(field.NewPath("controlPlane", "type"),
+				cpDiskType,
+				sets.List(gcp.ControlPlaneSupportedDisks)),
+		)
+	} else {
+		allErrs = append(allErrs,
+			ValidateInstanceType(
+				client,
+				field.NewPath("controlPlane", "platform", "gcp"),
+				ic.GCP.ProjectID,
+				ic.GCP.Region,
+				zones,
+				cpDiskType,
+				instanceType,
+				controlPlaneReq,
+				arch,
+			)...)
+	}
 
 	for idx, compute := range ic.Compute {
 		fieldPath := field.NewPath("compute").Index(idx)
