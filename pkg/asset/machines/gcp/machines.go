@@ -3,7 +3,6 @@ package gcp
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -70,7 +69,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	}
 	replicas := int32(total)
 	failureDomains := []machinev1.GCPFailureDomain{}
-	sort.Strings(mpool.Zones)
+
 	for _, zone := range mpool.Zones {
 		domain := machinev1.GCPFailureDomain{
 			Zone: zone,
@@ -78,6 +77,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		failureDomains = append(failureDomains, domain)
 	}
 	machineSetProvider.Zone = ""
+
 	controlPlaneMachineSet := &machinev1.ControlPlaneMachineSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1",
@@ -229,6 +229,7 @@ func ConfigMasters(machines []machineapi.Machine, controlPlane *machinev1.Contro
 	providerSpec.TargetPools = targetPools
 	return nil
 }
+
 func getNetworks(platform *gcp.Platform, clusterID, role string) (string, string, error) {
 	if platform.Network == "" {
 		return fmt.Sprintf("%s-network", clusterID), fmt.Sprintf("%s-%s-subnet", clusterID, role), nil
