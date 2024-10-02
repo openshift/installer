@@ -237,6 +237,8 @@ func getGVR(obj *unstructured.Unstructured) (schema.GroupVersionResource, error)
 		gvr = v1.GroupVersion.WithResource("infrastructures")
 	case "Proxy":
 		gvr = v1.SchemeGroupVersion.WithResource("proxies")
+	case "ImageDigestMirrorSet":
+		gvr = v1.SchemeGroupVersion.WithResource("imagedigestmirrorsets")
 	case "Namespace":
 		gvr = corev1.SchemeGroupVersion.WithResource("namespaces")
 	case "Secret":

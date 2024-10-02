@@ -289,16 +289,8 @@ func makeInstallConfig(t *testing.T) string {
 			Name: "ostest",
 		},
 		BaseDomain: "test.metalkube.org",
-		ImageDigestSources: []types.ImageDigestSource{
-			{
-				Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
-				Mirrors: []string{
-					"registry.example.com:5000/ocp4/openshift4",
-				},
-			},
-		},
-		SSHKey: "my-ssh-key",
-		FIPS:   true,
+		SSHKey:     "my-ssh-key",
+		FIPS:       true,
 	}
 	data, err := yaml.Marshal(ic)
 	if err != nil {
@@ -410,8 +402,23 @@ func defaultObjects() func(t *testing.T) ([]runtime.Object, []runtime.Object) {
 					},
 				},
 			},
+			&configv1.ImageDigestMirrorSetList{
+				Items: []configv1.ImageDigestMirrorSet{
+					{
+						Spec: configv1.ImageDigestMirrorSetSpec{
+							ImageDigestMirrors: []configv1.ImageDigestMirrors{
+								{
+									Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
+									Mirrors: []configv1.ImageMirror{
+										"registry.example.com:5000/ocp4/openshift4",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		}
-
 		return objects, openshiftObjects
 	}
 }

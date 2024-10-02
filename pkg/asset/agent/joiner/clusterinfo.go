@@ -126,6 +126,15 @@ func (ci *ClusterInfo) Generate(_ context.Context, dependencies asset.Parents) e
 	if err != nil {
 		return err
 	}
+	err = ci.retrieveImageDigestMirrorSets()
+	if err != nil {
+		return err
+	}
+	err = ci.retrieveImageContentPolicies()
+	if err != nil {
+		return err
+	}
+
 	err = ci.retrieveOsImage()
 	if err != nil {
 		return err
@@ -265,8 +274,6 @@ func (ci *ClusterInfo) retrieveInstallConfigData(addNodesConfig *AddNodesConfig)
 		return err
 	}
 
-	ci.ImageDigestSources = installConfig.ImageDigestSources
-	ci.DeprecatedImageContentSources = installConfig.DeprecatedImageContentSources
 	ci.SSHKey = installConfig.SSHKey
 	ci.ClusterName = installConfig.ObjectMeta.Name
 	ci.APIDNSName = fmt.Sprintf("api.%s.%s", ci.ClusterName, installConfig.BaseDomain)
@@ -274,6 +281,54 @@ func (ci *ClusterInfo) retrieveInstallConfigData(addNodesConfig *AddNodesConfig)
 
 	if addNodesConfig.Config.SSHKey != "" {
 		ci.SSHKey = addNodesConfig.Config.SSHKey
+	}
+
+	return nil
+}
+
+func (ci *ClusterInfo) retrieveImageDigestMirrorSets() error {
+	imageDigestMirrorSets, err := ci.OpenshiftClient.ConfigV1().ImageDigestMirrorSets().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return err
+		}
+		return nil
+	}
+
+	for _, idms := range imageDigestMirrorSets.Items {
+		for _, digestMirror := range idms.Spec.ImageDigestMirrors {
+			digestSource := types.ImageDigestSource{
+				Source: digestMirror.Source,
+			}
+			for _, m := range digestMirror.Mirrors {
+				digestSource.Mirrors = append(digestSource.Mirrors, string(m))
+			}
+			ci.ImageDigestSources = append(ci.ImageDigestSources, digestSource)
+		}
+	}
+
+	return nil
+}
+
+func (ci *ClusterInfo) retrieveImageContentPolicies() error {
+	imageContentPolicies, err := ci.OpenshiftClient.ConfigV1().ImageContentPolicies().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return err
+		}
+		return nil
+	}
+
+	for _, icp := range imageContentPolicies.Items {
+		for _, digestMirror := range icp.Spec.RepositoryDigestMirrors {
+			digestSource := types.ImageContentSource{
+				Source: digestMirror.Source,
+			}
+			for _, m := range digestMirror.Mirrors {
+				digestSource.Mirrors = append(digestSource.Mirrors, string(m))
+			}
+			ci.DeprecatedImageContentSources = append(ci.DeprecatedImageContentSources, digestSource)
+		}
 	}
 
 	return nil
