@@ -6,7 +6,7 @@ import (
 	v1beta1 "github.com/openshift/api/machine/v1beta1"
 )
 
-// MachineSetStatusApplyConfiguration represents an declarative configuration of the MachineSetStatus type for use
+// MachineSetStatusApplyConfiguration represents a declarative configuration of the MachineSetStatus type for use
 // with apply.
 type MachineSetStatusApplyConfiguration struct {
 	Replicas               *int32                         `json:"replicas,omitempty"`
@@ -21,7 +21,7 @@ type MachineSetStatusApplyConfiguration struct {
 	SynchronizedGeneration *int64                         `json:"synchronizedGeneration,omitempty"`
 }
 
-// MachineSetStatusApplyConfiguration constructs an declarative configuration of the MachineSetStatus type for use with
+// MachineSetStatusApplyConfiguration constructs a declarative configuration of the MachineSetStatus type for use with
 // apply.
 func MachineSetStatus() *MachineSetStatusApplyConfiguration {
 	return &MachineSetStatusApplyConfiguration{}

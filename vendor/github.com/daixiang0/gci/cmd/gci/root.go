@@ -42,6 +42,7 @@ func NewExecutor(version string) *Executor {
 	e.initDiff()
 	e.initPrint()
 	e.initWrite()
+	e.initList()
 	return &e
 }
 
@@ -67,6 +68,7 @@ func (e *Executor) runInCompatibilityMode(cmd *cobra.Command, args []string) err
 			NoPrefixComments: false,
 			Debug:            false,
 			SkipGenerated:    false,
+			SkipVendor:       false,
 		},
 		Sections:          sections,
 		SectionSeparators: sectionSeparators,

@@ -6,13 +6,13 @@ import (
 	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
-// NodeStatusApplyConfiguration represents an declarative configuration of the NodeStatus type for use
+// NodeStatusApplyConfiguration represents a declarative configuration of the NodeStatus type for use
 // with apply.
 type NodeStatusApplyConfiguration struct {
 	Conditions []v1.ConditionApplyConfiguration `json:"conditions,omitempty"`
 }
 
-// NodeStatusApplyConfiguration constructs an declarative configuration of the NodeStatus type for use with
+// NodeStatusApplyConfiguration constructs a declarative configuration of the NodeStatus type for use with
 // apply.
 func NodeStatus() *NodeStatusApplyConfiguration {
 	return &NodeStatusApplyConfiguration{}

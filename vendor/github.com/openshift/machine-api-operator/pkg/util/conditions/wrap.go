@@ -27,3 +27,15 @@ func (m *MachineHealthCheckWrapper) GetConditions() []machinev1.Condition {
 func (m *MachineHealthCheckWrapper) SetConditions(conditions []machinev1.Condition) {
 	m.Status.Conditions = conditions
 }
+
+type MachineSetWrapper struct {
+	*machinev1.MachineSet
+}
+
+func (m *MachineSetWrapper) GetConditions() []machinev1.Condition {
+	return m.Status.Conditions
+}
+
+func (m *MachineSetWrapper) SetConditions(conditions []machinev1.Condition) {
+	m.Status.Conditions = conditions
+}
