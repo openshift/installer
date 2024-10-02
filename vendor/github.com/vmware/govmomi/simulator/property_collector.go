@@ -41,6 +41,7 @@ type PropertyCollector struct {
 	mo.PropertyCollector
 
 	nopLocker
+	pending *types.UpdateSet
 	updates []types.ObjectUpdate
 	mu      sync.Mutex
 	cancel  context.CancelFunc
@@ -131,6 +132,10 @@ func wrapValue(rval reflect.Value, rtype reflect.Type) interface{} {
 			pval = &types.ArrayOfByte{
 				Byte: v,
 			}
+		case types.ByteSlice:
+			pval = &types.ArrayOfByte{
+				Byte: v,
+			}
 		case []int16:
 			pval = &types.ArrayOfShort{
 				Short: v,
@@ -157,15 +162,19 @@ func wrapValue(rval reflect.Value, rtype reflect.Type) interface{} {
 	return pval
 }
 
-func fieldValueInterface(f reflect.StructField, rval reflect.Value) interface{} {
+func fieldValueInterface(f reflect.StructField, rval reflect.Value, keyed ...bool) interface{} {
 	if rval.Kind() == reflect.Ptr {
 		rval = rval.Elem()
+	}
+
+	if len(keyed) == 1 && keyed[0] {
+		return rval.Interface() // don't wrap keyed fields in ArrayOf* type
 	}
 
 	return wrapValue(rval, f.Type)
 }
 
-func fieldValue(rval reflect.Value, p string) (interface{}, error) {
+func fieldValue(rval reflect.Value, p string, keyed ...bool) (interface{}, error) {
 	var value interface{}
 	fields := strings.Split(p, ".")
 
@@ -204,7 +213,7 @@ func fieldValue(rval reflect.Value, p string) (interface{}, error) {
 
 		if i == len(fields)-1 {
 			ftype, _ := rval.Type().FieldByName(x)
-			value = fieldValueInterface(ftype, val)
+			value = fieldValueInterface(ftype, val, keyed...)
 			break
 		}
 
@@ -212,6 +221,64 @@ func fieldValue(rval reflect.Value, p string) (interface{}, error) {
 	}
 
 	return value, nil
+}
+
+func fieldValueKey(rval reflect.Value, p mo.Field) (interface{}, error) {
+	if rval.Kind() != reflect.Slice {
+		return nil, errInvalidField
+	}
+
+	zero := reflect.Value{}
+
+	for i := 0; i < rval.Len(); i++ {
+		item := rval.Index(i)
+		if item.Kind() == reflect.Interface {
+			item = item.Elem()
+		}
+		if item.Kind() == reflect.Ptr {
+			item = item.Elem()
+		}
+		if item.Kind() != reflect.Struct {
+			return reflect.Value{}, errInvalidField
+		}
+
+		field := item.FieldByName("Key")
+		if field == zero {
+			return nil, errInvalidField
+		}
+
+		switch key := field.Interface().(type) {
+		case string:
+			s, ok := p.Key.(string)
+			if !ok {
+				return nil, errInvalidField
+			}
+			if s == key {
+				return item.Interface(), nil
+			}
+		case int32:
+			s, ok := p.Key.(int32)
+			if !ok {
+				return nil, errInvalidField
+			}
+			if s == key {
+				return item.Interface(), nil
+			}
+		default:
+			return nil, errInvalidField
+		}
+	}
+
+	return nil, nil
+}
+
+func fieldValueIndex(rval reflect.Value, p mo.Field) (interface{}, error) {
+	val, err := fieldValueKey(rval, p)
+	if err != nil || val == nil || p.Item == "" {
+		return val, err
+	}
+
+	return fieldValue(reflect.ValueOf(val), p.Item)
 }
 
 func fieldRefs(f interface{}) []types.ManagedObjectReference {
@@ -329,7 +396,19 @@ func (rr *retrieveResult) collectFields(ctx *Context, rval reflect.Value, fields
 		}
 		seen[name] = true
 
-		val, err := fieldValue(rval, name)
+		var val interface{}
+		var err error
+		var field mo.Field
+		if field.FromString(name) {
+			keyed := field.Key != nil
+
+			val, err = fieldValue(rval, field.Path, keyed)
+			if err == nil && keyed {
+				val, err = fieldValueIndex(reflect.ValueOf(val), field)
+			}
+		} else {
+			err = errInvalidField
+		}
 
 		switch err {
 		case nil, errEmptyField:
@@ -392,7 +471,10 @@ func (rr *retrieveResult) collect(ctx *Context, ref types.ManagedObjectReference
 	}
 
 	if match {
-		rr.Objects = append(rr.Objects, content)
+		// Copy while content.Obj is locked, as it won't be when final results are encoded.
+		var dst types.ObjectContent
+		deepCopy(&content, &dst)
+		rr.Objects = append(rr.Objects, dst)
 	}
 
 	rr.collected[ref] = true
@@ -740,9 +822,47 @@ func (pc *PropertyCollector) apply(ctx *Context, update *types.UpdateSet) types.
 	return nil
 }
 
+// pageUpdateSet limits the given UpdateSet to max number of object updates.
+// nil is returned when not truncated, otherwise the remaining UpdateSet.
+func pageUpdateSet(update *types.UpdateSet, max int) *types.UpdateSet {
+	for i := range update.FilterSet {
+		set := update.FilterSet[i].ObjectSet
+		n := len(set)
+		if n+1 > max {
+			update.Truncated = types.NewBool(true)
+			f := types.PropertyFilterUpdate{
+				Filter:    update.FilterSet[i].Filter,
+				ObjectSet: update.FilterSet[i].ObjectSet[max:],
+			}
+			update.FilterSet[i].ObjectSet = update.FilterSet[i].ObjectSet[:max]
+
+			pending := &types.UpdateSet{
+				Version:   "P",
+				FilterSet: []types.PropertyFilterUpdate{f},
+			}
+
+			if len(update.FilterSet) > i {
+				pending.FilterSet = append(pending.FilterSet, update.FilterSet[i+1:]...)
+				update.FilterSet = update.FilterSet[:i+1]
+			}
+
+			return pending
+		}
+		max -= n
+	}
+	return nil
+}
+
+// WaitOptions.maxObjectUpdates says:
+// > PropertyCollector policy may still limit the total count
+// > to something less than maxObjectUpdates.
+// Seems to be "may" == "will" and the default max is 100.
+const defaultMaxObjectUpdates = 100 // vCenter's default
+
 func (pc *PropertyCollector) WaitForUpdatesEx(ctx *Context, r *types.WaitForUpdatesEx) soap.HasFault {
 	wait, cancel := context.WithCancel(context.Background())
 	oneUpdate := false
+	maxObject := defaultMaxObjectUpdates
 	if r.Options != nil {
 		if max := r.Options.MaxWaitSeconds; max != nil {
 			// A value of 0 causes WaitForUpdatesEx to do one update calculation and return any results.
@@ -750,6 +870,9 @@ func (pc *PropertyCollector) WaitForUpdatesEx(ctx *Context, r *types.WaitForUpda
 			if *max > 0 {
 				wait, cancel = context.WithTimeout(context.Background(), time.Second*time.Duration(*max))
 			}
+		}
+		if max := r.Options.MaxObjectUpdates; max > 0 && max < defaultMaxObjectUpdates {
+			maxObject = int(max)
 		}
 	}
 	pc.mu.Lock()
@@ -766,6 +889,12 @@ func (pc *PropertyCollector) WaitForUpdatesEx(ctx *Context, r *types.WaitForUpda
 		Returnval: set,
 	}
 
+	if pc.pending != nil {
+		body.Res.Returnval = pc.pending
+		pc.pending = pageUpdateSet(body.Res.Returnval, maxObject)
+		return body
+	}
+
 	apply := func() bool {
 		if fault := pc.apply(ctx, set); fault != nil {
 			body.Fault_ = Fault("", fault)
@@ -779,6 +908,9 @@ func (pc *PropertyCollector) WaitForUpdatesEx(ctx *Context, r *types.WaitForUpda
 		ctx.Map.AddHandler(pc) // Listen for create, update, delete of managed objects
 		apply()                // Collect current state
 		set.Version = "-"      // Next request with Version set will wait via loop below
+		if body.Res != nil {
+			pc.pending = pageUpdateSet(body.Res.Returnval, maxObject)
+		}
 		return body
 	}
 
@@ -854,6 +986,7 @@ func (pc *PropertyCollector) WaitForUpdatesEx(ctx *Context, r *types.WaitForUpda
 				}
 			}
 			if len(set.FilterSet) != 0 {
+				pc.pending = pageUpdateSet(body.Res.Returnval, maxObject)
 				return body
 			}
 			if oneUpdate {

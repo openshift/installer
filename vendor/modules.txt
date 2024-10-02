@@ -502,9 +502,6 @@ github.com/diskfs/go-diskfs/util
 # github.com/docker/go-units v0.5.0
 ## explicit
 github.com/docker/go-units
-# github.com/dougm/pretty v0.0.0-20171025230240-2ee9d7453c02
-## explicit
-github.com/dougm/pretty
 # github.com/elliotwutingfeng/asciiset v0.0.0-20230602022725-51bbb787efab
 ## explicit; go 1.11
 github.com/elliotwutingfeng/asciiset
@@ -827,9 +824,6 @@ github.com/kdomanski/iso9660
 # github.com/kr/fs v0.1.0
 ## explicit
 github.com/kr/fs
-# github.com/kr/text v0.2.0
-## explicit
-github.com/kr/text
 # github.com/kylelemons/godebug v1.1.0
 ## explicit; go 1.11
 github.com/kylelemons/godebug/diff
@@ -1277,16 +1271,10 @@ github.com/ulikunitz/xz/lzma
 # github.com/vincent-petithory/dataurl v1.0.0
 ## explicit
 github.com/vincent-petithory/dataurl
-# github.com/vmware/govmomi v0.37.2
-## explicit; go 1.19
+# github.com/vmware/govmomi v0.43.0
+## explicit; go 1.21
 github.com/vmware/govmomi
-github.com/vmware/govmomi/cns
-github.com/vmware/govmomi/cns/methods
-github.com/vmware/govmomi/cns/types
 github.com/vmware/govmomi/find
-github.com/vmware/govmomi/govc/cli
-github.com/vmware/govmomi/govc/flags
-github.com/vmware/govmomi/govc/importx
 github.com/vmware/govmomi/history
 github.com/vmware/govmomi/internal
 github.com/vmware/govmomi/internal/version
@@ -1294,12 +1282,12 @@ github.com/vmware/govmomi/list
 github.com/vmware/govmomi/nfc
 github.com/vmware/govmomi/object
 github.com/vmware/govmomi/ovf
+github.com/vmware/govmomi/ovf/importer
 github.com/vmware/govmomi/pbm
 github.com/vmware/govmomi/pbm/methods
 github.com/vmware/govmomi/pbm/types
 github.com/vmware/govmomi/property
 github.com/vmware/govmomi/session
-github.com/vmware/govmomi/session/cache
 github.com/vmware/govmomi/session/keepalive
 github.com/vmware/govmomi/simulator
 github.com/vmware/govmomi/simulator/esx
@@ -1313,7 +1301,6 @@ github.com/vmware/govmomi/units
 github.com/vmware/govmomi/vapi
 github.com/vmware/govmomi/vapi/internal
 github.com/vmware/govmomi/vapi/library
-github.com/vmware/govmomi/vapi/library/finder
 github.com/vmware/govmomi/vapi/rest
 github.com/vmware/govmomi/vapi/simulator
 github.com/vmware/govmomi/vapi/tags
@@ -1330,8 +1317,6 @@ github.com/vmware/govmomi/vim25/progress
 github.com/vmware/govmomi/vim25/soap
 github.com/vmware/govmomi/vim25/types
 github.com/vmware/govmomi/vim25/xml
-github.com/vmware/govmomi/vmdk
-github.com/vmware/govmomi/vsan/vsanfs/types
 # github.com/xlab/treeprint v1.2.0
 ## explicit; go 1.13
 github.com/xlab/treeprint
@@ -1496,6 +1481,7 @@ golang.org/x/sys/windows/registry
 golang.org/x/term
 # golang.org/x/text v0.18.0
 ## explicit; go 1.18
+golang.org/x/text/cases
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/htmlindex
@@ -1506,6 +1492,7 @@ golang.org/x/text/encoding/korean
 golang.org/x/text/encoding/simplifiedchinese
 golang.org/x/text/encoding/traditionalchinese
 golang.org/x/text/encoding/unicode
+golang.org/x/text/internal
 golang.org/x/text/internal/language
 golang.org/x/text/internal/language/compact
 golang.org/x/text/internal/tag

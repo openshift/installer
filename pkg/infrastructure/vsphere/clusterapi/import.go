@@ -10,10 +10,10 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/vmware/govmomi/govc/importx"
 	"github.com/vmware/govmomi/nfc"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/ovf"
+	"github.com/vmware/govmomi/ovf/importer"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
@@ -60,14 +60,15 @@ func checkOvaSecureBoot(ovfEnvelope *ovf.Envelope) bool {
 func importRhcosOva(ctx context.Context, session *session.Session, folder *object.Folder, cachedImage, clusterID, tagID, diskProvisioningType string, failureDomain vsphere.FailureDomain) error {
 	name := fmt.Sprintf("%s-rhcos-%s-%s", clusterID, failureDomain.Region, failureDomain.Zone)
 	logrus.Infof("Importing OVA %v into failure domain %v.", name, failureDomain.Name)
-	archive := &importx.ArchiveFlag{Archive: &importx.TapeArchive{Path: cachedImage}}
 
-	ovfDescriptor, err := archive.ReadOvf("*.ovf")
+	archive := &importer.TapeArchive{Path: cachedImage}
+
+	ovfDescriptor, err := importer.ReadOvf("*.ovf", archive)
 	if err != nil {
 		return debugCorruptOva(cachedImage, err)
 	}
 
-	ovfEnvelope, err := archive.ReadEnvelope(ovfDescriptor)
+	ovfEnvelope, err := importer.ReadEnvelope(ovfDescriptor)
 	if err != nil {
 		return fmt.Errorf("failed to parse ovf: %w", err)
 	}
@@ -264,7 +265,7 @@ func isNetworkAvailable(networkObjectRef object.NetworkReference, hostNetworkMan
 // Used govc/importx/ovf.go as an example to implement
 // resourceVspherePrivateImportOvaCreate and upload functions
 // See: https://github.com/vmware/govmomi/blob/cc10a0758d5b4d4873388bcea417251d1ad03e42/govc/importx/ovf.go#L196-L324
-func upload(ctx context.Context, archive *importx.ArchiveFlag, lease *nfc.Lease, item nfc.FileItem) error {
+func upload(ctx context.Context, archive *importer.TapeArchive, lease *nfc.Lease, item nfc.FileItem) error {
 	file := item.Path
 
 	f, size, err := archive.Open(file)
