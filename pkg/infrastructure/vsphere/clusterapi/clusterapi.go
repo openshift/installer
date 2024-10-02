@@ -146,7 +146,7 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 // PostProvision should be called to add or update and vSphere resources after provisioning has completed.
 func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisionInput) error {
 	// We will want to check to see if ControlPlane machines need additional disks
-	cpPool := in.InstallConfig.Config.ControlPlane.Platform.VSphere
+	/*cpPool := in.InstallConfig.Config.ControlPlane.Platform.VSphere
 
 	// If not set, nothing to do here.
 	if cpPool == nil {
@@ -175,7 +175,7 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 				}
 			}
 		}
-	}
+	}*/
 
 	return nil
 }
