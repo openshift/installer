@@ -5,6 +5,7 @@ run:
     - "zz_generated.*\\.go$"
     - "_conversion\\.go$"
     - "vendored_cluster_api\\.go$"
+    - "^internal/apis/topology/v1alpha1"
   allow-parallel-runners: true
 
 linters:
@@ -120,9 +121,12 @@ linters-settings:
       - pkg: sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1
         alias: vmwarev1
       # VMware Operator
-      - pkg: "github.com/vmware-tanzu/vm-operator/api/v1alpha1"
-        alias: vmoprv1 
-      # CABPK
+      - pkg: "github.com/vmware-tanzu/vm-operator/api/v1alpha2"
+        alias: vmoprv1
+      # NSX Operator
+      - pkg: "github.com/vmware-tanzu/nsx-operator/pkg/apis/vpc/v1alpha1"
+        alias: nsxvpcv1
+    # CABPK
       - pkg: sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1
         alias: bootstrapv1
       # KCP

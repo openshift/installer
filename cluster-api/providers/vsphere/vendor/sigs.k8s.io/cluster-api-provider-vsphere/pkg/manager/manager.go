@@ -22,10 +22,9 @@ import (
 
 	"github.com/pkg/errors"
 	netopv1 "github.com/vmware-tanzu/net-operator-api/api/v1alpha1"
-	nsxopv1 "github.com/vmware-tanzu/nsx-operator/pkg/apis/v1alpha1"
-	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha1"
+	nsxvpcv1 "github.com/vmware-tanzu/nsx-operator/pkg/apis/vpc/v1alpha1"
+	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha2"
 	ncpv1 "github.com/vmware-tanzu/vm-operator/external/ncp/api/v1alpha1"
-	topologyv1 "github.com/vmware-tanzu/vm-operator/external/tanzu-topology/api/v1alpha1"
 	"gopkg.in/fsnotify.v1"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -38,6 +37,7 @@ import (
 	infrav1alpha4 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1alpha4"
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
+	topologyv1 "sigs.k8s.io/cluster-api-provider-vsphere/internal/apis/topology/v1alpha1"
 	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 )
 
@@ -65,7 +65,7 @@ func New(ctx context.Context, opts Options) (Manager, error) {
 	_ = vmoprv1.AddToScheme(opts.Scheme)
 	_ = ncpv1.AddToScheme(opts.Scheme)
 	_ = netopv1.AddToScheme(opts.Scheme)
-	_ = nsxopv1.AddToScheme(opts.Scheme)
+	_ = nsxvpcv1.AddToScheme(opts.Scheme)
 	_ = topologyv1.AddToScheme(opts.Scheme)
 	_ = ipamv1.AddToScheme(opts.Scheme)
 
@@ -87,8 +87,6 @@ func New(ctx context.Context, opts Options) (Manager, error) {
 		Scheme:                  opts.Scheme,
 		Username:                opts.Username,
 		Password:                opts.Password,
-		EnableKeepAlive:         opts.EnableKeepAlive,
-		KeepAliveDuration:       opts.KeepAliveDuration,
 		NetworkProvider:         opts.NetworkProvider,
 		WatchFilterValue:        opts.WatchFilterValue,
 	}

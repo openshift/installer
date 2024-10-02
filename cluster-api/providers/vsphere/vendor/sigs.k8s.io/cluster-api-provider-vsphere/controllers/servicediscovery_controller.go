@@ -94,8 +94,6 @@ func AddServiceDiscoveryControllerToManager(ctx context.Context, controllerManag
 	if err := mgr.Add(configMapCache); err != nil {
 		return errors.Wrapf(err, "failed to add ConfigMap cache")
 	}
-	src := source.Kind(configMapCache, &corev1.ConfigMap{})
-
 	clusterToInfraFn := clusterToVMwareInfrastructureMapFunc(ctx, controllerManagerCtx)
 	return ctrl.NewControllerManagedBy(mgr).For(&vmwarev1.VSphereCluster{}).
 		Named("servicediscovery/vspherecluster").
@@ -105,8 +103,11 @@ func AddServiceDiscoveryControllerToManager(ctx context.Context, controllerManag
 			handler.EnqueueRequestsFromMapFunc(r.serviceToClusters),
 		).
 		WatchesRawSource(
-			src,
-			handler.EnqueueRequestsFromMapFunc(r.configMapToClusters),
+			source.Kind(
+				configMapCache,
+				&corev1.ConfigMap{},
+				handler.TypedEnqueueRequestsFromMapFunc(r.configMapToClusters),
+			),
 		).
 		// watch the CAPI cluster
 		Watches(
@@ -461,7 +462,7 @@ func (r *serviceDiscoveryReconciler) serviceToClusters(ctx context.Context, o cl
 
 // configMapToClusters is a mapper function used to enqueue reconcile.Requests
 // It watches for cluster-info configmaps for the supervisor api-server.
-func (r *serviceDiscoveryReconciler) configMapToClusters(ctx context.Context, o client.Object) []reconcile.Request {
+func (r *serviceDiscoveryReconciler) configMapToClusters(ctx context.Context, o *corev1.ConfigMap) []reconcile.Request {
 	if o.GetNamespace() != metav1.NamespacePublic || o.GetName() != bootstrapapi.ConfigMapClusterInfo {
 		return nil
 	}

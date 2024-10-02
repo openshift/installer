@@ -33,13 +33,14 @@ Check out the [getting started guide](./docs/getting_started.md) for launching a
 
 This provider's versions are compatible with the following versions of Cluster API:
 
-|                     | Cluster API v1beta1 (v1.3) | Cluster API v1beta1 (v1.4) | Cluster API v1beta1 (v1.5) | Cluster API v1beta1 (v1.6) |
-|---------------------|:--------------------------:|:--------------------------:|:--------------------------:|:--------------------------:|
-| CAPV v1beta1 (v1.5) |             ✓              |             ✓              |             ☓              |             ☓              |
-| CAPV v1beta1 (v1.6) |             ✓              |             ✓              |             ☓              |             ☓              |
-| CAPV v1beta1 (v1.7) |             ✓              |             ✓              |             ☓              |             ☓              |
-| CAPV v1beta1 (v1.8) |             ☓              |             ☓              |             ✓              |             ☓              |
-| CAPV v1beta1 (v1.9) |             ☓              |             ☓              |             ☓              |             ✓              |
+|                      | Cluster API v1beta1 (v1.4) | Cluster API v1beta1 (v1.5) | Cluster API v1beta1 (v1.6) | Cluster API v1beta1 (v1.7) |
+|----------------------|:--------------------------:|:--------------------------:|:--------------------------:|:--------------------------:|
+| CAPV v1beta1 (v1.5)  |             ✓              |             ☓              |             ☓              |             ☓              |
+| CAPV v1beta1 (v1.6)  |             ✓              |             ☓              |             ☓              |             ☓              |
+| CAPV v1beta1 (v1.7)  |             ✓              |             ☓              |             ☓              |             ☓              |
+| CAPV v1beta1 (v1.8)  |             ☓              |             ✓              |             ☓              |             ☓              |
+| CAPV v1beta1 (v1.9)  |             ☓              |             ☓              |             ✓              |             x              |
+| CAPV v1beta1 (v1.10) |             ☓              |             ☓              |             x              |             ✓              |
 
 As CAPV doesn't dictate supported K8s versions, and it supports whatever CAPI supported, about the provider's compatibility with K8s versions, please refer
 to [CAPI Supported Kubernetes Versions](https://cluster-api.sigs.k8s.io/reference/versions.html).
@@ -63,15 +64,16 @@ production-like environments, it is highly recommended to build and use your own
 
 **Note:** Big OVAs will be split into multiple parts. To use them please download all parts and use `cat part1 part2 part3 > out.ova` to join them again.
 
-| Kubernetes | Ubuntu 18.04 | Ubuntu 20.04 | Ubuntu 22.04 | Photon 3 | Photon 5 | Flatcar Stable |
-|:-----------|:------------:|:------------:|:------------:|:--------:|:--------:|:--------------:|
-| [v1.24.11] |      ✓       |      ✓       |              |    ✓     |          |       ✓        |
-| [v1.25.7]  |      ✓       |      ✓       |              |    ✓     |          |       ✓        |
-| [v1.26.2]  |      ✓       |      ✓       |              |    ✓     |          |       ✓        |
-| [v1.27.3]  |      ✓       |      ✓       |      ✓       |    ✓     |          |       ✓        |
-| [v1.28.0]  |      ✓       |      ✓       |      ✓       |    ✓     |          |       ✓        |
-| [v1.29.0]  |              |              |      ✓       |    ✓     |    ✓     |       ✓        |
-| [v1.30.0]  |              |              |      ✓       |          |    ✓     |       ✓        |
+| Kubernetes | Ubuntu 18.04 | Ubuntu 20.04 | Ubuntu 22.04 | Ubuntu 24.04 | Photon 3 | Photon 5 | Flatcar Stable |
+|:-----------|:------------:|:------------:|:------------:|:------------:|:--------:|:--------:|:--------------:|
+| [v1.24.11] |      ✓       |      ✓       |              |              |    ✓     |          |       ✓        |
+| [v1.25.7]  |      ✓       |      ✓       |              |              |    ✓     |          |       ✓        |
+| [v1.26.2]  |      ✓       |      ✓       |              |              |    ✓     |          |       ✓        |
+| [v1.27.3]  |      ✓       |      ✓       |      ✓       |              |    ✓     |          |       ✓        |
+| [v1.28.0]  |      ✓       |      ✓       |      ✓       |              |    ✓     |          |       ✓        |
+| [v1.29.0]  |              |              |      ✓       |              |    ✓     |    ✓     |       ✓        |
+| [v1.30.0]  |              |              |      ✓       |              |          |    ✓     |       ✓        |
+| [v1.31.0]  |              |              |      ✓       |      ✓       |          |    ✓     |       ✓        |
 
 [v1.24.11]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.24.11
 [v1.25.7]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.25.7
@@ -80,6 +82,7 @@ production-like environments, it is highly recommended to build and use your own
 [v1.28.0]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.28.0
 [v1.29.0]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.29.0
 [v1.30.0]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.30.0
+[v1.31.0]: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases/tag/templates/v1.31.0
 
 A full list of the published machine images for CAPV can be found by [searching for releases](https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/releases?q=templates%2F&expanded=true)
 on the repository having the prefix `templates/` and taking a look at the available assets.
@@ -88,7 +91,11 @@ on the repository having the prefix `templates/` and taking a look at the availa
 
 Further documentation is available in the `/docs` directory.
 
-## Getting involved and contributing
+[vSphere Custom Resource Definitions][vsphere_custom_resource_definitions]
+
+[Cluster API Custom Resource Definitions][capi_custom_resource_definitions]
+
+  ## Getting involved and contributing
 
 Are you interested in contributing to cluster-api-provider-vsphere? We, the maintainers and community, would love your suggestions, contributions, and help! Also, the maintainers can be contacted at
 any time to learn more about how to get involved.
@@ -169,5 +176,9 @@ We also use the issue tracker to track features. If you have an idea for a featu
 [zoom_meeting]: https://zoom.us/j/92253194848?pwd=cVVVNDMxeTl1QVJPUlpvLzNSVU1JZz09
 
 [time_zone_converter]: http://www.thetimezoneconverter.com/?t=08:00&tz=PT%20%28Pacific%20Time%29
+
+[vsphere_custom_resource_definitions]: https://doc.crds.dev/github.com/kubernetes-sigs/cluster-api-provider-vsphere
+
+[capi_custom_resource_definitions]: https://doc.crds.dev/github.com/kubernetes-sigs/cluster-api
 
 <!-- markdownlint-disable-file MD033 -->

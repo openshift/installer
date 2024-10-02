@@ -69,7 +69,7 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 		}
 	}
 	if vmCtx.VSphereVM.Spec.CustomVMXKeys != nil {
-		log.Info("Applied custom vmx keys o VM clone spec")
+		log.Info("Applied custom VMX keys to VM clone spec")
 		if err := extraConfig.SetCustomVMXKeys(vmCtx.VSphereVM.Spec.CustomVMXKeys); err != nil {
 			return err
 		}
@@ -151,10 +151,6 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 	}
 
 	deviceSpecs = append(deviceSpecs, networkSpecs...)
-
-	if err != nil {
-		return errors.Wrapf(err, "error getting network specs for %q", ctx)
-	}
 
 	numCPUs := vmCtx.VSphereVM.Spec.NumCPUs
 	if numCPUs < 2 {
