@@ -3,7 +3,6 @@ package azure
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -82,11 +81,11 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		*machineSetProvider = *provider
 		machines = append(machines, machine)
 	}
-	replicas := int32(total)
 
+	replicas := int32(total)
 	failureDomains := []machinev1.AzureFailureDomain{}
+
 	if len(mpool.Zones) > 1 {
-		sort.Strings(mpool.Zones)
 		for _, zone := range mpool.Zones {
 			domain := machinev1.AzureFailureDomain{
 				Zone: zone,
