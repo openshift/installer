@@ -10,6 +10,7 @@ isoIgnitionContains node.x86_64.iso /etc/assisted/manifests/infraenv.yaml
 isoIgnitionContains node.x86_64.iso /etc/assisted/manifests/pull-secret.yaml
 isoIgnitionContains node.x86_64.iso /usr/local/bin/add-node.sh
 isoIgnitionUser node.x86_64.iso core my-sshKey
+isoCmp node.x86_64.iso /etc/containers/registries.conf expected/registries.conf
 
 -- nodes-config.yaml --
 hosts:
@@ -17,3 +18,16 @@ hosts:
       interfaces:
         - name: eth0
           macAddress: 00:f4:3d:a0:0e:2b
+
+-- expected/registries.conf --
+credential-helpers = []
+short-name-mode = ""
+unqualified-search-registries = []
+
+[[registry]]
+  location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+  mirror-by-digest-only = true
+  prefix = ""
+
+  [[registry.mirror]]
+    location = "registry.example.com:5000/ocp4/openshift4"
