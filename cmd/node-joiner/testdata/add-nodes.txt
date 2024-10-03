@@ -4,7 +4,7 @@
 exec node-joiner add-nodes --kubeconfig=$WORK/kubeconfig --log-level=debug --dir=$WORK
 
 exists $WORK/node.x86_64.iso
-isoIgnitionContains node.x86_64.iso /etc/assisted/add-nodes.env
+isoCmpRegEx node.x86_64.iso /etc/assisted/add-nodes.env expected/add-nodes.env
 isoIgnitionContains node.x86_64.iso /etc/assisted/manifests/cluster-image-set.yaml
 isoIgnitionContains node.x86_64.iso /etc/assisted/manifests/infraenv.yaml
 isoIgnitionContains node.x86_64.iso /etc/assisted/manifests/pull-secret.yaml
@@ -31,3 +31,8 @@ unqualified-search-registries = []
 
   [[registry.mirror]]
     location = "registry.example.com:5000/ocp4/openshift4"
+-- expected/add-nodes.env --
+CLUSTER_ID=c37c9544-4320-4380-9d8b-0753a4d9ea57
+CLUSTER_NAME=ostest
+CLUSTER_API_VIP_DNS_NAME=api.ostest.test.metalkube.org
+AGENT_AUTH_TOKEN_EXPIRY=.*

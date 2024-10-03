@@ -401,6 +401,9 @@ func defaultObjects() func(t *testing.T) ([]runtime.Object, []runtime.Object) {
 						Type: configv1.BareMetalPlatformType,
 					},
 				},
+				Status: configv1.InfrastructureStatus{
+					APIServerURL: "https://api.ostest.test.metalkube.org:6443",
+				},
 			},
 			&configv1.ImageDigestMirrorSetList{
 				Items: []configv1.ImageDigestMirrorSet{
