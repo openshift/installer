@@ -50,6 +50,7 @@ import (
 	"github.com/openshift/installer/pkg/gather/service"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	baremetalutils "github.com/openshift/installer/pkg/utils/baremetal"
@@ -891,7 +892,7 @@ func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error 
 	}
 	switch installConfig.Config.Platform.Name() { //nolint:gocritic
 	case gcp.Name:
-		if installConfig.Config.GCP.UserProvisionedDNS != gcp.UserProvisionedDNSEnabled {
+		if installConfig.Config.GCP.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
 			return nil
 		}
 	default:

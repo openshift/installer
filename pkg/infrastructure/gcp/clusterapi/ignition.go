@@ -20,6 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
@@ -39,7 +40,7 @@ func EditIgnition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, err
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*2)
 	defer cancel()
 
-	if in.InstallConfig.Config.GCP.UserProvisionedDNS == gcp.UserProvisionedDNSEnabled {
+	if in.InstallConfig.Config.GCP.UserProvisionedDNS == dns.UserProvisionedDNSEnabled {
 		gcpCluster := &capg.GCPCluster{}
 		key := client.ObjectKey{
 			Name:      in.InfraID,
