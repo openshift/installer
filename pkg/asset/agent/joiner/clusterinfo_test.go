@@ -15,9 +15,11 @@ import (
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
+	machineconfigv1 "github.com/openshift/api/machineconfiguration/v1"
 	"github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	fakeclientconfig "github.com/openshift/client-go/config/clientset/versioned/fake"
+	fakeclientmachineconfig "github.com/openshift/client-go/machineconfiguration/clientset/versioned/fake"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/types"
@@ -28,7 +30,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 		name                string
 		workflow            workflow.AgentWorkflowType
 		nodesConfig         AddNodesConfig
-		objs                func(t *testing.T) ([]runtime.Object, []runtime.Object)
+		objs                func(t *testing.T) ([]runtime.Object, []runtime.Object, []runtime.Object)
 		expectedClusterInfo ClusterInfo
 		expectedError       string
 	}{
@@ -83,9 +85,9 @@ func TestClusterInfo_Generate(t *testing.T) {
 					CPUArchitecture: "arm64",
 				},
 			},
-			objs: func(t *testing.T) ([]runtime.Object, []runtime.Object) {
+			objs: func(t *testing.T) ([]runtime.Object, []runtime.Object, []runtime.Object) {
 				t.Helper()
-				objs, ocObjs := defaultObjects()(t)
+				objs, ocObjs, ocMachineConfigObjs := defaultObjects()(t)
 				for i, o := range objs {
 					if node, ok := o.(*corev1.Node); ok {
 						node.Status.NodeInfo.Architecture = "amd64"
@@ -93,7 +95,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 						break
 					}
 				}
-				return objs, ocObjs
+				return objs, ocObjs, ocMachineConfigObjs
 			},
 			expectedClusterInfo: ClusterInfo{
 				ClusterID:    "1b5ba46b-7e56-47b1-a326-a9eebddfb38c",
@@ -132,9 +134,9 @@ func TestClusterInfo_Generate(t *testing.T) {
 		{
 			name:     "not supported platform",
 			workflow: workflow.AgentWorkflowTypeAddNodes,
-			objs: func(t *testing.T) ([]runtime.Object, []runtime.Object) {
+			objs: func(t *testing.T) ([]runtime.Object, []runtime.Object, []runtime.Object) {
 				t.Helper()
-				objs, ocObjs := defaultObjects()(t)
+				objs, ocObjs, ocMachineConfigObjs := defaultObjects()(t)
 				for i, o := range ocObjs {
 					if infra, ok := o.(*configv1.Infrastructure); ok {
 						infra.Spec.PlatformSpec.Type = configv1.AWSPlatformType
@@ -142,7 +144,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 						break
 					}
 				}
-				return objs, ocObjs
+				return objs, ocObjs, ocMachineConfigObjs
 			},
 			expectedError: "Platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"none\", \"external\"",
 		},
@@ -198,16 +200,18 @@ func TestClusterInfo_Generate(t *testing.T) {
 			parents.Add(agentWorkflow)
 			parents.Add(addNodesConfig)
 
-			var objects, openshiftObjects []runtime.Object
+			var objects, openshiftObjects, openshiftMachineConfigObjects []runtime.Object
 			if tc.objs != nil {
-				objects, openshiftObjects = tc.objs(t)
+				objects, openshiftObjects, openshiftMachineConfigObjects = tc.objs(t)
 			}
 			fakeClient := fake.NewSimpleClientset(objects...)
 			fakeOCClient := fakeclientconfig.NewSimpleClientset(openshiftObjects...)
+			fakeOCMachineConfigClient := fakeclientmachineconfig.NewSimpleClientset(openshiftMachineConfigObjects...)
 
 			clusterInfo := &ClusterInfo{
-				Client:          fakeClient,
-				OpenshiftClient: fakeOCClient,
+				Client:                       fakeClient,
+				OpenshiftClient:              fakeOCClient,
+				OpenshiftMachineConfigClient: fakeOCMachineConfigClient,
 			}
 			err := clusterInfo.Generate(context.Background(), parents)
 			if tc.expectedError == "" {
@@ -289,7 +293,6 @@ func makeInstallConfig(t *testing.T) string {
 			Name: "ostest",
 		},
 		BaseDomain: "test.metalkube.org",
-		SSHKey:     "my-ssh-key",
 		FIPS:       true,
 	}
 	data, err := yaml.Marshal(ic)
@@ -300,8 +303,8 @@ func makeInstallConfig(t *testing.T) string {
 	return string(data)
 }
 
-func defaultObjects() func(t *testing.T) ([]runtime.Object, []runtime.Object) {
-	return func(t *testing.T) ([]runtime.Object, []runtime.Object) {
+func defaultObjects() func(t *testing.T) ([]runtime.Object, []runtime.Object, []runtime.Object) {
+	return func(t *testing.T) ([]runtime.Object, []runtime.Object, []runtime.Object) {
 		t.Helper()
 		objects := []runtime.Object{
 			&corev1.Secret{
@@ -422,6 +425,27 @@ func defaultObjects() func(t *testing.T) ([]runtime.Object, []runtime.Object) {
 				},
 			},
 		}
-		return objects, openshiftObjects
+
+		openshiftMachineConfigObjects := []runtime.Object{
+			&machineconfigv1.MachineConfig{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "99-worker-ssh",
+				},
+				Spec: machineconfigv1.MachineConfigSpec{
+					Config: runtime.RawExtension{
+						Raw: []byte(`
+ignition:
+  version: 3.2.0
+passwd:
+  users:
+  - name: core
+    sshAuthorizedKeys:
+    - my-ssh-key`),
+					},
+				},
+			},
+		}
+
+		return objects, openshiftObjects, openshiftMachineConfigObjects
 	}
 }
