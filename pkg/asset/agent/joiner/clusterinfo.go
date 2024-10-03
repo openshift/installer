@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strings"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
@@ -147,6 +148,10 @@ func (ci *ClusterInfo) Generate(_ context.Context, dependencies asset.Parents) e
 	if err != nil {
 		return err
 	}
+	err = ci.retrieveAPIDNSName()
+	if err != nil {
+		return err
+	}
 
 	ci.Namespace = "cluster0"
 
@@ -276,7 +281,6 @@ func (ci *ClusterInfo) retrieveInstallConfigData(addNodesConfig *AddNodesConfig)
 
 	ci.SSHKey = installConfig.SSHKey
 	ci.ClusterName = installConfig.ObjectMeta.Name
-	ci.APIDNSName = fmt.Sprintf("api.%s.%s", ci.ClusterName, installConfig.BaseDomain)
 	ci.FIPS = installConfig.FIPS
 
 	if addNodesConfig.Config.SSHKey != "" {
@@ -428,6 +432,20 @@ func (ci *ClusterInfo) retrievePlatformType() error {
 	}
 
 	ci.PlatformType = agent.HivePlatformType(platform)
+	return nil
+}
+
+func (ci *ClusterInfo) retrieveAPIDNSName() error {
+	infra, err := ci.getInfrastructure()
+	if err != nil {
+		return err
+	}
+
+	apiURL, err := url.Parse(infra.Status.APIServerURL)
+	if err != nil {
+		return err
+	}
+	ci.APIDNSName = apiURL.Hostname()
 	return nil
 }
 

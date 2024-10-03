@@ -65,6 +65,7 @@ func TestNodeJoinerIntegration(t *testing.T) {
 
 		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
 			"isoCmp":              tshelpers.IsoCmp,
+			"isoCmpRegEx":         tshelpers.IsoCmpRegEx,
 			"isoIgnitionContains": tshelpers.IsoIgnitionContains,
 			"isoIgnitionUser":     tshelpers.IsoIgnitionUser,
 		},
