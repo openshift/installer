@@ -2027,9 +2027,9 @@ func (NetworkList) SwaggerDoc() map[string]string {
 }
 
 var map_NetworkMigration = map[string]string{
-	"":            "NetworkMigration represents the cluster network configuration.",
-	"networkType": "NetworkType is the target plugin that is to be deployed. Currently supported values are: OpenShiftSDN, OVNKubernetes",
-	"mtu":         "MTU contains the MTU migration configuration.",
+	"":            "NetworkMigration represents the network migration status.",
+	"networkType": "NetworkType is the target plugin that is being deployed. DEPRECATED: network type migration is no longer supported, so this should always be unset.",
+	"mtu":         "MTU is the MTU configuration that is being deployed.",
 }
 
 func (NetworkMigration) SwaggerDoc() map[string]string {
@@ -2040,7 +2040,7 @@ var map_NetworkSpec = map[string]string{
 	"":                     "NetworkSpec is the desired network configuration. As a general rule, this SHOULD NOT be read directly. Instead, you should consume the NetworkStatus, as it indicates the currently deployed configuration. Currently, most spec fields are immutable after installation. Please view the individual ones for further details on each.",
 	"clusterNetwork":       "IP address pool to use for pod IPs. This field is immutable after installation.",
 	"serviceNetwork":       "IP address pool for services. Currently, we only support a single entry here. This field is immutable after installation.",
-	"networkType":          "NetworkType is the plugin that is to be deployed (e.g. OpenShiftSDN). This should match a value that the cluster-network-operator understands, or else no networking will be installed. Currently supported values are: - OpenShiftSDN This field is immutable after installation.",
+	"networkType":          "NetworkType is the plugin that is to be deployed (e.g. OVNKubernetes). This should match a value that the cluster-network-operator understands, or else no networking will be installed. Currently supported values are: - OVNKubernetes This field is immutable after installation.",
 	"externalIP":           "externalIP defines configuration for controllers that affect Service.ExternalIP. If nil, then ExternalIP is not allowed to be set.",
 	"serviceNodePortRange": "The port range allowed for Services of type NodePort. If not specified, the default of 30000-32767 will be used. Such Services without a NodePort specified will have one automatically allocated from this range. This parameter can be updated after the cluster is installed.",
 	"networkDiagnostics":   "networkDiagnostics defines network diagnostics configuration.\n\nTakes precedence over spec.disableNetworkDiagnostics in network.operator.openshift.io. If networkDiagnostics is not specified or is empty, and the spec.disableNetworkDiagnostics flag in network.operator.openshift.io is set to true, the network diagnostics feature will be disabled.",
@@ -2054,10 +2054,10 @@ var map_NetworkStatus = map[string]string{
 	"":                  "NetworkStatus is the current network configuration.",
 	"clusterNetwork":    "IP address pool to use for pod IPs.",
 	"serviceNetwork":    "IP address pool for services. Currently, we only support a single entry here.",
-	"networkType":       "NetworkType is the plugin that is deployed (e.g. OpenShiftSDN).",
+	"networkType":       "NetworkType is the plugin that is deployed (e.g. OVNKubernetes).",
 	"clusterNetworkMTU": "ClusterNetworkMTU is the MTU for inter-pod networking.",
 	"migration":         "Migration contains the cluster network migration configuration.",
-	"conditions":        "conditions represents the observations of a network.config current state. Known .status.conditions.type are: \"NetworkTypeMigrationInProgress\", \"NetworkTypeMigrationMTUReady\", \"NetworkTypeMigrationTargetCNIAvailable\", \"NetworkTypeMigrationTargetCNIInUse\", \"NetworkTypeMigrationOriginalCNIPurged\" and \"NetworkDiagnosticsAvailable\"",
+	"conditions":        "conditions represents the observations of a network.config current state. Known .status.conditions.type are: \"NetworkDiagnosticsAvailable\"",
 }
 
 func (NetworkStatus) SwaggerDoc() map[string]string {
