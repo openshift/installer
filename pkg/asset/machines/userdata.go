@@ -13,6 +13,8 @@ kind: Secret
 metadata:
   name: {{.name}}
   namespace: openshift-machine-api
+  labels:
+    "machineconfiguration.openshift.io/contains-managed-ca-bundle": ""
 type: Opaque
 data:
   disableTemplating: "dHJ1ZQo="
