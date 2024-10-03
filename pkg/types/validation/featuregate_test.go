@@ -7,7 +7,7 @@ import (
 
 	v1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -22,7 +22,7 @@ func TestFeatureGates(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.GCP = validGCPPlatform()
-				c.GCP.UserProvisionedDNS = gcp.UserProvisionedDNSEnabled
+				c.GCP.UserProvisionedDNS = dns.UserProvisionedDNSEnabled
 				return c
 			}(),
 			expected: `^platform.gcp.userProvisionedDNS: Forbidden: this field is protected by the GCPClusterHostedDNS feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,

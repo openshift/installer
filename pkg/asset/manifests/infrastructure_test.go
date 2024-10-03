@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/dns"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 )
@@ -178,7 +179,7 @@ func (b icBuildNamespace) withGCPUserProvisionedDNS(enabled string) icOption {
 	return func(ic *types.InstallConfig) {
 		b.forGCP()(ic)
 		if enabled == "Enabled" {
-			ic.Platform.GCP.UserProvisionedDNS = gcptypes.UserProvisionedDNSEnabled
+			ic.Platform.GCP.UserProvisionedDNS = dns.UserProvisionedDNSEnabled
 			ic.FeatureGates = []string{"GCPClusterHostedDNS=true"}
 		}
 	}
