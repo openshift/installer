@@ -25,6 +25,7 @@ import (
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
+	machineconfigclient "github.com/openshift/client-go/machineconfiguration/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
@@ -47,8 +48,9 @@ import (
 // from an already existing cluster. A number of different resources
 // are inspected to extract the required configuration.
 type ClusterInfo struct {
-	Client          kubernetes.Interface
-	OpenshiftClient configclient.Interface
+	Client                       kubernetes.Interface
+	OpenshiftClient              configclient.Interface
+	OpenshiftMachineConfigClient machineconfigclient.Interface
 
 	ClusterID                     string
 	ClusterName                   string
@@ -124,7 +126,7 @@ func (ci *ClusterInfo) Generate(_ context.Context, dependencies asset.Parents) e
 		return err
 	}
 
-	err = ci.retrieveInstallConfigData(addNodesConfig)
+	err = ci.retrieveInstallConfigData()
 	if err != nil {
 		return err
 	}
@@ -157,6 +159,10 @@ func (ci *ClusterInfo) Generate(_ context.Context, dependencies asset.Parents) e
 	if err != nil {
 		return err
 	}
+	err = ci.retrieveSSHKey(addNodesConfig)
+	if err != nil {
+		return err
+	}
 
 	ci.Namespace = "cluster0"
 
@@ -184,6 +190,12 @@ func (ci *ClusterInfo) initClients(kubeconfig string) error {
 		return err
 	}
 	ci.OpenshiftClient = openshiftClient
+
+	openshiftMachineConfigClient, err := machineconfigclient.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	ci.OpenshiftMachineConfigClient = openshiftMachineConfigClient
 
 	k8sclientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
@@ -266,7 +278,7 @@ func (ci *ClusterInfo) retrieveArchitecture(addNodesConfig *AddNodesConfig) erro
 	return fmt.Errorf("unable to determine target cluster architecture")
 }
 
-func (ci *ClusterInfo) retrieveInstallConfigData(addNodesConfig *AddNodesConfig) error {
+func (ci *ClusterInfo) retrieveInstallConfigData() error {
 	clusterConfig, err := ci.Client.CoreV1().ConfigMaps("kube-system").Get(context.Background(), "cluster-config-v1", metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -284,13 +296,31 @@ func (ci *ClusterInfo) retrieveInstallConfigData(addNodesConfig *AddNodesConfig)
 		return err
 	}
 
-	ci.SSHKey = installConfig.SSHKey
 	ci.FIPS = installConfig.FIPS
+	return nil
+}
 
+func (ci *ClusterInfo) retrieveSSHKey(addNodesConfig *AddNodesConfig) error {
 	if addNodesConfig.Config.SSHKey != "" {
 		ci.SSHKey = addNodesConfig.Config.SSHKey
+		return nil
 	}
 
+	workerMachineConfig, err := ci.OpenshiftMachineConfigClient.MachineconfigurationV1().MachineConfigs().Get(context.Background(), "99-worker-ssh", metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	var ign igntypes.Config
+	if err := yaml.Unmarshal(workerMachineConfig.Spec.Config.Raw, &ign); err != nil {
+		return err
+	}
+	if len(ign.Passwd.Users) == 0 {
+		return fmt.Errorf("cannot retrieve SSH key from machineconfig/99-worker-ssh: no user found")
+	}
+	if len(ign.Passwd.Users[0].SSHAuthorizedKeys) == 0 {
+		return fmt.Errorf("cannot retrieve SSH key from machineconfig/99-worker-ssh: no SSH key found for user %s", ign.Passwd.Users[0].Name)
+	}
+	ci.SSHKey = string(ign.Passwd.Users[0].SSHAuthorizedKeys[0])
 	return nil
 }
 
