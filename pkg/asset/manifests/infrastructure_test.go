@@ -75,7 +75,31 @@ func TestGenerateInfrastructure(t *testing.T) {
 			infraBuild.withGCPClusterHostedDNS("Enabled"),
 		),
 		expectedFilesGenerated: 2,
-	}}
+	},
+		{
+			name:          "default AWS custom DNS",
+			installConfig: icBuild.build(icBuild.forAWS()),
+			expectedInfrastructure: infraBuild.build(
+				infraBuild.forPlatform(configv1.AWSPlatformType),
+				infraBuild.withAWSClusterHostedDNS("Disabled"),
+				infraBuild.withAWSPlatformSpec(),
+				infraBuild.withAWSPlatformStatus(),
+			),
+			expectedFilesGenerated: 1,
+		}, {
+			name: "AWS custom DNS",
+			installConfig: icBuild.build(
+				icBuild.forAWS(),
+				icBuild.withAWSUserProvisionedDNS("Enabled"),
+			),
+			expectedInfrastructure: infraBuild.build(
+				infraBuild.forPlatform(configv1.AWSPlatformType),
+				infraBuild.withAWSClusterHostedDNS("Enabled"),
+				infraBuild.withAWSPlatformSpec(),
+				infraBuild.withAWSPlatformStatus(),
+			),
+			expectedFilesGenerated: 1,
+		}}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			parents := asset.Parents{}
@@ -185,6 +209,16 @@ func (b icBuildNamespace) withGCPUserProvisionedDNS(enabled string) icOption {
 	}
 }
 
+func (b icBuildNamespace) withAWSUserProvisionedDNS(enabled string) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forAWS()(ic)
+		if enabled == "Enabled" {
+			ic.Platform.AWS.UserProvisionedDNS = dns.UserProvisionedDNSEnabled
+			ic.FeatureGates = []string{"AWSClusterHostedDNS=true"}
+		}
+	}
+}
+
 type infraOption func(*configv1.Infrastructure)
 
 type infraBuildNamespace struct{}
@@ -242,6 +276,9 @@ func (b infraBuildNamespace) withAWSPlatformStatus() infraOption {
 			return
 		}
 		infra.Status.PlatformStatus.AWS = &configv1.AWSPlatformStatus{}
+		infra.Status.PlatformStatus.AWS.CloudLoadBalancerConfig = &configv1.CloudLoadBalancerConfig{
+			DNSType: configv1.PlatformDefaultDNSType,
+		}
 	}
 }
 
@@ -306,6 +343,18 @@ func (b infraBuildNamespace) withGCPClusterHostedDNS(enabled string) infraOption
 		infra.Status.PlatformStatus.GCP.CloudLoadBalancerConfig.DNSType = configv1.PlatformDefaultDNSType
 		if enabled == "Enabled" {
 			infra.Status.PlatformStatus.GCP.CloudLoadBalancerConfig.DNSType = configv1.ClusterHostedDNSType
+		}
+	}
+}
+
+func (b infraBuildNamespace) withAWSClusterHostedDNS(enabled string) infraOption {
+	return func(infra *configv1.Infrastructure) {
+		b.withAWSPlatformStatus()(infra)
+		infra.Status.PlatformStatus.AWS.CloudLoadBalancerConfig = &configv1.CloudLoadBalancerConfig{
+			DNSType: configv1.PlatformDefaultDNSType,
+		}
+		if enabled == "Enabled" {
+			infra.Status.PlatformStatus.AWS.CloudLoadBalancerConfig.DNSType = configv1.ClusterHostedDNSType
 		}
 	}
 }

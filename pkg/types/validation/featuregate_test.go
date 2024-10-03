@@ -28,6 +28,16 @@ func TestFeatureGates(t *testing.T) {
 			expected: `^platform.gcp.userProvisionedDNS: Forbidden: this field is protected by the GCPClusterHostedDNS feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
 		},
 		{
+			name: "AWS UserProvisionedDNS is not allowed without Feature Gates",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = validAWSPlatform()
+				c.AWS.UserProvisionedDNS = dns.UserProvisionedDNSEnabled
+				return c
+			}(),
+			expected: `^platform.aws.userProvisionedDNS: Forbidden: this field is protected by the AWSClusterHostedDNS feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+		},
+		{
 			name: "vSphere hosts is allowed with Feature Gates enabled",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
