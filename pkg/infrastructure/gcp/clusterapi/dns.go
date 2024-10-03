@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"google.golang.org/api/dns/v1"
 	"google.golang.org/api/option"
 
@@ -148,6 +149,22 @@ func createDNSRecords(ctx context.Context, ic *installconfig.InstallConfig, clus
 // createPrivateManagedZone will create a private managed zone in the GCP project specified in the install config. The
 // private managed zone should only be created when one is not specified in the install config.
 func createPrivateManagedZone(ctx context.Context, ic *installconfig.InstallConfig, clusterID, network string) error {
+	// A shared VPC install allows a user to preconfigure a private zone. If there is a private zone found, do not create a new one.
+	if ic.Config.GCP.NetworkProjectID != "" {
+		client, err := gcpic.NewClient(ctx)
+		if err != nil {
+			return err
+		}
+		privateZone, err := client.GetDNSZone(ctx, ic.Config.GCP.ProjectID, ic.Config.ClusterDomain(), false)
+		if err != nil {
+			return fmt.Errorf("failed to get GCP private zone")
+		}
+		if privateZone != nil {
+			logrus.Debugf("found private zone %s, skipping creation of private zone", privateZone.Name)
+			return nil
+		}
+	}
+
 	// TODO: use the opts for the service to restrict scopes see google.golang.org/api/option.WithScopes
 	ssn, err := gcpic.GetSession(ctx)
 	if err != nil {
