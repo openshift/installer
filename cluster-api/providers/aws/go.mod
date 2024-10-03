@@ -139,3 +139,5 @@ replace (
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00
 	sigs.k8s.io/cluster-api => sigs.k8s.io/cluster-api v1.7.1
 )
+
+replace sigs.k8s.io/cluster-api-provider-aws/v2 => github.com/r4f4/cluster-api-provider-aws/v2 v2.0.0-20240924150657-a8806681250f

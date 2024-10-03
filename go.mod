@@ -321,3 +321,5 @@ replace github.com/openshift/assisted-service/models => github.com/openshift/ass
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
 
 replace github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
+
+replace sigs.k8s.io/cluster-api-provider-aws/v2 => github.com/r4f4/cluster-api-provider-aws/v2 v2.0.0-20240924150657-a8806681250f
