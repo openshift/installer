@@ -423,6 +423,7 @@ func AddStorageFiles(config *igntypes.Config, base string, uri string, templateD
 	}
 
 	filename := path.Base(uri)
+	filename = strings.TrimSuffix(filename, ".template")
 	parentDir := path.Base(path.Dir(uri))
 
 	var mode int
