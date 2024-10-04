@@ -1184,10 +1184,11 @@ func (AWSPlatformSpec) SwaggerDoc() map[string]string {
 }
 
 var map_AWSPlatformStatus = map[string]string{
-	"":                 "AWSPlatformStatus holds the current status of the Amazon Web Services infrastructure provider.",
-	"region":           "region holds the default AWS region for new AWS resources created by the cluster.",
-	"serviceEndpoints": "ServiceEndpoints list contains custom endpoints which will override default service endpoint of AWS Services. There must be only one ServiceEndpoint for a service.",
-	"resourceTags":     "resourceTags is a list of additional tags to apply to AWS resources created for the cluster. See https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html for information on tagging AWS resources. AWS supports a maximum of 50 tags per resource. OpenShift reserves 25 tags for its use, leaving 25 tags available for the user.",
+	"":                        "AWSPlatformStatus holds the current status of the Amazon Web Services infrastructure provider.",
+	"region":                  "region holds the default AWS region for new AWS resources created by the cluster.",
+	"serviceEndpoints":        "ServiceEndpoints list contains custom endpoints which will override default service endpoint of AWS Services. There must be only one ServiceEndpoint for a service.",
+	"resourceTags":            "resourceTags is a list of additional tags to apply to AWS resources created for the cluster. See https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html for information on tagging AWS resources. AWS supports a maximum of 50 tags per resource. OpenShift reserves 25 tags for its use, leaving 25 tags available for the user.",
+	"cloudLoadBalancerConfig": "cloudLoadBalancerConfig holds configuration related to DNS and cloud load balancers. It allows configuration of in-cluster DNS as an alternative to the platform default DNS implementation. When using the ClusterHosted DNS type, Load Balancer IP addresses must be provided for the API and internal API load balancers as well as the ingress load balancer.",
 }
 
 func (AWSPlatformStatus) SwaggerDoc() map[string]string {
@@ -1389,7 +1390,7 @@ var map_GCPPlatformStatus = map[string]string{
 	"region":                  "region holds the region for new GCP resources created for the cluster.",
 	"resourceLabels":          "resourceLabels is a list of additional labels to apply to GCP resources created for the cluster. See https://cloud.google.com/compute/docs/labeling-resources for information on labeling GCP resources. GCP supports a maximum of 64 labels per resource. OpenShift reserves 32 labels for internal use, allowing 32 labels for user configuration.",
 	"resourceTags":            "resourceTags is a list of additional tags to apply to GCP resources created for the cluster. See https://cloud.google.com/resource-manager/docs/tags/tags-overview for information on tagging GCP resources. GCP supports a maximum of 50 tags per resource.",
-	"cloudLoadBalancerConfig": "cloudLoadBalancerConfig is a union that contains the IP addresses of API, API-Int and Ingress Load Balancers created on the cloud platform. These values would not be populated on on-prem platforms. These Load Balancer IPs are used to configure the in-cluster DNS instances for API, API-Int and Ingress services. `dnsType` is expected to be set to `ClusterHosted` when these Load Balancer IP addresses are populated and used.",
+	"cloudLoadBalancerConfig": "cloudLoadBalancerConfig holds configuration related to DNS and cloud load balancers. It allows configuration of in-cluster DNS as an alternative to the platform default DNS implementation. When using the ClusterHosted DNS type, Load Balancer IP addresses must be provided for the API and internal API load balancers as well as the ingress load balancer.",
 }
 
 func (GCPPlatformStatus) SwaggerDoc() map[string]string {
@@ -1735,13 +1736,26 @@ func (PowerVSServiceEndpoint) SwaggerDoc() map[string]string {
 	return map_PowerVSServiceEndpoint
 }
 
+var map_VSphereFailureDomainAffinity = map[string]string{
+	"":           "VSphereFailureDomainAffinity contains the vCenter cluster vm-host group (virtual machine and host types) and the vm-host affinity rule that together creates a affinity configuration for vm-host based zonal. This configuration within vCenter creates the required association between a failure domain, virtual machines and ESXi hosts to create a vm-host based zone.",
+	"vmGroup":    "vmGroup is the name of the vm-host group of type virtual machine within vCenter for this failure domain. This field is required when the VSphereFailureDomain ZoneType is HostGroup",
+	"hostGroup":  "hostGroup is the name of the vm-host group of type host within vCenter for this failure domain. This field is required when the VSphereFailureDomain ZoneType is HostGroup",
+	"vmHostRule": "vmHostRule is the name of the affinity vm-host rule within vCenter for this failure domain. This field is required when the VSphereFailureDomain ZoneType is HostGroup",
+}
+
+func (VSphereFailureDomainAffinity) SwaggerDoc() map[string]string {
+	return map_VSphereFailureDomainAffinity
+}
+
 var map_VSpherePlatformFailureDomainSpec = map[string]string{
-	"":         "VSpherePlatformFailureDomainSpec holds the region and zone failure domain and the vCenter topology of that failure domain.",
-	"name":     "name defines the arbitrary but unique name of a failure domain.",
-	"region":   "region defines the name of a region tag that will be attached to a vCenter datacenter. The tag category in vCenter must be named openshift-region.",
-	"zone":     "zone defines the name of a zone tag that will be attached to a vCenter cluster. The tag category in vCenter must be named openshift-zone.",
-	"server":   "server is the fully-qualified domain name or the IP address of the vCenter server.",
-	"topology": "Topology describes a given failure domain using vSphere constructs",
+	"":               "VSpherePlatformFailureDomainSpec holds the region and zone failure domain and the vCenter topology of that failure domain.",
+	"name":           "name defines the arbitrary but unique name of a failure domain.",
+	"region":         "region defines the name of a region tag that will be attached to a vCenter datacenter. The tag category in vCenter must be named openshift-region.",
+	"zone":           "zone defines the name of a zone tag that will be attached to a vCenter cluster. The tag category in vCenter must be named openshift-zone.",
+	"regionAffinity": "affinity holds the VMGroup and the HostGroup names in vCenter corresponds to a vm-host group of type Virtual Machine and Host respectively. Is also contains the VMHostRule which is an affinity vm-host rule in vCenter.",
+	"zoneAffinity":   "affinity holds the VMGroup and the HostGroup names in vCenter corresponds to a vm-host group of type Virtual Machine and Host respectively. Is also contains the VMHostRule which is an affinity vm-host rule in vCenter.",
+	"server":         "server is the fully-qualified domain name or the IP address of the vCenter server.",
+	"topology":       "Topology describes a given failure domain using vSphere constructs",
 }
 
 func (VSpherePlatformFailureDomainSpec) SwaggerDoc() map[string]string {

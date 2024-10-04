@@ -175,6 +175,13 @@ var (
 						enableIn(configv1.Default, configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 						mustRegister()
 
+	FeatureGateVSphereHostVMGroupZonal = newFeatureGate("VSphereHostVMGroupZonal").
+						reportProblemsToJiraComponent("splat").
+						contactPerson("jcpowermac").
+						productScope(ocpSpecific).
+						enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+						mustRegister()
+
 	FeatureGateVSphereMultiVCenters = newFeatureGate("VSphereMultiVCenters").
 					reportProblemsToJiraComponent("splat").
 					contactPerson("vr4manta").
@@ -307,6 +314,13 @@ var (
 					mustRegister()
 
 	FeatureGateGCPClusterHostedDNS = newFeatureGate("GCPClusterHostedDNS").
+					reportProblemsToJiraComponent("Installer").
+					contactPerson("barbacbd").
+					productScope(ocpSpecific).
+					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+					mustRegister()
+
+	FeatureGateAWSClusterHostedDNS = newFeatureGate("AWSClusterHostedDNS").
 					reportProblemsToJiraComponent("Installer").
 					contactPerson("barbacbd").
 					productScope(ocpSpecific).

@@ -1077,7 +1077,7 @@ github.com/opencontainers/image-spec/specs-go/v1
 # github.com/opencontainers/runtime-spec v1.2.0
 ## explicit
 github.com/opencontainers/runtime-spec/specs-go
-# github.com/openshift/api v0.0.0-20241001152557-e415140e5d5f
+# github.com/openshift/api v0.0.0-20241001152557-e415140e5d5f => github.com/jcpowermac/api v0.0.0-20241012125422-509514f2aed1
 ## explicit; go 1.22.0
 github.com/openshift/api/annotations
 github.com/openshift/api/config/v1
@@ -1117,7 +1117,7 @@ github.com/openshift/assisted-service/client/versions
 # github.com/openshift/assisted-service/models v0.0.0 => github.com/openshift/assisted-service/models v0.0.0-20241001055825-63e8b0d3ad63
 ## explicit; go 1.21
 github.com/openshift/assisted-service/models
-# github.com/openshift/client-go v0.0.0-20241001162912-da6d55e4611f
+# github.com/openshift/client-go v0.0.0-20241001162912-da6d55e4611f => github.com/jcpowermac/client-go v0.0.0-20241012130935-723769955dcd
 ## explicit; go 1.22.0
 github.com/openshift/client-go/config/applyconfigurations
 github.com/openshift/client-go/config/applyconfigurations/config/v1
@@ -1188,7 +1188,7 @@ github.com/openshift/hive/apis/hive/v1/openstack
 github.com/openshift/hive/apis/hive/v1/ovirt
 github.com/openshift/hive/apis/hive/v1/vsphere
 github.com/openshift/hive/apis/scheme
-# github.com/openshift/library-go v0.0.0-20240919205913-c96b82b3762b
+# github.com/openshift/library-go v0.0.0-20240919205913-c96b82b3762b => github.com/jcpowermac/library-go v0.0.0-20241012131115-fd07c8284a96
 ## explicit; go 1.22.0
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 github.com/openshift/library-go/pkg/config/clusterstatus
@@ -1844,7 +1844,7 @@ k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
 k8s.io/api/storagemigration/v1alpha1
-# k8s.io/apiextensions-apiserver v0.31.0
+# k8s.io/apiextensions-apiserver v0.31.1
 ## explicit; go 1.22.0
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
@@ -2560,3 +2560,6 @@ sigs.k8s.io/yaml/goyaml.v3
 # github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20241001055825-63e8b0d3ad63
 # github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
 # github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
+# github.com/openshift/client-go => github.com/jcpowermac/client-go v0.0.0-20241012130935-723769955dcd
+# github.com/openshift/api => github.com/jcpowermac/api v0.0.0-20241012125422-509514f2aed1
+# github.com/openshift/library-go => github.com/jcpowermac/library-go v0.0.0-20241012131115-fd07c8284a96

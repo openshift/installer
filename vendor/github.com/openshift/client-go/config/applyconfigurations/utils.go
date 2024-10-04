@@ -384,6 +384,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1.UsernameClaimMappingApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("UsernamePrefix"):
 		return &configv1.UsernamePrefixApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("VSphereFailureDomainAffinity"):
+		return &configv1.VSphereFailureDomainAffinityApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("VSpherePlatformFailureDomainSpec"):
 		return &configv1.VSpherePlatformFailureDomainSpecApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("VSpherePlatformLoadBalancer"):
