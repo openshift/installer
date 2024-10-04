@@ -22,6 +22,9 @@ import (
 const (
 	keySize = 2048
 
+	// ValidityFourHours sets the validity of a cert to four hour.
+	ValidityFourHours = 4 * time.Hour
+
 	// ValidityOneDay sets the validity of a cert to 24 hours.
 	ValidityOneDay = time.Hour * 24
 
