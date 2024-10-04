@@ -29,6 +29,8 @@ import (
 //                         | matches the content of the local file                                                 |
 // IsoCmpRegEx			   | Same as IsoCmp, but the expected file can contain a regex pattern that will be applied| isoCmpRegEx agent.x86_64.iso /etc/assisted/manifests/infraenv.yaml expected/infraenv.yaml
 // 						   | during the comparison.																   |
+// IsoFileCmpRegEx 		   | checks that file context extracted directly from the ISO matches the content of the   | isoFileCmpRegEx node.x86_64.iso /EFI/redhat/grub.cfg expected/grub.cfg
+//						   | local file, by applying a regex comparison.										   |
 // InitrdImgContains       | check if the specified file is stored within a compressed cpio archive by scanning the| initrdImgContains agent.x86_64.iso /agent-files/agent-tui
 //                         | content of /images/ignition.img archive in the ISO                                    |
 // ------------------------|---------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------
@@ -143,6 +145,38 @@ func isoCmpInternal(ts *testscript.TestScript, neg bool, args []string, cmp func
 	ts.Check(err)
 
 	cmp(ts, neg, aData, eData, aFilePath, eFilePath)
+}
+
+// IsoFileCmpRegEx `isoPath` `isoFile` `expectedFile` check that the content of the ISO
+// `isoFile` - matches the content of the local file `expectedFile` (using a regex
+// comparison). Environment variables in `expectedFile` are substituted before the comparison.
+func IsoFileCmpRegEx(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 3 {
+		ts.Fatalf("usage: isofilecmpregex isoPath file1 file2")
+	}
+
+	workDir := ts.Getenv("WORK")
+	isoPath, aFilePath, eFilePath := args[0], args[1], args[2]
+	isoPathAbs := filepath.Join(workDir, isoPath)
+
+	disk, err := diskfs.Open(isoPathAbs, diskfs.WithOpenMode(diskfs.ReadOnly))
+	ts.Check(err)
+
+	fs, err := disk.GetFilesystem(0)
+	ts.Check(err)
+
+	aFile, err := fs.OpenFile(aFilePath, os.O_RDONLY)
+	ts.Check(err)
+	defer aFile.Close()
+
+	aData, err := io.ReadAll(aFile)
+	ts.Check(err)
+
+	eFilePathAbs := filepath.Join(workDir, eFilePath)
+	eData, err := os.ReadFile(eFilePathAbs)
+	ts.Check(err)
+
+	byteCompareRegEx(ts, neg, aData, eData, aFilePath, eFilePath)
 }
 
 // InitrdImgContains `isoPath` `file` check if the specified file `file`

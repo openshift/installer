@@ -69,6 +69,7 @@ func TestNodeJoinerIntegration(t *testing.T) {
 			"isoCmpRegEx":         tshelpers.IsoCmpRegEx,
 			"isoIgnitionContains": tshelpers.IsoIgnitionContains,
 			"isoIgnitionUser":     tshelpers.IsoIgnitionUser,
+			"isoFileCmpRegEx":     tshelpers.IsoFileCmpRegEx,
 		},
 
 		Setup: func(e *testscript.Env) error {
