@@ -28,8 +28,6 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
-const TechPreviewNoUpgrade = "TechPreviewNoUpgrade"
-
 func validInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
 		TypeMeta: metav1.TypeMeta{
