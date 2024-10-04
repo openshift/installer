@@ -3,6 +3,7 @@
 
 exec node-joiner add-nodes --kubeconfig=$WORK/kubeconfig --log-level=debug --dir=$WORK
 
+grep '^0$' $WORK/exit_code
 exists $WORK/node.x86_64.iso
 isoCmpRegEx node.x86_64.iso /etc/assisted/add-nodes.env expected/add-nodes.env
 isoIgnitionContains node.x86_64.iso /etc/assisted/manifests/cluster-image-set.yaml
