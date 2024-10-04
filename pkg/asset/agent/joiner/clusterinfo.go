@@ -126,10 +126,6 @@ func (ci *ClusterInfo) Generate(_ context.Context, dependencies asset.Parents) e
 		return err
 	}
 
-	err = ci.retrieveInstallConfigData()
-	if err != nil {
-		return err
-	}
 	err = ci.retrieveImageDigestMirrorSets()
 	if err != nil {
 		return err
@@ -280,26 +276,6 @@ func (ci *ClusterInfo) retrieveArchitecture(addNodesConfig *AddNodesConfig) erro
 	}
 
 	return fmt.Errorf("unable to determine target cluster architecture")
-}
-
-func (ci *ClusterInfo) retrieveInstallConfigData() error {
-	clusterConfig, err := ci.Client.CoreV1().ConfigMaps("kube-system").Get(context.Background(), "cluster-config-v1", metav1.GetOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil
-		}
-		return err
-	}
-	data, ok := clusterConfig.Data["install-config"]
-	if !ok {
-		return fmt.Errorf("cannot find install-config data")
-	}
-
-	installConfig := types.InstallConfig{}
-	if err = yaml.Unmarshal([]byte(data), &installConfig); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (ci *ClusterInfo) retrieveFIPS() error {

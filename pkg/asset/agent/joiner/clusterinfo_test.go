@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/utils/ptr"
-	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
 	machineconfigv1 "github.com/openshift/api/machineconfiguration/v1"
@@ -286,23 +285,6 @@ func makeCoreOsBootImages(t *testing.T, st *stream.Stream) string {
 	return string(data)
 }
 
-func makeInstallConfig(t *testing.T) string {
-	t.Helper()
-	ic := &types.InstallConfig{
-		ObjectMeta: v1.ObjectMeta{
-			Name: "ostest",
-		},
-		BaseDomain: "test.metalkube.org",
-		FIPS:       true,
-	}
-	data, err := yaml.Marshal(ic)
-	if err != nil {
-		t.Error(err)
-	}
-
-	return string(data)
-}
-
 func defaultObjects() func(t *testing.T) ([]runtime.Object, []runtime.Object, []runtime.Object) {
 	return func(t *testing.T) ([]runtime.Object, []runtime.Object, []runtime.Object) {
 		t.Helper()
@@ -335,15 +317,6 @@ func defaultObjects() func(t *testing.T) ([]runtime.Object, []runtime.Object, []
 					NodeInfo: corev1.NodeSystemInfo{
 						Architecture: "amd64",
 					},
-				},
-			},
-			&corev1.ConfigMap{
-				ObjectMeta: v1.ObjectMeta{
-					Name:      "cluster-config-v1",
-					Namespace: "kube-system",
-				},
-				Data: map[string]string{
-					"install-config": makeInstallConfig(t),
 				},
 			},
 			&corev1.ConfigMap{
