@@ -1735,13 +1735,26 @@ func (PowerVSServiceEndpoint) SwaggerDoc() map[string]string {
 	return map_PowerVSServiceEndpoint
 }
 
+var map_VSphereFailureDomainAffinity = map[string]string{
+	"":           "VSphereFailureDomainAffinity contains the vCenter cluster vm-host group (virtual machine and host types) and the vm-host affinity rule that together creates a affinity configuration for vm-host based zonal. This configuration within vCenter creates the required association between a failure domain, virtual machines and ESXi hosts to create a vm-host based zone.",
+	"vmGroup":    "vmGroup is the name of the vm-host group of type virtual machine within vCenter for this failure domain. This field is required when the VSphereFailureDomain ZoneType is HostGroup",
+	"hostGroup":  "hostGroup is the name of the vm-host group of type host within vCenter for this failure domain. This field is required when the VSphereFailureDomain ZoneType is HostGroup",
+	"vmHostRule": "vmHostRule is the name of the affinity vm-host rule within vCenter for this failure domain. This field is required when the VSphereFailureDomain ZoneType is HostGroup",
+}
+
+func (VSphereFailureDomainAffinity) SwaggerDoc() map[string]string {
+	return map_VSphereFailureDomainAffinity
+}
+
 var map_VSpherePlatformFailureDomainSpec = map[string]string{
-	"":         "VSpherePlatformFailureDomainSpec holds the region and zone failure domain and the vCenter topology of that failure domain.",
-	"name":     "name defines the arbitrary but unique name of a failure domain.",
-	"region":   "region defines the name of a region tag that will be attached to a vCenter datacenter. The tag category in vCenter must be named openshift-region.",
-	"zone":     "zone defines the name of a zone tag that will be attached to a vCenter cluster. The tag category in vCenter must be named openshift-zone.",
-	"server":   "server is the fully-qualified domain name or the IP address of the vCenter server.",
-	"topology": "Topology describes a given failure domain using vSphere constructs",
+	"":           "VSpherePlatformFailureDomainSpec holds the region and zone failure domain and the vCenter topology of that failure domain.",
+	"name":       "name defines the arbitrary but unique name of a failure domain.",
+	"region":     "region defines the name of a region tag that will be attached to a vCenter datacenter. The tag category in vCenter must be named openshift-region.",
+	"regionType": "regionType defines the type of region that is used for this failure domain. The current available options are ComputeCluster and Datacenter.",
+	"zone":       "zone defines the name of a zone tag that will be attached to a vCenter cluster. The tag category in vCenter must be named openshift-zone.",
+	"zoneType":   "zoneType defines the type of zone that is used for this failure domain. The current available options are HostGroup and ComputeCluster.",
+	"server":     "server is the fully-qualified domain name or the IP address of the vCenter server.",
+	"topology":   "Topology describes a given failure domain using vSphere constructs",
 }
 
 func (VSpherePlatformFailureDomainSpec) SwaggerDoc() map[string]string {
@@ -1816,6 +1829,7 @@ var map_VSpherePlatformTopology = map[string]string{
 	"resourcePool":   "resourcePool is the absolute path of the resource pool where virtual machines will be created. The absolute path is of the form /<datacenter>/host/<cluster>/Resources/<resourcepool>. The maximum length of the path is 2048 characters.",
 	"folder":         "folder is the absolute path of the folder where virtual machines are located. The absolute path is of the form /<datacenter>/vm/<folder>. The maximum length of the path is 2048 characters.",
 	"template":       "template is the full inventory path of the virtual machine or template that will be cloned when creating new machines in this failure domain. The maximum length of the path is 2048 characters.\n\nWhen omitted, the template will be calculated by the control plane machineset operator based on the region and zone defined in VSpherePlatformFailureDomainSpec. For example, for zone=zonea, region=region1, and infrastructure name=test, the template path would be calculated as /<datacenter>/vm/test-rhcos-region1-zonea.",
+	"affinity":       "affinity holds the VMGroup and the HostGroup names in vCenter corresponds to a vm-host group of type Virtual Machine and Host respectively. Is also contains the VMHostRule which is an affinity vm-host rule in vCenter.",
 }
 
 func (VSpherePlatformTopology) SwaggerDoc() map[string]string {

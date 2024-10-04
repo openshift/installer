@@ -3382,7 +3382,7 @@ var schemaYAML = typed.YAMLObject(`types:
       type:
         scalar: string
       default: ""
-- name: com.github.openshift.api.config.v1.VSphereFailureDomainAffinityGroup
+- name: com.github.openshift.api.config.v1.VSphereFailureDomainAffinity
   map:
     fields:
     - name: hostGroup
@@ -3538,9 +3538,9 @@ var schemaYAML = typed.YAMLObject(`types:
 - name: com.github.openshift.api.config.v1.VSpherePlatformTopology
   map:
     fields:
-    - name: affinityGroup
+    - name: affinity
       type:
-        namedType: com.github.openshift.api.config.v1.VSphereFailureDomainAffinityGroup
+        namedType: com.github.openshift.api.config.v1.VSphereFailureDomainAffinity
       default: {}
     - name: computeCluster
       type:

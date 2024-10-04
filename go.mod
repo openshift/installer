@@ -113,7 +113,7 @@ require (
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.31.1
-	k8s.io/apiextensions-apiserver v0.31.0
+	k8s.io/apiextensions-apiserver v0.31.1
 	k8s.io/apimachinery v0.31.1
 	k8s.io/client-go v0.31.1
 	k8s.io/cloud-provider-vsphere v1.31.0
@@ -323,3 +323,9 @@ replace github.com/openshift/assisted-service/models => github.com/openshift/ass
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
 
 replace github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
+
+replace github.com/openshift/client-go => github.com/jcpowermac/client-go v0.0.0-20241002131714-3be5d60ab621
+
+replace github.com/openshift/api => github.com/jcpowermac/api v0.0.0-20241002131240-8cb746e646cb
+
+replace github.com/openshift/library-go => github.com/jcpowermac/library-go v0.0.0-20241002131748-31bed7d1b859
