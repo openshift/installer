@@ -15,7 +15,7 @@ import (
 
 	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/mitchellh/hashstructure"
@@ -25,6 +25,30 @@ import (
 
 	"google.golang.org/api/compute/v1"
 )
+
+func IpCidrRangeDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
+	// The range may be a:
+	// A) single IP address (e.g. 10.2.3.4)
+	// B) CIDR format string (e.g. 10.1.2.0/24)
+	// C) netmask (e.g. /24)
+	//
+	// For A) and B), no diff to suppress, they have to match completely.
+	// For C), The API picks a network IP address and this creates a diff of the form:
+	// network_interface.0.alias_ip_range.0.ip_cidr_range: "10.128.1.0/24" => "/24"
+	// We should only compare the mask portion for this case.
+	if len(new) > 0 && new[0] == '/' {
+		oldNetmaskStartPos := strings.LastIndex(old, "/")
+
+		if oldNetmaskStartPos != -1 {
+			oldNetmask := old[strings.LastIndex(old, "/"):]
+			if oldNetmask == new {
+				return true
+			}
+		}
+	}
+
+	return false
+}
 
 var (
 	bootDiskKeys = []string{
@@ -43,6 +67,9 @@ var (
 		"boot_disk.0.initialize_params.0.image",
 		"boot_disk.0.initialize_params.0.labels",
 		"boot_disk.0.initialize_params.0.resource_manager_tags",
+		"boot_disk.0.initialize_params.0.provisioned_iops",
+		"boot_disk.0.initialize_params.0.provisioned_throughput",
+		"boot_disk.0.initialize_params.0.enable_confidential_compute",
 	}
 
 	schedulingKeys = []string{
@@ -53,6 +80,9 @@ var (
 		"scheduling.0.min_node_cpus",
 		"scheduling.0.provisioning_model",
 		"scheduling.0.instance_termination_action",
+		"scheduling.0.max_run_duration",
+		"scheduling.0.on_instance_stop_action",
+		"scheduling.0.local_ssd_recovery_timeout",
 	}
 
 	shieldedInstanceConfigKeys = []string{
@@ -229,9 +259,35 @@ func ResourceComputeInstance() *schema.Resource {
 									"resource_manager_tags": {
 										Type:         schema.TypeMap,
 										Optional:     true,
+										ForceNew:     true,
+										AtLeastOneOf: initializeParamsKeys,
+										Description:  `A map of resource manager tags. Resource manager tag keys and values have the same definition as resource manager tags. Keys must be in the format tagKeys/{tag_key_id}, and values are in the format tagValues/456. The field is ignored (both PUT & PATCH) when empty.`,
+									},
+
+									"provisioned_iops": {
+										Type:         schema.TypeInt,
+										Optional:     true,
+										AtLeastOneOf: initializeParamsKeys,
+										Computed:     true,
+										ForceNew:     true,
+										Description:  `Indicates how many IOPS to provision for the disk. This sets the number of I/O operations per second that the disk can handle.`,
+									},
+
+									"provisioned_throughput": {
+										Type:         schema.TypeInt,
+										Optional:     true,
+										AtLeastOneOf: initializeParamsKeys,
+										Computed:     true,
+										ForceNew:     true,
+										Description:  `Indicates how much throughput to provision for the disk. This sets the number of throughput mb per second that the disk can handle.`,
+									},
+
+									"enable_confidential_compute": {
+										Type:         schema.TypeBool,
+										Optional:     true,
 										AtLeastOneOf: initializeParamsKeys,
 										ForceNew:     true,
-										Description:  `A map of resource manager tags. Resource manager tag keys and values have the same definition as resource manager tags. Keys must be in the format tagKeys/{tag_key_id}, and values are in the format tagValues/456. The field is ignored (both PUT & PATCH) when empty.`,
+										Description:  `A flag to enable confidential compute mode on boot disk`,
 									},
 								},
 							},
@@ -262,9 +318,10 @@ func ResourceComputeInstance() *schema.Resource {
 			},
 
 			"machine_type": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: `The machine type to create.`,
+				Type:             schema.TypeString,
+				Required:         true,
+				Description:      `The machine type to create.`,
+				DiffSuppressFunc: tpgresource.CompareResourceNames,
 			},
 
 			"name": {
@@ -361,7 +418,7 @@ func ResourceComputeInstance() *schema.Resource {
 									"ip_cidr_range": {
 										Type:             schema.TypeString,
 										Required:         true,
-										DiffSuppressFunc: tpgresource.IpCidrRangeDiffSuppress,
+										DiffSuppressFunc: IpCidrRangeDiffSuppress,
 										Description:      `The IP CIDR range represented by this alias IP range.`,
 									},
 									"subnetwork_range_name": {
@@ -404,17 +461,44 @@ func ResourceComputeInstance() *schema.Resource {
 										Description: `The domain name to be used when creating DNSv6 records for the external IPv6 ranges.`,
 									},
 									"external_ipv6": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: `The first IPv6 address of the external IPv6 range associated with this instance, prefix length is stored in externalIpv6PrefixLength in ipv6AccessConfig. The field is output only, an IPv6 address from a subnetwork associated with the instance will be allocated dynamically.`,
+										Type:             schema.TypeString,
+										Optional:         true,
+										Computed:         true,
+										ForceNew:         true,
+										DiffSuppressFunc: ipv6RepresentationDiffSuppress,
+										Description:      `The first IPv6 address of the external IPv6 range associated with this instance, prefix length is stored in externalIpv6PrefixLength in ipv6AccessConfig. To use a static external IP address, it must be unused and in the same region as the instance's zone. If not specified, Google Cloud will automatically assign an external IPv6 address from the instance's subnetwork.`,
 									},
 									"external_ipv6_prefix_length": {
 										Type:        schema.TypeString,
+										Optional:    true,
 										Computed:    true,
+										ForceNew:    true,
 										Description: `The prefix length of the external IPv6 range.`,
+									},
+									"name": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Computed:    true,
+										ForceNew:    true,
+										Description: `The name of this access configuration. In ipv6AccessConfigs, the recommended name is External IPv6.`,
 									},
 								},
 							},
+						},
+
+						"internal_ipv6_prefix_length": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Computed:    true,
+							Description: `The prefix length of the primary internal IPv6 range.`,
+						},
+
+						"ipv6_address": {
+							Type:             schema.TypeString,
+							Optional:         true,
+							Computed:         true,
+							DiffSuppressFunc: ipv6RepresentationDiffSuppress,
+							Description:      `An IPv6 internal network address for this network interface. If not specified, Google Cloud will automatically assign an internal IPv6 address from the instance's subnetwork.`,
 						},
 
 						"queue_count": {
@@ -512,7 +596,6 @@ func ResourceComputeInstance() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: `A brief description of the resource.`,
 			},
 
@@ -564,10 +647,8 @@ func ResourceComputeInstance() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"resource_manager_tags": {
-							Type:     schema.TypeMap,
-							Optional: true,
-							// This field is intentionally not updatable. The API overrides all existing tags on the field when updated.  See go/gce-tags-terraform-support for details.
-							ForceNew:    true,
+							Type:        schema.TypeMap,
+							Optional:    true,
 							Description: `A map of resource manager tags. Resource manager tag keys and values have the same definition as resource manager tags. Keys must be in the format tagKeys/{tag_key_id}, and values are in the format tagValues/456. The field is ignored (both PUT & PATCH) when empty.`,
 						},
 					},
@@ -575,10 +656,27 @@ func ResourceComputeInstance() *schema.Resource {
 			},
 
 			"labels": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				Description: `A set of key/value label pairs assigned to the instance.
+
+				**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+				Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+			},
+
+			"terraform_labels": {
 				Type:        schema.TypeMap,
-				Optional:    true,
+				Computed:    true,
+				Description: `The combination of labels configured directly on the resource and default labels configured on the provider.`,
 				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: `A set of key/value label pairs assigned to the instance.`,
+			},
+
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"metadata": {
@@ -678,6 +776,81 @@ func ResourceComputeInstance() *schema.Resource {
 							AtLeastOneOf: schedulingKeys,
 							Description:  `Specifies the action GCE should take when SPOT VM is preempted.`,
 						},
+						"max_run_duration": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `The timeout for new network connections to hosts.`,
+							MaxItems:    1,
+							ForceNew:    true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"seconds": {
+										Type:     schema.TypeInt,
+										Required: true,
+										ForceNew: true,
+										Description: `Span of time at a resolution of a second.
+Must be from 0 to 315,576,000,000 inclusive.`,
+									},
+									"nanos": {
+										Type:     schema.TypeInt,
+										Optional: true,
+										ForceNew: true,
+										Description: `Span of time that's a fraction of a second at nanosecond
+resolution. Durations less than one second are represented
+with a 0 seconds field and a positive nanos field. Must
+be from 0 to 999,999,999 inclusive.`,
+									},
+								},
+							},
+						},
+						"on_instance_stop_action": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							MaxItems:    1,
+							ForceNew:    true,
+							Description: `Defines the behaviour for instances with the instance_termination_action.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"discard_local_ssd": {
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: `If true, the contents of any attached Local SSD disks will be discarded.`,
+										Default:     false,
+										ForceNew:    true,
+									},
+								},
+							},
+						},
+						"local_ssd_recovery_timeout": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Description: `Specifies the maximum amount of time a Local Ssd Vm should wait while
+  recovery of the Local Ssd state is attempted. Its value should be in
+  between 0 and 168 hours with hour granularity and the default value being 1
+  hour.`,
+							MaxItems: 1,
+							ForceNew: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"seconds": {
+										Type:     schema.TypeInt,
+										Required: true,
+										ForceNew: true,
+										Description: `Span of time at a resolution of a second.
+Must be from 0 to 315,576,000,000 inclusive.`,
+									},
+									"nanos": {
+										Type:     schema.TypeInt,
+										Optional: true,
+										ForceNew: true,
+										Description: `Span of time that's a fraction of a second at nanosecond
+resolution. Durations less than one second are represented
+with a 0 seconds field and a positive nanos field. Must
+be from 0 to 999,999,999 inclusive.`,
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -689,6 +862,12 @@ func ResourceComputeInstance() *schema.Resource {
 				Description: `The scratch disks attached to the instance.`,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"device_name": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: `Name with which the attached disk is accessible under /dev/disk/by-id/`,
+						},
 						"interface": {
 							Type:         schema.TypeString,
 							Required:     true,
@@ -813,9 +992,19 @@ func ResourceComputeInstance() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"enable_confidential_compute": {
-							Type:        schema.TypeBool,
-							Required:    true,
-							Description: `Defines whether the instance should have confidential compute enabled.`,
+							Type:         schema.TypeBool,
+							Optional:     true,
+							Description:  `Defines whether the instance should have confidential compute enabled. Field will be deprecated in a future release`,
+							AtLeastOneOf: []string{"confidential_instance_config.0.enable_confidential_compute", "confidential_instance_config.0.confidential_instance_type"},
+						},
+						"confidential_instance_type": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Description: `
+								Specifies which confidential computing technology to use.
+								This could be one of the following values: SEV, SEV_SNP.
+								If SEV_SNP, min_cpu_platform = "AMD Milan" is currently required.`,
+							AtLeastOneOf: []string{"confidential_instance_config.0.enable_confidential_compute", "confidential_instance_config.0.confidential_instance_type"},
 						},
 					},
 				},
@@ -949,6 +1138,8 @@ func ResourceComputeInstance() *schema.Resource {
 			},
 		},
 		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+			tpgresource.DefaultProviderZone,
 			customdiff.If(
 				func(_ context.Context, d *schema.ResourceDiff, meta interface{}) bool {
 					return d.HasChange("guest_accelerator")
@@ -957,6 +1148,7 @@ func ResourceComputeInstance() *schema.Resource {
 			),
 			desiredStatusDiff,
 			forceNewIfNetworkIPNotUpdatable,
+			tpgresource.SetLabelsDiff,
 		),
 		UseJSONNumber: true,
 	}
@@ -1090,7 +1282,7 @@ func expandComputeInstance(project string, d *schema.ResourceData, config *trans
 		NetworkPerformanceConfig:   networkPerformanceConfig,
 		Tags:                       resourceInstanceTags(d),
 		Params:                     params,
-		Labels:                     tpgresource.ExpandLabels(d),
+		Labels:                     tpgresource.ExpandEffectiveLabels(d),
 		ServiceAccounts:            expandServiceAccounts(d.Get("service_account").([]interface{})),
 		GuestAccelerators:          accels,
 		MinCpuPlatform:             d.Get("min_cpu_platform").(string),
@@ -1141,7 +1333,7 @@ func waitUntilInstanceHasDesiredStatus(config *transport_tpg.Config, d *schema.R
 			}
 			return instance.Id, instance.Status, nil
 		}
-		stateChangeConf := resource.StateChangeConf{
+		stateChangeConf := retry.StateChangeConf{
 			Delay:      5 * time.Second,
 			Pending:    getAllStatusBut(desiredStatus),
 			Refresh:    stateRefreshFunc,
@@ -1247,6 +1439,7 @@ func resourceComputeInstanceRead(d *schema.ResourceData, meta interface{}) error
 	if err := d.Set("metadata_fingerprint", instance.Metadata.Fingerprint); err != nil {
 		return fmt.Errorf("Error setting metadata_fingerprint: %s", err)
 	}
+
 	if err := d.Set("can_ip_forward", instance.CanIpForward); err != nil {
 		return fmt.Errorf("Error setting can_ip_forward: %s", err)
 	}
@@ -1290,7 +1483,15 @@ func resourceComputeInstanceRead(d *schema.ResourceData, meta interface{}) error
 		}
 	}
 
-	if err := d.Set("labels", instance.Labels); err != nil {
+	if err := tpgresource.SetLabels(instance.Labels, d, "labels"); err != nil {
+		return err
+	}
+
+	if err := tpgresource.SetLabels(instance.Labels, d, "terraform_labels"); err != nil {
+		return err
+	}
+
+	if err := d.Set("effective_labels", instance.Labels); err != nil {
 		return err
 	}
 
@@ -1499,6 +1700,35 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 	// Enable partial mode for the resource since it is possible
 	d.Partial(true)
 
+	if d.HasChange("description") {
+		err = transport_tpg.Retry(transport_tpg.RetryOptions{
+			RetryFunc: func() error {
+				instance, err := config.NewComputeClient(userAgent).Instances.Get(project, zone, instance.Name).Do()
+				if err != nil {
+					return fmt.Errorf("Error retrieving instance: %s", err)
+				}
+
+				instance.Description = d.Get("description").(string)
+
+				op, err := config.NewComputeClient(userAgent).Instances.Update(project, zone, instance.Name, instance).Do()
+				if err != nil {
+					return fmt.Errorf("Error updating instance: %s", err)
+				}
+
+				opErr := ComputeOperationWaitTime(config, op, project, "description, updating", userAgent, d.Timeout(schema.TimeoutUpdate))
+				if opErr != nil {
+					return opErr
+				}
+
+				return nil
+			},
+		})
+
+		if err != nil {
+			return err
+		}
+	}
+
 	if d.HasChange("metadata") {
 		metadata, err := resourceInstanceMetadata(d)
 		if err != nil {
@@ -1559,8 +1789,8 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 		}
 	}
 
-	if d.HasChange("labels") {
-		labels := tpgresource.ExpandLabels(d)
+	if d.HasChange("effective_labels") {
+		labels := tpgresource.ExpandEffectiveLabels(d)
 		labelFingerprint := d.Get("label_fingerprint").(string)
 		req := compute.InstancesSetLabelsRequest{Labels: labels, LabelFingerprint: labelFingerprint}
 
@@ -1572,6 +1802,40 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 		opErr := ComputeOperationWaitTime(config, op, project, "labels to update", userAgent, d.Timeout(schema.TimeoutUpdate))
 		if opErr != nil {
 			return opErr
+		}
+	}
+
+	if d.HasChange("params.0.resource_manager_tags") {
+		err = transport_tpg.Retry(transport_tpg.RetryOptions{
+			RetryFunc: func() error {
+				instance, err := config.NewComputeClient(userAgent).Instances.Get(project, zone, instance.Name).Do()
+				if err != nil {
+					return fmt.Errorf("Error retrieving instance: %s", err)
+				}
+
+				params, err := expandParams(d)
+				if err != nil {
+					return fmt.Errorf("Error updating params: %s", err)
+				}
+
+				instance.Params = params
+
+				op, err := config.NewComputeClient(userAgent).Instances.Update(project, zone, instance.Name, instance).Do()
+				if err != nil {
+					return fmt.Errorf("Error updating instance: %s", err)
+				}
+
+				opErr := ComputeOperationWaitTime(config, op, project, "resource_manager_tags, updating", userAgent, d.Timeout(schema.TimeoutUpdate))
+				if opErr != nil {
+					return opErr
+				}
+
+				return nil
+			},
+		})
+
+		if err != nil {
+			return err
 		}
 	}
 
@@ -1745,6 +2009,57 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 			}
 		}
 
+		if !updateDuringStop && d.HasChange(prefix+".stack_type") {
+
+			networkInterfacePatchObj := &compute.NetworkInterface{
+				StackType:   d.Get(prefix + ".stack_type").(string),
+				Fingerprint: instNetworkInterface.Fingerprint,
+			}
+			updateCall := config.NewComputeClient(userAgent).Instances.UpdateNetworkInterface(project, zone, instance.Name, networkName, networkInterfacePatchObj).Do
+			op, err := updateCall()
+			if err != nil {
+				return errwrap.Wrapf("Error updating network interface: {{err}}", err)
+			}
+			opErr := ComputeOperationWaitTime(config, op, project, "network interface to update", userAgent, d.Timeout(schema.TimeoutUpdate))
+			if opErr != nil {
+				return opErr
+			}
+		}
+
+		if !updateDuringStop && d.HasChange(prefix+".ipv6_address") {
+
+			networkInterfacePatchObj := &compute.NetworkInterface{
+				Ipv6Address: d.Get(prefix + ".ipv6_address").(string),
+				Fingerprint: instNetworkInterface.Fingerprint,
+			}
+			updateCall := config.NewComputeClient(userAgent).Instances.UpdateNetworkInterface(project, zone, instance.Name, networkName, networkInterfacePatchObj).Do
+			op, err := updateCall()
+			if err != nil {
+				return errwrap.Wrapf("Error updating network interface: {{err}}", err)
+			}
+			opErr := ComputeOperationWaitTime(config, op, project, "network interface to update", userAgent, d.Timeout(schema.TimeoutUpdate))
+			if opErr != nil {
+				return opErr
+			}
+		}
+
+		if !updateDuringStop && d.HasChange(prefix+".internal_ipv6_prefix_length") {
+
+			networkInterfacePatchObj := &compute.NetworkInterface{
+				InternalIpv6PrefixLength: d.Get(prefix + ".internal_ipv6_prefix_length").(int64),
+				Fingerprint:              instNetworkInterface.Fingerprint,
+			}
+			updateCall := config.NewComputeClient(userAgent).Instances.UpdateNetworkInterface(project, zone, instance.Name, networkName, networkInterfacePatchObj).Do
+			op, err := updateCall()
+			if err != nil {
+				return errwrap.Wrapf("Error updating network interface: {{err}}", err)
+			}
+			opErr := ComputeOperationWaitTime(config, op, project, "network interface to update", userAgent, d.Timeout(schema.TimeoutUpdate))
+			if opErr != nil {
+				return opErr
+			}
+		}
+
 		if updateDuringStop {
 			// Lets be explicit about what we are changing in the patch call
 			networkInterfacePatchObj := &compute.NetworkInterface{
@@ -1757,6 +2072,14 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 			// otherwise this could fail if the network ip is not compatible with the new Subnetwork/Network.
 			if d.HasChange(prefix + ".network_ip") {
 				networkInterfacePatchObj.NetworkIP = networkInterface.NetworkIP
+			}
+
+			if d.HasChange(prefix + ".internal_ipv6_prefix_length") {
+				networkInterfacePatchObj.Ipv6Address = networkInterface.Ipv6Address
+			}
+
+			if d.HasChange(prefix + ".ipv6_address") {
+				networkInterfacePatchObj.Ipv6Address = networkInterface.Ipv6Address
 			}
 
 			// Access config can run into some issues since we can't tell the difference between
@@ -1956,7 +2279,7 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 		desiredStatus := d.Get("desired_status").(string)
 
 		if statusBeforeUpdate == "RUNNING" && desiredStatus != "TERMINATED" && !d.Get("allow_stopping_for_update").(bool) {
-			return fmt.Errorf("Changing the machine_type, min_cpu_platform, service_account, enable_display, shielded_instance_config, scheduling.node_affinities " +
+			return fmt.Errorf("Changing the machine_type, min_cpu_platform, service_account, enable_display, shielded_instance_config, scheduling.node_affinities, scheduling.max_run_duration " +
 				"or network_interface.[#d].(network/subnetwork/subnetwork_project) or advanced_machine_features on a started instance requires stopping it. " +
 				"To acknowledge this, please set allow_stopping_for_update = true in your config. " +
 				"You can also stop it by setting desired_status = \"TERMINATED\", but the instance will not be restarted after the update.")
@@ -2010,7 +2333,7 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 		if d.HasChange("service_account.0.email") || scopesChange {
 			sa := d.Get("service_account").([]interface{})
 			req := &compute.InstancesSetServiceAccountRequest{ForceSendFields: []string{"email"}}
-			if len(sa) > 0 && sa[0] != nil {
+			if !isEmptyServiceAccountBlock(d) && len(sa) > 0 && sa[0] != nil {
 				saMap := sa[0].(map[string]interface{})
 				req.Email = saMap["email"].(string)
 				req.Scopes = tpgresource.CanonicalizeServiceScopes(tpgresource.ConvertStringSet(saMap["scopes"].(*schema.Set)))
@@ -2440,7 +2763,15 @@ func expandBootDisk(d *schema.ResourceData, config *transport_tpg.Config, projec
 	}
 
 	if v, ok := d.GetOk("boot_disk.0.source"); ok {
-		source, err := tpgresource.ParseDiskFieldValue(v.(string), d, config)
+		var err error
+		var source interface {
+			RelativeLink() string
+		}
+		if strings.Contains(v.(string), "regions/") {
+			source, err = tpgresource.ParseRegionDiskFieldValue(v.(string), d, config)
+		} else {
+			source, err = tpgresource.ParseDiskFieldValue(v.(string), d, config)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -2452,6 +2783,18 @@ func expandBootDisk(d *schema.ResourceData, config *transport_tpg.Config, projec
 
 		if v, ok := d.GetOk("boot_disk.0.initialize_params.0.size"); ok {
 			disk.InitializeParams.DiskSizeGb = int64(v.(int))
+		}
+
+		if v, ok := d.GetOk("boot_disk.0.initialize_params.0.provisioned_iops"); ok {
+			disk.InitializeParams.ProvisionedIops = int64(v.(int))
+		}
+
+		if v, ok := d.GetOk("boot_disk.0.initialize_params.0.provisioned_throughput"); ok {
+			disk.InitializeParams.ProvisionedThroughput = int64(v.(int))
+		}
+
+		if v, ok := d.GetOk("boot_disk.0.initialize_params.0.enable_confidential_compute"); ok {
+			disk.InitializeParams.EnableConfidentialCompute = v.(bool)
 		}
 
 		if v, ok := d.GetOk("boot_disk.0.initialize_params.0.type"); ok {
@@ -2515,10 +2858,13 @@ func flattenBootDisk(d *schema.ResourceData, disk *compute.AttachedDisk, config 
 			"type": tpgresource.GetResourceNameFromSelfLink(diskDetails.Type),
 			// If the config specifies a family name that doesn't match the image name, then
 			// the diff won't be properly suppressed. See DiffSuppressFunc for this field.
-			"image":                 diskDetails.SourceImage,
-			"size":                  diskDetails.SizeGb,
-			"labels":                diskDetails.Labels,
-			"resource_manager_tags": d.Get("boot_disk.0.initialize_params.0.resource_manager_tags"),
+			"image":                       diskDetails.SourceImage,
+			"size":                        diskDetails.SizeGb,
+			"labels":                      diskDetails.Labels,
+			"resource_manager_tags":       d.Get("boot_disk.0.initialize_params.0.resource_manager_tags"),
+			"provisioned_iops":            diskDetails.ProvisionedIops,
+			"provisioned_throughput":      diskDetails.ProvisionedThroughput,
+			"enable_confidential_compute": diskDetails.EnableConfidentialCompute,
 		}}
 	}
 
@@ -2548,6 +2894,7 @@ func expandScratchDisks(d *schema.ResourceData, config *transport_tpg.Config, pr
 		scratchDisks = append(scratchDisks, &compute.AttachedDisk{
 			AutoDelete: true,
 			Type:       "SCRATCH",
+			DeviceName: d.Get(fmt.Sprintf("scratch_disk.%d.device_name", i)).(string),
 			Interface:  d.Get(fmt.Sprintf("scratch_disk.%d.interface", i)).(string),
 			DiskSizeGb: int64(d.Get(fmt.Sprintf("scratch_disk.%d.size", i)).(int)),
 			InitializeParams: &compute.AttachedDiskInitializeParams{
@@ -2561,8 +2908,9 @@ func expandScratchDisks(d *schema.ResourceData, config *transport_tpg.Config, pr
 
 func flattenScratchDisk(disk *compute.AttachedDisk) map[string]interface{} {
 	result := map[string]interface{}{
-		"interface": disk.Interface,
-		"size":      disk.DiskSizeGb,
+		"device_name": disk.DeviceName,
+		"interface":   disk.Interface,
+		"size":        disk.DiskSizeGb,
 	}
 	return result
 }
@@ -2595,6 +2943,11 @@ func serviceAccountDiffSuppress(k, old, new string, d *schema.ResourceData) bool
 	// suppress changes between { } and {scopes:[]}
 	if l[0] != nil {
 		contents := l[0].(map[string]interface{})
+		email := contents["email"]
+		if email != "" {
+			// if email is non empty, don't suppress the diff
+			return false
+		}
 		if scopes, ok := contents["scopes"]; ok {
 			a := scopes.(*schema.Set).List()
 			if a != nil && len(a) > 0 {
@@ -2603,4 +2956,43 @@ func serviceAccountDiffSuppress(k, old, new string, d *schema.ResourceData) bool
 		}
 	}
 	return true
+}
+
+// isEmptyServiceAccountBlock is used to work around an issue when updating
+// service accounts. Creating the instance with some scopes but without
+// specifying a service account email, assigns default compute service account
+// to the instance:
+//
+//	service_account {
+//	   scopes = ["some-scope"]
+//	}
+//
+// Then when updating the instance with empty service account:
+//
+//	service_account {
+//	   scopes = []
+//	}
+//
+// the default Terraform behavior is to clear scopes without clearing the
+// email. The email was previously computed to be the default service account
+// and has not been modified, so the default plan is to leave it unchanged.
+// However, when creating a new instance:
+//
+//	service_account {
+//	   scopes = []
+//	}
+//
+// indicates an instance without any service account set.
+// isEmptyServiceAccountBlock is used to detect empty service_account block
+// and if it is, it is interpreted as no service account and no scopes.
+func isEmptyServiceAccountBlock(d *schema.ResourceData) bool {
+	serviceAccountsConfig := d.GetRawConfig().GetAttr("service_account")
+	if serviceAccountsConfig.IsNull() || len(serviceAccountsConfig.AsValueSlice()) == 0 {
+		return true
+	}
+	serviceAccount := serviceAccountsConfig.AsValueSlice()[0]
+	if serviceAccount.GetAttr("email").IsNull() && len(serviceAccount.GetAttr("scopes").AsValueSlice()) == 0 {
+		return true
+	}
+	return false
 }

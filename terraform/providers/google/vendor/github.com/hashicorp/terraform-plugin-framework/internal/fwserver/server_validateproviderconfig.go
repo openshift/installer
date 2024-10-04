@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwserver
 
 import (
@@ -40,7 +43,7 @@ func (s *Server) ValidateProviderConfig(ctx context.Context, req *ValidateProvid
 			// from modifying or removing diagnostics.
 			vpcRes := &provider.ValidateConfigResponse{}
 
-			logging.FrameworkDebug(
+			logging.FrameworkTrace(
 				ctx,
 				"Calling provider defined ConfigValidator",
 				map[string]interface{}{
@@ -48,7 +51,7 @@ func (s *Server) ValidateProviderConfig(ctx context.Context, req *ValidateProvid
 				},
 			)
 			configValidator.ValidateProvider(ctx, vpcReq, vpcRes)
-			logging.FrameworkDebug(
+			logging.FrameworkTrace(
 				ctx,
 				"Called provider defined ConfigValidator",
 				map[string]interface{}{
@@ -67,9 +70,9 @@ func (s *Server) ValidateProviderConfig(ctx context.Context, req *ValidateProvid
 		// from modifying or removing diagnostics.
 		vpcRes := &provider.ValidateConfigResponse{}
 
-		logging.FrameworkDebug(ctx, "Calling provider defined Provider ValidateConfig")
+		logging.FrameworkTrace(ctx, "Calling provider defined Provider ValidateConfig")
 		providerWithValidateConfig.ValidateConfig(ctx, vpcReq, vpcRes)
-		logging.FrameworkDebug(ctx, "Called provider defined Provider ValidateConfig")
+		logging.FrameworkTrace(ctx, "Called provider defined Provider ValidateConfig")
 
 		resp.Diagnostics.Append(vpcRes.Diagnostics...)
 	}

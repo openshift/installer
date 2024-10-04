@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ info:
   x-dcl-has-iam: false
   x-dcl-ref:
     text: API reference
-    url: https://cloud.google.com/anthos/clusters/docs/multi-cloud/reference/rest/v1/projects.locations.azureClusters.azureNodePools
+    url: https://cloud.google.com/kubernetes-engine/multi-cloud/docs/reference/rest/v1/projects.locations.azureClusters.azureNodePools
   x-dcl-guides:
   - text: Multicloud overview
-    url: https://cloud.google.com/anthos/clusters/docs/multi-cloud
+    url: https://cloud.google.com/kubernetes-engine/multi-cloud/docs
 paths:
   get:
     description: The function used to get information about a NodePool
@@ -142,6 +142,7 @@ components:
           - resource: Gkemulticloud/Cluster
             field: name
             parent: true
+          x-dcl-parameter: true
         config:
           type: object
           x-dcl-go-name: Config
@@ -150,6 +151,15 @@ components:
           required:
           - sshConfig
           properties:
+            labels:
+              type: object
+              additionalProperties:
+                type: string
+              x-dcl-go-name: Labels
+              description: 'Optional. The initial labels assigned to nodes of this
+                node pool. An object containing a list of "key": value pairs. Example:
+                { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
+              x-kubernetes-immutable: true
             proxyConfig:
               type: object
               x-dcl-go-name: ProxyConfig
@@ -244,6 +254,18 @@ components:
           x-dcl-go-name: Location
           description: The location for the resource
           x-kubernetes-immutable: true
+          x-dcl-parameter: true
+        management:
+          type: object
+          x-dcl-go-name: Management
+          x-dcl-go-type: NodePoolManagement
+          description: The Management configuration for this node pool.
+          properties:
+            autoRepair:
+              type: boolean
+              x-dcl-go-name: AutoRepair
+              description: Optional. Whether or not the nodes will be automatically
+                repaired.
         maxPodsConstraint:
           type: object
           x-dcl-go-name: MaxPodsConstraint
@@ -265,6 +287,7 @@ components:
           x-dcl-go-name: Name
           description: The name of this resource.
           x-kubernetes-immutable: true
+          x-dcl-has-long-form: true
         project:
           type: string
           x-dcl-go-name: Project
@@ -274,6 +297,7 @@ components:
           - resource: Cloudresourcemanager/Project
             field: name
             parent: true
+          x-dcl-parameter: true
         reconciling:
           type: boolean
           x-dcl-go-name: Reconciling

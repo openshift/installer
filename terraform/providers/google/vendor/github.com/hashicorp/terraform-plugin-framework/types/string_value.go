@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package types
 
 import "github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -20,4 +23,9 @@ func StringUnknown() basetypes.StringValue {
 // type ValueString method.
 func StringValue(value string) basetypes.StringValue {
 	return basetypes.NewStringValue(value)
+}
+
+// StringPointerValue creates a String with a null value if nil or a known value.
+func StringPointerValue(value *string) basetypes.StringValue {
+	return basetypes.NewStringPointerValue(value)
 }

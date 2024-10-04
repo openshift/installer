@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package metaschema
 
 import (
@@ -90,11 +93,13 @@ func (a SingleNestedAttribute) ApplyTerraform5AttributePathStep(step tftypes.Att
 // Equal returns true if the given Attribute is a SingleNestedAttribute
 // and all fields are equal.
 func (a SingleNestedAttribute) Equal(o fwschema.Attribute) bool {
-	if _, ok := o.(SingleNestedAttribute); !ok {
+	other, ok := o.(SingleNestedAttribute)
+
+	if !ok {
 		return false
 	}
 
-	return fwschema.AttributesEqual(a, o)
+	return fwschema.NestedAttributesEqual(a, other)
 }
 
 // GetAttributes returns the Attributes field value.

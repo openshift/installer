@@ -20,9 +20,11 @@ package compute
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -45,6 +47,10 @@ func ResourceComputeHttpHealthCheck() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -217,6 +223,7 @@ func resourceComputeHttpHealthCheckCreate(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -225,6 +232,7 @@ func resourceComputeHttpHealthCheckCreate(d *schema.ResourceData, meta interface
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating HttpHealthCheck: %s", err)
@@ -277,12 +285,14 @@ func resourceComputeHttpHealthCheckRead(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeHttpHealthCheck %q", d.Id()))
@@ -406,6 +416,7 @@ func resourceComputeHttpHealthCheckUpdate(d *schema.ResourceData, meta interface
 	}
 
 	log.Printf("[DEBUG] Updating HttpHealthCheck %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -420,6 +431,7 @@ func resourceComputeHttpHealthCheckUpdate(d *schema.ResourceData, meta interface
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -460,13 +472,15 @@ func resourceComputeHttpHealthCheckDelete(d *schema.ResourceData, meta interface
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting HttpHealthCheck %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting HttpHealthCheck %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -475,6 +489,7 @@ func resourceComputeHttpHealthCheckDelete(d *schema.ResourceData, meta interface
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "HttpHealthCheck")
@@ -495,9 +510,9 @@ func resourceComputeHttpHealthCheckDelete(d *schema.ResourceData, meta interface
 func resourceComputeHttpHealthCheckImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/global/httpHealthChecks/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/global/httpHealthChecks/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwserver
 
 import (
@@ -38,7 +41,7 @@ func (s *Server) DeleteResource(ctx context.Context, req *DeleteResourceRequest,
 		return
 	}
 
-	if _, ok := req.Resource.(resource.ResourceWithConfigure); ok {
+	if resourceWithConfigure, ok := req.Resource.(resource.ResourceWithConfigure); ok {
 		logging.FrameworkTrace(ctx, "Resource implements ResourceWithConfigure")
 
 		configureReq := resource.ConfigureRequest{
@@ -46,9 +49,9 @@ func (s *Server) DeleteResource(ctx context.Context, req *DeleteResourceRequest,
 		}
 		configureResp := resource.ConfigureResponse{}
 
-		logging.FrameworkDebug(ctx, "Calling provider defined Resource Configure")
-		req.Resource.(resource.ResourceWithConfigure).Configure(ctx, configureReq, &configureResp)
-		logging.FrameworkDebug(ctx, "Called provider defined Resource Configure")
+		logging.FrameworkTrace(ctx, "Calling provider defined Resource Configure")
+		resourceWithConfigure.Configure(ctx, configureReq, &configureResp)
+		logging.FrameworkTrace(ctx, "Called provider defined Resource Configure")
 
 		resp.Diagnostics.Append(configureResp.Diagnostics...)
 
@@ -79,19 +82,42 @@ func (s *Server) DeleteResource(ctx context.Context, req *DeleteResourceRequest,
 		deleteReq.ProviderMeta = *req.ProviderMeta
 	}
 
+	privateProviderData := privatestate.EmptyProviderData(ctx)
+
+	deleteReq.Private = privateProviderData
+	deleteResp.Private = privateProviderData
+
 	if req.PlannedPrivate != nil {
-		deleteReq.Private = req.PlannedPrivate.Provider
+		if req.PlannedPrivate.Provider != nil {
+			deleteReq.Private = req.PlannedPrivate.Provider
+			deleteResp.Private = req.PlannedPrivate.Provider
+		}
+
+		resp.Private = req.PlannedPrivate
 	}
 
-	logging.FrameworkDebug(ctx, "Calling provider defined Resource Delete")
+	logging.FrameworkTrace(ctx, "Calling provider defined Resource Delete")
 	req.Resource.Delete(ctx, deleteReq, &deleteResp)
-	logging.FrameworkDebug(ctx, "Called provider defined Resource Delete")
+	logging.FrameworkTrace(ctx, "Called provider defined Resource Delete")
 
 	if !deleteResp.Diagnostics.HasError() {
-		logging.FrameworkTrace(ctx, "No provider defined Delete errors detected, ensuring State is cleared")
+		logging.FrameworkTrace(ctx, "No provider defined Delete errors detected, ensuring State and Private are cleared")
 		deleteResp.State.RemoveResource(ctx)
+
+		// Preserve prior behavior of always returning nil.
+		// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/863
+		deleteResp.Private = nil
+		resp.Private = nil
 	}
 
 	resp.Diagnostics = deleteResp.Diagnostics
 	resp.NewState = &deleteResp.State
+
+	if deleteResp.Private != nil {
+		if resp.Private == nil {
+			resp.Private = &privatestate.Data{}
+		}
+
+		resp.Private.Provider = deleteResp.Private
+	}
 }

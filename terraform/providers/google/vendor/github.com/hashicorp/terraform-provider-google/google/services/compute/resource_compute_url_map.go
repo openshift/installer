@@ -20,10 +20,12 @@ package compute
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -48,6 +50,10 @@ func ResourceComputeUrlMap() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -1546,7 +1552,7 @@ less than one second are represented with a 0 'seconds' field and a positive
 
 * 5xx: Loadbalancer will attempt a retry if the backend service responds with
 any 5xx response code, or if the backend service does not respond at all,
-example: disconnects, reset, read timeout, connection failure, and refused
+for example: disconnects, reset, read timeout, connection failure, and refused
 streams.
 * gateway-error: Similar to 5xx, but only applies to response codes
 502, 503 or 504.
@@ -2406,7 +2412,7 @@ less than one second are represented with a 0 'seconds' field and a positive
 
 * 5xx: Loadbalancer will attempt a retry if the backend service responds with
   any 5xx response code, or if the backend service does not respond at all,
-  example: disconnects, reset, read timeout, connection failure, and refused
+  for example: disconnects, reset, read timeout, connection failure, and refused
   streams.
 * gateway-error: Similar to 5xx, but only applies to response codes
   502, 503 or 504.
@@ -2883,6 +2889,7 @@ func resourceComputeUrlMapCreate(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -2891,6 +2898,7 @@ func resourceComputeUrlMapCreate(d *schema.ResourceData, meta interface{}) error
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating UrlMap: %s", err)
@@ -2943,12 +2951,14 @@ func resourceComputeUrlMapRead(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeUrlMap %q", d.Id()))
@@ -3084,6 +3094,7 @@ func resourceComputeUrlMapUpdate(d *schema.ResourceData, meta interface{}) error
 	}
 
 	log.Printf("[DEBUG] Updating UrlMap %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -3098,6 +3109,7 @@ func resourceComputeUrlMapUpdate(d *schema.ResourceData, meta interface{}) error
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -3138,13 +3150,15 @@ func resourceComputeUrlMapDelete(d *schema.ResourceData, meta interface{}) error
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting UrlMap %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting UrlMap %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -3153,6 +3167,7 @@ func resourceComputeUrlMapDelete(d *schema.ResourceData, meta interface{}) error
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "UrlMap")
@@ -3173,9 +3188,9 @@ func resourceComputeUrlMapDelete(d *schema.ResourceData, meta interface{}) error
 func resourceComputeUrlMapImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/global/urlMaps/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/global/urlMaps/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

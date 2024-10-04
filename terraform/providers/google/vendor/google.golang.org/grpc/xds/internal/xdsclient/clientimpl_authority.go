@@ -21,7 +21,8 @@ import (
 	"errors"
 	"fmt"
 
-	"google.golang.org/grpc/xds/internal/xdsclient/bootstrap"
+	"google.golang.org/grpc/internal/grpclog"
+	"google.golang.org/grpc/internal/xds/bootstrap"
 	"google.golang.org/grpc/xds/internal/xdsclient/xdsresource"
 )
 
@@ -35,7 +36,7 @@ import (
 // authority, without holding c.authorityMu.
 //
 // Caller must not hold c.authorityMu.
-func (c *clientImpl) findAuthority(n *xdsresource.Name) (_ *authority, unref func(), _ error) {
+func (c *clientImpl) findAuthority(n *xdsresource.Name) (*authority, func(), error) {
 	scheme, authority := n.Scheme, n.Authority
 
 	c.authorityMu.Lock()
@@ -109,7 +110,7 @@ func (c *clientImpl) newAuthorityLocked(config *bootstrap.ServerConfig) (_ *auth
 		serializer:         c.serializer,
 		resourceTypeGetter: c.resourceTypes.get,
 		watchExpiryTimeout: c.watchExpiryTimeout,
-		logger:             c.logger,
+		logger:             grpclog.NewPrefixLogger(logger, authorityPrefix(c, config.ServerURI)),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("creating new authority for config %q: %v", config.String(), err)

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package path
 
 import (
@@ -42,6 +45,18 @@ type Path struct {
 //
 // List indices are 0-based. The first element of a list is 0.
 func (p Path) AtListIndex(index int) Path {
+	copiedPath := p.Copy()
+
+	copiedPath.steps.Append(PathStepElementKeyInt(index))
+
+	return copiedPath
+}
+
+// AtTupleIndex returns a copied path with a new tuple index step at the end.
+// The returned path is safe to modify without affecting the original.
+//
+// Tuple indices are 0-based. The first element of a tuple is 0.
+func (p Path) AtTupleIndex(index int) Path {
 	copiedPath := p.Copy()
 
 	copiedPath.steps.Append(PathStepElementKeyInt(index))

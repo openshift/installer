@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"sort"
 	"strings"
@@ -159,6 +160,7 @@ func ResourceComputeFirewall() *schema.Resource {
 		CustomizeDiff: customdiff.All(
 			resourceComputeFirewallEnableLoggingCustomizeDiff,
 			resourceComputeFirewallSourceFieldsCustomizeDiff,
+			tpgresource.DefaultProviderProject,
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -387,7 +389,7 @@ func computeFirewallAllowSchema() *schema.Resource {
 			"protocol": {
 				Type:             schema.TypeString,
 				Required:         true,
-				DiffSuppressFunc: tpgresource.CompareCaseInsensitive,
+				DiffSuppressFunc: tpgresource.CaseDiffSuppress,
 				Description: `The IP protocol to which this rule applies. The protocol type is
 required when creating a firewall rule. This value can either be
 one of the following well known protocol strings (tcp, udp,
@@ -417,7 +419,7 @@ func computeFirewallDenySchema() *schema.Resource {
 			"protocol": {
 				Type:             schema.TypeString,
 				Required:         true,
-				DiffSuppressFunc: tpgresource.CompareCaseInsensitive,
+				DiffSuppressFunc: tpgresource.CaseDiffSuppress,
 				Description: `The IP protocol to which this rule applies. The protocol type is
 required when creating a firewall rule. This value can either be
 one of the following well known protocol strings (tcp, udp,
@@ -464,7 +466,7 @@ func resourceComputeFirewallCreate(d *schema.ResourceData, meta interface{}) err
 	descriptionProp, err := expandComputeFirewallDescription(d.Get("description"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(descriptionProp)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
+	} else if v, ok := d.GetOkExists("description"); ok || !reflect.DeepEqual(v, descriptionProp) {
 		obj["description"] = descriptionProp
 	}
 	destinationRangesProp, err := expandComputeFirewallDestinationRanges(d.Get("destination_ranges"), d, config)
@@ -559,6 +561,7 @@ func resourceComputeFirewallCreate(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -567,6 +570,7 @@ func resourceComputeFirewallCreate(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Firewall: %s", err)
@@ -619,12 +623,14 @@ func resourceComputeFirewallRead(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeFirewall %q", d.Id()))
@@ -720,7 +726,7 @@ func resourceComputeFirewallUpdate(d *schema.ResourceData, meta interface{}) err
 	descriptionProp, err := expandComputeFirewallDescription(d.Get("description"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
+	} else if v, ok := d.GetOkExists("description"); ok || !reflect.DeepEqual(v, descriptionProp) {
 		obj["description"] = descriptionProp
 	}
 	destinationRangesProp, err := expandComputeFirewallDestinationRanges(d.Get("destination_ranges"), d, config)
@@ -790,6 +796,7 @@ func resourceComputeFirewallUpdate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	log.Printf("[DEBUG] Updating Firewall %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -804,6 +811,7 @@ func resourceComputeFirewallUpdate(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -844,13 +852,15 @@ func resourceComputeFirewallDelete(d *schema.ResourceData, meta interface{}) err
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Firewall %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Firewall %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -859,6 +869,7 @@ func resourceComputeFirewallDelete(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Firewall")
@@ -879,9 +890,9 @@ func resourceComputeFirewallDelete(d *schema.ResourceData, meta interface{}) err
 func resourceComputeFirewallImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/global/firewalls/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/global/firewalls/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

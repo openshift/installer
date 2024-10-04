@@ -103,7 +103,7 @@ func testSweepDataCatalogTaxonomy(region string) error {
 
 		name := tpgresource.GetResourceNameFromSelfLink(obj["name"].(string))
 		// Skip resources that shouldn't be sweeped
-		if !sweeper.IsSweepableTestResource(name) {
+		if !sweeper.IsSweepableTestResource(obj["displayName"].(string)) {
 			nonPrefixCount++
 			continue
 		}

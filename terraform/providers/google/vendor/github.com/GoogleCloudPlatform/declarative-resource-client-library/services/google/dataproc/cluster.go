@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -450,7 +450,7 @@ func (r *ClusterConfig) String() string {
 func (r *ClusterConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -532,7 +532,7 @@ func (r *ClusterConfigGceClusterConfig) String() string {
 func (r *ClusterConfigGceClusterConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -584,7 +584,7 @@ func (r *ClusterConfigGceClusterConfigReservationAffinity) String() string {
 func (r *ClusterConfigGceClusterConfigReservationAffinity) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -630,7 +630,7 @@ func (r *ClusterConfigGceClusterConfigNodeGroupAffinity) String() string {
 func (r *ClusterConfigGceClusterConfigNodeGroupAffinity) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -682,7 +682,7 @@ func (r *ClusterConfigGceClusterConfigShieldedInstanceConfig) String() string {
 func (r *ClusterConfigGceClusterConfigShieldedInstanceConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -728,7 +728,7 @@ func (r *ClusterConfigGceClusterConfigConfidentialInstanceConfig) String() strin
 func (r *ClusterConfigGceClusterConfigConfidentialInstanceConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -804,7 +804,7 @@ func (r *ClusterConfigMasterConfig) String() string {
 func (r *ClusterConfigMasterConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -859,7 +859,7 @@ func (r *ClusterConfigMasterConfigDiskConfig) String() string {
 func (r *ClusterConfigMasterConfigDiskConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -908,7 +908,7 @@ func (r *ClusterConfigMasterConfigManagedGroupConfig) String() string {
 func (r *ClusterConfigMasterConfigManagedGroupConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -957,7 +957,7 @@ func (r *ClusterConfigMasterConfigAccelerators) String() string {
 func (r *ClusterConfigMasterConfigAccelerators) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1012,7 +1012,7 @@ func (r *ClusterConfigMasterConfigInstanceReferences) String() string {
 func (r *ClusterConfigMasterConfigInstanceReferences) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1088,7 +1088,7 @@ func (r *ClusterConfigWorkerConfig) String() string {
 func (r *ClusterConfigWorkerConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1143,7 +1143,7 @@ func (r *ClusterConfigWorkerConfigDiskConfig) String() string {
 func (r *ClusterConfigWorkerConfigDiskConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1192,7 +1192,7 @@ func (r *ClusterConfigWorkerConfigManagedGroupConfig) String() string {
 func (r *ClusterConfigWorkerConfigManagedGroupConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1241,7 +1241,7 @@ func (r *ClusterConfigWorkerConfigAccelerators) String() string {
 func (r *ClusterConfigWorkerConfigAccelerators) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1296,7 +1296,7 @@ func (r *ClusterConfigWorkerConfigInstanceReferences) String() string {
 func (r *ClusterConfigWorkerConfigInstanceReferences) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1372,7 +1372,7 @@ func (r *ClusterConfigSecondaryWorkerConfig) String() string {
 func (r *ClusterConfigSecondaryWorkerConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1427,7 +1427,7 @@ func (r *ClusterConfigSecondaryWorkerConfigDiskConfig) String() string {
 func (r *ClusterConfigSecondaryWorkerConfigDiskConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1476,7 +1476,7 @@ func (r *ClusterConfigSecondaryWorkerConfigManagedGroupConfig) String() string {
 func (r *ClusterConfigSecondaryWorkerConfigManagedGroupConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1525,7 +1525,7 @@ func (r *ClusterConfigSecondaryWorkerConfigAccelerators) String() string {
 func (r *ClusterConfigSecondaryWorkerConfigAccelerators) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1580,7 +1580,7 @@ func (r *ClusterConfigSecondaryWorkerConfigInstanceReferences) String() string {
 func (r *ClusterConfigSecondaryWorkerConfigInstanceReferences) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1632,7 +1632,7 @@ func (r *ClusterConfigSoftwareConfig) String() string {
 func (r *ClusterConfigSoftwareConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1681,7 +1681,7 @@ func (r *ClusterConfigInitializationActions) String() string {
 func (r *ClusterConfigInitializationActions) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1727,7 +1727,7 @@ func (r *ClusterConfigEncryptionConfig) String() string {
 func (r *ClusterConfigEncryptionConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1773,7 +1773,7 @@ func (r *ClusterConfigAutoscalingConfig) String() string {
 func (r *ClusterConfigAutoscalingConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1822,7 +1822,7 @@ func (r *ClusterConfigSecurityConfig) String() string {
 func (r *ClusterConfigSecurityConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1910,7 +1910,7 @@ func (r *ClusterConfigSecurityConfigKerberosConfig) String() string {
 func (r *ClusterConfigSecurityConfigKerberosConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -1956,7 +1956,7 @@ func (r *ClusterConfigSecurityConfigIdentityConfig) String() string {
 func (r *ClusterConfigSecurityConfigIdentityConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2011,7 +2011,7 @@ func (r *ClusterConfigLifecycleConfig) String() string {
 func (r *ClusterConfigLifecycleConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2060,7 +2060,7 @@ func (r *ClusterConfigEndpointConfig) String() string {
 func (r *ClusterConfigEndpointConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2106,7 +2106,7 @@ func (r *ClusterConfigMetastoreConfig) String() string {
 func (r *ClusterConfigMetastoreConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2152,7 +2152,7 @@ func (r *ClusterConfigDataprocMetricConfig) String() string {
 func (r *ClusterConfigDataprocMetricConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2201,7 +2201,7 @@ func (r *ClusterConfigDataprocMetricConfigMetrics) String() string {
 func (r *ClusterConfigDataprocMetricConfigMetrics) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2256,7 +2256,7 @@ func (r *ClusterStatus) String() string {
 func (r *ClusterStatus) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2311,7 +2311,7 @@ func (r *ClusterStatusHistory) String() string {
 func (r *ClusterStatusHistory) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2360,7 +2360,7 @@ func (r *ClusterMetrics) String() string {
 func (r *ClusterMetrics) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2412,7 +2412,7 @@ func (r *ClusterVirtualClusterConfig) String() string {
 func (r *ClusterVirtualClusterConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2464,7 +2464,7 @@ func (r *ClusterVirtualClusterConfigKubernetesClusterConfig) String() string {
 func (r *ClusterVirtualClusterConfigKubernetesClusterConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2513,7 +2513,7 @@ func (r *ClusterVirtualClusterConfigKubernetesClusterConfigGkeClusterConfig) Str
 func (r *ClusterVirtualClusterConfigKubernetesClusterConfigGkeClusterConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2565,7 +2565,7 @@ func (r *ClusterVirtualClusterConfigKubernetesClusterConfigGkeClusterConfigNodeP
 func (r *ClusterVirtualClusterConfigKubernetesClusterConfigGkeClusterConfigNodePoolTarget) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2617,7 +2617,7 @@ func (r *ClusterVirtualClusterConfigKubernetesClusterConfigGkeClusterConfigNodeP
 func (r *ClusterVirtualClusterConfigKubernetesClusterConfigGkeClusterConfigNodePoolTargetNodePoolConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2684,7 +2684,7 @@ func (r *ClusterVirtualClusterConfigKubernetesClusterConfigGkeClusterConfigNodeP
 func (r *ClusterVirtualClusterConfigKubernetesClusterConfigGkeClusterConfigNodePoolTargetNodePoolConfigConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2736,7 +2736,7 @@ func (r *ClusterVirtualClusterConfigKubernetesClusterConfigGkeClusterConfigNodeP
 func (r *ClusterVirtualClusterConfigKubernetesClusterConfigGkeClusterConfigNodePoolTargetNodePoolConfigConfigAccelerators) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2782,7 +2782,7 @@ func (r *ClusterVirtualClusterConfigKubernetesClusterConfigGkeClusterConfigNodeP
 func (r *ClusterVirtualClusterConfigKubernetesClusterConfigGkeClusterConfigNodePoolTargetNodePoolConfigConfigEphemeralStorageConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2831,7 +2831,7 @@ func (r *ClusterVirtualClusterConfigKubernetesClusterConfigGkeClusterConfigNodeP
 func (r *ClusterVirtualClusterConfigKubernetesClusterConfigGkeClusterConfigNodePoolTargetNodePoolConfigAutoscaling) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2880,7 +2880,7 @@ func (r *ClusterVirtualClusterConfigKubernetesClusterConfigKubernetesSoftwareCon
 func (r *ClusterVirtualClusterConfigKubernetesClusterConfigKubernetesSoftwareConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2929,7 +2929,7 @@ func (r *ClusterVirtualClusterConfigAuxiliaryServicesConfig) String() string {
 func (r *ClusterVirtualClusterConfigAuxiliaryServicesConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -2975,7 +2975,7 @@ func (r *ClusterVirtualClusterConfigAuxiliaryServicesConfigMetastoreConfig) Stri
 func (r *ClusterVirtualClusterConfigAuxiliaryServicesConfigMetastoreConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -3021,7 +3021,7 @@ func (r *ClusterVirtualClusterConfigAuxiliaryServicesConfigSparkHistoryServerCon
 func (r *ClusterVirtualClusterConfigAuxiliaryServicesConfigSparkHistoryServerConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 

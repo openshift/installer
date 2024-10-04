@@ -20,14 +20,17 @@ package identityplatform
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
+	"github.com/hashicorp/terraform-provider-google/google/verify"
 )
 
 func ResourceIdentityPlatformConfig() *schema.Resource {
@@ -47,11 +50,423 @@ func ResourceIdentityPlatformConfig() *schema.Resource {
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
+
 		Schema: map[string]*schema.Schema{
+			"authorized_domains": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Optional:    true,
+				Description: `List of domains authorized for OAuth redirects.`,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"autodelete_anonymous_users": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: `Whether anonymous users will be auto-deleted after a period of 30 days`,
+			},
+			"blocking_functions": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Configuration related to blocking functions.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"triggers": {
+							Type:        schema.TypeSet,
+							Required:    true,
+							Description: `Map of Trigger to event type. Key should be one of the supported event types: "beforeCreate", "beforeSignIn".`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"event_type": {
+										Type:     schema.TypeString,
+										Required: true,
+									},
+									"function_uri": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: `HTTP URI trigger for the Cloud Function.`,
+									},
+									"update_time": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: `When the trigger was changed.`,
+									},
+								},
+							},
+						},
+						"forward_inbound_credentials": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `The user credentials to include in the JWT payload that is sent to the registered Blocking Functions.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"access_token": {
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: `Whether to pass the user's OAuth identity provider's access token.`,
+									},
+									"id_token": {
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: `Whether to pass the user's OIDC identity provider's ID token.`,
+									},
+									"refresh_token": {
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: `Whether to pass the user's OAuth identity provider's refresh token.`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"client": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Optional:    true,
+				Description: `Options related to how clients making requests on behalf of a project should be configured.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"permissions": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Configuration related to restricting a user's ability to affect their account.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"disabled_user_deletion": {
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: `When true, end users cannot delete their account on the associated project through any of our API methods`,
+									},
+									"disabled_user_signup": {
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: `When true, end users cannot sign up for a new account on the associated project through any of our API methods`,
+									},
+								},
+							},
+						},
+						"api_key": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: `API key that can be used when making requests for this project.`,
+							Sensitive:   true,
+						},
+						"firebase_subdomain": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: `Firebase subdomain.`,
+						},
+					},
+				},
+			},
+			"mfa": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Optional:    true,
+				Description: `Options related to how clients making requests on behalf of a project should be configured.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"enabled_providers": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `A list of usable second factors for this project. Possible values: ["PHONE_SMS"]`,
+							Elem: &schema.Schema{
+								Type:         schema.TypeString,
+								ValidateFunc: verify.ValidateEnum([]string{"PHONE_SMS"}),
+							},
+						},
+						"provider_configs": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Description: `A list of usable second factors for this project along with their configurations.
+This field does not support phone based MFA, for that use the 'enabledProviders' field.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"state": {
+										Type:         schema.TypeString,
+										Computed:     true,
+										Optional:     true,
+										ValidateFunc: verify.ValidateEnum([]string{"DISABLED", "ENABLED", "MANDATORY", ""}),
+										Description:  `Whether MultiFactor Authentication has been enabled for this project. Possible values: ["DISABLED", "ENABLED", "MANDATORY"]`,
+									},
+									"totp_provider_config": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: `TOTP MFA provider config for this project.`,
+										MaxItems:    1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"adjacent_intervals": {
+													Type:        schema.TypeInt,
+													Optional:    true,
+													Description: `The allowed number of adjacent intervals that will be used for verification to avoid clock skew.`,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						"state": {
+							Type:         schema.TypeString,
+							Computed:     true,
+							Optional:     true,
+							ValidateFunc: verify.ValidateEnum([]string{"DISABLED", "ENABLED", "MANDATORY", ""}),
+							Description:  `Whether MultiFactor Authentication has been enabled for this project. Possible values: ["DISABLED", "ENABLED", "MANDATORY"]`,
+						},
+					},
+				},
+			},
+			"monitoring": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Optional:    true,
+				Description: `Configuration related to monitoring project activity.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"request_logging": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Configuration for logging requests made to this project to Stackdriver Logging`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"enabled": {
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: `Whether logging is enabled for this project or not.`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"multi_tenant": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Configuration related to multi-tenant functionality.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"allow_tenants": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: `Whether this project can have tenants or not.`,
+						},
+						"default_tenant_location": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Description: `The default cloud parent org or folder that the tenant project should be created under.
+The parent resource name should be in the format of "/", such as "folders/123" or "organizations/456".
+If the value is not set, the tenant will be created under the same organization or folder as the agent project.`,
+						},
+					},
+				},
+			},
+			"quota": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Configuration related to quotas.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"sign_up_quota_config": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Quota for the Signup endpoint, if overwritten. Signup quota is measured in sign ups per project per hour per IP.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"quota": {
+										Type:        schema.TypeInt,
+										Optional:    true,
+										Description: `A sign up APIs quota that customers can override temporarily.`,
+									},
+									"quota_duration": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `How long this quota will be active for. It is measurred in seconds, e.g., Example: "9.615s".`,
+									},
+									"start_time": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `When this quota will take affect.`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"sign_in": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Optional:    true,
+				Description: `Configuration related to local sign in methods.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"allow_duplicate_emails": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: `Whether to allow more than one account to have the same email.`,
+						},
+						"anonymous": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Configuration options related to authenticating an anonymous user.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"enabled": {
+										Type:        schema.TypeBool,
+										Required:    true,
+										Description: `Whether anonymous user auth is enabled for the project or not.`,
+									},
+								},
+							},
+						},
+						"email": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Configuration options related to authenticating a user by their email address.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"enabled": {
+										Type:        schema.TypeBool,
+										Required:    true,
+										Description: `Whether email auth is enabled for the project or not.`,
+									},
+									"password_required": {
+										Type:     schema.TypeBool,
+										Optional: true,
+										Description: `Whether a password is required for email auth or not. If true, both an email and
+password must be provided to sign in. If false, a user may sign in via either
+email/password or email link.`,
+									},
+								},
+							},
+						},
+						"phone_number": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Configuration options related to authenticated a user by their phone number.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"enabled": {
+										Type:        schema.TypeBool,
+										Required:    true,
+										Description: `Whether phone number auth is enabled for the project or not.`,
+									},
+									"test_phone_numbers": {
+										Type:        schema.TypeMap,
+										Optional:    true,
+										Description: `A map of <test phone number, fake code> that can be used for phone auth testing.`,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+									},
+								},
+							},
+						},
+						"hash_config": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: `Output only. Hash config information.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"algorithm": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: `Different password hash algorithms used in Identity Toolkit.`,
+									},
+									"memory_cost": {
+										Type:        schema.TypeInt,
+										Computed:    true,
+										Description: `Memory cost for hash calculation. Used by scrypt and other similar password derivation algorithms. See https://tools.ietf.org/html/rfc7914 for explanation of field.`,
+									},
+									"rounds": {
+										Type:        schema.TypeInt,
+										Computed:    true,
+										Description: `How many rounds for hash calculation. Used by scrypt and other similar password derivation algorithms.`,
+									},
+									"salt_separator": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: `Non-printable character to be inserted between the salt and plain text password in base64.`,
+									},
+									"signer_key": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: `Signer key in base64.`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"sms_region_config": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Optional:    true,
+				Description: `Configures the regions where users are allowed to send verification SMS for the project or tenant. This is based on the calling code of the destination phone number.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"allow_by_default": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `A policy of allowing SMS to every region by default and adding disallowed regions to a disallow list.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"disallowed_regions": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: `Two letter unicode region codes to disallow as defined by https://cldr.unicode.org/ The full list of these region codes is here: https://github.com/unicode-cldr/cldr-localenames-full/blob/master/main/en/territories.json`,
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+									},
+								},
+							},
+							ExactlyOneOf: []string{"sms_region_config.0.allow_by_default", "sms_region_config.0.allowlist_only"},
+						},
+						"allowlist_only": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `A policy of only allowing regions by explicitly adding them to an allowlist.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"allowed_regions": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: `Two letter unicode region codes to allow as defined by https://cldr.unicode.org/ The full list of these region codes is here: https://github.com/unicode-cldr/cldr-localenames-full/blob/master/main/en/territories.json`,
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+									},
+								},
+							},
+							ExactlyOneOf: []string{"sms_region_config.0.allow_by_default", "sms_region_config.0.allowlist_only"},
+						},
+					},
+				},
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -151,12 +566,14 @@ func resourceIdentityPlatformConfigRead(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("IdentityPlatformConfig %q", d.Id()))
@@ -170,6 +587,33 @@ func resourceIdentityPlatformConfigRead(d *schema.ResourceData, meta interface{}
 		return fmt.Errorf("Error reading Config: %s", err)
 	}
 	if err := d.Set("autodelete_anonymous_users", flattenIdentityPlatformConfigAutodeleteAnonymousUsers(res["autodeleteAnonymousUsers"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Config: %s", err)
+	}
+	if err := d.Set("sign_in", flattenIdentityPlatformConfigSignIn(res["signIn"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Config: %s", err)
+	}
+	if err := d.Set("blocking_functions", flattenIdentityPlatformConfigBlockingFunctions(res["blockingFunctions"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Config: %s", err)
+	}
+	if err := d.Set("quota", flattenIdentityPlatformConfigQuota(res["quota"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Config: %s", err)
+	}
+	if err := d.Set("authorized_domains", flattenIdentityPlatformConfigAuthorizedDomains(res["authorizedDomains"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Config: %s", err)
+	}
+	if err := d.Set("sms_region_config", flattenIdentityPlatformConfigSmsRegionConfig(res["smsRegionConfig"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Config: %s", err)
+	}
+	if err := d.Set("client", flattenIdentityPlatformConfigClient(res["client"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Config: %s", err)
+	}
+	if err := d.Set("mfa", flattenIdentityPlatformConfigMfa(res["mfa"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Config: %s", err)
+	}
+	if err := d.Set("multi_tenant", flattenIdentityPlatformConfigMultiTenant(res["multiTenant"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Config: %s", err)
+	}
+	if err := d.Set("monitoring", flattenIdentityPlatformConfigMonitoring(res["monitoring"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Config: %s", err)
 	}
 
@@ -198,6 +642,60 @@ func resourceIdentityPlatformConfigUpdate(d *schema.ResourceData, meta interface
 	} else if v, ok := d.GetOkExists("autodelete_anonymous_users"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, autodeleteAnonymousUsersProp)) {
 		obj["autodeleteAnonymousUsers"] = autodeleteAnonymousUsersProp
 	}
+	signInProp, err := expandIdentityPlatformConfigSignIn(d.Get("sign_in"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("sign_in"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, signInProp)) {
+		obj["signIn"] = signInProp
+	}
+	blockingFunctionsProp, err := expandIdentityPlatformConfigBlockingFunctions(d.Get("blocking_functions"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("blocking_functions"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, blockingFunctionsProp)) {
+		obj["blockingFunctions"] = blockingFunctionsProp
+	}
+	quotaProp, err := expandIdentityPlatformConfigQuota(d.Get("quota"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("quota"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, quotaProp)) {
+		obj["quota"] = quotaProp
+	}
+	authorizedDomainsProp, err := expandIdentityPlatformConfigAuthorizedDomains(d.Get("authorized_domains"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("authorized_domains"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, authorizedDomainsProp)) {
+		obj["authorizedDomains"] = authorizedDomainsProp
+	}
+	smsRegionConfigProp, err := expandIdentityPlatformConfigSmsRegionConfig(d.Get("sms_region_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("sms_region_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, smsRegionConfigProp)) {
+		obj["smsRegionConfig"] = smsRegionConfigProp
+	}
+	clientProp, err := expandIdentityPlatformConfigClient(d.Get("client"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("client"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, clientProp)) {
+		obj["client"] = clientProp
+	}
+	mfaProp, err := expandIdentityPlatformConfigMfa(d.Get("mfa"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("mfa"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, mfaProp)) {
+		obj["mfa"] = mfaProp
+	}
+	multiTenantProp, err := expandIdentityPlatformConfigMultiTenant(d.Get("multi_tenant"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("multi_tenant"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, multiTenantProp)) {
+		obj["multiTenant"] = multiTenantProp
+	}
+	monitoringProp, err := expandIdentityPlatformConfigMonitoring(d.Get("monitoring"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("monitoring"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, monitoringProp)) {
+		obj["monitoring"] = monitoringProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{IdentityPlatformBasePath}}projects/{{project}}/config")
 	if err != nil {
@@ -205,10 +703,47 @@ func resourceIdentityPlatformConfigUpdate(d *schema.ResourceData, meta interface
 	}
 
 	log.Printf("[DEBUG] Updating Config %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("autodelete_anonymous_users") {
 		updateMask = append(updateMask, "autodeleteAnonymousUsers")
+	}
+
+	if d.HasChange("sign_in") {
+		updateMask = append(updateMask, "signIn")
+	}
+
+	if d.HasChange("blocking_functions") {
+		updateMask = append(updateMask, "blockingFunctions")
+	}
+
+	if d.HasChange("quota") {
+		updateMask = append(updateMask, "quota")
+	}
+
+	if d.HasChange("authorized_domains") {
+		updateMask = append(updateMask, "authorizedDomains")
+	}
+
+	if d.HasChange("sms_region_config") {
+		updateMask = append(updateMask, "smsRegionConfig")
+	}
+
+	if d.HasChange("client") {
+		updateMask = append(updateMask, "client")
+	}
+
+	if d.HasChange("mfa") {
+		updateMask = append(updateMask, "mfa")
+	}
+
+	if d.HasChange("multi_tenant") {
+		updateMask = append(updateMask, "multiTenant")
+	}
+
+	if d.HasChange("monitoring") {
+		updateMask = append(updateMask, "monitoring")
 	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
@@ -222,20 +757,25 @@ func resourceIdentityPlatformConfigUpdate(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Config %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Config %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating Config %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Config %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceIdentityPlatformConfigRead(d, meta)
@@ -253,9 +793,9 @@ func resourceIdentityPlatformConfigDelete(d *schema.ResourceData, meta interface
 func resourceIdentityPlatformConfigImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/config",
-		"projects/(?P<project>[^/]+)",
-		"(?P<project>[^/]+)",
+		"^projects/(?P<project>[^/]+)/config$",
+		"^projects/(?P<project>[^/]+)$",
+		"^(?P<project>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -278,6 +818,1231 @@ func flattenIdentityPlatformConfigAutodeleteAnonymousUsers(v interface{}, d *sch
 	return v
 }
 
+func flattenIdentityPlatformConfigSignIn(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["email"] =
+		flattenIdentityPlatformConfigSignInEmail(original["email"], d, config)
+	transformed["phone_number"] =
+		flattenIdentityPlatformConfigSignInPhoneNumber(original["phoneNumber"], d, config)
+	transformed["anonymous"] =
+		flattenIdentityPlatformConfigSignInAnonymous(original["anonymous"], d, config)
+	transformed["allow_duplicate_emails"] =
+		flattenIdentityPlatformConfigSignInAllowDuplicateEmails(original["allowDuplicateEmails"], d, config)
+	transformed["hash_config"] =
+		flattenIdentityPlatformConfigSignInHashConfig(original["hashConfig"], d, config)
+	return []interface{}{transformed}
+}
+func flattenIdentityPlatformConfigSignInEmail(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["enabled"] =
+		flattenIdentityPlatformConfigSignInEmailEnabled(original["enabled"], d, config)
+	transformed["password_required"] =
+		flattenIdentityPlatformConfigSignInEmailPasswordRequired(original["passwordRequired"], d, config)
+	return []interface{}{transformed}
+}
+func flattenIdentityPlatformConfigSignInEmailEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigSignInEmailPasswordRequired(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigSignInPhoneNumber(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["enabled"] =
+		flattenIdentityPlatformConfigSignInPhoneNumberEnabled(original["enabled"], d, config)
+	transformed["test_phone_numbers"] =
+		flattenIdentityPlatformConfigSignInPhoneNumberTestPhoneNumbers(original["testPhoneNumbers"], d, config)
+	return []interface{}{transformed}
+}
+func flattenIdentityPlatformConfigSignInPhoneNumberEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigSignInPhoneNumberTestPhoneNumbers(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigSignInAnonymous(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+
+	original := v.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	if original["enabled"] == nil {
+		transformed["enabled"] = false
+	} else {
+		transformed["enabled"] = original["enabled"]
+	}
+
+	return []interface{}{transformed}
+}
+
+func flattenIdentityPlatformConfigSignInAllowDuplicateEmails(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigSignInHashConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["algorithm"] =
+		flattenIdentityPlatformConfigSignInHashConfigAlgorithm(original["algorithm"], d, config)
+	transformed["signer_key"] =
+		flattenIdentityPlatformConfigSignInHashConfigSignerKey(original["signerKey"], d, config)
+	transformed["salt_separator"] =
+		flattenIdentityPlatformConfigSignInHashConfigSaltSeparator(original["saltSeparator"], d, config)
+	transformed["rounds"] =
+		flattenIdentityPlatformConfigSignInHashConfigRounds(original["rounds"], d, config)
+	transformed["memory_cost"] =
+		flattenIdentityPlatformConfigSignInHashConfigMemoryCost(original["memoryCost"], d, config)
+	return []interface{}{transformed}
+}
+func flattenIdentityPlatformConfigSignInHashConfigAlgorithm(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigSignInHashConfigSignerKey(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigSignInHashConfigSaltSeparator(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigSignInHashConfigRounds(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenIdentityPlatformConfigSignInHashConfigMemoryCost(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenIdentityPlatformConfigBlockingFunctions(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["triggers"] =
+		flattenIdentityPlatformConfigBlockingFunctionsTriggers(original["triggers"], d, config)
+	transformed["forward_inbound_credentials"] =
+		flattenIdentityPlatformConfigBlockingFunctionsForwardInboundCredentials(original["forwardInboundCredentials"], d, config)
+	return []interface{}{transformed}
+}
+func flattenIdentityPlatformConfigBlockingFunctionsTriggers(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.(map[string]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for k, raw := range l {
+		original := raw.(map[string]interface{})
+		transformed = append(transformed, map[string]interface{}{
+			"event_type":   k,
+			"function_uri": flattenIdentityPlatformConfigBlockingFunctionsTriggersFunctionUri(original["functionUri"], d, config),
+			"update_time":  flattenIdentityPlatformConfigBlockingFunctionsTriggersUpdateTime(original["updateTime"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenIdentityPlatformConfigBlockingFunctionsTriggersFunctionUri(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigBlockingFunctionsTriggersUpdateTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigBlockingFunctionsForwardInboundCredentials(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["id_token"] =
+		flattenIdentityPlatformConfigBlockingFunctionsForwardInboundCredentialsIdToken(original["idToken"], d, config)
+	transformed["access_token"] =
+		flattenIdentityPlatformConfigBlockingFunctionsForwardInboundCredentialsAccessToken(original["accessToken"], d, config)
+	transformed["refresh_token"] =
+		flattenIdentityPlatformConfigBlockingFunctionsForwardInboundCredentialsRefreshToken(original["refreshToken"], d, config)
+	return []interface{}{transformed}
+}
+func flattenIdentityPlatformConfigBlockingFunctionsForwardInboundCredentialsIdToken(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigBlockingFunctionsForwardInboundCredentialsAccessToken(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigBlockingFunctionsForwardInboundCredentialsRefreshToken(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigQuota(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["sign_up_quota_config"] =
+		flattenIdentityPlatformConfigQuotaSignUpQuotaConfig(original["signUpQuotaConfig"], d, config)
+	return []interface{}{transformed}
+}
+func flattenIdentityPlatformConfigQuotaSignUpQuotaConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["quota"] =
+		flattenIdentityPlatformConfigQuotaSignUpQuotaConfigQuota(original["quota"], d, config)
+	transformed["start_time"] =
+		flattenIdentityPlatformConfigQuotaSignUpQuotaConfigStartTime(original["startTime"], d, config)
+	transformed["quota_duration"] =
+		flattenIdentityPlatformConfigQuotaSignUpQuotaConfigQuotaDuration(original["quotaDuration"], d, config)
+	return []interface{}{transformed}
+}
+func flattenIdentityPlatformConfigQuotaSignUpQuotaConfigQuota(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenIdentityPlatformConfigQuotaSignUpQuotaConfigStartTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigQuotaSignUpQuotaConfigQuotaDuration(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigAuthorizedDomains(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigSmsRegionConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["allow_by_default"] =
+		flattenIdentityPlatformConfigSmsRegionConfigAllowByDefault(original["allowByDefault"], d, config)
+	transformed["allowlist_only"] =
+		flattenIdentityPlatformConfigSmsRegionConfigAllowlistOnly(original["allowlistOnly"], d, config)
+	return []interface{}{transformed}
+}
+func flattenIdentityPlatformConfigSmsRegionConfigAllowByDefault(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["disallowed_regions"] =
+		flattenIdentityPlatformConfigSmsRegionConfigAllowByDefaultDisallowedRegions(original["disallowedRegions"], d, config)
+	return []interface{}{transformed}
+}
+func flattenIdentityPlatformConfigSmsRegionConfigAllowByDefaultDisallowedRegions(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigSmsRegionConfigAllowlistOnly(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["allowed_regions"] =
+		flattenIdentityPlatformConfigSmsRegionConfigAllowlistOnlyAllowedRegions(original["allowedRegions"], d, config)
+	return []interface{}{transformed}
+}
+func flattenIdentityPlatformConfigSmsRegionConfigAllowlistOnlyAllowedRegions(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigClient(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["permissions"] =
+		flattenIdentityPlatformConfigClientPermissions(original["permissions"], d, config)
+	transformed["api_key"] =
+		flattenIdentityPlatformConfigClientApiKey(original["apiKey"], d, config)
+	transformed["firebase_subdomain"] =
+		flattenIdentityPlatformConfigClientFirebaseSubdomain(original["firebaseSubdomain"], d, config)
+	return []interface{}{transformed}
+}
+func flattenIdentityPlatformConfigClientPermissions(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+
+	original := v.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	if original["disabledUserSignup"] == nil {
+		transformed["disabled_user_signup"] = false
+	} else {
+		transformed["disabled_user_signup"] = original["disabledUserSignup"]
+	}
+
+	if original["disabledUserDeletion"] == nil {
+		transformed["disabled_user_deletion"] = false
+	} else {
+		transformed["disabled_user_deletion"] = original["disabledUserDeletion"]
+	}
+
+	return []interface{}{transformed}
+}
+
+func flattenIdentityPlatformConfigClientApiKey(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigClientFirebaseSubdomain(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigMfa(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["state"] =
+		flattenIdentityPlatformConfigMfaState(original["state"], d, config)
+	transformed["enabled_providers"] =
+		flattenIdentityPlatformConfigMfaEnabledProviders(original["enabledProviders"], d, config)
+	transformed["provider_configs"] =
+		flattenIdentityPlatformConfigMfaProviderConfigs(original["providerConfigs"], d, config)
+	return []interface{}{transformed}
+}
+func flattenIdentityPlatformConfigMfaState(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigMfaEnabledProviders(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigMfaProviderConfigs(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"state":                flattenIdentityPlatformConfigMfaProviderConfigsState(original["state"], d, config),
+			"totp_provider_config": flattenIdentityPlatformConfigMfaProviderConfigsTotpProviderConfig(original["totpProviderConfig"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenIdentityPlatformConfigMfaProviderConfigsState(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigMfaProviderConfigsTotpProviderConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["adjacent_intervals"] =
+		flattenIdentityPlatformConfigMfaProviderConfigsTotpProviderConfigAdjacentIntervals(original["adjacentIntervals"], d, config)
+	return []interface{}{transformed}
+}
+func flattenIdentityPlatformConfigMfaProviderConfigsTotpProviderConfigAdjacentIntervals(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenIdentityPlatformConfigMultiTenant(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["allow_tenants"] =
+		flattenIdentityPlatformConfigMultiTenantAllowTenants(original["allowTenants"], d, config)
+	transformed["default_tenant_location"] =
+		flattenIdentityPlatformConfigMultiTenantDefaultTenantLocation(original["defaultTenantLocation"], d, config)
+	return []interface{}{transformed}
+}
+func flattenIdentityPlatformConfigMultiTenantAllowTenants(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigMultiTenantDefaultTenantLocation(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenIdentityPlatformConfigMonitoring(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["request_logging"] =
+		flattenIdentityPlatformConfigMonitoringRequestLogging(original["requestLogging"], d, config)
+	return []interface{}{transformed}
+}
+func flattenIdentityPlatformConfigMonitoringRequestLogging(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+
+	original := v.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	if original["enabled"] == nil {
+		transformed["enabled"] = false
+	} else {
+		transformed["enabled"] = original["enabled"]
+	}
+
+	return []interface{}{transformed}
+}
+
 func expandIdentityPlatformConfigAutodeleteAnonymousUsers(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigSignIn(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedEmail, err := expandIdentityPlatformConfigSignInEmail(original["email"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedEmail); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["email"] = transformedEmail
+	}
+
+	transformedPhoneNumber, err := expandIdentityPlatformConfigSignInPhoneNumber(original["phone_number"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPhoneNumber); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["phoneNumber"] = transformedPhoneNumber
+	}
+
+	transformedAnonymous, err := expandIdentityPlatformConfigSignInAnonymous(original["anonymous"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAnonymous); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["anonymous"] = transformedAnonymous
+	}
+
+	transformedAllowDuplicateEmails, err := expandIdentityPlatformConfigSignInAllowDuplicateEmails(original["allow_duplicate_emails"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAllowDuplicateEmails); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["allowDuplicateEmails"] = transformedAllowDuplicateEmails
+	}
+
+	transformedHashConfig, err := expandIdentityPlatformConfigSignInHashConfig(original["hash_config"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedHashConfig); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["hashConfig"] = transformedHashConfig
+	}
+
+	return transformed, nil
+}
+
+func expandIdentityPlatformConfigSignInEmail(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedEnabled, err := expandIdentityPlatformConfigSignInEmailEnabled(original["enabled"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedEnabled); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["enabled"] = transformedEnabled
+	}
+
+	transformedPasswordRequired, err := expandIdentityPlatformConfigSignInEmailPasswordRequired(original["password_required"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPasswordRequired); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["passwordRequired"] = transformedPasswordRequired
+	}
+
+	return transformed, nil
+}
+
+func expandIdentityPlatformConfigSignInEmailEnabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigSignInEmailPasswordRequired(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigSignInPhoneNumber(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedEnabled, err := expandIdentityPlatformConfigSignInPhoneNumberEnabled(original["enabled"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedEnabled); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["enabled"] = transformedEnabled
+	}
+
+	transformedTestPhoneNumbers, err := expandIdentityPlatformConfigSignInPhoneNumberTestPhoneNumbers(original["test_phone_numbers"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedTestPhoneNumbers); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["testPhoneNumbers"] = transformedTestPhoneNumbers
+	}
+
+	return transformed, nil
+}
+
+func expandIdentityPlatformConfigSignInPhoneNumberEnabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigSignInPhoneNumberTestPhoneNumbers(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
+}
+
+func expandIdentityPlatformConfigSignInAnonymous(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedEnabled, err := expandIdentityPlatformConfigSignInAnonymousEnabled(original["enabled"], d, config)
+	if err != nil {
+		return nil, err
+	} else {
+		transformed["enabled"] = transformedEnabled
+	}
+
+	return transformed, nil
+}
+
+func expandIdentityPlatformConfigSignInAnonymousEnabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigSignInAllowDuplicateEmails(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigSignInHashConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedAlgorithm, err := expandIdentityPlatformConfigSignInHashConfigAlgorithm(original["algorithm"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAlgorithm); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["algorithm"] = transformedAlgorithm
+	}
+
+	transformedSignerKey, err := expandIdentityPlatformConfigSignInHashConfigSignerKey(original["signer_key"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSignerKey); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["signerKey"] = transformedSignerKey
+	}
+
+	transformedSaltSeparator, err := expandIdentityPlatformConfigSignInHashConfigSaltSeparator(original["salt_separator"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSaltSeparator); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["saltSeparator"] = transformedSaltSeparator
+	}
+
+	transformedRounds, err := expandIdentityPlatformConfigSignInHashConfigRounds(original["rounds"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedRounds); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["rounds"] = transformedRounds
+	}
+
+	transformedMemoryCost, err := expandIdentityPlatformConfigSignInHashConfigMemoryCost(original["memory_cost"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMemoryCost); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["memoryCost"] = transformedMemoryCost
+	}
+
+	return transformed, nil
+}
+
+func expandIdentityPlatformConfigSignInHashConfigAlgorithm(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigSignInHashConfigSignerKey(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigSignInHashConfigSaltSeparator(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigSignInHashConfigRounds(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigSignInHashConfigMemoryCost(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigBlockingFunctions(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedTriggers, err := expandIdentityPlatformConfigBlockingFunctionsTriggers(original["triggers"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedTriggers); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["triggers"] = transformedTriggers
+	}
+
+	transformedForwardInboundCredentials, err := expandIdentityPlatformConfigBlockingFunctionsForwardInboundCredentials(original["forward_inbound_credentials"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedForwardInboundCredentials); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["forwardInboundCredentials"] = transformedForwardInboundCredentials
+	}
+
+	return transformed, nil
+}
+
+func expandIdentityPlatformConfigBlockingFunctionsTriggers(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]interface{}, error) {
+	if v == nil {
+		return map[string]interface{}{}, nil
+	}
+	m := make(map[string]interface{})
+	for _, raw := range v.(*schema.Set).List() {
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedFunctionUri, err := expandIdentityPlatformConfigBlockingFunctionsTriggersFunctionUri(original["function_uri"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedFunctionUri); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["functionUri"] = transformedFunctionUri
+		}
+
+		transformedUpdateTime, err := expandIdentityPlatformConfigBlockingFunctionsTriggersUpdateTime(original["update_time"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedUpdateTime); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["updateTime"] = transformedUpdateTime
+		}
+
+		transformedEventType, err := tpgresource.ExpandString(original["event_type"], d, config)
+		if err != nil {
+			return nil, err
+		}
+		m[transformedEventType] = transformed
+	}
+	return m, nil
+}
+
+func expandIdentityPlatformConfigBlockingFunctionsTriggersFunctionUri(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigBlockingFunctionsTriggersUpdateTime(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigBlockingFunctionsForwardInboundCredentials(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedIdToken, err := expandIdentityPlatformConfigBlockingFunctionsForwardInboundCredentialsIdToken(original["id_token"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedIdToken); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["idToken"] = transformedIdToken
+	}
+
+	transformedAccessToken, err := expandIdentityPlatformConfigBlockingFunctionsForwardInboundCredentialsAccessToken(original["access_token"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAccessToken); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["accessToken"] = transformedAccessToken
+	}
+
+	transformedRefreshToken, err := expandIdentityPlatformConfigBlockingFunctionsForwardInboundCredentialsRefreshToken(original["refresh_token"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedRefreshToken); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["refreshToken"] = transformedRefreshToken
+	}
+
+	return transformed, nil
+}
+
+func expandIdentityPlatformConfigBlockingFunctionsForwardInboundCredentialsIdToken(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigBlockingFunctionsForwardInboundCredentialsAccessToken(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigBlockingFunctionsForwardInboundCredentialsRefreshToken(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigQuota(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedSignUpQuotaConfig, err := expandIdentityPlatformConfigQuotaSignUpQuotaConfig(original["sign_up_quota_config"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSignUpQuotaConfig); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["signUpQuotaConfig"] = transformedSignUpQuotaConfig
+	}
+
+	return transformed, nil
+}
+
+func expandIdentityPlatformConfigQuotaSignUpQuotaConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedQuota, err := expandIdentityPlatformConfigQuotaSignUpQuotaConfigQuota(original["quota"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedQuota); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["quota"] = transformedQuota
+	}
+
+	transformedStartTime, err := expandIdentityPlatformConfigQuotaSignUpQuotaConfigStartTime(original["start_time"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedStartTime); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["startTime"] = transformedStartTime
+	}
+
+	transformedQuotaDuration, err := expandIdentityPlatformConfigQuotaSignUpQuotaConfigQuotaDuration(original["quota_duration"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedQuotaDuration); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["quotaDuration"] = transformedQuotaDuration
+	}
+
+	return transformed, nil
+}
+
+func expandIdentityPlatformConfigQuotaSignUpQuotaConfigQuota(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigQuotaSignUpQuotaConfigStartTime(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigQuotaSignUpQuotaConfigQuotaDuration(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigAuthorizedDomains(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigSmsRegionConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedAllowByDefault, err := expandIdentityPlatformConfigSmsRegionConfigAllowByDefault(original["allow_by_default"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAllowByDefault); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["allowByDefault"] = transformedAllowByDefault
+	}
+
+	transformedAllowlistOnly, err := expandIdentityPlatformConfigSmsRegionConfigAllowlistOnly(original["allowlist_only"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAllowlistOnly); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["allowlistOnly"] = transformedAllowlistOnly
+	}
+
+	return transformed, nil
+}
+
+func expandIdentityPlatformConfigSmsRegionConfigAllowByDefault(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedDisallowedRegions, err := expandIdentityPlatformConfigSmsRegionConfigAllowByDefaultDisallowedRegions(original["disallowed_regions"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDisallowedRegions); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["disallowedRegions"] = transformedDisallowedRegions
+	}
+
+	return transformed, nil
+}
+
+func expandIdentityPlatformConfigSmsRegionConfigAllowByDefaultDisallowedRegions(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigSmsRegionConfigAllowlistOnly(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedAllowedRegions, err := expandIdentityPlatformConfigSmsRegionConfigAllowlistOnlyAllowedRegions(original["allowed_regions"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAllowedRegions); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["allowedRegions"] = transformedAllowedRegions
+	}
+
+	return transformed, nil
+}
+
+func expandIdentityPlatformConfigSmsRegionConfigAllowlistOnlyAllowedRegions(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigClient(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedPermissions, err := expandIdentityPlatformConfigClientPermissions(original["permissions"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPermissions); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["permissions"] = transformedPermissions
+	}
+
+	transformedApiKey, err := expandIdentityPlatformConfigClientApiKey(original["api_key"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedApiKey); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["apiKey"] = transformedApiKey
+	}
+
+	transformedFirebaseSubdomain, err := expandIdentityPlatformConfigClientFirebaseSubdomain(original["firebase_subdomain"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedFirebaseSubdomain); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["firebaseSubdomain"] = transformedFirebaseSubdomain
+	}
+
+	return transformed, nil
+}
+
+func expandIdentityPlatformConfigClientPermissions(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedDisabledUserSignup, err := expandIdentityPlatformConfigClientPermissionsDisabledUserSignup(original["disabled_user_signup"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDisabledUserSignup); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["disabledUserSignup"] = transformedDisabledUserSignup
+	}
+
+	transformedDisabledUserDeletion, err := expandIdentityPlatformConfigClientPermissionsDisabledUserDeletion(original["disabled_user_deletion"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDisabledUserDeletion); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["disabledUserDeletion"] = transformedDisabledUserDeletion
+	}
+
+	return transformed, nil
+}
+
+func expandIdentityPlatformConfigClientPermissionsDisabledUserSignup(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigClientPermissionsDisabledUserDeletion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigClientApiKey(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigClientFirebaseSubdomain(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigMfa(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedState, err := expandIdentityPlatformConfigMfaState(original["state"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedState); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["state"] = transformedState
+	}
+
+	transformedEnabledProviders, err := expandIdentityPlatformConfigMfaEnabledProviders(original["enabled_providers"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedEnabledProviders); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["enabledProviders"] = transformedEnabledProviders
+	}
+
+	transformedProviderConfigs, err := expandIdentityPlatformConfigMfaProviderConfigs(original["provider_configs"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedProviderConfigs); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["providerConfigs"] = transformedProviderConfigs
+	}
+
+	return transformed, nil
+}
+
+func expandIdentityPlatformConfigMfaState(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigMfaEnabledProviders(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigMfaProviderConfigs(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedState, err := expandIdentityPlatformConfigMfaProviderConfigsState(original["state"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedState); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["state"] = transformedState
+		}
+
+		transformedTotpProviderConfig, err := expandIdentityPlatformConfigMfaProviderConfigsTotpProviderConfig(original["totp_provider_config"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedTotpProviderConfig); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["totpProviderConfig"] = transformedTotpProviderConfig
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandIdentityPlatformConfigMfaProviderConfigsState(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigMfaProviderConfigsTotpProviderConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedAdjacentIntervals, err := expandIdentityPlatformConfigMfaProviderConfigsTotpProviderConfigAdjacentIntervals(original["adjacent_intervals"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAdjacentIntervals); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["adjacentIntervals"] = transformedAdjacentIntervals
+	}
+
+	return transformed, nil
+}
+
+func expandIdentityPlatformConfigMfaProviderConfigsTotpProviderConfigAdjacentIntervals(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigMultiTenant(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedAllowTenants, err := expandIdentityPlatformConfigMultiTenantAllowTenants(original["allow_tenants"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAllowTenants); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["allowTenants"] = transformedAllowTenants
+	}
+
+	transformedDefaultTenantLocation, err := expandIdentityPlatformConfigMultiTenantDefaultTenantLocation(original["default_tenant_location"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDefaultTenantLocation); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["defaultTenantLocation"] = transformedDefaultTenantLocation
+	}
+
+	return transformed, nil
+}
+
+func expandIdentityPlatformConfigMultiTenantAllowTenants(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigMultiTenantDefaultTenantLocation(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandIdentityPlatformConfigMonitoring(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedRequestLogging, err := expandIdentityPlatformConfigMonitoringRequestLogging(original["request_logging"], d, config)
+	if err != nil {
+		return nil, err
+	} else {
+		transformed["requestLogging"] = transformedRequestLogging
+	}
+
+	return transformed, nil
+}
+
+func expandIdentityPlatformConfigMonitoringRequestLogging(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedEnabled, err := expandIdentityPlatformConfigMonitoringRequestLoggingEnabled(original["enabled"], d, config)
+	if err != nil {
+		return nil, err
+	} else {
+		transformed["enabled"] = transformedEnabled
+	}
+
+	return transformed, nil
+}
+
+func expandIdentityPlatformConfigMonitoringRequestLoggingEnabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }

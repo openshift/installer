@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -167,6 +167,7 @@ func DCLLakeSchema() *dcl.Schema {
 								GoName:      "Location",
 								Description: "The location for the resource",
 								Immutable:   true,
+								Parameter:   true,
 							},
 							"metastore": &dcl.Property{
 								Type:        "object",
@@ -230,6 +231,7 @@ func DCLLakeSchema() *dcl.Schema {
 										Parent:   true,
 									},
 								},
+								HasLongForm: true,
 							},
 							"project": &dcl.Property{
 								Type:        "string",
@@ -243,6 +245,7 @@ func DCLLakeSchema() *dcl.Schema {
 										Parent:   true,
 									},
 								},
+								Parameter: true,
 							},
 							"serviceAccount": &dcl.Property{
 								Type:        "string",

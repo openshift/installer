@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ type FirewallPolicyRule struct {
 	Priority              *int64                           `json:"priority"`
 	Match                 *FirewallPolicyRuleMatch         `json:"match"`
 	Action                *string                          `json:"action"`
+	SecurityProfileGroup  *string                          `json:"securityProfileGroup"`
+	TlsInspect            *bool                            `json:"tlsInspect"`
 	Direction             *FirewallPolicyRuleDirectionEnum `json:"direction"`
 	TargetResources       []string                         `json:"targetResources"`
 	EnableLogging         *bool                            `json:"enableLogging"`
@@ -142,7 +144,7 @@ func (r *FirewallPolicyRuleMatch) String() string {
 func (r *FirewallPolicyRuleMatch) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -191,7 +193,7 @@ func (r *FirewallPolicyRuleMatchLayer4Configs) String() string {
 func (r *FirewallPolicyRuleMatchLayer4Configs) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -215,6 +217,8 @@ func (r *FirewallPolicyRule) ID() (string, error) {
 		"priority":                dcl.ValueOrEmptyString(nr.Priority),
 		"match":                   dcl.ValueOrEmptyString(nr.Match),
 		"action":                  dcl.ValueOrEmptyString(nr.Action),
+		"security_profile_group":  dcl.ValueOrEmptyString(nr.SecurityProfileGroup),
+		"tls_inspect":             dcl.ValueOrEmptyString(nr.TlsInspect),
 		"direction":               dcl.ValueOrEmptyString(nr.Direction),
 		"target_resources":        dcl.ValueOrEmptyString(nr.TargetResources),
 		"enable_logging":          dcl.ValueOrEmptyString(nr.EnableLogging),

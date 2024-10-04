@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
@@ -136,6 +137,7 @@ func ResourceComputeHealthCheck() *schema.Resource {
 
 		CustomizeDiff: customdiff.All(
 			healthCheckCustomizeDiff,
+			tpgresource.DefaultProviderProject,
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -778,6 +780,7 @@ func resourceComputeHealthCheckCreate(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -786,6 +789,7 @@ func resourceComputeHealthCheckCreate(d *schema.ResourceData, meta interface{}) 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating HealthCheck: %s", err)
@@ -838,12 +842,14 @@ func resourceComputeHealthCheckRead(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeHealthCheck %q", d.Id()))
@@ -1011,6 +1017,7 @@ func resourceComputeHealthCheckUpdate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	log.Printf("[DEBUG] Updating HealthCheck %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -1025,6 +1032,7 @@ func resourceComputeHealthCheckUpdate(d *schema.ResourceData, meta interface{}) 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -1065,13 +1073,15 @@ func resourceComputeHealthCheckDelete(d *schema.ResourceData, meta interface{}) 
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting HealthCheck %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting HealthCheck %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -1080,6 +1090,7 @@ func resourceComputeHealthCheckDelete(d *schema.ResourceData, meta interface{}) 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "HealthCheck")
@@ -1100,9 +1111,9 @@ func resourceComputeHealthCheckDelete(d *schema.ResourceData, meta interface{}) 
 func resourceComputeHealthCheckImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/global/healthChecks/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/global/healthChecks/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -2107,7 +2118,6 @@ func expandComputeHealthCheckLogConfigEnable(v interface{}, d tpgresource.Terraf
 }
 
 func resourceComputeHealthCheckEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
-
 	if _, ok := d.GetOk("http_health_check"); ok {
 		hc := d.Get("http_health_check").([]interface{})[0]
 		ps := hc.(map[string]interface{})["port_specification"]

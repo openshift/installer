@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -930,12 +930,15 @@ func DCLWorkflowTemplateSchema() *dcl.Schema {
 								GoName:      "Location",
 								Description: "The location for the resource",
 								Immutable:   true,
+								Parameter:   true,
 							},
 							"name": &dcl.Property{
 								Type:        "string",
 								GoName:      "Name",
 								Description: "Output only. The resource name of the workflow template, as described in https://cloud.google.com/apis/design/resource_names. * For `projects.regions.workflowTemplates`, the resource name of the template has the following format: `projects/{project_id}/regions/{region}/workflowTemplates/{template_id}` * For `projects.locations.workflowTemplates`, the resource name of the template has the following format: `projects/{project_id}/locations/{location}/workflowTemplates/{template_id}`",
 								Immutable:   true,
+								Parameter:   true,
+								HasLongForm: true,
 							},
 							"parameters": &dcl.Property{
 								Type:        "array",
@@ -2128,6 +2131,7 @@ func DCLWorkflowTemplateSchema() *dcl.Schema {
 										Parent:   true,
 									},
 								},
+								Parameter: true,
 							},
 							"updateTime": &dcl.Property{
 								Type:        "string",

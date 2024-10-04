@@ -12,6 +12,7 @@ import (
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 
 	"github.com/hashicorp/errwrap"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	sqladmin "google.golang.org/api/sqladmin/v1beta4"
@@ -58,6 +59,10 @@ func ResourceSqlUser() *schema.Resource {
 			Delete: schema.DefaultTimeout(10 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
+
 		SchemaVersion: 1,
 		MigrateState:  resourceSqlUserMigrateState,
 
@@ -90,7 +95,7 @@ func ResourceSqlUser() *schema.Resource {
 				Optional:  true,
 				Sensitive: true,
 				Description: `The password for the user. Can be updated. For Postgres instances this is a Required field, unless type is set to
-                either CLOUD_IAM_USER or CLOUD_IAM_SERVICE_ACCOUNT.`,
+				either CLOUD_IAM_USER or CLOUD_IAM_SERVICE_ACCOUNT.`,
 			},
 
 			"type": {
@@ -99,8 +104,7 @@ func ResourceSqlUser() *schema.Resource {
 				ForceNew:         true,
 				DiffSuppressFunc: tpgresource.EmptyOrDefaultStringSuppress("BUILT_IN"),
 				Description: `The user type. It determines the method to authenticate the user during login.
-                The default is the database's built-in user type. Flags include "BUILT_IN", "CLOUD_IAM_USER", or "CLOUD_IAM_SERVICE_ACCOUNT".`,
-				ValidateFunc: validation.StringInSlice([]string{"BUILT_IN", "CLOUD_IAM_USER", "CLOUD_IAM_SERVICE_ACCOUNT", ""}, false),
+				The default is the database's built-in user type.`,
 			},
 			"sql_server_user_details": {
 				Type:     schema.TypeList,
@@ -346,10 +350,9 @@ func resourceSqlUserRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	for _, currentUser := range users.Items {
-		if !strings.Contains(databaseInstance.DatabaseVersion, "POSTGRES") {
+		if !(strings.Contains(databaseInstance.DatabaseVersion, "POSTGRES") || currentUser.Type == "CLOUD_IAM_GROUP") {
 			name = strings.Split(name, "@")[0]
 		}
-
 		if currentUser.Name == name {
 			// Host can only be empty for postgres instances,
 			// so don't compare the host if the API host is empty.

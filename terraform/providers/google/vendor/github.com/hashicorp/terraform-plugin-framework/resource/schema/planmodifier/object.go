@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package planmodifier
 
 import (
@@ -10,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// Object is a schema validator for types.Object attributes.
+// Object is a schema plan modifier for types.Object attributes.
 type Object interface {
 	Describer
 
@@ -78,8 +81,8 @@ type ObjectResponse struct {
 	// attributes.
 	Private *privatestate.ProviderData
 
-	// Diagnostics report errors or warnings related to validating the data
-	// source configuration. An empty slice indicates success, with no warnings
-	// or errors generated.
+	// Diagnostics report errors or warnings related to modifying the resource
+	// plan. An empty slice indicates success, with no warnings or
+	// errors generated.
 	Diagnostics diag.Diagnostics
 }

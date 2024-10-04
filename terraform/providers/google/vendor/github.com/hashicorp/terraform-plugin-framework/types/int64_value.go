@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package types
 
 import "github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -20,4 +23,9 @@ func Int64Unknown() basetypes.Int64Value {
 // Int64 type ValueInt64 method.
 func Int64Value(value int64) basetypes.Int64Value {
 	return basetypes.NewInt64Value(value)
+}
+
+// Int64PointerValue creates a Int64 with a null value if nil or a known value.
+func Int64PointerValue(value *int64) basetypes.Int64Value {
+	return basetypes.NewInt64PointerValue(value)
 }

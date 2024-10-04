@@ -20,6 +20,7 @@ package cloudasset
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
@@ -232,6 +233,8 @@ func resourceCloudAssetOrganizationFeedCreate(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
 	// Send the project ID in the X-Goog-User-Project header.
 	origUserProjectOverride := config.UserProjectOverride
 	config.UserProjectOverride = true
@@ -243,6 +246,7 @@ func resourceCloudAssetOrganizationFeedCreate(d *schema.ResourceData, meta inter
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating OrganizationFeed: %s", err)
@@ -289,12 +293,14 @@ func resourceCloudAssetOrganizationFeedRead(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("CloudAssetOrganizationFeed %q", d.Id()))
@@ -374,6 +380,7 @@ func resourceCloudAssetOrganizationFeedUpdate(d *schema.ResourceData, meta inter
 	}
 
 	log.Printf("[DEBUG] Updating OrganizationFeed %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("asset_names") {
@@ -410,20 +417,25 @@ func resourceCloudAssetOrganizationFeedUpdate(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating OrganizationFeed %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating OrganizationFeed %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating OrganizationFeed %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating OrganizationFeed %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceCloudAssetOrganizationFeedRead(d, meta)
@@ -444,18 +456,18 @@ func resourceCloudAssetOrganizationFeedDelete(d *schema.ResourceData, meta inter
 	}
 
 	var obj map[string]interface{}
-
 	if parts := regexp.MustCompile(`projects\/([^\/]+)\/`).FindStringSubmatch(url); parts != nil {
 		billingProject = parts[1]
 	}
-
-	log.Printf("[DEBUG] Deleting OrganizationFeed %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting OrganizationFeed %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -464,6 +476,7 @@ func resourceCloudAssetOrganizationFeedDelete(d *schema.ResourceData, meta inter
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "OrganizationFeed")

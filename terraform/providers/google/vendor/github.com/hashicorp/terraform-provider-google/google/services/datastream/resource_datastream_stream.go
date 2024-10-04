@@ -21,13 +21,14 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -69,20 +70,20 @@ func resourceDatastreamStreamCustomDiff(_ context.Context, diff *schema.Resource
 
 // waitForDatastreamStreamReady waits for an agent pool to reach a stable state to indicate that it's ready.
 func waitForDatastreamStreamReady(d *schema.ResourceData, config *transport_tpg.Config, timeout time.Duration) error {
-	return resource.Retry(timeout, func() *resource.RetryError {
+	return retry.Retry(timeout, func() *retry.RetryError {
 		if err := resourceDatastreamStreamRead(d, config); err != nil {
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 
 		name := d.Get("name").(string)
 		state := d.Get("state").(string)
 		if state == "STARTING" || state == "DRAINING" {
-			return resource.RetryableError(fmt.Errorf("Stream %q has state %q.", name, state))
+			return retry.RetryableError(fmt.Errorf("Stream %q has state %q.", name, state))
 		} else if state == "NOT_STARTED" || state == "RUNNING" || state == "PAUSED" {
 			log.Printf("[DEBUG] Stream %q has state %q.", name, state)
 			return nil
 		} else {
-			return resource.NonRetryableError(fmt.Errorf("Stream %q has state %q.", name, state))
+			return retry.NonRetryableError(fmt.Errorf("Stream %q has state %q.", name, state))
 		}
 	})
 }
@@ -120,6 +121,8 @@ func ResourceDatastreamStream() *schema.Resource {
 
 		CustomizeDiff: customdiff.All(
 			resourceDatastreamStreamCustomDiff,
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -1258,6 +1261,13 @@ https://www.postgresql.org/docs/current/datatype.html`,
 				},
 				ExactlyOneOf: []string{"backfill_all", "backfill_none"},
 			},
+			"create_without_validation": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `Create the stream without validating it.`,
+				Default:     false,
+			},
 			"customer_managed_encryption_key": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -1266,9 +1276,18 @@ https://www.postgresql.org/docs/current/datatype.html`,
 will be encrypted using an internal Stream-specific encryption key provisioned through KMS.`,
 			},
 			"labels": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `Labels.
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
+			"effective_labels": {
 				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: `Labels.`,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"name": {
@@ -1280,6 +1299,13 @@ will be encrypted using an internal Stream-specific encryption key provisioned t
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `The state of the stream.`,
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"desired_state": {
 				Type:        schema.TypeString,
@@ -1306,12 +1332,6 @@ func resourceDatastreamStreamCreate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	obj := make(map[string]interface{})
-	labelsProp, err := expandDatastreamStreamLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	displayNameProp, err := expandDatastreamStreamDisplayName(d.Get("display_name"), d, config)
 	if err != nil {
 		return err
@@ -1348,13 +1368,19 @@ func resourceDatastreamStreamCreate(d *schema.ResourceData, meta interface{}) er
 	} else if v, ok := d.GetOkExists("customer_managed_encryption_key"); !tpgresource.IsEmptyValue(reflect.ValueOf(customerManagedEncryptionKeyProp)) && (ok || !reflect.DeepEqual(v, customerManagedEncryptionKeyProp)) {
 		obj["customerManagedEncryptionKey"] = customerManagedEncryptionKeyProp
 	}
+	labelsProp, err := expandDatastreamStreamEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
 	obj, err = resourceDatastreamStreamEncoder(d, meta, obj)
 	if err != nil {
 		return err
 	}
 
-	url, err := tpgresource.ReplaceVars(d, config, "{{DatastreamBasePath}}projects/{{project}}/locations/{{location}}/streams?streamId={{stream_id}}")
+	url, err := tpgresource.ReplaceVars(d, config, "{{DatastreamBasePath}}projects/{{project}}/locations/{{location}}/streams?streamId={{stream_id}}&force={{create_without_validation}}")
 	if err != nil {
 		return err
 	}
@@ -1373,6 +1399,7 @@ func resourceDatastreamStreamCreate(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -1381,6 +1408,7 @@ func resourceDatastreamStreamCreate(d *schema.ResourceData, meta interface{}) er
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Stream: %s", err)
@@ -1458,12 +1486,14 @@ func resourceDatastreamStreamRead(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DatastreamStream %q", d.Id()))
@@ -1506,6 +1536,12 @@ func resourceDatastreamStreamRead(d *schema.ResourceData, meta interface{}) erro
 	if err := d.Set("customer_managed_encryption_key", flattenDatastreamStreamCustomerManagedEncryptionKey(res["customerManagedEncryptionKey"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Stream: %s", err)
 	}
+	if err := d.Set("terraform_labels", flattenDatastreamStreamTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Stream: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenDatastreamStreamEffectiveLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Stream: %s", err)
+	}
 
 	return nil
 }
@@ -1526,12 +1562,6 @@ func resourceDatastreamStreamUpdate(d *schema.ResourceData, meta interface{}) er
 	billingProject = project
 
 	obj := make(map[string]interface{})
-	labelsProp, err := expandDatastreamStreamLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	displayNameProp, err := expandDatastreamStreamDisplayName(d.Get("display_name"), d, config)
 	if err != nil {
 		return err
@@ -1562,6 +1592,12 @@ func resourceDatastreamStreamUpdate(d *schema.ResourceData, meta interface{}) er
 	} else if v, ok := d.GetOkExists("backfill_none"); ok || !reflect.DeepEqual(v, backfillNoneProp) {
 		obj["backfillNone"] = backfillNoneProp
 	}
+	labelsProp, err := expandDatastreamStreamEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
 	obj, err = resourceDatastreamStreamEncoder(d, meta, obj)
 	if err != nil {
@@ -1574,11 +1610,8 @@ func resourceDatastreamStreamUpdate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	log.Printf("[DEBUG] Updating Stream %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
-
-	if d.HasChange("labels") {
-		updateMask = append(updateMask, "labels")
-	}
 
 	if d.HasChange("display_name") {
 		updateMask = append(updateMask, "displayName")
@@ -1599,6 +1632,10 @@ func resourceDatastreamStreamUpdate(d *schema.ResourceData, meta interface{}) er
 	if d.HasChange("backfill_none") {
 		updateMask = append(updateMask, "backfillNone")
 	}
+
+	if d.HasChange("effective_labels") {
+		updateMask = append(updateMask, "labels")
+	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
 	url, err = transport_tpg.AddQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
@@ -1618,8 +1655,19 @@ func resourceDatastreamStreamUpdate(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
+	// lables and terraform_labels fields are overriden with the labels before updating inside the function waitForDatastreamStreamReady
+	labels := d.Get("labels")
+	terraformLabels := d.Get("terraform_labels")
+
 	if err := waitForDatastreamStreamReady(d, config, d.Timeout(schema.TimeoutCreate)-time.Minute); err != nil {
 		return fmt.Errorf("Error waiting for Stream %q to be NOT_STARTED, RUNNING, or PAUSED before updating: %q", d.Get("name").(string), err)
+	}
+
+	if err := d.Set("labels", labels); err != nil {
+		return fmt.Errorf("Error setting back labels field: %s", err)
+	}
+	if err := d.Set("terraform_labels", terraformLabels); err != nil {
+		return fmt.Errorf("Error setting back terraform_labels field: %s", err)
 	}
 
 	// err == nil indicates that the billing_project value was found
@@ -1627,28 +1675,32 @@ func resourceDatastreamStreamUpdate(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Stream %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Stream %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating Stream %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Stream %q: %#v", d.Id(), res)
+		}
 
-	err = DatastreamOperationWaitTime(
-		config, res, project, "Updating Stream", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = DatastreamOperationWaitTime(
+			config, res, project, "Updating Stream", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	if err := waitForDatastreamStreamReady(d, config, d.Timeout(schema.TimeoutCreate)-time.Minute); err != nil {
@@ -1678,13 +1730,15 @@ func resourceDatastreamStreamDelete(d *schema.ResourceData, meta interface{}) er
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Stream %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Stream %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -1693,6 +1747,7 @@ func resourceDatastreamStreamDelete(d *schema.ResourceData, meta interface{}) er
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Stream")
@@ -1713,9 +1768,9 @@ func resourceDatastreamStreamDelete(d *schema.ResourceData, meta interface{}) er
 func resourceDatastreamStreamImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/streams/(?P<stream_id>[^/]+)",
-		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<stream_id>[^/]+)",
-		"(?P<location>[^/]+)/(?P<stream_id>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/streams/(?P<stream_id>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<stream_id>[^/]+)$",
+		"^(?P<location>[^/]+)/(?P<stream_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -1743,7 +1798,18 @@ func flattenDatastreamStreamName(v interface{}, d *schema.ResourceData, config *
 }
 
 func flattenDatastreamStreamLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenDatastreamStreamDisplayName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -3578,15 +3644,23 @@ func flattenDatastreamStreamCustomerManagedEncryptionKey(v interface{}, d *schem
 	return v
 }
 
-func expandDatastreamStreamLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+func flattenDatastreamStreamTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
-		return map[string]string{}, nil
+		return v
 	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
 	}
-	return m, nil
+
+	return transformed
+}
+
+func flattenDatastreamStreamEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
 }
 
 func expandDatastreamStreamDisplayName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -5876,6 +5950,17 @@ func expandDatastreamStreamBackfillNone(v interface{}, d tpgresource.TerraformRe
 
 func expandDatastreamStreamCustomerManagedEncryptionKey(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandDatastreamStreamEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }
 
 func resourceDatastreamStreamEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {

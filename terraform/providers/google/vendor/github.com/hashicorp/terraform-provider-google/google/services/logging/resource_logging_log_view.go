@@ -20,6 +20,7 @@ package logging
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -147,6 +148,7 @@ func resourceLoggingLogViewCreate(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -155,6 +157,7 @@ func resourceLoggingLogViewCreate(d *schema.ResourceData, meta interface{}) erro
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating LogView: %s", err)
@@ -191,12 +194,14 @@ func resourceLoggingLogViewRead(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("LoggingLogView %q", d.Id()))
@@ -252,6 +257,7 @@ func resourceLoggingLogViewUpdate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	log.Printf("[DEBUG] Updating LogView %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("description") {
@@ -273,20 +279,25 @@ func resourceLoggingLogViewUpdate(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating LogView %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating LogView %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating LogView %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating LogView %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceLoggingLogViewRead(d, meta)
@@ -307,13 +318,15 @@ func resourceLoggingLogViewDelete(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting LogView %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting LogView %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -322,6 +335,7 @@ func resourceLoggingLogViewDelete(d *schema.ResourceData, meta interface{}) erro
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "LogView")
@@ -334,7 +348,7 @@ func resourceLoggingLogViewDelete(d *schema.ResourceData, meta interface{}) erro
 func resourceLoggingLogViewImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"(?P<parent>.+)/locations/(?P<location>[^/]+)/buckets/(?P<bucket>[^/]+)/views/(?P<name>[^/]+)",
+		"^(?P<parent>.+)/locations/(?P<location>[^/]+)/buckets/(?P<bucket>[^/]+)/views/(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -381,12 +395,12 @@ func resourceLoggingLogViewEncoder(d *schema.ResourceData, meta interface{}, obj
 	// Extract any empty fields from the bucket field.
 	parent := d.Get("parent").(string)
 	bucket := d.Get("bucket").(string)
-	parent, err := ExtractFieldByPattern("parent", parent, bucket, "((projects|folders|organizations|billingAccounts)/[a-z0-9A-Z-]*)/locations/.*")
+	parent, err := tpgresource.ExtractFieldByPattern("parent", parent, bucket, "((projects|folders|organizations|billingAccounts)/[a-z0-9A-Z-]*)/locations/.*")
 	if err != nil {
 		return nil, fmt.Errorf("error extracting parent field: %s", err)
 	}
 	location := d.Get("location").(string)
-	location, err = ExtractFieldByPattern("location", location, bucket, "[a-zA-Z]*/[a-z0-9A-Z-]*/locations/([a-z0-9-]*)/buckets/.*")
+	location, err = tpgresource.ExtractFieldByPattern("location", location, bucket, "[a-zA-Z]*/[a-z0-9A-Z-]*/locations/([a-z0-9-]*)/buckets/.*")
 	if err != nil {
 		return nil, fmt.Errorf("error extracting location field: %s", err)
 	}

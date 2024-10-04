@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -97,6 +97,7 @@ components:
           x-dcl-references:
           - resource: Compute/NetworkEndpointGroup
             field: name
+          x-dcl-parameter: true
         instance:
           type: string
           x-dcl-go-name: Instance
@@ -112,6 +113,7 @@ components:
           type: string
           x-dcl-go-name: Location
           x-kubernetes-immutable: true
+          x-dcl-parameter: true
         port:
           type: integer
           format: int64
@@ -124,3 +126,4 @@ components:
           x-dcl-references:
           - resource: Cloudresourcemanager/Project
             field: name
+          x-dcl-parameter: true

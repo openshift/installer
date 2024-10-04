@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ type Key struct {
 	Labels          map[string]string   `json:"labels"`
 	CreateTime      *string             `json:"createTime"`
 	TestingOptions  *KeyTestingOptions  `json:"testingOptions"`
+	WafSettings     *KeyWafSettings     `json:"wafSettings"`
 	Project         *string             `json:"project"`
 }
 
@@ -121,6 +122,60 @@ func (v KeyTestingOptionsTestingChallengeEnum) Validate() error {
 	}
 }
 
+// The enum KeyWafSettingsWafServiceEnum.
+type KeyWafSettingsWafServiceEnum string
+
+// KeyWafSettingsWafServiceEnumRef returns a *KeyWafSettingsWafServiceEnum with the value of string s
+// If the empty string is provided, nil is returned.
+func KeyWafSettingsWafServiceEnumRef(s string) *KeyWafSettingsWafServiceEnum {
+	v := KeyWafSettingsWafServiceEnum(s)
+	return &v
+}
+
+func (v KeyWafSettingsWafServiceEnum) Validate() error {
+	if string(v) == "" {
+		// Empty enum is okay.
+		return nil
+	}
+	for _, s := range []string{"CA", "FASTLY"} {
+		if string(v) == s {
+			return nil
+		}
+	}
+	return &dcl.EnumInvalidError{
+		Enum:  "KeyWafSettingsWafServiceEnum",
+		Value: string(v),
+		Valid: []string{},
+	}
+}
+
+// The enum KeyWafSettingsWafFeatureEnum.
+type KeyWafSettingsWafFeatureEnum string
+
+// KeyWafSettingsWafFeatureEnumRef returns a *KeyWafSettingsWafFeatureEnum with the value of string s
+// If the empty string is provided, nil is returned.
+func KeyWafSettingsWafFeatureEnumRef(s string) *KeyWafSettingsWafFeatureEnum {
+	v := KeyWafSettingsWafFeatureEnum(s)
+	return &v
+}
+
+func (v KeyWafSettingsWafFeatureEnum) Validate() error {
+	if string(v) == "" {
+		// Empty enum is okay.
+		return nil
+	}
+	for _, s := range []string{"CHALLENGE_PAGE", "SESSION_TOKEN", "ACTION_TOKEN", "EXPRESS"} {
+		if string(v) == s {
+			return nil
+		}
+	}
+	return &dcl.EnumInvalidError{
+		Enum:  "KeyWafSettingsWafFeatureEnum",
+		Value: string(v),
+		Valid: []string{},
+	}
+}
+
 type KeyWebSettings struct {
 	empty                       bool                                           `json:"-"`
 	AllowAllDomains             *bool                                          `json:"allowAllDomains"`
@@ -175,7 +230,7 @@ func (r *KeyWebSettings) String() string {
 func (r *KeyWebSettings) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -224,7 +279,7 @@ func (r *KeyAndroidSettings) String() string {
 func (r *KeyAndroidSettings) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -273,7 +328,7 @@ func (r *KeyIosSettings) String() string {
 func (r *KeyIosSettings) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -322,7 +377,56 @@ func (r *KeyTestingOptions) String() string {
 func (r *KeyTestingOptions) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type KeyWafSettings struct {
+	empty      bool                          `json:"-"`
+	WafService *KeyWafSettingsWafServiceEnum `json:"wafService"`
+	WafFeature *KeyWafSettingsWafFeatureEnum `json:"wafFeature"`
+}
+
+type jsonKeyWafSettings KeyWafSettings
+
+func (r *KeyWafSettings) UnmarshalJSON(data []byte) error {
+	var res jsonKeyWafSettings
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyKeyWafSettings
+	} else {
+
+		r.WafService = res.WafService
+
+		r.WafFeature = res.WafFeature
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this KeyWafSettings is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyKeyWafSettings *KeyWafSettings = &KeyWafSettings{empty: true}
+
+func (r *KeyWafSettings) Empty() bool {
+	return r.empty
+}
+
+func (r *KeyWafSettings) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *KeyWafSettings) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -350,6 +454,7 @@ func (r *Key) ID() (string, error) {
 		"labels":           dcl.ValueOrEmptyString(nr.Labels),
 		"create_time":      dcl.ValueOrEmptyString(nr.CreateTime),
 		"testing_options":  dcl.ValueOrEmptyString(nr.TestingOptions),
+		"waf_settings":     dcl.ValueOrEmptyString(nr.WafSettings),
 		"project":          dcl.ValueOrEmptyString(nr.Project),
 	}
 	return dcl.Nprintf("projects/{{project}}/keys/{{name}}", params), nil

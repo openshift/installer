@@ -426,7 +426,7 @@
       }
     }
   },
-  "revision": "20230619",
+  "revision": "20240602",
   "rootUrl": "https://serviceusage.googleapis.com/",
   "schemas": {
     "AddEnableRulesMetadata": {
@@ -436,7 +436,7 @@
       "type": "object"
     },
     "AddEnableRulesResponse": {
-      "description": "The response message of \"AddEnableRules\" method.",
+      "description": "The response message of `AddEnableRules` method.",
       "id": "AddEnableRulesResponse",
       "properties": {
         "addedValues": {
@@ -674,6 +674,7 @@
           "type": "string"
         },
         "minDeadline": {
+          "deprecated": true,
           "description": "Deprecated, do not use.",
           "format": "double",
           "type": "number"
@@ -922,6 +923,7 @@
           "type": "array"
         },
         "referenceDocsUri": {
+          "deprecated": true,
           "description": "Link to automatically generated reference documentation. Example: https://cloud.google.com/nodejs/docs/reference/asset/latest",
           "type": "string"
         }
@@ -951,7 +953,7 @@
           "type": "string"
         },
         "name": {
-          "description": "Output only. The resource name of the policy. For example, We only allow consumer policy name as \"default\" for now: `projects/12345/consumerPolicies/default`, `folders/12345/consumerPolicies/default`, `organizations/12345/consumerPolicies/default`. Legacy format: `projects/12345/consumerPoly`",
+          "description": "Output only. The resource name of the policy. We only allow consumer policy name as `default` for now: `projects/12345/consumerPolicies/default`, `folders/12345/consumerPolicies/default`, `organizations/12345/consumerPolicies/default`.",
           "readOnly": true,
           "type": "string"
         },
@@ -1023,6 +1025,13 @@
         "environment": {
           "description": "The service controller environment to use. If empty, no control plane feature (like quota and billing) will be enabled. The recommended value for most services is servicecontrol.googleapis.com",
           "type": "string"
+        },
+        "methodPolicies": {
+          "description": "Defines policies applying to the API methods of the service.",
+          "items": {
+            "$ref": "MethodPolicy"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -1292,13 +1301,15 @@
           "type": "string"
         },
         "groups": {
-          "description": "DEPRECATED: Please use field `values`. Service group should have prefix `groups/`. The names of the service groups that are enabled (Not Implemented). go/predefined-service-groups. Example: `groups/googleServices`.",
+          "deprecated": true,
+          "description": "DEPRECATED: Please use field `values`. Service group should have prefix `groups/`. The names of the service groups that are enabled (Not Implemented). Example: `groups/googleServices`.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "services": {
+          "deprecated": true,
           "description": "DEPRECATED: Please use field `values`. Service should have prefix `services/`. The names of the services that are enabled. Example: `storage.googleapis.com`.",
           "items": {
             "type": "string"
@@ -1306,7 +1317,7 @@
           "type": "array"
         },
         "values": {
-          "description": "The names of the services or service groups that are enabled. Example: `services/storage.googleapis.com`, groups/googleServices`, groups/allServices`.",
+          "description": "The names of the services or service groups that are enabled. Example: `services/storage.googleapis.com`, `groups/googleServices`, `groups/allServices`.",
           "items": {
             "type": "string"
           },
@@ -1337,7 +1348,7 @@
       "id": "Endpoint",
       "properties": {
         "aliases": {
-          "description": "Unimplemented. Dot not use. DEPRECATED: This field is no longer supported. Instead of using aliases, please specify multiple google.api.Endpoint for each of the intended aliases. Additional names that this endpoint will be hosted on.",
+          "description": "Aliases for this endpoint, these will be served by the same UrlMap as the parent endpoint, and will be provisioned in the GCP stack for the Regional Endpoints.",
           "items": {
             "type": "string"
           },
@@ -1529,6 +1540,25 @@
         },
         "typeUrl": {
           "description": "The field type URL, without the scheme, for message or enumeration types. Example: `\"type.googleapis.com/google.protobuf.Timestamp\"`.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "FieldPolicy": {
+      "description": "Google API Policy Annotation This message defines a simple API policy annotation that can be used to annotate API request and response message fields with applicable policies. One field may have multiple applicable policies that must all be satisfied before a request can be processed. This policy annotation is used to generate the overall policy that will be used for automatic runtime policy enforcement and documentation generation.",
+      "id": "FieldPolicy",
+      "properties": {
+        "resourcePermission": {
+          "description": "Specifies the required permission(s) for the resource referred to by the field. It requires the field contains a valid resource reference, and the request must pass the permission checks to proceed. For example, \"resourcemanager.projects.get\".",
+          "type": "string"
+        },
+        "resourceType": {
+          "description": "Specifies the resource type for the resource referred to by the field.",
+          "type": "string"
+        },
+        "selector": {
+          "description": "Selects one or more request or response message fields to apply this `FieldPolicy`. When a `FieldPolicy` is used in proto annotation, the selector must be left as empty. The service config generator will automatically fill the correct value. When a `FieldPolicy` is used in service config, the selector must be a comma-separated string with valid request or response field paths, such as \"foo.bar\" or \"foo.bar,foo.baz\".",
           "type": "string"
         }
       },
@@ -1859,6 +1889,69 @@
       },
       "type": "object"
     },
+    "GoogleApiServiceusageV2alphaConsumerPolicy": {
+      "description": "Consumer Policy is a set of rules that define what services or service groups can be used for a cloud resource hierarchy.",
+      "id": "GoogleApiServiceusageV2alphaConsumerPolicy",
+      "properties": {
+        "annotations": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Optional. Annotations is an unstructured key-value map stored with a policy that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. [AIP-128](https://google.aip.dev/128#annotations)",
+          "type": "object"
+        },
+        "createTime": {
+          "description": "Output only. The time the policy was created. For singleton policies, this is the first touch of the policy.",
+          "format": "google-datetime",
+          "readOnly": true,
+          "type": "string"
+        },
+        "enableRules": {
+          "description": "Enable rules define usable services, groups, and categories. There can currently be at most one `EnableRule`. This restriction will be lifted in later releases.",
+          "items": {
+            "$ref": "GoogleApiServiceusageV2alphaEnableRule"
+          },
+          "type": "array"
+        },
+        "etag": {
+          "description": "Output only. An opaque tag indicating the current version of the policy, used for concurrency control.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "name": {
+          "description": "Output only. The resource name of the policy. Only the `default` policy is supported: `projects/12345/consumerPolicies/default`, `folders/12345/consumerPolicies/default`, `organizations/12345/consumerPolicies/default`.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "updateTime": {
+          "description": "Output only. The time the policy was last updated.",
+          "format": "google-datetime",
+          "readOnly": true,
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleApiServiceusageV2alphaEnableRule": {
+      "description": "The consumer policy rule that defines enabled services, groups, and categories.",
+      "id": "GoogleApiServiceusageV2alphaEnableRule",
+      "properties": {
+        "services": {
+          "description": "The names of the services that are enabled. Example: `services/storage.googleapis.com`.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleApiServiceusageV2alphaUpdateConsumerPolicyMetadata": {
+      "description": "Metadata for the `UpdateConsumerPolicy` method.",
+      "id": "GoogleApiServiceusageV2alphaUpdateConsumerPolicyMetadata",
+      "properties": {},
+      "type": "object"
+    },
     "Http": {
       "description": "Defines the HTTP configuration for an API service. It contains a list of HttpRule, each specifying the mapping of an RPC method to one or more HTTP REST API methods.",
       "id": "Http",
@@ -1878,7 +1971,7 @@
       "type": "object"
     },
     "HttpRule": {
-      "description": "# gRPC Transcoding gRPC Transcoding is a feature for mapping between a gRPC method and one or more HTTP REST endpoints. It allows developers to build a single API service that supports both gRPC APIs and REST APIs. Many systems, including [Google APIs](https://github.com/googleapis/googleapis), [Cloud Endpoints](https://cloud.google.com/endpoints), [gRPC Gateway](https://github.com/grpc-ecosystem/grpc-gateway), and [Envoy](https://github.com/envoyproxy/envoy) proxy support this feature and use it for large scale production services. `HttpRule` defines the schema of the gRPC/REST mapping. The mapping specifies how different portions of the gRPC request message are mapped to the URL path, URL query parameters, and HTTP request body. It also controls how the gRPC response message is mapped to the HTTP response body. `HttpRule` is typically specified as an `google.api.http` annotation on the gRPC method. Each mapping specifies a URL path template and an HTTP method. The path template may refer to one or more fields in the gRPC request message, as long as each field is a non-repeated field with a primitive (non-message) type. The path template controls how fields of the request message are mapped to the URL path. Example: service Messaging { rpc GetMessage(GetMessageRequest) returns (Message) { option (google.api.http) = { get: \"/v1/{name=messages/*}\" }; } } message GetMessageRequest { string name = 1; // Mapped to URL path. } message Message { string text = 1; // The resource content. } This enables an HTTP REST to gRPC mapping as below: HTTP | gRPC -----|----- `GET /v1/messages/123456` | `GetMessage(name: \"messages/123456\")` Any fields in the request message which are not bound by the path template automatically become HTTP query parameters if there is no HTTP request body. For example: service Messaging { rpc GetMessage(GetMessageRequest) returns (Message) { option (google.api.http) = { get:\"/v1/messages/{message_id}\" }; } } message GetMessageRequest { message SubMessage { string subfield = 1; } string message_id = 1; // Mapped to URL path. int64 revision = 2; // Mapped to URL query parameter `revision`. SubMessage sub = 3; // Mapped to URL query parameter `sub.subfield`. } This enables a HTTP JSON to RPC mapping as below: HTTP | gRPC -----|----- `GET /v1/messages/123456?revision=2\u0026sub.subfield=foo` | `GetMessage(message_id: \"123456\" revision: 2 sub: SubMessage(subfield: \"foo\"))` Note that fields which are mapped to URL query parameters must have a primitive type or a repeated primitive type or a non-repeated message type. In the case of a repeated type, the parameter can be repeated in the URL as `...?param=A\u0026param=B`. In the case of a message type, each field of the message is mapped to a separate parameter, such as `...?foo.a=A\u0026foo.b=B\u0026foo.c=C`. For HTTP methods that allow a request body, the `body` field specifies the mapping. Consider a REST update method on the message resource collection: service Messaging { rpc UpdateMessage(UpdateMessageRequest) returns (Message) { option (google.api.http) = { patch: \"/v1/messages/{message_id}\" body: \"message\" }; } } message UpdateMessageRequest { string message_id = 1; // mapped to the URL Message message = 2; // mapped to the body } The following HTTP JSON to RPC mapping is enabled, where the representation of the JSON in the request body is determined by protos JSON encoding: HTTP | gRPC -----|----- `PATCH /v1/messages/123456 { \"text\": \"Hi!\" }` | `UpdateMessage(message_id: \"123456\" message { text: \"Hi!\" })` The special name `*` can be used in the body mapping to define that every field not bound by the path template should be mapped to the request body. This enables the following alternative definition of the update method: service Messaging { rpc UpdateMessage(Message) returns (Message) { option (google.api.http) = { patch: \"/v1/messages/{message_id}\" body: \"*\" }; } } message Message { string message_id = 1; string text = 2; } The following HTTP JSON to RPC mapping is enabled: HTTP | gRPC -----|----- `PATCH /v1/messages/123456 { \"text\": \"Hi!\" }` | `UpdateMessage(message_id: \"123456\" text: \"Hi!\")` Note that when using `*` in the body mapping, it is not possible to have HTTP parameters, as all fields not bound by the path end in the body. This makes this option more rarely used in practice when defining REST APIs. The common usage of `*` is in custom methods which don't use the URL at all for transferring data. It is possible to define multiple HTTP methods for one RPC by using the `additional_bindings` option. Example: service Messaging { rpc GetMessage(GetMessageRequest) returns (Message) { option (google.api.http) = { get: \"/v1/messages/{message_id}\" additional_bindings { get: \"/v1/users/{user_id}/messages/{message_id}\" } }; } } message GetMessageRequest { string message_id = 1; string user_id = 2; } This enables the following two alternative HTTP JSON to RPC mappings: HTTP | gRPC -----|----- `GET /v1/messages/123456` | `GetMessage(message_id: \"123456\")` `GET /v1/users/me/messages/123456` | `GetMessage(user_id: \"me\" message_id: \"123456\")` ## Rules for HTTP mapping 1. Leaf request fields (recursive expansion nested messages in the request message) are classified into three categories: - Fields referred by the path template. They are passed via the URL path. - Fields referred by the HttpRule.body. They are passed via the HTTP request body. - All other fields are passed via the URL query parameters, and the parameter name is the field path in the request message. A repeated field can be represented as multiple query parameters under the same name. 2. If HttpRule.body is \"*\", there is no URL query parameter, all fields are passed via URL path and HTTP request body. 3. If HttpRule.body is omitted, there is no HTTP request body, all fields are passed via URL path and URL query parameters. ### Path template syntax Template = \"/\" Segments [ Verb ] ; Segments = Segment { \"/\" Segment } ; Segment = \"*\" | \"**\" | LITERAL | Variable ; Variable = \"{\" FieldPath [ \"=\" Segments ] \"}\" ; FieldPath = IDENT { \".\" IDENT } ; Verb = \":\" LITERAL ; The syntax `*` matches a single URL path segment. The syntax `**` matches zero or more URL path segments, which must be the last part of the URL path except the `Verb`. The syntax `Variable` matches part of the URL path as specified by its template. A variable template must not contain other variables. If a variable matches a single path segment, its template may be omitted, e.g. `{var}` is equivalent to `{var=*}`. The syntax `LITERAL` matches literal text in the URL path. If the `LITERAL` contains any reserved character, such characters should be percent-encoded before the matching. If a variable contains exactly one path segment, such as `\"{var}\"` or `\"{var=*}\"`, when such a variable is expanded into a URL path on the client side, all characters except `[-_.~0-9a-zA-Z]` are percent-encoded. The server side does the reverse decoding. Such variables show up in the [Discovery Document](https://developers.google.com/discovery/v1/reference/apis) as `{var}`. If a variable contains multiple path segments, such as `\"{var=foo/*}\"` or `\"{var=**}\"`, when such a variable is expanded into a URL path on the client side, all characters except `[-_.~/0-9a-zA-Z]` are percent-encoded. The server side does the reverse decoding, except \"%2F\" and \"%2f\" are left unchanged. Such variables show up in the [Discovery Document](https://developers.google.com/discovery/v1/reference/apis) as `{+var}`. ## Using gRPC API Service Configuration gRPC API Service Configuration (service config) is a configuration language for configuring a gRPC service to become a user-facing product. The service config is simply the YAML representation of the `google.api.Service` proto message. As an alternative to annotating your proto file, you can configure gRPC transcoding in your service config YAML files. You do this by specifying a `HttpRule` that maps the gRPC method to a REST endpoint, achieving the same effect as the proto annotation. This can be particularly useful if you have a proto that is reused in multiple services. Note that any transcoding specified in the service config will override any matching transcoding configuration in the proto. Example: http: rules: # Selects a gRPC method and applies HttpRule to it. - selector: example.v1.Messaging.GetMessage get: /v1/messages/{message_id}/{sub.subfield} ## Special notes When gRPC Transcoding is used to map a gRPC to JSON REST endpoints, the proto to JSON conversion must follow the [proto3 specification](https://developers.google.com/protocol-buffers/docs/proto3#json). While the single segment variable follows the semantics of [RFC 6570](https://tools.ietf.org/html/rfc6570) Section 3.2.2 Simple String Expansion, the multi segment variable **does not** follow RFC 6570 Section 3.2.3 Reserved Expansion. The reason is that the Reserved Expansion does not expand special characters like `?` and `#`, which would lead to invalid URLs. As the result, gRPC Transcoding uses a custom encoding for multi segment variables. The path variables **must not** refer to any repeated or mapped field, because client libraries are not capable of handling such variable expansion. The path variables **must not** capture the leading \"/\" character. The reason is that the most common use case \"{var}\" does not capture the leading \"/\" character. For consistency, all path variables must share the same behavior. Repeated message fields must not be mapped to URL query parameters, because no client library can support such complicated mapping. If an API needs to use a JSON array for request or response body, it can map the request or response body to a repeated field. However, some gRPC Transcoding implementations may not support this feature.",
+      "description": "gRPC Transcoding gRPC Transcoding is a feature for mapping between a gRPC method and one or more HTTP REST endpoints. It allows developers to build a single API service that supports both gRPC APIs and REST APIs. Many systems, including [Google APIs](https://github.com/googleapis/googleapis), [Cloud Endpoints](https://cloud.google.com/endpoints), [gRPC Gateway](https://github.com/grpc-ecosystem/grpc-gateway), and [Envoy](https://github.com/envoyproxy/envoy) proxy support this feature and use it for large scale production services. `HttpRule` defines the schema of the gRPC/REST mapping. The mapping specifies how different portions of the gRPC request message are mapped to the URL path, URL query parameters, and HTTP request body. It also controls how the gRPC response message is mapped to the HTTP response body. `HttpRule` is typically specified as an `google.api.http` annotation on the gRPC method. Each mapping specifies a URL path template and an HTTP method. The path template may refer to one or more fields in the gRPC request message, as long as each field is a non-repeated field with a primitive (non-message) type. The path template controls how fields of the request message are mapped to the URL path. Example: service Messaging { rpc GetMessage(GetMessageRequest) returns (Message) { option (google.api.http) = { get: \"/v1/{name=messages/*}\" }; } } message GetMessageRequest { string name = 1; // Mapped to URL path. } message Message { string text = 1; // The resource content. } This enables an HTTP REST to gRPC mapping as below: - HTTP: `GET /v1/messages/123456` - gRPC: `GetMessage(name: \"messages/123456\")` Any fields in the request message which are not bound by the path template automatically become HTTP query parameters if there is no HTTP request body. For example: service Messaging { rpc GetMessage(GetMessageRequest) returns (Message) { option (google.api.http) = { get:\"/v1/messages/{message_id}\" }; } } message GetMessageRequest { message SubMessage { string subfield = 1; } string message_id = 1; // Mapped to URL path. int64 revision = 2; // Mapped to URL query parameter `revision`. SubMessage sub = 3; // Mapped to URL query parameter `sub.subfield`. } This enables a HTTP JSON to RPC mapping as below: - HTTP: `GET /v1/messages/123456?revision=2\u0026sub.subfield=foo` - gRPC: `GetMessage(message_id: \"123456\" revision: 2 sub: SubMessage(subfield: \"foo\"))` Note that fields which are mapped to URL query parameters must have a primitive type or a repeated primitive type or a non-repeated message type. In the case of a repeated type, the parameter can be repeated in the URL as `...?param=A\u0026param=B`. In the case of a message type, each field of the message is mapped to a separate parameter, such as `...?foo.a=A\u0026foo.b=B\u0026foo.c=C`. For HTTP methods that allow a request body, the `body` field specifies the mapping. Consider a REST update method on the message resource collection: service Messaging { rpc UpdateMessage(UpdateMessageRequest) returns (Message) { option (google.api.http) = { patch: \"/v1/messages/{message_id}\" body: \"message\" }; } } message UpdateMessageRequest { string message_id = 1; // mapped to the URL Message message = 2; // mapped to the body } The following HTTP JSON to RPC mapping is enabled, where the representation of the JSON in the request body is determined by protos JSON encoding: - HTTP: `PATCH /v1/messages/123456 { \"text\": \"Hi!\" }` - gRPC: `UpdateMessage(message_id: \"123456\" message { text: \"Hi!\" })` The special name `*` can be used in the body mapping to define that every field not bound by the path template should be mapped to the request body. This enables the following alternative definition of the update method: service Messaging { rpc UpdateMessage(Message) returns (Message) { option (google.api.http) = { patch: \"/v1/messages/{message_id}\" body: \"*\" }; } } message Message { string message_id = 1; string text = 2; } The following HTTP JSON to RPC mapping is enabled: - HTTP: `PATCH /v1/messages/123456 { \"text\": \"Hi!\" }` - gRPC: `UpdateMessage(message_id: \"123456\" text: \"Hi!\")` Note that when using `*` in the body mapping, it is not possible to have HTTP parameters, as all fields not bound by the path end in the body. This makes this option more rarely used in practice when defining REST APIs. The common usage of `*` is in custom methods which don't use the URL at all for transferring data. It is possible to define multiple HTTP methods for one RPC by using the `additional_bindings` option. Example: service Messaging { rpc GetMessage(GetMessageRequest) returns (Message) { option (google.api.http) = { get: \"/v1/messages/{message_id}\" additional_bindings { get: \"/v1/users/{user_id}/messages/{message_id}\" } }; } } message GetMessageRequest { string message_id = 1; string user_id = 2; } This enables the following two alternative HTTP JSON to RPC mappings: - HTTP: `GET /v1/messages/123456` - gRPC: `GetMessage(message_id: \"123456\")` - HTTP: `GET /v1/users/me/messages/123456` - gRPC: `GetMessage(user_id: \"me\" message_id: \"123456\")` Rules for HTTP mapping 1. Leaf request fields (recursive expansion nested messages in the request message) are classified into three categories: - Fields referred by the path template. They are passed via the URL path. - Fields referred by the HttpRule.body. They are passed via the HTTP request body. - All other fields are passed via the URL query parameters, and the parameter name is the field path in the request message. A repeated field can be represented as multiple query parameters under the same name. 2. If HttpRule.body is \"*\", there is no URL query parameter, all fields are passed via URL path and HTTP request body. 3. If HttpRule.body is omitted, there is no HTTP request body, all fields are passed via URL path and URL query parameters. Path template syntax Template = \"/\" Segments [ Verb ] ; Segments = Segment { \"/\" Segment } ; Segment = \"*\" | \"**\" | LITERAL | Variable ; Variable = \"{\" FieldPath [ \"=\" Segments ] \"}\" ; FieldPath = IDENT { \".\" IDENT } ; Verb = \":\" LITERAL ; The syntax `*` matches a single URL path segment. The syntax `**` matches zero or more URL path segments, which must be the last part of the URL path except the `Verb`. The syntax `Variable` matches part of the URL path as specified by its template. A variable template must not contain other variables. If a variable matches a single path segment, its template may be omitted, e.g. `{var}` is equivalent to `{var=*}`. The syntax `LITERAL` matches literal text in the URL path. If the `LITERAL` contains any reserved character, such characters should be percent-encoded before the matching. If a variable contains exactly one path segment, such as `\"{var}\"` or `\"{var=*}\"`, when such a variable is expanded into a URL path on the client side, all characters except `[-_.~0-9a-zA-Z]` are percent-encoded. The server side does the reverse decoding. Such variables show up in the [Discovery Document](https://developers.google.com/discovery/v1/reference/apis) as `{var}`. If a variable contains multiple path segments, such as `\"{var=foo/*}\"` or `\"{var=**}\"`, when such a variable is expanded into a URL path on the client side, all characters except `[-_.~/0-9a-zA-Z]` are percent-encoded. The server side does the reverse decoding, except \"%2F\" and \"%2f\" are left unchanged. Such variables show up in the [Discovery Document](https://developers.google.com/discovery/v1/reference/apis) as `{+var}`. Using gRPC API Service Configuration gRPC API Service Configuration (service config) is a configuration language for configuring a gRPC service to become a user-facing product. The service config is simply the YAML representation of the `google.api.Service` proto message. As an alternative to annotating your proto file, you can configure gRPC transcoding in your service config YAML files. You do this by specifying a `HttpRule` that maps the gRPC method to a REST endpoint, achieving the same effect as the proto annotation. This can be particularly useful if you have a proto that is reused in multiple services. Note that any transcoding specified in the service config will override any matching transcoding configuration in the proto. Example below selects a gRPC method and applies HttpRule to it. http: rules: - selector: example.v1.Messaging.GetMessage get: /v1/messages/{message_id}/{sub.subfield} Special notes When gRPC Transcoding is used to map a gRPC to JSON REST endpoints, the proto to JSON conversion must follow the [proto3 specification](https://developers.google.com/protocol-buffers/docs/proto3#json). While the single segment variable follows the semantics of [RFC 6570](https://tools.ietf.org/html/rfc6570) Section 3.2.2 Simple String Expansion, the multi segment variable **does not** follow RFC 6570 Section 3.2.3 Reserved Expansion. The reason is that the Reserved Expansion does not expand special characters like `?` and `#`, which would lead to invalid URLs. As the result, gRPC Transcoding uses a custom encoding for multi segment variables. The path variables **must not** refer to any repeated or mapped field, because client libraries are not capable of handling such variable expansion. The path variables **must not** capture the leading \"/\" character. The reason is that the most common use case \"{var}\" does not capture the leading \"/\" character. For consistency, all path variables must share the same behavior. Repeated message fields must not be mapped to URL query parameters, because no client library can support such complicated mapping. If an API needs to use a JSON array for request or response body, it can map the request or response body to a repeated field. However, some gRPC Transcoding implementations may not support this feature.",
       "id": "HttpRule",
       "properties": {
         "additionalBindings": {
@@ -2237,16 +2330,41 @@
       },
       "type": "object"
     },
+    "MethodPolicy": {
+      "description": "Defines policies applying to an RPC method.",
+      "id": "MethodPolicy",
+      "properties": {
+        "requestPolicies": {
+          "description": "Policies that are applicable to the request message.",
+          "items": {
+            "$ref": "FieldPolicy"
+          },
+          "type": "array"
+        },
+        "selector": {
+          "description": "Selects a method to which these policies should be enforced, for example, \"google.pubsub.v1.Subscriber.CreateSubscription\". Refer to selector for syntax details. NOTE: This field must not be set in the proto annotation. It will be automatically filled by the service config compiler .",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "MethodSettings": {
       "description": "Describes the generator configuration for a method.",
       "id": "MethodSettings",
       "properties": {
+        "autoPopulatedFields": {
+          "description": "List of top-level fields of the request message, that should be automatically populated by the client libraries based on their (google.api.field_info).format. Currently supported format: UUID4. Example of a YAML configuration: publishing: method_settings: - selector: google.example.v1.ExampleService.CreateExample auto_populated_fields: - request_id",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "longRunning": {
           "$ref": "LongRunning",
-          "description": "Describes settings to use for long-running operations when generating API methods for RPCs. Complements RPCs that use the annotations in google/longrunning/operations.proto. Example of a YAML configuration:: publishing: method_settings: - selector: google.cloud.speech.v2.Speech.BatchRecognize long_running: initial_poll_delay: seconds: 60 # 1 minute poll_delay_multiplier: 1.5 max_poll_delay: seconds: 360 # 6 minutes total_poll_timeout: seconds: 54000 # 90 minutes"
+          "description": "Describes settings to use for long-running operations when generating API methods for RPCs. Complements RPCs that use the annotations in google/longrunning/operations.proto. Example of a YAML configuration:: publishing: method_settings: - selector: google.cloud.speech.v2.Speech.BatchRecognize long_running: initial_poll_delay: 60s # 1 minute poll_delay_multiplier: 1.5 max_poll_delay: 360s # 6 minutes total_poll_timeout: 54000s # 90 minutes"
         },
         "selector": {
-          "description": "The fully qualified name of the method, for which the options below apply. This is used to find the method to apply the options.",
+          "description": "The fully qualified name of the method, for which the options below apply. This is used to find the method to apply the options. Example: publishing: method_settings: - selector: google.storage.control.v2.StorageControl.CreateFolder # method settings for CreateFolder...",
           "type": "string"
         }
       },
@@ -2369,6 +2487,7 @@
           "type": "string"
         },
         "launchStage": {
+          "deprecated": true,
           "description": "Deprecated. Must use the MetricDescriptor.launch_stage instead.",
           "enum": [
             "LAUNCH_STAGE_UNSPECIFIED",
@@ -2482,7 +2601,7 @@
           "type": "string"
         },
         "type": {
-          "description": "Required. The monitored resource type. For example, the type `\"cloudsql_database\"` represents databases in Google Cloud SQL. For a list of types, see [Monitoring resource types](https://cloud.google.com/monitoring/api/resources) and [Logging resource types](https://cloud.google.com/logging/docs/api/v2/resource-list).",
+          "description": "Required. The monitored resource type. For example, the type `\"cloudsql_database\"` represents databases in Google Cloud SQL. For a list of types, see [Monitored resource types](https://cloud.google.com/monitoring/api/resources) and [Logging resource types](https://cloud.google.com/logging/docs/api/v2/resource-list).",
           "type": "string"
         }
       },
@@ -2578,7 +2697,7 @@
             "description": "Properties of the object. Contains field @type with type URL.",
             "type": "any"
           },
-          "description": "The normal response of the operation in case of success. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.",
+          "description": "The normal, successful response of the operation. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.",
           "type": "object"
         }
       },
@@ -2722,6 +2841,10 @@
         "protoReferenceDocumentationUri": {
           "description": "Optional link to proto reference documentation. Example: https://cloud.google.com/pubsub/lite/docs/reference/rpc",
           "type": "string"
+        },
+        "restReferenceDocumentationUri": {
+          "description": "Optional link to REST reference documentation. Example: https://cloud.google.com/pubsub/lite/docs/reference/rest",
+          "type": "string"
         }
       },
       "type": "object"
@@ -2854,7 +2977,7 @@
       "type": "object"
     },
     "RemoveEnableRulesResponse": {
-      "description": "The response message of \"RemoveEnableRules\" method.",
+      "description": "The response message of `RemoveEnableRules` method.",
       "id": "RemoveEnableRulesResponse",
       "properties": {
         "parent": {
@@ -2862,6 +2985,7 @@
           "type": "string"
         },
         "removedValues": {
+          "deprecated": true,
           "description": "The values removed from the parent consumer policy.",
           "items": {
             "type": "string"
@@ -3064,9 +3188,9 @@
       "properties": {},
       "type": "object"
     },
-    "UpdateConsumerPolicyLROMetadata": {
-      "description": "Metadata for the `UpdateConsumerPolicyLRO` method.",
-      "id": "UpdateConsumerPolicyLROMetadata",
+    "UpdateConsumerPolicyMetadata": {
+      "description": "Metadata for the `UpdateConsumerPolicy` method.",
+      "id": "UpdateConsumerPolicyMetadata",
       "properties": {},
       "type": "object"
     },

@@ -20,10 +20,12 @@ package bigquery
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -155,6 +157,10 @@ func ResourceBigQueryDatasetAccess() *schema.Resource {
 			Create: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"dataset_id": {
@@ -465,6 +471,7 @@ func resourceBigQueryDatasetAccessCreate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "PATCH",
@@ -473,6 +480,7 @@ func resourceBigQueryDatasetAccessCreate(d *schema.ResourceData, meta interface{
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutCreate),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsBigqueryIAMQuotaError},
 	})
 	if err != nil {
@@ -544,12 +552,14 @@ func resourceBigQueryDatasetAccessRead(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "GET",
 		Project:              billingProject,
 		RawURL:               url,
 		UserAgent:            userAgent,
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsBigqueryIAMQuotaError},
 	})
 	if err != nil {
@@ -636,13 +646,15 @@ func resourceBigQueryDatasetAccessDelete(d *schema.ResourceData, meta interface{
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "DatasetAccess")
 	}
-	log.Printf("[DEBUG] Deleting DatasetAccess %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting DatasetAccess %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "PATCH",
@@ -651,6 +663,7 @@ func resourceBigQueryDatasetAccessDelete(d *schema.ResourceData, meta interface{
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutDelete),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsBigqueryIAMQuotaError},
 	})
 	if err != nil {

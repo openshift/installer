@@ -20,11 +20,13 @@ package dialogflowcx
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -49,6 +51,10 @@ func ResourceDialogflowCXIntent() *schema.Resource {
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+		),
+
 		Schema: map[string]*schema.Schema{
 			"display_name": {
 				Type:         schema.TypeString,
@@ -66,14 +72,19 @@ func ResourceDialogflowCXIntent() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Description: `Indicates whether this is a fallback intent. Currently only default fallback intent is allowed in the agent, which is added upon agent creation.
-Adding training phrases to fallback intent is useful in the case of requests that are mistakenly matched, since training phrases assigned to fallback intents act as negative examples that triggers no-match event.`,
+Adding training phrases to fallback intent is useful in the case of requests that are mistakenly matched, since training phrases assigned to fallback intents act as negative examples that triggers no-match event.
+To manage the fallback intent, set 'is_default_negative_intent = true'`,
 			},
 			"labels": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Description: `The key/value metadata to label an intent. Labels can contain lowercase letters, digits and the symbols '-' and '_'. International characters are allowed, including letters from unicase alphabets. Keys must start with a letter. Keys and values can be no longer than 63 characters and no more than 128 bytes.
 Prefix "sys-" is reserved for Dialogflow defined labels. Currently allowed Dialogflow defined labels include: * sys-head * sys-contextual The above labels do not require value. "sys-head" means the intent is a head intent. "sys.contextual" means the intent is a contextual intent.
-An object containing a list of "key": value pairs. Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.`,
+An object containing a list of "key": value pairs. Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.
+
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
 				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"language_code": {
@@ -173,11 +184,42 @@ Part.text is set to a part of the phrase that you want to annotate, and the para
 					},
 				},
 			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"name": {
 				Type:     schema.TypeString,
 				Computed: true,
 				Description: `The unique identifier of the intent.
 Format: projects/<Project ID>/locations/<Location ID>/agents/<Agent ID>/intents/<Intent ID>.`,
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
+			"is_default_welcome_intent": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				ForceNew: true,
+				Description: `Marks this as the [Default Welcome Intent](https://cloud.google.com/dialogflow/cx/docs/concept/intent#welcome) for an agent. When you create an agent, a Default Welcome Intent is created automatically.
+The Default Welcome Intent cannot be deleted; deleting the 'google_dialogflow_cx_intent' resource does nothing to the underlying GCP resources.
+
+~> Avoid having multiple 'google_dialogflow_cx_intent' resources linked to the same agent with 'is_default_welcome_intent = true' because they will compete to control a single Default Welcome Intent resource in GCP.`,
+			},
+			"is_default_negative_intent": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				ForceNew: true,
+				Description: `Marks this as the [Default Negative Intent](https://cloud.google.com/dialogflow/cx/docs/concept/intent#negative) for an agent. When you create an agent, a Default Negative Intent is created automatically.
+The Default Negative Intent cannot be deleted; deleting the 'google_dialogflow_cx_intent' resource does nothing to the underlying GCP resources.
+
+~> Avoid having multiple 'google_dialogflow_cx_intent' resources linked to the same agent with 'is_default_negative_intent = true' because they will compete to control a single Default Negative Intent resource in GCP.`,
 			},
 		},
 		UseJSONNumber: true,
@@ -222,17 +264,17 @@ func resourceDialogflowCXIntentCreate(d *schema.ResourceData, meta interface{}) 
 	} else if v, ok := d.GetOkExists("is_fallback"); !tpgresource.IsEmptyValue(reflect.ValueOf(isFallbackProp)) && (ok || !reflect.DeepEqual(v, isFallbackProp)) {
 		obj["isFallback"] = isFallbackProp
 	}
-	labelsProp, err := expandDialogflowCXIntentLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	descriptionProp, err := expandDialogflowCXIntentDescription(d.Get("description"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(descriptionProp)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
+	}
+	labelsProp, err := expandDialogflowCXIntentEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
 	}
 	languageCodeProp, err := expandDialogflowCXIntentLanguageCode(d.Get("language_code"), d, config)
 	if err != nil {
@@ -254,6 +296,8 @@ func resourceDialogflowCXIntentCreate(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
 	// extract location from the parent
 	location := ""
 
@@ -268,6 +312,34 @@ func resourceDialogflowCXIntentCreate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	url = strings.Replace(url, "-dialogflow", fmt.Sprintf("%s-dialogflow", location), 1)
+
+	// if it's a default object Dialogflow creates for you, "Update" instead of "Create"
+	// Note: below we try to access fields that aren't present in the resource, because this custom code is reused across multiple Dialogflow resources that contain different fields. When the field isn't present, we deliberately ignore the error and the boolean is false.
+	isDefaultStartFlow, _ := d.Get("is_default_start_flow").(bool)
+	isDefaultWelcomeIntent, _ := d.Get("is_default_welcome_intent").(bool)
+	isDefaultNegativeIntent, _ := d.Get("is_default_negative_intent").(bool)
+	if isDefaultStartFlow || isDefaultWelcomeIntent || isDefaultNegativeIntent {
+		// hardcode the default object ID:
+		var defaultObjName string
+		if isDefaultStartFlow || isDefaultWelcomeIntent {
+			defaultObjName = "00000000-0000-0000-0000-000000000000"
+		}
+		if isDefaultNegativeIntent {
+			defaultObjName = "00000000-0000-0000-0000-000000000001"
+		}
+
+		// Store the ID
+		d.Set("name", defaultObjName)
+		id, err := tpgresource.ReplaceVars(d, config, "{{parent}}/intents/{{name}}")
+		if err != nil {
+			return fmt.Errorf("Error constructing id: %s", err)
+		}
+		d.SetId(id)
+
+		// and defer to the Update method:
+		log.Printf("[DEBUG] Updating default DialogflowCXIntent")
+		return resourceDialogflowCXIntentUpdate(d, meta)
+	}
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -276,6 +348,7 @@ func resourceDialogflowCXIntentCreate(d *schema.ResourceData, meta interface{}) 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Intent: %s", err)
@@ -315,6 +388,8 @@ func resourceDialogflowCXIntentRead(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
 	// extract location from the parent
 	location := ""
 
@@ -335,10 +410,13 @@ func resourceDialogflowCXIntentRead(d *schema.ResourceData, meta interface{}) er
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DialogflowCXIntent %q", d.Id()))
 	}
+
+	// Explicitly set virtual fields to default values if unset
 
 	if err := d.Set("name", flattenDialogflowCXIntentName(res["name"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Intent: %s", err)
@@ -362,6 +440,12 @@ func resourceDialogflowCXIntentRead(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf("Error reading Intent: %s", err)
 	}
 	if err := d.Set("description", flattenDialogflowCXIntentDescription(res["description"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Intent: %s", err)
+	}
+	if err := d.Set("terraform_labels", flattenDialogflowCXIntentTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Intent: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenDialogflowCXIntentEffectiveLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Intent: %s", err)
 	}
 	if err := d.Set("language_code", flattenDialogflowCXIntentLanguageCode(res["languageCode"], d, config)); err != nil {
@@ -411,17 +495,17 @@ func resourceDialogflowCXIntentUpdate(d *schema.ResourceData, meta interface{}) 
 	} else if v, ok := d.GetOkExists("is_fallback"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, isFallbackProp)) {
 		obj["isFallback"] = isFallbackProp
 	}
-	labelsProp, err := expandDialogflowCXIntentLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	descriptionProp, err := expandDialogflowCXIntentDescription(d.Get("description"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
+	}
+	labelsProp, err := expandDialogflowCXIntentEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{DialogflowCXBasePath}}{{parent}}/intents/{{name}}")
@@ -430,6 +514,7 @@ func resourceDialogflowCXIntentUpdate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	log.Printf("[DEBUG] Updating Intent %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -452,12 +537,12 @@ func resourceDialogflowCXIntentUpdate(d *schema.ResourceData, meta interface{}) 
 		updateMask = append(updateMask, "isFallback")
 	}
 
-	if d.HasChange("labels") {
-		updateMask = append(updateMask, "labels")
-	}
-
 	if d.HasChange("description") {
 		updateMask = append(updateMask, "description")
+	}
+
+	if d.HasChange("effective_labels") {
+		updateMask = append(updateMask, "labels")
 	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
@@ -486,20 +571,25 @@ func resourceDialogflowCXIntentUpdate(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Intent %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Intent %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating Intent %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Intent %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceDialogflowCXIntentRead(d, meta)
@@ -521,6 +611,13 @@ func resourceDialogflowCXIntentDelete(d *schema.ResourceData, meta interface{}) 
 
 	var obj map[string]interface{}
 
+	// err == nil indicates that the billing_project value was found
+	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+		billingProject = bp
+	}
+
+	headers := make(http.Header)
+
 	// extract location from the parent
 	location := ""
 
@@ -535,13 +632,19 @@ func resourceDialogflowCXIntentDelete(d *schema.ResourceData, meta interface{}) 
 	}
 
 	url = strings.Replace(url, "-dialogflow", fmt.Sprintf("%s-dialogflow", location), 1)
-	log.Printf("[DEBUG] Deleting Intent %q", d.Id())
 
-	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
-		billingProject = bp
+	// if it's a default object Dialogflow creates for you, skip deletion
+	// Note: below we try to access fields that aren't present in the resource, because this custom code is reused across multiple Dialogflow resources that contain different fields. When the field isn't present, we deliberately ignore the error and the boolean is false.
+	isDefaultStartFlow, _ := d.Get("is_default_start_flow").(bool)
+	isDefaultWelcomeIntent, _ := d.Get("is_default_welcome_intent").(bool)
+	isDefaultNegativeIntent, _ := d.Get("is_default_negative_intent").(bool)
+	if isDefaultStartFlow || isDefaultWelcomeIntent || isDefaultNegativeIntent {
+		// we can't delete these resources so do nothing
+		log.Printf("[DEBUG] Not deleting default DialogflowCXIntent")
+		return nil
 	}
 
+	log.Printf("[DEBUG] Deleting Intent %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -550,6 +653,7 @@ func resourceDialogflowCXIntentDelete(d *schema.ResourceData, meta interface{}) 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Intent")
@@ -576,6 +680,14 @@ func resourceDialogflowCXIntentImport(d *schema.ResourceData, meta interface{}) 
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}
 	d.SetId(id)
+
+	// Set is_default_X if the resource is actually a Default Intent
+	if d.Get("name").(string) == "00000000-0000-0000-0000-000000000000" {
+		d.Set("is_default_welcome_intent", true)
+	}
+	if d.Get("name").(string) == "00000000-0000-0000-0000-000000000001" {
+		d.Set("is_default_negative_intent", true)
+	}
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -718,10 +830,40 @@ func flattenDialogflowCXIntentIsFallback(v interface{}, d *schema.ResourceData, 
 }
 
 func flattenDialogflowCXIntentLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenDialogflowCXIntentDescription(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDialogflowCXIntentTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenDialogflowCXIntentEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -881,7 +1023,11 @@ func expandDialogflowCXIntentIsFallback(v interface{}, d tpgresource.TerraformRe
 	return v, nil
 }
 
-func expandDialogflowCXIntentLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+func expandDialogflowCXIntentDescription(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDialogflowCXIntentEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
 	if v == nil {
 		return map[string]string{}, nil
 	}
@@ -890,10 +1036,6 @@ func expandDialogflowCXIntentLabels(v interface{}, d tpgresource.TerraformResour
 		m[k] = val.(string)
 	}
 	return m, nil
-}
-
-func expandDialogflowCXIntentDescription(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
 }
 
 func expandDialogflowCXIntentLanguageCode(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {

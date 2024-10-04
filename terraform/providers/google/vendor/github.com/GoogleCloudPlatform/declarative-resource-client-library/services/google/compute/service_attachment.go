@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -149,7 +149,7 @@ func (r *ServiceAttachmentConnectedEndpoints) String() string {
 func (r *ServiceAttachmentConnectedEndpoints) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -198,7 +198,7 @@ func (r *ServiceAttachmentConsumerAcceptLists) String() string {
 func (r *ServiceAttachmentConsumerAcceptLists) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -247,7 +247,7 @@ func (r *ServiceAttachmentPscServiceAttachmentId) String() string {
 func (r *ServiceAttachmentPscServiceAttachmentId) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 

@@ -21,10 +21,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/structure"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -50,6 +52,10 @@ func ResourceHealthcareHl7V2Store() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"dataset": {
@@ -82,7 +88,11 @@ bytes, and must conform to the following PCRE regular expression: [\p{Ll}\p{Lo}\
 No more than 64 labels can be associated with a given store.
 
 An object containing a list of "key": value pairs.
-Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.`,
+Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.
+
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
 				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"notification_config": {
@@ -186,10 +196,29 @@ A base64-encoded string.`,
 					},
 				},
 			},
+			"reject_duplicate_message": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: `Determines whether duplicate messages are allowed.`,
+				Default:     false,
+			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"self_link": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `The fully qualified name of this dataset`,
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 		},
 		UseJSONNumber: true,
@@ -210,17 +239,17 @@ func resourceHealthcareHl7V2StoreCreate(d *schema.ResourceData, meta interface{}
 	} else if v, ok := d.GetOkExists("name"); !tpgresource.IsEmptyValue(reflect.ValueOf(nameProp)) && (ok || !reflect.DeepEqual(v, nameProp)) {
 		obj["name"] = nameProp
 	}
+	rejectDuplicateMessageProp, err := expandHealthcareHl7V2StoreRejectDuplicateMessage(d.Get("reject_duplicate_message"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("reject_duplicate_message"); !tpgresource.IsEmptyValue(reflect.ValueOf(rejectDuplicateMessageProp)) && (ok || !reflect.DeepEqual(v, rejectDuplicateMessageProp)) {
+		obj["rejectDuplicateMessage"] = rejectDuplicateMessageProp
+	}
 	parserConfigProp, err := expandHealthcareHl7V2StoreParserConfig(d.Get("parser_config"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("parser_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(parserConfigProp)) && (ok || !reflect.DeepEqual(v, parserConfigProp)) {
 		obj["parserConfig"] = parserConfigProp
-	}
-	labelsProp, err := expandHealthcareHl7V2StoreLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
 	}
 	notificationConfigsProp, err := expandHealthcareHl7V2StoreNotificationConfigs(d.Get("notification_configs"), d, config)
 	if err != nil {
@@ -233,6 +262,12 @@ func resourceHealthcareHl7V2StoreCreate(d *schema.ResourceData, meta interface{}
 		return err
 	} else if v, ok := d.GetOkExists("notification_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(notificationConfigProp)) && (ok || !reflect.DeepEqual(v, notificationConfigProp)) {
 		obj["notificationConfig"] = notificationConfigProp
+	}
+	labelsProp, err := expandHealthcareHl7V2StoreEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{HealthcareBasePath}}{{dataset}}/hl7V2Stores?hl7V2StoreId={{name}}")
@@ -248,6 +283,7 @@ func resourceHealthcareHl7V2StoreCreate(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -256,6 +292,7 @@ func resourceHealthcareHl7V2StoreCreate(d *schema.ResourceData, meta interface{}
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Hl7V2Store: %s", err)
@@ -292,12 +329,14 @@ func resourceHealthcareHl7V2StoreRead(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("HealthcareHl7V2Store %q", d.Id()))
@@ -318,6 +357,9 @@ func resourceHealthcareHl7V2StoreRead(d *schema.ResourceData, meta interface{}) 
 	if err := d.Set("name", flattenHealthcareHl7V2StoreName(res["name"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Hl7V2Store: %s", err)
 	}
+	if err := d.Set("reject_duplicate_message", flattenHealthcareHl7V2StoreRejectDuplicateMessage(res["rejectDuplicateMessage"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Hl7V2Store: %s", err)
+	}
 	if err := d.Set("parser_config", flattenHealthcareHl7V2StoreParserConfig(res["parserConfig"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Hl7V2Store: %s", err)
 	}
@@ -328,6 +370,12 @@ func resourceHealthcareHl7V2StoreRead(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("Error reading Hl7V2Store: %s", err)
 	}
 	if err := d.Set("notification_config", flattenHealthcareHl7V2StoreNotificationConfig(res["notificationConfig"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Hl7V2Store: %s", err)
+	}
+	if err := d.Set("terraform_labels", flattenHealthcareHl7V2StoreTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Hl7V2Store: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenHealthcareHl7V2StoreEffectiveLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Hl7V2Store: %s", err)
 	}
 
@@ -344,17 +392,17 @@ func resourceHealthcareHl7V2StoreUpdate(d *schema.ResourceData, meta interface{}
 	billingProject := ""
 
 	obj := make(map[string]interface{})
+	rejectDuplicateMessageProp, err := expandHealthcareHl7V2StoreRejectDuplicateMessage(d.Get("reject_duplicate_message"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("reject_duplicate_message"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, rejectDuplicateMessageProp)) {
+		obj["rejectDuplicateMessage"] = rejectDuplicateMessageProp
+	}
 	parserConfigProp, err := expandHealthcareHl7V2StoreParserConfig(d.Get("parser_config"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("parser_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, parserConfigProp)) {
 		obj["parserConfig"] = parserConfigProp
-	}
-	labelsProp, err := expandHealthcareHl7V2StoreLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
 	}
 	notificationConfigsProp, err := expandHealthcareHl7V2StoreNotificationConfigs(d.Get("notification_configs"), d, config)
 	if err != nil {
@@ -368,6 +416,12 @@ func resourceHealthcareHl7V2StoreUpdate(d *schema.ResourceData, meta interface{}
 	} else if v, ok := d.GetOkExists("notification_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, notificationConfigProp)) {
 		obj["notificationConfig"] = notificationConfigProp
 	}
+	labelsProp, err := expandHealthcareHl7V2StoreEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{HealthcareBasePath}}{{dataset}}/hl7V2Stores/{{name}}")
 	if err != nil {
@@ -375,16 +429,17 @@ func resourceHealthcareHl7V2StoreUpdate(d *schema.ResourceData, meta interface{}
 	}
 
 	log.Printf("[DEBUG] Updating Hl7V2Store %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
+
+	if d.HasChange("reject_duplicate_message") {
+		updateMask = append(updateMask, "rejectDuplicateMessage")
+	}
 
 	if d.HasChange("parser_config") {
 		updateMask = append(updateMask, "parser_config.allow_null_header",
 			"parser_config.segment_terminator",
 			"parser_config.schema")
-	}
-
-	if d.HasChange("labels") {
-		updateMask = append(updateMask, "labels")
 	}
 
 	if d.HasChange("notification_configs") {
@@ -393,6 +448,10 @@ func resourceHealthcareHl7V2StoreUpdate(d *schema.ResourceData, meta interface{}
 
 	if d.HasChange("notification_config") {
 		updateMask = append(updateMask, "notificationConfig")
+	}
+
+	if d.HasChange("effective_labels") {
+		updateMask = append(updateMask, "labels")
 	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
@@ -406,20 +465,25 @@ func resourceHealthcareHl7V2StoreUpdate(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Hl7V2Store %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Hl7V2Store %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating Hl7V2Store %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Hl7V2Store %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceHealthcareHl7V2StoreRead(d, meta)
@@ -440,13 +504,15 @@ func resourceHealthcareHl7V2StoreDelete(d *schema.ResourceData, meta interface{}
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Hl7V2Store %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Hl7V2Store %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -455,6 +521,7 @@ func resourceHealthcareHl7V2StoreDelete(d *schema.ResourceData, meta interface{}
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Hl7V2Store")
@@ -484,6 +551,10 @@ func resourceHealthcareHl7V2StoreImport(d *schema.ResourceData, meta interface{}
 }
 
 func flattenHealthcareHl7V2StoreName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenHealthcareHl7V2StoreRejectDuplicateMessage(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -531,7 +602,18 @@ func flattenHealthcareHl7V2StoreParserConfigVersion(v interface{}, d *schema.Res
 }
 
 func flattenHealthcareHl7V2StoreLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenHealthcareHl7V2StoreNotificationConfigs(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -578,7 +660,30 @@ func flattenHealthcareHl7V2StoreNotificationConfigPubsubTopic(v interface{}, d *
 	return v
 }
 
+func flattenHealthcareHl7V2StoreTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenHealthcareHl7V2StoreEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func expandHealthcareHl7V2StoreName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandHealthcareHl7V2StoreRejectDuplicateMessage(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -646,17 +751,6 @@ func expandHealthcareHl7V2StoreParserConfigVersion(v interface{}, d tpgresource.
 	return v, nil
 }
 
-func expandHealthcareHl7V2StoreLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
-	if v == nil {
-		return map[string]string{}, nil
-	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
-	}
-	return m, nil
-}
-
 func expandHealthcareHl7V2StoreNotificationConfigs(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
@@ -715,6 +809,17 @@ func expandHealthcareHl7V2StoreNotificationConfig(v interface{}, d tpgresource.T
 
 func expandHealthcareHl7V2StoreNotificationConfigPubsubTopic(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandHealthcareHl7V2StoreEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }
 
 func resourceHealthcareHl7V2StoreDecoder(d *schema.ResourceData, meta interface{}, res map[string]interface{}) (map[string]interface{}, error) {

@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -343,6 +343,7 @@ components:
           x-dcl-references:
           - resource: Compute/MachineType
             field: name
+          x-dcl-has-long-form: true
         metadata:
           type: object
           additionalProperties:
@@ -648,6 +649,7 @@ components:
           - resource: Cloudresourcemanager/Project
             field: name
             parent: true
+          x-dcl-parameter: true
         scheduling:
           type: object
           x-dcl-go-name: Scheduling

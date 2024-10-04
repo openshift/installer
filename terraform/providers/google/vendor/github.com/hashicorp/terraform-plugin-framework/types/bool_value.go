@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package types
 
 import "github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -20,4 +23,9 @@ func BoolUnknown() basetypes.BoolValue {
 // type ValueBool method.
 func BoolValue(value bool) basetypes.BoolValue {
 	return basetypes.NewBoolValue(value)
+}
+
+// BoolPointerValue creates a Bool with a null value if nil or a known value.
+func BoolPointerValue(value *bool) basetypes.BoolValue {
+	return basetypes.NewBoolPointerValue(value)
 }

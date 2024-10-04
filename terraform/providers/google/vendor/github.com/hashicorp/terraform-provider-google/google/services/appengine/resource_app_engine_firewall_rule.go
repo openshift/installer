@@ -20,10 +20,12 @@ package appengine
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -47,6 +49,10 @@ func ResourceAppEngineFirewallRule() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"action": {
@@ -145,6 +151,7 @@ func resourceAppEngineFirewallRuleCreate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -153,6 +160,7 @@ func resourceAppEngineFirewallRuleCreate(d *schema.ResourceData, meta interface{
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating FirewallRule: %s", err)
@@ -180,6 +188,7 @@ func resourceAppEngineFirewallRulePollRead(d *schema.ResourceData, meta interfac
 		config := meta.(*transport_tpg.Config)
 
 		url, err := tpgresource.ReplaceVars(d, config, "{{AppEngineBasePath}}apps/{{project}}/firewall/ingressRules/{{priority}}")
+
 		if err != nil {
 			return nil, err
 		}
@@ -241,12 +250,14 @@ func resourceAppEngineFirewallRuleRead(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("AppEngineFirewallRule %q", d.Id()))
@@ -326,6 +337,7 @@ func resourceAppEngineFirewallRuleUpdate(d *schema.ResourceData, meta interface{
 	}
 
 	log.Printf("[DEBUG] Updating FirewallRule %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("description") {
@@ -355,20 +367,25 @@ func resourceAppEngineFirewallRuleUpdate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating FirewallRule %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating FirewallRule %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating FirewallRule %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating FirewallRule %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceAppEngineFirewallRuleRead(d, meta)
@@ -402,13 +419,15 @@ func resourceAppEngineFirewallRuleDelete(d *schema.ResourceData, meta interface{
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting FirewallRule %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting FirewallRule %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -417,6 +436,7 @@ func resourceAppEngineFirewallRuleDelete(d *schema.ResourceData, meta interface{
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "FirewallRule")
@@ -429,9 +449,9 @@ func resourceAppEngineFirewallRuleDelete(d *schema.ResourceData, meta interface{
 func resourceAppEngineFirewallRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"apps/(?P<project>[^/]+)/firewall/ingressRules/(?P<priority>[^/]+)",
-		"(?P<project>[^/]+)/(?P<priority>[^/]+)",
-		"(?P<priority>[^/]+)",
+		"^apps/(?P<project>[^/]+)/firewall/ingressRules/(?P<priority>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<priority>[^/]+)$",
+		"^(?P<priority>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

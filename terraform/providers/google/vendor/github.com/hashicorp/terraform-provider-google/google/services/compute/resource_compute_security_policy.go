@@ -6,10 +6,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"time"
 
 	"github.com/hashicorp/errwrap"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -29,12 +31,15 @@ func ResourceComputeSecurityPolicy() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourceSecurityPolicyStateImporter,
 		},
-		CustomizeDiff: rulesCustomizeDiff,
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+			rulesCustomizeDiff,
+		),
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(8 * time.Minute),
-			Update: schema.DefaultTimeout(8 * time.Minute),
-			Delete: schema.DefaultTimeout(8 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -147,6 +152,45 @@ func ResourceComputeSecurityPolicy() *schema.Resource {
 										},
 										Description: `User defined CEVAL expression. A CEVAL expression is used to specify match criteria such as origin.ip, source.region_code and contents in the request header.`,
 									},
+
+									"expr_options": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										MaxItems:    1,
+										Description: `The configuration options available when specifying a user defined CEVAL expression (i.e., 'expr').`,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"recaptcha_options": {
+													Type:        schema.TypeList,
+													Required:    true,
+													MaxItems:    1,
+													Description: `reCAPTCHA configuration options to be applied for the rule. If the rule does not evaluate reCAPTCHA tokens, this field has no effect.`,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"action_token_site_keys": {
+																Type:        schema.TypeList,
+																Optional:    true,
+																Description: `A list of site keys to be used during the validation of reCAPTCHA action-tokens. The provided site keys need to be created from reCAPTCHA API under the same project where the security policy is created`,
+																MinItems:    1,
+																Elem: &schema.Schema{
+																	Type: schema.TypeString,
+																},
+															},
+															"session_token_site_keys": {
+																Type:        schema.TypeList,
+																Optional:    true,
+																Description: `A list of site keys to be used during the validation of reCAPTCHA session-tokens. The provided site keys need to be created from reCAPTCHA API under the same project where the security policy is created.`,
+																MinItems:    1,
+																Elem: &schema.Schema{
+																	Type: schema.TypeString,
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
 								},
 							},
 							Description: `A match condition that incoming traffic is evaluated against. If it evaluates to true, the corresponding action is enforced.`,
@@ -212,9 +256,8 @@ func ResourceComputeSecurityPolicy() *schema.Resource {
 									"enforce_on_key": {
 										Type:         schema.TypeString,
 										Optional:     true,
-										Default:      "ALL",
 										Description:  `Determines the key to enforce the rateLimitThreshold on`,
-										ValidateFunc: validation.StringInSlice([]string{"ALL", "IP", "HTTP_HEADER", "XFF_IP", "HTTP_COOKIE", "HTTP_PATH", "SNI", "REGION_CODE", ""}, false),
+										ValidateFunc: validation.StringInSlice([]string{"ALL", "IP", "HTTP_HEADER", "XFF_IP", "HTTP_COOKIE", "HTTP_PATH", "SNI", "REGION_CODE", "TLS_JA3_FINGERPRINT", "USER_IP", ""}, false),
 									},
 
 									"enforce_on_key_name": {
@@ -357,7 +400,7 @@ func ResourceComputeSecurityPolicy() *schema.Resource {
 							Type:         schema.TypeString,
 							Optional:     true,
 							Computed:     true,
-							ValidateFunc: validation.StringInSlice([]string{"DISABLED", "STANDARD"}, false),
+							ValidateFunc: validation.StringInSlice([]string{"DISABLED", "STANDARD", "STANDARD_WITH_GRAPHQL"}, false),
 							Description:  `JSON body parsing. Supported values include: "DISABLED", "STANDARD".`,
 						},
 						"json_custom_config": {
@@ -383,6 +426,12 @@ func ResourceComputeSecurityPolicy() *schema.Resource {
 							Computed:     true,
 							ValidateFunc: validation.StringInSlice([]string{"NORMAL", "VERBOSE"}, false),
 							Description:  `Logging level. Supported values include: "NORMAL", "VERBOSE".`,
+						},
+						"user_ip_request_headers": {
+							Type:        schema.TypeSet,
+							Optional:    true,
+							Description: `An optional list of case-insensitive request header names to use for resolving the callers client IP address.`,
+							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
 					},
 				},
@@ -410,7 +459,7 @@ func ResourceComputeSecurityPolicy() *schema.Resource {
 									"rule_visibility": {
 										Type:         schema.TypeString,
 										Optional:     true,
-										Default:      "STANDARD",
+										Computed:     true,
 										ValidateFunc: validation.StringInSlice([]string{"STANDARD", "PREMIUM"}, false),
 										Description:  `Rule visibility. Supported values include: "STANDARD", "PREMIUM".`,
 									},
@@ -594,6 +643,8 @@ func resourceComputeSecurityPolicyUpdate(d *schema.ResourceData, meta interface{
 		Fingerprint: d.Get("fingerprint").(string),
 	}
 
+	updateMask := []string{}
+
 	if d.HasChange("type") {
 		securityPolicy.Type = d.Get("type").(string)
 		securityPolicy.ForceSendFields = append(securityPolicy.ForceSendFields, "Type")
@@ -607,6 +658,11 @@ func resourceComputeSecurityPolicyUpdate(d *schema.ResourceData, meta interface{
 	if d.HasChange("advanced_options_config") {
 		securityPolicy.AdvancedOptionsConfig = expandSecurityPolicyAdvancedOptionsConfig(d.Get("advanced_options_config").([]interface{}))
 		securityPolicy.ForceSendFields = append(securityPolicy.ForceSendFields, "AdvancedOptionsConfig", "advancedOptionsConfig.jsonParsing", "advancedOptionsConfig.jsonCustomConfig", "advancedOptionsConfig.logLevel")
+		securityPolicy.ForceSendFields = append(securityPolicy.ForceSendFields, "advanceOptionConfig.userIpRequestHeaders")
+		if len(securityPolicy.AdvancedOptionsConfig.UserIpRequestHeaders) == 0 {
+			// to clean this list we must send the updateMask of this field on the request.
+			updateMask = append(updateMask, "advanced_options_config.user_ip_request_headers")
+		}
 	}
 
 	if d.HasChange("adaptive_protection_config") {
@@ -622,7 +678,7 @@ func resourceComputeSecurityPolicyUpdate(d *schema.ResourceData, meta interface{
 	if len(securityPolicy.ForceSendFields) > 0 {
 		client := config.NewComputeClient(userAgent)
 
-		op, err := client.SecurityPolicies.Patch(project, sp, securityPolicy).Do()
+		op, err := client.SecurityPolicies.Patch(project, sp, securityPolicy).UpdateMask(strings.Join(updateMask, ",")).Do()
 
 		if err != nil {
 			return errwrap.Wrapf(fmt.Sprintf("Error updating SecurityPolicy %q: {{err}}", sp), err)
@@ -650,7 +706,6 @@ func resourceComputeSecurityPolicyUpdate(d *schema.ResourceData, meta interface{
 			nPriorities[priority] = true
 			if !oPriorities[priority] {
 				client := config.NewComputeClient(userAgent)
-
 				// If the rule is in new and its priority does not exist in old, then add it.
 				op, err := client.SecurityPolicies.AddRule(project, sp, expandSecurityPolicyRule(rule)).Do()
 
@@ -764,6 +819,7 @@ func expandSecurityPolicyMatch(configured []interface{}) *compute.SecurityPolicy
 		VersionedExpr: data["versioned_expr"].(string),
 		Config:        expandSecurityPolicyMatchConfig(data["config"].([]interface{})),
 		Expr:          expandSecurityPolicyMatchExpr(data["expr"].([]interface{})),
+		ExprOptions:   expandSecurityPolicyMatchExprOptions(data["expr_options"].([]interface{})),
 	}
 }
 
@@ -790,6 +846,42 @@ func expandSecurityPolicyMatchExpr(expr []interface{}) *compute.Expr {
 		// Title:       data["title"].(string),
 		// Description: data["description"].(string),
 		// Location:    data["location"].(string),
+	}
+}
+
+func expandSecurityPolicyMatchExprOptions(exprOptions []interface{}) *compute.SecurityPolicyRuleMatcherExprOptions {
+	if len(exprOptions) == 0 || exprOptions[0] == nil {
+		return nil
+	}
+
+	data := exprOptions[0].(map[string]interface{})
+	return &compute.SecurityPolicyRuleMatcherExprOptions{
+		RecaptchaOptions: expandSecurityPolicyMatchExprOptionsRecaptchaOptions(data["recaptcha_options"].([]interface{})),
+	}
+}
+
+func expandSecurityPolicyMatchExprOptionsRecaptchaOptions(recaptchaOptions []interface{}) *compute.SecurityPolicyRuleMatcherExprOptionsRecaptchaOptions {
+	if len(recaptchaOptions) == 0 || recaptchaOptions[0] == nil {
+		return nil
+	}
+
+	data := recaptchaOptions[0].(map[string]interface{})
+
+	actionTokenKeysInterface := data["action_token_site_keys"].([]interface{})
+	actionTokenKeys := make([]string, len(actionTokenKeysInterface))
+	for i, v := range actionTokenKeysInterface {
+		actionTokenKeys[i] = v.(string)
+	}
+
+	sessionTokenKeysInterface := data["session_token_site_keys"].([]interface{})
+	sessionTokenKeys := make([]string, len(sessionTokenKeysInterface))
+	for i, v := range sessionTokenKeysInterface {
+		sessionTokenKeys[i] = v.(string)
+	}
+
+	return &compute.SecurityPolicyRuleMatcherExprOptionsRecaptchaOptions{
+		ActionTokenSiteKeys:  actionTokenKeys,
+		SessionTokenSiteKeys: sessionTokenKeys,
 	}
 }
 
@@ -820,6 +912,7 @@ func flattenMatch(match *compute.SecurityPolicyRuleMatcher) []map[string]interfa
 		"versioned_expr": match.VersionedExpr,
 		"config":         flattenMatchConfig(match.Config),
 		"expr":           flattenMatchExpr(match),
+		"expr_options":   flattenMatchExprOptions(match.ExprOptions),
 	}
 
 	return []map[string]interface{}{data}
@@ -832,6 +925,31 @@ func flattenMatchConfig(conf *compute.SecurityPolicyRuleMatcherConfig) []map[str
 
 	data := map[string]interface{}{
 		"src_ip_ranges": schema.NewSet(schema.HashString, tpgresource.ConvertStringArrToInterface(conf.SrcIpRanges)),
+	}
+
+	return []map[string]interface{}{data}
+}
+
+func flattenMatchExprOptions(exprOptions *compute.SecurityPolicyRuleMatcherExprOptions) []map[string]interface{} {
+	if exprOptions == nil {
+		return nil
+	}
+
+	data := map[string]interface{}{
+		"recaptcha_options": flattenMatchExprOptionsRecaptchaOptions(exprOptions.RecaptchaOptions),
+	}
+
+	return []map[string]interface{}{data}
+}
+
+func flattenMatchExprOptionsRecaptchaOptions(recaptchaOptions *compute.SecurityPolicyRuleMatcherExprOptionsRecaptchaOptions) []map[string]interface{} {
+	if recaptchaOptions == nil {
+		return nil
+	}
+
+	data := map[string]interface{}{
+		"action_token_site_keys":  recaptchaOptions.ActionTokenSiteKeys,
+		"session_token_site_keys": recaptchaOptions.SessionTokenSiteKeys,
 	}
 
 	return []map[string]interface{}{data}
@@ -860,9 +978,10 @@ func expandSecurityPolicyAdvancedOptionsConfig(configured []interface{}) *comput
 
 	data := configured[0].(map[string]interface{})
 	return &compute.SecurityPolicyAdvancedOptionsConfig{
-		JsonParsing:      data["json_parsing"].(string),
-		JsonCustomConfig: expandSecurityPolicyAdvancedOptionsConfigJsonCustomConfig(data["json_custom_config"].([]interface{})),
-		LogLevel:         data["log_level"].(string),
+		JsonParsing:          data["json_parsing"].(string),
+		JsonCustomConfig:     expandSecurityPolicyAdvancedOptionsConfigJsonCustomConfig(data["json_custom_config"].([]interface{})),
+		LogLevel:             data["log_level"].(string),
+		UserIpRequestHeaders: tpgresource.ConvertStringArr(data["user_ip_request_headers"].(*schema.Set).List()),
 	}
 }
 
@@ -872,9 +991,10 @@ func flattenSecurityPolicyAdvancedOptionsConfig(conf *compute.SecurityPolicyAdva
 	}
 
 	data := map[string]interface{}{
-		"json_parsing":       conf.JsonParsing,
-		"json_custom_config": flattenSecurityPolicyAdvancedOptionsConfigJsonCustomConfig(conf.JsonCustomConfig),
-		"log_level":          conf.LogLevel,
+		"json_parsing":            conf.JsonParsing,
+		"json_custom_config":      flattenSecurityPolicyAdvancedOptionsConfigJsonCustomConfig(conf.JsonCustomConfig),
+		"log_level":               conf.LogLevel,
+		"user_ip_request_headers": schema.NewSet(schema.HashString, tpgresource.ConvertStringArrToInterface(conf.UserIpRequestHeaders)),
 	}
 
 	return []map[string]interface{}{data}

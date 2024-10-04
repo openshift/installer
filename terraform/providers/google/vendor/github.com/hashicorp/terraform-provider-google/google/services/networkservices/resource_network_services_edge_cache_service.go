@@ -20,10 +20,12 @@ package networkservices
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -43,10 +45,15 @@ func ResourceNetworkServicesEdgeCacheService() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(30 * time.Minute),
-			Update: schema.DefaultTimeout(30 * time.Minute),
-			Delete: schema.DefaultTimeout(30 * time.Minute),
+			Create: schema.DefaultTimeout(60 * time.Minute),
+			Update: schema.DefaultTimeout(60 * time.Minute),
+			Delete: schema.DefaultTimeout(60 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -930,10 +937,13 @@ Note that only "global" certificates with a "scope" of "EDGE_CACHE" can be attac
 				},
 			},
 			"labels": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: `Set of label tags associated with the EdgeCache resource.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `Set of label tags associated with the EdgeCache resource.
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"log_config": {
 				Type:        schema.TypeList,
@@ -974,6 +984,12 @@ You must have at least one (1) edgeSslCertificate specified to enable this.`,
 
 If not set, the EdgeCacheService has no SSL policy configured, and will default to the "COMPATIBLE" policy.`,
 			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"ipv4_addresses": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -989,6 +1005,13 @@ If not set, the EdgeCacheService has no SSL policy configured, and will default 
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"project": {
 				Type:     schema.TypeString,
@@ -1014,12 +1037,6 @@ func resourceNetworkServicesEdgeCacheServiceCreate(d *schema.ResourceData, meta 
 		return err
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(descriptionProp)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
-	}
-	labelsProp, err := expandNetworkServicesEdgeCacheServiceLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
 	}
 	disableQuicProp, err := expandNetworkServicesEdgeCacheServiceDisableQuic(d.Get("disable_quic"), d, config)
 	if err != nil {
@@ -1069,6 +1086,12 @@ func resourceNetworkServicesEdgeCacheServiceCreate(d *schema.ResourceData, meta 
 	} else if v, ok := d.GetOkExists("edge_security_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(edgeSecurityPolicyProp)) && (ok || !reflect.DeepEqual(v, edgeSecurityPolicyProp)) {
 		obj["edgeSecurityPolicy"] = edgeSecurityPolicyProp
 	}
+	labelsProp, err := expandNetworkServicesEdgeCacheServiceEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{NetworkServicesBasePath}}projects/{{project}}/locations/global/edgeCacheServices?edgeCacheServiceId={{name}}")
 	if err != nil {
@@ -1089,6 +1112,7 @@ func resourceNetworkServicesEdgeCacheServiceCreate(d *schema.ResourceData, meta 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -1097,6 +1121,7 @@ func resourceNetworkServicesEdgeCacheServiceCreate(d *schema.ResourceData, meta 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating EdgeCacheService: %s", err)
@@ -1149,12 +1174,14 @@ func resourceNetworkServicesEdgeCacheServiceRead(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("NetworkServicesEdgeCacheService %q", d.Id()))
@@ -1200,6 +1227,12 @@ func resourceNetworkServicesEdgeCacheServiceRead(d *schema.ResourceData, meta in
 	if err := d.Set("edge_security_policy", flattenNetworkServicesEdgeCacheServiceEdgeSecurityPolicy(res["edgeSecurityPolicy"], d, config)); err != nil {
 		return fmt.Errorf("Error reading EdgeCacheService: %s", err)
 	}
+	if err := d.Set("terraform_labels", flattenNetworkServicesEdgeCacheServiceTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading EdgeCacheService: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenNetworkServicesEdgeCacheServiceEffectiveLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading EdgeCacheService: %s", err)
+	}
 
 	return nil
 }
@@ -1225,12 +1258,6 @@ func resourceNetworkServicesEdgeCacheServiceUpdate(d *schema.ResourceData, meta 
 		return err
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
-	}
-	labelsProp, err := expandNetworkServicesEdgeCacheServiceLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
 	}
 	disableQuicProp, err := expandNetworkServicesEdgeCacheServiceDisableQuic(d.Get("disable_quic"), d, config)
 	if err != nil {
@@ -1280,6 +1307,12 @@ func resourceNetworkServicesEdgeCacheServiceUpdate(d *schema.ResourceData, meta 
 	} else if v, ok := d.GetOkExists("edge_security_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, edgeSecurityPolicyProp)) {
 		obj["edgeSecurityPolicy"] = edgeSecurityPolicyProp
 	}
+	labelsProp, err := expandNetworkServicesEdgeCacheServiceEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{NetworkServicesBasePath}}projects/{{project}}/locations/global/edgeCacheServices/{{name}}")
 	if err != nil {
@@ -1287,14 +1320,11 @@ func resourceNetworkServicesEdgeCacheServiceUpdate(d *schema.ResourceData, meta 
 	}
 
 	log.Printf("[DEBUG] Updating EdgeCacheService %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("description") {
 		updateMask = append(updateMask, "description")
-	}
-
-	if d.HasChange("labels") {
-		updateMask = append(updateMask, "labels")
 	}
 
 	if d.HasChange("disable_quic") {
@@ -1328,6 +1358,10 @@ func resourceNetworkServicesEdgeCacheServiceUpdate(d *schema.ResourceData, meta 
 	if d.HasChange("edge_security_policy") {
 		updateMask = append(updateMask, "edgeSecurityPolicy")
 	}
+
+	if d.HasChange("effective_labels") {
+		updateMask = append(updateMask, "labels")
+	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
 	url, err = transport_tpg.AddQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
@@ -1340,28 +1374,32 @@ func resourceNetworkServicesEdgeCacheServiceUpdate(d *schema.ResourceData, meta 
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating EdgeCacheService %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating EdgeCacheService %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating EdgeCacheService %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating EdgeCacheService %q: %#v", d.Id(), res)
+		}
 
-	err = NetworkServicesOperationWaitTime(
-		config, res, project, "Updating EdgeCacheService", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = NetworkServicesOperationWaitTime(
+			config, res, project, "Updating EdgeCacheService", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceNetworkServicesEdgeCacheServiceRead(d, meta)
@@ -1388,13 +1426,15 @@ func resourceNetworkServicesEdgeCacheServiceDelete(d *schema.ResourceData, meta 
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting EdgeCacheService %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting EdgeCacheService %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -1403,6 +1443,7 @@ func resourceNetworkServicesEdgeCacheServiceDelete(d *schema.ResourceData, meta 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "EdgeCacheService")
@@ -1423,9 +1464,9 @@ func resourceNetworkServicesEdgeCacheServiceDelete(d *schema.ResourceData, meta 
 func resourceNetworkServicesEdgeCacheServiceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/global/edgeCacheServices/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/global/edgeCacheServices/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -1445,7 +1486,18 @@ func flattenNetworkServicesEdgeCacheServiceDescription(v interface{}, d *schema.
 }
 
 func flattenNetworkServicesEdgeCacheServiceLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenNetworkServicesEdgeCacheServiceDisableQuic(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -2193,19 +2245,27 @@ func flattenNetworkServicesEdgeCacheServiceEdgeSecurityPolicy(v interface{}, d *
 	return v
 }
 
-func expandNetworkServicesEdgeCacheServiceDescription(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
+func flattenNetworkServicesEdgeCacheServiceTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
-func expandNetworkServicesEdgeCacheServiceLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
-	if v == nil {
-		return map[string]string{}, nil
-	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
-	}
-	return m, nil
+func flattenNetworkServicesEdgeCacheServiceEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func expandNetworkServicesEdgeCacheServiceDescription(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
 }
 
 func expandNetworkServicesEdgeCacheServiceDisableQuic(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -3422,4 +3482,15 @@ func expandNetworkServicesEdgeCacheServiceLogConfigSampleRate(v interface{}, d t
 
 func expandNetworkServicesEdgeCacheServiceEdgeSecurityPolicy(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandNetworkServicesEdgeCacheServiceEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }

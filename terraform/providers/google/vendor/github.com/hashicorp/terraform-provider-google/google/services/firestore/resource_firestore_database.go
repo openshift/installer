@@ -20,10 +20,12 @@ package firestore
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -48,12 +50,16 @@ func ResourceFirestoreDatabase() *schema.Resource {
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
+
 		Schema: map[string]*schema.Schema{
 			"location_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
-				Description: `The location of the database. Available databases are listed at
+				Description: `The location of the database. Available locations are listed at
 https://cloud.google.com/firestore/docs/locations.`,
 			},
 			"name": {
@@ -89,15 +95,43 @@ for information about how to choose. Possible values: ["FIRESTORE_NATIVE", "DATA
 				ValidateFunc: verify.ValidateEnum([]string{"OPTIMISTIC", "PESSIMISTIC", "OPTIMISTIC_WITH_ENTITY_GROUPS", ""}),
 				Description:  `The concurrency control mode to use for this database. Possible values: ["OPTIMISTIC", "PESSIMISTIC", "OPTIMISTIC_WITH_ENTITY_GROUPS"]`,
 			},
+			"delete_protection_state": {
+				Type:         schema.TypeString,
+				Computed:     true,
+				Optional:     true,
+				ValidateFunc: verify.ValidateEnum([]string{"DELETE_PROTECTION_STATE_UNSPECIFIED", "DELETE_PROTECTION_ENABLED", "DELETE_PROTECTION_DISABLED", ""}),
+				Description: `State of delete protection for the database.
+When delete protection is enabled, this database cannot be deleted.
+The default value is 'DELETE_PROTECTION_STATE_UNSPECIFIED', which is currently equivalent to 'DELETE_PROTECTION_DISABLED'.
+**Note:** Additionally, to delete this database using 'terraform destroy', 'deletion_policy' must be set to 'DELETE'. Possible values: ["DELETE_PROTECTION_STATE_UNSPECIFIED", "DELETE_PROTECTION_ENABLED", "DELETE_PROTECTION_DISABLED"]`,
+			},
+			"point_in_time_recovery_enablement": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: verify.ValidateEnum([]string{"POINT_IN_TIME_RECOVERY_ENABLED", "POINT_IN_TIME_RECOVERY_DISABLED", ""}),
+				Description: `Whether to enable the PITR feature on this database.
+If 'POINT_IN_TIME_RECOVERY_ENABLED' is selected, reads are supported on selected versions of the data from within the past 7 days.
+versionRetentionPeriod and earliestVersionTime can be used to determine the supported versions. These include reads against any timestamp within the past hour
+and reads against 1-minute snapshots beyond 1 hour and within 7 days.
+If 'POINT_IN_TIME_RECOVERY_DISABLED' is selected, reads are supported on any version of the data from within the past 1 hour. Default value: "POINT_IN_TIME_RECOVERY_DISABLED" Possible values: ["POINT_IN_TIME_RECOVERY_ENABLED", "POINT_IN_TIME_RECOVERY_DISABLED"]`,
+				Default: "POINT_IN_TIME_RECOVERY_DISABLED",
+			},
 			"create_time": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: `The timestamp at which this database was created.`,
+				Description: `Output only. The timestamp at which this database was created.`,
+			},
+			"earliest_version_time": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Description: `Output only. The earliest timestamp at which older versions of the data can be read from the database. See versionRetentionPeriod above; this field is populated with now - versionRetentionPeriod.
+This value is continuously updated, and becomes stale the moment it is queried. If you are using this value to recover data, make sure to account for the time from the moment when the value is queried to the moment when you initiate the recovery.
+A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine fractional digits. Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z".`,
 			},
 			"etag": {
 				Type:     schema.TypeString,
 				Computed: true,
-				Description: `This checksum is computed by the server based on the value of other fields,
+				Description: `Output only. This checksum is computed by the server based on the value of other fields,
 and may be sent on update and delete requests to ensure the client has an
 up-to-date value before proceeding.`,
 			},
@@ -108,6 +142,34 @@ up-to-date value before proceeding.`,
 This keyPrefix is used, in combination with the project id ("~") to construct the application id
 that is returned from the Cloud Datastore APIs in Google App Engine first generation runtimes.
 This value may be empty in which case the appid to use for URL-encoded keys is the project_id (eg: foo instead of v~foo).`,
+			},
+			"uid": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `Output only. The system-generated UUID4 for this Database.`,
+			},
+			"update_time": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `Output only. The timestamp at which this database was most recently updated.`,
+			},
+			"version_retention_period": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Description: `Output only. The period during which past versions of data are retained in the database.
+Any read or query can specify a readTime within this window, and will read the state of the database at that time.
+If the PITR feature is enabled, the retention period is 7 days. Otherwise, the retention period is 1 hour.
+A duration in seconds with up to nine fractional digits, ending with 's'. Example: "3.5s".`,
+			},
+			"deletion_policy": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "ABANDON",
+				Description: `Deletion behavior for this database.
+If the deletion policy is 'ABANDON', the database will be removed from Terraform state but not deleted from Google Cloud upon destruction.
+If the deletion policy is 'DELETE', the database will both be removed from Terraform state and deleted from Google Cloud upon destruction.
+The default value is 'ABANDON'.
+See also 'delete_protection'.`,
 			},
 			"project": {
 				Type:     schema.TypeString,
@@ -158,6 +220,18 @@ func resourceFirestoreDatabaseCreate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("app_engine_integration_mode"); !tpgresource.IsEmptyValue(reflect.ValueOf(appEngineIntegrationModeProp)) && (ok || !reflect.DeepEqual(v, appEngineIntegrationModeProp)) {
 		obj["appEngineIntegrationMode"] = appEngineIntegrationModeProp
 	}
+	pointInTimeRecoveryEnablementProp, err := expandFirestoreDatabasePointInTimeRecoveryEnablement(d.Get("point_in_time_recovery_enablement"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("point_in_time_recovery_enablement"); !tpgresource.IsEmptyValue(reflect.ValueOf(pointInTimeRecoveryEnablementProp)) && (ok || !reflect.DeepEqual(v, pointInTimeRecoveryEnablementProp)) {
+		obj["pointInTimeRecoveryEnablement"] = pointInTimeRecoveryEnablementProp
+	}
+	deleteProtectionStateProp, err := expandFirestoreDatabaseDeleteProtectionState(d.Get("delete_protection_state"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("delete_protection_state"); !tpgresource.IsEmptyValue(reflect.ValueOf(deleteProtectionStateProp)) && (ok || !reflect.DeepEqual(v, deleteProtectionStateProp)) {
+		obj["deleteProtectionState"] = deleteProtectionStateProp
+	}
 	etagProp, err := expandFirestoreDatabaseEtag(d.Get("etag"), d, config)
 	if err != nil {
 		return err
@@ -184,6 +258,7 @@ func resourceFirestoreDatabaseCreate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -192,6 +267,7 @@ func resourceFirestoreDatabaseCreate(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Database: %s", err)
@@ -258,17 +334,25 @@ func resourceFirestoreDatabaseRead(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("FirestoreDatabase %q", d.Id()))
 	}
 
+	// Explicitly set virtual fields to default values if unset
+	if _, ok := d.GetOkExists("deletion_policy"); !ok {
+		if err := d.Set("deletion_policy", "ABANDON"); err != nil {
+			return fmt.Errorf("Error setting deletion_policy: %s", err)
+		}
+	}
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading Database: %s", err)
 	}
@@ -288,13 +372,31 @@ func resourceFirestoreDatabaseRead(d *schema.ResourceData, meta interface{}) err
 	if err := d.Set("app_engine_integration_mode", flattenFirestoreDatabaseAppEngineIntegrationMode(res["appEngineIntegrationMode"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Database: %s", err)
 	}
+	if err := d.Set("point_in_time_recovery_enablement", flattenFirestoreDatabasePointInTimeRecoveryEnablement(res["pointInTimeRecoveryEnablement"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Database: %s", err)
+	}
 	if err := d.Set("key_prefix", flattenFirestoreDatabaseKeyPrefix(res["key_prefix"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Database: %s", err)
+	}
+	if err := d.Set("delete_protection_state", flattenFirestoreDatabaseDeleteProtectionState(res["deleteProtectionState"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Database: %s", err)
 	}
 	if err := d.Set("etag", flattenFirestoreDatabaseEtag(res["etag"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Database: %s", err)
 	}
 	if err := d.Set("create_time", flattenFirestoreDatabaseCreateTime(res["create_time"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Database: %s", err)
+	}
+	if err := d.Set("update_time", flattenFirestoreDatabaseUpdateTime(res["update_time"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Database: %s", err)
+	}
+	if err := d.Set("uid", flattenFirestoreDatabaseUid(res["uid"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Database: %s", err)
+	}
+	if err := d.Set("version_retention_period", flattenFirestoreDatabaseVersionRetentionPeriod(res["versionRetentionPeriod"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Database: %s", err)
+	}
+	if err := d.Set("earliest_version_time", flattenFirestoreDatabaseEarliestVersionTime(res["earliestVersionTime"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Database: %s", err)
 	}
 
@@ -335,6 +437,18 @@ func resourceFirestoreDatabaseUpdate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("app_engine_integration_mode"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, appEngineIntegrationModeProp)) {
 		obj["appEngineIntegrationMode"] = appEngineIntegrationModeProp
 	}
+	pointInTimeRecoveryEnablementProp, err := expandFirestoreDatabasePointInTimeRecoveryEnablement(d.Get("point_in_time_recovery_enablement"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("point_in_time_recovery_enablement"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, pointInTimeRecoveryEnablementProp)) {
+		obj["pointInTimeRecoveryEnablement"] = pointInTimeRecoveryEnablementProp
+	}
+	deleteProtectionStateProp, err := expandFirestoreDatabaseDeleteProtectionState(d.Get("delete_protection_state"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("delete_protection_state"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, deleteProtectionStateProp)) {
+		obj["deleteProtectionState"] = deleteProtectionStateProp
+	}
 	etagProp, err := expandFirestoreDatabaseEtag(d.Get("etag"), d, config)
 	if err != nil {
 		return err
@@ -348,6 +462,7 @@ func resourceFirestoreDatabaseUpdate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	log.Printf("[DEBUG] Updating Database %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("type") {
@@ -360,6 +475,14 @@ func resourceFirestoreDatabaseUpdate(d *schema.ResourceData, meta interface{}) e
 
 	if d.HasChange("app_engine_integration_mode") {
 		updateMask = append(updateMask, "appEngineIntegrationMode")
+	}
+
+	if d.HasChange("point_in_time_recovery_enablement") {
+		updateMask = append(updateMask, "pointInTimeRecoveryEnablement")
+	}
+
+	if d.HasChange("delete_protection_state") {
+		updateMask = append(updateMask, "deleteProtectionState")
 	}
 
 	if d.HasChange("etag") {
@@ -377,48 +500,98 @@ func resourceFirestoreDatabaseUpdate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Database %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Database %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating Database %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Database %q: %#v", d.Id(), res)
+		}
 
-	err = FirestoreOperationWaitTime(
-		config, res, project, "Updating Database", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = FirestoreOperationWaitTime(
+			config, res, project, "Updating Database", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceFirestoreDatabaseRead(d, meta)
 }
 
 func resourceFirestoreDatabaseDelete(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[WARNING] Firestore Database resources"+
-		" cannot be deleted from Google Cloud. The resource %s will be removed from Terraform"+
-		" state, but will still be present on Google Cloud.", d.Id())
-	d.SetId("")
+	config := meta.(*transport_tpg.Config)
+	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
+	if err != nil {
+		return err
+	}
 
+	billingProject := ""
+
+	project, err := tpgresource.GetProject(d, config)
+	if err != nil {
+		return fmt.Errorf("Error fetching project for Database: %s", err)
+	}
+	billingProject = project
+
+	url, err := tpgresource.ReplaceVars(d, config, "{{FirestoreBasePath}}projects/{{project}}/databases/{{name}}")
+	if err != nil {
+		return err
+	}
+
+	var obj map[string]interface{}
+
+	// err == nil indicates that the billing_project value was found
+	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+		billingProject = bp
+	}
+
+	headers := make(http.Header)
+	if deletionPolicy := d.Get("deletion_policy"); deletionPolicy != "DELETE" {
+		log.Printf("[WARN] Firestore database %q deletion_policy is not set to 'DELETE', skipping deletion", d.Get("name").(string))
+		return nil
+	}
+	if deleteProtection := d.Get("delete_protection_state"); deleteProtection == "DELETE_PROTECTION_ENABLED" {
+		return fmt.Errorf("Cannot delete Firestore database %s: Delete Protection is enabled. Set delete_protection_state to DELETE_PROTECTION_DISABLED for this resource and run \"terraform apply\" before attempting to delete it.", d.Get("name").(string))
+	}
+
+	log.Printf("[DEBUG] Deleting Database %q", d.Id())
+	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+		Config:    config,
+		Method:    "DELETE",
+		Project:   billingProject,
+		RawURL:    url,
+		UserAgent: userAgent,
+		Body:      obj,
+		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
+	})
+	if err != nil {
+		return transport_tpg.HandleNotFoundError(err, d, "Database")
+	}
+
+	log.Printf("[DEBUG] Finished deleting Database %q: %#v", d.Id(), res)
 	return nil
 }
 
 func resourceFirestoreDatabaseImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/databases/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/databases/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -429,6 +602,11 @@ func resourceFirestoreDatabaseImport(d *schema.ResourceData, meta interface{}) (
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}
 	d.SetId(id)
+
+	// Explicitly set virtual fields to default values on import
+	if err := d.Set("deletion_policy", "ABANDON"); err != nil {
+		return nil, fmt.Errorf("Error setting deletion_policy: %s", err)
+	}
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -456,7 +634,15 @@ func flattenFirestoreDatabaseAppEngineIntegrationMode(v interface{}, d *schema.R
 	return v
 }
 
+func flattenFirestoreDatabasePointInTimeRecoveryEnablement(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenFirestoreDatabaseKeyPrefix(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenFirestoreDatabaseDeleteProtectionState(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -465,6 +651,22 @@ func flattenFirestoreDatabaseEtag(v interface{}, d *schema.ResourceData, config 
 }
 
 func flattenFirestoreDatabaseCreateTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenFirestoreDatabaseUpdateTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenFirestoreDatabaseUid(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenFirestoreDatabaseVersionRetentionPeriod(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenFirestoreDatabaseEarliestVersionTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -485,6 +687,14 @@ func expandFirestoreDatabaseConcurrencyMode(v interface{}, d tpgresource.Terrafo
 }
 
 func expandFirestoreDatabaseAppEngineIntegrationMode(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandFirestoreDatabasePointInTimeRecoveryEnablement(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandFirestoreDatabaseDeleteProtectionState(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

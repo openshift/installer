@@ -20,6 +20,7 @@ package accessapproval
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -181,6 +182,7 @@ func resourceAccessApprovalOrganizationSettingsCreate(d *schema.ResourceData, me
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("notification_emails") {
@@ -208,6 +210,7 @@ func resourceAccessApprovalOrganizationSettingsCreate(d *schema.ResourceData, me
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating OrganizationSettings: %s", err)
@@ -247,12 +250,14 @@ func resourceAccessApprovalOrganizationSettingsRead(d *schema.ResourceData, meta
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("AccessApprovalOrganizationSettings %q", d.Id()))
@@ -318,6 +323,7 @@ func resourceAccessApprovalOrganizationSettingsUpdate(d *schema.ResourceData, me
 	}
 
 	log.Printf("[DEBUG] Updating OrganizationSettings %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("notification_emails") {
@@ -343,20 +349,25 @@ func resourceAccessApprovalOrganizationSettingsUpdate(d *schema.ResourceData, me
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating OrganizationSettings %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating OrganizationSettings %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating OrganizationSettings %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating OrganizationSettings %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceAccessApprovalOrganizationSettingsRead(d, meta)
@@ -414,8 +425,8 @@ func resourceAccessApprovalOrganizationSettingsDelete(d *schema.ResourceData, me
 func resourceAccessApprovalOrganizationSettingsImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"organizations/(?P<organization_id>[^/]+)/accessApprovalSettings",
-		"(?P<organization_id>[^/]+)",
+		"^organizations/(?P<organization_id>[^/]+)/accessApprovalSettings$",
+		"^(?P<organization_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

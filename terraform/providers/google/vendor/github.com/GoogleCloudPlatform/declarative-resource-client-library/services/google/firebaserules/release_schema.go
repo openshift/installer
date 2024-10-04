@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -125,6 +125,7 @@ func DCLReleaseSchema() *dcl.Schema {
 								Description:         "Format: `projects/{project_id}/releases/{release_id}`\\Firestore Rules Releases will **always** have the name 'cloud.firestore'",
 								Immutable:           true,
 								ForwardSlashAllowed: true,
+								HasLongForm:         true,
 							},
 							"project": &dcl.Property{
 								Type:        "string",
@@ -138,17 +139,20 @@ func DCLReleaseSchema() *dcl.Schema {
 										Parent:   true,
 									},
 								},
+								Parameter: true,
 							},
 							"rulesetName": &dcl.Property{
 								Type:        "string",
 								GoName:      "RulesetName",
 								Description: "Name of the `Ruleset` referred to by this `Release`. The `Ruleset` must exist for the `Release` to be created.",
+								Immutable:   true,
 								ResourceReferences: []*dcl.PropertyResourceReference{
 									&dcl.PropertyResourceReference{
 										Resource: "Firebaserules/Ruleset",
 										Field:    "name",
 									},
 								},
+								HasLongForm: true,
 							},
 							"updateTime": &dcl.Property{
 								Type:        "string",

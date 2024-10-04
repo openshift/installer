@@ -18,16 +18,55 @@
 package compute
 
 import (
+	"bytes"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 )
+
+// Hash based on key, which is either project_id_or_num or network_url.
+func computeServiceAttachmentConsumerAcceptListsHash(v interface{}) int {
+	if v == nil {
+		return 0
+	}
+
+	var buf bytes.Buffer
+	m := v.(map[string]interface{})
+	log.Printf("[DEBUG] hashing %v", m)
+
+	if v, ok := m["project_id_or_num"]; ok {
+		if v == nil {
+			v = ""
+		}
+
+		buf.WriteString(fmt.Sprintf("%v-", v))
+	}
+
+	if v, ok := m["network_url"]; ok {
+		if v == nil {
+			v = ""
+		} else {
+			if networkUrl, err := tpgresource.GetRelativePath(v.(string)); err != nil {
+				log.Printf("[WARN] Error on retrieving relative path of network url: %s", err)
+			} else {
+				v = networkUrl
+			}
+		}
+
+		buf.WriteString(fmt.Sprintf("%v-", v))
+	}
+
+	log.Printf("[DEBUG] computed hash value of %v from %v", tpgresource.Hashcode(buf.String()), buf.String())
+	return tpgresource.Hashcode(buf.String())
+}
 
 func ResourceComputeServiceAttachment() *schema.Resource {
 	return &schema.Resource{
@@ -46,6 +85,11 @@ func ResourceComputeServiceAttachment() *schema.Resource {
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+			tpgresource.DefaultProviderRegion,
+		),
+
 		Schema: map[string]*schema.Schema{
 			"connection_preference": {
 				Type:     schema.TypeString,
@@ -56,7 +100,6 @@ values include "ACCEPT_AUTOMATIC", "ACCEPT_MANUAL".`,
 			"enable_proxy_protocol": {
 				Type:     schema.TypeBool,
 				Required: true,
-				ForceNew: true,
 				Description: `If true, enable the proxy protocol which is for supplying client TCP/IP
 address data in TCP connections that traverse proxies on their way to
 destination servers.`,
@@ -90,25 +133,12 @@ except the last character, which cannot be a dash.`,
 this service attachment.`,
 			},
 			"consumer_accept_lists": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
 				Description: `An array of projects that are allowed to connect to this service
 attachment.`,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"connection_limit": {
-							Type:     schema.TypeInt,
-							Required: true,
-							Description: `The number of consumer forwarding rules the consumer project can
-create.`,
-						},
-						"project_id_or_num": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: `A project that is allowed to connect to this service attachment.`,
-						},
-					},
-				},
+				Elem: computeServiceAttachmentConsumerAcceptListsSchema(),
+				Set:  computeServiceAttachmentConsumerAcceptListsHash,
 			},
 			"consumer_reject_lists": {
 				Type:     schema.TypeList,
@@ -135,6 +165,15 @@ supported is 1.`,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+			},
+			"reconcile_connections": {
+				Type:     schema.TypeBool,
+				Computed: true,
+				Optional: true,
+				Description: `This flag determines whether a consumer accept/reject list change can reconcile the statuses of existing ACCEPTED or REJECTED PSC endpoints.
+
+If false, connection policy update will only affect existing PENDING PSC endpoints. Existing ACCEPTED/REJECTED endpoints will remain untouched regardless how the connection policy is modified .
+If true, update will affect both PENDING and ACCEPTED/REJECTED PSC endpoints. For example, an ACCEPTED PSC endpoint will be moved to REJECTED if its project is added to the reject list.`,
 			},
 			"region": {
 				Type:             schema.TypeString,
@@ -183,6 +222,32 @@ updates of this resource.`,
 			},
 		},
 		UseJSONNumber: true,
+	}
+}
+
+func computeServiceAttachmentConsumerAcceptListsSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"connection_limit": {
+				Type:     schema.TypeInt,
+				Required: true,
+				Description: `The number of consumer forwarding rules the consumer project can
+create.`,
+			},
+			"network_url": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: tpgresource.CompareSelfLinkRelativePaths,
+				Description: `The network that is allowed to connect to this service attachment.
+Only one of project_id_or_num and network_url may be set.`,
+			},
+			"project_id_or_num": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Description: `A project that is allowed to connect to this service attachment.
+Only one of project_id_or_num and network_url may be set.`,
+			},
+		},
 	}
 }
 
@@ -254,6 +319,12 @@ func resourceComputeServiceAttachmentCreate(d *schema.ResourceData, meta interfa
 	} else if v, ok := d.GetOkExists("consumer_accept_lists"); ok || !reflect.DeepEqual(v, consumerAcceptListsProp) {
 		obj["consumerAcceptLists"] = consumerAcceptListsProp
 	}
+	reconcileConnectionsProp, err := expandComputeServiceAttachmentReconcileConnections(d.Get("reconcile_connections"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("reconcile_connections"); ok || !reflect.DeepEqual(v, reconcileConnectionsProp) {
+		obj["reconcileConnections"] = reconcileConnectionsProp
+	}
 	regionProp, err := expandComputeServiceAttachmentRegion(d.Get("region"), d, config)
 	if err != nil {
 		return err
@@ -280,6 +351,7 @@ func resourceComputeServiceAttachmentCreate(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -288,6 +360,7 @@ func resourceComputeServiceAttachmentCreate(d *schema.ResourceData, meta interfa
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating ServiceAttachment: %s", err)
@@ -340,18 +413,28 @@ func resourceComputeServiceAttachmentRead(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeServiceAttachment %q", d.Id()))
 	}
 
 	if err := d.Set("project", project); err != nil {
+		return fmt.Errorf("Error reading ServiceAttachment: %s", err)
+	}
+
+	region, err := tpgresource.GetRegion(d, config)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("region", region); err != nil {
 		return fmt.Errorf("Error reading ServiceAttachment: %s", err)
 	}
 
@@ -388,7 +471,7 @@ func resourceComputeServiceAttachmentRead(d *schema.ResourceData, meta interface
 	if err := d.Set("consumer_accept_lists", flattenComputeServiceAttachmentConsumerAcceptLists(res["consumerAcceptLists"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ServiceAttachment: %s", err)
 	}
-	if err := d.Set("region", flattenComputeServiceAttachmentRegion(res["region"], d, config)); err != nil {
+	if err := d.Set("reconcile_connections", flattenComputeServiceAttachmentReconcileConnections(res["reconcileConnections"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ServiceAttachment: %s", err)
 	}
 	if err := d.Set("self_link", tpgresource.ConvertSelfLinkToV1(res["selfLink"].(string))); err != nil {
@@ -438,6 +521,12 @@ func resourceComputeServiceAttachmentUpdate(d *schema.ResourceData, meta interfa
 	} else if v, ok := d.GetOkExists("nat_subnets"); ok || !reflect.DeepEqual(v, natSubnetsProp) {
 		obj["natSubnets"] = natSubnetsProp
 	}
+	enableProxyProtocolProp, err := expandComputeServiceAttachmentEnableProxyProtocol(d.Get("enable_proxy_protocol"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("enable_proxy_protocol"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, enableProxyProtocolProp)) {
+		obj["enableProxyProtocol"] = enableProxyProtocolProp
+	}
 	consumerRejectListsProp, err := expandComputeServiceAttachmentConsumerRejectLists(d.Get("consumer_reject_lists"), d, config)
 	if err != nil {
 		return err
@@ -449,6 +538,12 @@ func resourceComputeServiceAttachmentUpdate(d *schema.ResourceData, meta interfa
 		return err
 	} else if v, ok := d.GetOkExists("consumer_accept_lists"); ok || !reflect.DeepEqual(v, consumerAcceptListsProp) {
 		obj["consumerAcceptLists"] = consumerAcceptListsProp
+	}
+	reconcileConnectionsProp, err := expandComputeServiceAttachmentReconcileConnections(d.Get("reconcile_connections"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("reconcile_connections"); ok || !reflect.DeepEqual(v, reconcileConnectionsProp) {
+		obj["reconcileConnections"] = reconcileConnectionsProp
 	}
 
 	obj, err = resourceComputeServiceAttachmentUpdateEncoder(d, meta, obj)
@@ -462,6 +557,7 @@ func resourceComputeServiceAttachmentUpdate(d *schema.ResourceData, meta interfa
 	}
 
 	log.Printf("[DEBUG] Updating ServiceAttachment %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -476,6 +572,7 @@ func resourceComputeServiceAttachmentUpdate(d *schema.ResourceData, meta interfa
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -516,13 +613,15 @@ func resourceComputeServiceAttachmentDelete(d *schema.ResourceData, meta interfa
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting ServiceAttachment %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting ServiceAttachment %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -531,6 +630,7 @@ func resourceComputeServiceAttachmentDelete(d *schema.ResourceData, meta interfa
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "ServiceAttachment")
@@ -551,10 +651,10 @@ func resourceComputeServiceAttachmentDelete(d *schema.ResourceData, meta interfa
 func resourceComputeServiceAttachmentImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/serviceAttachments/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/serviceAttachments/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -643,21 +743,26 @@ func flattenComputeServiceAttachmentConsumerAcceptLists(v interface{}, d *schema
 		return v
 	}
 	l := v.([]interface{})
-	transformed := make([]interface{}, 0, len(l))
+	transformed := schema.NewSet(computeServiceAttachmentConsumerAcceptListsHash, []interface{}{})
 	for _, raw := range l {
 		original := raw.(map[string]interface{})
 		if len(original) < 1 {
 			// Do not include empty json objects coming back from the api
 			continue
 		}
-		transformed = append(transformed, map[string]interface{}{
+		transformed.Add(map[string]interface{}{
 			"project_id_or_num": flattenComputeServiceAttachmentConsumerAcceptListsProjectIdOrNum(original["projectIdOrNum"], d, config),
+			"network_url":       flattenComputeServiceAttachmentConsumerAcceptListsNetworkUrl(original["networkUrl"], d, config),
 			"connection_limit":  flattenComputeServiceAttachmentConsumerAcceptListsConnectionLimit(original["connectionLimit"], d, config),
 		})
 	}
 	return transformed
 }
 func flattenComputeServiceAttachmentConsumerAcceptListsProjectIdOrNum(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenComputeServiceAttachmentConsumerAcceptListsNetworkUrl(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -678,11 +783,8 @@ func flattenComputeServiceAttachmentConsumerAcceptListsConnectionLimit(v interfa
 	return v // let terraform core handle it otherwise
 }
 
-func flattenComputeServiceAttachmentRegion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return v
-	}
-	return tpgresource.ConvertSelfLinkToV1(v.(string))
+func flattenComputeServiceAttachmentReconcileConnections(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
 }
 
 func expandComputeServiceAttachmentName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -738,6 +840,7 @@ func expandComputeServiceAttachmentConsumerRejectLists(v interface{}, d tpgresou
 }
 
 func expandComputeServiceAttachmentConsumerAcceptLists(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	v = v.(*schema.Set).List()
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -752,6 +855,13 @@ func expandComputeServiceAttachmentConsumerAcceptLists(v interface{}, d tpgresou
 			return nil, err
 		} else if val := reflect.ValueOf(transformedProjectIdOrNum); val.IsValid() && !tpgresource.IsEmptyValue(val) {
 			transformed["projectIdOrNum"] = transformedProjectIdOrNum
+		}
+
+		transformedNetworkUrl, err := expandComputeServiceAttachmentConsumerAcceptListsNetworkUrl(original["network_url"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedNetworkUrl); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["networkUrl"] = transformedNetworkUrl
 		}
 
 		transformedConnectionLimit, err := expandComputeServiceAttachmentConsumerAcceptListsConnectionLimit(original["connection_limit"], d, config)
@@ -770,7 +880,15 @@ func expandComputeServiceAttachmentConsumerAcceptListsProjectIdOrNum(v interface
 	return v, nil
 }
 
+func expandComputeServiceAttachmentConsumerAcceptListsNetworkUrl(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandComputeServiceAttachmentConsumerAcceptListsConnectionLimit(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeServiceAttachmentReconcileConnections(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -783,7 +901,6 @@ func expandComputeServiceAttachmentRegion(v interface{}, d tpgresource.Terraform
 }
 
 func resourceComputeServiceAttachmentUpdateEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
-
 	// need to send value in PATCH due to validation bug on api b/198329756
 	nameProp := d.Get("name")
 	if v, ok := d.GetOkExists("name"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, nameProp)) {

@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 	cloudresourcemanager "google.golang.org/api/cloudresourcemanager/v1"
 )
@@ -109,7 +109,7 @@ func OperationDone(w Waiter) bool {
 	return false
 }
 
-func CommonRefreshFunc(w Waiter) resource.StateRefreshFunc {
+func CommonRefreshFunc(w Waiter) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		op, err := w.QueryOp()
 		if err != nil {
@@ -140,13 +140,10 @@ func CommonRefreshFunc(w Waiter) resource.StateRefreshFunc {
 
 func OperationWait(w Waiter, activity string, timeout time.Duration, pollInterval time.Duration) error {
 	if OperationDone(w) {
-		if w.Error() != nil {
-			return w.Error()
-		}
-		return nil
+		return w.Error()
 	}
 
-	c := &resource.StateChangeConf{
+	c := &retry.StateChangeConf{
 		Pending:      w.PendingStates(),
 		Target:       w.TargetStates(),
 		Refresh:      CommonRefreshFunc(w),
@@ -156,18 +153,15 @@ func OperationWait(w Waiter, activity string, timeout time.Duration, pollInterva
 	}
 	opRaw, err := c.WaitForState()
 	if err != nil {
-		return fmt.Errorf("Error waiting for %s: %s", activity, err)
+		return fmt.Errorf("Error waiting for %s: %w", activity, err)
 	}
 
 	err = w.SetOp(opRaw)
 	if err != nil {
 		return err
 	}
-	if w.Error() != nil {
-		return w.Error()
-	}
 
-	return nil
+	return w.Error()
 }
 
 // The cloud resource manager API operation is an example of one of many

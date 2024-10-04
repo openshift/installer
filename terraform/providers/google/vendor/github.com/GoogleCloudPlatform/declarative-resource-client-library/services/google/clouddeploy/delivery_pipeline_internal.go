@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -73,6 +73,22 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategy) validate() error {
 	return nil
 }
 func (r *DeliveryPipelineSerialPipelineStagesStrategyStandard) validate() error {
+	if !dcl.IsEmptyValueIndirect(r.Predeploy) {
+		if err := r.Predeploy.validate(); err != nil {
+			return err
+		}
+	}
+	if !dcl.IsEmptyValueIndirect(r.Postdeploy) {
+		if err := r.Postdeploy.validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func (r *DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy) validate() error {
+	return nil
+}
+func (r *DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy) validate() error {
 	return nil
 }
 func (r *DeliveryPipelineSerialPipelineStagesStrategyCanary) validate() error {
@@ -156,6 +172,22 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment) val
 	if err := dcl.Required(r, "percentages"); err != nil {
 		return err
 	}
+	if !dcl.IsEmptyValueIndirect(r.Predeploy) {
+		if err := r.Predeploy.validate(); err != nil {
+			return err
+		}
+	}
+	if !dcl.IsEmptyValueIndirect(r.Postdeploy) {
+		if err := r.Postdeploy.validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy) validate() error {
+	return nil
+}
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy) validate() error {
 	return nil
 }
 func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment) validate() error {
@@ -171,6 +203,22 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymen
 	if err := dcl.Required(r, "percentage"); err != nil {
 		return err
 	}
+	if !dcl.IsEmptyValueIndirect(r.Predeploy) {
+		if err := r.Predeploy.validate(); err != nil {
+			return err
+		}
+	}
+	if !dcl.IsEmptyValueIndirect(r.Postdeploy) {
+		if err := r.Postdeploy.validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy) validate() error {
+	return nil
+}
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy) validate() error {
 	return nil
 }
 func (r *DeliveryPipelineSerialPipelineStagesDeployParameters) validate() error {
@@ -1157,6 +1205,8 @@ func canonicalizeDeliveryPipelineSerialPipelineStagesStrategyStandard(des, initi
 	} else {
 		cDes.Verify = des.Verify
 	}
+	cDes.Predeploy = canonicalizeDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(des.Predeploy, initial.Predeploy, opts...)
+	cDes.Postdeploy = canonicalizeDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(des.Postdeploy, initial.Postdeploy, opts...)
 
 	return cDes
 }
@@ -1206,6 +1256,8 @@ func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyStandard(c *Clie
 	if dcl.BoolCanonicalize(des.Verify, nw.Verify) {
 		nw.Verify = des.Verify
 	}
+	nw.Predeploy = canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(c, des.Predeploy, nw.Predeploy)
+	nw.Postdeploy = canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(c, des.Postdeploy, nw.Postdeploy)
 
 	return nw
 }
@@ -1251,6 +1303,242 @@ func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyStandardSlice(c 
 	for i, d := range des {
 		n := nw[i]
 		items = append(items, *canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyStandard(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(des, initial *DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy, opts ...dcl.ApplyOption) *DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy{}
+
+	if dcl.StringArrayCanonicalize(des.Actions, initial.Actions) {
+		cDes.Actions = initial.Actions
+	} else {
+		cDes.Actions = des.Actions
+	}
+
+	return cDes
+}
+
+func canonicalizeDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploySlice(des, initial []DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy, opts ...dcl.ApplyOption) []DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(c *Client, des, nw *DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy) *DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringArrayCanonicalize(des.Actions, nw.Actions) {
+		nw.Actions = des.Actions
+	}
+
+	return nw
+}
+
+func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploySet(c *Client, des, nw []DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy) []DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareDeliveryPipelineSerialPipelineStagesStrategyStandardPredeployNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploySlice(c *Client, des, nw []DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy) []DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(des, initial *DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy, opts ...dcl.ApplyOption) *DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy{}
+
+	if dcl.StringArrayCanonicalize(des.Actions, initial.Actions) {
+		cDes.Actions = initial.Actions
+	} else {
+		cDes.Actions = des.Actions
+	}
+
+	return cDes
+}
+
+func canonicalizeDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploySlice(des, initial []DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy, opts ...dcl.ApplyOption) []DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(c *Client, des, nw *DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy) *DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringArrayCanonicalize(des.Actions, nw.Actions) {
+		nw.Actions = des.Actions
+	}
+
+	return nw
+}
+
+func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploySet(c *Client, des, nw []DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy) []DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeployNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploySlice(c *Client, des, nw []DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy) []DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(c, &d, &n))
 	}
 
 	return items
@@ -1689,6 +1977,16 @@ func canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig
 	} else {
 		cDes.Deployment = des.Deployment
 	}
+	if dcl.StringCanonicalize(des.RouteUpdateWaitTime, initial.RouteUpdateWaitTime) || dcl.IsZeroValue(des.RouteUpdateWaitTime) {
+		cDes.RouteUpdateWaitTime = initial.RouteUpdateWaitTime
+	} else {
+		cDes.RouteUpdateWaitTime = des.RouteUpdateWaitTime
+	}
+	if dcl.StringCanonicalize(des.StableCutbackDuration, initial.StableCutbackDuration) || dcl.IsZeroValue(des.StableCutbackDuration) {
+		cDes.StableCutbackDuration = initial.StableCutbackDuration
+	} else {
+		cDes.StableCutbackDuration = des.StableCutbackDuration
+	}
 
 	return cDes
 }
@@ -1743,6 +2041,12 @@ func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeCon
 	}
 	if dcl.StringCanonicalize(des.Deployment, nw.Deployment) {
 		nw.Deployment = des.Deployment
+	}
+	if dcl.StringCanonicalize(des.RouteUpdateWaitTime, nw.RouteUpdateWaitTime) {
+		nw.RouteUpdateWaitTime = des.RouteUpdateWaitTime
+	}
+	if dcl.StringCanonicalize(des.StableCutbackDuration, nw.StableCutbackDuration) {
+		nw.StableCutbackDuration = des.StableCutbackDuration
 	}
 
 	return nw
@@ -1947,6 +2251,21 @@ func canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig
 	} else {
 		cDes.AutomaticTrafficControl = des.AutomaticTrafficControl
 	}
+	if dcl.StringArrayCanonicalize(des.CanaryRevisionTags, initial.CanaryRevisionTags) {
+		cDes.CanaryRevisionTags = initial.CanaryRevisionTags
+	} else {
+		cDes.CanaryRevisionTags = des.CanaryRevisionTags
+	}
+	if dcl.StringArrayCanonicalize(des.PriorRevisionTags, initial.PriorRevisionTags) {
+		cDes.PriorRevisionTags = initial.PriorRevisionTags
+	} else {
+		cDes.PriorRevisionTags = des.PriorRevisionTags
+	}
+	if dcl.StringArrayCanonicalize(des.StableRevisionTags, initial.StableRevisionTags) {
+		cDes.StableRevisionTags = initial.StableRevisionTags
+	} else {
+		cDes.StableRevisionTags = des.StableRevisionTags
+	}
 
 	return cDes
 }
@@ -1995,6 +2314,15 @@ func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeCon
 
 	if dcl.BoolCanonicalize(des.AutomaticTrafficControl, nw.AutomaticTrafficControl) {
 		nw.AutomaticTrafficControl = des.AutomaticTrafficControl
+	}
+	if dcl.StringArrayCanonicalize(des.CanaryRevisionTags, nw.CanaryRevisionTags) {
+		nw.CanaryRevisionTags = des.CanaryRevisionTags
+	}
+	if dcl.StringArrayCanonicalize(des.PriorRevisionTags, nw.PriorRevisionTags) {
+		nw.PriorRevisionTags = des.PriorRevisionTags
+	}
+	if dcl.StringArrayCanonicalize(des.StableRevisionTags, nw.StableRevisionTags) {
+		nw.StableRevisionTags = des.StableRevisionTags
 	}
 
 	return nw
@@ -2071,6 +2399,8 @@ func canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploym
 	} else {
 		cDes.Verify = des.Verify
 	}
+	cDes.Predeploy = canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(des.Predeploy, initial.Predeploy, opts...)
+	cDes.Postdeploy = canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(des.Postdeploy, initial.Postdeploy, opts...)
 
 	return cDes
 }
@@ -2120,6 +2450,8 @@ func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDepl
 	if dcl.BoolCanonicalize(des.Verify, nw.Verify) {
 		nw.Verify = des.Verify
 	}
+	nw.Predeploy = canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(c, des.Predeploy, nw.Predeploy)
+	nw.Postdeploy = canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(c, des.Postdeploy, nw.Postdeploy)
 
 	return nw
 }
@@ -2165,6 +2497,242 @@ func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDepl
 	for i, d := range des {
 		n := nw[i]
 		items = append(items, *canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(des, initial *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy, opts ...dcl.ApplyOption) *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy{}
+
+	if dcl.StringArrayCanonicalize(des.Actions, initial.Actions) {
+		cDes.Actions = initial.Actions
+	} else {
+		cDes.Actions = des.Actions
+	}
+
+	return cDes
+}
+
+func canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploySlice(des, initial []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy, opts ...dcl.ApplyOption) []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(c *Client, des, nw *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy) *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringArrayCanonicalize(des.Actions, nw.Actions) {
+		nw.Actions = des.Actions
+	}
+
+	return nw
+}
+
+func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploySet(c *Client, des, nw []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy) []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeployNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploySlice(c *Client, des, nw []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy) []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(des, initial *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy, opts ...dcl.ApplyOption) *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy{}
+
+	if dcl.StringArrayCanonicalize(des.Actions, initial.Actions) {
+		cDes.Actions = initial.Actions
+	} else {
+		cDes.Actions = des.Actions
+	}
+
+	return cDes
+}
+
+func canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploySlice(des, initial []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy, opts ...dcl.ApplyOption) []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(c *Client, des, nw *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy) *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringArrayCanonicalize(des.Actions, nw.Actions) {
+		nw.Actions = des.Actions
+	}
+
+	return nw
+}
+
+func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploySet(c *Client, des, nw []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy) []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeployNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploySlice(c *Client, des, nw []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy) []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(c, &d, &n))
 	}
 
 	return items
@@ -2317,6 +2885,8 @@ func canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryD
 	} else {
 		cDes.Verify = des.Verify
 	}
+	cDes.Predeploy = canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(des.Predeploy, initial.Predeploy, opts...)
+	cDes.Postdeploy = canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(des.Postdeploy, initial.Postdeploy, opts...)
 
 	return cDes
 }
@@ -2372,6 +2942,8 @@ func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCana
 	if dcl.BoolCanonicalize(des.Verify, nw.Verify) {
 		nw.Verify = des.Verify
 	}
+	nw.Predeploy = canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(c, des.Predeploy, nw.Predeploy)
+	nw.Postdeploy = canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(c, des.Postdeploy, nw.Postdeploy)
 
 	return nw
 }
@@ -2417,6 +2989,242 @@ func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCana
 	for i, d := range des {
 		n := nw[i]
 		items = append(items, *canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(des, initial *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy, opts ...dcl.ApplyOption) *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy{}
+
+	if dcl.StringArrayCanonicalize(des.Actions, initial.Actions) {
+		cDes.Actions = initial.Actions
+	} else {
+		cDes.Actions = des.Actions
+	}
+
+	return cDes
+}
+
+func canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploySlice(des, initial []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy, opts ...dcl.ApplyOption) []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(c *Client, des, nw *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy) *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringArrayCanonicalize(des.Actions, nw.Actions) {
+		nw.Actions = des.Actions
+	}
+
+	return nw
+}
+
+func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploySet(c *Client, des, nw []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy) []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeployNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploySlice(c *Client, des, nw []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy) []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(des, initial *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy, opts ...dcl.ApplyOption) *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy{}
+
+	if dcl.StringArrayCanonicalize(des.Actions, initial.Actions) {
+		cDes.Actions = initial.Actions
+	} else {
+		cDes.Actions = des.Actions
+	}
+
+	return cDes
+}
+
+func canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploySlice(des, initial []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy, opts ...dcl.ApplyOption) []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(c *Client, des, nw *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy) *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringArrayCanonicalize(des.Actions, nw.Actions) {
+		nw.Actions = des.Actions
+	}
+
+	return nw
+}
+
+func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploySet(c *Client, des, nw []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy) []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeployNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploySlice(c *Client, des, nw []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy) []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(c, &d, &n))
 	}
 
 	return items
@@ -3296,6 +4104,78 @@ func compareDeliveryPipelineSerialPipelineStagesStrategyStandardNewStyle(d, a in
 		}
 		diffs = append(diffs, ds...)
 	}
+
+	if ds, err := dcl.Diff(desired.Predeploy, actual.Predeploy, dcl.DiffInfo{ObjectFunction: compareDeliveryPipelineSerialPipelineStagesStrategyStandardPredeployNewStyle, EmptyObject: EmptyDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy, OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("Predeploy")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Postdeploy, actual.Postdeploy, dcl.DiffInfo{ObjectFunction: compareDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeployNewStyle, EmptyObject: EmptyDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy, OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("Postdeploy")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareDeliveryPipelineSerialPipelineStagesStrategyStandardPredeployNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy)
+	if !ok {
+		desiredNotPointer, ok := d.(DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy or *DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy)
+	if !ok {
+		actualNotPointer, ok := a.(DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Actions, actual.Actions, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("Actions")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeployNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy)
+	if !ok {
+		desiredNotPointer, ok := d.(DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy or *DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy)
+	if !ok {
+		actualNotPointer, ok := a.(DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Actions, actual.Actions, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("Actions")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
 	return diffs, nil
 }
 
@@ -3454,6 +4334,20 @@ func compareDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKuber
 		}
 		diffs = append(diffs, ds...)
 	}
+
+	if ds, err := dcl.Diff(desired.RouteUpdateWaitTime, actual.RouteUpdateWaitTime, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("RouteUpdateWaitTime")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.StableCutbackDuration, actual.StableCutbackDuration, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("StableCutbackDuration")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
 	return diffs, nil
 }
 
@@ -3526,6 +4420,27 @@ func compareDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloud
 		}
 		diffs = append(diffs, ds...)
 	}
+
+	if ds, err := dcl.Diff(desired.CanaryRevisionTags, actual.CanaryRevisionTags, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("CanaryRevisionTags")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.PriorRevisionTags, actual.PriorRevisionTags, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("PriorRevisionTags")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.StableRevisionTags, actual.StableRevisionTags, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("StableRevisionTags")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
 	return diffs, nil
 }
 
@@ -3557,6 +4472,78 @@ func compareDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentNe
 	}
 
 	if ds, err := dcl.Diff(desired.Verify, actual.Verify, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("Verify")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Predeploy, actual.Predeploy, dcl.DiffInfo{ObjectFunction: compareDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeployNewStyle, EmptyObject: EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy, OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("Predeploy")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Postdeploy, actual.Postdeploy, dcl.DiffInfo{ObjectFunction: compareDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeployNewStyle, EmptyObject: EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy, OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("Postdeploy")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeployNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy)
+	if !ok {
+		desiredNotPointer, ok := d.(DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy or *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy)
+	if !ok {
+		actualNotPointer, ok := a.(DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Actions, actual.Actions, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("Actions")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeployNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy)
+	if !ok {
+		desiredNotPointer, ok := d.(DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy or *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy)
+	if !ok {
+		actualNotPointer, ok := a.(DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Actions, actual.Actions, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("Actions")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3636,6 +4623,78 @@ func compareDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploy
 	}
 
 	if ds, err := dcl.Diff(desired.Verify, actual.Verify, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("Verify")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Predeploy, actual.Predeploy, dcl.DiffInfo{ObjectFunction: compareDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeployNewStyle, EmptyObject: EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy, OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("Predeploy")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Postdeploy, actual.Postdeploy, dcl.DiffInfo{ObjectFunction: compareDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeployNewStyle, EmptyObject: EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy, OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("Postdeploy")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeployNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy)
+	if !ok {
+		desiredNotPointer, ok := d.(DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy or *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy)
+	if !ok {
+		actualNotPointer, ok := a.(DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Actions, actual.Actions, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("Actions")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeployNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy)
+	if !ok {
+		desiredNotPointer, ok := d.(DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy or *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy)
+	if !ok {
+		actualNotPointer, ok := a.(DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Actions, actual.Actions, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("Actions")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -4427,6 +5486,16 @@ func expandDeliveryPipelineSerialPipelineStagesStrategyStandard(c *Client, f *De
 	if v := f.Verify; !dcl.IsEmptyValueIndirect(v) {
 		m["verify"] = v
 	}
+	if v, err := expandDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(c, f.Predeploy, res); err != nil {
+		return nil, fmt.Errorf("error expanding Predeploy into predeploy: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["predeploy"] = v
+	}
+	if v, err := expandDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(c, f.Postdeploy, res); err != nil {
+		return nil, fmt.Errorf("error expanding Postdeploy into postdeploy: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["postdeploy"] = v
+	}
 
 	return m, nil
 }
@@ -4445,6 +5514,236 @@ func flattenDeliveryPipelineSerialPipelineStagesStrategyStandard(c *Client, i in
 		return EmptyDeliveryPipelineSerialPipelineStagesStrategyStandard
 	}
 	r.Verify = dcl.FlattenBool(m["verify"])
+	r.Predeploy = flattenDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(c, m["predeploy"], res)
+	r.Postdeploy = flattenDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(c, m["postdeploy"], res)
+
+	return r
+}
+
+// expandDeliveryPipelineSerialPipelineStagesStrategyStandardPredeployMap expands the contents of DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy into a JSON
+// request object.
+func expandDeliveryPipelineSerialPipelineStagesStrategyStandardPredeployMap(c *Client, f map[string]DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy, res *DeliveryPipeline) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploySlice expands the contents of DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy into a JSON
+// request object.
+func expandDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploySlice(c *Client, f []DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy, res *DeliveryPipeline) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenDeliveryPipelineSerialPipelineStagesStrategyStandardPredeployMap flattens the contents of DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy from a JSON
+// response object.
+func flattenDeliveryPipelineSerialPipelineStagesStrategyStandardPredeployMap(c *Client, i interface{}, res *DeliveryPipeline) map[string]DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy{}
+	}
+
+	if len(a) == 0 {
+		return map[string]DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy{}
+	}
+
+	items := make(map[string]DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy)
+	for k, item := range a {
+		items[k] = *flattenDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploySlice flattens the contents of DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy from a JSON
+// response object.
+func flattenDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploySlice(c *Client, i interface{}, res *DeliveryPipeline) []DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy{}
+	}
+
+	if len(a) == 0 {
+		return []DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy{}
+	}
+
+	items := make([]DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy expands an instance of DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy into a JSON
+// request object.
+func expandDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(c *Client, f *DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy, res *DeliveryPipeline) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Actions; v != nil {
+		m["actions"] = v
+	}
+
+	return m, nil
+}
+
+// flattenDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy flattens an instance of DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy from a JSON
+// response object.
+func flattenDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy(c *Client, i interface{}, res *DeliveryPipeline) *DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyDeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy
+	}
+	r.Actions = dcl.FlattenStringSlice(m["actions"])
+
+	return r
+}
+
+// expandDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeployMap expands the contents of DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy into a JSON
+// request object.
+func expandDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeployMap(c *Client, f map[string]DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy, res *DeliveryPipeline) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploySlice expands the contents of DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy into a JSON
+// request object.
+func expandDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploySlice(c *Client, f []DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy, res *DeliveryPipeline) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeployMap flattens the contents of DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy from a JSON
+// response object.
+func flattenDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeployMap(c *Client, i interface{}, res *DeliveryPipeline) map[string]DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy{}
+	}
+
+	if len(a) == 0 {
+		return map[string]DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy{}
+	}
+
+	items := make(map[string]DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy)
+	for k, item := range a {
+		items[k] = *flattenDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploySlice flattens the contents of DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy from a JSON
+// response object.
+func flattenDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploySlice(c *Client, i interface{}, res *DeliveryPipeline) []DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy{}
+	}
+
+	if len(a) == 0 {
+		return []DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy{}
+	}
+
+	items := make([]DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy expands an instance of DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy into a JSON
+// request object.
+func expandDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(c *Client, f *DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy, res *DeliveryPipeline) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Actions; v != nil {
+		m["actions"] = v
+	}
+
+	return m, nil
+}
+
+// flattenDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy flattens an instance of DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy from a JSON
+// response object.
+func flattenDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy(c *Client, i interface{}, res *DeliveryPipeline) *DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy
+	}
+	r.Actions = dcl.FlattenStringSlice(m["actions"])
 
 	return r
 }
@@ -4919,6 +6218,12 @@ func expandDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubern
 	if v := f.Deployment; !dcl.IsEmptyValueIndirect(v) {
 		m["deployment"] = v
 	}
+	if v := f.RouteUpdateWaitTime; !dcl.IsEmptyValueIndirect(v) {
+		m["routeUpdateWaitTime"] = v
+	}
+	if v := f.StableCutbackDuration; !dcl.IsEmptyValueIndirect(v) {
+		m["stableCutbackDuration"] = v
+	}
 
 	return m, nil
 }
@@ -4939,6 +6244,8 @@ func flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKuber
 	r.HttpRoute = dcl.FlattenString(m["httpRoute"])
 	r.Service = dcl.FlattenString(m["service"])
 	r.Deployment = dcl.FlattenString(m["deployment"])
+	r.RouteUpdateWaitTime = dcl.FlattenString(m["routeUpdateWaitTime"])
+	r.StableCutbackDuration = dcl.FlattenString(m["stableCutbackDuration"])
 
 	return r
 }
@@ -5157,6 +6464,15 @@ func expandDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudR
 	if v := f.AutomaticTrafficControl; !dcl.IsEmptyValueIndirect(v) {
 		m["automaticTrafficControl"] = v
 	}
+	if v := f.CanaryRevisionTags; v != nil {
+		m["canaryRevisionTags"] = v
+	}
+	if v := f.PriorRevisionTags; v != nil {
+		m["priorRevisionTags"] = v
+	}
+	if v := f.StableRevisionTags; v != nil {
+		m["stableRevisionTags"] = v
+	}
 
 	return m, nil
 }
@@ -5175,6 +6491,9 @@ func flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloud
 		return EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun
 	}
 	r.AutomaticTrafficControl = dcl.FlattenBool(m["automaticTrafficControl"])
+	r.CanaryRevisionTags = dcl.FlattenStringSlice(m["canaryRevisionTags"])
+	r.PriorRevisionTags = dcl.FlattenStringSlice(m["priorRevisionTags"])
+	r.StableRevisionTags = dcl.FlattenStringSlice(m["stableRevisionTags"])
 
 	return r
 }
@@ -5274,6 +6593,16 @@ func expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment(c 
 	if v := f.Verify; !dcl.IsEmptyValueIndirect(v) {
 		m["verify"] = v
 	}
+	if v, err := expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(c, f.Predeploy, res); err != nil {
+		return nil, fmt.Errorf("error expanding Predeploy into predeploy: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["predeploy"] = v
+	}
+	if v, err := expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(c, f.Postdeploy, res); err != nil {
+		return nil, fmt.Errorf("error expanding Postdeploy into postdeploy: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["postdeploy"] = v
+	}
 
 	return m, nil
 }
@@ -5293,6 +6622,236 @@ func flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment(c
 	}
 	r.Percentages = dcl.FlattenIntSlice(m["percentages"])
 	r.Verify = dcl.FlattenBool(m["verify"])
+	r.Predeploy = flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(c, m["predeploy"], res)
+	r.Postdeploy = flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(c, m["postdeploy"], res)
+
+	return r
+}
+
+// expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeployMap expands the contents of DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy into a JSON
+// request object.
+func expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeployMap(c *Client, f map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy, res *DeliveryPipeline) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploySlice expands the contents of DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy into a JSON
+// request object.
+func expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploySlice(c *Client, f []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy, res *DeliveryPipeline) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeployMap flattens the contents of DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy from a JSON
+// response object.
+func flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeployMap(c *Client, i interface{}, res *DeliveryPipeline) map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy{}
+	}
+
+	if len(a) == 0 {
+		return map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy{}
+	}
+
+	items := make(map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy)
+	for k, item := range a {
+		items[k] = *flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploySlice flattens the contents of DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy from a JSON
+// response object.
+func flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploySlice(c *Client, i interface{}, res *DeliveryPipeline) []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy{}
+	}
+
+	if len(a) == 0 {
+		return []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy{}
+	}
+
+	items := make([]DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy expands an instance of DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy into a JSON
+// request object.
+func expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(c *Client, f *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy, res *DeliveryPipeline) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Actions; v != nil {
+		m["actions"] = v
+	}
+
+	return m, nil
+}
+
+// flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy flattens an instance of DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy from a JSON
+// response object.
+func flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy(c *Client, i interface{}, res *DeliveryPipeline) *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy
+	}
+	r.Actions = dcl.FlattenStringSlice(m["actions"])
+
+	return r
+}
+
+// expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeployMap expands the contents of DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy into a JSON
+// request object.
+func expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeployMap(c *Client, f map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy, res *DeliveryPipeline) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploySlice expands the contents of DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy into a JSON
+// request object.
+func expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploySlice(c *Client, f []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy, res *DeliveryPipeline) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeployMap flattens the contents of DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy from a JSON
+// response object.
+func flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeployMap(c *Client, i interface{}, res *DeliveryPipeline) map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy{}
+	}
+
+	if len(a) == 0 {
+		return map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy{}
+	}
+
+	items := make(map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy)
+	for k, item := range a {
+		items[k] = *flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploySlice flattens the contents of DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy from a JSON
+// response object.
+func flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploySlice(c *Client, i interface{}, res *DeliveryPipeline) []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy{}
+	}
+
+	if len(a) == 0 {
+		return []DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy{}
+	}
+
+	items := make([]DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy expands an instance of DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy into a JSON
+// request object.
+func expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(c *Client, f *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy, res *DeliveryPipeline) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Actions; v != nil {
+		m["actions"] = v
+	}
+
+	return m, nil
+}
+
+// flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy flattens an instance of DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy from a JSON
+// response object.
+func flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy(c *Client, i interface{}, res *DeliveryPipeline) *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy
+	}
+	r.Actions = dcl.FlattenStringSlice(m["actions"])
 
 	return r
 }
@@ -5514,6 +7073,16 @@ func expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploym
 	if v := f.Verify; !dcl.IsEmptyValueIndirect(v) {
 		m["verify"] = v
 	}
+	if v, err := expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(c, f.Predeploy, res); err != nil {
+		return nil, fmt.Errorf("error expanding Predeploy into predeploy: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["predeploy"] = v
+	}
+	if v, err := expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(c, f.Postdeploy, res); err != nil {
+		return nil, fmt.Errorf("error expanding Postdeploy into postdeploy: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["postdeploy"] = v
+	}
 
 	return m, nil
 }
@@ -5535,6 +7104,236 @@ func flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploy
 	r.Percentage = dcl.FlattenInteger(m["percentage"])
 	r.Profiles = dcl.FlattenStringSlice(m["profiles"])
 	r.Verify = dcl.FlattenBool(m["verify"])
+	r.Predeploy = flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(c, m["predeploy"], res)
+	r.Postdeploy = flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(c, m["postdeploy"], res)
+
+	return r
+}
+
+// expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeployMap expands the contents of DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy into a JSON
+// request object.
+func expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeployMap(c *Client, f map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy, res *DeliveryPipeline) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploySlice expands the contents of DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy into a JSON
+// request object.
+func expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploySlice(c *Client, f []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy, res *DeliveryPipeline) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeployMap flattens the contents of DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy from a JSON
+// response object.
+func flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeployMap(c *Client, i interface{}, res *DeliveryPipeline) map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy{}
+	}
+
+	if len(a) == 0 {
+		return map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy{}
+	}
+
+	items := make(map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy)
+	for k, item := range a {
+		items[k] = *flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploySlice flattens the contents of DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy from a JSON
+// response object.
+func flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploySlice(c *Client, i interface{}, res *DeliveryPipeline) []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy{}
+	}
+
+	if len(a) == 0 {
+		return []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy{}
+	}
+
+	items := make([]DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy expands an instance of DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy into a JSON
+// request object.
+func expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(c *Client, f *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy, res *DeliveryPipeline) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Actions; v != nil {
+		m["actions"] = v
+	}
+
+	return m, nil
+}
+
+// flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy flattens an instance of DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy from a JSON
+// response object.
+func flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy(c *Client, i interface{}, res *DeliveryPipeline) *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy
+	}
+	r.Actions = dcl.FlattenStringSlice(m["actions"])
+
+	return r
+}
+
+// expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeployMap expands the contents of DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy into a JSON
+// request object.
+func expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeployMap(c *Client, f map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy, res *DeliveryPipeline) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploySlice expands the contents of DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy into a JSON
+// request object.
+func expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploySlice(c *Client, f []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy, res *DeliveryPipeline) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeployMap flattens the contents of DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy from a JSON
+// response object.
+func flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeployMap(c *Client, i interface{}, res *DeliveryPipeline) map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy{}
+	}
+
+	if len(a) == 0 {
+		return map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy{}
+	}
+
+	items := make(map[string]DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy)
+	for k, item := range a {
+		items[k] = *flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploySlice flattens the contents of DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy from a JSON
+// response object.
+func flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploySlice(c *Client, i interface{}, res *DeliveryPipeline) []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy{}
+	}
+
+	if len(a) == 0 {
+		return []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy{}
+	}
+
+	items := make([]DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy expands an instance of DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy into a JSON
+// request object.
+func expandDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(c *Client, f *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy, res *DeliveryPipeline) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Actions; v != nil {
+		m["actions"] = v
+	}
+
+	return m, nil
+}
+
+// flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy flattens an instance of DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy from a JSON
+// response object.
+func flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy(c *Client, i interface{}, res *DeliveryPipeline) *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy
+	}
+	r.Actions = dcl.FlattenStringSlice(m["actions"])
 
 	return r
 }
@@ -6304,6 +8103,34 @@ func extractDeliveryPipelineSerialPipelineStagesStrategyFields(r *DeliveryPipeli
 	return nil
 }
 func extractDeliveryPipelineSerialPipelineStagesStrategyStandardFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyStandard) error {
+	vPredeploy := o.Predeploy
+	if vPredeploy == nil {
+		// note: explicitly not the empty object.
+		vPredeploy = &DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy{}
+	}
+	if err := extractDeliveryPipelineSerialPipelineStagesStrategyStandardPredeployFields(r, vPredeploy); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vPredeploy) {
+		o.Predeploy = vPredeploy
+	}
+	vPostdeploy := o.Postdeploy
+	if vPostdeploy == nil {
+		// note: explicitly not the empty object.
+		vPostdeploy = &DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy{}
+	}
+	if err := extractDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeployFields(r, vPostdeploy); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vPostdeploy) {
+		o.Postdeploy = vPostdeploy
+	}
+	return nil
+}
+func extractDeliveryPipelineSerialPipelineStagesStrategyStandardPredeployFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy) error {
+	return nil
+}
+func extractDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeployFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy) error {
 	return nil
 }
 func extractDeliveryPipelineSerialPipelineStagesStrategyCanaryFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyCanary) error {
@@ -6402,12 +8229,68 @@ func extractDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloud
 	return nil
 }
 func extractDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment) error {
+	vPredeploy := o.Predeploy
+	if vPredeploy == nil {
+		// note: explicitly not the empty object.
+		vPredeploy = &DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy{}
+	}
+	if err := extractDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeployFields(r, vPredeploy); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vPredeploy) {
+		o.Predeploy = vPredeploy
+	}
+	vPostdeploy := o.Postdeploy
+	if vPostdeploy == nil {
+		// note: explicitly not the empty object.
+		vPostdeploy = &DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy{}
+	}
+	if err := extractDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeployFields(r, vPostdeploy); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vPostdeploy) {
+		o.Postdeploy = vPostdeploy
+	}
+	return nil
+}
+func extractDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeployFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy) error {
+	return nil
+}
+func extractDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeployFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy) error {
 	return nil
 }
 func extractDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment) error {
 	return nil
 }
 func extractDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs) error {
+	vPredeploy := o.Predeploy
+	if vPredeploy == nil {
+		// note: explicitly not the empty object.
+		vPredeploy = &DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy{}
+	}
+	if err := extractDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeployFields(r, vPredeploy); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vPredeploy) {
+		o.Predeploy = vPredeploy
+	}
+	vPostdeploy := o.Postdeploy
+	if vPostdeploy == nil {
+		// note: explicitly not the empty object.
+		vPostdeploy = &DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy{}
+	}
+	if err := extractDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeployFields(r, vPostdeploy); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vPostdeploy) {
+		o.Postdeploy = vPostdeploy
+	}
+	return nil
+}
+func extractDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeployFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy) error {
+	return nil
+}
+func extractDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeployFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy) error {
 	return nil
 }
 func extractDeliveryPipelineSerialPipelineStagesDeployParametersFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesDeployParameters) error {
@@ -6527,6 +8410,34 @@ func postReadExtractDeliveryPipelineSerialPipelineStagesStrategyFields(r *Delive
 	return nil
 }
 func postReadExtractDeliveryPipelineSerialPipelineStagesStrategyStandardFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyStandard) error {
+	vPredeploy := o.Predeploy
+	if vPredeploy == nil {
+		// note: explicitly not the empty object.
+		vPredeploy = &DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy{}
+	}
+	if err := extractDeliveryPipelineSerialPipelineStagesStrategyStandardPredeployFields(r, vPredeploy); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vPredeploy) {
+		o.Predeploy = vPredeploy
+	}
+	vPostdeploy := o.Postdeploy
+	if vPostdeploy == nil {
+		// note: explicitly not the empty object.
+		vPostdeploy = &DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy{}
+	}
+	if err := extractDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeployFields(r, vPostdeploy); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vPostdeploy) {
+		o.Postdeploy = vPostdeploy
+	}
+	return nil
+}
+func postReadExtractDeliveryPipelineSerialPipelineStagesStrategyStandardPredeployFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyStandardPredeploy) error {
+	return nil
+}
+func postReadExtractDeliveryPipelineSerialPipelineStagesStrategyStandardPostdeployFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyStandardPostdeploy) error {
 	return nil
 }
 func postReadExtractDeliveryPipelineSerialPipelineStagesStrategyCanaryFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyCanary) error {
@@ -6625,12 +8536,68 @@ func postReadExtractDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeCon
 	return nil
 }
 func postReadExtractDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment) error {
+	vPredeploy := o.Predeploy
+	if vPredeploy == nil {
+		// note: explicitly not the empty object.
+		vPredeploy = &DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy{}
+	}
+	if err := extractDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeployFields(r, vPredeploy); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vPredeploy) {
+		o.Predeploy = vPredeploy
+	}
+	vPostdeploy := o.Postdeploy
+	if vPostdeploy == nil {
+		// note: explicitly not the empty object.
+		vPostdeploy = &DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy{}
+	}
+	if err := extractDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeployFields(r, vPostdeploy); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vPostdeploy) {
+		o.Postdeploy = vPostdeploy
+	}
+	return nil
+}
+func postReadExtractDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeployFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPredeploy) error {
+	return nil
+}
+func postReadExtractDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeployFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeploymentPostdeploy) error {
 	return nil
 }
 func postReadExtractDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment) error {
 	return nil
 }
 func postReadExtractDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs) error {
+	vPredeploy := o.Predeploy
+	if vPredeploy == nil {
+		// note: explicitly not the empty object.
+		vPredeploy = &DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy{}
+	}
+	if err := extractDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeployFields(r, vPredeploy); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vPredeploy) {
+		o.Predeploy = vPredeploy
+	}
+	vPostdeploy := o.Postdeploy
+	if vPostdeploy == nil {
+		// note: explicitly not the empty object.
+		vPostdeploy = &DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy{}
+	}
+	if err := extractDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeployFields(r, vPostdeploy); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vPostdeploy) {
+		o.Postdeploy = vPostdeploy
+	}
+	return nil
+}
+func postReadExtractDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeployFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPredeploy) error {
+	return nil
+}
+func postReadExtractDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeployFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigsPostdeploy) error {
 	return nil
 }
 func postReadExtractDeliveryPipelineSerialPipelineStagesDeployParametersFields(r *DeliveryPipeline, o *DeliveryPipelineSerialPipelineStagesDeployParameters) error {

@@ -5,11 +5,11 @@ package compute
 import (
 	"fmt"
 	"log"
-	"regexp"
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -33,6 +33,10 @@ func ResourceComputeInstanceGroupManager() *schema.Resource {
 			Update: schema.DefaultTimeout(15 * time.Minute),
 			Delete: schema.DefaultTimeout(15 * time.Minute),
 		},
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+			tpgresource.DefaultProviderZone,
+		),
 		Schema: map[string]*schema.Schema{
 			"base_instance_name": {
 				Type:        schema.TypeString,
@@ -99,6 +103,12 @@ func ResourceComputeInstanceGroupManager() *schema.Resource {
 				Computed:    true,
 				ForceNew:    true,
 				Description: `The zone that instances in this group should be created in.`,
+			},
+
+			"creation_timestamp": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `Creation timestamp in RFC3339 text format.`,
 			},
 
 			"description": {
@@ -214,8 +224,8 @@ func ResourceComputeInstanceGroupManager() *schema.Resource {
 						"minimal_action": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{"REFRESH", "RESTART", "REPLACE"}, false),
-							Description:  `Minimal action to be taken on an instance. You can specify either REFRESH to update without stopping instances, RESTART to restart existing instances or REPLACE to delete and create new instances from the target template. If you specify a REFRESH, the Updater will attempt to perform that action only. However, if the Updater determines that the minimal action you specify is not enough to perform the update, it might perform a more disruptive action.`,
+							ValidateFunc: validation.StringInSlice([]string{"NONE", "REFRESH", "RESTART", "REPLACE"}, false),
+							Description:  `Minimal action to be taken on an instance. You can specify either NONE to forbid any actions, REFRESH to update without stopping instances, RESTART to restart existing instances or REPLACE to delete and create new instances from the target template. If you specify a REFRESH, the Updater will attempt to perform that action only. However, if the Updater determines that the minimal action you specify is not enough to perform the update, it might perform a more disruptive action.`,
 						},
 
 						"most_disruptive_allowed_action": {
@@ -275,6 +285,56 @@ func ResourceComputeInstanceGroupManager() *schema.Resource {
 				},
 			},
 
+			"instance_lifecycle_policy": {
+				Computed:    true,
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Description: `The instance lifecycle policy for this managed instance group.`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"default_action_on_failure": {
+							Type:         schema.TypeString,
+							Default:      "REPAIR",
+							Optional:     true,
+							ValidateFunc: validation.StringInSlice([]string{"REPAIR", "DO_NOTHING"}, true),
+							Description:  `Default behavior for all instance or health check failures.`,
+						},
+						"force_update_on_repair": {
+							Type:         schema.TypeString,
+							Default:      "NO",
+							Optional:     true,
+							ValidateFunc: validation.StringInSlice([]string{"YES", "NO"}, true),
+							Description:  `Specifies whether to apply the group's latest configuration when repairing a VM. Valid options are: YES, NO. If YES and you updated the group's instance template or per-instance configurations after the VM was created, then these changes are applied when VM is repaired. If NO (default), then updates are applied in accordance with the group's update policy type.`,
+						},
+					},
+				},
+			},
+
+			"all_instances_config": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Description: `Specifies configuration that overrides the instance template configuration for the group.`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"metadata": {
+							Type:        schema.TypeMap,
+							Optional:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         schema.HashString,
+							Description: `The metadata key-value pairs that you want to patch onto the instance. For more information, see Project and instance metadata,`,
+						},
+						"labels": {
+							Type:        schema.TypeMap,
+							Optional:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         schema.HashString,
+							Description: `The label key-value pairs that you want to patch onto the instance,`,
+						},
+					},
+				},
+			},
 			"wait_for_instances": {
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -286,8 +346,49 @@ func ResourceComputeInstanceGroupManager() *schema.Resource {
 				Optional:     true,
 				Default:      "STABLE",
 				ValidateFunc: validation.StringInSlice([]string{"STABLE", "UPDATED"}, false),
-
-				Description: `When used with wait_for_instances specifies the status to wait for. When STABLE is specified this resource will wait until the instances are stable before returning. When UPDATED is set, it will wait for the version target to be reached and any per instance configs to be effective as well as all instances to be stable before returning.`,
+				Description:  `When used with wait_for_instances specifies the status to wait for. When STABLE is specified this resource will wait until the instances are stable before returning. When UPDATED is set, it will wait for the version target to be reached and any per instance configs to be effective and all instances configs to be effective as well as all instances to be stable before returning.`,
+			},
+			"stateful_internal_ip": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `External IPs considered stateful by the instance group. `,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"interface_name": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: `The network interface name`,
+						},
+						"delete_rule": {
+							Type:         schema.TypeString,
+							Default:      "NEVER",
+							Optional:     true,
+							ValidateFunc: validation.StringInSlice([]string{"NEVER", "ON_PERMANENT_INSTANCE_DELETION"}, true),
+							Description:  `A value that prescribes what should happen to an associated static Address resource when a VM instance is permanently deleted. The available options are NEVER and ON_PERMANENT_INSTANCE_DELETION. NEVER - detach the IP when the VM is deleted, but do not delete the address resource. ON_PERMANENT_INSTANCE_DELETION will delete the stateful address when the VM is permanently deleted from the instance group. The default is NEVER.`,
+						},
+					},
+				},
+			},
+			"stateful_external_ip": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `External IPs considered stateful by the instance group. `,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"interface_name": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: `The network interface name`,
+						},
+						"delete_rule": {
+							Type:         schema.TypeString,
+							Default:      "NEVER",
+							Optional:     true,
+							ValidateFunc: validation.StringInSlice([]string{"NEVER", "ON_PERMANENT_INSTANCE_DELETION"}, true),
+							Description:  `A value that prescribes what should happen to an associated static Address resource when a VM instance is permanently deleted. The available options are NEVER and ON_PERMANENT_INSTANCE_DELETION. NEVER - detach the IP when the VM is deleted, but do not delete the address resource. ON_PERMANENT_INSTANCE_DELETION will delete the stateful address when the VM is permanently deleted from the instance group. The default is NEVER.`,
+						},
+					},
+				},
 			},
 			"stateful_disk": {
 				Type:        schema.TypeSet,
@@ -341,6 +442,25 @@ func ResourceComputeInstanceGroupManager() *schema.Resource {
 								},
 							},
 						},
+						"all_instances_config": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: `Status of all-instances configuration on the group.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"effective": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: `A bit indicating whether this configuration has been applied to all managed instances in the group.`,
+									},
+									"current_revision": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: `Current all-instances configuration revision. This value is in RFC3339 text format.`,
+									},
+								},
+							},
+						},
 						"stateful": {
 							Type:        schema.TypeList,
 							Computed:    true,
@@ -355,7 +475,7 @@ func ResourceComputeInstanceGroupManager() *schema.Resource {
 									"per_instance_configs": {
 										Type:        schema.TypeList,
 										Computed:    true,
-										Description: `Status of per-instance configs on the instance.`,
+										Description: `Status of per-instance configs on the instances.`,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"all_effective": {
@@ -459,6 +579,8 @@ func resourceComputeInstanceGroupManagerCreate(d *schema.ResourceData, meta inte
 		AutoHealingPolicies:         expandAutoHealingPolicies(d.Get("auto_healing_policies").([]interface{})),
 		Versions:                    expandVersions(d.Get("version").([]interface{})),
 		UpdatePolicy:                expandUpdatePolicy(d.Get("update_policy").([]interface{})),
+		InstanceLifecyclePolicy:     expandInstanceLifecyclePolicy(d.Get("instance_lifecycle_policy").([]interface{})),
+		AllInstancesConfig:          expandAllInstancesConfig(nil, d.Get("all_instances_config").([]interface{})),
 		StatefulPolicy:              expandStatefulPolicy(d),
 
 		// Force send TargetSize to allow a value of 0.
@@ -599,8 +721,8 @@ func resourceComputeInstanceGroupManagerRead(d *schema.ResourceData, meta interf
 			Name: operation,
 			Zone: zone,
 		}
-		if err := d.Set("operation", op.Name); err != nil {
-			return fmt.Errorf("Error setting operation: %s", err)
+		if err := d.Set("operation", ""); err != nil {
+			return fmt.Errorf("Error unsetting operation: %s", err)
 		}
 		err = ComputeOperationWaitTime(config, op, project, "Creating InstanceGroupManager", userAgent, d.Timeout(schema.TimeoutCreate))
 		if err != nil {
@@ -630,6 +752,9 @@ func resourceComputeInstanceGroupManagerRead(d *schema.ResourceData, meta interf
 	if err := d.Set("zone", tpgresource.GetResourceNameFromSelfLink(manager.Zone)); err != nil {
 		return fmt.Errorf("Error setting zone: %s", err)
 	}
+	if err := d.Set("creation_timestamp", manager.CreationTimestamp); err != nil {
+		return fmt.Errorf("Error reading creation_timestamp: %s", err)
+	}
 	if err := d.Set("description", manager.Description); err != nil {
 		return fmt.Errorf("Error setting description: %s", err)
 	}
@@ -651,6 +776,12 @@ func resourceComputeInstanceGroupManagerRead(d *schema.ResourceData, meta interf
 	if err = d.Set("stateful_disk", flattenStatefulPolicy(manager.StatefulPolicy)); err != nil {
 		return fmt.Errorf("Error setting stateful_disk in state: %s", err.Error())
 	}
+	if err = d.Set("stateful_internal_ip", flattenStatefulPolicyStatefulInternalIps(d, manager.StatefulPolicy)); err != nil {
+		return fmt.Errorf("Error setting stateful_internal_ip in state: %s", err.Error())
+	}
+	if err = d.Set("stateful_external_ip", flattenStatefulPolicyStatefulExternalIps(d, manager.StatefulPolicy)); err != nil {
+		return fmt.Errorf("Error setting stateful_external_ip in state: %s", err.Error())
+	}
 	if err := d.Set("fingerprint", manager.Fingerprint); err != nil {
 		return fmt.Errorf("Error setting fingerprint: %s", err)
 	}
@@ -669,6 +800,14 @@ func resourceComputeInstanceGroupManagerRead(d *schema.ResourceData, meta interf
 	}
 	if err = d.Set("update_policy", flattenUpdatePolicy(manager.UpdatePolicy)); err != nil {
 		return fmt.Errorf("Error setting update_policy in state: %s", err.Error())
+	}
+	if err = d.Set("instance_lifecycle_policy", flattenInstanceLifecyclePolicy(manager.InstanceLifecyclePolicy)); err != nil {
+		return fmt.Errorf("Error setting instance lifecycle policy in state: %s", err.Error())
+	}
+	if manager.AllInstancesConfig != nil {
+		if err = d.Set("all_instances_config", flattenAllInstancesConfig(manager.AllInstancesConfig)); err != nil {
+			return fmt.Errorf("Error setting all_instances_config in state: %s", err.Error())
+		}
 	}
 	if err = d.Set("status", flattenStatus(manager.Status)); err != nil {
 		return fmt.Errorf("Error setting status in state: %s", err.Error())
@@ -735,7 +874,22 @@ func resourceComputeInstanceGroupManagerUpdate(d *schema.ResourceData, meta inte
 		change = true
 	}
 
-	if d.HasChange("stateful_disk") {
+	if d.HasChange("instance_lifecycle_policy") {
+		updatedManager.InstanceLifecyclePolicy = expandInstanceLifecyclePolicy(d.Get("instance_lifecycle_policy").([]interface{}))
+		change = true
+	}
+
+	if d.HasChange("all_instances_config") {
+		oldAic, newAic := d.GetChange("all_instances_config")
+		if newAic == nil || len(newAic.([]interface{})) == 0 {
+			updatedManager.NullFields = append(updatedManager.NullFields, "AllInstancesConfig")
+		} else {
+			updatedManager.AllInstancesConfig = expandAllInstancesConfig(oldAic.([]interface{}), newAic.([]interface{}))
+		}
+		change = true
+	}
+
+	if d.HasChange("stateful_internal_ip") || d.HasChange("stateful_external_ip") || d.HasChange("stateful_disk") {
 		updatedManager.StatefulPolicy = expandStatefulPolicy(d)
 		change = true
 	}
@@ -817,21 +971,6 @@ func resourceComputeInstanceGroupManagerUpdate(d *schema.ResourceData, meta inte
 func resourceComputeInstanceGroupManagerDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*transport_tpg.Config)
 
-	if d.Get("wait_for_instances").(bool) {
-		err := computeIGMWaitForInstanceStatus(d, meta)
-		if err != nil {
-			notFound, reErr := regexp.MatchString(`not found`, err.Error())
-			if reErr != nil {
-				return reErr
-			}
-			if notFound {
-				// manager was not found, we can exit gracefully
-				return nil
-			}
-			return err
-		}
-	}
-
 	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
@@ -890,8 +1029,8 @@ func resourceComputeInstanceGroupManagerDelete(d *schema.ResourceData, meta inte
 
 func computeIGMWaitForInstanceStatus(d *schema.ResourceData, meta interface{}) error {
 	waitForUpdates := d.Get("wait_for_instances_status").(string) == "UPDATED"
-	conf := resource.StateChangeConf{
-		Pending: []string{"creating", "error", "updating per instance configs", "reaching version target"},
+	conf := retry.StateChangeConf{
+		Pending: []string{"creating", "error", "updating per instance configs", "reaching version target", "updating all instances config"},
 		Target:  []string{"created"},
 		Refresh: waitForInstancesRefreshFunc(getManager, waitForUpdates, d, meta),
 		Timeout: d.Timeout(schema.TimeoutCreate),
@@ -950,6 +1089,34 @@ func expandStatefulPolicy(d *schema.ResourceData) *compute.StatefulPolicy {
 		preservedState.Disks = disks
 	}
 
+	if d.HasChange("stateful_internal_ip") {
+		oldInternalIps, newInternalIps := d.GetChange("stateful_internal_ip")
+		preservedState.InternalIPs = expandStatefulIps(newInternalIps.([]interface{}))
+		// Remove Internal Ips
+		for _, raw := range oldInternalIps.([]interface{}) {
+			data := raw.(map[string]interface{})
+			networkIp := data["interface_name"].(string)
+			if _, exist := preservedState.InternalIPs[networkIp]; !exist {
+				preservedState.NullFields = append(preservedState.NullFields, "InternalIPs."+networkIp)
+			}
+		}
+		preservedState.ForceSendFields = append(preservedState.ForceSendFields, "InternalIPs")
+	}
+
+	if d.HasChange("stateful_external_ip") {
+		oldExternalIps, newExternalIps := d.GetChange("stateful_external_ip")
+		preservedState.ExternalIPs = expandStatefulIps(newExternalIps.([]interface{}))
+		// Remove External Ips
+		for _, raw := range oldExternalIps.([]interface{}) {
+			data := raw.(map[string]interface{})
+			networkIp := data["interface_name"].(string)
+			if _, exist := preservedState.ExternalIPs[networkIp]; !exist {
+				preservedState.NullFields = append(preservedState.NullFields, "ExternalIPs."+networkIp)
+			}
+		}
+		preservedState.ForceSendFields = append(preservedState.ForceSendFields, "ExternalIPs")
+	}
+
 	statefulPolicy := &compute.StatefulPolicy{PreservedState: preservedState}
 	statefulPolicy.ForceSendFields = append(statefulPolicy.ForceSendFields, "PreservedState")
 
@@ -967,6 +1134,19 @@ func expandStatefulDisks(statefulDisk []interface{}) map[string]compute.Stateful
 		statefulDisksMap[data["device_name"].(string)] = deviceName
 	}
 	return statefulDisksMap
+}
+
+func expandStatefulIps(statefulIP []interface{}) map[string]compute.StatefulPolicyPreservedStateNetworkIp {
+	statefulIpsMap := make(map[string]compute.StatefulPolicyPreservedStateNetworkIp)
+
+	for _, raw := range statefulIP {
+		data := raw.(map[string]interface{})
+		networkIp := compute.StatefulPolicyPreservedStateNetworkIp{
+			AutoDelete: data["delete_rule"].(string),
+		}
+		statefulIpsMap[data["interface_name"].(string)] = networkIp
+	}
+	return statefulIpsMap
 }
 
 func expandVersions(configured []interface{}) []*compute.InstanceGroupManagerVersion {
@@ -1000,6 +1180,17 @@ func expandFixedOrPercent(configured []interface{}) *compute.FixedOrPercent {
 		}
 	}
 	return fixedOrPercent
+}
+
+func expandInstanceLifecyclePolicy(configured []interface{}) *compute.InstanceGroupManagerInstanceLifecyclePolicy {
+	instanceLifecyclePolicy := &compute.InstanceGroupManagerInstanceLifecyclePolicy{}
+
+	for _, raw := range configured {
+		data := raw.(map[string]interface{})
+		instanceLifecyclePolicy.ForceUpdateOnRepair = data["force_update_on_repair"].(string)
+		instanceLifecyclePolicy.DefaultActionOnFailure = data["default_action_on_failure"].(string)
+	}
+	return instanceLifecyclePolicy
 }
 
 func expandUpdatePolicy(configured []interface{}) *compute.InstanceGroupManagerUpdatePolicy {
@@ -1079,6 +1270,49 @@ func flattenStatefulPolicy(statefulPolicy *compute.StatefulPolicy) []map[string]
 	}
 	return result
 }
+
+func flattenStatefulPolicyStatefulInternalIps(d *schema.ResourceData, statefulPolicy *compute.StatefulPolicy) []map[string]interface{} {
+	if statefulPolicy == nil || statefulPolicy.PreservedState == nil || statefulPolicy.PreservedState.InternalIPs == nil {
+		return make([]map[string]interface{}, 0, 0)
+	}
+
+	return flattenStatefulPolicyStatefulIps(d, "stateful_internal_ip", statefulPolicy.PreservedState.InternalIPs)
+}
+
+func flattenStatefulPolicyStatefulExternalIps(d *schema.ResourceData, statefulPolicy *compute.StatefulPolicy) []map[string]interface{} {
+	if statefulPolicy == nil || statefulPolicy.PreservedState == nil || statefulPolicy.PreservedState.ExternalIPs == nil {
+		return make([]map[string]interface{}, 0)
+	}
+
+	return flattenStatefulPolicyStatefulIps(d, "stateful_external_ip", statefulPolicy.PreservedState.ExternalIPs)
+}
+
+func flattenStatefulPolicyStatefulIps(d *schema.ResourceData, ipfieldName string, ips map[string]compute.StatefulPolicyPreservedStateNetworkIp) []map[string]interface{} {
+	// statefulPolicy.PreservedState.ExternalIPs and statefulPolicy.PreservedState.InternalIPs are affected by API-side reordering
+	// of external/internal IPs, where ordering is done by the interface_name value.
+	// Below we reorder the IPs to match the order in the config.
+	// Also, data is converted from a map (client library's statefulPolicy.PreservedState.ExternalIPs, or .InternalIPs) to a slice (stored in state).
+	// Any IPs found from the API response that aren't in the config are appended to the end of the slice.
+	configData := []map[string]interface{}{}
+	for _, item := range d.Get(ipfieldName).([]interface{}) {
+		configData = append(configData, item.(map[string]interface{}))
+	}
+	apiData := []map[string]interface{}{}
+	for interfaceName, ip := range ips {
+		data := map[string]interface{}{
+			"interface_name": interfaceName,
+			"delete_rule":    ip.AutoDelete,
+		}
+		apiData = append(apiData, data)
+	}
+	sorted, err := tpgresource.SortMapsByConfigOrder(configData, apiData, "interface_name")
+	if err != nil {
+		log.Printf("[ERROR] Could not sort API response for %s: %s", ipfieldName, err)
+		return apiData
+	}
+	return sorted
+}
+
 func flattenUpdatePolicy(updatePolicy *compute.InstanceGroupManagerUpdatePolicy) []map[string]interface{} {
 	results := []map[string]interface{}{}
 	if updatePolicy != nil {
@@ -1106,12 +1340,82 @@ func flattenUpdatePolicy(updatePolicy *compute.InstanceGroupManagerUpdatePolicy)
 	return results
 }
 
+func flattenInstanceLifecyclePolicy(instanceLifecyclePolicy *compute.InstanceGroupManagerInstanceLifecyclePolicy) []map[string]interface{} {
+	results := []map[string]interface{}{}
+	if instanceLifecyclePolicy != nil {
+		ilp := map[string]interface{}{}
+		ilp["force_update_on_repair"] = instanceLifecyclePolicy.ForceUpdateOnRepair
+		ilp["default_action_on_failure"] = instanceLifecyclePolicy.DefaultActionOnFailure
+		results = append(results, ilp)
+	}
+	return results
+}
+
+func expandAllInstancesConfig(old []interface{}, new []interface{}) *compute.InstanceGroupManagerAllInstancesConfig {
+	var properties *compute.InstancePropertiesPatch
+	for _, raw := range new {
+		properties = &compute.InstancePropertiesPatch{}
+		if raw != nil {
+			data := raw.(map[string]interface{})
+			properties.Metadata = tpgresource.ConvertStringMap(data["metadata"].(map[string]interface{}))
+			if len(properties.Metadata) == 0 {
+				properties.NullFields = append(properties.NullFields, "Metadata")
+			}
+			properties.Labels = tpgresource.ConvertStringMap(data["labels"].(map[string]interface{}))
+			if len(properties.Labels) == 0 {
+				properties.NullFields = append(properties.NullFields, "Labels")
+			}
+		}
+	}
+
+	if properties != nil {
+		for _, raw := range old {
+			if raw != nil {
+				data := raw.(map[string]interface{})
+				for k := range data["metadata"].(map[string]interface{}) {
+					if _, exist := properties.Metadata[k]; !exist {
+						properties.NullFields = append(properties.NullFields, fmt.Sprintf("Metadata.%s", k))
+					}
+				}
+				for k := range data["labels"].(map[string]interface{}) {
+					if _, exist := properties.Labels[k]; !exist {
+						properties.NullFields = append(properties.NullFields, fmt.Sprintf("Labels.%s", k))
+					}
+				}
+			}
+		}
+	}
+	if properties != nil {
+		allInstancesConfig := &compute.InstanceGroupManagerAllInstancesConfig{}
+		allInstancesConfig.Properties = properties
+		return allInstancesConfig
+	} else {
+		return nil
+	}
+}
+
+func flattenAllInstancesConfig(allInstancesConfig *compute.InstanceGroupManagerAllInstancesConfig) []map[string]interface{} {
+	results := []map[string]interface{}{}
+	props := map[string]interface{}{}
+	if len(allInstancesConfig.Properties.Metadata) > 0 {
+		props["metadata"] = allInstancesConfig.Properties.Metadata
+	}
+	if len(allInstancesConfig.Properties.Labels) > 0 {
+		props["labels"] = allInstancesConfig.Properties.Labels
+	}
+	results = append(results, props)
+	return results
+}
+
 func flattenStatus(status *compute.InstanceGroupManagerStatus) []map[string]interface{} {
 	results := []map[string]interface{}{}
 	data := map[string]interface{}{
 		"is_stable":      status.IsStable,
 		"stateful":       flattenStatusStateful(status.Stateful),
 		"version_target": flattenStatusVersionTarget(status.VersionTarget),
+	}
+	if status.AllInstancesConfig != nil {
+		data["all_instances_config"] = flattenStatusAllInstancesConfig(status.AllInstancesConfig)
 	}
 	results = append(results, data)
 	return results
@@ -1140,6 +1444,16 @@ func flattenStatusVersionTarget(versionTarget *compute.InstanceGroupManagerStatu
 	results := []map[string]interface{}{}
 	data := map[string]interface{}{
 		"is_reached": versionTarget.IsReached,
+	}
+	results = append(results, data)
+	return results
+}
+
+func flattenStatusAllInstancesConfig(allInstancesConfig *compute.InstanceGroupManagerStatusAllInstancesConfig) []map[string]interface{} {
+	results := []map[string]interface{}{}
+	data := map[string]interface{}{
+		"effective":        allInstancesConfig.Effective,
+		"current_revision": allInstancesConfig.CurrentRevision,
 	}
 	results = append(results, data)
 	return results

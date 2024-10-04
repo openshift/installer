@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -134,9 +134,11 @@ components:
         name:
           type: string
           x-dcl-go-name: Name
-          description: The resource name for the Key in the format "projects/{project}/keys/{key}".
+          description: The resource id for the Key, which is the same as the Site
+            Key itself.
           x-kubernetes-immutable: true
           x-dcl-server-generated-parameter: true
+          x-dcl-has-long-form: true
         project:
           type: string
           x-dcl-go-name: Project
@@ -146,6 +148,7 @@ components:
           - resource: Cloudresourcemanager/Project
             field: name
             parent: true
+          x-dcl-parameter: true
         testingOptions:
           type: object
           x-dcl-go-name: TestingOptions
@@ -174,6 +177,39 @@ components:
               description: All assessments for this Key will return this score. Must
                 be between 0 (likely not legitimate) and 1 (likely legitimate) inclusive.
               x-kubernetes-immutable: true
+        wafSettings:
+          type: object
+          x-dcl-go-name: WafSettings
+          x-dcl-go-type: KeyWafSettings
+          description: Settings specific to keys that can be used for WAF (Web Application
+            Firewall).
+          x-kubernetes-immutable: true
+          required:
+          - wafService
+          - wafFeature
+          properties:
+            wafFeature:
+              type: string
+              x-dcl-go-name: WafFeature
+              x-dcl-go-type: KeyWafSettingsWafFeatureEnum
+              description: 'Supported WAF features. For more information, see https://cloud.google.com/recaptcha-enterprise/docs/usecase#comparison_of_features.
+                Possible values: CHALLENGE_PAGE, SESSION_TOKEN, ACTION_TOKEN, EXPRESS'
+              x-kubernetes-immutable: true
+              enum:
+              - CHALLENGE_PAGE
+              - SESSION_TOKEN
+              - ACTION_TOKEN
+              - EXPRESS
+            wafService:
+              type: string
+              x-dcl-go-name: WafService
+              x-dcl-go-type: KeyWafSettingsWafServiceEnum
+              description: 'The WAF service that uses this key. Possible values: CA,
+                FASTLY'
+              x-kubernetes-immutable: true
+              enum:
+              - CA
+              - FASTLY
         webSettings:
           type: object
           x-dcl-go-name: WebSettings

@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
 )
@@ -47,7 +47,7 @@ func lifecycleState(ctx context.Context, client *Client, url string) (string, er
 		return "", err
 	}
 	defer resp.Response.Body.Close()
-	b, err := ioutil.ReadAll(resp.Response.Body)
+	b, err := io.ReadAll(resp.Response.Body)
 	if err != nil {
 		return "", err
 	}

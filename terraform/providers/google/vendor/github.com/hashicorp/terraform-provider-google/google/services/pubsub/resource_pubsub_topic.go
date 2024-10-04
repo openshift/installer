@@ -20,10 +20,12 @@ package pubsub
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -48,6 +50,11 @@ func ResourcePubsubTopic() *schema.Resource {
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
+		),
+
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:             schema.TypeString,
@@ -55,6 +62,53 @@ func ResourcePubsubTopic() *schema.Resource {
 				ForceNew:         true,
 				DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
 				Description:      `Name of the topic.`,
+			},
+			"ingestion_data_source_settings": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Settings for ingestion from a data source into this topic.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"aws_kinesis": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Settings for ingestion from Amazon Kinesis Data Streams.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"aws_role_arn": {
+										Type:     schema.TypeString,
+										Required: true,
+										Description: `AWS role ARN to be used for Federated Identity authentication with
+Kinesis. Check the Pub/Sub docs for how to set up this role and the
+required permissions that need to be attached to it.`,
+									},
+									"consumer_arn": {
+										Type:     schema.TypeString,
+										Required: true,
+										Description: `The Kinesis consumer ARN to used for ingestion in
+Enhanced Fan-Out mode. The consumer must be already
+created and ready to be used.`,
+									},
+									"gcp_service_account": {
+										Type:     schema.TypeString,
+										Required: true,
+										Description: `The GCP service account to be used for Federated Identity authentication
+with Kinesis (via a 'AssumeRoleWithWebIdentity' call for the provided
+role). The 'awsRoleArn' must be set up with 'accounts.google.com:sub'
+equals to this service account number.`,
+									},
+									"stream_arn": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: `The Kinesis stream ARN to ingest data from.`,
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 			"kms_key_name": {
 				Type:     schema.TypeString,
@@ -66,10 +120,14 @@ to messages published on this topic. Your project's PubSub service account
 The expected format is 'projects/*/locations/*/keyRings/*/cryptoKeys/*'`,
 			},
 			"labels": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: `A set of key/value label pairs to assign to this Topic.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `A set of key/value label pairs to assign to this Topic.
+
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"message_retention_duration": {
 				Type:     schema.TypeString,
@@ -80,7 +138,8 @@ the last messageRetentionDuration are always available to subscribers.
 For instance, it allows any attached subscription to seek to a timestamp
 that is up to messageRetentionDuration in the past. If this field is not
 set, message retention is controlled by settings on individual subscriptions.
-Cannot be more than 31 days or less than 10 minutes.`,
+The rotation period has the format of a decimal number, followed by the
+letter 's' (seconds). Cannot be more than 31 days or less than 10 minutes.`,
 			},
 			"message_storage_policy": {
 				Type:     schema.TypeList,
@@ -134,6 +193,19 @@ if the schema has been deleted.`,
 					},
 				},
 			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
 			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -165,12 +237,6 @@ func resourcePubsubTopicCreate(d *schema.ResourceData, meta interface{}) error {
 	} else if v, ok := d.GetOkExists("kms_key_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(kmsKeyNameProp)) && (ok || !reflect.DeepEqual(v, kmsKeyNameProp)) {
 		obj["kmsKeyName"] = kmsKeyNameProp
 	}
-	labelsProp, err := expandPubsubTopicLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	messageStoragePolicyProp, err := expandPubsubTopicMessageStoragePolicy(d.Get("message_storage_policy"), d, config)
 	if err != nil {
 		return err
@@ -188,6 +254,18 @@ func resourcePubsubTopicCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	} else if v, ok := d.GetOkExists("message_retention_duration"); !tpgresource.IsEmptyValue(reflect.ValueOf(messageRetentionDurationProp)) && (ok || !reflect.DeepEqual(v, messageRetentionDurationProp)) {
 		obj["messageRetentionDuration"] = messageRetentionDurationProp
+	}
+	ingestionDataSourceSettingsProp, err := expandPubsubTopicIngestionDataSourceSettings(d.Get("ingestion_data_source_settings"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("ingestion_data_source_settings"); !tpgresource.IsEmptyValue(reflect.ValueOf(ingestionDataSourceSettingsProp)) && (ok || !reflect.DeepEqual(v, ingestionDataSourceSettingsProp)) {
+		obj["ingestionDataSourceSettings"] = ingestionDataSourceSettingsProp
+	}
+	labelsProp, err := expandPubsubTopicEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
 	}
 
 	obj, err = resourcePubsubTopicEncoder(d, meta, obj)
@@ -214,6 +292,7 @@ func resourcePubsubTopicCreate(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "PUT",
@@ -222,6 +301,7 @@ func resourcePubsubTopicCreate(d *schema.ResourceData, meta interface{}) error {
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutCreate),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.PubsubTopicProjectNotReady},
 	})
 	if err != nil {
@@ -250,6 +330,7 @@ func resourcePubsubTopicPollRead(d *schema.ResourceData, meta interface{}) trans
 		config := meta.(*transport_tpg.Config)
 
 		url, err := tpgresource.ReplaceVars(d, config, "{{PubsubBasePath}}projects/{{project}}/topics/{{name}}")
+
 		if err != nil {
 			return nil, err
 		}
@@ -312,12 +393,14 @@ func resourcePubsubTopicRead(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "GET",
 		Project:              billingProject,
 		RawURL:               url,
 		UserAgent:            userAgent,
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.PubsubTopicProjectNotReady},
 	})
 	if err != nil {
@@ -346,6 +429,15 @@ func resourcePubsubTopicRead(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("message_retention_duration", flattenPubsubTopicMessageRetentionDuration(res["messageRetentionDuration"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Topic: %s", err)
 	}
+	if err := d.Set("ingestion_data_source_settings", flattenPubsubTopicIngestionDataSourceSettings(res["ingestionDataSourceSettings"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Topic: %s", err)
+	}
+	if err := d.Set("terraform_labels", flattenPubsubTopicTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Topic: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenPubsubTopicEffectiveLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Topic: %s", err)
+	}
 
 	return nil
 }
@@ -372,12 +464,6 @@ func resourcePubsubTopicUpdate(d *schema.ResourceData, meta interface{}) error {
 	} else if v, ok := d.GetOkExists("kms_key_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, kmsKeyNameProp)) {
 		obj["kmsKeyName"] = kmsKeyNameProp
 	}
-	labelsProp, err := expandPubsubTopicLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	messageStoragePolicyProp, err := expandPubsubTopicMessageStoragePolicy(d.Get("message_storage_policy"), d, config)
 	if err != nil {
 		return err
@@ -396,6 +482,18 @@ func resourcePubsubTopicUpdate(d *schema.ResourceData, meta interface{}) error {
 	} else if v, ok := d.GetOkExists("message_retention_duration"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, messageRetentionDurationProp)) {
 		obj["messageRetentionDuration"] = messageRetentionDurationProp
 	}
+	ingestionDataSourceSettingsProp, err := expandPubsubTopicIngestionDataSourceSettings(d.Get("ingestion_data_source_settings"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("ingestion_data_source_settings"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, ingestionDataSourceSettingsProp)) {
+		obj["ingestionDataSourceSettings"] = ingestionDataSourceSettingsProp
+	}
+	labelsProp, err := expandPubsubTopicEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
 	obj, err = resourcePubsubTopicUpdateEncoder(d, meta, obj)
 	if err != nil {
@@ -408,14 +506,11 @@ func resourcePubsubTopicUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[DEBUG] Updating Topic %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("kms_key_name") {
 		updateMask = append(updateMask, "kmsKeyName")
-	}
-
-	if d.HasChange("labels") {
-		updateMask = append(updateMask, "labels")
 	}
 
 	if d.HasChange("message_storage_policy") {
@@ -429,6 +524,14 @@ func resourcePubsubTopicUpdate(d *schema.ResourceData, meta interface{}) error {
 	if d.HasChange("message_retention_duration") {
 		updateMask = append(updateMask, "messageRetentionDuration")
 	}
+
+	if d.HasChange("ingestion_data_source_settings") {
+		updateMask = append(updateMask, "ingestionDataSourceSettings")
+	}
+
+	if d.HasChange("effective_labels") {
+		updateMask = append(updateMask, "labels")
+	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
 	url, err = transport_tpg.AddQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
@@ -441,21 +544,26 @@ func resourcePubsubTopicUpdate(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:               config,
-		Method:               "PATCH",
-		Project:              billingProject,
-		RawURL:               url,
-		UserAgent:            userAgent,
-		Body:                 obj,
-		Timeout:              d.Timeout(schema.TimeoutUpdate),
-		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.PubsubTopicProjectNotReady},
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:               config,
+			Method:               "PATCH",
+			Project:              billingProject,
+			RawURL:               url,
+			UserAgent:            userAgent,
+			Body:                 obj,
+			Timeout:              d.Timeout(schema.TimeoutUpdate),
+			Headers:              headers,
+			ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.PubsubTopicProjectNotReady},
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Topic %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Topic %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating Topic %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Topic %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourcePubsubTopicRead(d, meta)
@@ -482,13 +590,15 @@ func resourcePubsubTopicDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Topic %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Topic %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "DELETE",
@@ -497,6 +607,7 @@ func resourcePubsubTopicDelete(d *schema.ResourceData, meta interface{}) error {
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutDelete),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.PubsubTopicProjectNotReady},
 	})
 	if err != nil {
@@ -510,9 +621,9 @@ func resourcePubsubTopicDelete(d *schema.ResourceData, meta interface{}) error {
 func resourcePubsubTopicImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/topics/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/topics/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -539,7 +650,18 @@ func flattenPubsubTopicKmsKeyName(v interface{}, d *schema.ResourceData, config 
 }
 
 func flattenPubsubTopicLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenPubsubTopicMessageStoragePolicy(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -586,23 +708,79 @@ func flattenPubsubTopicMessageRetentionDuration(v interface{}, d *schema.Resourc
 	return v
 }
 
+func flattenPubsubTopicIngestionDataSourceSettings(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["aws_kinesis"] =
+		flattenPubsubTopicIngestionDataSourceSettingsAwsKinesis(original["awsKinesis"], d, config)
+	return []interface{}{transformed}
+}
+func flattenPubsubTopicIngestionDataSourceSettingsAwsKinesis(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["stream_arn"] =
+		flattenPubsubTopicIngestionDataSourceSettingsAwsKinesisStreamArn(original["streamArn"], d, config)
+	transformed["consumer_arn"] =
+		flattenPubsubTopicIngestionDataSourceSettingsAwsKinesisConsumerArn(original["consumerArn"], d, config)
+	transformed["aws_role_arn"] =
+		flattenPubsubTopicIngestionDataSourceSettingsAwsKinesisAwsRoleArn(original["awsRoleArn"], d, config)
+	transformed["gcp_service_account"] =
+		flattenPubsubTopicIngestionDataSourceSettingsAwsKinesisGcpServiceAccount(original["gcpServiceAccount"], d, config)
+	return []interface{}{transformed}
+}
+func flattenPubsubTopicIngestionDataSourceSettingsAwsKinesisStreamArn(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenPubsubTopicIngestionDataSourceSettingsAwsKinesisConsumerArn(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenPubsubTopicIngestionDataSourceSettingsAwsKinesisAwsRoleArn(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenPubsubTopicIngestionDataSourceSettingsAwsKinesisGcpServiceAccount(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenPubsubTopicTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenPubsubTopicEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func expandPubsubTopicName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return tpgresource.GetResourceNameFromSelfLink(v.(string)), nil
 }
 
 func expandPubsubTopicKmsKeyName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
-}
-
-func expandPubsubTopicLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
-	if v == nil {
-		return map[string]string{}, nil
-	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
-	}
-	return m, nil
 }
 
 func expandPubsubTopicMessageStoragePolicy(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -664,6 +842,92 @@ func expandPubsubTopicSchemaSettingsEncoding(v interface{}, d tpgresource.Terraf
 
 func expandPubsubTopicMessageRetentionDuration(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandPubsubTopicIngestionDataSourceSettings(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedAwsKinesis, err := expandPubsubTopicIngestionDataSourceSettingsAwsKinesis(original["aws_kinesis"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAwsKinesis); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["awsKinesis"] = transformedAwsKinesis
+	}
+
+	return transformed, nil
+}
+
+func expandPubsubTopicIngestionDataSourceSettingsAwsKinesis(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedStreamArn, err := expandPubsubTopicIngestionDataSourceSettingsAwsKinesisStreamArn(original["stream_arn"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedStreamArn); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["streamArn"] = transformedStreamArn
+	}
+
+	transformedConsumerArn, err := expandPubsubTopicIngestionDataSourceSettingsAwsKinesisConsumerArn(original["consumer_arn"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedConsumerArn); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["consumerArn"] = transformedConsumerArn
+	}
+
+	transformedAwsRoleArn, err := expandPubsubTopicIngestionDataSourceSettingsAwsKinesisAwsRoleArn(original["aws_role_arn"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAwsRoleArn); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["awsRoleArn"] = transformedAwsRoleArn
+	}
+
+	transformedGcpServiceAccount, err := expandPubsubTopicIngestionDataSourceSettingsAwsKinesisGcpServiceAccount(original["gcp_service_account"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedGcpServiceAccount); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["gcpServiceAccount"] = transformedGcpServiceAccount
+	}
+
+	return transformed, nil
+}
+
+func expandPubsubTopicIngestionDataSourceSettingsAwsKinesisStreamArn(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandPubsubTopicIngestionDataSourceSettingsAwsKinesisConsumerArn(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandPubsubTopicIngestionDataSourceSettingsAwsKinesisAwsRoleArn(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandPubsubTopicIngestionDataSourceSettingsAwsKinesisGcpServiceAccount(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandPubsubTopicEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }
 
 func resourcePubsubTopicEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {

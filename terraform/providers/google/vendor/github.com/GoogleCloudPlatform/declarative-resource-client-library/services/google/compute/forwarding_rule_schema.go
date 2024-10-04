@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -227,11 +227,12 @@ func DCLForwardingRuleSchema() *dcl.Schema {
 								GoName:      "Location",
 								Description: "The location of this resource.",
 								Immutable:   true,
+								Parameter:   true,
 							},
 							"metadataFilter": &dcl.Property{
 								Type:        "array",
 								GoName:      "MetadataFilter",
-								Description: "Opaque filter criteria used by Loadbalancer to restrict routing configuration to a limited set of [xDS](https://github.com/envoyproxy/data-plane-api/blob/master/XDS_PROTOCOL.md) compliant clients. In their xDS requests to Loadbalancer, xDS clients present [node metadata](https://github.com/envoyproxy/data-plane-api/search?q=%22message+Node%22+in%3A%2Fenvoy%2Fapi%2Fv2%2Fcore%2Fbase.proto&). If a match takes place, the relevant configuration is made available to those proxies. Otherwise, all the resources (e.g. `TargetHttpProxy`, `UrlMap`) referenced by the `ForwardingRule` will not be visible to those proxies.\n\nFor each `metadataFilter` in this list, if its `filterMatchCriteria` is set to MATCH_ANY, at least one of the `filterLabel`s must match the corresponding label provided in the metadata. If its `filterMatchCriteria` is set to MATCH_ALL, then all of its `filterLabel`s must match with corresponding labels provided in the metadata.\n\n`metadataFilters` specified here will be applifed before those specified in the `UrlMap` that this `ForwardingRule` references.\n\n`metadataFilters` only applies to Loadbalancers that have their loadBalancingScheme set to `INTERNAL_SELF_MANAGED`.",
+								Description: "Opaque filter criteria used by Loadbalancer to restrict routing configuration to a limited set of [xDS](https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol) compliant clients. In their xDS requests to Loadbalancer, xDS clients present [node metadata](https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/core/v3/base.proto.html#config-core-v3-node). If a match takes place, the relevant configuration is made available to those proxies. Otherwise, all the resources (e.g. `TargetHttpProxy`, `UrlMap`) referenced by the `ForwardingRule` will not be visible to those proxies.\n\nFor each `metadataFilter` in this list, if its `filterMatchCriteria` is set to MATCH_ANY, at least one of the `filterLabel`s must match the corresponding label provided in the metadata. If its `filterMatchCriteria` is set to MATCH_ALL, then all of its `filterLabel`s must match with corresponding labels provided in the metadata.\n\n`metadataFilters` specified here will be applifed before those specified in the `UrlMap` that this `ForwardingRule` references.\n\n`metadataFilters` only applies to Loadbalancers that have their loadBalancingScheme set to `INTERNAL_SELF_MANAGED`.",
 								Immutable:   true,
 								SendEmpty:   true,
 								ListType:    "list",
@@ -300,6 +301,7 @@ func DCLForwardingRuleSchema() *dcl.Schema {
 								Description:   "This field is not used for external load balancing. For `INTERNAL` and `INTERNAL_SELF_MANAGED` load balancing, this field identifies the network that the load balanced IP should belong to for this Forwarding Rule. If this field is not specified, the default network will be used.",
 								Immutable:     true,
 								ServerDefault: true,
+								HasLongForm:   true,
 							},
 							"networkTier": &dcl.Property{
 								Type:          "string",
@@ -343,6 +345,7 @@ func DCLForwardingRuleSchema() *dcl.Schema {
 										Parent:   true,
 									},
 								},
+								Parameter: true,
 							},
 							"pscConnectionId": &dcl.Property{
 								Type:        "string",
@@ -439,6 +442,7 @@ func DCLForwardingRuleSchema() *dcl.Schema {
 								Description:   "This field is only used for `INTERNAL` load balancing. For internal load balancing, this field identifies the subnetwork that the load balanced IP should belong to for this Forwarding Rule. If the network specified is in auto subnet mode, this field is optional. However, if the network is in custom subnet mode, a subnetwork must be specified.",
 								Immutable:     true,
 								ServerDefault: true,
+								HasLongForm:   true,
 							},
 							"target": &dcl.Property{
 								Type:        "string",

@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -228,11 +228,12 @@ components:
           x-dcl-go-name: Location
           description: The location of this resource.
           x-kubernetes-immutable: true
+          x-dcl-parameter: true
         metadataFilter:
           type: array
           x-dcl-go-name: MetadataFilter
           description: |-
-            Opaque filter criteria used by Loadbalancer to restrict routing configuration to a limited set of [xDS](https://github.com/envoyproxy/data-plane-api/blob/master/XDS_PROTOCOL.md) compliant clients. In their xDS requests to Loadbalancer, xDS clients present [node metadata](https://github.com/envoyproxy/data-plane-api/search?q=%22message+Node%22+in%3A%2Fenvoy%2Fapi%2Fv2%2Fcore%2Fbase.proto&). If a match takes place, the relevant configuration is made available to those proxies. Otherwise, all the resources (e.g. `TargetHttpProxy`, `UrlMap`) referenced by the `ForwardingRule` will not be visible to those proxies.
+            Opaque filter criteria used by Loadbalancer to restrict routing configuration to a limited set of [xDS](https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol) compliant clients. In their xDS requests to Loadbalancer, xDS clients present [node metadata](https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/core/v3/base.proto.html#config-core-v3-node). If a match takes place, the relevant configuration is made available to those proxies. Otherwise, all the resources (e.g. `TargetHttpProxy`, `UrlMap`) referenced by the `ForwardingRule` will not be visible to those proxies.
 
             For each `metadataFilter` in this list, if its `filterMatchCriteria` is set to MATCH_ANY, at least one of the `filterLabel`s must match the corresponding label provided in the metadata. If its `filterMatchCriteria` is set to MATCH_ALL, then all of its `filterLabel`s must match with corresponding labels provided in the metadata.
 
@@ -318,6 +319,7 @@ components:
             Rule. If this field is not specified, the default network will be used.
           x-kubernetes-immutable: true
           x-dcl-server-default: true
+          x-dcl-has-long-form: true
         networkTier:
           type: string
           x-dcl-go-name: NetworkTier
@@ -375,6 +377,7 @@ components:
           - resource: Cloudresourcemanager/Project
             field: name
             parent: true
+          x-dcl-parameter: true
         pscConnectionId:
           type: string
           x-dcl-go-name: PscConnectionId
@@ -481,6 +484,7 @@ components:
             the network is in custom subnet mode, a subnetwork must be specified.
           x-kubernetes-immutable: true
           x-dcl-server-default: true
+          x-dcl-has-long-form: true
         target:
           type: string
           x-dcl-go-name: Target

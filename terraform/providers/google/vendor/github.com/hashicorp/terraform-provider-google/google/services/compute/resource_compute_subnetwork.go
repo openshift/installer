@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"reflect"
 	"time"
 
@@ -74,6 +75,7 @@ func ResourceComputeSubnetwork() *schema.Resource {
 		CustomizeDiff: customdiff.All(
 			resourceComputeSubnetworkSecondaryIpRangeSetStyleDiff,
 			customdiff.ForceNewIfChange("ip_cidr_range", IsShrinkageIpCidr),
+			tpgresource.DefaultProviderProject,
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -115,6 +117,13 @@ Only networks that are in the distributed mode can have subnetworks.`,
 you create the resource. This field can be set only at resource
 creation time.`,
 			},
+			"external_ipv6_prefix": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `The range of external IPv6 addresses that are owned by this subnetwork.`,
+			},
 			"ipv6_access_type": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -126,9 +135,10 @@ cannot enable direct path. Possible values: ["EXTERNAL", "INTERNAL"]`,
 			"log_config": {
 				Type:     schema.TypeList,
 				Optional: true,
-				Description: `Denotes the logging options for the subnetwork flow logs. If logging is enabled
-logs will be exported to Stackdriver. This field cannot be set if the 'purpose' of this
-subnetwork is 'INTERNAL_HTTPS_LOAD_BALANCER'`,
+				Description: `This field denotes the VPC flow logging options for this subnetwork. If
+logging is enabled, logs are exported to Cloud Logging. Flow logging
+isn't supported if the subnet 'purpose' field is set to subnetwork is
+'REGIONAL_MANAGED_PROXY' or 'GLOBAL_MANAGED_PROXY'.`,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -204,12 +214,13 @@ access Google APIs and services by using Private Google Access.`,
 				Computed: true,
 				Optional: true,
 				ForceNew: true,
-				Description: `The purpose of the resource. This field can be either 'PRIVATE_RFC_1918', 'INTERNAL_HTTPS_LOAD_BALANCER', 'REGIONAL_MANAGED_PROXY', or 'PRIVATE_SERVICE_CONNECT'.
-A subnetwork with purpose set to 'INTERNAL_HTTPS_LOAD_BALANCER' is a user-created subnetwork that is reserved for Internal HTTP(S) Load Balancing.
-A subnetwork in a given region with purpose set to 'REGIONAL_MANAGED_PROXY' is a proxy-only subnet and is shared between all the regional Envoy-based load balancers.
+				Description: `The purpose of the resource. This field can be either 'PRIVATE_RFC_1918', 'REGIONAL_MANAGED_PROXY', 'GLOBAL_MANAGED_PROXY', 'PRIVATE_SERVICE_CONNECT' or 'PRIVATE_NAT'([Beta](https://terraform.io/docs/providers/google/guides/provider_versions.html)).
+A subnet with purpose set to 'REGIONAL_MANAGED_PROXY' is a user-created subnetwork that is reserved for regional Envoy-based load balancers.
+A subnetwork in a given region with purpose set to 'GLOBAL_MANAGED_PROXY' is a proxy-only subnet and is shared between all the cross-regional Envoy-based load balancers.
 A subnetwork with purpose set to 'PRIVATE_SERVICE_CONNECT' reserves the subnet for hosting a Private Service Connect published service.
-If unspecified, the purpose defaults to 'PRIVATE_RFC_1918'.
-The enableFlowLogs field isn't supported with the purpose field set to 'INTERNAL_HTTPS_LOAD_BALANCER'.`,
+A subnetwork with purpose set to 'PRIVATE_NAT' is used as source range for Private NAT gateways.
+Note that 'REGIONAL_MANAGED_PROXY' is the preferred setting for all regional Envoy load balancers.
+If unspecified, the purpose defaults to 'PRIVATE_RFC_1918'.`,
 			},
 			"region": {
 				Type:             schema.TypeString,
@@ -224,11 +235,10 @@ The enableFlowLogs field isn't supported with the purpose field set to 'INTERNAL
 				Optional:     true,
 				ValidateFunc: verify.ValidateEnum([]string{"ACTIVE", "BACKUP", ""}),
 				Description: `The role of subnetwork.
+Currently, this field is only used when 'purpose' is 'REGIONAL_MANAGED_PROXY'.
 The value can be set to 'ACTIVE' or 'BACKUP'.
-An 'ACTIVE' subnetwork is one that is currently being used.
-A 'BACKUP' subnetwork is one that is ready to be promoted to 'ACTIVE' or is currently draining.
-
-Subnetwork role must be specified when purpose is set to 'INTERNAL_HTTPS_LOAD_BALANCER' or 'REGIONAL_MANAGED_PROXY'. Possible values: ["ACTIVE", "BACKUP"]`,
+An 'ACTIVE' subnetwork is one that is currently being used for Envoy-based load balancers in a region.
+A 'BACKUP' subnetwork is one that is ready to be promoted to 'ACTIVE' or is currently draining. Possible values: ["ACTIVE", "BACKUP"]`,
 			},
 			"secondary_ip_range": {
 				Type:       schema.TypeList,
@@ -281,16 +291,16 @@ If not specified IPV4_ONLY will be used. Possible values: ["IPV4_ONLY", "IPV4_IP
 				Computed:    true,
 				Description: `Creation timestamp in RFC3339 text format.`,
 			},
-			"external_ipv6_prefix": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: `The range of external IPv6 addresses that are owned by this subnetwork.`,
-			},
 			"gateway_address": {
 				Type:     schema.TypeString,
 				Computed: true,
 				Description: `The gateway address for default routes to reach destination addresses
 outside this subnetwork.`,
+			},
+			"internal_ipv6_prefix": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `The internal IPv6 address range that is assigned to this subnetwork.`,
 			},
 			"ipv6_cidr_range": {
 				Type:        schema.TypeString,
@@ -446,6 +456,12 @@ func resourceComputeSubnetworkCreate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("ipv6_access_type"); !tpgresource.IsEmptyValue(reflect.ValueOf(ipv6AccessTypeProp)) && (ok || !reflect.DeepEqual(v, ipv6AccessTypeProp)) {
 		obj["ipv6AccessType"] = ipv6AccessTypeProp
 	}
+	externalIpv6PrefixProp, err := expandComputeSubnetworkExternalIpv6Prefix(d.Get("external_ipv6_prefix"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("external_ipv6_prefix"); !tpgresource.IsEmptyValue(reflect.ValueOf(externalIpv6PrefixProp)) && (ok || !reflect.DeepEqual(v, externalIpv6PrefixProp)) {
+		obj["externalIpv6Prefix"] = externalIpv6PrefixProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/regions/{{region}}/subnetworks")
 	if err != nil {
@@ -466,6 +482,7 @@ func resourceComputeSubnetworkCreate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -474,6 +491,7 @@ func resourceComputeSubnetworkCreate(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Subnetwork: %s", err)
@@ -526,12 +544,14 @@ func resourceComputeSubnetworkRead(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeSubnetwork %q", d.Id()))
@@ -589,6 +609,9 @@ func resourceComputeSubnetworkRead(d *schema.ResourceData, meta interface{}) err
 	if err := d.Set("ipv6_cidr_range", flattenComputeSubnetworkIpv6CidrRange(res["ipv6CidrRange"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Subnetwork: %s", err)
 	}
+	if err := d.Set("internal_ipv6_prefix", flattenComputeSubnetworkInternalIpv6Prefix(res["internalIpv6Prefix"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Subnetwork: %s", err)
+	}
 	if err := d.Set("external_ipv6_prefix", flattenComputeSubnetworkExternalIpv6Prefix(res["externalIpv6Prefix"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Subnetwork: %s", err)
 	}
@@ -631,6 +654,8 @@ func resourceComputeSubnetworkUpdate(d *schema.ResourceData, meta interface{}) e
 			return err
 		}
 
+		headers := make(http.Header)
+
 		// err == nil indicates that the billing_project value was found
 		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 			billingProject = bp
@@ -644,6 +669,7 @@ func resourceComputeSubnetworkUpdate(d *schema.ResourceData, meta interface{}) e
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating Subnetwork %q: %s", d.Id(), err)
@@ -673,6 +699,8 @@ func resourceComputeSubnetworkUpdate(d *schema.ResourceData, meta interface{}) e
 			return err
 		}
 
+		headers := make(http.Header)
+
 		// err == nil indicates that the billing_project value was found
 		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 			billingProject = bp
@@ -686,6 +714,7 @@ func resourceComputeSubnetworkUpdate(d *schema.ResourceData, meta interface{}) e
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating Subnetwork %q: %s", d.Id(), err)
@@ -750,6 +779,8 @@ func resourceComputeSubnetworkUpdate(d *schema.ResourceData, meta interface{}) e
 			return err
 		}
 
+		headers := make(http.Header)
+
 		// err == nil indicates that the billing_project value was found
 		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 			billingProject = bp
@@ -763,6 +794,7 @@ func resourceComputeSubnetworkUpdate(d *schema.ResourceData, meta interface{}) e
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating Subnetwork %q: %s", d.Id(), err)
@@ -815,6 +847,8 @@ func resourceComputeSubnetworkUpdate(d *schema.ResourceData, meta interface{}) e
 			return err
 		}
 
+		headers := make(http.Header)
+
 		// err == nil indicates that the billing_project value was found
 		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 			billingProject = bp
@@ -828,6 +862,7 @@ func resourceComputeSubnetworkUpdate(d *schema.ResourceData, meta interface{}) e
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating Subnetwork %q: %s", d.Id(), err)
@@ -880,6 +915,8 @@ func resourceComputeSubnetworkUpdate(d *schema.ResourceData, meta interface{}) e
 			return err
 		}
 
+		headers := make(http.Header)
+
 		// err == nil indicates that the billing_project value was found
 		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 			billingProject = bp
@@ -893,6 +930,7 @@ func resourceComputeSubnetworkUpdate(d *schema.ResourceData, meta interface{}) e
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating Subnetwork %q: %s", d.Id(), err)
@@ -945,6 +983,8 @@ func resourceComputeSubnetworkUpdate(d *schema.ResourceData, meta interface{}) e
 			return err
 		}
 
+		headers := make(http.Header)
+
 		// err == nil indicates that the billing_project value was found
 		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 			billingProject = bp
@@ -958,6 +998,7 @@ func resourceComputeSubnetworkUpdate(d *schema.ResourceData, meta interface{}) e
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating Subnetwork %q: %s", d.Id(), err)
@@ -999,13 +1040,15 @@ func resourceComputeSubnetworkDelete(d *schema.ResourceData, meta interface{}) e
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Subnetwork %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Subnetwork %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -1014,6 +1057,7 @@ func resourceComputeSubnetworkDelete(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Subnetwork")
@@ -1034,10 +1078,10 @@ func resourceComputeSubnetworkDelete(d *schema.ResourceData, meta interface{}) e
 func resourceComputeSubnetworkImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/subnetworks/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/subnetworks/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -1174,6 +1218,10 @@ func flattenComputeSubnetworkIpv6CidrRange(v interface{}, d *schema.ResourceData
 	return v
 }
 
+func flattenComputeSubnetworkInternalIpv6Prefix(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenComputeSubnetworkExternalIpv6Prefix(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
@@ -1265,8 +1313,8 @@ func expandComputeSubnetworkLogConfig(v interface{}, d tpgresource.TerraformReso
 	if len(l) == 0 || l[0] == nil {
 		purpose, ok := d.GetOkExists("purpose")
 
-		if ok && (purpose.(string) == "REGIONAL_MANAGED_PROXY" || purpose.(string) == "INTERNAL_HTTPS_LOAD_BALANCER") {
-			// Subnetworks for regional L7 ILB/XLB do not accept any values for logConfig
+		if ok && (purpose.(string) == "REGIONAL_MANAGED_PROXY" || purpose.(string) == "GLOBAL_MANAGED_PROXY" || purpose.(string) == "INTERNAL_HTTPS_LOAD_BALANCER") {
+			// Subnetworks for regional L7 ILB/XLB or cross-regional L7 ILB do not accept any values for logConfig
 			return nil, nil
 		}
 		// send enable = false to ensure logging is disabled if there is no config
@@ -1295,5 +1343,9 @@ func expandComputeSubnetworkStackType(v interface{}, d tpgresource.TerraformReso
 }
 
 func expandComputeSubnetworkIpv6AccessType(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeSubnetworkExternalIpv6Prefix(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }

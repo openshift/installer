@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,6 +33,12 @@ func (r *WorkerPool) validate() error {
 	if err := dcl.ValidateAtMostOneOfFieldsSet([]string{"WorkerConfig", "PrivatePoolV1Config"}, r.WorkerConfig, r.PrivatePoolV1Config); err != nil {
 		return err
 	}
+	if err := dcl.ValidateAtMostOneOfFieldsSet([]string{"PrivateServiceConnect", "PrivatePoolV1Config"}, r.PrivateServiceConnect, r.PrivatePoolV1Config); err != nil {
+		return err
+	}
+	if err := dcl.ValidateAtMostOneOfFieldsSet([]string{"PrivateServiceConnect", "NetworkConfig"}, r.PrivateServiceConnect, r.NetworkConfig); err != nil {
+		return err
+	}
 	if err := dcl.Required(r, "name"); err != nil {
 		return err
 	}
@@ -57,9 +63,17 @@ func (r *WorkerPool) validate() error {
 			return err
 		}
 	}
+	if !dcl.IsEmptyValueIndirect(r.PrivateServiceConnect) {
+		if err := r.PrivateServiceConnect.validate(); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 func (r *WorkerPoolPrivatePoolV1Config) validate() error {
+	if err := dcl.ValidateAtMostOneOfFieldsSet([]string{"NetworkConfig", "PrivateServiceConnect"}, r.NetworkConfig, r.PrivateServiceConnect); err != nil {
+		return err
+	}
 	if !dcl.IsEmptyValueIndirect(r.WorkerConfig) {
 		if err := r.WorkerConfig.validate(); err != nil {
 			return err
@@ -67,6 +81,11 @@ func (r *WorkerPoolPrivatePoolV1Config) validate() error {
 	}
 	if !dcl.IsEmptyValueIndirect(r.NetworkConfig) {
 		if err := r.NetworkConfig.validate(); err != nil {
+			return err
+		}
+	}
+	if !dcl.IsEmptyValueIndirect(r.PrivateServiceConnect) {
+		if err := r.PrivateServiceConnect.validate(); err != nil {
 			return err
 		}
 	}
@@ -78,11 +97,20 @@ func (r *WorkerPoolPrivatePoolV1ConfigWorkerConfig) validate() error {
 func (r *WorkerPoolPrivatePoolV1ConfigNetworkConfig) validate() error {
 	return nil
 }
+func (r *WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect) validate() error {
+	return nil
+}
 func (r *WorkerPoolWorkerConfig) validate() error {
 	return nil
 }
 func (r *WorkerPoolNetworkConfig) validate() error {
 	if err := dcl.Required(r, "peeredNetwork"); err != nil {
+		return err
+	}
+	return nil
+}
+func (r *WorkerPoolPrivateServiceConnect) validate() error {
+	if err := dcl.Required(r, "networkAttachment"); err != nil {
 		return err
 	}
 	return nil
@@ -522,6 +550,34 @@ func canonicalizeWorkerPoolInitialState(rawInitial, rawDesired *WorkerPool) (*Wo
 		}
 	}
 
+	if !dcl.IsZeroValue(rawInitial.PrivateServiceConnect) {
+		// Check if anything else is set.
+		if dcl.AnySet() {
+			rawInitial.PrivateServiceConnect = EmptyWorkerPoolPrivateServiceConnect
+		}
+	}
+
+	if !dcl.IsZeroValue(rawInitial.PrivatePoolV1Config) {
+		// Check if anything else is set.
+		if dcl.AnySet() {
+			rawInitial.PrivatePoolV1Config = EmptyWorkerPoolPrivatePoolV1Config
+		}
+	}
+
+	if !dcl.IsZeroValue(rawInitial.PrivateServiceConnect) {
+		// Check if anything else is set.
+		if dcl.AnySet(rawInitial.NetworkConfig) {
+			rawInitial.PrivateServiceConnect = EmptyWorkerPoolPrivateServiceConnect
+		}
+	}
+
+	if !dcl.IsZeroValue(rawInitial.NetworkConfig) {
+		// Check if anything else is set.
+		if dcl.AnySet() {
+			rawInitial.NetworkConfig = EmptyWorkerPoolNetworkConfig
+		}
+	}
+
 	return rawInitial, nil
 }
 
@@ -540,6 +596,7 @@ func canonicalizeWorkerPoolDesiredState(rawDesired, rawInitial *WorkerPool, opts
 		rawDesired.PrivatePoolV1Config = canonicalizeWorkerPoolPrivatePoolV1Config(rawDesired.PrivatePoolV1Config, nil, opts...)
 		rawDesired.WorkerConfig = canonicalizeWorkerPoolWorkerConfig(rawDesired.WorkerConfig, nil, opts...)
 		rawDesired.NetworkConfig = canonicalizeWorkerPoolNetworkConfig(rawDesired.NetworkConfig, nil, opts...)
+		rawDesired.PrivateServiceConnect = canonicalizeWorkerPoolPrivateServiceConnect(rawDesired.PrivateServiceConnect, nil, opts...)
 
 		return rawDesired, nil
 	}
@@ -563,6 +620,7 @@ func canonicalizeWorkerPoolDesiredState(rawDesired, rawInitial *WorkerPool, opts
 	canonicalDesired.PrivatePoolV1Config = canonicalizeWorkerPoolPrivatePoolV1Config(rawDesired.PrivatePoolV1Config, rawInitial.PrivatePoolV1Config, opts...)
 	canonicalDesired.WorkerConfig = canonicalizeWorkerPoolWorkerConfig(rawDesired.WorkerConfig, rawInitial.WorkerConfig, opts...)
 	canonicalDesired.NetworkConfig = canonicalizeWorkerPoolNetworkConfig(rawDesired.NetworkConfig, rawInitial.NetworkConfig, opts...)
+	canonicalDesired.PrivateServiceConnect = canonicalizeWorkerPoolPrivateServiceConnect(rawDesired.PrivateServiceConnect, rawInitial.PrivateServiceConnect, opts...)
 	if dcl.NameToSelfLink(rawDesired.Project, rawInitial.Project) {
 		canonicalDesired.Project = rawInitial.Project
 	} else {
@@ -599,6 +657,34 @@ func canonicalizeWorkerPoolDesiredState(rawDesired, rawInitial *WorkerPool, opts
 		// Check if anything else is set.
 		if dcl.AnySet(rawDesired.WorkerConfig) {
 			canonicalDesired.PrivatePoolV1Config = EmptyWorkerPoolPrivatePoolV1Config
+		}
+	}
+
+	if canonicalDesired.PrivateServiceConnect != nil {
+		// Check if anything else is set.
+		if dcl.AnySet() {
+			canonicalDesired.PrivateServiceConnect = EmptyWorkerPoolPrivateServiceConnect
+		}
+	}
+
+	if canonicalDesired.PrivatePoolV1Config != nil {
+		// Check if anything else is set.
+		if dcl.AnySet() {
+			canonicalDesired.PrivatePoolV1Config = EmptyWorkerPoolPrivatePoolV1Config
+		}
+	}
+
+	if canonicalDesired.PrivateServiceConnect != nil {
+		// Check if anything else is set.
+		if dcl.AnySet(rawDesired.NetworkConfig) {
+			canonicalDesired.PrivateServiceConnect = EmptyWorkerPoolPrivateServiceConnect
+		}
+	}
+
+	if canonicalDesired.NetworkConfig != nil {
+		// Check if anything else is set.
+		if dcl.AnySet() {
+			canonicalDesired.NetworkConfig = EmptyWorkerPoolNetworkConfig
 		}
 	}
 
@@ -682,6 +768,12 @@ func canonicalizeWorkerPoolNewState(c *Client, rawNew, rawDesired *WorkerPool) (
 		rawNew.NetworkConfig = canonicalizeNewWorkerPoolNetworkConfig(c, rawDesired.NetworkConfig, rawNew.NetworkConfig)
 	}
 
+	if dcl.IsEmptyValueIndirect(rawNew.PrivateServiceConnect) && dcl.IsEmptyValueIndirect(rawDesired.PrivateServiceConnect) {
+		rawNew.PrivateServiceConnect = rawDesired.PrivateServiceConnect
+	} else {
+		rawNew.PrivateServiceConnect = canonicalizeNewWorkerPoolPrivateServiceConnect(c, rawDesired.PrivateServiceConnect, rawNew.PrivateServiceConnect)
+	}
+
 	rawNew.Project = rawDesired.Project
 
 	rawNew.Location = rawDesired.Location
@@ -697,6 +789,26 @@ func canonicalizeWorkerPoolPrivatePoolV1Config(des, initial *WorkerPoolPrivatePo
 		return des
 	}
 
+	if des.NetworkConfig != nil || (initial != nil && initial.NetworkConfig != nil) {
+		// Check if anything else is set.
+		if dcl.AnySet() {
+			des.NetworkConfig = nil
+			if initial != nil {
+				initial.NetworkConfig = nil
+			}
+		}
+	}
+
+	if des.PrivateServiceConnect != nil || (initial != nil && initial.PrivateServiceConnect != nil) {
+		// Check if anything else is set.
+		if dcl.AnySet() {
+			des.PrivateServiceConnect = nil
+			if initial != nil {
+				initial.PrivateServiceConnect = nil
+			}
+		}
+	}
+
 	if initial == nil {
 		return des
 	}
@@ -705,6 +817,7 @@ func canonicalizeWorkerPoolPrivatePoolV1Config(des, initial *WorkerPoolPrivatePo
 
 	cDes.WorkerConfig = canonicalizeWorkerPoolPrivatePoolV1ConfigWorkerConfig(des.WorkerConfig, initial.WorkerConfig, opts...)
 	cDes.NetworkConfig = canonicalizeWorkerPoolPrivatePoolV1ConfigNetworkConfig(des.NetworkConfig, initial.NetworkConfig, opts...)
+	cDes.PrivateServiceConnect = canonicalizeWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect(des.PrivateServiceConnect, initial.PrivateServiceConnect, opts...)
 
 	return cDes
 }
@@ -753,6 +866,7 @@ func canonicalizeNewWorkerPoolPrivatePoolV1Config(c *Client, des, nw *WorkerPool
 
 	nw.WorkerConfig = canonicalizeNewWorkerPoolPrivatePoolV1ConfigWorkerConfig(c, des.WorkerConfig, nw.WorkerConfig)
 	nw.NetworkConfig = canonicalizeNewWorkerPoolPrivatePoolV1ConfigNetworkConfig(c, des.NetworkConfig, nw.NetworkConfig)
+	nw.PrivateServiceConnect = canonicalizeNewWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect(c, des.PrivateServiceConnect, nw.PrivateServiceConnect)
 
 	return nw
 }
@@ -1057,6 +1171,138 @@ func canonicalizeNewWorkerPoolPrivatePoolV1ConfigNetworkConfigSlice(c *Client, d
 	return items
 }
 
+func canonicalizeWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect(des, initial *WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect, opts ...dcl.ApplyOption) *WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect{}
+
+	if dcl.IsZeroValue(des.NetworkAttachment) || (dcl.IsEmptyValueIndirect(des.NetworkAttachment) && dcl.IsEmptyValueIndirect(initial.NetworkAttachment)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.NetworkAttachment = initial.NetworkAttachment
+	} else {
+		cDes.NetworkAttachment = des.NetworkAttachment
+	}
+	if dcl.BoolCanonicalize(des.PublicIPAddressDisabled, initial.PublicIPAddressDisabled) || dcl.IsZeroValue(des.PublicIPAddressDisabled) {
+		cDes.PublicIPAddressDisabled = initial.PublicIPAddressDisabled
+	} else {
+		cDes.PublicIPAddressDisabled = des.PublicIPAddressDisabled
+	}
+	if dcl.BoolCanonicalize(des.RouteAllTraffic, initial.RouteAllTraffic) || dcl.IsZeroValue(des.RouteAllTraffic) {
+		cDes.RouteAllTraffic = initial.RouteAllTraffic
+	} else {
+		cDes.RouteAllTraffic = des.RouteAllTraffic
+	}
+
+	return cDes
+}
+
+func canonicalizeWorkerPoolPrivatePoolV1ConfigPrivateServiceConnectSlice(des, initial []WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect, opts ...dcl.ApplyOption) []WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect(c *Client, des, nw *WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect) *WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.BoolCanonicalize(des.PublicIPAddressDisabled, nw.PublicIPAddressDisabled) {
+		nw.PublicIPAddressDisabled = des.PublicIPAddressDisabled
+	}
+	if dcl.BoolCanonicalize(des.RouteAllTraffic, nw.RouteAllTraffic) {
+		nw.RouteAllTraffic = des.RouteAllTraffic
+	}
+
+	return nw
+}
+
+func canonicalizeNewWorkerPoolPrivatePoolV1ConfigPrivateServiceConnectSet(c *Client, des, nw []WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect) []WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareWorkerPoolPrivatePoolV1ConfigPrivateServiceConnectNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewWorkerPoolPrivatePoolV1ConfigPrivateServiceConnectSlice(c *Client, des, nw []WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect) []WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect(c, &d, &n))
+	}
+
+	return items
+}
+
 func canonicalizeWorkerPoolWorkerConfig(des, initial *WorkerPoolWorkerConfig, opts ...dcl.ApplyOption) *WorkerPoolWorkerConfig {
 	if des == nil {
 		return initial
@@ -1313,6 +1559,130 @@ func canonicalizeNewWorkerPoolNetworkConfigSlice(c *Client, des, nw []WorkerPool
 	return items
 }
 
+func canonicalizeWorkerPoolPrivateServiceConnect(des, initial *WorkerPoolPrivateServiceConnect, opts ...dcl.ApplyOption) *WorkerPoolPrivateServiceConnect {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &WorkerPoolPrivateServiceConnect{}
+
+	if dcl.IsZeroValue(des.NetworkAttachment) || (dcl.IsEmptyValueIndirect(des.NetworkAttachment) && dcl.IsEmptyValueIndirect(initial.NetworkAttachment)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.NetworkAttachment = initial.NetworkAttachment
+	} else {
+		cDes.NetworkAttachment = des.NetworkAttachment
+	}
+	if dcl.BoolCanonicalize(des.RouteAllTraffic, initial.RouteAllTraffic) || dcl.IsZeroValue(des.RouteAllTraffic) {
+		cDes.RouteAllTraffic = initial.RouteAllTraffic
+	} else {
+		cDes.RouteAllTraffic = des.RouteAllTraffic
+	}
+
+	return cDes
+}
+
+func canonicalizeWorkerPoolPrivateServiceConnectSlice(des, initial []WorkerPoolPrivateServiceConnect, opts ...dcl.ApplyOption) []WorkerPoolPrivateServiceConnect {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]WorkerPoolPrivateServiceConnect, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeWorkerPoolPrivateServiceConnect(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]WorkerPoolPrivateServiceConnect, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeWorkerPoolPrivateServiceConnect(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewWorkerPoolPrivateServiceConnect(c *Client, des, nw *WorkerPoolPrivateServiceConnect) *WorkerPoolPrivateServiceConnect {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for WorkerPoolPrivateServiceConnect while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.BoolCanonicalize(des.RouteAllTraffic, nw.RouteAllTraffic) {
+		nw.RouteAllTraffic = des.RouteAllTraffic
+	}
+
+	return nw
+}
+
+func canonicalizeNewWorkerPoolPrivateServiceConnectSet(c *Client, des, nw []WorkerPoolPrivateServiceConnect) []WorkerPoolPrivateServiceConnect {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []WorkerPoolPrivateServiceConnect
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareWorkerPoolPrivateServiceConnectNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewWorkerPoolPrivateServiceConnect(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewWorkerPoolPrivateServiceConnectSlice(c *Client, des, nw []WorkerPoolPrivateServiceConnect) []WorkerPoolPrivateServiceConnect {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []WorkerPoolPrivateServiceConnect
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewWorkerPoolPrivateServiceConnect(c, &d, &n))
+	}
+
+	return items
+}
+
 // The differ returns a list of diffs, along with a list of operations that should be taken
 // to remedy them. Right now, it does not attempt to consolidate operations - if several
 // fields can be fixed with a patch update, it will perform the patch several times.
@@ -1415,6 +1785,13 @@ func diffWorkerPool(c *Client, desired, actual *WorkerPool, opts ...dcl.ApplyOpt
 		newDiffs = append(newDiffs, ds...)
 	}
 
+	if ds, err := dcl.Diff(desired.PrivateServiceConnect, actual.PrivateServiceConnect, dcl.DiffInfo{ObjectFunction: compareWorkerPoolPrivateServiceConnectNewStyle, EmptyObject: EmptyWorkerPoolPrivateServiceConnect, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PrivateServiceConnect")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
 	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
@@ -1462,6 +1839,13 @@ func compareWorkerPoolPrivatePoolV1ConfigNewStyle(d, a interface{}, fn dcl.Field
 	}
 
 	if ds, err := dcl.Diff(desired.NetworkConfig, actual.NetworkConfig, dcl.DiffInfo{ObjectFunction: compareWorkerPoolPrivatePoolV1ConfigNetworkConfigNewStyle, EmptyObject: EmptyWorkerPoolPrivatePoolV1ConfigNetworkConfig, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NetworkConfig")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.PrivateServiceConnect, actual.PrivateServiceConnect, dcl.DiffInfo{ObjectFunction: compareWorkerPoolPrivatePoolV1ConfigPrivateServiceConnectNewStyle, EmptyObject: EmptyWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PrivateServiceConnect")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1549,6 +1933,49 @@ func compareWorkerPoolPrivatePoolV1ConfigNetworkConfigNewStyle(d, a interface{},
 	return diffs, nil
 }
 
+func compareWorkerPoolPrivatePoolV1ConfigPrivateServiceConnectNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect)
+	if !ok {
+		desiredNotPointer, ok := d.(WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect or *WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect)
+	if !ok {
+		actualNotPointer, ok := a.(WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.NetworkAttachment, actual.NetworkAttachment, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NetworkAttachment")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.PublicIPAddressDisabled, actual.PublicIPAddressDisabled, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PublicIpAddressDisabled")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.RouteAllTraffic, actual.RouteAllTraffic, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RouteAllTraffic")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
 func compareWorkerPoolWorkerConfigNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
 	var diffs []*dcl.FieldDiff
 
@@ -1620,6 +2047,42 @@ func compareWorkerPoolNetworkConfigNewStyle(d, a interface{}, fn dcl.FieldName) 
 	}
 
 	if ds, err := dcl.Diff(desired.PeeredNetworkIPRange, actual.PeeredNetworkIPRange, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PeeredNetworkIpRange")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareWorkerPoolPrivateServiceConnectNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*WorkerPoolPrivateServiceConnect)
+	if !ok {
+		desiredNotPointer, ok := d.(WorkerPoolPrivateServiceConnect)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a WorkerPoolPrivateServiceConnect or *WorkerPoolPrivateServiceConnect", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*WorkerPoolPrivateServiceConnect)
+	if !ok {
+		actualNotPointer, ok := a.(WorkerPoolPrivateServiceConnect)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a WorkerPoolPrivateServiceConnect", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.NetworkAttachment, actual.NetworkAttachment, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NetworkAttachment")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.RouteAllTraffic, actual.RouteAllTraffic, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RouteAllTraffic")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1718,6 +2181,11 @@ func expandWorkerPool(c *Client, f *WorkerPool) (map[string]interface{}, error) 
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["networkConfig"] = v
 	}
+	if v, err := expandWorkerPoolPrivateServiceConnect(c, f.PrivateServiceConnect, res); err != nil {
+		return nil, fmt.Errorf("error expanding PrivateServiceConnect into privateServiceConnect: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["privateServiceConnect"] = v
+	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Project into project: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
@@ -1756,6 +2224,7 @@ func flattenWorkerPool(c *Client, i interface{}, res *WorkerPool) *WorkerPool {
 	resultRes.Etag = dcl.FlattenString(m["etag"])
 	resultRes.WorkerConfig = flattenWorkerPoolWorkerConfig(c, m["workerConfig"], res)
 	resultRes.NetworkConfig = flattenWorkerPoolNetworkConfig(c, m["networkConfig"], res)
+	resultRes.PrivateServiceConnect = flattenWorkerPoolPrivateServiceConnect(c, m["privateServiceConnect"], res)
 	resultRes.Project = dcl.FlattenString(m["project"])
 	resultRes.Location = dcl.FlattenString(m["location"])
 
@@ -1861,6 +2330,11 @@ func expandWorkerPoolPrivatePoolV1Config(c *Client, f *WorkerPoolPrivatePoolV1Co
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["networkConfig"] = v
 	}
+	if v, err := expandWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect(c, f.PrivateServiceConnect, res); err != nil {
+		return nil, fmt.Errorf("error expanding PrivateServiceConnect into privateServiceConnect: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["privateServiceConnect"] = v
+	}
 
 	return m, nil
 }
@@ -1880,6 +2354,7 @@ func flattenWorkerPoolPrivatePoolV1Config(c *Client, i interface{}, res *WorkerP
 	}
 	r.WorkerConfig = flattenWorkerPoolPrivatePoolV1ConfigWorkerConfig(c, m["workerConfig"], res)
 	r.NetworkConfig = flattenWorkerPoolPrivatePoolV1ConfigNetworkConfig(c, m["networkConfig"], res)
+	r.PrivateServiceConnect = flattenWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect(c, m["privateServiceConnect"], res)
 
 	return r
 }
@@ -2124,6 +2599,128 @@ func flattenWorkerPoolPrivatePoolV1ConfigNetworkConfig(c *Client, i interface{},
 	return r
 }
 
+// expandWorkerPoolPrivatePoolV1ConfigPrivateServiceConnectMap expands the contents of WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect into a JSON
+// request object.
+func expandWorkerPoolPrivatePoolV1ConfigPrivateServiceConnectMap(c *Client, f map[string]WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect, res *WorkerPool) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandWorkerPoolPrivatePoolV1ConfigPrivateServiceConnectSlice expands the contents of WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect into a JSON
+// request object.
+func expandWorkerPoolPrivatePoolV1ConfigPrivateServiceConnectSlice(c *Client, f []WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect, res *WorkerPool) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenWorkerPoolPrivatePoolV1ConfigPrivateServiceConnectMap flattens the contents of WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect from a JSON
+// response object.
+func flattenWorkerPoolPrivatePoolV1ConfigPrivateServiceConnectMap(c *Client, i interface{}, res *WorkerPool) map[string]WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect{}
+	}
+
+	if len(a) == 0 {
+		return map[string]WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect{}
+	}
+
+	items := make(map[string]WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect)
+	for k, item := range a {
+		items[k] = *flattenWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenWorkerPoolPrivatePoolV1ConfigPrivateServiceConnectSlice flattens the contents of WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect from a JSON
+// response object.
+func flattenWorkerPoolPrivatePoolV1ConfigPrivateServiceConnectSlice(c *Client, i interface{}, res *WorkerPool) []WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect{}
+	}
+
+	if len(a) == 0 {
+		return []WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect{}
+	}
+
+	items := make([]WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect expands an instance of WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect into a JSON
+// request object.
+func expandWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect(c *Client, f *WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect, res *WorkerPool) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.NetworkAttachment; !dcl.IsEmptyValueIndirect(v) {
+		m["networkAttachment"] = v
+	}
+	if v := f.PublicIPAddressDisabled; !dcl.IsEmptyValueIndirect(v) {
+		m["publicIpAddressDisabled"] = v
+	}
+	if v := f.RouteAllTraffic; !dcl.IsEmptyValueIndirect(v) {
+		m["routeAllTraffic"] = v
+	}
+
+	return m, nil
+}
+
+// flattenWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect flattens an instance of WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect from a JSON
+// response object.
+func flattenWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect(c *Client, i interface{}, res *WorkerPool) *WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyWorkerPoolPrivatePoolV1ConfigPrivateServiceConnect
+	}
+	r.NetworkAttachment = dcl.FlattenString(m["networkAttachment"])
+	r.PublicIPAddressDisabled = dcl.FlattenBool(m["publicIpAddressDisabled"])
+	r.RouteAllTraffic = dcl.FlattenBool(m["routeAllTraffic"])
+
+	return r
+}
+
 // expandWorkerPoolWorkerConfigMap expands the contents of WorkerPoolWorkerConfig into a JSON
 // request object.
 func expandWorkerPoolWorkerConfigMap(c *Client, f map[string]WorkerPoolWorkerConfig, res *WorkerPool) (map[string]interface{}, error) {
@@ -2364,6 +2961,124 @@ func flattenWorkerPoolNetworkConfig(c *Client, i interface{}, res *WorkerPool) *
 	return r
 }
 
+// expandWorkerPoolPrivateServiceConnectMap expands the contents of WorkerPoolPrivateServiceConnect into a JSON
+// request object.
+func expandWorkerPoolPrivateServiceConnectMap(c *Client, f map[string]WorkerPoolPrivateServiceConnect, res *WorkerPool) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandWorkerPoolPrivateServiceConnect(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandWorkerPoolPrivateServiceConnectSlice expands the contents of WorkerPoolPrivateServiceConnect into a JSON
+// request object.
+func expandWorkerPoolPrivateServiceConnectSlice(c *Client, f []WorkerPoolPrivateServiceConnect, res *WorkerPool) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandWorkerPoolPrivateServiceConnect(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenWorkerPoolPrivateServiceConnectMap flattens the contents of WorkerPoolPrivateServiceConnect from a JSON
+// response object.
+func flattenWorkerPoolPrivateServiceConnectMap(c *Client, i interface{}, res *WorkerPool) map[string]WorkerPoolPrivateServiceConnect {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]WorkerPoolPrivateServiceConnect{}
+	}
+
+	if len(a) == 0 {
+		return map[string]WorkerPoolPrivateServiceConnect{}
+	}
+
+	items := make(map[string]WorkerPoolPrivateServiceConnect)
+	for k, item := range a {
+		items[k] = *flattenWorkerPoolPrivateServiceConnect(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenWorkerPoolPrivateServiceConnectSlice flattens the contents of WorkerPoolPrivateServiceConnect from a JSON
+// response object.
+func flattenWorkerPoolPrivateServiceConnectSlice(c *Client, i interface{}, res *WorkerPool) []WorkerPoolPrivateServiceConnect {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []WorkerPoolPrivateServiceConnect{}
+	}
+
+	if len(a) == 0 {
+		return []WorkerPoolPrivateServiceConnect{}
+	}
+
+	items := make([]WorkerPoolPrivateServiceConnect, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenWorkerPoolPrivateServiceConnect(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandWorkerPoolPrivateServiceConnect expands an instance of WorkerPoolPrivateServiceConnect into a JSON
+// request object.
+func expandWorkerPoolPrivateServiceConnect(c *Client, f *WorkerPoolPrivateServiceConnect, res *WorkerPool) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.NetworkAttachment; !dcl.IsEmptyValueIndirect(v) {
+		m["networkAttachment"] = v
+	}
+	if v := f.RouteAllTraffic; !dcl.IsEmptyValueIndirect(v) {
+		m["routeAllTraffic"] = v
+	}
+
+	return m, nil
+}
+
+// flattenWorkerPoolPrivateServiceConnect flattens an instance of WorkerPoolPrivateServiceConnect from a JSON
+// response object.
+func flattenWorkerPoolPrivateServiceConnect(c *Client, i interface{}, res *WorkerPool) *WorkerPoolPrivateServiceConnect {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &WorkerPoolPrivateServiceConnect{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyWorkerPoolPrivateServiceConnect
+	}
+	r.NetworkAttachment = dcl.FlattenString(m["networkAttachment"])
+	r.RouteAllTraffic = dcl.FlattenBool(m["routeAllTraffic"])
+
+	return r
+}
+
 // flattenWorkerPoolStateEnumMap flattens the contents of WorkerPoolStateEnum from a JSON
 // response object.
 func flattenWorkerPoolStateEnumMap(c *Client, i interface{}, res *WorkerPool) map[string]WorkerPoolStateEnum {
@@ -2596,6 +3311,17 @@ func extractWorkerPoolFields(r *WorkerPool) error {
 	if !dcl.IsEmptyValueIndirect(vNetworkConfig) {
 		r.NetworkConfig = vNetworkConfig
 	}
+	vPrivateServiceConnect := r.PrivateServiceConnect
+	if vPrivateServiceConnect == nil {
+		// note: explicitly not the empty object.
+		vPrivateServiceConnect = &WorkerPoolPrivateServiceConnect{}
+	}
+	if err := extractWorkerPoolPrivateServiceConnectFields(r, vPrivateServiceConnect); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vPrivateServiceConnect) {
+		r.PrivateServiceConnect = vPrivateServiceConnect
+	}
 	return nil
 }
 func extractWorkerPoolPrivatePoolV1ConfigFields(r *WorkerPool, o *WorkerPoolPrivatePoolV1Config) error {
@@ -2621,6 +3347,17 @@ func extractWorkerPoolPrivatePoolV1ConfigFields(r *WorkerPool, o *WorkerPoolPriv
 	if !dcl.IsEmptyValueIndirect(vNetworkConfig) {
 		o.NetworkConfig = vNetworkConfig
 	}
+	vPrivateServiceConnect := o.PrivateServiceConnect
+	if vPrivateServiceConnect == nil {
+		// note: explicitly not the empty object.
+		vPrivateServiceConnect = &WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect{}
+	}
+	if err := extractWorkerPoolPrivatePoolV1ConfigPrivateServiceConnectFields(r, vPrivateServiceConnect); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vPrivateServiceConnect) {
+		o.PrivateServiceConnect = vPrivateServiceConnect
+	}
 	return nil
 }
 func extractWorkerPoolPrivatePoolV1ConfigWorkerConfigFields(r *WorkerPool, o *WorkerPoolPrivatePoolV1ConfigWorkerConfig) error {
@@ -2629,10 +3366,16 @@ func extractWorkerPoolPrivatePoolV1ConfigWorkerConfigFields(r *WorkerPool, o *Wo
 func extractWorkerPoolPrivatePoolV1ConfigNetworkConfigFields(r *WorkerPool, o *WorkerPoolPrivatePoolV1ConfigNetworkConfig) error {
 	return nil
 }
+func extractWorkerPoolPrivatePoolV1ConfigPrivateServiceConnectFields(r *WorkerPool, o *WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect) error {
+	return nil
+}
 func extractWorkerPoolWorkerConfigFields(r *WorkerPool, o *WorkerPoolWorkerConfig) error {
 	return nil
 }
 func extractWorkerPoolNetworkConfigFields(r *WorkerPool, o *WorkerPoolNetworkConfig) error {
+	return nil
+}
+func extractWorkerPoolPrivateServiceConnectFields(r *WorkerPool, o *WorkerPoolPrivateServiceConnect) error {
 	return nil
 }
 
@@ -2672,6 +3415,17 @@ func postReadExtractWorkerPoolFields(r *WorkerPool) error {
 	if !dcl.IsEmptyValueIndirect(vNetworkConfig) {
 		r.NetworkConfig = vNetworkConfig
 	}
+	vPrivateServiceConnect := r.PrivateServiceConnect
+	if vPrivateServiceConnect == nil {
+		// note: explicitly not the empty object.
+		vPrivateServiceConnect = &WorkerPoolPrivateServiceConnect{}
+	}
+	if err := postReadExtractWorkerPoolPrivateServiceConnectFields(r, vPrivateServiceConnect); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vPrivateServiceConnect) {
+		r.PrivateServiceConnect = vPrivateServiceConnect
+	}
 	return nil
 }
 func postReadExtractWorkerPoolPrivatePoolV1ConfigFields(r *WorkerPool, o *WorkerPoolPrivatePoolV1Config) error {
@@ -2697,6 +3451,17 @@ func postReadExtractWorkerPoolPrivatePoolV1ConfigFields(r *WorkerPool, o *Worker
 	if !dcl.IsEmptyValueIndirect(vNetworkConfig) {
 		o.NetworkConfig = vNetworkConfig
 	}
+	vPrivateServiceConnect := o.PrivateServiceConnect
+	if vPrivateServiceConnect == nil {
+		// note: explicitly not the empty object.
+		vPrivateServiceConnect = &WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect{}
+	}
+	if err := extractWorkerPoolPrivatePoolV1ConfigPrivateServiceConnectFields(r, vPrivateServiceConnect); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vPrivateServiceConnect) {
+		o.PrivateServiceConnect = vPrivateServiceConnect
+	}
 	return nil
 }
 func postReadExtractWorkerPoolPrivatePoolV1ConfigWorkerConfigFields(r *WorkerPool, o *WorkerPoolPrivatePoolV1ConfigWorkerConfig) error {
@@ -2705,9 +3470,15 @@ func postReadExtractWorkerPoolPrivatePoolV1ConfigWorkerConfigFields(r *WorkerPoo
 func postReadExtractWorkerPoolPrivatePoolV1ConfigNetworkConfigFields(r *WorkerPool, o *WorkerPoolPrivatePoolV1ConfigNetworkConfig) error {
 	return nil
 }
+func postReadExtractWorkerPoolPrivatePoolV1ConfigPrivateServiceConnectFields(r *WorkerPool, o *WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect) error {
+	return nil
+}
 func postReadExtractWorkerPoolWorkerConfigFields(r *WorkerPool, o *WorkerPoolWorkerConfig) error {
 	return nil
 }
 func postReadExtractWorkerPoolNetworkConfigFields(r *WorkerPool, o *WorkerPoolNetworkConfig) error {
+	return nil
+}
+func postReadExtractWorkerPoolPrivateServiceConnectFields(r *WorkerPool, o *WorkerPoolPrivateServiceConnect) error {
 	return nil
 }

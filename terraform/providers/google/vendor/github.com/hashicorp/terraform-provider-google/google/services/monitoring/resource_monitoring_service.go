@@ -20,10 +20,12 @@ package monitoring
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -46,6 +48,10 @@ func ResourceMonitoringGenericService() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"service_id": {
@@ -177,6 +183,7 @@ func resourceMonitoringGenericServiceCreate(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "POST",
@@ -185,6 +192,7 @@ func resourceMonitoringGenericServiceCreate(d *schema.ResourceData, meta interfa
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutCreate),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringConcurrentEditError},
 	})
 	if err != nil {
@@ -231,12 +239,14 @@ func resourceMonitoringGenericServiceRead(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "GET",
 		Project:              billingProject,
 		RawURL:               url,
 		UserAgent:            userAgent,
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringConcurrentEditError},
 	})
 	if err != nil {
@@ -301,6 +311,7 @@ func resourceMonitoringGenericServiceUpdate(d *schema.ResourceData, meta interfa
 	}
 
 	log.Printf("[DEBUG] Updating GenericService %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -322,21 +333,26 @@ func resourceMonitoringGenericServiceUpdate(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:               config,
-		Method:               "PATCH",
-		Project:              billingProject,
-		RawURL:               url,
-		UserAgent:            userAgent,
-		Body:                 obj,
-		Timeout:              d.Timeout(schema.TimeoutUpdate),
-		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringConcurrentEditError},
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:               config,
+			Method:               "PATCH",
+			Project:              billingProject,
+			RawURL:               url,
+			UserAgent:            userAgent,
+			Body:                 obj,
+			Timeout:              d.Timeout(schema.TimeoutUpdate),
+			Headers:              headers,
+			ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringConcurrentEditError},
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating GenericService %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating GenericService %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating GenericService %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating GenericService %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceMonitoringGenericServiceRead(d, meta)
@@ -363,13 +379,15 @@ func resourceMonitoringGenericServiceDelete(d *schema.ResourceData, meta interfa
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting GenericService %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting GenericService %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "DELETE",
@@ -378,6 +396,7 @@ func resourceMonitoringGenericServiceDelete(d *schema.ResourceData, meta interfa
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutDelete),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringConcurrentEditError},
 	})
 	if err != nil {
@@ -391,9 +410,9 @@ func resourceMonitoringGenericServiceDelete(d *schema.ResourceData, meta interfa
 func resourceMonitoringGenericServiceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/services/(?P<service_id>[^/]+)",
-		"(?P<project>[^/]+)/(?P<service_id>[^/]+)",
-		"(?P<service_id>[^/]+)",
+		"^projects/(?P<project>[^/]+)/services/(?P<service_id>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<service_id>[^/]+)$",
+		"^(?P<service_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

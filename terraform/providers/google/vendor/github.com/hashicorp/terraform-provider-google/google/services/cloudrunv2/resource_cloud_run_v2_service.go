@@ -20,9 +20,11 @@ package cloudrunv2
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -47,7 +49,19 @@ func ResourceCloudRunV2Service() *schema.Resource {
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.SetAnnotationsDiff,
+			tpgresource.DefaultProviderProject,
+		),
+
 		Schema: map[string]*schema.Schema{
+			"location": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: `The location of the cloud run service`,
+			},
 			"name": {
 				Type:             schema.TypeString,
 				Required:         true,
@@ -96,6 +110,14 @@ This field follows Kubernetes annotations' namespacing, limits, and rules.`,
 										Type:        schema.TypeList,
 										Optional:    true,
 										Description: `Entrypoint array. Not executed within a shell. The docker image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. The $(VAR_NAME) syntax can be escaped with a double $$, ie: $$(VAR_NAME). Escaped references will never be expanded, regardless of whether the variable exists or not. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell`,
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+									},
+									"depends_on": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: `Containers which should be started before this container. If specified the container will wait to start until all containers with the listed names are healthy.`,
 										Elem: &schema.Schema{
 											Type: schema.TypeString,
 										},
@@ -245,15 +267,16 @@ If not specified, defaults to the same value as container.ports[0].containerPort
 												"tcp_socket": {
 													Type:        schema.TypeList,
 													Optional:    true,
-													Deprecated:  "Cloud Run does not support tcp socket in liveness probe and `liveness_probe.tcp_socket` field will be removed in a future major release.",
-													Description: `TCPSocket specifies an action involving a TCP port. This field is not supported in liveness probe currently.`,
+													Description: `TCPSocketAction describes an action based on opening a socket`,
 													MaxItems:    1,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
 															"port": {
-																Type:        schema.TypeInt,
-																Optional:    true,
-																Description: `Port number to access on the container. Must be in the range 1 to 65535. If not specified, defaults to 8080.`,
+																Type:     schema.TypeInt,
+																Required: true,
+																Description: `Port number to access on the container. Must be in the range 1 to 65535.
+If not specified, defaults to the exposed port of the container, which
+is the value of container.ports[0].containerPort.`,
 															},
 														},
 													},
@@ -279,6 +302,7 @@ If not specified, defaults to the same value as container.ports[0].containerPort
 										Description: `List of ports to expose from the container. Only a single port can be specified. The specified ports must be listening on all interfaces (0.0.0.0) within the container to be accessible.
 
 If omitted, a port number will be chosen and passed to the container through the PORT environment variable for the container to listen on`,
+										MaxItems: 1,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"container_port": {
@@ -304,15 +328,16 @@ If omitted, a port number will be chosen and passed to the container through the
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"cpu_idle": {
-													Type:        schema.TypeBool,
-													Optional:    true,
-													Description: `Determines whether CPU should be throttled or not outside of requests.`,
+													Type:     schema.TypeBool,
+													Optional: true,
+													Description: `Determines whether CPU is only allocated during requests. True by default if the parent 'resources' field is not set. However, if
+'resources' is set, this field must be explicitly set to true to preserve the default behavior.`,
 												},
 												"limits": {
 													Type:        schema.TypeMap,
 													Computed:    true,
 													Optional:    true,
-													Description: `Only memory and CPU are supported. Note: The only supported values for CPU are '1', '2', '4', and '8'. Setting 4 CPU requires at least 2Gi of memory. The values of the map is string form of the 'quantity' k8s type: https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go`,
+													Description: `Only memory and CPU are supported. Use key 'cpu' for CPU limit and 'memory' for memory limit. Note: The only supported values for CPU are '1', '2', '4', and '8'. Setting 4 CPU requires at least 2Gi of memory. The values of the map is string form of the 'quantity' k8s type: https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go`,
 													Elem:        &schema.Schema{Type: schema.TypeString},
 												},
 												"startup_cpu_boost": {
@@ -534,9 +559,10 @@ All system labels in v1 now have a corresponding field in v2 RevisionTemplate.`,
 							Description: `Enables session affinity. For more information, go to https://cloud.google.com/run/docs/configuring/session-affinity`,
 						},
 						"timeout": {
-							Type:     schema.TypeString,
-							Computed: true,
-							Optional: true,
+							Type:         schema.TypeString,
+							Computed:     true,
+							Optional:     true,
+							ValidateFunc: verify.ValidateRegexp(`^[0-9]+(?:\.[0-9]{1,9})?s$`),
 							Description: `Max allowed time for an instance to respond to a request.
 
 A duration in seconds with up to nine fractional digits, ending with 's'. Example: "3.5s".`,
@@ -560,12 +586,58 @@ A duration in seconds with up to nine fractional digits, ending with 's'. Exampl
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"instances": {
-													Type:        schema.TypeList,
+													Type:        schema.TypeSet,
 													Optional:    true,
 													Description: `The Cloud SQL instance connection names, as can be found in https://console.cloud.google.com/sql/instances. Visit https://cloud.google.com/sql/docs/mysql/connect-run for more information on how to connect Cloud SQL and Cloud Run. Format: {project}:{location}:{instance}`,
 													Elem: &schema.Schema{
 														Type: schema.TypeString,
 													},
+													Set: schema.HashString,
+												},
+											},
+										},
+									},
+									"gcs": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: `Cloud Storage bucket mounted as a volume using GCSFuse. This feature is only supported in the gen2 execution environment and requires launch-stage to be set to ALPHA or BETA.`,
+										MaxItems:    1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"bucket": {
+													Type:        schema.TypeString,
+													Required:    true,
+													Description: `GCS Bucket name`,
+												},
+												"read_only": {
+													Type:        schema.TypeBool,
+													Optional:    true,
+													Description: `If true, mount the GCS bucket as read-only`,
+												},
+											},
+										},
+									},
+									"nfs": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: `Represents an NFS mount.`,
+										MaxItems:    1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"path": {
+													Type:        schema.TypeString,
+													Required:    true,
+													Description: `Path that is exported by the NFS server.`,
+												},
+												"server": {
+													Type:        schema.TypeString,
+													Required:    true,
+													Description: `Hostname or IP address of the NFS server`,
+												},
+												"read_only": {
+													Type:        schema.TypeBool,
+													Optional:    true,
+													Description: `If true, mount the NFS volume as read only`,
 												},
 											},
 										},
@@ -593,15 +665,15 @@ A duration in seconds with up to nine fractional digits, ending with 's'. Exampl
 													Description: `If unspecified, the volume will expose a file whose name is the secret, relative to VolumeMount.mount_path. If specified, the key will be used as the version to fetch from Cloud Secret Manager and the path will be the name of the file exposed in the volume. When items are defined, they must specify a path and a version.`,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
-															"mode": {
-																Type:        schema.TypeInt,
-																Required:    true,
-																Description: `Integer octal mode bits to use on this file, must be a value between 01 and 0777 (octal). If 0 or not set, the Volume's default mode will be used.`,
-															},
 															"path": {
 																Type:        schema.TypeString,
 																Required:    true,
 																Description: `The relative path of the secret in the container.`,
+															},
+															"mode": {
+																Type:        schema.TypeInt,
+																Optional:    true,
+																Description: `Integer octal mode bits to use on this file, must be a value between 01 and 0777 (octal). If 0 or not set, the Volume's default mode will be used.`,
 															},
 															"version": {
 																Type:        schema.TypeString,
@@ -631,9 +703,43 @@ A duration in seconds with up to nine fractional digits, ending with 's'. Exampl
 									},
 									"egress": {
 										Type:         schema.TypeString,
+										Computed:     true,
 										Optional:     true,
 										ValidateFunc: verify.ValidateEnum([]string{"ALL_TRAFFIC", "PRIVATE_RANGES_ONLY", ""}),
 										Description:  `Traffic VPC egress settings. Possible values: ["ALL_TRAFFIC", "PRIVATE_RANGES_ONLY"]`,
+									},
+									"network_interfaces": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: `Direct VPC egress settings. Currently only single network interface is supported.`,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"network": {
+													Type:     schema.TypeString,
+													Computed: true,
+													Optional: true,
+													Description: `The VPC network that the Cloud Run resource will be able to send traffic to. At least one of network or subnetwork must be specified. If both
+network and subnetwork are specified, the given VPC subnetwork must belong to the given VPC network. If network is not specified, it will be
+looked up from the subnetwork.`,
+												},
+												"subnetwork": {
+													Type:     schema.TypeString,
+													Computed: true,
+													Optional: true,
+													Description: `The VPC subnetwork that the Cloud Run resource will get IPs from. At least one of network or subnetwork must be specified. If both
+network and subnetwork are specified, the given VPC subnetwork must belong to the given VPC network. If subnetwork is not specified, the
+subnetwork with the same name with the network will be used.`,
+												},
+												"tags": {
+													Type:        schema.TypeList,
+													Optional:    true,
+													Description: `Network tags applied to this Cloud Run service.`,
+													Elem: &schema.Schema{
+														Type: schema.TypeString,
+													},
+												},
+											},
+										},
 									},
 								},
 							},
@@ -649,7 +755,10 @@ A duration in seconds with up to nine fractional digits, ending with 's'. Exampl
 Cloud Run API v2 does not support annotations with 'run.googleapis.com', 'cloud.googleapis.com', 'serving.knative.dev', or 'autoscaling.knative.dev' namespaces, and they will be rejected in new resources.
 All system annotations in v1 now have a corresponding field in v2 Service.
 
-This field follows Kubernetes annotations' namespacing, limits, and rules.`,
+This field follows Kubernetes annotations' namespacing, limits, and rules.
+
+**Note**: This field is non-authoritative, and will only manage the annotations present in your configuration.
+Please refer to the field 'effective_annotations' for all of the annotations present on the resource.`,
 				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"binary_authorization": {
@@ -682,6 +791,15 @@ This field follows Kubernetes annotations' namespacing, limits, and rules.`,
 				Optional:    true,
 				Description: `Arbitrary version identifier for the API client.`,
 			},
+			"custom_audiences": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Description: `One or more custom audiences that you want this service to support. Specify each custom audience as the full URL in a string. The custom audiences are encoded in the token and used to authenticate requests.
+For more information, see https://cloud.google.com/run/docs/configuring/custom-audiences.`,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -701,7 +819,10 @@ This field follows Kubernetes annotations' namespacing, limits, and rules.`,
 environment, state, etc. For more information, visit https://cloud.google.com/resource-manager/docs/creating-managing-labels or https://cloud.google.com/run/docs/configuring/labels.
 
 Cloud Run API v2 does not support labels with  'run.googleapis.com', 'cloud.googleapis.com', 'serving.knative.dev', or 'autoscaling.knative.dev' namespaces, and they will be rejected.
-All system labels in v1 now have a corresponding field in v2 Service.`,
+All system labels in v1 now have a corresponding field in v2 Service.
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
 				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"launch_stage": {
@@ -713,12 +834,6 @@ All system labels in v1 now have a corresponding field in v2 Service.`,
 If no value is specified, GA is assumed. Set the launch stage to a preview stage on input to allow use of preview features in that stage. On read (or output), describes whether the resource uses preview features.
 
 For example, if ALPHA is provided as input, but only BETA and GA-level features are used, this field will be BETA on output. Possible values: ["UNIMPLEMENTED", "PRELAUNCH", "EARLY_ACCESS", "ALPHA", "BETA", "GA", "DEPRECATED"]`,
-			},
-			"location": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: `The location of the cloud run service`,
 			},
 			"traffic": {
 				Type:        schema.TypeList,
@@ -803,15 +918,52 @@ A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to n
 					},
 				},
 			},
+			"create_time": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `The creation time.`,
+			},
+			"creator": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `Email address of the authenticated creator.`,
+			},
+			"delete_time": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `The deletion time.`,
+			},
+			"effective_annotations": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of annotations (key/value pairs) present on the resource in GCP, including the annotations configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"etag": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `A system-generated fingerprint for this version of the resource. May be used to detect modification conflict during updates.`,
 			},
+			"expire_time": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `For a deleted resource, the time after which it will be permamently deleted.`,
+			},
 			"generation": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `A number that monotonically increases every time the user modifies the desired state. Please note that unlike v1, this is an int64 value. As with most Google APIs, its JSON representation will be a string instead of an integer.`,
+			},
+			"last_modifier": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `Email address of the last authenticated modifier.`,
 			},
 			"latest_created_revision": {
 				Type:        schema.TypeString,
@@ -888,6 +1040,13 @@ If reconciliation failed, trafficStatuses, observedGeneration, and latestReadyRe
 					},
 				},
 			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
 			"traffic_statuses": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -927,6 +1086,11 @@ If reconciliation failed, trafficStatuses, observedGeneration, and latestReadyRe
 				Computed:    true,
 				Description: `Server assigned unique identifier for the trigger. The value is a UUID4 string and guaranteed to remain unchanged until the resource is deleted.`,
 			},
+			"update_time": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `The last-modified time.`,
+			},
 			"uri": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -956,18 +1120,6 @@ func resourceCloudRunV2ServiceCreate(d *schema.ResourceData, meta interface{}) e
 		return err
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(descriptionProp)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
-	}
-	labelsProp, err := expandCloudRunV2ServiceLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
-	annotationsProp, err := expandCloudRunV2ServiceAnnotations(d.Get("annotations"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("annotations"); !tpgresource.IsEmptyValue(reflect.ValueOf(annotationsProp)) && (ok || !reflect.DeepEqual(v, annotationsProp)) {
-		obj["annotations"] = annotationsProp
 	}
 	clientProp, err := expandCloudRunV2ServiceClient(d.Get("client"), d, config)
 	if err != nil {
@@ -999,6 +1151,12 @@ func resourceCloudRunV2ServiceCreate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("binary_authorization"); !tpgresource.IsEmptyValue(reflect.ValueOf(binaryAuthorizationProp)) && (ok || !reflect.DeepEqual(v, binaryAuthorizationProp)) {
 		obj["binaryAuthorization"] = binaryAuthorizationProp
 	}
+	customAudiencesProp, err := expandCloudRunV2ServiceCustomAudiences(d.Get("custom_audiences"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("custom_audiences"); !tpgresource.IsEmptyValue(reflect.ValueOf(customAudiencesProp)) && (ok || !reflect.DeepEqual(v, customAudiencesProp)) {
+		obj["customAudiences"] = customAudiencesProp
+	}
 	templateProp, err := expandCloudRunV2ServiceTemplate(d.Get("template"), d, config)
 	if err != nil {
 		return err
@@ -1010,6 +1168,18 @@ func resourceCloudRunV2ServiceCreate(d *schema.ResourceData, meta interface{}) e
 		return err
 	} else if v, ok := d.GetOkExists("traffic"); !tpgresource.IsEmptyValue(reflect.ValueOf(trafficProp)) && (ok || !reflect.DeepEqual(v, trafficProp)) {
 		obj["traffic"] = trafficProp
+	}
+	labelsProp, err := expandCloudRunV2ServiceEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
+	annotationsProp, err := expandCloudRunV2ServiceEffectiveAnnotations(d.Get("effective_annotations"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_annotations"); !tpgresource.IsEmptyValue(reflect.ValueOf(annotationsProp)) && (ok || !reflect.DeepEqual(v, annotationsProp)) {
+		obj["annotations"] = annotationsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{CloudRunV2BasePath}}projects/{{project}}/locations/{{location}}/services?serviceId={{name}}")
@@ -1031,6 +1201,7 @@ func resourceCloudRunV2ServiceCreate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -1039,6 +1210,7 @@ func resourceCloudRunV2ServiceCreate(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Service: %s", err)
@@ -1058,9 +1230,6 @@ func resourceCloudRunV2ServiceCreate(d *schema.ResourceData, meta interface{}) e
 		config, res, &opRes, project, "Creating Service", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
-		// The resource didn't actually create
-		d.SetId("")
-
 		return fmt.Errorf("Error waiting to create Service: %s", err)
 	}
 
@@ -1101,12 +1270,14 @@ func resourceCloudRunV2ServiceRead(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("CloudRunV2Service %q", d.Id()))
@@ -1131,6 +1302,24 @@ func resourceCloudRunV2ServiceRead(d *schema.ResourceData, meta interface{}) err
 	if err := d.Set("annotations", flattenCloudRunV2ServiceAnnotations(res["annotations"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Service: %s", err)
 	}
+	if err := d.Set("create_time", flattenCloudRunV2ServiceCreateTime(res["createTime"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Service: %s", err)
+	}
+	if err := d.Set("update_time", flattenCloudRunV2ServiceUpdateTime(res["updateTime"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Service: %s", err)
+	}
+	if err := d.Set("delete_time", flattenCloudRunV2ServiceDeleteTime(res["deleteTime"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Service: %s", err)
+	}
+	if err := d.Set("expire_time", flattenCloudRunV2ServiceExpireTime(res["expireTime"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Service: %s", err)
+	}
+	if err := d.Set("creator", flattenCloudRunV2ServiceCreator(res["creator"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Service: %s", err)
+	}
+	if err := d.Set("last_modifier", flattenCloudRunV2ServiceLastModifier(res["lastModifier"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Service: %s", err)
+	}
 	if err := d.Set("client", flattenCloudRunV2ServiceClient(res["client"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Service: %s", err)
 	}
@@ -1144,6 +1333,9 @@ func resourceCloudRunV2ServiceRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("Error reading Service: %s", err)
 	}
 	if err := d.Set("binary_authorization", flattenCloudRunV2ServiceBinaryAuthorization(res["binaryAuthorization"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Service: %s", err)
+	}
+	if err := d.Set("custom_audiences", flattenCloudRunV2ServiceCustomAudiences(res["customAudiences"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Service: %s", err)
 	}
 	if err := d.Set("template", flattenCloudRunV2ServiceTemplate(res["template"], d, config)); err != nil {
@@ -1179,6 +1371,15 @@ func resourceCloudRunV2ServiceRead(d *schema.ResourceData, meta interface{}) err
 	if err := d.Set("etag", flattenCloudRunV2ServiceEtag(res["etag"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Service: %s", err)
 	}
+	if err := d.Set("terraform_labels", flattenCloudRunV2ServiceTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Service: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenCloudRunV2ServiceEffectiveLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Service: %s", err)
+	}
+	if err := d.Set("effective_annotations", flattenCloudRunV2ServiceEffectiveAnnotations(res["annotations"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Service: %s", err)
+	}
 
 	return nil
 }
@@ -1204,18 +1405,6 @@ func resourceCloudRunV2ServiceUpdate(d *schema.ResourceData, meta interface{}) e
 		return err
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
-	}
-	labelsProp, err := expandCloudRunV2ServiceLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
-	annotationsProp, err := expandCloudRunV2ServiceAnnotations(d.Get("annotations"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("annotations"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, annotationsProp)) {
-		obj["annotations"] = annotationsProp
 	}
 	clientProp, err := expandCloudRunV2ServiceClient(d.Get("client"), d, config)
 	if err != nil {
@@ -1247,6 +1436,12 @@ func resourceCloudRunV2ServiceUpdate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("binary_authorization"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, binaryAuthorizationProp)) {
 		obj["binaryAuthorization"] = binaryAuthorizationProp
 	}
+	customAudiencesProp, err := expandCloudRunV2ServiceCustomAudiences(d.Get("custom_audiences"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("custom_audiences"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, customAudiencesProp)) {
+		obj["customAudiences"] = customAudiencesProp
+	}
 	templateProp, err := expandCloudRunV2ServiceTemplate(d.Get("template"), d, config)
 	if err != nil {
 		return err
@@ -1259,6 +1454,18 @@ func resourceCloudRunV2ServiceUpdate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("traffic"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, trafficProp)) {
 		obj["traffic"] = trafficProp
 	}
+	labelsProp, err := expandCloudRunV2ServiceEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
+	annotationsProp, err := expandCloudRunV2ServiceEffectiveAnnotations(d.Get("effective_annotations"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_annotations"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, annotationsProp)) {
+		obj["annotations"] = annotationsProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{CloudRunV2BasePath}}projects/{{project}}/locations/{{location}}/services/{{name}}")
 	if err != nil {
@@ -1266,6 +1473,7 @@ func resourceCloudRunV2ServiceUpdate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	log.Printf("[DEBUG] Updating Service %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -1280,6 +1488,7 @@ func resourceCloudRunV2ServiceUpdate(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -1320,13 +1529,15 @@ func resourceCloudRunV2ServiceDelete(d *schema.ResourceData, meta interface{}) e
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Service %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Service %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -1335,6 +1546,7 @@ func resourceCloudRunV2ServiceDelete(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Service")
@@ -1355,9 +1567,9 @@ func resourceCloudRunV2ServiceDelete(d *schema.ResourceData, meta interface{}) e
 func resourceCloudRunV2ServiceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/services/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)",
-		"(?P<location>[^/]+)/(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/services/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<location>[^/]+)/(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -1385,10 +1597,56 @@ func flattenCloudRunV2ServiceGeneration(v interface{}, d *schema.ResourceData, c
 }
 
 func flattenCloudRunV2ServiceLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenCloudRunV2ServiceAnnotations(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("annotations"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenCloudRunV2ServiceCreateTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudRunV2ServiceUpdateTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudRunV2ServiceDeleteTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudRunV2ServiceExpireTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudRunV2ServiceCreator(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudRunV2ServiceLastModifier(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1428,6 +1686,10 @@ func flattenCloudRunV2ServiceBinaryAuthorizationBreakglassJustification(v interf
 }
 
 func flattenCloudRunV2ServiceBinaryAuthorizationUseDefault(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudRunV2ServiceCustomAudiences(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1542,6 +1804,8 @@ func flattenCloudRunV2ServiceTemplateVpcAccess(v interface{}, d *schema.Resource
 		flattenCloudRunV2ServiceTemplateVpcAccessConnector(original["connector"], d, config)
 	transformed["egress"] =
 		flattenCloudRunV2ServiceTemplateVpcAccessEgress(original["egress"], d, config)
+	transformed["network_interfaces"] =
+		flattenCloudRunV2ServiceTemplateVpcAccessNetworkInterfaces(original["networkInterfaces"], d, config)
 	return []interface{}{transformed}
 }
 func flattenCloudRunV2ServiceTemplateVpcAccessConnector(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1549,6 +1813,38 @@ func flattenCloudRunV2ServiceTemplateVpcAccessConnector(v interface{}, d *schema
 }
 
 func flattenCloudRunV2ServiceTemplateVpcAccessEgress(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudRunV2ServiceTemplateVpcAccessNetworkInterfaces(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"network":    flattenCloudRunV2ServiceTemplateVpcAccessNetworkInterfacesNetwork(original["network"], d, config),
+			"subnetwork": flattenCloudRunV2ServiceTemplateVpcAccessNetworkInterfacesSubnetwork(original["subnetwork"], d, config),
+			"tags":       flattenCloudRunV2ServiceTemplateVpcAccessNetworkInterfacesTags(original["tags"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenCloudRunV2ServiceTemplateVpcAccessNetworkInterfacesNetwork(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudRunV2ServiceTemplateVpcAccessNetworkInterfacesSubnetwork(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudRunV2ServiceTemplateVpcAccessNetworkInterfacesTags(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1584,6 +1880,7 @@ func flattenCloudRunV2ServiceTemplateContainers(v interface{}, d *schema.Resourc
 			"working_dir":    flattenCloudRunV2ServiceTemplateContainersWorkingDir(original["workingDir"], d, config),
 			"liveness_probe": flattenCloudRunV2ServiceTemplateContainersLivenessProbe(original["livenessProbe"], d, config),
 			"startup_probe":  flattenCloudRunV2ServiceTemplateContainersStartupProbe(original["startupProbe"], d, config),
+			"depends_on":     flattenCloudRunV2ServiceTemplateContainersDependsOn(original["dependsOn"], d, config),
 		})
 	}
 	return transformed
@@ -1787,10 +2084,10 @@ func flattenCloudRunV2ServiceTemplateContainersLivenessProbe(v interface{}, d *s
 		flattenCloudRunV2ServiceTemplateContainersLivenessProbeFailureThreshold(original["failureThreshold"], d, config)
 	transformed["http_get"] =
 		flattenCloudRunV2ServiceTemplateContainersLivenessProbeHttpGet(original["httpGet"], d, config)
-	transformed["tcp_socket"] =
-		flattenCloudRunV2ServiceTemplateContainersLivenessProbeTcpSocket(original["tcpSocket"], d, config)
 	transformed["grpc"] =
 		flattenCloudRunV2ServiceTemplateContainersLivenessProbeGrpc(original["grpc"], d, config)
+	transformed["tcp_socket"] =
+		flattenCloudRunV2ServiceTemplateContainersLivenessProbeTcpSocket(original["tcpSocket"], d, config)
 	return []interface{}{transformed}
 }
 func flattenCloudRunV2ServiceTemplateContainersLivenessProbeInitialDelaySeconds(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1923,33 +2220,6 @@ func flattenCloudRunV2ServiceTemplateContainersLivenessProbeHttpGetHttpHeadersVa
 	return v
 }
 
-func flattenCloudRunV2ServiceTemplateContainersLivenessProbeTcpSocket(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	transformed := make(map[string]interface{})
-	transformed["port"] =
-		flattenCloudRunV2ServiceTemplateContainersLivenessProbeTcpSocketPort(original["port"], d, config)
-	return []interface{}{transformed}
-}
-func flattenCloudRunV2ServiceTemplateContainersLivenessProbeTcpSocketPort(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	// Handles the string fixed64 format
-	if strVal, ok := v.(string); ok {
-		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
-			return intVal
-		}
-	}
-
-	// number values are represented as float64
-	if floatVal, ok := v.(float64); ok {
-		intVal := int(floatVal)
-		return intVal
-	}
-
-	return v // let terraform core handle it otherwise
-}
-
 func flattenCloudRunV2ServiceTemplateContainersLivenessProbeGrpc(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return nil
@@ -1981,6 +2251,36 @@ func flattenCloudRunV2ServiceTemplateContainersLivenessProbeGrpcPort(v interface
 
 func flattenCloudRunV2ServiceTemplateContainersLivenessProbeGrpcService(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
+}
+
+func flattenCloudRunV2ServiceTemplateContainersLivenessProbeTcpSocket(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["port"] =
+		flattenCloudRunV2ServiceTemplateContainersLivenessProbeTcpSocketPort(original["port"], d, config)
+	return []interface{}{transformed}
+}
+func flattenCloudRunV2ServiceTemplateContainersLivenessProbeTcpSocketPort(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
 }
 
 func flattenCloudRunV2ServiceTemplateContainersStartupProbe(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -2198,6 +2498,10 @@ func flattenCloudRunV2ServiceTemplateContainersStartupProbeGrpcService(v interfa
 	return v
 }
 
+func flattenCloudRunV2ServiceTemplateContainersDependsOn(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenCloudRunV2ServiceTemplateVolumes(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return v
@@ -2214,6 +2518,8 @@ func flattenCloudRunV2ServiceTemplateVolumes(v interface{}, d *schema.ResourceDa
 			"name":               flattenCloudRunV2ServiceTemplateVolumesName(original["name"], d, config),
 			"secret":             flattenCloudRunV2ServiceTemplateVolumesSecret(original["secret"], d, config),
 			"cloud_sql_instance": flattenCloudRunV2ServiceTemplateVolumesCloudSqlInstance(original["cloudSqlInstance"], d, config),
+			"gcs":                flattenCloudRunV2ServiceTemplateVolumesGcs(original["gcs"], d, config),
+			"nfs":                flattenCloudRunV2ServiceTemplateVolumesNfs(original["nfs"], d, config),
 		})
 	}
 	return transformed
@@ -2319,6 +2625,61 @@ func flattenCloudRunV2ServiceTemplateVolumesCloudSqlInstance(v interface{}, d *s
 	return []interface{}{transformed}
 }
 func flattenCloudRunV2ServiceTemplateVolumesCloudSqlInstanceInstances(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	return schema.NewSet(schema.HashString, v.([]interface{}))
+}
+
+func flattenCloudRunV2ServiceTemplateVolumesGcs(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["bucket"] =
+		flattenCloudRunV2ServiceTemplateVolumesGcsBucket(original["bucket"], d, config)
+	transformed["read_only"] =
+		flattenCloudRunV2ServiceTemplateVolumesGcsReadOnly(original["readOnly"], d, config)
+	return []interface{}{transformed}
+}
+func flattenCloudRunV2ServiceTemplateVolumesGcsBucket(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudRunV2ServiceTemplateVolumesGcsReadOnly(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudRunV2ServiceTemplateVolumesNfs(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["server"] =
+		flattenCloudRunV2ServiceTemplateVolumesNfsServer(original["server"], d, config)
+	transformed["path"] =
+		flattenCloudRunV2ServiceTemplateVolumesNfsPath(original["path"], d, config)
+	transformed["read_only"] =
+		flattenCloudRunV2ServiceTemplateVolumesNfsReadOnly(original["readOnly"], d, config)
+	return []interface{}{transformed}
+}
+func flattenCloudRunV2ServiceTemplateVolumesNfsServer(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudRunV2ServiceTemplateVolumesNfsPath(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudRunV2ServiceTemplateVolumesNfsReadOnly(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -2596,30 +2957,31 @@ func flattenCloudRunV2ServiceEtag(v interface{}, d *schema.ResourceData, config 
 	return v
 }
 
+func flattenCloudRunV2ServiceTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenCloudRunV2ServiceEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudRunV2ServiceEffectiveAnnotations(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func expandCloudRunV2ServiceDescription(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
-}
-
-func expandCloudRunV2ServiceLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
-	if v == nil {
-		return map[string]string{}, nil
-	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
-	}
-	return m, nil
-}
-
-func expandCloudRunV2ServiceAnnotations(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
-	if v == nil {
-		return map[string]string{}, nil
-	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
-	}
-	return m, nil
 }
 
 func expandCloudRunV2ServiceClient(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -2669,6 +3031,10 @@ func expandCloudRunV2ServiceBinaryAuthorizationBreakglassJustification(v interfa
 }
 
 func expandCloudRunV2ServiceBinaryAuthorizationUseDefault(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudRunV2ServiceCustomAudiences(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -2858,6 +3224,13 @@ func expandCloudRunV2ServiceTemplateVpcAccess(v interface{}, d tpgresource.Terra
 		transformed["egress"] = transformedEgress
 	}
 
+	transformedNetworkInterfaces, err := expandCloudRunV2ServiceTemplateVpcAccessNetworkInterfaces(original["network_interfaces"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedNetworkInterfaces); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["networkInterfaces"] = transformedNetworkInterfaces
+	}
+
 	return transformed, nil
 }
 
@@ -2866,6 +3239,54 @@ func expandCloudRunV2ServiceTemplateVpcAccessConnector(v interface{}, d tpgresou
 }
 
 func expandCloudRunV2ServiceTemplateVpcAccessEgress(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudRunV2ServiceTemplateVpcAccessNetworkInterfaces(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedNetwork, err := expandCloudRunV2ServiceTemplateVpcAccessNetworkInterfacesNetwork(original["network"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedNetwork); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["network"] = transformedNetwork
+		}
+
+		transformedSubnetwork, err := expandCloudRunV2ServiceTemplateVpcAccessNetworkInterfacesSubnetwork(original["subnetwork"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedSubnetwork); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["subnetwork"] = transformedSubnetwork
+		}
+
+		transformedTags, err := expandCloudRunV2ServiceTemplateVpcAccessNetworkInterfacesTags(original["tags"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedTags); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["tags"] = transformedTags
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandCloudRunV2ServiceTemplateVpcAccessNetworkInterfacesNetwork(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudRunV2ServiceTemplateVpcAccessNetworkInterfacesSubnetwork(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudRunV2ServiceTemplateVpcAccessNetworkInterfacesTags(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -2962,6 +3383,13 @@ func expandCloudRunV2ServiceTemplateContainers(v interface{}, d tpgresource.Terr
 			return nil, err
 		} else if val := reflect.ValueOf(transformedStartupProbe); val.IsValid() && !tpgresource.IsEmptyValue(val) {
 			transformed["startupProbe"] = transformedStartupProbe
+		}
+
+		transformedDependsOn, err := expandCloudRunV2ServiceTemplateContainersDependsOn(original["depends_on"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedDependsOn); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["dependsOn"] = transformedDependsOn
 		}
 
 		req = append(req, transformed)
@@ -3256,18 +3684,18 @@ func expandCloudRunV2ServiceTemplateContainersLivenessProbe(v interface{}, d tpg
 		transformed["httpGet"] = transformedHttpGet
 	}
 
-	transformedTcpSocket, err := expandCloudRunV2ServiceTemplateContainersLivenessProbeTcpSocket(original["tcp_socket"], d, config)
-	if err != nil {
-		return nil, err
-	} else {
-		transformed["tcpSocket"] = transformedTcpSocket
-	}
-
 	transformedGrpc, err := expandCloudRunV2ServiceTemplateContainersLivenessProbeGrpc(original["grpc"], d, config)
 	if err != nil {
 		return nil, err
 	} else {
 		transformed["grpc"] = transformedGrpc
+	}
+
+	transformedTcpSocket, err := expandCloudRunV2ServiceTemplateContainersLivenessProbeTcpSocket(original["tcp_socket"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedTcpSocket); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["tcpSocket"] = transformedTcpSocket
 	}
 
 	return transformed, nil
@@ -3372,34 +3800,6 @@ func expandCloudRunV2ServiceTemplateContainersLivenessProbeHttpGetHttpHeadersVal
 	return v, nil
 }
 
-func expandCloudRunV2ServiceTemplateContainersLivenessProbeTcpSocket(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	l := v.([]interface{})
-	if len(l) == 0 {
-		return nil, nil
-	}
-
-	if l[0] == nil {
-		transformed := make(map[string]interface{})
-		return transformed, nil
-	}
-	raw := l[0]
-	original := raw.(map[string]interface{})
-	transformed := make(map[string]interface{})
-
-	transformedPort, err := expandCloudRunV2ServiceTemplateContainersLivenessProbeTcpSocketPort(original["port"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedPort); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["port"] = transformedPort
-	}
-
-	return transformed, nil
-}
-
-func expandCloudRunV2ServiceTemplateContainersLivenessProbeTcpSocketPort(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
 func expandCloudRunV2ServiceTemplateContainersLivenessProbeGrpc(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	l := v.([]interface{})
 	if len(l) == 0 {
@@ -3436,6 +3836,29 @@ func expandCloudRunV2ServiceTemplateContainersLivenessProbeGrpcPort(v interface{
 }
 
 func expandCloudRunV2ServiceTemplateContainersLivenessProbeGrpcService(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudRunV2ServiceTemplateContainersLivenessProbeTcpSocket(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedPort, err := expandCloudRunV2ServiceTemplateContainersLivenessProbeTcpSocketPort(original["port"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPort); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["port"] = transformedPort
+	}
+
+	return transformed, nil
+}
+
+func expandCloudRunV2ServiceTemplateContainersLivenessProbeTcpSocketPort(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -3666,6 +4089,10 @@ func expandCloudRunV2ServiceTemplateContainersStartupProbeGrpcService(v interfac
 	return v, nil
 }
 
+func expandCloudRunV2ServiceTemplateContainersDependsOn(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandCloudRunV2ServiceTemplateVolumes(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
@@ -3695,6 +4122,20 @@ func expandCloudRunV2ServiceTemplateVolumes(v interface{}, d tpgresource.Terrafo
 			return nil, err
 		} else if val := reflect.ValueOf(transformedCloudSqlInstance); val.IsValid() && !tpgresource.IsEmptyValue(val) {
 			transformed["cloudSqlInstance"] = transformedCloudSqlInstance
+		}
+
+		transformedGcs, err := expandCloudRunV2ServiceTemplateVolumesGcs(original["gcs"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedGcs); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["gcs"] = transformedGcs
+		}
+
+		transformedNfs, err := expandCloudRunV2ServiceTemplateVolumesNfs(original["nfs"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedNfs); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["nfs"] = transformedNfs
 		}
 
 		req = append(req, transformed)
@@ -3815,6 +4256,86 @@ func expandCloudRunV2ServiceTemplateVolumesCloudSqlInstance(v interface{}, d tpg
 }
 
 func expandCloudRunV2ServiceTemplateVolumesCloudSqlInstanceInstances(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	v = v.(*schema.Set).List()
+	return v, nil
+}
+
+func expandCloudRunV2ServiceTemplateVolumesGcs(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedBucket, err := expandCloudRunV2ServiceTemplateVolumesGcsBucket(original["bucket"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedBucket); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["bucket"] = transformedBucket
+	}
+
+	transformedReadOnly, err := expandCloudRunV2ServiceTemplateVolumesGcsReadOnly(original["read_only"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedReadOnly); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["readOnly"] = transformedReadOnly
+	}
+
+	return transformed, nil
+}
+
+func expandCloudRunV2ServiceTemplateVolumesGcsBucket(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudRunV2ServiceTemplateVolumesGcsReadOnly(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudRunV2ServiceTemplateVolumesNfs(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedServer, err := expandCloudRunV2ServiceTemplateVolumesNfsServer(original["server"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedServer); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["server"] = transformedServer
+	}
+
+	transformedPath, err := expandCloudRunV2ServiceTemplateVolumesNfsPath(original["path"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPath); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["path"] = transformedPath
+	}
+
+	transformedReadOnly, err := expandCloudRunV2ServiceTemplateVolumesNfsReadOnly(original["read_only"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedReadOnly); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["readOnly"] = transformedReadOnly
+	}
+
+	return transformed, nil
+}
+
+func expandCloudRunV2ServiceTemplateVolumesNfsServer(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudRunV2ServiceTemplateVolumesNfsPath(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudRunV2ServiceTemplateVolumesNfsReadOnly(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -3891,4 +4412,26 @@ func expandCloudRunV2ServiceTrafficPercent(v interface{}, d tpgresource.Terrafor
 
 func expandCloudRunV2ServiceTrafficTag(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandCloudRunV2ServiceEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
+}
+
+func expandCloudRunV2ServiceEffectiveAnnotations(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }
