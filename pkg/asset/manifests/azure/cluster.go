@@ -48,6 +48,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	controlPlaneSubnet := installConfig.Config.Platform.Azure.ControlPlaneSubnetName(clusterID.InfraID)
 	computeSubnet := installConfig.Config.Platform.Azure.ComputeSubnetName(clusterID.InfraID)
 	networkSecurityGroup := installConfig.Config.Platform.Azure.NetworkSecurityGroupName(clusterID.InfraID)
+	systemTags := azure.ConvertSDKTagsToCAPZTags(azure.GetSystemTags(clusterID.InfraID))
 
 	source := "*"
 	if installConfig.Config.Publish == types.InternalPublishingStrategy {
@@ -70,6 +71,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					Action:           capz.SecurityRuleActionAllow,
 				},
 			},
+			Tags: systemTags,
 		},
 	}
 
@@ -165,6 +167,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 						CIDRBlocks: []string{
 							mainCIDR.String(),
 						},
+						Tags: systemTags,
 					},
 				},
 				APIServerLB:            apiServerLB,
