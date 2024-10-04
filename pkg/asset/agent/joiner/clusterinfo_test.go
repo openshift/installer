@@ -444,6 +444,14 @@ passwd:
 					},
 				},
 			},
+			&machineconfigv1.MachineConfig{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "99-worker-fips",
+				},
+				Spec: machineconfigv1.MachineConfigSpec{
+					FIPS: true,
+				},
+			},
 		}
 
 		return objects, openshiftObjects, openshiftMachineConfigObjects

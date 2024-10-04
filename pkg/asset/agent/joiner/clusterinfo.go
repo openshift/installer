@@ -163,6 +163,10 @@ func (ci *ClusterInfo) Generate(_ context.Context, dependencies asset.Parents) e
 	if err != nil {
 		return err
 	}
+	err = ci.retrieveFIPS()
+	if err != nil {
+		return err
+	}
 
 	ci.Namespace = "cluster0"
 
@@ -295,8 +299,20 @@ func (ci *ClusterInfo) retrieveInstallConfigData() error {
 	if err = yaml.Unmarshal([]byte(data), &installConfig); err != nil {
 		return err
 	}
+	return nil
+}
 
-	ci.FIPS = installConfig.FIPS
+func (ci *ClusterInfo) retrieveFIPS() error {
+	workerMachineConfig, err := ci.OpenshiftMachineConfigClient.MachineconfigurationV1().MachineConfigs().Get(context.Background(), "99-worker-fips", metav1.GetOptions{})
+	if err != nil {
+		// This resource is not created when FIPS it's not enabled
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+
+	ci.FIPS = workerMachineConfig.Spec.FIPS
 	return nil
 }
 

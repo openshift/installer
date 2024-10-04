@@ -13,4 +13,3 @@ spec:
       - name: core
         sshAuthorizedKeys:
         - my-sshKey
-  

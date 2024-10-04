@@ -158,6 +158,10 @@ func (fr *FakeOCPRegistry) makeMinimalISO() ([]byte, error) {
 		"iso/images/pxeboot/initrd.img": []byte("initrdimg"),
 		"iso/images/efiboot.img":        []byte("efibootimg"),
 		"iso/boot.catalog":              []byte("bootcatalog"),
+		// The following files are required to allow the correct embedding of
+		// the kernel args (ie, fips=1).
+		"iso/EFI/redhat/grub.cfg": []byte("\n############### COREOS_KARG_EMBED_AREA"),
+		"iso/coreos/kargs.json":   []byte(`{"files": [{"path": "EFI/redhat/grub.cfg"}]}`),
 	}
 	for file, content := range files {
 		dir := filepath.Dir(file)

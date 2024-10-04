@@ -11,6 +11,7 @@ isoIgnitionContains node.x86_64.iso /etc/assisted/manifests/pull-secret.yaml
 isoIgnitionContains node.x86_64.iso /usr/local/bin/add-node.sh
 isoIgnitionUser node.x86_64.iso core my-sshKey
 isoCmp node.x86_64.iso /etc/containers/registries.conf expected/registries.conf
+isoFileCmpRegEx node.x86_64.iso /EFI/redhat/grub.cfg expected/grub.cfg
 
 -- nodes-config.yaml --
 hosts:
@@ -18,7 +19,7 @@ hosts:
       interfaces:
         - name: eth0
           macAddress: 00:f4:3d:a0:0e:2b
-
+          
 -- expected/registries.conf --
 credential-helpers = []
 short-name-mode = ""
@@ -36,3 +37,5 @@ CLUSTER_ID=c37c9544-4320-4380-9d8b-0753a4d9ea57
 CLUSTER_NAME=ostest
 CLUSTER_API_VIP_DNS_NAME=api.ostest.test.metalkube.org
 AGENT_AUTH_TOKEN_EXPIRY=.*
+-- expected/grub.cfg --
+.*fips=1.*
