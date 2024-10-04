@@ -6,7 +6,7 @@ import (
 	v1 "github.com/openshift/api/config/v1"
 )
 
-// ImageStatusApplyConfiguration represents an declarative configuration of the ImageStatus type for use
+// ImageStatusApplyConfiguration represents a declarative configuration of the ImageStatus type for use
 // with apply.
 type ImageStatusApplyConfiguration struct {
 	InternalRegistryHostname  *string            `json:"internalRegistryHostname,omitempty"`
@@ -14,7 +14,7 @@ type ImageStatusApplyConfiguration struct {
 	ImageStreamImportMode     *v1.ImportModeType `json:"imageStreamImportMode,omitempty"`
 }
 
-// ImageStatusApplyConfiguration constructs an declarative configuration of the ImageStatus type for use with
+// ImageStatusApplyConfiguration constructs a declarative configuration of the ImageStatus type for use with
 // apply.
 func ImageStatus() *ImageStatusApplyConfiguration {
 	return &ImageStatusApplyConfiguration{}

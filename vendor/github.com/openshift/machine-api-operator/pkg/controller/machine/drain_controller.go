@@ -56,11 +56,11 @@ func newDrainController(mgr manager.Manager) reconcile.Reconciler {
 // As we know drains are a slower operation then traditional reconciles, we start with a
 // larger base delay to allow the pods time for graceful shutdown.
 // We cap out at 1000 seconds as with the default queue.
-func newDrainRateLimiter() workqueue.RateLimiter {
-	return workqueue.NewMaxOfRateLimiter(
-		workqueue.NewItemExponentialFailureRateLimiter(5*time.Second, 1000*time.Second),
+func newDrainRateLimiter() workqueue.TypedRateLimiter[reconcile.Request] {
+	return workqueue.NewTypedMaxOfRateLimiter[reconcile.Request](
+		workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](5*time.Second, 1000*time.Second),
 		// 10 qps, 100 bucket size.  This is only for retry speed and its only the overall factor (not per item)
-		&workqueue.BucketRateLimiter{Limiter: rate.NewLimiter(rate.Limit(10), 100)},
+		&workqueue.TypedBucketRateLimiter[reconcile.Request]{Limiter: rate.NewLimiter(rate.Limit(10), 100)},
 	)
 }
 

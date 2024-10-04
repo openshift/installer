@@ -54,7 +54,7 @@ message LocalObjectReference {
 message Route {
   // metadata is the standard object's metadata.
   // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+  optional .k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
 
   // spec is the desired state of the route
   // +kubebuilder:validation:XValidation:rule="!has(self.tls) || self.tls.termination != 'passthrough' || !has(self.httpHeaders)",message="header actions are not permitted when tls termination is passthrough."
@@ -230,7 +230,7 @@ message RouteIngressCondition {
   optional string message = 4;
 
   // RFC 3339 date and time when this condition last transitioned
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastTransitionTime = 5;
+  optional .k8s.io.apimachinery.pkg.apis.meta.v1.Time lastTransitionTime = 5;
 }
 
 // RouteList is a collection of Routes.
@@ -240,7 +240,7 @@ message RouteIngressCondition {
 message RouteList {
   // metadata is the standard list's metadata.
   // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+  optional .k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
 
   // items is a list of routes
   repeated Route items = 2;
@@ -251,7 +251,7 @@ message RoutePort {
   // The target port on pods selected by the service this route points to.
   // If this is a string, it will be looked up as a named port in the target
   // endpoints port list. Required
-  optional k8s.io.apimachinery.pkg.util.intstr.IntOrString targetPort = 1;
+  optional .k8s.io.apimachinery.pkg.util.intstr.IntOrString targetPort = 1;
 }
 
 // RouteSetHTTPHeader specifies what value needs to be set on an HTTP header.
