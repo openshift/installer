@@ -45,22 +45,27 @@ type Service struct {
 // ServiceOptions holds the PowerVS Service Options specific information.
 type ServiceOptions struct {
 	*ibmpisession.IBMPIOptions
-
 	CloudInstanceID string
 }
 
-// NewService returns a new service for the Power VS api client.
+// NewService returns a new service for the PowerVS api client.
+// This will create only PowerVS session and actual clients can be created later by calling WithClients method.
 func NewService(options ServiceOptions) (PowerVS, error) {
-	auth, err := authenticator.GetAuthenticator()
-	if err != nil {
-		return nil, err
+	if options.Authenticator == nil {
+		auth, err := authenticator.GetAuthenticator()
+		if err != nil {
+			return nil, err
+		}
+		options.Authenticator = auth
 	}
-	options.Authenticator = auth
-	account, err := utils.GetAccount(auth)
-	if err != nil {
-		return nil, err
+	if options.UserAccount == "" {
+		account, err := utils.GetAccount(options.Authenticator)
+		if err != nil {
+			return nil, err
+		}
+		options.IBMPIOptions.UserAccount = account
 	}
-	options.IBMPIOptions.UserAccount = account
+
 	session, err := ibmpisession.NewIBMPISession(options.IBMPIOptions)
 	if err != nil {
 		return nil, err

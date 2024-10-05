@@ -17,10 +17,14 @@ limitations under the License.
 package resourcemanager
 
 import (
+	"fmt"
+	"net/http"
+
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/authenticator"
+	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/utils"
 )
 
 // Service holds the IBM Cloud Resource Manager Service specific information.
@@ -49,7 +53,33 @@ func NewService(options *resourcemanagerv2.ResourceManagerV2Options) (ResourceMa
 	}, nil
 }
 
+// GetResourceGroup returns a Resource Group.
+func (s *Service) GetResourceGroup(getResourceGroupOptions *resourcemanagerv2.GetResourceGroupOptions) (*resourcemanagerv2.ResourceGroup, *core.DetailedResponse, error) {
+	return s.client.GetResourceGroup(getResourceGroupOptions)
+}
+
 // ListResourceGroups lists the resource groups.
 func (s *Service) ListResourceGroups(listResourceGroupsOptions *resourcemanagerv2.ListResourceGroupsOptions) (result *resourcemanagerv2.ResourceGroupList, response *core.DetailedResponse, err error) {
 	return s.client.ListResourceGroups(listResourceGroupsOptions)
+}
+
+// GetResourceGroupByName returns the Resource Group with the provided name, if found.
+func (s *Service) GetResourceGroupByName(rgName string) (*resourcemanagerv2.ResourceGroup, error) {
+	accountID, err := utils.GetAccountID()
+	if err != nil {
+		return nil, fmt.Errorf("failed getting account id for resource group lookup: %w", err)
+	}
+
+	listOptions := s.client.NewListResourceGroupsOptions()
+	listOptions.SetAccountID(accountID)
+	listOptions.SetName(rgName)
+
+	result, response, err := s.ListResourceGroups(listOptions)
+	if err != nil {
+		return nil, fmt.Errorf("failed listing Resource Groups: %w", err)
+	}
+	if result == nil || result.Resources == nil || len(result.Resources) != 1 || (response != nil && response.StatusCode == http.StatusNotFound) {
+		return nil, fmt.Errorf("failed to find Resource Group")
+	}
+	return &result.Resources[0], nil
 }
