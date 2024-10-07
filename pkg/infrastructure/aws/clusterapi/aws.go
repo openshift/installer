@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/openshift/installer/pkg/types/dns"
 	"strings"
 	"time"
 
@@ -115,6 +116,13 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 	}
 
 	client := awsconfig.NewClient(awsSession)
+
+	// The user has selected to provision their own DNS solution. Skip the creation of the
+	// Hosted Zone(s) and the records for those zones.
+	if in.InstallConfig.Config.AWS.UserProvisionedDNS == dns.UserProvisionedDNSEnabled {
+		logrus.Debugf("User Provisioned DNS enabled, skipping dns record creation")
+		return nil
+	}
 
 	logrus.Infoln("Creating Route53 records for control plane load balancer")
 
