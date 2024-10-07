@@ -27,20 +27,22 @@ var controllerconfigsKind = v1.SchemeGroupVersion.WithKind("ControllerConfig")
 
 // Get takes name of the controllerConfig, and returns the corresponding controllerConfig object, and an error if there is any.
 func (c *FakeControllerConfigs) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.ControllerConfig, err error) {
+	emptyResult := &v1.ControllerConfig{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootGetAction(controllerconfigsResource, name), &v1.ControllerConfig{})
+		Invokes(testing.NewRootGetActionWithOptions(controllerconfigsResource, name, options), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.ControllerConfig), err
 }
 
 // List takes label and field selectors, and returns the list of ControllerConfigs that match those selectors.
 func (c *FakeControllerConfigs) List(ctx context.Context, opts metav1.ListOptions) (result *v1.ControllerConfigList, err error) {
+	emptyResult := &v1.ControllerConfigList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootListAction(controllerconfigsResource, controllerconfigsKind, opts), &v1.ControllerConfigList{})
+		Invokes(testing.NewRootListActionWithOptions(controllerconfigsResource, controllerconfigsKind, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -59,36 +61,39 @@ func (c *FakeControllerConfigs) List(ctx context.Context, opts metav1.ListOption
 // Watch returns a watch.Interface that watches the requested controllerConfigs.
 func (c *FakeControllerConfigs) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewRootWatchAction(controllerconfigsResource, opts))
+		InvokesWatch(testing.NewRootWatchActionWithOptions(controllerconfigsResource, opts))
 }
 
 // Create takes the representation of a controllerConfig and creates it.  Returns the server's representation of the controllerConfig, and an error, if there is any.
 func (c *FakeControllerConfigs) Create(ctx context.Context, controllerConfig *v1.ControllerConfig, opts metav1.CreateOptions) (result *v1.ControllerConfig, err error) {
+	emptyResult := &v1.ControllerConfig{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateAction(controllerconfigsResource, controllerConfig), &v1.ControllerConfig{})
+		Invokes(testing.NewRootCreateActionWithOptions(controllerconfigsResource, controllerConfig, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.ControllerConfig), err
 }
 
 // Update takes the representation of a controllerConfig and updates it. Returns the server's representation of the controllerConfig, and an error, if there is any.
 func (c *FakeControllerConfigs) Update(ctx context.Context, controllerConfig *v1.ControllerConfig, opts metav1.UpdateOptions) (result *v1.ControllerConfig, err error) {
+	emptyResult := &v1.ControllerConfig{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateAction(controllerconfigsResource, controllerConfig), &v1.ControllerConfig{})
+		Invokes(testing.NewRootUpdateActionWithOptions(controllerconfigsResource, controllerConfig, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.ControllerConfig), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeControllerConfigs) UpdateStatus(ctx context.Context, controllerConfig *v1.ControllerConfig, opts metav1.UpdateOptions) (*v1.ControllerConfig, error) {
+func (c *FakeControllerConfigs) UpdateStatus(ctx context.Context, controllerConfig *v1.ControllerConfig, opts metav1.UpdateOptions) (result *v1.ControllerConfig, err error) {
+	emptyResult := &v1.ControllerConfig{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateSubresourceAction(controllerconfigsResource, "status", controllerConfig), &v1.ControllerConfig{})
+		Invokes(testing.NewRootUpdateSubresourceActionWithOptions(controllerconfigsResource, "status", controllerConfig, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.ControllerConfig), err
 }
@@ -102,7 +107,7 @@ func (c *FakeControllerConfigs) Delete(ctx context.Context, name string, opts me
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeControllerConfigs) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(controllerconfigsResource, listOpts)
+	action := testing.NewRootDeleteCollectionActionWithOptions(controllerconfigsResource, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1.ControllerConfigList{})
 	return err
@@ -110,10 +115,11 @@ func (c *FakeControllerConfigs) DeleteCollection(ctx context.Context, opts metav
 
 // Patch applies the patch and returns the patched controllerConfig.
 func (c *FakeControllerConfigs) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.ControllerConfig, err error) {
+	emptyResult := &v1.ControllerConfig{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(controllerconfigsResource, name, pt, data, subresources...), &v1.ControllerConfig{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(controllerconfigsResource, name, pt, data, opts, subresources...), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.ControllerConfig), err
 }
@@ -131,10 +137,11 @@ func (c *FakeControllerConfigs) Apply(ctx context.Context, controllerConfig *mac
 	if name == nil {
 		return nil, fmt.Errorf("controllerConfig.Name must be provided to Apply")
 	}
+	emptyResult := &v1.ControllerConfig{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(controllerconfigsResource, *name, types.ApplyPatchType, data), &v1.ControllerConfig{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(controllerconfigsResource, *name, types.ApplyPatchType, data, opts.ToPatchOptions()), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.ControllerConfig), err
 }
@@ -153,10 +160,11 @@ func (c *FakeControllerConfigs) ApplyStatus(ctx context.Context, controllerConfi
 	if name == nil {
 		return nil, fmt.Errorf("controllerConfig.Name must be provided to Apply")
 	}
+	emptyResult := &v1.ControllerConfig{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(controllerconfigsResource, *name, types.ApplyPatchType, data, "status"), &v1.ControllerConfig{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(controllerconfigsResource, *name, types.ApplyPatchType, data, opts.ToPatchOptions(), "status"), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.ControllerConfig), err
 }

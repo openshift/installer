@@ -27,20 +27,22 @@ var machineconfigpoolsKind = v1.SchemeGroupVersion.WithKind("MachineConfigPool")
 
 // Get takes name of the machineConfigPool, and returns the corresponding machineConfigPool object, and an error if there is any.
 func (c *FakeMachineConfigPools) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.MachineConfigPool, err error) {
+	emptyResult := &v1.MachineConfigPool{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootGetAction(machineconfigpoolsResource, name), &v1.MachineConfigPool{})
+		Invokes(testing.NewRootGetActionWithOptions(machineconfigpoolsResource, name, options), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.MachineConfigPool), err
 }
 
 // List takes label and field selectors, and returns the list of MachineConfigPools that match those selectors.
 func (c *FakeMachineConfigPools) List(ctx context.Context, opts metav1.ListOptions) (result *v1.MachineConfigPoolList, err error) {
+	emptyResult := &v1.MachineConfigPoolList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootListAction(machineconfigpoolsResource, machineconfigpoolsKind, opts), &v1.MachineConfigPoolList{})
+		Invokes(testing.NewRootListActionWithOptions(machineconfigpoolsResource, machineconfigpoolsKind, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -59,36 +61,39 @@ func (c *FakeMachineConfigPools) List(ctx context.Context, opts metav1.ListOptio
 // Watch returns a watch.Interface that watches the requested machineConfigPools.
 func (c *FakeMachineConfigPools) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewRootWatchAction(machineconfigpoolsResource, opts))
+		InvokesWatch(testing.NewRootWatchActionWithOptions(machineconfigpoolsResource, opts))
 }
 
 // Create takes the representation of a machineConfigPool and creates it.  Returns the server's representation of the machineConfigPool, and an error, if there is any.
 func (c *FakeMachineConfigPools) Create(ctx context.Context, machineConfigPool *v1.MachineConfigPool, opts metav1.CreateOptions) (result *v1.MachineConfigPool, err error) {
+	emptyResult := &v1.MachineConfigPool{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateAction(machineconfigpoolsResource, machineConfigPool), &v1.MachineConfigPool{})
+		Invokes(testing.NewRootCreateActionWithOptions(machineconfigpoolsResource, machineConfigPool, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.MachineConfigPool), err
 }
 
 // Update takes the representation of a machineConfigPool and updates it. Returns the server's representation of the machineConfigPool, and an error, if there is any.
 func (c *FakeMachineConfigPools) Update(ctx context.Context, machineConfigPool *v1.MachineConfigPool, opts metav1.UpdateOptions) (result *v1.MachineConfigPool, err error) {
+	emptyResult := &v1.MachineConfigPool{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateAction(machineconfigpoolsResource, machineConfigPool), &v1.MachineConfigPool{})
+		Invokes(testing.NewRootUpdateActionWithOptions(machineconfigpoolsResource, machineConfigPool, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.MachineConfigPool), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeMachineConfigPools) UpdateStatus(ctx context.Context, machineConfigPool *v1.MachineConfigPool, opts metav1.UpdateOptions) (*v1.MachineConfigPool, error) {
+func (c *FakeMachineConfigPools) UpdateStatus(ctx context.Context, machineConfigPool *v1.MachineConfigPool, opts metav1.UpdateOptions) (result *v1.MachineConfigPool, err error) {
+	emptyResult := &v1.MachineConfigPool{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateSubresourceAction(machineconfigpoolsResource, "status", machineConfigPool), &v1.MachineConfigPool{})
+		Invokes(testing.NewRootUpdateSubresourceActionWithOptions(machineconfigpoolsResource, "status", machineConfigPool, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.MachineConfigPool), err
 }
@@ -102,7 +107,7 @@ func (c *FakeMachineConfigPools) Delete(ctx context.Context, name string, opts m
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeMachineConfigPools) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(machineconfigpoolsResource, listOpts)
+	action := testing.NewRootDeleteCollectionActionWithOptions(machineconfigpoolsResource, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1.MachineConfigPoolList{})
 	return err
@@ -110,10 +115,11 @@ func (c *FakeMachineConfigPools) DeleteCollection(ctx context.Context, opts meta
 
 // Patch applies the patch and returns the patched machineConfigPool.
 func (c *FakeMachineConfigPools) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.MachineConfigPool, err error) {
+	emptyResult := &v1.MachineConfigPool{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(machineconfigpoolsResource, name, pt, data, subresources...), &v1.MachineConfigPool{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(machineconfigpoolsResource, name, pt, data, opts, subresources...), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.MachineConfigPool), err
 }
@@ -131,10 +137,11 @@ func (c *FakeMachineConfigPools) Apply(ctx context.Context, machineConfigPool *m
 	if name == nil {
 		return nil, fmt.Errorf("machineConfigPool.Name must be provided to Apply")
 	}
+	emptyResult := &v1.MachineConfigPool{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(machineconfigpoolsResource, *name, types.ApplyPatchType, data), &v1.MachineConfigPool{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(machineconfigpoolsResource, *name, types.ApplyPatchType, data, opts.ToPatchOptions()), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.MachineConfigPool), err
 }
@@ -153,10 +160,11 @@ func (c *FakeMachineConfigPools) ApplyStatus(ctx context.Context, machineConfigP
 	if name == nil {
 		return nil, fmt.Errorf("machineConfigPool.Name must be provided to Apply")
 	}
+	emptyResult := &v1.MachineConfigPool{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(machineconfigpoolsResource, *name, types.ApplyPatchType, data, "status"), &v1.MachineConfigPool{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(machineconfigpoolsResource, *name, types.ApplyPatchType, data, opts.ToPatchOptions(), "status"), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.MachineConfigPool), err
 }
