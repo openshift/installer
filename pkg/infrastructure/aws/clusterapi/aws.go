@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/openshift/installer/pkg/types/dns"
 	"strings"
 	"time"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
@@ -27,11 +27,13 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/dns"
 )
 
 var (
 	_ clusterapi.Provider           = (*Provider)(nil)
 	_ clusterapi.PreProvider        = (*Provider)(nil)
+	_ clusterapi.IgnitionProvider   = (*Provider)(nil)
 	_ clusterapi.InfraReadyProvider = (*Provider)(nil)
 	_ clusterapi.BootstrapDestroyer = (*Provider)(nil)
 	_ clusterapi.PostDestroyer      = (*Provider)(nil)
@@ -83,6 +85,22 @@ func (*Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInp
 		}
 	}
 	return nil
+}
+
+// Ignition edits the ignition contents to add the public and private load balancer ip addresses to the
+// infrastructure CR. The infrastructure CR is updated and added to the ignition files. CAPA creates a
+// bucket for ignition, and this ignition data will be placed in the bucket.
+func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]*corev1.Secret, error) {
+	ignBytes, err := editIgnition(ctx, in)
+	if err != nil {
+		return nil, fmt.Errorf("failed to edit bootstrap ignition: %w", err)
+	}
+
+	ignSecrets := []*corev1.Secret{
+		clusterapi.IgnitionSecret(ignBytes, in.InfraID, "bootstrap"),
+		clusterapi.IgnitionSecret(in.MasterIgnData, in.InfraID, "master"),
+	}
+	return ignSecrets, nil
 }
 
 // InfraReady creates private hosted zone and DNS records.
