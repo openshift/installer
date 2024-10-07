@@ -29,7 +29,6 @@ func ParseToken(tokenString string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-
 // ParseExpirationFromToken checks if the token is expired or not.
 func ParseExpirationFromToken(tokenString string) (time.Time, error) {
 	claims, err := ParseToken(tokenString)

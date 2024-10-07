@@ -10,7 +10,7 @@ cluster_id=""
 while [[ "${cluster_id}" = "" ]]
 do
     # Get cluster id
-    cluster_id=$(curl_assisted_service "/clusters" GET $USER_AUTH_TOKEN | jq -r .[].id)
+    cluster_id=$(curl_assisted_service "/clusters" GET "$USER_AUTH_TOKEN" | jq -r .[].id)
     if [[ "${cluster_id}" = "" ]]; then
         sleep 2
     fi
@@ -28,7 +28,7 @@ status_issue="90_start-install"
 num_known_hosts() {
     local known_hosts=0
     local insufficient_hosts=0
-    host_status=$(curl_assisted_service "/infra-envs/${INFRA_ENV_ID}/hosts" GET $USER_AUTH_TOKEN | jq -r .[].status)
+    host_status=$(curl_assisted_service "/infra-envs/${INFRA_ENV_ID}/hosts" GET "$USER_AUTH_TOKEN" | jq -r .[].status)
     if [[ -n ${host_status} ]]; then
         for status in ${host_status}; do
             if [[ "${status}" == "known" ]]; then
@@ -58,7 +58,7 @@ clear_issue "${status_issue}"
 while [[ "${cluster_status}" != "installed" ]]
 do
     sleep 5
-    cluster_info="$(curl_assisted_service "/clusters" GET $USER_AUTH_TOKEN)"
+    cluster_info="$(curl_assisted_service "/clusters" GET "$USER_AUTH_TOKEN")"
     cluster_status=$(printf '%s' "${cluster_info}" | jq -r .[].status)
     echo "Cluster status: ${cluster_status}" 1>&2
     # Start the cluster install, if it transitions back to Ready due to a failure,
@@ -66,7 +66,7 @@ do
     case "${cluster_status}" in
         "ready")
             echo "Starting cluster installation..." 1>&2
-            res=$(curl_assisted_service "/clusters/${cluster_id}/actions/install" POST $USER_AUTH_TOKEN -w "%{http_code}" -o /dev/null)
+            res=$(curl_assisted_service "/clusters/${cluster_id}/actions/install" POST "$USER_AUTH_TOKEN" -w "%{http_code}" -o /dev/null)
             if [[ $res = "202" ]]; then 
                 printf '\nCluster installation started\n' 1>&2
             fi

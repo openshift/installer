@@ -35,9 +35,9 @@ var (
 
 // AuthType holds the authenticator type for agent based installer.
 const (
-	AuthType = "agent-installer-local"
-	agentPersona = "agentAuth"
-	userPersona = "userAuth"
+	AuthType       = "agent-installer-local"
+	agentPersona   = "agentAuth"
+	userPersona    = "userAuth"
 	watcherPersona = "watcherAuth"
 )
 
@@ -99,7 +99,7 @@ func (a *AuthConfig) Generate(_ context.Context, dependencies asset.Parents) err
 		// Auth tokens expires after 48 hours
 		expiry := time.Now().UTC().Add(48 * time.Hour)
 		a.AuthTokenExpiry = expiry.Format(time.RFC3339)
-		
+
 		agentAuthToken, err := generateToken(agentPersona, privateKey, &expiry)
 		if err != nil {
 			return err

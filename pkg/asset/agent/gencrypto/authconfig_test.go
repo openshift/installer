@@ -38,21 +38,23 @@ func TestAuthConfig_Generate(t *testing.T) {
 			assert.NotEqual(t, authConfigAsset.UserAuthToken, authConfigAsset.WatcherAuthToken)
 
 			// verify each token is signed with correct persona
-			claims , err := ParseToken(authConfigAsset.AgentAuthToken)
+			claims, err := ParseToken(authConfigAsset.AgentAuthToken)
 			assert.NoError(t, err)
-			persona, _ := claims["sub"].(string)
+			persona, ok := claims["sub"].(string)
 			assert.Equal(t, persona, agentPersona)
+			assert.Equal(t, ok, true)
 
-			claims , err = ParseToken(authConfigAsset.UserAuthToken)
+			claims, err = ParseToken(authConfigAsset.UserAuthToken)
 			assert.NoError(t, err)
-			persona, _ = claims["sub"].(string)
+			persona, ok = claims["sub"].(string)
 			assert.Equal(t, persona, userPersona)
+			assert.Equal(t, ok, true)
 
-			claims , err = ParseToken(authConfigAsset.WatcherAuthToken)
+			claims, err = ParseToken(authConfigAsset.WatcherAuthToken)
 			assert.NoError(t, err)
-			persona, _ = claims["sub"].(string)
+			persona, ok = claims["sub"].(string)
 			assert.Equal(t, persona, watcherPersona)
-			
+			assert.Equal(t, ok, true)
 		})
 	}
 }
