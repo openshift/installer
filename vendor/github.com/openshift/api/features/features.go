@@ -313,6 +313,13 @@ var (
 					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 					mustRegister()
 
+	FeatureGateAWSClusterHostedDNS = newFeatureGate("AWSClusterHostedDNS").
+					reportProblemsToJiraComponent("Installer").
+					contactPerson("barbacbd").
+					productScope(ocpSpecific).
+					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+					mustRegister()
+
 	FeatureGateMixedCPUsAllocation = newFeatureGate("MixedCPUsAllocation").
 					reportProblemsToJiraComponent("NodeTuningOperator").
 					contactPerson("titzhak").
