@@ -27,20 +27,22 @@ var machineosbuildsKind = v1alpha1.SchemeGroupVersion.WithKind("MachineOSBuild")
 
 // Get takes name of the machineOSBuild, and returns the corresponding machineOSBuild object, and an error if there is any.
 func (c *FakeMachineOSBuilds) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.MachineOSBuild, err error) {
+	emptyResult := &v1alpha1.MachineOSBuild{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootGetAction(machineosbuildsResource, name), &v1alpha1.MachineOSBuild{})
+		Invokes(testing.NewRootGetActionWithOptions(machineosbuildsResource, name, options), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.MachineOSBuild), err
 }
 
 // List takes label and field selectors, and returns the list of MachineOSBuilds that match those selectors.
 func (c *FakeMachineOSBuilds) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.MachineOSBuildList, err error) {
+	emptyResult := &v1alpha1.MachineOSBuildList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootListAction(machineosbuildsResource, machineosbuildsKind, opts), &v1alpha1.MachineOSBuildList{})
+		Invokes(testing.NewRootListActionWithOptions(machineosbuildsResource, machineosbuildsKind, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -59,36 +61,39 @@ func (c *FakeMachineOSBuilds) List(ctx context.Context, opts v1.ListOptions) (re
 // Watch returns a watch.Interface that watches the requested machineOSBuilds.
 func (c *FakeMachineOSBuilds) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewRootWatchAction(machineosbuildsResource, opts))
+		InvokesWatch(testing.NewRootWatchActionWithOptions(machineosbuildsResource, opts))
 }
 
 // Create takes the representation of a machineOSBuild and creates it.  Returns the server's representation of the machineOSBuild, and an error, if there is any.
 func (c *FakeMachineOSBuilds) Create(ctx context.Context, machineOSBuild *v1alpha1.MachineOSBuild, opts v1.CreateOptions) (result *v1alpha1.MachineOSBuild, err error) {
+	emptyResult := &v1alpha1.MachineOSBuild{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateAction(machineosbuildsResource, machineOSBuild), &v1alpha1.MachineOSBuild{})
+		Invokes(testing.NewRootCreateActionWithOptions(machineosbuildsResource, machineOSBuild, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.MachineOSBuild), err
 }
 
 // Update takes the representation of a machineOSBuild and updates it. Returns the server's representation of the machineOSBuild, and an error, if there is any.
 func (c *FakeMachineOSBuilds) Update(ctx context.Context, machineOSBuild *v1alpha1.MachineOSBuild, opts v1.UpdateOptions) (result *v1alpha1.MachineOSBuild, err error) {
+	emptyResult := &v1alpha1.MachineOSBuild{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateAction(machineosbuildsResource, machineOSBuild), &v1alpha1.MachineOSBuild{})
+		Invokes(testing.NewRootUpdateActionWithOptions(machineosbuildsResource, machineOSBuild, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.MachineOSBuild), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeMachineOSBuilds) UpdateStatus(ctx context.Context, machineOSBuild *v1alpha1.MachineOSBuild, opts v1.UpdateOptions) (*v1alpha1.MachineOSBuild, error) {
+func (c *FakeMachineOSBuilds) UpdateStatus(ctx context.Context, machineOSBuild *v1alpha1.MachineOSBuild, opts v1.UpdateOptions) (result *v1alpha1.MachineOSBuild, err error) {
+	emptyResult := &v1alpha1.MachineOSBuild{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateSubresourceAction(machineosbuildsResource, "status", machineOSBuild), &v1alpha1.MachineOSBuild{})
+		Invokes(testing.NewRootUpdateSubresourceActionWithOptions(machineosbuildsResource, "status", machineOSBuild, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.MachineOSBuild), err
 }
@@ -102,7 +107,7 @@ func (c *FakeMachineOSBuilds) Delete(ctx context.Context, name string, opts v1.D
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeMachineOSBuilds) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(machineosbuildsResource, listOpts)
+	action := testing.NewRootDeleteCollectionActionWithOptions(machineosbuildsResource, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.MachineOSBuildList{})
 	return err
@@ -110,10 +115,11 @@ func (c *FakeMachineOSBuilds) DeleteCollection(ctx context.Context, opts v1.Dele
 
 // Patch applies the patch and returns the patched machineOSBuild.
 func (c *FakeMachineOSBuilds) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.MachineOSBuild, err error) {
+	emptyResult := &v1alpha1.MachineOSBuild{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(machineosbuildsResource, name, pt, data, subresources...), &v1alpha1.MachineOSBuild{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(machineosbuildsResource, name, pt, data, opts, subresources...), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.MachineOSBuild), err
 }
@@ -131,10 +137,11 @@ func (c *FakeMachineOSBuilds) Apply(ctx context.Context, machineOSBuild *machine
 	if name == nil {
 		return nil, fmt.Errorf("machineOSBuild.Name must be provided to Apply")
 	}
+	emptyResult := &v1alpha1.MachineOSBuild{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(machineosbuildsResource, *name, types.ApplyPatchType, data), &v1alpha1.MachineOSBuild{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(machineosbuildsResource, *name, types.ApplyPatchType, data, opts.ToPatchOptions()), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.MachineOSBuild), err
 }
@@ -153,10 +160,11 @@ func (c *FakeMachineOSBuilds) ApplyStatus(ctx context.Context, machineOSBuild *m
 	if name == nil {
 		return nil, fmt.Errorf("machineOSBuild.Name must be provided to Apply")
 	}
+	emptyResult := &v1alpha1.MachineOSBuild{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(machineosbuildsResource, *name, types.ApplyPatchType, data, "status"), &v1alpha1.MachineOSBuild{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(machineosbuildsResource, *name, types.ApplyPatchType, data, opts.ToPatchOptions(), "status"), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.MachineOSBuild), err
 }

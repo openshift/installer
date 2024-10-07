@@ -27,20 +27,22 @@ var kubeletconfigsKind = v1.SchemeGroupVersion.WithKind("KubeletConfig")
 
 // Get takes name of the kubeletConfig, and returns the corresponding kubeletConfig object, and an error if there is any.
 func (c *FakeKubeletConfigs) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.KubeletConfig, err error) {
+	emptyResult := &v1.KubeletConfig{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootGetAction(kubeletconfigsResource, name), &v1.KubeletConfig{})
+		Invokes(testing.NewRootGetActionWithOptions(kubeletconfigsResource, name, options), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.KubeletConfig), err
 }
 
 // List takes label and field selectors, and returns the list of KubeletConfigs that match those selectors.
 func (c *FakeKubeletConfigs) List(ctx context.Context, opts metav1.ListOptions) (result *v1.KubeletConfigList, err error) {
+	emptyResult := &v1.KubeletConfigList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootListAction(kubeletconfigsResource, kubeletconfigsKind, opts), &v1.KubeletConfigList{})
+		Invokes(testing.NewRootListActionWithOptions(kubeletconfigsResource, kubeletconfigsKind, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -59,36 +61,39 @@ func (c *FakeKubeletConfigs) List(ctx context.Context, opts metav1.ListOptions) 
 // Watch returns a watch.Interface that watches the requested kubeletConfigs.
 func (c *FakeKubeletConfigs) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewRootWatchAction(kubeletconfigsResource, opts))
+		InvokesWatch(testing.NewRootWatchActionWithOptions(kubeletconfigsResource, opts))
 }
 
 // Create takes the representation of a kubeletConfig and creates it.  Returns the server's representation of the kubeletConfig, and an error, if there is any.
 func (c *FakeKubeletConfigs) Create(ctx context.Context, kubeletConfig *v1.KubeletConfig, opts metav1.CreateOptions) (result *v1.KubeletConfig, err error) {
+	emptyResult := &v1.KubeletConfig{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateAction(kubeletconfigsResource, kubeletConfig), &v1.KubeletConfig{})
+		Invokes(testing.NewRootCreateActionWithOptions(kubeletconfigsResource, kubeletConfig, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.KubeletConfig), err
 }
 
 // Update takes the representation of a kubeletConfig and updates it. Returns the server's representation of the kubeletConfig, and an error, if there is any.
 func (c *FakeKubeletConfigs) Update(ctx context.Context, kubeletConfig *v1.KubeletConfig, opts metav1.UpdateOptions) (result *v1.KubeletConfig, err error) {
+	emptyResult := &v1.KubeletConfig{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateAction(kubeletconfigsResource, kubeletConfig), &v1.KubeletConfig{})
+		Invokes(testing.NewRootUpdateActionWithOptions(kubeletconfigsResource, kubeletConfig, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.KubeletConfig), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeKubeletConfigs) UpdateStatus(ctx context.Context, kubeletConfig *v1.KubeletConfig, opts metav1.UpdateOptions) (*v1.KubeletConfig, error) {
+func (c *FakeKubeletConfigs) UpdateStatus(ctx context.Context, kubeletConfig *v1.KubeletConfig, opts metav1.UpdateOptions) (result *v1.KubeletConfig, err error) {
+	emptyResult := &v1.KubeletConfig{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateSubresourceAction(kubeletconfigsResource, "status", kubeletConfig), &v1.KubeletConfig{})
+		Invokes(testing.NewRootUpdateSubresourceActionWithOptions(kubeletconfigsResource, "status", kubeletConfig, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.KubeletConfig), err
 }
@@ -102,7 +107,7 @@ func (c *FakeKubeletConfigs) Delete(ctx context.Context, name string, opts metav
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeKubeletConfigs) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(kubeletconfigsResource, listOpts)
+	action := testing.NewRootDeleteCollectionActionWithOptions(kubeletconfigsResource, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1.KubeletConfigList{})
 	return err
@@ -110,10 +115,11 @@ func (c *FakeKubeletConfigs) DeleteCollection(ctx context.Context, opts metav1.D
 
 // Patch applies the patch and returns the patched kubeletConfig.
 func (c *FakeKubeletConfigs) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.KubeletConfig, err error) {
+	emptyResult := &v1.KubeletConfig{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(kubeletconfigsResource, name, pt, data, subresources...), &v1.KubeletConfig{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(kubeletconfigsResource, name, pt, data, opts, subresources...), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.KubeletConfig), err
 }
@@ -131,10 +137,11 @@ func (c *FakeKubeletConfigs) Apply(ctx context.Context, kubeletConfig *machineco
 	if name == nil {
 		return nil, fmt.Errorf("kubeletConfig.Name must be provided to Apply")
 	}
+	emptyResult := &v1.KubeletConfig{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(kubeletconfigsResource, *name, types.ApplyPatchType, data), &v1.KubeletConfig{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(kubeletconfigsResource, *name, types.ApplyPatchType, data, opts.ToPatchOptions()), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.KubeletConfig), err
 }
@@ -153,10 +160,11 @@ func (c *FakeKubeletConfigs) ApplyStatus(ctx context.Context, kubeletConfig *mac
 	if name == nil {
 		return nil, fmt.Errorf("kubeletConfig.Name must be provided to Apply")
 	}
+	emptyResult := &v1.KubeletConfig{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(kubeletconfigsResource, *name, types.ApplyPatchType, data, "status"), &v1.KubeletConfig{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(kubeletconfigsResource, *name, types.ApplyPatchType, data, opts.ToPatchOptions(), "status"), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1.KubeletConfig), err
 }

@@ -27,20 +27,22 @@ var machineconfignodesKind = v1alpha1.SchemeGroupVersion.WithKind("MachineConfig
 
 // Get takes name of the machineConfigNode, and returns the corresponding machineConfigNode object, and an error if there is any.
 func (c *FakeMachineConfigNodes) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.MachineConfigNode, err error) {
+	emptyResult := &v1alpha1.MachineConfigNode{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootGetAction(machineconfignodesResource, name), &v1alpha1.MachineConfigNode{})
+		Invokes(testing.NewRootGetActionWithOptions(machineconfignodesResource, name, options), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.MachineConfigNode), err
 }
 
 // List takes label and field selectors, and returns the list of MachineConfigNodes that match those selectors.
 func (c *FakeMachineConfigNodes) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.MachineConfigNodeList, err error) {
+	emptyResult := &v1alpha1.MachineConfigNodeList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootListAction(machineconfignodesResource, machineconfignodesKind, opts), &v1alpha1.MachineConfigNodeList{})
+		Invokes(testing.NewRootListActionWithOptions(machineconfignodesResource, machineconfignodesKind, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -59,36 +61,39 @@ func (c *FakeMachineConfigNodes) List(ctx context.Context, opts v1.ListOptions) 
 // Watch returns a watch.Interface that watches the requested machineConfigNodes.
 func (c *FakeMachineConfigNodes) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewRootWatchAction(machineconfignodesResource, opts))
+		InvokesWatch(testing.NewRootWatchActionWithOptions(machineconfignodesResource, opts))
 }
 
 // Create takes the representation of a machineConfigNode and creates it.  Returns the server's representation of the machineConfigNode, and an error, if there is any.
 func (c *FakeMachineConfigNodes) Create(ctx context.Context, machineConfigNode *v1alpha1.MachineConfigNode, opts v1.CreateOptions) (result *v1alpha1.MachineConfigNode, err error) {
+	emptyResult := &v1alpha1.MachineConfigNode{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootCreateAction(machineconfignodesResource, machineConfigNode), &v1alpha1.MachineConfigNode{})
+		Invokes(testing.NewRootCreateActionWithOptions(machineconfignodesResource, machineConfigNode, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.MachineConfigNode), err
 }
 
 // Update takes the representation of a machineConfigNode and updates it. Returns the server's representation of the machineConfigNode, and an error, if there is any.
 func (c *FakeMachineConfigNodes) Update(ctx context.Context, machineConfigNode *v1alpha1.MachineConfigNode, opts v1.UpdateOptions) (result *v1alpha1.MachineConfigNode, err error) {
+	emptyResult := &v1alpha1.MachineConfigNode{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateAction(machineconfignodesResource, machineConfigNode), &v1alpha1.MachineConfigNode{})
+		Invokes(testing.NewRootUpdateActionWithOptions(machineconfignodesResource, machineConfigNode, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.MachineConfigNode), err
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeMachineConfigNodes) UpdateStatus(ctx context.Context, machineConfigNode *v1alpha1.MachineConfigNode, opts v1.UpdateOptions) (*v1alpha1.MachineConfigNode, error) {
+func (c *FakeMachineConfigNodes) UpdateStatus(ctx context.Context, machineConfigNode *v1alpha1.MachineConfigNode, opts v1.UpdateOptions) (result *v1alpha1.MachineConfigNode, err error) {
+	emptyResult := &v1alpha1.MachineConfigNode{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootUpdateSubresourceAction(machineconfignodesResource, "status", machineConfigNode), &v1alpha1.MachineConfigNode{})
+		Invokes(testing.NewRootUpdateSubresourceActionWithOptions(machineconfignodesResource, "status", machineConfigNode, opts), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.MachineConfigNode), err
 }
@@ -102,7 +107,7 @@ func (c *FakeMachineConfigNodes) Delete(ctx context.Context, name string, opts v
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeMachineConfigNodes) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(machineconfignodesResource, listOpts)
+	action := testing.NewRootDeleteCollectionActionWithOptions(machineconfignodesResource, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.MachineConfigNodeList{})
 	return err
@@ -110,10 +115,11 @@ func (c *FakeMachineConfigNodes) DeleteCollection(ctx context.Context, opts v1.D
 
 // Patch applies the patch and returns the patched machineConfigNode.
 func (c *FakeMachineConfigNodes) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.MachineConfigNode, err error) {
+	emptyResult := &v1alpha1.MachineConfigNode{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(machineconfignodesResource, name, pt, data, subresources...), &v1alpha1.MachineConfigNode{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(machineconfignodesResource, name, pt, data, opts, subresources...), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.MachineConfigNode), err
 }
@@ -131,10 +137,11 @@ func (c *FakeMachineConfigNodes) Apply(ctx context.Context, machineConfigNode *m
 	if name == nil {
 		return nil, fmt.Errorf("machineConfigNode.Name must be provided to Apply")
 	}
+	emptyResult := &v1alpha1.MachineConfigNode{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(machineconfignodesResource, *name, types.ApplyPatchType, data), &v1alpha1.MachineConfigNode{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(machineconfignodesResource, *name, types.ApplyPatchType, data, opts.ToPatchOptions()), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.MachineConfigNode), err
 }
@@ -153,10 +160,11 @@ func (c *FakeMachineConfigNodes) ApplyStatus(ctx context.Context, machineConfigN
 	if name == nil {
 		return nil, fmt.Errorf("machineConfigNode.Name must be provided to Apply")
 	}
+	emptyResult := &v1alpha1.MachineConfigNode{}
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(machineconfignodesResource, *name, types.ApplyPatchType, data, "status"), &v1alpha1.MachineConfigNode{})
+		Invokes(testing.NewRootPatchSubresourceActionWithOptions(machineconfignodesResource, *name, types.ApplyPatchType, data, opts.ToPatchOptions(), "status"), emptyResult)
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v1alpha1.MachineConfigNode), err
 }
