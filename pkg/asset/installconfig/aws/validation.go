@@ -23,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/dns"
 )
 
 type resourceRequirements struct {
@@ -573,6 +574,11 @@ var requiredServices = []string{
 // ValidateForProvisioning validates if the install config is valid for provisioning the cluster.
 func ValidateForProvisioning(client API, ic *types.InstallConfig, metadata *Metadata) error {
 	if ic.Publish == types.InternalPublishingStrategy && ic.AWS.HostedZone == "" {
+		return nil
+	}
+
+	if ic.AWS.UserProvisionedDNS == dns.UserProvisionedDNSEnabled {
+		logrus.Debug("User Provisioned DNS enabled, skipping zone validation")
 		return nil
 	}
 
