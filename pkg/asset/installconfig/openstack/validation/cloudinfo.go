@@ -380,11 +380,15 @@ func (ci *CloudInfo) getNetwork(ctx context.Context, controlPlanePort *openstack
 	networkName := controlPlanePort.Network.Name
 	networkID := controlPlanePort.Network.ID
 	if networkName == "" && networkID == "" {
-		return nil, nil
+		if len(ci.ControlPlanePortSubnets) > 0 && ci.ControlPlanePortSubnets[0].NetworkID != "" {
+			networkID = ci.ControlPlanePortSubnets[0].NetworkID
+		} else {
+			return nil, nil
+		}
 	}
 	opts := networks.ListOpts{}
 	if networkID != "" {
-		opts.ID = controlPlanePort.Network.ID
+		opts.ID = networkID
 	}
 	if networkName != "" {
 		opts.Name = controlPlanePort.Network.Name
