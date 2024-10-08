@@ -110,7 +110,7 @@ func (o *ClusterUninstaller) deleteForwardingRule(ctx context.Context, item clou
 		o.resetRequestID(item.typeName, item.name)
 		return fmt.Errorf("failed to delete forwarding rule %s with error: %s: %w", item.name, operationErrorMessage(op), err)
 	}
-	if op != nil && op.Status == "DONE" {
+	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
 		o.resetRequestID(item.typeName, item.name)
 		o.deletePendingItems(item.typeName, []cloudResource{item})
 		o.Logger.Infof("Deleted forwarding rule %s", item.name)
