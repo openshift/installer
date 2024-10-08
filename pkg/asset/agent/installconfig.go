@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	configv1 "github.com/openshift/api/config/v1"
-	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/releaseimage"
@@ -133,10 +132,12 @@ func (a *OptionalInstallConfig) validatePlatformsByName(installConfig *types.Ins
 	var allErrs field.ErrorList
 
 	if installConfig.Platform.Name() == external.Name {
-		if installConfig.Platform.External.PlatformName == string(models.PlatformTypeOci) &&
+		if installConfig.Platform.External.PlatformName == ExternalPlatformNameOci &&
 			installConfig.Platform.External.CloudControllerManager != external.CloudControllerManagerTypeExternal {
 			fieldPath := field.NewPath("Platform", "External", "CloudControllerManager")
-			allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.Platform.External.CloudControllerManager, fmt.Sprintf("When using external %s platform, %s must be set to %s", string(models.PlatformTypeOci), fieldPath, external.CloudControllerManagerTypeExternal)))
+			allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.Platform.External.CloudControllerManager,
+				fmt.Sprintf("When using external %s platform, %s must be set to %s",
+					ExternalPlatformNameOci, fieldPath, external.CloudControllerManagerTypeExternal)))
 		}
 	}
 

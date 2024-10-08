@@ -194,6 +194,8 @@ type AgentSpec struct {
 	IgnitionConfigOverrides string `json:"ignitionConfigOverrides,omitempty"`
 	// IgnitionEndpointTokenReference references a secret containing an Authorization Bearer token to fetch the ignition from ignition_endpoint_url.
 	IgnitionEndpointTokenReference *IgnitionEndpointTokenReference `json:"ignitionEndpointTokenReference,omitempty"`
+	// IgnitionEndpointHTTPHeaders are the additional HTTP headers used when fetching the ignition.
+	IgnitionEndpointHTTPHeaders map[string]string `json:"ignitionEndpointHTTPHeaders,omitempty"`
 	// NodeLabels are the labels to be applied on the node associated with this agent
 	NodeLabels map[string]string `json:"nodeLabels,omitempty"`
 }
@@ -225,6 +227,13 @@ type HostNTPSources struct {
 	SourceState models.SourceState `json:"sourceState,omitempty"`
 }
 
+type AgentDeprovisionInfo struct {
+	ClusterName      string `json:"cluster_name,omitempty"`
+	ClusterNamespace string `json:"cluster_namespace,omitempty"`
+	NodeName         string `json:"node_name,omitempty"`
+	Message          string `json:"message,omitempty"`
+}
+
 // AgentStatus defines the observed state of Agent
 type AgentStatus struct {
 	Bootstrap bool `json:"bootstrap,omitempty"`
@@ -245,6 +254,10 @@ type AgentStatus struct {
 	// InstallationDiskID is the disk that will be used for the installation.
 	// +optional
 	InstallationDiskID string `json:"installation_disk_id,omitempty"`
+
+	// DeprovisionInfo stores data related to the agent's previous cluster binding in order to clean up when the agent re-registers
+	// +optional
+	DeprovisionInfo *AgentDeprovisionInfo `json:"deprovision_info,omitempty"`
 }
 
 type DebugInfo struct {

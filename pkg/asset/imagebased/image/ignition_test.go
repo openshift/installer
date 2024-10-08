@@ -85,7 +85,7 @@ func TestIgnition_Generate(t *testing.T) {
 							},
 						}).
 						additionalTrustBundle(testCert).
-						networkConfig(aiv1beta1.NetConfig{Raw: []byte(testNetworkConfig)}).
+						networkConfig(&aiv1beta1.NetConfig{Raw: []byte(testNetworkConfig)}).
 						ignitionConfigOverride(ignitionConfigOverride).
 						build(),
 				},

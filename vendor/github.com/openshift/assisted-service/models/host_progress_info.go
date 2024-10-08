@@ -32,6 +32,9 @@ type HostProgressInfo struct {
 	// Format: date-time
 	StageStartedAt strfmt.DateTime `json:"stage_started_at,omitempty" gorm:"type:timestamp with time zone"`
 
+	// Indicate of the current stage has been timed out.
+	StageTimedOut bool `json:"stage_timed_out,omitempty"`
+
 	// Time at which the current progress stage was last updated.
 	// Format: date-time
 	StageUpdatedAt strfmt.DateTime `json:"stage_updated_at,omitempty" gorm:"type:timestamp with time zone"`

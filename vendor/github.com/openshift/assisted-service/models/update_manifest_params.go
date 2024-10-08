@@ -22,7 +22,7 @@ type UpdateManifestParams struct {
 
 	// The file name for the manifest to modify.
 	// Required: true
-	// Pattern: ^[^/]*\.(yaml|yml|json)$
+	// Pattern: ^[^\/]*\.(json|ya?ml(\.patch_?[a-zA-Z0-9_]*)?)$
 	FileName string `json:"file_name"`
 
 	// The folder for the manifest to modify.
@@ -34,7 +34,7 @@ type UpdateManifestParams struct {
 	UpdatedContent *string `json:"updated_content,omitempty"`
 
 	// The new file name for the manifest.
-	// Pattern: ^[^/]*\.(yaml|yml|json)$
+	// Pattern: ^[^\/]*\.(json|ya?ml(\.patch_?[a-zA-Z0-9_]*)?)$
 	UpdatedFileName *string `json:"updated_file_name,omitempty"`
 
 	// The new folder for the manifest. Manifests can be placed in 'manifests' or 'openshift' directories.
@@ -74,7 +74,7 @@ func (m *UpdateManifestParams) validateFileName(formats strfmt.Registry) error {
 		return err
 	}
 
-	if err := validate.Pattern("file_name", "body", m.FileName, `^[^/]*\.(yaml|yml|json)$`); err != nil {
+	if err := validate.Pattern("file_name", "body", m.FileName, `^[^\/]*\.(json|ya?ml(\.patch_?[a-zA-Z0-9_]*)?)$`); err != nil {
 		return err
 	}
 
@@ -129,7 +129,7 @@ func (m *UpdateManifestParams) validateUpdatedFileName(formats strfmt.Registry) 
 		return nil
 	}
 
-	if err := validate.Pattern("updated_file_name", "body", *m.UpdatedFileName, `^[^/]*\.(yaml|yml|json)$`); err != nil {
+	if err := validate.Pattern("updated_file_name", "body", *m.UpdatedFileName, `^[^\/]*\.(json|ya?ml(\.patch_?[a-zA-Z0-9_]*)?)$`); err != nil {
 		return err
 	}
 

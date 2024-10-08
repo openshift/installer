@@ -155,7 +155,7 @@ func (i *ImageBasedConfig) validateNetworkConfig() field.ErrorList {
 	var allErrs field.ErrorList
 
 	// empty NetworkConfig is fine
-	if i.Config.NetworkConfig.String() == "" {
+	if i.Config.NetworkConfig == nil || i.Config.NetworkConfig.String() == "" {
 		return nil
 	}
 

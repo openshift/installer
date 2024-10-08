@@ -41,6 +41,9 @@ type InstallCmdRequest struct {
 	// List of disks to format
 	DisksToFormat []string `json:"disks_to_format"`
 
+	// If true, assisted service will attempt to skip MCO reboot
+	EnableSkipMcoReboot bool `json:"enable_skip_mco_reboot,omitempty"`
+
 	// Guaranteed availability of the installed cluster. 'Full' installs a Highly-Available cluster
 	// over multiple master nodes whereas 'None' installs a full cluster over one node.
 	//
@@ -71,6 +74,9 @@ type InstallCmdRequest struct {
 
 	// Must-gather images to use
 	MustGatherImage string `json:"must_gather_image,omitempty"`
+
+	// If true, notify number of reboots by assisted controller
+	NotifyNumReboots bool `json:"notify_num_reboots,omitempty"`
 
 	// Version of the OpenShift cluster.
 	OpenshiftVersion string `json:"openshift_version,omitempty"`

@@ -90,6 +90,12 @@ func (cc *ClusterConfiguration) Generate(_ context.Context, dependencies asset.P
 	if installConfig.Config == nil || imageBasedConfig.Config == nil {
 		return cc.finish()
 	}
+	if imageBasedConfig.Config.ClusterID != "" {
+		clusterID.UUID = imageBasedConfig.Config.ClusterID
+	}
+	if imageBasedConfig.Config.InfraID != "" {
+		clusterID.InfraID = imageBasedConfig.Config.InfraID
+	}
 
 	cc.Config = &imagebased.SeedReconfiguration{
 		APIVersion:            imagebased.SeedReconfigurationVersion,
@@ -101,9 +107,12 @@ func (cc *ClusterConfiguration) Generate(_ context.Context, dependencies asset.P
 		KubeadminPasswordHash: pwdHash,
 		Proxy:                 installConfig.Config.Proxy,
 		PullSecret:            installConfig.Config.PullSecret,
-		RawNMStateConfig:      imageBasedConfig.Config.NetworkConfig.String(),
 		ReleaseRegistry:       imageBasedConfig.Config.ReleaseRegistry,
 		SSHKey:                installConfig.Config.SSHKey,
+	}
+
+	if imageBasedConfig.Config.NetworkConfig != nil {
+		cc.Config.RawNMStateConfig = imageBasedConfig.Config.NetworkConfig.String()
 	}
 
 	if len(imageBasedConfig.Config.AdditionalNTPSources) > 0 {
@@ -139,7 +148,9 @@ func (cc *ClusterConfiguration) Generate(_ context.Context, dependencies asset.P
 	}
 
 	// validation for the length of the MachineNetwork is performed in the InstallConfig
-	cc.Config.MachineNetwork = installConfig.Config.Networking.MachineNetwork[0].CIDR.String()
+	if len(installConfig.Config.Networking.MachineNetwork) > 0 {
+		cc.Config.MachineNetwork = installConfig.Config.Networking.MachineNetwork[0].CIDR.String()
+	}
 
 	clusterConfigurationData, err := json.Marshal(cc.Config)
 	if err != nil {

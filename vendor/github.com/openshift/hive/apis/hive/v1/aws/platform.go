@@ -39,6 +39,13 @@ type PlatformStatus struct {
 // PrivateLinkAccess configures access to the cluster API using AWS PrivateLink
 type PrivateLinkAccess struct {
 	Enabled bool `json:"enabled"`
+
+	// AdditionalAllowedPrincipals is a list of additional allowed principal ARNs to be configured
+	// for the Private Link cluster's VPC Endpoint Service.
+	// ARNs provided as AdditionalAllowedPrincipals will be configured for the cluster's VPC Endpoint
+	// Service in addition to the IAM entity used by Hive.
+	// +optional
+	AdditionalAllowedPrincipals *[]string `json:"additionalAllowedPrincipals,omitempty"`
 }
 
 // PrivateLinkAccessStatus contains the observed state for PrivateLinkAccess resources.
@@ -54,6 +61,15 @@ type PrivateLinkAccessStatus struct {
 type VPCEndpointService struct {
 	Name string `json:"name,omitempty"`
 	ID   string `json:"id,omitempty"`
+	// DefaultAllowedPrincipal is the ARN of the IAM entity used by Hive as configured for the Private
+	// Link cluster's VPC Endpoint Service.
+	// +optional
+	DefaultAllowedPrincipal *string `json:"defaultAllowedPrincipal,omitempty"`
+	// AdditionalAllowedPrincipals is a list of additional allowed principal ARNs that have been configured
+	// for the Private Link cluster's VPC Endpoint Service. This list in Status is used to determine if a sync
+	// of Allowed Principals is needed outside of the regular reconcile period of 2hrs.
+	// +optional
+	AdditionalAllowedPrincipals *[]string `json:"additionalAllowedPrincipals,omitempty"`
 }
 
 // AssumeRole stores information for the IAM role that needs to be assumed

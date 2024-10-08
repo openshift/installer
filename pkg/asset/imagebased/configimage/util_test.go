@@ -103,11 +103,18 @@ func imageBasedConfig() *ImageBasedConfig {
 			},
 			Hostname:        "somehostname",
 			ReleaseRegistry: "quay.io",
-			NetworkConfig: aiv1beta1.NetConfig{
+			NetworkConfig: &aiv1beta1.NetConfig{
 				Raw: unmarshalJSON([]byte(rawNMStateConfig)),
 			},
 		},
 	}
+	return ibConfig
+}
+
+func imageBasedConfigWithSetClusterID(clusterID string, infraID string) *ImageBasedConfig {
+	ibConfig := imageBasedConfig()
+	ibConfig.Config.ClusterID = clusterID
+	ibConfig.Config.InfraID = infraID
 	return ibConfig
 }
 
