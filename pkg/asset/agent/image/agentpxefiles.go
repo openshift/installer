@@ -68,6 +68,7 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 
 // PersistToFile writes the PXE assets in the assets folder named pxe.
 func (a *AgentPXEFiles) PersistToFile(directory string) error {
+	var kernelFileType string
 	// If the imageReader is not set then it means that either one of the AgentPXEFiles
 	// dependencies or the asset itself failed for some reason
 	if a.imageReader == nil {
@@ -92,10 +93,20 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 	if err != nil {
 		return err
 	}
-	kernelFileType := "vmlinuz"
-	if a.cpuArch == arch.RpmArch(types.ArchitectureS390X) {
+
+	switch a.cpuArch {
+	case arch.RpmArch(types.ArchitectureS390X):
+
 		kernelFileType = "kernel.img"
+
+		err = a.handleAdditionals390xArtifacts(bootArtifactsFullPath)
+		if err != nil {
+			return err
+		}
+	default:
+		kernelFileType = "vmlinuz"
 	}
+
 	agentVmlinuzFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("agent.%s-%s", a.cpuArch, kernelFileType))
 	kernelReader, err := os.Open(filepath.Join(a.tmpPath, "images", "pxeboot", kernelFileType))
 	if err != nil {
@@ -211,4 +222,38 @@ func getKernelArgs(filepath string) (string, error) {
 	liveISOArgMatch := regexp.MustCompile(`coreos\.liveiso=[^ ]+ ?`)
 	kernelArgs := liveISOArgMatch.ReplaceAllString(args.DefaultKernelArgs, "")
 	return kernelArgs, nil
+}
+
+func (a *AgentPXEFiles) handleAdditionals390xArtifacts(bootArtifactsFullPath string) error {
+	// initrd is already copied and file pointer is at EOF so move it to start again.
+	_, err := a.imageReader.Seek(0, io.SeekStart)
+	if err != nil {
+		return err
+	}
+
+	agentInitrdAddrFilePath := filepath.Join(a.tmpPath, "images", "initrd.addrsize")
+	addrsizeFile, err := isoeditor.NewInitrdAddrsizeReader(agentInitrdAddrFilePath, a.imageReader)
+	if err != nil {
+		return err
+	}
+
+	agentInitrdAddrFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("agent.%s-initrd.addrsize", a.cpuArch))
+	err = copyfile(agentInitrdAddrFile, addrsizeFile)
+	if err != nil {
+		return err
+	}
+
+	agentINSFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("agent.%s-generic.ins", a.cpuArch))
+	genericReader, err := os.Open(filepath.Join(a.tmpPath, "generic.ins"))
+	if err != nil {
+		return err
+	}
+	defer genericReader.Close()
+
+	err = copyfile(agentINSFile, genericReader)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
