@@ -10,6 +10,7 @@ import (
 
 	"net"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -48,7 +49,7 @@ func rrdatasDnsDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
 
 // suppress on a list when 1) its items have dups that need to be ignored
 // and 2) string comparison on the items may need a special parse function
-// example of usage can be found ../../../third_party/terraform/tests/resource_dns_record_set_test.go.erb
+// example of usage can be found ../../../third_party/terraform/services/dns/resource_dns_record_set_test.go.erb
 func RrdatasListDiffSuppress(oldList, newList []string, fun func(x string) string, _ *schema.ResourceData) bool {
 	// compare two lists of unordered records
 	diff := make(map[string]bool, len(oldList))
@@ -82,6 +83,10 @@ func ResourceDnsRecordSet() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourceDnsRecordSetImportState,
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"managed_zone": {
@@ -164,7 +169,7 @@ func ResourceDnsRecordSet() *schema.Resource {
 						"primary_backup": {
 							Type:        schema.TypeList,
 							Optional:    true,
-							Description: "The configuration for a primary-backup policy with global to regional failover. Queries are responded to with the global primary targets, but if none of the primary targets are healthy, then we fallback to a regional failover policy.",
+							Description: "The configuration for a failover policy with global to regional failover. Queries are responded to with the global primary targets, but if none of the primary targets are healthy, then we fallback to a regional failover policy.",
 							MaxItems:    1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -260,8 +265,8 @@ var healthCheckedTargetSchema *schema.Resource = &schema.Resource{
 					"load_balancer_type": {
 						Type:         schema.TypeString,
 						Required:     true,
-						Description:  `The type of load balancer. This value is case-sensitive. Possible values: ["regionalL4ilb", "regionalL7ilb]`,
-						ValidateFunc: validation.StringInSlice([]string{"regionalL4ilb", "regionalL7ilb"}, false),
+						Description:  `The type of load balancer. This value is case-sensitive. Possible values: ["regionalL4ilb", "regionalL7ilb", "globalL7ilb"]`,
+						ValidateFunc: validation.StringInSlice([]string{"regionalL4ilb", "regionalL7ilb", "globalL7ilb"}, false),
 					},
 					"ip_address": {
 						Type:        schema.TypeString,
@@ -427,15 +432,11 @@ func resourceDnsRecordSetRead(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("ttl", rrset.Ttl); err != nil {
 		return fmt.Errorf("Error setting ttl: %s", err)
 	}
-	if len(rrset.Rrdatas) > 0 {
-		if err := d.Set("rrdatas", rrset.Rrdatas); err != nil {
-			return fmt.Errorf("Error setting rrdatas: %s", err)
-		}
+	if err := d.Set("rrdatas", rrset.Rrdatas); err != nil {
+		return fmt.Errorf("Error setting rrdatas: %s", err)
 	}
-	if rrset.RoutingPolicy != nil {
-		if err := d.Set("routing_policy", flattenDnsRecordSetRoutingPolicy(rrset.RoutingPolicy)); err != nil {
-			return fmt.Errorf("Error setting routing_policy: %s", err)
-		}
+	if err := d.Set("routing_policy", flattenDnsRecordSetRoutingPolicy(rrset.RoutingPolicy)); err != nil {
+		return fmt.Errorf("Error setting routing_policy: %s", err)
 	}
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error setting project: %s", err)
@@ -458,14 +459,17 @@ func resourceDnsRecordSetDelete(d *schema.ResourceData, meta interface{}) error 
 
 	zone := d.Get("managed_zone").(string)
 
-	// NS records must always have a value, so we short-circuit delete
-	// this allows terraform delete to work, but may have unexpected
-	// side-effects when deleting just that record set.
+	// NS and SOA records on the root zone must always have a value,
+	// so we short-circuit delete this allows terraform delete to work,
+	// but may have unexpected side-effects when deleting just that
+	// record set.
 	// Unfortunately, you can set NS records on subdomains, and those
 	// CAN and MUST be deleted, so we need to retrieve the managed zone,
 	// check if what we're looking at is a subdomain, and only not delete
 	// if it's not actually a subdomain
-	if d.Get("type").(string) == "NS" {
+	// This does not apply to SOA, as they can only be set on the root
+	// zone.
+	if d.Get("type").(string) == "NS" || d.Get("type").(string) == "SOA" {
 		mz, err := config.NewDnsClient(userAgent).ManagedZones.Get(project, zone).Do()
 		if err != nil {
 			return fmt.Errorf("Error retrieving managed zone %q from %q: %s", zone, project, err)
@@ -473,7 +477,7 @@ func resourceDnsRecordSetDelete(d *schema.ResourceData, meta interface{}) error 
 		domain := mz.DnsName
 
 		if domain == d.Get("name").(string) {
-			log.Println("[DEBUG] NS records can't be deleted due to API restrictions, so they're being left in place. See https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/dns_record_set for more information.")
+			log.Printf("[DEBUG] root-level %s records can't be deleted due to API restrictions, so they're being left in place. See https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/dns_record_set for more information.\n", d.Get("type").(string))
 			return nil
 		}
 	}

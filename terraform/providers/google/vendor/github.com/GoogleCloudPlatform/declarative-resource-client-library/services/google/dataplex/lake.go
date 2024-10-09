@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -142,7 +142,7 @@ func (r *LakeMetastore) String() string {
 func (r *LakeMetastore) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -194,7 +194,7 @@ func (r *LakeAssetStatus) String() string {
 func (r *LakeAssetStatus) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -249,7 +249,7 @@ func (r *LakeMetastoreStatus) String() string {
 func (r *LakeMetastoreStatus) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 

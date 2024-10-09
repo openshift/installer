@@ -20,6 +20,7 @@ package resourcemanager
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -144,6 +145,7 @@ func resourceResourceManagerLienCreate(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -152,6 +154,7 @@ func resourceResourceManagerLienCreate(d *schema.ResourceData, meta interface{})
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Lien: %s", err)
@@ -203,12 +206,14 @@ func resourceResourceManagerLienRead(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ResourceManagerLien %q", d.Id()))
@@ -275,6 +280,13 @@ func resourceResourceManagerLienDelete(d *schema.ResourceData, meta interface{})
 	}
 
 	var obj map[string]interface{}
+
+	// err == nil indicates that the billing_project value was found
+	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+		billingProject = bp
+	}
+
+	headers := make(http.Header)
 	// log the old URL to make the ineffassign linter happy
 	// in theory, we should find a way to disable the default URL and not construct
 	// both, but that's a problem for another day. Today, we cheat.
@@ -283,13 +295,8 @@ func resourceResourceManagerLienDelete(d *schema.ResourceData, meta interface{})
 	if err != nil {
 		return err
 	}
+
 	log.Printf("[DEBUG] Deleting Lien %q", d.Id())
-
-	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
-		billingProject = bp
-	}
-
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -298,6 +305,7 @@ func resourceResourceManagerLienDelete(d *schema.ResourceData, meta interface{})
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Lien")
@@ -310,7 +318,7 @@ func resourceResourceManagerLienDelete(d *schema.ResourceData, meta interface{})
 func resourceResourceManagerLienImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"(?P<parent>[^/]+)/(?P<name>[^/]+)",
+		"^(?P<parent>[^/]+)/(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -103,6 +104,7 @@ func ResourceCloudBuildTrigger() *schema.Resource {
 		},
 		CustomizeDiff: customdiff.All(
 			stepTimeoutCustomizeDiff,
+			tpgresource.DefaultProviderProject,
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -416,6 +418,71 @@ If any of the images fail to be pushed, the build is marked FAILURE.`,
 											Type: schema.TypeString,
 										},
 									},
+									"maven_artifacts": {
+										Type:     schema.TypeList,
+										Optional: true,
+										Description: `A Maven artifact to upload to Artifact Registry upon successful completion of all build steps.
+
+The location and generation of the uploaded objects will be stored in the Build resource's results field.
+
+If any objects fail to be pushed, the build is marked FAILURE.`,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"artifact_id": {
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: `Maven artifactId value used when uploading the artifact to Artifact Registry.`,
+												},
+												"group_id": {
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: `Maven groupId value used when uploading the artifact to Artifact Registry.`,
+												},
+												"path": {
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: `Path to an artifact in the build's workspace to be uploaded to Artifact Registry. This can be either an absolute path, e.g. /workspace/my-app/target/my-app-1.0.SNAPSHOT.jar or a relative path from /workspace, e.g. my-app/target/my-app-1.0.SNAPSHOT.jar.`,
+												},
+												"repository": {
+													Type:     schema.TypeString,
+													Optional: true,
+													Description: `Artifact Registry repository, in the form "https://$REGION-maven.pkg.dev/$PROJECT/$REPOSITORY"
+
+Artifact in the workspace specified by path will be uploaded to Artifact Registry with this location as a prefix.`,
+												},
+												"version": {
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: `Maven version value used when uploading the artifact to Artifact Registry.`,
+												},
+											},
+										},
+									},
+									"npm_packages": {
+										Type:     schema.TypeList,
+										Optional: true,
+										Description: `Npm package to upload to Artifact Registry upon successful completion of all build steps.
+
+The location and generation of the uploaded objects will be stored in the Build resource's results field.
+
+If any objects fail to be pushed, the build is marked FAILURE.`,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"package_path": {
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: `Path to the package.json. e.g. workspace/path/to/package`,
+												},
+												"repository": {
+													Type:     schema.TypeString,
+													Optional: true,
+													Description: `Artifact Registry repository, in the form "https://$REGION-npm.pkg.dev/$PROJECT/$REPOSITORY"
+
+Npm package in the workspace specified by path will be zipped and uploaded to Artifact Registry with this location as a prefix.`,
+												},
+											},
+										},
+									},
 									"objects": {
 										Type:     schema.TypeList,
 										Optional: true,
@@ -470,6 +537,34 @@ nine fractional digits. Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:2
 															},
 														},
 													},
+												},
+											},
+										},
+									},
+									"python_packages": {
+										Type:     schema.TypeList,
+										Optional: true,
+										Description: `Python package to upload to Artifact Registry upon successful completion of all build steps. A package can encapsulate multiple objects to be uploaded to a single repository.
+
+The location and generation of the uploaded objects will be stored in the Build resource's results field.
+
+If any objects fail to be pushed, the build is marked FAILURE.`,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"paths": {
+													Type:        schema.TypeList,
+													Optional:    true,
+													Description: `Path globs used to match files in the build's workspace. For Python/ Twine, this is usually dist/*, and sometimes additionally an .asc file.`,
+													Elem: &schema.Schema{
+														Type: schema.TypeString,
+													},
+												},
+												"repository": {
+													Type:     schema.TypeString,
+													Optional: true,
+													Description: `Artifact Registry repository, in the form "https://$REGION-python.pkg.dev/$PROJECT/$REPOSITORY"
+
+Files in the workspace matching any path pattern will be uploaded to Artifact Registry with this location as a prefix.`,
 												},
 											},
 										},
@@ -573,10 +668,9 @@ The elements are of the form "KEY=VALUE" for the environment variable "KEY" bein
 										Description:  `Option to specify the logging mode, which determines if and where build logs are stored. Possible values: ["LOGGING_UNSPECIFIED", "LEGACY", "GCS_ONLY", "STACKDRIVER_ONLY", "CLOUD_LOGGING_ONLY", "NONE"]`,
 									},
 									"machine_type": {
-										Type:         schema.TypeString,
-										Optional:     true,
-										ValidateFunc: verify.ValidateEnum([]string{"UNSPECIFIED", "N1_HIGHCPU_8", "N1_HIGHCPU_32", "E2_HIGHCPU_8", "E2_HIGHCPU_32", ""}),
-										Description:  `Compute Engine machine type on which to run the build. Possible values: ["UNSPECIFIED", "N1_HIGHCPU_8", "N1_HIGHCPU_32", "E2_HIGHCPU_8", "E2_HIGHCPU_32"]`,
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `Compute Engine machine type on which to run the build.`,
 									},
 									"requested_verify_option": {
 										Type:         schema.TypeString,
@@ -854,6 +948,12 @@ When using Pub/Sub, Webhook or Manual set the file name using git_file_source in
 							ValidateFunc: verify.ValidateEnum([]string{"UNKNOWN", "CLOUD_SOURCE_REPOSITORIES", "GITHUB", "BITBUCKET_SERVER"}),
 							Description: `The type of the repo, since it may not be explicit from the repo field (e.g from a URL).
 Values can be UNKNOWN, CLOUD_SOURCE_REPOSITORIES, GITHUB, BITBUCKET_SERVER Possible values: ["UNKNOWN", "CLOUD_SOURCE_REPOSITORIES", "GITHUB", "BITBUCKET_SERVER"]`,
+						},
+						"bitbucket_server_config": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Description: `The full resource name of the bitbucket server config.
+Format: projects/{project}/locations/{location}/bitbucketServerConfigs/{id}.`,
 						},
 						"github_enterprise_config": {
 							Type:     schema.TypeString,
@@ -1177,6 +1277,12 @@ One of 'trigger_template', 'github', 'pubsub_config' 'webhook_config' or 'source
 							Description: `The type of the repo, since it may not be explicit from the repo field (e.g from a URL).
 Values can be UNKNOWN, CLOUD_SOURCE_REPOSITORIES, GITHUB, BITBUCKET_SERVER Possible values: ["UNKNOWN", "CLOUD_SOURCE_REPOSITORIES", "GITHUB", "BITBUCKET_SERVER"]`,
 						},
+						"bitbucket_server_config": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Description: `The full resource name of the bitbucket server config.
+Format: projects/{project}/locations/{location}/bitbucketServerConfigs/{id}.`,
+						},
 						"github_enterprise_config": {
 							Type:     schema.TypeString,
 							Optional: true,
@@ -1476,6 +1582,7 @@ func resourceCloudBuildTriggerCreate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -1484,6 +1591,7 @@ func resourceCloudBuildTriggerCreate(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Trigger: %s", err)
@@ -1545,6 +1653,7 @@ func resourceCloudBuildTriggerRead(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	// To support import with the legacy id format.
 	url = strings.ReplaceAll(url, "/locations//", "/locations/global/")
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
@@ -1553,6 +1662,7 @@ func resourceCloudBuildTriggerRead(d *schema.ResourceData, meta interface{}) err
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("CloudBuildTrigger %q", d.Id()))
@@ -1784,6 +1894,7 @@ func resourceCloudBuildTriggerUpdate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	log.Printf("[DEBUG] Updating Trigger %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	obj["id"] = d.Get("trigger_id")
 
 	// err == nil indicates that the billing_project value was found
@@ -1799,6 +1910,7 @@ func resourceCloudBuildTriggerUpdate(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -1831,13 +1943,15 @@ func resourceCloudBuildTriggerDelete(d *schema.ResourceData, meta interface{}) e
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Trigger %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Trigger %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -1846,6 +1960,7 @@ func resourceCloudBuildTriggerDelete(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Trigger")
@@ -1858,10 +1973,10 @@ func resourceCloudBuildTriggerDelete(d *schema.ResourceData, meta interface{}) e
 func resourceCloudBuildTriggerImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/triggers/(?P<trigger_id>[^/]+)",
-		"projects/(?P<project>[^/]+)/triggers/(?P<trigger_id>[^/]+)",
-		"(?P<project>[^/]+)/(?P<trigger_id>[^/]+)",
-		"(?P<trigger_id>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/triggers/(?P<trigger_id>[^/]+)$",
+		"^projects/(?P<project>[^/]+)/triggers/(?P<trigger_id>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<trigger_id>[^/]+)$",
+		"^(?P<trigger_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -1950,6 +2065,8 @@ func flattenCloudBuildTriggerGitFileSource(v interface{}, d *schema.ResourceData
 		flattenCloudBuildTriggerGitFileSourceRevision(original["revision"], d, config)
 	transformed["github_enterprise_config"] =
 		flattenCloudBuildTriggerGitFileSourceGithubEnterpriseConfig(original["githubEnterpriseConfig"], d, config)
+	transformed["bitbucket_server_config"] =
+		flattenCloudBuildTriggerGitFileSourceBitbucketServerConfig(original["bitbucketServerConfig"], d, config)
 	return []interface{}{transformed}
 }
 func flattenCloudBuildTriggerGitFileSourcePath(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1973,6 +2090,10 @@ func flattenCloudBuildTriggerGitFileSourceRevision(v interface{}, d *schema.Reso
 }
 
 func flattenCloudBuildTriggerGitFileSourceGithubEnterpriseConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudBuildTriggerGitFileSourceBitbucketServerConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -2074,6 +2195,8 @@ func flattenCloudBuildTriggerSourceToBuild(v interface{}, d *schema.ResourceData
 		flattenCloudBuildTriggerSourceToBuildRepoType(original["repoType"], d, config)
 	transformed["github_enterprise_config"] =
 		flattenCloudBuildTriggerSourceToBuildGithubEnterpriseConfig(original["githubEnterpriseConfig"], d, config)
+	transformed["bitbucket_server_config"] =
+		flattenCloudBuildTriggerSourceToBuildBitbucketServerConfig(original["bitbucketServerConfig"], d, config)
 	return []interface{}{transformed}
 }
 func flattenCloudBuildTriggerSourceToBuildUri(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -2093,6 +2216,10 @@ func flattenCloudBuildTriggerSourceToBuildRepoType(v interface{}, d *schema.Reso
 }
 
 func flattenCloudBuildTriggerSourceToBuildGithubEnterpriseConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudBuildTriggerSourceToBuildBitbucketServerConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -2762,6 +2889,12 @@ func flattenCloudBuildTriggerBuildArtifacts(v interface{}, d *schema.ResourceDat
 		flattenCloudBuildTriggerBuildArtifactsImages(original["images"], d, config)
 	transformed["objects"] =
 		flattenCloudBuildTriggerBuildArtifactsObjects(original["objects"], d, config)
+	transformed["maven_artifacts"] =
+		flattenCloudBuildTriggerBuildArtifactsMavenArtifacts(original["mavenArtifacts"], d, config)
+	transformed["python_packages"] =
+		flattenCloudBuildTriggerBuildArtifactsPythonPackages(original["pythonPackages"], d, config)
+	transformed["npm_packages"] =
+		flattenCloudBuildTriggerBuildArtifactsNpmPackages(original["npmPackages"], d, config)
 	return []interface{}{transformed}
 }
 func flattenCloudBuildTriggerBuildArtifactsImages(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -2813,6 +2946,102 @@ func flattenCloudBuildTriggerBuildArtifactsObjectsTimingStartTime(v interface{},
 }
 
 func flattenCloudBuildTriggerBuildArtifactsObjectsTimingEndTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudBuildTriggerBuildArtifactsMavenArtifacts(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"repository":  flattenCloudBuildTriggerBuildArtifactsMavenArtifactsRepository(original["repository"], d, config),
+			"path":        flattenCloudBuildTriggerBuildArtifactsMavenArtifactsPath(original["path"], d, config),
+			"artifact_id": flattenCloudBuildTriggerBuildArtifactsMavenArtifactsArtifactId(original["artifactId"], d, config),
+			"group_id":    flattenCloudBuildTriggerBuildArtifactsMavenArtifactsGroupId(original["groupId"], d, config),
+			"version":     flattenCloudBuildTriggerBuildArtifactsMavenArtifactsVersion(original["version"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenCloudBuildTriggerBuildArtifactsMavenArtifactsRepository(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudBuildTriggerBuildArtifactsMavenArtifactsPath(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudBuildTriggerBuildArtifactsMavenArtifactsArtifactId(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudBuildTriggerBuildArtifactsMavenArtifactsGroupId(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudBuildTriggerBuildArtifactsMavenArtifactsVersion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudBuildTriggerBuildArtifactsPythonPackages(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"repository": flattenCloudBuildTriggerBuildArtifactsPythonPackagesRepository(original["repository"], d, config),
+			"paths":      flattenCloudBuildTriggerBuildArtifactsPythonPackagesPaths(original["paths"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenCloudBuildTriggerBuildArtifactsPythonPackagesRepository(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudBuildTriggerBuildArtifactsPythonPackagesPaths(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudBuildTriggerBuildArtifactsNpmPackages(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"repository":   flattenCloudBuildTriggerBuildArtifactsNpmPackagesRepository(original["repository"], d, config),
+			"package_path": flattenCloudBuildTriggerBuildArtifactsNpmPackagesPackagePath(original["packagePath"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenCloudBuildTriggerBuildArtifactsNpmPackagesRepository(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudBuildTriggerBuildArtifactsNpmPackagesPackagePath(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -3029,6 +3258,13 @@ func expandCloudBuildTriggerGitFileSource(v interface{}, d tpgresource.Terraform
 		transformed["githubEnterpriseConfig"] = transformedGithubEnterpriseConfig
 	}
 
+	transformedBitbucketServerConfig, err := expandCloudBuildTriggerGitFileSourceBitbucketServerConfig(original["bitbucket_server_config"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedBitbucketServerConfig); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["bitbucketServerConfig"] = transformedBitbucketServerConfig
+	}
+
 	return transformed, nil
 }
 
@@ -3053,6 +3289,10 @@ func expandCloudBuildTriggerGitFileSourceRevision(v interface{}, d tpgresource.T
 }
 
 func expandCloudBuildTriggerGitFileSourceGithubEnterpriseConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudBuildTriggerGitFileSourceBitbucketServerConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -3227,6 +3467,13 @@ func expandCloudBuildTriggerSourceToBuild(v interface{}, d tpgresource.Terraform
 		transformed["githubEnterpriseConfig"] = transformedGithubEnterpriseConfig
 	}
 
+	transformedBitbucketServerConfig, err := expandCloudBuildTriggerSourceToBuildBitbucketServerConfig(original["bitbucket_server_config"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedBitbucketServerConfig); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["bitbucketServerConfig"] = transformedBitbucketServerConfig
+	}
+
 	return transformed, nil
 }
 
@@ -3247,6 +3494,10 @@ func expandCloudBuildTriggerSourceToBuildRepoType(v interface{}, d tpgresource.T
 }
 
 func expandCloudBuildTriggerSourceToBuildGithubEnterpriseConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudBuildTriggerSourceToBuildBitbucketServerConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -4388,6 +4639,27 @@ func expandCloudBuildTriggerBuildArtifacts(v interface{}, d tpgresource.Terrafor
 		transformed["objects"] = transformedObjects
 	}
 
+	transformedMavenArtifacts, err := expandCloudBuildTriggerBuildArtifactsMavenArtifacts(original["maven_artifacts"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMavenArtifacts); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["mavenArtifacts"] = transformedMavenArtifacts
+	}
+
+	transformedPythonPackages, err := expandCloudBuildTriggerBuildArtifactsPythonPackages(original["python_packages"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPythonPackages); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["pythonPackages"] = transformedPythonPackages
+	}
+
+	transformedNpmPackages, err := expandCloudBuildTriggerBuildArtifactsNpmPackages(original["npm_packages"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedNpmPackages); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["npmPackages"] = transformedNpmPackages
+	}
+
 	return transformed, nil
 }
 
@@ -4467,6 +4739,150 @@ func expandCloudBuildTriggerBuildArtifactsObjectsTimingStartTime(v interface{}, 
 }
 
 func expandCloudBuildTriggerBuildArtifactsObjectsTimingEndTime(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudBuildTriggerBuildArtifactsMavenArtifacts(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedRepository, err := expandCloudBuildTriggerBuildArtifactsMavenArtifactsRepository(original["repository"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedRepository); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["repository"] = transformedRepository
+		}
+
+		transformedPath, err := expandCloudBuildTriggerBuildArtifactsMavenArtifactsPath(original["path"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedPath); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["path"] = transformedPath
+		}
+
+		transformedArtifactId, err := expandCloudBuildTriggerBuildArtifactsMavenArtifactsArtifactId(original["artifact_id"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedArtifactId); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["artifactId"] = transformedArtifactId
+		}
+
+		transformedGroupId, err := expandCloudBuildTriggerBuildArtifactsMavenArtifactsGroupId(original["group_id"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedGroupId); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["groupId"] = transformedGroupId
+		}
+
+		transformedVersion, err := expandCloudBuildTriggerBuildArtifactsMavenArtifactsVersion(original["version"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedVersion); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["version"] = transformedVersion
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandCloudBuildTriggerBuildArtifactsMavenArtifactsRepository(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudBuildTriggerBuildArtifactsMavenArtifactsPath(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudBuildTriggerBuildArtifactsMavenArtifactsArtifactId(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudBuildTriggerBuildArtifactsMavenArtifactsGroupId(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudBuildTriggerBuildArtifactsMavenArtifactsVersion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudBuildTriggerBuildArtifactsPythonPackages(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedRepository, err := expandCloudBuildTriggerBuildArtifactsPythonPackagesRepository(original["repository"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedRepository); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["repository"] = transformedRepository
+		}
+
+		transformedPaths, err := expandCloudBuildTriggerBuildArtifactsPythonPackagesPaths(original["paths"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedPaths); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["paths"] = transformedPaths
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandCloudBuildTriggerBuildArtifactsPythonPackagesRepository(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudBuildTriggerBuildArtifactsPythonPackagesPaths(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudBuildTriggerBuildArtifactsNpmPackages(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedRepository, err := expandCloudBuildTriggerBuildArtifactsNpmPackagesRepository(original["repository"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedRepository); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["repository"] = transformedRepository
+		}
+
+		transformedPackagePath, err := expandCloudBuildTriggerBuildArtifactsNpmPackagesPackagePath(original["package_path"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedPackagePath); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["packagePath"] = transformedPackagePath
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandCloudBuildTriggerBuildArtifactsNpmPackagesRepository(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudBuildTriggerBuildArtifactsNpmPackagesPackagePath(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

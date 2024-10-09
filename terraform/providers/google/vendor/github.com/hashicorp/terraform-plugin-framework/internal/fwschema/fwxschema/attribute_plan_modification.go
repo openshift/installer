@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwxschema
 
 import (
@@ -84,4 +87,13 @@ type AttributeWithStringPlanModifiers interface {
 
 	// StringPlanModifiers should return a list of String plan modifiers.
 	StringPlanModifiers() []planmodifier.String
+}
+
+// AttributeWithDynamicPlanModifiers is an optional interface on Attribute which
+// enables Dynamic plan modifier support.
+type AttributeWithDynamicPlanModifiers interface {
+	fwschema.Attribute
+
+	// DynamicPlanModifiers should return a list of Dynamic plan modifiers.
+	DynamicPlanModifiers() []planmodifier.Dynamic
 }

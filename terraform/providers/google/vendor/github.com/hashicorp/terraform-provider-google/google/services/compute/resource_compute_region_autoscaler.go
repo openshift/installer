@@ -20,9 +20,11 @@ package compute
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -46,6 +48,11 @@ func ResourceComputeRegionAutoscaler() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+			tpgresource.DefaultProviderRegion,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"autoscaling_policy": {
@@ -162,6 +169,62 @@ The metric cannot have negative values.
 
 The metric must have a value type of INT64 or DOUBLE.`,
 									},
+									"filter": {
+										Type:     schema.TypeString,
+										Optional: true,
+										Description: `A filter string to be used as the filter string for
+a Stackdriver Monitoring TimeSeries.list API call.
+This filter is used to select a specific TimeSeries for
+the purpose of autoscaling and to determine whether the metric
+is exporting per-instance or per-group data.
+
+You can only use the AND operator for joining selectors.
+You can only use direct equality comparison operator (=) without
+any functions for each selector.
+You can specify the metric in both the filter string and in the
+metric field. However, if specified in both places, the metric must
+be identical.
+
+The monitored resource type determines what kind of values are
+expected for the metric. If it is a gce_instance, the autoscaler
+expects the metric to include a separate TimeSeries for each
+instance in a group. In such a case, you cannot filter on resource
+labels.
+
+If the resource type is any other value, the autoscaler expects
+this metric to contain values that apply to the entire autoscaled
+instance group and resource label filtering can be performed to
+point autoscaler at the correct TimeSeries to scale upon.
+This is called a per-group metric for the purpose of autoscaling.
+
+If not specified, the type defaults to gce_instance.
+
+You should provide a filter that is selective enough to pick just
+one TimeSeries for the autoscaled group or for each of the instances
+(if you are using gce_instance resource type). If multiple
+TimeSeries are returned upon the query execution, the autoscaler
+will sum their respective values to obtain its scaling value.`,
+									},
+									"single_instance_assignment": {
+										Type:     schema.TypeFloat,
+										Optional: true,
+										Description: `If scaling is based on a per-group metric value that represents the
+total amount of work to be done or resource usage, set this value to
+an amount assigned for a single instance of the scaled group.
+The autoscaler will keep the number of instances proportional to the
+value of this metric, the metric itself should not change value due
+to group resizing.
+
+For example, a good metric to use with the target is
+'pubsub.googleapis.com/subscription/num_undelivered_messages'
+or a custom metric exporting the total number of requests coming to
+your instances.
+
+A bad example would be a metric exporting an average or median
+latency, since this value can't include a chunk assignable to a
+single instance, it could be better used with utilization_target
+instead.`,
+									},
 									"target": {
 										Type:     schema.TypeFloat,
 										Optional: true,
@@ -186,11 +249,10 @@ Stackdriver Monitoring metric. Possible values: ["GAUGE", "DELTA_PER_SECOND", "D
 							},
 						},
 						"mode": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							ValidateFunc: verify.ValidateEnum([]string{"OFF", "ONLY_UP", "ON", ""}),
-							Description:  `Defines operating mode for this policy. Default value: "ON" Possible values: ["OFF", "ONLY_UP", "ON"]`,
-							Default:      "ON",
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: `Defines operating mode for this policy.`,
+							Default:     "ON",
 						},
 						"scale_in_control": {
 							Type:     schema.TypeList,
@@ -391,6 +453,7 @@ func resourceComputeRegionAutoscalerCreate(d *schema.ResourceData, meta interfac
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -399,6 +462,7 @@ func resourceComputeRegionAutoscalerCreate(d *schema.ResourceData, meta interfac
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating RegionAutoscaler: %s", err)
@@ -451,18 +515,28 @@ func resourceComputeRegionAutoscalerRead(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeRegionAutoscaler %q", d.Id()))
 	}
 
 	if err := d.Set("project", project); err != nil {
+		return fmt.Errorf("Error reading RegionAutoscaler: %s", err)
+	}
+
+	region, err := tpgresource.GetRegion(d, config)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("region", region); err != nil {
 		return fmt.Errorf("Error reading RegionAutoscaler: %s", err)
 	}
 
@@ -479,9 +553,6 @@ func resourceComputeRegionAutoscalerRead(d *schema.ResourceData, meta interface{
 		return fmt.Errorf("Error reading RegionAutoscaler: %s", err)
 	}
 	if err := d.Set("target", flattenComputeRegionAutoscalerTarget(res["target"], d, config)); err != nil {
-		return fmt.Errorf("Error reading RegionAutoscaler: %s", err)
-	}
-	if err := d.Set("region", flattenComputeRegionAutoscalerRegion(res["region"], d, config)); err != nil {
 		return fmt.Errorf("Error reading RegionAutoscaler: %s", err)
 	}
 	if err := d.Set("self_link", tpgresource.ConvertSelfLinkToV1(res["selfLink"].(string))); err != nil {
@@ -544,6 +615,7 @@ func resourceComputeRegionAutoscalerUpdate(d *schema.ResourceData, meta interfac
 	}
 
 	log.Printf("[DEBUG] Updating RegionAutoscaler %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -558,6 +630,7 @@ func resourceComputeRegionAutoscalerUpdate(d *schema.ResourceData, meta interfac
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -598,13 +671,15 @@ func resourceComputeRegionAutoscalerDelete(d *schema.ResourceData, meta interfac
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting RegionAutoscaler %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting RegionAutoscaler %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -613,6 +688,7 @@ func resourceComputeRegionAutoscalerDelete(d *schema.ResourceData, meta interfac
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "RegionAutoscaler")
@@ -633,10 +709,10 @@ func resourceComputeRegionAutoscalerDelete(d *schema.ResourceData, meta interfac
 func resourceComputeRegionAutoscalerImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/autoscalers/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/autoscalers/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -868,9 +944,11 @@ func flattenComputeRegionAutoscalerAutoscalingPolicyMetric(v interface{}, d *sch
 			continue
 		}
 		transformed = append(transformed, map[string]interface{}{
-			"name":   flattenComputeRegionAutoscalerAutoscalingPolicyMetricName(original["metric"], d, config),
-			"target": flattenComputeRegionAutoscalerAutoscalingPolicyMetricTarget(original["utilizationTarget"], d, config),
-			"type":   flattenComputeRegionAutoscalerAutoscalingPolicyMetricType(original["utilizationTargetType"], d, config),
+			"name":                       flattenComputeRegionAutoscalerAutoscalingPolicyMetricName(original["metric"], d, config),
+			"single_instance_assignment": flattenComputeRegionAutoscalerAutoscalingPolicyMetricSingleInstanceAssignment(original["singleInstanceAssignment"], d, config),
+			"target":                     flattenComputeRegionAutoscalerAutoscalingPolicyMetricTarget(original["utilizationTarget"], d, config),
+			"type":                       flattenComputeRegionAutoscalerAutoscalingPolicyMetricType(original["utilizationTargetType"], d, config),
+			"filter":                     flattenComputeRegionAutoscalerAutoscalingPolicyMetricFilter(original["filter"], d, config),
 		})
 	}
 	return transformed
@@ -879,11 +957,19 @@ func flattenComputeRegionAutoscalerAutoscalingPolicyMetricName(v interface{}, d 
 	return v
 }
 
+func flattenComputeRegionAutoscalerAutoscalingPolicyMetricSingleInstanceAssignment(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenComputeRegionAutoscalerAutoscalingPolicyMetricTarget(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
 func flattenComputeRegionAutoscalerAutoscalingPolicyMetricType(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenComputeRegionAutoscalerAutoscalingPolicyMetricFilter(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -978,13 +1064,6 @@ func flattenComputeRegionAutoscalerTarget(v interface{}, d *schema.ResourceData,
 	return v
 }
 
-func flattenComputeRegionAutoscalerRegion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return v
-	}
-	return tpgresource.ConvertSelfLinkToV1(v.(string))
-}
-
 func expandComputeRegionAutoscalerName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
@@ -1012,7 +1091,7 @@ func expandComputeRegionAutoscalerAutoscalingPolicy(v interface{}, d tpgresource
 	transformedMaxReplicas, err := expandComputeRegionAutoscalerAutoscalingPolicyMaxReplicas(original["max_replicas"], d, config)
 	if err != nil {
 		return nil, err
-	} else if val := reflect.ValueOf(transformedMaxReplicas); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+	} else {
 		transformed["maxNumReplicas"] = transformedMaxReplicas
 	}
 
@@ -1199,6 +1278,13 @@ func expandComputeRegionAutoscalerAutoscalingPolicyMetric(v interface{}, d tpgre
 			transformed["metric"] = transformedName
 		}
 
+		transformedSingleInstanceAssignment, err := expandComputeRegionAutoscalerAutoscalingPolicyMetricSingleInstanceAssignment(original["single_instance_assignment"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedSingleInstanceAssignment); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["singleInstanceAssignment"] = transformedSingleInstanceAssignment
+		}
+
 		transformedTarget, err := expandComputeRegionAutoscalerAutoscalingPolicyMetricTarget(original["target"], d, config)
 		if err != nil {
 			return nil, err
@@ -1213,6 +1299,13 @@ func expandComputeRegionAutoscalerAutoscalingPolicyMetric(v interface{}, d tpgre
 			transformed["utilizationTargetType"] = transformedType
 		}
 
+		transformedFilter, err := expandComputeRegionAutoscalerAutoscalingPolicyMetricFilter(original["filter"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedFilter); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["filter"] = transformedFilter
+		}
+
 		req = append(req, transformed)
 	}
 	return req, nil
@@ -1222,11 +1315,19 @@ func expandComputeRegionAutoscalerAutoscalingPolicyMetricName(v interface{}, d t
 	return v, nil
 }
 
+func expandComputeRegionAutoscalerAutoscalingPolicyMetricSingleInstanceAssignment(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandComputeRegionAutoscalerAutoscalingPolicyMetricTarget(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
 func expandComputeRegionAutoscalerAutoscalingPolicyMetricType(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeRegionAutoscalerAutoscalingPolicyMetricFilter(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package reflect
 
 // Options provides configuration settings for how the reflection behavior
@@ -12,9 +15,4 @@ type Options struct {
 	// translated into empty values without provider interaction, or if
 	// they must be explicitly handled.
 	UnhandledUnknownAsEmpty bool
-
-	// AllowRoundingNumbers silently rounds numbers that don't fit
-	// perfectly in the types they're being stored in, rather than
-	// returning errors. Numbers will always be rounded towards 0.
-	AllowRoundingNumbers bool
 }

@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -778,6 +778,7 @@ components:
             this field as part of the HTTP request URL. It is not settable as a field
             in the request body.
           x-kubernetes-immutable: true
+          x-dcl-parameter: true
         logConfig:
           type: object
           x-dcl-go-name: LogConfig
@@ -1007,6 +1008,7 @@ components:
           - resource: Cloudresourcemanager/Project
             field: name
             parent: true
+          x-dcl-parameter: true
         protocol:
           type: string
           x-dcl-go-name: Protocol

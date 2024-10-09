@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -106,6 +106,7 @@ components:
           x-dcl-go-name: DataplexZone
           description: The zone for the resource
           x-kubernetes-immutable: true
+          x-dcl-parameter: true
         description:
           type: string
           x-dcl-go-name: Description
@@ -288,15 +289,18 @@ components:
           x-dcl-go-name: Lake
           description: The lake for the resource
           x-kubernetes-immutable: true
+          x-dcl-parameter: true
         location:
           type: string
           x-dcl-go-name: Location
           description: The location for the resource
           x-kubernetes-immutable: true
+          x-dcl-parameter: true
         name:
           type: string
           x-dcl-go-name: Name
           description: The name of the asset.
+          x-dcl-has-long-form: true
         project:
           type: string
           x-dcl-go-name: Project
@@ -306,13 +310,13 @@ components:
           - resource: Cloudresourcemanager/Project
             field: name
             parent: true
+          x-dcl-parameter: true
         resourceSpec:
           type: object
           x-dcl-go-name: ResourceSpec
           x-dcl-go-type: AssetResourceSpec
           description: Required. Immutable. Specification of the resource that is
             referenced by this asset.
-          x-kubernetes-immutable: true
           required:
           - type
           properties:
@@ -323,6 +327,17 @@ components:
                 the data that is being managed within a lake. For example: `projects/{project_number}/buckets/{bucket_id}`
                 `projects/{project_number}/datasets/{dataset_id}`'
               x-kubernetes-immutable: true
+            readAccessMode:
+              type: string
+              x-dcl-go-name: ReadAccessMode
+              x-dcl-go-type: AssetResourceSpecReadAccessModeEnum
+              description: 'Optional. Determines how read permissions are handled
+                for each asset and their associated tables. Only available to storage
+                buckets assets. Possible values: DIRECT, MANAGED'
+              x-dcl-server-default: true
+              enum:
+              - DIRECT
+              - MANAGED
             type:
               type: string
               x-dcl-go-name: Type

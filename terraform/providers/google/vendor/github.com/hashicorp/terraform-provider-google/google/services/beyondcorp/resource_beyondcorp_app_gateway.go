@@ -18,11 +18,14 @@
 package beyondcorp
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -34,6 +37,7 @@ func ResourceBeyondcorpAppGateway() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceBeyondcorpAppGatewayCreate,
 		Read:   resourceBeyondcorpAppGatewayRead,
+		Update: resourceBeyondcorpAppGatewayUpdate,
 		Delete: resourceBeyondcorpAppGatewayDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -42,8 +46,23 @@ func ResourceBeyondcorpAppGateway() *schema.Resource {
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		SchemaVersion: 1,
+
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceBeyondcorpAppGatewayResourceV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: ResourceBeyondcorpAppGatewayUpgradeV0,
+				Version: 0,
+			},
+		},
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -67,11 +86,14 @@ func ResourceBeyondcorpAppGateway() *schema.Resource {
 				Default:      "HOST_TYPE_UNSPECIFIED",
 			},
 			"labels": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				ForceNew:    true,
-				Description: `Resource labels to represent user provided metadata.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `Resource labels to represent user provided metadata.
+
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"region": {
 				Type:        schema.TypeString,
@@ -106,10 +128,24 @@ func ResourceBeyondcorpAppGateway() *schema.Resource {
 					},
 				},
 			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				ForceNew:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"state": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `Represents the different states of a AppGateway.`,
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"uri": {
 				Type:        schema.TypeString,
@@ -153,10 +189,10 @@ func resourceBeyondcorpAppGatewayCreate(d *schema.ResourceData, meta interface{}
 	} else if v, ok := d.GetOkExists("display_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(displayNameProp)) && (ok || !reflect.DeepEqual(v, displayNameProp)) {
 		obj["displayName"] = displayNameProp
 	}
-	labelsProp, err := expandBeyondcorpAppGatewayLabels(d.Get("labels"), d, config)
+	labelsProp, err := expandBeyondcorpAppGatewayEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
 		obj["labels"] = labelsProp
 	}
 
@@ -179,6 +215,7 @@ func resourceBeyondcorpAppGatewayCreate(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -187,6 +224,7 @@ func resourceBeyondcorpAppGatewayCreate(d *schema.ResourceData, meta interface{}
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating AppGateway: %s", err)
@@ -249,12 +287,14 @@ func resourceBeyondcorpAppGatewayRead(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("BeyondcorpAppGateway %q", d.Id()))
@@ -285,8 +325,19 @@ func resourceBeyondcorpAppGatewayRead(d *schema.ResourceData, meta interface{}) 
 	if err := d.Set("allocated_connections", flattenBeyondcorpAppGatewayAllocatedConnections(res["allocatedConnections"], d, config)); err != nil {
 		return fmt.Errorf("Error reading AppGateway: %s", err)
 	}
+	if err := d.Set("terraform_labels", flattenBeyondcorpAppGatewayTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading AppGateway: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenBeyondcorpAppGatewayEffectiveLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading AppGateway: %s", err)
+	}
 
 	return nil
+}
+
+func resourceBeyondcorpAppGatewayUpdate(d *schema.ResourceData, meta interface{}) error {
+	// Only the root field "labels" and "terraform_labels" are mutable
+	return resourceBeyondcorpAppGatewayRead(d, meta)
 }
 
 func resourceBeyondcorpAppGatewayDelete(d *schema.ResourceData, meta interface{}) error {
@@ -310,13 +361,15 @@ func resourceBeyondcorpAppGatewayDelete(d *schema.ResourceData, meta interface{}
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting AppGateway %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting AppGateway %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -325,6 +378,7 @@ func resourceBeyondcorpAppGatewayDelete(d *schema.ResourceData, meta interface{}
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "AppGateway")
@@ -345,10 +399,10 @@ func resourceBeyondcorpAppGatewayDelete(d *schema.ResourceData, meta interface{}
 func resourceBeyondcorpAppGatewayImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<region>[^/]+)/appGateways/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<region>[^/]+)/appGateways/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -376,7 +430,18 @@ func flattenBeyondcorpAppGatewayDisplayName(v interface{}, d *schema.ResourceDat
 }
 
 func flattenBeyondcorpAppGatewayLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenBeyondcorpAppGatewayState(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -423,6 +488,25 @@ func flattenBeyondcorpAppGatewayAllocatedConnectionsIngressPort(v interface{}, d
 	return v // let terraform core handle it otherwise
 }
 
+func flattenBeyondcorpAppGatewayTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenBeyondcorpAppGatewayEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func expandBeyondcorpAppGatewayType(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
@@ -435,7 +519,7 @@ func expandBeyondcorpAppGatewayDisplayName(v interface{}, d tpgresource.Terrafor
 	return v, nil
 }
 
-func expandBeyondcorpAppGatewayLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+func expandBeyondcorpAppGatewayEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
 	if v == nil {
 		return map[string]string{}, nil
 	}
@@ -444,4 +528,111 @@ func expandBeyondcorpAppGatewayLabels(v interface{}, d tpgresource.TerraformReso
 		m[k] = val.(string)
 	}
 	return m, nil
+}
+
+func resourceBeyondcorpAppGatewayResourceV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"name": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: `ID of the AppGateway.`,
+			},
+			"display_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `An arbitrary user-provided name for the AppGateway.`,
+			},
+			"host_type": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: verify.ValidateEnum([]string{"HOST_TYPE_UNSPECIFIED", "GCP_REGIONAL_MIG", ""}),
+				Description:  `The type of hosting used by the AppGateway. Default value: "HOST_TYPE_UNSPECIFIED" Possible values: ["HOST_TYPE_UNSPECIFIED", "GCP_REGIONAL_MIG"]`,
+				Default:      "HOST_TYPE_UNSPECIFIED",
+			},
+			"labels": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				ForceNew: true,
+				Description: `Resource labels to represent user provided metadata.
+
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
+			"region": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `The region of the AppGateway.`,
+			},
+			"type": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: verify.ValidateEnum([]string{"TYPE_UNSPECIFIED", "TCP_PROXY", ""}),
+				Description:  `The type of network connectivity used by the AppGateway. Default value: "TYPE_UNSPECIFIED" Possible values: ["TYPE_UNSPECIFIED", "TCP_PROXY"]`,
+				Default:      "TYPE_UNSPECIFIED",
+			},
+			"allocated_connections": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: `A list of connections allocated for the Gateway.`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"ingress_port": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: `The ingress port of an allocated connection.`,
+						},
+						"psc_uri": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: `The PSC uri of an allocated connection.`,
+						},
+					},
+				},
+			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				ForceNew:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"state": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `Represents the different states of a AppGateway.`,
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				ForceNew: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
+			"uri": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `Server-defined URI for this resource.`,
+			},
+			"project": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+			},
+		},
+		UseJSONNumber: true,
+	}
+}
+
+func ResourceBeyondcorpAppGatewayUpgradeV0(_ context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+	return tpgresource.TerraformLabelsStateUpgrade(rawState)
 }

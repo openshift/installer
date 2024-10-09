@@ -21,7 +21,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -30,6 +32,33 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 )
+
+func ResourceMonitoringMonitoredProjectNameDiffSuppressFunc(k, old, new string, d tpgresource.TerraformResourceDataChange) bool {
+	// Don't suppress if values are empty strings
+	if old == "" || new == "" {
+		return false
+	}
+
+	oldShort := tpgresource.GetResourceNameFromSelfLink(old)
+	newShort := tpgresource.GetResourceNameFromSelfLink(new)
+
+	// Suppress if short names are equal
+	if oldShort == newShort {
+		return true
+	}
+
+	_, isOldNumErr := tpgresource.StringToFixed64(oldShort)
+	isOldNumber := isOldNumErr == nil
+	_, isNewNumErr := tpgresource.StringToFixed64(newShort)
+	isNewNumber := isNewNumErr == nil
+
+	// Suppress if comparing a project number to project id
+	return isOldNumber != isNewNumber
+}
+
+func resourceMonitoringMonitoredProjectNameDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
+	return ResourceMonitoringMonitoredProjectNameDiffSuppressFunc(k, old, new, d)
+}
 
 func ResourceMonitoringMonitoredProject() *schema.Resource {
 	return &schema.Resource{
@@ -68,7 +97,7 @@ func ResourceMonitoringMonitoredProject() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ForceNew:         true,
-				DiffSuppressFunc: tpgresource.CompareResourceNames,
+				DiffSuppressFunc: resourceMonitoringMonitoredProjectNameDiffSuppress,
 				Description:      `Immutable. The resource name of the 'MonitoredProject'. On input, the resource name includes the scoping project ID and monitored project ID. On output, it contains the equivalent project numbers. Example: 'locations/global/metricsScopes/{SCOPING_PROJECT_ID_OR_NUMBER}/projects/{MONITORED_PROJECT_ID_OR_NUMBER}'`,
 			},
 			"create_time": {
@@ -89,7 +118,7 @@ func resourceMonitoringMonitoredProjectCreate(d *schema.ResourceData, meta inter
 	}
 
 	obj := make(map[string]interface{})
-	nameProp, err := expandNestedMonitoringMonitoredProjectName(d.Get("name"), d, config)
+	nameProp, err := expandMonitoringMonitoredProjectName(d.Get("name"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("name"); !tpgresource.IsEmptyValue(reflect.ValueOf(nameProp)) && (ok || !reflect.DeepEqual(v, nameProp)) {
@@ -114,6 +143,7 @@ func resourceMonitoringMonitoredProjectCreate(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "POST",
@@ -122,6 +152,7 @@ func resourceMonitoringMonitoredProjectCreate(d *schema.ResourceData, meta inter
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutCreate),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringPermissionError},
 	})
 	if err != nil {
@@ -159,6 +190,7 @@ func resourceMonitoringMonitoredProjectRead(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	name := d.Get("name").(string)
 	name = tpgresource.GetResourceNameFromSelfLink(name)
 	d.Set("name", name)
@@ -175,22 +207,11 @@ func resourceMonitoringMonitoredProjectRead(d *schema.ResourceData, meta interfa
 		Project:              billingProject,
 		RawURL:               url,
 		UserAgent:            userAgent,
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringPermissionError},
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("MonitoringMonitoredProject %q", d.Id()))
-	}
-
-	res, err = flattenNestedMonitoringMonitoredProject(d, meta, res)
-	if err != nil {
-		return err
-	}
-
-	if res == nil {
-		// Object isn't there any more - remove it from the state.
-		log.Printf("[DEBUG] Removing MonitoringMonitoredProject because it couldn't be matched.")
-		d.SetId("")
-		return nil
 	}
 
 	res, err = resourceMonitoringMonitoredProjectDecoder(d, meta, res)
@@ -205,10 +226,10 @@ func resourceMonitoringMonitoredProjectRead(d *schema.ResourceData, meta interfa
 		return nil
 	}
 
-	if err := d.Set("name", flattenNestedMonitoringMonitoredProjectName(res["name"], d, config)); err != nil {
+	if err := d.Set("name", flattenMonitoringMonitoredProjectName(res["name"], d, config)); err != nil {
 		return fmt.Errorf("Error reading MonitoredProject: %s", err)
 	}
-	if err := d.Set("create_time", flattenNestedMonitoringMonitoredProjectCreateTime(res["createTime"], d, config)); err != nil {
+	if err := d.Set("create_time", flattenMonitoringMonitoredProjectCreateTime(res["createTime"], d, config)); err != nil {
 		return fmt.Errorf("Error reading MonitoredProject: %s", err)
 	}
 
@@ -224,19 +245,21 @@ func resourceMonitoringMonitoredProjectDelete(d *schema.ResourceData, meta inter
 
 	billingProject := ""
 
-	url, err := tpgresource.ReplaceVars(d, config, "{{MonitoringBasePath}}v1/locations/global/metricsScopes/{{metrics_scope}}/projects/{{name}}")
+	url, err := tpgresource.ReplaceVars(d, config, "{{MonitoringBasePath}}v1/{{name}}")
 	if err != nil {
 		return err
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting MonitoredProject %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting MonitoredProject %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "DELETE",
@@ -245,6 +268,7 @@ func resourceMonitoringMonitoredProjectDelete(d *schema.ResourceData, meta inter
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutDelete),
+		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringPermissionError},
 	})
 	if err != nil {
@@ -281,98 +305,70 @@ func resourceMonitoringMonitoredProjectImport(d *schema.ResourceData, meta inter
 	return []*schema.ResourceData{d}, nil
 }
 
-func flattenNestedMonitoringMonitoredProjectName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+func flattenMonitoringMonitoredProjectName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
-func flattenNestedMonitoringMonitoredProjectCreateTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+func flattenMonitoringMonitoredProjectCreateTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
-func expandNestedMonitoringMonitoredProjectName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+func expandMonitoringMonitoredProjectName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
 func resourceMonitoringMonitoredProjectEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
 	name := d.Get("name").(string)
+	log.Printf("[DEBUG] Encoded monitored project name: %s", name)
 	name = tpgresource.GetResourceNameFromSelfLink(name)
+	log.Printf("[DEBUG] Encoded monitored project resource name: %s", name)
 	d.Set("name", name)
 	metricsScope := d.Get("metrics_scope").(string)
+	log.Printf("[DEBUG] Encoded monitored project metricsScope: %s", metricsScope)
 	metricsScope = tpgresource.GetResourceNameFromSelfLink(metricsScope)
+	log.Printf("[DEBUG] Encoded monitored project metricsScope resource name: %s", metricsScope)
 	d.Set("metrics_scope", metricsScope)
 	obj["name"] = fmt.Sprintf("locations/global/metricsScopes/%s/projects/%s", metricsScope, name)
 	return obj, nil
 }
 
-func flattenNestedMonitoringMonitoredProject(d *schema.ResourceData, meta interface{}, res map[string]interface{}) (map[string]interface{}, error) {
-	var v interface{}
-	var ok bool
-
-	v, ok = res["monitoredProjects"]
-	if !ok || v == nil {
-		return nil, nil
-	}
-
-	switch v.(type) {
-	case []interface{}:
-		break
-	case map[string]interface{}:
-		// Construct list out of single nested resource
-		v = []interface{}{v}
-	default:
-		return nil, fmt.Errorf("expected list or map for value monitoredProjects. Actual value: %v", v)
-	}
-
-	_, item, err := resourceMonitoringMonitoredProjectFindNestedObjectInList(d, meta, v.([]interface{}))
-	if err != nil {
-		return nil, err
-	}
-	return item, nil
-}
-
-func resourceMonitoringMonitoredProjectFindNestedObjectInList(d *schema.ResourceData, meta interface{}, items []interface{}) (index int, item map[string]interface{}, err error) {
-	expectedName, err := expandNestedMonitoringMonitoredProjectName(d.Get("name"), d, meta.(*transport_tpg.Config))
-	if err != nil {
-		return -1, nil, err
-	}
-	expectedFlattenedName := flattenNestedMonitoringMonitoredProjectName(expectedName, d, meta.(*transport_tpg.Config))
-
-	// Search list for this resource.
-	for idx, itemRaw := range items {
-		if itemRaw == nil {
-			continue
-		}
-		item := itemRaw.(map[string]interface{})
-
-		// Decode list item before comparing.
-		item, err := resourceMonitoringMonitoredProjectDecoder(d, meta, item)
-		if err != nil {
-			return -1, nil, err
-		}
-
-		itemName := flattenNestedMonitoringMonitoredProjectName(item["name"], d, meta.(*transport_tpg.Config))
-		// IsEmptyValue check so that if one is nil and the other is "", that's considered a match
-		if !(tpgresource.IsEmptyValue(reflect.ValueOf(itemName)) && tpgresource.IsEmptyValue(reflect.ValueOf(expectedFlattenedName))) && !reflect.DeepEqual(itemName, expectedFlattenedName) {
-			log.Printf("[DEBUG] Skipping item with name= %#v, looking for %#v)", itemName, expectedFlattenedName)
-			continue
-		}
-		log.Printf("[DEBUG] Found item for resource %q: %#v)", d.Id(), item)
-		return idx, item, nil
-	}
-	return -1, nil, nil
-}
 func resourceMonitoringMonitoredProjectDecoder(d *schema.ResourceData, meta interface{}, res map[string]interface{}) (map[string]interface{}, error) {
+	// terraform resource config
 	config := meta.(*transport_tpg.Config)
-	name := res["name"].(string)
-	name = tpgresource.GetResourceNameFromSelfLink(name)
-	if name != "" {
-		project, err := config.NewResourceManagerClient(config.UserAgent).Projects.Get(name).Do()
-		if err != nil {
-			return nil, err
-		}
-		res["name"] = project.ProjectId
+
+	// The API returns all monitored projects
+	monitoredProjects, _ := res["monitoredProjects"].([]interface{})
+
+	// Convert configured terraform monitored_project resource name to a ProjectNumber
+	expectedProject, configProjectErr := config.NewResourceManagerClient(config.UserAgent).Projects.Get(d.Get("name").(string)).Do()
+	if configProjectErr != nil {
+		return nil, configProjectErr
 	}
-	return res, nil
+	expectedProjectNumber := strconv.FormatInt(expectedProject.ProjectNumber, 10)
+
+	log.Printf("[DEBUG] Scanning for ProjectNumber: %s.", expectedProjectNumber)
+
+	// Iterate through the list of monitoredProjects to make sure one matches the configured monitored_project
+	for _, monitoredProjectRaw := range monitoredProjects {
+		if monitoredProjectRaw == nil {
+			continue
+		}
+		monitoredProject := monitoredProjectRaw.(map[string]interface{})
+
+		// MonitoredProject names have the format locations/global/metricsScopes/[metricScopeProjectNumber]/projects/[projectNumber]
+		monitoredProjectName := monitoredProject["name"]
+
+		// `res` contains the MonitoredProjects of the relevant metrics scope
+		log.Printf("[DEBUG] Matching ProjectNumbers: %s to %s.", expectedProjectNumber, monitoredProjectName)
+		if strings.HasSuffix(monitoredProjectName.(string), fmt.Sprintf("/%s", expectedProjectNumber)) {
+			// Match found - set response object name to match
+			res["name"] = monitoredProjectName
+			log.Printf("[DEBUG] Matched ProjectNumbers: %s and %s.", expectedProjectNumber, monitoredProjectName)
+			return res, nil
+		}
+	}
+	log.Printf("[DEBUG] MonitoringMonitoredProject couldn't be matched.")
+	return nil, nil
 }
 
 func resourceMonitoringMonitoredProjectResourceV0() *schema.Resource {

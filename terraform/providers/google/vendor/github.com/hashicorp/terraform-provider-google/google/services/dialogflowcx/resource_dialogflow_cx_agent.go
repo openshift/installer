@@ -18,13 +18,17 @@
 package dialogflowcx
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/structure"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -47,6 +51,10 @@ func ResourceDialogflowCXAgent() *schema.Resource {
 			Update: schema.DefaultTimeout(40 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"default_language_code": {
@@ -77,6 +85,65 @@ for a list of the currently supported language codes. This field cannot be updat
 				Description: `The time zone of this agent from the [time zone database](https://www.iana.org/time-zones), e.g., America/New_York,
 Europe/Paris.`,
 			},
+			"advanced_settings": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Optional: true,
+				Description: `Hierarchical advanced settings for this agent. The settings exposed at the lower level overrides the settings exposed at the higher level.
+Hierarchy: Agent->Flow->Page->Fulfillment/Parameter.`,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"audio_export_gcs_destination": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Description: `If present, incoming audio is exported by Dialogflow to the configured Google Cloud Storage destination. Exposed at the following levels:
+* Agent level
+* Flow level`,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"uri": {
+										Type:     schema.TypeString,
+										Optional: true,
+										Description: `The Google Cloud Storage URI for the exported objects. Whether a full object name, or just a prefix, its usage depends on the Dialogflow operation.
+Format: gs://bucket/object-name-or-prefix`,
+									},
+								},
+							},
+						},
+						"dtmf_settings": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Description: `Define behaviors for DTMF (dual tone multi frequency). DTMF settings does not override each other. DTMF settings set at different levels define DTMF detections running in parallel. Exposed at the following levels:
+* Agent level
+* Flow level
+* Page level
+* Parameter level`,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"enabled": {
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: `If true, incoming audio is processed for DTMF (dual tone multi frequency) events. For example, if the caller presses a button on their telephone keypad and DTMF processing is enabled, Dialogflow will detect the event (e.g. a "3" was pressed) in the incoming audio and pass the event to the bot to drive business logic (e.g. when 3 is pressed, return the account balance).`,
+									},
+									"finish_digit": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `The digit that terminates a DTMF digit sequence.`,
+									},
+									"max_digits": {
+										Type:        schema.TypeInt,
+										Optional:    true,
+										Description: `Max length of DTMF digits.`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			"avatar_uri": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -97,6 +164,55 @@ Europe/Paris.`,
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: `Determines whether this agent should log conversation queries.`,
+			},
+			"git_integration_settings": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Git integration settings for this agent.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"github_settings": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Settings of integration with GitHub.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"access_token": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `The access token used to authenticate the access to the GitHub repository.`,
+										Sensitive:   true,
+									},
+									"branches": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: `A list of branches configured to be used from Dialogflow.`,
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+									},
+									"display_name": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `The unique repository display name for the GitHub repository.`,
+									},
+									"repository_uri": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `The GitHub repository URI related to the agent.`,
+									},
+									"tracking_branch": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `The branch of the GitHub repository tracked for this agent.`,
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 			"security_settings": {
 				Type:        schema.TypeString,
@@ -124,6 +240,26 @@ Europe/Paris.`,
 				Description: `The list of all languages supported by this agent (except for the default_language_code).`,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
+				},
+			},
+			"text_to_speech_settings": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Settings related to speech synthesizing.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"synthesize_speech_configs": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.StringIsJSON,
+							StateFunc:    func(v interface{}) string { s, _ := structure.NormalizeJsonString(v); return s },
+							Description: `Configuration of how speech should be synthesized, mapping from [language](https://cloud.google.com/dialogflow/cx/docs/reference/language) to [SynthesizeSpeechConfig](https://cloud.google.com/dialogflow/cx/docs/reference/rest/v3/projects.locations.agents#synthesizespeechconfig).
+These settings affect:
+* The phone gateway synthesize configuration set via Agent.text_to_speech_settings.
+* How speech is synthesized when invoking session APIs. 'Agent.text_to_speech_settings' only applies if 'OutputAudioConfig.synthesize_speech_config' is not specified.`,
+						},
+					},
 				},
 			},
 			"name": {
@@ -215,6 +351,24 @@ func resourceDialogflowCXAgentCreate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("enable_spell_correction"); !tpgresource.IsEmptyValue(reflect.ValueOf(enableSpellCorrectionProp)) && (ok || !reflect.DeepEqual(v, enableSpellCorrectionProp)) {
 		obj["enableSpellCorrection"] = enableSpellCorrectionProp
 	}
+	advancedSettingsProp, err := expandDialogflowCXAgentAdvancedSettings(d.Get("advanced_settings"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("advanced_settings"); !tpgresource.IsEmptyValue(reflect.ValueOf(advancedSettingsProp)) && (ok || !reflect.DeepEqual(v, advancedSettingsProp)) {
+		obj["advancedSettings"] = advancedSettingsProp
+	}
+	gitIntegrationSettingsProp, err := expandDialogflowCXAgentGitIntegrationSettings(d.Get("git_integration_settings"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("git_integration_settings"); !tpgresource.IsEmptyValue(reflect.ValueOf(gitIntegrationSettingsProp)) && (ok || !reflect.DeepEqual(v, gitIntegrationSettingsProp)) {
+		obj["gitIntegrationSettings"] = gitIntegrationSettingsProp
+	}
+	textToSpeechSettingsProp, err := expandDialogflowCXAgentTextToSpeechSettings(d.Get("text_to_speech_settings"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("text_to_speech_settings"); !tpgresource.IsEmptyValue(reflect.ValueOf(textToSpeechSettingsProp)) && (ok || !reflect.DeepEqual(v, textToSpeechSettingsProp)) {
+		obj["textToSpeechSettings"] = textToSpeechSettingsProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{DialogflowCXBasePath}}projects/{{project}}/locations/{{location}}/agents")
 	if err != nil {
@@ -235,6 +389,7 @@ func resourceDialogflowCXAgentCreate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -243,6 +398,7 @@ func resourceDialogflowCXAgentCreate(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Agent: %s", err)
@@ -288,12 +444,14 @@ func resourceDialogflowCXAgentRead(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DialogflowCXAgent %q", d.Id()))
@@ -337,6 +495,15 @@ func resourceDialogflowCXAgentRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("Error reading Agent: %s", err)
 	}
 	if err := d.Set("enable_spell_correction", flattenDialogflowCXAgentEnableSpellCorrection(res["enableSpellCorrection"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Agent: %s", err)
+	}
+	if err := d.Set("advanced_settings", flattenDialogflowCXAgentAdvancedSettings(res["advancedSettings"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Agent: %s", err)
+	}
+	if err := d.Set("git_integration_settings", flattenDialogflowCXAgentGitIntegrationSettings(res["gitIntegrationSettings"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Agent: %s", err)
+	}
+	if err := d.Set("text_to_speech_settings", flattenDialogflowCXAgentTextToSpeechSettings(res["textToSpeechSettings"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Agent: %s", err)
 	}
 
@@ -413,6 +580,24 @@ func resourceDialogflowCXAgentUpdate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("enable_spell_correction"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, enableSpellCorrectionProp)) {
 		obj["enableSpellCorrection"] = enableSpellCorrectionProp
 	}
+	advancedSettingsProp, err := expandDialogflowCXAgentAdvancedSettings(d.Get("advanced_settings"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("advanced_settings"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, advancedSettingsProp)) {
+		obj["advancedSettings"] = advancedSettingsProp
+	}
+	gitIntegrationSettingsProp, err := expandDialogflowCXAgentGitIntegrationSettings(d.Get("git_integration_settings"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("git_integration_settings"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, gitIntegrationSettingsProp)) {
+		obj["gitIntegrationSettings"] = gitIntegrationSettingsProp
+	}
+	textToSpeechSettingsProp, err := expandDialogflowCXAgentTextToSpeechSettings(d.Get("text_to_speech_settings"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("text_to_speech_settings"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, textToSpeechSettingsProp)) {
+		obj["textToSpeechSettings"] = textToSpeechSettingsProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{DialogflowCXBasePath}}projects/{{project}}/locations/{{location}}/agents/{{name}}")
 	if err != nil {
@@ -420,6 +605,7 @@ func resourceDialogflowCXAgentUpdate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	log.Printf("[DEBUG] Updating Agent %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -457,6 +643,18 @@ func resourceDialogflowCXAgentUpdate(d *schema.ResourceData, meta interface{}) e
 	if d.HasChange("enable_spell_correction") {
 		updateMask = append(updateMask, "enableSpellCorrection")
 	}
+
+	if d.HasChange("advanced_settings") {
+		updateMask = append(updateMask, "advancedSettings")
+	}
+
+	if d.HasChange("git_integration_settings") {
+		updateMask = append(updateMask, "gitIntegrationSettings")
+	}
+
+	if d.HasChange("text_to_speech_settings") {
+		updateMask = append(updateMask, "textToSpeechSettings")
+	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
 	url, err = transport_tpg.AddQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
@@ -469,20 +667,25 @@ func resourceDialogflowCXAgentUpdate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Agent %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Agent %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating Agent %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Agent %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceDialogflowCXAgentRead(d, meta)
@@ -509,13 +712,15 @@ func resourceDialogflowCXAgentDelete(d *schema.ResourceData, meta interface{}) e
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Agent %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Agent %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -524,6 +729,7 @@ func resourceDialogflowCXAgentDelete(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Agent")
@@ -536,9 +742,9 @@ func resourceDialogflowCXAgentDelete(d *schema.ResourceData, meta interface{}) e
 func resourceDialogflowCXAgentImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/agents/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)",
-		"(?P<location>[^/]+)/(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/agents/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<location>[^/]+)/(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -617,6 +823,131 @@ func flattenDialogflowCXAgentEnableSpellCorrection(v interface{}, d *schema.Reso
 	return v
 }
 
+func flattenDialogflowCXAgentAdvancedSettings(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["audio_export_gcs_destination"] =
+		flattenDialogflowCXAgentAdvancedSettingsAudioExportGcsDestination(original["audioExportGcsDestination"], d, config)
+	transformed["dtmf_settings"] =
+		flattenDialogflowCXAgentAdvancedSettingsDtmfSettings(original["dtmfSettings"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDialogflowCXAgentAdvancedSettingsAudioExportGcsDestination(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["uri"] =
+		flattenDialogflowCXAgentAdvancedSettingsAudioExportGcsDestinationUri(original["uri"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDialogflowCXAgentAdvancedSettingsAudioExportGcsDestinationUri(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDialogflowCXAgentAdvancedSettingsDtmfSettings(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["enabled"] =
+		flattenDialogflowCXAgentAdvancedSettingsDtmfSettingsEnabled(original["enabled"], d, config)
+	transformed["max_digits"] =
+		flattenDialogflowCXAgentAdvancedSettingsDtmfSettingsMaxDigits(original["maxDigits"], d, config)
+	transformed["finish_digit"] =
+		flattenDialogflowCXAgentAdvancedSettingsDtmfSettingsFinishDigit(original["finishDigit"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDialogflowCXAgentAdvancedSettingsDtmfSettingsEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDialogflowCXAgentAdvancedSettingsDtmfSettingsMaxDigits(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenDialogflowCXAgentAdvancedSettingsDtmfSettingsFinishDigit(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDialogflowCXAgentGitIntegrationSettings(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	transformed := make(map[string]interface{})
+	transformed["github_settings"] =
+		flattenDialogflowCXAgentGitIntegrationSettingsGithubSettings(original["githubSettings"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDialogflowCXAgentGitIntegrationSettingsGithubSettings(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	// ignore access_token, which is always returned as REDACTED
+	delete(original, "access_token")
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["display_name"] = original["displayName"]
+	transformed["repository_uri"] = original["repositoryUri"]
+	transformed["tracking_branch"] = original["trackingBranch"]
+	transformed["access_token"] = d.Get("git_integration_settings.0.github_settings.0.access_token")
+	transformed["branches"] = original["branches"]
+	return []interface{}{transformed}
+}
+
+func flattenDialogflowCXAgentTextToSpeechSettings(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	transformed := make(map[string]interface{})
+	transformed["synthesize_speech_configs"] =
+		flattenDialogflowCXAgentTextToSpeechSettingsSynthesizeSpeechConfigs(original["synthesizeSpeechConfigs"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDialogflowCXAgentTextToSpeechSettingsSynthesizeSpeechConfigs(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	b, err := json.Marshal(v)
+	if err != nil {
+		// TODO: return error once https://github.com/GoogleCloudPlatform/magic-modules/issues/3257 is fixed.
+		log.Printf("[ERROR] failed to marshal schema to JSON: %v", err)
+	}
+	return string(b)
+}
+
 func expandDialogflowCXAgentDisplayName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
@@ -674,4 +1005,225 @@ func expandDialogflowCXAgentEnableStackdriverLogging(v interface{}, d tpgresourc
 
 func expandDialogflowCXAgentEnableSpellCorrection(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandDialogflowCXAgentAdvancedSettings(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedAudioExportGcsDestination, err := expandDialogflowCXAgentAdvancedSettingsAudioExportGcsDestination(original["audio_export_gcs_destination"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAudioExportGcsDestination); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["audioExportGcsDestination"] = transformedAudioExportGcsDestination
+	}
+
+	transformedDtmfSettings, err := expandDialogflowCXAgentAdvancedSettingsDtmfSettings(original["dtmf_settings"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDtmfSettings); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["dtmfSettings"] = transformedDtmfSettings
+	}
+
+	return transformed, nil
+}
+
+func expandDialogflowCXAgentAdvancedSettingsAudioExportGcsDestination(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedUri, err := expandDialogflowCXAgentAdvancedSettingsAudioExportGcsDestinationUri(original["uri"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedUri); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["uri"] = transformedUri
+	}
+
+	return transformed, nil
+}
+
+func expandDialogflowCXAgentAdvancedSettingsAudioExportGcsDestinationUri(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDialogflowCXAgentAdvancedSettingsDtmfSettings(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedEnabled, err := expandDialogflowCXAgentAdvancedSettingsDtmfSettingsEnabled(original["enabled"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedEnabled); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["enabled"] = transformedEnabled
+	}
+
+	transformedMaxDigits, err := expandDialogflowCXAgentAdvancedSettingsDtmfSettingsMaxDigits(original["max_digits"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMaxDigits); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["maxDigits"] = transformedMaxDigits
+	}
+
+	transformedFinishDigit, err := expandDialogflowCXAgentAdvancedSettingsDtmfSettingsFinishDigit(original["finish_digit"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedFinishDigit); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["finishDigit"] = transformedFinishDigit
+	}
+
+	return transformed, nil
+}
+
+func expandDialogflowCXAgentAdvancedSettingsDtmfSettingsEnabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDialogflowCXAgentAdvancedSettingsDtmfSettingsMaxDigits(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDialogflowCXAgentAdvancedSettingsDtmfSettingsFinishDigit(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDialogflowCXAgentGitIntegrationSettings(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 {
+		return nil, nil
+	}
+
+	if l[0] == nil {
+		transformed := make(map[string]interface{})
+		return transformed, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedGithubSettings, err := expandDialogflowCXAgentGitIntegrationSettingsGithubSettings(original["github_settings"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedGithubSettings); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["githubSettings"] = transformedGithubSettings
+	}
+
+	return transformed, nil
+}
+
+func expandDialogflowCXAgentGitIntegrationSettingsGithubSettings(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedDisplayName, err := expandDialogflowCXAgentGitIntegrationSettingsGithubSettingsDisplayName(original["display_name"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDisplayName); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["displayName"] = transformedDisplayName
+	}
+
+	transformedRepositoryUri, err := expandDialogflowCXAgentGitIntegrationSettingsGithubSettingsRepositoryUri(original["repository_uri"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedRepositoryUri); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["repositoryUri"] = transformedRepositoryUri
+	}
+
+	transformedTrackingBranch, err := expandDialogflowCXAgentGitIntegrationSettingsGithubSettingsTrackingBranch(original["tracking_branch"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedTrackingBranch); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["trackingBranch"] = transformedTrackingBranch
+	}
+
+	transformedAccessToken, err := expandDialogflowCXAgentGitIntegrationSettingsGithubSettingsAccessToken(original["access_token"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAccessToken); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["accessToken"] = transformedAccessToken
+	}
+
+	transformedBranches, err := expandDialogflowCXAgentGitIntegrationSettingsGithubSettingsBranches(original["branches"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedBranches); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["branches"] = transformedBranches
+	}
+
+	return transformed, nil
+}
+
+func expandDialogflowCXAgentGitIntegrationSettingsGithubSettingsDisplayName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDialogflowCXAgentGitIntegrationSettingsGithubSettingsRepositoryUri(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDialogflowCXAgentGitIntegrationSettingsGithubSettingsTrackingBranch(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDialogflowCXAgentGitIntegrationSettingsGithubSettingsAccessToken(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDialogflowCXAgentGitIntegrationSettingsGithubSettingsBranches(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDialogflowCXAgentTextToSpeechSettings(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 {
+		return nil, nil
+	}
+
+	if l[0] == nil {
+		transformed := make(map[string]interface{})
+		return transformed, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedSynthesizeSpeechConfigs, err := expandDialogflowCXAgentTextToSpeechSettingsSynthesizeSpeechConfigs(original["synthesize_speech_configs"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSynthesizeSpeechConfigs); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["synthesizeSpeechConfigs"] = transformedSynthesizeSpeechConfigs
+	}
+
+	return transformed, nil
+}
+
+func expandDialogflowCXAgentTextToSpeechSettingsSynthesizeSpeechConfigs(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	b := []byte(v.(string))
+	if len(b) == 0 {
+		return nil, nil
+	}
+	m := make(map[string]interface{})
+	if err := json.Unmarshal(b, &m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }

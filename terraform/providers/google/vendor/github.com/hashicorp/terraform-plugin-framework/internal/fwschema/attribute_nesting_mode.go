@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwschema
 
 // NestingMode is an enum type of the ways nested attributes can be nested in

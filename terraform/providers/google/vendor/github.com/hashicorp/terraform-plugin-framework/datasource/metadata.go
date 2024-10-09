@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package datasource
 
 // MetadataRequest represents a request for the DataSource to return metadata,

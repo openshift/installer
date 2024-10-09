@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
@@ -90,6 +91,29 @@ See [Enabling CMEK for Logging Buckets](https://cloud.google.com/logging/docs/ro
 			},
 		},
 	},
+	"index_configs": {
+		Type:        schema.TypeSet,
+		MaxItems:    20,
+		Optional:    true,
+		Computed:    true,
+		Description: `A list of indexed fields and related configuration data.`,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"field_path": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: `The LogEntry field path to index.`,
+				},
+				"type": {
+					Type:     schema.TypeString,
+					Required: true,
+					Description: `The type of data in this index
+Note that some paths are automatically indexed, and other paths are not eligible for indexing. See [indexing documentation]( https://cloud.google.com/logging/docs/view/advanced-queries#indexed-fields) for details.
+For example: jsonPayload.request.status`,
+				},
+			},
+		},
+	},
 }
 
 type loggingBucketConfigIDFunc func(d *schema.ResourceData, config *transport_tpg.Config) (string, error)
@@ -107,6 +131,9 @@ func ResourceLoggingBucketConfig(parentType string, parentSpecificSchema map[str
 		},
 		Schema:        tpgresource.MergeSchemas(loggingBucketConfigSchema, parentSpecificSchema),
 		UseJSONNumber: true,
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 	}
 }
 
@@ -205,6 +232,7 @@ func resourceLoggingBucketConfigCreate(d *schema.ResourceData, meta interface{},
 	obj["description"] = d.Get("description")
 	obj["retentionDays"] = d.Get("retention_days")
 	obj["cmekSettings"] = expandCmekSettings(d.Get("cmek_settings"))
+	obj["indexConfigs"] = expandIndexConfigs(d.Get("index_configs"))
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{LoggingBasePath}}projects/{{project}}/locations/{{location}}/buckets?bucketId={{bucket_id}}")
 	if err != nil {
@@ -289,6 +317,10 @@ func resourceLoggingBucketConfigRead(d *schema.ResourceData, meta interface{}) e
 		return fmt.Errorf("Error setting cmek_settings: %s", err)
 	}
 
+	if err := d.Set("index_configs", flattenIndexConfigs(res["indexConfigs"])); err != nil {
+		return fmt.Errorf("Error setting index_configs: %s", err)
+	}
+
 	return nil
 }
 
@@ -309,6 +341,7 @@ func resourceLoggingBucketConfigUpdate(d *schema.ResourceData, meta interface{})
 	obj["retentionDays"] = d.Get("retention_days")
 	obj["description"] = d.Get("description")
 	obj["cmekSettings"] = expandCmekSettings(d.Get("cmek_settings"))
+	obj["indexConfigs"] = expandIndexConfigs(d.Get("index_configs"))
 
 	updateMask := []string{}
 	if d.HasChange("retention_days") {
@@ -320,6 +353,10 @@ func resourceLoggingBucketConfigUpdate(d *schema.ResourceData, meta interface{})
 	if d.HasChange("cmek_settings") {
 		updateMask = append(updateMask, "cmekSettings")
 	}
+	if d.HasChange("index_configs") {
+		updateMask = append(updateMask, "indexConfigs")
+	}
+
 	url, err = transport_tpg.AddQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
 	if err != nil {
 		return err
@@ -406,4 +443,45 @@ func flattenCmekSettings(cmekSettings interface{}) []map[string]interface{} {
 	}
 
 	return []map[string]interface{}{data}
+}
+
+func expandIndexConfigs(maybeIndexConfigs interface{}) []map[string]interface{} {
+	if maybeIndexConfigs == nil {
+		return nil
+	}
+
+	indexConfigs := maybeIndexConfigs.(*schema.Set).List()
+	transformedIndexConfigs := make([]map[string]interface{}, 0, len(indexConfigs))
+
+	for _, entry := range indexConfigs {
+		original := entry.(map[string]interface{})
+
+		transformed := map[string]interface{}{
+			"fieldPath": original["field_path"],
+			"type":      original["type"],
+		}
+		transformedIndexConfigs = append(transformedIndexConfigs, transformed)
+	}
+	return transformedIndexConfigs
+}
+
+func flattenIndexConfigs(maybeIndexConfigs interface{}) []map[string]interface{} {
+	if maybeIndexConfigs == nil {
+		return nil
+	}
+
+	indexConfigs := maybeIndexConfigs.([]interface{})
+	flattenedIndexConfigs := make([]map[string]interface{}, 0, len(indexConfigs))
+
+	for _, entry := range indexConfigs {
+		indexConfig := entry.(map[string]interface{})
+		if len(indexConfig) < 1 {
+			continue
+		}
+		flattenedIndexConfigs = append(flattenedIndexConfigs, map[string]interface{}{
+			"field_path": indexConfig["fieldPath"],
+			"type":       indexConfig["type"],
+		})
+	}
+	return flattenedIndexConfigs
 }

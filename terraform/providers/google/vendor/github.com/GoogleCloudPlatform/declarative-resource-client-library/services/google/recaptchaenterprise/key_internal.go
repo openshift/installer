@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -55,6 +55,11 @@ func (r *Key) validate() error {
 			return err
 		}
 	}
+	if !dcl.IsEmptyValueIndirect(r.WafSettings) {
+		if err := r.WafSettings.validate(); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 func (r *KeyWebSettings) validate() error {
@@ -70,6 +75,15 @@ func (r *KeyIosSettings) validate() error {
 	return nil
 }
 func (r *KeyTestingOptions) validate() error {
+	return nil
+}
+func (r *KeyWafSettings) validate() error {
+	if err := dcl.Required(r, "wafService"); err != nil {
+		return err
+	}
+	if err := dcl.Required(r, "wafFeature"); err != nil {
+		return err
+	}
 	return nil
 }
 func (r *Key) basePath() string {
@@ -476,6 +490,7 @@ func canonicalizeKeyDesiredState(rawDesired, rawInitial *Key, opts ...dcl.ApplyO
 		rawDesired.AndroidSettings = canonicalizeKeyAndroidSettings(rawDesired.AndroidSettings, nil, opts...)
 		rawDesired.IosSettings = canonicalizeKeyIosSettings(rawDesired.IosSettings, nil, opts...)
 		rawDesired.TestingOptions = canonicalizeKeyTestingOptions(rawDesired.TestingOptions, nil, opts...)
+		rawDesired.WafSettings = canonicalizeKeyWafSettings(rawDesired.WafSettings, nil, opts...)
 
 		return rawDesired, nil
 	}
@@ -501,6 +516,7 @@ func canonicalizeKeyDesiredState(rawDesired, rawInitial *Key, opts ...dcl.ApplyO
 		canonicalDesired.Labels = rawDesired.Labels
 	}
 	canonicalDesired.TestingOptions = canonicalizeKeyTestingOptions(rawDesired.TestingOptions, rawInitial.TestingOptions, opts...)
+	canonicalDesired.WafSettings = canonicalizeKeyWafSettings(rawDesired.WafSettings, rawInitial.WafSettings, opts...)
 	if dcl.NameToSelfLink(rawDesired.Project, rawInitial.Project) {
 		canonicalDesired.Project = rawInitial.Project
 	} else {
@@ -578,6 +594,12 @@ func canonicalizeKeyNewState(c *Client, rawNew, rawDesired *Key) (*Key, error) {
 		rawNew.TestingOptions = rawDesired.TestingOptions
 	} else {
 		rawNew.TestingOptions = canonicalizeNewKeyTestingOptions(c, rawDesired.TestingOptions, rawNew.TestingOptions)
+	}
+
+	if dcl.IsEmptyValueIndirect(rawNew.WafSettings) && dcl.IsEmptyValueIndirect(rawDesired.WafSettings) {
+		rawNew.WafSettings = rawDesired.WafSettings
+	} else {
+		rawNew.WafSettings = canonicalizeNewKeyWafSettings(c, rawDesired.WafSettings, rawNew.WafSettings)
 	}
 
 	rawNew.Project = rawDesired.Project
@@ -1104,6 +1126,127 @@ func canonicalizeNewKeyTestingOptionsSlice(c *Client, des, nw []KeyTestingOption
 	return items
 }
 
+func canonicalizeKeyWafSettings(des, initial *KeyWafSettings, opts ...dcl.ApplyOption) *KeyWafSettings {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &KeyWafSettings{}
+
+	if dcl.IsZeroValue(des.WafService) || (dcl.IsEmptyValueIndirect(des.WafService) && dcl.IsEmptyValueIndirect(initial.WafService)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.WafService = initial.WafService
+	} else {
+		cDes.WafService = des.WafService
+	}
+	if dcl.IsZeroValue(des.WafFeature) || (dcl.IsEmptyValueIndirect(des.WafFeature) && dcl.IsEmptyValueIndirect(initial.WafFeature)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.WafFeature = initial.WafFeature
+	} else {
+		cDes.WafFeature = des.WafFeature
+	}
+
+	return cDes
+}
+
+func canonicalizeKeyWafSettingsSlice(des, initial []KeyWafSettings, opts ...dcl.ApplyOption) []KeyWafSettings {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]KeyWafSettings, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeKeyWafSettings(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]KeyWafSettings, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeKeyWafSettings(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewKeyWafSettings(c *Client, des, nw *KeyWafSettings) *KeyWafSettings {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for KeyWafSettings while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	return nw
+}
+
+func canonicalizeNewKeyWafSettingsSet(c *Client, des, nw []KeyWafSettings) []KeyWafSettings {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []KeyWafSettings
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareKeyWafSettingsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewKeyWafSettings(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewKeyWafSettingsSlice(c *Client, des, nw []KeyWafSettings) []KeyWafSettings {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []KeyWafSettings
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewKeyWafSettings(c, &d, &n))
+	}
+
+	return items
+}
+
 // The differ returns a list of diffs, along with a list of operations that should be taken
 // to remedy them. Right now, it does not attempt to consolidate operations - if several
 // fields can be fixed with a patch update, it will perform the patch several times.
@@ -1172,6 +1315,13 @@ func diffKey(c *Client, desired, actual *Key, opts ...dcl.ApplyOption) ([]*dcl.F
 	}
 
 	if ds, err := dcl.Diff(desired.TestingOptions, actual.TestingOptions, dcl.DiffInfo{ObjectFunction: compareKeyTestingOptionsNewStyle, EmptyObject: EmptyKeyTestingOptions, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("TestingOptions")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.WafSettings, actual.WafSettings, dcl.DiffInfo{ObjectFunction: compareKeyWafSettingsNewStyle, EmptyObject: EmptyKeyWafSettings, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("WafSettings")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1355,6 +1505,42 @@ func compareKeyTestingOptionsNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dc
 	return diffs, nil
 }
 
+func compareKeyWafSettingsNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*KeyWafSettings)
+	if !ok {
+		desiredNotPointer, ok := d.(KeyWafSettings)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a KeyWafSettings or *KeyWafSettings", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*KeyWafSettings)
+	if !ok {
+		actualNotPointer, ok := a.(KeyWafSettings)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a KeyWafSettings", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.WafService, actual.WafService, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("WafService")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.WafFeature, actual.WafFeature, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("WafFeature")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
 // urlNormalized returns a copy of the resource struct with values normalized
 // for URL substitutions. For instance, it converts long-form self-links to
 // short-form so they can be substituted in.
@@ -1446,6 +1632,11 @@ func expandKey(c *Client, f *Key) (map[string]interface{}, error) {
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["testingOptions"] = v
 	}
+	if v, err := expandKeyWafSettings(c, f.WafSettings, res); err != nil {
+		return nil, fmt.Errorf("error expanding WafSettings into wafSettings: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["wafSettings"] = v
+	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Project into project: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
@@ -1475,6 +1666,7 @@ func flattenKey(c *Client, i interface{}, res *Key) *Key {
 	resultRes.Labels = dcl.FlattenKeyValuePairs(m["labels"])
 	resultRes.CreateTime = dcl.FlattenString(m["createTime"])
 	resultRes.TestingOptions = flattenKeyTestingOptions(c, m["testingOptions"], res)
+	resultRes.WafSettings = flattenKeyWafSettings(c, m["wafSettings"], res)
 	resultRes.Project = dcl.FlattenString(m["project"])
 
 	return resultRes
@@ -1964,6 +2156,124 @@ func flattenKeyTestingOptions(c *Client, i interface{}, res *Key) *KeyTestingOpt
 	return r
 }
 
+// expandKeyWafSettingsMap expands the contents of KeyWafSettings into a JSON
+// request object.
+func expandKeyWafSettingsMap(c *Client, f map[string]KeyWafSettings, res *Key) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandKeyWafSettings(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandKeyWafSettingsSlice expands the contents of KeyWafSettings into a JSON
+// request object.
+func expandKeyWafSettingsSlice(c *Client, f []KeyWafSettings, res *Key) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandKeyWafSettings(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenKeyWafSettingsMap flattens the contents of KeyWafSettings from a JSON
+// response object.
+func flattenKeyWafSettingsMap(c *Client, i interface{}, res *Key) map[string]KeyWafSettings {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]KeyWafSettings{}
+	}
+
+	if len(a) == 0 {
+		return map[string]KeyWafSettings{}
+	}
+
+	items := make(map[string]KeyWafSettings)
+	for k, item := range a {
+		items[k] = *flattenKeyWafSettings(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenKeyWafSettingsSlice flattens the contents of KeyWafSettings from a JSON
+// response object.
+func flattenKeyWafSettingsSlice(c *Client, i interface{}, res *Key) []KeyWafSettings {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []KeyWafSettings{}
+	}
+
+	if len(a) == 0 {
+		return []KeyWafSettings{}
+	}
+
+	items := make([]KeyWafSettings, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenKeyWafSettings(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandKeyWafSettings expands an instance of KeyWafSettings into a JSON
+// request object.
+func expandKeyWafSettings(c *Client, f *KeyWafSettings, res *Key) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.WafService; !dcl.IsEmptyValueIndirect(v) {
+		m["wafService"] = v
+	}
+	if v := f.WafFeature; !dcl.IsEmptyValueIndirect(v) {
+		m["wafFeature"] = v
+	}
+
+	return m, nil
+}
+
+// flattenKeyWafSettings flattens an instance of KeyWafSettings from a JSON
+// response object.
+func flattenKeyWafSettings(c *Client, i interface{}, res *Key) *KeyWafSettings {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &KeyWafSettings{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyKeyWafSettings
+	}
+	r.WafService = flattenKeyWafSettingsWafServiceEnum(m["wafService"])
+	r.WafFeature = flattenKeyWafSettingsWafFeatureEnum(m["wafFeature"])
+
+	return r
+}
+
 // flattenKeyWebSettingsIntegrationTypeEnumMap flattens the contents of KeyWebSettingsIntegrationTypeEnum from a JSON
 // response object.
 func flattenKeyWebSettingsIntegrationTypeEnumMap(c *Client, i interface{}, res *Key) map[string]KeyWebSettingsIntegrationTypeEnum {
@@ -2117,6 +2427,108 @@ func flattenKeyTestingOptionsTestingChallengeEnum(i interface{}) *KeyTestingOpti
 	return KeyTestingOptionsTestingChallengeEnumRef(s)
 }
 
+// flattenKeyWafSettingsWafServiceEnumMap flattens the contents of KeyWafSettingsWafServiceEnum from a JSON
+// response object.
+func flattenKeyWafSettingsWafServiceEnumMap(c *Client, i interface{}, res *Key) map[string]KeyWafSettingsWafServiceEnum {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]KeyWafSettingsWafServiceEnum{}
+	}
+
+	if len(a) == 0 {
+		return map[string]KeyWafSettingsWafServiceEnum{}
+	}
+
+	items := make(map[string]KeyWafSettingsWafServiceEnum)
+	for k, item := range a {
+		items[k] = *flattenKeyWafSettingsWafServiceEnum(item.(interface{}))
+	}
+
+	return items
+}
+
+// flattenKeyWafSettingsWafServiceEnumSlice flattens the contents of KeyWafSettingsWafServiceEnum from a JSON
+// response object.
+func flattenKeyWafSettingsWafServiceEnumSlice(c *Client, i interface{}, res *Key) []KeyWafSettingsWafServiceEnum {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []KeyWafSettingsWafServiceEnum{}
+	}
+
+	if len(a) == 0 {
+		return []KeyWafSettingsWafServiceEnum{}
+	}
+
+	items := make([]KeyWafSettingsWafServiceEnum, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenKeyWafSettingsWafServiceEnum(item.(interface{})))
+	}
+
+	return items
+}
+
+// flattenKeyWafSettingsWafServiceEnum asserts that an interface is a string, and returns a
+// pointer to a *KeyWafSettingsWafServiceEnum with the same value as that string.
+func flattenKeyWafSettingsWafServiceEnum(i interface{}) *KeyWafSettingsWafServiceEnum {
+	s, ok := i.(string)
+	if !ok {
+		return nil
+	}
+
+	return KeyWafSettingsWafServiceEnumRef(s)
+}
+
+// flattenKeyWafSettingsWafFeatureEnumMap flattens the contents of KeyWafSettingsWafFeatureEnum from a JSON
+// response object.
+func flattenKeyWafSettingsWafFeatureEnumMap(c *Client, i interface{}, res *Key) map[string]KeyWafSettingsWafFeatureEnum {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]KeyWafSettingsWafFeatureEnum{}
+	}
+
+	if len(a) == 0 {
+		return map[string]KeyWafSettingsWafFeatureEnum{}
+	}
+
+	items := make(map[string]KeyWafSettingsWafFeatureEnum)
+	for k, item := range a {
+		items[k] = *flattenKeyWafSettingsWafFeatureEnum(item.(interface{}))
+	}
+
+	return items
+}
+
+// flattenKeyWafSettingsWafFeatureEnumSlice flattens the contents of KeyWafSettingsWafFeatureEnum from a JSON
+// response object.
+func flattenKeyWafSettingsWafFeatureEnumSlice(c *Client, i interface{}, res *Key) []KeyWafSettingsWafFeatureEnum {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []KeyWafSettingsWafFeatureEnum{}
+	}
+
+	if len(a) == 0 {
+		return []KeyWafSettingsWafFeatureEnum{}
+	}
+
+	items := make([]KeyWafSettingsWafFeatureEnum, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenKeyWafSettingsWafFeatureEnum(item.(interface{})))
+	}
+
+	return items
+}
+
+// flattenKeyWafSettingsWafFeatureEnum asserts that an interface is a string, and returns a
+// pointer to a *KeyWafSettingsWafFeatureEnum with the same value as that string.
+func flattenKeyWafSettingsWafFeatureEnum(i interface{}) *KeyWafSettingsWafFeatureEnum {
+	s, ok := i.(string)
+	if !ok {
+		return nil
+	}
+
+	return KeyWafSettingsWafFeatureEnumRef(s)
+}
+
 // This function returns a matcher that checks whether a serialized resource matches this resource
 // in its parameters (as defined by the fields in a Get, which definitionally define resource
 // identity).  This is useful in extracting the element from a List call.
@@ -2247,6 +2659,17 @@ func extractKeyFields(r *Key) error {
 	if !dcl.IsEmptyValueIndirect(vTestingOptions) {
 		r.TestingOptions = vTestingOptions
 	}
+	vWafSettings := r.WafSettings
+	if vWafSettings == nil {
+		// note: explicitly not the empty object.
+		vWafSettings = &KeyWafSettings{}
+	}
+	if err := extractKeyWafSettingsFields(r, vWafSettings); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vWafSettings) {
+		r.WafSettings = vWafSettings
+	}
 	return nil
 }
 func extractKeyWebSettingsFields(r *Key, o *KeyWebSettings) error {
@@ -2259,6 +2682,9 @@ func extractKeyIosSettingsFields(r *Key, o *KeyIosSettings) error {
 	return nil
 }
 func extractKeyTestingOptionsFields(r *Key, o *KeyTestingOptions) error {
+	return nil
+}
+func extractKeyWafSettingsFields(r *Key, o *KeyWafSettings) error {
 	return nil
 }
 
@@ -2307,6 +2733,17 @@ func postReadExtractKeyFields(r *Key) error {
 	if !dcl.IsEmptyValueIndirect(vTestingOptions) {
 		r.TestingOptions = vTestingOptions
 	}
+	vWafSettings := r.WafSettings
+	if vWafSettings == nil {
+		// note: explicitly not the empty object.
+		vWafSettings = &KeyWafSettings{}
+	}
+	if err := postReadExtractKeyWafSettingsFields(r, vWafSettings); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vWafSettings) {
+		r.WafSettings = vWafSettings
+	}
 	return nil
 }
 func postReadExtractKeyWebSettingsFields(r *Key, o *KeyWebSettings) error {
@@ -2319,5 +2756,8 @@ func postReadExtractKeyIosSettingsFields(r *Key, o *KeyIosSettings) error {
 	return nil
 }
 func postReadExtractKeyTestingOptionsFields(r *Key, o *KeyTestingOptions) error {
+	return nil
+}
+func postReadExtractKeyWafSettingsFields(r *Key, o *KeyWafSettings) error {
 	return nil
 }
