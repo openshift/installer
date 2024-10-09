@@ -12,11 +12,13 @@ import (
 
 	ignutil "github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	"k8s.io/apimachinery/pkg/runtime"
 	capg "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
+	mcfgv1 "github.com/openshift/api/machineconfiguration/v1"
 	"github.com/openshift/installer/cmd/openshift-install/command"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/lbconfig"
@@ -27,7 +29,8 @@ import (
 )
 
 const (
-	infrastructureFilepath = "/opt/openshift/manifests/cluster-infrastructure-02-config.yml"
+	infrastructureFilepath      = "/opt/openshift/manifests/cluster-infrastructure-02-config.yml"
+	masterMachineConfigFilePath = "/opt/openshift/openshift/99_openshift-machine-api_master-control-plane-machine-set.yaml"
 
 	// replaceable is the string that precedes the encoded data in the ignition data.
 	// The data must be replaced before decoding the string, and the string must be
@@ -100,14 +103,19 @@ func EditIgnition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, []b
 			return nil, nil, fmt.Errorf("failed to save %s to state file: %w", lbConfig.Name(), err)
 		}
 
-		editedIgnBytes, err := json.Marshal(ignData)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to convert ignition data to json: %w", err)
-		}
-
 		updatedMasterIgn, err := updatePointerIgnition(in, []string{computeIntAddress.Address}, "master")
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to update Master Ignition with API-Int IP: %w", err)
+		}
+
+		err = updatePointerMachineConfig(ignData, updatedMasterIgn)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to update Master Machine Config within Bootstrap Ignition: %w", err)
+		}
+
+		editedIgnBytes, err := json.Marshal(ignData)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to convert ignition data to json: %w", err)
 		}
 
 		return editedIgnBytes, updatedMasterIgn, nil
@@ -200,4 +208,41 @@ func updatePointerIgnition(in clusterapi.IgnitionInput, privateLBs []string, rol
 		return nil, fmt.Errorf("failed to convert %s ignition data to json: %w", role, err)
 	}
 	return updatedIgnBytes, nil
+}
+
+func updatePointerMachineConfig(bootstrapIgnConfig *igntypes.Config, pointerIgn []byte) error {
+	for i, fileData := range bootstrapIgnConfig.Storage.Files {
+		// update the contents of this file
+		if fileData.Path == masterMachineConfigFilePath {
+			contents := bootstrapIgnConfig.Storage.Files[i].Contents.Source
+			replaced := strings.Replace(*contents, replaceable, "", 1)
+
+			rawDecodedText, err := base64.StdEncoding.DecodeString(replaced)
+			if err != nil {
+				return fmt.Errorf("failed to decode contents of bootstrap ignition file: %w", err)
+			}
+			machineConfig := &mcfgv1.MachineConfig{}
+			if err := yaml.Unmarshal(rawDecodedText, machineConfig); err != nil {
+				return fmt.Errorf("failed to unmarshal Master Machine Config within Bootstrap Ignition: %w", err)
+			}
+			if pointerIgn != nil {
+				rawExt := runtime.RawExtension{
+					Raw: pointerIgn,
+				}
+				machineConfig.Spec.Config = rawExt
+			}
+			// convert Master Machine Config back to an encoded string
+			masterConfigContents, err := yaml.Marshal(machineConfig)
+			if err != nil {
+				return fmt.Errorf("failed to marshal Master Machine Config: %w", err)
+			}
+
+			encoded := fmt.Sprintf("%s%s", replaceable, base64.StdEncoding.EncodeToString(masterConfigContents))
+			// replace the contents with the edited information
+			bootstrapIgnConfig.Storage.Files[i].Contents.Source = &encoded
+
+			break
+		}
+	}
+	return nil
 }
