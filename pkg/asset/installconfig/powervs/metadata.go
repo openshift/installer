@@ -65,12 +65,12 @@ func (m *Metadata) AccountID(ctx context.Context) (string, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	client, err := m.client()
-	if err != nil {
-		return "", err
-	}
-
 	if m.accountID == "" {
+		client, err := m.client()
+		if err != nil {
+			return "", err
+		}
+
 		if client.BXCli.User == nil || client.BXCli.User.Account == "" {
 			return "", fmt.Errorf("failed to get find account ID: %+v", client.BXCli.User)
 		}
@@ -86,12 +86,12 @@ func (m *Metadata) APIKey(ctx context.Context) (string, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	client, err := m.client()
-	if err != nil {
-		return "", err
-	}
-
 	if m.apiKey == "" {
+		client, err := m.client()
+		if err != nil {
+			return "", err
+		}
+
 		m.apiKey = client.GetAPIKey()
 	}
 
@@ -104,12 +104,12 @@ func (m *Metadata) CISInstanceCRN(ctx context.Context) (string, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	client, err := m.client()
-	if err != nil {
-		return "", err
-	}
-
 	if m.PublishStrategy == types.ExternalPublishingStrategy && m.cisInstanceCRN == "" {
+		client, err := m.client()
+		if err != nil {
+			return "", err
+		}
+
 		m.cisInstanceCRN, err = client.GetInstanceCRNByName(ctx, m.BaseDomain, types.ExternalPublishingStrategy)
 		if err != nil {
 			return "", err
@@ -129,12 +129,12 @@ func (m *Metadata) DNSInstanceCRN(ctx context.Context) (string, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	client, err := m.client()
-	if err != nil {
-		return "", err
-	}
-
 	if m.PublishStrategy == types.InternalPublishingStrategy && m.dnsInstanceCRN == "" {
+		client, err := m.client()
+		if err != nil {
+			return "", err
+		}
+
 		m.dnsInstanceCRN, err = client.GetInstanceCRNByName(ctx, m.BaseDomain, types.InternalPublishingStrategy)
 		if err != nil {
 			return "", err
