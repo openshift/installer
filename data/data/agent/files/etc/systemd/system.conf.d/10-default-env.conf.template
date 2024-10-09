@@ -7,6 +7,8 @@ DefaultEnvironment=HTTP_PROXY="{{replace .Proxy.HTTPProxy "%" "%%"}}"
 DefaultEnvironment=HTTPS_PROXY="{{replace .Proxy.HTTPSProxy "%" "%%"}}"
 {{end -}}
 {{if .Proxy.NoProxy -}}
-DefaultEnvironment=NO_PROXY="{{.Proxy.NoProxy}}"
+DefaultEnvironment=NO_PROXY="{{.Proxy.NoProxy}},{{.RendezvousIP}}"
+{{else -}}
+DefaultEnvironment=NO_PROXY="{{.RendezvousIP}}"
 {{end -}}
 {{end -}}

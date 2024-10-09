@@ -79,6 +79,7 @@ type agentTemplateData struct {
 	TokenExpiry               string
 	AuthType                  string
 	CaBundleMount             string
+	RendezvousIP              string
 }
 
 // Name returns the human-friendly name of the asset.
@@ -272,6 +273,7 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 		numMasters, numWorkers,
 		osImage,
 		infraEnv.Spec.Proxy,
+		a.RendezvousIP,
 	)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
@@ -386,7 +388,7 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage, releaseIm
 	haveMirrorConfig bool,
 	numMasters, numWorkers int,
 	osImage *models.OsImage,
-	proxy *v1beta1.Proxy) *agentTemplateData {
+	proxy *v1beta1.Proxy, rendezvousIP string) *agentTemplateData {
 	return &agentTemplateData{
 		ServiceProtocol:           "http",
 		PullSecret:                pullSecret,
@@ -407,6 +409,7 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage, releaseIm
 		Token:                     token,
 		TokenExpiry:               tokenExpiry,
 		CaBundleMount:             caBundleMount,
+		RendezvousIP:              rendezvousIP,
 	}
 }
 
