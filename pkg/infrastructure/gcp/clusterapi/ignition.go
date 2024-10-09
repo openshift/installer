@@ -5,9 +5,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net"
+	"net/url"
 	"strings"
 	"time"
 
+	ignutil "github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	capg "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -35,7 +38,8 @@ const (
 // EditIgnition attempts to edit the contents of the bootstrap ignition when the user has selected
 // a custom DNS configuration. Find the public and private load balancer addresses and fill in the
 // infrastructure file within the ignition struct.
-func EditIgnition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, error) {
+func EditIgnition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, []byte, error) {
+	// Why do we need another context here?
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*2)
 	defer cancel()
 
@@ -46,12 +50,12 @@ func EditIgnition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, err
 			Namespace: capiutils.Namespace,
 		}
 		if err := in.Client.Get(ctx, key, gcpCluster); err != nil {
-			return nil, fmt.Errorf("failed to get GCP cluster: %w", err)
+			return nil, nil, fmt.Errorf("failed to get GCP cluster: %w", err)
 		}
 
 		svc, err := NewComputeService()
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		project := in.InstallConfig.Config.GCP.ProjectID
@@ -65,7 +69,7 @@ func EditIgnition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, err
 			addressCut := apiIPAddress[strings.LastIndex(apiIPAddress, "/")+1:]
 			computeAddressObj, err := svc.GlobalAddresses.Get(project, addressCut).Context(ctx).Do()
 			if err != nil {
-				return nil, fmt.Errorf("failed to get global compute address: %w", err)
+				return nil, nil, fmt.Errorf("failed to get global compute address: %w", err)
 			}
 			computeAddress = computeAddressObj.Address
 		}
@@ -74,37 +78,42 @@ func EditIgnition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, err
 		addressIntCut := apiIntIPAddress[strings.LastIndex(apiIntIPAddress, "/")+1:]
 		computeIntAddress, err := svc.Addresses.Get(project, in.InstallConfig.Config.GCP.Region, addressIntCut).Context(ctx).Do()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get compute address: %w", err)
+			return nil, nil, fmt.Errorf("failed to get compute address: %w", err)
 		}
 
 		ignData := &igntypes.Config{}
 		err = json.Unmarshal(in.BootstrapIgnData, ignData)
 		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal bootstrap ignition: %w", err)
+			return nil, nil, fmt.Errorf("failed to unmarshal bootstrap ignition: %w", err)
 		}
 
 		err = addLoadBalancersToInfra(gcp.Name, ignData, []string{computeAddress}, []string{computeIntAddress.Address})
 		if err != nil {
-			return nil, fmt.Errorf("failed to add load balancers to ignition config: %w", err)
+			return nil, nil, fmt.Errorf("failed to add load balancers to ignition config: %w", err)
 		}
 
 		lbConfig, err := lbconfig.GenerateLBConfigOverride(computeIntAddress.Address, computeAddress)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		if err := asset.NewDefaultFileWriter(lbConfig).PersistToFile(command.RootOpts.Dir); err != nil {
-			return nil, fmt.Errorf("failed to save %s to state file: %w", lbConfig.Name(), err)
+			return nil, nil, fmt.Errorf("failed to save %s to state file: %w", lbConfig.Name(), err)
 		}
 
 		editedIgnBytes, err := json.Marshal(ignData)
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert ignition data to json: %w", err)
+			return nil, nil, fmt.Errorf("failed to convert ignition data to json: %w", err)
 		}
 
-		return editedIgnBytes, nil
+		updatedMasterIgn, err := updatePointerIgnition(in, []string{computeIntAddress.Address}, "master")
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to update Master Ignition with API-Int IP: %w", err)
+		}
+
+		return editedIgnBytes, updatedMasterIgn, nil
 	}
 
-	return nil, nil
+	return in.BootstrapIgnData, in.MasterIgnData, nil
 }
 
 // addLoadBalancersToInfra will load the public and private load balancer information into
@@ -160,4 +169,32 @@ func addLoadBalancersToInfra(platform string, config *igntypes.Config, publicLBs
 	}
 
 	return nil
+}
+
+func updatePointerIgnition(in clusterapi.IgnitionInput, privateLBs []string, role string) ([]byte, error) {
+	ignData := &igntypes.Config{}
+	err := json.Unmarshal(in.MasterIgnData, ignData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal master ignition: %w", err)
+	}
+
+	ignitionHost := net.JoinHostPort(privateLBs[0], "22623")
+	ignitionConfig := igntypes.IgnitionConfig{
+		Merge: []igntypes.Resource{{
+			Source: ignutil.StrToPtr(func() *url.URL {
+				return &url.URL{
+					Scheme: "https",
+					Host:   ignitionHost,
+					Path:   fmt.Sprintf("/config/%s", role),
+				}
+			}().String()),
+		}},
+	}
+
+	ignData.Ignition.Config = ignitionConfig
+	updatedIgnBytes, err := json.Marshal(ignData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert %s ignition data to json: %w", role, err)
+	}
+	return updatedIgnBytes, nil
 }
