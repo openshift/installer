@@ -282,6 +282,16 @@ var (
 		OwningProduct:       ocpSpecific,
 	}
 
+	FeatureGateNetworkLiveMigration = FeatureGateName("NetworkLiveMigration")
+	sdnLiveMigration                = FeatureGateDescription{
+		FeatureGateAttributes: FeatureGateAttributes{
+			Name: FeatureGateNetworkLiveMigration,
+		},
+		OwningJiraComponent: "Networking/ovn-kubernetes",
+		ResponsiblePerson:   "pliu",
+		OwningProduct:       ocpSpecific,
+	}
+
 	FeatureGateAutomatedEtcdBackup = FeatureGateName("AutomatedEtcdBackup")
 	automatedEtcdBackup            = FeatureGateDescription{
 		FeatureGateAttributes: FeatureGateAttributes{

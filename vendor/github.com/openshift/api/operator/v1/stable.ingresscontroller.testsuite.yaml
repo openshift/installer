@@ -476,3 +476,85 @@ tests:
                 set:
                   value: DENY
     expectedError: 'IngressController.operator.openshift.io "default-not-allowed-values" is invalid: [spec.httpHeaders.actions.response[0].action.type: Required value, <nil>: Invalid value: "null": some validation rules were not checked because the object was invalid; correct the existing errors to complete validation]'
+  - name: Should be able to create an IngressController with valid nominal connect timeout
+    initial: |
+      apiVersion: operator.openshift.io/v1
+      kind: IngressController
+      metadata:
+        name: default
+        namespace: openshift-ingress-operator
+      spec:
+        tuningOptions:
+          connectTimeout: 10s
+    expected: |
+      apiVersion: operator.openshift.io/v1
+      kind: IngressController
+      metadata:
+        name: default
+        namespace: openshift-ingress-operator
+      spec:
+        httpEmptyRequestsPolicy: Respond
+        tuningOptions:
+          connectTimeout: 10s
+  - name: Should be able to create an IngressController with valid composite connect timeout
+    initial: |
+      apiVersion: operator.openshift.io/v1
+      kind: IngressController
+      metadata:
+        name: default
+        namespace: openshift-ingress-operator
+      spec:
+        tuningOptions:
+          connectTimeout: 100ms300μs
+    expected: |
+      apiVersion: operator.openshift.io/v1
+      kind: IngressController
+      metadata:
+        name: default
+        namespace: openshift-ingress-operator
+      spec:
+        httpEmptyRequestsPolicy: Respond
+        tuningOptions:
+          connectTimeout: 100ms300μs
+  - name: Should be able to create an IngressController with valid fraction connect timeout
+    initial: |
+      apiVersion: operator.openshift.io/v1
+      kind: IngressController
+      metadata:
+        name: default
+        namespace: openshift-ingress-operator
+      spec:
+        tuningOptions:
+          connectTimeout: 1.5m
+    expected: |
+      apiVersion: operator.openshift.io/v1
+      kind: IngressController
+      metadata:
+        name: default
+        namespace: openshift-ingress-operator
+      spec:
+        httpEmptyRequestsPolicy: Respond
+        tuningOptions:
+          connectTimeout: 1.5m
+  - name: Should not be able to create an IngressController with invalid unit connect timeout
+    initial: |
+      apiVersion: operator.openshift.io/v1
+      kind: IngressController
+      metadata:
+        name: default
+        namespace: openshift-ingress-operator
+      spec:
+        tuningOptions:
+          connectTimeout: 3d
+    expectedError: "IngressController.operator.openshift.io \"default\" is invalid: spec.tuningOptions.connectTimeout: Invalid value: \"3d\": spec.tuningOptions.connectTimeout in body should match '^(0|([0-9]+(\\.[0-9]+)?(ns|us|µs|μs|ms|s|m|h))+)$'"
+  - name: Should not be able to create an IngressController with invalid space connect timeout
+    initial: |
+      apiVersion: operator.openshift.io/v1
+      kind: IngressController
+      metadata:
+        name: default
+        namespace: openshift-ingress-operator
+      spec:
+        tuningOptions:
+          connectTimeout: "4 s"
+    expectedError: "IngressController.operator.openshift.io \"default\" is invalid: spec.tuningOptions.connectTimeout: Invalid value: \"4 s\": spec.tuningOptions.connectTimeout in body should match '^(0|([0-9]+(\\.[0-9]+)?(ns|us|µs|μs|ms|s|m|h))+)$'"

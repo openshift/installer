@@ -8742,7 +8742,7 @@ github.com/opencontainers/runc/libcontainer/user
 # github.com/opencontainers/runtime-spec v1.1.0
 ## explicit
 github.com/opencontainers/runtime-spec/specs-go
-# github.com/openshift/api v0.0.0-20230831095235-8891815aa476
+# github.com/openshift/api v0.0.0-20230831095235-8891815aa476 => /root/projects/api
 ## explicit; go 1.20
 github.com/openshift/api/config/v1
 github.com/openshift/api/config/v1alpha1
@@ -9680,3 +9680,4 @@ sigs.k8s.io/yaml
 # github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1
 # github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
 # go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.11.2
+# github.com/openshift/api => /root/projects/api

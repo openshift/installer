@@ -12,3 +12,26 @@ tests:
       apiVersion: config.openshift.io/v1
       kind: Network
       spec: {}
+  - name: Should be able to set status conditions
+    initial: |
+      apiVersion: config.openshift.io/v1
+      kind: Network
+      spec: {} # No spec is required for a Network
+      status:
+        conditions:
+          - type: NetworkTypeMigrationInProgress
+            status: "False"
+            reason: "Reason"
+            message: "Message"
+            lastTransitionTime: "2023-10-25T12:00:00Z"
+    expected: |
+      apiVersion: config.openshift.io/v1
+      kind: Network
+      spec: {}
+      status:
+        conditions:
+          - type: NetworkTypeMigrationInProgress
+            status: "False"
+            reason: "Reason"
+            message: "Message"
+            lastTransitionTime: "2023-10-25T12:00:00Z"
