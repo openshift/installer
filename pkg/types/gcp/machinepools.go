@@ -9,12 +9,32 @@ type FeatureSwitch string
 // applicable when ConfidentialCompute is Enabled.
 type OnHostMaintenanceType string
 
+const (
+	// PDSSD is the constant string representation for persistent disk ssd disk types.
+	PDSSD = "pd-ssd"
+	// PDStandard is the constant string representation for persistent disk standard disk types.
+	PDStandard = "pd-standard"
+	// PDBalanced is the constant string representation for persistent disk balanced disk types.
+	PDBalanced = "pd-balanced"
+	// HyperDiskBalanced is the constant string representation for hyperdisk balanced disk types.
+	HyperDiskBalanced = "hyperdisk-balanced"
+)
+
 var (
 	// ControlPlaneSupportedDisks contains the supported disk types for control plane nodes.
-	ControlPlaneSupportedDisks = sets.New("hyperdisk-balanced", "pd-balanced", "pd-ssd")
+	ControlPlaneSupportedDisks = sets.New(HyperDiskBalanced, PDBalanced, PDSSD)
 
 	// ComputeSupportedDisks contains the supported disk types for control plane nodes.
-	ComputeSupportedDisks = sets.New("hyperdisk-balanced", "pd-balanced", "pd-ssd", "pd-standard")
+	ComputeSupportedDisks = sets.New(HyperDiskBalanced, PDBalanced, PDSSD, PDStandard)
+
+	// DiskTypeToInstanceTypeMap contains a map where the key is the Disk Type, and the values are a list of
+	// instance types that are supported by the installer and correlate to the Disk Type.
+	DiskTypeToInstanceTypeMap = map[string][]string{
+		PDStandard:        {"a2", "e2", "n1", "n2", "n2d", "t2a", "t2d"},
+		PDSSD:             {"a2", "a3", "c3", "c3d", "e2", "m1", "n1", "n2", "n2d", "t2a", "t2d"},
+		PDBalanced:        {"a2", "a3", "c3", "c3d", "e2", "m1", "n1", "n2", "n2d", "t2a", "t2d"},
+		HyperDiskBalanced: {"c3", "c3d", "m1", "n4"},
+	}
 )
 
 const (
