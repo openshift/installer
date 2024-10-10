@@ -802,6 +802,10 @@ spec:
                       description: "clientTimeout defines how long a connection will be held open while waiting for a client response. \n If unset, the default timeout is 30s"
                       format: duration
                       type: string
+                    connectTimeout:
+                      description: "ConnectTimeout defines the maximum time to wait for a connection attempt to a server/backend to succeed. \n This field expects an unsigned duration string of decimal numbers, each with optional fraction and a unit suffix, e.g. \"300ms\", \"1.5h\" or \"2h45m\". Valid time units are \"ns\", \"us\" (or \"µs\" U+00B5 or \"μs\" U+03BC), \"ms\", \"s\", \"m\", \"h\". \n When omitted, this means the user has no opinion and the platform is left to choose a reasonable default. This default is subject to change over time. The current default is 5s."
+                      pattern: ^(0|([0-9]+(\.[0-9]+)?(ns|us|µs|μs|ms|s|m|h))+)$
+                      type: string
                     headerBufferBytes:
                       description: "headerBufferBytes describes how much memory should be reserved (in bytes) for IngressController connection sessions. Note that this value must be at least 16384 if HTTP/2 is enabled for the IngressController (https://tools.ietf.org/html/rfc7540). If this field is empty, the IngressController will use a default value of 32768 bytes. \n Setting this field is generally not recommended as headerBufferBytes values that are too small may break the IngressController and headerBufferBytes values that are too large could cause the IngressController to use significantly more memory than necessary."
                       format: int32

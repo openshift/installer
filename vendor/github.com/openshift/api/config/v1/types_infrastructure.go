@@ -622,7 +622,7 @@ type GCPResourceLabel struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=63
-	// +kubebuilder:validation:Pattern=`^[a-z][0-9a-z_-]+$`
+	// +kubebuilder:validation:Pattern=`^[a-z][0-9a-z_-]{0,62}$`
 	Key string `json:"key"`
 
 	// value is the value part of the label. A label value can have a maximum of 63 characters and cannot be empty.
@@ -630,7 +630,7 @@ type GCPResourceLabel struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=63
-	// +kubebuilder:validation:Pattern=`^[0-9a-z_-]+$`
+	// +kubebuilder:validation:Pattern=`^[0-9a-z_-]{1,63}$`
 	Value string `json:"value"`
 }
 
