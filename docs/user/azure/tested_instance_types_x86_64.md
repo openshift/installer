@@ -1,3 +1,4 @@
+* `standardBasv2Family`
 * `standardBSFamily`
 * `standardBsv2Family`
 * `standardDADSv5Family`
@@ -55,17 +56,22 @@
 * `standardLSFamily`
 * `standardLSv2Family`
 * `standardLSv3Family`
+* `standardMDSHighMemoryv3Family`
 * `standardMDSMediumMemoryv2Family`
 * `standardMDSMediumMemoryv3Family`
+* `standardMIDSHighMemoryv3Family`
 * `standardMIDSMediumMemoryv2Family`
+* `standardMISHighMemoryv3Family`
 * `standardMISMediumMemoryv2Family`
 * `standardMSFamily`
+* `standardMSHighMemoryv3Family`
 * `standardMSMediumMemoryv2Family`
 * `standardMSMediumMemoryv3Family`
 * `StandardNCADSA100v4Family`
 * `Standard NCASv3_T4 Family`
 * `standardNCSv3Family`
 * `standardNDSv2Family`
+* `StandardNGADSV620v1Family`
 * `standardNPSFamily`
 * `StandardNVADSA10v5Family`
 * `standardNVSv3Family`
