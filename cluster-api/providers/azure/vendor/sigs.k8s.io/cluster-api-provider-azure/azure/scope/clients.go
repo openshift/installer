@@ -81,10 +81,11 @@ func (c *AzureClients) setCredentialsWithProvider(ctx context.Context, subscript
 	if credentialsProvider == nil {
 		return fmt.Errorf("credentials provider cannot have an empty value")
 	}
+	fmt.Printf("DEBUGGIN setCredentialsWithProvider environmentName: %s \n", environmentName)
 
 	settings, err := c.getSettingsFromEnvironment(environmentName)
 	if err != nil {
-		return err
+		return fmt.Errorf("getSettingsFromEnvironment: %w", err)
 	}
 
 	if subscriptionID == "" {
@@ -103,13 +104,13 @@ func (c *AzureClients) setCredentialsWithProvider(ctx context.Context, subscript
 
 	clientSecret, err := credentialsProvider.GetClientSecret(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("GetClientSecret: %w", err)
 	}
 	c.Values["AZURE_CLIENT_SECRET"] = strings.TrimSuffix(clientSecret, "\n")
 
 	tokenCredential, err := credentialsProvider.GetTokenCredential(ctx, c.ResourceManagerEndpoint, c.Environment.ActiveDirectoryEndpoint, c.Environment.TokenAudience)
 	if err != nil {
-		return err
+		return fmt.Errorf("GetTokenCredential: %w", err)
 	}
 	c.TokenCredential = tokenCredential
 	return err
