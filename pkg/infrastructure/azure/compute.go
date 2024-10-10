@@ -224,6 +224,7 @@ func CreateGalleryImageVersion(ctx context.Context, in *CreateGalleryImageVersio
 		armcompute.GalleryImageVersion{
 			Location:   to.Ptr(in.Region),
 			Properties: &galleryImageVersionProperties,
+			Tags:       in.Tags,
 		},
 		&armcompute.GalleryImageVersionsClientBeginCreateOrUpdateOptions{},
 	)
