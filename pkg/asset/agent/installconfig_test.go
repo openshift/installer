@@ -108,7 +108,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: "192.168.122.10": IP expected to be in one of the machine networks: 10.0.0.0/16, platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
 		},
 		{
 			name: "ingressVIP missing and vcenter vSphere credentials are present",
@@ -142,7 +142,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: "192.168.122.10": IP expected to be in one of the machine networks: 10.0.0.0/16, platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set]`,
 		},
 		{
 			name: "vcenter vSphere credentials are present but failureDomain server does not match",
@@ -189,7 +189,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [platform.vsphere.failureDomains.server: Invalid value: "diff1.vcenter.com": server does not exist in vcenters, platform.vsphere.failureDomains.server: Invalid value: "diff2.vcenter.com": server does not exist in vcenters]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: "192.168.122.10": IP expected to be in one of the machine networks: 10.0.0.0/16, platform.vsphere.ingressVIPs: Invalid value: "192.168.122.11": IP expected to be in one of the machine networks: 10.0.0.0/16, platform.vsphere.failureDomains.server: Invalid value: "diff1.vcenter.com": server does not exist in vcenters, platform.vsphere.failureDomains.server: Invalid value: "diff2.vcenter.com": server does not exist in vcenters]`,
 		},
 		{
 			name: "All required vSphere fields must be entered if some of them are entered - deprecated fields",
@@ -208,7 +208,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [Platform.VSphere.username: Required value: All credential fields are required if any one is specified, Platform.VSphere.password: Required value: All credential fields are required if any one is specified, Platform.VSphere.datacenter: Required value: All credential fields are required if any one is specified, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: "192.168.122.10": IP expected to be in one of the machine networks: 10.0.0.0/16, platform.vsphere.ingressVIPs: Invalid value: "192.168.122.11": IP expected to be in one of the machine networks: 10.0.0.0/16, Platform.VSphere.username: Required value: All credential fields are required if any one is specified, Platform.VSphere.password: Required value: All credential fields are required if any one is specified, Platform.VSphere.datacenter: Required value: All credential fields are required if any one is specified, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
 		},
 		{
 			name: "All required vSphere fields must be entered if some of them are entered - vcenter fields",
@@ -229,7 +229,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [Platform.VSphere.password: Required value: All credential fields are required if any one is specified, Platform.VSphere.datacenter: Required value: All credential fields are required if any one is specified, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: "192.168.122.10": IP expected to be in one of the machine networks: 10.0.0.0/16, platform.vsphere.ingressVIPs: Invalid value: "192.168.122.11": IP expected to be in one of the machine networks: 10.0.0.0/16, Platform.VSphere.password: Required value: All credential fields are required if any one is specified, Platform.VSphere.datacenter: Required value: All credential fields are required if any one is specified, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
 		},
 		{
 			name: "ingressVIP missing for vSphere, credentials not provided and should not flag error",
@@ -245,7 +245,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: "192.168.122.10": IP expected to be in one of the machine networks: 10.0.0.0/16, platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set]`,
 		},
 		{
 			name: "no compute.replicas set for SNO",
@@ -797,7 +797,7 @@ networking:
   networkType: OVNKubernetes
   machineNetwork:
   - cidr: 192.168.122.0/23
-  serviceNetwork: 
+  serviceNetwork:
   - 172.30.0.0/16
 compute:
   - architecture: amd64
@@ -821,7 +821,7 @@ platform:
     folder: testFolder
     cluster: testCluster
     apiVIP: 192.168.122.10
-    ingressVIPs: 
+    ingressVIPs:
       - 192.168.122.11
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
