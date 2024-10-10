@@ -171,7 +171,7 @@ You may want to label the cluster metrics with a cluster identifier.
 
 Optionally, since metrics will be collected externally, you can set a reduced retention for local metrics.
 
-The resulting `cluster-monitoring-config` ConfigMap should then resemble this:
+The resulting `cluster-monitoring-config` ConfigMap could then resemble this:
 
 ```yaml
 apiVersion: v1
