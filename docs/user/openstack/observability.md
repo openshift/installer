@@ -248,7 +248,7 @@ TOKEN=$(oc whoami -t)
 Then get the Prometheus federation route URL:
 
 ```bash
-HOST=$(oc -n openshift-monitoring get route prometheus-k8s-federate -ojsonpath={.status.ingress[].host})
+HOST=$(oc -n openshift-monitoring get route prometheus-k8s-federate -ojsonpath={'.status.ingress[].host'})
 ```
 
 #### Let RHOSO scrape OpenShift's federation endpoint
