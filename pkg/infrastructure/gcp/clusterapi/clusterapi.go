@@ -121,7 +121,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		return nil, fmt.Errorf("failed to create bucket %s: %w", bucketName, err)
 	}
 
-	editedIgnitionBytes, err := EditIgnition(ctx, in)
+	editedIgnitionBytes, updatedMasterIgn, err := EditIgnition(ctx, in)
 	if err != nil {
 		return nil, fmt.Errorf("failed to edit bootstrap ignition: %w", err)
 	}
@@ -154,7 +154,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 
 	ignSecrets := []*corev1.Secret{
 		clusterapi.IgnitionSecret([]byte(ignShim), in.InfraID, "bootstrap"),
-		clusterapi.IgnitionSecret(in.MasterIgnData, in.InfraID, "master"),
+		clusterapi.IgnitionSecret(updatedMasterIgn, in.InfraID, "master"),
 	}
 
 	return ignSecrets, nil
