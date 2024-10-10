@@ -21,7 +21,7 @@ a different instance.
 In this example, we'll use an external storage to store the metrics. We'll
 assume that the external storage is another Prometheus instance.
 
-We will set up remote-write from both instances, authenticating them with mTLS
+We will set up remote-write from both OpenStack and OpenShift, authenticating them with mTLS
 (mutual TLS). The target Prometheus needs to be configured to accept client TLS
 certificates, and remote write.
 
