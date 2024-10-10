@@ -27,6 +27,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	v1 "github.com/openshift/api/config/v1"
+	machineconfigv1 "github.com/openshift/api/machineconfiguration/v1"
 	"github.com/openshift/installer/internal/tshelpers"
 )
 
@@ -65,8 +66,10 @@ func TestNodeJoinerIntegration(t *testing.T) {
 
 		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
 			"isoCmp":              tshelpers.IsoCmp,
+			"isoCmpRegEx":         tshelpers.IsoCmpRegEx,
 			"isoIgnitionContains": tshelpers.IsoIgnitionContains,
 			"isoIgnitionUser":     tshelpers.IsoIgnitionUser,
+			"isoFileCmpRegEx":     tshelpers.IsoFileCmpRegEx,
 		},
 
 		Setup: func(e *testscript.Env) error {
@@ -237,6 +240,10 @@ func getGVR(obj *unstructured.Unstructured) (schema.GroupVersionResource, error)
 		gvr = v1.GroupVersion.WithResource("infrastructures")
 	case "Proxy":
 		gvr = v1.SchemeGroupVersion.WithResource("proxies")
+	case "ImageDigestMirrorSet":
+		gvr = v1.SchemeGroupVersion.WithResource("imagedigestmirrorsets")
+	case "MachineConfig":
+		gvr = machineconfigv1.SchemeGroupVersion.WithResource("machineconfigs")
 	case "Namespace":
 		gvr = corev1.SchemeGroupVersion.WithResource("namespaces")
 	case "Secret":
