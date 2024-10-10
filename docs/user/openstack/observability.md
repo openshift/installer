@@ -233,7 +233,7 @@ possible to query remote metric stores instead.
 
 OpenShift exposes a federation endpoint to enable queries originating from
 outside the cluster to include OpenShift cluster monitoring data. You can
-follow [these instructions][federation] to set it up.
+follow [these instructions][federation] to get acquainted to the endpoint.
 
 [federation]: https://docs.redhat.com/en/documentation/openshift_container_platform/4.16/html/monitoring/accessing-third-party-monitoring-apis#monitoring-querying-metrics-by-using-the-federation-endpoint-for-prometheus_accessing-monitoring-apis-by-using-the-cli "OpenShift documentation: Querying metrics by using the federation endpoint for Prometheus"
 
