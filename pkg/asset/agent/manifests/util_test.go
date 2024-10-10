@@ -450,6 +450,39 @@ func getAgentHostsWithBMCConfig() *agentconfig.AgentHosts {
 	}
 }
 
+func getAgentHostsConfigNoInterfaces() *agentconfig.AgentHosts {
+	return &agentconfig.AgentHosts{
+		Hosts: []agenttypes.Host{
+			{
+				Hostname:   "control-0.example.org",
+				Interfaces: []*v1beta1.Interface{},
+				NetworkConfig: v1beta1.NetConfig{
+					Raw: unmarshalJSON([]byte(rawNMStateConfig)),
+				},
+			},
+		},
+	}
+}
+
+func getAgentHostsConfigInvalidMac() *agentconfig.AgentHosts {
+	return &agentconfig.AgentHosts{
+		Hosts: []agenttypes.Host{
+			{
+				Hostname: "control-0.example.org",
+				Interfaces: []*v1beta1.Interface{
+					{
+						Name:       "enp2s0",
+						MacAddress: "98-af-65-a5-8d-02",
+					},
+				},
+				NetworkConfig: v1beta1.NetConfig{
+					Raw: unmarshalJSON([]byte(rawNMStateConfig)),
+				},
+			},
+		},
+	}
+}
+
 func getGoodACI() *hiveext.AgentClusterInstall {
 	goodACI := &hiveext.AgentClusterInstall{
 		TypeMeta: metav1.TypeMeta{
