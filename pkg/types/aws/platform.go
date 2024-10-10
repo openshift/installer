@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 
 	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/installer/pkg/types/dns"
 )
 
 const (
@@ -119,6 +120,13 @@ type Platform struct {
 	// Public IPv4 address that you bring to your AWS account with BYOIP.
 	// +optional
 	PublicIpv4Pool string `json:"publicIpv4Pool,omitempty"`
+
+	// UserProvisionedDNS indicates if the customer is providing their own DNS solution in place of the default
+	// provisioned by the Installer.
+	// +kubebuilder:default:="Disabled"
+	// +default="Disabled"
+	// +kubebuilder:validation:Enum="Enabled";"Disabled"
+	UserProvisionedDNS dns.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
 }
 
 // ServiceEndpoint store the configuration for services to

@@ -12,12 +12,12 @@ import (
 // GatedFeatures determines all of the install config fields that should
 // be validated to ensure that the proper featuregate is enabled when the field is used.
 func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeature {
-	g := c.GCP
+	a := c.AWS
 	return []featuregates.GatedInstallConfigFeature{
 		{
-			FeatureGateName: features.FeatureGateGCPClusterHostedDNS,
-			Condition:       g.UserProvisionedDNS == dns.UserProvisionedDNSEnabled,
-			Field:           field.NewPath("platform", "gcp", "userProvisionedDNS"),
+			FeatureGateName: features.FeatureGateAWSClusterHostedDNS,
+			Condition:       a.UserProvisionedDNS == dns.UserProvisionedDNSEnabled,
+			Field:           field.NewPath("platform", "aws", "userProvisionedDNS"),
 		},
 	}
 }

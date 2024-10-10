@@ -2687,6 +2687,15 @@ spec:
                     items:
                       type: string
                     type: array
+                  userProvisionedDNS:
+                    default: Disabled
+                    description: UserProvisionedDNS indicates if the customer is providing
+                      their own DNS solution in place of the default provisioned by
+                      the Installer.
+                    enum:
+                    - Enabled
+                    - Disabled
+                    type: string
                   userTags:
                     additionalProperties:
                       type: string
