@@ -71,17 +71,17 @@ func NewCluster(ctx context.Context, assetDir, rendezvousIP, kubeconfigPath, ssh
 	czero := &Cluster{}
 	capi := &clientSet{}
 
-	var authToken string
+	var watcherAuthToken string
 	var err error
 
 	switch workflowType {
 	case workflow.AgentWorkflowTypeInstall:
-		authToken, err = FindAuthTokenFromAssetStore(assetDir)
+		watcherAuthToken, err = FindAuthTokenFromAssetStore(assetDir)
 		if err != nil {
 			return nil, err
 		}
 	case workflow.AgentWorkflowTypeAddNodes:
-		authToken, err = gencrypto.GetAuthTokenFromCluster(ctx, kubeconfigPath)
+		watcherAuthToken, err = gencrypto.GetAuthTokenFromCluster(ctx, kubeconfigPath)
 		if err != nil {
 			return nil, err
 		}
@@ -89,7 +89,7 @@ func NewCluster(ctx context.Context, assetDir, rendezvousIP, kubeconfigPath, ssh
 		return nil, fmt.Errorf("AgentWorkflowType value not supported: %s", workflowType)
 	}
 
-	restclient := NewNodeZeroRestClient(ctx, rendezvousIP, sshKey, authToken)
+	restclient := NewNodeZeroRestClient(ctx, rendezvousIP, sshKey, watcherAuthToken)
 
 	kubeclient, err := NewClusterKubeAPIClient(ctx, kubeconfigPath)
 	if err != nil {

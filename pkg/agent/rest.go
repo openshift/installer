@@ -33,7 +33,7 @@ type NodeZeroRestClient struct {
 }
 
 // NewNodeZeroRestClient Initialize a new rest client to interact with the Agent Rest API on node zero.
-func NewNodeZeroRestClient(ctx context.Context, rendezvousIP, sshKey, token string) *NodeZeroRestClient {
+func NewNodeZeroRestClient(ctx context.Context, rendezvousIP, sshKey, watcherAuthToken string) *NodeZeroRestClient {
 	restClient := &NodeZeroRestClient{}
 
 	// Get SSH Keys which can be used to determine if Rest API failures are due to network connectivity issues
@@ -48,7 +48,7 @@ func NewNodeZeroRestClient(ctx context.Context, rendezvousIP, sshKey, token stri
 		Path:   client.DefaultBasePath,
 	}
 
-	config.AuthInfo = gencrypto.UserAuthHeaderWriter(token)
+	config.AuthInfo = gencrypto.WatcherAuthHeaderWriter(watcherAuthToken)
 
 	client := client.New(config)
 
@@ -137,7 +137,7 @@ func FindAuthTokenFromAssetStore(assetDir string) (string, error) {
 
 	var authToken string
 	if authConfig != nil {
-		authToken = authConfig.(*gencrypto.AuthConfig).AgentAuthToken
+		authToken = authConfig.(*gencrypto.AuthConfig).WatcherAuthToken
 	}
 
 	return authToken, nil

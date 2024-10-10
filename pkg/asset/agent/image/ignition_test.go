@@ -92,8 +92,10 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	clusterName := "test-agent-cluster-install.test"
 
 	publicKey := "-----BEGIN EC PUBLIC KEY-----\nMHcCAQEEIOSCfDNmx0qe6dncV4tg==\n-----END EC PUBLIC KEY-----\n"
-	token := "someToken"
-	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries, "minimal-iso", infraEnvID, publicKey, gencrypto.AuthType, token, "", "", haveMirrorConfig, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, osImage, proxy)
+	agentAuthToken := "agentAuthToken"
+	userAuthToken := "userAuthToken"
+	watcherAuthToken := "watcherAuthToken"
+	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries, "minimal-iso", infraEnvID, publicKey, gencrypto.AuthType, agentAuthToken, userAuthToken, watcherAuthToken, "", "", haveMirrorConfig, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, osImage, proxy)
 	assert.Equal(t, clusterName, templateData.ClusterName)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
@@ -109,16 +111,19 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	assert.Equal(t, proxy, templateData.Proxy)
 	assert.Equal(t, publicKey, templateData.PublicKeyPEM)
 	assert.Equal(t, gencrypto.AuthType, templateData.AuthType)
-	assert.Equal(t, token, templateData.Token)
+	assert.Equal(t, agentAuthToken, templateData.AgentAuthToken)
+	assert.Equal(t, userAuthToken, templateData.UserAuthToken)
+	assert.Equal(t, watcherAuthToken, templateData.WatcherAuthToken)
 
 }
 
 func TestIgnition_getRendezvousHostEnv(t *testing.T) {
 	nodeZeroIP := "2001:db8::dead:beef"
-	token := "someToken"
-	rendezvousHostEnv := getRendezvousHostEnv("http", nodeZeroIP, token, workflow.AgentWorkflowTypeInstall)
+	agentAuthtoken := "agentAuthtoken"
+	userAuthToken := "userAuthToken"
+	rendezvousHostEnv := getRendezvousHostEnv("http", nodeZeroIP, agentAuthtoken, userAuthToken, workflow.AgentWorkflowTypeInstall)
 	assert.Equal(t,
-		"NODE_ZERO_IP="+nodeZeroIP+"\nSERVICE_BASE_URL=http://["+nodeZeroIP+"]:8090/\nIMAGE_SERVICE_BASE_URL=http://["+nodeZeroIP+"]:8888/\nAGENT_AUTH_TOKEN="+token+"\nPULL_SECRET_TOKEN="+token+"\nWORKFLOW_TYPE=install\n",
+		"NODE_ZERO_IP="+nodeZeroIP+"\nSERVICE_BASE_URL=http://["+nodeZeroIP+"]:8090/\nIMAGE_SERVICE_BASE_URL=http://["+nodeZeroIP+"]:8888/\nPULL_SECRET_TOKEN="+agentAuthtoken+"\nUSER_AUTH_TOKEN="+userAuthToken+"\nWORKFLOW_TYPE=install\n",
 		rendezvousHostEnv)
 }
 

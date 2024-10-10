@@ -75,7 +75,9 @@ type agentTemplateData struct {
 	ConfigImageFiles          string
 	ImageTypeISO              string
 	PublicKeyPEM              string
-	Token                     string
+	AgentAuthToken            string
+	UserAuthToken             string
+	WatcherAuthToken          string
 	TokenExpiry               string
 	AuthType                  string
 	CaBundleMount             string
@@ -193,7 +195,7 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 		// Enable add-nodes specific services
 		enabledServices = append(enabledServices, "agent-add-node.service")
 		// Generate add-nodes.env file
-		addNodesEnvFile := ignition.FileFromString(addNodesEnvPath, "root", 0644, getAddNodesEnv(*clusterInfo, authConfig.AgentAuthTokenExpiry))
+		addNodesEnvFile := ignition.FileFromString(addNodesEnvPath, "root", 0644, getAddNodesEnv(*clusterInfo, authConfig.AuthTokenExpiry))
 		config.Storage.Files = append(config.Storage.Files, addNodesEnvFile)
 
 		// Enable auth token service
@@ -266,7 +268,9 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 		authConfig.PublicKey,
 		authConfig.AuthType,
 		authConfig.AgentAuthToken,
-		authConfig.AgentAuthTokenExpiry,
+		authConfig.UserAuthToken,
+		authConfig.WatcherAuthToken,
+		authConfig.AuthTokenExpiry,
 		caBundleMount,
 		len(registriesConfig.MirrorConfig) > 0,
 		numMasters, numWorkers,
@@ -281,7 +285,7 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 
 	rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath,
 		"root", 0644,
-		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, a.RendezvousIP, authConfig.AgentAuthToken, agentWorkflow.Workflow))
+		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, a.RendezvousIP, authConfig.AgentAuthToken, authConfig.UserAuthToken, agentWorkflow.Workflow))
 	config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 
 	err = addBootstrapScripts(&config, agentManifests.ClusterImageSet.Spec.ReleaseImage)
@@ -382,7 +386,7 @@ func addBootstrapScripts(config *igntypes.Config, releaseImage string) (err erro
 }
 
 func getTemplateData(name, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries,
-	imageTypeISO, infraEnvID, publicKey, authType, token, tokenExpiry, caBundleMount string,
+	imageTypeISO, infraEnvID, publicKey, authType, agentAuthToken, userAuthToken, watcherAuthToken, tokenExpiry, caBundleMount string,
 	haveMirrorConfig bool,
 	numMasters, numWorkers int,
 	osImage *models.OsImage,
@@ -404,13 +408,15 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage, releaseIm
 		ImageTypeISO:              imageTypeISO,
 		PublicKeyPEM:              publicKey,
 		AuthType:                  authType,
-		Token:                     token,
+		AgentAuthToken:            agentAuthToken,
+		UserAuthToken:             userAuthToken,
+		WatcherAuthToken:          watcherAuthToken,
 		TokenExpiry:               tokenExpiry,
 		CaBundleMount:             caBundleMount,
 	}
 }
 
-func getRendezvousHostEnv(serviceProtocol, nodeZeroIP, token string, workflowType workflow.AgentWorkflowType) string {
+func getRendezvousHostEnv(serviceProtocol, nodeZeroIP, agentAuthtoken, userAuthToken string, workflowType workflow.AgentWorkflowType) string {
 	serviceBaseURL := url.URL{
 		Scheme: serviceProtocol,
 		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
@@ -421,8 +427,10 @@ func getRendezvousHostEnv(serviceProtocol, nodeZeroIP, token string, workflowTyp
 		Host:   net.JoinHostPort(nodeZeroIP, "8888"),
 		Path:   "/",
 	}
-	// AGENT_AUTH_TOKEN is required to authenticate API requests against agent-installer-local auth type.
-	// PULL_SECRET_TOKEN contains the same value as AGENT_AUTH_TOKEN. The name PULL_SECRET_TOKEN is used in
+	// USER_AUTH_TOKEN is required to authenticate API requests against agent-installer-local auth type
+	// and for the endpoints marked with userAuth security definition in assisted-service swagger.yaml.
+	// PULL_SECRET_TOKEN contains the AGENT_AUTH_TOKEN and is required for the endpoints marked with agentAuth security definition in assisted-service swagger.yaml.
+	// The name PULL_SECRET_TOKEN is used in
 	// assisted-installer-agent, which is responsible for authenticating API requests related to agents.
 	// Historically, PULL_SECRET_TOKEN was used solely to store the pull secrets.
 	// However, as the authentication mechanisms have evolved, PULL_SECRET_TOKEN now
@@ -434,10 +442,10 @@ func getRendezvousHostEnv(serviceProtocol, nodeZeroIP, token string, workflowTyp
 	return fmt.Sprintf(`NODE_ZERO_IP=%s
 SERVICE_BASE_URL=%s
 IMAGE_SERVICE_BASE_URL=%s
-AGENT_AUTH_TOKEN=%s
 PULL_SECRET_TOKEN=%s
+USER_AUTH_TOKEN=%s
 WORKFLOW_TYPE=%s
-`, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String(), token, token, workflowType)
+`, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String(), agentAuthtoken, userAuthToken, workflowType)
 }
 
 func getAddNodesEnv(clusterInfo joiner.ClusterInfo, authTokenExpiry string) string {
