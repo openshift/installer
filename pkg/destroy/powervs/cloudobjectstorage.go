@@ -25,7 +25,7 @@ const cosResourceID = "dff97f5c-bc5e-4455-b470-411c3edbe49c"
 func (o *ClusterUninstaller) listCOSInstances() (cloudResources, error) {
 	o.Logger.Debugf("Listing COS instances")
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	var (
@@ -147,7 +147,7 @@ func (o *ClusterUninstaller) findReclaimedCOSInstance(item cloudResource) (*reso
 
 	getReclamationOptions = o.controllerSvc.NewListReclamationsOptions()
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	reclamations, response, err = o.controllerSvc.ListReclamationsWithContext(ctx, getReclamationOptions)
@@ -191,7 +191,7 @@ func (o *ClusterUninstaller) destroyCOSInstance(item cloudResource) error {
 
 	getOptions = o.controllerSvc.NewGetResourceInstanceOptions(item.id)
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	_, response, err = o.controllerSvc.GetResourceInstanceWithContext(ctx, getOptions)
@@ -250,14 +250,14 @@ func (o *ClusterUninstaller) destroyCOSInstances() error {
 
 	items := o.insertPendingItems(cosTypeName, firstPassList.list())
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	for _, item := range items {
 		select {
 		case <-ctx.Done():
 			o.Logger.Debugf("destroyCOSInstances: case <-ctx.Done()")
-			return o.Context.Err() // we're cancelled, abort
+			return ctx.Err() // we're cancelled, abort
 		default:
 		}
 

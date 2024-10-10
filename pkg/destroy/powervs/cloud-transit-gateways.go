@@ -10,6 +10,8 @@ import (
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/networking-go-sdk/transitgatewayapisv1"
 	"k8s.io/apimachinery/pkg/util/wait"
+
+	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 )
 
 const (
@@ -132,6 +134,39 @@ func (o *ClusterUninstaller) listTransitGateways() (cloudResources, error) {
 // Destroy a specified transit gateway.
 func (o *ClusterUninstaller) destroyTransitGateway(item cloudResource) error {
 	var (
+		deleteTransitGatewayOptions *transitgatewayapisv1.DeleteTransitGatewayOptions
+		response                    *core.DetailedResponse
+		err                         error
+
+		ctx    context.Context
+		cancel func()
+	)
+
+	ctx, cancel = contextWithTimeout()
+	defer cancel()
+
+	err = o.destroyTransitGatewayConnections(item)
+	if err != nil {
+		return err
+	}
+
+	// We can delete the transit gateway now!
+	deleteTransitGatewayOptions = o.tgClient.NewDeleteTransitGatewayOptions(item.id)
+
+	response, err = o.tgClient.DeleteTransitGatewayWithContext(ctx, deleteTransitGatewayOptions)
+	if err != nil {
+		o.Logger.Fatalf("destroyTransitGateway: DeleteTransitGatewayWithContext returns %v with response %v", err, response)
+	}
+
+	o.deletePendingItems(item.typeName, []cloudResource{item})
+	o.Logger.Infof("Deleted Transit Gateway %q", item.name)
+
+	return nil
+}
+
+// Destroy the connections for a specified transit gateway.
+func (o *ClusterUninstaller) destroyTransitGatewayConnections(item cloudResource) error {
+	var (
 		firstPassList cloudResources
 
 		err error
@@ -145,9 +180,6 @@ func (o *ClusterUninstaller) destroyTransitGateway(item cloudResource) error {
 			Factor: 1.5,
 			Cap:    10 * time.Minute,
 			Steps:  math.MaxInt32}
-
-		deleteTransitGatewayOptions *transitgatewayapisv1.DeleteTransitGatewayOptions
-		response                    *core.DetailedResponse
 	)
 
 	firstPassList, err = o.listTransitConnections(item)
@@ -157,14 +189,14 @@ func (o *ClusterUninstaller) destroyTransitGateway(item cloudResource) error {
 
 	items = o.insertPendingItems(transitGatewayConnectionTypeName, firstPassList.list())
 
-	ctx, cancel = o.contextWithTimeout()
+	ctx, cancel = contextWithTimeout()
 	defer cancel()
 
 	for _, item := range items {
 		select {
-		case <-o.Context.Done():
-			o.Logger.Debugf("destroyTransitGateway: case <-o.Context.Done()")
-			return o.Context.Err() // we're cancelled, abort
+		case <-ctx.Done():
+			o.Logger.Debugf("destroyTransitGateway: case <-ctx.Done()")
+			return ctx.Err() // we're cancelled, abort
 		default:
 		}
 
@@ -213,18 +245,7 @@ func (o *ClusterUninstaller) destroyTransitGateway(item cloudResource) error {
 		o.Logger.Fatalf("destroyTransitGateway: ExponentialBackoffWithContext (list) returns %v", err)
 	}
 
-	// We can delete the transit gateway now!
-	deleteTransitGatewayOptions = o.tgClient.NewDeleteTransitGatewayOptions(item.id)
-
-	response, err = o.tgClient.DeleteTransitGatewayWithContext(ctx, deleteTransitGatewayOptions)
-	if err != nil {
-		o.Logger.Fatalf("destroyTransitGateway: DeleteTransitGatewayWithContext returns %v with response %v", err, response)
-	}
-
-	o.deletePendingItems(item.typeName, []cloudResource{item})
-	o.Logger.Infof("Deleted Transit Gateway %q", item.name)
-
-	return nil
+	return err
 }
 
 // Destroy a specified transit gateway connection.
@@ -238,7 +259,7 @@ func (o *ClusterUninstaller) destroyTransitConnection(item cloudResource) error 
 		err                                   error
 	)
 
-	ctx, cancel = o.contextWithTimeout()
+	ctx, cancel = contextWithTimeout()
 	defer cancel()
 
 	// ...Options(transitGatewayID string, id string)
@@ -256,7 +277,7 @@ func (o *ClusterUninstaller) destroyTransitConnection(item cloudResource) error 
 	return nil
 }
 
-// listTransitGateways lists Transit Connections for a Transit Gateway in the IBM Cloud.
+// listTransitConnections lists Transit Connections for a Transit Gateway in the IBM Cloud.
 func (o *ClusterUninstaller) listTransitConnections(item cloudResource) (cloudResources, error) {
 	o.Logger.Debugf("Listing Transit Gateways Connections (%s)", item.name)
 
@@ -273,8 +294,10 @@ func (o *ClusterUninstaller) listTransitConnections(item cloudResource) (cloudRe
 		moreData                           = true
 	)
 
-	ctx, cancel = o.contextWithTimeout()
+	ctx, cancel = contextWithTimeout()
 	defer cancel()
+
+	o.Logger.Debugf("listTransitConnections: searching for ID %s", item.id)
 
 	listConnectionsOptions = o.tgClient.NewListConnectionsOptions()
 	listConnectionsOptions.SetLimit(perPage)
@@ -289,7 +312,8 @@ func (o *ClusterUninstaller) listTransitConnections(item cloudResource) (cloudRe
 			return nil, err
 		}
 		for _, transitConnection = range transitConnectionCollections.Connections {
-			if !strings.Contains(*transitConnection.TransitGateway.Name, o.InfraID) {
+			if *transitConnection.TransitGateway.ID != item.id {
+				o.Logger.Debugf("listTransitConnections: SKIP: %s, %s, %s", *transitConnection.ID, *transitConnection.Name, *transitConnection.TransitGateway.Name)
 				continue
 			}
 
@@ -372,9 +396,53 @@ func (o *ClusterUninstaller) listTransitConnections(item cloudResource) (cloudRe
 	return cloudResources{}.insert(result...), nil
 }
 
-// destroyTransitGateways searches for transit gateways that have a name that starts with
-// the cluster's infra ID.
+// We either deal with an existing TG or destroy TGs matching a name.
 func (o *ClusterUninstaller) destroyTransitGateways() error {
+	var (
+		client *powervsconfig.Client
+		tgID   string
+		item   cloudResource
+		err    error
+
+		ctx    context.Context
+		cancel func()
+	)
+
+	ctx, cancel = contextWithTimeout()
+	defer cancel()
+
+	// Old style: delete all TGs matching by name
+	if o.TransitGatewayName == "" {
+		return o.innerDestroyTransitGateways()
+	}
+
+	// New style: delete just TG connections for existing TG
+	client, err = powervsconfig.NewClient()
+	if err != nil {
+		return err
+	}
+
+	tgID, err = client.TransitGatewayID(ctx, o.TransitGatewayName)
+	if err != nil {
+		return err
+	}
+
+	item = cloudResource{
+		key:      tgID,
+		name:     o.TransitGatewayName,
+		status:   "",
+		typeName: transitGatewayConnectionTypeName,
+		id:       tgID,
+	}
+
+	err = o.destroyTransitGatewayConnections(item)
+
+	return err
+}
+
+// innerDestroyTransitGateways searches for transit gateways that have a name that starts with
+// the cluster's infra ID.
+func (o *ClusterUninstaller) innerDestroyTransitGateways() error {
 	var (
 		firstPassList cloudResources
 
@@ -398,14 +466,14 @@ func (o *ClusterUninstaller) destroyTransitGateways() error {
 
 	items = o.insertPendingItems(transitGatewayTypeName, firstPassList.list())
 
-	ctx, cancel = o.contextWithTimeout()
+	ctx, cancel = contextWithTimeout()
 	defer cancel()
 
 	for _, item := range items {
 		select {
-		case <-o.Context.Done():
-			o.Logger.Debugf("destroyTransitGateways: case <-o.Context.Done()")
-			return o.Context.Err() // we're cancelled, abort
+		case <-ctx.Done():
+			o.Logger.Debugf("destroyTransitGateways: case <-ctx.Done()")
+			return ctx.Err() // we're cancelled, abort
 		default:
 		}
 

@@ -86,7 +86,10 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 	}
 
-	transitGatewayName = fmt.Sprintf("%s-tg", clusterID.InfraID)
+	transitGatewayName = installConfig.Config.Platform.PowerVS.TGName
+	if transitGatewayName == "" {
+		transitGatewayName = fmt.Sprintf("%s-tg", clusterID.InfraID)
+	}
 
 	cosName = fmt.Sprintf("%s-cos", clusterID.InfraID)
 

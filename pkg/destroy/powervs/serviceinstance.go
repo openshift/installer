@@ -44,13 +44,13 @@ func (o *ClusterUninstaller) convertResourceGroupNameToID(resourceGroupID string
 func (o *ClusterUninstaller) listServiceInstances() (cloudResources, error) {
 	o.Logger.Debugf("Listing service instances")
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	select {
 	case <-ctx.Done():
 		o.Logger.Debugf("listServiceInstances: case <-ctx.Done()")
-		return nil, o.Context.Err() // we're cancelled, abort
+		return nil, ctx.Err() // we're cancelled, abort
 	default:
 	}
 
@@ -163,13 +163,13 @@ func (o *ClusterUninstaller) listServiceInstances() (cloudResources, error) {
 
 // destroyServiceInstance destroys a service instance.
 func (o *ClusterUninstaller) destroyServiceInstance(item cloudResource) error {
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	select {
 	case <-ctx.Done():
 		o.Logger.Debugf("destroyServiceInstance: case <-ctx.Done()")
-		return o.Context.Err() // we're cancelled, abort
+		return ctx.Err() // we're cancelled, abort
 	default:
 	}
 
@@ -225,14 +225,14 @@ func (o *ClusterUninstaller) destroyServiceInstances() error {
 
 	items := o.insertPendingItems(serviceInstanceTypeName, firstPassList.list())
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	for _, item := range items {
 		select {
 		case <-ctx.Done():
 			o.Logger.Debugf("destroyServiceInstances: case <-ctx.Done()")
-			return o.Context.Err() // we're cancelled, abort
+			return ctx.Err() // we're cancelled, abort
 		default:
 		}
 
