@@ -139,6 +139,10 @@ func (c *Client) GetMachineTypeWithZones(ctx context.Context, project, region, m
 	if len(machines) == 0 {
 		cctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 		defer cancel()
+
+		if len(pz) == 0 {
+			return nil, nil, fmt.Errorf("failed to find public zone in project %s region %s", project, region)
+		}
 		machine, err := svc.MachineTypes.Get(project, pz[0].Name, machineType).Context(cctx).Do()
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to fetch instance type: %w", err)
