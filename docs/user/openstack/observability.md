@@ -291,6 +291,8 @@ Don't forget to make the token available as a secret (in the example above, the 
 -n openstack ceate secret generic ocp-federated --from-literal=token=sha256~xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
+// TODO: add verbiage
+
 ## Available mappings
 
 OpenShift exposes metrics that establish a correlation between OpenStack
