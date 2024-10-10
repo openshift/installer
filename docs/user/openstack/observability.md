@@ -16,7 +16,7 @@ a different instance.
 
 ### Using remote-write to send RHOSO and OCP metrics to an external storage
 
-#### Setup external storage
+#### Set up the external storage
 
 In this example, we'll use an external storage to store the metrics. We'll
 assume that the external storage is another Prometheus instance.
