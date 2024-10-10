@@ -81,7 +81,13 @@ Make sure you have the Cluster Observability Operator installed in the OpenShift
 
 To confirm that the Telemetry Operator is correctly running, follow these steps
 
-// TODO: provide steps to ensure telemetry operator is installed and running
+To check that the telemetry machinery is correctly installed, you can issue this command:
+
+```bash
+oc -n openstack get monitoringstacks metric-storage -o yaml
+```
+
+The `monitoringstacks` CRD being installed is a good indicator that telemetry is functional.
 
 
 <!--
