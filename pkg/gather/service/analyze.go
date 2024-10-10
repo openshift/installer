@@ -19,7 +19,7 @@ import (
 // then the name of the service is "release-image".
 // In case the log-bundle is from bootstrap-in-place installation the file name is:
 // "log-bundle-20210329190553/log-bundle-bootstrap/bootstrap/services/release-image.json"
-var serviceEntriesFilePathRegex = regexp.MustCompile(`^[^\/]+(?:\/log-bundle-bootstrap)?\/bootstrap\/services\/([^.]+)\.json$`)
+var serviceEntriesFilePathRegex = regexp.MustCompile(`\/bootstrap\/services\/([^.]+)\.json$`)
 
 // AnalyzeGatherBundle will analyze the bootstrap gather bundle at the specified path.
 // Analysis will be logged.
