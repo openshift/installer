@@ -190,8 +190,13 @@ func getTaskStatus(clientV3 nutanixclientv3.Service, taskUUID string) (string, e
 }
 
 // RHCOSImageName is the unique image name for a given cluster.
-func RHCOSImageName(infraID string) string {
-	return fmt.Sprintf("%s-rhcos", infraID)
+func RHCOSImageName(p *Platform, infraID string) string {
+	imgName := p.PreloadedOSImageName
+	if imgName == "" {
+		imgName = fmt.Sprintf("%s-rhcos", infraID)
+	}
+
+	return imgName
 }
 
 // CategoryKey returns the cluster specific category key name.
