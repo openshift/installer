@@ -15,7 +15,7 @@ EnvironmentFile=/usr/local/share/assisted-service/agent-images.env
 EnvironmentFile=/usr/local/share/assisted-service/assisted-service.env
 ExecStartPre=/bin/rm -f %t/%n.ctr-id
 ExecStartPre=/usr/local/bin/wait-for-assisted-service.sh
-ExecStart=podman run --net host --cidfile=%t/%n.ctr-id --cgroups=no-conmon --log-driver=journald --rm --pod-id-file=%t/assisted-service-pod.pod-id --replace --name=agent-register-cluster -v /etc/assisted/manifests:/manifests -v /etc/assisted/extra-manifests:/extra-manifests {{ if .HaveMirrorConfig }}-v /etc/containers:/etc/containers{{ end }} {{.CaBundleMount}} --env SERVICE_BASE_URL --env OPENSHIFT_INSTALL_RELEASE_IMAGE_MIRROR --env AGENT_AUTH_TOKEN $SERVICE_IMAGE /usr/local/bin/agent-installer-client registerCluster
+ExecStart=podman run --net host --cidfile=%t/%n.ctr-id --cgroups=no-conmon --log-driver=journald --rm --pod-id-file=%t/assisted-service-pod.pod-id --replace --name=agent-register-cluster -v /etc/assisted/manifests:/manifests -v /etc/assisted/extra-manifests:/extra-manifests {{ if .HaveMirrorConfig }}-v /etc/containers:/etc/containers{{ end }} {{.CaBundleMount}} --env SERVICE_BASE_URL --env OPENSHIFT_INSTALL_RELEASE_IMAGE_MIRROR --env USER_AUTH_TOKEN $SERVICE_IMAGE /usr/local/bin/agent-installer-client registerCluster
 ExecStop=/usr/bin/podman stop --ignore --cidfile=%t/%n.ctr-id
 ExecStopPost=/usr/bin/podman rm -f --ignore --cidfile=%t/%n.ctr-id
 

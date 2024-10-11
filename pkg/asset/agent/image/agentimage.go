@@ -74,7 +74,7 @@ func (a *AgentImage) Generate(ctx context.Context, dependencies asset.Parents) e
 
 		a.platform = clusterInfo.PlatformType
 		a.isoFilename = agentAddNodesISOFilename
-		a.imageExpiresAt = authConfig.AgentAuthTokenExpiry
+		a.imageExpiresAt = authConfig.AuthTokenExpiry
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
