@@ -21,6 +21,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
+	ibmcloudic "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/gcp"
@@ -480,7 +481,8 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 				subnets[subnet.Zone] = subnet.Name
 			}
 		}
-		imageName := fmt.Sprintf("%s-rhcos", clusterID.InfraID)
+		pool.Platform.IBMCloud = &mpool
+		imageName := ibmcloudic.VSIImageName(clusterID.InfraID)
 
 		c.FileList, err = ibmcloud.GenerateMachines(
 			ctx,
