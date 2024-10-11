@@ -137,7 +137,9 @@ func (c *Cluster) Generate(_ context.Context, dependencies asset.Parents) error 
 		}
 	case ibmcloudtypes.Name:
 		var err error
-		out, err = ibmcloud.GenerateClusterAssets(installConfig, clusterID, rhcosImage.Name())
+		// Isolate the RHCOS Image filename.
+		imageName := strings.SplitN(filepath.Base(rhcosImage.ControlPlane), ".gz", 2)[0]
+		out, err = ibmcloud.GenerateClusterAssets(installConfig, clusterID, imageName)
 		if err != nil {
 			return fmt.Errorf("failed to generate IBM Cloud VPC manifests: %w", err)
 		}

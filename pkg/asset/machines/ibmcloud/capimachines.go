@@ -38,9 +38,11 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 		}
 
 		// Generate the necessary machine data
-		bootVolume := &capibmcloud.VPCVolume{}
+		var bootVolume *capibmcloud.VPCVolume
 		if providerSpec.BootVolume.EncryptionKey != "" {
-			bootVolume.EncryptionKeyCRN = providerSpec.BootVolume.EncryptionKey
+			bootVolume = &capibmcloud.VPCVolume{
+				EncryptionKeyCRN: providerSpec.BootVolume.EncryptionKey,
+			}
 		}
 
 		image := &capibmcloud.IBMVPCResourceReference{
