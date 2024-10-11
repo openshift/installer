@@ -4168,6 +4168,11 @@ spec:
                         - message: type is immutable once set
                           rule: oldSelf == '' || self == oldSelf
                     type: object
+                  preloadedOSImageName:
+                    description: PreloadedOSImageName uses the named preloaded RHCOS
+                      image from PC/PE, instead of create and upload a new image for
+                      each cluster.
+                    type: string
                   prismCentral:
                     description: PrismCentral is the endpoint (address and port) and
                       credentials to connect to the Prism Central. This serves as

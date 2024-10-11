@@ -652,7 +652,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
 			pool.Platform.Nutanix = &mpool
-			imageName := nutanixtypes.RHCOSImageName(clusterID.InfraID)
+			imageName := nutanixtypes.RHCOSImageName(ic.Platform.Nutanix, clusterID.InfraID)
 
 			sets, err := nutanix.MachineSets(clusterID.InfraID, ic, &pool, imageName, "worker", workerUserDataSecretName)
 			if err != nil {
