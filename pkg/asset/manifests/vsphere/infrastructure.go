@@ -55,12 +55,12 @@ func GetInfraPlatformSpec(ic *installconfig.InstallConfig, clusterID string) *co
 				if failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
 					vmGroupAndRuleName := fmt.Sprintf("%s-%s", clusterID, failureDomain.Name)
 
-					failureDomainSpec.RegionType = string(failureDomain.RegionType)
-					failureDomainSpec.ZoneType = string(failureDomain.ZoneType)
+					failureDomainSpec.RegionAffinity.Type = configv1.VSphereFailureDomainType(failureDomain.RegionType)
+					failureDomainSpec.RegionAffinity.Type = configv1.VSphereFailureDomainType(failureDomain.ZoneType)
 
-					failureDomainSpec.Topology.Affinity.HostGroup = failureDomain.Topology.HostGroup
-					failureDomainSpec.Topology.Affinity.VMGroup = vmGroupAndRuleName
-					failureDomainSpec.Topology.Affinity.VMHostRule = vmGroupAndRuleName
+					failureDomainSpec.ZoneAffinity.HostGroup = failureDomain.Topology.HostGroup
+					failureDomainSpec.ZoneAffinity.VMGroup = vmGroupAndRuleName
+					failureDomainSpec.ZoneAffinity.VMHostRule = vmGroupAndRuleName
 				}
 			}
 
