@@ -292,14 +292,14 @@ func (c *Client) DeleteHostZoneObjects(ctx context.Context, infraID string) erro
 
 	finder := find.NewFinder(c.client, false)
 
-	datacenters, err := finder.DatacenterList(ctx, "*")
+	datacenters, err := finder.DatacenterList(ctx, "/...")
 	if err != nil {
 		return err
 	}
 
 	for _, dc := range datacenters {
 		finder = finder.SetDatacenter(dc)
-		clusterObjs, err := finder.ClusterComputeResourceList(ctx, "*")
+		clusterObjs, err := finder.ClusterComputeResourceList(ctx, "/...")
 		if err != nil {
 			return err
 		}

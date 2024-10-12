@@ -32,11 +32,13 @@ var (
 )
 
 const (
-	tagTestCreateRegionCategory     = 0x01
-	tagTestCreateZoneCategory       = 0x02
-	tagTestAttachRegionTags         = 0x04
-	tagTestAttachZoneTags           = 0x08
-	tagTestNothingCreatedOrAttached = 0x10
+	tagTestCreateRegionCategory      = 0x01
+	tagTestCreateZoneCategory        = 0x02
+	tagTestAttachRegionTags          = 0x04
+	tagTestAttachZoneTags            = 0x08
+	tagTestNothingCreatedOrAttached  = 0x10
+	tagTestAttachRegionOnClusterTags = 0x20
+	tagTestAttachZoneOnHostsTags     = 0x40
 )
 
 const wildcardDNS = "nip.io"
@@ -127,6 +129,58 @@ func teardownTagAttachmentTest(ctx context.Context, tagMgr *vapitags.Manager) er
 	return nil
 }
 
+type ObjectTypeToTag string
+
+const (
+	Datacenter ObjectTypeToTag = "Datacenter"
+	Cluster    ObjectTypeToTag = "Cluster"
+	Host       ObjectTypeToTag = "Host"
+)
+
+func createTagAndAttachToType(ctx context.Context, restClient *rest.Client, finder Finder, objectType ObjectTypeToTag, tagName, categoryID string) error {
+	tagMgr := vapitags.NewManager(restClient)
+	var refs []mo.Reference
+
+	switch objectType {
+	case Datacenter:
+		objects, err := finder.DatacenterList(ctx, "/...")
+		if err != nil {
+			return err
+		}
+		for _, o := range objects {
+			refs = append(refs, o.Reference())
+		}
+	case Cluster:
+		objects, err := finder.ClusterComputeResourceList(ctx, "/...")
+		if err != nil {
+			return err
+		}
+		for _, o := range objects {
+			refs = append(refs, o.Reference())
+		}
+	case Host:
+		objects, err := finder.HostSystemList(ctx, "/...")
+		if err != nil {
+			return err
+		}
+		for _, o := range objects {
+			refs = append(refs, o.Reference())
+		}
+	default:
+		return errors.New("unknown object type")
+	}
+
+	tagID, err := tagMgr.CreateTag(ctx, &vapitags.Tag{
+		Name:       tagName,
+		CategoryID: categoryID,
+	})
+	if err != nil {
+		return err
+	}
+
+	return tagMgr.AttachTagToMultipleObjects(ctx, tagID, refs)
+}
+
 func setupTagAttachmentTest(ctx context.Context, restClient *rest.Client, finder Finder, attachmentMask int64) (*vapitags.Manager, error) {
 	tagMgr := vapitags.NewManager(restClient)
 
@@ -140,22 +194,13 @@ func setupTagAttachmentTest(ctx context.Context, restClient *rest.Client, finder
 		}
 
 		if attachmentMask&tagTestAttachRegionTags != 0 {
-			tagID, err := tagMgr.CreateTag(ctx, &vapitags.Tag{
-				Name:       "us-east",
-				CategoryID: categoryID,
-			})
-			if err != nil {
+			if err := createTagAndAttachToType(ctx, restClient, finder, Datacenter, "us-east", categoryID); err != nil {
 				return nil, err
 			}
-			datacenters, err := finder.DatacenterList(ctx, "/...")
-			if err != nil {
+		}
+		if attachmentMask&tagTestAttachRegionOnClusterTags != 0 {
+			if err := createTagAndAttachToType(ctx, restClient, finder, Cluster, "us-east", categoryID); err != nil {
 				return nil, err
-			}
-			for _, datacenter := range datacenters {
-				err = tagMgr.AttachTag(ctx, tagID, datacenter)
-				if err != nil {
-					return nil, err
-				}
 			}
 		}
 	}
@@ -168,22 +213,13 @@ func setupTagAttachmentTest(ctx context.Context, restClient *rest.Client, finder
 			return nil, err
 		}
 		if attachmentMask&tagTestAttachZoneTags != 0 {
-			tagID, err := tagMgr.CreateTag(ctx, &vapitags.Tag{
-				Name:       "us-east-1a",
-				CategoryID: categoryID,
-			})
-			if err != nil {
+			if err := createTagAndAttachToType(ctx, restClient, finder, Cluster, "us-east-1a", categoryID); err != nil {
 				return nil, err
 			}
-			clusters, err := finder.ClusterComputeResourceList(ctx, "/...")
-			if err != nil {
+		}
+		if attachmentMask&tagTestAttachZoneOnHostsTags != 0 {
+			if err := createTagAndAttachToType(ctx, restClient, finder, Host, "us-east-1a", categoryID); err != nil {
 				return nil, err
-			}
-			for _, cluster := range clusters {
-				err = tagMgr.AttachTag(ctx, tagID, cluster)
-				if err != nil {
-					return nil, err
-				}
 			}
 		}
 	}
@@ -360,7 +396,8 @@ func TestValidateFailureDomains(t *testing.T) {
 			validationMethod: validateFailureDomain,
 			checkTags:        false,
 			expectErr:        `^platform.vsphere.failureDomains.topology: Invalid value: "invalid-network": unable to find network provided$`,
-		}, {
+		},
+		{
 			name: "multi-zone validation - create missing folder",
 			failureDomain: func() *vsphere.FailureDomain {
 				failureDomain := &validMultiVCenterPlatform().FailureDomains[0]
@@ -370,7 +407,8 @@ func TestValidateFailureDomains(t *testing.T) {
 			validationMethod: validateFailureDomain,
 			checkTags:        false,
 			expectErr:        ``,
-		}, {
+		},
+		{
 			name:             "multi-zone tag categories present and tags attached",
 			validationMethod: validateFailureDomain,
 			failureDomain:    &validMultiVCenterPlatform().FailureDomains[0],
@@ -395,6 +433,23 @@ func TestValidateFailureDomains(t *testing.T) {
 			checkTags:        true,
 			tagTestMask:      tagTestNothingCreatedOrAttached,
 			expectErr:        "platform.vsphere: Internal error: tag categories openshift-zone and openshift-region must be created",
+		},
+		{
+			name: "vm-host group zonal",
+			failureDomain: func() *vsphere.FailureDomain {
+				failureDomain := &validMultiVCenterPlatform().FailureDomains[0]
+				failureDomain.Topology.HostGroup = "foo"
+				failureDomain.ZoneType = vsphere.HostGroupFailureDomain
+				failureDomain.RegionType = vsphere.ComputeClusterFailureDomain
+				return failureDomain
+			}(),
+			validationMethod: validateFailureDomain,
+			checkTags:        true,
+			tagTestMask: tagTestCreateZoneCategory |
+				tagTestCreateRegionCategory |
+				tagTestAttachRegionOnClusterTags |
+				tagTestAttachZoneOnHostsTags,
+			expectErr: ``,
 		},
 	}
 

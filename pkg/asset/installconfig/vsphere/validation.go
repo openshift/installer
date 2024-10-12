@@ -156,7 +156,8 @@ func validateFailureDomain(validationCtx *validationContext, failureDomain *vsph
 	}
 
 	vsphereField := field.NewPath("platform").Child("vsphere")
-	topologyField := vsphereField.Child("failureDomains").Child("topology")
+	failureDomainField := vsphereField.Child("failureDomains")
+	topologyField := failureDomainField.Child("topology")
 
 	if checkTags {
 		regionTagCategoryID, zoneTagCategoryID, err := validateTagCategories(validationCtx)
@@ -167,9 +168,7 @@ func validateFailureDomain(validationCtx *validationContext, failureDomain *vsph
 		validationCtx.regionTagCategoryID = regionTagCategoryID
 		validationCtx.zoneTagCategoryID = zoneTagCategoryID
 		if failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
-			if err = validateHostTagAttachments(validationCtx, failureDomain.Topology.ComputeCluster, failureDomain.Zone); err != nil {
-				allErrs = append(allErrs, field.InternalError(vsphereField, err))
-			}
+			allErrs = append(allErrs, validateHostTagAttachments(validationCtx, failureDomain.Topology.ComputeCluster, failureDomain.Zone, topologyField.Child("hostGroup"))...)
 		}
 	}
 
@@ -607,7 +606,8 @@ func validateTagCategories(validationCtx *validationContext) (string, string, er
 	return regionTagCategoryID, zoneTagCategoryID, nil
 }
 
-func validateHostTagAttachments(validationCtx *validationContext, cluster, zoneName string) error {
+func validateHostTagAttachments(validationCtx *validationContext, cluster, zoneName string, fldPath *field.Path) field.ErrorList {
+	errList := field.ErrorList{}
 	if validationCtx.TagManager == nil {
 		// todo: jcallen: should this really return nil?
 		return nil
@@ -617,12 +617,12 @@ func validateHostTagAttachments(validationCtx *validationContext, cluster, zoneN
 
 	ccr, err := validationCtx.Finder.ClusterComputeResource(ctx, cluster)
 	if err != nil {
-		return err
+		errList = append(errList, field.Invalid(fldPath, cluster, err.Error()))
 	}
 
 	hosts, err := ccr.Hosts(ctx)
 	if err != nil {
-		return err
+		errList = append(errList, field.Invalid(fldPath, cluster, err.Error()))
 	}
 
 	references := make([]mo.Reference, 0, len(hosts))
@@ -633,16 +633,12 @@ func validateHostTagAttachments(validationCtx *validationContext, cluster, zoneN
 
 	attachedTags, err := validationCtx.TagManager.GetAttachedTagsOnObjects(ctx, references)
 	if err != nil {
-		return err
+		errList = append(errList, field.Invalid(fldPath, cluster, err.Error()))
 	}
 
-	// todo: jcallen: this isn't enough
-	// todo: the zonal tag attached to the host _must_ be the
-	// todo: the one defined in the capv failure domain
-
 	for _, ta := range attachedTags {
+		found := false
 		if findHostReference(hosts, ta.ObjectID) {
-			found := false
 			for _, ta := range ta.Tags {
 				if ta.CategoryID == validationCtx.zoneTagCategoryID {
 					if ta.Name == zoneName {
@@ -650,21 +646,13 @@ func validateHostTagAttachments(validationCtx *validationContext, cluster, zoneN
 					}
 				}
 			}
-			if !found {
-				return errors.Errorf("host %s does not have a zone tag attachment", ta.ObjectID)
-			}
 		}
-
-		/*
-			else {
-				// todo: fix this later, obv we don't just want the obj id
-				return errors.Errorf("host %s does not have a zone tag attachment", ta.ObjectID)
-			}
-
-		*/
+		if !found {
+			errList = append(errList, field.Invalid(fldPath, ta.ObjectID.Reference().Value, errors.New("no tagged attached to host").Error()))
+		}
 	}
 
-	return nil
+	return errList
 }
 
 func findHostReference(hosts []*object.HostSystem, hostRef mo.Reference) bool {
