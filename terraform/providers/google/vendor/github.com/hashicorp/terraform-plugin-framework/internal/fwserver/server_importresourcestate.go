@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwserver
 
 import (
@@ -47,7 +50,7 @@ func (s *Server) ImportResourceState(ctx context.Context, req *ImportResourceSta
 		return
 	}
 
-	if _, ok := req.Resource.(resource.ResourceWithConfigure); ok {
+	if resourceWithConfigure, ok := req.Resource.(resource.ResourceWithConfigure); ok {
 		logging.FrameworkTrace(ctx, "Resource implements ResourceWithConfigure")
 
 		configureReq := resource.ConfigureRequest{
@@ -55,9 +58,9 @@ func (s *Server) ImportResourceState(ctx context.Context, req *ImportResourceSta
 		}
 		configureResp := resource.ConfigureResponse{}
 
-		logging.FrameworkDebug(ctx, "Calling provider defined Resource Configure")
-		req.Resource.(resource.ResourceWithConfigure).Configure(ctx, configureReq, &configureResp)
-		logging.FrameworkDebug(ctx, "Called provider defined Resource Configure")
+		logging.FrameworkTrace(ctx, "Calling provider defined Resource Configure")
+		resourceWithConfigure.Configure(ctx, configureReq, &configureResp)
+		logging.FrameworkTrace(ctx, "Called provider defined Resource Configure")
 
 		resp.Diagnostics.Append(configureResp.Diagnostics...)
 
@@ -100,9 +103,9 @@ func (s *Server) ImportResourceState(ctx context.Context, req *ImportResourceSta
 		Private: privateProviderData,
 	}
 
-	logging.FrameworkDebug(ctx, "Calling provider defined Resource ImportState")
+	logging.FrameworkTrace(ctx, "Calling provider defined Resource ImportState")
 	resourceWithImportState.ImportState(ctx, importReq, &importResp)
-	logging.FrameworkDebug(ctx, "Called provider defined Resource ImportState")
+	logging.FrameworkTrace(ctx, "Called provider defined Resource ImportState")
 
 	resp.Diagnostics.Append(importResp.Diagnostics...)
 

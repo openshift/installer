@@ -20,10 +20,12 @@ package compute
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -35,15 +37,15 @@ import (
 // "UNPROVISIONED" state, to indicate that it's either ready or awaiting partner
 // activity.
 func waitForAttachmentToBeProvisioned(d *schema.ResourceData, config *transport_tpg.Config, timeout time.Duration) error {
-	return resource.Retry(timeout, func() *resource.RetryError {
+	return retry.Retry(timeout, func() *retry.RetryError {
 		if err := resourceComputeInterconnectAttachmentRead(d, config); err != nil {
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 
 		name := d.Get("name").(string)
 		state := d.Get("state").(string)
 		if state == "UNPROVISIONED" {
-			return resource.RetryableError(fmt.Errorf("InterconnectAttachment %q has state %q.", name, state))
+			return retry.RetryableError(fmt.Errorf("InterconnectAttachment %q has state %q.", name, state))
 		}
 		log.Printf("InterconnectAttachment %q has state %q.", name, state)
 		return nil
@@ -66,6 +68,10 @@ func ResourceComputeInterconnectAttachment() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -148,11 +154,9 @@ domain. If not specified, the value will default to AVAILABILITY_DOMAIN_ANY.`,
 				Description: `Indicates the user-supplied encryption option of this interconnect
 attachment. Can only be specified at attachment creation for PARTNER or
 DEDICATED attachments.
-
 * NONE - This is the default value, which means that the VLAN attachment
 carries unencrypted traffic. VMs are able to send traffic to, or receive
 traffic from, such a VLAN attachment.
-
 * IPSEC - The VLAN attachment carries only encrypted traffic that is
 encrypted by an IPsec device, such as an HA VPN gateway or third-party
 IPsec VPN. VMs cannot directly send traffic to, or receive traffic from,
@@ -176,17 +180,14 @@ be set if type is PARTNER.`,
 				Description: `URL of addresses that have been reserved for the interconnect attachment,
 Used only for interconnect attachment that has the encryption option as
 IPSEC.
-
 The addresses must be RFC 1918 IP address ranges. When creating HA VPN
 gateway over the interconnect attachment, if the attachment is configured
 to use an RFC 1918 IP address, then the VPN gateway's IP address will be
 allocated from the IP address range specified here.
-
 For example, if the HA VPN gateway's interface 0 is paired to this
 interconnect attachment, then an RFC 1918 IP address for the VPN gateway
 interface 0 will be allocated from the IP address specified for this
 interconnect attachment.
-
 If this field is not specified for interconnect attachment that has
 encryption option as IPSEC, later on when creating HA VPN gateway on this
 interconnect attachment, the HA VPN gateway's IP address will be
@@ -209,6 +210,27 @@ this interconnect attachment. Currently, only 1440 and 1500 are allowed. If not 
 				Optional:         true,
 				DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
 				Description:      `Region where the regional interconnect attachment resides.`,
+			},
+			"stack_type": {
+				Type:         schema.TypeString,
+				Computed:     true,
+				Optional:     true,
+				ValidateFunc: verify.ValidateEnum([]string{"IPV4_IPV6", "IPV4_ONLY", ""}),
+				Description: `The stack type for this interconnect attachment to identify whether the IPv6
+feature is enabled or not. If not specified, IPV4_ONLY will be used.
+This field can be both set at interconnect attachments creation and update
+interconnect attachment operations. Possible values: ["IPV4_IPV6", "IPV4_ONLY"]`,
+			},
+			"subnet_length": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				ForceNew: true,
+				Description: `Length of the IPv4 subnet mask. Allowed values: 29 (default), 30. The default value is 29,
+except for Cross-Cloud Interconnect connections that use an InterconnectRemoteLocation with a
+constraints.subnetLengthRange.min equal to 30. For example, connections that use an Azure
+remote location fall into this category. In these cases, the default value is 30, and
+requesting 29 returns an error. Where both 29 and 30 are allowed, 29 is preferred, because it
+gives Google Cloud Support more debugging visibility.`,
 			},
 			"type": {
 				Type:         schema.TypeString,
@@ -233,6 +255,12 @@ using PARTNER type this will be managed upstream.`,
 				Description: `IPv4 address + prefix length to be configured on Cloud Router
 Interface for this interconnect attachment.`,
 			},
+			"cloud_router_ipv6_address": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Description: `IPv6 address + prefix length to be configured on Cloud Router
+Interface for this interconnect attachment.`,
+			},
 			"creation_timestamp": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -242,6 +270,12 @@ Interface for this interconnect attachment.`,
 				Type:     schema.TypeString,
 				Computed: true,
 				Description: `IPv4 address + prefix length to be configured on the customer
+router subinterface for this interconnect attachment.`,
+			},
+			"customer_router_ipv6_address": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Description: `IPv6 address + prefix length to be configured on the customer
 router subinterface for this interconnect attachment.`,
 			},
 			"google_reference_id": {
@@ -386,6 +420,18 @@ func resourceComputeInterconnectAttachmentCreate(d *schema.ResourceData, meta in
 	} else if v, ok := d.GetOkExists("encryption"); !tpgresource.IsEmptyValue(reflect.ValueOf(encryptionProp)) && (ok || !reflect.DeepEqual(v, encryptionProp)) {
 		obj["encryption"] = encryptionProp
 	}
+	stackTypeProp, err := expandComputeInterconnectAttachmentStackType(d.Get("stack_type"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("stack_type"); !tpgresource.IsEmptyValue(reflect.ValueOf(stackTypeProp)) && (ok || !reflect.DeepEqual(v, stackTypeProp)) {
+		obj["stackType"] = stackTypeProp
+	}
+	subnetLengthProp, err := expandComputeInterconnectAttachmentSubnetLength(d.Get("subnet_length"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("subnet_length"); !tpgresource.IsEmptyValue(reflect.ValueOf(subnetLengthProp)) && (ok || !reflect.DeepEqual(v, subnetLengthProp)) {
+		obj["subnetLength"] = subnetLengthProp
+	}
 	regionProp, err := expandComputeInterconnectAttachmentRegion(d.Get("region"), d, config)
 	if err != nil {
 		return err
@@ -412,6 +458,7 @@ func resourceComputeInterconnectAttachmentCreate(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -420,6 +467,7 @@ func resourceComputeInterconnectAttachmentCreate(d *schema.ResourceData, meta in
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating InterconnectAttachment: %s", err)
@@ -476,12 +524,14 @@ func resourceComputeInterconnectAttachmentRead(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeInterconnectAttachment %q", d.Id()))
@@ -551,6 +601,15 @@ func resourceComputeInterconnectAttachmentRead(d *schema.ResourceData, meta inte
 	if err := d.Set("encryption", flattenComputeInterconnectAttachmentEncryption(res["encryption"], d, config)); err != nil {
 		return fmt.Errorf("Error reading InterconnectAttachment: %s", err)
 	}
+	if err := d.Set("stack_type", flattenComputeInterconnectAttachmentStackType(res["stackType"], d, config)); err != nil {
+		return fmt.Errorf("Error reading InterconnectAttachment: %s", err)
+	}
+	if err := d.Set("cloud_router_ipv6_address", flattenComputeInterconnectAttachmentCloudRouterIpv6Address(res["cloudRouterIpv6Address"], d, config)); err != nil {
+		return fmt.Errorf("Error reading InterconnectAttachment: %s", err)
+	}
+	if err := d.Set("customer_router_ipv6_address", flattenComputeInterconnectAttachmentCustomerRouterIpv6Address(res["customerRouterIpv6Address"], d, config)); err != nil {
+		return fmt.Errorf("Error reading InterconnectAttachment: %s", err)
+	}
 	if err := d.Set("region", flattenComputeInterconnectAttachmentRegion(res["region"], d, config)); err != nil {
 		return fmt.Errorf("Error reading InterconnectAttachment: %s", err)
 	}
@@ -601,6 +660,12 @@ func resourceComputeInterconnectAttachmentUpdate(d *schema.ResourceData, meta in
 	} else if v, ok := d.GetOkExists("bandwidth"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, bandwidthProp)) {
 		obj["bandwidth"] = bandwidthProp
 	}
+	stackTypeProp, err := expandComputeInterconnectAttachmentStackType(d.Get("stack_type"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("stack_type"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, stackTypeProp)) {
+		obj["stackType"] = stackTypeProp
+	}
 	regionProp, err := expandComputeInterconnectAttachmentRegion(d.Get("region"), d, config)
 	if err != nil {
 		return err
@@ -614,6 +679,7 @@ func resourceComputeInterconnectAttachmentUpdate(d *schema.ResourceData, meta in
 	}
 
 	log.Printf("[DEBUG] Updating InterconnectAttachment %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -628,6 +694,7 @@ func resourceComputeInterconnectAttachmentUpdate(d *schema.ResourceData, meta in
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -668,16 +735,18 @@ func resourceComputeInterconnectAttachmentDelete(d *schema.ResourceData, meta in
 	}
 
 	var obj map[string]interface{}
-	if err := waitForAttachmentToBeProvisioned(d, config, d.Timeout(schema.TimeoutCreate)); err != nil {
-		return fmt.Errorf("Error waiting for InterconnectAttachment %q to be provisioned: %q", d.Get("name").(string), err)
-	}
-	log.Printf("[DEBUG] Deleting InterconnectAttachment %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+	if err := waitForAttachmentToBeProvisioned(d, config, d.Timeout(schema.TimeoutCreate)); err != nil {
+		return fmt.Errorf("Error waiting for InterconnectAttachment %q to be provisioned: %q", d.Get("name").(string), err)
+	}
+
+	log.Printf("[DEBUG] Deleting InterconnectAttachment %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -686,6 +755,7 @@ func resourceComputeInterconnectAttachmentDelete(d *schema.ResourceData, meta in
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "InterconnectAttachment")
@@ -706,10 +776,10 @@ func resourceComputeInterconnectAttachmentDelete(d *schema.ResourceData, meta in
 func resourceComputeInterconnectAttachmentImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/interconnectAttachments/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/interconnectAttachments/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -857,6 +927,18 @@ func flattenComputeInterconnectAttachmentEncryption(v interface{}, d *schema.Res
 	return v
 }
 
+func flattenComputeInterconnectAttachmentStackType(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenComputeInterconnectAttachmentCloudRouterIpv6Address(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenComputeInterconnectAttachmentCustomerRouterIpv6Address(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenComputeInterconnectAttachmentRegion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return v
@@ -929,6 +1011,14 @@ func expandComputeInterconnectAttachmentIpsecInternalAddresses(v interface{}, d 
 }
 
 func expandComputeInterconnectAttachmentEncryption(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeInterconnectAttachmentStackType(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeInterconnectAttachmentSubnetLength(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

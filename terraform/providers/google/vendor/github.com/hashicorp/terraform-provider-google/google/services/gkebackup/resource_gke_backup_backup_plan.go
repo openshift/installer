@@ -20,14 +20,17 @@ package gkebackup
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
+	"github.com/hashicorp/terraform-provider-google/google/verify"
 )
 
 func ResourceGKEBackupBackupPlan() *schema.Resource {
@@ -46,6 +49,11 @@ func ResourceGKEBackupBackupPlan() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"cluster": {
@@ -108,6 +116,13 @@ when they fall into the scope of Backups.`,
 							Optional: true,
 							Description: `This flag specifies whether volume data should be backed up when PVCs are
 included in the scope of a Backup.`,
+						},
+						"permissive_mode": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Description: `This flag specifies whether Backups will not fail when
+Backup for GKE detects Kubernetes configuration that is
+non-standard or requires additional setup to restore.`,
 						},
 						"selected_applications": {
 							Type:        schema.TypeList,
@@ -173,6 +188,8 @@ included in the scope of a Backup.`,
 							Optional: true,
 							Description: `A standard cron string that defines a repeating schedule for
 creating Backups via this BackupPlan.
+This is mutually exclusive with the rpoConfig field since at most one
+schedule can be defined for a BackupPlan.
 If this is defined, then backupRetainDays must also be defined.`,
 						},
 						"paused": {
@@ -180,6 +197,136 @@ If this is defined, then backupRetainDays must also be defined.`,
 							Computed:    true,
 							Optional:    true,
 							Description: `This flag denotes whether automatic Backup creation is paused for this BackupPlan.`,
+						},
+						"rpo_config": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Description: `Defines the RPO schedule configuration for this BackupPlan. This is mutually
+exclusive with the cronSchedule field since at most one schedule can be defined
+for a BackupPLan. If this is defined, then backupRetainDays must also be defined.`,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"target_rpo_minutes": {
+										Type:     schema.TypeInt,
+										Required: true,
+										Description: `Defines the target RPO for the BackupPlan in minutes, which means the target
+maximum data loss in time that is acceptable for this BackupPlan. This must be
+at least 60, i.e., 1 hour, and at most 86400, i.e., 60 days.`,
+									},
+									"exclusion_windows": {
+										Type:     schema.TypeList,
+										Optional: true,
+										Description: `User specified time windows during which backup can NOT happen for this BackupPlan.
+Backups should start and finish outside of any given exclusion window. Note: backup
+jobs will be scheduled to start and finish outside the duration of the window as
+much as possible, but running jobs will not get canceled when it runs into the window.
+All the time and date values in exclusionWindows entry in the API are in UTC. We
+only allow <=1 recurrence (daily or weekly) exclusion window for a BackupPlan while no
+restriction on number of single occurrence windows.`,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"duration": {
+													Type:         schema.TypeString,
+													Required:     true,
+													ValidateFunc: verify.ValidateDuration(),
+													Description: `Specifies duration of the window in seconds with up to nine fractional digits,
+terminated by 's'. Example: "3.5s". Restrictions for duration based on the
+recurrence type to allow some time for backup to happen:
+  - single_occurrence_date:  no restriction
+  - daily window: duration < 24 hours
+  - weekly window:
+    - days of week includes all seven days of a week: duration < 24 hours
+    - all other weekly window: duration < 168 hours (i.e., 24 * 7 hours)`,
+												},
+												"start_time": {
+													Type:        schema.TypeList,
+													Required:    true,
+													Description: `Specifies the start time of the window using time of the day in UTC.`,
+													MaxItems:    1,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"hours": {
+																Type:        schema.TypeInt,
+																Optional:    true,
+																Description: `Hours of day in 24 hour format.`,
+															},
+															"minutes": {
+																Type:        schema.TypeInt,
+																Optional:    true,
+																Description: `Minutes of hour of day.`,
+															},
+															"nanos": {
+																Type:        schema.TypeInt,
+																Optional:    true,
+																Description: `Fractions of seconds in nanoseconds.`,
+															},
+															"seconds": {
+																Type:        schema.TypeInt,
+																Optional:    true,
+																Description: `Seconds of minutes of the time.`,
+															},
+														},
+													},
+												},
+												"daily": {
+													Type:     schema.TypeBool,
+													Optional: true,
+													Description: `The exclusion window occurs every day if set to "True".
+Specifying this field to "False" is an error.
+Only one of singleOccurrenceDate, daily and daysOfWeek may be set.`,
+												},
+												"days_of_week": {
+													Type:     schema.TypeList,
+													Optional: true,
+													Description: `The exclusion window occurs on these days of each week in UTC.
+Only one of singleOccurrenceDate, daily and daysOfWeek may be set.`,
+													MaxItems: 1,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"days_of_week": {
+																Type:        schema.TypeList,
+																Optional:    true,
+																Description: `A list of days of week. Possible values: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]`,
+																Elem: &schema.Schema{
+																	Type:         schema.TypeString,
+																	ValidateFunc: verify.ValidateEnum([]string{"MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"}),
+																},
+															},
+														},
+													},
+												},
+												"single_occurrence_date": {
+													Type:     schema.TypeList,
+													Optional: true,
+													Description: `No recurrence. The exclusion window occurs only once and on this date in UTC.
+Only one of singleOccurrenceDate, daily and daysOfWeek may be set.`,
+													MaxItems: 1,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"day": {
+																Type:        schema.TypeInt,
+																Optional:    true,
+																Description: `Day of a month.`,
+															},
+															"month": {
+																Type:        schema.TypeInt,
+																Optional:    true,
+																Description: `Month of a year.`,
+															},
+															"year": {
+																Type:        schema.TypeInt,
+																Optional:    true,
+																Description: `Year of the date.`,
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -203,7 +350,11 @@ from being created via this BackupPlan (including scheduled Backups).`,
 				Optional: true,
 				Description: `Description: A set of custom labels supplied by the user.
 A list of key->value pairs.
-Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.`,
+Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.
+
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
 				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"retention_policy": {
@@ -237,7 +388,9 @@ subject to automatic deletion. Updating this field does NOT affect
 existing Backups under it. Backups created AFTER a successful update
 will automatically pick up the new value.
 NOTE: backupRetainDays must be >= backupDeleteLockDays.
-If cronSchedule is defined, then this must be <= 360 * the creation interval.]`,
+If cronSchedule is defined, then this must be <= 360 * the creation interval.
+If rpo_config is defined, then this must be
+<= 360 * targetRpoMinutes/(1440minutes/day)`,
 						},
 						"locked": {
 							Type:     schema.TypeBool,
@@ -249,6 +402,12 @@ the locked field itself.`,
 						},
 					},
 				},
+			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"etag": {
 				Type:     schema.TypeString,
@@ -274,6 +433,13 @@ backupPlans.delete to ensure that their change will be applied to the same versi
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `Detailed description of why BackupPlan is in its current state.`,
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"uid": {
 				Type:        schema.TypeString,
@@ -323,12 +489,6 @@ func resourceGKEBackupBackupPlanCreate(d *schema.ResourceData, meta interface{})
 	} else if v, ok := d.GetOkExists("retention_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(retentionPolicyProp)) && (ok || !reflect.DeepEqual(v, retentionPolicyProp)) {
 		obj["retentionPolicy"] = retentionPolicyProp
 	}
-	labelsProp, err := expandGKEBackupBackupPlanLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	backupScheduleProp, err := expandGKEBackupBackupPlanBackupSchedule(d.Get("backup_schedule"), d, config)
 	if err != nil {
 		return err
@@ -346,6 +506,12 @@ func resourceGKEBackupBackupPlanCreate(d *schema.ResourceData, meta interface{})
 		return err
 	} else if v, ok := d.GetOkExists("backup_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(backupConfigProp)) && (ok || !reflect.DeepEqual(v, backupConfigProp)) {
 		obj["backupConfig"] = backupConfigProp
+	}
+	labelsProp, err := expandGKEBackupBackupPlanEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{GKEBackupBasePath}}projects/{{project}}/locations/{{location}}/backupPlans?backupPlanId={{name}}")
@@ -367,6 +533,7 @@ func resourceGKEBackupBackupPlanCreate(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -375,6 +542,7 @@ func resourceGKEBackupBackupPlanCreate(d *schema.ResourceData, meta interface{})
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating BackupPlan: %s", err)
@@ -441,12 +609,14 @@ func resourceGKEBackupBackupPlanRead(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("GKEBackupBackupPlan %q", d.Id()))
@@ -495,6 +665,12 @@ func resourceGKEBackupBackupPlanRead(d *schema.ResourceData, meta interface{}) e
 	if err := d.Set("state_reason", flattenGKEBackupBackupPlanStateReason(res["stateReason"], d, config)); err != nil {
 		return fmt.Errorf("Error reading BackupPlan: %s", err)
 	}
+	if err := d.Set("terraform_labels", flattenGKEBackupBackupPlanTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading BackupPlan: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenGKEBackupBackupPlanEffectiveLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading BackupPlan: %s", err)
+	}
 
 	return nil
 }
@@ -527,12 +703,6 @@ func resourceGKEBackupBackupPlanUpdate(d *schema.ResourceData, meta interface{})
 	} else if v, ok := d.GetOkExists("retention_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, retentionPolicyProp)) {
 		obj["retentionPolicy"] = retentionPolicyProp
 	}
-	labelsProp, err := expandGKEBackupBackupPlanLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	backupScheduleProp, err := expandGKEBackupBackupPlanBackupSchedule(d.Get("backup_schedule"), d, config)
 	if err != nil {
 		return err
@@ -551,6 +721,12 @@ func resourceGKEBackupBackupPlanUpdate(d *schema.ResourceData, meta interface{})
 	} else if v, ok := d.GetOkExists("backup_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, backupConfigProp)) {
 		obj["backupConfig"] = backupConfigProp
 	}
+	labelsProp, err := expandGKEBackupBackupPlanEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{GKEBackupBasePath}}projects/{{project}}/locations/{{location}}/backupPlans/{{name}}")
 	if err != nil {
@@ -558,6 +734,7 @@ func resourceGKEBackupBackupPlanUpdate(d *schema.ResourceData, meta interface{})
 	}
 
 	log.Printf("[DEBUG] Updating BackupPlan %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("description") {
@@ -566,10 +743,6 @@ func resourceGKEBackupBackupPlanUpdate(d *schema.ResourceData, meta interface{})
 
 	if d.HasChange("retention_policy") {
 		updateMask = append(updateMask, "retentionPolicy")
-	}
-
-	if d.HasChange("labels") {
-		updateMask = append(updateMask, "labels")
 	}
 
 	if d.HasChange("backup_schedule") {
@@ -583,6 +756,10 @@ func resourceGKEBackupBackupPlanUpdate(d *schema.ResourceData, meta interface{})
 	if d.HasChange("backup_config") {
 		updateMask = append(updateMask, "backupConfig")
 	}
+
+	if d.HasChange("effective_labels") {
+		updateMask = append(updateMask, "labels")
+	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
 	url, err = transport_tpg.AddQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
@@ -595,28 +772,32 @@ func resourceGKEBackupBackupPlanUpdate(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating BackupPlan %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating BackupPlan %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating BackupPlan %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating BackupPlan %q: %#v", d.Id(), res)
+		}
 
-	err = GKEBackupOperationWaitTime(
-		config, res, project, "Updating BackupPlan", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = GKEBackupOperationWaitTime(
+			config, res, project, "Updating BackupPlan", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceGKEBackupBackupPlanRead(d, meta)
@@ -643,13 +824,15 @@ func resourceGKEBackupBackupPlanDelete(d *schema.ResourceData, meta interface{})
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting BackupPlan %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting BackupPlan %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -658,6 +841,7 @@ func resourceGKEBackupBackupPlanDelete(d *schema.ResourceData, meta interface{})
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "BackupPlan")
@@ -678,9 +862,9 @@ func resourceGKEBackupBackupPlanDelete(d *schema.ResourceData, meta interface{})
 func resourceGKEBackupBackupPlanImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/backupPlans/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)",
-		"(?P<location>[^/]+)/(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/backupPlans/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<location>[^/]+)/(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -770,7 +954,18 @@ func flattenGKEBackupBackupPlanRetentionPolicyLocked(v interface{}, d *schema.Re
 }
 
 func flattenGKEBackupBackupPlanLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenGKEBackupBackupPlanBackupSchedule(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -786,6 +981,8 @@ func flattenGKEBackupBackupPlanBackupSchedule(v interface{}, d *schema.ResourceD
 		flattenGKEBackupBackupPlanBackupScheduleCronSchedule(original["cronSchedule"], d, config)
 	transformed["paused"] =
 		flattenGKEBackupBackupPlanBackupSchedulePaused(original["paused"], d, config)
+	transformed["rpo_config"] =
+		flattenGKEBackupBackupPlanBackupScheduleRpoConfig(original["rpoConfig"], d, config)
 	return []interface{}{transformed}
 }
 func flattenGKEBackupBackupPlanBackupScheduleCronSchedule(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -793,6 +990,240 @@ func flattenGKEBackupBackupPlanBackupScheduleCronSchedule(v interface{}, d *sche
 }
 
 func flattenGKEBackupBackupPlanBackupSchedulePaused(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEBackupBackupPlanBackupScheduleRpoConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["target_rpo_minutes"] =
+		flattenGKEBackupBackupPlanBackupScheduleRpoConfigTargetRpoMinutes(original["targetRpoMinutes"], d, config)
+	transformed["exclusion_windows"] =
+		flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindows(original["exclusionWindows"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEBackupBackupPlanBackupScheduleRpoConfigTargetRpoMinutes(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindows(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"start_time":             flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTime(original["startTime"], d, config),
+			"duration":               flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsDuration(original["duration"], d, config),
+			"single_occurrence_date": flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsSingleOccurrenceDate(original["singleOccurrenceDate"], d, config),
+			"daily":                  flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsDaily(original["daily"], d, config),
+			"days_of_week":           flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsDaysOfWeek(original["daysOfWeek"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["hours"] =
+		flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTimeHours(original["hours"], d, config)
+	transformed["minutes"] =
+		flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTimeMinutes(original["minutes"], d, config)
+	transformed["seconds"] =
+		flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTimeSeconds(original["seconds"], d, config)
+	transformed["nanos"] =
+		flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTimeNanos(original["nanos"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTimeHours(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTimeMinutes(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTimeSeconds(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTimeNanos(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsDuration(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsSingleOccurrenceDate(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["year"] =
+		flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsSingleOccurrenceDateYear(original["year"], d, config)
+	transformed["month"] =
+		flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsSingleOccurrenceDateMonth(original["month"], d, config)
+	transformed["day"] =
+		flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsSingleOccurrenceDateDay(original["day"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsSingleOccurrenceDateYear(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsSingleOccurrenceDateMonth(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsSingleOccurrenceDateDay(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsDaily(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsDaysOfWeek(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["days_of_week"] =
+		flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsDaysOfWeekDaysOfWeek(original["daysOfWeek"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsDaysOfWeekDaysOfWeek(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -825,6 +1256,8 @@ func flattenGKEBackupBackupPlanBackupConfig(v interface{}, d *schema.ResourceDat
 		flattenGKEBackupBackupPlanBackupConfigSelectedNamespaces(original["selectedNamespaces"], d, config)
 	transformed["selected_applications"] =
 		flattenGKEBackupBackupPlanBackupConfigSelectedApplications(original["selectedApplications"], d, config)
+	transformed["permissive_mode"] =
+		flattenGKEBackupBackupPlanBackupConfigPermissiveMode(original["permissiveMode"], d, config)
 	return []interface{}{transformed}
 }
 func flattenGKEBackupBackupPlanBackupConfigIncludeVolumeData(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -913,6 +1346,10 @@ func flattenGKEBackupBackupPlanBackupConfigSelectedApplicationsNamespacedNamesNa
 	return v
 }
 
+func flattenGKEBackupBackupPlanBackupConfigPermissiveMode(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenGKEBackupBackupPlanProtectedPodCount(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
@@ -935,6 +1372,25 @@ func flattenGKEBackupBackupPlanState(v interface{}, d *schema.ResourceData, conf
 }
 
 func flattenGKEBackupBackupPlanStateReason(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEBackupBackupPlanTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenGKEBackupBackupPlanEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -995,17 +1451,6 @@ func expandGKEBackupBackupPlanRetentionPolicyLocked(v interface{}, d tpgresource
 	return v, nil
 }
 
-func expandGKEBackupBackupPlanLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
-	if v == nil {
-		return map[string]string{}, nil
-	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
-	}
-	return m, nil
-}
-
 func expandGKEBackupBackupPlanBackupSchedule(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
@@ -1029,6 +1474,13 @@ func expandGKEBackupBackupPlanBackupSchedule(v interface{}, d tpgresource.Terraf
 		transformed["paused"] = transformedPaused
 	}
 
+	transformedRpoConfig, err := expandGKEBackupBackupPlanBackupScheduleRpoConfig(original["rpo_config"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedRpoConfig); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["rpoConfig"] = transformedRpoConfig
+	}
+
 	return transformed, nil
 }
 
@@ -1037,6 +1489,218 @@ func expandGKEBackupBackupPlanBackupScheduleCronSchedule(v interface{}, d tpgres
 }
 
 func expandGKEBackupBackupPlanBackupSchedulePaused(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEBackupBackupPlanBackupScheduleRpoConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedTargetRpoMinutes, err := expandGKEBackupBackupPlanBackupScheduleRpoConfigTargetRpoMinutes(original["target_rpo_minutes"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedTargetRpoMinutes); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["targetRpoMinutes"] = transformedTargetRpoMinutes
+	}
+
+	transformedExclusionWindows, err := expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindows(original["exclusion_windows"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedExclusionWindows); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["exclusionWindows"] = transformedExclusionWindows
+	}
+
+	return transformed, nil
+}
+
+func expandGKEBackupBackupPlanBackupScheduleRpoConfigTargetRpoMinutes(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindows(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedStartTime, err := expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTime(original["start_time"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedStartTime); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["startTime"] = transformedStartTime
+		}
+
+		transformedDuration, err := expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsDuration(original["duration"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedDuration); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["duration"] = transformedDuration
+		}
+
+		transformedSingleOccurrenceDate, err := expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsSingleOccurrenceDate(original["single_occurrence_date"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedSingleOccurrenceDate); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["singleOccurrenceDate"] = transformedSingleOccurrenceDate
+		}
+
+		transformedDaily, err := expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsDaily(original["daily"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedDaily); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["daily"] = transformedDaily
+		}
+
+		transformedDaysOfWeek, err := expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsDaysOfWeek(original["days_of_week"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedDaysOfWeek); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["daysOfWeek"] = transformedDaysOfWeek
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTime(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedHours, err := expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTimeHours(original["hours"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedHours); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["hours"] = transformedHours
+	}
+
+	transformedMinutes, err := expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTimeMinutes(original["minutes"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMinutes); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["minutes"] = transformedMinutes
+	}
+
+	transformedSeconds, err := expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTimeSeconds(original["seconds"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSeconds); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["seconds"] = transformedSeconds
+	}
+
+	transformedNanos, err := expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTimeNanos(original["nanos"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedNanos); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["nanos"] = transformedNanos
+	}
+
+	return transformed, nil
+}
+
+func expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTimeHours(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTimeMinutes(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTimeSeconds(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsStartTimeNanos(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsDuration(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsSingleOccurrenceDate(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedYear, err := expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsSingleOccurrenceDateYear(original["year"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedYear); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["year"] = transformedYear
+	}
+
+	transformedMonth, err := expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsSingleOccurrenceDateMonth(original["month"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMonth); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["month"] = transformedMonth
+	}
+
+	transformedDay, err := expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsSingleOccurrenceDateDay(original["day"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDay); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["day"] = transformedDay
+	}
+
+	return transformed, nil
+}
+
+func expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsSingleOccurrenceDateYear(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsSingleOccurrenceDateMonth(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsSingleOccurrenceDateDay(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsDaily(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsDaysOfWeek(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedDaysOfWeek, err := expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsDaysOfWeekDaysOfWeek(original["days_of_week"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDaysOfWeek); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["daysOfWeek"] = transformedDaysOfWeek
+	}
+
+	return transformed, nil
+}
+
+func expandGKEBackupBackupPlanBackupScheduleRpoConfigExclusionWindowsDaysOfWeekDaysOfWeek(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -1093,6 +1757,13 @@ func expandGKEBackupBackupPlanBackupConfig(v interface{}, d tpgresource.Terrafor
 		return nil, err
 	} else if val := reflect.ValueOf(transformedSelectedApplications); val.IsValid() && !tpgresource.IsEmptyValue(val) {
 		transformed["selectedApplications"] = transformedSelectedApplications
+	}
+
+	transformedPermissiveMode, err := expandGKEBackupBackupPlanBackupConfigPermissiveMode(original["permissive_mode"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPermissiveMode); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["permissiveMode"] = transformedPermissiveMode
 	}
 
 	return transformed, nil
@@ -1210,4 +1881,19 @@ func expandGKEBackupBackupPlanBackupConfigSelectedApplicationsNamespacedNamesNam
 
 func expandGKEBackupBackupPlanBackupConfigSelectedApplicationsNamespacedNamesName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandGKEBackupBackupPlanBackupConfigPermissiveMode(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEBackupBackupPlanEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }

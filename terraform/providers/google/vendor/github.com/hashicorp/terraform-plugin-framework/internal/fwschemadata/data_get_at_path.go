@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwschemadata
 
 import (
@@ -33,6 +36,7 @@ func (d Data) GetAtPath(ctx context.Context, schemaPath path.Path, target any) d
 	}
 
 	if reflect.IsGenericAttrValue(ctx, target) {
+		//nolint:forcetypeassert // Type assertion is guaranteed by the above `reflect.IsGenericAttrValue` function
 		*(target.(*attr.Value)) = attrValue
 		return nil
 	}

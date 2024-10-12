@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -103,6 +103,33 @@ func (v AssetResourceSpecTypeEnum) Validate() error {
 	}
 }
 
+// The enum AssetResourceSpecReadAccessModeEnum.
+type AssetResourceSpecReadAccessModeEnum string
+
+// AssetResourceSpecReadAccessModeEnumRef returns a *AssetResourceSpecReadAccessModeEnum with the value of string s
+// If the empty string is provided, nil is returned.
+func AssetResourceSpecReadAccessModeEnumRef(s string) *AssetResourceSpecReadAccessModeEnum {
+	v := AssetResourceSpecReadAccessModeEnum(s)
+	return &v
+}
+
+func (v AssetResourceSpecReadAccessModeEnum) Validate() error {
+	if string(v) == "" {
+		// Empty enum is okay.
+		return nil
+	}
+	for _, s := range []string{"DIRECT", "MANAGED"} {
+		if string(v) == s {
+			return nil
+		}
+	}
+	return &dcl.EnumInvalidError{
+		Enum:  "AssetResourceSpecReadAccessModeEnum",
+		Value: string(v),
+		Valid: []string{},
+	}
+}
+
 // The enum AssetResourceStatusStateEnum.
 type AssetResourceStatusStateEnum string
 
@@ -185,9 +212,10 @@ func (v AssetDiscoveryStatusStateEnum) Validate() error {
 }
 
 type AssetResourceSpec struct {
-	empty bool                       `json:"-"`
-	Name  *string                    `json:"name"`
-	Type  *AssetResourceSpecTypeEnum `json:"type"`
+	empty          bool                                 `json:"-"`
+	Name           *string                              `json:"name"`
+	Type           *AssetResourceSpecTypeEnum           `json:"type"`
+	ReadAccessMode *AssetResourceSpecReadAccessModeEnum `json:"readAccessMode"`
 }
 
 type jsonAssetResourceSpec AssetResourceSpec
@@ -209,6 +237,8 @@ func (r *AssetResourceSpec) UnmarshalJSON(data []byte) error {
 
 		r.Type = res.Type
 
+		r.ReadAccessMode = res.ReadAccessMode
+
 	}
 	return nil
 }
@@ -229,7 +259,7 @@ func (r *AssetResourceSpec) String() string {
 func (r *AssetResourceSpec) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -281,7 +311,7 @@ func (r *AssetResourceStatus) String() string {
 func (r *AssetResourceStatus) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -333,7 +363,7 @@ func (r *AssetSecurityStatus) String() string {
 func (r *AssetSecurityStatus) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -394,7 +424,7 @@ func (r *AssetDiscoverySpec) String() string {
 func (r *AssetDiscoverySpec) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -449,7 +479,7 @@ func (r *AssetDiscoverySpecCsvOptions) String() string {
 func (r *AssetDiscoverySpecCsvOptions) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -498,7 +528,7 @@ func (r *AssetDiscoverySpecJsonOptions) String() string {
 func (r *AssetDiscoverySpecJsonOptions) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -559,7 +589,7 @@ func (r *AssetDiscoveryStatus) String() string {
 func (r *AssetDiscoveryStatus) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -614,7 +644,7 @@ func (r *AssetDiscoveryStatusStats) String() string {
 func (r *AssetDiscoveryStatusStats) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 

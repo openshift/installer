@@ -20,6 +20,7 @@ package logging
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
@@ -155,6 +156,7 @@ func resourceLoggingLinkedDatasetCreate(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -163,6 +165,7 @@ func resourceLoggingLinkedDatasetCreate(d *schema.ResourceData, meta interface{}
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating LinkedDataset: %s", err)
@@ -223,12 +226,14 @@ func resourceLoggingLinkedDatasetRead(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("LoggingLinkedDataset %q", d.Id()))
@@ -268,13 +273,15 @@ func resourceLoggingLinkedDatasetDelete(d *schema.ResourceData, meta interface{}
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting LinkedDataset %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting LinkedDataset %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -283,6 +290,7 @@ func resourceLoggingLinkedDatasetDelete(d *schema.ResourceData, meta interface{}
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "LinkedDataset")
@@ -303,7 +311,7 @@ func resourceLoggingLinkedDatasetDelete(d *schema.ResourceData, meta interface{}
 func resourceLoggingLinkedDatasetImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"(?P<parent>.+)/locations/(?P<location>[^/]+)/buckets/(?P<bucket>[^/]+)/links/(?P<link_id>[^/]+)",
+		"^(?P<parent>.+)/locations/(?P<location>[^/]+)/buckets/(?P<bucket>[^/]+)/links/(?P<link_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -359,12 +367,12 @@ func resourceLoggingLinkedDatasetEncoder(d *schema.ResourceData, meta interface{
 	// Extract any empty fields from the bucket field.
 	parent := d.Get("parent").(string)
 	bucket := d.Get("bucket").(string)
-	parent, err := ExtractFieldByPattern("parent", parent, bucket, "((projects|folders|organizations|billingAccounts)/[a-z0-9A-Z-]*)/locations/.*")
+	parent, err := tpgresource.ExtractFieldByPattern("parent", parent, bucket, "((projects|folders|organizations|billingAccounts)/[a-z0-9A-Z-]*)/locations/.*")
 	if err != nil {
 		return nil, fmt.Errorf("error extracting parent field: %s", err)
 	}
 	location := d.Get("location").(string)
-	location, err = ExtractFieldByPattern("location", location, bucket, "[a-zA-Z]*/[a-z0-9A-Z-]*/locations/([a-z0-9-]*)/buckets/.*")
+	location, err = tpgresource.ExtractFieldByPattern("location", location, bucket, "[a-zA-Z]*/[a-z0-9A-Z-]*/locations/([a-z0-9-]*)/buckets/.*")
 	if err != nil {
 		return nil, fmt.Errorf("error extracting location field: %s", err)
 	}

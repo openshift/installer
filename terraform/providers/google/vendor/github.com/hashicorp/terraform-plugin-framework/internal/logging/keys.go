@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package logging
 
 // Structured logging keys.
@@ -22,6 +25,12 @@ const (
 	// Underlying Go error string when logging an error.
 	KeyError = "error"
 
+	// The name of function being operated on, such as "parse_xyz"
+	KeyFunctionName = "tf_function_name"
+
 	// The type of resource being operated on, such as "random_pet"
 	KeyResourceType = "tf_resource_type"
+
+	// The type of value being operated on, such as "JSONStringValue".
+	KeyValueType = "tf_value_type"
 )

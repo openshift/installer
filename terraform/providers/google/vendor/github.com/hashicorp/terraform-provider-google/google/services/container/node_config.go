@@ -21,12 +21,62 @@ var defaultOauthScopes = []string{
 	"https://www.googleapis.com/auth/trace.append",
 }
 
+func schemaContainerdConfig() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeList,
+		Optional:    true,
+		Description: "Parameters for containerd configuration.",
+		MaxItems:    1,
+		Elem: &schema.Resource{Schema: map[string]*schema.Schema{
+			"private_registry_access_config": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Parameters for private container registries configuration.",
+				MaxItems:    1,
+				Elem: &schema.Resource{Schema: map[string]*schema.Schema{
+					"enabled": {
+						Type:        schema.TypeBool,
+						Required:    true,
+						Description: "Whether or not private registries are configured.",
+					},
+					"certificate_authority_domain_config": {
+						Type:        schema.TypeList,
+						Optional:    true,
+						Description: "Parameters for configuring CA certificate and domains.",
+						Elem: &schema.Resource{Schema: map[string]*schema.Schema{
+							"fqdns": {
+								Type:        schema.TypeList,
+								Required:    true,
+								Description: "List of fully-qualified-domain-names. IPv4s and port specification are supported.",
+								Elem:        &schema.Schema{Type: schema.TypeString},
+							},
+							"gcp_secret_manager_certificate_config": {
+								Type:        schema.TypeList,
+								Required:    true,
+								Description: "Parameters for configuring a certificate hosted in GCP SecretManager.",
+								MaxItems:    1,
+								Elem: &schema.Resource{Schema: map[string]*schema.Schema{
+									"secret_uri": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "URI for the secret that hosts a certificate. Must be in the format 'projects/PROJECT_NUM/secrets/SECRET_NAME/versions/VERSION_OR_LATEST'.",
+									},
+								}},
+							},
+						}},
+					},
+				}},
+			},
+		}},
+	}
+}
+
 func schemaLoggingVariant() *schema.Schema {
 	return &schema.Schema{
 		Type:         schema.TypeString,
 		Optional:     true,
+		Computed:     true,
 		Description:  `Type of logging agent that is used as the default value for node pools in the cluster. Valid values include DEFAULT and MAX_THROUGHPUT.`,
-		Default:      "DEFAULT",
 		ValidateFunc: validation.StringInSlice([]string{"DEFAULT", "MAX_THROUGHPUT"}, false),
 	}
 }
@@ -61,11 +111,11 @@ func schemaNodeConfig() *schema.Schema {
 		MaxItems:    1,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
+				"containerd_config": schemaContainerdConfig(),
 				"disk_size_gb": {
 					Type:         schema.TypeInt,
 					Optional:     true,
 					Computed:     true,
-					ForceNew:     true,
 					ValidateFunc: validation.IntAtLeast(10),
 					Description:  `Size of the disk attached to each node, specified in GB. The smallest allowed disk size is 10GB.`,
 				},
@@ -74,7 +124,6 @@ func schemaNodeConfig() *schema.Schema {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Computed:    true,
-					ForceNew:    true,
 					Description: `Type of the disk attached to each node. Such as pd-standard, pd-balanced or pd-ssd`,
 				},
 
@@ -228,6 +277,30 @@ func schemaNodeConfig() *schema.Schema {
 					},
 				},
 
+				"secondary_boot_disks": {
+					Type:        schema.TypeList,
+					Optional:    true,
+					MaxItems:    127,
+					Description: `Secondary boot disks for preloading data or container images.`,
+					ForceNew:    true,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"disk_image": {
+								Type:        schema.TypeString,
+								Required:    true,
+								ForceNew:    true,
+								Description: `Disk image to create the secondary boot disk from`,
+							},
+							"mode": {
+								Type:        schema.TypeString,
+								Optional:    true,
+								ForceNew:    true,
+								Description: `Mode for how the secondary boot disk is used.`,
+							},
+						},
+					},
+				},
+
 				"gcfs_config": schemaGcfsConfig(true),
 
 				"gvnic": {
@@ -252,7 +325,6 @@ func schemaNodeConfig() *schema.Schema {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Computed:    true,
-					ForceNew:    true,
 					Description: `The name of a Google Compute Engine machine type.`,
 				},
 
@@ -380,35 +452,51 @@ func schemaNodeConfig() *schema.Schema {
 				},
 
 				"taint": {
-					Type:     schema.TypeList,
-					Optional: true,
-					// Computed=true because GKE Sandbox will automatically add taints to nodes that can/cannot run sandboxed pods.
-					Computed: true,
-					ForceNew: true,
-					// Legacy config mode allows explicitly defining an empty taint.
-					// See https://www.terraform.io/docs/configuration/attr-as-blocks.html
-					ConfigMode:  schema.SchemaConfigModeAttr,
+					Type:        schema.TypeList,
+					Optional:    true,
 					Description: `List of Kubernetes taints to be applied to each node.`,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
 							"key": {
 								Type:        schema.TypeString,
 								Required:    true,
-								ForceNew:    true,
 								Description: `Key for taint.`,
 							},
 							"value": {
 								Type:        schema.TypeString,
 								Required:    true,
-								ForceNew:    true,
 								Description: `Value for taint.`,
 							},
 							"effect": {
 								Type:         schema.TypeString,
 								Required:     true,
-								ForceNew:     true,
 								ValidateFunc: validation.StringInSlice([]string{"NO_SCHEDULE", "PREFER_NO_SCHEDULE", "NO_EXECUTE"}, false),
 								Description:  `Effect for taint.`,
+							},
+						},
+					},
+				},
+
+				"effective_taints": {
+					Type:        schema.TypeList,
+					Computed:    true,
+					Description: `List of kubernetes taints applied to each node.`,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"key": {
+								Type:        schema.TypeString,
+								Computed:    true,
+								Description: `Key for taint.`,
+							},
+							"value": {
+								Type:        schema.TypeString,
+								Computed:    true,
+								Description: `Value for taint.`,
+							},
+							"effect": {
+								Type:        schema.TypeString,
+								Computed:    true,
+								Description: `Effect for taint.`,
 							},
 						},
 					},
@@ -481,9 +569,17 @@ func schemaNodeConfig() *schema.Schema {
 						Schema: map[string]*schema.Schema{
 							"sysctls": {
 								Type:        schema.TypeMap,
-								Required:    true,
+								Optional:    true,
 								Elem:        &schema.Schema{Type: schema.TypeString},
 								Description: `The Linux kernel parameters to be applied to the nodes and all pods running on the nodes.`,
+							},
+							"cgroup_mode": {
+								Type:             schema.TypeString,
+								Optional:         true,
+								Computed:         true,
+								ValidateFunc:     validation.StringInSlice([]string{"CGROUP_MODE_UNSPECIFIED", "CGROUP_MODE_V1", "CGROUP_MODE_V2"}, false),
+								Description:      `cgroupMode specifies the cgroup mode to be used on the node.`,
+								DiffSuppressFunc: tpgresource.EmptyOrDefaultStringSuppress("CGROUP_MODE_UNSPECIFIED"),
 							},
 						},
 					},
@@ -508,6 +604,12 @@ func schemaNodeConfig() *schema.Schema {
 								Required:    true,
 								ForceNew:    true,
 								Description: `The number of threads per physical core. To disable simultaneous multithreading (SMT) set this to 1. If unset, the maximum number of threads supported per core by the underlying processor is assumed.`,
+							},
+							"enable_nested_virtualization": {
+								Type:        schema.TypeBool,
+								Optional:    true,
+								ForceNew:    true,
+								Description: `Whether the node should have nested virtualization enabled.`,
 							},
 						},
 					},
@@ -553,6 +655,68 @@ func schemaNodeConfig() *schema.Schema {
 						},
 					},
 				},
+				"host_maintenance_policy": {
+					Type:        schema.TypeList,
+					Optional:    true,
+					Description: `The maintenance policy for the hosts on which the GKE VMs run on.`,
+					ForceNew:    true,
+					MaxItems:    1,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"maintenance_interval": {
+								Type:         schema.TypeString,
+								Required:     true,
+								ForceNew:     true,
+								Description:  `.`,
+								ValidateFunc: validation.StringInSlice([]string{"MAINTENANCE_INTERVAL_UNSPECIFIED", "AS_NEEDED", "PERIODIC"}, false),
+							},
+						},
+					},
+				},
+				"confidential_nodes": {
+					Type:        schema.TypeList,
+					Optional:    true,
+					Computed:    true,
+					ForceNew:    true,
+					MaxItems:    1,
+					Description: `Configuration for the confidential nodes feature, which makes nodes run on confidential VMs. Warning: This configuration can't be changed (or added/removed) after pool creation without deleting and recreating the entire pool.`,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"enabled": {
+								Type:        schema.TypeBool,
+								Required:    true,
+								ForceNew:    true,
+								Description: `Whether Confidential Nodes feature is enabled for all nodes in this pool.`,
+							},
+						},
+					},
+				},
+				"fast_socket": {
+					Type:        schema.TypeList,
+					Optional:    true,
+					MaxItems:    1,
+					Description: `Enable or disable NCCL Fast Socket in the node pool.`,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"enabled": {
+								Type:        schema.TypeBool,
+								Required:    true,
+								Description: `Whether or not NCCL Fast Socket is enabled`,
+							},
+						},
+					},
+				},
+				"resource_manager_tags": {
+					Type:        schema.TypeMap,
+					Optional:    true,
+					Description: `A map of resource manager tags. Resource manager tag keys and values have the same definition as resource manager tags. Keys must be in the format tagKeys/{tag_key_id}, and values are in the format tagValues/456. The field is ignored (both PUT & PATCH) when empty.`,
+				},
+				"enable_confidential_storage": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					ForceNew:    true,
+					Description: `If enabled boot disks are configured with confidential mode.`,
+				},
 			},
 		},
 	}
@@ -566,6 +730,7 @@ func expandNodeConfigDefaults(configured interface{}) *container.NodeConfigDefau
 	config := configs[0].(map[string]interface{})
 
 	nodeConfigDefaults := &container.NodeConfigDefaults{}
+	nodeConfigDefaults.ContainerdConfig = expandContainerdConfig(config["containerd_config"])
 	if variant, ok := config["logging_variant"]; ok {
 		nodeConfigDefaults.LoggingConfig = &container.NodePoolLoggingConfig{
 			VariantConfig: &container.LoggingVariantConfig{
@@ -587,6 +752,10 @@ func expandNodeConfig(v interface{}) *container.NodeConfig {
 	}
 
 	nodeConfig := nodeConfigs[0].(map[string]interface{})
+
+	if v, ok := nodeConfig["containerd_config"]; ok {
+		nc.ContainerdConfig = expandContainerdConfig(v)
+	}
 
 	if v, ok := nodeConfig["machine_type"]; ok {
 		nc.MachineType = v.(string)
@@ -660,6 +829,28 @@ func expandNodeConfig(v interface{}) *container.NodeConfig {
 		}
 	}
 
+	if v, ok := nodeConfig["secondary_boot_disks"]; ok && len(v.([]interface{})) > 0 {
+		conf, confOK := v.([]interface{})[0].(map[string]interface{})
+		if confOK {
+			modeValue, modeOK := conf["mode"]
+			diskImage := conf["disk_image"].(string)
+			if modeOK {
+				nc.SecondaryBootDisks = append(nc.SecondaryBootDisks, &container.SecondaryBootDisk{
+					DiskImage: diskImage,
+					Mode:      modeValue.(string),
+				})
+			} else {
+				nc.SecondaryBootDisks = append(nc.SecondaryBootDisks, &container.SecondaryBootDisk{
+					DiskImage: diskImage,
+				})
+			}
+		} else {
+			nc.SecondaryBootDisks = append(nc.SecondaryBootDisks, &container.SecondaryBootDisk{
+				DiskImage: "",
+			})
+		}
+	}
+
 	if v, ok := nodeConfig["gcfs_config"]; ok && len(v.([]interface{})) > 0 {
 		conf := v.([]interface{})[0].(map[string]interface{})
 		nc.GcfsConfig = &container.GcfsConfig{
@@ -670,6 +861,13 @@ func expandNodeConfig(v interface{}) *container.NodeConfig {
 	if v, ok := nodeConfig["gvnic"]; ok && len(v.([]interface{})) > 0 {
 		conf := v.([]interface{})[0].(map[string]interface{})
 		nc.Gvnic = &container.VirtualNIC{
+			Enabled: conf["enabled"].(bool),
+		}
+	}
+
+	if v, ok := nodeConfig["fast_socket"]; ok && len(v.([]interface{})) > 0 {
+		conf := v.([]interface{})[0].(map[string]interface{})
+		nc.FastSocket = &container.FastSocket{
 			Enabled: conf["enabled"].(bool),
 		}
 	}
@@ -731,6 +929,10 @@ func expandNodeConfig(v interface{}) *container.NodeConfig {
 		nc.ResourceLabels = m
 	}
 
+	if v, ok := nodeConfig["resource_manager_tags"]; ok && len(v.(map[string]interface{})) > 0 {
+		nc.ResourceManagerTags = expandResourceManagerTags(v)
+	}
+
 	if v, ok := nodeConfig["tags"]; ok {
 		tagsList := v.([]interface{})
 		tags := []string{}
@@ -770,8 +972,10 @@ func expandNodeConfig(v interface{}) *container.NodeConfig {
 				Value:  data["value"].(string),
 				Effect: data["effect"].(string),
 			}
+
 			nodeTaints = append(nodeTaints, taint)
 		}
+
 		nc.Taints = nodeTaints
 	}
 
@@ -798,7 +1002,8 @@ func expandNodeConfig(v interface{}) *container.NodeConfig {
 	if v, ok := nodeConfig["advanced_machine_features"]; ok && len(v.([]interface{})) > 0 {
 		advanced_machine_features := v.([]interface{})[0].(map[string]interface{})
 		nc.AdvancedMachineFeatures = &container.AdvancedMachineFeatures{
-			ThreadsPerCore: int64(advanced_machine_features["threads_per_core"].(int)),
+			ThreadsPerCore:             int64(advanced_machine_features["threads_per_core"].(int)),
+			EnableNestedVirtualization: advanced_machine_features["enable_nested_virtualization"].(bool),
 		}
 	}
 
@@ -806,7 +1011,28 @@ func expandNodeConfig(v interface{}) *container.NodeConfig {
 		nc.SoleTenantConfig = expandSoleTenantConfig(v)
 	}
 
+	if v, ok := nodeConfig["enable_confidential_storage"]; ok {
+		nc.EnableConfidentialStorage = v.(bool)
+	}
+
+	if v, ok := nodeConfig["confidential_nodes"]; ok {
+		nc.ConfidentialNodes = expandConfidentialNodes(v)
+	}
+
 	return nc
+}
+
+func expandResourceManagerTags(v interface{}) *container.ResourceManagerTags {
+	rmts := make(map[string]string)
+
+	if v != nil {
+		rmts = tpgresource.ConvertStringMap(v.(map[string]interface{}))
+	}
+
+	return &container.ResourceManagerTags{
+		Tags:            rmts,
+		ForceSendFields: []string{"Tags"},
+	}
 }
 
 func expandWorkloadMetadataConfig(v interface{}) *container.WorkloadMetadataConfig {
@@ -862,18 +1088,129 @@ func expandLinuxNodeConfig(v interface{}) *container.LinuxNodeConfig {
 	if len(ls) == 0 {
 		return nil
 	}
+	if ls[0] == nil {
+		return &container.LinuxNodeConfig{}
+	}
 	cfg := ls[0].(map[string]interface{})
+
+	linuxNodeConfig := &container.LinuxNodeConfig{}
+	sysctls := expandSysctls(cfg)
+	if sysctls != nil {
+		linuxNodeConfig.Sysctls = sysctls
+	}
+	cgroupMode := expandCgroupMode(cfg)
+	if len(cgroupMode) != 0 {
+		linuxNodeConfig.CgroupMode = cgroupMode
+	}
+
+	return linuxNodeConfig
+}
+
+func expandSysctls(cfg map[string]interface{}) map[string]string {
 	sysCfgRaw, ok := cfg["sysctls"]
 	if !ok {
 		return nil
 	}
-	m := make(map[string]string)
+	sysctls := make(map[string]string)
 	for k, v := range sysCfgRaw.(map[string]interface{}) {
-		m[k] = v.(string)
+		sysctls[k] = v.(string)
 	}
-	return &container.LinuxNodeConfig{
-		Sysctls: m,
+	return sysctls
+}
+
+func expandCgroupMode(cfg map[string]interface{}) string {
+	cgroupMode, ok := cfg["cgroup_mode"]
+	if !ok {
+		return ""
 	}
+
+	return cgroupMode.(string)
+}
+
+func expandContainerdConfig(v interface{}) *container.ContainerdConfig {
+	if v == nil {
+		return nil
+	}
+	ls := v.([]interface{})
+	if len(ls) == 0 {
+		return nil
+	}
+	if ls[0] == nil {
+		return &container.ContainerdConfig{}
+	}
+	cfg := ls[0].(map[string]interface{})
+
+	cc := &container.ContainerdConfig{}
+	cc.PrivateRegistryAccessConfig = expandPrivateRegistryAccessConfig(cfg["private_registry_access_config"])
+	return cc
+}
+
+func expandPrivateRegistryAccessConfig(v interface{}) *container.PrivateRegistryAccessConfig {
+	if v == nil {
+		return nil
+	}
+	ls := v.([]interface{})
+	if len(ls) == 0 {
+		return nil
+	}
+	if ls[0] == nil {
+		return &container.PrivateRegistryAccessConfig{}
+	}
+	cfg := ls[0].(map[string]interface{})
+
+	pracc := &container.PrivateRegistryAccessConfig{}
+	if enabled, ok := cfg["enabled"]; ok {
+		pracc.Enabled = enabled.(bool)
+	}
+	if caCfgRaw, ok := cfg["certificate_authority_domain_config"]; ok {
+		ls := caCfgRaw.([]interface{})
+		pracc.CertificateAuthorityDomainConfig = make([]*container.CertificateAuthorityDomainConfig, len(ls))
+		for i, caCfg := range ls {
+			pracc.CertificateAuthorityDomainConfig[i] = expandCADomainConfig(caCfg)
+		}
+	}
+
+	return pracc
+}
+
+func expandCADomainConfig(v interface{}) *container.CertificateAuthorityDomainConfig {
+	if v == nil {
+		return nil
+	}
+	cfg := v.(map[string]interface{})
+
+	caConfig := &container.CertificateAuthorityDomainConfig{}
+	if v, ok := cfg["fqdns"]; ok {
+		fqdns := v.([]interface{})
+		caConfig.Fqdns = make([]string, len(fqdns))
+		for i, dn := range fqdns {
+			caConfig.Fqdns[i] = dn.(string)
+		}
+	}
+
+	caConfig.GcpSecretManagerCertificateConfig = expandGCPSecretManagerCertificateConfig(cfg["gcp_secret_manager_certificate_config"])
+
+	return caConfig
+}
+
+func expandGCPSecretManagerCertificateConfig(v interface{}) *container.GCPSecretManagerCertificateConfig {
+	if v == nil {
+		return nil
+	}
+	ls := v.([]interface{})
+	if len(ls) == 0 {
+		return nil
+	}
+	if ls[0] == nil {
+		return &container.GCPSecretManagerCertificateConfig{}
+	}
+	cfg := ls[0].(map[string]interface{})
+
+	gcpSMConfig := &container.GCPSecretManagerCertificateConfig{}
+	if v, ok := cfg["secret_uri"]; ok {
+		gcpSMConfig.SecretUri = v.(string)
+	}
+	return gcpSMConfig
 }
 
 func expandSoleTenantConfig(v interface{}) *container.SoleTenantConfig {
@@ -904,6 +1241,17 @@ func expandSoleTenantConfig(v interface{}) *container.SoleTenantConfig {
 	}
 }
 
+func expandConfidentialNodes(configured interface{}) *container.ConfidentialNodes {
+	l := configured.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil
+	}
+	config := l[0].(map[string]interface{})
+	return &container.ConfidentialNodes{
+		Enabled: config["enabled"].(bool),
+	}
+}
+
 func flattenNodeConfigDefaults(c *container.NodeConfigDefaults) []map[string]interface{} {
 	result := make([]map[string]interface{}, 0, 1)
 
@@ -913,20 +1261,34 @@ func flattenNodeConfigDefaults(c *container.NodeConfigDefaults) []map[string]int
 
 	result = append(result, map[string]interface{}{})
 
+	result[0]["containerd_config"] = flattenContainerdConfig(c.ContainerdConfig)
+
 	result[0]["logging_variant"] = flattenLoggingVariant(c.LoggingConfig)
 
 	return result
 }
 
-func flattenNodeConfig(c *container.NodeConfig) []map[string]interface{} {
+// v == old state of `node_config`
+func flattenNodeConfig(c *container.NodeConfig, v interface{}) []map[string]interface{} {
 	config := make([]map[string]interface{}, 0, 1)
 
 	if c == nil {
 		return config
 	}
 
+	// default to no prior taint state if there are any issues
+	oldTaints := []interface{}{}
+	oldNodeConfigSchemaContainer := v.([]interface{})
+	if len(oldNodeConfigSchemaContainer) != 0 {
+		oldNodeConfigSchema := oldNodeConfigSchemaContainer[0].(map[string]interface{})
+		if vt, ok := oldNodeConfigSchema["taint"]; ok && len(vt.([]interface{})) > 0 {
+			oldTaints = vt.([]interface{})
+		}
+	}
+
 	config = append(config, map[string]interface{}{
 		"machine_type":                       c.MachineType,
+		"containerd_config":                  flattenContainerdConfig(c.ContainerdConfig),
 		"disk_size_gb":                       c.DiskSizeGb,
 		"disk_type":                          c.DiskType,
 		"guest_accelerator":                  flattenContainerGuestAccelerators(c.Accelerators),
@@ -944,17 +1306,23 @@ func flattenNodeConfig(c *container.NodeConfig) []map[string]interface{} {
 		"resource_labels":                    c.ResourceLabels,
 		"tags":                               c.Tags,
 		"preemptible":                        c.Preemptible,
+		"secondary_boot_disks":               flattenSecondaryBootDisks(c.SecondaryBootDisks),
 		"spot":                               c.Spot,
 		"min_cpu_platform":                   c.MinCpuPlatform,
 		"shielded_instance_config":           flattenShieldedInstanceConfig(c.ShieldedInstanceConfig),
-		"taint":                              flattenTaints(c.Taints),
+		"taint":                              flattenTaints(c.Taints, oldTaints),
+		"effective_taints":                   flattenEffectiveTaints(c.Taints),
 		"workload_metadata_config":           flattenWorkloadMetadataConfig(c.WorkloadMetadataConfig),
+		"confidential_nodes":                 flattenConfidentialNodes(c.ConfidentialNodes),
 		"boot_disk_kms_key":                  c.BootDiskKmsKey,
 		"kubelet_config":                     flattenKubeletConfig(c.KubeletConfig),
 		"linux_node_config":                  flattenLinuxNodeConfig(c.LinuxNodeConfig),
 		"node_group":                         c.NodeGroup,
 		"advanced_machine_features":          flattenAdvancedMachineFeaturesConfig(c.AdvancedMachineFeatures),
 		"sole_tenant_config":                 flattenSoleTenantConfig(c.SoleTenantConfig),
+		"fast_socket":                        flattenFastSocket(c.FastSocket),
+		"resource_manager_tags":              flattenResourceManagerTags(c.ResourceManagerTags),
+		"enable_confidential_storage":        c.EnableConfidentialStorage,
 	})
 
 	if len(c.OauthScopes) > 0 {
@@ -964,11 +1332,24 @@ func flattenNodeConfig(c *container.NodeConfig) []map[string]interface{} {
 	return config
 }
 
+func flattenResourceManagerTags(c *container.ResourceManagerTags) map[string]interface{} {
+	rmt := make(map[string]interface{})
+
+	if c != nil {
+		for k, v := range c.Tags {
+			rmt[k] = v
+		}
+	}
+
+	return rmt
+}
+
 func flattenAdvancedMachineFeaturesConfig(c *container.AdvancedMachineFeatures) []map[string]interface{} {
 	result := []map[string]interface{}{}
 	if c != nil {
 		result = append(result, map[string]interface{}{
-			"threads_per_core": c.ThreadsPerCore,
+			"threads_per_core":             c.ThreadsPerCore,
+			"enable_nested_virtualization": c.EnableNestedVirtualization,
 		})
 	}
 	return result
@@ -1033,6 +1414,20 @@ func flattenEphemeralStorageLocalSsdConfig(c *container.EphemeralStorageLocalSsd
 	return result
 }
 
+func flattenSecondaryBootDisks(c []*container.SecondaryBootDisk) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	if c != nil {
+		for _, disk := range c {
+			secondaryBootDisk := map[string]interface{}{
+				"disk_image": disk.DiskImage,
+				"mode":       disk.Mode,
+			}
+			result = append(result, secondaryBootDisk)
+		}
+	}
+	return result
+}
+
 func flattenLoggingVariant(c *container.NodePoolLoggingConfig) string {
 	variant := "DEFAULT"
 	if c != nil && c.VariantConfig != nil && c.VariantConfig.Variant != "" {
@@ -1073,7 +1468,31 @@ func flattenGKEReservationAffinity(c *container.ReservationAffinity) []map[strin
 	return result
 }
 
-func flattenTaints(c []*container.NodeTaint) []map[string]interface{} {
+// flattenTaints records the set of taints already present in state.
+func flattenTaints(c []*container.NodeTaint, oldTaints []interface{}) []map[string]interface{} {
+	taintKeys := map[string]struct{}{}
+	for _, raw := range oldTaints {
+		data := raw.(map[string]interface{})
+		taintKey := data["key"].(string)
+		taintKeys[taintKey] = struct{}{}
+	}
+
+	result := []map[string]interface{}{}
+	for _, taint := range c {
+		if _, ok := taintKeys[taint.Key]; ok {
+			result = append(result, map[string]interface{}{
+				"key":    taint.Key,
+				"value":  taint.Value,
+				"effect": taint.Effect,
+			})
+		}
+	}
+
+	return result
+}
+
+// flattenEffectiveTaints records the complete set of taints returned from GKE.
+func flattenEffectiveTaints(c []*container.NodeTaint) []map[string]interface{} {
 	result := []map[string]interface{}{}
 	for _, taint := range c {
 		result = append(result, map[string]interface{}{
@@ -1082,6 +1501,7 @@ func flattenTaints(c []*container.NodeTaint) []map[string]interface{} {
 			"effect": taint.Effect,
 		})
 	}
+
 	return result
 }
 
@@ -1112,7 +1532,86 @@ func flattenLinuxNodeConfig(c *container.LinuxNodeConfig) []map[string]interface
 	result := []map[string]interface{}{}
 	if c != nil {
 		result = append(result, map[string]interface{}{
-			"sysctls": c.Sysctls,
+			"sysctls":     c.Sysctls,
+			"cgroup_mode": c.CgroupMode,
+		})
+	}
+	return result
+}
+
+func flattenContainerdConfig(c *container.ContainerdConfig) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	if c == nil {
+		return result
+	}
+	r := map[string]interface{}{}
+	if c.PrivateRegistryAccessConfig != nil {
+		r["private_registry_access_config"] = flattenPrivateRegistryAccessConfig(c.PrivateRegistryAccessConfig)
+	}
+	return append(result, r)
+}
+
+func flattenPrivateRegistryAccessConfig(c *container.PrivateRegistryAccessConfig) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	if c == nil {
+		return result
+	}
+	r := map[string]interface{}{
+		"enabled": c.Enabled,
+	}
+	if c.CertificateAuthorityDomainConfig != nil {
+		caConfigs := make([]interface{}, len(c.CertificateAuthorityDomainConfig))
+		for i, caCfg := range c.CertificateAuthorityDomainConfig {
+			caConfigs[i] = flattenCADomainConfig(caCfg)
+		}
+		r["certificate_authority_domain_config"] = caConfigs
+	}
+	return append(result, r)
+}
+
+//  func flattenCADomainConfig(c *container.CertificateAuthorityDomainConfig) []map[string]interface{} {
+//  	result := []map[string]interface{}{}
+//  	if c == nil {
+//  		return result
+//  	}
+//  	r := map[string]interface{}{
+//  		"fqdns": c.Fqdns,
+//  	}
+//  	if c.GcpSecretManagerCertificateConfig != nil {
+//  		r["gcp_secret_manager_certificate_config"] = flattenGCPSecretManagerCertificateConfig(c.GcpSecretManagerCertificateConfig)
+//  	}
+//  	return append(result, r)
+//  }
+
+func flattenCADomainConfig(c *container.CertificateAuthorityDomainConfig) map[string]interface{} {
+	if c == nil {
+		return nil
+	}
+	r := map[string]interface{}{
+		"fqdns": c.Fqdns,
+	}
+	if c.GcpSecretManagerCertificateConfig != nil {
+		r["gcp_secret_manager_certificate_config"] = flattenGCPSecretManagerCertificateConfig(c.GcpSecretManagerCertificateConfig)
+	}
+	return r
+}
+
+func flattenGCPSecretManagerCertificateConfig(c *container.GCPSecretManagerCertificateConfig) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	if c == nil {
+		return result
+	}
+	r := map[string]interface{}{
+		"secret_uri": c.SecretUri,
+	}
+	return append(result, r)
+}
+
+func flattenConfidentialNodes(c *container.ConfidentialNodes) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	if c != nil {
+		result = append(result, map[string]interface{}{
+			"enabled": c.Enabled,
 		})
 	}
 	return result
@@ -1134,4 +1633,14 @@ func flattenSoleTenantConfig(c *container.SoleTenantConfig) []map[string]interfa
 	return append(result, map[string]interface{}{
 		"node_affinity": affinities,
 	})
+}
+
+func flattenFastSocket(c *container.FastSocket) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	if c != nil {
+		result = append(result, map[string]interface{}{
+			"enabled": c.Enabled,
+		})
+	}
+	return result
 }

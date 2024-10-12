@@ -22,9 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-google/google/services/apikeys"
 	"github.com/hashicorp/terraform-provider-google/google/services/assuredworkloads"
-	"github.com/hashicorp/terraform-provider-google/google/services/bigqueryreservation"
 	"github.com/hashicorp/terraform-provider-google/google/services/cloudbuild"
-	"github.com/hashicorp/terraform-provider-google/google/services/cloudbuildv2"
 	"github.com/hashicorp/terraform-provider-google/google/services/clouddeploy"
 	"github.com/hashicorp/terraform-provider-google/google/services/compute"
 	"github.com/hashicorp/terraform-provider-google/google/services/containeraws"
@@ -33,26 +31,20 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/services/dataproc"
 	"github.com/hashicorp/terraform-provider-google/google/services/eventarc"
 	"github.com/hashicorp/terraform-provider-google/google/services/firebaserules"
+	"github.com/hashicorp/terraform-provider-google/google/services/gkehub"
 	"github.com/hashicorp/terraform-provider-google/google/services/networkconnectivity"
-	"github.com/hashicorp/terraform-provider-google/google/services/orgpolicy"
-	"github.com/hashicorp/terraform-provider-google/google/services/privateca"
 	"github.com/hashicorp/terraform-provider-google/google/services/recaptchaenterprise"
 )
 
 var dclResources = map[string]*schema.Resource{
 	"google_apikeys_key":                                        apikeys.ResourceApikeysKey(),
 	"google_assured_workloads_workload":                         assuredworkloads.ResourceAssuredWorkloadsWorkload(),
-	"google_bigquery_reservation_assignment":                    bigqueryreservation.ResourceBigqueryReservationAssignment(),
 	"google_cloudbuild_worker_pool":                             cloudbuild.ResourceCloudbuildWorkerPool(),
-	"google_cloudbuildv2_connection":                            cloudbuildv2.ResourceCloudbuildv2Connection(),
-	"google_cloudbuildv2_repository":                            cloudbuildv2.ResourceCloudbuildv2Repository(),
 	"google_clouddeploy_delivery_pipeline":                      clouddeploy.ResourceClouddeployDeliveryPipeline(),
 	"google_clouddeploy_target":                                 clouddeploy.ResourceClouddeployTarget(),
 	"google_compute_firewall_policy":                            compute.ResourceComputeFirewallPolicy(),
 	"google_compute_firewall_policy_association":                compute.ResourceComputeFirewallPolicyAssociation(),
 	"google_compute_firewall_policy_rule":                       compute.ResourceComputeFirewallPolicyRule(),
-	"google_compute_region_network_firewall_policy":             compute.ResourceComputeRegionNetworkFirewallPolicy(),
-	"google_compute_network_firewall_policy":                    compute.ResourceComputeNetworkFirewallPolicy(),
 	"google_compute_network_firewall_policy_association":        compute.ResourceComputeNetworkFirewallPolicyAssociation(),
 	"google_compute_region_network_firewall_policy_association": compute.ResourceComputeRegionNetworkFirewallPolicyAssociation(),
 	"google_compute_network_firewall_policy_rule":               compute.ResourceComputeNetworkFirewallPolicyRule(),
@@ -71,9 +63,8 @@ var dclResources = map[string]*schema.Resource{
 	"google_eventarc_trigger":                                   eventarc.ResourceEventarcTrigger(),
 	"google_firebaserules_release":                              firebaserules.ResourceFirebaserulesRelease(),
 	"google_firebaserules_ruleset":                              firebaserules.ResourceFirebaserulesRuleset(),
+	"google_gke_hub_feature_membership":                         gkehub.ResourceGkeHubFeatureMembership(),
 	"google_network_connectivity_hub":                           networkconnectivity.ResourceNetworkConnectivityHub(),
 	"google_network_connectivity_spoke":                         networkconnectivity.ResourceNetworkConnectivitySpoke(),
-	"google_org_policy_policy":                                  orgpolicy.ResourceOrgPolicyPolicy(),
-	"google_privateca_certificate_template":                     privateca.ResourcePrivatecaCertificateTemplate(),
 	"google_recaptcha_enterprise_key":                           recaptchaenterprise.ResourceRecaptchaEnterpriseKey(),
 }

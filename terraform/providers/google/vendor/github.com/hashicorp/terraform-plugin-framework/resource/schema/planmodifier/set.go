@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package planmodifier
 
 import (
@@ -10,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// Set is a schema validator for types.Set attributes.
+// Set is a schema plan modifier for types.Set attributes.
 type Set interface {
 	Describer
 
@@ -78,8 +81,8 @@ type SetResponse struct {
 	// attributes.
 	Private *privatestate.ProviderData
 
-	// Diagnostics report errors or warnings related to validating the data
-	// source configuration. An empty slice indicates success, with no warnings
-	// or errors generated.
+	// Diagnostics report errors or warnings related to modifying the resource
+	// plan. An empty slice indicates success, with no warnings or
+	// errors generated.
 	Diagnostics diag.Diagnostics
 }

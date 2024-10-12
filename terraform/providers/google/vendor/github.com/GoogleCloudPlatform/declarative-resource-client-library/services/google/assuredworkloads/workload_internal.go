@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,9 +33,6 @@ func (r *Workload) validate() error {
 	if err := dcl.Required(r, "complianceRegime"); err != nil {
 		return err
 	}
-	if err := dcl.Required(r, "billingAccount"); err != nil {
-		return err
-	}
 	if err := dcl.RequiredParameter(r.Organization, "Organization"); err != nil {
 		return err
 	}
@@ -44,6 +41,26 @@ func (r *Workload) validate() error {
 	}
 	if !dcl.IsEmptyValueIndirect(r.KmsSettings) {
 		if err := r.KmsSettings.validate(); err != nil {
+			return err
+		}
+	}
+	if !dcl.IsEmptyValueIndirect(r.SaaEnrollmentResponse) {
+		if err := r.SaaEnrollmentResponse.validate(); err != nil {
+			return err
+		}
+	}
+	if !dcl.IsEmptyValueIndirect(r.ComplianceStatus) {
+		if err := r.ComplianceStatus.validate(); err != nil {
+			return err
+		}
+	}
+	if !dcl.IsEmptyValueIndirect(r.PartnerPermissions) {
+		if err := r.PartnerPermissions.validate(); err != nil {
+			return err
+		}
+	}
+	if !dcl.IsEmptyValueIndirect(r.EkmProvisioningResponse) {
+		if err := r.EkmProvisioningResponse.validate(); err != nil {
 			return err
 		}
 	}
@@ -62,6 +79,18 @@ func (r *WorkloadKmsSettings) validate() error {
 	return nil
 }
 func (r *WorkloadResourceSettings) validate() error {
+	return nil
+}
+func (r *WorkloadSaaEnrollmentResponse) validate() error {
+	return nil
+}
+func (r *WorkloadComplianceStatus) validate() error {
+	return nil
+}
+func (r *WorkloadPartnerPermissions) validate() error {
+	return nil
+}
+func (r *WorkloadEkmProvisioningResponse) validate() error {
 	return nil
 }
 func (r *Workload) basePath() string {
@@ -476,6 +505,10 @@ func canonicalizeWorkloadDesiredState(rawDesired, rawInitial *Workload, opts ...
 		// Since the initial state is empty, the desired state is all we have.
 		// We canonicalize the remaining nested objects with nil to pick up defaults.
 		rawDesired.KmsSettings = canonicalizeWorkloadKmsSettings(rawDesired.KmsSettings, nil, opts...)
+		rawDesired.SaaEnrollmentResponse = canonicalizeWorkloadSaaEnrollmentResponse(rawDesired.SaaEnrollmentResponse, nil, opts...)
+		rawDesired.ComplianceStatus = canonicalizeWorkloadComplianceStatus(rawDesired.ComplianceStatus, nil, opts...)
+		rawDesired.PartnerPermissions = canonicalizeWorkloadPartnerPermissions(rawDesired.PartnerPermissions, nil, opts...)
+		rawDesired.EkmProvisioningResponse = canonicalizeWorkloadEkmProvisioningResponse(rawDesired.EkmProvisioningResponse, nil, opts...)
 
 		return rawDesired, nil
 	}
@@ -515,6 +548,23 @@ func canonicalizeWorkloadDesiredState(rawDesired, rawInitial *Workload, opts ...
 	}
 	canonicalDesired.KmsSettings = canonicalizeWorkloadKmsSettings(rawDesired.KmsSettings, rawInitial.KmsSettings, opts...)
 	canonicalDesired.ResourceSettings = canonicalizeWorkloadResourceSettingsSlice(rawDesired.ResourceSettings, rawInitial.ResourceSettings, opts...)
+	if dcl.BoolCanonicalize(rawDesired.EnableSovereignControls, rawInitial.EnableSovereignControls) {
+		canonicalDesired.EnableSovereignControls = rawInitial.EnableSovereignControls
+	} else {
+		canonicalDesired.EnableSovereignControls = rawDesired.EnableSovereignControls
+	}
+	if dcl.IsZeroValue(rawDesired.Partner) || (dcl.IsEmptyValueIndirect(rawDesired.Partner) && dcl.IsEmptyValueIndirect(rawInitial.Partner)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		canonicalDesired.Partner = rawInitial.Partner
+	} else {
+		canonicalDesired.Partner = rawDesired.Partner
+	}
+	canonicalDesired.PartnerPermissions = canonicalizeWorkloadPartnerPermissions(rawDesired.PartnerPermissions, rawInitial.PartnerPermissions, opts...)
+	if dcl.BoolCanonicalize(rawDesired.ViolationNotificationsEnabled, rawInitial.ViolationNotificationsEnabled) {
+		canonicalDesired.ViolationNotificationsEnabled = rawInitial.ViolationNotificationsEnabled
+	} else {
+		canonicalDesired.ViolationNotificationsEnabled = rawDesired.ViolationNotificationsEnabled
+	}
 	if dcl.NameToSelfLink(rawDesired.Organization, rawInitial.Organization) {
 		canonicalDesired.Organization = rawInitial.Organization
 	} else {
@@ -575,6 +625,64 @@ func canonicalizeWorkloadNewState(c *Client, rawNew, rawDesired *Workload) (*Wor
 	rawNew.KmsSettings = rawDesired.KmsSettings
 
 	rawNew.ResourceSettings = rawDesired.ResourceSettings
+
+	if dcl.IsEmptyValueIndirect(rawNew.KajEnrollmentState) && dcl.IsEmptyValueIndirect(rawDesired.KajEnrollmentState) {
+		rawNew.KajEnrollmentState = rawDesired.KajEnrollmentState
+	} else {
+	}
+
+	if dcl.IsEmptyValueIndirect(rawNew.EnableSovereignControls) && dcl.IsEmptyValueIndirect(rawDesired.EnableSovereignControls) {
+		rawNew.EnableSovereignControls = rawDesired.EnableSovereignControls
+	} else {
+		if dcl.BoolCanonicalize(rawDesired.EnableSovereignControls, rawNew.EnableSovereignControls) {
+			rawNew.EnableSovereignControls = rawDesired.EnableSovereignControls
+		}
+	}
+
+	if dcl.IsEmptyValueIndirect(rawNew.SaaEnrollmentResponse) && dcl.IsEmptyValueIndirect(rawDesired.SaaEnrollmentResponse) {
+		rawNew.SaaEnrollmentResponse = rawDesired.SaaEnrollmentResponse
+	} else {
+		rawNew.SaaEnrollmentResponse = canonicalizeNewWorkloadSaaEnrollmentResponse(c, rawDesired.SaaEnrollmentResponse, rawNew.SaaEnrollmentResponse)
+	}
+
+	if dcl.IsEmptyValueIndirect(rawNew.ComplianceStatus) && dcl.IsEmptyValueIndirect(rawDesired.ComplianceStatus) {
+		rawNew.ComplianceStatus = rawDesired.ComplianceStatus
+	} else {
+		rawNew.ComplianceStatus = canonicalizeNewWorkloadComplianceStatus(c, rawDesired.ComplianceStatus, rawNew.ComplianceStatus)
+	}
+
+	if dcl.IsEmptyValueIndirect(rawNew.CompliantButDisallowedServices) && dcl.IsEmptyValueIndirect(rawDesired.CompliantButDisallowedServices) {
+		rawNew.CompliantButDisallowedServices = rawDesired.CompliantButDisallowedServices
+	} else {
+		if dcl.StringArrayCanonicalize(rawDesired.CompliantButDisallowedServices, rawNew.CompliantButDisallowedServices) {
+			rawNew.CompliantButDisallowedServices = rawDesired.CompliantButDisallowedServices
+		}
+	}
+
+	if dcl.IsEmptyValueIndirect(rawNew.Partner) && dcl.IsEmptyValueIndirect(rawDesired.Partner) {
+		rawNew.Partner = rawDesired.Partner
+	} else {
+	}
+
+	if dcl.IsEmptyValueIndirect(rawNew.PartnerPermissions) && dcl.IsEmptyValueIndirect(rawDesired.PartnerPermissions) {
+		rawNew.PartnerPermissions = rawDesired.PartnerPermissions
+	} else {
+		rawNew.PartnerPermissions = canonicalizeNewWorkloadPartnerPermissions(c, rawDesired.PartnerPermissions, rawNew.PartnerPermissions)
+	}
+
+	if dcl.IsEmptyValueIndirect(rawNew.EkmProvisioningResponse) && dcl.IsEmptyValueIndirect(rawDesired.EkmProvisioningResponse) {
+		rawNew.EkmProvisioningResponse = rawDesired.EkmProvisioningResponse
+	} else {
+		rawNew.EkmProvisioningResponse = canonicalizeNewWorkloadEkmProvisioningResponse(c, rawDesired.EkmProvisioningResponse, rawNew.EkmProvisioningResponse)
+	}
+
+	if dcl.IsEmptyValueIndirect(rawNew.ViolationNotificationsEnabled) && dcl.IsEmptyValueIndirect(rawDesired.ViolationNotificationsEnabled) {
+		rawNew.ViolationNotificationsEnabled = rawDesired.ViolationNotificationsEnabled
+	} else {
+		if dcl.BoolCanonicalize(rawDesired.ViolationNotificationsEnabled, rawNew.ViolationNotificationsEnabled) {
+			rawNew.ViolationNotificationsEnabled = rawDesired.ViolationNotificationsEnabled
+		}
+	}
 
 	rawNew.Organization = rawDesired.Organization
 
@@ -853,6 +961,11 @@ func canonicalizeWorkloadResourceSettings(des, initial *WorkloadResourceSettings
 	} else {
 		cDes.ResourceType = des.ResourceType
 	}
+	if dcl.StringCanonicalize(des.DisplayName, initial.DisplayName) || dcl.IsZeroValue(des.DisplayName) {
+		cDes.DisplayName = initial.DisplayName
+	} else {
+		cDes.DisplayName = des.DisplayName
+	}
 
 	return cDes
 }
@@ -902,6 +1015,9 @@ func canonicalizeNewWorkloadResourceSettings(c *Client, des, nw *WorkloadResourc
 	if dcl.StringCanonicalize(des.ResourceId, nw.ResourceId) {
 		nw.ResourceId = des.ResourceId
 	}
+	if dcl.StringCanonicalize(des.DisplayName, nw.DisplayName) {
+		nw.DisplayName = des.DisplayName
+	}
 
 	return nw
 }
@@ -947,6 +1063,509 @@ func canonicalizeNewWorkloadResourceSettingsSlice(c *Client, des, nw []WorkloadR
 	for i, d := range des {
 		n := nw[i]
 		items = append(items, *canonicalizeNewWorkloadResourceSettings(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeWorkloadSaaEnrollmentResponse(des, initial *WorkloadSaaEnrollmentResponse, opts ...dcl.ApplyOption) *WorkloadSaaEnrollmentResponse {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &WorkloadSaaEnrollmentResponse{}
+
+	if dcl.IsZeroValue(des.SetupErrors) || (dcl.IsEmptyValueIndirect(des.SetupErrors) && dcl.IsEmptyValueIndirect(initial.SetupErrors)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.SetupErrors = initial.SetupErrors
+	} else {
+		cDes.SetupErrors = des.SetupErrors
+	}
+	if dcl.IsZeroValue(des.SetupStatus) || (dcl.IsEmptyValueIndirect(des.SetupStatus) && dcl.IsEmptyValueIndirect(initial.SetupStatus)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.SetupStatus = initial.SetupStatus
+	} else {
+		cDes.SetupStatus = des.SetupStatus
+	}
+
+	return cDes
+}
+
+func canonicalizeWorkloadSaaEnrollmentResponseSlice(des, initial []WorkloadSaaEnrollmentResponse, opts ...dcl.ApplyOption) []WorkloadSaaEnrollmentResponse {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]WorkloadSaaEnrollmentResponse, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeWorkloadSaaEnrollmentResponse(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]WorkloadSaaEnrollmentResponse, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeWorkloadSaaEnrollmentResponse(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewWorkloadSaaEnrollmentResponse(c *Client, des, nw *WorkloadSaaEnrollmentResponse) *WorkloadSaaEnrollmentResponse {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for WorkloadSaaEnrollmentResponse while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	return nw
+}
+
+func canonicalizeNewWorkloadSaaEnrollmentResponseSet(c *Client, des, nw []WorkloadSaaEnrollmentResponse) []WorkloadSaaEnrollmentResponse {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []WorkloadSaaEnrollmentResponse
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareWorkloadSaaEnrollmentResponseNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewWorkloadSaaEnrollmentResponse(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewWorkloadSaaEnrollmentResponseSlice(c *Client, des, nw []WorkloadSaaEnrollmentResponse) []WorkloadSaaEnrollmentResponse {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []WorkloadSaaEnrollmentResponse
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewWorkloadSaaEnrollmentResponse(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeWorkloadComplianceStatus(des, initial *WorkloadComplianceStatus, opts ...dcl.ApplyOption) *WorkloadComplianceStatus {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &WorkloadComplianceStatus{}
+
+	if dcl.IsZeroValue(des.ActiveViolationCount) || (dcl.IsEmptyValueIndirect(des.ActiveViolationCount) && dcl.IsEmptyValueIndirect(initial.ActiveViolationCount)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.ActiveViolationCount = initial.ActiveViolationCount
+	} else {
+		cDes.ActiveViolationCount = des.ActiveViolationCount
+	}
+	if dcl.IsZeroValue(des.AcknowledgedViolationCount) || (dcl.IsEmptyValueIndirect(des.AcknowledgedViolationCount) && dcl.IsEmptyValueIndirect(initial.AcknowledgedViolationCount)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.AcknowledgedViolationCount = initial.AcknowledgedViolationCount
+	} else {
+		cDes.AcknowledgedViolationCount = des.AcknowledgedViolationCount
+	}
+
+	return cDes
+}
+
+func canonicalizeWorkloadComplianceStatusSlice(des, initial []WorkloadComplianceStatus, opts ...dcl.ApplyOption) []WorkloadComplianceStatus {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]WorkloadComplianceStatus, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeWorkloadComplianceStatus(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]WorkloadComplianceStatus, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeWorkloadComplianceStatus(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewWorkloadComplianceStatus(c *Client, des, nw *WorkloadComplianceStatus) *WorkloadComplianceStatus {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for WorkloadComplianceStatus while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	return nw
+}
+
+func canonicalizeNewWorkloadComplianceStatusSet(c *Client, des, nw []WorkloadComplianceStatus) []WorkloadComplianceStatus {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []WorkloadComplianceStatus
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareWorkloadComplianceStatusNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewWorkloadComplianceStatus(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewWorkloadComplianceStatusSlice(c *Client, des, nw []WorkloadComplianceStatus) []WorkloadComplianceStatus {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []WorkloadComplianceStatus
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewWorkloadComplianceStatus(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeWorkloadPartnerPermissions(des, initial *WorkloadPartnerPermissions, opts ...dcl.ApplyOption) *WorkloadPartnerPermissions {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &WorkloadPartnerPermissions{}
+
+	if dcl.BoolCanonicalize(des.DataLogsViewer, initial.DataLogsViewer) || dcl.IsZeroValue(des.DataLogsViewer) {
+		cDes.DataLogsViewer = initial.DataLogsViewer
+	} else {
+		cDes.DataLogsViewer = des.DataLogsViewer
+	}
+	if dcl.BoolCanonicalize(des.ServiceAccessApprover, initial.ServiceAccessApprover) || dcl.IsZeroValue(des.ServiceAccessApprover) {
+		cDes.ServiceAccessApprover = initial.ServiceAccessApprover
+	} else {
+		cDes.ServiceAccessApprover = des.ServiceAccessApprover
+	}
+	if dcl.BoolCanonicalize(des.AssuredWorkloadsMonitoring, initial.AssuredWorkloadsMonitoring) || dcl.IsZeroValue(des.AssuredWorkloadsMonitoring) {
+		cDes.AssuredWorkloadsMonitoring = initial.AssuredWorkloadsMonitoring
+	} else {
+		cDes.AssuredWorkloadsMonitoring = des.AssuredWorkloadsMonitoring
+	}
+
+	return cDes
+}
+
+func canonicalizeWorkloadPartnerPermissionsSlice(des, initial []WorkloadPartnerPermissions, opts ...dcl.ApplyOption) []WorkloadPartnerPermissions {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]WorkloadPartnerPermissions, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeWorkloadPartnerPermissions(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]WorkloadPartnerPermissions, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeWorkloadPartnerPermissions(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewWorkloadPartnerPermissions(c *Client, des, nw *WorkloadPartnerPermissions) *WorkloadPartnerPermissions {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for WorkloadPartnerPermissions while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.BoolCanonicalize(des.DataLogsViewer, nw.DataLogsViewer) {
+		nw.DataLogsViewer = des.DataLogsViewer
+	}
+	if dcl.BoolCanonicalize(des.ServiceAccessApprover, nw.ServiceAccessApprover) {
+		nw.ServiceAccessApprover = des.ServiceAccessApprover
+	}
+	if dcl.BoolCanonicalize(des.AssuredWorkloadsMonitoring, nw.AssuredWorkloadsMonitoring) {
+		nw.AssuredWorkloadsMonitoring = des.AssuredWorkloadsMonitoring
+	}
+
+	return nw
+}
+
+func canonicalizeNewWorkloadPartnerPermissionsSet(c *Client, des, nw []WorkloadPartnerPermissions) []WorkloadPartnerPermissions {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []WorkloadPartnerPermissions
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareWorkloadPartnerPermissionsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewWorkloadPartnerPermissions(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewWorkloadPartnerPermissionsSlice(c *Client, des, nw []WorkloadPartnerPermissions) []WorkloadPartnerPermissions {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []WorkloadPartnerPermissions
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewWorkloadPartnerPermissions(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeWorkloadEkmProvisioningResponse(des, initial *WorkloadEkmProvisioningResponse, opts ...dcl.ApplyOption) *WorkloadEkmProvisioningResponse {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &WorkloadEkmProvisioningResponse{}
+
+	if dcl.IsZeroValue(des.EkmProvisioningState) || (dcl.IsEmptyValueIndirect(des.EkmProvisioningState) && dcl.IsEmptyValueIndirect(initial.EkmProvisioningState)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.EkmProvisioningState = initial.EkmProvisioningState
+	} else {
+		cDes.EkmProvisioningState = des.EkmProvisioningState
+	}
+	if dcl.IsZeroValue(des.EkmProvisioningErrorDomain) || (dcl.IsEmptyValueIndirect(des.EkmProvisioningErrorDomain) && dcl.IsEmptyValueIndirect(initial.EkmProvisioningErrorDomain)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.EkmProvisioningErrorDomain = initial.EkmProvisioningErrorDomain
+	} else {
+		cDes.EkmProvisioningErrorDomain = des.EkmProvisioningErrorDomain
+	}
+	if dcl.IsZeroValue(des.EkmProvisioningErrorMapping) || (dcl.IsEmptyValueIndirect(des.EkmProvisioningErrorMapping) && dcl.IsEmptyValueIndirect(initial.EkmProvisioningErrorMapping)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.EkmProvisioningErrorMapping = initial.EkmProvisioningErrorMapping
+	} else {
+		cDes.EkmProvisioningErrorMapping = des.EkmProvisioningErrorMapping
+	}
+
+	return cDes
+}
+
+func canonicalizeWorkloadEkmProvisioningResponseSlice(des, initial []WorkloadEkmProvisioningResponse, opts ...dcl.ApplyOption) []WorkloadEkmProvisioningResponse {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]WorkloadEkmProvisioningResponse, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeWorkloadEkmProvisioningResponse(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]WorkloadEkmProvisioningResponse, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeWorkloadEkmProvisioningResponse(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewWorkloadEkmProvisioningResponse(c *Client, des, nw *WorkloadEkmProvisioningResponse) *WorkloadEkmProvisioningResponse {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for WorkloadEkmProvisioningResponse while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	return nw
+}
+
+func canonicalizeNewWorkloadEkmProvisioningResponseSet(c *Client, des, nw []WorkloadEkmProvisioningResponse) []WorkloadEkmProvisioningResponse {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []WorkloadEkmProvisioningResponse
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareWorkloadEkmProvisioningResponseNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewWorkloadEkmProvisioningResponse(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewWorkloadEkmProvisioningResponseSlice(c *Client, des, nw []WorkloadEkmProvisioningResponse) []WorkloadEkmProvisioningResponse {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []WorkloadEkmProvisioningResponse
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewWorkloadEkmProvisioningResponse(c, &d, &n))
 	}
 
 	return items
@@ -1034,6 +1653,69 @@ func diffWorkload(c *Client, desired, actual *Workload, opts ...dcl.ApplyOption)
 	}
 
 	if ds, err := dcl.Diff(desired.ResourceSettings, actual.ResourceSettings, dcl.DiffInfo{Ignore: true, ObjectFunction: compareWorkloadResourceSettingsNewStyle, EmptyObject: EmptyWorkloadResourceSettings, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ResourceSettings")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.KajEnrollmentState, actual.KajEnrollmentState, dcl.DiffInfo{OutputOnly: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KajEnrollmentState")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.EnableSovereignControls, actual.EnableSovereignControls, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("EnableSovereignControls")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.SaaEnrollmentResponse, actual.SaaEnrollmentResponse, dcl.DiffInfo{OutputOnly: true, ObjectFunction: compareWorkloadSaaEnrollmentResponseNewStyle, EmptyObject: EmptyWorkloadSaaEnrollmentResponse, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SaaEnrollmentResponse")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.ComplianceStatus, actual.ComplianceStatus, dcl.DiffInfo{OutputOnly: true, ObjectFunction: compareWorkloadComplianceStatusNewStyle, EmptyObject: EmptyWorkloadComplianceStatus, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ComplianceStatus")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.CompliantButDisallowedServices, actual.CompliantButDisallowedServices, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CompliantButDisallowedServices")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Partner, actual.Partner, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Partner")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.PartnerPermissions, actual.PartnerPermissions, dcl.DiffInfo{ObjectFunction: compareWorkloadPartnerPermissionsNewStyle, EmptyObject: EmptyWorkloadPartnerPermissions, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PartnerPermissions")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.EkmProvisioningResponse, actual.EkmProvisioningResponse, dcl.DiffInfo{OutputOnly: true, ObjectFunction: compareWorkloadEkmProvisioningResponseNewStyle, EmptyObject: EmptyWorkloadEkmProvisioningResponse, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("EkmProvisioningResponse")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.ViolationNotificationsEnabled, actual.ViolationNotificationsEnabled, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ViolationNotificationsEnabled")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1164,6 +1846,171 @@ func compareWorkloadResourceSettingsNewStyle(d, a interface{}, fn dcl.FieldName)
 		}
 		diffs = append(diffs, ds...)
 	}
+
+	if ds, err := dcl.Diff(desired.DisplayName, actual.DisplayName, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DisplayName")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareWorkloadSaaEnrollmentResponseNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*WorkloadSaaEnrollmentResponse)
+	if !ok {
+		desiredNotPointer, ok := d.(WorkloadSaaEnrollmentResponse)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a WorkloadSaaEnrollmentResponse or *WorkloadSaaEnrollmentResponse", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*WorkloadSaaEnrollmentResponse)
+	if !ok {
+		actualNotPointer, ok := a.(WorkloadSaaEnrollmentResponse)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a WorkloadSaaEnrollmentResponse", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.SetupErrors, actual.SetupErrors, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SetupErrors")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.SetupStatus, actual.SetupStatus, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SetupStatus")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareWorkloadComplianceStatusNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*WorkloadComplianceStatus)
+	if !ok {
+		desiredNotPointer, ok := d.(WorkloadComplianceStatus)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a WorkloadComplianceStatus or *WorkloadComplianceStatus", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*WorkloadComplianceStatus)
+	if !ok {
+		actualNotPointer, ok := a.(WorkloadComplianceStatus)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a WorkloadComplianceStatus", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.ActiveViolationCount, actual.ActiveViolationCount, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ActiveViolationCount")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.AcknowledgedViolationCount, actual.AcknowledgedViolationCount, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AcknowledgedViolationCount")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareWorkloadPartnerPermissionsNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*WorkloadPartnerPermissions)
+	if !ok {
+		desiredNotPointer, ok := d.(WorkloadPartnerPermissions)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a WorkloadPartnerPermissions or *WorkloadPartnerPermissions", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*WorkloadPartnerPermissions)
+	if !ok {
+		actualNotPointer, ok := a.(WorkloadPartnerPermissions)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a WorkloadPartnerPermissions", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.DataLogsViewer, actual.DataLogsViewer, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DataLogsViewer")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.ServiceAccessApprover, actual.ServiceAccessApprover, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ServiceAccessApprover")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.AssuredWorkloadsMonitoring, actual.AssuredWorkloadsMonitoring, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AssuredWorkloadsMonitoring")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareWorkloadEkmProvisioningResponseNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*WorkloadEkmProvisioningResponse)
+	if !ok {
+		desiredNotPointer, ok := d.(WorkloadEkmProvisioningResponse)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a WorkloadEkmProvisioningResponse or *WorkloadEkmProvisioningResponse", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*WorkloadEkmProvisioningResponse)
+	if !ok {
+		actualNotPointer, ok := a.(WorkloadEkmProvisioningResponse)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a WorkloadEkmProvisioningResponse", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.EkmProvisioningState, actual.EkmProvisioningState, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("EkmProvisioningState")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.EkmProvisioningErrorDomain, actual.EkmProvisioningErrorDomain, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("EkmProvisioningErrorDomain")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.EkmProvisioningErrorMapping, actual.EkmProvisioningErrorMapping, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("EkmProvisioningErrorMapping")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
 	return diffs, nil
 }
 
@@ -1261,6 +2108,20 @@ func expandWorkload(c *Client, f *Workload) (map[string]interface{}, error) {
 	} else if v != nil {
 		m["resourceSettings"] = v
 	}
+	if v := f.EnableSovereignControls; dcl.ValueShouldBeSent(v) {
+		m["enableSovereignControls"] = v
+	}
+	if v := f.Partner; dcl.ValueShouldBeSent(v) {
+		m["partner"] = v
+	}
+	if v, err := expandWorkloadPartnerPermissions(c, f.PartnerPermissions, res); err != nil {
+		return nil, fmt.Errorf("error expanding PartnerPermissions into partnerPermissions: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["partnerPermissions"] = v
+	}
+	if v := f.ViolationNotificationsEnabled; dcl.ValueShouldBeSent(v) {
+		m["violationNotificationsEnabled"] = v
+	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Organization into organization: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
@@ -1297,6 +2158,15 @@ func flattenWorkload(c *Client, i interface{}, res *Workload) *Workload {
 	resultRes.ProvisionedResourcesParent = dcl.FlattenSecretValue(m["provisionedResourcesParent"])
 	resultRes.KmsSettings = flattenWorkloadKmsSettings(c, m["kmsSettings"], res)
 	resultRes.ResourceSettings = flattenWorkloadResourceSettingsSlice(c, m["resourceSettings"], res)
+	resultRes.KajEnrollmentState = flattenWorkloadKajEnrollmentStateEnum(m["kajEnrollmentState"])
+	resultRes.EnableSovereignControls = dcl.FlattenBool(m["enableSovereignControls"])
+	resultRes.SaaEnrollmentResponse = flattenWorkloadSaaEnrollmentResponse(c, m["saaEnrollmentResponse"], res)
+	resultRes.ComplianceStatus = flattenWorkloadComplianceStatus(c, m["complianceStatus"], res)
+	resultRes.CompliantButDisallowedServices = dcl.FlattenStringSlice(m["compliantButDisallowedServices"])
+	resultRes.Partner = flattenWorkloadPartnerEnum(m["partner"])
+	resultRes.PartnerPermissions = flattenWorkloadPartnerPermissions(c, m["partnerPermissions"], res)
+	resultRes.EkmProvisioningResponse = flattenWorkloadEkmProvisioningResponse(c, m["ekmProvisioningResponse"], res)
+	resultRes.ViolationNotificationsEnabled = dcl.FlattenBool(m["violationNotificationsEnabled"])
 	resultRes.Organization = dcl.FlattenString(m["organization"])
 	resultRes.Location = dcl.FlattenString(m["location"])
 
@@ -1634,6 +2504,9 @@ func expandWorkloadResourceSettings(c *Client, f *WorkloadResourceSettings, res 
 	if v := f.ResourceType; !dcl.IsEmptyValueIndirect(v) {
 		m["resourceType"] = v
 	}
+	if v := f.DisplayName; !dcl.IsEmptyValueIndirect(v) {
+		m["displayName"] = v
+	}
 
 	return m, nil
 }
@@ -1653,6 +2526,487 @@ func flattenWorkloadResourceSettings(c *Client, i interface{}, res *Workload) *W
 	}
 	r.ResourceId = dcl.FlattenString(m["resourceId"])
 	r.ResourceType = flattenWorkloadResourceSettingsResourceTypeEnum(m["resourceType"])
+	r.DisplayName = dcl.FlattenString(m["displayName"])
+
+	return r
+}
+
+// expandWorkloadSaaEnrollmentResponseMap expands the contents of WorkloadSaaEnrollmentResponse into a JSON
+// request object.
+func expandWorkloadSaaEnrollmentResponseMap(c *Client, f map[string]WorkloadSaaEnrollmentResponse, res *Workload) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandWorkloadSaaEnrollmentResponse(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandWorkloadSaaEnrollmentResponseSlice expands the contents of WorkloadSaaEnrollmentResponse into a JSON
+// request object.
+func expandWorkloadSaaEnrollmentResponseSlice(c *Client, f []WorkloadSaaEnrollmentResponse, res *Workload) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandWorkloadSaaEnrollmentResponse(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenWorkloadSaaEnrollmentResponseMap flattens the contents of WorkloadSaaEnrollmentResponse from a JSON
+// response object.
+func flattenWorkloadSaaEnrollmentResponseMap(c *Client, i interface{}, res *Workload) map[string]WorkloadSaaEnrollmentResponse {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]WorkloadSaaEnrollmentResponse{}
+	}
+
+	if len(a) == 0 {
+		return map[string]WorkloadSaaEnrollmentResponse{}
+	}
+
+	items := make(map[string]WorkloadSaaEnrollmentResponse)
+	for k, item := range a {
+		items[k] = *flattenWorkloadSaaEnrollmentResponse(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenWorkloadSaaEnrollmentResponseSlice flattens the contents of WorkloadSaaEnrollmentResponse from a JSON
+// response object.
+func flattenWorkloadSaaEnrollmentResponseSlice(c *Client, i interface{}, res *Workload) []WorkloadSaaEnrollmentResponse {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []WorkloadSaaEnrollmentResponse{}
+	}
+
+	if len(a) == 0 {
+		return []WorkloadSaaEnrollmentResponse{}
+	}
+
+	items := make([]WorkloadSaaEnrollmentResponse, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenWorkloadSaaEnrollmentResponse(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandWorkloadSaaEnrollmentResponse expands an instance of WorkloadSaaEnrollmentResponse into a JSON
+// request object.
+func expandWorkloadSaaEnrollmentResponse(c *Client, f *WorkloadSaaEnrollmentResponse, res *Workload) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.SetupErrors; v != nil {
+		m["setupErrors"] = v
+	}
+	if v := f.SetupStatus; !dcl.IsEmptyValueIndirect(v) {
+		m["setupStatus"] = v
+	}
+
+	return m, nil
+}
+
+// flattenWorkloadSaaEnrollmentResponse flattens an instance of WorkloadSaaEnrollmentResponse from a JSON
+// response object.
+func flattenWorkloadSaaEnrollmentResponse(c *Client, i interface{}, res *Workload) *WorkloadSaaEnrollmentResponse {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &WorkloadSaaEnrollmentResponse{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyWorkloadSaaEnrollmentResponse
+	}
+	r.SetupErrors = flattenWorkloadSaaEnrollmentResponseSetupErrorsEnumSlice(c, m["setupErrors"], res)
+	r.SetupStatus = flattenWorkloadSaaEnrollmentResponseSetupStatusEnum(m["setupStatus"])
+
+	return r
+}
+
+// expandWorkloadComplianceStatusMap expands the contents of WorkloadComplianceStatus into a JSON
+// request object.
+func expandWorkloadComplianceStatusMap(c *Client, f map[string]WorkloadComplianceStatus, res *Workload) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandWorkloadComplianceStatus(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandWorkloadComplianceStatusSlice expands the contents of WorkloadComplianceStatus into a JSON
+// request object.
+func expandWorkloadComplianceStatusSlice(c *Client, f []WorkloadComplianceStatus, res *Workload) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandWorkloadComplianceStatus(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenWorkloadComplianceStatusMap flattens the contents of WorkloadComplianceStatus from a JSON
+// response object.
+func flattenWorkloadComplianceStatusMap(c *Client, i interface{}, res *Workload) map[string]WorkloadComplianceStatus {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]WorkloadComplianceStatus{}
+	}
+
+	if len(a) == 0 {
+		return map[string]WorkloadComplianceStatus{}
+	}
+
+	items := make(map[string]WorkloadComplianceStatus)
+	for k, item := range a {
+		items[k] = *flattenWorkloadComplianceStatus(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenWorkloadComplianceStatusSlice flattens the contents of WorkloadComplianceStatus from a JSON
+// response object.
+func flattenWorkloadComplianceStatusSlice(c *Client, i interface{}, res *Workload) []WorkloadComplianceStatus {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []WorkloadComplianceStatus{}
+	}
+
+	if len(a) == 0 {
+		return []WorkloadComplianceStatus{}
+	}
+
+	items := make([]WorkloadComplianceStatus, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenWorkloadComplianceStatus(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandWorkloadComplianceStatus expands an instance of WorkloadComplianceStatus into a JSON
+// request object.
+func expandWorkloadComplianceStatus(c *Client, f *WorkloadComplianceStatus, res *Workload) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.ActiveViolationCount; v != nil {
+		m["activeViolationCount"] = v
+	}
+	if v := f.AcknowledgedViolationCount; v != nil {
+		m["acknowledgedViolationCount"] = v
+	}
+
+	return m, nil
+}
+
+// flattenWorkloadComplianceStatus flattens an instance of WorkloadComplianceStatus from a JSON
+// response object.
+func flattenWorkloadComplianceStatus(c *Client, i interface{}, res *Workload) *WorkloadComplianceStatus {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &WorkloadComplianceStatus{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyWorkloadComplianceStatus
+	}
+	r.ActiveViolationCount = dcl.FlattenIntSlice(m["activeViolationCount"])
+	r.AcknowledgedViolationCount = dcl.FlattenIntSlice(m["acknowledgedViolationCount"])
+
+	return r
+}
+
+// expandWorkloadPartnerPermissionsMap expands the contents of WorkloadPartnerPermissions into a JSON
+// request object.
+func expandWorkloadPartnerPermissionsMap(c *Client, f map[string]WorkloadPartnerPermissions, res *Workload) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandWorkloadPartnerPermissions(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandWorkloadPartnerPermissionsSlice expands the contents of WorkloadPartnerPermissions into a JSON
+// request object.
+func expandWorkloadPartnerPermissionsSlice(c *Client, f []WorkloadPartnerPermissions, res *Workload) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandWorkloadPartnerPermissions(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenWorkloadPartnerPermissionsMap flattens the contents of WorkloadPartnerPermissions from a JSON
+// response object.
+func flattenWorkloadPartnerPermissionsMap(c *Client, i interface{}, res *Workload) map[string]WorkloadPartnerPermissions {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]WorkloadPartnerPermissions{}
+	}
+
+	if len(a) == 0 {
+		return map[string]WorkloadPartnerPermissions{}
+	}
+
+	items := make(map[string]WorkloadPartnerPermissions)
+	for k, item := range a {
+		items[k] = *flattenWorkloadPartnerPermissions(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenWorkloadPartnerPermissionsSlice flattens the contents of WorkloadPartnerPermissions from a JSON
+// response object.
+func flattenWorkloadPartnerPermissionsSlice(c *Client, i interface{}, res *Workload) []WorkloadPartnerPermissions {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []WorkloadPartnerPermissions{}
+	}
+
+	if len(a) == 0 {
+		return []WorkloadPartnerPermissions{}
+	}
+
+	items := make([]WorkloadPartnerPermissions, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenWorkloadPartnerPermissions(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandWorkloadPartnerPermissions expands an instance of WorkloadPartnerPermissions into a JSON
+// request object.
+func expandWorkloadPartnerPermissions(c *Client, f *WorkloadPartnerPermissions, res *Workload) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.DataLogsViewer; !dcl.IsEmptyValueIndirect(v) {
+		m["dataLogsViewer"] = v
+	}
+	if v := f.ServiceAccessApprover; !dcl.IsEmptyValueIndirect(v) {
+		m["serviceAccessApprover"] = v
+	}
+	if v := f.AssuredWorkloadsMonitoring; !dcl.IsEmptyValueIndirect(v) {
+		m["assuredWorkloadsMonitoring"] = v
+	}
+
+	return m, nil
+}
+
+// flattenWorkloadPartnerPermissions flattens an instance of WorkloadPartnerPermissions from a JSON
+// response object.
+func flattenWorkloadPartnerPermissions(c *Client, i interface{}, res *Workload) *WorkloadPartnerPermissions {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &WorkloadPartnerPermissions{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyWorkloadPartnerPermissions
+	}
+	r.DataLogsViewer = dcl.FlattenBool(m["dataLogsViewer"])
+	r.ServiceAccessApprover = dcl.FlattenBool(m["serviceAccessApprover"])
+	r.AssuredWorkloadsMonitoring = dcl.FlattenBool(m["assuredWorkloadsMonitoring"])
+
+	return r
+}
+
+// expandWorkloadEkmProvisioningResponseMap expands the contents of WorkloadEkmProvisioningResponse into a JSON
+// request object.
+func expandWorkloadEkmProvisioningResponseMap(c *Client, f map[string]WorkloadEkmProvisioningResponse, res *Workload) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandWorkloadEkmProvisioningResponse(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandWorkloadEkmProvisioningResponseSlice expands the contents of WorkloadEkmProvisioningResponse into a JSON
+// request object.
+func expandWorkloadEkmProvisioningResponseSlice(c *Client, f []WorkloadEkmProvisioningResponse, res *Workload) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandWorkloadEkmProvisioningResponse(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenWorkloadEkmProvisioningResponseMap flattens the contents of WorkloadEkmProvisioningResponse from a JSON
+// response object.
+func flattenWorkloadEkmProvisioningResponseMap(c *Client, i interface{}, res *Workload) map[string]WorkloadEkmProvisioningResponse {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]WorkloadEkmProvisioningResponse{}
+	}
+
+	if len(a) == 0 {
+		return map[string]WorkloadEkmProvisioningResponse{}
+	}
+
+	items := make(map[string]WorkloadEkmProvisioningResponse)
+	for k, item := range a {
+		items[k] = *flattenWorkloadEkmProvisioningResponse(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenWorkloadEkmProvisioningResponseSlice flattens the contents of WorkloadEkmProvisioningResponse from a JSON
+// response object.
+func flattenWorkloadEkmProvisioningResponseSlice(c *Client, i interface{}, res *Workload) []WorkloadEkmProvisioningResponse {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []WorkloadEkmProvisioningResponse{}
+	}
+
+	if len(a) == 0 {
+		return []WorkloadEkmProvisioningResponse{}
+	}
+
+	items := make([]WorkloadEkmProvisioningResponse, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenWorkloadEkmProvisioningResponse(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandWorkloadEkmProvisioningResponse expands an instance of WorkloadEkmProvisioningResponse into a JSON
+// request object.
+func expandWorkloadEkmProvisioningResponse(c *Client, f *WorkloadEkmProvisioningResponse, res *Workload) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.EkmProvisioningState; !dcl.IsEmptyValueIndirect(v) {
+		m["ekmProvisioningState"] = v
+	}
+	if v := f.EkmProvisioningErrorDomain; !dcl.IsEmptyValueIndirect(v) {
+		m["ekmProvisioningErrorDomain"] = v
+	}
+	if v := f.EkmProvisioningErrorMapping; !dcl.IsEmptyValueIndirect(v) {
+		m["ekmProvisioningErrorMapping"] = v
+	}
+
+	return m, nil
+}
+
+// flattenWorkloadEkmProvisioningResponse flattens an instance of WorkloadEkmProvisioningResponse from a JSON
+// response object.
+func flattenWorkloadEkmProvisioningResponse(c *Client, i interface{}, res *Workload) *WorkloadEkmProvisioningResponse {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &WorkloadEkmProvisioningResponse{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyWorkloadEkmProvisioningResponse
+	}
+	r.EkmProvisioningState = flattenWorkloadEkmProvisioningResponseEkmProvisioningStateEnum(m["ekmProvisioningState"])
+	r.EkmProvisioningErrorDomain = flattenWorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum(m["ekmProvisioningErrorDomain"])
+	r.EkmProvisioningErrorMapping = flattenWorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum(m["ekmProvisioningErrorMapping"])
 
 	return r
 }
@@ -1810,6 +3164,363 @@ func flattenWorkloadResourceSettingsResourceTypeEnum(i interface{}) *WorkloadRes
 	return WorkloadResourceSettingsResourceTypeEnumRef(s)
 }
 
+// flattenWorkloadKajEnrollmentStateEnumMap flattens the contents of WorkloadKajEnrollmentStateEnum from a JSON
+// response object.
+func flattenWorkloadKajEnrollmentStateEnumMap(c *Client, i interface{}, res *Workload) map[string]WorkloadKajEnrollmentStateEnum {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]WorkloadKajEnrollmentStateEnum{}
+	}
+
+	if len(a) == 0 {
+		return map[string]WorkloadKajEnrollmentStateEnum{}
+	}
+
+	items := make(map[string]WorkloadKajEnrollmentStateEnum)
+	for k, item := range a {
+		items[k] = *flattenWorkloadKajEnrollmentStateEnum(item.(interface{}))
+	}
+
+	return items
+}
+
+// flattenWorkloadKajEnrollmentStateEnumSlice flattens the contents of WorkloadKajEnrollmentStateEnum from a JSON
+// response object.
+func flattenWorkloadKajEnrollmentStateEnumSlice(c *Client, i interface{}, res *Workload) []WorkloadKajEnrollmentStateEnum {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []WorkloadKajEnrollmentStateEnum{}
+	}
+
+	if len(a) == 0 {
+		return []WorkloadKajEnrollmentStateEnum{}
+	}
+
+	items := make([]WorkloadKajEnrollmentStateEnum, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenWorkloadKajEnrollmentStateEnum(item.(interface{})))
+	}
+
+	return items
+}
+
+// flattenWorkloadKajEnrollmentStateEnum asserts that an interface is a string, and returns a
+// pointer to a *WorkloadKajEnrollmentStateEnum with the same value as that string.
+func flattenWorkloadKajEnrollmentStateEnum(i interface{}) *WorkloadKajEnrollmentStateEnum {
+	s, ok := i.(string)
+	if !ok {
+		return nil
+	}
+
+	return WorkloadKajEnrollmentStateEnumRef(s)
+}
+
+// flattenWorkloadSaaEnrollmentResponseSetupErrorsEnumMap flattens the contents of WorkloadSaaEnrollmentResponseSetupErrorsEnum from a JSON
+// response object.
+func flattenWorkloadSaaEnrollmentResponseSetupErrorsEnumMap(c *Client, i interface{}, res *Workload) map[string]WorkloadSaaEnrollmentResponseSetupErrorsEnum {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]WorkloadSaaEnrollmentResponseSetupErrorsEnum{}
+	}
+
+	if len(a) == 0 {
+		return map[string]WorkloadSaaEnrollmentResponseSetupErrorsEnum{}
+	}
+
+	items := make(map[string]WorkloadSaaEnrollmentResponseSetupErrorsEnum)
+	for k, item := range a {
+		items[k] = *flattenWorkloadSaaEnrollmentResponseSetupErrorsEnum(item.(interface{}))
+	}
+
+	return items
+}
+
+// flattenWorkloadSaaEnrollmentResponseSetupErrorsEnumSlice flattens the contents of WorkloadSaaEnrollmentResponseSetupErrorsEnum from a JSON
+// response object.
+func flattenWorkloadSaaEnrollmentResponseSetupErrorsEnumSlice(c *Client, i interface{}, res *Workload) []WorkloadSaaEnrollmentResponseSetupErrorsEnum {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []WorkloadSaaEnrollmentResponseSetupErrorsEnum{}
+	}
+
+	if len(a) == 0 {
+		return []WorkloadSaaEnrollmentResponseSetupErrorsEnum{}
+	}
+
+	items := make([]WorkloadSaaEnrollmentResponseSetupErrorsEnum, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenWorkloadSaaEnrollmentResponseSetupErrorsEnum(item.(interface{})))
+	}
+
+	return items
+}
+
+// flattenWorkloadSaaEnrollmentResponseSetupErrorsEnum asserts that an interface is a string, and returns a
+// pointer to a *WorkloadSaaEnrollmentResponseSetupErrorsEnum with the same value as that string.
+func flattenWorkloadSaaEnrollmentResponseSetupErrorsEnum(i interface{}) *WorkloadSaaEnrollmentResponseSetupErrorsEnum {
+	s, ok := i.(string)
+	if !ok {
+		return nil
+	}
+
+	return WorkloadSaaEnrollmentResponseSetupErrorsEnumRef(s)
+}
+
+// flattenWorkloadSaaEnrollmentResponseSetupStatusEnumMap flattens the contents of WorkloadSaaEnrollmentResponseSetupStatusEnum from a JSON
+// response object.
+func flattenWorkloadSaaEnrollmentResponseSetupStatusEnumMap(c *Client, i interface{}, res *Workload) map[string]WorkloadSaaEnrollmentResponseSetupStatusEnum {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]WorkloadSaaEnrollmentResponseSetupStatusEnum{}
+	}
+
+	if len(a) == 0 {
+		return map[string]WorkloadSaaEnrollmentResponseSetupStatusEnum{}
+	}
+
+	items := make(map[string]WorkloadSaaEnrollmentResponseSetupStatusEnum)
+	for k, item := range a {
+		items[k] = *flattenWorkloadSaaEnrollmentResponseSetupStatusEnum(item.(interface{}))
+	}
+
+	return items
+}
+
+// flattenWorkloadSaaEnrollmentResponseSetupStatusEnumSlice flattens the contents of WorkloadSaaEnrollmentResponseSetupStatusEnum from a JSON
+// response object.
+func flattenWorkloadSaaEnrollmentResponseSetupStatusEnumSlice(c *Client, i interface{}, res *Workload) []WorkloadSaaEnrollmentResponseSetupStatusEnum {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []WorkloadSaaEnrollmentResponseSetupStatusEnum{}
+	}
+
+	if len(a) == 0 {
+		return []WorkloadSaaEnrollmentResponseSetupStatusEnum{}
+	}
+
+	items := make([]WorkloadSaaEnrollmentResponseSetupStatusEnum, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenWorkloadSaaEnrollmentResponseSetupStatusEnum(item.(interface{})))
+	}
+
+	return items
+}
+
+// flattenWorkloadSaaEnrollmentResponseSetupStatusEnum asserts that an interface is a string, and returns a
+// pointer to a *WorkloadSaaEnrollmentResponseSetupStatusEnum with the same value as that string.
+func flattenWorkloadSaaEnrollmentResponseSetupStatusEnum(i interface{}) *WorkloadSaaEnrollmentResponseSetupStatusEnum {
+	s, ok := i.(string)
+	if !ok {
+		return nil
+	}
+
+	return WorkloadSaaEnrollmentResponseSetupStatusEnumRef(s)
+}
+
+// flattenWorkloadPartnerEnumMap flattens the contents of WorkloadPartnerEnum from a JSON
+// response object.
+func flattenWorkloadPartnerEnumMap(c *Client, i interface{}, res *Workload) map[string]WorkloadPartnerEnum {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]WorkloadPartnerEnum{}
+	}
+
+	if len(a) == 0 {
+		return map[string]WorkloadPartnerEnum{}
+	}
+
+	items := make(map[string]WorkloadPartnerEnum)
+	for k, item := range a {
+		items[k] = *flattenWorkloadPartnerEnum(item.(interface{}))
+	}
+
+	return items
+}
+
+// flattenWorkloadPartnerEnumSlice flattens the contents of WorkloadPartnerEnum from a JSON
+// response object.
+func flattenWorkloadPartnerEnumSlice(c *Client, i interface{}, res *Workload) []WorkloadPartnerEnum {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []WorkloadPartnerEnum{}
+	}
+
+	if len(a) == 0 {
+		return []WorkloadPartnerEnum{}
+	}
+
+	items := make([]WorkloadPartnerEnum, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenWorkloadPartnerEnum(item.(interface{})))
+	}
+
+	return items
+}
+
+// flattenWorkloadPartnerEnum asserts that an interface is a string, and returns a
+// pointer to a *WorkloadPartnerEnum with the same value as that string.
+func flattenWorkloadPartnerEnum(i interface{}) *WorkloadPartnerEnum {
+	s, ok := i.(string)
+	if !ok {
+		return nil
+	}
+
+	return WorkloadPartnerEnumRef(s)
+}
+
+// flattenWorkloadEkmProvisioningResponseEkmProvisioningStateEnumMap flattens the contents of WorkloadEkmProvisioningResponseEkmProvisioningStateEnum from a JSON
+// response object.
+func flattenWorkloadEkmProvisioningResponseEkmProvisioningStateEnumMap(c *Client, i interface{}, res *Workload) map[string]WorkloadEkmProvisioningResponseEkmProvisioningStateEnum {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]WorkloadEkmProvisioningResponseEkmProvisioningStateEnum{}
+	}
+
+	if len(a) == 0 {
+		return map[string]WorkloadEkmProvisioningResponseEkmProvisioningStateEnum{}
+	}
+
+	items := make(map[string]WorkloadEkmProvisioningResponseEkmProvisioningStateEnum)
+	for k, item := range a {
+		items[k] = *flattenWorkloadEkmProvisioningResponseEkmProvisioningStateEnum(item.(interface{}))
+	}
+
+	return items
+}
+
+// flattenWorkloadEkmProvisioningResponseEkmProvisioningStateEnumSlice flattens the contents of WorkloadEkmProvisioningResponseEkmProvisioningStateEnum from a JSON
+// response object.
+func flattenWorkloadEkmProvisioningResponseEkmProvisioningStateEnumSlice(c *Client, i interface{}, res *Workload) []WorkloadEkmProvisioningResponseEkmProvisioningStateEnum {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []WorkloadEkmProvisioningResponseEkmProvisioningStateEnum{}
+	}
+
+	if len(a) == 0 {
+		return []WorkloadEkmProvisioningResponseEkmProvisioningStateEnum{}
+	}
+
+	items := make([]WorkloadEkmProvisioningResponseEkmProvisioningStateEnum, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenWorkloadEkmProvisioningResponseEkmProvisioningStateEnum(item.(interface{})))
+	}
+
+	return items
+}
+
+// flattenWorkloadEkmProvisioningResponseEkmProvisioningStateEnum asserts that an interface is a string, and returns a
+// pointer to a *WorkloadEkmProvisioningResponseEkmProvisioningStateEnum with the same value as that string.
+func flattenWorkloadEkmProvisioningResponseEkmProvisioningStateEnum(i interface{}) *WorkloadEkmProvisioningResponseEkmProvisioningStateEnum {
+	s, ok := i.(string)
+	if !ok {
+		return nil
+	}
+
+	return WorkloadEkmProvisioningResponseEkmProvisioningStateEnumRef(s)
+}
+
+// flattenWorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnumMap flattens the contents of WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum from a JSON
+// response object.
+func flattenWorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnumMap(c *Client, i interface{}, res *Workload) map[string]WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum{}
+	}
+
+	if len(a) == 0 {
+		return map[string]WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum{}
+	}
+
+	items := make(map[string]WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum)
+	for k, item := range a {
+		items[k] = *flattenWorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum(item.(interface{}))
+	}
+
+	return items
+}
+
+// flattenWorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnumSlice flattens the contents of WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum from a JSON
+// response object.
+func flattenWorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnumSlice(c *Client, i interface{}, res *Workload) []WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum{}
+	}
+
+	if len(a) == 0 {
+		return []WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum{}
+	}
+
+	items := make([]WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenWorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum(item.(interface{})))
+	}
+
+	return items
+}
+
+// flattenWorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum asserts that an interface is a string, and returns a
+// pointer to a *WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum with the same value as that string.
+func flattenWorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum(i interface{}) *WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum {
+	s, ok := i.(string)
+	if !ok {
+		return nil
+	}
+
+	return WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnumRef(s)
+}
+
+// flattenWorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnumMap flattens the contents of WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum from a JSON
+// response object.
+func flattenWorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnumMap(c *Client, i interface{}, res *Workload) map[string]WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum{}
+	}
+
+	if len(a) == 0 {
+		return map[string]WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum{}
+	}
+
+	items := make(map[string]WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum)
+	for k, item := range a {
+		items[k] = *flattenWorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum(item.(interface{}))
+	}
+
+	return items
+}
+
+// flattenWorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnumSlice flattens the contents of WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum from a JSON
+// response object.
+func flattenWorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnumSlice(c *Client, i interface{}, res *Workload) []WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum{}
+	}
+
+	if len(a) == 0 {
+		return []WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum{}
+	}
+
+	items := make([]WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenWorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum(item.(interface{})))
+	}
+
+	return items
+}
+
+// flattenWorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum asserts that an interface is a string, and returns a
+// pointer to a *WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum with the same value as that string.
+func flattenWorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum(i interface{}) *WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum {
+	s, ok := i.(string)
+	if !ok {
+		return nil
+	}
+
+	return WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnumRef(s)
+}
+
 // This function returns a matcher that checks whether a serialized resource matches this resource
 // in its parameters (as defined by the fields in a Get, which definitionally define resource
 // identity).  This is useful in extracting the element from a List call.
@@ -1915,6 +3626,50 @@ func extractWorkloadFields(r *Workload) error {
 	if !dcl.IsEmptyValueIndirect(vKmsSettings) {
 		r.KmsSettings = vKmsSettings
 	}
+	vSaaEnrollmentResponse := r.SaaEnrollmentResponse
+	if vSaaEnrollmentResponse == nil {
+		// note: explicitly not the empty object.
+		vSaaEnrollmentResponse = &WorkloadSaaEnrollmentResponse{}
+	}
+	if err := extractWorkloadSaaEnrollmentResponseFields(r, vSaaEnrollmentResponse); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vSaaEnrollmentResponse) {
+		r.SaaEnrollmentResponse = vSaaEnrollmentResponse
+	}
+	vComplianceStatus := r.ComplianceStatus
+	if vComplianceStatus == nil {
+		// note: explicitly not the empty object.
+		vComplianceStatus = &WorkloadComplianceStatus{}
+	}
+	if err := extractWorkloadComplianceStatusFields(r, vComplianceStatus); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vComplianceStatus) {
+		r.ComplianceStatus = vComplianceStatus
+	}
+	vPartnerPermissions := r.PartnerPermissions
+	if vPartnerPermissions == nil {
+		// note: explicitly not the empty object.
+		vPartnerPermissions = &WorkloadPartnerPermissions{}
+	}
+	if err := extractWorkloadPartnerPermissionsFields(r, vPartnerPermissions); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vPartnerPermissions) {
+		r.PartnerPermissions = vPartnerPermissions
+	}
+	vEkmProvisioningResponse := r.EkmProvisioningResponse
+	if vEkmProvisioningResponse == nil {
+		// note: explicitly not the empty object.
+		vEkmProvisioningResponse = &WorkloadEkmProvisioningResponse{}
+	}
+	if err := extractWorkloadEkmProvisioningResponseFields(r, vEkmProvisioningResponse); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vEkmProvisioningResponse) {
+		r.EkmProvisioningResponse = vEkmProvisioningResponse
+	}
 	return nil
 }
 func extractWorkloadResourcesFields(r *Workload, o *WorkloadResources) error {
@@ -1924,6 +3679,18 @@ func extractWorkloadKmsSettingsFields(r *Workload, o *WorkloadKmsSettings) error
 	return nil
 }
 func extractWorkloadResourceSettingsFields(r *Workload, o *WorkloadResourceSettings) error {
+	return nil
+}
+func extractWorkloadSaaEnrollmentResponseFields(r *Workload, o *WorkloadSaaEnrollmentResponse) error {
+	return nil
+}
+func extractWorkloadComplianceStatusFields(r *Workload, o *WorkloadComplianceStatus) error {
+	return nil
+}
+func extractWorkloadPartnerPermissionsFields(r *Workload, o *WorkloadPartnerPermissions) error {
+	return nil
+}
+func extractWorkloadEkmProvisioningResponseFields(r *Workload, o *WorkloadEkmProvisioningResponse) error {
 	return nil
 }
 
@@ -1939,6 +3706,50 @@ func postReadExtractWorkloadFields(r *Workload) error {
 	if !dcl.IsEmptyValueIndirect(vKmsSettings) {
 		r.KmsSettings = vKmsSettings
 	}
+	vSaaEnrollmentResponse := r.SaaEnrollmentResponse
+	if vSaaEnrollmentResponse == nil {
+		// note: explicitly not the empty object.
+		vSaaEnrollmentResponse = &WorkloadSaaEnrollmentResponse{}
+	}
+	if err := postReadExtractWorkloadSaaEnrollmentResponseFields(r, vSaaEnrollmentResponse); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vSaaEnrollmentResponse) {
+		r.SaaEnrollmentResponse = vSaaEnrollmentResponse
+	}
+	vComplianceStatus := r.ComplianceStatus
+	if vComplianceStatus == nil {
+		// note: explicitly not the empty object.
+		vComplianceStatus = &WorkloadComplianceStatus{}
+	}
+	if err := postReadExtractWorkloadComplianceStatusFields(r, vComplianceStatus); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vComplianceStatus) {
+		r.ComplianceStatus = vComplianceStatus
+	}
+	vPartnerPermissions := r.PartnerPermissions
+	if vPartnerPermissions == nil {
+		// note: explicitly not the empty object.
+		vPartnerPermissions = &WorkloadPartnerPermissions{}
+	}
+	if err := postReadExtractWorkloadPartnerPermissionsFields(r, vPartnerPermissions); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vPartnerPermissions) {
+		r.PartnerPermissions = vPartnerPermissions
+	}
+	vEkmProvisioningResponse := r.EkmProvisioningResponse
+	if vEkmProvisioningResponse == nil {
+		// note: explicitly not the empty object.
+		vEkmProvisioningResponse = &WorkloadEkmProvisioningResponse{}
+	}
+	if err := postReadExtractWorkloadEkmProvisioningResponseFields(r, vEkmProvisioningResponse); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vEkmProvisioningResponse) {
+		r.EkmProvisioningResponse = vEkmProvisioningResponse
+	}
 	return nil
 }
 func postReadExtractWorkloadResourcesFields(r *Workload, o *WorkloadResources) error {
@@ -1948,5 +3759,17 @@ func postReadExtractWorkloadKmsSettingsFields(r *Workload, o *WorkloadKmsSetting
 	return nil
 }
 func postReadExtractWorkloadResourceSettingsFields(r *Workload, o *WorkloadResourceSettings) error {
+	return nil
+}
+func postReadExtractWorkloadSaaEnrollmentResponseFields(r *Workload, o *WorkloadSaaEnrollmentResponse) error {
+	return nil
+}
+func postReadExtractWorkloadComplianceStatusFields(r *Workload, o *WorkloadComplianceStatus) error {
+	return nil
+}
+func postReadExtractWorkloadPartnerPermissionsFields(r *Workload, o *WorkloadPartnerPermissions) error {
+	return nil
+}
+func postReadExtractWorkloadEkmProvisioningResponseFields(r *Workload, o *WorkloadEkmProvisioningResponse) error {
 	return nil
 }

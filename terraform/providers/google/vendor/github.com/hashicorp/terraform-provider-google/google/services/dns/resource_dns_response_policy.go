@@ -20,10 +20,12 @@ package dns
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -46,6 +48,10 @@ func ResourceDNSResponsePolicy() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"response_policy_name": {
@@ -127,7 +133,7 @@ func resourceDNSResponsePolicyCreate(d *schema.ResourceData, meta interface{}) e
 	networksProp, err := expandDNSResponsePolicyNetworks(d.Get("networks"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("networks"); !tpgresource.IsEmptyValue(reflect.ValueOf(networksProp)) && (ok || !reflect.DeepEqual(v, networksProp)) {
+	} else if v, ok := d.GetOkExists("networks"); ok || !reflect.DeepEqual(v, networksProp) {
 		obj["networks"] = networksProp
 	}
 	gkeClustersProp, err := expandDNSResponsePolicyGkeClusters(d.Get("gke_clusters"), d, config)
@@ -156,6 +162,7 @@ func resourceDNSResponsePolicyCreate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -164,6 +171,7 @@ func resourceDNSResponsePolicyCreate(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating ResponsePolicy: %s", err)
@@ -206,12 +214,14 @@ func resourceDNSResponsePolicyRead(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DNSResponsePolicy %q", d.Id()))
@@ -262,7 +272,7 @@ func resourceDNSResponsePolicyUpdate(d *schema.ResourceData, meta interface{}) e
 	networksProp, err := expandDNSResponsePolicyNetworks(d.Get("networks"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("networks"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, networksProp)) {
+	} else if v, ok := d.GetOkExists("networks"); ok || !reflect.DeepEqual(v, networksProp) {
 		obj["networks"] = networksProp
 	}
 	gkeClustersProp, err := expandDNSResponsePolicyGkeClusters(d.Get("gke_clusters"), d, config)
@@ -278,6 +288,7 @@ func resourceDNSResponsePolicyUpdate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	log.Printf("[DEBUG] Updating ResponsePolicy %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -292,6 +303,7 @@ func resourceDNSResponsePolicyUpdate(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -324,6 +336,13 @@ func resourceDNSResponsePolicyDelete(d *schema.ResourceData, meta interface{}) e
 	}
 
 	var obj map[string]interface{}
+
+	// err == nil indicates that the billing_project value was found
+	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+		billingProject = bp
+	}
+
+	headers := make(http.Header)
 	// if gke clusters are attached, they need to be detached before the response policy can be deleted
 	if d.Get("gke_clusters.#").(int) > 0 {
 		patched := make(map[string]interface{})
@@ -371,13 +390,8 @@ func resourceDNSResponsePolicyDelete(d *schema.ResourceData, meta interface{}) e
 			return fmt.Errorf("Error updating Policy %q: %s", d.Id(), err)
 		}
 	}
+
 	log.Printf("[DEBUG] Deleting ResponsePolicy %q", d.Id())
-
-	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
-		billingProject = bp
-	}
-
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -386,6 +400,7 @@ func resourceDNSResponsePolicyDelete(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "ResponsePolicy")
@@ -398,9 +413,9 @@ func resourceDNSResponsePolicyDelete(d *schema.ResourceData, meta interface{}) e
 func resourceDNSResponsePolicyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/responsePolicies/(?P<response_policy_name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<response_policy_name>[^/]+)",
-		"(?P<response_policy_name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/responsePolicies/(?P<response_policy_name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<response_policy_name>[^/]+)$",
+		"^(?P<response_policy_name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

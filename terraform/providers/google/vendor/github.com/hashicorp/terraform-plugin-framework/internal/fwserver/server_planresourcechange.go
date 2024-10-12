@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwserver
 
 import (
@@ -8,8 +11,10 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema"
+	"github.com/hashicorp/terraform-plugin-framework/internal/fwschemadata"
 	"github.com/hashicorp/terraform-plugin-framework/internal/logging"
 	"github.com/hashicorp/terraform-plugin-framework/internal/privatestate"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -44,7 +49,7 @@ func (s *Server) PlanResourceChange(ctx context.Context, req *PlanResourceChange
 		return
 	}
 
-	if _, ok := req.Resource.(resource.ResourceWithConfigure); ok {
+	if resourceWithConfigure, ok := req.Resource.(resource.ResourceWithConfigure); ok {
 		logging.FrameworkTrace(ctx, "Resource implements ResourceWithConfigure")
 
 		configureReq := resource.ConfigureRequest{
@@ -52,9 +57,9 @@ func (s *Server) PlanResourceChange(ctx context.Context, req *PlanResourceChange
 		}
 		configureResp := resource.ConfigureResponse{}
 
-		logging.FrameworkDebug(ctx, "Calling provider defined Resource Configure")
-		req.Resource.(resource.ResourceWithConfigure).Configure(ctx, configureReq, &configureResp)
-		logging.FrameworkDebug(ctx, "Called provider defined Resource Configure")
+		logging.FrameworkTrace(ctx, "Calling provider defined Resource Configure")
+		resourceWithConfigure.Configure(ctx, configureReq, &configureResp)
+		logging.FrameworkTrace(ctx, "Called provider defined Resource Configure")
 
 		resp.Diagnostics.Append(configureResp.Diagnostics...)
 
@@ -104,46 +109,29 @@ func (s *Server) PlanResourceChange(ctx context.Context, req *PlanResourceChange
 
 	resp.PlannedState = planToState(*req.ProposedNewState)
 
-	// Execute any AttributePlanModifiers.
+	// Set Defaults.
 	//
-	// This pass is before any Computed-only attributes are marked as unknown
-	// to ensure any plan changes will trigger that behavior. These plan
-	// modifiers are run again after that marking to allow setting values
-	// and preventing extraneous plan differences.
-	//
-	// We only do this if there's a plan to modify; otherwise, it
-	// represents a resource being deleted and there's no point.
-	//
-	// TODO: Enabling this pass will generate the following test error:
-	//
-	//     --- FAIL: TestServerPlanResourceChange/two_modifyplan_add_list_elem (0.00s)
-	// serve_test.go:3303: An unexpected error was encountered trying to read an attribute from the configuration. This is always an error in the provider. Please report the following to the provider developer:
-	//
-	// ElementKeyInt(1).AttributeName("name") still remains in the path: step cannot be applied to this value
-	//
-	// To fix this, (Config).GetAttribute() should return nil instead of the error.
-	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/183
-	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/150
-	// See also: https://github.com/hashicorp/terraform-plugin-framework/pull/167
+	// If the planned state is not null (i.e., not a destroy operation) we traverse the schema,
+	// identifying any attributes which are null within the configuration, and if the attribute
+	// has a default value specified by the `Default` field on the attribute then the default
+	// value is assigned.
+	if !resp.PlannedState.Raw.IsNull() {
+		data := fwschemadata.Data{
+			Description:    fwschemadata.DataDescriptionState,
+			Schema:         resp.PlannedState.Schema,
+			TerraformValue: resp.PlannedState.Raw,
+		}
 
-	// Execute any resource-level ModifyPlan method.
-	//
-	// This pass is before any Computed-only attributes are marked as unknown
-	// to ensure any plan changes will trigger that behavior. These plan
-	// modifiers be run again after that marking to allow setting values and
-	// preventing extraneous plan differences.
-	//
-	// TODO: Enabling this pass will generate the following test error:
-	//
-	//     --- FAIL: TestServerPlanResourceChange/two_modifyplan_add_list_elem (0.00s)
-	// serve_test.go:3303: An unexpected error was encountered trying to read an attribute from the configuration. This is always an error in the provider. Please report the following to the provider developer:
-	//
-	// ElementKeyInt(1).AttributeName("name") still remains in the path: step cannot be applied to this value
-	//
-	// To fix this, (Config).GetAttribute() should return nil instead of the error.
-	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/183
-	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/150
-	// See also: https://github.com/hashicorp/terraform-plugin-framework/pull/167
+		diags := data.TransformDefaults(ctx, req.Config.Raw)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		resp.PlannedState.Raw = data.TerraformValue
+	}
 
 	// After ensuring there are proposed changes, mark any computed attributes
 	// that are null in the config as unknown in the plan, so providers have
@@ -155,7 +143,56 @@ func (s *Server) PlanResourceChange(ctx context.Context, req *PlanResourceChange
 	// We only do this if there's a plan to modify; otherwise, it
 	// represents a resource being deleted and there's no point.
 	if !resp.PlannedState.Raw.IsNull() && !resp.PlannedState.Raw.Equal(req.PriorState.Raw) {
-		logging.FrameworkTrace(ctx, "Marking Computed null Config values as unknown in Plan")
+		// Loop through top level attributes/blocks to individually emit logs
+		// for value changes. This is helpful for troubleshooting unexpected
+		// plan outputs and only needs to be done for resource update plans.
+		// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/627
+		if !req.PriorState.Raw.IsNull() {
+			var allPaths, changedPaths path.Paths
+
+			for attrName := range resp.PlannedState.Schema.GetAttributes() {
+				allPaths.Append(path.Root(attrName))
+			}
+
+			for blockName := range resp.PlannedState.Schema.GetBlocks() {
+				allPaths.Append(path.Root(blockName))
+			}
+
+			for _, p := range allPaths {
+				var plannedState, priorState attr.Value
+
+				// This logging is best effort and any errors should not be
+				// returned to practitioners.
+				_ = resp.PlannedState.GetAttribute(ctx, p, &plannedState)
+				_ = req.PriorState.GetAttribute(ctx, p, &priorState)
+
+				// Due to ignoring diagnostics, the value may not be populated.
+				// Prevent the panic and show the path as changed.
+				if plannedState == nil {
+					changedPaths.Append(p)
+
+					continue
+				}
+
+				if plannedState.Equal(priorState) {
+					continue
+				}
+
+				changedPaths.Append(p)
+			}
+
+			// Colocate these log entries to not intermix with GetAttribute logging
+			for _, p := range changedPaths {
+				logging.FrameworkDebug(ctx,
+					"Detected value change between proposed new state and prior state",
+					map[string]any{
+						logging.KeyAttributePath: p.String(),
+					},
+				)
+			}
+		}
+
+		logging.FrameworkDebug(ctx, "Marking Computed attributes with null configuration values as unknown (known after apply) in the plan to prevent potential Terraform errors")
 
 		modifiedPlan, err := tftypes.Transform(resp.PlannedState.Raw, MarkComputedNilsAsUnknown(ctx, req.Config.Raw, req.ResourceSchema))
 
@@ -175,7 +212,7 @@ func (s *Server) PlanResourceChange(ctx context.Context, req *PlanResourceChange
 		resp.PlannedState.Raw = modifiedPlan
 	}
 
-	// Execute any AttributePlanModifiers again. This allows overwriting
+	// Execute any schema-based plan modifiers. This allows overwriting
 	// any unknown values.
 	//
 	// We only do this if there's a plan to modify; otherwise, it
@@ -210,7 +247,7 @@ func (s *Server) PlanResourceChange(ctx context.Context, req *PlanResourceChange
 		}
 	}
 
-	// Execute any resource-level ModifyPlan method again. This allows
+	// Execute any resource-level ModifyPlan method. This allows
 	// overwriting any unknown values.
 	//
 	// We do this regardless of whether the plan is null or not, because we
@@ -239,9 +276,9 @@ func (s *Server) PlanResourceChange(ctx context.Context, req *PlanResourceChange
 			Private:         modifyPlanReq.Private,
 		}
 
-		logging.FrameworkDebug(ctx, "Calling provider defined Resource ModifyPlan")
+		logging.FrameworkTrace(ctx, "Calling provider defined Resource ModifyPlan")
 		resourceWithModifyPlan.ModifyPlan(ctx, modifyPlanReq, &modifyPlanResp)
-		logging.FrameworkDebug(ctx, "Called provider defined Resource ModifyPlan")
+		logging.FrameworkTrace(ctx, "Called provider defined Resource ModifyPlan")
 
 		resp.Diagnostics = modifyPlanResp.Diagnostics
 		resp.PlannedState = planToState(modifyPlanResp.Plan)
@@ -272,16 +309,6 @@ func MarkComputedNilsAsUnknown(ctx context.Context, config tftypes.Value, resour
 			return val, nil
 		}
 
-		configVal, _, err := tftypes.WalkAttributePath(config, path)
-
-		if err != tftypes.ErrInvalidStep && err != nil {
-			logging.FrameworkError(ctx, "error walking attribute path")
-			return val, err
-		} else if err != tftypes.ErrInvalidStep && !configVal.(tftypes.Value).IsNull() {
-			logging.FrameworkTrace(ctx, "attribute not null in config, not marking unknown")
-			return val, nil
-		}
-
 		attribute, err := resourceSchema.AttributeAtTerraformPath(ctx, path)
 
 		if err != nil {
@@ -297,14 +324,86 @@ func MarkComputedNilsAsUnknown(ctx context.Context, config tftypes.Value, resour
 				return val, nil
 			}
 
+			if errors.Is(err, fwschema.ErrPathInsideDynamicAttribute) {
+				// ignore attributes/elements inside schema.DynamicAttribute, they have no schema of their own
+				logging.FrameworkTrace(ctx, "attribute is inside of a dynamic attribute, not marking unknown")
+				return val, nil
+			}
+
 			logging.FrameworkError(ctx, "couldn't find attribute in resource schema")
 
 			return tftypes.Value{}, fmt.Errorf("couldn't find attribute in resource schema: %w", err)
 		}
+
+		configValIface, _, err := tftypes.WalkAttributePath(config, path)
+
+		if err != nil && err != tftypes.ErrInvalidStep {
+			logging.FrameworkError(ctx,
+				"Error walking attributes/block path during unknown marking",
+				map[string]any{
+					logging.KeyError: err.Error(),
+				},
+			)
+			return val, fmt.Errorf("error walking attribute/block path during unknown marking: %w", err)
+		}
+
+		configVal, ok := configValIface.(tftypes.Value)
+		if !ok {
+			return val, fmt.Errorf("unexpected type during unknown marking: %T", configValIface)
+		}
+
+		if !configVal.IsNull() {
+			logging.FrameworkTrace(ctx, "Attribute/block not null in configuration, not marking unknown")
+			return val, nil
+		}
+
 		if !attribute.IsComputed() {
 			logging.FrameworkTrace(ctx, "attribute is not computed in schema, not marking unknown")
 
 			return val, nil
+		}
+
+		switch a := attribute.(type) {
+		case fwschema.AttributeWithBoolDefaultValue:
+			if a.BoolDefaultValue() != nil {
+				return val, nil
+			}
+		case fwschema.AttributeWithFloat64DefaultValue:
+			if a.Float64DefaultValue() != nil {
+				return val, nil
+			}
+		case fwschema.AttributeWithInt64DefaultValue:
+			if a.Int64DefaultValue() != nil {
+				return val, nil
+			}
+		case fwschema.AttributeWithListDefaultValue:
+			if a.ListDefaultValue() != nil {
+				return val, nil
+			}
+		case fwschema.AttributeWithMapDefaultValue:
+			if a.MapDefaultValue() != nil {
+				return val, nil
+			}
+		case fwschema.AttributeWithNumberDefaultValue:
+			if a.NumberDefaultValue() != nil {
+				return val, nil
+			}
+		case fwschema.AttributeWithObjectDefaultValue:
+			if a.ObjectDefaultValue() != nil {
+				return val, nil
+			}
+		case fwschema.AttributeWithSetDefaultValue:
+			if a.SetDefaultValue() != nil {
+				return val, nil
+			}
+		case fwschema.AttributeWithStringDefaultValue:
+			if a.StringDefaultValue() != nil {
+				return val, nil
+			}
+		case fwschema.AttributeWithDynamicDefaultValue:
+			if a.DynamicDefaultValue() != nil {
+				return val, nil
+			}
 		}
 
 		logging.FrameworkDebug(ctx, "marking computed attribute that is null in the config as unknown")

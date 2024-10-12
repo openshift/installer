@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -93,6 +93,8 @@ components:
           x-dcl-conflicts:
           - gke
           - run
+          - multiTarget
+          - customTarget
           properties:
             membership:
               type: string
@@ -109,6 +111,27 @@ components:
           readOnly: true
           description: Output only. Time at which the `Target` was created.
           x-kubernetes-immutable: true
+        customTarget:
+          type: object
+          x-dcl-go-name: CustomTarget
+          x-dcl-go-type: TargetCustomTarget
+          description: Optional. Information specifying a Custom Target.
+          x-dcl-conflicts:
+          - gke
+          - anthosCluster
+          - run
+          - multiTarget
+          required:
+          - customTargetType
+          properties:
+            customTargetType:
+              type: string
+              x-dcl-go-name: CustomTargetType
+              description: Required. The name of the CustomTargetType. Format must
+                be `projects/{project}/locations/{location}/customTargetTypes/{custom_target_type}`.
+              x-dcl-references:
+              - resource: Clouddeploy/CustomTargetType
+                field: selfLink
         deployParameters:
           type: object
           additionalProperties:
@@ -180,6 +203,11 @@ components:
                   - EXECUTION_ENVIRONMENT_USAGE_UNSPECIFIED
                   - RENDER
                   - DEPLOY
+              verbose:
+                type: boolean
+                x-dcl-go-name: Verbose
+                description: Optional. If true, additional logging will be enabled
+                  when running builds in this execution environment.
               workerPool:
                 type: string
                 x-dcl-go-name: WorkerPool
@@ -198,6 +226,8 @@ components:
           x-dcl-conflicts:
           - anthosCluster
           - run
+          - multiTarget
+          - customTarget
           properties:
             cluster:
               type: string
@@ -233,11 +263,36 @@ components:
           x-dcl-go-name: Location
           description: The location for the resource
           x-kubernetes-immutable: true
+          x-dcl-parameter: true
+        multiTarget:
+          type: object
+          x-dcl-go-name: MultiTarget
+          x-dcl-go-type: TargetMultiTarget
+          description: Information specifying a multiTarget.
+          x-dcl-conflicts:
+          - gke
+          - anthosCluster
+          - run
+          - customTarget
+          required:
+          - targetIds
+          properties:
+            targetIds:
+              type: array
+              x-dcl-go-name: TargetIds
+              description: Required. The target_ids of this multiTarget.
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: string
+                x-dcl-go-type: string
         name:
           type: string
           x-dcl-go-name: Name
-          description: Name of the `Target`. Format is [a-z][a-z0-9\-]{0,62}.
+          description: Name of the `Target`. Format is `[a-z]([a-z0-9-]{0,61}[a-z0-9])?`.
           x-kubernetes-immutable: true
+          x-dcl-parameter: true
+          x-dcl-has-long-form: true
         project:
           type: string
           x-dcl-go-name: Project
@@ -247,6 +302,7 @@ components:
           - resource: Cloudresourcemanager/Project
             field: name
             parent: true
+          x-dcl-parameter: true
         requireApproval:
           type: boolean
           x-dcl-go-name: RequireApproval
@@ -259,6 +315,8 @@ components:
           x-dcl-conflicts:
           - gke
           - anthosCluster
+          - multiTarget
+          - customTarget
           required:
           - location
           properties:

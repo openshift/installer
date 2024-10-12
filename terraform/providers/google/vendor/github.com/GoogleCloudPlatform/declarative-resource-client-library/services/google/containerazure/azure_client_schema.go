@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@ func DCLAzureClientSchema() *dcl.Schema {
 			StructName:  "AzureClient",
 			Reference: &dcl.Link{
 				Text: "API reference",
-				URL:  "https://cloud.google.com/anthos/clusters/docs/multi-cloud/reference/rest/v1/projects.locations.azureClients",
+				URL:  "https://cloud.google.com/kubernetes-engine/multi-cloud/docs/reference/rest/v1/projects.locations.azureClients",
 			},
 			Guides: []*dcl.Link{
 				&dcl.Link{
 					Text: "Multicloud overview",
-					URL:  "https://cloud.google.com/anthos/clusters/docs/multi-cloud",
+					URL:  "https://cloud.google.com/kubernetes-engine/multi-cloud/docs",
 				},
 			},
 		},
@@ -147,12 +147,14 @@ func DCLAzureClientSchema() *dcl.Schema {
 								GoName:      "Location",
 								Description: "The location for the resource",
 								Immutable:   true,
+								Parameter:   true,
 							},
 							"name": &dcl.Property{
 								Type:        "string",
 								GoName:      "Name",
 								Description: "The name of this resource.",
 								Immutable:   true,
+								HasLongForm: true,
 							},
 							"project": &dcl.Property{
 								Type:        "string",
@@ -166,6 +168,7 @@ func DCLAzureClientSchema() *dcl.Schema {
 										Parent:   true,
 									},
 								},
+								Parameter: true,
 							},
 							"tenantId": &dcl.Property{
 								Type:        "string",

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwserver
 
 import (
@@ -7,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema"
+	"github.com/hashicorp/terraform-plugin-framework/internal/fwschemadata"
 	"github.com/hashicorp/terraform-plugin-framework/internal/logging"
 	"github.com/hashicorp/terraform-plugin-framework/internal/privatestate"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -39,7 +43,7 @@ func (s *Server) CreateResource(ctx context.Context, req *CreateResourceRequest,
 		return
 	}
 
-	if _, ok := req.Resource.(resource.ResourceWithConfigure); ok {
+	if resourceWithConfigure, ok := req.Resource.(resource.ResourceWithConfigure); ok {
 		logging.FrameworkTrace(ctx, "Resource implements ResourceWithConfigure")
 
 		configureReq := resource.ConfigureRequest{
@@ -47,9 +51,9 @@ func (s *Server) CreateResource(ctx context.Context, req *CreateResourceRequest,
 		}
 		configureResp := resource.ConfigureResponse{}
 
-		logging.FrameworkDebug(ctx, "Calling provider defined Resource Configure")
-		req.Resource.(resource.ResourceWithConfigure).Configure(ctx, configureReq, &configureResp)
-		logging.FrameworkDebug(ctx, "Called provider defined Resource Configure")
+		logging.FrameworkTrace(ctx, "Calling provider defined Resource Configure")
+		resourceWithConfigure.Configure(ctx, configureReq, &configureResp)
+		logging.FrameworkTrace(ctx, "Called provider defined Resource Configure")
 
 		resp.Diagnostics.Append(configureResp.Diagnostics...)
 
@@ -93,9 +97,9 @@ func (s *Server) CreateResource(ctx context.Context, req *CreateResourceRequest,
 		createReq.ProviderMeta = *req.ProviderMeta
 	}
 
-	logging.FrameworkDebug(ctx, "Calling provider defined Resource Create")
+	logging.FrameworkTrace(ctx, "Calling provider defined Resource Create")
 	req.Resource.Create(ctx, createReq, &createResp)
-	logging.FrameworkDebug(ctx, "Called provider defined Resource Create")
+	logging.FrameworkTrace(ctx, "Called provider defined Resource Create")
 
 	resp.Diagnostics = createResp.Diagnostics
 	resp.NewState = &createResp.State
@@ -123,4 +127,40 @@ func (s *Server) CreateResource(ctx context.Context, req *CreateResourceRequest,
 
 		resp.Private.Provider = createResp.Private
 	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	semanticEqualityReq := SchemaSemanticEqualityRequest{
+		PriorData: fwschemadata.Data{
+			Description:    fwschemadata.DataDescriptionPlan,
+			Schema:         req.PlannedState.Schema,
+			TerraformValue: req.PlannedState.Raw.Copy(),
+		},
+		ProposedNewData: fwschemadata.Data{
+			Description:    fwschemadata.DataDescriptionState,
+			Schema:         resp.NewState.Schema,
+			TerraformValue: resp.NewState.Raw.Copy(),
+		},
+	}
+	semanticEqualityResp := &SchemaSemanticEqualityResponse{
+		NewData: semanticEqualityReq.ProposedNewData,
+	}
+
+	SchemaSemanticEquality(ctx, semanticEqualityReq, semanticEqualityResp)
+
+	resp.Diagnostics.Append(semanticEqualityResp.Diagnostics...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if semanticEqualityResp.NewData.TerraformValue.Equal(resp.NewState.Raw) {
+		return
+	}
+
+	logging.FrameworkDebug(ctx, "State updated due to semantic equality")
+
+	resp.NewState.Raw = semanticEqualityResp.NewData.TerraformValue
 }

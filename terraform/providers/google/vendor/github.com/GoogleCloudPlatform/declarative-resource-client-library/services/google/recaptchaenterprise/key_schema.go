@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -175,9 +175,10 @@ func DCLKeySchema() *dcl.Schema {
 							"name": &dcl.Property{
 								Type:                     "string",
 								GoName:                   "Name",
-								Description:              "The resource name for the Key in the format \"projects/{project}/keys/{key}\".",
+								Description:              "The resource id for the Key, which is the same as the Site Key itself.",
 								Immutable:                true,
 								ServerGeneratedParameter: true,
+								HasLongForm:              true,
 							},
 							"project": &dcl.Property{
 								Type:        "string",
@@ -191,6 +192,7 @@ func DCLKeySchema() *dcl.Schema {
 										Parent:   true,
 									},
 								},
+								Parameter: true,
 							},
 							"testingOptions": &dcl.Property{
 								Type:        "object",
@@ -218,6 +220,43 @@ func DCLKeySchema() *dcl.Schema {
 										GoName:      "TestingScore",
 										Description: "All assessments for this Key will return this score. Must be between 0 (likely not legitimate) and 1 (likely legitimate) inclusive.",
 										Immutable:   true,
+									},
+								},
+							},
+							"wafSettings": &dcl.Property{
+								Type:        "object",
+								GoName:      "WafSettings",
+								GoType:      "KeyWafSettings",
+								Description: "Settings specific to keys that can be used for WAF (Web Application Firewall).",
+								Immutable:   true,
+								Required: []string{
+									"wafService",
+									"wafFeature",
+								},
+								Properties: map[string]*dcl.Property{
+									"wafFeature": &dcl.Property{
+										Type:        "string",
+										GoName:      "WafFeature",
+										GoType:      "KeyWafSettingsWafFeatureEnum",
+										Description: "Supported WAF features. For more information, see https://cloud.google.com/recaptcha-enterprise/docs/usecase#comparison_of_features. Possible values: CHALLENGE_PAGE, SESSION_TOKEN, ACTION_TOKEN, EXPRESS",
+										Immutable:   true,
+										Enum: []string{
+											"CHALLENGE_PAGE",
+											"SESSION_TOKEN",
+											"ACTION_TOKEN",
+											"EXPRESS",
+										},
+									},
+									"wafService": &dcl.Property{
+										Type:        "string",
+										GoName:      "WafService",
+										GoType:      "KeyWafSettingsWafServiceEnum",
+										Description: "The WAF service that uses this key. Possible values: CA, FASTLY",
+										Immutable:   true,
+										Enum: []string{
+											"CA",
+											"FASTLY",
+										},
 									},
 								},
 							},

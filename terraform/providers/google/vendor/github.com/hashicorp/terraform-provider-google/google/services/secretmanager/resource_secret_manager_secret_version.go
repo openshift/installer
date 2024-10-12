@@ -21,6 +21,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
@@ -34,21 +35,11 @@ import (
 	"google.golang.org/api/googleapi"
 )
 
-func resourceSecretManagerSecretVersionUpdate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*transport_tpg.Config)
-
-	_, err := expandSecretManagerSecretVersionEnabled(d.Get("enabled"), d, config)
-	if err != nil {
-		return err
-	}
-
-	return resourceSecretManagerSecretVersionRead(d, meta)
-}
-
 func ResourceSecretManagerSecretVersion() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceSecretManagerSecretVersionCreate,
 		Read:   resourceSecretManagerSecretVersionRead,
+		Update: resourceSecretManagerSecretVersionUpdate,
 		Delete: resourceSecretManagerSecretVersionDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -57,10 +48,9 @@ func ResourceSecretManagerSecretVersion() *schema.Resource {
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
-
-		Update: resourceSecretManagerSecretVersionUpdate,
 
 		Schema: map[string]*schema.Schema{
 			"secret_data": {
@@ -105,6 +95,24 @@ func ResourceSecretManagerSecretVersion() *schema.Resource {
 				Computed:    true,
 				Description: `The version of the Secret.`,
 			},
+			"deletion_policy": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "DELETE",
+				Description: `The deletion policy for the secret version. Setting 'ABANDON' allows the resource
+to be abandoned rather than deleted. Setting 'DISABLE' allows the resource to be
+disabled rather than deleted. Default is 'DELETE'. Possible values are:
+  * DELETE
+  * DISABLE
+  * ABANDON`,
+			},
+			"is_secret_data_base64": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				ForceNew:    true,
+				Default:     false,
+				Description: `If set to 'true', the secret data is expected to be base64-encoded string and would be sent as is.`,
+			},
 		},
 		UseJSONNumber: true,
 	}
@@ -144,6 +152,7 @@ func resourceSecretManagerSecretVersionCreate(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -152,6 +161,7 @@ func resourceSecretManagerSecretVersionCreate(d *schema.ResourceData, meta inter
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating SecretVersion: %s", err)
@@ -206,12 +216,20 @@ func resourceSecretManagerSecretVersionRead(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+	// Explicitly set the field to default value if unset
+	if _, ok := d.GetOkExists("is_secret_data_base64"); !ok {
+		if err := d.Set("is_secret_data_base64", false); err != nil {
+			return fmt.Errorf("Error setting is_secret_data_base64: %s", err)
+		}
+	}
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("SecretManagerSecretVersion %q", d.Id()))
@@ -227,6 +245,13 @@ func resourceSecretManagerSecretVersionRead(d *schema.ResourceData, meta interfa
 		log.Printf("[DEBUG] Removing SecretManagerSecretVersion because it no longer exists.")
 		d.SetId("")
 		return nil
+	}
+
+	// Explicitly set virtual fields to default values if unset
+	if _, ok := d.GetOkExists("deletion_policy"); !ok {
+		if err := d.Set("deletion_policy", "DELETE"); err != nil {
+			return fmt.Errorf("Error setting deletion_policy: %s", err)
+		}
 	}
 
 	if err := d.Set("enabled", flattenSecretManagerSecretVersionEnabled(res["state"], d, config)); err != nil {
@@ -263,6 +288,16 @@ func resourceSecretManagerSecretVersionRead(d *schema.ResourceData, meta interfa
 	return nil
 }
 
+func resourceSecretManagerSecretVersionUpdate(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*transport_tpg.Config)
+	_, err := expandSecretManagerSecretVersionEnabled(d.Get("enabled"), d, config)
+	if err != nil {
+		return err
+	}
+
+	return resourceSecretManagerSecretVersionRead(d, meta)
+}
+
 func resourceSecretManagerSecretVersionDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*transport_tpg.Config)
 	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
@@ -278,13 +313,25 @@ func resourceSecretManagerSecretVersionDelete(d *schema.ResourceData, meta inter
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting SecretVersion %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+	deletionPolicy := d.Get("deletion_policy")
+
+	if deletionPolicy == "ABANDON" {
+		return nil
+	} else if deletionPolicy == "DISABLE" {
+		url, err = tpgresource.ReplaceVars(d, config, "{{SecretManagerBasePath}}{{name}}:disable")
+		if err != nil {
+			return err
+		}
+	}
+
+	log.Printf("[DEBUG] Deleting SecretVersion %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -293,6 +340,7 @@ func resourceSecretManagerSecretVersionDelete(d *schema.ResourceData, meta inter
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "SecretVersion")
@@ -316,7 +364,7 @@ func resourceSecretManagerSecretVersionImport(d *schema.ResourceData, meta inter
 
 	parts := secretRegex.FindStringSubmatch(name)
 	if len(parts) != 2 {
-		panic(fmt.Sprintf("Version name does not fit the format `projects/{{project}}/secrets/{{secret}}/versions/{{version}}`"))
+		return nil, fmt.Errorf("Version name does not fit the format `projects/{{project}}/secrets/{{secret}}/versions/{{version}}`")
 	}
 	if err := d.Set("secret", parts[1]); err != nil {
 		return nil, fmt.Errorf("Error setting secret: %s", err)
@@ -325,6 +373,11 @@ func resourceSecretManagerSecretVersionImport(d *schema.ResourceData, meta inter
 	parts = versionRegex.FindStringSubmatch(name)
 
 	if err := d.Set("version", parts[3]); err != nil {
+		return nil, fmt.Errorf("Error setting version: %s", err)
+	}
+
+	// Explicitly set virtual fields to default values on import
+	if err := d.Set("deletion_policy", "DELETE"); err != nil {
 		return nil, fmt.Errorf("Error setting version: %s", err)
 	}
 
@@ -396,11 +449,15 @@ func flattenSecretManagerSecretVersionPayload(v interface{}, d *schema.ResourceD
 		return err
 	}
 
-	data, err := base64.StdEncoding.DecodeString(accessRes["payload"].(map[string]interface{})["data"].(string))
-	if err != nil {
-		return err
+	if d.Get("is_secret_data_base64").(bool) {
+		transformed["secret_data"] = accessRes["payload"].(map[string]interface{})["data"].(string)
+	} else {
+		data, err := base64.StdEncoding.DecodeString(accessRes["payload"].(map[string]interface{})["data"].(string))
+		if err != nil {
+			return err
+		}
+		transformed["secret_data"] = string(data)
 	}
-	transformed["secret_data"] = string(data)
 	return []interface{}{transformed}
 }
 
@@ -460,6 +517,9 @@ func expandSecretManagerSecretVersionPayloadSecretData(v interface{}, d tpgresou
 		return nil, nil
 	}
 
+	if d.Get("is_secret_data_base64").(bool) {
+		return v, nil
+	}
 	return base64.StdEncoding.EncodeToString([]byte(v.(string))), nil
 }
 

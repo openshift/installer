@@ -20,10 +20,12 @@ package alloydb
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -43,10 +45,15 @@ func ResourceAlloydbInstance() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(40 * time.Minute),
-			Update: schema.DefaultTimeout(40 * time.Minute),
-			Delete: schema.DefaultTimeout(40 * time.Minute),
+			Create: schema.DefaultTimeout(120 * time.Minute),
+			Update: schema.DefaultTimeout(120 * time.Minute),
+			Delete: schema.DefaultTimeout(120 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.SetAnnotationsDiff,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"cluster": {
@@ -67,14 +74,23 @@ func ResourceAlloydbInstance() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: verify.ValidateEnum([]string{"PRIMARY", "READ_POOL"}),
-				Description:  `The type of the instance. If the instance type is READ_POOL, provide the associated PRIMARY instance in the 'depends_on' meta-data attribute. Possible values: ["PRIMARY", "READ_POOL"]`,
+				ValidateFunc: verify.ValidateEnum([]string{"PRIMARY", "READ_POOL", "SECONDARY"}),
+				Description: `The type of the instance.
+If the instance type is READ_POOL, provide the associated PRIMARY/SECONDARY instance in the 'depends_on' meta-data attribute.
+If the instance type is SECONDARY, point to the cluster_type of the associated secondary cluster instead of mentioning SECONDARY.
+Example: {instance_type = google_alloydb_cluster.<secondary_cluster_name>.cluster_type} instead of {instance_type = SECONDARY}
+If the instance type is SECONDARY, the terraform delete instance operation does not delete the secondary instance but abandons it instead.
+Use deletion_policy = "FORCE" in the associated secondary cluster and delete the cluster forcefully to delete the secondary cluster as well its associated secondary instance.
+Users can undo the delete secondary instance action by importing the deleted secondary instance by calling terraform import. Possible values: ["PRIMARY", "READ_POOL", "SECONDARY"]`,
 			},
 			"annotations": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: `Annotations to allow client tools to store small amount of arbitrary data. This is distinct from labels.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `Annotations to allow client tools to store small amount of arbitrary data. This is distinct from labels.
+
+**Note**: This field is non-authoritative, and will only manage the annotations present in your configuration.
+Please refer to the field 'effective_annotations' for all of the annotations present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"availability_type": {
 				Type:         schema.TypeString,
@@ -88,8 +104,43 @@ Zone is automatically chosen from the list of zones in the region specified.
 Read pool of size 1 can only have zonal availability. Read pools with node count of 2 or more
 can have regional availability (nodes are present in 2 or more zones in a region).' Possible values: ["AVAILABILITY_TYPE_UNSPECIFIED", "ZONAL", "REGIONAL"]`,
 			},
+			"client_connection_config": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Optional:    true,
+				Description: `Client connection specific configurations.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"require_connectors": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: `Configuration to enforce connectors only (ex: AuthProxy) connections to the database.`,
+						},
+						"ssl_config": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Optional:    true,
+							Description: `SSL config option for this instance.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"ssl_mode": {
+										Type:         schema.TypeString,
+										Computed:     true,
+										Optional:     true,
+										ValidateFunc: verify.ValidateEnum([]string{"ENCRYPTED_ONLY", "ALLOW_UNENCRYPTED_AND_ENCRYPTED", ""}),
+										Description:  `SSL mode. Specifies client-server SSL/TLS connection behavior. Possible values: ["ENCRYPTED_ONLY", "ALLOW_UNENCRYPTED_AND_ENCRYPTED"]`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			"database_flags": {
 				Type:        schema.TypeMap,
+				Computed:    true,
 				Optional:    true,
 				Description: `Database flags. Set at instance level. * They are copied from primary instance on read instance creation. * Read instances can set new or override existing flags that are relevant for reads, e.g. for enabling columnar cache on a read instance. Flags set on read instance may or may not be present on primary.`,
 				Elem:        &schema.Schema{Type: schema.TypeString},
@@ -105,10 +156,13 @@ can have regional availability (nodes are present in 2 or more zones in a region
 				Description: `The Compute Engine zone that the instance should serve from, per https://cloud.google.com/compute/docs/regions-zones This can ONLY be specified for ZONAL instances. If present for a REGIONAL instance, an error will be thrown. If this is absent for a ZONAL instance, instance is created in a random zone with available capacity.`,
 			},
 			"labels": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: `User-defined labels for the alloydb instance.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `User-defined labels for the alloydb instance.
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"machine_config": {
 				Type:        schema.TypeList,
@@ -127,10 +181,108 @@ can have regional availability (nodes are present in 2 or more zones in a region
 					},
 				},
 			},
+			"network_config": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Instance level network configuration.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"authorized_external_networks": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Description: `A list of external networks authorized to access this instance. This
+field is only allowed to be set when 'enable_public_ip' is set to
+true.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"cidr_range": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `CIDR range for one authorized network of the instance.`,
+									},
+								},
+							},
+							RequiredWith: []string{"network_config.0.enable_public_ip"},
+						},
+						"enable_public_ip": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Description: `Enabling public ip for the instance. If a user wishes to disable this,
+please also clear the list of the authorized external networks set on
+the same instance.`,
+						},
+					},
+				},
+			},
+			"psc_instance_config": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Configuration for Private Service Connect (PSC) for the instance.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"allowed_consumer_projects": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Description: `List of consumer projects that are allowed to create PSC endpoints to service-attachments to this instance.
+These should be specified as project numbers only.`,
+							Elem: &schema.Schema{
+								Type:         schema.TypeString,
+								ValidateFunc: verify.ValidateRegexp(`^\d+$`),
+							},
+						},
+						"psc_dns_name": {
+							Type:     schema.TypeString,
+							Computed: true,
+							Description: `The DNS name of the instance for PSC connectivity.
+Name convention: <uid>.<uid>.<region>.alloydb-psc.goog`,
+						},
+						"service_attachment_link": {
+							Type:     schema.TypeString,
+							Computed: true,
+							Description: `The service attachment created when Private Service Connect (PSC) is enabled for the instance.
+The name of the resource will be in the format of
+'projects/<alloydb-tenant-project-number>/regions/<region-name>/serviceAttachments/<service-attachment-name>'`,
+						},
+					},
+				},
+			},
+			"query_insights_config": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Optional:    true,
+				Description: `Configuration for query insights.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"query_plans_per_minute": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: `Number of query execution plans captured by Insights per minute for all queries combined. The default value is 5. Any integer between 0 and 20 is considered valid.`,
+						},
+						"query_string_length": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: `Query string length. The default value is 1024. Any integer between 256 and 4500 is considered valid.`,
+						},
+						"record_application_tags": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: `Record application tags for an instance. This flag is turned "on" by default.`,
+						},
+						"record_client_address": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: `Record client address for an instance. Client address is PII information. This flag is turned "on" by default.`,
+						},
+					},
+				},
+			},
 			"read_pool_config": {
 				Type:        schema.TypeList,
 				Optional:    true,
-				Description: `Read pool specific config.`,
+				Description: `Read pool specific config. If the instance type is READ_POOL, this configuration must be provided.`,
 				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -147,6 +299,18 @@ can have regional availability (nodes are present in 2 or more zones in a region
 				Computed:    true,
 				Description: `Time the Instance was created in UTC.`,
 			},
+			"effective_annotations": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of annotations (key/value pairs) present on the resource in GCP, including the annotations configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"ip_address": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -157,6 +321,13 @@ can have regional availability (nodes are present in 2 or more zones in a region
 				Computed:    true,
 				Description: `The name of the instance resource.`,
 			},
+			"public_ip_address": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Description: `The public IP addresses for the Instance. This is available ONLY when
+networkConfig.enablePublicIp is set to true. This is the connection
+endpoint for an end-user application.`,
+			},
 			"reconciling": {
 				Type:        schema.TypeBool,
 				Computed:    true,
@@ -166,6 +337,13 @@ can have regional availability (nodes are present in 2 or more zones in a region
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `The current state of the alloydb instance.`,
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"uid": {
 				Type:        schema.TypeString,
@@ -191,18 +369,6 @@ func resourceAlloydbInstanceCreate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	obj := make(map[string]interface{})
-	labelsProp, err := expandAlloydbInstanceLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
-	annotationsProp, err := expandAlloydbInstanceAnnotations(d.Get("annotations"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("annotations"); !tpgresource.IsEmptyValue(reflect.ValueOf(annotationsProp)) && (ok || !reflect.DeepEqual(v, annotationsProp)) {
-		obj["annotations"] = annotationsProp
-	}
 	displayNameProp, err := expandAlloydbInstanceDisplayName(d.Get("display_name"), d, config)
 	if err != nil {
 		return err
@@ -233,6 +399,12 @@ func resourceAlloydbInstanceCreate(d *schema.ResourceData, meta interface{}) err
 	} else if v, ok := d.GetOkExists("instance_type"); !tpgresource.IsEmptyValue(reflect.ValueOf(instanceTypeProp)) && (ok || !reflect.DeepEqual(v, instanceTypeProp)) {
 		obj["instanceType"] = instanceTypeProp
 	}
+	queryInsightsConfigProp, err := expandAlloydbInstanceQueryInsightsConfig(d.Get("query_insights_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("query_insights_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(queryInsightsConfigProp)) && (ok || !reflect.DeepEqual(v, queryInsightsConfigProp)) {
+		obj["queryInsightsConfig"] = queryInsightsConfigProp
+	}
 	readPoolConfigProp, err := expandAlloydbInstanceReadPoolConfig(d.Get("read_pool_config"), d, config)
 	if err != nil {
 		return err
@@ -244,6 +416,36 @@ func resourceAlloydbInstanceCreate(d *schema.ResourceData, meta interface{}) err
 		return err
 	} else if v, ok := d.GetOkExists("machine_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(machineConfigProp)) && (ok || !reflect.DeepEqual(v, machineConfigProp)) {
 		obj["machineConfig"] = machineConfigProp
+	}
+	clientConnectionConfigProp, err := expandAlloydbInstanceClientConnectionConfig(d.Get("client_connection_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("client_connection_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(clientConnectionConfigProp)) && (ok || !reflect.DeepEqual(v, clientConnectionConfigProp)) {
+		obj["clientConnectionConfig"] = clientConnectionConfigProp
+	}
+	pscInstanceConfigProp, err := expandAlloydbInstancePscInstanceConfig(d.Get("psc_instance_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("psc_instance_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(pscInstanceConfigProp)) && (ok || !reflect.DeepEqual(v, pscInstanceConfigProp)) {
+		obj["pscInstanceConfig"] = pscInstanceConfigProp
+	}
+	networkConfigProp, err := expandAlloydbInstanceNetworkConfig(d.Get("network_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("network_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(networkConfigProp)) && (ok || !reflect.DeepEqual(v, networkConfigProp)) {
+		obj["networkConfig"] = networkConfigProp
+	}
+	labelsProp, err := expandAlloydbInstanceEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
+	annotationsProp, err := expandAlloydbInstanceEffectiveAnnotations(d.Get("effective_annotations"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_annotations"); !tpgresource.IsEmptyValue(reflect.ValueOf(annotationsProp)) && (ok || !reflect.DeepEqual(v, annotationsProp)) {
+		obj["annotations"] = annotationsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{AlloydbBasePath}}{{cluster}}/instances?instanceId={{instance_id}}")
@@ -259,6 +461,12 @@ func resourceAlloydbInstanceCreate(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+	// Read the config and call createsecondary api if instance_type is SECONDARY
+
+	if instanceType := d.Get("instance_type"); instanceType == "SECONDARY" {
+		url = strings.Replace(url, "instances?instanceId", "instances:createsecondary?instanceId", 1)
+	}
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -267,6 +475,7 @@ func resourceAlloydbInstanceCreate(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Instance: %s", err)
@@ -313,12 +522,14 @@ func resourceAlloydbInstanceRead(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("AlloydbInstance %q", d.Id()))
@@ -363,10 +574,34 @@ func resourceAlloydbInstanceRead(d *schema.ResourceData, meta interface{}) error
 	if err := d.Set("ip_address", flattenAlloydbInstanceIpAddress(res["ipAddress"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
+	if err := d.Set("query_insights_config", flattenAlloydbInstanceQueryInsightsConfig(res["queryInsightsConfig"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
 	if err := d.Set("read_pool_config", flattenAlloydbInstanceReadPoolConfig(res["readPoolConfig"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
 	if err := d.Set("machine_config", flattenAlloydbInstanceMachineConfig(res["machineConfig"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("client_connection_config", flattenAlloydbInstanceClientConnectionConfig(res["clientConnectionConfig"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("psc_instance_config", flattenAlloydbInstancePscInstanceConfig(res["pscInstanceConfig"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("network_config", flattenAlloydbInstanceNetworkConfig(res["networkConfig"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("public_ip_address", flattenAlloydbInstancePublicIpAddress(res["publicIpAddress"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("terraform_labels", flattenAlloydbInstanceTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenAlloydbInstanceEffectiveLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("effective_annotations", flattenAlloydbInstanceEffectiveAnnotations(res["annotations"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
 
@@ -384,18 +619,6 @@ func resourceAlloydbInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 	billingProject := ""
 
 	obj := make(map[string]interface{})
-	labelsProp, err := expandAlloydbInstanceLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
-	annotationsProp, err := expandAlloydbInstanceAnnotations(d.Get("annotations"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("annotations"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, annotationsProp)) {
-		obj["annotations"] = annotationsProp
-	}
 	displayNameProp, err := expandAlloydbInstanceDisplayName(d.Get("display_name"), d, config)
 	if err != nil {
 		return err
@@ -420,6 +643,12 @@ func resourceAlloydbInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 	} else if v, ok := d.GetOkExists("availability_type"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, availabilityTypeProp)) {
 		obj["availabilityType"] = availabilityTypeProp
 	}
+	queryInsightsConfigProp, err := expandAlloydbInstanceQueryInsightsConfig(d.Get("query_insights_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("query_insights_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, queryInsightsConfigProp)) {
+		obj["queryInsightsConfig"] = queryInsightsConfigProp
+	}
 	readPoolConfigProp, err := expandAlloydbInstanceReadPoolConfig(d.Get("read_pool_config"), d, config)
 	if err != nil {
 		return err
@@ -432,6 +661,36 @@ func resourceAlloydbInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 	} else if v, ok := d.GetOkExists("machine_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, machineConfigProp)) {
 		obj["machineConfig"] = machineConfigProp
 	}
+	clientConnectionConfigProp, err := expandAlloydbInstanceClientConnectionConfig(d.Get("client_connection_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("client_connection_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, clientConnectionConfigProp)) {
+		obj["clientConnectionConfig"] = clientConnectionConfigProp
+	}
+	pscInstanceConfigProp, err := expandAlloydbInstancePscInstanceConfig(d.Get("psc_instance_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("psc_instance_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, pscInstanceConfigProp)) {
+		obj["pscInstanceConfig"] = pscInstanceConfigProp
+	}
+	networkConfigProp, err := expandAlloydbInstanceNetworkConfig(d.Get("network_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("network_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, networkConfigProp)) {
+		obj["networkConfig"] = networkConfigProp
+	}
+	labelsProp, err := expandAlloydbInstanceEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
+	annotationsProp, err := expandAlloydbInstanceEffectiveAnnotations(d.Get("effective_annotations"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_annotations"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, annotationsProp)) {
+		obj["annotations"] = annotationsProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{AlloydbBasePath}}{{cluster}}/instances/{{instance_id}}")
 	if err != nil {
@@ -439,15 +698,8 @@ func resourceAlloydbInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	log.Printf("[DEBUG] Updating Instance %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
-
-	if d.HasChange("labels") {
-		updateMask = append(updateMask, "labels")
-	}
-
-	if d.HasChange("annotations") {
-		updateMask = append(updateMask, "annotations")
-	}
 
 	if d.HasChange("display_name") {
 		updateMask = append(updateMask, "displayName")
@@ -465,12 +717,36 @@ func resourceAlloydbInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 		updateMask = append(updateMask, "availabilityType")
 	}
 
+	if d.HasChange("query_insights_config") {
+		updateMask = append(updateMask, "queryInsightsConfig")
+	}
+
 	if d.HasChange("read_pool_config") {
 		updateMask = append(updateMask, "readPoolConfig")
 	}
 
 	if d.HasChange("machine_config") {
 		updateMask = append(updateMask, "machineConfig")
+	}
+
+	if d.HasChange("client_connection_config") {
+		updateMask = append(updateMask, "clientConnectionConfig")
+	}
+
+	if d.HasChange("psc_instance_config") {
+		updateMask = append(updateMask, "pscInstanceConfig")
+	}
+
+	if d.HasChange("network_config") {
+		updateMask = append(updateMask, "networkConfig")
+	}
+
+	if d.HasChange("effective_labels") {
+		updateMask = append(updateMask, "labels")
+	}
+
+	if d.HasChange("effective_annotations") {
+		updateMask = append(updateMask, "annotations")
 	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
@@ -484,28 +760,32 @@ func resourceAlloydbInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Instance %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Instance %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating Instance %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Instance %q: %#v", d.Id(), res)
+		}
 
-	err = AlloydbOperationWaitTime(
-		config, res, project, "Updating Instance", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = AlloydbOperationWaitTime(
+			config, res, project, "Updating Instance", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceAlloydbInstanceRead(d, meta)
@@ -527,13 +807,33 @@ func resourceAlloydbInstanceDelete(d *schema.ResourceData, meta interface{}) err
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Instance %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+	// Read the config and avoid calling the delete API if the instance_type is SECONDARY and instead return nil
+	// Returning nil is equivalent of returning a success message to the users
+	// This is done because deletion of secondary instance is not supported
+	// Instead users should be deleting the secondary cluster which will forcefully delete the associated secondary instance
+	// A warning message prompts the user to delete the associated secondary cluster.
+	// Users can always undo the delete secondary instance action by importing the deleted secondary instance by calling terraform import
+
+	var instanceType interface{}
+	instanceTypeProp, err := expandAlloydbInstanceInstanceType(d.Get("instance_type"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("instance_type"); !tpgresource.IsEmptyValue(reflect.ValueOf(instanceTypeProp)) && (ok || !reflect.DeepEqual(v, instanceTypeProp)) {
+		instanceType = instanceTypeProp
+	}
+	if instanceType != nil && instanceType == "SECONDARY" {
+		log.Printf("[WARNING] This operation didn't delete the Secondary Instance %q. Please delete the associated Secondary Cluster as well to delete the entire cluster and the secondary instance.\n", d.Id())
+		return nil
+	}
+
+	log.Printf("[DEBUG] Deleting Instance %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -542,6 +842,7 @@ func resourceAlloydbInstanceDelete(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Instance")
@@ -596,11 +897,33 @@ func flattenAlloydbInstanceUid(v interface{}, d *schema.ResourceData, config *tr
 }
 
 func flattenAlloydbInstanceLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenAlloydbInstanceAnnotations(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("annotations"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenAlloydbInstanceState(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -629,6 +952,67 @@ func flattenAlloydbInstanceInstanceType(v interface{}, d *schema.ResourceData, c
 
 func flattenAlloydbInstanceIpAddress(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
+}
+
+func flattenAlloydbInstanceQueryInsightsConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["query_string_length"] =
+		flattenAlloydbInstanceQueryInsightsConfigQueryStringLength(original["queryStringLength"], d, config)
+	transformed["record_application_tags"] =
+		flattenAlloydbInstanceQueryInsightsConfigRecordApplicationTags(original["recordApplicationTags"], d, config)
+	transformed["record_client_address"] =
+		flattenAlloydbInstanceQueryInsightsConfigRecordClientAddress(original["recordClientAddress"], d, config)
+	transformed["query_plans_per_minute"] =
+		flattenAlloydbInstanceQueryInsightsConfigQueryPlansPerMinute(original["queryPlansPerMinute"], d, config)
+	return []interface{}{transformed}
+}
+func flattenAlloydbInstanceQueryInsightsConfigQueryStringLength(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenAlloydbInstanceQueryInsightsConfigRecordApplicationTags(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbInstanceQueryInsightsConfigRecordClientAddress(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbInstanceQueryInsightsConfigQueryPlansPerMinute(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
 }
 
 func flattenAlloydbInstanceReadPoolConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -691,26 +1075,137 @@ func flattenAlloydbInstanceMachineConfigCpuCount(v interface{}, d *schema.Resour
 	return v // let terraform core handle it otherwise
 }
 
-func expandAlloydbInstanceLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+func flattenAlloydbInstanceClientConnectionConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
-		return map[string]string{}, nil
+		return nil
 	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
 	}
-	return m, nil
+	transformed := make(map[string]interface{})
+	transformed["require_connectors"] =
+		flattenAlloydbInstanceClientConnectionConfigRequireConnectors(original["requireConnectors"], d, config)
+	transformed["ssl_config"] =
+		flattenAlloydbInstanceClientConnectionConfigSslConfig(original["sslConfig"], d, config)
+	return []interface{}{transformed}
+}
+func flattenAlloydbInstanceClientConnectionConfigRequireConnectors(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
 }
 
-func expandAlloydbInstanceAnnotations(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+func flattenAlloydbInstanceClientConnectionConfigSslConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
-		return map[string]string{}, nil
+		return nil
 	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
 	}
-	return m, nil
+	transformed := make(map[string]interface{})
+	transformed["ssl_mode"] =
+		flattenAlloydbInstanceClientConnectionConfigSslConfigSslMode(original["sslMode"], d, config)
+	return []interface{}{transformed}
+}
+func flattenAlloydbInstanceClientConnectionConfigSslConfigSslMode(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbInstancePscInstanceConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["service_attachment_link"] =
+		flattenAlloydbInstancePscInstanceConfigServiceAttachmentLink(original["serviceAttachmentLink"], d, config)
+	transformed["allowed_consumer_projects"] =
+		flattenAlloydbInstancePscInstanceConfigAllowedConsumerProjects(original["allowedConsumerProjects"], d, config)
+	transformed["psc_dns_name"] =
+		flattenAlloydbInstancePscInstanceConfigPscDnsName(original["pscDnsName"], d, config)
+	return []interface{}{transformed}
+}
+func flattenAlloydbInstancePscInstanceConfigServiceAttachmentLink(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbInstancePscInstanceConfigAllowedConsumerProjects(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbInstancePscInstanceConfigPscDnsName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbInstanceNetworkConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["authorized_external_networks"] =
+		flattenAlloydbInstanceNetworkConfigAuthorizedExternalNetworks(original["authorizedExternalNetworks"], d, config)
+	transformed["enable_public_ip"] =
+		flattenAlloydbInstanceNetworkConfigEnablePublicIp(original["enablePublicIp"], d, config)
+	return []interface{}{transformed}
+}
+func flattenAlloydbInstanceNetworkConfigAuthorizedExternalNetworks(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"cidr_range": flattenAlloydbInstanceNetworkConfigAuthorizedExternalNetworksCidrRange(original["cidrRange"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenAlloydbInstanceNetworkConfigAuthorizedExternalNetworksCidrRange(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbInstanceNetworkConfigEnablePublicIp(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbInstancePublicIpAddress(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbInstanceTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenAlloydbInstanceEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbInstanceEffectiveAnnotations(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
 }
 
 func expandAlloydbInstanceDisplayName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -737,6 +1232,62 @@ func expandAlloydbInstanceAvailabilityType(v interface{}, d tpgresource.Terrafor
 }
 
 func expandAlloydbInstanceInstanceType(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbInstanceQueryInsightsConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedQueryStringLength, err := expandAlloydbInstanceQueryInsightsConfigQueryStringLength(original["query_string_length"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedQueryStringLength); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["queryStringLength"] = transformedQueryStringLength
+	}
+
+	transformedRecordApplicationTags, err := expandAlloydbInstanceQueryInsightsConfigRecordApplicationTags(original["record_application_tags"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedRecordApplicationTags); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["recordApplicationTags"] = transformedRecordApplicationTags
+	}
+
+	transformedRecordClientAddress, err := expandAlloydbInstanceQueryInsightsConfigRecordClientAddress(original["record_client_address"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedRecordClientAddress); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["recordClientAddress"] = transformedRecordClientAddress
+	}
+
+	transformedQueryPlansPerMinute, err := expandAlloydbInstanceQueryInsightsConfigQueryPlansPerMinute(original["query_plans_per_minute"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedQueryPlansPerMinute); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["queryPlansPerMinute"] = transformedQueryPlansPerMinute
+	}
+
+	return transformed, nil
+}
+
+func expandAlloydbInstanceQueryInsightsConfigQueryStringLength(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbInstanceQueryInsightsConfigRecordApplicationTags(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbInstanceQueryInsightsConfigRecordClientAddress(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbInstanceQueryInsightsConfigQueryPlansPerMinute(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -784,4 +1335,180 @@ func expandAlloydbInstanceMachineConfig(v interface{}, d tpgresource.TerraformRe
 
 func expandAlloydbInstanceMachineConfigCpuCount(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandAlloydbInstanceClientConnectionConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedRequireConnectors, err := expandAlloydbInstanceClientConnectionConfigRequireConnectors(original["require_connectors"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedRequireConnectors); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["requireConnectors"] = transformedRequireConnectors
+	}
+
+	transformedSslConfig, err := expandAlloydbInstanceClientConnectionConfigSslConfig(original["ssl_config"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSslConfig); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["sslConfig"] = transformedSslConfig
+	}
+
+	return transformed, nil
+}
+
+func expandAlloydbInstanceClientConnectionConfigRequireConnectors(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbInstanceClientConnectionConfigSslConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedSslMode, err := expandAlloydbInstanceClientConnectionConfigSslConfigSslMode(original["ssl_mode"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSslMode); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["sslMode"] = transformedSslMode
+	}
+
+	return transformed, nil
+}
+
+func expandAlloydbInstanceClientConnectionConfigSslConfigSslMode(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbInstancePscInstanceConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedServiceAttachmentLink, err := expandAlloydbInstancePscInstanceConfigServiceAttachmentLink(original["service_attachment_link"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedServiceAttachmentLink); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["serviceAttachmentLink"] = transformedServiceAttachmentLink
+	}
+
+	transformedAllowedConsumerProjects, err := expandAlloydbInstancePscInstanceConfigAllowedConsumerProjects(original["allowed_consumer_projects"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAllowedConsumerProjects); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["allowedConsumerProjects"] = transformedAllowedConsumerProjects
+	}
+
+	transformedPscDnsName, err := expandAlloydbInstancePscInstanceConfigPscDnsName(original["psc_dns_name"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPscDnsName); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["pscDnsName"] = transformedPscDnsName
+	}
+
+	return transformed, nil
+}
+
+func expandAlloydbInstancePscInstanceConfigServiceAttachmentLink(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbInstancePscInstanceConfigAllowedConsumerProjects(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbInstancePscInstanceConfigPscDnsName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbInstanceNetworkConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedAuthorizedExternalNetworks, err := expandAlloydbInstanceNetworkConfigAuthorizedExternalNetworks(original["authorized_external_networks"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAuthorizedExternalNetworks); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["authorizedExternalNetworks"] = transformedAuthorizedExternalNetworks
+	}
+
+	transformedEnablePublicIp, err := expandAlloydbInstanceNetworkConfigEnablePublicIp(original["enable_public_ip"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedEnablePublicIp); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["enablePublicIp"] = transformedEnablePublicIp
+	}
+
+	return transformed, nil
+}
+
+func expandAlloydbInstanceNetworkConfigAuthorizedExternalNetworks(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedCidrRange, err := expandAlloydbInstanceNetworkConfigAuthorizedExternalNetworksCidrRange(original["cidr_range"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedCidrRange); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["cidrRange"] = transformedCidrRange
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandAlloydbInstanceNetworkConfigAuthorizedExternalNetworksCidrRange(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbInstanceNetworkConfigEnablePublicIp(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbInstanceEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
+}
+
+func expandAlloydbInstanceEffectiveAnnotations(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }

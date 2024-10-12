@@ -20,9 +20,11 @@ package compute
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -46,6 +48,11 @@ func ResourceComputePerInstanceConfig() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+			tpgresource.DefaultProviderZone,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"instance_group_manager": {
@@ -75,6 +82,78 @@ func ResourceComputePerInstanceConfig() *schema.Resource {
 							Elem:        computePerInstanceConfigPreservedStateDiskSchema(),
 							// Default schema.HashSchema is used.
 						},
+						"external_ip": {
+							Type:        schema.TypeSet,
+							Optional:    true,
+							Description: `Preserved external IPs defined for this instance. This map is keyed with the name of the network interface.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"interface_name": {
+										Type:     schema.TypeString,
+										Required: true,
+									},
+									"auto_delete": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										ValidateFunc: verify.ValidateEnum([]string{"NEVER", "ON_PERMANENT_INSTANCE_DELETION", ""}),
+										Description:  `These stateful IPs will never be released during autohealing, update or VM instance recreate operations. This flag is used to configure if the IP reservation should be deleted after it is no longer used by the group, e.g. when the given instance or the whole group is deleted. Default value: "NEVER" Possible values: ["NEVER", "ON_PERMANENT_INSTANCE_DELETION"]`,
+										Default:      "NEVER",
+									},
+									"ip_address": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: `Ip address representation`,
+										MaxItems:    1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"address": {
+													Type:             schema.TypeString,
+													Optional:         true,
+													DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
+													Description:      `The URL of the reservation for this IP address.`,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						"internal_ip": {
+							Type:        schema.TypeSet,
+							Optional:    true,
+							Description: `Preserved internal IPs defined for this instance. This map is keyed with the name of the network interface.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"interface_name": {
+										Type:     schema.TypeString,
+										Required: true,
+									},
+									"auto_delete": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										ValidateFunc: verify.ValidateEnum([]string{"NEVER", "ON_PERMANENT_INSTANCE_DELETION", ""}),
+										Description:  `These stateful IPs will never be released during autohealing, update or VM instance recreate operations. This flag is used to configure if the IP reservation should be deleted after it is no longer used by the group, e.g. when the given instance or the whole group is deleted. Default value: "NEVER" Possible values: ["NEVER", "ON_PERMANENT_INSTANCE_DELETION"]`,
+										Default:      "NEVER",
+									},
+									"ip_address": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: `Ip address representation`,
+										MaxItems:    1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"address": {
+													Type:             schema.TypeString,
+													Optional:         true,
+													DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
+													Description:      `The URL of the reservation for this IP address.`,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
 						"metadata": {
 							Type:        schema.TypeMap,
 							Optional:    true,
@@ -86,6 +165,7 @@ func ResourceComputePerInstanceConfig() *schema.Resource {
 			},
 			"zone": {
 				Type:             schema.TypeString,
+				Computed:         true,
 				Optional:         true,
 				ForceNew:         true,
 				DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
@@ -112,6 +192,13 @@ Default is 'REPLACE'. Possible values are:
 * RESTART
 * REFRESH
 * NONE`,
+			},
+			"remove_instance_on_destroy": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				Description: `When true, deleting this config will immediately remove the underlying instance.
+When false, deleting this config will use the behavior as determined by remove_instance_on_destroy.`,
 			},
 			"remove_instance_state_on_destroy": {
 				Type:     schema.TypeBool,
@@ -220,6 +307,7 @@ func resourceComputePerInstanceConfigCreate(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -228,6 +316,7 @@ func resourceComputePerInstanceConfigCreate(d *schema.ResourceData, meta interfa
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating PerInstanceConfig: %s", err)
@@ -280,12 +369,14 @@ func resourceComputePerInstanceConfigRead(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputePerInstanceConfig %q", d.Id()))
@@ -314,12 +405,25 @@ func resourceComputePerInstanceConfigRead(d *schema.ResourceData, meta interface
 			return fmt.Errorf("Error setting most_disruptive_allowed_action: %s", err)
 		}
 	}
+	if _, ok := d.GetOkExists("remove_instance_on_destroy"); !ok {
+		if err := d.Set("remove_instance_on_destroy", false); err != nil {
+			return fmt.Errorf("Error setting remove_instance_on_destroy: %s", err)
+		}
+	}
 	if _, ok := d.GetOkExists("remove_instance_state_on_destroy"); !ok {
 		if err := d.Set("remove_instance_state_on_destroy", false); err != nil {
 			return fmt.Errorf("Error setting remove_instance_state_on_destroy: %s", err)
 		}
 	}
 	if err := d.Set("project", project); err != nil {
+		return fmt.Errorf("Error reading PerInstanceConfig: %s", err)
+	}
+
+	zone, err := tpgresource.GetZone(d, config)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("zone", zone); err != nil {
 		return fmt.Errorf("Error reading PerInstanceConfig: %s", err)
 	}
 
@@ -380,6 +484,7 @@ func resourceComputePerInstanceConfigUpdate(d *schema.ResourceData, meta interfa
 	}
 
 	log.Printf("[DEBUG] Updating PerInstanceConfig %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -394,6 +499,7 @@ func resourceComputePerInstanceConfigUpdate(d *schema.ResourceData, meta interfa
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -480,14 +586,31 @@ func resourceComputePerInstanceConfigDelete(d *schema.ResourceData, meta interfa
 	transport_tpg.MutexStore.Lock(lockName)
 	defer transport_tpg.MutexStore.Unlock(lockName)
 
-	url, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/instanceGroupManagers/{{instance_group_manager}}/deletePerInstanceConfigs")
+	var url string
+	if d.Get("remove_instance_on_destroy").(bool) {
+		url, err = tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/instanceGroupManagers/{{instance_group_manager}}/deleteInstances")
+	} else {
+		url, err = tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/instanceGroupManagers/{{instance_group_manager}}/deletePerInstanceConfigs")
+	}
 	if err != nil {
 		return err
 	}
 
 	var obj map[string]interface{}
-	obj = map[string]interface{}{
-		"names": [1]string{d.Get("name").(string)},
+	if d.Get("remove_instance_on_destroy").(bool) {
+		// Instance name in deleteInstances request must include zone
+		instanceName, err := tpgresource.ReplaceVars(d, config, "zones/{{zone}}/instances/{{name}}")
+		if err != nil {
+			return err
+		}
+
+		obj = map[string]interface{}{
+			"instances": [1]string{instanceName},
+		}
+	} else {
+		obj = map[string]interface{}{
+			"names": [1]string{d.Get("name").(string)},
+		}
 	}
 	log.Printf("[DEBUG] Deleting PerInstanceConfig %q", d.Id())
 
@@ -512,8 +635,14 @@ func resourceComputePerInstanceConfigDelete(d *schema.ResourceData, meta interfa
 		return err
 	}
 
-	// Potentially delete the state managed by this config
-	if d.Get("remove_instance_state_on_destroy").(bool) {
+	if d.Get("remove_instance_on_destroy").(bool) {
+		err = transport_tpg.PollingWaitTime(resourceComputePerInstanceConfigInstancePollRead(d, meta, d.Get("name").(string)), PollCheckInstanceConfigInstanceDeleted, "Deleting PerInstanceConfig", d.Timeout(schema.TimeoutDelete), 1)
+		if err != nil {
+			return fmt.Errorf("Error waiting for instance delete on PerInstanceConfig %q: %s", d.Id(), err)
+		}
+	} else if d.Get("remove_instance_state_on_destroy").(bool) {
+		// Potentially delete the state managed by this config
+
 		// Instance name in applyUpdatesToInstances request must include zone
 		instanceName, err := tpgresource.ReplaceVars(d, config, "zones/{{zone}}/instances/{{name}}")
 		if err != nil {
@@ -565,10 +694,10 @@ func resourceComputePerInstanceConfigDelete(d *schema.ResourceData, meta interfa
 func resourceComputePerInstanceConfigImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/zones/(?P<zone>[^/]+)/instanceGroupManagers/(?P<instance_group_manager>[^/]+)/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<zone>[^/]+)/(?P<instance_group_manager>[^/]+)/(?P<name>[^/]+)",
-		"(?P<zone>[^/]+)/(?P<instance_group_manager>[^/]+)/(?P<name>[^/]+)",
-		"(?P<instance_group_manager>[^/]+)/(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/zones/(?P<zone>[^/]+)/instanceGroupManagers/(?P<instance_group_manager>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<zone>[^/]+)/(?P<instance_group_manager>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<zone>[^/]+)/(?P<instance_group_manager>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<instance_group_manager>[^/]+)/(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -586,6 +715,9 @@ func resourceComputePerInstanceConfigImport(d *schema.ResourceData, meta interfa
 	}
 	if err := d.Set("most_disruptive_allowed_action", "REPLACE"); err != nil {
 		return nil, fmt.Errorf("Error setting most_disruptive_allowed_action: %s", err)
+	}
+	if err := d.Set("remove_instance_on_destroy", false); err != nil {
+		return nil, fmt.Errorf("Error setting remove_instance_on_destroy: %s", err)
 	}
 	if err := d.Set("remove_instance_state_on_destroy", false); err != nil {
 		return nil, fmt.Errorf("Error setting remove_instance_state_on_destroy: %s", err)
@@ -611,6 +743,10 @@ func flattenNestedComputePerInstanceConfigPreservedState(v interface{}, d *schem
 		flattenNestedComputePerInstanceConfigPreservedStateMetadata(original["metadata"], d, config)
 	transformed["disk"] =
 		flattenNestedComputePerInstanceConfigPreservedStateDisk(original["disks"], d, config)
+	transformed["internal_ip"] =
+		flattenNestedComputePerInstanceConfigPreservedStateInternalIp(original["internalIPs"], d, config)
+	transformed["external_ip"] =
+		flattenNestedComputePerInstanceConfigPreservedStateExternalIp(original["externalIPs"], d, config)
 	return []interface{}{transformed}
 }
 func flattenNestedComputePerInstanceConfigPreservedStateMetadata(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -639,6 +775,86 @@ func flattenNestedComputePerInstanceConfigPreservedStateDisk(v interface{}, d *s
 	return transformed
 }
 
+func flattenNestedComputePerInstanceConfigPreservedStateInternalIp(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.(map[string]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for k, raw := range l {
+		original := raw.(map[string]interface{})
+		transformed = append(transformed, map[string]interface{}{
+			"interface_name": k,
+			"auto_delete":    flattenNestedComputePerInstanceConfigPreservedStateInternalIpAutoDelete(original["autoDelete"], d, config),
+			"ip_address":     flattenNestedComputePerInstanceConfigPreservedStateInternalIpIpAddress(original["ipAddress"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenNestedComputePerInstanceConfigPreservedStateInternalIpAutoDelete(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenNestedComputePerInstanceConfigPreservedStateInternalIpIpAddress(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["address"] =
+		flattenNestedComputePerInstanceConfigPreservedStateInternalIpIpAddressAddress(original["address"], d, config)
+	return []interface{}{transformed}
+}
+func flattenNestedComputePerInstanceConfigPreservedStateInternalIpIpAddressAddress(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	return tpgresource.ConvertSelfLinkToV1(v.(string))
+}
+
+func flattenNestedComputePerInstanceConfigPreservedStateExternalIp(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.(map[string]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for k, raw := range l {
+		original := raw.(map[string]interface{})
+		transformed = append(transformed, map[string]interface{}{
+			"interface_name": k,
+			"auto_delete":    flattenNestedComputePerInstanceConfigPreservedStateExternalIpAutoDelete(original["autoDelete"], d, config),
+			"ip_address":     flattenNestedComputePerInstanceConfigPreservedStateExternalIpIpAddress(original["ipAddress"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenNestedComputePerInstanceConfigPreservedStateExternalIpAutoDelete(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenNestedComputePerInstanceConfigPreservedStateExternalIpIpAddress(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["address"] =
+		flattenNestedComputePerInstanceConfigPreservedStateExternalIpIpAddressAddress(original["address"], d, config)
+	return []interface{}{transformed}
+}
+func flattenNestedComputePerInstanceConfigPreservedStateExternalIpIpAddressAddress(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	return tpgresource.ConvertSelfLinkToV1(v.(string))
+}
+
 func expandNestedComputePerInstanceConfigName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
@@ -664,6 +880,20 @@ func expandNestedComputePerInstanceConfigPreservedState(v interface{}, d tpgreso
 		return nil, err
 	} else if val := reflect.ValueOf(transformedDisk); val.IsValid() && !tpgresource.IsEmptyValue(val) {
 		transformed["disks"] = transformedDisk
+	}
+
+	transformedInternalIp, err := expandNestedComputePerInstanceConfigPreservedStateInternalIp(original["internal_ip"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedInternalIp); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["internalIPs"] = transformedInternalIp
+	}
+
+	transformedExternalIp, err := expandNestedComputePerInstanceConfigPreservedStateExternalIp(original["external_ip"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedExternalIp); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["externalIPs"] = transformedExternalIp
 	}
 
 	return transformed, nil
@@ -708,6 +938,132 @@ func expandNestedComputePerInstanceConfigPreservedStateDisk(v interface{}, d tpg
 		req[deviceName] = diskObj
 	}
 	return req, nil
+}
+
+func expandNestedComputePerInstanceConfigPreservedStateInternalIp(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]interface{}, error) {
+	if v == nil {
+		return map[string]interface{}{}, nil
+	}
+	m := make(map[string]interface{})
+	for _, raw := range v.(*schema.Set).List() {
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedAutoDelete, err := expandNestedComputePerInstanceConfigPreservedStateInternalIpAutoDelete(original["auto_delete"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedAutoDelete); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["autoDelete"] = transformedAutoDelete
+		}
+
+		transformedIpAddress, err := expandNestedComputePerInstanceConfigPreservedStateInternalIpIpAddress(original["ip_address"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedIpAddress); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["ipAddress"] = transformedIpAddress
+		}
+
+		transformedInterfaceName, err := tpgresource.ExpandString(original["interface_name"], d, config)
+		if err != nil {
+			return nil, err
+		}
+		m[transformedInterfaceName] = transformed
+	}
+	return m, nil
+}
+
+func expandNestedComputePerInstanceConfigPreservedStateInternalIpAutoDelete(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNestedComputePerInstanceConfigPreservedStateInternalIpIpAddress(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedAddress, err := expandNestedComputePerInstanceConfigPreservedStateInternalIpIpAddressAddress(original["address"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAddress); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["address"] = transformedAddress
+	}
+
+	return transformed, nil
+}
+
+func expandNestedComputePerInstanceConfigPreservedStateInternalIpIpAddressAddress(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	f, err := tpgresource.ParseRegionalFieldValue("addresses", v.(string), "project", "region", "zone", d, config, true)
+	if err != nil {
+		return nil, fmt.Errorf("Invalid value for address: %s", err)
+	}
+	return f.RelativeLink(), nil
+}
+
+func expandNestedComputePerInstanceConfigPreservedStateExternalIp(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]interface{}, error) {
+	if v == nil {
+		return map[string]interface{}{}, nil
+	}
+	m := make(map[string]interface{})
+	for _, raw := range v.(*schema.Set).List() {
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedAutoDelete, err := expandNestedComputePerInstanceConfigPreservedStateExternalIpAutoDelete(original["auto_delete"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedAutoDelete); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["autoDelete"] = transformedAutoDelete
+		}
+
+		transformedIpAddress, err := expandNestedComputePerInstanceConfigPreservedStateExternalIpIpAddress(original["ip_address"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedIpAddress); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["ipAddress"] = transformedIpAddress
+		}
+
+		transformedInterfaceName, err := tpgresource.ExpandString(original["interface_name"], d, config)
+		if err != nil {
+			return nil, err
+		}
+		m[transformedInterfaceName] = transformed
+	}
+	return m, nil
+}
+
+func expandNestedComputePerInstanceConfigPreservedStateExternalIpAutoDelete(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNestedComputePerInstanceConfigPreservedStateExternalIpIpAddress(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedAddress, err := expandNestedComputePerInstanceConfigPreservedStateExternalIpIpAddressAddress(original["address"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAddress); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["address"] = transformedAddress
+	}
+
+	return transformed, nil
+}
+
+func expandNestedComputePerInstanceConfigPreservedStateExternalIpIpAddressAddress(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	f, err := tpgresource.ParseRegionalFieldValue("addresses", v.(string), "project", "region", "zone", d, config, true)
+	if err != nil {
+		return nil, fmt.Errorf("Invalid value for address: %s", err)
+	}
+	return f.RelativeLink(), nil
 }
 
 func resourceComputePerInstanceConfigEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {

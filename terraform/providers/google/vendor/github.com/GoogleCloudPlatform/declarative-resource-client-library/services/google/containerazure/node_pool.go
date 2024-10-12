@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ type NodePool struct {
 	Etag                  *string                    `json:"etag"`
 	Annotations           map[string]string          `json:"annotations"`
 	MaxPodsConstraint     *NodePoolMaxPodsConstraint `json:"maxPodsConstraint"`
+	Management            *NodePoolManagement        `json:"management"`
 	AzureAvailabilityZone *string                    `json:"azureAvailabilityZone"`
 	Project               *string                    `json:"project"`
 	Location              *string                    `json:"location"`
@@ -80,6 +81,7 @@ type NodePoolConfig struct {
 	VmSize      *string                    `json:"vmSize"`
 	RootVolume  *NodePoolConfigRootVolume  `json:"rootVolume"`
 	Tags        map[string]string          `json:"tags"`
+	Labels      map[string]string          `json:"labels"`
 	SshConfig   *NodePoolConfigSshConfig   `json:"sshConfig"`
 	ProxyConfig *NodePoolConfigProxyConfig `json:"proxyConfig"`
 }
@@ -105,6 +107,8 @@ func (r *NodePoolConfig) UnmarshalJSON(data []byte) error {
 
 		r.Tags = res.Tags
 
+		r.Labels = res.Labels
+
 		r.SshConfig = res.SshConfig
 
 		r.ProxyConfig = res.ProxyConfig
@@ -129,7 +133,7 @@ func (r *NodePoolConfig) String() string {
 func (r *NodePoolConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -175,7 +179,7 @@ func (r *NodePoolConfigRootVolume) String() string {
 func (r *NodePoolConfigRootVolume) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -221,7 +225,7 @@ func (r *NodePoolConfigSshConfig) String() string {
 func (r *NodePoolConfigSshConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -270,7 +274,7 @@ func (r *NodePoolConfigProxyConfig) String() string {
 func (r *NodePoolConfigProxyConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -319,7 +323,7 @@ func (r *NodePoolAutoscaling) String() string {
 func (r *NodePoolAutoscaling) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -365,7 +369,53 @@ func (r *NodePoolMaxPodsConstraint) String() string {
 func (r *NodePoolMaxPodsConstraint) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type NodePoolManagement struct {
+	empty      bool  `json:"-"`
+	AutoRepair *bool `json:"autoRepair"`
+}
+
+type jsonNodePoolManagement NodePoolManagement
+
+func (r *NodePoolManagement) UnmarshalJSON(data []byte) error {
+	var res jsonNodePoolManagement
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyNodePoolManagement
+	} else {
+
+		r.AutoRepair = res.AutoRepair
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this NodePoolManagement is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyNodePoolManagement *NodePoolManagement = &NodePoolManagement{empty: true}
+
+func (r *NodePoolManagement) Empty() bool {
+	return r.empty
+}
+
+func (r *NodePoolManagement) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *NodePoolManagement) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -398,6 +448,7 @@ func (r *NodePool) ID() (string, error) {
 		"etag":                    dcl.ValueOrEmptyString(nr.Etag),
 		"annotations":             dcl.ValueOrEmptyString(nr.Annotations),
 		"max_pods_constraint":     dcl.ValueOrEmptyString(nr.MaxPodsConstraint),
+		"management":              dcl.ValueOrEmptyString(nr.Management),
 		"azure_availability_zone": dcl.ValueOrEmptyString(nr.AzureAvailabilityZone),
 		"project":                 dcl.ValueOrEmptyString(nr.Project),
 		"location":                dcl.ValueOrEmptyString(nr.Location),

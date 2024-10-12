@@ -20,10 +20,12 @@ package databasemigrationservice
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -47,6 +49,11 @@ func ResourceDatabaseMigrationServiceConnectionProfile() *schema.Resource {
 			Update: schema.DefaultTimeout(60 * time.Minute),
 			Delete: schema.DefaultTimeout(60 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"connection_profile_id": {
@@ -167,7 +174,7 @@ It is specified in the form: 'projects/{project_number}/global/networks/{network
 						},
 					},
 				},
-				ExactlyOneOf: []string{"mysql", "postgresql", "cloudsql", "alloydb"},
+				ExactlyOneOf: []string{"mysql", "postgresql", "oracle", "cloudsql", "alloydb"},
 			},
 			"cloudsql": {
 				Type:        schema.TypeList,
@@ -233,6 +240,12 @@ If the available storage repeatedly falls below the threshold size, Cloud SQL co
 										Optional: true,
 										Description: `The database engine type and version.
 Currently supported values located at https://cloud.google.com/database-migration/docs/reference/rest/v1/projects.locations.connectionProfiles#sqldatabaseversion`,
+									},
+									"edition": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										ValidateFunc: verify.ValidateEnum([]string{"ENTERPRISE", "ENTERPRISE_PLUS", ""}),
+										Description:  `The edition of the given Cloud SQL instance. Possible values: ["ENTERPRISE", "ENTERPRISE_PLUS"]`,
 									},
 									"ip_config": {
 										Type:        schema.TypeList,
@@ -345,7 +358,7 @@ For more information, see https://cloud.google.com/sql/docs/mysql/instance-setti
 						},
 					},
 				},
-				ExactlyOneOf: []string{"mysql", "postgresql", "cloudsql", "alloydb"},
+				ExactlyOneOf: []string{"mysql", "postgresql", "oracle", "cloudsql", "alloydb"},
 			},
 			"display_name": {
 				Type:        schema.TypeString,
@@ -353,10 +366,14 @@ For more information, see https://cloud.google.com/sql/docs/mysql/instance-setti
 				Description: `The connection profile display name.`,
 			},
 			"labels": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: `The resource labels for connection profile to use to annotate any related underlying resources such as Compute Engine VMs.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `The resource labels for connection profile to use to annotate any related underlying resources such as Compute Engine VMs.
+
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"location": {
 				Type:        schema.TypeString,
@@ -445,7 +462,162 @@ If this field is used then the 'clientCertificate' field is mandatory.`,
 						},
 					},
 				},
-				ExactlyOneOf: []string{"mysql", "postgresql", "cloudsql", "alloydb"},
+				ExactlyOneOf: []string{"mysql", "postgresql", "oracle", "cloudsql", "alloydb"},
+			},
+			"oracle": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Specifies connection parameters required specifically for Oracle databases.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"database_service": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: `Required. Database service for the Oracle connection.`,
+						},
+						"host": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: `Required. The IP or hostname of the source Oracle database.`,
+						},
+						"password": {
+							Type:     schema.TypeString,
+							Required: true,
+							ForceNew: true,
+							Description: `Required. Input only. The password for the user that Database Migration Service will be using to connect to the database.
+This field is not returned on request, and the value is encrypted when stored in Database Migration Service.`,
+							Sensitive: true,
+						},
+						"port": {
+							Type:        schema.TypeInt,
+							Required:    true,
+							Description: `Required. The network port of the source Oracle database.`,
+						},
+						"username": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: `Required. The username that Database Migration Service will use to connect to the database. The value is encrypted when stored in Database Migration Service.`,
+						},
+						"forward_ssh_connectivity": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `SSL configuration for the destination to connect to the source database.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"hostname": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: `Required. Hostname for the SSH tunnel.`,
+									},
+									"port": {
+										Type:        schema.TypeInt,
+										Required:    true,
+										Description: `Port for the SSH tunnel, default value is 22.`,
+									},
+									"username": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: `Required. Username for the SSH tunnel.`,
+									},
+									"password": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										ForceNew:     true,
+										Description:  `Input only. SSH password. Only one of 'password' and 'private_key' can be configured.`,
+										Sensitive:    true,
+										ExactlyOneOf: []string{},
+									},
+									"private_key": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										ForceNew:     true,
+										Description:  `Input only. SSH private key. Only one of 'password' and 'private_key' can be configured.`,
+										Sensitive:    true,
+										ExactlyOneOf: []string{"oracle.0.forward_ssh_connectivity.0.password", "oracle.0.forward_ssh_connectivity.0.private_key"},
+									},
+								},
+							},
+							ExactlyOneOf: []string{},
+						},
+						"private_connectivity": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Configuration for using a private network to communicate with the source database`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"private_connection": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: `Required. The resource name (URI) of the private connection.`,
+									},
+								},
+							},
+							ExactlyOneOf: []string{"oracle.0.static_service_ip_connectivity", "oracle.0.forward_ssh_connectivity", "oracle.0.private_connectivity"},
+						},
+						"ssl": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `SSL configuration for the destination to connect to the source database.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"ca_certificate": {
+										Type:     schema.TypeString,
+										Required: true,
+										ForceNew: true,
+										Description: `Required. Input only. The x509 PEM-encoded certificate of the CA that signed the source database server's certificate.
+The replica will use this certificate to verify it's connecting to the right host.`,
+										Sensitive: true,
+									},
+									"client_certificate": {
+										Type:     schema.TypeString,
+										Optional: true,
+										ForceNew: true,
+										Description: `Input only. The x509 PEM-encoded certificate that will be used by the replica to authenticate against the source database server.
+If this field is used then the 'clientKey' field is mandatory`,
+										Sensitive:    true,
+										RequiredWith: []string{},
+									},
+									"client_key": {
+										Type:     schema.TypeString,
+										Optional: true,
+										ForceNew: true,
+										Description: `Input only. The unencrypted PKCS#1 or PKCS#8 PEM-encoded private key associated with the Client Certificate.
+If this field is used then the 'clientCertificate' field is mandatory.`,
+										Sensitive:    true,
+										RequiredWith: []string{},
+									},
+									"type": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: `The current connection profile state.`,
+									},
+								},
+							},
+						},
+						"static_service_ip_connectivity": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Description: `This object has no nested fields.
+
+Static IP address connectivity configured on service project.`,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{},
+							},
+							ExactlyOneOf: []string{},
+						},
+						"password_set": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: `Output only. Indicates If this connection profile password is stored.`,
+						},
+					},
+				},
+				ExactlyOneOf: []string{"mysql", "postgresql", "oracle", "cloudsql", "alloydb"},
 			},
 			"postgresql": {
 				Type:        schema.TypeList,
@@ -535,7 +707,7 @@ If this field is used then the 'clientCertificate' field is mandatory.`,
 						},
 					},
 				},
-				ExactlyOneOf: []string{"mysql", "postgresql", "cloudsql", "alloydb"},
+				ExactlyOneOf: []string{"mysql", "postgresql", "oracle", "cloudsql", "alloydb"},
 			},
 			"create_time": {
 				Type:        schema.TypeString,
@@ -546,6 +718,12 @@ If this field is used then the 'clientCertificate' field is mandatory.`,
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `The database provider.`,
+			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"error": {
 				Type:        schema.TypeList,
@@ -584,6 +762,13 @@ If this field is used then the 'clientCertificate' field is mandatory.`,
 				Computed:    true,
 				Description: `The current connection profile state.`,
 			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
 			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -609,12 +794,6 @@ func resourceDatabaseMigrationServiceConnectionProfileCreate(d *schema.ResourceD
 	} else if v, ok := d.GetOkExists("display_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(displayNameProp)) && (ok || !reflect.DeepEqual(v, displayNameProp)) {
 		obj["displayName"] = displayNameProp
 	}
-	labelsProp, err := expandDatabaseMigrationServiceConnectionProfileLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	mysqlProp, err := expandDatabaseMigrationServiceConnectionProfileMysql(d.Get("mysql"), d, config)
 	if err != nil {
 		return err
@@ -627,6 +806,12 @@ func resourceDatabaseMigrationServiceConnectionProfileCreate(d *schema.ResourceD
 	} else if v, ok := d.GetOkExists("postgresql"); !tpgresource.IsEmptyValue(reflect.ValueOf(postgresqlProp)) && (ok || !reflect.DeepEqual(v, postgresqlProp)) {
 		obj["postgresql"] = postgresqlProp
 	}
+	oracleProp, err := expandDatabaseMigrationServiceConnectionProfileOracle(d.Get("oracle"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("oracle"); !tpgresource.IsEmptyValue(reflect.ValueOf(oracleProp)) && (ok || !reflect.DeepEqual(v, oracleProp)) {
+		obj["oracle"] = oracleProp
+	}
 	cloudsqlProp, err := expandDatabaseMigrationServiceConnectionProfileCloudsql(d.Get("cloudsql"), d, config)
 	if err != nil {
 		return err
@@ -638,6 +823,12 @@ func resourceDatabaseMigrationServiceConnectionProfileCreate(d *schema.ResourceD
 		return err
 	} else if v, ok := d.GetOkExists("alloydb"); !tpgresource.IsEmptyValue(reflect.ValueOf(alloydbProp)) && (ok || !reflect.DeepEqual(v, alloydbProp)) {
 		obj["alloydb"] = alloydbProp
+	}
+	labelsProp, err := expandDatabaseMigrationServiceConnectionProfileEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{DatabaseMigrationServiceBasePath}}projects/{{project}}/locations/{{location}}/connectionProfiles?connectionProfileId={{connection_profile_id}}")
@@ -659,6 +850,7 @@ func resourceDatabaseMigrationServiceConnectionProfileCreate(d *schema.ResourceD
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -667,6 +859,7 @@ func resourceDatabaseMigrationServiceConnectionProfileCreate(d *schema.ResourceD
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating ConnectionProfile: %s", err)
@@ -719,12 +912,14 @@ func resourceDatabaseMigrationServiceConnectionProfileRead(d *schema.ResourceDat
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DatabaseMigrationServiceConnectionProfile %q", d.Id()))
@@ -761,10 +956,19 @@ func resourceDatabaseMigrationServiceConnectionProfileRead(d *schema.ResourceDat
 	if err := d.Set("postgresql", flattenDatabaseMigrationServiceConnectionProfilePostgresql(res["postgresql"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ConnectionProfile: %s", err)
 	}
+	if err := d.Set("oracle", flattenDatabaseMigrationServiceConnectionProfileOracle(res["oracle"], d, config)); err != nil {
+		return fmt.Errorf("Error reading ConnectionProfile: %s", err)
+	}
 	if err := d.Set("cloudsql", flattenDatabaseMigrationServiceConnectionProfileCloudsql(res["cloudsql"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ConnectionProfile: %s", err)
 	}
 	if err := d.Set("alloydb", flattenDatabaseMigrationServiceConnectionProfileAlloydb(res["alloydb"], d, config)); err != nil {
+		return fmt.Errorf("Error reading ConnectionProfile: %s", err)
+	}
+	if err := d.Set("terraform_labels", flattenDatabaseMigrationServiceConnectionProfileTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading ConnectionProfile: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenDatabaseMigrationServiceConnectionProfileEffectiveLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ConnectionProfile: %s", err)
 	}
 
@@ -793,12 +997,6 @@ func resourceDatabaseMigrationServiceConnectionProfileUpdate(d *schema.ResourceD
 	} else if v, ok := d.GetOkExists("display_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, displayNameProp)) {
 		obj["displayName"] = displayNameProp
 	}
-	labelsProp, err := expandDatabaseMigrationServiceConnectionProfileLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	mysqlProp, err := expandDatabaseMigrationServiceConnectionProfileMysql(d.Get("mysql"), d, config)
 	if err != nil {
 		return err
@@ -810,6 +1008,12 @@ func resourceDatabaseMigrationServiceConnectionProfileUpdate(d *schema.ResourceD
 		return err
 	} else if v, ok := d.GetOkExists("postgresql"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, postgresqlProp)) {
 		obj["postgresql"] = postgresqlProp
+	}
+	oracleProp, err := expandDatabaseMigrationServiceConnectionProfileOracle(d.Get("oracle"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("oracle"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, oracleProp)) {
+		obj["oracle"] = oracleProp
 	}
 	cloudsqlProp, err := expandDatabaseMigrationServiceConnectionProfileCloudsql(d.Get("cloudsql"), d, config)
 	if err != nil {
@@ -823,6 +1027,12 @@ func resourceDatabaseMigrationServiceConnectionProfileUpdate(d *schema.ResourceD
 	} else if v, ok := d.GetOkExists("alloydb"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, alloydbProp)) {
 		obj["alloydb"] = alloydbProp
 	}
+	labelsProp, err := expandDatabaseMigrationServiceConnectionProfileEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{DatabaseMigrationServiceBasePath}}projects/{{project}}/locations/{{location}}/connectionProfiles/{{connection_profile_id}}")
 	if err != nil {
@@ -830,14 +1040,11 @@ func resourceDatabaseMigrationServiceConnectionProfileUpdate(d *schema.ResourceD
 	}
 
 	log.Printf("[DEBUG] Updating ConnectionProfile %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
 		updateMask = append(updateMask, "displayName")
-	}
-
-	if d.HasChange("labels") {
-		updateMask = append(updateMask, "labels")
 	}
 
 	if d.HasChange("mysql") {
@@ -848,12 +1055,20 @@ func resourceDatabaseMigrationServiceConnectionProfileUpdate(d *schema.ResourceD
 		updateMask = append(updateMask, "postgresql")
 	}
 
+	if d.HasChange("oracle") {
+		updateMask = append(updateMask, "oracle")
+	}
+
 	if d.HasChange("cloudsql") {
 		updateMask = append(updateMask, "cloudsql")
 	}
 
 	if d.HasChange("alloydb") {
 		updateMask = append(updateMask, "alloydb")
+	}
+
+	if d.HasChange("effective_labels") {
+		updateMask = append(updateMask, "labels")
 	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
@@ -867,28 +1082,32 @@ func resourceDatabaseMigrationServiceConnectionProfileUpdate(d *schema.ResourceD
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating ConnectionProfile %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating ConnectionProfile %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating ConnectionProfile %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating ConnectionProfile %q: %#v", d.Id(), res)
+		}
 
-	err = DatabaseMigrationServiceOperationWaitTime(
-		config, res, project, "Updating ConnectionProfile", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = DatabaseMigrationServiceOperationWaitTime(
+			config, res, project, "Updating ConnectionProfile", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceDatabaseMigrationServiceConnectionProfileRead(d, meta)
@@ -915,13 +1134,15 @@ func resourceDatabaseMigrationServiceConnectionProfileDelete(d *schema.ResourceD
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting ConnectionProfile %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting ConnectionProfile %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -930,6 +1151,7 @@ func resourceDatabaseMigrationServiceConnectionProfileDelete(d *schema.ResourceD
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "ConnectionProfile")
@@ -950,9 +1172,9 @@ func resourceDatabaseMigrationServiceConnectionProfileDelete(d *schema.ResourceD
 func resourceDatabaseMigrationServiceConnectionProfileImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/connectionProfiles/(?P<connection_profile_id>[^/]+)",
-		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<connection_profile_id>[^/]+)",
-		"(?P<location>[^/]+)/(?P<connection_profile_id>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/connectionProfiles/(?P<connection_profile_id>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<connection_profile_id>[^/]+)$",
+		"^(?P<location>[^/]+)/(?P<connection_profile_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -980,7 +1202,18 @@ func flattenDatabaseMigrationServiceConnectionProfileCreateTime(v interface{}, d
 }
 
 func flattenDatabaseMigrationServiceConnectionProfileLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenDatabaseMigrationServiceConnectionProfileState(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1233,6 +1466,188 @@ func flattenDatabaseMigrationServiceConnectionProfilePostgresqlNetworkArchitectu
 	return v
 }
 
+func flattenDatabaseMigrationServiceConnectionProfileOracle(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["host"] =
+		flattenDatabaseMigrationServiceConnectionProfileOracleHost(original["host"], d, config)
+	transformed["port"] =
+		flattenDatabaseMigrationServiceConnectionProfileOraclePort(original["port"], d, config)
+	transformed["username"] =
+		flattenDatabaseMigrationServiceConnectionProfileOracleUsername(original["username"], d, config)
+	transformed["password"] =
+		flattenDatabaseMigrationServiceConnectionProfileOraclePassword(original["password"], d, config)
+	transformed["password_set"] =
+		flattenDatabaseMigrationServiceConnectionProfileOraclePasswordSet(original["passwordSet"], d, config)
+	transformed["database_service"] =
+		flattenDatabaseMigrationServiceConnectionProfileOracleDatabaseService(original["databaseService"], d, config)
+	transformed["ssl"] =
+		flattenDatabaseMigrationServiceConnectionProfileOracleSsl(original["ssl"], d, config)
+	transformed["static_service_ip_connectivity"] =
+		flattenDatabaseMigrationServiceConnectionProfileOracleStaticServiceIpConnectivity(original["staticServiceIpConnectivity"], d, config)
+	transformed["forward_ssh_connectivity"] =
+		flattenDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivity(original["forwardSshConnectivity"], d, config)
+	transformed["private_connectivity"] =
+		flattenDatabaseMigrationServiceConnectionProfileOraclePrivateConnectivity(original["privateConnectivity"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDatabaseMigrationServiceConnectionProfileOracleHost(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDatabaseMigrationServiceConnectionProfileOraclePort(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenDatabaseMigrationServiceConnectionProfileOracleUsername(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDatabaseMigrationServiceConnectionProfileOraclePassword(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return d.Get("oracle.0.password")
+}
+
+func flattenDatabaseMigrationServiceConnectionProfileOraclePasswordSet(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDatabaseMigrationServiceConnectionProfileOracleDatabaseService(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDatabaseMigrationServiceConnectionProfileOracleSsl(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["type"] =
+		flattenDatabaseMigrationServiceConnectionProfileOracleSslType(original["type"], d, config)
+	transformed["client_key"] =
+		flattenDatabaseMigrationServiceConnectionProfileOracleSslClientKey(original["clientKey"], d, config)
+	transformed["client_certificate"] =
+		flattenDatabaseMigrationServiceConnectionProfileOracleSslClientCertificate(original["clientCertificate"], d, config)
+	transformed["ca_certificate"] =
+		flattenDatabaseMigrationServiceConnectionProfileOracleSslCaCertificate(original["caCertificate"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDatabaseMigrationServiceConnectionProfileOracleSslType(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDatabaseMigrationServiceConnectionProfileOracleSslClientKey(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return d.Get("oracle.0.ssl.0.client_key")
+}
+
+func flattenDatabaseMigrationServiceConnectionProfileOracleSslClientCertificate(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return d.Get("oracle.0.ssl.0.client_certificate")
+}
+
+func flattenDatabaseMigrationServiceConnectionProfileOracleSslCaCertificate(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return d.Get("oracle.0.ssl.0.ca_certificate")
+}
+
+func flattenDatabaseMigrationServiceConnectionProfileOracleStaticServiceIpConnectivity(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	return []interface{}{transformed}
+}
+
+func flattenDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivity(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["hostname"] =
+		flattenDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityHostname(original["hostname"], d, config)
+	transformed["username"] =
+		flattenDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityUsername(original["username"], d, config)
+	transformed["port"] =
+		flattenDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityPort(original["port"], d, config)
+	transformed["password"] =
+		flattenDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityPassword(original["password"], d, config)
+	transformed["private_key"] =
+		flattenDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityPrivateKey(original["privateKey"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityHostname(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityUsername(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityPort(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityPassword(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return d.Get("oracle.0.forward_ssh_connectivity.0.password")
+}
+
+func flattenDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityPrivateKey(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return d.Get("oracle.0.forward_ssh_connectivity.0.private_key")
+}
+
+func flattenDatabaseMigrationServiceConnectionProfileOraclePrivateConnectivity(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["private_connection"] =
+		flattenDatabaseMigrationServiceConnectionProfileOraclePrivateConnectivityPrivateConnection(original["privateConnection"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDatabaseMigrationServiceConnectionProfileOraclePrivateConnectivityPrivateConnection(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenDatabaseMigrationServiceConnectionProfileCloudsql(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return nil
@@ -1297,6 +1712,8 @@ func flattenDatabaseMigrationServiceConnectionProfileCloudsqlSettings(v interfac
 		flattenDatabaseMigrationServiceConnectionProfileCloudsqlSettingsCollation(original["collation"], d, config)
 	transformed["cmek_key_name"] =
 		flattenDatabaseMigrationServiceConnectionProfileCloudsqlSettingsCmekKeyName(original["cmekKeyName"], d, config)
+	transformed["edition"] =
+		flattenDatabaseMigrationServiceConnectionProfileCloudsqlSettingsEdition(original["edition"], d, config)
 	return []interface{}{transformed}
 }
 func flattenDatabaseMigrationServiceConnectionProfileCloudsqlSettingsDatabaseVersion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1424,6 +1841,10 @@ func flattenDatabaseMigrationServiceConnectionProfileCloudsqlSettingsCollation(v
 }
 
 func flattenDatabaseMigrationServiceConnectionProfileCloudsqlSettingsCmekKeyName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDatabaseMigrationServiceConnectionProfileCloudsqlSettingsEdition(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1577,19 +1998,27 @@ func flattenDatabaseMigrationServiceConnectionProfileAlloydbSettingsPrimaryInsta
 	return v
 }
 
-func expandDatabaseMigrationServiceConnectionProfileDisplayName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
+func flattenDatabaseMigrationServiceConnectionProfileTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
-func expandDatabaseMigrationServiceConnectionProfileLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
-	if v == nil {
-		return map[string]string{}, nil
-	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
-	}
-	return m, nil
+func flattenDatabaseMigrationServiceConnectionProfileEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func expandDatabaseMigrationServiceConnectionProfileDisplayName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
 }
 
 func expandDatabaseMigrationServiceConnectionProfileMysql(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -1885,6 +2314,273 @@ func expandDatabaseMigrationServiceConnectionProfilePostgresqlNetworkArchitectur
 	return v, nil
 }
 
+func expandDatabaseMigrationServiceConnectionProfileOracle(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedHost, err := expandDatabaseMigrationServiceConnectionProfileOracleHost(original["host"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedHost); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["host"] = transformedHost
+	}
+
+	transformedPort, err := expandDatabaseMigrationServiceConnectionProfileOraclePort(original["port"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPort); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["port"] = transformedPort
+	}
+
+	transformedUsername, err := expandDatabaseMigrationServiceConnectionProfileOracleUsername(original["username"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedUsername); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["username"] = transformedUsername
+	}
+
+	transformedPassword, err := expandDatabaseMigrationServiceConnectionProfileOraclePassword(original["password"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPassword); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["password"] = transformedPassword
+	}
+
+	transformedPasswordSet, err := expandDatabaseMigrationServiceConnectionProfileOraclePasswordSet(original["password_set"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPasswordSet); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["passwordSet"] = transformedPasswordSet
+	}
+
+	transformedDatabaseService, err := expandDatabaseMigrationServiceConnectionProfileOracleDatabaseService(original["database_service"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDatabaseService); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["databaseService"] = transformedDatabaseService
+	}
+
+	transformedSsl, err := expandDatabaseMigrationServiceConnectionProfileOracleSsl(original["ssl"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSsl); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["ssl"] = transformedSsl
+	}
+
+	transformedStaticServiceIpConnectivity, err := expandDatabaseMigrationServiceConnectionProfileOracleStaticServiceIpConnectivity(original["static_service_ip_connectivity"], d, config)
+	if err != nil {
+		return nil, err
+	} else {
+		transformed["staticServiceIpConnectivity"] = transformedStaticServiceIpConnectivity
+	}
+
+	transformedForwardSshConnectivity, err := expandDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivity(original["forward_ssh_connectivity"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedForwardSshConnectivity); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["forwardSshConnectivity"] = transformedForwardSshConnectivity
+	}
+
+	transformedPrivateConnectivity, err := expandDatabaseMigrationServiceConnectionProfileOraclePrivateConnectivity(original["private_connectivity"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPrivateConnectivity); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["privateConnectivity"] = transformedPrivateConnectivity
+	}
+
+	return transformed, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOracleHost(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOraclePort(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOracleUsername(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOraclePassword(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOraclePasswordSet(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOracleDatabaseService(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOracleSsl(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedType, err := expandDatabaseMigrationServiceConnectionProfileOracleSslType(original["type"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedType); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["type"] = transformedType
+	}
+
+	transformedClientKey, err := expandDatabaseMigrationServiceConnectionProfileOracleSslClientKey(original["client_key"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedClientKey); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["clientKey"] = transformedClientKey
+	}
+
+	transformedClientCertificate, err := expandDatabaseMigrationServiceConnectionProfileOracleSslClientCertificate(original["client_certificate"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedClientCertificate); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["clientCertificate"] = transformedClientCertificate
+	}
+
+	transformedCaCertificate, err := expandDatabaseMigrationServiceConnectionProfileOracleSslCaCertificate(original["ca_certificate"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedCaCertificate); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["caCertificate"] = transformedCaCertificate
+	}
+
+	return transformed, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOracleSslType(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOracleSslClientKey(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOracleSslClientCertificate(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOracleSslCaCertificate(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOracleStaticServiceIpConnectivity(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 {
+		return nil, nil
+	}
+
+	if l[0] == nil {
+		transformed := make(map[string]interface{})
+		return transformed, nil
+	}
+	transformed := make(map[string]interface{})
+
+	return transformed, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivity(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedHostname, err := expandDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityHostname(original["hostname"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedHostname); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["hostname"] = transformedHostname
+	}
+
+	transformedUsername, err := expandDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityUsername(original["username"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedUsername); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["username"] = transformedUsername
+	}
+
+	transformedPort, err := expandDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityPort(original["port"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPort); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["port"] = transformedPort
+	}
+
+	transformedPassword, err := expandDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityPassword(original["password"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPassword); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["password"] = transformedPassword
+	}
+
+	transformedPrivateKey, err := expandDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityPrivateKey(original["private_key"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPrivateKey); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["privateKey"] = transformedPrivateKey
+	}
+
+	return transformed, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityHostname(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityUsername(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityPort(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityPassword(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOracleForwardSshConnectivityPrivateKey(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOraclePrivateConnectivity(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedPrivateConnection, err := expandDatabaseMigrationServiceConnectionProfileOraclePrivateConnectivityPrivateConnection(original["private_connection"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPrivateConnection); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["privateConnection"] = transformedPrivateConnection
+	}
+
+	return transformed, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileOraclePrivateConnectivityPrivateConnection(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandDatabaseMigrationServiceConnectionProfileCloudsql(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
@@ -2048,6 +2744,13 @@ func expandDatabaseMigrationServiceConnectionProfileCloudsqlSettings(v interface
 		return nil, err
 	} else if val := reflect.ValueOf(transformedCmekKeyName); val.IsValid() && !tpgresource.IsEmptyValue(val) {
 		transformed["cmekKeyName"] = transformedCmekKeyName
+	}
+
+	transformedEdition, err := expandDatabaseMigrationServiceConnectionProfileCloudsqlSettingsEdition(original["edition"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedEdition); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["edition"] = transformedEdition
 	}
 
 	return transformed, nil
@@ -2235,6 +2938,10 @@ func expandDatabaseMigrationServiceConnectionProfileCloudsqlSettingsCollation(v 
 }
 
 func expandDatabaseMigrationServiceConnectionProfileCloudsqlSettingsCmekKeyName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileCloudsqlSettingsEdition(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -2474,4 +3181,15 @@ func expandDatabaseMigrationServiceConnectionProfileAlloydbSettingsPrimaryInstan
 
 func expandDatabaseMigrationServiceConnectionProfileAlloydbSettingsPrimaryInstanceSettingsPrivateIp(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandDatabaseMigrationServiceConnectionProfileEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }

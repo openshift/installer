@@ -1,11 +1,16 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package schema
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema/fwxschema"
+	"github.com/hashicorp/terraform-plugin-framework/internal/fwtype"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -14,8 +19,9 @@ import (
 
 // Ensure the implementation satisifies the desired interfaces.
 var (
-	_ Block                             = ListNestedBlock{}
-	_ fwxschema.BlockWithListValidators = ListNestedBlock{}
+	_ Block                                    = ListNestedBlock{}
+	_ fwschema.BlockWithValidateImplementation = ListNestedBlock{}
+	_ fwxschema.BlockWithListValidators        = ListNestedBlock{}
 )
 
 // ListNestedBlock represents a block that is a list of objects where
@@ -52,6 +58,10 @@ var (
 type ListNestedBlock struct {
 	// NestedObject is the underlying object that contains nested attributes or
 	// blocks. This field must be set.
+	//
+	// Nested attributes that contain a dynamic type (i.e. DynamicAttribute) are not supported.
+	// If underlying dynamic values are required, replace this block definition with
+	// a DynamicAttribute.
 	NestedObject NestedBlockObject
 
 	// CustomType enables the use of a custom attribute type in place of the
@@ -181,5 +191,15 @@ func (b ListNestedBlock) Type() attr.Type {
 
 	return types.ListType{
 		ElemType: b.NestedObject.Type(),
+	}
+}
+
+// ValidateImplementation contains logic for validating the
+// provider-defined implementation of the block to prevent unexpected
+// errors or panics. This logic runs during the GetProviderSchema RPC and
+// should never include false positives.
+func (b ListNestedBlock) ValidateImplementation(ctx context.Context, req fwschema.ValidateImplementationRequest, resp *fwschema.ValidateImplementationResponse) {
+	if b.CustomType == nil && fwtype.ContainsCollectionWithDynamic(b.Type()) {
+		resp.Diagnostics.Append(fwtype.BlockCollectionWithDynamicTypeDiag(req.Path))
 	}
 }

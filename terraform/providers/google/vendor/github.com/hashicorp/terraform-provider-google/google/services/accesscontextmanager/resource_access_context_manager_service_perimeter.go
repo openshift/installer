@@ -20,6 +20,7 @@ package accesscontextmanager
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -109,7 +110,7 @@ the 'useExplicitDryRunSpec' flag is set.`,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"access_levels": {
-							Type:     schema.TypeList,
+							Type:     schema.TypeSet,
 							Optional: true,
 							Description: `A list of AccessLevel resource names that allow resources within
 the ServicePerimeter to be accessed from the internet.
@@ -124,6 +125,7 @@ Format: accessPolicies/{policy_id}/accessLevels/{access_level_name}`,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
+							Set:          schema.HashString,
 							AtLeastOneOf: []string{"spec.0.resources", "spec.0.access_levels", "spec.0.restricted_services"},
 						},
 						"egress_policies": {
@@ -143,7 +145,7 @@ a perimeter bridge.`,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"identities": {
-													Type:     schema.TypeList,
+													Type:     schema.TypeSet,
 													Optional: true,
 													Description: `A list of identities that are allowed access through this 'EgressPolicy'.
 Should be in the format of email address. The email address should
@@ -151,6 +153,7 @@ represent individual user or service account only.`,
 													Elem: &schema.Schema{
 														Type: schema.TypeString,
 													},
+													Set: schema.HashString,
 												},
 												"identity_type": {
 													Type:         schema.TypeString,
@@ -159,6 +162,26 @@ represent individual user or service account only.`,
 													Description: `Specifies the type of identities that are allowed access to outside the
 perimeter. If left unspecified, then members of 'identities' field will
 be allowed access. Possible values: ["IDENTITY_TYPE_UNSPECIFIED", "ANY_IDENTITY", "ANY_USER_ACCOUNT", "ANY_SERVICE_ACCOUNT"]`,
+												},
+												"source_restriction": {
+													Type:         schema.TypeString,
+													Optional:     true,
+													ValidateFunc: verify.ValidateEnum([]string{"SOURCE_RESTRICTION_UNSPECIFIED", "SOURCE_RESTRICTION_ENABLED", "SOURCE_RESTRICTION_DISABLED", ""}),
+													Description:  `Whether to enforce traffic restrictions based on 'sources' field. If the 'sources' field is non-empty, then this field must be set to 'SOURCE_RESTRICTION_ENABLED'. Possible values: ["SOURCE_RESTRICTION_UNSPECIFIED", "SOURCE_RESTRICTION_ENABLED", "SOURCE_RESTRICTION_DISABLED"]`,
+												},
+												"sources": {
+													Type:        schema.TypeList,
+													Optional:    true,
+													Description: `Sources that this EgressPolicy authorizes access from.`,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"access_level": {
+																Type:        schema.TypeString,
+																Optional:    true,
+																Description: `An AccessLevel resource name that allows resources outside the ServicePerimeter to be accessed from the inside.`,
+															},
+														},
+													},
 												},
 											},
 										},
@@ -172,7 +195,7 @@ cause this 'EgressPolicy' to apply.`,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"external_resources": {
-													Type:     schema.TypeList,
+													Type:     schema.TypeSet,
 													Optional: true,
 													Description: `A list of external resources that are allowed to be accessed. A request
 matches if it contains an external resource in this list (Example:
@@ -180,6 +203,7 @@ s3://bucket/path). Currently '*' is not allowed.`,
 													Elem: &schema.Schema{
 														Type: schema.TypeString,
 													},
+													Set: schema.HashString,
 												},
 												"operations": {
 													Type:     schema.TypeList,
@@ -224,7 +248,7 @@ field set to '*' will allow all methods AND permissions for all services.`,
 													},
 												},
 												"resources": {
-													Type:     schema.TypeList,
+													Type:     schema.TypeSet,
 													Optional: true,
 													Description: `A list of resources, currently only projects in the form
 'projects/<projectnumber>', that match this to stanza. A request matches
@@ -234,6 +258,7 @@ the perimeter.`,
 													Elem: &schema.Schema{
 														Type: schema.TypeString,
 													},
+													Set: schema.HashString,
 												},
 											},
 										},
@@ -259,7 +284,7 @@ to apply.`,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"identities": {
-													Type:     schema.TypeList,
+													Type:     schema.TypeSet,
 													Optional: true,
 													Description: `A list of identities that are allowed access through this ingress policy.
 Should be in the format of email address. The email address should represent
@@ -267,6 +292,7 @@ individual user or service account only.`,
 													Elem: &schema.Schema{
 														Type: schema.TypeString,
 													},
+													Set: schema.HashString,
 												},
 												"identity_type": {
 													Type:         schema.TypeString,
@@ -361,7 +387,7 @@ field set to '*' will allow all methods AND permissions for all services.`,
 													},
 												},
 												"resources": {
-													Type:     schema.TypeList,
+													Type:     schema.TypeSet,
 													Optional: true,
 													Description: `A list of resources, currently only projects in the form
 'projects/<projectnumber>', protected by this 'ServicePerimeter'
@@ -374,6 +400,7 @@ also matches the 'operations' field.`,
 													Elem: &schema.Schema{
 														Type: schema.TypeString,
 													},
+													Set: schema.HashString,
 												},
 											},
 										},
@@ -382,7 +409,7 @@ also matches the 'operations' field.`,
 							},
 						},
 						"resources": {
-							Type:     schema.TypeList,
+							Type:     schema.TypeSet,
 							Optional: true,
 							Description: `A list of GCP resources that are inside of the service perimeter.
 Currently only projects are allowed.
@@ -390,10 +417,11 @@ Format: projects/{project_number}`,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
+							Set:          schema.HashString,
 							AtLeastOneOf: []string{"spec.0.resources", "spec.0.access_levels", "spec.0.restricted_services"},
 						},
 						"restricted_services": {
-							Type:     schema.TypeList,
+							Type:     schema.TypeSet,
 							Optional: true,
 							Description: `GCP services that are subject to the Service Perimeter
 restrictions. Must contain a list of services. For example, if
@@ -403,6 +431,7 @@ restrictions.`,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
+							Set:          schema.HashString,
 							AtLeastOneOf: []string{"spec.0.resources", "spec.0.access_levels", "spec.0.restricted_services"},
 						},
 						"vpc_accessible_services": {
@@ -414,13 +443,14 @@ Perimeter.`,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"allowed_services": {
-										Type:     schema.TypeList,
+										Type:     schema.TypeSet,
 										Optional: true,
 										Description: `The list of APIs usable within the Service Perimeter.
 Must be empty unless 'enableRestriction' is True.`,
 										Elem: &schema.Schema{
 											Type: schema.TypeString,
 										},
+										Set: schema.HashString,
 									},
 									"enable_restriction": {
 										Type:     schema.TypeBool,
@@ -444,7 +474,7 @@ perimeter content and boundaries.`,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"access_levels": {
-							Type:     schema.TypeList,
+							Type:     schema.TypeSet,
 							Optional: true,
 							Description: `A list of AccessLevel resource names that allow resources within
 the ServicePerimeter to be accessed from the internet.
@@ -459,6 +489,7 @@ Format: accessPolicies/{policy_id}/accessLevels/{access_level_name}`,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
+							Set:          schema.HashString,
 							AtLeastOneOf: []string{"status.0.resources", "status.0.access_levels", "status.0.restricted_services"},
 						},
 						"egress_policies": {
@@ -478,7 +509,7 @@ a perimeter bridge.`,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"identities": {
-													Type:     schema.TypeList,
+													Type:     schema.TypeSet,
 													Optional: true,
 													Description: `A list of identities that are allowed access through this 'EgressPolicy'.
 Should be in the format of email address. The email address should
@@ -486,6 +517,7 @@ represent individual user or service account only.`,
 													Elem: &schema.Schema{
 														Type: schema.TypeString,
 													},
+													Set: schema.HashString,
 												},
 												"identity_type": {
 													Type:         schema.TypeString,
@@ -494,6 +526,26 @@ represent individual user or service account only.`,
 													Description: `Specifies the type of identities that are allowed access to outside the
 perimeter. If left unspecified, then members of 'identities' field will
 be allowed access. Possible values: ["IDENTITY_TYPE_UNSPECIFIED", "ANY_IDENTITY", "ANY_USER_ACCOUNT", "ANY_SERVICE_ACCOUNT"]`,
+												},
+												"source_restriction": {
+													Type:         schema.TypeString,
+													Optional:     true,
+													ValidateFunc: verify.ValidateEnum([]string{"SOURCE_RESTRICTION_UNSPECIFIED", "SOURCE_RESTRICTION_ENABLED", "SOURCE_RESTRICTION_DISABLED", ""}),
+													Description:  `Whether to enforce traffic restrictions based on 'sources' field. If the 'sources' field is non-empty, then this field must be set to 'SOURCE_RESTRICTION_ENABLED'. Possible values: ["SOURCE_RESTRICTION_UNSPECIFIED", "SOURCE_RESTRICTION_ENABLED", "SOURCE_RESTRICTION_DISABLED"]`,
+												},
+												"sources": {
+													Type:        schema.TypeList,
+													Optional:    true,
+													Description: `Sources that this EgressPolicy authorizes access from.`,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"access_level": {
+																Type:        schema.TypeString,
+																Optional:    true,
+																Description: `An AccessLevel resource name that allows resources outside the ServicePerimeter to be accessed from the inside.`,
+															},
+														},
+													},
 												},
 											},
 										},
@@ -507,7 +559,7 @@ cause this 'EgressPolicy' to apply.`,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"external_resources": {
-													Type:     schema.TypeList,
+													Type:     schema.TypeSet,
 													Optional: true,
 													Description: `A list of external resources that are allowed to be accessed. A request
 matches if it contains an external resource in this list (Example:
@@ -515,6 +567,7 @@ s3://bucket/path). Currently '*' is not allowed.`,
 													Elem: &schema.Schema{
 														Type: schema.TypeString,
 													},
+													Set: schema.HashString,
 												},
 												"operations": {
 													Type:     schema.TypeList,
@@ -559,7 +612,7 @@ field set to '*' will allow all methods AND permissions for all services.`,
 													},
 												},
 												"resources": {
-													Type:     schema.TypeList,
+													Type:     schema.TypeSet,
 													Optional: true,
 													Description: `A list of resources, currently only projects in the form
 'projects/<projectnumber>', that match this to stanza. A request matches
@@ -569,6 +622,7 @@ the perimeter.`,
 													Elem: &schema.Schema{
 														Type: schema.TypeString,
 													},
+													Set: schema.HashString,
 												},
 											},
 										},
@@ -594,7 +648,7 @@ to apply.`,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"identities": {
-													Type:     schema.TypeList,
+													Type:     schema.TypeSet,
 													Optional: true,
 													Description: `A list of identities that are allowed access through this ingress policy.
 Should be in the format of email address. The email address should represent
@@ -602,6 +656,7 @@ individual user or service account only.`,
 													Elem: &schema.Schema{
 														Type: schema.TypeString,
 													},
+													Set: schema.HashString,
 												},
 												"identity_type": {
 													Type:         schema.TypeString,
@@ -696,7 +751,7 @@ field set to '*' will allow all methods AND permissions for all services.`,
 													},
 												},
 												"resources": {
-													Type:     schema.TypeList,
+													Type:     schema.TypeSet,
 													Optional: true,
 													Description: `A list of resources, currently only projects in the form
 'projects/<projectnumber>', protected by this 'ServicePerimeter'
@@ -709,6 +764,7 @@ also matches the 'operations' field.`,
 													Elem: &schema.Schema{
 														Type: schema.TypeString,
 													},
+													Set: schema.HashString,
 												},
 											},
 										},
@@ -717,7 +773,7 @@ also matches the 'operations' field.`,
 							},
 						},
 						"resources": {
-							Type:     schema.TypeList,
+							Type:     schema.TypeSet,
 							Optional: true,
 							Description: `A list of GCP resources that are inside of the service perimeter.
 Currently only projects are allowed.
@@ -725,6 +781,7 @@ Format: projects/{project_number}`,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
+							Set:          schema.HashString,
 							AtLeastOneOf: []string{"status.0.resources", "status.0.access_levels", "status.0.restricted_services"},
 						},
 						"restricted_services": {
@@ -881,6 +938,7 @@ func resourceAccessContextManagerServicePerimeterCreate(d *schema.ResourceData, 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -889,6 +947,7 @@ func resourceAccessContextManagerServicePerimeterCreate(d *schema.ResourceData, 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating ServicePerimeter: %s", err)
@@ -949,12 +1008,14 @@ func resourceAccessContextManagerServicePerimeterRead(d *schema.ResourceData, me
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("AccessContextManagerServicePerimeter %q", d.Id()))
@@ -1050,6 +1111,7 @@ func resourceAccessContextManagerServicePerimeterUpdate(d *schema.ResourceData, 
 	}
 
 	log.Printf("[DEBUG] Updating ServicePerimeter %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("title") {
@@ -1083,28 +1145,32 @@ func resourceAccessContextManagerServicePerimeterUpdate(d *schema.ResourceData, 
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating ServicePerimeter %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating ServicePerimeter %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating ServicePerimeter %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating ServicePerimeter %q: %#v", d.Id(), res)
+		}
 
-	err = AccessContextManagerOperationWaitTime(
-		config, res, "Updating ServicePerimeter", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = AccessContextManagerOperationWaitTime(
+			config, res, "Updating ServicePerimeter", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceAccessContextManagerServicePerimeterRead(d, meta)
@@ -1132,13 +1198,15 @@ func resourceAccessContextManagerServicePerimeterDelete(d *schema.ResourceData, 
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting ServicePerimeter %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting ServicePerimeter %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -1147,6 +1215,7 @@ func resourceAccessContextManagerServicePerimeterDelete(d *schema.ResourceData, 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "ServicePerimeter")
@@ -1229,11 +1298,17 @@ func flattenAccessContextManagerServicePerimeterStatus(v interface{}, d *schema.
 	return []interface{}{transformed}
 }
 func flattenAccessContextManagerServicePerimeterStatusResources(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
 func flattenAccessContextManagerServicePerimeterStatusAccessLevels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
 func flattenAccessContextManagerServicePerimeterStatusRestrictedServices(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1310,7 +1385,10 @@ func flattenAccessContextManagerServicePerimeterStatusIngressPoliciesIngressFrom
 }
 
 func flattenAccessContextManagerServicePerimeterStatusIngressPoliciesIngressFromIdentities(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
 func flattenAccessContextManagerServicePerimeterStatusIngressPoliciesIngressFromSources(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1356,7 +1434,10 @@ func flattenAccessContextManagerServicePerimeterStatusIngressPoliciesIngressTo(v
 	return []interface{}{transformed}
 }
 func flattenAccessContextManagerServicePerimeterStatusIngressPoliciesIngressToResources(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
 func flattenAccessContextManagerServicePerimeterStatusIngressPoliciesIngressToOperations(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1439,6 +1520,10 @@ func flattenAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFrom(v
 	transformed := make(map[string]interface{})
 	transformed["identity_type"] =
 		flattenAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromIdentityType(original["identityType"], d, config)
+	transformed["sources"] =
+		flattenAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromSources(original["sources"], d, config)
+	transformed["source_restriction"] =
+		flattenAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromSourceRestriction(original["sourceRestriction"], d, config)
 	transformed["identities"] =
 		flattenAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromIdentities(original["identities"], d, config)
 	return []interface{}{transformed}
@@ -1447,8 +1532,37 @@ func flattenAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromId
 	return v
 }
 
-func flattenAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromIdentities(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+func flattenAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromSources(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"access_level": flattenAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromSourcesAccessLevel(original["accessLevel"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromSourcesAccessLevel(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
+}
+
+func flattenAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromSourceRestriction(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromIdentities(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
 func flattenAccessContextManagerServicePerimeterStatusEgressPoliciesEgressTo(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1469,11 +1583,17 @@ func flattenAccessContextManagerServicePerimeterStatusEgressPoliciesEgressTo(v i
 	return []interface{}{transformed}
 }
 func flattenAccessContextManagerServicePerimeterStatusEgressPoliciesEgressToResources(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
 func flattenAccessContextManagerServicePerimeterStatusEgressPoliciesEgressToExternalResources(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
 func flattenAccessContextManagerServicePerimeterStatusEgressPoliciesEgressToOperations(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1550,15 +1670,24 @@ func flattenAccessContextManagerServicePerimeterSpec(v interface{}, d *schema.Re
 	return []interface{}{transformed}
 }
 func flattenAccessContextManagerServicePerimeterSpecResources(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
 func flattenAccessContextManagerServicePerimeterSpecAccessLevels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
 func flattenAccessContextManagerServicePerimeterSpecRestrictedServices(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
 func flattenAccessContextManagerServicePerimeterSpecVpcAccessibleServices(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1581,7 +1710,10 @@ func flattenAccessContextManagerServicePerimeterSpecVpcAccessibleServicesEnableR
 }
 
 func flattenAccessContextManagerServicePerimeterSpecVpcAccessibleServicesAllowedServices(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
 func flattenAccessContextManagerServicePerimeterSpecIngressPolicies(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1625,7 +1757,10 @@ func flattenAccessContextManagerServicePerimeterSpecIngressPoliciesIngressFromId
 }
 
 func flattenAccessContextManagerServicePerimeterSpecIngressPoliciesIngressFromIdentities(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
 func flattenAccessContextManagerServicePerimeterSpecIngressPoliciesIngressFromSources(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1671,7 +1806,10 @@ func flattenAccessContextManagerServicePerimeterSpecIngressPoliciesIngressTo(v i
 	return []interface{}{transformed}
 }
 func flattenAccessContextManagerServicePerimeterSpecIngressPoliciesIngressToResources(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
 func flattenAccessContextManagerServicePerimeterSpecIngressPoliciesIngressToOperations(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1754,6 +1892,10 @@ func flattenAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFrom(v i
 	transformed := make(map[string]interface{})
 	transformed["identity_type"] =
 		flattenAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromIdentityType(original["identityType"], d, config)
+	transformed["sources"] =
+		flattenAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromSources(original["sources"], d, config)
+	transformed["source_restriction"] =
+		flattenAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromSourceRestriction(original["sourceRestriction"], d, config)
 	transformed["identities"] =
 		flattenAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromIdentities(original["identities"], d, config)
 	return []interface{}{transformed}
@@ -1762,8 +1904,37 @@ func flattenAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromIden
 	return v
 }
 
-func flattenAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromIdentities(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+func flattenAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromSources(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"access_level": flattenAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromSourcesAccessLevel(original["accessLevel"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromSourcesAccessLevel(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
+}
+
+func flattenAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromSourceRestriction(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromIdentities(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
 func flattenAccessContextManagerServicePerimeterSpecEgressPoliciesEgressTo(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1784,11 +1955,17 @@ func flattenAccessContextManagerServicePerimeterSpecEgressPoliciesEgressTo(v int
 	return []interface{}{transformed}
 }
 func flattenAccessContextManagerServicePerimeterSpecEgressPoliciesEgressToResources(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
 func flattenAccessContextManagerServicePerimeterSpecEgressPoliciesEgressToExternalResources(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
 func flattenAccessContextManagerServicePerimeterSpecEgressPoliciesEgressToOperations(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1916,10 +2093,12 @@ func expandAccessContextManagerServicePerimeterStatus(v interface{}, d tpgresour
 }
 
 func expandAccessContextManagerServicePerimeterStatusResources(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	v = v.(*schema.Set).List()
 	return v, nil
 }
 
 func expandAccessContextManagerServicePerimeterStatusAccessLevels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	v = v.(*schema.Set).List()
 	return v, nil
 }
 
@@ -2030,6 +2209,7 @@ func expandAccessContextManagerServicePerimeterStatusIngressPoliciesIngressFromI
 }
 
 func expandAccessContextManagerServicePerimeterStatusIngressPoliciesIngressFromIdentities(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	v = v.(*schema.Set).List()
 	return v, nil
 }
 
@@ -2097,6 +2277,7 @@ func expandAccessContextManagerServicePerimeterStatusIngressPoliciesIngressTo(v 
 }
 
 func expandAccessContextManagerServicePerimeterStatusIngressPoliciesIngressToResources(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	v = v.(*schema.Set).List()
 	return v, nil
 }
 
@@ -2215,6 +2396,20 @@ func expandAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFrom(v 
 		transformed["identityType"] = transformedIdentityType
 	}
 
+	transformedSources, err := expandAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromSources(original["sources"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSources); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["sources"] = transformedSources
+	}
+
+	transformedSourceRestriction, err := expandAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromSourceRestriction(original["source_restriction"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSourceRestriction); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["sourceRestriction"] = transformedSourceRestriction
+	}
+
 	transformedIdentities, err := expandAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromIdentities(original["identities"], d, config)
 	if err != nil {
 		return nil, err
@@ -2229,7 +2424,38 @@ func expandAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromIde
 	return v, nil
 }
 
+func expandAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromSources(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedAccessLevel, err := expandAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromSourcesAccessLevel(original["access_level"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedAccessLevel); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["accessLevel"] = transformedAccessLevel
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromSourcesAccessLevel(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromSourceRestriction(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandAccessContextManagerServicePerimeterStatusEgressPoliciesEgressFromIdentities(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	v = v.(*schema.Set).List()
 	return v, nil
 }
 
@@ -2267,10 +2493,12 @@ func expandAccessContextManagerServicePerimeterStatusEgressPoliciesEgressTo(v in
 }
 
 func expandAccessContextManagerServicePerimeterStatusEgressPoliciesEgressToResources(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	v = v.(*schema.Set).List()
 	return v, nil
 }
 
 func expandAccessContextManagerServicePerimeterStatusEgressPoliciesEgressToExternalResources(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	v = v.(*schema.Set).List()
 	return v, nil
 }
 
@@ -2399,14 +2627,17 @@ func expandAccessContextManagerServicePerimeterSpec(v interface{}, d tpgresource
 }
 
 func expandAccessContextManagerServicePerimeterSpecResources(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	v = v.(*schema.Set).List()
 	return v, nil
 }
 
 func expandAccessContextManagerServicePerimeterSpecAccessLevels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	v = v.(*schema.Set).List()
 	return v, nil
 }
 
 func expandAccessContextManagerServicePerimeterSpecRestrictedServices(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	v = v.(*schema.Set).List()
 	return v, nil
 }
 
@@ -2441,6 +2672,7 @@ func expandAccessContextManagerServicePerimeterSpecVpcAccessibleServicesEnableRe
 }
 
 func expandAccessContextManagerServicePerimeterSpecVpcAccessibleServicesAllowedServices(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	v = v.(*schema.Set).List()
 	return v, nil
 }
 
@@ -2511,6 +2743,7 @@ func expandAccessContextManagerServicePerimeterSpecIngressPoliciesIngressFromIde
 }
 
 func expandAccessContextManagerServicePerimeterSpecIngressPoliciesIngressFromIdentities(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	v = v.(*schema.Set).List()
 	return v, nil
 }
 
@@ -2578,6 +2811,7 @@ func expandAccessContextManagerServicePerimeterSpecIngressPoliciesIngressTo(v in
 }
 
 func expandAccessContextManagerServicePerimeterSpecIngressPoliciesIngressToResources(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	v = v.(*schema.Set).List()
 	return v, nil
 }
 
@@ -2696,6 +2930,20 @@ func expandAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFrom(v in
 		transformed["identityType"] = transformedIdentityType
 	}
 
+	transformedSources, err := expandAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromSources(original["sources"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSources); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["sources"] = transformedSources
+	}
+
+	transformedSourceRestriction, err := expandAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromSourceRestriction(original["source_restriction"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSourceRestriction); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["sourceRestriction"] = transformedSourceRestriction
+	}
+
 	transformedIdentities, err := expandAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromIdentities(original["identities"], d, config)
 	if err != nil {
 		return nil, err
@@ -2710,7 +2958,38 @@ func expandAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromIdent
 	return v, nil
 }
 
+func expandAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromSources(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedAccessLevel, err := expandAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromSourcesAccessLevel(original["access_level"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedAccessLevel); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["accessLevel"] = transformedAccessLevel
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromSourcesAccessLevel(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromSourceRestriction(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandAccessContextManagerServicePerimeterSpecEgressPoliciesEgressFromIdentities(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	v = v.(*schema.Set).List()
 	return v, nil
 }
 
@@ -2748,10 +3027,12 @@ func expandAccessContextManagerServicePerimeterSpecEgressPoliciesEgressTo(v inte
 }
 
 func expandAccessContextManagerServicePerimeterSpecEgressPoliciesEgressToResources(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	v = v.(*schema.Set).List()
 	return v, nil
 }
 
 func expandAccessContextManagerServicePerimeterSpecEgressPoliciesEgressToExternalResources(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	v = v.(*schema.Set).List()
 	return v, nil
 }
 

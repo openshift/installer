@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwserver
 
 import (
@@ -17,7 +20,14 @@ import (
 // UpgradeResourceStateRequest is the framework server request for the
 // UpgradeResourceState RPC.
 type UpgradeResourceStateRequest struct {
-	// TODO: Create framework defined type that is not protocol specific.
+	// Using the tfprotov6 type here was a pragmatic effort decision around when
+	// the framework introduced compatibility promises. This type was chosen as
+	// it was readily available and trivial to convert between tfprotov5.
+	//
+	// Using a terraform-plugin-go type is not ideal for the framework as almost
+	// all terraform-plugin-go types have framework abstractions, but if there
+	// is ever a time where it makes sense to re-evaluate this decision, such as
+	// a major version bump, it could be changed then.
 	// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/340
 	RawState *tfprotov6.RawState
 
@@ -99,7 +109,7 @@ func (s *Server) UpgradeResourceState(ctx context.Context, req *UpgradeResourceS
 		return
 	}
 
-	if _, ok := req.Resource.(resource.ResourceWithConfigure); ok {
+	if resourceWithConfigure, ok := req.Resource.(resource.ResourceWithConfigure); ok {
 		logging.FrameworkTrace(ctx, "Resource implements ResourceWithConfigure")
 
 		configureReq := resource.ConfigureRequest{
@@ -107,9 +117,9 @@ func (s *Server) UpgradeResourceState(ctx context.Context, req *UpgradeResourceS
 		}
 		configureResp := resource.ConfigureResponse{}
 
-		logging.FrameworkDebug(ctx, "Calling provider defined Resource Configure")
-		req.Resource.(resource.ResourceWithConfigure).Configure(ctx, configureReq, &configureResp)
-		logging.FrameworkDebug(ctx, "Called provider defined Resource Configure")
+		logging.FrameworkTrace(ctx, "Calling provider defined Resource Configure")
+		resourceWithConfigure.Configure(ctx, configureReq, &configureResp)
+		logging.FrameworkTrace(ctx, "Called provider defined Resource Configure")
 
 		resp.Diagnostics.Append(configureResp.Diagnostics...)
 
@@ -132,9 +142,9 @@ func (s *Server) UpgradeResourceState(ctx context.Context, req *UpgradeResourceS
 
 	logging.FrameworkTrace(ctx, "Resource implements ResourceWithUpgradeState")
 
-	logging.FrameworkDebug(ctx, "Calling provider defined Resource UpgradeState")
+	logging.FrameworkTrace(ctx, "Calling provider defined Resource UpgradeState")
 	resourceStateUpgraders := resourceWithUpgradeState.UpgradeState(ctx)
-	logging.FrameworkDebug(ctx, "Called provider defined Resource UpgradeState")
+	logging.FrameworkTrace(ctx, "Called provider defined Resource UpgradeState")
 
 	// Panic prevention
 	if resourceStateUpgraders == nil {
@@ -191,9 +201,9 @@ func (s *Server) UpgradeResourceState(ctx context.Context, req *UpgradeResourceS
 	// by calling the equivalent of SetAttribute(GetAttribute()) and skipping
 	// any errors.
 
-	logging.FrameworkDebug(ctx, "Calling provider defined StateUpgrader")
+	logging.FrameworkTrace(ctx, "Calling provider defined StateUpgrader")
 	resourceStateUpgrader.StateUpgrader(ctx, upgradeResourceStateRequest, &upgradeResourceStateResponse)
-	logging.FrameworkDebug(ctx, "Called provider defined StateUpgrader")
+	logging.FrameworkTrace(ctx, "Called provider defined StateUpgrader")
 
 	resp.Diagnostics.Append(upgradeResourceStateResponse.Diagnostics...)
 

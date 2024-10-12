@@ -20,6 +20,7 @@ package cloudidentity
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -134,6 +135,40 @@ See the
 for possible values. Default value: "EMPTY" Possible values: ["INITIAL_GROUP_CONFIG_UNSPECIFIED", "WITH_INITIAL_OWNER", "EMPTY"]`,
 				Default: "EMPTY",
 			},
+			"additional_group_keys": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: `Additional group keys associated with the Group`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:     schema.TypeString,
+							Computed: true,
+							Description: `The ID of the entity.
+
+For Google-managed entities, the id must be the email address of an existing
+group or user.
+
+For external-identity-mapped entities, the id must be a string conforming
+to the Identity Source's requirements.
+
+Must be unique within a namespace.`,
+						},
+						"namespace": {
+							Type:     schema.TypeString,
+							Computed: true,
+							Description: `The namespace in which the entity exists.
+
+If not specified, the EntityKey represents a Google-managed entity
+such as a Google user or a Google Group.
+
+If specified, the EntityKey represents an external-identity-mapped group.
+The namespace must correspond to an identity source created in Admin Console
+and must be in the form of 'identitysources/{identity_source_id}'.`,
+						},
+					},
+				},
+			},
 			"create_time": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -207,6 +242,7 @@ func resourceCloudIdentityGroupCreate(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -215,6 +251,7 @@ func resourceCloudIdentityGroupCreate(d *schema.ResourceData, meta interface{}) 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Group: %s", err)
@@ -263,6 +300,7 @@ func resourceCloudIdentityGroupPollRead(d *schema.ResourceData, meta interface{}
 		config := meta.(*transport_tpg.Config)
 
 		url, err := tpgresource.ReplaceVars(d, config, "{{CloudIdentityBasePath}}{{name}}")
+
 		if err != nil {
 			return nil, err
 		}
@@ -312,12 +350,14 @@ func resourceCloudIdentityGroupRead(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("CloudIdentityGroup %q", d.Id()))
@@ -336,6 +376,9 @@ func resourceCloudIdentityGroupRead(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf("Error reading Group: %s", err)
 	}
 	if err := d.Set("description", flattenCloudIdentityGroupDescription(res["description"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Group: %s", err)
+	}
+	if err := d.Set("additional_group_keys", flattenCloudIdentityGroupAdditionalGroupKeys(res["additionalGroupKeys"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Group: %s", err)
 	}
 	if err := d.Set("create_time", flattenCloudIdentityGroupCreateTime(res["createTime"], d, config)); err != nil {
@@ -386,6 +429,7 @@ func resourceCloudIdentityGroupUpdate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	log.Printf("[DEBUG] Updating Group %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -411,25 +455,29 @@ func resourceCloudIdentityGroupUpdate(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Group %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Group %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating Group %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Group %q: %#v", d.Id(), res)
+		}
 
-	err = transport_tpg.PollingWaitTime(resourceCloudIdentityGroupPollRead(d, meta), transport_tpg.PollCheckForExistenceWith403, "Updating Group", d.Timeout(schema.TimeoutUpdate), 10)
-	if err != nil {
-		return err
+		err = transport_tpg.PollingWaitTime(resourceCloudIdentityGroupPollRead(d, meta), transport_tpg.PollCheckForExistenceWith403, "Updating Group", d.Timeout(schema.TimeoutUpdate), 10)
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceCloudIdentityGroupRead(d, meta)
@@ -450,13 +498,15 @@ func resourceCloudIdentityGroupDelete(d *schema.ResourceData, meta interface{}) 
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Group %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Group %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -465,6 +515,7 @@ func resourceCloudIdentityGroupDelete(d *schema.ResourceData, meta interface{}) 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Group")
@@ -536,6 +587,33 @@ func flattenCloudIdentityGroupDisplayName(v interface{}, d *schema.ResourceData,
 }
 
 func flattenCloudIdentityGroupDescription(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudIdentityGroupAdditionalGroupKeys(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"id":        flattenCloudIdentityGroupAdditionalGroupKeysId(original["id"], d, config),
+			"namespace": flattenCloudIdentityGroupAdditionalGroupKeysNamespace(original["namespace"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenCloudIdentityGroupAdditionalGroupKeysId(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudIdentityGroupAdditionalGroupKeysNamespace(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 

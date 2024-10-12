@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -86,6 +86,7 @@ components:
           - resource: Compute/FirewallPolicy
             field: name
             parent: true
+          x-dcl-has-long-form: true
         name:
           type: string
           x-dcl-go-name: Name

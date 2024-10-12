@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwserver
 
 import (
@@ -211,7 +214,7 @@ func BlockValidateList(ctx context.Context, block fwxschema.BlockWithListValidat
 		// from modifying or removing diagnostics.
 		validateResp := &validator.ListResponse{}
 
-		logging.FrameworkDebug(
+		logging.FrameworkTrace(
 			ctx,
 			"Calling provider defined validator.List",
 			map[string]interface{}{
@@ -221,7 +224,7 @@ func BlockValidateList(ctx context.Context, block fwxschema.BlockWithListValidat
 
 		blockValidator.ValidateList(ctx, validateReq, validateResp)
 
-		logging.FrameworkDebug(
+		logging.FrameworkTrace(
 			ctx,
 			"Called provider defined validator.List",
 			map[string]interface{}{
@@ -276,7 +279,7 @@ func BlockValidateObject(ctx context.Context, block fwxschema.BlockWithObjectVal
 		// from modifying or removing diagnostics.
 		validateResp := &validator.ObjectResponse{}
 
-		logging.FrameworkDebug(
+		logging.FrameworkTrace(
 			ctx,
 			"Calling provider defined validator.Object",
 			map[string]interface{}{
@@ -286,7 +289,7 @@ func BlockValidateObject(ctx context.Context, block fwxschema.BlockWithObjectVal
 
 		blockValidator.ValidateObject(ctx, validateReq, validateResp)
 
-		logging.FrameworkDebug(
+		logging.FrameworkTrace(
 			ctx,
 			"Called provider defined validator.Object",
 			map[string]interface{}{
@@ -341,7 +344,7 @@ func BlockValidateSet(ctx context.Context, block fwxschema.BlockWithSetValidator
 		// from modifying or removing diagnostics.
 		validateResp := &validator.SetResponse{}
 
-		logging.FrameworkDebug(
+		logging.FrameworkTrace(
 			ctx,
 			"Calling provider defined validator.Set",
 			map[string]interface{}{
@@ -351,7 +354,7 @@ func BlockValidateSet(ctx context.Context, block fwxschema.BlockWithSetValidator
 
 		blockValidator.ValidateSet(ctx, validateReq, validateResp)
 
-		logging.FrameworkDebug(
+		logging.FrameworkTrace(
 			ctx,
 			"Called provider defined validator.Set",
 			map[string]interface{}{
@@ -403,7 +406,7 @@ func NestedBlockObjectValidate(ctx context.Context, o fwschema.NestedBlockObject
 			// from modifying or removing diagnostics.
 			validateResp := &validator.ObjectResponse{}
 
-			logging.FrameworkDebug(
+			logging.FrameworkTrace(
 				ctx,
 				"Calling provider defined validator.Object",
 				map[string]interface{}{
@@ -413,7 +416,7 @@ func NestedBlockObjectValidate(ctx context.Context, o fwschema.NestedBlockObject
 
 			objectValidator.ValidateObject(ctx, validateReq, validateResp)
 
-			logging.FrameworkDebug(
+			logging.FrameworkTrace(
 				ctx,
 				"Called provider defined validator.Object",
 				map[string]interface{}{

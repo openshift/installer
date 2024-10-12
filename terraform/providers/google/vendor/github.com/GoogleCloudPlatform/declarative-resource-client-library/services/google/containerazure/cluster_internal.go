@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -191,6 +191,12 @@ func (r *ClusterAuthorization) validate() error {
 }
 func (r *ClusterAuthorizationAdminUsers) validate() error {
 	if err := dcl.Required(r, "username"); err != nil {
+		return err
+	}
+	return nil
+}
+func (r *ClusterAuthorizationAdminGroups) validate() error {
+	if err := dcl.Required(r, "group"); err != nil {
 		return err
 	}
 	return nil
@@ -2001,6 +2007,7 @@ func canonicalizeClusterAuthorization(des, initial *ClusterAuthorization, opts .
 	cDes := &ClusterAuthorization{}
 
 	cDes.AdminUsers = canonicalizeClusterAuthorizationAdminUsersSlice(des.AdminUsers, initial.AdminUsers, opts...)
+	cDes.AdminGroups = canonicalizeClusterAuthorizationAdminGroupsSlice(des.AdminGroups, initial.AdminGroups, opts...)
 
 	return cDes
 }
@@ -2048,6 +2055,7 @@ func canonicalizeNewClusterAuthorization(c *Client, des, nw *ClusterAuthorizatio
 	}
 
 	nw.AdminUsers = canonicalizeNewClusterAuthorizationAdminUsersSlice(c, des.AdminUsers, nw.AdminUsers)
+	nw.AdminGroups = canonicalizeNewClusterAuthorizationAdminGroupsSlice(c, des.AdminGroups, nw.AdminGroups)
 
 	return nw
 }
@@ -2211,6 +2219,124 @@ func canonicalizeNewClusterAuthorizationAdminUsersSlice(c *Client, des, nw []Clu
 	for i, d := range des {
 		n := nw[i]
 		items = append(items, *canonicalizeNewClusterAuthorizationAdminUsers(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeClusterAuthorizationAdminGroups(des, initial *ClusterAuthorizationAdminGroups, opts ...dcl.ApplyOption) *ClusterAuthorizationAdminGroups {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &ClusterAuthorizationAdminGroups{}
+
+	if dcl.StringCanonicalize(des.Group, initial.Group) || dcl.IsZeroValue(des.Group) {
+		cDes.Group = initial.Group
+	} else {
+		cDes.Group = des.Group
+	}
+
+	return cDes
+}
+
+func canonicalizeClusterAuthorizationAdminGroupsSlice(des, initial []ClusterAuthorizationAdminGroups, opts ...dcl.ApplyOption) []ClusterAuthorizationAdminGroups {
+	if des == nil {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]ClusterAuthorizationAdminGroups, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeClusterAuthorizationAdminGroups(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]ClusterAuthorizationAdminGroups, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeClusterAuthorizationAdminGroups(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewClusterAuthorizationAdminGroups(c *Client, des, nw *ClusterAuthorizationAdminGroups) *ClusterAuthorizationAdminGroups {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for ClusterAuthorizationAdminGroups while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringCanonicalize(des.Group, nw.Group) {
+		nw.Group = des.Group
+	}
+
+	return nw
+}
+
+func canonicalizeNewClusterAuthorizationAdminGroupsSet(c *Client, des, nw []ClusterAuthorizationAdminGroups) []ClusterAuthorizationAdminGroups {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []ClusterAuthorizationAdminGroups
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareClusterAuthorizationAdminGroupsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewClusterAuthorizationAdminGroups(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewClusterAuthorizationAdminGroupsSlice(c *Client, des, nw []ClusterAuthorizationAdminGroups) []ClusterAuthorizationAdminGroups {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []ClusterAuthorizationAdminGroups
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewClusterAuthorizationAdminGroups(c, &d, &n))
 	}
 
 	return items
@@ -3026,6 +3152,13 @@ func compareClusterAuthorizationNewStyle(d, a interface{}, fn dcl.FieldName) ([]
 		}
 		diffs = append(diffs, ds...)
 	}
+
+	if ds, err := dcl.Diff(desired.AdminGroups, actual.AdminGroups, dcl.DiffInfo{ObjectFunction: compareClusterAuthorizationAdminGroupsNewStyle, EmptyObject: EmptyClusterAuthorizationAdminGroups, OperationSelector: dcl.TriggersOperation("updateClusterUpdateAzureClusterOperation")}, fn.AddNest("AdminGroups")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
 	return diffs, nil
 }
 
@@ -3050,6 +3183,35 @@ func compareClusterAuthorizationAdminUsersNewStyle(d, a interface{}, fn dcl.Fiel
 	}
 
 	if ds, err := dcl.Diff(desired.Username, actual.Username, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAzureClusterOperation")}, fn.AddNest("Username")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareClusterAuthorizationAdminGroupsNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*ClusterAuthorizationAdminGroups)
+	if !ok {
+		desiredNotPointer, ok := d.(ClusterAuthorizationAdminGroups)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a ClusterAuthorizationAdminGroups or *ClusterAuthorizationAdminGroups", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*ClusterAuthorizationAdminGroups)
+	if !ok {
+		actualNotPointer, ok := a.(ClusterAuthorizationAdminGroups)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a ClusterAuthorizationAdminGroups", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Group, actual.Group, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAzureClusterOperation")}, fn.AddNest("Group")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -4489,6 +4651,11 @@ func expandClusterAuthorization(c *Client, f *ClusterAuthorization, res *Cluster
 	} else if v != nil {
 		m["adminUsers"] = v
 	}
+	if v, err := expandClusterAuthorizationAdminGroupsSlice(c, f.AdminGroups, res); err != nil {
+		return nil, fmt.Errorf("error expanding AdminGroups into adminGroups: %w", err)
+	} else if v != nil {
+		m["adminGroups"] = v
+	}
 
 	return m, nil
 }
@@ -4507,6 +4674,7 @@ func flattenClusterAuthorization(c *Client, i interface{}, res *Cluster) *Cluste
 		return EmptyClusterAuthorization
 	}
 	r.AdminUsers = flattenClusterAuthorizationAdminUsersSlice(c, m["adminUsers"], res)
+	r.AdminGroups = flattenClusterAuthorizationAdminGroupsSlice(c, m["adminGroups"], res)
 
 	return r
 }
@@ -4621,6 +4789,120 @@ func flattenClusterAuthorizationAdminUsers(c *Client, i interface{}, res *Cluste
 		return EmptyClusterAuthorizationAdminUsers
 	}
 	r.Username = dcl.FlattenString(m["username"])
+
+	return r
+}
+
+// expandClusterAuthorizationAdminGroupsMap expands the contents of ClusterAuthorizationAdminGroups into a JSON
+// request object.
+func expandClusterAuthorizationAdminGroupsMap(c *Client, f map[string]ClusterAuthorizationAdminGroups, res *Cluster) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandClusterAuthorizationAdminGroups(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandClusterAuthorizationAdminGroupsSlice expands the contents of ClusterAuthorizationAdminGroups into a JSON
+// request object.
+func expandClusterAuthorizationAdminGroupsSlice(c *Client, f []ClusterAuthorizationAdminGroups, res *Cluster) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandClusterAuthorizationAdminGroups(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenClusterAuthorizationAdminGroupsMap flattens the contents of ClusterAuthorizationAdminGroups from a JSON
+// response object.
+func flattenClusterAuthorizationAdminGroupsMap(c *Client, i interface{}, res *Cluster) map[string]ClusterAuthorizationAdminGroups {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]ClusterAuthorizationAdminGroups{}
+	}
+
+	if len(a) == 0 {
+		return map[string]ClusterAuthorizationAdminGroups{}
+	}
+
+	items := make(map[string]ClusterAuthorizationAdminGroups)
+	for k, item := range a {
+		items[k] = *flattenClusterAuthorizationAdminGroups(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenClusterAuthorizationAdminGroupsSlice flattens the contents of ClusterAuthorizationAdminGroups from a JSON
+// response object.
+func flattenClusterAuthorizationAdminGroupsSlice(c *Client, i interface{}, res *Cluster) []ClusterAuthorizationAdminGroups {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []ClusterAuthorizationAdminGroups{}
+	}
+
+	if len(a) == 0 {
+		return []ClusterAuthorizationAdminGroups{}
+	}
+
+	items := make([]ClusterAuthorizationAdminGroups, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenClusterAuthorizationAdminGroups(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandClusterAuthorizationAdminGroups expands an instance of ClusterAuthorizationAdminGroups into a JSON
+// request object.
+func expandClusterAuthorizationAdminGroups(c *Client, f *ClusterAuthorizationAdminGroups, res *Cluster) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Group; !dcl.IsEmptyValueIndirect(v) {
+		m["group"] = v
+	}
+
+	return m, nil
+}
+
+// flattenClusterAuthorizationAdminGroups flattens an instance of ClusterAuthorizationAdminGroups from a JSON
+// response object.
+func flattenClusterAuthorizationAdminGroups(c *Client, i interface{}, res *Cluster) *ClusterAuthorizationAdminGroups {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &ClusterAuthorizationAdminGroups{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyClusterAuthorizationAdminGroups
+	}
+	r.Group = dcl.FlattenString(m["group"])
 
 	return r
 }
@@ -5165,6 +5447,9 @@ func extractClusterAuthorizationFields(r *Cluster, o *ClusterAuthorization) erro
 func extractClusterAuthorizationAdminUsersFields(r *Cluster, o *ClusterAuthorizationAdminUsers) error {
 	return nil
 }
+func extractClusterAuthorizationAdminGroupsFields(r *Cluster, o *ClusterAuthorizationAdminGroups) error {
+	return nil
+}
 func extractClusterWorkloadIdentityConfigFields(r *Cluster, o *ClusterWorkloadIdentityConfig) error {
 	return nil
 }
@@ -5327,6 +5612,9 @@ func postReadExtractClusterAuthorizationFields(r *Cluster, o *ClusterAuthorizati
 	return nil
 }
 func postReadExtractClusterAuthorizationAdminUsersFields(r *Cluster, o *ClusterAuthorizationAdminUsers) error {
+	return nil
+}
+func postReadExtractClusterAuthorizationAdminGroupsFields(r *Cluster, o *ClusterAuthorizationAdminGroups) error {
 	return nil
 }
 func postReadExtractClusterWorkloadIdentityConfigFields(r *Cluster, o *ClusterWorkloadIdentityConfig) error {

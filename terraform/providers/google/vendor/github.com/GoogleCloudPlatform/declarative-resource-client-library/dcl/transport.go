@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -123,7 +123,7 @@ func SendRequest(ctx context.Context, c *Config, verb, url string, body *bytes.B
 	start := time.Now()
 	err = Do(ctx, func(ctx context.Context) (*RetryDetails, error) {
 		// Reset req body before http call.
-		req.Body = ioutil.NopCloser(bytes.NewReader(bodyBytes))
+		req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 		res, err = httpClient.Do(req)
 		if err != nil {
 			return nil, err
@@ -137,13 +137,13 @@ func SendRequest(ctx context.Context, c *Config, verb, url string, body *bytes.B
 			}
 			return nil, err
 		}
-		req.Body = ioutil.NopCloser(bytes.NewReader(bodyBytes))
+		req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 		return &RetryDetails{Request: req.Clone(ctx), Response: res}, err
 	}, retryProvider)
 	if err != nil {
 		return nil, err
 	}
-	req.Body = ioutil.NopCloser(bytes.NewReader(bodyBytes))
+	req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 	return &RetryDetails{Request: req, Response: res}, nil
 }
 
@@ -230,7 +230,7 @@ func URL(urlpath, basePath, userPath string, params map[string]interface{}) stri
 // it as unstructured JSON in a map[string]interface{}.
 func ResponseBodyAsJSON(retry *RetryDetails) (map[string]interface{}, error) {
 	defer retry.Response.Body.Close()
-	b, err := ioutil.ReadAll(retry.Response.Body)
+	b, err := io.ReadAll(retry.Response.Body)
 	if err != nil {
 		return nil, err
 	}

@@ -20,10 +20,12 @@ package gkehub2
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -48,6 +50,11 @@ func ResourceGKEHub2Feature() *schema.Resource {
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
+		),
+
 		Schema: map[string]*schema.Schema{
 			"location": {
 				Type:        schema.TypeString,
@@ -55,11 +62,411 @@ func ResourceGKEHub2Feature() *schema.Resource {
 				ForceNew:    true,
 				Description: `The location for the resource`,
 			},
-			"labels": {
-				Type:        schema.TypeMap,
+			"fleet_default_member_config": {
+				Type:        schema.TypeList,
 				Optional:    true,
-				Description: `GCP labels for this Feature.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: `Optional. Fleet Default Membership Configuration.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"configmanagement": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Config Management spec`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"config_sync": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: `ConfigSync configuration for the cluster`,
+										MaxItems:    1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"enabled": {
+													Type:        schema.TypeBool,
+													Optional:    true,
+													Description: `Enables the installation of ConfigSync. If set to true, ConfigSync resources will be created and the other ConfigSync fields will be applied if exist. If set to false, all other ConfigSync fields will be ignored, ConfigSync resources will be deleted. If omitted, ConfigSync resources will be managed depends on the presence of the git or oci field.`,
+												},
+												"git": {
+													Type:        schema.TypeList,
+													Optional:    true,
+													Description: `Git repo configuration for the cluster`,
+													MaxItems:    1,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"secret_type": {
+																Type:        schema.TypeString,
+																Required:    true,
+																Description: `Type of secret configured for access to the Git repo`,
+															},
+															"gcp_service_account_email": {
+																Type:        schema.TypeString,
+																Optional:    true,
+																Description: `The Google Cloud Service Account Email used for auth when secretType is gcpServiceAccount`,
+															},
+															"https_proxy": {
+																Type:        schema.TypeString,
+																Optional:    true,
+																Description: `URL for the HTTPS Proxy to be used when communicating with the Git repo`,
+															},
+															"policy_dir": {
+																Type:        schema.TypeString,
+																Optional:    true,
+																Description: `The path within the Git repository that represents the top level of the repo to sync`,
+															},
+															"sync_branch": {
+																Type:        schema.TypeString,
+																Optional:    true,
+																Description: `The branch of the repository to sync from. Default: master`,
+															},
+															"sync_repo": {
+																Type:        schema.TypeString,
+																Optional:    true,
+																Description: `The URL of the Git repository to use as the source of truth`,
+															},
+															"sync_rev": {
+																Type:        schema.TypeString,
+																Optional:    true,
+																Description: `Git revision (tag or hash) to check out. Default HEAD`,
+															},
+															"sync_wait_secs": {
+																Type:        schema.TypeString,
+																Optional:    true,
+																Description: `Period in seconds between consecutive syncs. Default: 15`,
+															},
+														},
+													},
+												},
+												"oci": {
+													Type:        schema.TypeList,
+													Optional:    true,
+													Description: `OCI repo configuration for the cluster`,
+													MaxItems:    1,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"secret_type": {
+																Type:        schema.TypeString,
+																Required:    true,
+																Description: `Type of secret configured for access to the Git repo`,
+															},
+															"gcp_service_account_email": {
+																Type:        schema.TypeString,
+																Optional:    true,
+																Description: `The Google Cloud Service Account Email used for auth when secretType is gcpServiceAccount`,
+															},
+															"policy_dir": {
+																Type:        schema.TypeString,
+																Optional:    true,
+																Description: `The absolute path of the directory that contains the local resources. Default: the root directory of the image`,
+															},
+															"sync_repo": {
+																Type:        schema.TypeString,
+																Optional:    true,
+																Description: `The OCI image repository URL for the package to sync from`,
+															},
+															"sync_wait_secs": {
+																Type:        schema.TypeString,
+																Optional:    true,
+																Description: `Period in seconds between consecutive syncs. Default: 15`,
+															},
+															"version": {
+																Type:        schema.TypeString,
+																Optional:    true,
+																Deprecated:  "The `configmanagement.config_sync.oci.version` field is deprecated and will be removed in a future major release. Please use `configmanagement.version` field to specify the version of ACM installed instead.",
+																Description: `Version of ACM installed`,
+															},
+														},
+													},
+												},
+												"prevent_drift": {
+													Type:        schema.TypeBool,
+													Optional:    true,
+													Description: `Set to true to enable the Config Sync admission webhook to prevent drifts. If set to 'false', disables the Config Sync admission webhook and does not prevent drifts.`,
+												},
+												"source_format": {
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: `Specifies whether the Config Sync Repo is in hierarchical or unstructured mode`,
+												},
+											},
+										},
+									},
+									"version": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `Version of ACM installed`,
+									},
+								},
+							},
+						},
+						"mesh": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Service Mesh spec`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"management": {
+										Type:         schema.TypeString,
+										Required:     true,
+										ValidateFunc: verify.ValidateEnum([]string{"MANAGEMENT_UNSPECIFIED", "MANAGEMENT_AUTOMATIC", "MANAGEMENT_MANUAL"}),
+										Description:  `Whether to automatically manage Service Mesh Possible values: ["MANAGEMENT_UNSPECIFIED", "MANAGEMENT_AUTOMATIC", "MANAGEMENT_MANUAL"]`,
+									},
+								},
+							},
+						},
+						"policycontroller": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Policy Controller spec`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"policy_controller_hub_config": {
+										Type:        schema.TypeList,
+										Required:    true,
+										Description: `Configuration of Policy Controller`,
+										MaxItems:    1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"install_spec": {
+													Type:         schema.TypeString,
+													Required:     true,
+													ValidateFunc: verify.ValidateEnum([]string{"INSTALL_SPEC_UNSPECIFIED", "INSTALL_SPEC_NOT_INSTALLED", "INSTALL_SPEC_ENABLED", "INSTALL_SPEC_SUSPENDED", "INSTALL_SPEC_DETACHED"}),
+													Description:  `Configures the mode of the Policy Controller installation Possible values: ["INSTALL_SPEC_UNSPECIFIED", "INSTALL_SPEC_NOT_INSTALLED", "INSTALL_SPEC_ENABLED", "INSTALL_SPEC_SUSPENDED", "INSTALL_SPEC_DETACHED"]`,
+												},
+												"audit_interval_seconds": {
+													Type:        schema.TypeInt,
+													Optional:    true,
+													Description: `Interval for Policy Controller Audit scans (in seconds). When set to 0, this disables audit functionality altogether.`,
+												},
+												"constraint_violation_limit": {
+													Type:        schema.TypeInt,
+													Optional:    true,
+													Description: `The maximum number of audit violations to be stored in a constraint. If not set, the internal default of 20 will be used.`,
+												},
+												"deployment_configs": {
+													Type:        schema.TypeSet,
+													Computed:    true,
+													Optional:    true,
+													Description: `Map of deployment configs to deployments ("admission", "audit", "mutation").`,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"component": {
+																Type:     schema.TypeString,
+																Required: true,
+															},
+															"container_resources": {
+																Type:        schema.TypeList,
+																Optional:    true,
+																Description: `Container resource requirements.`,
+																MaxItems:    1,
+																Elem: &schema.Resource{
+																	Schema: map[string]*schema.Schema{
+																		"limits": {
+																			Type:        schema.TypeList,
+																			Optional:    true,
+																			Description: `Limits describes the maximum amount of compute resources allowed for use by the running container.`,
+																			MaxItems:    1,
+																			Elem: &schema.Resource{
+																				Schema: map[string]*schema.Schema{
+																					"cpu": {
+																						Type:        schema.TypeString,
+																						Optional:    true,
+																						Description: `CPU requirement expressed in Kubernetes resource units.`,
+																					},
+																					"memory": {
+																						Type:        schema.TypeString,
+																						Optional:    true,
+																						Description: `Memory requirement expressed in Kubernetes resource units.`,
+																					},
+																				},
+																			},
+																		},
+																		"requests": {
+																			Type:        schema.TypeList,
+																			Optional:    true,
+																			Description: `Requests describes the amount of compute resources reserved for the container by the kube-scheduler.`,
+																			MaxItems:    1,
+																			Elem: &schema.Resource{
+																				Schema: map[string]*schema.Schema{
+																					"cpu": {
+																						Type:        schema.TypeString,
+																						Optional:    true,
+																						Description: `CPU requirement expressed in Kubernetes resource units.`,
+																					},
+																					"memory": {
+																						Type:        schema.TypeString,
+																						Optional:    true,
+																						Description: `Memory requirement expressed in Kubernetes resource units.`,
+																					},
+																				},
+																			},
+																		},
+																	},
+																},
+															},
+															"pod_affinity": {
+																Type:         schema.TypeString,
+																Computed:     true,
+																Optional:     true,
+																ValidateFunc: verify.ValidateEnum([]string{"AFFINITY_UNSPECIFIED", "NO_AFFINITY", "ANTI_AFFINITY", ""}),
+																Description:  `Pod affinity configuration. Possible values: ["AFFINITY_UNSPECIFIED", "NO_AFFINITY", "ANTI_AFFINITY"]`,
+															},
+															"pod_toleration": {
+																Type:        schema.TypeList,
+																Optional:    true,
+																Description: `Pod tolerations of node taints.`,
+																Elem: &schema.Resource{
+																	Schema: map[string]*schema.Schema{
+																		"effect": {
+																			Type:        schema.TypeString,
+																			Optional:    true,
+																			Description: `Matches a taint effect.`,
+																		},
+																		"key": {
+																			Type:        schema.TypeString,
+																			Optional:    true,
+																			Description: `Matches a taint key (not necessarily unique).`,
+																		},
+																		"operator": {
+																			Type:        schema.TypeString,
+																			Optional:    true,
+																			Description: `Matches a taint operator.`,
+																		},
+																		"value": {
+																			Type:        schema.TypeString,
+																			Optional:    true,
+																			Description: `Matches a taint value.`,
+																		},
+																	},
+																},
+															},
+															"replica_count": {
+																Type:        schema.TypeInt,
+																Computed:    true,
+																Optional:    true,
+																Description: `Pod replica count.`,
+															},
+														},
+													},
+												},
+												"exemptable_namespaces": {
+													Type:        schema.TypeList,
+													Optional:    true,
+													Description: `The set of namespaces that are excluded from Policy Controller checks. Namespaces do not need to currently exist on the cluster.`,
+													Elem: &schema.Schema{
+														Type: schema.TypeString,
+													},
+												},
+												"log_denies_enabled": {
+													Type:        schema.TypeBool,
+													Optional:    true,
+													Description: `Logs all denies and dry run failures.`,
+												},
+												"monitoring": {
+													Type:        schema.TypeList,
+													Computed:    true,
+													Optional:    true,
+													Description: `Monitoring specifies the configuration of monitoring Policy Controller.`,
+													MaxItems:    1,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"backends": {
+																Type:        schema.TypeList,
+																Computed:    true,
+																Optional:    true,
+																Description: `Specifies the list of backends Policy Controller will export to. An empty list would effectively disable metrics export. Possible values: ["MONITORING_BACKEND_UNSPECIFIED", "PROMETHEUS", "CLOUD_MONITORING"]`,
+																Elem: &schema.Schema{
+																	Type:         schema.TypeString,
+																	ValidateFunc: verify.ValidateEnum([]string{"MONITORING_BACKEND_UNSPECIFIED", "PROMETHEUS", "CLOUD_MONITORING"}),
+																},
+															},
+														},
+													},
+												},
+												"mutation_enabled": {
+													Type:        schema.TypeBool,
+													Optional:    true,
+													Description: `Enables the ability to mutate resources using Policy Controller.`,
+												},
+												"policy_content": {
+													Type:        schema.TypeList,
+													Optional:    true,
+													Description: `Specifies the desired policy content on the cluster.`,
+													MaxItems:    1,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"bundles": {
+																Type:        schema.TypeSet,
+																Optional:    true,
+																Description: `Configures which bundles to install and their corresponding install specs.`,
+																Elem: &schema.Resource{
+																	Schema: map[string]*schema.Schema{
+																		"bundle": {
+																			Type:     schema.TypeString,
+																			Required: true,
+																		},
+																		"exempted_namespaces": {
+																			Type:        schema.TypeList,
+																			Optional:    true,
+																			Description: `The set of namespaces to be exempted from the bundle.`,
+																			Elem: &schema.Schema{
+																				Type: schema.TypeString,
+																			},
+																		},
+																	},
+																},
+															},
+															"template_library": {
+																Type:        schema.TypeList,
+																Computed:    true,
+																Optional:    true,
+																Description: `Configures the installation of the Template Library.`,
+																MaxItems:    1,
+																Elem: &schema.Resource{
+																	Schema: map[string]*schema.Schema{
+																		"installation": {
+																			Type:         schema.TypeString,
+																			Optional:     true,
+																			ValidateFunc: verify.ValidateEnum([]string{"INSTALATION_UNSPECIFIED", "NOT_INSTALLED", "ALL", ""}),
+																			Description:  `Configures the manner in which the template library is installed on the cluster. Possible values: ["INSTALATION_UNSPECIFIED", "NOT_INSTALLED", "ALL"]`,
+																		},
+																	},
+																},
+															},
+														},
+													},
+												},
+												"referential_rules_enabled": {
+													Type:        schema.TypeBool,
+													Optional:    true,
+													Description: `Enables the ability to use Constraint Templates that reference to objects other than the object currently being evaluated.`,
+												},
+											},
+										},
+									},
+									"version": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Optional:    true,
+										Description: `Configures the version of Policy Controller`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"labels": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `GCP labels for this Feature.
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"name": {
 				Type:             schema.TypeString,
@@ -75,6 +482,84 @@ func ResourceGKEHub2Feature() *schema.Resource {
 				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"clusterupgrade": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Clusterupgrade feature spec.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"post_conditions": {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Optional:    true,
+										Description: `Post conditions to override for the specified upgrade.`,
+										MaxItems:    1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"soaking": {
+													Type:        schema.TypeString,
+													Required:    true,
+													Description: `Amount of time to "soak" after a rollout has been finished before marking it COMPLETE. Cannot exceed 30 days.`,
+												},
+											},
+										},
+									},
+									"upstream_fleets": {
+										Type:        schema.TypeList,
+										Required:    true,
+										Description: `Specified if other fleet should be considered as a source of upgrades. Currently, at most one upstream fleet is allowed. The fleet name should be either fleet project number or id.`,
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+									},
+									"gke_upgrade_overrides": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: `Configuration overrides for individual upgrades.`,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"post_conditions": {
+													Type:        schema.TypeList,
+													Required:    true,
+													Description: `Post conditions to override for the specified upgrade.`,
+													MaxItems:    1,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"soaking": {
+																Type:        schema.TypeString,
+																Required:    true,
+																Description: `Amount of time to "soak" after a rollout has been finished before marking it COMPLETE. Cannot exceed 30 days.`,
+															},
+														},
+													},
+												},
+												"upgrade": {
+													Type:        schema.TypeList,
+													Required:    true,
+													Description: `Which upgrade to override.`,
+													MaxItems:    1,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"name": {
+																Type:        schema.TypeString,
+																Required:    true,
+																Description: `Name of the upgrade, e.g., "k8s_control_plane". It should be a valid upgrade name. It must not exceet 99 characters.`,
+															},
+															"version": {
+																Type:        schema.TypeString,
+																Required:    true,
+																Description: `Version of the upgrade, e.g., "1.22.1-gke.100". It should be a valid version. It must not exceet 99 characters.`,
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
 						"fleetobservability": {
 							Type:        schema.TypeList,
 							Optional:    true,
@@ -155,6 +640,12 @@ func ResourceGKEHub2Feature() *schema.Resource {
 				Computed:    true,
 				Description: `Output only. When the Feature resource was deleted.`,
 			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"resource_state": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -207,6 +698,13 @@ func ResourceGKEHub2Feature() *schema.Resource {
 					},
 				},
 			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
 			"update_time": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -231,24 +729,29 @@ func resourceGKEHub2FeatureCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	obj := make(map[string]interface{})
-	labelsProp, err := expandGKEHub2FeatureLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	specProp, err := expandGKEHub2FeatureSpec(d.Get("spec"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("spec"); !tpgresource.IsEmptyValue(reflect.ValueOf(specProp)) && (ok || !reflect.DeepEqual(v, specProp)) {
 		obj["spec"] = specProp
 	}
+	fleetDefaultMemberConfigProp, err := expandGKEHub2FeatureFleetDefaultMemberConfig(d.Get("fleet_default_member_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("fleet_default_member_config"); ok || !reflect.DeepEqual(v, fleetDefaultMemberConfigProp) {
+		obj["fleetDefaultMemberConfig"] = fleetDefaultMemberConfigProp
+	}
+	labelsProp, err := expandGKEHub2FeatureEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
-	url, err := tpgresource.ReplaceVars(d, config, "{{GKEHub2BasePath}}projects/{{project}}/locations/{{location}}/features?featureId={{name}}")
+	url, err := tpgresource.ReplaceVarsForId(d, config, "{{GKEHub2BasePath}}projects/{{project}}/locations/{{location}}/features?featureId={{name}}")
 	if err != nil {
 		return err
 	}
-	url = strings.ReplaceAll(url, "projects/projects/", "projects/")
 
 	log.Printf("[DEBUG] Creating new Feature: %#v", obj)
 	billingProject := ""
@@ -264,6 +767,7 @@ func resourceGKEHub2FeatureCreate(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -272,24 +776,24 @@ func resourceGKEHub2FeatureCreate(d *schema.ResourceData, meta interface{}) erro
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Feature: %s", err)
 	}
 
 	// Store the ID now
-	id, err := tpgresource.ReplaceVars(d, config, "projects/{{project}}/locations/{{location}}/features/{{name}}")
+	id, err := tpgresource.ReplaceVarsForId(d, config, "projects/{{project}}/locations/{{location}}/features/{{name}}")
 	if err != nil {
 		return fmt.Errorf("Error constructing id: %s", err)
 	}
-	id = strings.ReplaceAll(id, "projects/projects/", "projects/")
 	d.SetId(id)
 
 	// Use the resource in the operation response to populate
 	// identity fields and d.Id() before read
 	var opRes map[string]interface{}
 	err = GKEHub2OperationWaitTimeWithResponse(
-		config, res, &opRes, project, "Creating Feature", userAgent,
+		config, res, &opRes, tpgresource.GetResourceNameFromSelfLink(project), "Creating Feature", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		// The resource didn't actually create
@@ -299,11 +803,10 @@ func resourceGKEHub2FeatureCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	// This may have caused the ID to update - update it if so.
-	id, err = tpgresource.ReplaceVars(d, config, "projects/{{project}}/locations/{{location}}/features/{{name}}")
+	id, err = tpgresource.ReplaceVarsForId(d, config, "projects/{{project}}/locations/{{location}}/features/{{name}}")
 	if err != nil {
 		return fmt.Errorf("Error constructing id: %s", err)
 	}
-	id = strings.ReplaceAll(id, "projects/projects/", "projects/")
 	d.SetId(id)
 
 	log.Printf("[DEBUG] Finished creating Feature %q: %#v", d.Id(), res)
@@ -318,11 +821,10 @@ func resourceGKEHub2FeatureRead(d *schema.ResourceData, meta interface{}) error 
 		return err
 	}
 
-	url, err := tpgresource.ReplaceVars(d, config, "{{GKEHub2BasePath}}projects/{{project}}/locations/{{location}}/features/{{name}}")
+	url, err := tpgresource.ReplaceVarsForId(d, config, "{{GKEHub2BasePath}}projects/{{project}}/locations/{{location}}/features/{{name}}")
 	if err != nil {
 		return err
 	}
-	url = strings.ReplaceAll(url, "projects/projects/", "projects/")
 
 	billingProject := ""
 
@@ -337,12 +839,14 @@ func resourceGKEHub2FeatureRead(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("GKEHub2Feature %q", d.Id()))
@@ -361,6 +865,9 @@ func resourceGKEHub2FeatureRead(d *schema.ResourceData, meta interface{}) error 
 	if err := d.Set("spec", flattenGKEHub2FeatureSpec(res["spec"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Feature: %s", err)
 	}
+	if err := d.Set("fleet_default_member_config", flattenGKEHub2FeatureFleetDefaultMemberConfig(res["fleetDefaultMemberConfig"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Feature: %s", err)
+	}
 	if err := d.Set("state", flattenGKEHub2FeatureState(res["state"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Feature: %s", err)
 	}
@@ -371,6 +878,12 @@ func resourceGKEHub2FeatureRead(d *schema.ResourceData, meta interface{}) error 
 		return fmt.Errorf("Error reading Feature: %s", err)
 	}
 	if err := d.Set("delete_time", flattenGKEHub2FeatureDeleteTime(res["deleteTime"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Feature: %s", err)
+	}
+	if err := d.Set("terraform_labels", flattenGKEHub2FeatureTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Feature: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenGKEHub2FeatureEffectiveLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Feature: %s", err)
 	}
 
@@ -393,34 +906,44 @@ func resourceGKEHub2FeatureUpdate(d *schema.ResourceData, meta interface{}) erro
 	billingProject = strings.TrimPrefix(project, "projects/")
 
 	obj := make(map[string]interface{})
-	labelsProp, err := expandGKEHub2FeatureLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	specProp, err := expandGKEHub2FeatureSpec(d.Get("spec"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("spec"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, specProp)) {
 		obj["spec"] = specProp
 	}
+	fleetDefaultMemberConfigProp, err := expandGKEHub2FeatureFleetDefaultMemberConfig(d.Get("fleet_default_member_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("fleet_default_member_config"); ok || !reflect.DeepEqual(v, fleetDefaultMemberConfigProp) {
+		obj["fleetDefaultMemberConfig"] = fleetDefaultMemberConfigProp
+	}
+	labelsProp, err := expandGKEHub2FeatureEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
-	url, err := tpgresource.ReplaceVars(d, config, "{{GKEHub2BasePath}}projects/{{project}}/locations/{{location}}/features/{{name}}")
+	url, err := tpgresource.ReplaceVarsForId(d, config, "{{GKEHub2BasePath}}projects/{{project}}/locations/{{location}}/features/{{name}}")
 	if err != nil {
 		return err
 	}
-	url = strings.ReplaceAll(url, "projects/projects/", "projects/")
 
 	log.Printf("[DEBUG] Updating Feature %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
-
-	if d.HasChange("labels") {
-		updateMask = append(updateMask, "labels")
-	}
 
 	if d.HasChange("spec") {
 		updateMask = append(updateMask, "spec")
+	}
+
+	if d.HasChange("fleet_default_member_config") {
+		updateMask = append(updateMask, "fleetDefaultMemberConfig")
+	}
+
+	if d.HasChange("effective_labels") {
+		updateMask = append(updateMask, "labels")
 	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
@@ -434,28 +957,32 @@ func resourceGKEHub2FeatureUpdate(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Feature %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Feature %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating Feature %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Feature %q: %#v", d.Id(), res)
+		}
 
-	err = GKEHub2OperationWaitTime(
-		config, res, project, "Updating Feature", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = GKEHub2OperationWaitTime(
+			config, res, tpgresource.GetResourceNameFromSelfLink(project), "Updating Feature", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceGKEHub2FeatureRead(d, meta)
@@ -476,20 +1003,21 @@ func resourceGKEHub2FeatureDelete(d *schema.ResourceData, meta interface{}) erro
 	}
 	billingProject = strings.TrimPrefix(project, "projects/")
 
-	url, err := tpgresource.ReplaceVars(d, config, "{{GKEHub2BasePath}}projects/{{project}}/locations/{{location}}/features/{{name}}")
+	url, err := tpgresource.ReplaceVarsForId(d, config, "{{GKEHub2BasePath}}projects/{{project}}/locations/{{location}}/features/{{name}}")
 	if err != nil {
 		return err
 	}
-	url = strings.ReplaceAll(url, "projects/projects/", "projects/")
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Feature %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Feature %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -498,13 +1026,14 @@ func resourceGKEHub2FeatureDelete(d *schema.ResourceData, meta interface{}) erro
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Feature")
 	}
 
 	err = GKEHub2OperationWaitTime(
-		config, res, project, "Deleting Feature", userAgent,
+		config, res, tpgresource.GetResourceNameFromSelfLink(project), "Deleting Feature", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
 	if err != nil {
@@ -518,26 +1047,36 @@ func resourceGKEHub2FeatureDelete(d *schema.ResourceData, meta interface{}) erro
 func resourceGKEHub2FeatureImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/features/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)",
-		"(?P<location>[^/]+)/(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/features/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<location>[^/]+)/(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
 
 	// Replace import id for the resource id
-	id, err := tpgresource.ReplaceVars(d, config, "projects/{{project}}/locations/{{location}}/features/{{name}}")
+	id, err := tpgresource.ReplaceVarsForId(d, config, "projects/{{project}}/locations/{{location}}/features/{{name}}")
 	if err != nil {
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}
-	id = strings.ReplaceAll(id, "projects/projects/", "projects/")
 	d.SetId(id)
 
 	return []*schema.ResourceData{d}, nil
 }
 
 func flattenGKEHub2FeatureLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenGKEHub2FeatureResourceState(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -576,6 +1115,8 @@ func flattenGKEHub2FeatureSpec(v interface{}, d *schema.ResourceData, config *tr
 		flattenGKEHub2FeatureSpecMulticlusteringress(original["multiclusteringress"], d, config)
 	transformed["fleetobservability"] =
 		flattenGKEHub2FeatureSpecFleetobservability(original["fleetobservability"], d, config)
+	transformed["clusterupgrade"] =
+		flattenGKEHub2FeatureSpecClusterupgrade(original["clusterupgrade"], d, config)
 	return []interface{}{transformed}
 }
 func flattenGKEHub2FeatureSpecMulticlusteringress(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -657,6 +1198,604 @@ func flattenGKEHub2FeatureSpecFleetobservabilityLoggingConfigFleetScopeLogsConfi
 	return v
 }
 
+func flattenGKEHub2FeatureSpecClusterupgrade(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["upstream_fleets"] =
+		flattenGKEHub2FeatureSpecClusterupgradeUpstreamFleets(original["upstreamFleets"], d, config)
+	transformed["post_conditions"] =
+		flattenGKEHub2FeatureSpecClusterupgradePostConditions(original["postConditions"], d, config)
+	transformed["gke_upgrade_overrides"] =
+		flattenGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverrides(original["gkeUpgradeOverrides"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEHub2FeatureSpecClusterupgradeUpstreamFleets(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureSpecClusterupgradePostConditions(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["soaking"] =
+		flattenGKEHub2FeatureSpecClusterupgradePostConditionsSoaking(original["soaking"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEHub2FeatureSpecClusterupgradePostConditionsSoaking(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverrides(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"upgrade":         flattenGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesUpgrade(original["upgrade"], d, config),
+			"post_conditions": flattenGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesPostConditions(original["postConditions"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesUpgrade(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["name"] =
+		flattenGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesUpgradeName(original["name"], d, config)
+	transformed["version"] =
+		flattenGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesUpgradeVersion(original["version"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesUpgradeName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesUpgradeVersion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesPostConditions(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["soaking"] =
+		flattenGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesPostConditionsSoaking(original["soaking"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesPostConditionsSoaking(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["mesh"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigMesh(original["mesh"], d, config)
+	transformed["configmanagement"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagement(original["configmanagement"], d, config)
+	transformed["policycontroller"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontroller(original["policycontroller"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEHub2FeatureFleetDefaultMemberConfigMesh(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["management"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigMeshManagement(original["management"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEHub2FeatureFleetDefaultMemberConfigMeshManagement(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagement(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["version"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementVersion(original["version"], d, config)
+	transformed["config_sync"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSync(original["configSync"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementVersion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSync(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["source_format"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncSourceFormat(original["sourceFormat"], d, config)
+	transformed["enabled"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncEnabled(original["enabled"], d, config)
+	transformed["prevent_drift"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncPreventDrift(original["preventDrift"], d, config)
+	transformed["git"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGit(original["git"], d, config)
+	transformed["oci"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOci(original["oci"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncSourceFormat(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncPreventDrift(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGit(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["sync_repo"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSyncRepo(original["syncRepo"], d, config)
+	transformed["sync_branch"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSyncBranch(original["syncBranch"], d, config)
+	transformed["policy_dir"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitPolicyDir(original["policyDir"], d, config)
+	transformed["sync_rev"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSyncRev(original["syncRev"], d, config)
+	transformed["secret_type"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSecretType(original["secretType"], d, config)
+	transformed["https_proxy"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitHttpsProxy(original["httpsProxy"], d, config)
+	transformed["gcp_service_account_email"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitGcpServiceAccountEmail(original["gcpServiceAccountEmail"], d, config)
+	transformed["sync_wait_secs"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSyncWaitSecs(original["syncWaitSecs"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSyncRepo(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSyncBranch(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitPolicyDir(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSyncRev(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSecretType(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitHttpsProxy(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitGcpServiceAccountEmail(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSyncWaitSecs(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOci(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["sync_repo"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciSyncRepo(original["syncRepo"], d, config)
+	transformed["policy_dir"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciPolicyDir(original["policyDir"], d, config)
+	transformed["secret_type"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciSecretType(original["secretType"], d, config)
+	transformed["gcp_service_account_email"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciGcpServiceAccountEmail(original["gcpServiceAccountEmail"], d, config)
+	transformed["sync_wait_secs"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciSyncWaitSecs(original["syncWaitSecs"], d, config)
+	transformed["version"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciVersion(original["version"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciSyncRepo(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciPolicyDir(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciSecretType(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciGcpServiceAccountEmail(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciSyncWaitSecs(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciVersion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontroller(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["version"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerVersion(original["version"], d, config)
+	transformed["policy_controller_hub_config"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfig(original["policyControllerHubConfig"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerVersion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["install_spec"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigInstallSpec(original["installSpec"], d, config)
+	transformed["audit_interval_seconds"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigAuditIntervalSeconds(original["auditIntervalSeconds"], d, config)
+	transformed["exemptable_namespaces"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigExemptableNamespaces(original["exemptableNamespaces"], d, config)
+	transformed["log_denies_enabled"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigLogDeniesEnabled(original["logDeniesEnabled"], d, config)
+	transformed["mutation_enabled"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigMutationEnabled(original["mutationEnabled"], d, config)
+	transformed["referential_rules_enabled"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigReferentialRulesEnabled(original["referentialRulesEnabled"], d, config)
+	transformed["monitoring"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigMonitoring(original["monitoring"], d, config)
+	transformed["constraint_violation_limit"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigConstraintViolationLimit(original["constraintViolationLimit"], d, config)
+	transformed["deployment_configs"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigs(original["deploymentConfigs"], d, config)
+	transformed["policy_content"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContent(original["policyContent"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigInstallSpec(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigAuditIntervalSeconds(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigExemptableNamespaces(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigLogDeniesEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigMutationEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigReferentialRulesEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigMonitoring(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["backends"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigMonitoringBackends(original["backends"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigMonitoringBackends(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigConstraintViolationLimit(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigs(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.(map[string]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for k, raw := range l {
+		original := raw.(map[string]interface{})
+		transformed = append(transformed, map[string]interface{}{
+			"component":           k,
+			"replica_count":       flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsReplicaCount(original["replicaCount"], d, config),
+			"container_resources": flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResources(original["containerResources"], d, config),
+			"pod_affinity":        flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodAffinity(original["podAffinity"], d, config),
+			"pod_toleration":      flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodToleration(original["podTolerations"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsReplicaCount(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResources(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["limits"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesLimits(original["limits"], d, config)
+	transformed["requests"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesRequests(original["requests"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesLimits(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["memory"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesLimitsMemory(original["memory"], d, config)
+	transformed["cpu"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesLimitsCpu(original["cpu"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesLimitsMemory(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesLimitsCpu(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesRequests(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["memory"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesRequestsMemory(original["memory"], d, config)
+	transformed["cpu"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesRequestsCpu(original["cpu"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesRequestsMemory(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesRequestsCpu(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodAffinity(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodToleration(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"key":      flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodTolerationKey(original["key"], d, config),
+			"operator": flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodTolerationOperator(original["operator"], d, config),
+			"value":    flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodTolerationValue(original["value"], d, config),
+			"effect":   flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodTolerationEffect(original["effect"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodTolerationKey(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodTolerationOperator(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodTolerationValue(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodTolerationEffect(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContent(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["template_library"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContentTemplateLibrary(original["templateLibrary"], d, config)
+	transformed["bundles"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContentBundles(original["bundles"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContentTemplateLibrary(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["installation"] =
+		flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContentTemplateLibraryInstallation(original["installation"], d, config)
+	return []interface{}{transformed}
+}
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContentTemplateLibraryInstallation(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContentBundles(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.(map[string]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for k, raw := range l {
+		original := raw.(map[string]interface{})
+		transformed = append(transformed, map[string]interface{}{
+			"bundle":              k,
+			"exempted_namespaces": flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContentBundlesExemptedNamespaces(original["exemptedNamespaces"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContentBundlesExemptedNamespaces(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenGKEHub2FeatureState(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return nil
@@ -711,15 +1850,23 @@ func flattenGKEHub2FeatureDeleteTime(v interface{}, d *schema.ResourceData, conf
 	return v
 }
 
-func expandGKEHub2FeatureLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+func flattenGKEHub2FeatureTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
-		return map[string]string{}, nil
+		return v
 	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
 	}
-	return m, nil
+
+	return transformed
+}
+
+func flattenGKEHub2FeatureEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
 }
 
 func expandGKEHub2FeatureSpec(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -743,6 +1890,13 @@ func expandGKEHub2FeatureSpec(v interface{}, d tpgresource.TerraformResourceData
 		return nil, err
 	} else if val := reflect.ValueOf(transformedFleetobservability); val.IsValid() && !tpgresource.IsEmptyValue(val) {
 		transformed["fleetobservability"] = transformedFleetobservability
+	}
+
+	transformedClusterupgrade, err := expandGKEHub2FeatureSpecClusterupgrade(original["clusterupgrade"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedClusterupgrade); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["clusterupgrade"] = transformedClusterupgrade
 	}
 
 	return transformed, nil
@@ -860,4 +2014,932 @@ func expandGKEHub2FeatureSpecFleetobservabilityLoggingConfigFleetScopeLogsConfig
 
 func expandGKEHub2FeatureSpecFleetobservabilityLoggingConfigFleetScopeLogsConfigMode(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandGKEHub2FeatureSpecClusterupgrade(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedUpstreamFleets, err := expandGKEHub2FeatureSpecClusterupgradeUpstreamFleets(original["upstream_fleets"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedUpstreamFleets); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["upstreamFleets"] = transformedUpstreamFleets
+	}
+
+	transformedPostConditions, err := expandGKEHub2FeatureSpecClusterupgradePostConditions(original["post_conditions"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPostConditions); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["postConditions"] = transformedPostConditions
+	}
+
+	transformedGkeUpgradeOverrides, err := expandGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverrides(original["gke_upgrade_overrides"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedGkeUpgradeOverrides); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["gkeUpgradeOverrides"] = transformedGkeUpgradeOverrides
+	}
+
+	return transformed, nil
+}
+
+func expandGKEHub2FeatureSpecClusterupgradeUpstreamFleets(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureSpecClusterupgradePostConditions(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedSoaking, err := expandGKEHub2FeatureSpecClusterupgradePostConditionsSoaking(original["soaking"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSoaking); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["soaking"] = transformedSoaking
+	}
+
+	return transformed, nil
+}
+
+func expandGKEHub2FeatureSpecClusterupgradePostConditionsSoaking(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverrides(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedUpgrade, err := expandGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesUpgrade(original["upgrade"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedUpgrade); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["upgrade"] = transformedUpgrade
+		}
+
+		transformedPostConditions, err := expandGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesPostConditions(original["post_conditions"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedPostConditions); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["postConditions"] = transformedPostConditions
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesUpgrade(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedName, err := expandGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesUpgradeName(original["name"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedName); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["name"] = transformedName
+	}
+
+	transformedVersion, err := expandGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesUpgradeVersion(original["version"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedVersion); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["version"] = transformedVersion
+	}
+
+	return transformed, nil
+}
+
+func expandGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesUpgradeName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesUpgradeVersion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesPostConditions(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedSoaking, err := expandGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesPostConditionsSoaking(original["soaking"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSoaking); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["soaking"] = transformedSoaking
+	}
+
+	return transformed, nil
+}
+
+func expandGKEHub2FeatureSpecClusterupgradeGkeUpgradeOverridesPostConditionsSoaking(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedMesh, err := expandGKEHub2FeatureFleetDefaultMemberConfigMesh(original["mesh"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMesh); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["mesh"] = transformedMesh
+	}
+
+	transformedConfigmanagement, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagement(original["configmanagement"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedConfigmanagement); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["configmanagement"] = transformedConfigmanagement
+	}
+
+	transformedPolicycontroller, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontroller(original["policycontroller"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPolicycontroller); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["policycontroller"] = transformedPolicycontroller
+	}
+
+	return transformed, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigMesh(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedManagement, err := expandGKEHub2FeatureFleetDefaultMemberConfigMeshManagement(original["management"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedManagement); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["management"] = transformedManagement
+	}
+
+	return transformed, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigMeshManagement(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagement(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedVersion, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementVersion(original["version"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedVersion); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["version"] = transformedVersion
+	}
+
+	transformedConfigSync, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSync(original["config_sync"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedConfigSync); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["configSync"] = transformedConfigSync
+	}
+
+	return transformed, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementVersion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSync(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedSourceFormat, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncSourceFormat(original["source_format"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSourceFormat); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["sourceFormat"] = transformedSourceFormat
+	}
+
+	transformedEnabled, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncEnabled(original["enabled"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedEnabled); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["enabled"] = transformedEnabled
+	}
+
+	transformedPreventDrift, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncPreventDrift(original["prevent_drift"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPreventDrift); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["preventDrift"] = transformedPreventDrift
+	}
+
+	transformedGit, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGit(original["git"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedGit); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["git"] = transformedGit
+	}
+
+	transformedOci, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOci(original["oci"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedOci); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["oci"] = transformedOci
+	}
+
+	return transformed, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncSourceFormat(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncEnabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncPreventDrift(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGit(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedSyncRepo, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSyncRepo(original["sync_repo"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSyncRepo); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["syncRepo"] = transformedSyncRepo
+	}
+
+	transformedSyncBranch, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSyncBranch(original["sync_branch"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSyncBranch); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["syncBranch"] = transformedSyncBranch
+	}
+
+	transformedPolicyDir, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitPolicyDir(original["policy_dir"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPolicyDir); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["policyDir"] = transformedPolicyDir
+	}
+
+	transformedSyncRev, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSyncRev(original["sync_rev"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSyncRev); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["syncRev"] = transformedSyncRev
+	}
+
+	transformedSecretType, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSecretType(original["secret_type"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSecretType); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["secretType"] = transformedSecretType
+	}
+
+	transformedHttpsProxy, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitHttpsProxy(original["https_proxy"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedHttpsProxy); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["httpsProxy"] = transformedHttpsProxy
+	}
+
+	transformedGcpServiceAccountEmail, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitGcpServiceAccountEmail(original["gcp_service_account_email"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedGcpServiceAccountEmail); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["gcpServiceAccountEmail"] = transformedGcpServiceAccountEmail
+	}
+
+	transformedSyncWaitSecs, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSyncWaitSecs(original["sync_wait_secs"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSyncWaitSecs); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["syncWaitSecs"] = transformedSyncWaitSecs
+	}
+
+	return transformed, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSyncRepo(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSyncBranch(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitPolicyDir(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSyncRev(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSecretType(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitHttpsProxy(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitGcpServiceAccountEmail(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncGitSyncWaitSecs(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOci(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedSyncRepo, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciSyncRepo(original["sync_repo"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSyncRepo); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["syncRepo"] = transformedSyncRepo
+	}
+
+	transformedPolicyDir, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciPolicyDir(original["policy_dir"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPolicyDir); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["policyDir"] = transformedPolicyDir
+	}
+
+	transformedSecretType, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciSecretType(original["secret_type"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSecretType); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["secretType"] = transformedSecretType
+	}
+
+	transformedGcpServiceAccountEmail, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciGcpServiceAccountEmail(original["gcp_service_account_email"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedGcpServiceAccountEmail); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["gcpServiceAccountEmail"] = transformedGcpServiceAccountEmail
+	}
+
+	transformedSyncWaitSecs, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciSyncWaitSecs(original["sync_wait_secs"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSyncWaitSecs); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["syncWaitSecs"] = transformedSyncWaitSecs
+	}
+
+	transformedVersion, err := expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciVersion(original["version"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedVersion); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["version"] = transformedVersion
+	}
+
+	return transformed, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciSyncRepo(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciPolicyDir(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciSecretType(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciGcpServiceAccountEmail(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciSyncWaitSecs(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigConfigmanagementConfigSyncOciVersion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontroller(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedVersion, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerVersion(original["version"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedVersion); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["version"] = transformedVersion
+	}
+
+	transformedPolicyControllerHubConfig, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfig(original["policy_controller_hub_config"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPolicyControllerHubConfig); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["policyControllerHubConfig"] = transformedPolicyControllerHubConfig
+	}
+
+	return transformed, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerVersion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedInstallSpec, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigInstallSpec(original["install_spec"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedInstallSpec); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["installSpec"] = transformedInstallSpec
+	}
+
+	transformedAuditIntervalSeconds, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigAuditIntervalSeconds(original["audit_interval_seconds"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAuditIntervalSeconds); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["auditIntervalSeconds"] = transformedAuditIntervalSeconds
+	}
+
+	transformedExemptableNamespaces, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigExemptableNamespaces(original["exemptable_namespaces"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedExemptableNamespaces); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["exemptableNamespaces"] = transformedExemptableNamespaces
+	}
+
+	transformedLogDeniesEnabled, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigLogDeniesEnabled(original["log_denies_enabled"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedLogDeniesEnabled); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["logDeniesEnabled"] = transformedLogDeniesEnabled
+	}
+
+	transformedMutationEnabled, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigMutationEnabled(original["mutation_enabled"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMutationEnabled); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["mutationEnabled"] = transformedMutationEnabled
+	}
+
+	transformedReferentialRulesEnabled, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigReferentialRulesEnabled(original["referential_rules_enabled"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedReferentialRulesEnabled); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["referentialRulesEnabled"] = transformedReferentialRulesEnabled
+	}
+
+	transformedMonitoring, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigMonitoring(original["monitoring"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMonitoring); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["monitoring"] = transformedMonitoring
+	}
+
+	transformedConstraintViolationLimit, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigConstraintViolationLimit(original["constraint_violation_limit"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedConstraintViolationLimit); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["constraintViolationLimit"] = transformedConstraintViolationLimit
+	}
+
+	transformedDeploymentConfigs, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigs(original["deployment_configs"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDeploymentConfigs); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["deploymentConfigs"] = transformedDeploymentConfigs
+	}
+
+	transformedPolicyContent, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContent(original["policy_content"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPolicyContent); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["policyContent"] = transformedPolicyContent
+	}
+
+	return transformed, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigInstallSpec(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigAuditIntervalSeconds(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigExemptableNamespaces(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigLogDeniesEnabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigMutationEnabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigReferentialRulesEnabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigMonitoring(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedBackends, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigMonitoringBackends(original["backends"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedBackends); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["backends"] = transformedBackends
+	}
+
+	return transformed, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigMonitoringBackends(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigConstraintViolationLimit(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigs(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]interface{}, error) {
+	if v == nil {
+		return map[string]interface{}{}, nil
+	}
+	m := make(map[string]interface{})
+	for _, raw := range v.(*schema.Set).List() {
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedReplicaCount, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsReplicaCount(original["replica_count"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedReplicaCount); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["replicaCount"] = transformedReplicaCount
+		}
+
+		transformedContainerResources, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResources(original["container_resources"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedContainerResources); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["containerResources"] = transformedContainerResources
+		}
+
+		transformedPodAffinity, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodAffinity(original["pod_affinity"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedPodAffinity); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["podAffinity"] = transformedPodAffinity
+		}
+
+		transformedPodToleration, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodToleration(original["pod_toleration"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedPodToleration); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["podTolerations"] = transformedPodToleration
+		}
+
+		transformedComponent, err := tpgresource.ExpandString(original["component"], d, config)
+		if err != nil {
+			return nil, err
+		}
+		m[transformedComponent] = transformed
+	}
+	return m, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsReplicaCount(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResources(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedLimits, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesLimits(original["limits"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedLimits); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["limits"] = transformedLimits
+	}
+
+	transformedRequests, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesRequests(original["requests"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedRequests); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["requests"] = transformedRequests
+	}
+
+	return transformed, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesLimits(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedMemory, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesLimitsMemory(original["memory"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMemory); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["memory"] = transformedMemory
+	}
+
+	transformedCpu, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesLimitsCpu(original["cpu"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedCpu); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["cpu"] = transformedCpu
+	}
+
+	return transformed, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesLimitsMemory(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesLimitsCpu(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesRequests(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedMemory, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesRequestsMemory(original["memory"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMemory); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["memory"] = transformedMemory
+	}
+
+	transformedCpu, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesRequestsCpu(original["cpu"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedCpu); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["cpu"] = transformedCpu
+	}
+
+	return transformed, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesRequestsMemory(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesRequestsCpu(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodAffinity(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodToleration(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedKey, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodTolerationKey(original["key"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedKey); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["key"] = transformedKey
+		}
+
+		transformedOperator, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodTolerationOperator(original["operator"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedOperator); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["operator"] = transformedOperator
+		}
+
+		transformedValue, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodTolerationValue(original["value"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedValue); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["value"] = transformedValue
+		}
+
+		transformedEffect, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodTolerationEffect(original["effect"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedEffect); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["effect"] = transformedEffect
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodTolerationKey(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodTolerationOperator(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodTolerationValue(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodTolerationEffect(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContent(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedTemplateLibrary, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContentTemplateLibrary(original["template_library"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedTemplateLibrary); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["templateLibrary"] = transformedTemplateLibrary
+	}
+
+	transformedBundles, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContentBundles(original["bundles"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedBundles); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["bundles"] = transformedBundles
+	}
+
+	return transformed, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContentTemplateLibrary(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedInstallation, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContentTemplateLibraryInstallation(original["installation"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedInstallation); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["installation"] = transformedInstallation
+	}
+
+	return transformed, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContentTemplateLibraryInstallation(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContentBundles(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]interface{}, error) {
+	if v == nil {
+		return map[string]interface{}{}, nil
+	}
+	m := make(map[string]interface{})
+	for _, raw := range v.(*schema.Set).List() {
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedExemptedNamespaces, err := expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContentBundlesExemptedNamespaces(original["exempted_namespaces"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedExemptedNamespaces); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["exemptedNamespaces"] = transformedExemptedNamespaces
+		}
+
+		transformedBundle, err := tpgresource.ExpandString(original["bundle"], d, config)
+		if err != nil {
+			return nil, err
+		}
+		m[transformedBundle] = transformed
+	}
+	return m, nil
+}
+
+func expandGKEHub2FeatureFleetDefaultMemberConfigPolicycontrollerPolicyControllerHubConfigPolicyContentBundlesExemptedNamespaces(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandGKEHub2FeatureEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }

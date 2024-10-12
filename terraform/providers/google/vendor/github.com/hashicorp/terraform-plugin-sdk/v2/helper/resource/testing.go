@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package resource
 
 import (
@@ -12,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/mitchellh/go-testing-interface"
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
@@ -551,6 +553,16 @@ type TestStep struct {
 	// ImportStateCheck checks the results of ImportState. It should be
 	// used to verify that the resulting value of ImportState has the
 	// proper resources, IDs, and attributes.
+	//
+	// Prefer ImportStateVerify over ImportStateCheck, unless the resource
+	// import explicitly is expected to create multiple resources (not a
+	// recommended resource implementation) or if attributes are imported with
+	// syntactically different but semantically/functionally equivalent values
+	// where special logic is needed.
+	//
+	// Terraform versions 1.3 and later can include data source states during
+	// import, which the testing framework will skip to prevent the need for
+	// Terraform version specific logic in provider testing.
 	ImportStateCheck ImportStateCheckFunc
 
 	// ImportStateVerify, if true, will also check that the state values
@@ -823,15 +835,15 @@ func ComposeTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 // TestCheckFuncs and aggregates failures.
 func ComposeAggregateTestCheckFunc(fs ...TestCheckFunc) TestCheckFunc {
 	return func(s *terraform.State) error {
-		var result *multierror.Error
+		var result []error
 
 		for i, f := range fs {
 			if err := f(s); err != nil {
-				result = multierror.Append(result, fmt.Errorf("Check %d/%d error: %s", i+1, len(fs), err))
+				result = append(result, fmt.Errorf("Check %d/%d error: %w", i+1, len(fs), err))
 			}
 		}
 
-		return result.ErrorOrNil()
+		return errors.Join(result...)
 	}
 }
 

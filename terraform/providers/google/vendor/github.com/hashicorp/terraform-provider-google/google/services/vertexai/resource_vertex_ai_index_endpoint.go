@@ -20,10 +20,12 @@ package vertexai
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -47,6 +49,11 @@ func ResourceVertexAIIndexEndpoint() *schema.Resource {
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
+		),
+
 		Schema: map[string]*schema.Schema{
 			"display_name": {
 				Type:        schema.TypeString,
@@ -59,10 +66,13 @@ func ResourceVertexAIIndexEndpoint() *schema.Resource {
 				Description: `The description of the Index.`,
 			},
 			"labels": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: `The labels with user-defined metadata to organize your Indexes.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `The labels with user-defined metadata to organize your Indexes.
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"network": {
 				Type:     schema.TypeString,
@@ -72,6 +82,41 @@ func ResourceVertexAIIndexEndpoint() *schema.Resource {
 Private services access must already be configured for the network. If left unspecified, the index endpoint is not peered with any network.
 [Format](https://cloud.google.com/compute/docs/reference/rest/v1/networks/insert): 'projects/{project}/global/networks/{network}'.
 Where '{project}' is a project number, as in '12345', and '{network}' is network name.`,
+				ConflictsWith: []string{"private_service_connect_config"},
+			},
+			"private_service_connect_config": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `Optional. Configuration for private service connect. 'network' and 'privateServiceConnectConfig' are mutually exclusive.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"enable_private_service_connect": {
+							Type:        schema.TypeBool,
+							Required:    true,
+							ForceNew:    true,
+							Description: `If set to true, the IndexEndpoint is created without private service access.`,
+						},
+						"project_allowlist": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							ForceNew:    true,
+							Description: `A list of Projects from which the forwarding rule will target the service attachment.`,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
+				ConflictsWith: []string{"network"},
+			},
+			"public_endpoint_enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `If true, the deployed index will be accessible through public endpoint.`,
 			},
 			"region": {
 				Type:        schema.TypeString,
@@ -84,6 +129,12 @@ Where '{project}' is a project number, as in '12345', and '{network}' is network
 				Computed:    true,
 				Description: `The timestamp of when the Index was created in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine fractional digits.`,
 			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"etag": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -93,6 +144,18 @@ Where '{project}' is a project number, as in '12345', and '{network}' is network
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `The resource name of the Index.`,
+			},
+			"public_endpoint_domain_name": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `If publicEndpointEnabled is true, this field will be populated with the domain name to use for this index endpoint.`,
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"update_time": {
 				Type:        schema.TypeString,
@@ -130,17 +193,29 @@ func resourceVertexAIIndexEndpointCreate(d *schema.ResourceData, meta interface{
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(descriptionProp)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
-	labelsProp, err := expandVertexAIIndexEndpointLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	networkProp, err := expandVertexAIIndexEndpointNetwork(d.Get("network"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("network"); !tpgresource.IsEmptyValue(reflect.ValueOf(networkProp)) && (ok || !reflect.DeepEqual(v, networkProp)) {
 		obj["network"] = networkProp
+	}
+	privateServiceConnectConfigProp, err := expandVertexAIIndexEndpointPrivateServiceConnectConfig(d.Get("private_service_connect_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("private_service_connect_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(privateServiceConnectConfigProp)) && (ok || !reflect.DeepEqual(v, privateServiceConnectConfigProp)) {
+		obj["privateServiceConnectConfig"] = privateServiceConnectConfigProp
+	}
+	publicEndpointEnabledProp, err := expandVertexAIIndexEndpointPublicEndpointEnabled(d.Get("public_endpoint_enabled"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("public_endpoint_enabled"); !tpgresource.IsEmptyValue(reflect.ValueOf(publicEndpointEnabledProp)) && (ok || !reflect.DeepEqual(v, publicEndpointEnabledProp)) {
+		obj["publicEndpointEnabled"] = publicEndpointEnabledProp
+	}
+	labelsProp, err := expandVertexAIIndexEndpointEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{VertexAIBasePath}}projects/{{project}}/locations/{{region}}/indexEndpoints")
@@ -162,6 +237,7 @@ func resourceVertexAIIndexEndpointCreate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -170,6 +246,7 @@ func resourceVertexAIIndexEndpointCreate(d *schema.ResourceData, meta interface{
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating IndexEndpoint: %s", err)
@@ -236,12 +313,14 @@ func resourceVertexAIIndexEndpointRead(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("VertexAIIndexEndpoint %q", d.Id()))
@@ -270,6 +349,18 @@ func resourceVertexAIIndexEndpointRead(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("Error reading IndexEndpoint: %s", err)
 	}
 	if err := d.Set("network", flattenVertexAIIndexEndpointNetwork(res["network"], d, config)); err != nil {
+		return fmt.Errorf("Error reading IndexEndpoint: %s", err)
+	}
+	if err := d.Set("private_service_connect_config", flattenVertexAIIndexEndpointPrivateServiceConnectConfig(res["privateServiceConnectConfig"], d, config)); err != nil {
+		return fmt.Errorf("Error reading IndexEndpoint: %s", err)
+	}
+	if err := d.Set("public_endpoint_domain_name", flattenVertexAIIndexEndpointPublicEndpointDomainName(res["publicEndpointDomainName"], d, config)); err != nil {
+		return fmt.Errorf("Error reading IndexEndpoint: %s", err)
+	}
+	if err := d.Set("terraform_labels", flattenVertexAIIndexEndpointTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading IndexEndpoint: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenVertexAIIndexEndpointEffectiveLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading IndexEndpoint: %s", err)
 	}
 
@@ -304,10 +395,10 @@ func resourceVertexAIIndexEndpointUpdate(d *schema.ResourceData, meta interface{
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
-	labelsProp, err := expandVertexAIIndexEndpointLabels(d.Get("labels"), d, config)
+	labelsProp, err := expandVertexAIIndexEndpointEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
 		obj["labels"] = labelsProp
 	}
 
@@ -317,6 +408,7 @@ func resourceVertexAIIndexEndpointUpdate(d *schema.ResourceData, meta interface{
 	}
 
 	log.Printf("[DEBUG] Updating IndexEndpoint %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -327,7 +419,7 @@ func resourceVertexAIIndexEndpointUpdate(d *schema.ResourceData, meta interface{
 		updateMask = append(updateMask, "description")
 	}
 
-	if d.HasChange("labels") {
+	if d.HasChange("effective_labels") {
 		updateMask = append(updateMask, "labels")
 	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
@@ -342,20 +434,25 @@ func resourceVertexAIIndexEndpointUpdate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating IndexEndpoint %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating IndexEndpoint %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating IndexEndpoint %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating IndexEndpoint %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceVertexAIIndexEndpointRead(d, meta)
@@ -382,13 +479,15 @@ func resourceVertexAIIndexEndpointDelete(d *schema.ResourceData, meta interface{
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting IndexEndpoint %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting IndexEndpoint %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -397,6 +496,7 @@ func resourceVertexAIIndexEndpointDelete(d *schema.ResourceData, meta interface{
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "IndexEndpoint")
@@ -417,10 +517,10 @@ func resourceVertexAIIndexEndpointDelete(d *schema.ResourceData, meta interface{
 func resourceVertexAIIndexEndpointImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<region>[^/]+)/indexEndpoints/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<region>[^/]+)/indexEndpoints/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -451,7 +551,18 @@ func flattenVertexAIIndexEndpointDescription(v interface{}, d *schema.ResourceDa
 }
 
 func flattenVertexAIIndexEndpointLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenVertexAIIndexEndpointCreateTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -466,6 +577,58 @@ func flattenVertexAIIndexEndpointNetwork(v interface{}, d *schema.ResourceData, 
 	return v
 }
 
+func flattenVertexAIIndexEndpointPrivateServiceConnectConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	transformed := make(map[string]interface{})
+
+	if v == nil {
+		// Disabled by default, but API will not return object if value is false
+		transformed["enable_private_service_connect"] = false
+		return []interface{}{transformed}
+	}
+
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+
+	transformed["enable_private_service_connect"] =
+		flattenVertexAIIndexEndpointPrivateServiceConnectConfigEnablePrivateServiceConnect(original["enablePrivateServiceConnect"], d, config)
+	transformed["project_allowlist"] =
+		flattenVertexAIIndexEndpointPrivateServiceConnectConfigProjectAllowlist(original["projectAllowlist"], d, config)
+	return []interface{}{transformed}
+}
+
+func flattenVertexAIIndexEndpointPrivateServiceConnectConfigEnablePrivateServiceConnect(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenVertexAIIndexEndpointPrivateServiceConnectConfigProjectAllowlist(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenVertexAIIndexEndpointPublicEndpointDomainName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenVertexAIIndexEndpointTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenVertexAIIndexEndpointEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func expandVertexAIIndexEndpointDisplayName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
@@ -474,7 +637,49 @@ func expandVertexAIIndexEndpointDescription(v interface{}, d tpgresource.Terrafo
 	return v, nil
 }
 
-func expandVertexAIIndexEndpointLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+func expandVertexAIIndexEndpointNetwork(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandVertexAIIndexEndpointPrivateServiceConnectConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedEnablePrivateServiceConnect, err := expandVertexAIIndexEndpointPrivateServiceConnectConfigEnablePrivateServiceConnect(original["enable_private_service_connect"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedEnablePrivateServiceConnect); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["enablePrivateServiceConnect"] = transformedEnablePrivateServiceConnect
+	}
+
+	transformedProjectAllowlist, err := expandVertexAIIndexEndpointPrivateServiceConnectConfigProjectAllowlist(original["project_allowlist"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedProjectAllowlist); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["projectAllowlist"] = transformedProjectAllowlist
+	}
+
+	return transformed, nil
+}
+
+func expandVertexAIIndexEndpointPrivateServiceConnectConfigEnablePrivateServiceConnect(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandVertexAIIndexEndpointPrivateServiceConnectConfigProjectAllowlist(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandVertexAIIndexEndpointPublicEndpointEnabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandVertexAIIndexEndpointEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
 	if v == nil {
 		return map[string]string{}, nil
 	}
@@ -483,8 +688,4 @@ func expandVertexAIIndexEndpointLabels(v interface{}, d tpgresource.TerraformRes
 		m[k] = val.(string)
 	}
 	return m, nil
-}
-
-func expandVertexAIIndexEndpointNetwork(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
 }

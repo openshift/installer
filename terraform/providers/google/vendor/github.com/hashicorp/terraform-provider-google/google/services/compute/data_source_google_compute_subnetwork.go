@@ -33,6 +33,10 @@ func DataSourceGoogleComputeSubnetwork() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"internal_ipv6_prefix": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"private_ip_google_access": {
 				Type:     schema.TypeBool,
 				Computed: true,
@@ -87,14 +91,18 @@ func dataSourceGoogleComputeSubnetworkRead(d *schema.ResourceData, meta interfac
 	if err != nil {
 		return err
 	}
+	id := fmt.Sprintf("projects/%s/regions/%s/subnetworks/%s", project, region, name)
 
 	subnetwork, err := config.NewComputeClient(userAgent).Subnetworks.Get(project, region, name).Do()
 	if err != nil {
-		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("Subnetwork Not Found : %s", name))
+		return transport_tpg.HandleDataSourceNotFoundError(err, d, fmt.Sprintf("Subnetwork Not Found : %s", name), id)
 	}
 
 	if err := d.Set("ip_cidr_range", subnetwork.IpCidrRange); err != nil {
 		return fmt.Errorf("Error setting ip_cidr_range: %s", err)
+	}
+	if err := d.Set("internal_ipv6_prefix", subnetwork.InternalIpv6Prefix); err != nil {
+		return fmt.Errorf("Error setting internal_ipv6_prefix: %s", err)
 	}
 	if err := d.Set("private_ip_google_access", subnetwork.PrivateIpGoogleAccess); err != nil {
 		return fmt.Errorf("Error setting private_ip_google_access: %s", err)
@@ -124,7 +132,7 @@ func dataSourceGoogleComputeSubnetworkRead(d *schema.ResourceData, meta interfac
 		return fmt.Errorf("Error setting secondary_ip_range: %s", err)
 	}
 
-	d.SetId(fmt.Sprintf("projects/%s/regions/%s/subnetworks/%s", project, region, name))
+	d.SetId(id)
 	return nil
 }
 

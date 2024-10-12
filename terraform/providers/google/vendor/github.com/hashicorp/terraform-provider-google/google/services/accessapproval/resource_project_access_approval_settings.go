@@ -20,6 +20,7 @@ package accessapproval
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -89,8 +90,8 @@ resources of that resource. A maximum of 50 email addresses are allowed.`,
 			"project": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Deprecated:  "Deprecated in favor of `project_id`",
-				Description: `Deprecated in favor of 'project_id'`,
+				Deprecated:  "`project` is deprecated and will be removed in a future major release. Use `project_id` instead.",
+				Description: `Project id.`,
 			},
 			"ancestor_has_active_key_version": {
 				Type:        schema.TypeBool,
@@ -195,6 +196,7 @@ func resourceAccessApprovalProjectSettingsCreate(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("notification_emails") {
@@ -226,6 +228,7 @@ func resourceAccessApprovalProjectSettingsCreate(d *schema.ResourceData, meta in
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating ProjectSettings: %s", err)
@@ -265,12 +268,14 @@ func resourceAccessApprovalProjectSettingsRead(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("AccessApprovalProjectSettings %q", d.Id()))
@@ -345,6 +350,7 @@ func resourceAccessApprovalProjectSettingsUpdate(d *schema.ResourceData, meta in
 	}
 
 	log.Printf("[DEBUG] Updating ProjectSettings %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("notification_emails") {
@@ -374,20 +380,25 @@ func resourceAccessApprovalProjectSettingsUpdate(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating ProjectSettings %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating ProjectSettings %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating ProjectSettings %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating ProjectSettings %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceAccessApprovalProjectSettingsRead(d, meta)
@@ -445,8 +456,8 @@ func resourceAccessApprovalProjectSettingsDelete(d *schema.ResourceData, meta in
 func resourceAccessApprovalProjectSettingsImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project_id>[^/]+)/accessApprovalSettings",
-		"(?P<project_id>[^/]+)",
+		"^projects/(?P<project_id>[^/]+)/accessApprovalSettings$",
+		"^(?P<project_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
