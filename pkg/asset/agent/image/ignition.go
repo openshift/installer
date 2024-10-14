@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"net"
 	"net/url"
 	"path"
@@ -48,6 +49,7 @@ const extraManifestPath = "/etc/assisted/extra-manifests"
 const registriesConfPath = "/etc/containers/registries.conf"
 const registryCABundlePath = "/etc/pki/ca-trust/source/anchors/domain.crt"
 const clusterConfigPath = "/etc/assisted/clusterconfig"
+const chronyConfPath = "/etc/chrony.conf"
 
 // Ignition is an asset that generates the agent installer ignition file.
 type Ignition struct {
@@ -330,6 +332,11 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 	}
 
 	err = addExtraManifests(&config, extraManifests)
+	if err != nil {
+		return err
+	}
+
+	err = addNTPSources(&config, infraEnv)
 	if err != nil {
 		return err
 	}
@@ -706,4 +713,29 @@ func getPublicContainerRegistries(registriesConfig *mirror.RegistriesConf) strin
 	}
 
 	return "quay.io"
+}
+
+func addNTPSources(config *igntypes.Config, infraEnv *v1beta1.InfraEnv) error {
+	if len(infraEnv.Spec.AdditionalNTPSources) == 0 {
+		return nil
+	}
+
+	chronyConfTemplate := `{{ range . }}server {{ . }} iburst
+{{ end }}makestep 1.0 3
+rtcsync
+logdir /var/log/chrony
+`
+	tmpl, err := template.New("chronyConf").Parse(chronyConfTemplate)
+	if err != nil {
+		return fmt.Errorf("error while parsing template for %s file: %w", chronyConfPath, err)
+	}
+
+	var sb strings.Builder
+	err = tmpl.Execute(&sb, infraEnv.Spec.AdditionalNTPSources)
+	if err != nil {
+		return fmt.Errorf("error while generating %s file: %w", chronyConfPath, err)
+	}
+
+	config.Storage.Files = append(config.Storage.Files, ignition.FileFromString(chronyConfPath, "root", 0644, sb.String()))
+	return nil
 }
