@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -395,45 +396,44 @@ func TestIgnition_Generate(t *testing.T) {
 	err = os.Chdir(path.Join(workingDirectory, "../../../../data"))
 	assert.NoError(t, err)
 
-	secretDataBytes, err := base64.StdEncoding.DecodeString("c3VwZXItc2VjcmV0Cg==")
-	assert.NoError(t, err)
-
 	cases := []struct {
 		name                string
-		overrideDeps        []asset.Asset
+		overrideAssets      map[reflect.Type]func(t *testing.T, dep asset.Asset) asset.Asset
 		expectedError       string
 		expectedFiles       []string
 		expectedFileContent map[string]string
 		serviceEnabledMap   map[string]bool
 	}{
 		{
-			name: "no-extra-manifests",
+			name: "default",
 			serviceEnabledMap: map[string]bool{
 				"pre-network-manager-config.service": true,
 				"agent-check-config-image.service":   false},
 			expectedFiles: generatedFiles(),
 		},
 		{
-			name: "default",
-			overrideDeps: []asset.Asset{
-				&manifests.ExtraManifests{
-					FileList: []*asset.File{
-						{
-							Filename: "openshift/test-configmap.yaml",
-							Data: []byte(`
+			name: "with extra manifests",
+			overrideAssets: map[reflect.Type]func(t *testing.T, dep asset.Asset) asset.Asset{
+				reflect.TypeOf(manifests.ExtraManifests{}): func(t *testing.T, dep asset.Asset) asset.Asset {
+					t.Helper()
+					return &manifests.ExtraManifests{
+						FileList: []*asset.File{
+							{
+								Filename: "openshift/test-configmap.yaml",
+								Data: []byte(`
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: agent-test-1
-
+    name: agent-test-1
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: agent-test-2`),
+    name: agent-test-2`),
+							},
 						},
-					},
+					}
 				},
 			},
 			expectedFiles: generatedFiles("/etc/assisted/extra-manifests/test-configmap-0.yaml", "/etc/assisted/extra-manifests/test-configmap-1.yaml"),
@@ -454,49 +454,54 @@ metadata:
 		},
 		{
 			name: "no nmstateconfigs defined, pre-network-manager-config.service should not be enabled",
-			overrideDeps: []asset.Asset{
-				&manifests.AgentManifests{
-					InfraEnv: &aiv1beta1.InfraEnv{
-						Spec: aiv1beta1.InfraEnvSpec{
-							SSHAuthorizedKey: "my-ssh-key",
-						},
-					},
-					ClusterImageSet: &hivev1.ClusterImageSet{
-						Spec: hivev1.ClusterImageSetSpec{
-							ReleaseImage: "registry.ci.openshift.org/origin/release:4.11",
-						},
-					},
-					ClusterDeployment: &hivev1.ClusterDeployment{
-						Spec: hivev1.ClusterDeploymentSpec{
-							ClusterName: "ostest",
-							BaseDomain:  "ostest",
-						},
-					},
-					PullSecret: &v1.Secret{
-						Data: map[string][]byte{
-							".dockerconfigjson": secretDataBytes,
-						},
-					},
-					AgentClusterInstall: &hiveext.AgentClusterInstall{
-						Spec: hiveext.AgentClusterInstallSpec{
-							APIVIP: "192.168.111.5",
-							ProvisionRequirements: hiveext.ProvisionRequirements{
-								ControlPlaneAgents: 3,
-								WorkerAgents:       5,
-							},
-						},
-					},
+			overrideAssets: map[reflect.Type]func(t *testing.T, dep asset.Asset) asset.Asset{
+				reflect.TypeOf(manifests.AgentManifests{}): func(t *testing.T, dep asset.Asset) asset.Asset {
+					t.Helper()
+					am, ok := dep.(*manifests.AgentManifests)
+					assert.True(t, ok)
+					// remove nmstate configuration
+					am.NMStateConfigs = []*aiv1beta1.NMStateConfig{}
+					am.StaticNetworkConfigs = []*models.HostStaticNetworkConfig{}
+					return am
 				},
 			},
 			serviceEnabledMap: map[string]bool{
 				"pre-network-manager-config.service": false},
+		},
+		{
+			name: "with additional ntp sources",
+			overrideAssets: map[reflect.Type]func(t *testing.T, dep asset.Asset) asset.Asset{
+				reflect.TypeOf(manifests.AgentManifests{}): func(t *testing.T, dep asset.Asset) asset.Asset {
+					t.Helper()
+					am, ok := dep.(*manifests.AgentManifests)
+					assert.True(t, ok)
+					am.InfraEnv.Spec.AdditionalNTPSources = []string{"0.clock.ntp.org", "1.clock.ntp.org"}
+					return am
+				},
+			},
+			expectedFiles: generatedFiles("/etc/chrony.conf"),
+			expectedFileContent: map[string]string{
+				"/etc/chrony.conf": `server 0.clock.ntp.org iburst
+server 1.clock.ntp.org iburst
+makestep 1.0 3
+rtcsync
+logdir /var/log/chrony`,
+			},
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			deps := buildIgnitionAssetDefaultDependencies(t)
 
-			overrideDeps(deps, tc.overrideDeps)
+			if tc.overrideAssets != nil {
+				for i, dep := range deps {
+					overrideFunc, found := tc.overrideAssets[reflect.TypeOf(dep).Elem()]
+					if !found {
+						continue
+					}
+					deps[i] = overrideFunc(t, dep)
+				}
+			}
 
 			parents := asset.Parents{}
 			parents.Add(deps...)
