@@ -13,7 +13,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/find"
-	"github.com/vmware/govmomi/object"
 	vapitags "github.com/vmware/govmomi/vapi/tags"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -168,7 +167,11 @@ func validateFailureDomain(validationCtx *validationContext, failureDomain *vsph
 		validationCtx.regionTagCategoryID = regionTagCategoryID
 		validationCtx.zoneTagCategoryID = zoneTagCategoryID
 		if failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
-			allErrs = append(allErrs, validateHostTagAttachments(validationCtx, failureDomain.Topology.ComputeCluster, failureDomain.Zone, topologyField.Child("hostGroup"))...)
+			allErrs = append(allErrs, validateTagAttachments(validationCtx, ClusterComputeResource, failureDomain.Topology.ComputeCluster, Region, failureDomain.Zone, topologyField.Child("computeCluster"))...)
+			allErrs = append(allErrs, validateTagAttachments(validationCtx, HostSystem, failureDomain.Topology.ComputeCluster, Zone, failureDomain.Zone, topologyField.Child("hostGroup"))...)
+		} else {
+			allErrs = append(allErrs, validateTagAttachments(validationCtx, Datacenter, failureDomain.Topology.Datacenter, Region, failureDomain.Zone, topologyField.Child("datacenter"))...)
+			allErrs = append(allErrs, validateTagAttachments(validationCtx, ClusterComputeResource, failureDomain.Topology.ComputeCluster, Zone, failureDomain.Zone, topologyField.Child("computeCluster"))...)
 		}
 	}
 
@@ -390,16 +393,6 @@ func computeClusterExists(validationCtx *validationContext, computeCluster strin
 		}
 	}
 
-	if checkTagAttachment {
-		/* TODO: jcallen: fix me...
-		err = validateTagAttachment(validationCtx, computeClusterMo.Reference())
-		if err != nil {
-			return field.ErrorList{field.InternalError(fldPath, err)}
-		}
-
-		*/
-	}
-
 	return field.ErrorList{}
 }
 
@@ -606,11 +599,119 @@ func validateTagCategories(validationCtx *validationContext) (string, string, er
 	return regionTagCategoryID, zoneTagCategoryID, nil
 }
 
+type VSphereObjectType string
+
+const (
+	Datacenter             VSphereObjectType = "Datacenter"
+	ClusterComputeResource VSphereObjectType = "ClusterComputeResource"
+	HostSystem             VSphereObjectType = "HostSystem"
+)
+
+const (
+	Region string = "region"
+	Zone   string = "zone"
+)
+
+func validateTagAttachments(validationCtx *validationContext, objectType VSphereObjectType, objectPath, objectLocation, locationName string, fldPath *field.Path) field.ErrorList {
+	errList := field.ErrorList{}
+	var refs []mo.Reference
+	regionTagCategoryID := validationCtx.regionTagCategoryID
+	zoneTagCategoryID := validationCtx.zoneTagCategoryID
+	if validationCtx.TagManager == nil {
+		return append(errList, field.InternalError(fldPath, errors.New("Tag manager is unavailable")))
+	}
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	defer cancel()
+
+	switch objectType {
+	case Datacenter:
+		obj, err := validationCtx.Finder.Datacenter(ctx, objectPath)
+		if err != nil {
+			return field.ErrorList{field.InternalError(fldPath, err)}
+		}
+		refs = append(refs, obj.Reference())
+	case ClusterComputeResource:
+		obj, err := validationCtx.Finder.ClusterComputeResource(ctx, objectPath)
+		if err != nil {
+			return field.ErrorList{field.InternalError(fldPath, err)}
+		}
+		refs = append(refs, obj.Reference())
+	case HostSystem:
+		ccr, err := validationCtx.Finder.ClusterComputeResource(ctx, objectPath)
+		if err != nil {
+			errList = append(errList, field.Invalid(fldPath, objectPath, err.Error()))
+		}
+		if err != nil {
+			return field.ErrorList{field.InternalError(fldPath, err)}
+		}
+		hosts, err := ccr.Hosts(ctx)
+		if err != nil {
+			errList = append(errList, field.Invalid(fldPath, objectPath, err.Error()))
+		}
+
+		for _, o := range hosts {
+			refs = append(refs, o.Reference())
+		}
+	}
+	attachedTags, err := validationCtx.TagManager.GetAttachedTagsOnObjects(ctx, refs)
+	if err != nil {
+		errList = append(errList, field.Invalid(fldPath, objectPath, err.Error()))
+	}
+
+	for _, ta := range attachedTags {
+		hostTagFound := false
+
+		if findReference(refs, ta.ObjectID) {
+			for _, tag := range ta.Tags {
+				switch objectLocation {
+				case Region:
+					if tag.CategoryID == regionTagCategoryID {
+						return nil
+					}
+				case Zone:
+					if tag.CategoryID == zoneTagCategoryID {
+						if objectType == HostSystem {
+							if tag.Name == locationName {
+								hostTagFound = true
+							}
+						} else {
+							return nil
+						}
+					}
+				}
+			}
+		}
+		if !hostTagFound && objectType == HostSystem {
+			errList = append(errList, field.Invalid(fldPath, ta.ObjectID.Reference().Value, errors.New("no tagged attached to host").Error()))
+		}
+	}
+
+	if objectType != HostSystem {
+		tagCategory := vsphere.TagCategoryRegion
+		if objectLocation == Zone {
+			tagCategory = vsphere.TagCategoryZone
+		}
+
+		errList = append(errList, field.Invalid(fldPath, tagCategory, errors.New("tag associated with tag category not attached to this resource or ancestor").Error()))
+	}
+
+	return errList
+}
+
+func findReference(refs []mo.Reference, ref mo.Reference) bool {
+	for _, r := range refs {
+		if r.Reference().Value == ref.Reference().Value {
+			return true
+		}
+	}
+	return false
+}
+
+/*
 func validateHostTagAttachments(validationCtx *validationContext, cluster, zoneName string, fldPath *field.Path) field.ErrorList {
 	errList := field.ErrorList{}
 	if validationCtx.TagManager == nil {
-		// todo: jcallen: should this really return nil?
-		return nil
+		return append(errList, field.InternalError(fldPath, errors.New("Tag manager is unavailable")))
 	}
 	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 	defer cancel()
@@ -657,7 +758,7 @@ func validateHostTagAttachments(validationCtx *validationContext, cluster, zoneN
 
 func findHostReference(hosts []*object.HostSystem, hostRef mo.Reference) bool {
 	for _, h := range hosts {
-		if h.Reference() == hostRef {
+		if h.Reference().Value == hostRef.Reference().Value {
 			return true
 		}
 	}
@@ -665,10 +766,6 @@ func findHostReference(hosts []*object.HostSystem, hostRef mo.Reference) bool {
 }
 
 func validateTagAttachment(validationCtx *validationContext, reference vim25types.ManagedObjectReference) error {
-	// todo: jcallen: currently this is unused but will need this to make sure that the esxi hosts have the correct tags attached
-	// todo: jcallen: while it doesn't really matter for the installer make sure the performance
-	// todo: jcallen: suggested query of tags is used.
-
 	if validationCtx.TagManager == nil {
 		return nil
 	}
@@ -722,6 +819,8 @@ func validateTagAttachment(validationCtx *validationContext, reference vim25type
 	}
 	return errors.New(strings.Join(errs, ","))
 }
+
+*/
 
 func validateTemplate(validationCtx *validationContext, template string, fldPath *field.Path) field.ErrorList {
 	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
