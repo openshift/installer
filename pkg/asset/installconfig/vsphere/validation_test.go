@@ -140,12 +140,12 @@ const (
 
 */
 
-func createTagAndAttachToType(ctx context.Context, restClient *rest.Client, finder Finder, objectType VSphereObjectType, tagName, categoryID string) error {
+func createTagAndAttachToType(ctx context.Context, restClient *rest.Client, finder Finder, objectType vsphereObjectType, tagName, categoryID string) error {
 	tagMgr := vapitags.NewManager(restClient)
 	var refs []mo.Reference
 
 	switch objectType {
-	case Datacenter:
+	case datacenter:
 		objects, err := finder.DatacenterList(ctx, "/...")
 		if err != nil {
 			return err
@@ -153,7 +153,7 @@ func createTagAndAttachToType(ctx context.Context, restClient *rest.Client, find
 		for _, o := range objects {
 			refs = append(refs, o.Reference())
 		}
-	case ClusterComputeResource:
+	case clusterComputeResource:
 		objects, err := finder.ClusterComputeResourceList(ctx, "/...")
 		if err != nil {
 			return err
@@ -161,7 +161,7 @@ func createTagAndAttachToType(ctx context.Context, restClient *rest.Client, find
 		for _, o := range objects {
 			refs = append(refs, o.Reference())
 		}
-	case HostSystem:
+	case hostSystem:
 		objects, err := finder.HostSystemList(ctx, "/...")
 		if err != nil {
 			return err
@@ -197,12 +197,12 @@ func setupTagAttachmentTest(ctx context.Context, restClient *rest.Client, finder
 		}
 
 		if attachmentMask&tagTestAttachRegionTags != 0 {
-			if err := createTagAndAttachToType(ctx, restClient, finder, Datacenter, "us-east", categoryID); err != nil {
+			if err := createTagAndAttachToType(ctx, restClient, finder, datacenter, "us-east", categoryID); err != nil {
 				return nil, err
 			}
 		}
 		if attachmentMask&tagTestAttachRegionOnClusterTags != 0 {
-			if err := createTagAndAttachToType(ctx, restClient, finder, ClusterComputeResource, "us-east", categoryID); err != nil {
+			if err := createTagAndAttachToType(ctx, restClient, finder, clusterComputeResource, "us-east", categoryID); err != nil {
 				return nil, err
 			}
 		}
@@ -216,12 +216,12 @@ func setupTagAttachmentTest(ctx context.Context, restClient *rest.Client, finder
 			return nil, err
 		}
 		if attachmentMask&tagTestAttachZoneTags != 0 {
-			if err := createTagAndAttachToType(ctx, restClient, finder, ClusterComputeResource, "us-east-1a", categoryID); err != nil {
+			if err := createTagAndAttachToType(ctx, restClient, finder, clusterComputeResource, "us-east-1a", categoryID); err != nil {
 				return nil, err
 			}
 		}
 		if attachmentMask&tagTestAttachZoneOnHostsTags != 0 {
-			if err := createTagAndAttachToType(ctx, restClient, finder, HostSystem, "us-east-1a", categoryID); err != nil {
+			if err := createTagAndAttachToType(ctx, restClient, finder, hostSystem, "us-east-1a", categoryID); err != nil {
 				return nil, err
 			}
 		}

@@ -167,11 +167,11 @@ func validateFailureDomain(validationCtx *validationContext, failureDomain *vsph
 		validationCtx.regionTagCategoryID = regionTagCategoryID
 		validationCtx.zoneTagCategoryID = zoneTagCategoryID
 		if failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
-			allErrs = append(allErrs, validateTagAttachments(validationCtx, ClusterComputeResource, failureDomain.Topology.ComputeCluster, Region, failureDomain.Zone, topologyField.Child("computeCluster"))...)
-			allErrs = append(allErrs, validateTagAttachments(validationCtx, HostSystem, failureDomain.Topology.ComputeCluster, Zone, failureDomain.Zone, topologyField.Child("hostGroup"))...)
+			allErrs = append(allErrs, validateTagAttachments(validationCtx, clusterComputeResource, failureDomain.Topology.ComputeCluster, region, failureDomain.Zone, topologyField.Child("computeCluster"))...)
+			allErrs = append(allErrs, validateTagAttachments(validationCtx, hostSystem, failureDomain.Topology.ComputeCluster, zone, failureDomain.Zone, topologyField.Child("hostGroup"))...)
 		} else {
-			allErrs = append(allErrs, validateTagAttachments(validationCtx, Datacenter, failureDomain.Topology.Datacenter, Region, failureDomain.Zone, topologyField.Child("datacenter"))...)
-			allErrs = append(allErrs, validateTagAttachments(validationCtx, ClusterComputeResource, failureDomain.Topology.ComputeCluster, Zone, failureDomain.Zone, topologyField.Child("computeCluster"))...)
+			allErrs = append(allErrs, validateTagAttachments(validationCtx, datacenter, failureDomain.Topology.Datacenter, region, failureDomain.Zone, topologyField.Child("datacenter"))...)
+			allErrs = append(allErrs, validateTagAttachments(validationCtx, clusterComputeResource, failureDomain.Topology.ComputeCluster, zone, failureDomain.Zone, topologyField.Child("computeCluster"))...)
 		}
 	}
 
@@ -599,20 +599,20 @@ func validateTagCategories(validationCtx *validationContext) (string, string, er
 	return regionTagCategoryID, zoneTagCategoryID, nil
 }
 
-type VSphereObjectType string
+type vsphereObjectType string
 
 const (
-	Datacenter             VSphereObjectType = "Datacenter"
-	ClusterComputeResource VSphereObjectType = "ClusterComputeResource"
-	HostSystem             VSphereObjectType = "HostSystem"
+	datacenter             vsphereObjectType = "Datacenter"
+	clusterComputeResource vsphereObjectType = "ClusterComputeResource"
+	hostSystem             vsphereObjectType = "HostSystem"
 )
 
 const (
-	Region string = "region"
-	Zone   string = "zone"
+	region string = "region"
+	zone   string = "zone"
 )
 
-func validateTagAttachments(validationCtx *validationContext, objectType VSphereObjectType, objectPath, objectLocation, locationName string, fldPath *field.Path) field.ErrorList {
+func validateTagAttachments(validationCtx *validationContext, objectType vsphereObjectType, objectPath, objectLocation, locationName string, fldPath *field.Path) field.ErrorList {
 	errList := field.ErrorList{}
 	var refs []mo.Reference
 	regionTagCategoryID := validationCtx.regionTagCategoryID
@@ -624,19 +624,19 @@ func validateTagAttachments(validationCtx *validationContext, objectType VSphere
 	defer cancel()
 
 	switch objectType {
-	case Datacenter:
+	case datacenter:
 		obj, err := validationCtx.Finder.Datacenter(ctx, objectPath)
 		if err != nil {
 			return field.ErrorList{field.InternalError(fldPath, err)}
 		}
 		refs = append(refs, obj.Reference())
-	case ClusterComputeResource:
+	case clusterComputeResource:
 		obj, err := validationCtx.Finder.ClusterComputeResource(ctx, objectPath)
 		if err != nil {
 			return field.ErrorList{field.InternalError(fldPath, err)}
 		}
 		refs = append(refs, obj.Reference())
-	case HostSystem:
+	case hostSystem:
 		ccr, err := validationCtx.Finder.ClusterComputeResource(ctx, objectPath)
 		if err != nil {
 			errList = append(errList, field.Invalid(fldPath, objectPath, err.Error()))
@@ -664,13 +664,13 @@ func validateTagAttachments(validationCtx *validationContext, objectType VSphere
 		if findReference(refs, ta.ObjectID) {
 			for _, tag := range ta.Tags {
 				switch objectLocation {
-				case Region:
+				case region:
 					if tag.CategoryID == regionTagCategoryID {
 						return nil
 					}
-				case Zone:
+				case zone:
 					if tag.CategoryID == zoneTagCategoryID {
-						if objectType == HostSystem {
+						if objectType == hostSystem {
 							if tag.Name == locationName {
 								hostTagFound = true
 							}
@@ -681,14 +681,14 @@ func validateTagAttachments(validationCtx *validationContext, objectType VSphere
 				}
 			}
 		}
-		if !hostTagFound && objectType == HostSystem {
+		if !hostTagFound && objectType == hostSystem {
 			errList = append(errList, field.Invalid(fldPath, ta.ObjectID.Reference().Value, errors.New("no tagged attached to host").Error()))
 		}
 	}
 
-	if objectType != HostSystem {
+	if objectType != hostSystem {
 		tagCategory := vsphere.TagCategoryRegion
-		if objectLocation == Zone {
+		if objectLocation == zone {
 			tagCategory = vsphere.TagCategoryZone
 		}
 
