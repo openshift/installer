@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/openshift/installer/cmd/openshift-install/command"
 	agentpkg "github.com/openshift/installer/pkg/agent"
@@ -100,6 +101,10 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 			}
 
 			kubeconfigPath := filepath.Join(assetDir, "auth", "kubeconfig")
+			config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
+			if err != nil {
+				logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
+			}
 
 			rendezvousIP, sshKey, err := agentpkg.FindRendezvouIPAndSSHKeyFromAssetStore(assetDir)
 			if err != nil {
@@ -126,6 +131,13 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 				The cluster should be accessible for troubleshooting as detailed in the documentation linked below,
 				https://docs.openshift.com/container-platform/latest/support/troubleshooting/troubleshooting-installations.html`)
 				logrus.Exit(exitCodeInstallFailed)
+			}
+			if err := agentpkg.AddRouterCAToClusterCA(cluster.Ctx, config, assetDir); err != nil {
+				logrus.Error("Error adding router CA to cluster CA")
+				logrus.Error(err)
+				logrus.Exit(exitCodeInstallFailed)
+			} else {
+				logrus.Info("Router CA added to cluster CA")
 			}
 			cluster.PrintInstallationComplete()
 		},
