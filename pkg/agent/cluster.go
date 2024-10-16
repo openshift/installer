@@ -6,7 +6,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/go-openapi/strfmt"
@@ -17,7 +16,6 @@ import (
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
-	"github.com/openshift/installer/pkg/gather/ssh"
 )
 
 // Cluster is a struct designed to help interact with the cluster that is
@@ -156,8 +154,8 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 		if !czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
 			logrus.Debug("Agent Rest API never initialized. Bootstrap Kube API never initialized")
 			elapsedSinceInit := time.Since(czero.installHistory.ClusterInitTime)
-			// After allowing time for the interface to come up, check if Node0 can be accessed via ssh
-			if elapsedSinceInit > 2*time.Minute && !czero.CanSSHToNodeZero() {
+			// After allowing time for the interface to come up, check if Node0 can be accessed
+			if elapsedSinceInit > 2*time.Minute && !czero.CanConnectToNodeZero() {
 				logrus.Info("Cannot access Rendezvous Host. There may be a network configuration problem, check console for additional info")
 			} else {
 				logrus.Info("Waiting for cluster install to initialize. Sleeping for 30 seconds")
@@ -483,16 +481,18 @@ func (czero *Cluster) PrintInstallStatus(cluster *models.Cluster) {
 	}
 }
 
-// CanSSHToNodeZero Checks if ssh to NodeZero succeeds.
-func (czero *Cluster) CanSSHToNodeZero() bool {
+// CanConnectToNodeZero Checks if NodeZero is reachable.
+func (czero *Cluster) CanConnectToNodeZero() bool {
 	ip := czero.API.Rest.NodeZeroIP
 	port := 22
 
-	_, err := ssh.NewClient("core", net.JoinHostPort(ip, strconv.Itoa(port)), czero.API.Rest.NodeSSHKey)
+	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, port))
 	if err != nil {
-		logrus.Debugf("Failed to connect to the Rendezvous Host: %s", err)
+		logrus.Debugf("Failed to connect to the Rendezvous Host on port 22: %s", err)
+		return false
 	}
-	return err == nil
+	conn.Close()
+	return true
 }
 
 // Human friendly install status strings mapped to the Agent Rest API cluster statuses
