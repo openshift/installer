@@ -38,11 +38,12 @@ type AgentImage struct {
 	platform             hiveext.PlatformType
 	isoFilename          string
 	imageExpiresAt       string
+	minimalISO           bool
 }
 
 var _ asset.WritableAsset = (*AgentImage)(nil)
 
-// Dependencies returns the assets on which the Bootstrap asset depends.
+// Dependencies returns the assets on which the AgentImage asset depends.
 func (a *AgentImage) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&workflow.AgentWorkflow{},
@@ -54,7 +55,7 @@ func (a *AgentImage) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the image file for to ISO asset.
+// Generate generates the image file for an AgentImage asset.
 func (a *AgentImage) Generate(ctx context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	clusterInfo := &joiner.ClusterInfo{}
@@ -85,6 +86,7 @@ func (a *AgentImage) Generate(ctx context.Context, dependencies asset.Parents) e
 	a.tmpPath = agentArtifacts.TmpPath
 	a.isoPath = agentArtifacts.ISOPath
 	a.bootArtifactsBaseURL = agentArtifacts.BootArtifactsBaseURL
+	a.minimalISO = agentArtifacts.MinimalISO
 
 	volumeID, err := isoeditor.VolumeIdentifier(a.isoPath)
 	if err != nil {
@@ -92,7 +94,7 @@ func (a *AgentImage) Generate(ctx context.Context, dependencies asset.Parents) e
 	}
 	a.volumeID = volumeID
 
-	if a.platform == hiveext.ExternalPlatformType {
+	if a.minimalISO {
 		// when the bootArtifactsBaseURL is specified, construct the custom rootfs URL
 		if a.bootArtifactsBaseURL != "" {
 			a.rootFSURL = fmt.Sprintf("%s/%s", a.bootArtifactsBaseURL, fmt.Sprintf("agent.%s-rootfs.img", a.cpuArch))
@@ -226,9 +228,9 @@ func (a *AgentImage) PersistToFile(directory string) error {
 	}
 
 	var msg string
-	// For external platform when the bootArtifactsBaseURL is specified,
+	// For minimal ISO, when the bootArtifactsBaseURL is specified,
 	// output the rootfs file alongside the minimal ISO
-	if a.platform == hiveext.ExternalPlatformType {
+	if a.minimalISO {
 		if a.bootArtifactsBaseURL != "" {
 			bootArtifactsFullPath := filepath.Join(directory, bootArtifactsPath)
 			err := createDir(bootArtifactsFullPath)
