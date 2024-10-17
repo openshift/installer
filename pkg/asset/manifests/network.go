@@ -1,7 +1,6 @@
 package manifests
 
 import (
-	"fmt"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -12,29 +11,18 @@ import (
 	operatorv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/powervs"
 )
 
 var (
-	noCrdFilename  = filepath.Join(manifestDir, "cluster-network-01-crd.yml")
 	noCfgFilename  = filepath.Join(manifestDir, "cluster-network-02-config.yml")
 	cnoCfgFilename = filepath.Join(manifestDir, "cluster-network-03-config.yml")
 	// Cluster Network MTU for AWS Local Zone deployments on edge machine pools.
 	ovnKNetworkMtuEdge   uint32 = 1200
 	ocpSDNNetworkMtuEdge uint32 = 1250
 )
-
-// We need to manually create our CRDs first, so we can create the
-// configuration instance of it in the installer. Other operators have
-// their CRD created by the CVO, but we need to create the corresponding
-// CRs in the installer, so we need the CRD to be there.
-// The first CRD is the high-level Network.config.openshift.io object,
-// which is stable and minimal. Administrators can configure the
-// network in a more detailed manner with the operator-specific CR, which
-// also needs to be done before the installer is run, so we provide both.
 
 // Networking generates the cluster-network-*.yml files.
 type Networking struct {
@@ -54,15 +42,13 @@ func (no *Networking) Name() string {
 func (no *Networking) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
-		&openshift.NetworkCRDs{},
 	}
 }
 
-// Generate generates the network operator config and its CRD.
+// Generate generates the network operator config.
 func (no *Networking) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
-	crds := &openshift.NetworkCRDs{}
-	dependencies.Get(installConfig, crds)
+	dependencies.Get(installConfig)
 
 	netConfig := installConfig.Config.Networking
 
@@ -108,16 +94,7 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 		return errors.Wrapf(err, "failed to create %s manifests from InstallConfig", no.Name())
 	}
 
-	crdContents := ""
-	for _, crdFile := range crds.Files() {
-		crdContents = fmt.Sprintf("%s\n---\n%s", crdContents, crdFile.Data)
-	}
-
 	no.FileList = []*asset.File{
-		{
-			Filename: noCrdFilename,
-			Data:     []byte(crdContents),
-		},
 		{
 			Filename: noCfgFilename,
 			Data:     configData,
