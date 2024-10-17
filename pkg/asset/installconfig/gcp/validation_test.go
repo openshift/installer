@@ -111,14 +111,16 @@ var (
 	invalidateXpnSA          = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.GCP.ServiceAccount = invalidXpnSA }
 
 	machineTypeAPIResult = map[string]*compute.MachineType{
-		"n1-standard-1":  {GuestCpus: 1, MemoryMb: 3840},
-		"n1-standard-2":  {GuestCpus: 2, MemoryMb: 7680},
-		"n1-standard-4":  {GuestCpus: 4, MemoryMb: 15360},
-		"n2-standard-1":  {GuestCpus: 1, MemoryMb: 8192},
-		"n2-standard-2":  {GuestCpus: 2, MemoryMb: 16384},
-		"n2-standard-4":  {GuestCpus: 4, MemoryMb: 32768},
-		"n4-standard-4":  {GuestCpus: 4, MemoryMb: 32768},
-		"t2a-standard-4": {GuestCpus: 4, MemoryMb: 16384},
+		"n1-standard-1":     {GuestCpus: 1, MemoryMb: 3840},
+		"n1-standard-2":     {GuestCpus: 2, MemoryMb: 7680},
+		"n1-standard-4":     {GuestCpus: 4, MemoryMb: 15360},
+		"n2-standard-1":     {GuestCpus: 1, MemoryMb: 8192},
+		"n2-standard-2":     {GuestCpus: 2, MemoryMb: 16384},
+		"n2-standard-4":     {GuestCpus: 4, MemoryMb: 32768},
+		"n4-standard-4":     {GuestCpus: 4, MemoryMb: 32768},
+		"t2a-standard-4":    {GuestCpus: 4, MemoryMb: 16384},
+		"n4-custom-4-16384": {GuestCpus: 4, MemoryMb: 16384}, // custom machine type
+		"custom-4-16384":    {GuestCpus: 4, MemoryMb: 16384}, // custom machine type - default type
 	}
 
 	subnetAPIResult = []*compute.Subnetwork{
@@ -862,6 +864,38 @@ func TestValidateInstanceType(t *testing.T) {
 			diskType:       "hyperdisk-balanced",
 			expectedError:  true,
 			expectedErrMsg: `^\[instance.diskType: Invalid value: "hyperdisk\-balanced": n2\-standard\-4 instance requires one of the following disk types: \[pd\-standard pd\-ssd pd\-balanced\]\]$`,
+		},
+		{
+			name:           "Valid custom instance type",
+			zones:          []string{"a"},
+			instanceType:   "n4-custom-4-16384",
+			diskType:       "hyperdisk-balanced",
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Valid custom instance type invalid disk type",
+			zones:          []string{"a"},
+			instanceType:   "n4-custom-4-16384",
+			diskType:       "pd-ssd",
+			expectedError:  true,
+			expectedErrMsg: `^\[instance.diskType: Invalid value: "pd\-ssd": n4\-custom\-4\-16384 instance requires one of the following disk types: \[hyperdisk\-balanced\]\]$`,
+		},
+		{
+			name:           "Valid custom default instance type",
+			zones:          []string{"a"},
+			instanceType:   "custom-4-16384",
+			diskType:       "pd-ssd",
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Invalid disk type custom default instance type",
+			zones:          []string{"a"},
+			instanceType:   "custom-4-16384",
+			diskType:       "hyperdisk-balanced",
+			expectedError:  true,
+			expectedErrMsg: `^\[instance.diskType: Invalid value: "hyperdisk\-balanced": custom\-4\-16384 instance requires one of the following disk types: \[pd\-standard pd\-ssd pd\-balanced\]\]$`,
 		},
 	}
 

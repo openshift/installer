@@ -27,6 +27,10 @@ var (
 	// ComputeSupportedDisks contains the supported disk types for control plane nodes.
 	ComputeSupportedDisks = sets.New(HyperDiskBalanced, PDBalanced, PDSSD, PDStandard)
 
+	// DefaultCustomInstanceType is the default instance type on the GCP server side. The default custom
+	// instance type can be changed on the client side with gcloud.
+	DefaultCustomInstanceType = "n1"
+
 	// InstanceTypeToDiskTypeMap contains a map where the key is the Instance Type, and the
 	// values are a list of disk types that are supported by the installer and correlate to the Instance Type.
 	InstanceTypeToDiskTypeMap = map[string][]string{

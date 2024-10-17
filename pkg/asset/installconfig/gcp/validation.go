@@ -80,6 +80,9 @@ func validateInstanceAndDiskType(fldPath *field.Path, diskType, instanceType, ar
 	}
 
 	family, _, _ := strings.Cut(instanceType, "-")
+	if family == "custom" {
+		family = gcp.DefaultCustomInstanceType
+	}
 	diskTypes, ok := gcp.InstanceTypeToDiskTypeMap[family]
 	if !ok {
 		return field.NotFound(fldPath.Child("type"), family)
