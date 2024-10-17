@@ -5,6 +5,7 @@ import (
 
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/mtu"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	"github.com/stretchr/testify/assert"
@@ -54,17 +55,20 @@ func withControlPlanePortSubnets(subnetCIDR, allocationPoolStart, allocationPool
 				{Start: allocationPoolStart, End: allocationPoolEnd},
 			},
 		}
-		Allsubnets := []*subnets.Subnet{&subnet}
-		ci.ControlPlanePortSubnets = Allsubnets
+		allsubnets := []*subnets.Subnet{&subnet}
+		ci.ControlPlanePortSubnets = allsubnets
 	}
 }
 func validPlatformCloudInfo(options ...func(*CloudInfo)) *CloudInfo {
 	ci := CloudInfo{
-		ExternalNetwork: &networks.Network{
-			ID:           "71b97520-69af-4c35-8153-cdf827z96e60",
-			Name:         validExternalNetwork,
-			AdminStateUp: true,
-			Status:       "ACTIVE",
+		ExternalNetwork: &Network{
+			networks.Network{
+				ID:           "71b97520-69af-4c35-8153-cdf827z96e60",
+				Name:         validExternalNetwork,
+				AdminStateUp: true,
+				Status:       "ACTIVE",
+			},
+			mtu.NetworkMTUExt{},
 		},
 		APIFIP: &floatingips.FloatingIP{
 			ID:     validFIP1,
@@ -412,8 +416,8 @@ func TestMachineSubnet(t *testing.T) {
 				subnet := subnets.Subnet{
 					ID: "00000000-5a89-4465-8d54-3517ec2bad48",
 				}
-				Allsubnets := []*subnets.Subnet{&subnet}
-				ci.ControlPlanePortSubnets = Allsubnets
+				allsubnets := []*subnets.Subnet{&subnet}
+				ci.ControlPlanePortSubnets = allsubnets
 				return ci
 			}(),
 			networking:     validNetworking(),
@@ -434,9 +438,11 @@ func TestMachineSubnet(t *testing.T) {
 					NetworkID: "00000000-1a11-4465-8d54-3517ec2bad48",
 					CIDR:      "172.0.0.1/24",
 				}
-				Allsubnets := []*subnets.Subnet{&subnet}
-				ci.ControlPlanePortSubnets = Allsubnets
-				ci.ControlPlanePortNetwork = &networks.Network{ID: "00000000-2a22-4465-8d54-3517ec2bad48"}
+				allSubnets := []*subnets.Subnet{&subnet}
+				ci.ControlPlanePortSubnets = allSubnets
+				network := Network{}
+				network.ID = "00000000-2a22-4465-8d54-3517ec2bad48"
+				ci.ControlPlanePortNetwork = &network
 				return ci
 			}(),
 			networking: func() *types.Networking {
@@ -462,8 +468,8 @@ func TestMachineSubnet(t *testing.T) {
 					ID:   validSubnetID,
 					CIDR: "172.0.0.1/16",
 				}
-				Allsubnets := []*subnets.Subnet{&subnet}
-				ci.ControlPlanePortSubnets = Allsubnets
+				allsubnets := []*subnets.Subnet{&subnet}
+				ci.ControlPlanePortSubnets = allsubnets
 				return ci
 			}(),
 			networking: func() *types.Networking {
@@ -505,8 +511,8 @@ func TestMachineSubnet(t *testing.T) {
 					CIDR:      "2001:db8::/64",
 					IPVersion: 6,
 				}
-				Allsubnets := []*subnets.Subnet{&subnet, &subnetv6}
-				ci.ControlPlanePortSubnets = Allsubnets
+				allsubnets := []*subnets.Subnet{&subnet, &subnetv6}
+				ci.ControlPlanePortSubnets = allsubnets
 				return ci
 			}(),
 			networking: func() *types.Networking {
@@ -535,8 +541,8 @@ func TestMachineSubnet(t *testing.T) {
 					ID:   validSubnetID,
 					CIDR: "172.0.0.1/16",
 				}
-				Allsubnets := []*subnets.Subnet{&subnet}
-				ci.ControlPlanePortSubnets = Allsubnets
+				allsubnets := []*subnets.Subnet{&subnet}
+				ci.ControlPlanePortSubnets = allsubnets
 				return ci
 			}(),
 			networking: func() *types.Networking {
@@ -576,8 +582,8 @@ func TestMachineSubnet(t *testing.T) {
 					CIDR:      "10.0.0.0/16",
 					IPVersion: 4,
 				}
-				Allsubnets := []*subnets.Subnet{&subnet, &subnetv6}
-				ci.ControlPlanePortSubnets = Allsubnets
+				allsubnets := []*subnets.Subnet{&subnet, &subnetv6}
+				ci.ControlPlanePortSubnets = allsubnets
 				return ci
 			}(),
 			networking: func() *types.Networking {
@@ -609,8 +615,8 @@ func TestMachineSubnet(t *testing.T) {
 					CIDR:      "2001:db8::/64",
 					IPVersion: 6,
 				}
-				Allsubnets := []*subnets.Subnet{&subnetv6}
-				ci.ControlPlanePortSubnets = Allsubnets
+				allsubnets := []*subnets.Subnet{&subnetv6}
+				ci.ControlPlanePortSubnets = allsubnets
 				return ci
 			}(),
 			networking: func() *types.Networking {
@@ -622,6 +628,53 @@ func TestMachineSubnet(t *testing.T) {
 				return n
 			}(),
 			expectedErrMsg: `platform.openstack.controlPlanePort.fixedIPs: Internal error: one IPv4 subnet must be specified`,
+		},
+		{
+			name: "MTU too low",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				fixedIPv6 := openstack.FixedIP{
+					Subnet: openstack.SubnetFilter{ID: "00000000-1111-4465-8d54-3517ec2bad48"},
+				}
+				p.ControlPlanePort = &openstack.PortTarget{
+					FixedIPs: []openstack.FixedIP{fixedIPv6},
+					Network:  openstack.NetworkFilter{ID: "71b97520-69af-4c35-8153-cdf827z96e60"},
+				}
+				return p
+			}(),
+			cloudInfo: func() *CloudInfo {
+				ci := validPlatformCloudInfo()
+				subnetv6 := subnets.Subnet{
+					ID:        "00000000-1111-4465-8d54-3517ec2bad48",
+					CIDR:      "2001:db8::/64",
+					IPVersion: 6,
+					NetworkID: "71b97520-69af-4c35-8153-cdf827z96e60",
+				}
+				allSubnets := []*subnets.Subnet{&subnetv6}
+				ci.ControlPlanePortSubnets = allSubnets
+
+				network := Network{
+					networks.Network{
+						ID:           "71b97520-69af-4c35-8153-cdf827z96e60",
+						Name:         "too-low",
+						AdminStateUp: true,
+						Status:       "ACTIVE",
+						Subnets:      []string{"00000000-1111-4465-8d54-3517ec2bad48"},
+					},
+					mtu.NetworkMTUExt{MTU: 1200},
+				}
+				ci.ControlPlanePortNetwork = &network
+				return ci
+			}(),
+			networking: func() *types.Networking {
+				n := validNetworking()
+				machineNetworkEntry := &types.MachineNetworkEntry{
+					CIDR: *ipnet.MustParseCIDR("2001:db8::/64"),
+				}
+				n.MachineNetwork = []types.MachineNetworkEntry{*machineNetworkEntry}
+				return n
+			}(),
+			expectedErrMsg: "platform.openstack.controlPlanePort.network: Internal error: network should have an MTU of at least 1380",
 		},
 	}
 
