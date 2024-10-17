@@ -463,16 +463,15 @@ func (m *Metadata) AddSecurityGroupRule(ctx context.Context, rule *vpcv1.Securit
 		Cap:      leftInContext(ctx),
 		Steps:    math.MaxInt32}
 
+	client, err := m.client()
+	if err != nil {
+		return err
+	}
+
 	var lastErr error
-	err := wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
-		client, lastErr := m.client()
-		if lastErr != nil {
-			lastErr = client.AddSecurityGroupRule(ctx, vpcID, rule)
-		}
-		if lastErr == nil {
-			return true, nil
-		}
-		return false, nil
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
+		lastErr = client.AddSecurityGroupRule(ctx, vpcID, rule)
+		return lastErr == nil, nil
 	})
 
 	if err != nil {
