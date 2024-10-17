@@ -361,7 +361,7 @@ func (c *Client) GetRegions(ctx context.Context, project string) ([]string, erro
 		return nil, errors.Wrapf(err, "failed to get regions for project")
 	}
 
-	computeRegions := make([]string, len(gcpRegionsList.Items))
+	computeRegions := make([]string, 0, len(gcpRegionsList.Items))
 	for _, region := range gcpRegionsList.Items {
 		computeRegions = append(computeRegions, region.Name)
 	}

@@ -56,7 +56,7 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 	var vpcFromSubnet string
 	client := ec2.New(session, aws.NewConfig().WithRegion(region))
 
-	idPointers := make([]*string, len(ids))
+	idPointers := make([]*string, 0, len(ids))
 	for _, id := range ids {
 		idPointers = append(idPointers, aws.String(id))
 	}
