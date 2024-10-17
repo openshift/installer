@@ -36,9 +36,10 @@ type Config struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	CPUArchitecture string       `json:"cpuArchitecture,omitempty"`
-	SSHKey          string       `json:"sshKey,omitempty"`
-	Hosts           []agent.Host `json:"hosts,omitempty"`
+	CPUArchitecture      string       `json:"cpuArchitecture,omitempty"`
+	SSHKey               string       `json:"sshKey,omitempty"`
+	Hosts                []agent.Host `json:"hosts,omitempty"`
+	AdditionalNTPSources []string     `json:"additionalNTPSources,omitempty"`
 }
 
 // Params is used to store the command line parameters.
@@ -123,6 +124,9 @@ func (a *AddNodesConfig) finish() error {
 	if err := a.validateSSHKey(); err != nil {
 		allErrs = append(allErrs, err...)
 	}
+	if err := ValidateAdditionalNTPSources(field.NewPath("AdditionalNTPSources"), a.Config.AdditionalNTPSources); err != nil {
+		allErrs = append(allErrs, err...)
+	}
 
 	return allErrs.ToAggregate()
 }
@@ -148,5 +152,21 @@ func (a *AddNodesConfig) validateSSHKey() field.ErrorList {
 	if err := validate.SSHPublicKey(a.Config.SSHKey); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), a.Config.SSHKey, err.Error()))
 	}
+	return allErrs
+}
+
+func ValidateAdditionalNTPSources(additionalNTPSourcesPath *field.Path, sources []string) field.ErrorList {
+	var allErrs field.ErrorList
+
+	for i, source := range sources {
+		domainNameErr := validate.DomainName(source, true)
+		if domainNameErr != nil {
+			ipErr := validate.IP(source)
+			if ipErr != nil {
+				allErrs = append(allErrs, field.Invalid(additionalNTPSourcesPath.Index(i), source, "NTP source is not a valid domain name nor a valid IP"))
+			}
+		}
+	}
+
 	return allErrs
 }
