@@ -52,6 +52,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
@@ -503,7 +504,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 		publicZoneName := ""
 		privateZoneName := ""
 
-		if installConfig.Config.GCP.UserProvisionedDNS != gcp.UserProvisionedDNSEnabled {
+		if installConfig.Config.GCP.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
 			if installConfig.Config.Publish == types.ExternalPublishingStrategy {
 				publicZone, err := client.GetDNSZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain, true)
 				if err != nil {
@@ -554,7 +555,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 				PrivateZoneName:     privateZoneName,
 				PublishStrategy:     installConfig.Config.Publish,
 				InfrastructureName:  clusterID.InfraID,
-				UserProvisionedDNS:  installConfig.Config.GCP.UserProvisionedDNS == gcp.UserProvisionedDNSEnabled,
+				UserProvisionedDNS:  installConfig.Config.GCP.UserProvisionedDNS == dns.UserProvisionedDNSEnabled,
 				UserTags:            tags,
 				IgnitionShim:        string(shim),
 				PresignedURL:        url,
