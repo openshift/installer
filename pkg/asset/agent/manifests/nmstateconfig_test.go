@@ -284,6 +284,30 @@ func TestNMStateConfig_Generate(t *testing.T) {
 			expectedConfig:     nil,
 			expectedError:      "failed to validate network yaml",
 		},
+		{
+			name: "invalid networkConfig, no interfaces in interface table",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
+				getAgentHostsConfigNoInterfaces(),
+				getValidOptionalInstallConfig(),
+			},
+			requiresNmstatectl: true,
+			expectedConfig:     nil,
+			expectedError:      "at least one interface for host 0 must be provided",
+		},
+		{
+			name: "invalid networkConfig, invalid mac in interface table",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
+				getAgentHostsConfigInvalidMac(),
+				getValidOptionalInstallConfig(),
+			},
+			requiresNmstatectl: true,
+			expectedConfig:     nil,
+			expectedError:      "MAC address 98-af-65-a5-8d-02 for host 0 is incorrectly formatted, use XX:XX:XX:XX:XX:XX format",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
