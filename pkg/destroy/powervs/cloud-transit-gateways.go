@@ -312,7 +312,7 @@ func (o *ClusterUninstaller) listTransitConnections(item cloudResource) (cloudRe
 			return nil, err
 		}
 		for _, transitConnection = range transitConnectionCollections.Connections {
-			if *transitConnection.TransitGateway.ID != item.id {
+			if *transitConnection.TransitGateway.ID != item.id || !(strings.Contains(*transitConnection.Name, o.InfraID)) {
 				o.Logger.Debugf("listTransitConnections: SKIP: %s, %s, %s", *transitConnection.ID, *transitConnection.Name, *transitConnection.TransitGateway.Name)
 				continue
 			}
