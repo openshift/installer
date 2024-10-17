@@ -66,21 +66,24 @@ func (o *Permissions) Generate(ctx context.Context, dependencies asset.Parents) 
 }
 
 func (o *Permissions) writePolicy(groups []awsconfig.PermissionGroup, filename string) error {
-	perms, err := awsconfig.PermissionsList(groups)
-	if err != nil {
-		return fmt.Errorf("failed to generate permissions list: %w", err)
+	policy := iamv1.PolicyDocument{
+		Version:   "2012-10-17",
+		Statement: []iamv1.StatementEntry{},
 	}
 
-	policy := iamv1.PolicyDocument{
-		Version: "2012-10-17",
-		Statement: []iamv1.StatementEntry{
-			{
-				Effect:   "Allow",
-				Action:   perms,
-				Resource: iamv1.Resources{"*"},
-			},
-		},
+	for _, group := range groups {
+		groupPerms, err := awsconfig.Permissions(group)
+		if err != nil {
+			return err
+		}
+		policy.Statement = append(policy.Statement, iamv1.StatementEntry{
+			Effect:   "Allow",
+			Action:   groupPerms,
+			Resource: iamv1.Resources{"*"},
+			Sid:      string(group),
+		})
 	}
+
 	policyBytes, err := json.Marshal(policy)
 	if err != nil {
 		return fmt.Errorf("failed to marshal permissions policy: %w", err)
