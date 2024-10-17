@@ -493,14 +493,23 @@ func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 func PermissionsList(required []PermissionGroup) ([]string, error) {
 	requiredPermissions := sets.New[string]()
 	for _, group := range required {
-		groupPerms, ok := permissions[group]
-		if !ok {
-			return nil, fmt.Errorf("unable to access permissions group %s", group)
+		groupPerms, err := Permissions(group)
+		if err != nil {
+			return nil, err
 		}
 		requiredPermissions.Insert(groupPerms...)
 	}
 
 	return sets.List(requiredPermissions), nil
+}
+
+// Permissions returns the list of permissions associated with `group`.
+func Permissions(group PermissionGroup) ([]string, error) {
+	groupPerms, ok := permissions[group]
+	if !ok {
+		return nil, fmt.Errorf("unable to access permissions group %s", group)
+	}
+	return groupPerms, nil
 }
 
 // includesExistingInstanceRole checks if at least one BYO instance role is included in the install-config.

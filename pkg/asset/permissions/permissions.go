@@ -4,7 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	iamv1 "sigs.k8s.io/cluster-api-provider-aws/v2/iam/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -66,21 +69,27 @@ func (o *Permissions) Generate(ctx context.Context, dependencies asset.Parents) 
 }
 
 func (o *Permissions) writePolicy(groups []awsconfig.PermissionGroup, filename string) error {
-	perms, err := awsconfig.PermissionsList(groups)
-	if err != nil {
-		return fmt.Errorf("failed to generate permissions list: %w", err)
+	policy := iamv1.PolicyDocument{
+		Version:   "2012-10-17",
+		Statement: []iamv1.StatementEntry{},
 	}
 
-	policy := iamv1.PolicyDocument{
-		Version: "2012-10-17",
-		Statement: []iamv1.StatementEntry{
-			{
-				Effect:   "Allow",
-				Action:   perms,
-				Resource: iamv1.Resources{"*"},
-			},
-		},
+	caser := cases.Title(language.English)
+	for _, group := range groups {
+		groupPerms, err := awsconfig.Permissions(group)
+		if err != nil {
+			return err
+		}
+		// Sid must be alphanumeric
+		sid := strings.ReplaceAll(caser.String(string(group)), "-", "")
+		policy.Statement = append(policy.Statement, iamv1.StatementEntry{
+			Effect:   "Allow",
+			Action:   groupPerms,
+			Resource: iamv1.Resources{"*"},
+			Sid:      sid,
+		})
 	}
+
 	policyBytes, err := json.Marshal(policy)
 	if err != nil {
 		return fmt.Errorf("failed to marshal permissions policy: %w", err)
