@@ -6,6 +6,7 @@ import (
 	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/featuregates"
+	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // GatedFeatures determines all of the vSphere install config fields that should
@@ -42,6 +43,17 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 			FeatureGateName: features.FeatureGateVSphereMultiNetworks,
 			Condition:       nodeNetworkingDefined,
 			Field:           field.NewPath("platform", "vsphere", "nodeNetworking"),
+		},
+		{
+			FeatureGateName: features.FeatureGateVSphereHostVMGroupZonal,
+			Condition: func(v *vsphere.Platform) bool {
+				for _, fd := range v.FailureDomains {
+					if fd.ZoneType == vsphere.HostGroupFailureDomain || fd.Topology.HostGroup != "" {
+						return true
+					}
+				}
+				return false
+			}(v),
 		},
 	}
 }

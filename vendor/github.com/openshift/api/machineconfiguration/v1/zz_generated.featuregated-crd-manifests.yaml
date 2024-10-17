@@ -28,10 +28,12 @@ controllerconfigs.machineconfiguration.openshift.io:
   Capability: ""
   Category: ""
   FeatureGates:
+  - AWSClusterHostedDNS
   - BareMetalLoadBalancer
   - GCPClusterHostedDNS
   - GCPLabelsTags
   - VSphereControlPlaneMachineSet
+  - VSphereHostVMGroupZonal
   - VSphereMultiNetworks
   - VSphereMultiVCenters
   FilenameOperatorName: machine-config

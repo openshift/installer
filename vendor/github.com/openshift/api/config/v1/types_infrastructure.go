@@ -507,6 +507,20 @@ type AWSPlatformStatus struct {
 	// +listType=atomic
 	// +optional
 	ResourceTags []AWSResourceTag `json:"resourceTags,omitempty"`
+
+	// cloudLoadBalancerConfig holds configuration related to DNS and cloud
+	// load balancers. It allows configuration of in-cluster DNS as an alternative
+	// to the platform default DNS implementation.
+	// When using the ClusterHosted DNS type, Load Balancer IP addresses
+	// must be provided for the API and internal API load balancers as well as the
+	// ingress load balancer.
+	//
+	// +default={"dnsType": "PlatformDefault"}
+	// +kubebuilder:default={"dnsType": "PlatformDefault"}
+	// +openshift:enable:FeatureGate=AWSClusterHostedDNS
+	// +optional
+	// +nullable
+	CloudLoadBalancerConfig *CloudLoadBalancerConfig `json:"cloudLoadBalancerConfig,omitempty"`
 }
 
 // AWSResourceTag is a tag to apply to AWS resources created for the cluster.
@@ -647,12 +661,12 @@ type GCPPlatformStatus struct {
 	// Tombstone the field as a reminder.
 	// ClusterHostedDNS ClusterHostedDNS `json:"clusterHostedDNS,omitempty"`
 
-	// cloudLoadBalancerConfig is a union that contains the IP addresses of API,
-	// API-Int and Ingress Load Balancers created on the cloud platform. These
-	// values would not be populated on on-prem platforms. These Load Balancer
-	// IPs are used to configure the in-cluster DNS instances for API, API-Int
-	// and Ingress services. `dnsType` is expected to be set to `ClusterHosted`
-	// when these Load Balancer IP addresses are populated and used.
+	// cloudLoadBalancerConfig holds configuration related to DNS and cloud
+	// load balancers. It allows configuration of in-cluster DNS as an alternative
+	// to the platform default DNS implementation.
+	// When using the ClusterHosted DNS type, Load Balancer IP addresses
+	// must be provided for the API and internal API load balancers as well as the
+	// ingress load balancer.
 	//
 	// +default={"dnsType": "PlatformDefault"}
 	// +kubebuilder:default={"dnsType": "PlatformDefault"}
@@ -1148,8 +1162,22 @@ type VSpherePlatformLoadBalancer struct {
 	Type PlatformLoadBalancerType `json:"type,omitempty"`
 }
 
-// VSpherePlatformFailureDomainSpec holds the region and zone failure domain and
-// the vCenter topology of that failure domain.
+// The VSphereFailureDomainType is a string representation of a failure domain
+// type. There are three supportable types: HostGroup, ComputeCluster and Datacenter
+type VSphereFailureDomainType string
+
+const (
+	// HostGroupFailureDomain is a failure domain for a vCenter vm-host group.
+	HostGroupFailureDomain VSphereFailureDomainType = "HostGroup"
+	// ComputeClusterFailureDomain is a failure domain for a vCenter compute cluster.
+	ComputeClusterFailureDomain VSphereFailureDomainType = "ComputeCluster"
+	// DatacenterFailureDomain is a failure domain for a vCenter datacenter.
+	DatacenterFailureDomain VSphereFailureDomainType = "Datacenter"
+)
+
+// VSpherePlatformFailureDomainSpec holds the region and zone failure domain and the vCenter topology of that failure domain.
+// +kubebuilder:validation:XValidation:rule="has(self.zoneAffinity) && self.zoneAffinity.type == 'HostGroup' ?  has(self.regionAffinity) && self.regionAffinity.type == 'ComputeCluster' : true",message="when zoneAffinity type is HostGroup, regionAffinity type must be ComputeCluster"
+// +kubebuilder:validation:XValidation:rule="has(self.zoneAffinity) && self.zoneAffinity.type == 'ComputeCluster' ?  has(self.regionAffinity) && self.regionAffinity.type == 'Datacenter' : true",message="when zoneAffinity type is ComputeCluster, regionAffinity type must be Datacenter"
 type VSpherePlatformFailureDomainSpec struct {
 	// name defines the arbitrary but unique name
 	// of a failure domain.
@@ -1173,6 +1201,22 @@ type VSpherePlatformFailureDomainSpec struct {
 	// +kubebuilder:validation:MaxLength=80
 	// +kubebuilder:validation:Required
 	Zone string `json:"zone"`
+
+	// affinity holds the VMGroup and the HostGroup names in vCenter corresponds to
+	// a vm-host group of type Virtual Machine and Host respectively. Is also
+	// contains the VMHostRule which is an affinity vm-host rule in vCenter.
+	// +openshift:validation:featureGate=VSphereHostVMGroupZonal
+	// +kubebuilder:validation:Optional
+	// +optional
+	RegionAffinity VSphereFailureDomainAffinity `json:"regionAffinity,omitempty"`
+
+	// affinity holds the VMGroup and the HostGroup names in vCenter corresponds to
+	// a vm-host group of type Virtual Machine and Host respectively. Is also
+	// contains the VMHostRule which is an affinity vm-host rule in vCenter.
+	// +openshift:validation:featureGate=VSphereHostVMGroupZonal
+	// +kubebuilder:validation:Optional
+	// +optional
+	ZoneAffinity VSphereFailureDomainAffinity `json:"zoneAffinity,omitempty"`
 
 	// server is the fully-qualified domain name or the IP address of the vCenter server.
 	// +kubebuilder:validation:Required
@@ -1261,6 +1305,47 @@ type VSpherePlatformTopology struct {
 	// +kubebuilder:validation:Pattern=`^/.*?/vm/.*?`
 	// +optional
 	Template string `json:"template,omitempty"`
+}
+
+// VSphereFailureDomainAffinity contains the vCenter cluster vm-host group (virtual machine and host types)
+// and the vm-host affinity rule that together creates a affinity configuration for vm-host based zonal.
+// This configuration within vCenter creates the required association between a failure domain, virtual machines
+// and ESXi hosts to create a vm-host based zone.
+// +kubebuilder:validation:XValidation:rule="has(self.type) && self.type == 'HostGroup' ?  has(self.hostGroup) : true",message="when type is HostGroup, hostGroup field must be defined"
+// +kubebuilder:validation:XValidation:rule="has(self.type) && self.type != 'HostGroup' ?  !has(self.hostGroup) : true",message="when hostGroup field is defined, type must be HostGroup"
+// +kubebuilder:validation:XValidation:rule="has(self.type) && self.type == 'HostGroup' ?  has(self.vmGroup) : true",message="when type is HostGroup, vmGroup field must be defined"
+// +kubebuilder:validation:XValidation:rule="has(self.type) && self.type != 'HostGroup' ?  !has(self.vmGroup) : true",message="when vmGroup field is defined, type must be HostGroup"
+// +kubebuilder:validation:XValidation:rule="has(self.type) && self.type == 'HostGroup' ?  has(self.vmHostRule) : true",message="when type is HostGroup, vmHostRule field must be defined"
+// +kubebuilder:validation:XValidation:rule="has(self.type) && self.type != 'HostGroup' ?  !has(self.vmHostRule) : true",message="when vmHostRule field is defined, type must be HostGroup"
+// +union
+type VSphereFailureDomainAffinity struct {
+	// +kubebuilder:validation:Optional
+	// +openshift:validation:FeatureGateAwareEnum:featureGate=VSphereHostVMGroupZonal,enum=HostGroup;ComputeCluster;Datacenter
+	// +unionDiscriminator
+	Type VSphereFailureDomainType `json:"type"`
+	// vmGroup is the name of the vm-host group of type virtual machine within vCenter for this failure domain.
+	// This field is required when the VSphereFailureDomain ZoneType is HostGroup
+	// +openshift:validation:featureGate=VSphereHostVMGroupZonal
+	// +kubebuilder:validation:MaxLength=80
+	// +optional
+	// +unionMember,optional
+	VMGroup string `json:"vmGroup,omitempty"`
+
+	// hostGroup is the name of the vm-host group of type host within vCenter for this failure domain.
+	// This field is required when the VSphereFailureDomain ZoneType is HostGroup
+	// +openshift:validation:featureGate=VSphereHostVMGroupZonal
+	// +kubebuilder:validation:MaxLength=80
+	// +optional
+	// +unionMember,optional
+	HostGroup string `json:"hostGroup,omitempty"`
+
+	// vmHostRule is the name of the affinity vm-host rule within vCenter for this failure domain.
+	// This field is required when the VSphereFailureDomain ZoneType is HostGroup
+	// +openshift:validation:featureGate=VSphereHostVMGroupZonal
+	// +kubebuilder:validation:MaxLength=80
+	// +optional
+	// +unionMember,optional
+	VMHostRule string `json:"vmHostRule,omitempty"`
 }
 
 // VSpherePlatformVCenterSpec stores the vCenter connection fields.
