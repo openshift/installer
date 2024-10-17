@@ -14,13 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controllers
+package vmware
 
 import (
 	"context"
 	"fmt"
 	"net"
 	"net/url"
+	"reflect"
 	"time"
 
 	"github.com/pkg/errors"
@@ -484,4 +485,9 @@ func allClustersRequests(ctx context.Context, c client.Client) []reconcile.Reque
 		requests = append(requests, reconcile.Request{NamespacedName: key})
 	}
 	return requests
+}
+
+func clusterToVMwareInfrastructureMapFunc(ctx context.Context, controllerCtx *capvcontext.ControllerManagerContext) handler.MapFunc {
+	gvk := vmwarev1.GroupVersion.WithKind(reflect.TypeOf(&vmwarev1.VSphereCluster{}).Elem().Name())
+	return clusterutilv1.ClusterToInfrastructureMapFunc(ctx, gvk, controllerCtx.Client, &vmwarev1.VSphereCluster{})
 }

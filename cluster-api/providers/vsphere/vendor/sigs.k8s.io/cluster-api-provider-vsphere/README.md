@@ -33,14 +33,12 @@ Check out the [getting started guide](./docs/getting_started.md) for launching a
 
 This provider's versions are compatible with the following versions of Cluster API:
 
-|                      | Cluster API v1beta1 (v1.4) | Cluster API v1beta1 (v1.5) | Cluster API v1beta1 (v1.6) | Cluster API v1beta1 (v1.7) |
+|                      | Cluster API v1beta1 (v1.5) | Cluster API v1beta1 (v1.6) | Cluster API v1beta1 (v1.7) | Cluster API v1beta1 (v1.8) |
 |----------------------|:--------------------------:|:--------------------------:|:--------------------------:|:--------------------------:|
-| CAPV v1beta1 (v1.5)  |             ✓              |             ☓              |             ☓              |             ☓              |
-| CAPV v1beta1 (v1.6)  |             ✓              |             ☓              |             ☓              |             ☓              |
-| CAPV v1beta1 (v1.7)  |             ✓              |             ☓              |             ☓              |             ☓              |
-| CAPV v1beta1 (v1.8)  |             ☓              |             ✓              |             ☓              |             ☓              |
-| CAPV v1beta1 (v1.9)  |             ☓              |             ☓              |             ✓              |             x              |
-| CAPV v1beta1 (v1.10) |             ☓              |             ☓              |             x              |             ✓              |
+| CAPV v1beta1 (v1.8)  |             ✓              |             ☓              |             ☓              |             ☓              |
+| CAPV v1beta1 (v1.9)  |             ☓              |             ✓              |             x              |             x              |
+| CAPV v1beta1 (v1.10) |             ☓              |             x              |             ✓              |             x              |
+| CAPV v1beta1 (v1.11) |             ☓              |             x              |             x              |             ✓              |
 
 As CAPV doesn't dictate supported K8s versions, and it supports whatever CAPI supported, about the provider's compatibility with K8s versions, please refer
 to [CAPI Supported Kubernetes Versions](https://cluster-api.sigs.k8s.io/reference/versions.html).
@@ -116,7 +114,7 @@ Participating in the project is governed by the Kubernetes code of conduct. Plea
 
 ### Implementer office hours
 
-- Bi-weekly on [Zoom][zoom_meeting] on Thursdays @ 10:00am Pacific. [Convert to your time zone.][time_zone_converter]
+- Bi-weekly on [Zoom][zoom_meeting] on Wednesdays @ 02:30 PM Central European Time.
 - Previous meetings: \[ [notes][meeting_notes] \]
 
 ### Other ways to communicate with the contributors
@@ -174,8 +172,6 @@ We also use the issue tracker to track features. If you have an idea for a featu
 [troubleshooting]: ./docs/troubleshooting.md
 
 [zoom_meeting]: https://zoom.us/j/92253194848?pwd=cVVVNDMxeTl1QVJPUlpvLzNSVU1JZz09
-
-[time_zone_converter]: http://www.thetimezoneconverter.com/?t=08:00&tz=PT%20%28Pacific%20Time%29
 
 [vsphere_custom_resource_definitions]: https://doc.crds.dev/github.com/kubernetes-sigs/cluster-api-provider-vsphere
 

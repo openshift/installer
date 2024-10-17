@@ -408,11 +408,11 @@ func setupSupervisorControllers(ctx context.Context, controllerCtx *capvcontext.
 		return err
 	}
 
-	if err := controllers.AddServiceAccountProviderControllerToManager(ctx, controllerCtx, mgr, tracker, concurrency(providerServiceAccountConcurrency)); err != nil {
+	if err := vmware.AddServiceAccountProviderControllerToManager(ctx, controllerCtx, mgr, tracker, concurrency(providerServiceAccountConcurrency)); err != nil {
 		return err
 	}
 
-	return controllers.AddServiceDiscoveryControllerToManager(ctx, controllerCtx, mgr, tracker, concurrency(serviceDiscoveryConcurrency))
+	return vmware.AddServiceDiscoveryControllerToManager(ctx, controllerCtx, mgr, tracker, concurrency(serviceDiscoveryConcurrency))
 }
 
 func setupChecks(mgr ctrlmgr.Manager) {

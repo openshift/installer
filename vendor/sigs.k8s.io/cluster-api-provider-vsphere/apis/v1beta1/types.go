@@ -203,6 +203,16 @@ type VirtualMachineCloneSpec struct {
 	// Check the compatibility with the ESXi version before setting the value.
 	// +optional
 	HardwareVersion string `json:"hardwareVersion,omitempty"`
+	// DataDisks holds information for additional disks to add to the VM that are not part of the VM's OVA template.
+	// +optional
+	DataDisks []VSphereDisk `json:"dataDisks,omitempty"`
+}
+
+// VSphereDisk describes additional disks for vSphere to be added to VM that are not part of the VM OVA template.
+type VSphereDisk struct {
+	// SizeGiB is the size of the disk (in GiB).
+	// +kubebuilder:validation:Required
+	SizeGiB int64 `json:"sizeGiB"`
 }
 
 // VSphereMachineTemplateResource describes the data needed to create a VSphereMachine from a template.
@@ -279,8 +289,8 @@ type PCIDeviceSpec struct {
 // NetworkSpec defines the virtual machine's network configuration.
 type NetworkSpec struct {
 	// Devices is the list of network devices used by the virtual machine.
-	// TODO(akutz) Make sure at least one network matches the
-	//             ClusterSpec.CloudProviderConfiguration.Network.Name
+	//
+	// TODO(akutz) Make sure at least one network matches the ClusterSpec.CloudProviderConfiguration.Network.Name
 	Devices []NetworkDeviceSpec `json:"devices"`
 
 	// Routes is a list of optional, static routes applied to the virtual

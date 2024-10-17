@@ -1147,6 +1147,20 @@ spec:
                       description: VSphere is the configuration used when installing
                         on vSphere.
                       properties:
+                        additionalDisks:
+                          description: AdditionalDisks defines additional disks to
+                            add to vm that are not part of the template.
+                          items:
+                            description: AdditionalDisks defines the disk for a virtual
+                              machine.
+                            properties:
+                              diskSizeGB:
+                                description: DiskSizeGB defines the size of disk in
+                                  GB.
+                                format: int32
+                                type: integer
+                            type: object
+                          type: array
                         coresPerSocket:
                           description: NumCoresPerSocket is the number of cores per
                             socket in a vm. The number of vCPUs on the vm will be
@@ -2222,6 +2236,20 @@ spec:
                     description: VSphere is the configuration used when installing
                       on vSphere.
                     properties:
+                      additionalDisks:
+                        description: AdditionalDisks defines additional disks to add
+                          to vm that are not part of the template.
+                        items:
+                          description: AdditionalDisks defines the disk for a virtual
+                            machine.
+                          properties:
+                            diskSizeGB:
+                              description: DiskSizeGB defines the size of disk in
+                                GB.
+                              format: int32
+                              type: integer
+                          type: object
+                        type: array
                       coresPerSocket:
                         description: NumCoresPerSocket is the number of cores per
                           socket in a vm. The number of vCPUs on the vm will be NumCPUs/NumCoresPerSocket.
@@ -4893,6 +4921,20 @@ spec:
                       used when installing on VSphere for machine pools which do not
                       define their own platform configuration.
                     properties:
+                      additionalDisks:
+                        description: AdditionalDisks defines additional disks to add
+                          to vm that are not part of the template.
+                        items:
+                          description: AdditionalDisks defines the disk for a virtual
+                            machine.
+                          properties:
+                            diskSizeGB:
+                              description: DiskSizeGB defines the size of disk in
+                                GB.
+                              format: int32
+                              type: integer
+                          type: object
+                        type: array
                       coresPerSocket:
                         description: NumCoresPerSocket is the number of cores per
                           socket in a vm. The number of vCPUs on the vm will be NumCPUs/NumCoresPerSocket.
