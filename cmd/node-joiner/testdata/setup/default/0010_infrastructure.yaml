@@ -5,3 +5,5 @@ metadata:
 spec:
   platformSpec:
     type: BareMetal
+status:
+  apiServerURL: https://api.ostest.test.metalkube.org:6443
