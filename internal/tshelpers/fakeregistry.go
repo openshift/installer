@@ -154,8 +154,11 @@ func (fr *FakeOCPRegistry) makeMinimalISO() ([]byte, error) {
 	defer os.RemoveAll(tempDir)
 
 	files := map[string][]byte{
+		"iso/coreos/kargs.json":         []byte("{\"default\": \"rw coreos.liveiso=rhcos-418.94.202409050217-0 ignition.firstboot ignition.platform.id=metal\",\"files\": [{\"end\": \"\\n\",\"offset\": 968,\"pad\": \"#\",\"path\": \"EFI/redhat/grub.cfg\"},{\"end\": \"\\n\",\"offset\": 1865,\"pad\": \"#\",\"path\": \"isolinux/isolinux.cfg\"}],\"size\": 1115}"),
 		"iso/images/ignition.img":       []byte("ignitionimg"),
 		"iso/images/pxeboot/initrd.img": []byte("initrdimg"),
+		"iso/images/pxeboot/rootfs.img": []byte("rootfsimg"),
+		"iso/images/pxeboot/vmlinuz":    []byte("vmlinuz"),
 		"iso/images/efiboot.img":        []byte("efibootimg"),
 		"iso/boot.catalog":              []byte("bootcatalog"),
 		// The following files are required to allow the correct embedding of

@@ -18,18 +18,24 @@ const (
 )
 
 // NewAddNodesCommand creates a new command for add nodes.
-func NewAddNodesCommand(directory string, kubeConfig string) error {
-	err := saveParams(directory, kubeConfig)
+func NewAddNodesCommand(directory string, kubeConfig string, generatePXE bool) error {
+	err := saveParams(directory, kubeConfig, generatePXE)
 	if err != nil {
 		return err
 	}
 
-	fetcher := store.NewAssetsFetcher(directory)
-	err = fetcher.FetchAndPersist(context.Background(), []asset.WritableAsset{
+	assets := []asset.WritableAsset{
 		&workflow.AgentWorkflowAddNodes{},
-		&image.AgentImage{},
-		&configimage.ConfigImage{},
-	})
+	}
+	if generatePXE {
+		assets = append(assets, &image.AgentPXEFiles{})
+	} else {
+		assets = append(assets, &image.AgentImage{})
+		assets = append(assets, &configimage.ConfigImage{})
+	}
+
+	fetcher := store.NewAssetsFetcher(directory)
+	err = fetcher.FetchAndPersist(context.Background(), assets)
 
 	// Save the exit code result
 	exitCode := "0"
@@ -43,11 +49,12 @@ func NewAddNodesCommand(directory string, kubeConfig string) error {
 	return err
 }
 
-func saveParams(directory, kubeConfig string) error {
+func saveParams(directory, kubeConfig string, generatePXE bool) error {
 	// Store the current parameters into the assets folder, so
 	// that they could be retrieved later by the assets
 	params := joiner.Params{
-		Kubeconfig: kubeConfig,
+		Kubeconfig:  kubeConfig,
+		GeneratePXE: generatePXE,
 	}
 	return params.Save(directory)
 }
