@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controllers
+package vmware
 
 import (
 	"context"
@@ -61,7 +61,6 @@ import (
 
 const (
 	kindProviderServiceAccount = "ProviderServiceAccount"
-	systemServiceAccountPrefix = "system.serviceaccount"
 )
 
 // AddServiceAccountProviderControllerToManager adds this controller to the provided manager.

@@ -97,9 +97,10 @@ type PostProvider interface {
 
 // PostProvisionInput collects the args passed to the PostProvision hook.
 type PostProvisionInput struct {
-	Client        client.Client
-	InstallConfig *installconfig.InstallConfig
-	InfraID       string
+	Client           client.Client
+	InstallConfig    *installconfig.InstallConfig
+	InfraID          string
+	MachineManifests []client.Object
 }
 
 // BootstrapDestroyer allows platform-specific behavior when

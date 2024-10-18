@@ -29,6 +29,7 @@ import (
 	pbmTypes "github.com/vmware/govmomi/pbm/types"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
+	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -142,6 +143,7 @@ func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []by
 		if err != nil {
 			return errors.Wrapf(err, "error getting disk spec for %q", ctx)
 		}
+		log.Info("Got the following disks", "disk", diskSpecs)
 		deviceSpecs = append(deviceSpecs, diskSpecs...)
 	}
 
@@ -341,7 +343,7 @@ func getDiskSpec(vmCtx *capvcontext.VMContext, devices object.VirtualDeviceList)
 	}
 
 	// There is at least one disk
-	var diskSpecs []types.BaseVirtualDeviceConfigSpec
+	diskSpecs := []types.BaseVirtualDeviceConfigSpec{}
 	primaryDisk := disks[0].(*types.VirtualDisk)
 	primaryCloneCapacityKB := int64(vmCtx.VSphereVM.Spec.DiskGiB) * 1024 * 1024
 	primaryDiskConfigSpec, err := getDiskConfigSpec(primaryDisk, primaryCloneCapacityKB)
@@ -369,6 +371,17 @@ func getDiskSpec(vmCtx *capvcontext.VMContext, devices object.VirtualDeviceList)
 			diskSpecs = append(diskSpecs, additionalDiskConfigSpec)
 		}
 	}
+
+	// Now if we have increased the disk size of any additional disks that were in the template, we can now add new disks
+	// that are present in the additionalDisks list.
+	if len(vmCtx.VSphereVM.Spec.DataDisks) > 0 {
+		additionalDisks, diskErr := createAdditionalDisks(vmCtx.VSphereVM.Spec.DataDisks, primaryDisk, devices)
+		if diskErr != nil {
+
+		}
+		diskSpecs = append(diskSpecs, additionalDisks...)
+	}
+
 	return diskSpecs, nil
 }
 
@@ -388,6 +401,101 @@ func getDiskConfigSpec(disk *types.VirtualDisk, diskCloneCapacityKB int64) (type
 		Operation: types.VirtualDeviceConfigSpecOperationEdit,
 		Device:    disk,
 	}, nil
+}
+
+func createAdditionalDisks(disks []infrav1.VSphereDisk, primaryDisk *types.VirtualDisk, devices object.VirtualDeviceList) ([]types.BaseVirtualDeviceConfigSpec, error) {
+	additionalDisks := []types.BaseVirtualDeviceConfigSpec{}
+	unit := int32(1)
+
+	for i, dataDisk := range disks {
+		klog.InfoS("Adding disk", "spec", dataDisk)
+
+		//  Get controller.  Only supporting using same controller as primary disk at this time
+		controller, ok := devices.FindByKey(primaryDisk.ControllerKey).(types.BaseVirtualController)
+		if !ok {
+			klog.Infof("Unable to get scsi controller")
+		}
+
+		dev := &types.VirtualDisk{
+			VirtualDevice: types.VirtualDevice{
+				Key: devices.NewKey() - int32(i),
+				Backing: &types.VirtualDiskFlatVer2BackingInfo{
+					DiskMode:        string(types.VirtualDiskModePersistent),
+					ThinProvisioned: types.NewBool(true),
+					VirtualDeviceFileBackingInfo: types.VirtualDeviceFileBackingInfo{
+						FileName: "",
+					},
+				},
+				//UnitNumber:    assignUnitNumber,
+				ControllerKey: controller.GetVirtualController().Key,
+			},
+			CapacityInKB: dataDisk.SizeGiB * 1024 * 1024,
+		}
+
+		// Assign unit number to next slot on controller
+		assignUnitNumber(dev, devices, additionalDisks, controller, unit)
+		unit = *dev.UnitNumber
+
+		diskConfigSpec := types.VirtualDeviceConfigSpec{
+			Device:        dev,
+			Operation:     types.VirtualDeviceConfigSpecOperationAdd,
+			FileOperation: types.VirtualDeviceConfigSpecFileOperationCreate,
+		}
+
+		klog.InfoS("Generated device", "dev", dev)
+
+		additionalDisks = append(additionalDisks, &diskConfigSpec)
+	}
+
+	return additionalDisks, nil
+}
+
+// assignController assigns a device to a controller.
+func assignUnitNumber(device types.BaseVirtualDevice, existingDevices object.VirtualDeviceList, newDevices []types.BaseVirtualDeviceConfigSpec, controller types.BaseVirtualController, offset int32) {
+	vd := device.GetVirtualDevice()
+	vd.ControllerKey = controller.GetVirtualController().Key
+	vd.UnitNumber = &offset
+
+	units := make([]bool, 30)
+
+	for i := 0; i < int(offset); i++ {
+		units[i] = true
+	}
+
+	switch sc := controller.(type) {
+	case types.BaseVirtualSCSIController:
+		//  The SCSI controller sits on its own bus
+		klog.Infof("Marking SCSI Controller's unit number: %d", sc.GetVirtualSCSIController().ScsiCtlrUnitNumber)
+		units[sc.GetVirtualSCSIController().ScsiCtlrUnitNumber] = true
+	}
+
+	key := controller.GetVirtualController().Key
+
+	// Check all existing devices
+	for _, device := range existingDevices {
+		d := device.GetVirtualDevice()
+
+		if d.ControllerKey == key && d.UnitNumber != nil {
+			units[int(*d.UnitNumber)] = true
+		}
+	}
+
+	// Check new devices
+	for _, device := range newDevices {
+		d := device.GetVirtualDeviceConfigSpec().Device.GetVirtualDevice()
+
+		if d.ControllerKey == key && d.UnitNumber != nil {
+			units[int(*d.UnitNumber)] = true
+		}
+	}
+
+	for unit, used := range units {
+		if !used {
+			unit32 := int32(unit)
+			vd.UnitNumber = &unit32
+			break
+		}
+	}
 }
 
 const ethCardType = "vmxnet3"

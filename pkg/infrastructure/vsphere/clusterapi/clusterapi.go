@@ -134,6 +134,18 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	return nil
 }
 
+// InfraReady is called once cluster.Status.InfrastructureReady
+// is true, typically after load balancers have been provisioned. It can be used
+// to create DNS records.
+func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
+	return nil
+}
+
+// PostProvision should be called to add or update and vSphere resources after provisioning has completed.
+func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisionInput) error {
+	return nil
+}
+
 // downloadImage if any failure domains don't have a defined template, this function
 // returns true.
 func downloadImage(installConfig *installconfig.InstallConfig) bool {

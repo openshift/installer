@@ -70,6 +70,12 @@ type VSphereMachineProviderSpec struct {
 	// When using LinkedClone, if no snapshots exist for the source template, falls back to FullClone.
 	// +optional
 	CloneMode CloneMode `json:"cloneMode,omitempty"`
+	// disks is a list of non OS disks to be created and attached to the VM.  The max number of disk allowed to be attached is
+	// currently 15.  This limitation is being applied to allow no more than 16 disks on the default scsi controller for the VM.
+	// The first disk on that SCSI controller will be the OS disk from the template.
+	// +openshift:enable:FeatureGate=VSphereMultiDisk
+	// +optional
+	DataDisks []VSphereDisk `json:"dataDisks,omitempty"`
 }
 
 // CloneMode is the type of clone operation used to clone a VM from a template.
@@ -170,6 +176,13 @@ type NetworkDeviceSpec struct {
 	// +kubebuilder:validation:Format=ipv4
 	// +optional
 	AddressesFromPools []AddressesFromPool `json:"addressesFromPools,omitempty"`
+}
+
+// VSphereDisk describes additional disks for vSphere.
+type VSphereDisk struct {
+	// sizeGiB is the size of the disk (in GiB).
+	// +kubebuilder:validation:Required
+	SizeGiB int64 `json:"sizeGiB"`
 }
 
 // WorkspaceConfig defines a workspace configuration for the vSphere cloud

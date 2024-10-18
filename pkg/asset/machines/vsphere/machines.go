@@ -335,6 +335,14 @@ func provider(clusterID string, vcenter *vsphere.VCenter, failureDomain vsphere.
 		networkDeviceSpec[i] = machineapi.NetworkDeviceSpec{NetworkName: network}
 	}
 
+	dataDisks := []machineapi.VSphereDisk{}
+	for _, curDisk := range mpool.DataDisks {
+		newDisk := machineapi.VSphereDisk{
+			SizeGiB: int64(curDisk.DiskSizeGiB),
+		}
+		dataDisks = append(dataDisks, newDisk)
+	}
+
 	return &machineapi.VSphereMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: machineapi.SchemeGroupVersion.String(),
@@ -358,6 +366,7 @@ func provider(clusterID string, vcenter *vsphere.VCenter, failureDomain vsphere.
 		NumCoresPerSocket: mpool.NumCoresPerSocket,
 		MemoryMiB:         mpool.MemoryMiB,
 		DiskGiB:           mpool.OSDisk.DiskSizeGB,
+		DataDisks:         dataDisks,
 	}, nil
 }
 
