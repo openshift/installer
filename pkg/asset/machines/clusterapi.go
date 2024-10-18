@@ -452,7 +452,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 			return fmt.Errorf("failed to generate Cluster API machine manifests for control-plane: %w", err)
 		}
 		pool.Platform.Nutanix = &mpool
-		templateName := nutanixtypes.RHCOSImageName(clusterID.InfraID)
+		templateName := nutanixtypes.RHCOSImageName(ic.Platform.Nutanix, clusterID.InfraID)
 
 		c.FileList, err = nutanixcapi.GenerateMachines(clusterID.InfraID, ic, &pool, templateName, "master")
 		if err != nil {

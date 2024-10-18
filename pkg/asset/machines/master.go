@@ -502,7 +502,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 		pool.Platform.Nutanix = &mpool
-		templateName := nutanixtypes.RHCOSImageName(clusterID.InfraID)
+		templateName := nutanixtypes.RHCOSImageName(ic.Platform.Nutanix, clusterID.InfraID)
 
 		machines, controlPlaneMachineSet, err = nutanix.Machines(clusterID.InfraID, ic, &pool, templateName, "master", masterUserDataSecretName)
 		if err != nil {
