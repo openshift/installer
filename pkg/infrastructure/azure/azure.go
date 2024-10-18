@@ -3,6 +3,7 @@ package azure
 import (
 	"context"
 	"fmt"
+	"maps"
 	"math/rand"
 	"net/http"
 	"os"
@@ -88,12 +89,9 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 	tokenCredential := session.TokenCreds
 	resourceGroupName := platform.ClusterResourceGroupName(in.InfraID)
 
-	userTags := platform.UserTags
-	tags := make(map[string]*string, len(userTags)+1)
-	tags[fmt.Sprintf("kubernetes.io_cluster.%s", in.InfraID)] = ptr.To("owned")
-	for k, v := range userTags {
-		tags[k] = ptr.To(v)
-	}
+	userTags := aztypes.ConvertCAPZTagsToSDKTags(platform.UserTags)
+	tags := aztypes.GetSystemTags(in.InfraID)
+	maps.Copy(tags, userTags)
 	p.Tags = tags
 
 	// Create resource group
@@ -328,12 +326,9 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		return fmt.Errorf("image length is not aligned on a 512 byte boundary")
 	}
 
-	userTags := platform.UserTags
-	tags := make(map[string]*string, len(userTags)+1)
-	tags[fmt.Sprintf("kubernetes.io_cluster.%s", in.InfraID)] = ptr.To("owned")
-	for k, v := range userTags {
-		tags[k] = ptr.To(v)
-	}
+	userTags := aztypes.ConvertCAPZTagsToSDKTags(platform.UserTags)
+	tags := aztypes.GetSystemTags(in.InfraID)
+	maps.Copy(tags, userTags)
 
 	tokenCredential := session.TokenCreds
 	storageURL := fmt.Sprintf("https://%s.blob.%s", storageAccountName, session.Environment.StorageEndpointSuffix)
@@ -476,6 +471,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			GalleryImageVersionName: galleryImageVersionName,
 			Region:                  platform.Region,
 			BlobURL:                 blobURL,
+			Tags:                    tags,
 			RegionalReplicaCount:    int32(1),
 			ComputeClientFactory:    computeClientFactory,
 		})
@@ -495,6 +491,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			GalleryImageVersionName: galleryGen2ImageVersionName,
 			Region:                  platform.Region,
 			BlobURL:                 blobURL,
+			Tags:                    tags,
 			RegionalReplicaCount:    int32(1),
 			ComputeClientFactory:    computeClientFactory,
 		})
@@ -584,7 +581,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	p.NetworkClientFactory = networkClientFactory
 	p.lbBackendAddressPools = lbBaps
 
-	if err := createDNSEntries(ctx, in, extLBFQDN, resourceGroupName); err != nil {
+	if err := createDNSEntries(ctx, in, extLBFQDN, resourceGroupName, tags); err != nil {
 		return fmt.Errorf("error creating DNS records: %w", err)
 	}
 
