@@ -57,16 +57,15 @@ func newCompletionCmd() *cobra.Command {
 	}
 	completionCmd.AddCommand(bashCompletionCmd)
 
-	// The zsh completions didn't work for crawford, so commenting them out
-	//zshCompletionCmd := &cobra.Command{
-	//Use:     "zsh",
-	//Short:   "Outputs the zsh shell completions",
-	//Example: completionExampleZsh,
-	//RunE: func(cmd *cobra.Command, _ []string) error {
-	//return cmd.Root().GenZshCompletion(os.Stdout)
-	//},
-	//}
-	//completionCmd.AddCommand(zshCompletionCmd)
+	zshCompletionCmd := &cobra.Command{
+		Use:     "zsh",
+		Short:   "Outputs the zsh shell completions",
+		Example: completionExampleZsh,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return cmd.Root().GenZshCompletion(os.Stdout)
+		},
+	}
+	completionCmd.AddCommand(zshCompletionCmd)
 
 	return completionCmd
 }
