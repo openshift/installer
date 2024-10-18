@@ -101,7 +101,7 @@ metadata:
   name: openshift-was not built correctly
   namespace: cluster0
 spec:
-  releaseImage: registry.ci.openshift.org/origin/release:4.14
+  releaseImage: registry.ci.openshift.org/origin/release:4.15
 status: {}
 -- expected/infraenv.yaml --
 metadata:
