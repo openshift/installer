@@ -22,6 +22,7 @@ metadata:
 # All fields are optional
 rendezvousIP: your-node0-ip
 bootArtifactsBaseURL: http://user-specified-infra.com
+minimalISO: false
 additionalNTPSources:
 - 0.rhel.pool.ntp.org
 - 1.rhel.pool.ntp.org

@@ -165,9 +165,10 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 		}
 		a.RendezvousIP = nodeZeroIP
 		logrus.Infof("The rendezvous host IP (node0 IP) is %s", a.RendezvousIP)
-		// Define cluster name and image type.
+		// Define cluster name
 		clusterName = fmt.Sprintf("%s.%s", agentManifests.ClusterDeployment.Spec.ClusterName, agentManifests.ClusterDeployment.Spec.BaseDomain)
-		if agentManifests.AgentClusterInstall.Spec.PlatformType == hiveext.ExternalPlatformType {
+		if (agentConfigAsset.Config != nil && agentConfigAsset.Config.MinimalISO) ||
+			(agentManifests.AgentClusterInstall.Spec.PlatformType == hiveext.ExternalPlatformType) {
 			imageTypeISO = "minimal-iso"
 		}
 		// Fetch the required number of master and worker nodes.
