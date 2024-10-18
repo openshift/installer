@@ -61,19 +61,19 @@ func (i *InfraEnv) Generate(_ context.Context, dependencies asset.Parents) error
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
 		if installConfig.Config != nil {
-			err := i.generateManifest(installConfig.ClusterName(), installConfig.ClusterNamespace(), installConfig.Config.SSHKey, installConfig.Config.AdditionalTrustBundle, installConfig.Config.Proxy, string(installConfig.Config.ControlPlane.Architecture))
+			var additionalNTPSources []string
+			if agentConfig.Config != nil {
+				additionalNTPSources = agentConfig.Config.AdditionalNTPSources
+			}
+
+			err := i.generateManifest(installConfig.ClusterName(), installConfig.ClusterNamespace(), installConfig.Config.SSHKey, installConfig.Config.AdditionalTrustBundle, installConfig.Config.Proxy, string(installConfig.Config.ControlPlane.Architecture), additionalNTPSources)
 			if err != nil {
 				return err
 			}
-
-			if agentConfig.Config != nil {
-				i.Config.Spec.AdditionalNTPSources = agentConfig.Config.AdditionalNTPSources
-			}
-
 		}
 
 	case workflow.AgentWorkflowTypeAddNodes:
-		err := i.generateManifest(clusterInfo.ClusterName, clusterInfo.Namespace, clusterInfo.SSHKey, clusterInfo.UserCaBundle, clusterInfo.Proxy, clusterInfo.Architecture)
+		err := i.generateManifest(clusterInfo.ClusterName, clusterInfo.Namespace, clusterInfo.SSHKey, clusterInfo.UserCaBundle, clusterInfo.Proxy, clusterInfo.Architecture, clusterInfo.AdditionalNTPSources)
 		if err != nil {
 			return err
 		}
@@ -85,7 +85,7 @@ func (i *InfraEnv) Generate(_ context.Context, dependencies asset.Parents) error
 	return i.finish()
 }
 
-func (i *InfraEnv) generateManifest(clusterName, clusterNamespace, sshKey, additionalTrustBundle string, proxy *types.Proxy, architecture string) error {
+func (i *InfraEnv) generateManifest(clusterName, clusterNamespace, sshKey, additionalTrustBundle string, proxy *types.Proxy, architecture string, additionalNTPSources []string) error {
 	infraEnv := &aiv1beta1.InfraEnv{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "InfraEnv",
@@ -119,6 +119,9 @@ func (i *InfraEnv) generateManifest(clusterName, clusterNamespace, sshKey, addit
 	}
 	if proxy != nil {
 		infraEnv.Spec.Proxy = getProxy(proxy)
+	}
+	if len(additionalNTPSources) > 0 {
+		infraEnv.Spec.AdditionalNTPSources = additionalNTPSources
 	}
 
 	i.Config = infraEnv
