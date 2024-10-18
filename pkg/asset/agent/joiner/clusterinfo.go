@@ -72,6 +72,7 @@ type ClusterInfo struct {
 	IgnitionEndpointWorker        *models.IgnitionEndpoint
 	FIPS                          bool
 	Nodes                         *corev1.NodeList
+	AdditionalNTPSources          []string
 }
 
 var _ asset.WritableAsset = (*ClusterInfo)(nil)
@@ -120,6 +121,7 @@ func (ci *ClusterInfo) Generate(_ context.Context, dependencies asset.Parents) e
 		ci.retrieveSSHKey,
 		ci.retrieveFIPS,
 		ci.retrieveNamespace,
+		ci.retrieveAdditionalNTPSources,
 	} {
 		if err := f(); err != nil {
 			return err
@@ -452,6 +454,11 @@ func (ci *ClusterInfo) retrieveClusterName() error {
 
 func (ci *ClusterInfo) retrieveNamespace() error {
 	ci.Namespace = "cluster0"
+	return nil
+}
+
+func (ci *ClusterInfo) retrieveAdditionalNTPSources() error {
+	ci.AdditionalNTPSources = ci.addNodesConfig.Config.AdditionalNTPSources
 	return nil
 }
 
