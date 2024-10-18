@@ -155,6 +155,7 @@ func (a *AddNodesConfig) validateSSHKey() field.ErrorList {
 	return allErrs
 }
 
+// ValidateAdditionalNTPSources checks if the given list of additional NTP sources are either valid domain names or IPs.
 func ValidateAdditionalNTPSources(additionalNTPSourcesPath *field.Path, sources []string) field.ErrorList {
 	var allErrs field.ErrorList
 

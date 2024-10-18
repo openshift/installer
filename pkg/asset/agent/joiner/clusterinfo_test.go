@@ -386,6 +386,7 @@ func defaultExpectedClusterInfo() ClusterInfo {
 }
 
 func verifyClusterInfo(t *testing.T, expectedClusterInfo, clusterInfo ClusterInfo) {
+	t.Helper()
 	assert.Equal(t, expectedClusterInfo.ClusterID, clusterInfo.ClusterID)
 	assert.Equal(t, expectedClusterInfo.ClusterName, clusterInfo.ClusterName)
 	assert.Equal(t, expectedClusterInfo.Version, clusterInfo.Version)
