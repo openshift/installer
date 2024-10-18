@@ -295,11 +295,17 @@ func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, net
 		return err
 	}
 
+	machineCIDR := in.InstallConfig.Config.Networking.MachineNetwork[0].CIDR.String()
 	// api rules are needed to access the kube-apiserver on master nodes
 	firewallName = fmt.Sprintf("%s-api", in.InfraID)
 	srcTags = []string{}
 	targetTags = []string{masterTag}
-	srcRanges = []string{}
+	if in.InstallConfig.Config.Publish == types.ExternalPublishingStrategy {
+		srcRanges = []string{}
+	} else {
+		// For Internal, limit the source to the machineCIDR
+		srcRanges = []string{machineCIDR}
+	}
 	if err := addFirewallRule(ctx, firewallName, network, projectID, getAPIPorts(), srcTags, targetTags, srcRanges); err != nil {
 		return err
 	}
@@ -308,7 +314,6 @@ func createFirewallRules(ctx context.Context, in clusterapi.InfraReadyInput, net
 	firewallName = fmt.Sprintf("%s-internal-network", in.InfraID)
 	srcTags = []string{}
 	targetTags = []string{workerTag, masterTag}
-	machineCIDR := in.InstallConfig.Config.Networking.MachineNetwork[0].CIDR.String()
 	srcRanges = []string{machineCIDR}
 	err := addFirewallRule(ctx, firewallName, network, projectID, getInternalNetworkPorts(), srcTags, targetTags, srcRanges)
 
