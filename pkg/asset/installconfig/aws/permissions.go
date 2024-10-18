@@ -536,3 +536,12 @@ func includesCreateInstanceProfile(installConfig *types.InstallConfig) bool {
 	mpool.Set(installConfig.AWS.DefaultMachinePlatform)
 	return len(mpool.IAMProfile) == 0
 }
+
+// AllPermissionGroups returns all the permission groups known by the Installer.
+func AllPermissionGroups() []PermissionGroup {
+	groups := make([]PermissionGroup, 0, len(permissions))
+	for group := range permissions {
+		groups = append(groups, group)
+	}
+	return groups
+}
