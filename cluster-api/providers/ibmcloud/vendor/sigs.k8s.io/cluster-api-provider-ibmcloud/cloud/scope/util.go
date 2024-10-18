@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -56,4 +57,59 @@ func CheckCreateInfraAnnotation(cluster infrav1beta2.IBMPowerVSCluster) bool {
 		return false
 	}
 	return createInfra
+}
+
+// CRN is a local duplicate of IBM Cloud CRN for parsing and references.
+type CRN struct {
+	Scheme          string
+	Version         string
+	CName           string
+	CType           string
+	ServiceName     string
+	Region          string
+	ScopeType       string
+	Scope           string
+	ServiceInstance string
+	ResourceType    string
+	Resource        string
+}
+
+// ParseCRN is a local duplicate of IBM Cloud CRN Parse functionality, to convert a string into a CRN, if it is in the correct format.
+func ParseCRN(s string) (*CRN, error) {
+	if s == "" {
+		return nil, nil
+	}
+
+	segments := strings.Split(s, ":")
+	if len(segments) != 10 || segments[0] != "crn" {
+		return nil, fmt.Errorf("malformed CRN")
+	}
+
+	crn := &CRN{
+		Scheme:          segments[0],
+		Version:         segments[1],
+		CName:           segments[2],
+		CType:           segments[3],
+		ServiceName:     segments[4],
+		Region:          segments[5],
+		ServiceInstance: segments[7],
+		ResourceType:    segments[8],
+		Resource:        segments[9],
+	}
+
+	// Scope portions require additional parsing.
+	scopeSegments := segments[6]
+	if scopeSegments != "" {
+		if scopeSegments == "global" {
+			crn.Scope = scopeSegments
+		} else {
+			scopeParts := strings.Split(scopeSegments, "/")
+			if len(scopeParts) != 2 {
+				return nil, fmt.Errorf("malformed scope in CRN")
+			}
+			crn.ScopeType, crn.Scope = scopeParts[0], scopeParts[1]
+		}
+	}
+
+	return crn, nil
 }

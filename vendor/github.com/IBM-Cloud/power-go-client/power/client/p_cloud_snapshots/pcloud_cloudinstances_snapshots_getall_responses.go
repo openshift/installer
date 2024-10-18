@@ -6,6 +6,7 @@ package p_cloud_snapshots
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -109,11 +110,13 @@ func (o *PcloudCloudinstancesSnapshotsGetallOK) Code() int {
 }
 
 func (o *PcloudCloudinstancesSnapshotsGetallOK) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallOK %s", 200, payload)
 }
 
 func (o *PcloudCloudinstancesSnapshotsGetallOK) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallOK %s", 200, payload)
 }
 
 func (o *PcloudCloudinstancesSnapshotsGetallOK) GetPayload() *models.Snapshots {
@@ -177,11 +180,13 @@ func (o *PcloudCloudinstancesSnapshotsGetallBadRequest) Code() int {
 }
 
 func (o *PcloudCloudinstancesSnapshotsGetallBadRequest) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallBadRequest %s", 400, payload)
 }
 
 func (o *PcloudCloudinstancesSnapshotsGetallBadRequest) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallBadRequest %s", 400, payload)
 }
 
 func (o *PcloudCloudinstancesSnapshotsGetallBadRequest) GetPayload() *models.Error {
@@ -245,11 +250,13 @@ func (o *PcloudCloudinstancesSnapshotsGetallUnauthorized) Code() int {
 }
 
 func (o *PcloudCloudinstancesSnapshotsGetallUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudCloudinstancesSnapshotsGetallUnauthorized) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudCloudinstancesSnapshotsGetallUnauthorized) GetPayload() *models.Error {
@@ -313,11 +320,13 @@ func (o *PcloudCloudinstancesSnapshotsGetallForbidden) Code() int {
 }
 
 func (o *PcloudCloudinstancesSnapshotsGetallForbidden) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallForbidden %s", 403, payload)
 }
 
 func (o *PcloudCloudinstancesSnapshotsGetallForbidden) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallForbidden %s", 403, payload)
 }
 
 func (o *PcloudCloudinstancesSnapshotsGetallForbidden) GetPayload() *models.Error {
@@ -381,11 +390,13 @@ func (o *PcloudCloudinstancesSnapshotsGetallNotFound) Code() int {
 }
 
 func (o *PcloudCloudinstancesSnapshotsGetallNotFound) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallNotFound %s", 404, payload)
 }
 
 func (o *PcloudCloudinstancesSnapshotsGetallNotFound) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallNotFound %s", 404, payload)
 }
 
 func (o *PcloudCloudinstancesSnapshotsGetallNotFound) GetPayload() *models.Error {
@@ -449,11 +460,13 @@ func (o *PcloudCloudinstancesSnapshotsGetallInternalServerError) Code() int {
 }
 
 func (o *PcloudCloudinstancesSnapshotsGetallInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudCloudinstancesSnapshotsGetallInternalServerError) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/snapshots][%d] pcloudCloudinstancesSnapshotsGetallInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudCloudinstancesSnapshotsGetallInternalServerError) GetPayload() *models.Error {

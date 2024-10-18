@@ -6,6 +6,7 @@ package p_cloud_volumes
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -109,11 +110,13 @@ func (o *PcloudPvminstancesVolumesSetbootPutOK) Code() int {
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutOK) Error() string {
-	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutOK %s", 200, payload)
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutOK) String() string {
-	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutOK %s", 200, payload)
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutOK) GetPayload() models.Object {
@@ -175,11 +178,13 @@ func (o *PcloudPvminstancesVolumesSetbootPutBadRequest) Code() int {
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutBadRequest) Error() string {
-	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutBadRequest %s", 400, payload)
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutBadRequest) String() string {
-	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutBadRequest %s", 400, payload)
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutBadRequest) GetPayload() *models.Error {
@@ -243,11 +248,13 @@ func (o *PcloudPvminstancesVolumesSetbootPutUnauthorized) Code() int {
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutUnauthorized) Error() string {
-	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutUnauthorized) String() string {
-	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutUnauthorized) GetPayload() *models.Error {
@@ -311,11 +318,13 @@ func (o *PcloudPvminstancesVolumesSetbootPutForbidden) Code() int {
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutForbidden) Error() string {
-	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutForbidden %s", 403, payload)
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutForbidden) String() string {
-	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutForbidden %s", 403, payload)
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutForbidden) GetPayload() *models.Error {
@@ -379,11 +388,13 @@ func (o *PcloudPvminstancesVolumesSetbootPutNotFound) Code() int {
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutNotFound) Error() string {
-	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutNotFound %s", 404, payload)
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutNotFound) String() string {
-	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutNotFound %s", 404, payload)
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutNotFound) GetPayload() *models.Error {
@@ -447,11 +458,13 @@ func (o *PcloudPvminstancesVolumesSetbootPutInternalServerError) Code() int {
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutInternalServerError) Error() string {
-	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutInternalServerError) String() string {
-	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutInternalServerError) GetPayload() *models.Error {

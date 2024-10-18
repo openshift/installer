@@ -35,7 +35,7 @@ type CloudConnectionCreate struct {
 
 	// speed of the cloud connection (speed in megabits per second)
 	// Required: true
-	// Enum: [50 100 200 500 1000 2000 5000 10000]
+	// Enum: [50,100,200,500,1000,2000,5000,10000]
 	Speed *int64 `json:"speed"`
 
 	// list of subnets to attach to cloud connection

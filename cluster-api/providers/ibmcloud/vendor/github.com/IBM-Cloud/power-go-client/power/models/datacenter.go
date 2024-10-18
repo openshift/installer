@@ -24,6 +24,9 @@ type Datacenter struct {
 	// Required: true
 	Capabilities map[string]bool `json:"capabilities"`
 
+	// Additional Datacenter Capabilities Details
+	CapabilitiesDetails *CapabilitiesDetails `json:"capabilitiesDetails,omitempty"`
+
 	// Link to Datacenter Region
 	Href string `json:"href,omitempty"`
 
@@ -33,12 +36,12 @@ type Datacenter struct {
 
 	// The Datacenter status
 	// Required: true
-	// Enum: [active maintenance down]
+	// Enum: ["active","maintenance","down"]
 	Status *string `json:"status"`
 
 	// The Datacenter type
 	// Required: true
-	// Enum: [off-premises on-premises]
+	// Enum: ["off-premises","on-premises"]
 	Type *string `json:"type"`
 }
 
@@ -47,6 +50,10 @@ func (m *Datacenter) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateCapabilities(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateCapabilitiesDetails(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -72,6 +79,25 @@ func (m *Datacenter) validateCapabilities(formats strfmt.Registry) error {
 
 	if err := validate.Required("capabilities", "body", m.Capabilities); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (m *Datacenter) validateCapabilitiesDetails(formats strfmt.Registry) error {
+	if swag.IsZero(m.CapabilitiesDetails) { // not required
+		return nil
+	}
+
+	if m.CapabilitiesDetails != nil {
+		if err := m.CapabilitiesDetails.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("capabilitiesDetails")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("capabilitiesDetails")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -190,6 +216,10 @@ func (m *Datacenter) validateType(formats strfmt.Registry) error {
 func (m *Datacenter) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.contextValidateCapabilitiesDetails(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateLocation(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -197,6 +227,27 @@ func (m *Datacenter) ContextValidate(ctx context.Context, formats strfmt.Registr
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *Datacenter) contextValidateCapabilitiesDetails(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.CapabilitiesDetails != nil {
+
+		if swag.IsZero(m.CapabilitiesDetails) { // not required
+			return nil
+		}
+
+		if err := m.CapabilitiesDetails.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("capabilitiesDetails")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("capabilitiesDetails")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 

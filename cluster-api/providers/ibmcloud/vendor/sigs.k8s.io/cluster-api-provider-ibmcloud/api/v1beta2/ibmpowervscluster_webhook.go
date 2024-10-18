@@ -102,11 +102,34 @@ func (r *IBMPowerVSCluster) validateIBMPowerVSClusterNetwork() *field.Error {
 	return nil
 }
 
+func (r *IBMPowerVSCluster) validateIBMPowerVSClusterLoadBalancers() (allErrs field.ErrorList) {
+	if err := r.validateIBMPowerVSClusterLoadBalancerNames(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
+	if len(r.Spec.LoadBalancers) == 0 {
+		return allErrs
+	}
+
+	for _, loadbalancer := range r.Spec.LoadBalancers {
+		if *loadbalancer.Public {
+			return allErrs
+		}
+	}
+
+	return append(allErrs, field.Invalid(field.NewPath("spec.LoadBalancers"), r.Spec.LoadBalancers, "Expect atleast one of the load balancer to be public"))
+}
+
 func (r *IBMPowerVSCluster) validateIBMPowerVSClusterLoadBalancerNames() (allErrs field.ErrorList) {
 	found := make(map[string]bool)
 	for i, loadbalancer := range r.Spec.LoadBalancers {
+		if loadbalancer.Name == "" {
+			continue
+		}
+
 		if found[loadbalancer.Name] {
 			allErrs = append(allErrs, field.Duplicate(field.NewPath("spec", fmt.Sprintf("loadbalancers[%d]", i)), map[string]interface{}{"Name": loadbalancer.Name}))
+			continue
 		}
 		found[loadbalancer.Name] = true
 	}
@@ -117,8 +140,12 @@ func (r *IBMPowerVSCluster) validateIBMPowerVSClusterLoadBalancerNames() (allErr
 func (r *IBMPowerVSCluster) validateIBMPowerVSClusterVPCSubnetNames() (allErrs field.ErrorList) {
 	found := make(map[string]bool)
 	for i, subnet := range r.Spec.VPCSubnets {
+		if subnet.Name == nil {
+			continue
+		}
 		if found[*subnet.Name] {
 			allErrs = append(allErrs, field.Duplicate(field.NewPath("spec", fmt.Sprintf("vpcSubnets[%d]", i)), map[string]interface{}{"Name": *subnet.Name}))
+			continue
 		}
 		found[*subnet.Name] = true
 	}
@@ -128,6 +155,9 @@ func (r *IBMPowerVSCluster) validateIBMPowerVSClusterVPCSubnetNames() (allErrs f
 
 func (r *IBMPowerVSCluster) validateIBMPowerVSClusterTransitGateway() *field.Error {
 	if r.Spec.Zone == nil && r.Spec.VPC == nil {
+		return nil
+	}
+	if r.Spec.TransitGateway == nil {
 		return nil
 	}
 	if _, globalRouting, _ := genUtil.GetTransitGatewayLocationAndRouting(r.Spec.Zone, r.Spec.VPC.Region); r.Spec.TransitGateway.GlobalRouting != nil && !*r.Spec.TransitGateway.GlobalRouting && globalRouting != nil && *globalRouting {
@@ -183,7 +213,7 @@ func (r *IBMPowerVSCluster) validateIBMPowerVSClusterCreateInfraPrereq() (allErr
 		allErrs = append(allErrs, err...)
 	}
 
-	if err := r.validateIBMPowerVSClusterLoadBalancerNames(); err != nil {
+	if err := r.validateIBMPowerVSClusterLoadBalancers(); err != nil {
 		allErrs = append(allErrs, err...)
 	}
 

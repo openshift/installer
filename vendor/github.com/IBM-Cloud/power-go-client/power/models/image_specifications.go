@@ -37,6 +37,9 @@ type ImageSpecifications struct {
 
 	// Operating System
 	OperatingSystem string `json:"operatingSystem,omitempty"`
+
+	// Checksum of the source file (imported images only)
+	SourceChecksum string `json:"sourceChecksum,omitempty"`
 }
 
 // Validate validates this image specifications

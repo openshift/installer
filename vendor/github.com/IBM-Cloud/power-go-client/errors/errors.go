@@ -121,11 +121,14 @@ const DeleteSPPPlacementGroupOperationFailed = "failed to perform Delete Shared 
 const AddMemberSPPPlacementGroupOperationFailed = "failed to perform Add Member Operation for pool %s and shared processor pool placement group %s with error %w"
 const DeleteMemberSPPPlacementGroupOperationFailed = "failed to perform Delete Member Operation for pool %s and shared processor pool placement group %s with error %w"
 
-// start of workspaces
+// start of Workspaces Messages
 const GetWorkspaceOperationFailed = "failed to perform Get Workspace Operation for id %s with error %w"
 
-// Datacenter
+// start of Datacenter Messages
 const GetDatacenterOperationFailed = "failed to perform Get Datacenter Operation for id %s with error %w"
+
+// start of StorageTier Messages
+const GetAllStorageTiersOperationFailed = "failed to perform get all Storage Tiers Operation for id %s with error %w"
 
 // ErrorTarget ...
 type ErrorTarget struct {
