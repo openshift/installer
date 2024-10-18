@@ -896,6 +896,17 @@ func getMachinePoolSecurityType(in clusterapi.InfraReadyInput) (string, error) {
 			securityType = pool.Settings.SecurityType
 		}
 	}
+	if securityType == "" && in.InstallConfig.Config.Compute != nil {
+		for _, compute := range in.InstallConfig.Config.Compute {
+			if compute.Platform.Azure != nil {
+				pool := compute.Platform.Azure
+				if pool.Settings != nil {
+					securityType = pool.Settings.SecurityType
+					break
+				}
+			}
+		}
+	}
 	if securityType == "" && in.InstallConfig.Config.Platform.Azure.DefaultMachinePlatform != nil {
 		pool := in.InstallConfig.Config.Platform.Azure.DefaultMachinePlatform
 		if pool.Settings != nil {
