@@ -65,6 +65,9 @@ const (
 	// PermissionValidateInstanceType is a permission set required when validating instance types.
 	PermissionValidateInstanceType PermissionGroup = "permission-validate-instance-type"
 
+	// PermissionDefaultZones is a permission set required when zones are not set in the install-config.
+	PermissionDefaultZones PermissionGroup = "permission-default-zones"
+
 	// PermissionMintCreds is a permission set required when minting credentials.
 	PermissionMintCreds PermissionGroup = "permission-mint-creds"
 
@@ -314,6 +317,12 @@ var permissions = map[PermissionGroup][]string{
 		// Needed to validate instance availability in region
 		"ec2:DescribeInstanceTypes",
 	},
+	PermissionDefaultZones: {
+		// Needed to list the zones available in the region
+		"ec2:DescribeAvailabilityZones",
+		// Needed to filter zones by instance type
+		"ec2:DescribeInstanceTypeOfferings",
+	},
 	// From: https://github.com/openshift/cloud-credential-operator/blob/master/pkg/aws/utils.go
 	// TODO: export these in CCO so we don't have to duplicate them here.
 	PermissionMintCreds: {
@@ -497,6 +506,10 @@ func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 		permissionGroups = append(permissionGroups, PermissionValidateInstanceType)
 	}
 
+	if !includesZones(ic) {
+		permissionGroups = append(permissionGroups, PermissionDefaultZones)
+	}
+
 	return permissionGroups
 }
 
@@ -650,4 +663,21 @@ func includesInstanceType(installConfig *types.InstallConfig) bool {
 	}
 
 	return len(mpool.InstanceType) > 0
+}
+
+// includesZones checks if zones are specified in the install-config. It also returns true if zones will be derived from
+// the specified subnets.
+func includesZones(installConfig *types.InstallConfig) bool {
+	mpool := aws.MachinePool{}
+	mpool.Set(installConfig.AWS.DefaultMachinePlatform)
+
+	if mp := installConfig.ControlPlane; mp != nil {
+		mpool.Set(mp.Platform.AWS)
+	}
+
+	for _, compute := range installConfig.Compute {
+		mpool.Set(compute.Platform.AWS)
+	}
+
+	return len(mpool.Zones) > 0 || len(installConfig.AWS.Subnets) > 0
 }

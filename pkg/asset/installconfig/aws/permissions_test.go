@@ -762,3 +762,48 @@ func TestIncludesInstanceType(t *testing.T) {
 		assert.NotContains(t, RequiredPermissionGroups(ic), PermissionValidateInstanceType)
 	})
 }
+
+func TestIncludesZones(t *testing.T) {
+	t.Run("Should be true when", func(t *testing.T) {
+		t.Run("zones specified in defaultMachinePlatform", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.ControlPlane.Platform.AWS.Zones = []string{}
+			ic.Compute[0].Platform.AWS.Zones = []string{}
+			ic.AWS.Subnets = []string{}
+			ic.AWS.DefaultMachinePlatform = &aws.MachinePool{
+				Zones: []string{"a", "b"},
+			}
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionDefaultZones)
+		})
+		t.Run("zones specified in controlPlane", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.Compute[0].Platform.AWS.Zones = []string{}
+			ic.AWS.Subnets = []string{}
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionDefaultZones)
+		})
+		t.Run("zones specified in compute", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.ControlPlane.Platform.AWS.Zones = []string{}
+			ic.AWS.Subnets = []string{}
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionDefaultZones)
+		})
+		t.Run("subnets specified", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.ControlPlane.Platform.AWS.Zones = []string{}
+			ic.Compute[0].Platform.AWS.Zones = []string{}
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionDefaultZones)
+		})
+	})
+	t.Run("Should be false when neither zones nor subnets specified", func(t *testing.T) {
+		ic := validInstallConfig()
+		ic.AWS.Subnets = []string{}
+		ic.ControlPlane.Platform.AWS.Zones = []string{}
+		ic.Compute[0].Platform.AWS.Zones = []string{}
+		requiredPerms := RequiredPermissionGroups(ic)
+		assert.Contains(t, requiredPerms, PermissionDefaultZones)
+	})
+}
