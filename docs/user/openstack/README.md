@@ -54,6 +54,7 @@ It covers the installation with the default CNI (OVNKubernetes).
 
 ## Reference Documents
 
+- [Observability](observability.md)
 - [Privileges](privileges.md)
 - [Control plane machine set](control-plane-machine-set.md)
 - [Known Issues and Workarounds](known-issues.md)
