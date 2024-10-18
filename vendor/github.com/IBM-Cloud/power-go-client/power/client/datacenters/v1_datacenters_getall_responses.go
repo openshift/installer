@@ -6,6 +6,7 @@ package datacenters
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -103,11 +104,13 @@ func (o *V1DatacentersGetallOK) Code() int {
 }
 
 func (o *V1DatacentersGetallOK) Error() string {
-	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallOK %s", 200, payload)
 }
 
 func (o *V1DatacentersGetallOK) String() string {
-	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallOK %s", 200, payload)
 }
 
 func (o *V1DatacentersGetallOK) GetPayload() *models.Datacenters {
@@ -171,11 +174,13 @@ func (o *V1DatacentersGetallBadRequest) Code() int {
 }
 
 func (o *V1DatacentersGetallBadRequest) Error() string {
-	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallBadRequest %s", 400, payload)
 }
 
 func (o *V1DatacentersGetallBadRequest) String() string {
-	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallBadRequest %s", 400, payload)
 }
 
 func (o *V1DatacentersGetallBadRequest) GetPayload() *models.Error {
@@ -239,11 +244,13 @@ func (o *V1DatacentersGetallUnauthorized) Code() int {
 }
 
 func (o *V1DatacentersGetallUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallUnauthorized %s", 401, payload)
 }
 
 func (o *V1DatacentersGetallUnauthorized) String() string {
-	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallUnauthorized %s", 401, payload)
 }
 
 func (o *V1DatacentersGetallUnauthorized) GetPayload() *models.Error {
@@ -307,11 +314,13 @@ func (o *V1DatacentersGetallForbidden) Code() int {
 }
 
 func (o *V1DatacentersGetallForbidden) Error() string {
-	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallForbidden %s", 403, payload)
 }
 
 func (o *V1DatacentersGetallForbidden) String() string {
-	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallForbidden %s", 403, payload)
 }
 
 func (o *V1DatacentersGetallForbidden) GetPayload() *models.Error {
@@ -375,11 +384,13 @@ func (o *V1DatacentersGetallInternalServerError) Code() int {
 }
 
 func (o *V1DatacentersGetallInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallInternalServerError %s", 500, payload)
 }
 
 func (o *V1DatacentersGetallInternalServerError) String() string {
-	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/datacenters][%d] v1DatacentersGetallInternalServerError %s", 500, payload)
 }
 
 func (o *V1DatacentersGetallInternalServerError) GetPayload() *models.Error {

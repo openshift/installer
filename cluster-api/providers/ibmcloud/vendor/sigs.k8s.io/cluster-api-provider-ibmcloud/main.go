@@ -30,6 +30,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	cgrecord "k8s.io/client-go/tools/record"
+	"k8s.io/component-base/logs"
+	logsv1 "k8s.io/component-base/logs/api/v1"
 	"k8s.io/klog/v2"
 
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -48,6 +50,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/record"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	_ "k8s.io/component-base/logs/json/register"
 )
 
 var (
@@ -56,6 +59,7 @@ var (
 	healthAddr           string
 	syncPeriod           time.Duration
 	managerOptions       = flags.ManagerOptions{}
+	logOptions           = logs.NewOptions()
 	webhookPort          int
 	webhookCertDir       string
 
@@ -126,6 +130,7 @@ func initFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&webhookCertDir, "webhook-cert-dir", "/tmp/k8s-webhook-server/serving-certs/",
 		"The webhook certificate directory, where the server should find the TLS certificate and key.")
 
+	logsv1.AddFlags(logOptions, fs)
 	flags.AddManagerOptions(fs, &managerOptions)
 }
 
@@ -139,6 +144,12 @@ func validateFlags() error {
 	default:
 		return fmt.Errorf("invalid value for flag provider-id-fmt: %s, Supported values: %s, %s ", options.ProviderIDFormat, options.ProviderIDFormatV1, options.ProviderIDFormatV2)
 	}
+
+	if err := logsv1.ValidateAndApply(logOptions, nil); err != nil {
+		setupLog.Error(err, "unable to validate and apply log options")
+		return err
+	}
+
 	return nil
 }
 

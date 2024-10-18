@@ -6,6 +6,7 @@ package p_cloud_p_vm_instances
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -109,11 +110,13 @@ func (o *PcloudV2PvminstancesCaptureGetOK) Code() int {
 }
 
 func (o *PcloudV2PvminstancesCaptureGetOK) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetOK %s", 200, payload)
 }
 
 func (o *PcloudV2PvminstancesCaptureGetOK) String() string {
-	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetOK %s", 200, payload)
 }
 
 func (o *PcloudV2PvminstancesCaptureGetOK) GetPayload() *models.Job {
@@ -177,11 +180,13 @@ func (o *PcloudV2PvminstancesCaptureGetBadRequest) Code() int {
 }
 
 func (o *PcloudV2PvminstancesCaptureGetBadRequest) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetBadRequest %s", 400, payload)
 }
 
 func (o *PcloudV2PvminstancesCaptureGetBadRequest) String() string {
-	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetBadRequest %s", 400, payload)
 }
 
 func (o *PcloudV2PvminstancesCaptureGetBadRequest) GetPayload() *models.Error {
@@ -245,11 +250,13 @@ func (o *PcloudV2PvminstancesCaptureGetUnauthorized) Code() int {
 }
 
 func (o *PcloudV2PvminstancesCaptureGetUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudV2PvminstancesCaptureGetUnauthorized) String() string {
-	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudV2PvminstancesCaptureGetUnauthorized) GetPayload() *models.Error {
@@ -313,11 +320,13 @@ func (o *PcloudV2PvminstancesCaptureGetForbidden) Code() int {
 }
 
 func (o *PcloudV2PvminstancesCaptureGetForbidden) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetForbidden %s", 403, payload)
 }
 
 func (o *PcloudV2PvminstancesCaptureGetForbidden) String() string {
-	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetForbidden %s", 403, payload)
 }
 
 func (o *PcloudV2PvminstancesCaptureGetForbidden) GetPayload() *models.Error {
@@ -381,11 +390,13 @@ func (o *PcloudV2PvminstancesCaptureGetNotFound) Code() int {
 }
 
 func (o *PcloudV2PvminstancesCaptureGetNotFound) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetNotFound %s", 404, payload)
 }
 
 func (o *PcloudV2PvminstancesCaptureGetNotFound) String() string {
-	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetNotFound %s", 404, payload)
 }
 
 func (o *PcloudV2PvminstancesCaptureGetNotFound) GetPayload() *models.Error {
@@ -449,11 +460,13 @@ func (o *PcloudV2PvminstancesCaptureGetInternalServerError) Code() int {
 }
 
 func (o *PcloudV2PvminstancesCaptureGetInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudV2PvminstancesCaptureGetInternalServerError) String() string {
-	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudV2PvminstancesCaptureGetInternalServerError) GetPayload() *models.Error {

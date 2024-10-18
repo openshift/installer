@@ -6,6 +6,7 @@ package authentication
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -109,11 +110,13 @@ func (o *ServiceBrokerAuthRegistrationOK) Code() int {
 }
 
 func (o *ServiceBrokerAuthRegistrationOK) Error() string {
-	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationOK %s", 200, payload)
 }
 
 func (o *ServiceBrokerAuthRegistrationOK) String() string {
-	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationOK %s", 200, payload)
 }
 
 func (o *ServiceBrokerAuthRegistrationOK) GetPayload() *models.AccessToken {
@@ -177,11 +180,13 @@ func (o *ServiceBrokerAuthRegistrationBadRequest) Code() int {
 }
 
 func (o *ServiceBrokerAuthRegistrationBadRequest) Error() string {
-	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBrokerAuthRegistrationBadRequest) String() string {
-	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBrokerAuthRegistrationBadRequest) GetPayload() *models.Error {
@@ -245,11 +250,13 @@ func (o *ServiceBrokerAuthRegistrationUnauthorized) Code() int {
 }
 
 func (o *ServiceBrokerAuthRegistrationUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceBrokerAuthRegistrationUnauthorized) String() string {
-	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceBrokerAuthRegistrationUnauthorized) GetPayload() *models.Error {
@@ -313,11 +320,13 @@ func (o *ServiceBrokerAuthRegistrationForbidden) Code() int {
 }
 
 func (o *ServiceBrokerAuthRegistrationForbidden) Error() string {
-	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationForbidden %s", 403, payload)
 }
 
 func (o *ServiceBrokerAuthRegistrationForbidden) String() string {
-	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationForbidden %s", 403, payload)
 }
 
 func (o *ServiceBrokerAuthRegistrationForbidden) GetPayload() *models.Error {
@@ -381,11 +390,13 @@ func (o *ServiceBrokerAuthRegistrationNotFound) Code() int {
 }
 
 func (o *ServiceBrokerAuthRegistrationNotFound) Error() string {
-	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationNotFound %s", 404, payload)
 }
 
 func (o *ServiceBrokerAuthRegistrationNotFound) String() string {
-	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationNotFound %s", 404, payload)
 }
 
 func (o *ServiceBrokerAuthRegistrationNotFound) GetPayload() *models.Error {
@@ -449,11 +460,13 @@ func (o *ServiceBrokerAuthRegistrationInternalServerError) Code() int {
 }
 
 func (o *ServiceBrokerAuthRegistrationInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationInternalServerError %s", 500, payload)
 }
 
 func (o *ServiceBrokerAuthRegistrationInternalServerError) String() string {
-	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/registration][%d] serviceBrokerAuthRegistrationInternalServerError %s", 500, payload)
 }
 
 func (o *ServiceBrokerAuthRegistrationInternalServerError) GetPayload() *models.Error {

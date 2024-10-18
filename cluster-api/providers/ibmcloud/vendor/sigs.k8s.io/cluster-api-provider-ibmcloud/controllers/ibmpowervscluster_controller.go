@@ -297,7 +297,7 @@ func (r *IBMPowerVSClusterReconciler) reconcile(clusterScope *scope.PowerVSClust
 	clusterScope.Info("Reconciling Transit Gateway")
 	if requeue, err := clusterScope.ReconcileTransitGateway(); err != nil {
 		clusterScope.Error(err, "failed to reconcile transit gateway")
-		conditions.MarkFalse(powerVSCluster.cluster, infrav1beta2.TransitGatewayReadyCondition, infrav1beta2.TransitGatewayReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
+		conditions.MarkFalse(powerVSCluster.cluster, infrav1beta2.TransitGatewayReadyCondition, infrav1beta2.TransitGatewayReconciliationFailedReason, capiv1beta1.ConditionSeverityError, "%s", err.Error())
 		return reconcile.Result{}, err
 	} else if requeue {
 		clusterScope.Info("Setting up Transit gateway is pending, requeuing")
@@ -309,7 +309,7 @@ func (r *IBMPowerVSClusterReconciler) reconcile(clusterScope *scope.PowerVSClust
 	if clusterScope.IBMPowerVSCluster.Spec.Ignition != nil {
 		clusterScope.Info("Reconciling COS service instance")
 		if err := clusterScope.ReconcileCOSInstance(); err != nil {
-			conditions.MarkFalse(powerVSCluster.cluster, infrav1beta2.COSInstanceReadyCondition, infrav1beta2.COSInstanceReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
+			conditions.MarkFalse(powerVSCluster.cluster, infrav1beta2.COSInstanceReadyCondition, infrav1beta2.COSInstanceReconciliationFailedReason, capiv1beta1.ConditionSeverityError, "%s", err.Error())
 			return reconcile.Result{}, err
 		}
 		conditions.MarkTrue(powerVSCluster.cluster, infrav1beta2.COSInstanceReadyCondition)
@@ -330,20 +330,18 @@ func (r *IBMPowerVSClusterReconciler) reconcile(clusterScope *scope.PowerVSClust
 		return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
 	}
 
-	// update cluster object with loadbalancer host
-	loadBalancer := clusterScope.PublicLoadBalancer()
-	if loadBalancer == nil {
-		return reconcile.Result{}, fmt.Errorf("failed to fetch public loadbalancer")
-	}
-
 	clusterScope.Info("Getting load balancer host")
-	hostName := clusterScope.GetLoadBalancerHostName(loadBalancer.Name)
+	hostName, err := clusterScope.GetPublicLoadBalancerHostName()
+	if err != nil {
+		return reconcile.Result{}, fmt.Errorf("failed to fetch public loadbalancer: %w", err)
+	}
 	if hostName == nil || *hostName == "" {
 		clusterScope.Info("LoadBalancer hostname is not yet available, requeuing")
 		return reconcile.Result{RequeueAfter: time.Minute}, nil
 	}
 
-	clusterScope.IBMPowerVSCluster.Spec.ControlPlaneEndpoint.Host = *clusterScope.GetLoadBalancerHostName(loadBalancer.Name)
+	// update cluster object with loadbalancer host name
+	clusterScope.IBMPowerVSCluster.Spec.ControlPlaneEndpoint.Host = *hostName
 	clusterScope.IBMPowerVSCluster.Spec.ControlPlaneEndpoint.Port = clusterScope.APIServerPort()
 	clusterScope.IBMPowerVSCluster.Status.Ready = true
 	return ctrl.Result{}, nil

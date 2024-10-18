@@ -6,6 +6,7 @@ package p_cloud_tasks
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -115,11 +116,13 @@ func (o *PcloudTasksDeleteOK) Code() int {
 }
 
 func (o *PcloudTasksDeleteOK) Error() string {
-	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteOK %s", 200, payload)
 }
 
 func (o *PcloudTasksDeleteOK) String() string {
-	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteOK %s", 200, payload)
 }
 
 func (o *PcloudTasksDeleteOK) GetPayload() models.Object {
@@ -181,11 +184,13 @@ func (o *PcloudTasksDeleteBadRequest) Code() int {
 }
 
 func (o *PcloudTasksDeleteBadRequest) Error() string {
-	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteBadRequest %s", 400, payload)
 }
 
 func (o *PcloudTasksDeleteBadRequest) String() string {
-	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteBadRequest %s", 400, payload)
 }
 
 func (o *PcloudTasksDeleteBadRequest) GetPayload() *models.Error {
@@ -249,11 +254,13 @@ func (o *PcloudTasksDeleteUnauthorized) Code() int {
 }
 
 func (o *PcloudTasksDeleteUnauthorized) Error() string {
-	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudTasksDeleteUnauthorized) String() string {
-	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudTasksDeleteUnauthorized) GetPayload() *models.Error {
@@ -317,11 +324,13 @@ func (o *PcloudTasksDeleteForbidden) Code() int {
 }
 
 func (o *PcloudTasksDeleteForbidden) Error() string {
-	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteForbidden %s", 403, payload)
 }
 
 func (o *PcloudTasksDeleteForbidden) String() string {
-	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteForbidden %s", 403, payload)
 }
 
 func (o *PcloudTasksDeleteForbidden) GetPayload() *models.Error {
@@ -385,11 +394,13 @@ func (o *PcloudTasksDeleteNotFound) Code() int {
 }
 
 func (o *PcloudTasksDeleteNotFound) Error() string {
-	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteNotFound %s", 404, payload)
 }
 
 func (o *PcloudTasksDeleteNotFound) String() string {
-	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteNotFound %s", 404, payload)
 }
 
 func (o *PcloudTasksDeleteNotFound) GetPayload() *models.Error {
@@ -453,11 +464,13 @@ func (o *PcloudTasksDeleteGone) Code() int {
 }
 
 func (o *PcloudTasksDeleteGone) Error() string {
-	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteGone  %+v", 410, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteGone %s", 410, payload)
 }
 
 func (o *PcloudTasksDeleteGone) String() string {
-	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteGone  %+v", 410, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteGone %s", 410, payload)
 }
 
 func (o *PcloudTasksDeleteGone) GetPayload() *models.Error {
@@ -521,11 +534,13 @@ func (o *PcloudTasksDeleteInternalServerError) Code() int {
 }
 
 func (o *PcloudTasksDeleteInternalServerError) Error() string {
-	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudTasksDeleteInternalServerError) String() string {
-	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudTasksDeleteInternalServerError) GetPayload() *models.Error {

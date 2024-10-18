@@ -6,6 +6,7 @@ package internal_storage_regions
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -103,11 +104,13 @@ func (o *InternalV1StorageRegionsStoragePoolsGetOK) Code() int {
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsGetOK) Error() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetOK %s", 200, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsGetOK) String() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetOK %s", 200, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsGetOK) GetPayload() models.StoragePools {
@@ -169,11 +172,13 @@ func (o *InternalV1StorageRegionsStoragePoolsGetUnauthorized) Code() int {
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsGetUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetUnauthorized %s", 401, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsGetUnauthorized) String() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetUnauthorized %s", 401, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsGetUnauthorized) GetPayload() *models.Error {
@@ -237,11 +242,13 @@ func (o *InternalV1StorageRegionsStoragePoolsGetForbidden) Code() int {
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsGetForbidden) Error() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetForbidden %s", 403, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsGetForbidden) String() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetForbidden %s", 403, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsGetForbidden) GetPayload() *models.Error {
@@ -305,11 +312,13 @@ func (o *InternalV1StorageRegionsStoragePoolsGetNotFound) Code() int {
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsGetNotFound) Error() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetNotFound %s", 404, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsGetNotFound) String() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetNotFound %s", 404, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsGetNotFound) GetPayload() *models.Error {
@@ -373,11 +382,13 @@ func (o *InternalV1StorageRegionsStoragePoolsGetInternalServerError) Code() int 
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsGetInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetInternalServerError %s", 500, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsGetInternalServerError) String() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsGetInternalServerError %s", 500, payload)
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsGetInternalServerError) GetPayload() *models.Error {

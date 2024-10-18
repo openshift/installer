@@ -78,7 +78,7 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 
 	// Create a COS Instance and Bucket to host the RHCOS image file.
 	// NOTE(cjschaef): Support to use an existing COS Object (RHCO image file) or VPC Custom Image could be added to skip this step.
-	cosInstanceName := fmt.Sprintf("%s-cos", in.InfraID)
+	cosInstanceName := ibmcloudic.COSInstanceName(in.InfraID)
 	logrus.Debugf("checking for existing cos instance: %s", cosInstanceName)
 	cosInstance, err := client.GetCOSInstanceByName(ctx, cosInstanceName)
 	if err != nil {
@@ -89,7 +89,7 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		}
 		logrus.Debugf("created cos instance: %s", cosInstanceName)
 	}
-	bucketName := fmt.Sprintf("%s-vsi-image", in.InfraID)
+	bucketName := ibmcloudic.VSIImageCOSBucketName(in.InfraID)
 	logrus.Debugf("checking for existing cos bucket: %s", bucketName)
 	_, err = client.GetCOSBucketByName(ctx, *cosInstance.ID, bucketName, region)
 	if err != nil {
