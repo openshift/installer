@@ -40,8 +40,8 @@ import (
 const (
 	retryTime        = 10 * time.Second
 	retryCount       = 6
-	confidentialVMST = "ConfidentialVM"
-	trustedLaunchST  = "TrustedLaunch"
+	confidentialVMST = "ConfidentialVMSupported"
+	trustedLaunchST  = "TrustedLaunchsupported"
 )
 
 // Provider implements Azure CAPI installation.
@@ -411,7 +411,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		computeClientFactory := createImageGalleryOutput.ComputeClientFactory
 
 		// Create gallery images
-		basicImage, err := CreateGalleryImage(ctx, &CreateGalleryImageInput{
+		_, err = CreateGalleryImage(ctx, &CreateGalleryImageInput{
 			ResourceGroupName:    resourceGroupName,
 			GalleryName:          galleryName,
 			GalleryImageName:     galleryImageName,
@@ -440,8 +440,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			return err
 		}
 
-		var galleryImageID *string
-		gen2Image, err := CreateGalleryImage(ctx, &CreateGalleryImageInput{
+		_, err = CreateGalleryImage(ctx, &CreateGalleryImageInput{
 			ResourceGroupName:    resourceGroupName,
 			GalleryName:          galleryName,
 			GalleryImageName:     galleryGen2ImageName,
@@ -463,16 +462,12 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			return err
 		}
 
-		if securityType == confidentialVMST {
-			galleryImageID = basicImage.GalleryImage.ID
-		}
 		// Create gallery image versions
 		_, err = CreateGalleryImageVersion(ctx, &CreateGalleryImageVersionInput{
 			ResourceGroupName:       resourceGroupName,
 			StorageAccountID:        *storageAccount.ID,
 			GalleryName:             galleryName,
 			GalleryImageName:        galleryImageName,
-			GalleryImageID:          galleryImageID,
 			GalleryImageVersionName: galleryImageVersionName,
 			Region:                  platform.Region,
 			BlobURL:                 blobURL,
@@ -483,15 +478,11 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			return err
 		}
 
-		if securityType == confidentialVMST {
-			galleryImageID = gen2Image.GalleryImage.ID
-		}
 		_, err = CreateGalleryImageVersion(ctx, &CreateGalleryImageVersionInput{
 			ResourceGroupName:       resourceGroupName,
 			StorageAccountID:        *storageAccount.ID,
 			GalleryName:             galleryName,
 			GalleryImageName:        galleryGen2ImageName,
-			GalleryImageID:          galleryImageID,
 			GalleryImageVersionName: galleryGen2ImageVersionName,
 			Region:                  platform.Region,
 			BlobURL:                 blobURL,
@@ -903,6 +894,17 @@ func getMachinePoolSecurityType(in clusterapi.InfraReadyInput) (string, error) {
 		pool := in.InstallConfig.Config.ControlPlane.Platform.Azure
 		if pool.Settings != nil {
 			securityType = pool.Settings.SecurityType
+		}
+	}
+	if securityType == "" && in.InstallConfig.Config.Compute != nil {
+		for _, compute := range in.InstallConfig.Config.Compute {
+			if compute.Platform.Azure != nil {
+				pool := compute.Platform.Azure
+				if pool.Settings != nil {
+					securityType = pool.Settings.SecurityType
+					break
+				}
+			}
 		}
 	}
 	if securityType == "" && in.InstallConfig.Config.Platform.Azure.DefaultMachinePlatform != nil {
