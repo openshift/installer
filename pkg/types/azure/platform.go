@@ -192,8 +192,3 @@ func (p *Platform) ComputeSubnetName(infraID string) string {
 func (p *Platform) NetworkSecurityGroupName(infraID string) string {
 	return fmt.Sprintf("%s-nsg", infraID)
 }
-
-// IsARO returns true if ARO-only modifications are enabled
-func (p *Platform) IsARO() bool {
-	return aro
-}
