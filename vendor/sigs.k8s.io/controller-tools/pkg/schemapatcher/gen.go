@@ -18,7 +18,7 @@ package schemapatcher
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"gopkg.in/yaml.v3"
@@ -92,7 +92,7 @@ func (g Generator) Generate(ctx *genall.GenerationContext) (result error) {
 		Collector: ctx.Collector,
 		Checker:   ctx.Checker,
 		// Indicates the parser on whether to register the ObjectMeta type or not
-		GenerateEmbeddedObjectMeta: g.GenerateEmbeddedObjectMeta != nil && *g.GenerateEmbeddedObjectMeta == true,
+		GenerateEmbeddedObjectMeta: g.GenerateEmbeddedObjectMeta != nil && *g.GenerateEmbeddedObjectMeta,
 	}
 
 	crdgen.AddKnownTypes(parser)
@@ -335,7 +335,7 @@ func (e *partialCRD) setVersionedSchemata(newSchemata map[string]apiext.JSONSche
 // minimally invasive.  Returned CRDs are mapped by group-kind.
 func crdsFromDirectory(ctx *genall.GenerationContext, dir string) (map[schema.GroupKind]*partialCRDSet, error) {
 	res := map[schema.GroupKind]*partialCRDSet{}
-	dirEntries, err := ioutil.ReadDir(dir)
+	dirEntries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}
