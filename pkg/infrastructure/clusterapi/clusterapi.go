@@ -363,9 +363,9 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 				return allReady, nil
 			}); err != nil {
 			if wait.Interrupted(err) {
-				return fileList, fmt.Errorf("control-plane machines were not provisioned within %v: %w", provisionTimeout, err)
+				return fileList, fmt.Errorf("%s within %v: %w", asset.ControlPlaneCreationError, provisionTimeout, err)
 			}
-			return fileList, fmt.Errorf("control-plane machines are not ready: %w", err)
+			return fileList, fmt.Errorf("%s: machines are not ready: %w", asset.ControlPlaneCreationError, err)
 		}
 	}
 	timer.StopTimer(machineStage)
