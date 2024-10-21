@@ -6,6 +6,7 @@ package internal_power_v_s_instances
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -91,11 +92,13 @@ func (o *InternalV1PowervsInstancesGetOK) Code() int {
 }
 
 func (o *InternalV1PowervsInstancesGetOK) Error() string {
-	return fmt.Sprintf("[GET /internal/v1/powervs/instances][%d] internalV1PowervsInstancesGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/powervs/instances][%d] internalV1PowervsInstancesGetOK %s", 200, payload)
 }
 
 func (o *InternalV1PowervsInstancesGetOK) String() string {
-	return fmt.Sprintf("[GET /internal/v1/powervs/instances][%d] internalV1PowervsInstancesGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/powervs/instances][%d] internalV1PowervsInstancesGetOK %s", 200, payload)
 }
 
 func (o *InternalV1PowervsInstancesGetOK) GetPayload() *models.PowerVSInstances {
@@ -159,11 +162,13 @@ func (o *InternalV1PowervsInstancesGetForbidden) Code() int {
 }
 
 func (o *InternalV1PowervsInstancesGetForbidden) Error() string {
-	return fmt.Sprintf("[GET /internal/v1/powervs/instances][%d] internalV1PowervsInstancesGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/powervs/instances][%d] internalV1PowervsInstancesGetForbidden %s", 403, payload)
 }
 
 func (o *InternalV1PowervsInstancesGetForbidden) String() string {
-	return fmt.Sprintf("[GET /internal/v1/powervs/instances][%d] internalV1PowervsInstancesGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/powervs/instances][%d] internalV1PowervsInstancesGetForbidden %s", 403, payload)
 }
 
 func (o *InternalV1PowervsInstancesGetForbidden) GetPayload() *models.Error {
@@ -227,11 +232,13 @@ func (o *InternalV1PowervsInstancesGetInternalServerError) Code() int {
 }
 
 func (o *InternalV1PowervsInstancesGetInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /internal/v1/powervs/instances][%d] internalV1PowervsInstancesGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/powervs/instances][%d] internalV1PowervsInstancesGetInternalServerError %s", 500, payload)
 }
 
 func (o *InternalV1PowervsInstancesGetInternalServerError) String() string {
-	return fmt.Sprintf("[GET /internal/v1/powervs/instances][%d] internalV1PowervsInstancesGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/powervs/instances][%d] internalV1PowervsInstancesGetInternalServerError %s", 500, payload)
 }
 
 func (o *InternalV1PowervsInstancesGetInternalServerError) GetPayload() *models.Error {

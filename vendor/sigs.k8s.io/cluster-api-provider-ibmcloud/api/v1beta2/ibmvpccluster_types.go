@@ -195,7 +195,7 @@ type ImageSpec struct {
 	// name is the name of the desired VPC Custom Image.
 	// +kubebuilder:validation:MinLength:=1
 	// +kubebuilder:validation:MaxLength:=63
-	// +kubebuilder:validation:Pattern='/^([a-z]|[a-z][-a-z0-9]*[a-z0-9])$/'
+	// +kubebuilder:validation:Pattern=`^([a-z]|[a-z][-a-z0-9]*[a-z0-9])$`
 	// +optional
 	Name *string `json:"name,omitempty"`
 

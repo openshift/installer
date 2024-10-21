@@ -22,7 +22,7 @@ type DeadPeerDetection struct {
 
 	// Action to take when a Peer Gateway stops responding
 	// Required: true
-	// Enum: [restart]
+	// Enum: ["restart"]
 	Action *string `json:"action"`
 
 	// How often to test that the Peer Gateway is responsive

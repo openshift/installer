@@ -26,7 +26,7 @@ type TokenRequest struct {
 
 	// Source type of the token request (web or cli)
 	// Required: true
-	// Enum: [web cli]
+	// Enum: ["web","cli"]
 	Source *string `json:"source"`
 }
 

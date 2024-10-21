@@ -46,7 +46,7 @@ type Workspace struct {
 
 	// The Workspace type
 	// Required: true
-	// Enum: [off-premises on-premises]
+	// Enum: ["off-premises","on-premises"]
 	Type *string `json:"type"`
 }
 

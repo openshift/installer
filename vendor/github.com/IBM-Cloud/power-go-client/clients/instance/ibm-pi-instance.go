@@ -55,8 +55,8 @@ func (f *IBMPIInstanceClient) GetAll() (*models.PVMInstances, error) {
 // Create an Instance
 func (f *IBMPIInstanceClient) Create(body *models.PVMInstanceCreate) (*models.PVMInstanceList, error) {
 	// Check for satellite differences in this endpoint
-	if f.session.IsOnPrem() && (body.SoftwareLicenses != nil || body.SharedProcessorPool != "") {
-		return nil, fmt.Errorf("software licenses and shared processor pool parameters are not supported in satellite location, check documentation")
+	if f.session.IsOnPrem() && body.DeploymentTarget != nil {
+		return nil, fmt.Errorf("deployment target parameter is not supported in satellite location, check documentation")
 	}
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -176,6 +176,10 @@ func (f *IBMPIInstanceClient) UpdateConsoleLanguage(id string, body *models.Cons
 
 // Capture an Instance
 func (f *IBMPIInstanceClient) CaptureInstanceToImageCatalog(id string, body *models.PVMInstanceCapture) error {
+	// Check for satellite differences in this endpoint
+	if !f.session.IsOnPrem() && body.Checksum {
+		return fmt.Errorf("checksum parameter is not supported off-premise")
+	}
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesCapturePostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithPvmInstanceID(id).
@@ -286,10 +290,10 @@ func (f *IBMPIInstanceClient) AddNetwork(id string, body *models.PVMInstanceAddN
 }
 
 // Delete a Network from an Instance
-func (f *IBMPIInstanceClient) DeleteNetwork(id string, body *models.PVMInstanceRemoveNetwork) error {
+func (f *IBMPIInstanceClient) DeleteNetwork(id, networkID string, body *models.PVMInstanceRemoveNetwork) error {
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesNetworksDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
-		WithCloudInstanceID(f.cloudInstanceID).WithPvmInstanceID(id).
+		WithCloudInstanceID(f.cloudInstanceID).WithPvmInstanceID(id).WithNetworkID(networkID).
 		WithBody(body)
 	_, err := f.session.Power.PCloudpVMInstances.PcloudPvminstancesNetworksDelete(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {

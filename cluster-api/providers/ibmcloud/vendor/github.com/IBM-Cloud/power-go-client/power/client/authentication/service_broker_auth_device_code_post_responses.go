@@ -6,6 +6,7 @@ package authentication
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -109,11 +110,13 @@ func (o *ServiceBrokerAuthDeviceCodePostOK) Code() int {
 }
 
 func (o *ServiceBrokerAuthDeviceCodePostOK) Error() string {
-	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostOK %s", 200, payload)
 }
 
 func (o *ServiceBrokerAuthDeviceCodePostOK) String() string {
-	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostOK %s", 200, payload)
 }
 
 func (o *ServiceBrokerAuthDeviceCodePostOK) GetPayload() *models.DeviceCode {
@@ -177,11 +180,13 @@ func (o *ServiceBrokerAuthDeviceCodePostBadRequest) Code() int {
 }
 
 func (o *ServiceBrokerAuthDeviceCodePostBadRequest) Error() string {
-	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBrokerAuthDeviceCodePostBadRequest) String() string {
-	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBrokerAuthDeviceCodePostBadRequest) GetPayload() *models.Error {
@@ -245,11 +250,13 @@ func (o *ServiceBrokerAuthDeviceCodePostUnauthorized) Code() int {
 }
 
 func (o *ServiceBrokerAuthDeviceCodePostUnauthorized) Error() string {
-	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceBrokerAuthDeviceCodePostUnauthorized) String() string {
-	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceBrokerAuthDeviceCodePostUnauthorized) GetPayload() *models.Error {
@@ -313,11 +320,13 @@ func (o *ServiceBrokerAuthDeviceCodePostForbidden) Code() int {
 }
 
 func (o *ServiceBrokerAuthDeviceCodePostForbidden) Error() string {
-	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostForbidden %s", 403, payload)
 }
 
 func (o *ServiceBrokerAuthDeviceCodePostForbidden) String() string {
-	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostForbidden %s", 403, payload)
 }
 
 func (o *ServiceBrokerAuthDeviceCodePostForbidden) GetPayload() *models.Error {
@@ -381,11 +390,13 @@ func (o *ServiceBrokerAuthDeviceCodePostNotFound) Code() int {
 }
 
 func (o *ServiceBrokerAuthDeviceCodePostNotFound) Error() string {
-	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostNotFound %s", 404, payload)
 }
 
 func (o *ServiceBrokerAuthDeviceCodePostNotFound) String() string {
-	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostNotFound %s", 404, payload)
 }
 
 func (o *ServiceBrokerAuthDeviceCodePostNotFound) GetPayload() *models.Error {
@@ -449,11 +460,13 @@ func (o *ServiceBrokerAuthDeviceCodePostInternalServerError) Code() int {
 }
 
 func (o *ServiceBrokerAuthDeviceCodePostInternalServerError) Error() string {
-	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostInternalServerError %s", 500, payload)
 }
 
 func (o *ServiceBrokerAuthDeviceCodePostInternalServerError) String() string {
-	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/device/code][%d] serviceBrokerAuthDeviceCodePostInternalServerError %s", 500, payload)
 }
 
 func (o *ServiceBrokerAuthDeviceCodePostInternalServerError) GetPayload() *models.Error {
