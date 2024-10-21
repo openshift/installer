@@ -313,6 +313,9 @@ func runTargetCmd(ctx context.Context, targets ...asset.WritableAsset) func(cmd 
 				logrus.Error(err)
 				logrus.Exit(exitCodeInstallConfigError)
 			}
+			if strings.Contains(err.Error(), asset.ControlPlaneCreationError) {
+				gatherAndAnalyzeBootstrapLogs(ctx, command.RootOpts.Dir)
+			}
 			if strings.Contains(err.Error(), asset.ClusterCreationError) {
 				logrus.Error(err)
 				logrus.Exit(exitCodeInfrastructureFailed)
