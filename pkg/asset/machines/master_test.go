@@ -77,6 +77,7 @@ spec:
   fips: false
   kernelArguments:
   - nosmt
+  - smt-enabled=off
   kernelType: ""
   osImageURL: ""
 `},
@@ -100,6 +101,7 @@ spec:
   fips: false
   kernelArguments:
   - nosmt
+  - smt-enabled=off
   kernelType: ""
   osImageURL: ""
 `, `apiVersion: machineconfiguration.openshift.io/v1
