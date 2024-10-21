@@ -47,7 +47,6 @@ import (
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	targetassets "github.com/openshift/installer/pkg/asset/targets"
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
-	"github.com/openshift/installer/pkg/gather/service"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
@@ -178,21 +177,12 @@ func clusterCreatePostRun(ctx context.Context) (int, error) {
 	//
 	timer.StartTimer("Bootstrap Complete")
 	if err := waitForBootstrapComplete(ctx, config); err != nil {
-		bundlePath, gatherErr := runGatherBootstrapCmd(ctx, command.RootOpts.Dir)
-		if gatherErr != nil {
-			logrus.Error("Attempted to gather debug logs after installation failure: ", gatherErr)
-		}
 		if err := logClusterOperatorConditions(ctx, config); err != nil {
 			logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err)
 		}
 		logrus.Error("Bootstrap failed to complete: ", err.Unwrap())
 		logrus.Error(err.Error())
-		if gatherErr == nil {
-			if err := service.AnalyzeGatherBundle(bundlePath); err != nil {
-				logrus.Error("Attempted to analyze the debug logs after installation failure: ", err)
-			}
-			logrus.Infof("Bootstrap gather logs captured here %q", bundlePath)
-		}
+		gatherAndAnalyzeBootstrapLogs(ctx, command.RootOpts.Dir)
 		return exitCodeBootstrapFailed, nil
 	}
 	timer.StopTimer("Bootstrap Complete")
