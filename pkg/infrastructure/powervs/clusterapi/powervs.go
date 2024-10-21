@@ -209,6 +209,10 @@ func findMissingSecurityGroupRules(ctx context.Context, in clusterapi.InfraReady
 	foundPorts := sets.Set[int64]{}
 	wantedPorts := sets.New[int64](22, 10258, 22623)
 
+	if in.InstallConfig.Config.Publish == types.InternalPublishingStrategy {
+		wantedPorts = wantedPorts.Insert(6443, 443, 5000)
+	}
+
 	existingRules, err := in.InstallConfig.PowerVS.ListSecurityGroupRules(ctx, vpcID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list security group rules: %w", err)
