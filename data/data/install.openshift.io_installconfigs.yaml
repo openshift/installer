@@ -2719,6 +2719,34 @@ spec:
                       This field is optional when creating a private cluster, otherwise
                       required.
                     type: string
+                  bootDiagnostics:
+                    description: BootDiagnostics has the value for the storage account
+                      URI where the machine log information is sent to. Defaults to
+                      disabled if no value and defaults to the installer created storage
+                      account if the URI is not mentioned.
+                    properties:
+                      storageAccountURI:
+                        description: StorageAccountURI specifies the storage account
+                          the log information needs to be stored in.
+                        type: string
+                      type:
+                        allOf:
+                        - enum:
+                          - Managed
+                          - UserManaged
+                          - Disabled
+                        - enum:
+                          - Disabled
+                          - Managed
+                          - UserManaged
+                        default: Disabled
+                        description: Type specifies the boot diagnostics type for
+                          the machines created.
+                        type: string
+                    required:
+                    - storageAccountURI
+                    - type
+                    type: object
                   cloudName:
                     description: cloudName is the name of the Azure cloud environment
                       which can be used to configure the Azure SDK with the appropriate

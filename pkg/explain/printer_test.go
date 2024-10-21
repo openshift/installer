@@ -207,6 +207,9 @@ func Test_PrintFields(t *testing.T) {
     baseDomainResourceGroupName <string>
       BaseDomainResourceGroupName specifies the resource group where the Azure DNS zone for the base domain is found. This field is optional when creating a private cluster, otherwise required.
 
+    bootDiagnostics <object>
+      BootDiagnostics has the value for the storage account URI where the machine log information is sent to. Defaults to disabled if no value and defaults to the installer created storage account if the URI is not mentioned.
+
     cloudName <string>
       Valid Values: "","AzurePublicCloud","AzureUSGovernmentCloud","AzureChinaCloud","AzureGermanCloud","AzureStackCloud"
       cloudName is the name of the Azure cloud environment which can be used to configure the Azure SDK with the appropriate Azure API endpoints. If empty, the value is equal to "AzurePublicCloud".
