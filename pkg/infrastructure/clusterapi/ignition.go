@@ -4,8 +4,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net"
+	"net/url"
 	"strings"
 
+	ignutil "github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"sigs.k8s.io/yaml"
 
@@ -18,7 +21,8 @@ import (
 )
 
 const (
-	infrastructureFilepath = "/opt/openshift/manifests/cluster-infrastructure-02-config.yml"
+	infrastructureFilepath   = "/opt/openshift/manifests/cluster-infrastructure-02-config.yml"
+	masterPointerIgnFilePath = "/opt/openshift/openshift/99_openshift-installer-ignition_master.yaml"
 
 	// replaceable is the string that precedes the encoded data in the ignition data.
 	// The data must be replaced before decoding the string, and the string must be
@@ -29,16 +33,16 @@ const (
 // EditIgnition attempts to edit the contents of the bootstrap ignition when the user has selected
 // a custom DNS configuration. Find the public and private load balancer addresses and fill in the
 // infrastructure file within the ignition struct.
-func EditIgnition(in IgnitionInput, platform string, publicIPAddresses, privateIPAddresses []string) ([]byte, error) {
+func EditIgnition(in IgnitionInput, platform string, publicIPAddresses, privateIPAddresses []string) ([]byte, []byte, error) {
 	ignData := &igntypes.Config{}
 	err := json.Unmarshal(in.BootstrapIgnData, ignData)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal bootstrap ignition: %w", err)
+		return nil, nil, fmt.Errorf("failed to unmarshal bootstrap ignition: %w", err)
 	}
 
-	err = AddLoadBalancersToInfra(platform, ignData, publicIPAddresses, privateIPAddresses)
+	err = addLoadBalancersToInfra(platform, ignData, publicIPAddresses, privateIPAddresses)
 	if err != nil {
-		return nil, fmt.Errorf("failed to add load balancers to ignition config: %w", err)
+		return nil, nil, fmt.Errorf("failed to add load balancers to ignition config: %w", err)
 	}
 
 	publicIPsSingleStr := strings.Join(publicIPAddresses, ",")
@@ -46,24 +50,28 @@ func EditIgnition(in IgnitionInput, platform string, publicIPAddresses, privateI
 
 	lbConfig, err := lbconfig.GenerateLBConfigOverride(privateIPsSingleStr, publicIPsSingleStr)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if err := asset.NewDefaultFileWriter(lbConfig).PersistToFile(command.RootOpts.Dir); err != nil {
-		return nil, fmt.Errorf("failed to save %s to state file: %w", lbConfig.Name(), err)
+		return nil, nil, fmt.Errorf("failed to save %s to state file: %w", lbConfig.Name(), err)
 	}
 
 	editedIgnBytes, err := json.Marshal(ignData)
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert ignition data to json: %w", err)
+		return nil, nil, fmt.Errorf("failed to convert ignition data to json: %w", err)
 	}
 
-	return editedIgnBytes, nil
+	editedPointerIgn, err := updatePointerIgnition(in, privateIPAddresses, "master")
+	if err != nil {
+		return editedIgnBytes, in.MasterIgnData, fmt.Errorf("failed to update Pointer Ignition")
+	}
+	return editedIgnBytes, editedPointerIgn, nil
 }
 
 // AddLoadBalancersToInfra will load the public and private load balancer information into
 // the infrastructure CR. This will occur after the data has already been inserted into the
 // ignition file.
-func AddLoadBalancersToInfra(platform string, config *igntypes.Config, publicLBs []string, privateLBs []string) error {
+func addLoadBalancersToInfra(platform string, config *igntypes.Config, publicLBs []string, privateLBs []string) error {
 	for i, fileData := range config.Storage.Files {
 		// update the contents of this file
 		if fileData.Path == infrastructureFilepath {
@@ -122,4 +130,28 @@ func AddLoadBalancersToInfra(platform string, config *igntypes.Config, publicLBs
 	}
 
 	return nil
+}
+
+func updatePointerIgnition(in IgnitionInput, privateLBs []string, role string) ([]byte, error) {
+	ignData := &igntypes.Config{}
+	err := json.Unmarshal(in.MasterIgnData, ignData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal master ignition: %w", err)
+	}
+	if len(privateLBs) > 0 {
+		ignitionHost := net.JoinHostPort(privateLBs[0], "22623")
+		ignData.Ignition.Config.Merge[0].Source = ignutil.StrToPtr(func() *url.URL {
+			return &url.URL{
+				Scheme: "https",
+				Host:   ignitionHost,
+				Path:   fmt.Sprintf("/config/%s", role),
+			}
+		}().String())
+		editedIgnBytes, err := json.Marshal(ignData)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert pointer ignition data to json: %w", err)
+		}
+		return editedIgnBytes, nil
+	}
+	return in.MasterIgnData, nil
 }
