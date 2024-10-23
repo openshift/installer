@@ -1,14 +1,16 @@
 package aws
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
 	"reflect"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/iam"
+	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
@@ -144,39 +146,40 @@ func (p *PolicyDocument) GetAllowedActions() []string {
 // sts:GetCallerIdentity and iam:SimulatePrincipalPolicy
 func (p *PolicyDocument) checkPermissionsUsingQueryClient(queryClient *awsClient, targetUserARN string,
 	params *SimulateParams) (bool, error) {
-	// Ignoring isRoot here since we only warn the user that its not best practice to use it.
+	// Ignoring isRoot here since we only warn the user that it's not best practice to use it.
 	// TODO: Add a check for isRoot in the initialize
-	allowList := aws.StringSlice(p.GetAllowedActions())
+	allowList := p.GetAllowedActions()
 
 	input := &iam.SimulatePrincipalPolicyInput{
 		PolicySourceArn: aws.String(targetUserARN),
 		ActionNames:     allowList,
-		ContextEntries:  []*iam.ContextEntry{},
+		ContextEntries:  []iamtypes.ContextEntry{},
 	}
 
 	if params != nil && params.Region != "" {
-		input.ContextEntries = append(input.ContextEntries, &iam.ContextEntry{
+		input.ContextEntries = append(input.ContextEntries, iamtypes.ContextEntry{
 			ContextKeyName:   aws.String("aws:RequestedRegion"),
-			ContextKeyType:   aws.String("stringList"),
-			ContextKeyValues: []*string{aws.String(params.Region)},
+			ContextKeyType:   "stringList",
+			ContextKeyValues: []string{params.Region},
 		})
 	}
 
+	client := iam.NewFromConfig(queryClient.cfg)
+
 	// Collect all failed actions
 	var failedActions []string
-	err := queryClient.iamClient.SimulatePrincipalPolicyPages(input,
-		func(response *iam.SimulatePolicyResponse, lastPage bool) bool {
-			for _, result := range response.EvaluationResults {
-				if *result.EvalDecision != "allowed" {
-					// Don't bail out after the first failure, so we can log the full list
-					// of failed/denied actions
-					failedActions = append(failedActions, *result.EvalActionName)
-				}
+	paginator := iam.NewSimulatePrincipalPolicyPaginator(client, input)
+	for paginator.HasMorePages() {
+		output, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			return false, fmt.Errorf("Error simulating policy: %v", err)
+		}
+
+		for _, result := range output.EvaluationResults {
+			if result.EvalDecision != "allowed" {
+				failedActions = append(failedActions, *result.EvalActionName)
 			}
-			return !lastPage
-		})
-	if err != nil {
-		return false, fmt.Errorf("Error simulating policy: %v", err)
+		}
 	}
 
 	if len(failedActions) > 0 {
@@ -194,8 +197,8 @@ func (p PolicyDocument) String() string {
 	return string(res)
 }
 
-func updateAssumeRolePolicyPrincipals(policy string, role *iam.Role) (string, bool, error) {
-	oldPolicy, err := url.QueryUnescape(aws.StringValue(role.AssumeRolePolicyDocument))
+func updateAssumeRolePolicyPrincipals(policy string, role *iamtypes.Role) (string, bool, error) {
+	oldPolicy, err := url.QueryUnescape(aws.ToString(role.AssumeRolePolicyDocument))
 	if err != nil {
 		return policy, false, err
 	}
@@ -251,13 +254,12 @@ func updateAssumeRolePolicyPrincipals(policy string, role *iam.Role) (string, bo
 	return policy, true, nil
 }
 
-func InterpolatePolicyDocument(doc string, replacements map[string]string) string {
+func InterpolatePolicyDocument(partition string, doc string, replacements map[string]string) string {
 	for key, val := range replacements {
 		doc = strings.Replace(doc, fmt.Sprintf("%%{%s}", key), val, -1)
 	}
 
 	// TODO Remove once MCC policies are all updated
-	partition := GetPartition()
 	doc = strings.Replace(doc, "arn:aws:", fmt.Sprintf("arn:%s:", partition), -1)
 
 	return doc
@@ -266,7 +268,7 @@ func InterpolatePolicyDocument(doc string, replacements map[string]string) strin
 func getPolicyDocument(policyDocument *string) (*PolicyDocument, error) {
 	data := PolicyDocument{}
 	if policyDocument != nil {
-		val, err := url.QueryUnescape(aws.StringValue(policyDocument))
+		val, err := url.QueryUnescape(aws.ToString(policyDocument))
 		if err != nil {
 			return &data, err
 		}
@@ -275,7 +277,7 @@ func getPolicyDocument(policyDocument *string) (*PolicyDocument, error) {
 	return &data, nil
 }
 
-func GenerateRolePolicyDoc(oidcEndpointUrl,
+func GenerateRolePolicyDoc(partition, oidcEndpointUrl,
 	accountID, serviceAccounts, policyDetails string) (string, error) {
 	oidcEndpointURL, err := url.ParseRequestURI(oidcEndpointUrl)
 	if err != nil {
@@ -283,9 +285,9 @@ func GenerateRolePolicyDoc(oidcEndpointUrl,
 	}
 	issuerURL := fmt.Sprintf("%s%s", oidcEndpointURL.Host, oidcEndpointURL.Path)
 
-	oidcProviderARN := GetOIDCProviderARN(accountID, issuerURL)
+	oidcProviderARN := GetOIDCProviderARN(partition, accountID, issuerURL)
 
-	policy := InterpolatePolicyDocument(policyDetails, map[string]string{
+	policy := InterpolatePolicyDocument(partition, policyDetails, map[string]string{
 		"oidc_provider_arn": oidcProviderARN,
 		"issuer_url":        issuerURL,
 		"service_accounts":  serviceAccounts,
@@ -294,7 +296,7 @@ func GenerateRolePolicyDoc(oidcEndpointUrl,
 	return policy, nil
 }
 
-func GenerateOperatorRolePolicyDocByOidcEndpointUrl(oidcEndpointURL string,
+func GenerateOperatorRolePolicyDocByOidcEndpointUrl(partition string, oidcEndpointURL string,
 	accountID string, operator *cmv1.STSOperator,
 	policyDetails string) (string, error) {
 	serviceAccounts := make([]string, len(operator.ServiceAccounts()))
@@ -303,18 +305,18 @@ func GenerateOperatorRolePolicyDocByOidcEndpointUrl(oidcEndpointURL string,
 	}
 	service_accounts := strings.Join(serviceAccounts, `" , "`)
 
-	return GenerateRolePolicyDoc(oidcEndpointURL, accountID, service_accounts, policyDetails)
+	return GenerateRolePolicyDoc(partition, oidcEndpointURL, accountID, service_accounts, policyDetails)
 }
 
-func GenerateOperatorRolePolicyDoc(cluster *cmv1.Cluster, accountID string, operator *cmv1.STSOperator,
-	policyDetails string) (string, error) {
-	return GenerateOperatorRolePolicyDocByOidcEndpointUrl(cluster.AWS().STS().OIDCEndpointURL(),
+func GenerateOperatorRolePolicyDoc(partition string, cluster *cmv1.Cluster,
+	accountID string, operator *cmv1.STSOperator, policyDetails string) (string, error) {
+	return GenerateOperatorRolePolicyDocByOidcEndpointUrl(partition, cluster.AWS().STS().OIDCEndpointURL(),
 		accountID, operator, policyDetails)
 }
 
-func GenerateAddonPolicyDoc(cluster *cmv1.Cluster, accountID string, cr *cmv1.CredentialRequest,
+func GenerateAddonPolicyDoc(partition string, cluster *cmv1.Cluster, accountID string, cr *cmv1.CredentialRequest,
 	policyDetails string) (string, error) {
 	service_accounts := fmt.Sprintf("system:serviceaccount:%s:%s", cr.Namespace(), cr.ServiceAccount())
-	return GenerateRolePolicyDoc(cluster.AWS().STS().OIDCEndpointURL(),
+	return GenerateRolePolicyDoc(partition, cluster.AWS().STS().OIDCEndpointURL(),
 		accountID, service_accounts, policyDetails)
 }

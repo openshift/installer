@@ -150,6 +150,7 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 						CidrBlocks:  sshRuleCidr,
 					},
 				},
+				NodePortIngressRuleCidrBlocks: []string{capiutils.CIDRFromInstallConfig(ic).String()},
 			},
 			S3Bucket: &capa.S3Bucket{
 				Name:                    GetIgnitionBucketName(clusterID.InfraID),

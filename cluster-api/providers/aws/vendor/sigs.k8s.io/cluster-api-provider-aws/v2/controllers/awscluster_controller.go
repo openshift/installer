@@ -413,10 +413,10 @@ func (r *AWSClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 	}
 
 	return controller.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(r.requeueAWSClusterForUnpausedCluster(ctx, log)),
-		predicates.ClusterUnpaused(log.GetLogger()),
-	)
+		source.Kind[client.Object](mgr.GetCache(), &clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(r.requeueAWSClusterForUnpausedCluster(ctx, log)),
+			predicates.ClusterUnpaused(log.GetLogger()),
+		))
 }
 
 func (r *AWSClusterReconciler) requeueAWSClusterForUnpausedCluster(_ context.Context, log logger.Wrapper) handler.MapFunc {

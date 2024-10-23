@@ -49,9 +49,9 @@ const (
 	// Arm64ArchitectureTag is the reference AWS uses for arm64 architecture images.
 	Arm64ArchitectureTag = "arm64"
 
-	// DefaultMachineAMIOwnerID is a heptio/VMware owned account. Please see:
-	// https://github.com/kubernetes-sigs/cluster-api-provider-aws/issues/487
-	DefaultMachineAMIOwnerID = "258751437250"
+	// DefaultMachineAMIOwnerID is a CNCF owned account. This was previously a VMWare owned account
+	// but the project lost access to it. See the k8s.io repo for the infra definition.
+	DefaultMachineAMIOwnerID = "819546954734"
 
 	// ubuntuOwnerID is Ubuntu owned account. Please see:
 	// https://ubuntu.com/server/docs/cloud-images/amazon-ec2
@@ -60,16 +60,16 @@ const (
 	ubuntuOwnerIDUsGov = "513442679011"
 
 	// Description regex for fetching Ubuntu AMIs for bastion host.
-	ubuntuImageDescription = "Canonical??Ubuntu??20.04?LTS??amd64?focal?image*"
+	ubuntuImageDescription = "Canonical??Ubuntu??24.04?LTS??amd64?noble?image*"
 
 	// defaultMachineAMILookupBaseOS is the default base operating system to use
 	// when looking up machine AMIs.
-	defaultMachineAMILookupBaseOS = "ubuntu-18.04"
+	defaultMachineAMILookupBaseOS = "ubuntu-24.04"
 
 	// DefaultAmiNameFormat is defined in the build/ directory of this project.
 	// The pattern is:
 	// 1. the string value `capa-ami-`
-	// 2. the baseOS of the AMI, for example: ubuntu-18.04, centos-7, amazon-2
+	// 2. the baseOS of the AMI, for example: ubuntu-24.04, centos-7, amazon-2
 	// 3. the kubernetes version as defined by the packages produced by kubernetes/release with or without v as a prefix, for example: 1.13.0, 1.12.5-mybuild.1, v1.17.3
 	// 4. a `-` followed by any additional characters.
 	DefaultAmiNameFormat = "capa-ami-{{.BaseOS}}-?{{.K8sVersion}}-*"

@@ -26,7 +26,7 @@ curl -s -o $BASTION_BOOTSTRAP_FILE $BASTION_BOOTSTRAP
 chmod +x $BASTION_BOOTSTRAP_FILE
 
 # This gets us far enough in the bastion script to be useful.
-apt-get -y update && apt-get -y install python-pip
+apt-get -y update && apt-get -y install python3-pip
 pip install --upgrade pip &> /dev/null
 
 ./$BASTION_BOOTSTRAP_FILE --enable true

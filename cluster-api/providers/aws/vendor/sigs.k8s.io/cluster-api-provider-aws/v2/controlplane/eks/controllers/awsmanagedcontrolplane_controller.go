@@ -177,16 +177,16 @@ func (r *AWSManagedControlPlaneReconciler) SetupWithManager(ctx context.Context,
 	}
 
 	if err = c.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, awsManagedControlPlane.GroupVersionKind(), mgr.GetClient(), &ekscontrolplanev1.AWSManagedControlPlane{})),
-		predicates.ClusterUnpausedAndInfrastructureReady(log.GetLogger()),
+		source.Kind[client.Object](mgr.GetCache(), &clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, awsManagedControlPlane.GroupVersionKind(), mgr.GetClient(), &ekscontrolplanev1.AWSManagedControlPlane{})),
+			predicates.ClusterUnpausedAndInfrastructureReady(log.GetLogger())),
 	); err != nil {
 		return fmt.Errorf("failed adding a watch for ready clusters: %w", err)
 	}
 
 	if err = c.Watch(
-		source.Kind(mgr.GetCache(), &infrav1.AWSManagedCluster{}),
-		handler.EnqueueRequestsFromMapFunc(r.managedClusterToManagedControlPlane(ctx, log)),
+		source.Kind[client.Object](mgr.GetCache(), &infrav1.AWSManagedCluster{},
+			handler.EnqueueRequestsFromMapFunc(r.managedClusterToManagedControlPlane(ctx, log))),
 	); err != nil {
 		return fmt.Errorf("failed adding a watch for AWSManagedCluster")
 	}

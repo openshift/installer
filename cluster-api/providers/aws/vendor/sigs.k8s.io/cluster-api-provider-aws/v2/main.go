@@ -117,8 +117,8 @@ var (
 	errMaxSyncPeriodExceeded = errors.New("sync period greater than maximum allowed")
 	errEKSInvalidFlags       = errors.New("invalid EKS flag combination")
 
-	logOptions         = logs.NewOptions()
-	diagnosticsOptions = flags.DiagnosticsOptions{}
+	logOptions     = logs.NewOptions()
+	managerOptions = flags.ManagerOptions{}
 )
 
 // Add RBAC for the authorized diagnostics endpoint.
@@ -136,7 +136,10 @@ func main() {
 	}
 	ctrl.SetLogger(klog.Background())
 
-	diagnosticsOpts := flags.GetDiagnosticsOptions(diagnosticsOptions)
+	_, metricsOptions, err := flags.GetManagerOptions(managerOptions)
+	if err != nil {
+		setupLog.Error(err, "Unable to start manager: invalid flags")
+	}
 
 	var watchNamespaces map[string]cache.Config
 	if watchNamespace != "" {
@@ -172,7 +175,7 @@ func main() {
 	restConfig.UserAgent = "cluster-api-provider-aws-controller"
 	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
 		Scheme:                     scheme,
-		Metrics:                    diagnosticsOpts,
+		Metrics:                    *metricsOptions,
 		LeaderElection:             enableLeaderElection,
 		LeaseDuration:              &leaderElectionLeaseDuration,
 		RenewDeadline:              &leaderElectionRenewDeadline,
@@ -606,5 +609,5 @@ func initFlags(fs *pflag.FlagSet) {
 
 	feature.MutableGates.AddFlag(fs)
 
-	flags.AddDiagnosticsOptions(fs, &diagnosticsOptions)
+	flags.AddManagerOptions(fs, &managerOptions)
 }

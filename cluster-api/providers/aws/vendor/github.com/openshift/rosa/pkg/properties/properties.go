@@ -30,3 +30,5 @@ const FakeCluster = "fake_cluster"
 const UseLocalCredentials = "use_local_credentials"
 
 const ProvisionShardId = "provision_shard_id"
+
+const KeyringEnvKey = "OCM_KEYRING"

@@ -48,6 +48,7 @@ type Version struct {
 	imageOverrides            *ImageOverrides
 	rawID                     string
 	releaseImage              string
+	releaseImages             *ReleaseImages
 	gcpMarketplaceEnabled     bool
 	rosaEnabled               bool
 	default_                  bool
@@ -379,7 +380,7 @@ func (o *Version) GetRawID() (value string, ok bool) {
 // ReleaseImage returns the value of the 'release_image' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// ReleaseImage contains the URI of Openshift release image.
+// ReleaseImage contains the URI of Openshift release image for amd64 architecture.
 func (o *Version) ReleaseImage() string {
 	if o != nil && o.bitmap_&16384 != 0 {
 		return o.releaseImage
@@ -390,11 +391,34 @@ func (o *Version) ReleaseImage() string {
 // GetReleaseImage returns the value of the 'release_image' attribute and
 // a flag indicating if the attribute has a value.
 //
-// ReleaseImage contains the URI of Openshift release image.
+// ReleaseImage contains the URI of Openshift release image for amd64 architecture.
 func (o *Version) GetReleaseImage() (value string, ok bool) {
 	ok = o != nil && o.bitmap_&16384 != 0
 	if ok {
 		value = o.releaseImage
+	}
+	return
+}
+
+// ReleaseImages returns the value of the 'release_images' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// ReleaseImages contains the URI of OpenShift release images for arm64 and multi architectures.
+func (o *Version) ReleaseImages() *ReleaseImages {
+	if o != nil && o.bitmap_&32768 != 0 {
+		return o.releaseImages
+	}
+	return nil
+}
+
+// GetReleaseImages returns the value of the 'release_images' attribute and
+// a flag indicating if the attribute has a value.
+//
+// ReleaseImages contains the URI of OpenShift release images for arm64 and multi architectures.
+func (o *Version) GetReleaseImages() (value *ReleaseImages, ok bool) {
+	ok = o != nil && o.bitmap_&32768 != 0
+	if ok {
+		value = o.releaseImages
 	}
 	return
 }

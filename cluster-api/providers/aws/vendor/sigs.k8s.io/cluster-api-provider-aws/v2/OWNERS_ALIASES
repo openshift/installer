@@ -6,17 +6,6 @@ aliases:
     - justinsb
     - neolit123
     - vincepri
-  cluster-api-admins:
-    - fabriziopandini
-    - sbueringer
-    - vincepri
-  cluster-api-maintainers:
-    - chrischdi
-    - enxebre
-    - fabriziopandini
-    - killianmuldoon
-    - sbueringer
-    - vincepri
   cluster-api-aws-admins:
     - richardcase
   cluster-api-aws-maintainers:

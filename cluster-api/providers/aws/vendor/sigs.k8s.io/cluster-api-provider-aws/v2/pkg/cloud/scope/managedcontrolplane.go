@@ -480,3 +480,8 @@ func (s *ManagedControlPlaneScope) AdditionalControlPlaneIngressRules() []infrav
 func (s *ManagedControlPlaneScope) UnstructuredControlPlane() (*unstructured.Unstructured, error) {
 	return getUnstructuredControlPlane(context.TODO(), s.Client, s.Cluster)
 }
+
+// NodePortIngressRuleCidrBlocks returns the CIDR blocks for the node NodePort ingress rules.
+func (s *ManagedControlPlaneScope) NodePortIngressRuleCidrBlocks() []string {
+	return nil
+}

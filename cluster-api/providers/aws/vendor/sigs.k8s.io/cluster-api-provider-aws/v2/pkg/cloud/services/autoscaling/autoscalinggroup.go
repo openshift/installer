@@ -349,7 +349,7 @@ func (s *Service) CanStartASGInstanceRefresh(scope *scope.MachinePoolScope) (boo
 // StartASGInstanceRefresh will start an ASG instance with refresh.
 func (s *Service) StartASGInstanceRefresh(scope *scope.MachinePoolScope) error {
 	strategy := ptr.To[string](autoscaling.RefreshStrategyRolling)
-	var minHealthyPercentage, instanceWarmup *int64
+	var minHealthyPercentage, maxHealthyPercentage, instanceWarmup *int64
 	if scope.AWSMachinePool.Spec.RefreshPreferences != nil {
 		if scope.AWSMachinePool.Spec.RefreshPreferences.Strategy != nil {
 			strategy = scope.AWSMachinePool.Spec.RefreshPreferences.Strategy
@@ -360,6 +360,9 @@ func (s *Service) StartASGInstanceRefresh(scope *scope.MachinePoolScope) error {
 		if scope.AWSMachinePool.Spec.RefreshPreferences.MinHealthyPercentage != nil {
 			minHealthyPercentage = scope.AWSMachinePool.Spec.RefreshPreferences.MinHealthyPercentage
 		}
+		if scope.AWSMachinePool.Spec.RefreshPreferences.MaxHealthyPercentage != nil {
+			maxHealthyPercentage = scope.AWSMachinePool.Spec.RefreshPreferences.MaxHealthyPercentage
+		}
 	}
 
 	input := &autoscaling.StartInstanceRefreshInput{
@@ -368,6 +371,7 @@ func (s *Service) StartASGInstanceRefresh(scope *scope.MachinePoolScope) error {
 		Preferences: &autoscaling.RefreshPreferences{
 			InstanceWarmup:       instanceWarmup,
 			MinHealthyPercentage: minHealthyPercentage,
+			MaxHealthyPercentage: maxHealthyPercentage,
 		},
 	}
 

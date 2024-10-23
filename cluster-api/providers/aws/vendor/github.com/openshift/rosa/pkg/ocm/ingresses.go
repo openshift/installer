@@ -17,8 +17,34 @@ limitations under the License.
 package ocm
 
 import (
+	"fmt"
+
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
+
+func (c *Client) GetIngress(clusterId string, ingressKey string) (*cmv1.Ingress, error) {
+	ingresses, err := c.GetIngresses(clusterId)
+	if err != nil {
+		return nil, err
+	}
+
+	var ingress *cmv1.Ingress
+	for _, item := range ingresses {
+		if ingressKey == "apps" && item.Default() {
+			ingress = item
+		}
+		if ingressKey == "apps2" && !item.Default() {
+			ingress = item
+		}
+		if item.ID() == ingressKey {
+			ingress = item
+		}
+	}
+	if ingress == nil {
+		return nil, fmt.Errorf("Failed to get ingress '%s' for cluster '%s'", ingressKey, clusterId)
+	}
+	return ingress, nil
+}
 
 func (c *Client) GetIngresses(clusterID string) ([]*cmv1.Ingress, error) {
 	response, err := c.ocm.ClustersMgmt().V1().

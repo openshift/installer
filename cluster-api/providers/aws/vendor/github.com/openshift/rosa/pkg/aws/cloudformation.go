@@ -17,13 +17,16 @@ limitations under the License.
 package aws
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
+	cloudformationtypes "github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
+	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
+	"github.com/aws/smithy-go"
 
 	"github.com/openshift/rosa/assets"
 )
@@ -45,13 +48,11 @@ func (c *awsClient) EnsureOsdCcsAdminUser(stackName string, adminUserName string
 		//If user doesn't exists proceed normally
 		//If users exists and tag is not present then add the tag
 		//if user exists and tag is present then proceed normally
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case iam.ErrCodeNoSuchEntityException:
-				userExists = false
-			default:
-				return false, err
-			}
+		var noEntityErr *iamtypes.NoSuchEntityException
+		if errors.As(err, &noEntityErr) {
+			userExists = false
+		} else {
+			return false, err
 		}
 	}
 	if userExists {
@@ -79,9 +80,9 @@ func (c *awsClient) EnsureOsdCcsAdminUser(stackName string, adminUserName string
 	// If stack CREATE_COMPLETE or UPGRADE_COMPLETE the stack is already create
 	// try to update it in case the cloudformation template has changed
 	if stackStatus != nil {
-		if (*stackStatus == cloudformation.StackStatusCreateComplete) ||
-			(*stackStatus == cloudformation.StackStatusUpdateComplete) {
-			_, err = c.UpdateStack(cfTemplateBody, stackName)
+		if (*stackStatus == string(cloudformationtypes.StackStatusCreateComplete)) ||
+			(*stackStatus == string(cloudformationtypes.StackStatusUpdateComplete)) {
+			err = c.UpdateStack(cfTemplateBody, stackName)
 			if err != nil {
 				return false, err
 			}
@@ -114,83 +115,62 @@ func (c *awsClient) EnsureOsdCcsAdminUser(stackName string, adminUserName string
 
 func (c *awsClient) CreateStack(cfTemplateBody, stackName string) (bool, error) {
 	// Create cloudformation stack
-	_, err := c.cfClient.CreateStack(buildCreateStackInput(cfTemplateBody, stackName))
+	_, err := c.cfClient.CreateStack(context.Background(), buildCreateStackInput(cfTemplateBody, stackName))
 	if err != nil {
 		return false, err
 	}
 
-	// Wait until cloudformation stack creates
-	err = c.cfClient.WaitUntilStackCreateComplete(&cloudformation.DescribeStacksInput{
-		StackName: aws.String(stackName),
-	})
+	err = waitForStackCreateComplete(context.Background(), c.cfClient, stackName)
 	if err != nil {
-		switch typed := err.(type) {
-		case awserr.Error:
-			// Waiter reached maximum attempts waiting for the resource to be ready
-			if typed.Code() == request.WaiterResourceNotReadyErrorCode {
-				c.logger.Errorf("Max retries reached waiting for stack to create")
-				return false, err
-			}
-		}
 		return false, err
 	}
 
 	return true, nil
 }
 
-func (c *awsClient) UpdateStack(cfTemplateBody, stackName string) (bool, error) {
-	_, err := c.cfClient.UpdateStack(buildUpdateStackInput(cfTemplateBody, stackName))
+func (c *awsClient) UpdateStack(cfTemplateBody, stackName string) error {
+	_, err := c.cfClient.UpdateStack(context.TODO(), buildUpdateStackInput(cfTemplateBody, stackName))
 	if err != nil {
-		switch typed := err.(type) {
-		case awserr.Error:
-			// Exit true if there is no update to be performed on the cloudformation stack
-			if typed.Code() == "ValidationError" {
-				if typed.Message() == "No updates are to be performed." {
-					return true, nil
-				}
+		var apiErr smithy.APIError
+		if errors.As(err, &apiErr) {
+			if apiErr.ErrorCode() == "ValidationError" &&
+				strings.Contains(apiErr.ErrorMessage(), "No updates are to be performed") {
+				// No updates are to be performed
+				return nil
 			}
 		}
-		return false, err
+		return err
 	}
 
 	// Wait for CloudFormation update to complete
-	err = c.cfClient.WaitUntilStackUpdateComplete(&cloudformation.DescribeStacksInput{
-		StackName: aws.String(stackName),
-	})
-
+	err = waitForStackUpdateComplete(context.TODO(), c.cfClient, stackName)
 	if err != nil {
-		switch typed := err.(type) {
-		case awserr.Error:
-			// Waiter reached maximum attempts waiting for the resource to be ready
-			if typed.Code() == request.WaiterResourceNotReadyErrorCode {
-				c.logger.Errorf("Max retries reached waiting for stack to create")
-				return false, err
-			}
-		}
-		return false, err
+		return err
 	}
 
-	return true, err
+	return nil
 }
 
 func (c *awsClient) CheckStackReadyOrNotExisting(stackName string) (stackReady bool, status *string, err error) {
-	stackList, err := c.cfClient.ListStacks(&cloudformation.ListStacksInput{})
+	stackList, err := c.cfClient.ListStacks(context.TODO(), &cloudformation.ListStacksInput{})
 	if err != nil {
 		return false, nil, err
 	}
 
 	for _, summary := range stackList.StackSummaries {
 		if *summary.StackName == stackName {
-			if (*summary.StackStatus == cloudformation.StackStatusCreateComplete) ||
-				(*summary.StackStatus == cloudformation.StackStatusUpdateComplete) {
-				return true, summary.StackStatus, nil
+			if (summary.StackStatus == cloudformationtypes.StackStatusCreateComplete) ||
+				(summary.StackStatus == cloudformationtypes.StackStatusUpdateComplete) {
+				stackStatus := string(summary.StackStatus)
+				return true, &stackStatus, nil
 			}
-			if *summary.StackStatus != cloudformation.StackStatusDeleteComplete {
-				return false, summary.StackStatus, fmt.Errorf("Error creating user: Cloudformation stack %s exists "+
+			if summary.StackStatus != cloudformationtypes.StackStatusDeleteComplete {
+				stackStatus := string(summary.StackStatus)
+				return false, &stackStatus, fmt.Errorf("Error creating user: CloudFormation stack %s exists "+
 					"with status %s. Expected status is %s.\n"+
 					"Ensure %s CloudFormation Stack does not exist, then retry with\n"+
 					"rosa init --delete-stack; rosa init",
-					*summary.StackName, *summary.StackStatus, cloudformation.StackStatusCreateComplete, *summary.StackName)
+					*summary.StackName, summary.StackStatus, cloudformationtypes.StackStatusCreateComplete, *summary.StackName)
 			}
 		}
 	}
@@ -203,30 +183,18 @@ func (c *awsClient) DeleteOsdCcsAdminUser(stackName string) error {
 	}
 
 	// Delete cloudformation stack
-	_, err := c.cfClient.DeleteStack(deleteStackInput)
+	_, err := c.cfClient.DeleteStack(context.Background(), deleteStackInput)
 	if err != nil {
-		switch typed := err.(type) {
-		case awserr.Error:
-			if typed.Code() == cloudformation.ErrCodeTokenAlreadyExistsException {
-				return nil
-			}
+		var tokenExistsErr *cloudformationtypes.TokenAlreadyExistsException
+		if errors.As(err, &tokenExistsErr) {
+			return nil
 		}
 		return err
 	}
 
 	// Wait until cloudformation stack deletes
-	err = c.cfClient.WaitUntilStackDeleteComplete(&cloudformation.DescribeStacksInput{
-		StackName: aws.String(stackName),
-	})
+	err = waitForStackDeleteComplete(context.Background(), c.cfClient, stackName)
 	if err != nil {
-		switch typed := err.(type) {
-		case awserr.Error:
-			// Waiter reached maximum attempts waiting for the resource to be ready
-			if typed.Code() == request.WaiterResourceNotReadyErrorCode {
-				c.logger.Errorf("Max retries reached waiting for stack to delete")
-				return err
-			}
-		}
 		return err
 	}
 
@@ -236,9 +204,9 @@ func (c *awsClient) DeleteOsdCcsAdminUser(stackName string) error {
 // Build cloudformation create stack input
 func buildCreateStackInput(cfTemplateBody, stackName string) *cloudformation.CreateStackInput {
 	// Special cloudformation capabilities are required to create IAM resources in AWS
-	cfCapabilityIAM := "CAPABILITY_IAM"
-	cfCapabilityNamedIAM := "CAPABILITY_NAMED_IAM"
-	cfTemplateCapabilities := []*string{&cfCapabilityIAM, &cfCapabilityNamedIAM}
+	cfCapabilityIAM := cloudformationtypes.CapabilityCapabilityIam
+	cfCapabilityNamedIAM := cloudformationtypes.CapabilityCapabilityNamedIam
+	cfTemplateCapabilities := []cloudformationtypes.Capability{cfCapabilityIAM, cfCapabilityNamedIAM}
 
 	return &cloudformation.CreateStackInput{
 		Capabilities: cfTemplateCapabilities,
@@ -250,9 +218,9 @@ func buildCreateStackInput(cfTemplateBody, stackName string) *cloudformation.Cre
 // Build cloudformation update stack input
 func buildUpdateStackInput(cfTemplateBody, stackName string) *cloudformation.UpdateStackInput {
 	// Special cloudformation capabilities are required to update IAM resources in AWS
-	cfCapabilityIAM := "CAPABILITY_IAM"
-	cfCapabilityNamedIAM := "CAPABILITY_NAMED_IAM"
-	cfTemplateCapabilities := []*string{&cfCapabilityIAM, &cfCapabilityNamedIAM}
+	cfCapabilityIAM := cloudformationtypes.CapabilityCapabilityIam
+	cfCapabilityNamedIAM := cloudformationtypes.CapabilityCapabilityNamedIam
+	cfTemplateCapabilities := []cloudformationtypes.Capability{cfCapabilityIAM, cfCapabilityNamedIAM}
 
 	return &cloudformation.UpdateStackInput{
 		Capabilities: cfTemplateCapabilities,

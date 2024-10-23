@@ -24,24 +24,31 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	JSON           = "json"
+	YAML           = "yaml"
+	FLAG_NAME      = "output"
+	FLAG_SHORTHAND = "o"
+)
+
 var o string
 
-var formats = []string{"json", "yaml"}
+var formats = []string{JSON, YAML}
 
 // AddFlag adds the interactive flag to the given set of command line flags.
 func AddFlag(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(
 		&o,
-		"output",
-		"o",
+		FLAG_NAME,
+		FLAG_SHORTHAND,
 		"",
 		fmt.Sprintf("Output format. Allowed formats are %s", formats),
 	)
 
-	cmd.RegisterFlagCompletionFunc("output", completion)
+	cmd.RegisterFlagCompletionFunc(FLAG_NAME, completion)
 }
 
-func completion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func completion(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 	return formats, cobra.ShellCompDirectiveDefault
 }
 
@@ -52,4 +59,8 @@ func HasFlag() bool {
 // Enabled retursn a boolean flag that indicates if the interactive mode is enabled.
 func Output() string {
 	return o
+}
+
+func SetOutput(output string) {
+	o = output
 }

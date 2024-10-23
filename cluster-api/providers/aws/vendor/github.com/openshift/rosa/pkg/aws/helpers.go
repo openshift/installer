@@ -1,20 +1,22 @@
 package aws
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
+	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/aws/aws-sdk-go/aws/endpoints"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/iam"
-	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/arn"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	awsCommonUtils "github.com/openshift-online/ocm-common/pkg/aws/utils"
 	awsCommonValidations "github.com/openshift-online/ocm-common/pkg/aws/validations"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -22,6 +24,7 @@ import (
 	"github.com/zgalor/weberr"
 
 	"github.com/openshift/rosa/pkg/arguments"
+	client "github.com/openshift/rosa/pkg/aws/api_interface"
 	awscb "github.com/openshift/rosa/pkg/aws/commandbuilder"
 	"github.com/openshift/rosa/pkg/aws/tags"
 	"github.com/openshift/rosa/pkg/constants"
@@ -36,6 +39,9 @@ var RoleNameRE = regexp.MustCompile(`^[\w+=,.@-]+$`)
 // AWS accepted arn format: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html
 var RoleArnRE = regexp.MustCompile(
 	`^arn:aws[\w-]*:iam::\d{12}:role(?:\/+[\w+=,.@-]+)+$`,
+)
+var PolicyArnRE = regexp.MustCompile(
+	`^arn:aws[\w-]*:iam::(\d{12}|aws):policy(?:\/+[\w+=,.@-]+)+$`,
 )
 
 // UserTagKeyRE , UserTagValueRE - https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html#tag-conventions
@@ -54,6 +60,8 @@ var UserNoProxyRE = regexp.MustCompile(
 
 const (
 	SecretsManager = "secretsmanager"
+	awsDefaultId   = "aws"
+	maxWaitDur     = 5 * time.Minute
 )
 
 func GetJumpAccount(env string) string {
@@ -130,15 +138,12 @@ func ARNPathValidator(input interface{}) error {
 // prompt for user input.
 func GetRegion(region string) (string, error) {
 	if region == "" {
-		defaultSession, err := session.NewSessionWithOptions(session.Options{
-			SharedConfigState: session.SharedConfigEnable,
-		})
-
+		cfg, err := config.LoadDefaultConfig(context.TODO())
 		if err != nil {
-			return "", fmt.Errorf("Error creating default session for AWS client: %v", err)
+			return "", fmt.Errorf("Error loading default AWS configuration: %v", err)
 		}
 
-		region = *defaultSession.Config.Region
+		region = cfg.Region
 	}
 	return region, nil
 }
@@ -154,7 +159,7 @@ func getClientDetails(awsClient *awsClient) (*sts.GetCallerIdentityOutput, bool,
 		return nil, rootUser, err
 	}
 
-	user, err := awsClient.stsClient.GetCallerIdentity(&sts.GetCallerIdentityInput{})
+	user, err := awsClient.stsClient.GetCallerIdentity(context.Background(), &sts.GetCallerIdentityInput{})
 	if err != nil {
 		return nil, rootUser, err
 	}
@@ -297,7 +302,7 @@ func UserTagValidator(input interface{}) error {
 	for _, t := range inputTags {
 		tag := strings.Split(t, delimiter)
 		if len(tag) != 2 {
-			return fmt.Errorf("invalid tag format for tag '%s'. Expected tag format: 'key%svalue'", tag, delimiter)
+			return fmt.Errorf("invalid tag format for tag '%s'. Expected tag format: 'key value'", tag)
 		}
 
 		if tag[0] == "" || tag[1] == "" {
@@ -402,13 +407,13 @@ func HasDuplicates(valSlice []string) (string, bool) {
 	return "", false
 }
 
-func GetTagValues(tagsValue []*iam.Tag) (roleType string, version string) {
+func GetTagValues(tagsValue []iamtypes.Tag) (roleType string, version string) {
 	for _, tag := range tagsValue {
-		switch aws.StringValue(tag.Key) {
+		switch aws.ToString(tag.Key) {
 		case tags.RoleType:
-			roleType = aws.StringValue(tag.Value)
+			roleType = aws.ToString(tag.Value)
 		case awsCommonValidations.OpenShiftVersion:
-			version = aws.StringValue(tag.Value)
+			version = aws.ToString(tag.Value)
 		}
 	}
 	return
@@ -437,20 +442,20 @@ func GetPolicyName(name string) string {
 	return fmt.Sprintf("%s-Policy", name)
 }
 
-func GetOperatorPolicyARN(accountID string, prefix string, namespace string, name string, path string) string {
-	return getPolicyARN(accountID, GetOperatorPolicyName(prefix, namespace, name), path)
+func GetOperatorPolicyARN(partition string, accountID string,
+	prefix string, namespace string, name string, path string) string {
+	return getPolicyARN(partition, accountID, GetOperatorPolicyName(prefix, namespace, name), path)
 }
 
-func GetAdminPolicyARN(accountID string, name string, path string) string {
-	return getPolicyARN(accountID, GetAdminPolicyName(name), path)
+func GetAdminPolicyARN(partition string, accountID string, name string, path string) string {
+	return getPolicyARN(partition, accountID, GetAdminPolicyName(name), path)
 }
 
-func GetPolicyARN(accountID string, name string, path string) string {
-	return getPolicyARN(accountID, GetPolicyName(name), path)
+func GetPolicyARN(partition string, accountID string, name string, path string) string {
+	return getPolicyARN(partition, accountID, GetPolicyName(name), path)
 }
 
-func getPolicyARN(accountID string, name string, path string) string {
-	partition := GetPartition()
+func getPolicyARN(partition string, accountID string, name string, path string) string {
 	str := fmt.Sprintf("arn:%s:iam::%s:policy", partition, accountID)
 	if path != "" {
 		str = fmt.Sprintf("%s%s", str, path)
@@ -482,29 +487,15 @@ func GetPathFromARN(arnStr string) (string, error) {
 	return path, nil
 }
 
-func GetRoleARN(accountID string, name string, path string) string {
+func GetRoleARN(accountID string, name string, path string, partition string) string {
 	if path == "" {
 		path = "/"
 	}
-	partition := GetPartition()
 	return fmt.Sprintf("arn:%s:iam::%s:role%s%s", partition, accountID, path, name)
 }
 
-func GetOIDCProviderARN(accountID string, providerURL string) string {
-	partition := GetPartition()
+func GetOIDCProviderARN(partition string, accountID string, providerURL string) string {
 	return fmt.Sprintf("arn:%s:iam::%s:oidc-provider/%s", partition, accountID, providerURL)
-}
-
-func GetPartition() string {
-	region, err := GetRegion(arguments.GetRegion())
-	if err != nil || region == "" {
-		return endpoints.AwsPartitionID
-	}
-	partition, ok := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), region)
-	if !ok || partition.ID() == "" {
-		return endpoints.AwsPartitionID
-	}
-	return partition.ID()
 }
 
 func GetPrefixFromAccountRole(cluster *cmv1.Cluster, roleNameSuffix string) (string, error) {
@@ -626,13 +617,13 @@ func GetInstallerAccountRoleName(cluster *cmv1.Cluster) (string, error) {
 }
 
 func GenerateOperatorRolePolicyFiles(reporter *rprtr.Object, policies map[string]*cmv1.AWSSTSPolicy,
-	credRequests map[string]*cmv1.STSOperator, sharedVpcRoleArn string) error {
+	credRequests map[string]*cmv1.STSOperator, sharedVpcRoleArn string, partition string) error {
 	isSharedVpc := sharedVpcRoleArn != ""
 	for credrequest := range credRequests {
 		filename := GetOperatorPolicyKey(credrequest, false, isSharedVpc)
 		policyDetail := GetPolicyDetails(policies, filename)
 		if isSharedVpc {
-			policyDetail = InterpolatePolicyDocument(policyDetail, map[string]string{
+			policyDetail = InterpolatePolicyDocument(partition, policyDetail, map[string]string{
 				"shared_vpc_role_arn": sharedVpcRoleArn,
 			})
 		}
@@ -652,13 +643,13 @@ func GenerateOperatorRolePolicyFiles(reporter *rprtr.Object, policies map[string
 }
 
 func GenerateAccountRolePolicyFiles(reporter *rprtr.Object, env string, policies map[string]*cmv1.AWSSTSPolicy,
-	skipPermissionFiles bool, accountRoles map[string]AccountRole) error {
+	skipPermissionFiles bool, accountRoles map[string]AccountRole, partition string) error {
 	for file := range accountRoles {
 		//Get trust policy
 		filename := fmt.Sprintf("sts_%s_trust_policy", file)
 		policyDetail := GetPolicyDetails(policies, filename)
-		policy := InterpolatePolicyDocument(policyDetail, map[string]string{
-			"partition":      GetPartition(),
+		policy := InterpolatePolicyDocument(partition, policyDetail, map[string]string{
+			"partition":      partition,
 			"aws_account_id": GetJumpAccount(env),
 		})
 		filename = GetFormattedFileName(filename)
@@ -702,10 +693,10 @@ func GetFormattedFileName(filename string) string {
 	return filename
 }
 
-func BuildOperatorRolePolicies(prefix string, accountID string, awsClient Client, commands []string,
+func BuildOperatorRolePolicies(prefix string, accountID string, partition string, awsClient Client, commands []string,
 	defaultPolicyVersion string, credRequests map[string]*cmv1.STSOperator, path string) []string {
 	for credrequest, operator := range credRequests {
-		policyARN := GetOperatorPolicyARN(accountID, prefix, operator.Namespace(), operator.Name(), path)
+		policyARN := GetOperatorPolicyARN(partition, accountID, prefix, operator.Namespace(), operator.Name(), path)
 		_, err := awsClient.IsPolicyExists(policyARN)
 		if err != nil {
 			name := GetOperatorPolicyName(prefix, operator.Namespace(), operator.Name())
@@ -768,6 +759,7 @@ func FindFirstAttachedPolicy(policiesDetails []PolicyDetail) PolicyDetail {
 func UpgradeOperatorRolePolicies(
 	reporter *rprtr.Object,
 	awsClient Client,
+	partition string,
 	accountID string,
 	prefix string,
 	policies map[string]*cmv1.AWSSTSPolicy,
@@ -778,11 +770,11 @@ func UpgradeOperatorRolePolicies(
 ) error {
 	isSharedVpc := cluster.AWS().PrivateHostedZoneRoleARN() != ""
 	for credrequest, operator := range credRequests {
-		policyARN := GetOperatorPolicyARN(accountID, prefix, operator.Namespace(), operator.Name(), path)
+		policyARN := GetOperatorPolicyARN(partition, accountID, prefix, operator.Namespace(), operator.Name(), path)
 		filename := GetOperatorPolicyKey(credrequest, cluster.Hypershift().Enabled(), isSharedVpc)
 		policyDetails := GetPolicyDetails(policies, filename)
 		if isSharedVpc {
-			policyDetails = InterpolatePolicyDocument(policyDetails, map[string]string{
+			policyDetails = InterpolatePolicyDocument(partition, policyDetails, map[string]string{
 				"shared_vpc_role_arn": cluster.AWS().PrivateHostedZoneRoleARN(),
 			})
 		}
@@ -812,7 +804,7 @@ const (
 )
 
 // SetSubnetOption Creates a subnet option using a predefined template.
-func SetSubnetOption(subnet *ec2.Subnet) string {
+func SetSubnetOption(subnet ec2types.Subnet) string {
 	subnetName := ""
 	for _, tag := range subnet.Tags {
 		switch *tag.Key {
@@ -823,15 +815,15 @@ func SetSubnetOption(subnet *ec2.Subnet) string {
 			break
 		}
 	}
-	return fmt.Sprintf(subnetTemplate, aws.StringValue(subnet.SubnetId),
-		subnetName, aws.StringValue(subnet.VpcId), aws.StringValue(subnet.AvailabilityZone),
-		aws.StringValue(subnet.OwnerId))
+	return fmt.Sprintf(subnetTemplate, aws.ToString(subnet.SubnetId),
+		subnetName, aws.ToString(subnet.VpcId), aws.ToString(subnet.AvailabilityZone),
+		aws.ToString(subnet.OwnerId))
 }
 
 // SetSecurityGroupOption Creates a security group option using a predefined template.
-func SetSecurityGroupOption(securityGroup *ec2.SecurityGroup) string {
+func SetSecurityGroupOption(securityGroup ec2types.SecurityGroup) string {
 	return fmt.Sprintf(securityGroupTemplate,
-		aws.StringValue(securityGroup.GroupId), aws.StringValue(securityGroup.GroupName))
+		aws.ToString(securityGroup.GroupId), aws.ToString(securityGroup.GroupName))
 }
 
 // Parse option expects the actual option as the first token followed by a space
@@ -969,7 +961,7 @@ func GetAccountRolePolicyKeys(roleType string) []string {
 func ComputeOperatorRoleArn(prefix string, operator *cmv1.STSOperator, creator *Creator, path string) string {
 	role := fmt.Sprintf("%s-%s-%s", prefix, operator.Namespace(), operator.Name())
 	role = awsCommonUtils.TruncateRoleName(role)
-	str := fmt.Sprintf("arn:%s:iam::%s:role", GetPartition(), creator.AccountID)
+	str := fmt.Sprintf("arn:%s:iam::%s:role", creator.Partition, creator.AccountID)
 	if path != "" {
 		str = fmt.Sprintf("%s%s", str, path)
 		return fmt.Sprintf("%s%s", str, role)
@@ -988,4 +980,44 @@ func IsHostedCPManagedPolicies(cluster *cmv1.Cluster) bool {
 
 func IsHostedCP(cluster *cmv1.Cluster) bool {
 	return cluster.Hypershift().Enabled()
+}
+
+func buildDescribeStacksInput(stackName string) *cloudformation.DescribeStacksInput {
+	return &cloudformation.DescribeStacksInput{
+		StackName: aws.String(stackName),
+	}
+}
+
+func waitForStackCreateComplete(ctx context.Context, cfClient client.CloudFormationApiClient, stackName string) error {
+	waiter := cloudformation.NewStackCreateCompleteWaiter(cfClient)
+
+	params := buildDescribeStacksInput(stackName)
+
+	// You can also use WaitForOutput if you need the output
+	return waiter.Wait(ctx, params, maxWaitDur, func(o *cloudformation.StackCreateCompleteWaiterOptions) {
+		// Optionally set MinDelay, MaxDelay, and other options here
+	})
+}
+
+func waitForStackUpdateComplete(ctx context.Context, cfClient client.CloudFormationApiClient, stackName string) error {
+	waiter := cloudformation.NewStackUpdateCompleteWaiter(cfClient)
+
+	params := buildDescribeStacksInput(stackName)
+
+	// You can also use WaitForOutput if you need the output
+	return waiter.Wait(ctx, params, maxWaitDur, func(o *cloudformation.StackUpdateCompleteWaiterOptions) {
+		// Optionally set MinDelay, MaxDelay, and other options here
+	})
+
+}
+
+func waitForStackDeleteComplete(ctx context.Context, cfClient client.CloudFormationApiClient, stackName string) error {
+	waiter := cloudformation.NewStackDeleteCompleteWaiter(cfClient)
+
+	params := buildDescribeStacksInput(stackName)
+
+	// You can also use WaitForOutput if you need the output
+	return waiter.Wait(ctx, params, maxWaitDur, func(o *cloudformation.StackDeleteCompleteWaiterOptions) {
+		// Optionally set MinDelay, MaxDelay, and other options here
+	})
 }

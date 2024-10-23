@@ -180,6 +180,69 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
 	// +optional
 	ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint"`
+
+	// ClusterRegistryConfig represents registry config used with the cluster.
+	// +optional
+	ClusterRegistryConfig *RegistryConfig `json:"clusterRegistryConfig,omitempty"`
+}
+
+// RegistryConfig for ROSA-HCP cluster
+type RegistryConfig struct {
+	// AdditionalTrustedCAs containing the registry hostname as the key, and the PEM-encoded certificate as the value,
+	// for each additional registry CA to trust.
+	// +optional
+	AdditionalTrustedCAs map[string]string `json:"additionalTrustedCAs,omitempty"`
+
+	// AllowedRegistriesForImport limits the container image registries that normal users may import
+	// images from. Set this list to the registries that you trust to contain valid Docker
+	// images and that you want applications to be able to import from.
+	// +optional
+	AllowedRegistriesForImport []RegistryLocation `json:"allowedRegistriesForImport,omitempty"`
+
+	// RegistrySources contains configuration that determines how the container runtime
+	// should treat individual registries when accessing images. It does not contain configuration
+	// for the internal cluster registry. AllowedRegistries, BlockedRegistries are mutually exclusive.
+	// +optional
+	RegistrySources *RegistrySources `json:"registrySources,omitempty"`
+}
+
+// RegistryLocation contains a location of the registry specified by the registry domain name.
+type RegistryLocation struct {
+	// domainName specifies a domain name for the registry. The domain name might include wildcards, like '*' or '??'.
+	// In case the registry use non-standard (80 or 443) port, the port should be included in the domain name as well.
+	// +optional
+	DomainName string `json:"domainName,omitempty"`
+
+	// insecure indicates whether the registry is secure (https) or insecure (http), default is secured.
+	// +kubebuilder:default=false
+	// +optional
+	Insecure bool `json:"insecure,omitempty"`
+}
+
+// RegistrySources contains registries configuration.
+type RegistrySources struct {
+	// AllowedRegistries are the registries for which image pull and push actions are allowed.
+	// To specify all subdomains, add the asterisk (*) wildcard character as a prefix to the domain name,
+	// For example, *.example.com.
+	// You can specify an individual repository within a registry, For example: reg1.io/myrepo/myapp:latest.
+	// All other registries are blocked.
+	// +optional
+	AllowedRegistries []string `json:"allowedRegistries,omitempty"`
+
+	// BlockedRegistries are the registries for which image pull and push actions are denied.
+	// To specify all subdomains, add the asterisk (*) wildcard character as a prefix to the domain name,
+	// For example, *.example.com.
+	// You can specify an individual repository within a registry, For example: reg1.io/myrepo/myapp:latest.
+	// All other registries are allowed.
+	// +optional
+	BlockedRegistries []string `json:"blockedRegistries,omitempty"`
+
+	// InsecureRegistries are registries which do not have a valid TLS certificate or only support HTTP connections.
+	// To specify all subdomains, add the asterisk (*) wildcard character as a prefix to the domain name,
+	// For example, *.example.com.
+	// You can specify an individual repository within a registry, For example: reg1.io/myrepo/myapp:latest.
+	// +optional
+	InsecureRegistries []string `json:"insecureRegistries,omitempty"`
 }
 
 // NetworkSpec for ROSA-HCP.

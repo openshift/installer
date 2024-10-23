@@ -591,7 +591,6 @@ func (s *Service) getSecurityGroupIngressRules(role infrav1.SecurityGroupRole) (
 			},
 		}
 	}
-	cidrBlocks := []string{services.AnyIPv4CidrBlock}
 	switch role {
 	case infrav1.SecurityGroupBastion:
 		return infrav1.IngressRules{
@@ -645,6 +644,10 @@ func (s *Service) getSecurityGroupIngressRules(role infrav1.SecurityGroupRole) (
 		return append(cniRules, rules...), nil
 
 	case infrav1.SecurityGroupNode:
+		cidrBlocks := []string{services.AnyIPv4CidrBlock}
+		if scopeCidrBlocks := s.scope.NodePortIngressRuleCidrBlocks(); len(scopeCidrBlocks) > 0 {
+			cidrBlocks = scopeCidrBlocks
+		}
 		rules := infrav1.IngressRules{
 			{
 				Description: "Node Port Services",

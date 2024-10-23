@@ -81,6 +81,16 @@ func (c *Client) DNSDomains() *DNSDomainsClient {
 	)
 }
 
+// GCP returns the target 'GCP' resource.
+//
+// Reference to the resource that manages the collection of gcp endpoints.
+func (c *Client) GCP() *GCPClient {
+	return NewGCPClient(
+		c.transport,
+		path.Join(c.path, "gcp"),
+	)
+}
+
 // GCPInquiries returns the target 'GCP_inquiries' resource.
 //
 // Reference to the resource that manages the collection of gcp inquiries.
@@ -228,6 +238,16 @@ func (c *Client) ProvisionShards() *ProvisionShardsClient {
 	return NewProvisionShardsClient(
 		c.transport,
 		path.Join(c.path, "provision_shards"),
+	)
+}
+
+// RegistryAllowlists returns the target 'registry_allowlists' resource.
+//
+// Reference to the resource that manages the collection of registry allowlists.
+func (c *Client) RegistryAllowlists() *RegistryAllowlistsClient {
+	return NewRegistryAllowlistsClient(
+		c.transport,
+		path.Join(c.path, "registry_allowlists"),
 	)
 }
 

@@ -37,5 +37,9 @@ func Enabled() bool {
 	return enabled
 }
 
+func SetEnabled(debugEnabled bool) {
+	enabled = debugEnabled
+}
+
 // enabled is a boolean flag that indicates that the debug mode is enabled.
 var enabled bool
