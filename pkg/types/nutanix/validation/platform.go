@@ -68,9 +68,8 @@ func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path, c *types.Install
 		}
 	}
 
-	// Currently we only support one subnet for an OpenShift cluster
-	if len(p.SubnetUUIDs) != 1 || len(p.SubnetUUIDs[0]) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath.Child("subnet"), "must specify the subnet"))
+	if len(p.SubnetUUIDs) == 0 || p.SubnetUUIDs[0] == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("subnet"), "must specify at least one subnet"))
 	}
 
 	if c.Nutanix.LoadBalancer != nil {
@@ -95,8 +94,8 @@ func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path, c *types.Install
 					allErrs = append(allErrs, field.Required(fldPath.Child("failureDomain", "prismElement", "uuid"), "failureDomain prismElement uuid cannot be empty"))
 				}
 
-				if len(fd.SubnetUUIDs) != 1 || p.SubnetUUIDs[0] == "" {
-					allErrs = append(allErrs, field.Invalid(fldPath.Child("failureDomain", "subnetUUIDs"), "", "must specify one failure domain subnet uuid"))
+				if len(fd.SubnetUUIDs) == 0 || p.SubnetUUIDs[0] == "" {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("failureDomain", "subnetUUIDs"), "", "must specify at least one failure domain subnet uuid"))
 				}
 
 				for _, sc := range fd.StorageContainers {

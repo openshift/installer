@@ -147,7 +147,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.SubnetUUIDs[0] = ""
 				return p
 			}(),
-			expectedError: `^test-path\.subnet: Required value: must specify the subnet$`,
+			expectedError: `^test-path\.subnet: Required value: must specify at least one subnet$`,
 		},
 		{
 			name: "Capital letters in Prism Central",
