@@ -40,19 +40,19 @@ func TestAuthConfig_Generate(t *testing.T) {
 			// verify each token is signed with correct persona
 			claims, err := ParseToken(authConfigAsset.AgentAuthToken)
 			assert.NoError(t, err)
-			persona, ok := claims["sub"].(string)
+			persona, ok := claims["auth_scheme"].(string)
 			assert.Equal(t, persona, agentPersona)
 			assert.Equal(t, ok, true)
 
 			claims, err = ParseToken(authConfigAsset.UserAuthToken)
 			assert.NoError(t, err)
-			persona, ok = claims["sub"].(string)
+			persona, ok = claims["auth_scheme"].(string)
 			assert.Equal(t, persona, userPersona)
 			assert.Equal(t, ok, true)
 
 			claims, err = ParseToken(authConfigAsset.WatcherAuthToken)
 			assert.NoError(t, err)
-			persona, ok = claims["sub"].(string)
+			persona, ok = claims["auth_scheme"].(string)
 			assert.Equal(t, persona, watcherPersona)
 			assert.Equal(t, ok, true)
 		})

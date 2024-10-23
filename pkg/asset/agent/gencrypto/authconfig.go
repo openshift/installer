@@ -181,7 +181,7 @@ func keyPairPEM() (string, string, error) {
 func generateToken(userPersona string, privateKeyPem string, expiry *time.Time) (string, error) {
 	// Create the JWT claims
 	claims := jwt.MapClaims{
-		"sub": userPersona,
+		"auth_scheme": userPersona,
 	}
 	// Set the expiry time if provided
 	if expiry != nil {
