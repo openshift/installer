@@ -9,6 +9,8 @@ import (
 )
 
 const (
+	// ImportClusterConfigFilename is a config file used to store
+	// additional params required to complete a cluster import.
 	ImportClusterConfigFilename = "import-cluster-config.json"
 )
 

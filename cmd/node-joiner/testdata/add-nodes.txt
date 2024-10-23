@@ -13,6 +13,7 @@ isoIgnitionContains node.x86_64.iso /usr/local/bin/add-node.sh
 isoIgnitionUser node.x86_64.iso core my-sshKey
 isoCmp node.x86_64.iso /etc/containers/registries.conf expected/registries.conf
 isoFileCmpRegEx node.x86_64.iso /EFI/redhat/grub.cfg expected/grub.cfg
+isoCmpRegEx node.x86_64.iso /etc/assisted/clusterconfig/import-cluster-config.json expected/import-cluster-config.json
 
 -- nodes-config.yaml --
 hosts:
@@ -40,3 +41,5 @@ CLUSTER_API_VIP_DNS_NAME=api.ostest.test.metalkube.org
 AGENT_AUTH_TOKEN_EXPIRY=.*
 -- expected/grub.cfg --
 .*fips=1.*
+-- expected/import-cluster-config.json --
+.*"userManagedNetworking": false.*

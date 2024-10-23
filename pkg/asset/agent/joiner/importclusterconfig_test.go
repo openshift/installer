@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"github.com/go-openapi/swag"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestImportClusterConfig_Generate(t *testing.T) {

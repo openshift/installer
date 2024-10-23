@@ -1,0 +1,27 @@
+
+# Verify that the UserManageNetworking is set for none platform.
+
+exec node-joiner add-nodes --kubeconfig=$WORK/kubeconfig --log-level=debug --dir=$WORK
+
+grep '^0$' $WORK/exit_code
+exists $WORK/node.x86_64.iso
+isoCmpRegEx node.x86_64.iso /etc/assisted/clusterconfig/import-cluster-config.json expected/import-cluster-config.json
+
+-- setup/infrastructure.yaml --
+apiVersion: config.openshift.io/v1
+kind: Infrastructure
+metadata:
+  name: cluster
+spec:
+  platformSpec:
+    type: None
+
+-- nodes-config.yaml --
+hosts:
+    - hostname: extra-worker-0
+      interfaces:
+        - name: eth0
+          macAddress: 00:f4:3d:a0:0e:2b
+         
+-- expected/import-cluster-config.json --
+.*"userManagedNetworking": true.*
