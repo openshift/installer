@@ -32,7 +32,7 @@ import (
 
 // ClusterLogsUUIDClient is the client of the 'cluster_logs_UUID' resource.
 //
-// Manages the collection of cluster logs by custer uuid.
+// Manages the collection of cluster logs by cluster uuid.
 type ClusterLogsUUIDClient struct {
 	transport http.RoundTripper
 	path      string

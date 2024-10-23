@@ -172,6 +172,15 @@ func writeVersion(object *Version, stream *jsoniter.Stream) {
 		}
 		stream.WriteObjectField("release_image")
 		stream.WriteString(object.releaseImage)
+		count++
+	}
+	present_ = object.bitmap_&32768 != 0 && object.releaseImages != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("release_images")
+		writeReleaseImages(object.releaseImages, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -260,6 +269,10 @@ func readVersion(iterator *jsoniter.Iterator) *Version {
 			value := iterator.ReadString()
 			object.releaseImage = value
 			object.bitmap_ |= 16384
+		case "release_images":
+			value := readReleaseImages(iterator)
+			object.releaseImages = value
+			object.bitmap_ |= 32768
 		default:
 			iterator.ReadAny()
 		}
