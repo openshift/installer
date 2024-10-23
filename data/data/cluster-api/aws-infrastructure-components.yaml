@@ -117,11 +117,13 @@ spec:
                               items:
                                 type: string
                               type: array
+                              x-kubernetes-list-type: atomic
                           required:
                           - key
                           - operator
                           type: object
                         type: array
+                        x-kubernetes-list-type: atomic
                       matchLabels:
                         additionalProperties:
                           type: string
@@ -211,11 +213,13 @@ spec:
                               items:
                                 type: string
                               type: array
+                              x-kubernetes-list-type: atomic
                           required:
                           - key
                           - operator
                           type: object
                         type: array
+                        x-kubernetes-list-type: atomic
                       matchLabels:
                         additionalProperties:
                           type: string
@@ -344,11 +348,13 @@ spec:
                               items:
                                 type: string
                               type: array
+                              x-kubernetes-list-type: atomic
                           required:
                           - key
                           - operator
                           type: object
                         type: array
+                        x-kubernetes-list-type: atomic
                       matchLabels:
                         additionalProperties:
                           type: string
@@ -497,11 +503,13 @@ spec:
                               items:
                                 type: string
                               type: array
+                              x-kubernetes-list-type: atomic
                           required:
                           - key
                           - operator
                           type: object
                         type: array
+                        x-kubernetes-list-type: atomic
                       matchLabels:
                         additionalProperties:
                           type: string
@@ -2010,6 +2018,13 @@ spec:
                           type: object
                         type: array
                     type: object
+                  nodePortIngressRuleCidrBlocks:
+                    description: |-
+                      NodePortIngressRuleCidrBlocks is an optional set of CIDR blocks to allow traffic to nodes' NodePort services.
+                      If none are specified here, all IPs are allowed to connect.
+                    items:
+                      type: string
+                    type: array
                   securityGroupOverrides:
                     additionalProperties:
                       type: string
@@ -2295,6 +2310,25 @@ spec:
                         - ip-name
                         - resource-name
                         type: string
+                      secondaryCidrBlocks:
+                        description: |-
+                          SecondaryCidrBlocks are additional CIDR blocks to be associated when the provider creates a managed VPC.
+                          Defaults to none. Mutually exclusive with IPAMPool. This makes sense to use if, for example, you want to use
+                          a separate IP range for pods (e.g. Cilium ENI mode).
+                        items:
+                          description: VpcCidrBlock defines the CIDR block and settings
+                            to associate with the managed VPC. Currently, only IPv4
+                            is supported.
+                          properties:
+                            ipv4CidrBlock:
+                              description: IPv4CidrBlock is the IPv4 CIDR block to
+                                associate with the managed VPC.
+                              minLength: 1
+                              type: string
+                          required:
+                          - ipv4CidrBlock
+                          type: object
+                        type: array
                       subnetSchema:
                         default: PreferPrivate
                         description: |-
@@ -3669,11 +3703,13 @@ spec:
                               items:
                                 type: string
                               type: array
+                              x-kubernetes-list-type: atomic
                           required:
                           - key
                           - operator
                           type: object
                         type: array
+                        x-kubernetes-list-type: atomic
                       matchLabels:
                         additionalProperties:
                           type: string
@@ -3773,11 +3809,13 @@ spec:
                               items:
                                 type: string
                               type: array
+                              x-kubernetes-list-type: atomic
                           required:
                           - key
                           - operator
                           type: object
                         type: array
+                        x-kubernetes-list-type: atomic
                       matchLabels:
                         additionalProperties:
                           type: string
@@ -4834,6 +4872,13 @@ spec:
                                   type: object
                                 type: array
                             type: object
+                          nodePortIngressRuleCidrBlocks:
+                            description: |-
+                              NodePortIngressRuleCidrBlocks is an optional set of CIDR blocks to allow traffic to nodes' NodePort services.
+                              If none are specified here, all IPs are allowed to connect.
+                            items:
+                              type: string
+                            type: array
                           securityGroupOverrides:
                             additionalProperties:
                               type: string
@@ -5121,6 +5166,25 @@ spec:
                                 - ip-name
                                 - resource-name
                                 type: string
+                              secondaryCidrBlocks:
+                                description: |-
+                                  SecondaryCidrBlocks are additional CIDR blocks to be associated when the provider creates a managed VPC.
+                                  Defaults to none. Mutually exclusive with IPAMPool. This makes sense to use if, for example, you want to use
+                                  a separate IP range for pods (e.g. Cilium ENI mode).
+                                items:
+                                  description: VpcCidrBlock defines the CIDR block
+                                    and settings to associate with the managed VPC.
+                                    Currently, only IPv4 is supported.
+                                  properties:
+                                    ipv4CidrBlock:
+                                      description: IPv4CidrBlock is the IPv4 CIDR
+                                        block to associate with the managed VPC.
+                                      minLength: 1
+                                      type: string
+                                  required:
+                                  - ipv4CidrBlock
+                                  type: object
+                                type: array
                               subnetSchema:
                                 default: PreferPrivate
                                 description: |-
@@ -6647,6 +6711,50 @@ spec:
                   name:
                     description: The name of the launch template.
                     type: string
+                  nonRootVolumes:
+                    description: Configuration options for the non root storage volumes.
+                    items:
+                      description: Volume encapsulates the configuration options for
+                        the storage device.
+                      properties:
+                        deviceName:
+                          description: Device name
+                          type: string
+                        encrypted:
+                          description: Encrypted is whether the volume should be encrypted
+                            or not.
+                          type: boolean
+                        encryptionKey:
+                          description: |-
+                            EncryptionKey is the KMS key to use to encrypt the volume. Can be either a KMS key ID or ARN.
+                            If Encrypted is set and this is omitted, the default AWS key will be used.
+                            The key must already exist and be accessible by the controller.
+                          type: string
+                        iops:
+                          description: IOPS is the number of IOPS requested for the
+                            disk. Not applicable to all types.
+                          format: int64
+                          type: integer
+                        size:
+                          description: |-
+                            Size specifies size (in Gi) of the storage device.
+                            Must be greater than the image snapshot size or 8 (whichever is greater).
+                          format: int64
+                          minimum: 8
+                          type: integer
+                        throughput:
+                          description: Throughput to provision in MiB/s supported
+                            for the volume type. Not applicable to all types.
+                          format: int64
+                          type: integer
+                        type:
+                          description: Type is the type of the volume (e.g. gp2, io1,
+                            etc...).
+                          type: string
+                      required:
+                      - size
+                      type: object
+                    type: array
                   privateDnsName:
                     description: PrivateDNSName is the options for the instance hostname.
                     properties:
@@ -6833,6 +6941,18 @@ spec:
                       to use. During this time, the next replacement will not be initiated.
                       The default is to use the value for the health check grace period defined for the group.
                     format: int64
+                    type: integer
+                  maxHealthyPercentage:
+                    description: |-
+                      The amount of capacity as a percentage in ASG that can be in service and healthy, or pending,
+                      to support your workload when replacing instances.
+                      The value is expressed as a percentage of the desired capacity of the ASG. Value range is 100 to 200.
+                      If you specify MaxHealthyPercentage , you must also specify MinHealthyPercentage , and the difference between
+                      them cannot be greater than 100.
+                      A larger range increases the number of instances that can be replaced at the same time.
+                    format: int64
+                    maximum: 200
+                    minimum: 100
                     type: integer
                   minHealthyPercentage:
                     description: |-
@@ -9986,6 +10106,13 @@ spec:
                           type: object
                         type: array
                     type: object
+                  nodePortIngressRuleCidrBlocks:
+                    description: |-
+                      NodePortIngressRuleCidrBlocks is an optional set of CIDR blocks to allow traffic to nodes' NodePort services.
+                      If none are specified here, all IPs are allowed to connect.
+                    items:
+                      type: string
+                    type: array
                   securityGroupOverrides:
                     additionalProperties:
                       type: string
@@ -10271,6 +10398,25 @@ spec:
                         - ip-name
                         - resource-name
                         type: string
+                      secondaryCidrBlocks:
+                        description: |-
+                          SecondaryCidrBlocks are additional CIDR blocks to be associated when the provider creates a managed VPC.
+                          Defaults to none. Mutually exclusive with IPAMPool. This makes sense to use if, for example, you want to use
+                          a separate IP range for pods (e.g. Cilium ENI mode).
+                        items:
+                          description: VpcCidrBlock defines the CIDR block and settings
+                            to associate with the managed VPC. Currently, only IPv4
+                            is supported.
+                          properties:
+                            ipv4CidrBlock:
+                              description: IPv4CidrBlock is the IPv4 CIDR block to
+                                associate with the managed VPC.
+                              minLength: 1
+                              type: string
+                          required:
+                          - ipv4CidrBlock
+                          type: object
+                        type: array
                       subnetSchema:
                         default: PreferPrivate
                         description: |-
@@ -10445,10 +10591,15 @@ spec:
                                   description: The key to select.
                                   type: string
                                 name:
+                                  default: ""
                                   description: |-
                                     Name of the referent.
-                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
                                     TODO: Add other useful fields. apiVersion, kind, uid?
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                   type: string
                                 optional:
                                   description: Specify whether the ConfigMap or its
@@ -10508,10 +10659,15 @@ spec:
                                     be a valid secret key.
                                   type: string
                                 name:
+                                  default: ""
                                   description: |-
                                     Name of the referent.
-                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
                                     TODO: Add other useful fields. apiVersion, kind, uid?
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                   type: string
                                 optional:
                                   description: Specify whether the Secret or its key
@@ -11993,6 +12149,13 @@ spec:
                           type: object
                         type: array
                     type: object
+                  nodePortIngressRuleCidrBlocks:
+                    description: |-
+                      NodePortIngressRuleCidrBlocks is an optional set of CIDR blocks to allow traffic to nodes' NodePort services.
+                      If none are specified here, all IPs are allowed to connect.
+                    items:
+                      type: string
+                    type: array
                   securityGroupOverrides:
                     additionalProperties:
                       type: string
@@ -12278,6 +12441,25 @@ spec:
                         - ip-name
                         - resource-name
                         type: string
+                      secondaryCidrBlocks:
+                        description: |-
+                          SecondaryCidrBlocks are additional CIDR blocks to be associated when the provider creates a managed VPC.
+                          Defaults to none. Mutually exclusive with IPAMPool. This makes sense to use if, for example, you want to use
+                          a separate IP range for pods (e.g. Cilium ENI mode).
+                        items:
+                          description: VpcCidrBlock defines the CIDR block and settings
+                            to associate with the managed VPC. Currently, only IPv4
+                            is supported.
+                          properties:
+                            ipv4CidrBlock:
+                              description: IPv4CidrBlock is the IPv4 CIDR block to
+                                associate with the managed VPC.
+                              minLength: 1
+                              type: string
+                          required:
+                          - ipv4CidrBlock
+                          type: object
+                        type: array
                       subnetSchema:
                         default: PreferPrivate
                         description: |-
@@ -12470,10 +12652,15 @@ spec:
                                   description: The key to select.
                                   type: string
                                 name:
+                                  default: ""
                                   description: |-
                                     Name of the referent.
-                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
                                     TODO: Add other useful fields. apiVersion, kind, uid?
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                   type: string
                                 optional:
                                   description: Specify whether the ConfigMap or its
@@ -12533,10 +12720,15 @@ spec:
                                     be a valid secret key.
                                   type: string
                                 name:
+                                  default: ""
                                   description: |-
                                     Name of the referent.
-                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
                                     TODO: Add other useful fields. apiVersion, kind, uid?
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                   type: string
                                 optional:
                                   description: Specify whether the Secret or its key
@@ -14312,6 +14504,50 @@ spec:
                   name:
                     description: The name of the launch template.
                     type: string
+                  nonRootVolumes:
+                    description: Configuration options for the non root storage volumes.
+                    items:
+                      description: Volume encapsulates the configuration options for
+                        the storage device.
+                      properties:
+                        deviceName:
+                          description: Device name
+                          type: string
+                        encrypted:
+                          description: Encrypted is whether the volume should be encrypted
+                            or not.
+                          type: boolean
+                        encryptionKey:
+                          description: |-
+                            EncryptionKey is the KMS key to use to encrypt the volume. Can be either a KMS key ID or ARN.
+                            If Encrypted is set and this is omitted, the default AWS key will be used.
+                            The key must already exist and be accessible by the controller.
+                          type: string
+                        iops:
+                          description: IOPS is the number of IOPS requested for the
+                            disk. Not applicable to all types.
+                          format: int64
+                          type: integer
+                        size:
+                          description: |-
+                            Size specifies size (in Gi) of the storage device.
+                            Must be greater than the image snapshot size or 8 (whichever is greater).
+                          format: int64
+                          minimum: 8
+                          type: integer
+                        throughput:
+                          description: Throughput to provision in MiB/s supported
+                            for the volume type. Not applicable to all types.
+                          format: int64
+                          type: integer
+                        type:
+                          description: Type is the type of the volume (e.g. gp2, io1,
+                            etc...).
+                          type: string
+                      required:
+                      - size
+                      type: object
+                    type: array
                   privateDnsName:
                     description: PrivateDNSName is the options for the instance hostname.
                     properties:
@@ -15912,6 +16148,75 @@ spec:
                   rule: self == oldSelf
                 - message: billingAccount must be a valid AWS account ID
                   rule: self.matches('^[0-9]{12}$')
+              clusterRegistryConfig:
+                description: ClusterRegistryConfig represents registry config used
+                  with the cluster.
+                properties:
+                  additionalTrustedCAs:
+                    additionalProperties:
+                      type: string
+                    description: |-
+                      AdditionalTrustedCAs containing the registry hostname as the key, and the PEM-encoded certificate as the value,
+                      for each additional registry CA to trust.
+                    type: object
+                  allowedRegistriesForImport:
+                    description: |-
+                      AllowedRegistriesForImport limits the container image registries that normal users may import
+                      images from. Set this list to the registries that you trust to contain valid Docker
+                      images and that you want applications to be able to import from.
+                    items:
+                      description: RegistryLocation contains a location of the registry
+                        specified by the registry domain name.
+                      properties:
+                        domainName:
+                          description: |-
+                            domainName specifies a domain name for the registry. The domain name might include wildcards, like '*' or '??'.
+                            In case the registry use non-standard (80 or 443) port, the port should be included in the domain name as well.
+                          type: string
+                        insecure:
+                          default: false
+                          description: insecure indicates whether the registry is
+                            secure (https) or insecure (http), default is secured.
+                          type: boolean
+                      type: object
+                    type: array
+                  registrySources:
+                    description: |-
+                      RegistrySources contains configuration that determines how the container runtime
+                      should treat individual registries when accessing images. It does not contain configuration
+                      for the internal cluster registry. AllowedRegistries, BlockedRegistries are mutually exclusive.
+                    properties:
+                      allowedRegistries:
+                        description: |-
+                          AllowedRegistries are the registries for which image pull and push actions are allowed.
+                          To specify all subdomains, add the asterisk (*) wildcard character as a prefix to the domain name,
+                          For example, *.example.com.
+                          You can specify an individual repository within a registry, For example: reg1.io/myrepo/myapp:latest.
+                          All other registries are blocked.
+                        items:
+                          type: string
+                        type: array
+                      blockedRegistries:
+                        description: |-
+                          BlockedRegistries are the registries for which image pull and push actions are denied.
+                          To specify all subdomains, add the asterisk (*) wildcard character as a prefix to the domain name,
+                          For example, *.example.com.
+                          You can specify an individual repository within a registry, For example: reg1.io/myrepo/myapp:latest.
+                          All other registries are allowed.
+                        items:
+                          type: string
+                        type: array
+                      insecureRegistries:
+                        description: |-
+                          InsecureRegistries are registries which do not have a valid TLS certificate or only support HTTP connections.
+                          To specify all subdomains, add the asterisk (*) wildcard character as a prefix to the domain name,
+                          For example, *.example.com.
+                          You can specify an individual repository within a registry, For example: reg1.io/myrepo/myapp:latest.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                type: object
               controlPlaneEndpoint:
                 description: ControlPlaneEndpoint represents the endpoint used to
                   communicate with the control plane.
@@ -15935,10 +16240,15 @@ spec:
                   - ocmApiUrl: Optional, defaults to 'https://api.openshift.com'
                 properties:
                   name:
+                    default: ""
                     description: |-
                       Name of the referent.
-                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      This field is effectively required, but due to backwards compatibility is
+                      allowed to be empty. Instances of this type with an empty value here are
+                      almost certainly wrong.
                       TODO: Add other useful fields. apiVersion, kind, uid?
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
@@ -16543,6 +16853,19 @@ spec:
               version:
                 description: OpenShift semantic version, for example "4.14.5".
                 type: string
+              versionGate:
+                default: WaitForAcknowledge
+                description: |-
+                  VersionGate requires acknowledgment when upgrading ROSA-HCP y-stream versions (e.g., from 4.15 to 4.16).
+                  Default is WaitForAcknowledge.
+                  WaitForAcknowledge: If acknowledgment is required, the upgrade will not proceed until VersionGate is set to Acknowledge or AlwaysAcknowledge.
+                  Acknowledge: If acknowledgment is required, apply it for the upgrade. After upgrade is done set the version gate to WaitForAcknowledge.
+                  AlwaysAcknowledge: If acknowledgment is required, apply it and proceed with the upgrade.
+                enum:
+                - Acknowledge
+                - WaitForAcknowledge
+                - AlwaysAcknowledge
+                type: string
               workerRoleARN:
                 description: WorkerRoleARN is an AWS IAM role that will be attached
                   to worker instances.
@@ -16557,11 +16880,17 @@ spec:
             - subnets
             - supportRoleARN
             - version
+            - versionGate
             - workerRoleARN
             type: object
           status:
             description: RosaControlPlaneStatus defines the observed state of ROSAControlPlane.
             properties:
+              availableUpgrades:
+                description: Available upgrades for the ROSA hosted control plane.
+                items:
+                  type: string
+                type: array
               conditions:
                 description: Conditions specifies the conditions for the managed control
                   plane
@@ -17587,7 +17916,7 @@ spec:
         env:
         - name: AWS_SHARED_CREDENTIALS_FILE
           value: /home/.aws/credentials
-        image: registry.k8s.io/cluster-api-aws/cluster-api-aws-controller:v2.6.1
+        image: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller:v2.5.1
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
@@ -17617,6 +17946,7 @@ spec:
             - ALL
           runAsGroup: 65532
           runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert
