@@ -68,9 +68,9 @@ func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path, c *types.Install
 		}
 	}
 
-	// Currently we only support one subnet for an OpenShift cluster
-	if len(p.SubnetUUIDs) != 1 || len(p.SubnetUUIDs[0]) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath.Child("subnet"), "must specify the subnet"))
+	// validate subnets configuration
+	if errs := validateSubnets(fldPath.Child("subnetUUIDs"), p.SubnetUUIDs); len(errs) > 0 {
+		allErrs = append(allErrs, errs...)
 	}
 
 	if c.Nutanix.LoadBalancer != nil {
@@ -95,8 +95,9 @@ func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path, c *types.Install
 					allErrs = append(allErrs, field.Required(fldPath.Child("failureDomain", "prismElement", "uuid"), "failureDomain prismElement uuid cannot be empty"))
 				}
 
-				if len(fd.SubnetUUIDs) != 1 || p.SubnetUUIDs[0] == "" {
-					allErrs = append(allErrs, field.Invalid(fldPath.Child("failureDomain", "subnetUUIDs"), "", "must specify one failure domain subnet uuid"))
+				// validate subnets configuration
+				if errs := validateSubnets(fldPath.Child("failureDomain", "subnetUUIDs"), fd.SubnetUUIDs); len(errs) > 0 {
+					allErrs = append(allErrs, errs...)
 				}
 
 				for _, sc := range fd.StorageContainers {
@@ -133,4 +134,29 @@ func validateLoadBalancer(lbType configv1.PlatformLoadBalancerType) bool {
 	default:
 		return false
 	}
+}
+
+// validateSubnets validates the input subnetUUIDs meet the configuration requirements.
+func validateSubnets(fldPath *field.Path, subnetUUIDs []string) field.ErrorList {
+	var errs field.ErrorList
+
+	count := len(subnetUUIDs)
+	switch {
+	case count == 0 || subnetUUIDs[0] == "":
+		errs = append(errs, field.Required(fldPath, "must specify at least one subnet"))
+	case count > 32:
+		errs = append(errs, field.TooMany(fldPath, count, 32))
+	default:
+		// check duplication
+		visited := make(map[string]bool, 0)
+		for _, uuid := range subnetUUIDs {
+			if _, ok := visited[uuid]; ok {
+				errs = append(errs, field.Invalid(fldPath, uuid, "should not configure duplicate value"))
+			} else {
+				visited[uuid] = true
+			}
+		}
+	}
+
+	return errs
 }
