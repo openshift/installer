@@ -272,7 +272,7 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 		assetData["99_baremetal-provisioning-config.yaml"] = applyTemplateData(baremetalConfig.Files()[0].Data, bmTemplateData)
 	}
 
-	if platform == azuretypes.Name && installConfig.Config.Azure.IsARO() && installConfig.Config.CredentialsMode != types.ManualCredentialsMode {
+	if installConfig.Config.CredentialsMode != types.ManualCredentialsMode {
 		// config is used to created compatible secret to trigger azure cloud
 		// controller config merge behaviour
 		// https://github.com/openshift/origin/blob/90c050f5afb4c52ace82b15e126efe98fa798d88/vendor/k8s.io/legacy-cloud-providers/azure/azure_config.go#L83

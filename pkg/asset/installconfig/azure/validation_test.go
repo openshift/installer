@@ -683,8 +683,7 @@ func Test_validateResourceGroup(t *testing.T) {
 		groupName: "valid-resource-group-with-resources",
 		// ARO provisions Azure resources before resolving the asset graph,
 		// so there will always be resources in its resource group.
-		wantSkip: (&azure.Platform{}).IsARO(),
-		err:      `^\Qplatform.azure.resourceGroupName: Invalid value: "valid-resource-group-with-resources": resource group must be empty but it has 3 resources like id1, id2 ...\E$`,
+		err: `^\Qplatform.azure.resourceGroupName: Invalid value: "valid-resource-group-with-resources": resource group must be empty but it has 3 resources like id1, id2 ...\E$`,
 	}}
 
 	mockCtrl := gomock.NewController(t)
