@@ -210,6 +210,7 @@ func setupInitialResources(config *rest.Config, setupPath string, envArgs []stri
 				}
 			}
 		} else {
+			obj.SetResourceVersion(updObj.GetResourceVersion())
 			updObj, err = csDynamic.Resource(gvr).Namespace(obj.GetNamespace()).Update(context.Background(), obj, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("Error while updating resource from %s: %w", fName, err)
