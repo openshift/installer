@@ -2,7 +2,9 @@ package configimage
 
 import (
 	"context"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"os"
@@ -131,6 +133,11 @@ func (cc *ClusterConfiguration) Generate(_ context.Context, dependencies asset.P
 		}
 	}
 
+	ingressCertificateCN, err := getCommonNameFromCertificate(ingressOperatorSignerCertKey.Cert())
+	if err != nil {
+		return fmt.Errorf("failed to get CN from ingress CA certificate: %w", err)
+	}
+
 	cc.Config.KubeconfigCryptoRetention = imagebased.KubeConfigCryptoRetention{
 		KubeAPICrypto: imagebased.KubeAPICrypto{
 			ServingCrypto: imagebased.ServingCrypto{
@@ -143,7 +150,8 @@ func (cc *ClusterConfiguration) Generate(_ context.Context, dependencies asset.P
 			},
 		},
 		IngresssCrypto: imagebased.IngresssCrypto{
-			IngressCA: string(ingressOperatorSignerCertKey.Key()),
+			IngressCAPrivateKey:  string(ingressOperatorSignerCertKey.Key()),
+			IngressCertificateCN: ingressCertificateCN,
 		},
 	}
 
@@ -213,4 +221,18 @@ func chronyConfWithAdditionalNTPSources(sources []string) string {
 		content += fmt.Sprintf("\nserver %s iburst", source)
 	}
 	return content
+}
+
+func getCommonNameFromCertificate(certPEM []byte) (string, error) {
+	block, _ := pem.Decode(certPEM)
+	if block == nil {
+		return "", fmt.Errorf("failed to decode PEM block")
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse certificate: %w", err)
+	}
+
+	return cert.Subject.CommonName, nil
 }
