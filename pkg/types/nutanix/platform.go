@@ -28,6 +28,12 @@ type Platform struct {
 	// +optional
 	ClusterOSImage string `json:"clusterOSImage,omitempty"`
 
+	// PreloadedOSImageName uses the named preloaded RHCOS image from PC/PE,
+	// instead of create and upload a new image for each cluster.
+	//
+	// +optional
+	PreloadedOSImageName string `json:"preloadedOSImageName,omitempty"`
+
 	// DeprecatedAPIVIP is the virtual IP address for the api endpoint
 	// Deprecated: use APIVIPs
 	//
