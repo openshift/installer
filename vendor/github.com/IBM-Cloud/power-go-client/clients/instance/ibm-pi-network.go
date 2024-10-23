@@ -8,6 +8,7 @@ import (
 	"github.com/IBM-Cloud/power-go-client/helpers"
 
 	"github.com/IBM-Cloud/power-go-client/ibmpisession"
+	"github.com/IBM-Cloud/power-go-client/power/client/networks"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_networks"
 	"github.com/IBM-Cloud/power-go-client/power/models"
 )
@@ -195,4 +196,66 @@ func (f *IBMPINetworkClient) UpdatePort(id, networkPortID string, body *models.N
 		return nil, fmt.Errorf("failed to update the port %s and Network %s", networkPortID, id)
 	}
 	return resp.Payload, nil
+}
+
+// Create a network interface
+func (f *IBMPINetworkClient) CreateNetworkInterface(id string, body *models.NetworkInterfaceCreate) (*models.NetworkInterface, error) {
+	params := networks.NewV1NetworksNetworkInterfacesPostParams().WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).WithNetworkID(id).WithBody(body)
+	resp, err := f.session.Power.Networks.V1NetworksNetworkInterfacesPost(params, f.session.AuthInfo(f.cloudInstanceID))
+	if err != nil {
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to create network interface for network %s with %w", id, err))
+	}
+	if resp == nil || resp.Payload == nil {
+		return nil, fmt.Errorf("failed to create network interface for network %s", id)
+	}
+	return resp.Payload, nil
+}
+
+// Get all Create a network interface
+func (f *IBMPINetworkClient) GetAllNetworkInterfaces(id string) (*models.NetworkInterfaces, error) {
+	params := networks.NewV1NetworksNetworkInterfacesGetallParams().WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).WithNetworkID(id)
+	resp, err := f.session.Power.Networks.V1NetworksNetworkInterfacesGetall(params, f.session.AuthInfo(f.cloudInstanceID))
+	if err != nil {
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to get all network interfaces for network %s: %w", id, err))
+	}
+	if resp == nil || resp.Payload == nil {
+		return nil, fmt.Errorf("failed to get all network interfaces for network %s", id)
+	}
+	return resp.Payload, nil
+}
+
+// Get a network interface
+func (f *IBMPINetworkClient) GetNetworkInterface(id, netIntID string) (*models.NetworkInterface, error) {
+	params := networks.NewV1NetworksNetworkInterfacesGetParams().WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).WithNetworkID(id).WithNetworkInterfaceID(netIntID)
+	resp, err := f.session.Power.Networks.V1NetworksNetworkInterfacesGet(params, f.session.AuthInfo(f.cloudInstanceID))
+	if err != nil {
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to get network interace %s for network %s: %w", netIntID, id, err))
+	}
+	if resp == nil || resp.Payload == nil {
+		return nil, fmt.Errorf("failed to get network interface %s for network %s", netIntID, id)
+	}
+	return resp.Payload, nil
+}
+
+// Update a network interface
+func (f *IBMPINetworkClient) UpdateNetworkInterface(id, netIntID string, body *models.NetworkInterfaceUpdate) (*models.NetworkInterface, error) {
+	params := networks.NewV1NetworksNetworkInterfacesPutParams().WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).WithNetworkID(id).WithNetworkInterfaceID(netIntID).WithBody(body)
+	resp, err := f.session.Power.Networks.V1NetworksNetworkInterfacesPut(params, f.session.AuthInfo(f.cloudInstanceID))
+	if err != nil {
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to update network interface %s and network %s with error %w", netIntID, id, err))
+	}
+	if resp == nil || resp.Payload == nil {
+		return nil, fmt.Errorf("failed to update network interface %s and network %s", netIntID, id)
+	}
+	return resp.Payload, nil
+}
+
+// Delete a network interface
+func (f *IBMPINetworkClient) DeleteNetworkInterface(id, netIntID string) error {
+	params := networks.NewV1NetworksNetworkInterfacesDeleteParams().WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).WithNetworkID(id).WithNetworkInterfaceID(netIntID)
+	_, err := f.session.Power.Networks.V1NetworksNetworkInterfacesDelete(params, f.session.AuthInfo(f.cloudInstanceID))
+	if err != nil {
+		return fmt.Errorf("failed to delete network interface %s for network %s with error %w", netIntID, id, err)
+	}
+	return nil
 }

@@ -23,6 +23,9 @@ type SharedProcessorPoolCreate struct {
 	// Required: true
 	HostGroup *string `json:"hostGroup"`
 
+	// The host id of a host in a host group (only available for dedicated hosts)
+	HostID string `json:"hostID,omitempty"`
+
 	// The name of the Shared Processor Pool; minumum of 2 characters, maximum of 12, the only special character allowed is the underscore '_'.
 	// Required: true
 	Name *string `json:"name"`
@@ -33,6 +36,9 @@ type SharedProcessorPoolCreate struct {
 	// The amount of reserved processor cores for the Shared Processor Pool; only integers allowed, no fractional values
 	// Required: true
 	ReservedCores *int64 `json:"reservedCores"`
+
+	// user tags
+	UserTags Tags `json:"userTags,omitempty"`
 }
 
 // Validate validates this shared processor pool create
@@ -48,6 +54,10 @@ func (m *SharedProcessorPoolCreate) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateReservedCores(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateUserTags(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -84,8 +94,48 @@ func (m *SharedProcessorPoolCreate) validateReservedCores(formats strfmt.Registr
 	return nil
 }
 
-// ContextValidate validates this shared processor pool create based on context it is used
+func (m *SharedProcessorPoolCreate) validateUserTags(formats strfmt.Registry) error {
+	if swag.IsZero(m.UserTags) { // not required
+		return nil
+	}
+
+	if err := m.UserTags.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("userTags")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("userTags")
+		}
+		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this shared processor pool create based on the context it is used
 func (m *SharedProcessorPoolCreate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateUserTags(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *SharedProcessorPoolCreate) contextValidateUserTags(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.UserTags.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("userTags")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("userTags")
+		}
+		return err
+	}
+
 	return nil
 }
 

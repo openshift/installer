@@ -25,6 +25,7 @@ type VolumesCloneRequest struct {
 	//   Example volume names using displayName="volume-abcdef"
 	//     single volume clone will be named "clone-volume-abcdef"
 	//     multi volume clone will be named "clone-volume-abcdef-1", "clone-volume-abcdef-2", ...
+	// For multiple volume clone, the provided name will be truncated to the first 20 characters.
 	//
 	// Required: true
 	DisplayName *string `json:"displayName"`

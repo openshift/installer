@@ -76,3 +76,18 @@ func selectRegion() (string, error) {
 	}
 	return selectedRegion, nil
 }
+
+// COSInstanceName creates a COS Instance name based on provided InfraID.
+func COSInstanceName(infraID string) string {
+	return fmt.Sprintf("%s-cos", infraID)
+}
+
+// VSIImageCOSBucketName creates a COS Bucket name for the VSI Image, based on provided InfraID.
+func VSIImageCOSBucketName(infraID string) string {
+	return fmt.Sprintf("%s-vsi-image", infraID)
+}
+
+// VSIImageName creates a VPC VSI Image name, based on provided InfraID.
+func VSIImageName(infraID string) string {
+	return fmt.Sprintf("%s-rhcos", infraID)
+}

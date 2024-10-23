@@ -17,12 +17,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/cmd/openshift-install/command"
 	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset/cluster/metadata"
 	azic "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpic "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	powervsic "github.com/openshift/installer/pkg/asset/installconfig/powervs"
+	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/clusterapi/internal/process"
 	"github.com/openshift/installer/pkg/clusterapi/internal/process/addr"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -85,7 +87,7 @@ type system struct {
 }
 
 // Run launches the cluster-api system.
-func (c *system) Run(ctx context.Context) error {
+func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 	c.Lock()
 	defer c.Unlock()
 
@@ -238,7 +240,40 @@ func (c *system) Run(ctx context.Context) error {
 			),
 		)
 	case ibmcloud.Name:
-		// TODO
+		ibmcloudFlags := []string{
+			"--provider-id-fmt=v2",
+			"-v=2",
+			"--metrics-bind-addr=0",
+			"--health-addr={{suggestHealthHostPort}}",
+			"--leader-elect=false",
+			"--webhook-port={{.WebhookPort}}",
+			"--webhook-cert-dir={{.WebhookCertDir}}",
+			fmt.Sprintf("--namespace=%s", capiutils.Namespace),
+		}
+
+		// Get the ServiceEndpoint overrides, along with Region, to pass on to CAPI, if any.
+		if serviceEndpoints := metadata.IBMCloud.GetRegionAndEndpointsFlag(); serviceEndpoints != "" {
+			ibmcloudFlags = append(ibmcloudFlags, fmt.Sprintf("--service-endpoint=%s", serviceEndpoints))
+		}
+
+		iamEndpoint := "https://iam.cloud.ibm.com"
+		// Override IAM endpoint if an override was provided.
+		if overrideURL := ibmcloud.CheckServiceEndpointOverride(configv1.IBMCloudServiceIAM, metadata.IBMCloud.ServiceEndpoints); overrideURL != "" {
+			iamEndpoint = overrideURL
+		}
+
+		controllers = append(controllers,
+			c.getInfrastructureController(
+				&IBMCloud,
+				ibmcloudFlags,
+				map[string]string{
+					"IBMCLOUD_AUTH_TYPE": "iam",
+					"IBMCLOUD_APIKEY":    os.Getenv("IC_API_KEY"),
+					"IBMCLOUD_AUTH_URL":  iamEndpoint,
+					"LOGLEVEL":           "5",
+				},
+			),
+		)
 	case nutanix.Name:
 		controllers = append(controllers,
 			c.getInfrastructureController(
