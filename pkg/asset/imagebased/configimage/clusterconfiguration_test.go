@@ -2,9 +2,18 @@ package configimage
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"errors"
+	"fmt"
+	"math/big"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -23,6 +32,8 @@ const (
 	testSSHKey = "ssh-rsa AAAAB3NzaC1y1LJe3zew1ghc= root@localhost.localdomain"
 
 	testSecret = `{"auths":{"cloud.openshift.com":{"auth":"b3BlUTA=","email":"test@redhat.com"}}}` //nolint:gosec // not real credentials
+
+	testIngressCN = "ingress-operator@482023856"
 )
 
 func TestClusterConfiguration_Generate(t *testing.T) {
@@ -226,7 +237,8 @@ func TestClusterConfiguration_LoadedFromDisk(t *testing.T) {
       }
     },
     "IngresssCrypto": {
-      "ingress_ca": "ingress-key"
+      "ingress_ca": "ingress-key",
+      "ingress_certificate_cn": "` + testIngressCN + `"
     }
   },
   "ssh_key": "ssh-rsa AAAAB3NzaC1y1LJe3zew1ghc= root@localhost.localdomain",
@@ -346,7 +358,8 @@ func clusterConfiguration() *ClusterConfigurationBuilder {
 			},
 		},
 		IngresssCrypto: imagebased.IngresssCrypto{
-			IngressCA: string(ingressCertKey().SelfSignedCertKey.Key()),
+			IngressCAPrivateKey:  string(ingressCertKey().SelfSignedCertKey.Key()),
+			IngressCertificateCN: testIngressCN,
 		},
 	}
 
@@ -431,10 +444,25 @@ func adminKubeConfigCertKey() *tls.AdminKubeConfigSignerCertKey {
 }
 
 func ingressCertKey() *IngressOperatorSignerCertKey {
+	crt := &x509.Certificate{
+		Subject: pkix.Name{
+			CommonName: testIngressCN,
+		},
+		SerialNumber:          big.NewInt(42),
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(1 * time.Hour),
+		IsCA:                  true,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+		BasicConstraintsValid: true,
+	}
+	block, _, _ := genSelfSignedKeyPair(crt) //nolint:errcheck
+	crtPEM := pem.EncodeToMemory(block)
+
 	return &IngressOperatorSignerCertKey{
 		SelfSignedCertKey: tls.SelfSignedCertKey{
 			CertKey: tls.CertKey{
-				CertRaw: []byte("ingress-cert"),
+				CertRaw: crtPEM,
 				KeyRaw:  []byte("ingress-key"),
 			},
 		},
@@ -468,4 +496,19 @@ func installConfig() *InstallConfigBuilder {
 	return &InstallConfigBuilder{
 		InstallConfig: *defaultInstallConfig(),
 	}
+}
+
+// genSelfSignedKeyPair generates a key and a self-signed certificate from the provided Certificate.
+func genSelfSignedKeyPair(cert *x509.Certificate) (*pem.Block, *ecdsa.PrivateKey, error) {
+	key, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not generate rsa key - %w", err)
+	}
+
+	signedCert, err := x509.CreateCertificate(rand.Reader, cert, cert, &key.PublicKey, key)
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not generate self-signed certificate - %w", err)
+	}
+
+	return &pem.Block{Type: "CERTIFICATE", Bytes: signedCert}, key, err
 }
