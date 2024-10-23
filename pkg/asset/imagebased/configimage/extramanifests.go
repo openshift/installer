@@ -48,9 +48,14 @@ func (em *ExtraManifests) Load(f asset.FileFetcher) (found bool, err error) {
 	if err != nil {
 		return false, fmt.Errorf("failed to load *.yml files: %w", err)
 	}
+	jsonFileList, err := f.FetchByPattern(filepath.Join(extraManifestsDir, "*.json"))
+	if err != nil {
+		return false, fmt.Errorf("failed to load *.json files: %w", err)
+	}
 
 	em.FileList = append(em.FileList, yamlFileList...)
 	em.FileList = append(em.FileList, ymlFileList...)
+	em.FileList = append(em.FileList, jsonFileList...)
 	asset.SortFiles(em.FileList)
 
 	return len(em.FileList) > 0, nil
