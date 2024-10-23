@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/go-openapi/swag"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -215,10 +214,7 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 			}
 		}
 
-		if installConfig.Config.Platform.Name() == none.Name || installConfig.Config.Platform.Name() == external.Name {
-			logrus.Debugf("Setting UserManagedNetworking to true for %s platform", installConfig.Config.Platform.Name())
-			agentClusterInstall.Spec.Networking.UserManagedNetworking = swag.Bool(true)
-		}
+		agentClusterInstall.Spec.Networking.UserManagedNetworking = agent.GetUserManagedNetworkingByPlatformType(agent.HivePlatformType(installConfig.Config.Platform))
 
 		icOverridden := false
 		icOverrides := agentClusterInstallInstallConfigOverrides{}
@@ -386,11 +382,7 @@ func (a *AgentClusterInstall) Load(f asset.FileFetcher) (bool, error) {
 	// Set the default value for userManagedNetworking, as would be done by the
 	// mutating webhook in ZTP.
 	if agentClusterInstall.Spec.Networking.UserManagedNetworking == nil {
-		switch agentClusterInstall.Spec.PlatformType {
-		case hiveext.NonePlatformType, hiveext.ExternalPlatformType:
-			logrus.Debugf("Setting UserManagedNetworking to true for %s platform", agentClusterInstall.Spec.PlatformType)
-			agentClusterInstall.Spec.Networking.UserManagedNetworking = swag.Bool(true)
-		}
+		agentClusterInstall.Spec.Networking.UserManagedNetworking = agent.GetUserManagedNetworkingByPlatformType(agentClusterInstall.Spec.PlatformType)
 	}
 
 	a.Config = agentClusterInstall

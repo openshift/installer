@@ -9,6 +9,7 @@ import (
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/yaml"
 
+	"github.com/go-openapi/swag"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/assisted-service/api/v1beta1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
@@ -512,8 +513,9 @@ func getGoodACI() *hiveext.AgentClusterInstall {
 						HostPrefix: 23,
 					},
 				},
-				ServiceNetwork: []string{"172.30.0.0/16"},
-				NetworkType:    "OVNKubernetes",
+				ServiceNetwork:        []string{"172.30.0.0/16"},
+				NetworkType:           "OVNKubernetes",
+				UserManagedNetworking: swag.Bool(false),
 			},
 			SSHPublicKey: strings.Trim(testSSHKey, "|\n\t"),
 			ProvisionRequirements: hiveext.ProvisionRequirements{
