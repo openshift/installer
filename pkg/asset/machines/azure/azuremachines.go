@@ -144,6 +144,20 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 		}
 	}
 
+	var diagnostic *capz.Diagnostics
+	if in.Platform.BootDiagnostics != nil {
+		diagnostic = &capz.Diagnostics{
+			Boot: &capz.BootDiagnostics{
+				StorageAccountType: in.Platform.BootDiagnostics.Type,
+			},
+		}
+		if in.Platform.BootDiagnostics.StorageAccountURI != "" {
+			diagnostic.Boot.UserManaged = &capz.UserManagedBootDiagnostics{
+				StorageAccountURI: in.Platform.BootDiagnostics.StorageAccountURI,
+			}
+		}
+	}
+
 	var result []*asset.RuntimeFile
 	for idx := int64(0); idx < total; idx++ {
 		zone := mpool.Zones[int(idx)%len(mpool.Zones)]
@@ -166,6 +180,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 				AllocatePublicIP:           false,
 				EnableIPForwarding:         false,
 				SecurityProfile:            securityProfile,
+				Diagnostics:                diagnostic,
 				NetworkInterfaces: []capz.NetworkInterface{
 					{
 						SubnetName:            in.Subnet,
@@ -233,6 +248,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 			AdditionalCapabilities:     additionalCapabilities,
 			SecurityProfile:            securityProfile,
 			Identity:                   capz.VMIdentityUserAssigned,
+			Diagnostics:                diagnostic,
 			UserAssignedIdentities: []capz.UserAssignedIdentity{
 				{
 					ProviderID: userAssignedIdentityID,

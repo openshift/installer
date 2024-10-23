@@ -3,6 +3,8 @@ package azure
 import (
 	"fmt"
 	"strings"
+
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 )
 
 // aro is a setting to enable aro-only modifications
@@ -100,6 +102,25 @@ type Platform struct {
 
 	// CustomerManagedKey has the keys needed to encrypt the storage account.
 	CustomerManagedKey *CustomerManagedKey `json:"customerManagedKey,omitempty"`
+
+	// BootDiagnostics has the value for the storage account URI where the
+	// machine log information is sent to. Defaults to disabled if no value
+	// and defaults to the installer created storage account if the URI is not
+	// mentioned.
+	// +optional
+	BootDiagnostics *BootDiagnostics `json:"bootDiagnostics,omitempty"`
+}
+
+type BootDiagnostics struct {
+	// Type specifies the boot diagnostics type for the machines created.
+	//
+	// +kubebuilder:validation:Enum=Disabled;Managed;UserManaged
+	// +kubebuilder:default=Disabled
+	Type capz.BootDiagnosticsStorageAccountType `json:"type"`
+
+	// StorageAccountURI specifies the storage account the log information
+	// needs to be stored in.
+	StorageAccountURI string `json:"storageAccountURI"`
 }
 
 // KeyVault defines an Azure Key Vault.

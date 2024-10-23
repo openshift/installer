@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
@@ -110,6 +111,12 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 
 	if p.CustomerManagedKey != nil {
 		allErrs = append(allErrs, validateCustomerManagedKeys(p.CloudName, *p.CustomerManagedKey, fldPath.Child("customerManagedKey"))...)
+	}
+
+	if p.BootDiagnostics != nil {
+		if p.BootDiagnostics.Type != "" {
+			p.BootDiagnostics.Type = capz.DisabledDiagnosticsStorage
+		}
 	}
 
 	// support for Azure user-defined tags made available through
