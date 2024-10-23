@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/manifests/clusterapi"
 	"github.com/openshift/installer/pkg/asset/password"
+	"github.com/openshift/installer/pkg/asset/permissions"
 	"github.com/openshift/installer/pkg/asset/templates/content/bootkube"
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
 	"github.com/openshift/installer/pkg/asset/tls"
@@ -75,5 +76,10 @@ var (
 		&password.KubeadminPassword{},
 		&tls.JournalCertKey{},
 		&cluster.Cluster{},
+	}
+
+	// Permissions are the required permissions assets.
+	Permissions = []asset.WritableAsset{
+		&permissions.Permissions{},
 	}
 )
