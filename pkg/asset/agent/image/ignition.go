@@ -95,6 +95,7 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&workflow.AgentWorkflow{},
 		&joiner.ClusterInfo{},
 		&joiner.AddNodesConfig{},
+		&joiner.ImportClusterConfig{},
 		&manifests.AgentManifests{},
 		&manifests.ExtraManifests{},
 		&tls.KubeAPIServerLBSignerCertKey{},
@@ -114,15 +115,13 @@ func (a *Ignition) Dependencies() []asset.Asset {
 // Generate generates the agent installer ignition.
 func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
-	clusterInfo := &joiner.ClusterInfo{}
-	addNodesConfig := &joiner.AddNodesConfig{}
 	agentManifests := &manifests.AgentManifests{}
 	agentConfigAsset := &agentconfig.AgentConfig{}
 	agentHostsAsset := &agentconfig.AgentHosts{}
 	extraManifests := &manifests.ExtraManifests{}
 	authConfig := &gencrypto.AuthConfig{}
 	infraEnvAsset := &common.InfraEnvID{}
-	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests, authConfig, agentWorkflow, clusterInfo, addNodesConfig, infraEnvAsset)
+	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests, authConfig, agentWorkflow, infraEnvAsset)
 
 	pwd := &password.KubeadminPassword{}
 	dependencies.Get(pwd)
@@ -184,6 +183,11 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 		streamGetter = DefaultCoreOSStreamGetter
 
 	case workflow.AgentWorkflowTypeAddNodes:
+		clusterInfo := &joiner.ClusterInfo{}
+		addNodesConfig := &joiner.AddNodesConfig{}
+		importClusterConfig := &joiner.ImportClusterConfig{}
+		dependencies.Get(clusterInfo, addNodesConfig, importClusterConfig)
+
 		// In the add-nodes workflow, every node will act independently from the others.
 		a.RendezvousIP = "127.0.0.1"
 		// Reuse the existing cluster name.
@@ -209,7 +213,7 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 			return clusterInfo.OSImage, nil
 		}
 		// If defined, add the ignition endpoints
-		if err := addDay2IgnitionEndpoints(&config, *clusterInfo); err != nil {
+		if err := addDay2ClusterConfigFiles(&config, *clusterInfo, *importClusterConfig); err != nil {
 			return err
 		}
 
@@ -568,11 +572,8 @@ func addHostConfig(config *igntypes.Config, agentHosts *agentconfig.AgentHosts) 
 	return nil
 }
 
-func addDay2IgnitionEndpoints(config *igntypes.Config, clusterInfo joiner.ClusterInfo) error {
-	if clusterInfo.IgnitionEndpointWorker == nil {
-		return nil
-	}
-
+func addDay2ClusterConfigFiles(config *igntypes.Config, clusterInfo joiner.ClusterInfo, importClusterConfig joiner.ImportClusterConfig) error {
+	// Create cluster config folder.
 	user := "root"
 	mode := 0644
 	config.Storage.Directories = append(config.Storage.Directories, igntypes.Directory{
@@ -588,12 +589,31 @@ func addDay2IgnitionEndpoints(config *igntypes.Config, clusterInfo joiner.Cluste
 		},
 	})
 
-	workerIgnitionBytes, err := json.Marshal(clusterInfo.IgnitionEndpointWorker)
-	if err != nil {
-		return err
+	day2Files := []struct {
+		name    string
+		rawData interface{}
+	}{
+		{
+			name:    "worker-ignition-endpoint.json",
+			rawData: clusterInfo.IgnitionEndpointWorker,
+		},
+		{
+			name:    joiner.ImportClusterConfigFilename,
+			rawData: importClusterConfig.Config,
+		},
 	}
-	workerIgnitionFile := ignition.FileFromBytes(path.Join(clusterConfigPath, "worker-ignition-endpoint.json"), user, mode, workerIgnitionBytes)
-	config.Storage.Files = append(config.Storage.Files, workerIgnitionFile)
+	for _, f := range day2Files {
+		if f.rawData == nil {
+			continue
+		}
+		data, err := json.MarshalIndent(f.rawData, "", "  ")
+		if err != nil {
+			return err
+		}
+		ignFile := ignition.FileFromBytes(path.Join(clusterConfigPath, f.name), user, mode, data)
+		config.Storage.Files = append(config.Storage.Files, ignFile)
+	}
+
 	return nil
 }
 
