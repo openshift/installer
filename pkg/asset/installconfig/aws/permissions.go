@@ -61,6 +61,9 @@ const (
 
 	// PermissionDeleteIgnitionObjects is a permission set required when `preserveBootstrapIgnition` is not set.
 	PermissionDeleteIgnitionObjects PermissionGroup = "delete-ignition-objects"
+
+	// PermissionDefaultZones is a permission set required when zones are not set in the install-config.
+	PermissionDefaultZones PermissionGroup = "permission-default-zones"
 )
 
 var permissions = map[PermissionGroup][]string{
@@ -301,6 +304,12 @@ var permissions = map[PermissionGroup][]string{
 		// Needed by capa which always deletes the ignition objects once the VMs are up.
 		"s3:DeleteObject",
 	},
+	PermissionDefaultZones: {
+		// Needed to list the zones available in the region
+		"ec2:DescribeAvailabilityZones",
+		// Needed to filter zones by instance type
+		"ec2:DescribeInstanceTypeOfferings",
+	},
 }
 
 // ValidateCreds will try to create an AWS session, and also verify that the current credentials
@@ -405,6 +414,10 @@ func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 
 	if includesCreateInstanceProfile(ic) {
 		permissionGroups = append(permissionGroups, PermissionCreateInstanceProfile)
+	}
+
+	if !includesZones(ic) {
+		permissionGroups = append(permissionGroups, PermissionDefaultZones)
 	}
 
 	return permissionGroups
@@ -535,4 +548,21 @@ func includesCreateInstanceProfile(installConfig *types.InstallConfig) bool {
 	mpool := aws.MachinePool{}
 	mpool.Set(installConfig.AWS.DefaultMachinePlatform)
 	return len(mpool.IAMProfile) == 0
+}
+
+// includesZones checks if zones are specified in the install-config. It also returns true if zones will be derived from
+// the specified subnets.
+func includesZones(installConfig *types.InstallConfig) bool {
+	mpool := aws.MachinePool{}
+	mpool.Set(installConfig.AWS.DefaultMachinePlatform)
+
+	if mp := installConfig.ControlPlane; mp != nil {
+		mpool.Set(mp.Platform.AWS)
+	}
+
+	for _, compute := range installConfig.Compute {
+		mpool.Set(compute.Platform.AWS)
+	}
+
+	return len(mpool.Zones) > 0 || len(installConfig.AWS.Subnets) > 0
 }
