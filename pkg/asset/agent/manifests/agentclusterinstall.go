@@ -207,6 +207,9 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 				PlatformName: installConfig.Config.Platform.External.PlatformName,
 			}
 		}
+		if installConfig.Config.Platform.Name() == external.Name && installConfig.Config.Platform.External.PlatformName == agent.ExternalPlatformNameOci {
+			agentClusterInstall.Spec.ExternalPlatformSpec.CloudControllerManager = external.CloudControllerManagerTypeExternal
+		}
 
 		if installConfig.Config.Platform.Name() == none.Name || installConfig.Config.Platform.Name() == external.Name {
 			logrus.Debugf("Setting UserManagedNetworking to true for %s platform", installConfig.Config.Platform.Name())
