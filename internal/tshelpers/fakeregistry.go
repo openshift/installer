@@ -156,6 +156,8 @@ func (fr *FakeOCPRegistry) makeMinimalISO() ([]byte, error) {
 	files := map[string][]byte{
 		"iso/images/ignition.img":       []byte("ignitionimg"),
 		"iso/images/pxeboot/initrd.img": []byte("initrdimg"),
+		"iso/images/pxeboot/rootfs.img": []byte("rootfsimg"),
+		"iso/images/pxeboot/vmlinuz":    []byte("vmlinuz"),
 		"iso/images/efiboot.img":        []byte("efibootimg"),
 		"iso/boot.catalog":              []byte("bootcatalog"),
 		// The following files are required to allow the correct embedding of

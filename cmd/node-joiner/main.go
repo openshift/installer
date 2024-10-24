@@ -22,30 +22,26 @@ func main() {
 func nodeJoiner() error {
 	nodesAddCmd := &cobra.Command{
 		Use:   "add-nodes",
-		Short: "Generates an ISO that could be used to boot the configured nodes to let them join an existing cluster",
+		Short: "Generates an ISO that can be used to boot the configured nodes to let them join an existing cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			kubeConfig, err := cmd.Flags().GetString("kubeconfig")
+			dir, kubeConfig, err := getDirAndKubeconfigValuesFromFlags(cmd)
 			if err != nil {
 				return err
 			}
-			dir, err := cmd.Flags().GetString("dir")
+			generatePXE, err := cmd.Flags().GetBool("pxe")
 			if err != nil {
 				return err
 			}
-			return nodejoiner.NewAddNodesCommand(dir, kubeConfig)
+			return nodejoiner.NewAddNodesCommand(dir, kubeConfig, generatePXE)
 		},
 	}
+	nodesAddCmd.Flags().BoolP("pxe", "p", false, "Instead of an ISO, generates PXE files that can be used to boot the configured nodes to let them join an existing cluster")
 
 	nodesMonitorCmd := &cobra.Command{
 		Use:   "monitor-add-nodes",
 		Short: "Monitors the configured nodes while they are joining an existing cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			dir, err := cmd.Flags().GetString("dir")
-			if err != nil {
-				return err
-			}
-
-			kubeConfig, err := cmd.Flags().GetString("kubeconfig")
+			dir, kubeConfig, err := getDirAndKubeconfigValuesFromFlags(cmd)
 			if err != nil {
 				return err
 			}
@@ -71,6 +67,18 @@ func nodeJoiner() error {
 	rootCmd.AddCommand(nodesMonitorCmd)
 
 	return rootCmd.Execute()
+}
+
+func getDirAndKubeconfigValuesFromFlags(cmd *cobra.Command) (string, string, error) {
+	kubeConfig, err := cmd.Flags().GetString("kubeconfig")
+	if err != nil {
+		return "", "", err
+	}
+	dir, err := cmd.Flags().GetString("dir")
+	if err != nil {
+		return "", "", err
+	}
+	return dir, kubeConfig, nil
 }
 
 func runRootCmd(cmd *cobra.Command, args []string) {

@@ -9,7 +9,7 @@ import (
 
 // NewMonitorAddNodesCommand creates a new command for monitor add nodes.
 func NewMonitorAddNodesCommand(directory, kubeconfigPath string, ips []string) error {
-	err := saveParams(directory, kubeconfigPath)
+	err := saveParams(directory, kubeconfigPath, false)
 	if err != nil {
 		return err
 	}
