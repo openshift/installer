@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	baremetalhost "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,6 +17,7 @@ import (
 	"k8s.io/client-go/rest"
 	clientwatch "k8s.io/client-go/tools/watch"
 
+	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/infrastructure/baremetal"
 )
 
@@ -106,5 +108,5 @@ func WaitForBaremetalBootstrapControlPlane(ctx context.Context, config *rest.Con
 		return fmt.Errorf("failed to persist masters file to disk: %w", err)
 	}
 
-	return withSyncErr
+	return errors.Wrap(withSyncErr, asset.ControlPlaneCreationError)
 }

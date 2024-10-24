@@ -89,6 +89,18 @@ func newGatherBootstrapCmd(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
+func gatherAndAnalyzeBootstrapLogs(ctx context.Context, directory string) {
+	bundlePath, gatherErr := runGatherBootstrapCmd(ctx, command.RootOpts.Dir)
+	if gatherErr != nil {
+		logrus.Error("Attempted to gather debug logs after installation failure: ", gatherErr)
+	} else {
+		if err := service.AnalyzeGatherBundle(bundlePath); err != nil {
+			logrus.Error("Attempted to analyze the debug logs after installation failure: ", err)
+		}
+		logrus.Infof("Bootstrap gather logs captured here %q", bundlePath)
+	}
+}
+
 func runGatherBootstrapCmd(ctx context.Context, directory string) (string, error) {
 	assetStore, err := assetstore.NewStore(directory)
 	if err != nil {
