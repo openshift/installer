@@ -166,7 +166,7 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 					IntervalSeconds:         ptr.To[int64](10),
 					TimeoutSeconds:          ptr.To[int64](10),
 					ThresholdCount:          ptr.To[int64](2),
-					UnhealthyThresholdCount: ptr.To[int64](2),
+					UnhealthyThresholdCount: ptr.To[int64](1),
 				},
 				AdditionalListeners: []capa.AdditionalListenerSpec{
 					{
@@ -209,7 +209,7 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 				IntervalSeconds:         ptr.To[int64](10),
 				TimeoutSeconds:          ptr.To[int64](10),
 				ThresholdCount:          ptr.To[int64](2),
-				UnhealthyThresholdCount: ptr.To[int64](2),
+				UnhealthyThresholdCount: ptr.To[int64](1),
 			},
 			IngressRules: []capa.IngressRule{
 				{
