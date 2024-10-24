@@ -26,6 +26,8 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
+	"github.com/Azure/go-autorest/autorest/azure"
+	"github.com/davecgh/go-spew/spew"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	"sigs.k8s.io/cluster-api-provider-azure/version"
 )
@@ -41,6 +43,8 @@ const (
 	ChinaCloudName = "AzureChinaCloud"
 	// USGovernmentCloudName is the name of the Azure US Government cloud.
 	USGovernmentCloudName = "AzureUSGovernmentCloud"
+	// StackCloudName is the name for Azure Stack Hub.
+	StackCloudName = "HybridEnvironment"
 )
 
 const (
@@ -361,6 +365,24 @@ func ARMClientOptions(azureEnvironment string, extraPolicies ...policy.Policy) (
 		opts.Cloud = cloud.AzureChina
 	case USGovernmentCloudName:
 		opts.Cloud = cloud.AzureGovernment
+	case StackCloudName:
+		armEndpoint := "https://management.mtcazs.wwtatc.com"
+		cloudEnv, err := azure.EnvironmentFromURL(armEndpoint)
+		if err != nil {
+			return nil, err
+		}
+		spew.Println("BUGGIN CAPZ env")
+		spew.Dump(cloudEnv)
+		opts.Cloud = cloud.Configuration{
+			ActiveDirectoryAuthorityHost: cloudEnv.ActiveDirectoryEndpoint,
+			Services: map[cloud.ServiceName]cloud.ServiceConfiguration{
+				cloud.ResourceManager: {
+					//Audience: cloudEnv.TokenAudience,
+					Audience: "https://management.wwtatc.onmicrosoft.com/1d974a95-a89d-4009-9aee-8d17ddf1971d",
+					Endpoint: cloudEnv.ResourceManagerEndpoint,
+				},
+			},
+		}
 	case "":
 		// No cloud name provided, so leave at defaults.
 	default:

@@ -27,6 +27,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	azureautorest "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
+	"github.com/davecgh/go-spew/spew"
 )
 
 // AzureClients contains all the Azure clients used by the scopes.
@@ -81,10 +82,11 @@ func (c *AzureClients) setCredentialsWithProvider(ctx context.Context, subscript
 	if credentialsProvider == nil {
 		return fmt.Errorf("credentials provider cannot have an empty value")
 	}
+	fmt.Printf("DEBUGGIN setCredentialsWithProvider environmentName: %s \n", environmentName)
 
 	settings, err := c.getSettingsFromEnvironment(environmentName)
 	if err != nil {
-		return err
+		return fmt.Errorf("getSettingsFromEnvironment: %w", err)
 	}
 
 	if subscriptionID == "" {
@@ -95,7 +97,8 @@ func (c *AzureClients) setCredentialsWithProvider(ctx context.Context, subscript
 	}
 
 	c.EnvironmentSettings = settings
-	c.ResourceManagerEndpoint = settings.Environment.ResourceManagerEndpoint
+	//c.ResourceManagerEndpoint = settings.Environment.ResourceManagerEndpoint
+	c.ResourceManagerEndpoint = "https://management.mtcazs.wwtatc.com"
 	c.ResourceManagerVMDNSSuffix = settings.Environment.ResourceManagerVMDNSSuffix
 	c.Values["AZURE_SUBSCRIPTION_ID"] = strings.TrimSuffix(subscriptionID, "\n")
 	c.Values["AZURE_TENANT_ID"] = strings.TrimSuffix(credentialsProvider.GetTenantID(), "\n")
@@ -103,13 +106,14 @@ func (c *AzureClients) setCredentialsWithProvider(ctx context.Context, subscript
 
 	clientSecret, err := credentialsProvider.GetClientSecret(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("GetClientSecret: %w", err)
 	}
 	c.Values["AZURE_CLIENT_SECRET"] = strings.TrimSuffix(clientSecret, "\n")
 
-	tokenCredential, err := credentialsProvider.GetTokenCredential(ctx, c.ResourceManagerEndpoint, c.Environment.ActiveDirectoryEndpoint, c.Environment.TokenAudience)
+	//tokenCredential, err := credentialsProvider.GetTokenCredential(ctx, c.ResourceManagerEndpoint, c.Environment.ActiveDirectoryEndpoint, c.Environment.TokenAudience)
+	tokenCredential, err := credentialsProvider.GetTokenCredential(ctx, "https://management.mtcazs.wwtatc.com", "https://login.microsoftonline.com/", "https://management.wwtatc.onmicrosoft.com/1d974a95-a89d-4009-9aee-8d17ddf1971d")
 	if err != nil {
-		return err
+		return fmt.Errorf("GetTokenCredential: %w", err)
 	}
 	c.TokenCredential = tokenCredential
 	return err
@@ -132,6 +136,9 @@ func (c *AzureClients) getSettingsFromEnvironment(environmentName string) (s aut
 	setValue(s, "AZURE_AD_RESOURCE")
 	if v := s.Values["AZURE_ENVIRONMENT"]; v == "" {
 		s.Environment = azureautorest.PublicCloud
+	} else if v == "AzureStackCloud" {
+		spew.Println("BUGGIN' gettin' environs")
+		s.Environment, err = azureautorest.EnvironmentFromURL("https://management.mtcazs.wwtatc.com")
 	} else {
 		s.Environment, err = azureautorest.EnvironmentFromName(v)
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential"
+	"github.com/davecgh/go-spew/spew"
 )
 
 const credNameSecret = "ClientSecretCredential"
@@ -56,6 +57,8 @@ func NewClientSecretCredential(tenantID string, clientID string, clientSecret st
 		DisableInstanceDiscovery:     options.DisableInstanceDiscovery,
 		tokenCachePersistenceOptions: options.tokenCachePersistenceOptions,
 	}
+	spew.Println("BUGGIN' msalOpts")
+	spew.Dump(msalOpts)
 	c, err := newConfidentialClient(tenantID, clientID, credNameSecret, cred, msalOpts)
 	if err != nil {
 		return nil, err
