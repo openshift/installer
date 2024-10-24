@@ -8,7 +8,7 @@ import (
 // +kubebuilder:validation:Enum="";thin;thick;eagerZeroedThick
 type DiskType string
 
-// FailureDomainType is the name of the failure domain type.
+// FailureDomainType is the string representation name of the failure domain type.
 // There are two defined failure domains currently, Datacenter and ComputeCluster.
 // Each represents a vCenter object type within a vSphere environment.
 // +kubebuilder:validation:Enum=HostGroup;Datacenter;ComputeCluster
@@ -38,6 +38,15 @@ const (
 	ComputeRole = "compute"
 	// BootstrapRole represents bootstrap nodes.
 	BootstrapRole = "bootstrap"
+)
+
+const (
+	// HostGroupFailureDomain is a failure domain for a vCenter vm-host group.
+	HostGroupFailureDomain FailureDomainType = "HostGroup"
+	// ComputeClusterFailureDomain is a failure domain for a vCenter compute cluster.
+	ComputeClusterFailureDomain FailureDomainType = "ComputeCluster"
+	// DatacenterFailureDomain is a failure domain for a vCenter datacenter.
+	DatacenterFailureDomain FailureDomainType = "Datacenter"
 )
 
 // Platform stores any global configuration used for vsphere platforms.
@@ -174,6 +183,15 @@ type FailureDomain struct {
 	// Topology describes a given failure domain using vSphere constructs
 	// +kubebuilder:validation:Required
 	Topology Topology `json:"topology"`
+
+	// Type is the type of failure domain, the current values are "Datacenter", "ComputeCluster" and "HostGroup"
+	// +kubebuilder:validation:Enum=Datacenter;ComputeCluster
+	// +optional
+	RegionType FailureDomainType `json:"regionType,omitempty"`
+	// Type is the type of failure domain, the current values are "Datacenter", "ComputeCluster" and "HostGroup"
+	// +kubebuilder:validation:Enum=ComputeCluster;HostGroup
+	// +optional
+	ZoneType FailureDomainType `json:"zoneType,omitempty"`
 }
 
 // Topology holds the required and optional vCenter objects - datacenter,
@@ -225,6 +243,12 @@ type Topology struct {
 	// +kubebuilder:example=`urn:vmomi:InventoryServiceTag:5736bf56-49f5-4667-b38c-b97e09dc9578:GLOBAL`
 	// +optional
 	TagIDs []string `json:"tagIDs,omitempty"`
+
+	// hostGroup is the name of the vm-host group of type host within vCenter for this failure domain.
+	// This field is required when the FailureDomain zoneType is HostGroup
+	// +kubebuilder:validation:MaxLength=80
+	// +optional
+	HostGroup string `json:"hostGroup,omitempty"`
 }
 
 // VCenter stores the vCenter connection fields

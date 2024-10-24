@@ -9,6 +9,7 @@ import (
 	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // GetInfraPlatformSpec constructs VSpherePlatformSpec for the infrastructure spec
@@ -32,7 +33,7 @@ func GetInfraPlatformSpec(ic *installconfig.InstallConfig, clusterID string) *co
 				template = fmt.Sprintf("/%s/vm/%s-rhcos-%s-%s", topology.Datacenter, clusterID, failureDomain.Region, failureDomain.Zone)
 			}
 
-			platformSpec.FailureDomains = append(platformSpec.FailureDomains, configv1.VSpherePlatformFailureDomainSpec{
+			failureDomainSpec := configv1.VSpherePlatformFailureDomainSpec{
 				Name:   failureDomain.Name,
 				Region: failureDomain.Region,
 				Zone:   failureDomain.Zone,
@@ -46,7 +47,24 @@ func GetInfraPlatformSpec(ic *installconfig.InstallConfig, clusterID string) *co
 					Folder:         topology.Folder,
 					Template:       template,
 				},
-			})
+			}
+
+			if ic.Config.EnabledFeatureGates().Enabled(features.FeatureGateVSphereHostVMGroupZonal) {
+				logrus.Debug("Host VM Group based zonal feature gate enabled")
+
+				if failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
+					vmGroupAndRuleName := fmt.Sprintf("%s-%s", clusterID, failureDomain.Name)
+
+					failureDomainSpec.RegionAffinity.Type = configv1.VSphereFailureDomainType(failureDomain.RegionType)
+					failureDomainSpec.RegionAffinity.Type = configv1.VSphereFailureDomainType(failureDomain.ZoneType)
+
+					failureDomainSpec.ZoneAffinity.HostGroup = failureDomain.Topology.HostGroup
+					failureDomainSpec.ZoneAffinity.VMGroup = vmGroupAndRuleName
+					failureDomainSpec.ZoneAffinity.VMHostRule = vmGroupAndRuleName
+				}
+			}
+
+			platformSpec.FailureDomains = append(platformSpec.FailureDomains, failureDomainSpec)
 		}
 	}
 

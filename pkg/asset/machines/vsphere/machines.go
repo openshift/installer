@@ -27,6 +27,8 @@ type MachineData struct {
 	ControlPlaneMachineSet *machinev1.ControlPlaneMachineSet
 	IPClaims               []ipamv1.IPAddressClaim
 	IPAddresses            []ipamv1.IPAddress
+
+	MachineFailureDomain map[string]string
 }
 
 // Machines returns a list of machines for a machinepool.
@@ -67,12 +69,14 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		}
 	}
 
-	failureDomains := []machinev1.VSphereFailureDomain{}
+	var failureDomains []machinev1.VSphereFailureDomain
 
 	vsphereMachineProvider := &machineapi.VSphereMachineProviderSpec{}
+	data.MachineFailureDomain = make(map[string]string)
 
 	for idx := int32(0); idx < replicas; idx++ {
 		logrus.Debugf("Creating %v machine %v", role, idx)
+
 		var host *vsphere.Host
 		desiredZone := mpool.Zones[int(idx)%numOfZones]
 		if hosts != nil && int(idx) < len(hosts) {
@@ -110,6 +114,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		if err != nil {
 			return data, errors.Wrap(err, "unable to find vCenter in failure domains")
 		}
+
 		provider, err := provider(clusterID, vcenter, failureDomain, mpool, osImageForZone, userDataSecret)
 		if err != nil {
 			return data, errors.Wrap(err, "failed to create provider")
@@ -132,6 +137,8 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 				// we don't need to set Versions, because we control those via operators.
 			},
 		}
+
+		data.MachineFailureDomain[machine.Name] = failureDomain.Name
 
 		// Apply static IP if configured
 		claim, address, err := applyNetworkConfig(host, provider, machine)
@@ -335,7 +342,7 @@ func provider(clusterID string, vcenter *vsphere.VCenter, failureDomain vsphere.
 		networkDeviceSpec[i] = machineapi.NetworkDeviceSpec{NetworkName: network}
 	}
 
-	return &machineapi.VSphereMachineProviderSpec{
+	vSphereMachineProviderSpec := &machineapi.VSphereMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: machineapi.SchemeGroupVersion.String(),
 			Kind:       "VSphereMachineProviderSpec",
@@ -358,7 +365,14 @@ func provider(clusterID string, vcenter *vsphere.VCenter, failureDomain vsphere.
 		NumCoresPerSocket: mpool.NumCoresPerSocket,
 		MemoryMiB:         mpool.MemoryMiB,
 		DiskGiB:           mpool.OSDisk.DiskSizeGB,
-	}, nil
+	}
+
+	if failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
+		vSphereMachineProviderSpec.Workspace.VMGroup = fmt.Sprintf("%s-%s", clusterID, failureDomain.Name)
+	}
+
+	return vSphereMachineProviderSpec, nil
+
 }
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines

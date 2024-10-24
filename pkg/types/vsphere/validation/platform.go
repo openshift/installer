@@ -158,6 +158,33 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path, isLegacyUp
 	topologyFld := fldPath.Child("topology")
 	var associatedVCenter *vsphere.VCenter
 	for index, failureDomain := range p.FailureDomains {
+		if failureDomain.ZoneType == "" && failureDomain.RegionType == "" {
+			logrus.Debug("using the defaults regionType is Datacenter and zoneType is ComputeCluster")
+		}
+
+		if failureDomain.RegionType == "" && failureDomain.ZoneType != "" {
+			allErrs = append(allErrs, field.Required(fldPath.Child("regionType"), "must specify regionType if zoneType is defined"))
+		}
+		if failureDomain.RegionType != "" && failureDomain.ZoneType == "" {
+			allErrs = append(allErrs, field.Required(fldPath.Child("zoneType"), "must specify zoneType if regionType is defined"))
+		}
+
+		if failureDomain.RegionType == vsphere.HostGroupFailureDomain {
+			return append(allErrs, field.Required(fldPath.Child("regionType"), "region type cannot be used for host group failure domains"))
+		}
+
+		if failureDomain.ZoneType == vsphere.HostGroupFailureDomain && failureDomain.Topology.HostGroup == "" {
+			allErrs = append(allErrs, field.Required(fldPath.Child("hostGroup"), "must not be empty if zoneType is HostGroup"))
+		}
+
+		if failureDomain.RegionType == vsphere.ComputeClusterFailureDomain {
+			if failureDomain.ZoneType != vsphere.HostGroupFailureDomain {
+				allErrs = append(allErrs, field.Required(fldPath.Child("regionType"), "zoneType must be HostGroup"))
+				allErrs = append(allErrs, field.Required(fldPath.Child("zoneType"), "something something..."))
+				return allErrs
+			}
+		}
+
 		if len(failureDomain.Name) == 0 {
 			allErrs = append(allErrs, field.Required(fldPath.Child("name"), "must specify the name"))
 		} else {
