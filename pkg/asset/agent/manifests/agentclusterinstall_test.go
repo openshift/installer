@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/go-openapi/swag"
 	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -281,10 +282,6 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 }
 
 func TestAgentClusterInstall_LoadedFromDisk(t *testing.T) {
-
-	emptyACI := &hiveext.AgentClusterInstall{}
-	emptyACI.Spec.Networking.NetworkType = "OVNKubernetes"
-
 	cases := []struct {
 		name           string
 		data           string
@@ -352,7 +349,8 @@ spec:
 						ServiceNetwork: []string{
 							"172.30.0.0/16",
 						},
-						NetworkType: "OVNKubernetes",
+						NetworkType:           "OVNKubernetes",
+						UserManagedNetworking: swag.Bool(false),
 					},
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
@@ -428,7 +426,7 @@ spec:
 							"172.30.0.0/16",
 						},
 						NetworkType:           "OVNKubernetes",
-						UserManagedNetworking: func(b bool) *bool { return &b }(true),
+						UserManagedNetworking: swag.Bool(true),
 					},
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
@@ -498,7 +496,8 @@ spec:
 						ServiceNetwork: []string{
 							"172.30.0.0/16",
 						},
-						NetworkType: "OVNKubernetes",
+						NetworkType:           "OVNKubernetes",
+						UserManagedNetworking: swag.Bool(false),
 					},
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
@@ -559,7 +558,8 @@ spec:
 						ServiceNetwork: []string{
 							"172.30.0.0/16",
 						},
-						NetworkType: "OpenShiftSDN",
+						NetworkType:           "OpenShiftSDN",
+						UserManagedNetworking: swag.Bool(false),
 					},
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
@@ -626,7 +626,8 @@ spec:
 						ServiceNetwork: []string{
 							"172.30.0.0/16",
 						},
-						NetworkType: "OVNKubernetes",
+						NetworkType:           "OVNKubernetes",
+						UserManagedNetworking: swag.Bool(false),
 					},
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
@@ -704,7 +705,8 @@ spec:
 							"172.30.0.0/16",
 							"fd02::/112",
 						},
-						NetworkType: "OVNKubernetes",
+						NetworkType:           "OVNKubernetes",
+						UserManagedNetworking: swag.Bool(false),
 					},
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
@@ -721,10 +723,17 @@ spec:
 			expectedError: "failed to unmarshal cluster-manifests/agent-cluster-install.yaml: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1beta1.AgentClusterInstall",
 		},
 		{
-			name:           "empty",
-			data:           "",
-			expectedFound:  true,
-			expectedConfig: emptyACI,
+			name:          "empty",
+			data:          "",
+			expectedFound: true,
+			expectedConfig: &hiveext.AgentClusterInstall{
+				Spec: hiveext.AgentClusterInstallSpec{
+					Networking: hiveext.Networking{
+						NetworkType:           "OVNKubernetes",
+						UserManagedNetworking: swag.Bool(false),
+					},
+				},
+			},
 		},
 		{
 			name:       "file-not-found",

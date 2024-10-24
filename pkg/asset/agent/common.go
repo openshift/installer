@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"github.com/go-openapi/swag"
 	"github.com/sirupsen/logrus"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
@@ -85,4 +86,16 @@ func DetermineReleaseImageArch(pullSecret, pullSpec string) (string, error) {
 	}
 	logrus.Debugf("Release Image arch is: %s", releaseArch)
 	return releaseArch, nil
+}
+
+// GetUserManagedNetworkingByPlatformType returns the expected value for userManagedNetworking
+// based on the current platform type.
+func GetUserManagedNetworkingByPlatformType(platformType hiveext.PlatformType) *bool {
+	switch platformType {
+	case hiveext.NonePlatformType, hiveext.ExternalPlatformType:
+		logrus.Debugf("Setting UserManagedNetworking to true for %s platform", platformType)
+		return swag.Bool(true)
+	default:
+		return swag.Bool(false)
+	}
 }
