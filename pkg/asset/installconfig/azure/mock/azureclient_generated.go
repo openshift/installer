@@ -8,11 +8,10 @@ import (
 	context "context"
 	reflect "reflect"
 
-	compute "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/compute/mgmt/compute"
 	resources "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
 	subscriptions "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
 	network "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
-	compute0 "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
+	compute "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -100,10 +99,10 @@ func (mr *MockAPIMockRecorder) GetControlPlaneSubnet(ctx, resourceGroupName, vir
 }
 
 // GetDiskEncryptionSet mocks base method.
-func (m *MockAPI) GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName, diskEncryptionSetName string) (*compute0.DiskEncryptionSet, error) {
+func (m *MockAPI) GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName, diskEncryptionSetName string) (*compute.DiskEncryptionSet, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDiskEncryptionSet", ctx, subscriptionID, groupName, diskEncryptionSetName)
-	ret0, _ := ret[0].(*compute0.DiskEncryptionSet)
+	ret0, _ := ret[0].(*compute.DiskEncryptionSet)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -160,10 +159,10 @@ func (mr *MockAPIMockRecorder) GetHyperVGenerationVersion(ctx, instanceType, reg
 }
 
 // GetLocationInfo mocks base method.
-func (m *MockAPI) GetLocationInfo(ctx context.Context, region, instanceType string) (*compute0.ResourceSkuLocationInfo, error) {
+func (m *MockAPI) GetLocationInfo(ctx context.Context, region, instanceType string) (*compute.ResourceSkuLocationInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLocationInfo", ctx, region, instanceType)
-	ret0, _ := ret[0].(*compute0.ResourceSkuLocationInfo)
+	ret0, _ := ret[0].(*compute.ResourceSkuLocationInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -175,10 +174,10 @@ func (mr *MockAPIMockRecorder) GetLocationInfo(ctx, region, instanceType interfa
 }
 
 // GetMarketplaceImage mocks base method.
-func (m *MockAPI) GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (compute0.VirtualMachineImage, error) {
+func (m *MockAPI) GetMarketplaceImage(ctx context.Context, region, publisher, offer, sku, version string) (compute.VirtualMachineImage, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetMarketplaceImage", ctx, region, publisher, offer, sku, version)
-	ret0, _ := ret[0].(compute0.VirtualMachineImage)
+	ret0, _ := ret[0].(compute.VirtualMachineImage)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
