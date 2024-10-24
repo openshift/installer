@@ -184,7 +184,8 @@ func TestInfraEnv_Generate(t *testing.T) {
 					Proxy: &types.Proxy{
 						HTTPProxy: "proxy",
 					},
-					Architecture: "arm64",
+					Architecture:         "arm64",
+					AdditionalNTPSources: []string{"0.fedora.pool.ntp.org", "1.fedora.pool.ntp.org"},
 				},
 				&agent.OptionalInstallConfig{},
 				&agentconfig.AgentConfig{},
@@ -215,6 +216,7 @@ func TestInfraEnv_Generate(t *testing.T) {
 					},
 					AdditionalTrustBundle: "user-ca-bundle",
 					CpuArchitecture:       "aarch64",
+					AdditionalNTPSources:  []string{"0.fedora.pool.ntp.org", "1.fedora.pool.ntp.org"},
 				},
 			},
 		},
