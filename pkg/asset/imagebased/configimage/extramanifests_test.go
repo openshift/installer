@@ -88,6 +88,10 @@ func TestExtraManifests_Load(t *testing.T) {
 		},
 	}
 
+	yamlPattern := "extra-manifests/*.yaml"
+	ymlPattern := "extra-manifests/*.yml"
+	jsonPattern := "extra-manifests/*.json"
+
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			yamlFiles := []*asset.File{}
@@ -115,33 +119,22 @@ func TestExtraManifests_Load(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			fileFetcher := mock.NewMockFileFetcher(mockCtrl)
+
 			if tc.yamlFetchError != nil {
-				fileFetcher.EXPECT().FetchByPattern("extra-manifests/*.yaml").Return(
-					[]*asset.File{},
-					tc.yamlFetchError,
-				)
-			} else if tc.ymlFetchError != nil {
-				fileFetcher.EXPECT().FetchByPattern("extra-manifests/*.yaml").Return(yamlFiles, nil)
+				fileFetcher.EXPECT().FetchByPattern(yamlPattern).Return([]*asset.File{}, tc.yamlFetchError)
+			} else {
+				fileFetcher.EXPECT().FetchByPattern(yamlPattern).Return(yamlFiles, nil)
 
 				if tc.ymlFetchError != nil {
-					fileFetcher.EXPECT().FetchByPattern("extra-manifests/*.yml").Return(
-						[]*asset.File{},
-						tc.ymlFetchError,
-					)
+					fileFetcher.EXPECT().FetchByPattern(ymlPattern).Return([]*asset.File{}, tc.ymlFetchError)
 				} else {
-					fileFetcher.EXPECT().FetchByPattern("extra-manifests/*.yml").Return(ymlFiles, nil)
-				}
-			} else {
-				fileFetcher.EXPECT().FetchByPattern("extra-manifests/*.yaml").Return(yamlFiles, nil)
-				fileFetcher.EXPECT().FetchByPattern("extra-manifests/*.yml").Return(ymlFiles, nil)
+					fileFetcher.EXPECT().FetchByPattern(ymlPattern).Return(ymlFiles, nil)
 
-				if tc.jsonFetchError != nil {
-					fileFetcher.EXPECT().FetchByPattern("extra-manifests/*.json").Return(
-						[]*asset.File{},
-						tc.jsonFetchError,
-					)
-				} else {
-					fileFetcher.EXPECT().FetchByPattern("extra-manifests/*.json").Return(jsonFiles, nil)
+					if tc.jsonFetchError != nil {
+						fileFetcher.EXPECT().FetchByPattern(jsonPattern).Return([]*asset.File{}, tc.jsonFetchError)
+					} else {
+						fileFetcher.EXPECT().FetchByPattern(jsonPattern).Return(jsonFiles, nil)
+					}
 				}
 			}
 
