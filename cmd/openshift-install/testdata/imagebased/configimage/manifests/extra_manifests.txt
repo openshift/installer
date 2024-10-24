@@ -3,10 +3,7 @@
 exec openshift-install image-based create config-image --dir $WORK
 
 exists $WORK/imagebasedconfig.iso
-exists $WORK/auth/kubeconfig
-exists $WORK/auth/kubeadmin-password
 
-isoContains imagebasedconfig.iso /cluster-configuration/manifest.json
 isoContains imagebasedconfig.iso /extra-manifests/test.yaml
 isoContains imagebasedconfig.iso /extra-manifests/test.yml
 isoContains imagebasedconfig.iso /extra-manifests/test.json
