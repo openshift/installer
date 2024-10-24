@@ -28,6 +28,7 @@ resource "azurerm_lb" "internal" {
       #   were being assigned the same IP dynamically). Issue is being tracked as a support ticket to Azure.
       private_ip_address_allocation = frontend_ip_configuration.value.ipv6 ? "Static" : "Dynamic"
       private_ip_address            = frontend_ip_configuration.value.ipv6 ? cidrhost(local.master_subnet_cidr_v6, -2) : null
+      zones                         = length(var.azure_master_availability_zones) > 0 && var.azure_master_availability_zones[0] != "" ? var.azure_master_availability_zones : []
     }
   }
 
