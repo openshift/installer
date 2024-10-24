@@ -1,11 +1,12 @@
 [Unit]
-Description=Configure secondary NIC on OCI when using iSCSI boot drive
+Description=Pull a script passed in OCI user data and execute it
 After=NetworkManager.service
 
 [Service]
 StandardOutput=syslog
 StandardError=syslog
-ExecStart=/usr/local/bin/iscsi-oci-configure-secondary-nic.sh
+Environment="ASSISTED_INSTALLER_DISCOVERY_ENV=1"
+ExecStart=/usr/local/bin/oci-eval-user-data.sh
 Type=oneshot
 RemainAfterExit=yes
 Restart=on-failure

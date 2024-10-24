@@ -360,7 +360,7 @@ func generatedFiles(otherFiles ...string) []string {
 		// "/etc/assisted/manifests/infraenv.yaml",
 		"/etc/assisted/network/host0/eth0.nmconnection",
 		"/etc/assisted/network/host0/mac_interface.ini",
-		"/usr/local/bin/iscsi-oci-configure-secondary-nic.sh",
+		"/usr/local/bin/oci-eval-user-data.sh",
 		"/usr/local/bin/pre-network-manager-config.sh",
 		"/opt/agent/tls/kubeadmin-password.hash"}
 	files = append(files, otherFiles...)
