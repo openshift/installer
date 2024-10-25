@@ -27,7 +27,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/Azure/go-autorest/autorest/azure"
-	"github.com/davecgh/go-spew/spew"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	"sigs.k8s.io/cluster-api-provider-azure/version"
 )
@@ -221,6 +220,11 @@ func VMID(subscriptionID, resourceGroup, vmName string) string {
 	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s", subscriptionID, resourceGroup, vmName)
 }
 
+// VMSSID returns the azure resource ID for a given VMSS.
+func VMSSID(subscriptionID, resourceGroup, vmssName string) string {
+	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachineScaleSets/%s", subscriptionID, resourceGroup, vmssName)
+}
+
 // VNetID returns the azure resource ID for a given VNet.
 func VNetID(subscriptionID, resourceGroup, vnetName string) string {
 	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualNetworks/%s", subscriptionID, resourceGroup, vnetName)
@@ -371,8 +375,6 @@ func ARMClientOptions(azureEnvironment string, extraPolicies ...policy.Policy) (
 		if err != nil {
 			return nil, err
 		}
-		spew.Println("BUGGIN CAPZ env")
-		spew.Dump(cloudEnv)
 		opts.Cloud = cloud.Configuration{
 			ActiveDirectoryAuthorityHost: cloudEnv.ActiveDirectoryEndpoint,
 			Services: map[cloud.ServiceName]cloud.ServiceConfiguration{

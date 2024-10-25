@@ -4,7 +4,7 @@
 package storage
 
 import (
-	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/pkg/errors"
@@ -273,7 +273,7 @@ type IpTag struct {
 }
 
 // AssignProperties_From_IpTag populates our IpTag from the provided source IpTag
-func (ipTag *IpTag) AssignProperties_From_IpTag(source *v20220701s.IpTag) error {
+func (ipTag *IpTag) AssignProperties_From_IpTag(source *storage.IpTag) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -304,7 +304,7 @@ func (ipTag *IpTag) AssignProperties_From_IpTag(source *v20220701s.IpTag) error 
 }
 
 // AssignProperties_To_IpTag populates the provided destination IpTag from our IpTag
-func (ipTag *IpTag) AssignProperties_To_IpTag(destination *v20220701s.IpTag) error {
+func (ipTag *IpTag) AssignProperties_To_IpTag(destination *storage.IpTag) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(ipTag.PropertyBag)
 
@@ -343,7 +343,7 @@ type IpTag_STATUS struct {
 }
 
 // AssignProperties_From_IpTag_STATUS populates our IpTag_STATUS from the provided source IpTag_STATUS
-func (ipTag *IpTag_STATUS) AssignProperties_From_IpTag_STATUS(source *v20220701s.IpTag_STATUS) error {
+func (ipTag *IpTag_STATUS) AssignProperties_From_IpTag_STATUS(source *storage.IpTag_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -374,7 +374,7 @@ func (ipTag *IpTag_STATUS) AssignProperties_From_IpTag_STATUS(source *v20220701s
 }
 
 // AssignProperties_To_IpTag_STATUS populates the provided destination IpTag_STATUS from our IpTag_STATUS
-func (ipTag *IpTag_STATUS) AssignProperties_To_IpTag_STATUS(destination *v20220701s.IpTag_STATUS) error {
+func (ipTag *IpTag_STATUS) AssignProperties_To_IpTag_STATUS(destination *storage.IpTag_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(ipTag.PropertyBag)
 
@@ -464,13 +464,13 @@ type PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded struct {
 }
 
 type augmentConversionForIpTag interface {
-	AssignPropertiesFrom(src *v20220701s.IpTag) error
-	AssignPropertiesTo(dst *v20220701s.IpTag) error
+	AssignPropertiesFrom(src *storage.IpTag) error
+	AssignPropertiesTo(dst *storage.IpTag) error
 }
 
 type augmentConversionForIpTag_STATUS interface {
-	AssignPropertiesFrom(src *v20220701s.IpTag_STATUS) error
-	AssignPropertiesTo(dst *v20220701s.IpTag_STATUS) error
+	AssignPropertiesFrom(src *storage.IpTag_STATUS) error
+	AssignPropertiesTo(dst *storage.IpTag_STATUS) error
 }
 
 func init() {

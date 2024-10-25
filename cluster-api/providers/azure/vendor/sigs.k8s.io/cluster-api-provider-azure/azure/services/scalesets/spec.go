@@ -391,6 +391,10 @@ func (s *ScaleSetSpec) generateStorageProfile(ctx context.Context) (*armcompute.
 		storageProfile.OSDisk.DiffDiskSettings = &armcompute.DiffDiskSettings{
 			Option: ptr.To(armcompute.DiffDiskOptions(s.OSDisk.DiffDiskSettings.Option)),
 		}
+
+		if s.OSDisk.DiffDiskSettings.Placement != nil {
+			storageProfile.OSDisk.DiffDiskSettings.Placement = ptr.To(armcompute.DiffDiskPlacement(*s.OSDisk.DiffDiskSettings.Placement))
+		}
 	}
 
 	if s.OSDisk.ManagedDisk != nil {

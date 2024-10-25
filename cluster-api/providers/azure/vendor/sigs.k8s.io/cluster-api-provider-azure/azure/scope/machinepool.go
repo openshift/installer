@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -209,7 +210,7 @@ func (m *MachinePoolScope) ScaleSetSpec(ctx context.Context) azure.ResourceSpecG
 		SubscriptionID:               m.SubscriptionID(),
 		HasReplicasExternallyManaged: m.HasReplicasExternallyManaged(ctx),
 		ClusterName:                  m.ClusterName(),
-		AdditionalTags:               m.AzureMachinePool.Spec.AdditionalTags,
+		AdditionalTags:               m.AdditionalTags(),
 		PlatformFaultDomainCount:     m.AzureMachinePool.Spec.PlatformFaultDomainCount,
 		ZoneBalance:                  m.AzureMachinePool.Spec.ZoneBalance,
 	}
@@ -405,13 +406,40 @@ func (m *MachinePoolScope) applyAzureMachinePoolMachines(ctx context.Context) er
 	}
 
 	existingMachinesByProviderID := make(map[string]infrav1exp.AzureMachinePoolMachine, len(ampms))
-	for _, machine := range ampms {
-		existingMachinesByProviderID[machine.Spec.ProviderID] = machine
+	for _, ampm := range ampms {
+		machine, err := util.GetOwnerMachine(ctx, m.client, ampm.ObjectMeta)
+		if err != nil {
+			return fmt.Errorf("failed to find owner machine for %s/%s: %w", ampm.Namespace, ampm.Name, err)
+		}
+
+		if _, ampmHasDeleteAnnotation := ampm.Annotations[clusterv1.DeleteMachineAnnotation]; !ampmHasDeleteAnnotation {
+			// fetch Machine delete annotation from owner machine to AzureMachinePoolMachine.
+			// This ensures setting a deleteMachine annotation on the Machine has an effect on the AzureMachinePoolMachine
+			// and the deployment strategy, in case the automatic propagation of the annotation from Machine to AzureMachinePoolMachine
+			// hasn't been done yet.
+			if machine != nil && machine.Annotations != nil {
+				if _, hasDeleteAnnotation := machine.Annotations[clusterv1.DeleteMachineAnnotation]; hasDeleteAnnotation {
+					log.V(4).Info("fetched DeleteMachineAnnotation", "machine", ampm.Spec.ProviderID)
+					if ampm.Annotations == nil {
+						ampm.Annotations = make(map[string]string)
+					}
+					ampm.Annotations[clusterv1.DeleteMachineAnnotation] = machine.Annotations[clusterv1.DeleteMachineAnnotation]
+				}
+			}
+		} else {
+			log.V(4).Info("DeleteMachineAnnotation already set")
+		}
+
+		existingMachinesByProviderID[ampm.Spec.ProviderID] = ampm
 	}
 
 	// determine which machines need to be created to reflect the current state in Azure
 	azureMachinesByProviderID := m.vmssState.InstancesByProviderID(m.AzureMachinePool.Spec.OrchestrationMode)
 	for key, val := range azureMachinesByProviderID {
+		if val.State == infrav1.Deleting || val.State == infrav1.Deleted {
+			log.V(4).Info("not recreating AzureMachinePoolMachine because VMSS VM is deleting", "providerID", key)
+			continue
+		}
 		if _, ok := existingMachinesByProviderID[key]; !ok {
 			log.V(4).Info("creating AzureMachinePoolMachine", "providerID", key)
 			if err := m.createMachine(ctx, val); err != nil {
@@ -533,7 +561,7 @@ func (m *MachinePoolScope) DeleteMachine(ctx context.Context, ampm infrav1exp.Az
 		return errors.Wrapf(err, "error getting owner Machine for AzureMachinePoolMachine %s/%s", ampm.Namespace, ampm.Name)
 	}
 	if machine == nil {
-		log.V(2).Info("No owner Machine exists for AzureMachinePoolMachine", ampm, klog.KObj(&ampm))
+		log.V(2).Info("No owner Machine exists for AzureMachinePoolMachine", "ampm", klog.KObj(&ampm))
 		// If the AzureMachinePoolMachine does not have an owner Machine, do not attempt to delete the AzureMachinePoolMachine as the MachinePool controller will create the
 		// Machine and we want to let it catch up. If we are too hasty to delete, that introduces a race condition where the AzureMachinePoolMachine could be deleted
 		// just as the Machine comes online.
@@ -945,4 +973,42 @@ func (m *MachinePoolScope) ReconcileReplicas(ctx context.Context, vmss *azure.VM
 	}
 
 	return nil
+}
+
+// AnnotationJSON returns a map[string]interface from a JSON annotation.
+func (m *MachinePoolScope) AnnotationJSON(annotation string) (map[string]interface{}, error) {
+	out := map[string]interface{}{}
+	jsonAnnotation := m.AzureMachinePool.GetAnnotations()[annotation]
+	if jsonAnnotation == "" {
+		return out, nil
+	}
+	err := json.Unmarshal([]byte(jsonAnnotation), &out)
+	if err != nil {
+		return out, err
+	}
+	return out, nil
+}
+
+// UpdateAnnotationJSON updates the `annotation` with
+// `content`. `content` in this case should be a `map[string]interface{}`
+// suitable for turning into JSON. This `content` map will be marshalled into a
+// JSON string before being set as the given `annotation`.
+func (m *MachinePoolScope) UpdateAnnotationJSON(annotation string, content map[string]interface{}) error {
+	b, err := json.Marshal(content)
+	if err != nil {
+		return err
+	}
+	m.SetAnnotation(annotation, string(b))
+	return nil
+}
+
+// TagsSpecs returns the tags for the AzureMachinePool.
+func (m *MachinePoolScope) TagsSpecs() []azure.TagsSpec {
+	return []azure.TagsSpec{
+		{
+			Scope:      azure.VMSSID(m.SubscriptionID(), m.NodeResourceGroup(), m.Name()),
+			Tags:       m.AdditionalTags(),
+			Annotation: azure.VMSSTagsLastAppliedAnnotation,
+		},
+	}
 }
