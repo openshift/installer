@@ -6,6 +6,7 @@ package authentication
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -109,11 +110,13 @@ func (o *ServiceBrokerAuthCallbackOK) Code() int {
 }
 
 func (o *ServiceBrokerAuthCallbackOK) Error() string {
-	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackOK %s", 200, payload)
 }
 
 func (o *ServiceBrokerAuthCallbackOK) String() string {
-	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackOK %s", 200, payload)
 }
 
 func (o *ServiceBrokerAuthCallbackOK) GetPayload() *models.AccessToken {
@@ -177,11 +180,13 @@ func (o *ServiceBrokerAuthCallbackBadRequest) Code() int {
 }
 
 func (o *ServiceBrokerAuthCallbackBadRequest) Error() string {
-	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBrokerAuthCallbackBadRequest) String() string {
-	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBrokerAuthCallbackBadRequest) GetPayload() *models.Error {
@@ -245,11 +250,13 @@ func (o *ServiceBrokerAuthCallbackUnauthorized) Code() int {
 }
 
 func (o *ServiceBrokerAuthCallbackUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceBrokerAuthCallbackUnauthorized) String() string {
-	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceBrokerAuthCallbackUnauthorized) GetPayload() *models.Error {
@@ -313,11 +320,13 @@ func (o *ServiceBrokerAuthCallbackForbidden) Code() int {
 }
 
 func (o *ServiceBrokerAuthCallbackForbidden) Error() string {
-	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackForbidden %s", 403, payload)
 }
 
 func (o *ServiceBrokerAuthCallbackForbidden) String() string {
-	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackForbidden %s", 403, payload)
 }
 
 func (o *ServiceBrokerAuthCallbackForbidden) GetPayload() *models.Error {
@@ -381,11 +390,13 @@ func (o *ServiceBrokerAuthCallbackNotFound) Code() int {
 }
 
 func (o *ServiceBrokerAuthCallbackNotFound) Error() string {
-	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackNotFound %s", 404, payload)
 }
 
 func (o *ServiceBrokerAuthCallbackNotFound) String() string {
-	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackNotFound %s", 404, payload)
 }
 
 func (o *ServiceBrokerAuthCallbackNotFound) GetPayload() *models.Error {
@@ -449,11 +460,13 @@ func (o *ServiceBrokerAuthCallbackInternalServerError) Code() int {
 }
 
 func (o *ServiceBrokerAuthCallbackInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackInternalServerError %s", 500, payload)
 }
 
 func (o *ServiceBrokerAuthCallbackInternalServerError) String() string {
-	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /auth/v1/callback][%d] serviceBrokerAuthCallbackInternalServerError %s", 500, payload)
 }
 
 func (o *ServiceBrokerAuthCallbackInternalServerError) GetPayload() *models.Error {

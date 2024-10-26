@@ -28,7 +28,7 @@ type TransitGatewayLocation struct {
 	// Location Type of the PowerVS Service
 	// Example: data-center
 	// Required: true
-	// Enum: [region data-center zone]
+	// Enum: ["region","data-center","zone"]
 	LocationType *string `json:"locationType"`
 
 	// The PowerVS Location URL path to access specific service instance information

@@ -30,7 +30,7 @@ type UpdateStoragePool struct {
 	OverrideThresholds *Thresholds `json:"overrideThresholds,omitempty"`
 
 	// state of storage pool
-	// Enum: [closed opened]
+	// Enum: ["closed","opened"]
 	State *string `json:"state,omitempty"`
 }
 

@@ -6,6 +6,7 @@ package service_bindings
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -115,11 +116,13 @@ func (o *ServiceBindingUnbindingOK) Code() int {
 }
 
 func (o *ServiceBindingUnbindingOK) Error() string {
-	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingOK %s", 200, payload)
 }
 
 func (o *ServiceBindingUnbindingOK) String() string {
-	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingOK %s", 200, payload)
 }
 
 func (o *ServiceBindingUnbindingOK) GetPayload() models.Object {
@@ -181,11 +184,13 @@ func (o *ServiceBindingUnbindingAccepted) Code() int {
 }
 
 func (o *ServiceBindingUnbindingAccepted) Error() string {
-	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingAccepted  %+v", 202, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingAccepted %s", 202, payload)
 }
 
 func (o *ServiceBindingUnbindingAccepted) String() string {
-	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingAccepted  %+v", 202, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingAccepted %s", 202, payload)
 }
 
 func (o *ServiceBindingUnbindingAccepted) GetPayload() *models.AsyncOperation {
@@ -249,11 +254,13 @@ func (o *ServiceBindingUnbindingBadRequest) Code() int {
 }
 
 func (o *ServiceBindingUnbindingBadRequest) Error() string {
-	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBindingUnbindingBadRequest) String() string {
-	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBindingUnbindingBadRequest) GetPayload() *models.Error {
@@ -317,11 +324,13 @@ func (o *ServiceBindingUnbindingUnauthorized) Code() int {
 }
 
 func (o *ServiceBindingUnbindingUnauthorized) Error() string {
-	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceBindingUnbindingUnauthorized) String() string {
-	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceBindingUnbindingUnauthorized) GetPayload() *models.Error {
@@ -385,11 +394,13 @@ func (o *ServiceBindingUnbindingForbidden) Code() int {
 }
 
 func (o *ServiceBindingUnbindingForbidden) Error() string {
-	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingForbidden %s", 403, payload)
 }
 
 func (o *ServiceBindingUnbindingForbidden) String() string {
-	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingForbidden %s", 403, payload)
 }
 
 func (o *ServiceBindingUnbindingForbidden) GetPayload() *models.Error {
@@ -453,11 +464,13 @@ func (o *ServiceBindingUnbindingNotFound) Code() int {
 }
 
 func (o *ServiceBindingUnbindingNotFound) Error() string {
-	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingNotFound %s", 404, payload)
 }
 
 func (o *ServiceBindingUnbindingNotFound) String() string {
-	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingNotFound %s", 404, payload)
 }
 
 func (o *ServiceBindingUnbindingNotFound) GetPayload() *models.Error {
@@ -521,11 +534,13 @@ func (o *ServiceBindingUnbindingGone) Code() int {
 }
 
 func (o *ServiceBindingUnbindingGone) Error() string {
-	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingGone  %+v", 410, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingGone %s", 410, payload)
 }
 
 func (o *ServiceBindingUnbindingGone) String() string {
-	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingGone  %+v", 410, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingUnbindingGone %s", 410, payload)
 }
 
 func (o *ServiceBindingUnbindingGone) GetPayload() *models.Error {

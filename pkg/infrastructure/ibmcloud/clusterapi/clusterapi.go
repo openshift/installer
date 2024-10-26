@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -23,6 +24,13 @@ type Provider struct{}
 // Name returns the IBM Cloud provider name.
 func (p Provider) Name() string {
 	return ibmcloudtypes.Name
+}
+
+// NetworkTimeout allows platform provider to override the timeout
+// when waiting for the network infrastructure to become ready.
+func (p Provider) NetworkTimeout() time.Duration {
+	// IBM Cloud requires additional time for VPC Custom Image creation and Load Balancer reconciliation.
+	return 30 * time.Minute
 }
 
 // PublicGatherEndpoint indicates that machine ready checks should NOT wait for an ExternalIP
@@ -78,7 +86,7 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 
 	// Create a COS Instance and Bucket to host the RHCOS image file.
 	// NOTE(cjschaef): Support to use an existing COS Object (RHCO image file) or VPC Custom Image could be added to skip this step.
-	cosInstanceName := fmt.Sprintf("%s-cos", in.InfraID)
+	cosInstanceName := ibmcloudic.COSInstanceName(in.InfraID)
 	logrus.Debugf("checking for existing cos instance: %s", cosInstanceName)
 	cosInstance, err := client.GetCOSInstanceByName(ctx, cosInstanceName)
 	if err != nil {
@@ -89,7 +97,7 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		}
 		logrus.Debugf("created cos instance: %s", cosInstanceName)
 	}
-	bucketName := fmt.Sprintf("%s-vsi-image", in.InfraID)
+	bucketName := ibmcloudic.VSIImageCOSBucketName(in.InfraID)
 	logrus.Debugf("checking for existing cos bucket: %s", bucketName)
 	_, err = client.GetCOSBucketByName(ctx, *cosInstance.ID, bucketName, region)
 	if err != nil {

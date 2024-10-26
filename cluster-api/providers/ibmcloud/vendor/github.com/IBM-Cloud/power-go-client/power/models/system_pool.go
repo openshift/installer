@@ -22,6 +22,9 @@ type SystemPool struct {
 	// Advertised capacity cores and memory (GB)
 	Capacity *System `json:"capacity,omitempty"`
 
+	// Core allocation increment
+	CoreIncrement float64 `json:"coreIncrement,omitempty"`
+
 	// Processor to Memory (GB) Ratio
 	CoreMemoryRatio float64 `json:"coreMemoryRatio,omitempty"`
 

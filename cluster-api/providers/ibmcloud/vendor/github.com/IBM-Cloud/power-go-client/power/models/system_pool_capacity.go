@@ -29,7 +29,7 @@ type SystemPoolCapacity struct {
 	Memory *int64 `json:"memory"`
 
 	// The DataCenter list of servers and their available resources
-	Systems []*System `json:"systems"`
+	Systems []*SystemResources `json:"systems"`
 
 	// Total number of cores in the System Pool
 	// Required: true
@@ -38,6 +38,14 @@ type SystemPoolCapacity struct {
 	// Total amount of memory in the System Pool (GB)
 	// Required: true
 	TotalMemory *int64 `json:"totalMemory"`
+
+	// Total number of physical cores in the Pod
+	// Required: true
+	TotalPhysCores *float64 `json:"totalPhysCores"`
+
+	// Total amount of physical memory in the Pod (GB)
+	// Required: true
+	TotalPhysMemory *int64 `json:"totalPhysMemory"`
 }
 
 // Validate validates this system pool capacity
@@ -61,6 +69,14 @@ func (m *SystemPoolCapacity) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateTotalMemory(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateTotalPhysCores(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateTotalPhysMemory(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -126,6 +142,24 @@ func (m *SystemPoolCapacity) validateTotalCores(formats strfmt.Registry) error {
 func (m *SystemPoolCapacity) validateTotalMemory(formats strfmt.Registry) error {
 
 	if err := validate.Required("totalMemory", "body", m.TotalMemory); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *SystemPoolCapacity) validateTotalPhysCores(formats strfmt.Registry) error {
+
+	if err := validate.Required("totalPhysCores", "body", m.TotalPhysCores); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *SystemPoolCapacity) validateTotalPhysMemory(formats strfmt.Registry) error {
+
+	if err := validate.Required("totalPhysMemory", "body", m.TotalPhysMemory); err != nil {
 		return err
 	}
 

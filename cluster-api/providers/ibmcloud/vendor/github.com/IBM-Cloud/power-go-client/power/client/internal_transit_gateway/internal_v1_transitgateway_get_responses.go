@@ -6,6 +6,7 @@ package internal_transit_gateway
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -85,11 +86,13 @@ func (o *InternalV1TransitgatewayGetOK) Code() int {
 }
 
 func (o *InternalV1TransitgatewayGetOK) Error() string {
-	return fmt.Sprintf("[GET /internal/v1/transit-gateway/{powervs_service_crn}][%d] internalV1TransitgatewayGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/transit-gateway/{powervs_service_crn}][%d] internalV1TransitgatewayGetOK %s", 200, payload)
 }
 
 func (o *InternalV1TransitgatewayGetOK) String() string {
-	return fmt.Sprintf("[GET /internal/v1/transit-gateway/{powervs_service_crn}][%d] internalV1TransitgatewayGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/transit-gateway/{powervs_service_crn}][%d] internalV1TransitgatewayGetOK %s", 200, payload)
 }
 
 func (o *InternalV1TransitgatewayGetOK) GetPayload() *models.TransitGatewayInstance {
@@ -153,11 +156,13 @@ func (o *InternalV1TransitgatewayGetForbidden) Code() int {
 }
 
 func (o *InternalV1TransitgatewayGetForbidden) Error() string {
-	return fmt.Sprintf("[GET /internal/v1/transit-gateway/{powervs_service_crn}][%d] internalV1TransitgatewayGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/transit-gateway/{powervs_service_crn}][%d] internalV1TransitgatewayGetForbidden %s", 403, payload)
 }
 
 func (o *InternalV1TransitgatewayGetForbidden) String() string {
-	return fmt.Sprintf("[GET /internal/v1/transit-gateway/{powervs_service_crn}][%d] internalV1TransitgatewayGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/transit-gateway/{powervs_service_crn}][%d] internalV1TransitgatewayGetForbidden %s", 403, payload)
 }
 
 func (o *InternalV1TransitgatewayGetForbidden) GetPayload() *models.Error {

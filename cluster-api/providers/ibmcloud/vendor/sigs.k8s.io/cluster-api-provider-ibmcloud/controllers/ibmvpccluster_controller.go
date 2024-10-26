@@ -239,13 +239,53 @@ func (r *IBMVPCClusterReconciler) reconcileCluster(clusterScope *scope.VPCCluste
 	clusterScope.Info("Reconciling VPC")
 	if requeue, err := clusterScope.ReconcileVPC(); err != nil {
 		clusterScope.Error(err, "failed to reconcile VPC")
-		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.VPCReadyCondition, infrav1beta2.VPCReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
+		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.VPCReadyCondition, infrav1beta2.VPCReconciliationFailedReason, capiv1beta1.ConditionSeverityError, "%s", err.Error())
 		return reconcile.Result{}, err
 	} else if requeue {
 		clusterScope.Info("VPC creation is pending, requeuing")
 		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
 	}
+	clusterScope.Info("Reconciliation of VPC complete")
 	conditions.MarkTrue(clusterScope.IBMVPCCluster, infrav1beta2.VPCReadyCondition)
+
+	// Reconcile the cluster's VPC Custom Image.
+	clusterScope.Info("Reconciling VPC Custom Image")
+	if requeue, err := clusterScope.ReconcileVPCCustomImage(); err != nil {
+		clusterScope.Error(err, "failed to reconcile VPC Custom Image")
+		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.ImageReadyCondition, infrav1beta2.ImageReconciliationFailedReason, capiv1beta1.ConditionSeverityError, "%s", err.Error())
+		return reconcile.Result{}, err
+	} else if requeue {
+		clusterScope.Info("VPC Custom Image creation is pending, requeueing")
+		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
+	}
+	clusterScope.Info("Reconciliation of VPC Custom Image complete")
+	conditions.MarkTrue(clusterScope.IBMVPCCluster, infrav1beta2.ImageReadyCondition)
+
+	// Reconcile the cluster's VPC Subnets.
+	clusterScope.Info("Reconciling VPC Subnets")
+	if requeue, err := clusterScope.ReconcileSubnets(); err != nil {
+		clusterScope.Error(err, "failed to reconcile VPC Subnets")
+		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.VPCSubnetReadyCondition, infrav1beta2.VPCSubnetReconciliationFailedReason, capiv1beta1.ConditionSeverityError, "%s", err.Error())
+		return reconcile.Result{}, err
+	} else if requeue {
+		clusterScope.Info("VPC Subnets creation is pending, requeueing")
+		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
+	}
+	clusterScope.Info("Reconciliation of VPC Subnets complete")
+	conditions.MarkTrue(clusterScope.IBMVPCCluster, infrav1beta2.VPCSubnetReadyCondition)
+
+	// Reconcile the cluster's Security Groups (and Security Group Rules)
+	clusterScope.Info("Reconciling Security Groups")
+	if requeue, err := clusterScope.ReconcileSecurityGroups(); err != nil {
+		clusterScope.Error(err, "failed to reconcile Security Groups")
+		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.VPCSecurityGroupReadyCondition, infrav1beta2.VPCSecurityGroupReconciliationFailedReason, capiv1beta1.ConditionSeverityError, "%s", err.Error())
+		return reconcile.Result{}, err
+	} else if requeue {
+		clusterScope.Info("Security Groups creation is pending, requeueing")
+		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
+	}
+	clusterScope.Info("Reconciliation of Security Groups complete")
+	conditions.MarkTrue(clusterScope.IBMVPCCluster, infrav1beta2.VPCSecurityGroupReadyCondition)
 
 	// TODO(cjschaef): add remaining resource reconciliation.
 
@@ -337,7 +377,7 @@ func (r *IBMVPCClusterReconciler) reconcileLBState(clusterScope *scope.ClusterSc
 	case infrav1beta2.VPCLoadBalancerStateCreatePending:
 		clusterScope.Logger.V(3).Info("LoadBalancer is in create state")
 		clusterScope.SetNotReady()
-		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.LoadBalancerReadyCondition, string(infrav1beta2.VPCLoadBalancerStateCreatePending), capiv1beta1.ConditionSeverityInfo, *loadBalancer.OperatingStatus)
+		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.LoadBalancerReadyCondition, string(infrav1beta2.VPCLoadBalancerStateCreatePending), capiv1beta1.ConditionSeverityInfo, "%s", *loadBalancer.OperatingStatus)
 	case infrav1beta2.VPCLoadBalancerStateActive:
 		clusterScope.Logger.V(3).Info("LoadBalancer is in active state")
 		clusterScope.SetReady()
