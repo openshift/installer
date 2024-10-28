@@ -124,4 +124,12 @@ type InstallationConfig struct {
 
 	// SSHKey is the public Secure Shell (SSH) key to provide access to instances.
 	SSHKey string `json:"sshKey,omitempty"`
+
+	// CoreosInstallerParams additional parameters for coreos-install command that will be used while writing os to disk
+	// Example: in order not to override earlier created installation disk partition, you can provide
+	// coreosInstallerArgs: []{"--save-partindex=6"} - this will save previously created partition number 6
+	// Allowed flags: "--append-karg", "--delete-karg", "--save-partlabel", "--save-partindex"
+	//
+	// +optional
+	CoreosInstallerArgs []string `json:"coreosInstallerArgs,omitempty"`
 }

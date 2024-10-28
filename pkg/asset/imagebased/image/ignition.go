@@ -43,14 +43,15 @@ func (i *Ignition) Dependencies() []asset.Asset {
 }
 
 type ibiConfigurationFile struct {
-	ExtraPartitionLabel  string `json:"extraPartitionLabel,omitempty"`
-	ExtraPartitionNumber uint   `json:"extraPartitionNumber,omitempty"`
-	ExtraPartitionStart  string `json:"extraPartitionStart,omitempty"`
-	InstallationDisk     string `json:"installationDisk"`
-	SeedImage            string `json:"seedImage"`
-	SeedVersion          string `json:"seedVersion"`
-	Shutdown             bool   `json:"shutdown,omitempty"`
-	SkipDiskCleanup      bool   `json:"skipDiskCleanup,omitempty"`
+	ExtraPartitionLabel  string   `json:"extraPartitionLabel,omitempty"`
+	ExtraPartitionNumber uint     `json:"extraPartitionNumber,omitempty"`
+	ExtraPartitionStart  string   `json:"extraPartitionStart,omitempty"`
+	InstallationDisk     string   `json:"installationDisk"`
+	SeedImage            string   `json:"seedImage"`
+	SeedVersion          string   `json:"seedVersion"`
+	Shutdown             bool     `json:"shutdown,omitempty"`
+	SkipDiskCleanup      bool     `json:"skipDiskCleanup,omitempty"`
+	CoreosInstallerArgs  []string `json:"coreosInstallerArgs,omitempty"`
 }
 
 type ibiTemplateData struct {
@@ -99,6 +100,7 @@ func (i *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 		SeedImage:            ibiConfig.SeedImage,
 		Shutdown:             ibiConfig.Shutdown,
 		SkipDiskCleanup:      ibiConfig.SkipDiskCleanup,
+		CoreosInstallerArgs:  ibiConfig.CoreosInstallerArgs,
 	}
 	ibiConfigJSON, err := json.Marshal(ibiConfigFile)
 	if err != nil {

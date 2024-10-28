@@ -308,6 +308,42 @@ proxy:
 			expectedFound: false,
 			expectedError: "invalid Image-based Installation ISO Config: proxy.httpsProxy: Unsupported value: \"invalidscheme\": supported values: \"http\", \"https\"",
 		},
+		{
+			name: "invalid-coreosInstallerArgs arg - not allowed arg",
+			data: `
+apiVersion: v1beta1
+metadata:
+  name: image-based-installation-config
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+seedVersion: 4.16.0
+seedImage: quay.io/openshift-kni/seed-image:4.16.0
+installationDisk: /dev/vda
+coreosInstallerArgs:
+- "--test"
+- "3"
+`,
+
+			expectedFound: false,
+			expectedError: "found unexpected flag --test for coreosInstallerArgs - allowed flags are [--append-karg --delete-karg --save-partlabel --save-partindex",
+		},
+		{
+			name: "valid-coreosInstallerArgs arg",
+			data: `
+apiVersion: v1beta1
+metadata:
+  name: image-based-installation-config
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+seedVersion: 4.16.0
+seedImage: quay.io/openshift-kni/seed-image:4.16.0
+installationDisk: /dev/vda
+coreosInstallerArgs:
+- "--save-partindex"
+- "5"
+`,
+
+			expectedFound: true,
+			expectedError: "",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
