@@ -14,6 +14,7 @@ import (
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
+	"github.com/go-openapi/swag"
 )
 
 // NewV2ListClusterManifestsParams creates a new V2ListClusterManifestsParams object,
@@ -69,6 +70,12 @@ type V2ListClusterManifestsParams struct {
 	*/
 	ClusterID strfmt.UUID
 
+	/* IncludeSystemGenerated.
+
+	   Include system generated manifests in results? Default is false.
+	*/
+	IncludeSystemGenerated *bool
+
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
@@ -86,7 +93,18 @@ func (o *V2ListClusterManifestsParams) WithDefaults() *V2ListClusterManifestsPar
 //
 // All values with no default are reset to their zero value.
 func (o *V2ListClusterManifestsParams) SetDefaults() {
-	// no default values defined for this parameter
+	var (
+		includeSystemGeneratedDefault = bool(false)
+	)
+
+	val := V2ListClusterManifestsParams{
+		IncludeSystemGenerated: &includeSystemGeneratedDefault,
+	}
+
+	val.timeout = o.timeout
+	val.Context = o.Context
+	val.HTTPClient = o.HTTPClient
+	*o = val
 }
 
 // WithTimeout adds the timeout to the v2 list cluster manifests params
@@ -133,6 +151,17 @@ func (o *V2ListClusterManifestsParams) SetClusterID(clusterID strfmt.UUID) {
 	o.ClusterID = clusterID
 }
 
+// WithIncludeSystemGenerated adds the includeSystemGenerated to the v2 list cluster manifests params
+func (o *V2ListClusterManifestsParams) WithIncludeSystemGenerated(includeSystemGenerated *bool) *V2ListClusterManifestsParams {
+	o.SetIncludeSystemGenerated(includeSystemGenerated)
+	return o
+}
+
+// SetIncludeSystemGenerated adds the includeSystemGenerated to the v2 list cluster manifests params
+func (o *V2ListClusterManifestsParams) SetIncludeSystemGenerated(includeSystemGenerated *bool) {
+	o.IncludeSystemGenerated = includeSystemGenerated
+}
+
 // WriteToRequest writes these params to a swagger request
 func (o *V2ListClusterManifestsParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
@@ -144,6 +173,23 @@ func (o *V2ListClusterManifestsParams) WriteToRequest(r runtime.ClientRequest, r
 	// path param cluster_id
 	if err := r.SetPathParam("cluster_id", o.ClusterID.String()); err != nil {
 		return err
+	}
+
+	if o.IncludeSystemGenerated != nil {
+
+		// query param include_system_generated
+		var qrIncludeSystemGenerated bool
+
+		if o.IncludeSystemGenerated != nil {
+			qrIncludeSystemGenerated = *o.IncludeSystemGenerated
+		}
+		qIncludeSystemGenerated := swag.FormatBool(qrIncludeSystemGenerated)
+		if qIncludeSystemGenerated != "" {
+
+			if err := r.SetQueryParam("include_system_generated", qIncludeSystemGenerated); err != nil {
+				return err
+			}
+		}
 	}
 
 	if len(res) > 0 {

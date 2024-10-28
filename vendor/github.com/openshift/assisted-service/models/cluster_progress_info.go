@@ -8,8 +8,10 @@ package models
 import (
 	"context"
 
+	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // ClusterProgressInfo cluster progress info
@@ -17,11 +19,26 @@ import (
 // swagger:model cluster-progress-info
 type ClusterProgressInfo struct {
 
+	// finalizing stage
+	FinalizingStage FinalizingStage `json:"finalizing_stage,omitempty"`
+
 	// finalizing stage percentage
 	FinalizingStagePercentage int64 `json:"finalizing_stage_percentage,omitempty"`
 
+	// finalizing stage started at
+	// Format: date-time
+	FinalizingStageStartedAt strfmt.DateTime `json:"finalizing_stage_started_at,omitempty" gorm:"type:timestamp with time zone"`
+
 	// installing stage percentage
 	InstallingStagePercentage int64 `json:"installing_stage_percentage,omitempty"`
+
+	// node updater finished at
+	// Format: date-time
+	NodeUpdaterFinishedAt strfmt.DateTime `json:"node_updater_finished_at,omitempty" gorm:"type:timestamp with time zone"`
+
+	// node updater started at
+	// Format: date-time
+	NodeUpdaterStartedAt strfmt.DateTime `json:"node_updater_started_at,omitempty" gorm:"type:timestamp with time zone"`
 
 	// preparing for installation stage percentage
 	PreparingForInstallationStagePercentage int64 `json:"preparing_for_installation_stage_percentage,omitempty"`
@@ -32,11 +49,108 @@ type ClusterProgressInfo struct {
 
 // Validate validates this cluster progress info
 func (m *ClusterProgressInfo) Validate(formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.validateFinalizingStage(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateFinalizingStageStartedAt(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateNodeUpdaterFinishedAt(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateNodeUpdaterStartedAt(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
 	return nil
 }
 
-// ContextValidate validates this cluster progress info based on context it is used
+func (m *ClusterProgressInfo) validateFinalizingStage(formats strfmt.Registry) error {
+	if swag.IsZero(m.FinalizingStage) { // not required
+		return nil
+	}
+
+	if err := m.FinalizingStage.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("finalizing_stage")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("finalizing_stage")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *ClusterProgressInfo) validateFinalizingStageStartedAt(formats strfmt.Registry) error {
+	if swag.IsZero(m.FinalizingStageStartedAt) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("finalizing_stage_started_at", "body", "date-time", m.FinalizingStageStartedAt.String(), formats); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ClusterProgressInfo) validateNodeUpdaterFinishedAt(formats strfmt.Registry) error {
+	if swag.IsZero(m.NodeUpdaterFinishedAt) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("node_updater_finished_at", "body", "date-time", m.NodeUpdaterFinishedAt.String(), formats); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ClusterProgressInfo) validateNodeUpdaterStartedAt(formats strfmt.Registry) error {
+	if swag.IsZero(m.NodeUpdaterStartedAt) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("node_updater_started_at", "body", "date-time", m.NodeUpdaterStartedAt.String(), formats); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this cluster progress info based on the context it is used
 func (m *ClusterProgressInfo) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateFinalizingStage(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *ClusterProgressInfo) contextValidateFinalizingStage(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.FinalizingStage.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("finalizing_stage")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("finalizing_stage")
+		}
+		return err
+	}
+
 	return nil
 }
 
