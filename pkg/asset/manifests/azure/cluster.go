@@ -104,6 +104,26 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}
 
 	virtualNetworkID := ""
+	lbip := capz.DefaultInternalLBIPAddress
+	_, controlPlaneCIDR, err := net.ParseCIDR(installConfig.Config.Azure.ControlPlaneSubnet)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get control plane CIDR")
+	}
+	// Check if default lbip is within control plane network.
+	// If not in control plane network, assign the first IP in the CIDR to lbip.
+	if !controlPlaneCIDR.Contains(net.ParseIP(lbip)) {
+		ip := controlPlaneCIDR.IP
+		// Since the first 4 IP of the subnets are usually reserved[1], pick the next one that's available in the CIDR.
+		// [1] - https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/private-ip-addresses#allocation-method
+		ip[len(ip)-1] += 4
+		lbip = ip.String()
+	}
+	apiServerLB.FrontendIPs = []capz.FrontendIP{{
+		Name: fmt.Sprintf("%s-internal-frontEnd", clusterID.InfraID),
+		FrontendIPClass: capz.FrontendIPClass{
+			PrivateIPAddress: lbip,
+		},
+	}}
 	if installConfig.Config.Azure.VirtualNetwork != "" {
 		client, err := installConfig.Azure.Client()
 		if err != nil {
@@ -117,16 +137,12 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		if virtualNetwork != nil {
 			virtualNetworkID = *virtualNetwork.ID
 		}
-		lbip, err := getNextAvailableIP(ctx, installConfig)
+		lbip, err := getNextAvailableIP(ctx, installConfig, lbip)
 		if err != nil {
 			return nil, err
 		}
-		apiServerLB.FrontendIPs = []capz.FrontendIP{{
-			Name: fmt.Sprintf("%s-internal-frontEnd", clusterID.InfraID),
-			FrontendIPClass: capz.FrontendIPClass{
-				PrivateIPAddress: lbip,
-			},
-		},
+		apiServerLB.FrontendIPs[0].FrontendIPClass = capz.FrontendIPClass{
+			PrivateIPAddress: lbip,
 		}
 	}
 
@@ -255,25 +271,20 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}, nil
 }
 
-func getNextAvailableIP(ctx context.Context, installConfig *installconfig.InstallConfig) (string, error) {
-	lbip := capz.DefaultInternalLBIPAddress
-	machineCidr := installConfig.Config.MachineNetwork
+func getNextAvailableIP(ctx context.Context, installConfig *installconfig.InstallConfig, lbip string) (string, error) {
 	client, err := installConfig.Azure.Client()
 	if err != nil {
 		return "", fmt.Errorf("failed to get azure client: %w", err)
 	}
 
+	machineCidr := installConfig.Config.MachineNetwork
 	availableIP, err := client.CheckIPAddressAvailability(ctx, installConfig.Config.Azure.NetworkResourceGroupName, installConfig.Config.Azure.VirtualNetwork, lbip)
 	if err != nil {
 		return "", fmt.Errorf("failed to get azure ip availability: %w", err)
 	}
 	if *availableIP.Available {
 		for _, cidrRange := range machineCidr {
-			_, ipnet, err := net.ParseCIDR(cidrRange.CIDR.String())
-			if err != nil {
-				return "", fmt.Errorf("failed to get machine network CIDR: %w", err)
-			}
-			if ipnet.Contains(net.ParseIP(lbip)) {
+			if cidrRange.CIDR.Contains(net.ParseIP(lbip)) {
 				return lbip, nil
 			}
 		}
@@ -283,11 +294,7 @@ func getNextAvailableIP(ctx context.Context, installConfig *installconfig.Instal
 	}
 	for _, ip := range *availableIP.AvailableIPAddresses {
 		for _, cidrRange := range machineCidr {
-			_, ipnet, err := net.ParseCIDR(cidrRange.CIDR.String())
-			if err != nil {
-				return "", fmt.Errorf("failed to get machine network CIDR: %w", err)
-			}
-			if ipnet.Contains(net.ParseIP(ip)) {
+			if cidrRange.CIDR.Contains(net.ParseIP(lbip)) {
 				return ip, nil
 			}
 		}
