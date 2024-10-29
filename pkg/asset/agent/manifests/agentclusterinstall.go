@@ -210,7 +210,7 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 				PlatformName: installConfig.Config.Platform.External.PlatformName,
 			}
 		}
-		if installConfig.Config.Platform.Name() == external.Name && installConfig.Config.Platform.External.PlatformName == agent.ExternalPlatformNameOci {
+		if installConfig.Config.Platform.Name() == external.Name && installConfig.Config.Platform.External.PlatformName == external.ExternalPlatformNameOci {
 			agentClusterInstall.Spec.ExternalPlatformSpec.CloudControllerManager = external.CloudControllerManagerTypeExternal
 		}
 
