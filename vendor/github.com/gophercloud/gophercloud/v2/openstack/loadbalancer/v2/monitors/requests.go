@@ -119,6 +119,10 @@ type CreateOpts struct {
 	// is not specified, it defaults to "GET". Required for HTTP(S) types.
 	HTTPMethod string `json:"http_method,omitempty"`
 
+	// The HTTP version. One of 1.0 or 1.1. The default is 1.0. New in
+	// version 2.10.
+	HTTPVersion string `json:"http_version,omitempty"`
+
 	// Expected HTTP codes for a passing HTTP(S) Monitor. You can either specify
 	// a single status like "200", a range like "200-202", or a combination like
 	// "200-202, 401".
@@ -138,6 +142,10 @@ type CreateOpts struct {
 	// The administrative state of the Monitor. A valid value is true (UP)
 	// or false (DOWN).
 	AdminStateUp *bool `json:"admin_state_up,omitempty"`
+
+	// The domain name, which be injected into the HTTP Host Header to the
+	// backend server for HTTP health check. New in version 2.10
+	DomainName string `json:"domain_name,omitempty"`
 
 	// Tags is a set of resource tags. New in version 2.5
 	Tags []string `json:"tags,omitempty"`
@@ -213,6 +221,10 @@ type UpdateOpts struct {
 	// is not specified, it defaults to "GET". Required for HTTP(S) types.
 	HTTPMethod string `json:"http_method,omitempty"`
 
+	// The HTTP version. One of 1.0 or 1.1. The default is 1.0. New in
+	// version 2.10.
+	HTTPVersion *string `json:"http_version,omitempty"`
+
 	// Expected HTTP codes for a passing HTTP(S) Monitor. You can either specify
 	// a single status like "200", or a range like "200-202". Required for HTTP(S)
 	// types.
@@ -220,6 +232,10 @@ type UpdateOpts struct {
 
 	// The Name of the Monitor.
 	Name *string `json:"name,omitempty"`
+
+	// The domain name, which be injected into the HTTP Host Header to the
+	// backend server for HTTP health check. New in version 2.10
+	DomainName *string `json:"domain_name,omitempty"`
 
 	// The administrative state of the Monitor. A valid value is true (UP)
 	// or false (DOWN).

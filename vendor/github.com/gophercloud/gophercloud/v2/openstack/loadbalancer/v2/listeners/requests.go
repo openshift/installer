@@ -37,6 +37,15 @@ const (
 	TLSVersionTLSv1_3 TLSVersion = "TLSv1.3"
 )
 
+// ClientAuthentication represents the TLS client authentication mode.
+type ClientAuthentication string
+
+const (
+	ClientAuthenticationNone      ClientAuthentication = "NONE"
+	ClientAuthenticationOptional  ClientAuthentication = "OPTIONAL"
+	ClientAuthenticationMandatory ClientAuthentication = "MANDATORY"
+)
+
 // ListOptsBuilder allows extensions to add additional parameters to the
 // List request.
 type ListOptsBuilder interface {
@@ -170,6 +179,46 @@ type CreateOpts struct {
 	// A list of IPv4, IPv6 or mix of both CIDRs
 	AllowedCIDRs []string `json:"allowed_cidrs,omitempty"`
 
+	// A list of ALPN protocols. Available protocols: http/1.0, http/1.1,
+	// h2. Available from microversion 2.20.
+	ALPNProtocols []string `json:"alpn_protocols,omitempty"`
+
+	// The TLS client authentication mode. One of the options NONE,
+	// OPTIONAL or MANDATORY. Available from microversion 2.8.
+	ClientAuthentication ClientAuthentication `json:"client_authentication,omitempty"`
+
+	// The ref of the key manager service secret containing a PEM format
+	// client CA certificate bundle for TERMINATED_HTTPS listeners.
+	// Available from microversion 2.8.
+	ClientCATLSContainerRef string `json:"client_ca_tls_container_ref,omitempty"`
+
+	// The URI of the key manager service secret containing a PEM format CA
+	// revocation list file for TERMINATED_HTTPS listeners. Available from
+	// microversion 2.8.
+	ClientCRLContainerRef string `json:"client_crl_container_ref,omitempty"`
+
+	// Defines whether the includeSubDomains directive should be added to
+	// the Strict-Transport-Security HTTP response header. This requires
+	// setting the hsts_max_age option as well in order to become
+	// effective. Available from microversion 2.27.
+	HSTSIncludeSubdomains bool `json:"hsts_include_subdomains,omitempty"`
+
+	// The value of the max_age directive for the Strict-Transport-Security
+	// HTTP response header. Setting this enables HTTP Strict Transport
+	// Security (HSTS) for the TLS-terminated listener. Available from
+	// microversion 2.27.
+	HSTSMaxAge int `json:"hsts_max_age,omitempty"`
+
+	// Defines whether the preload directive should be added to the
+	// Strict-Transport-Security HTTP response header. This requires
+	// setting the hsts_max_age option as well in order to become
+	// effective. Available from microversion 2.27.
+	HSTSPreload bool `json:"hsts_preload,omitempty"`
+
+	// List of ciphers in OpenSSL format (colon-separated). Available from
+	// microversion 2.15.
+	TLSCiphers string `json:"tls_ciphers,omitempty"`
+
 	// A list of TLS protocol versions. Available from microversion 2.17
 	TLSVersions []TLSVersion `json:"tls_versions,omitempty"`
 
@@ -255,6 +304,46 @@ type UpdateOpts struct {
 	// A list of IPv4, IPv6 or mix of both CIDRs
 	AllowedCIDRs *[]string `json:"allowed_cidrs,omitempty"`
 
+	// A list of ALPN protocols. Available protocols: http/1.0, http/1.1,
+	// h2. Available from microversion 2.20.
+	ALPNProtocols *[]string `json:"alpn_protocols,omitempty"`
+
+	// The TLS client authentication mode. One of the options NONE,
+	// OPTIONAL or MANDATORY. Available from microversion 2.8.
+	ClientAuthentication *ClientAuthentication `json:"client_authentication,omitempty"`
+
+	// The ref of the key manager service secret containing a PEM format
+	// client CA certificate bundle for TERMINATED_HTTPS listeners.
+	// Available from microversion 2.8.
+	ClientCATLSContainerRef *string `json:"client_ca_tls_container_ref,omitempty"`
+
+	// The URI of the key manager service secret containing a PEM format CA
+	// revocation list file for TERMINATED_HTTPS listeners. Available from
+	// microversion 2.8.
+	ClientCRLContainerRef *string `json:"client_crl_container_ref,omitempty"`
+
+	// Defines whether the includeSubDomains directive should be added to
+	// the Strict-Transport-Security HTTP response header. This requires
+	// setting the hsts_max_age option as well in order to become
+	// effective. Available from microversion 2.27.
+	HSTSIncludeSubdomains *bool `json:"hsts_include_subdomains,omitempty"`
+
+	// The value of the max_age directive for the Strict-Transport-Security
+	// HTTP response header. Setting this enables HTTP Strict Transport
+	// Security (HSTS) for the TLS-terminated listener. Available from
+	// microversion 2.27.
+	HSTSMaxAge *int `json:"hsts_max_age,omitempty"`
+
+	// Defines whether the preload directive should be added to the
+	// Strict-Transport-Security HTTP response header. This requires
+	// setting the hsts_max_age option as well in order to become
+	// effective. Available from microversion 2.27.
+	HSTSPreload *bool `json:"hsts_preload,omitempty"`
+
+	// List of ciphers in OpenSSL format (colon-separated). Available from
+	// microversion 2.15.
+	TLSCiphers *string `json:"tls_ciphers,omitempty"`
+
 	// A list of TLS protocol versions. Available from microversion 2.17
 	TLSVersions *[]TLSVersion `json:"tls_versions,omitempty"`
 
@@ -269,8 +358,21 @@ func (opts UpdateOpts) ToListenerUpdateMap() (map[string]any, error) {
 		return nil, err
 	}
 
-	if m := b["listener"].(map[string]any); m["default_pool_id"] == "" {
+	m := b["listener"].(map[string]any)
+
+	// allow to unset default_pool_id on empty string
+	if m["default_pool_id"] == "" {
 		m["default_pool_id"] = nil
+	}
+
+	// allow to unset alpn_protocols on empty slice
+	if opts.ALPNProtocols != nil && len(*opts.ALPNProtocols) == 0 {
+		m["alpn_protocols"] = nil
+	}
+
+	// allow to unset tls_versions on empty slice
+	if opts.TLSVersions != nil && len(*opts.TLSVersions) == 0 {
+		m["tls_versions"] = nil
 	}
 
 	return b, nil

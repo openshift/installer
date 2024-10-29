@@ -54,6 +54,8 @@ type Share struct {
 	ShareType string `json:"share_type"`
 	// The name of the share type.
 	ShareTypeName string `json:"share_type_name"`
+	// The UUID of the share group. Available starting from the microversion 2.31
+	ShareGroupID string `json:"share_group_id"`
 	// Size of the share in GB
 	Size int `json:"size"`
 	// UUID of the snapshot from which to create the share

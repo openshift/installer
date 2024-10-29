@@ -114,6 +114,24 @@ type Listener struct {
 	// New in version 2.8
 	ClientCRLContainerRef string `json:"client_crl_container_ref"`
 
+	// Defines whether the includeSubDomains directive should be added to
+	// the Strict-Transport-Security HTTP response header. This requires
+	// setting the hsts_max_age option as well in order to become
+	// effective. Available from microversion 2.27.
+	HSTSIncludeSubdomains bool `json:"hsts_include_subdomains"`
+
+	// The value of the max_age directive for the Strict-Transport-Security
+	// HTTP response header. Setting this enables HTTP Strict Transport
+	// Security (HSTS) for the TLS-terminated listener. Available from
+	// microversion 2.27.
+	HSTSMaxAge int `json:"hsts_max_age"`
+
+	// Defines whether the preload directive should be added to the
+	// Strict-Transport-Security HTTP response header. This requires
+	// setting the hsts_max_age option as well in order to become
+	// effective. Available from microversion 2.27.
+	HSTSPreload bool `json:"hsts_preload"`
+
 	// The operating status of the resource
 	OperatingStatus string `json:"operating_status"`
 }

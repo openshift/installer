@@ -8,6 +8,17 @@ import (
 	"github.com/gophercloud/gophercloud/v2/pagination"
 )
 
+// Type TLSVersion represents a tls version
+type TLSVersion string
+
+const (
+	TLSVersionSSLv3   TLSVersion = "SSLv3"
+	TLSVersionTLSv1   TLSVersion = "TLSv1"
+	TLSVersionTLSv1_1 TLSVersion = "TLSv1.1"
+	TLSVersionTLSv1_2 TLSVersion = "TLSv1.2"
+	TLSVersionTLSv1_3 TLSVersion = "TLSv1.3"
+)
+
 // ListOptsBuilder allows extensions to add additional parameters to the
 // List request.
 type ListOptsBuilder interface {
@@ -122,6 +133,37 @@ type CreateOpts struct {
 	// Omit this field to prevent session persistence.
 	Persistence *SessionPersistence `json:"session_persistence,omitempty"`
 
+	// A list of ALPN protocols. Available protocols: http/1.0, http/1.1,
+	// h2. Available from microversion 2.24.
+	ALPNProtocols []string `json:"alpn_protocols,omitempty"`
+
+	// The reference of the key manager service secret containing a PEM
+	// format CA certificate bundle for tls_enabled pools. Available from
+	// microversion 2.8.
+	CATLSContainerRef string `json:"ca_tls_container_ref,omitempty"`
+
+	// The reference of the key manager service secret containing a PEM
+	// format CA revocation list file for tls_enabled pools. Available from
+	// microversion 2.8.
+	CRLContainerRef string `json:"crl_container_ref,omitempty"`
+
+	// When true connections to backend member servers will use TLS
+	// encryption. Default is false. Available from microversion 2.8.
+	TLSEnabled bool `json:"tls_enabled,omitempty"`
+
+	// List of ciphers in OpenSSL format (colon-separated). Available from
+	// microversion 2.15.
+	TLSCiphers string `json:"tls_ciphers,omitempty"`
+
+	// The reference to the key manager service secret containing a PKCS12
+	// format certificate/key bundle for tls_enabled pools for TLS client
+	// authentication to the member servers. Available from microversion 2.8.
+	TLSContainerRef string `json:"tls_container_ref,omitempty"`
+
+	// A list of TLS protocol versions. Available versions: SSLv3, TLSv1,
+	// TLSv1.1, TLSv1.2, TLSv1.3. Available from microversion 2.17.
+	TLSVersions []TLSVersion `json:"tls_versions,omitempty"`
+
 	// The administrative state of the Pool. A valid value is true (UP)
 	// or false (DOWN).
 	AdminStateUp *bool `json:"admin_state_up,omitempty"`
@@ -196,13 +238,66 @@ type UpdateOpts struct {
 	// Persistence is the session persistence of the pool.
 	Persistence *SessionPersistence `json:"session_persistence,omitempty"`
 
+	// A list of ALPN protocols. Available protocols: http/1.0, http/1.1,
+	// h2. Available from microversion 2.24.
+	ALPNProtocols *[]string `json:"alpn_protocols,omitempty"`
+
+	// The reference of the key manager service secret containing a PEM
+	// format CA certificate bundle for tls_enabled pools. Available from
+	// microversion 2.8.
+	CATLSContainerRef *string `json:"ca_tls_container_ref,omitempty"`
+
+	// The reference of the key manager service secret containing a PEM
+	// format CA revocation list file for tls_enabled pools. Available from
+	// microversion 2.8.
+	CRLContainerRef *string `json:"crl_container_ref,omitempty"`
+
+	// When true connections to backend member servers will use TLS
+	// encryption. Default is false. Available from microversion 2.8.
+	TLSEnabled *bool `json:"tls_enabled,omitempty"`
+
+	// List of ciphers in OpenSSL format (colon-separated). Available from
+	// microversion 2.15.
+	TLSCiphers *string `json:"tls_ciphers,omitempty"`
+
+	// The reference to the key manager service secret containing a PKCS12
+	// format certificate/key bundle for tls_enabled pools for TLS client
+	// authentication to the member servers. Available from microversion 2.8.
+	TLSContainerRef *string `json:"tls_container_ref,omitempty"`
+
+	// A list of TLS protocol versions. Available versions: SSLv3, TLSv1,
+	// TLSv1.1, TLSv1.2, TLSv1.3. Available from microversion 2.17.
+	TLSVersions *[]TLSVersion `json:"tls_versions,omitempty"`
+
 	// Tags is a set of resource tags. New in version 2.5
 	Tags *[]string `json:"tags,omitempty"`
 }
 
 // ToPoolUpdateMap builds a request body from UpdateOpts.
 func (opts UpdateOpts) ToPoolUpdateMap() (map[string]any, error) {
-	return gophercloud.BuildRequestBody(opts, "pool")
+	b, err := gophercloud.BuildRequestBody(opts, "pool")
+	if err != nil {
+		return nil, err
+	}
+
+	m := b["pool"].(map[string]any)
+
+	// allow to unset session_persistence on empty SessionPersistence struct
+	if opts.Persistence != nil && *opts.Persistence == (SessionPersistence{}) {
+		m["session_persistence"] = nil
+	}
+
+	// allow to unset alpn_protocols on empty slice
+	if opts.ALPNProtocols != nil && len(*opts.ALPNProtocols) == 0 {
+		m["alpn_protocols"] = nil
+	}
+
+	// allow to unset tls_versions on empty slice
+	if opts.TLSVersions != nil && len(*opts.TLSVersions) == 0 {
+		m["tls_versions"] = nil
+	}
+
+	return b, nil
 }
 
 // Update allows pools to be updated.

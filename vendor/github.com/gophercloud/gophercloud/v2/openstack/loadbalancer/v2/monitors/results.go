@@ -60,12 +60,18 @@ type Monitor struct {
 	// The HTTP method that the monitor uses for requests.
 	HTTPMethod string `json:"http_method"`
 
+	// The HTTP version that the monitor uses for requests.
+	HTTPVersion string `json:"http_version"`
+
 	// The HTTP path of the request sent by the monitor to test the health of a
 	// member. Must be a string beginning with a forward slash (/).
 	URLPath string `json:"url_path" `
 
 	// Expected HTTP codes for a passing HTTP(S) monitor.
 	ExpectedCodes string `json:"expected_codes"`
+
+	// The HTTP host header that the monitor uses for requests.
+	DomainName string `json:"domain_name"`
 
 	// The administrative state of the health monitor, which is up (true) or
 	// down (false).

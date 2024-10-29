@@ -28,6 +28,14 @@ type String *string
 // +optional.
 type Int *int
 
+// UInt16 is a uint16 that can be unspecified. uint16s which are converted to
+// optional.UInt16 during API conversion will be converted to nil if the value
+// was previously 0.
+// +kubebuilder:validation:Minimum:=0
+// +kubebuilder:validation:Maximum:=65535
+// +optional.
+type UInt16 *uint16
+
 // Bool is a bool that can be unspecified. bools which are converted to
 // optional.Bool during API conversion will be converted to nil if the value
 // was previously false.
