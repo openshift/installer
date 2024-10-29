@@ -190,6 +190,7 @@ func restorev1beta1MachineSpec(previous *infrav1.OpenStackMachineSpec, dst *infr
 	dst.ServerGroup = previous.ServerGroup
 	dst.Image = previous.Image
 	dst.FloatingIPPoolRef = previous.FloatingIPPoolRef
+	dst.SchedulerHintAdditionalProperties = previous.SchedulerHintAdditionalProperties
 
 	if len(dst.SecurityGroups) == len(previous.SecurityGroups) {
 		for i := range dst.SecurityGroups {
@@ -373,7 +374,6 @@ func Convert_v1beta1_OpenStackMachineSpec_To_v1alpha6_OpenStackMachineSpec(in *i
 	}
 
 	if in.IdentityRef != nil {
-		out.IdentityRef = &OpenStackIdentityReference{Name: in.IdentityRef.Name}
 		out.CloudName = in.IdentityRef.CloudName
 	}
 

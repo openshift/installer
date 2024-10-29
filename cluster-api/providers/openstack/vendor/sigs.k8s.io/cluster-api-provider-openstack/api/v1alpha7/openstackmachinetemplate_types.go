@@ -26,11 +26,13 @@ type OpenStackMachineTemplateSpec struct {
 }
 
 // +genclient
-// +genclient:Namespaced
 // +kubebuilder:object:root=true
+// +kubebuilder:deprecatedversion:warning="The v1alpha7 version of OpenStackMachineTemplate has been deprecated and will be removed in a future release."
 // +kubebuilder:resource:path=openstackmachinetemplates,scope=Namespaced,categories=cluster-api,shortName=osmt
 
 // OpenStackMachineTemplate is the Schema for the openstackmachinetemplates API.
+//
+// Deprecated: v1alpha7.OpenStackMachineTemplate has been replaced by v1beta1.OpenStackMachineTemplate.
 type OpenStackMachineTemplate struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -41,6 +43,8 @@ type OpenStackMachineTemplate struct {
 // +kubebuilder:object:root=true
 
 // OpenStackMachineTemplateList contains a list of OpenStackMachineTemplate.
+//
+// Deprecated: v1alpha7.OpenStackMachineTemplateList has been replaced by v1beta1.OpenStackMachineTemplateList.
 type OpenStackMachineTemplateList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

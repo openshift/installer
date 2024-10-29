@@ -22,6 +22,7 @@ import (
 	"hash/fnv"
 
 	"github.com/davecgh/go-spew/spew"
+	"k8s.io/apimachinery/pkg/util/dump"
 )
 
 // SpewHashObject writes specified object to hash using the spew library
@@ -49,4 +50,13 @@ func ComputeSpewHash(objectToWrite interface{}) (uint32, error) {
 		return 0, err
 	}
 	return instanceSpecHasher.Sum32(), nil
+}
+
+// DeepHashObject writes specified object to hash using the spew library
+// which follows pointers and prints actual values of the nested objects
+// ensuring the hash does not change when a pointer changes.
+// This function is taken from https://github.com/kubernetes/kubernetes/blob/v1.29.2/pkg/util/hash/hash.go#L26-L32
+func DeepHashObject(hasher hash.Hash, objectToWrite interface{}) {
+	hasher.Reset()
+	fmt.Fprintf(hasher, "%v", dump.ForHash(objectToWrite))
 }

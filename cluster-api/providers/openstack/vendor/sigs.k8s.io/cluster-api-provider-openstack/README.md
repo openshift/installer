@@ -35,43 +35,15 @@ previous cluster managers such as [kops][kops] and
 
 ------
 
-## Compatibility with Cluster API and Kubernetes Versions
+## Compatibility with Cluster API
 
 This provider's versions are compatible with the following versions of Cluster API:
 
 |                                    | v1beta1 (v1.x) |
 |------------------------------------| -------------- |
-| OpenStack Provider v1alpha5 (v0.6) | ✓              |
 | OpenStack Provider v1alpha6 (v0.7) | ✓              |
 | OpenStack Provider v1alpha7 (v0.9) | ✓              |
 | OpenStack Provider v1beta1         | ✓              |
-
-
-This provider's versions are able to install and manage the following versions of Kubernetes:
-
-|                                    | v1.25 | v1.26 | v1.27 | v1.28 |
-|------------------------------------| ----- | ----- | ----- | ----- |
-| OpenStack Provider v1alpha5 (v0.6) | ✓     | +     | +     | +     |
-| OpenStack Provider v1alpha6 (v0.7) | ✓     | ✓     | ✓     | +     |
-| OpenStack Provider v1alpha7 (v0.9) | +     | ✓     | ✓     | ★     |
-| OpenStack Provider v1beta1         | +     | ✓     | ✓     | ★     |
-
-This provider's versions are able to install Kubernetes to the following versions of OpenStack:
-
-|                                    | Queens | Rocky | Stein | Train | Ussuri | Victoria | Wallaby | Xena | Yoga | Bobcat |
-|------------------------------------| ------ | ----- | ----- | ----- | ------ | -------- | ------- | ---- | ---- | ------ |
-| OpenStack Provider v1alpha5 (v0.6) | +      | +     | +     | +     | +      | ✓        | ✓       | ✓    | ✓    | ★      |
-| OpenStack Provider v1alpha6 (v0.7) | +      | +     | +     | +     | +      | ✓        | ✓       | ✓    | ✓    | ★      |
-| OpenStack Provider v1alpha7 (v0.9) |        | +     | +     | +     | +      | ✓        | ✓       | ✓    | ✓    | ★      |
-| OpenStack Provider v1beta1         |        | +     | +     | +     | +      | ✓        | ✓       | ✓    | ✓    | ★      |
-
-Test status:
-
-- `★` currently testing
-- `✓` previously tested
-- `+` should work, but we weren't able to test it
-
-Older versions may also work but we have not verified.
 
 Each version of Cluster API for OpenStack will attempt to support two Kubernetes versions.
 
@@ -124,7 +96,11 @@ involved:
 - via the [SIG-Cluster-Lifecycle Mailing List](https://groups.google.com/forum/#!forum/kubernetes-sig-cluster-lifecycle).
 - during our Office Hours
   - bi-weekly on Wednesdays @ 14:00 UTC on Zoom (link in meeting notes)
-  - Previous meetings: [ [notes][office-hours-notes] | [recordings][office-hours-recordings] ]
+  - Previous meetings:
+    - [notes this year][office-hours-notes]
+    - [notes in 2023][office-hours-notes-2023]
+    - [notes in 2022][office-hours-notes-2022]
+    - [recordings][office-hours-recordings]
 
 In the interest of getting more new people involved we try to tag issues with
 [`good first issue`][good_first_issue].
@@ -180,7 +156,9 @@ We also use the issue tracker to track features. If you have an idea for a featu
 [kops]: https://github.com/kubernetes/kops
 [kubicorn]: http://kubicorn.io/
 [slack]: https://kubernetes.slack.com/messages/cluster-api-openstack
-[office-hours-notes]: https://docs.google.com/document/d/1hzi6nr04mhQYBKrwL2NDTNPvgI4RgO9a-gqmk31kXMA/edit
+[office-hours-notes]: https://cluster-api-openstack.sigs.k8s.io/agenda
+[office-hours-notes-2023]: https://cluster-api-openstack.sigs.k8s.io/agenda/2023.html
+[office-hours-notes-2022]: https://cluster-api-openstack.sigs.k8s.io/agenda/2022.html
 [office-hours-recordings]: https://www.youtube.com/playlist?list=PL69nYSiGNLP29D0nYgAGWt1ZFqS9Z7lw4
 [good_first_issue]: https://github.com/kubernetes-sigs/cluster-api-provider-openstack/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3A%22good+first+issue%22
 [prow]: https://go.k8s.io/bot-commands
