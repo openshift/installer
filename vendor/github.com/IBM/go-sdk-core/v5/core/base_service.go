@@ -919,7 +919,7 @@ func IBMCloudSDKRetryPolicy(ctx context.Context, resp *http.Response, err error)
 		return true, nil
 	}
 
-	GetLogger().Debug("No retry for status code: %d\n")
+	GetLogger().Debug("No retry for status code: %d\n", resp.StatusCode)
 	return false, nil
 }
 

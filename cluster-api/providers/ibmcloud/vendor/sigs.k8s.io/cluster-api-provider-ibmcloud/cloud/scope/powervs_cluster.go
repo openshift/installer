@@ -1955,6 +1955,8 @@ func (s *PowerVSClusterScope) ReconcileLoadBalancers() (bool, error) {
 		loadBalancers = append(loadBalancers, s.IBMPowerVSCluster.Spec.LoadBalancers...)
 	}
 
+	isAnyLoadBalancerNotReady := false
+
 	for index, loadBalancer := range loadBalancers {
 		var loadBalancerID *string
 		if loadBalancer.ID != nil {
@@ -1974,8 +1976,9 @@ func (s *PowerVSClusterScope) ReconcileLoadBalancers() (bool, error) {
 				return false, err
 			}
 
-			if requeue := s.checkLoadBalancerStatus(*loadBalancer); requeue {
-				return requeue, nil
+			if isReady := s.checkLoadBalancerStatus(*loadBalancer); !isReady {
+				s.V(3).Info("LoadBalancer is still not Active", "name", *loadBalancer.Name, "state", *loadBalancer.ProvisioningStatus)
+				isAnyLoadBalancerNotReady = true
 			}
 
 			loadBalancerStatus := infrav1beta2.VPCLoadBalancerStatus{
@@ -2012,25 +2015,26 @@ func (s *PowerVSClusterScope) ReconcileLoadBalancers() (bool, error) {
 		}
 		s.Info("Created VPC load balancer", "loadBalancerID", loadBalancerStatus.ID)
 		s.SetLoadBalancerStatus(loadBalancer.Name, *loadBalancerStatus)
+		isAnyLoadBalancerNotReady = true
+	}
+	if isAnyLoadBalancerNotReady {
 		return false, nil
 	}
 	return true, nil
 }
 
 // checkLoadBalancerStatus checks the state of a VPC load balancer.
-// If state is pending, true is returned indicating a requeue for reconciliation.
-// In all other cases, it returns false.
+// If state is active, true is returned, in all other cases, it returns false indicating that load balancer is still not ready.
 func (s *PowerVSClusterScope) checkLoadBalancerStatus(lb vpcv1.LoadBalancer) bool {
 	s.V(3).Info("Checking the status of VPC load balancer", "name", *lb.Name)
 	switch *lb.ProvisioningStatus {
 	case string(infrav1beta2.VPCLoadBalancerStateActive):
 		s.V(3).Info("VPC load balancer is in active state")
+		return true
 	case string(infrav1beta2.VPCLoadBalancerStateCreatePending):
 		s.V(3).Info("VPC load balancer creation is in pending state")
-		return true
 	case string(infrav1beta2.VPCLoadBalancerStateUpdatePending):
 		s.V(3).Info("VPC load balancer is in updating state")
-		return true
 	}
 	return false
 }
