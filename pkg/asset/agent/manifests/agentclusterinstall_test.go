@@ -14,7 +14,6 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
-	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
@@ -104,7 +103,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	installConfigWExternalOCIPlatform := getValidOptionalInstallConfig()
 	installConfigWExternalOCIPlatform.Config.Platform = types.Platform{
 		External: &externaltype.Platform{
-			PlatformName:           string(models.PlatformTypeOci),
+			PlatformName:           externaltype.ExternalPlatformNameOci,
 			CloudControllerManager: externaltype.CloudControllerManagerTypeExternal,
 		},
 	}
@@ -118,7 +117,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	goodExternalOCIPlatformACI.Spec.Networking.UserManagedNetworking = &val
 	goodExternalOCIPlatformACI.Spec.PlatformType = hiveext.ExternalPlatformType
 	goodExternalOCIPlatformACI.Spec.ExternalPlatformSpec = &hiveext.ExternalPlatformSpec{
-		PlatformName: string(models.PlatformTypeOci),
+		PlatformName: externaltype.ExternalPlatformNameOci,
 	}
 	goodExternalOCIPlatformACI.SetAnnotations(map[string]string{
 		installConfigOverrides: `{"platform":{"external":{"platformName":"oci","cloudControllerManager":"External"}}}`,
@@ -405,7 +404,7 @@ spec:
 					IngressVIP:   "192.168.111.4",
 					PlatformType: hiveext.ExternalPlatformType,
 					ExternalPlatformSpec: &hiveext.ExternalPlatformSpec{
-						PlatformName: string(models.PlatformTypeOci),
+						PlatformName: externaltype.ExternalPlatformNameOci,
 					},
 					ClusterDeploymentRef: corev1.LocalObjectReference{
 						Name: "ostest",

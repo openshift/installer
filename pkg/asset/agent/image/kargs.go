@@ -7,11 +7,11 @@ import (
 	"github.com/sirupsen/logrus"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
-	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	external "github.com/openshift/installer/pkg/types/external"
 )
 
 // Kargs is an Asset that generates the additional kernel args.
@@ -40,8 +40,8 @@ func (a *Kargs) Generate(_ context.Context, dependencies asset.Parents) error {
 	case workflow.AgentWorkflowTypeInstall:
 		a.fips = agentClusterInstall.FIPSEnabled()
 		// Add kernel args for external oci platform
-		if agentClusterInstall.GetExternalPlatformName() == string(models.PlatformTypeOci) {
-			logrus.Debugf("Added kernel args to enable serial console for %s %s platform", hiveext.ExternalPlatformType, string(models.PlatformTypeOci))
+		if agentClusterInstall.GetExternalPlatformName() == external.ExternalPlatformNameOci {
+			logrus.Debugf("Added kernel args to enable serial console for %s %s platform", hiveext.ExternalPlatformType, external.ExternalPlatformNameOci)
 			a.consoleArgs = " console=ttyS0"
 		}
 
