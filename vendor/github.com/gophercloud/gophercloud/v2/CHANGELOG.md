@@ -1,3 +1,14 @@
+## v2.1.0 (2024-07-24)
+
+* [GH-3078](https://github.com/gophercloud/gophercloud/pull/3078) [networking]: add BGP VPNs support
+* [GH-3086](https://github.com/gophercloud/gophercloud/pull/3086) build(deps): bump golang.org/x/crypto from 0.24.0 to 0.25.0
+* [GH-3090](https://github.com/gophercloud/gophercloud/pull/3090) Adding support for  field dns_publish_fixed_ip in a subnet
+* [GH-3092](https://github.com/gophercloud/gophercloud/pull/3092) [neutron]: introduce Stateful argument for the security groups
+* [GH-3094](https://github.com/gophercloud/gophercloud/pull/3094) [neutron]: introduce Description argument for the portforwarding
+* [GH-3106](https://github.com/gophercloud/gophercloud/pull/3106) clouds: Parse trust_id from clouds.yaml
+* [GH-3131](https://github.com/gophercloud/gophercloud/pull/3131) Align ServiceFail provisioning state value with Ironic
+* [GH-3136](https://github.com/gophercloud/gophercloud/pull/3136) Added node.Retired
+
 ## v2.0.0 (2024-05-27)
 
 MAIN BREAKING CHANGES:

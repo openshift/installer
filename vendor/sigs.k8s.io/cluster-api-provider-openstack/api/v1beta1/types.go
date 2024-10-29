@@ -28,7 +28,13 @@ type OpenStackMachineTemplateResource struct {
 	Spec OpenStackMachineSpec `json:"spec"`
 }
 
-// ImageParam describes a glance image. It can be specified by ID or filter.
+type ResourceReference struct {
+	// Name is the name of the referenced resource
+	Name string `json:"name"`
+}
+
+// ImageParam describes a glance image. It can be specified by ID, filter, or a
+// reference to an ORC Image.
 // +kubebuilder:validation:MaxProperties:=1
 // +kubebuilder:validation:MinProperties:=1
 type ImageParam struct {
@@ -42,6 +48,11 @@ type ImageParam struct {
 	// be raised.
 	// +optional
 	Filter *ImageFilter `json:"filter,omitempty"`
+
+	// ImageRef is a reference to an ORC Image in the same namespace as the
+	// referring object.
+	// +optional
+	ImageRef *ResourceReference `json:"imageRef,omitempty"`
 }
 
 // ImageFilter describes a query for an image.
@@ -422,6 +433,8 @@ type PortStatus struct {
 
 type BindingProfile struct {
 	// OVSHWOffload enables or disables the OVS hardware offload feature.
+	// This flag is not required on OpenStack clouds since Yoga as Nova will set it automatically when the port is attached.
+	// See: https://bugs.launchpad.net/nova/+bug/2020813
 	// +optional
 	OVSHWOffload *bool `json:"ovsHWOffload,omitempty"`
 
@@ -862,6 +875,10 @@ type APIServerLoadBalancer struct {
 	// AvailabilityZone is the failure domain that will be used to create the APIServerLoadBalancer Spec.
 	//+optional
 	AvailabilityZone optional.String `json:"availabilityZone,omitempty"`
+
+	// Flavor is the flavor name that will be used to create the APIServerLoadBalancer Spec.
+	//+optional
+	Flavor optional.String `json:"flavor,omitempty"`
 }
 
 func (s *APIServerLoadBalancer) IsZero() bool {
@@ -882,6 +899,10 @@ type ResolvedMachineSpec struct {
 	// ImageID is the ID of the image to use for the machine and is calculated based on ImageFilter.
 	// +optional
 	ImageID string `json:"imageID,omitempty"`
+
+	// FlavorID is the ID of the flavor to use.
+	// +optional
+	FlavorID string `json:"flavorID,omitempty"`
 
 	// Ports is the fully resolved list of ports to create for the machine.
 	// +optional
