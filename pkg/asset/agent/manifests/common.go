@@ -1,6 +1,8 @@
 package manifests
 
 import (
+	"fmt"
+
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/types"
@@ -19,11 +21,20 @@ func getPullSecretName(clusterName string) string {
 	return clusterName + "-pull-secret"
 }
 
-func getProxy(proxy *types.Proxy) *aiv1beta1.Proxy {
+func getProxy(proxy *types.Proxy, rendezvousIP string) *aiv1beta1.Proxy {
+	// if proxy set add the rendezvousIP to noproxy
+	noProxy := proxy.NoProxy
+	if (proxy.HTTPProxy != "" || proxy.HTTPSProxy != "") && rendezvousIP != "" {
+		if noProxy == "" {
+			noProxy = rendezvousIP
+		} else {
+			noProxy = fmt.Sprintf("%s,%s", noProxy, rendezvousIP)
+		}
+	}
 	return &aiv1beta1.Proxy{
 		HTTPProxy:  proxy.HTTPProxy,
 		HTTPSProxy: proxy.HTTPSProxy,
-		NoProxy:    proxy.NoProxy,
+		NoProxy:    noProxy,
 	}
 }
 
