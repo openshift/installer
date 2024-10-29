@@ -969,7 +969,7 @@ func (m *PowerVSMachineScope) GetMachineInternalIP() string {
 	return ""
 }
 
-// CreateVPCLoadBalancerPoolMember creates a member in load balaner pool.
+// CreateVPCLoadBalancerPoolMember creates a member in load balancer pool.
 func (m *PowerVSMachineScope) CreateVPCLoadBalancerPoolMember() (*vpcv1.LoadBalancerPoolMember, error) { //nolint:gocyclo
 	loadBalancers := make([]infrav1beta2.VPCLoadBalancerSpec, 0)
 	if len(m.IBMPowerVSCluster.Spec.LoadBalancers) == 0 {
