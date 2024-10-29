@@ -39,10 +39,10 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	})
 
 	installConfigWithProxy := getValidOptionalInstallConfig()
-	installConfigWithProxy.Config.Proxy = (*types.Proxy)(getProxy(getProxyValidOptionalInstallConfig().Config.Proxy))
+	installConfigWithProxy.Config.Proxy = (*types.Proxy)(getProxy(getProxyValidOptionalInstallConfig().Config.Proxy, ""))
 
 	goodProxyACI := getGoodACI()
-	goodProxyACI.Spec.Proxy = (*hiveext.Proxy)(getProxy(getProxyValidOptionalInstallConfig().Config.Proxy))
+	goodProxyACI.Spec.Proxy = (*hiveext.Proxy)(getProxy(getProxyValidOptionalInstallConfig().Config.Proxy, "192.168.122.2"))
 
 	goodACIDualStackVIPs := getGoodACIDualStack()
 	goodACIDualStackVIPs.Spec.APIVIPs = []string{"192.168.122.10", "2001:db8:1111:2222:ffff:ffff:ffff:cafe"}
@@ -141,6 +141,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				&agent.OptionalInstallConfig{},
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedError: "missing configuration or manifest file",
 		},
@@ -150,6 +151,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getValidOptionalInstallConfig(),
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodACI,
 		},
@@ -159,6 +161,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWithoutNetworkType,
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodACI,
 		},
@@ -168,6 +171,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWithFIPS,
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodFIPSACI,
 		},
@@ -177,6 +181,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWithProxy,
 				&agentconfig.AgentHosts{},
+				getValidAgentConfig(),
 			},
 			expectedConfig: goodProxyACI,
 		},
@@ -186,6 +191,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getValidOptionalInstallConfigDualStack(),
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: getGoodACIDualStack(),
 		},
@@ -195,6 +201,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getValidOptionalInstallConfigDualStackDualVIPs(),
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodACIDualStackVIPs,
 		},
@@ -204,6 +211,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWithCapabilities,
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodCapabilitiesACI,
 		},
@@ -213,6 +221,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWithNetworkOverride,
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodNetworkOverrideACI,
 		},
@@ -222,6 +231,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWithCPUPartitioning,
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodCPUPartitioningACI,
 		},
@@ -231,6 +241,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWExternalPlatform,
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodExternalPlatformACI,
 		},
@@ -240,6 +251,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWExternalOCIPlatform,
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodExternalOCIPlatformACI,
 		},
@@ -249,6 +261,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getValidOptionalInstallConfigWithProvisioning(),
 				getAgentHostsWithBMCConfig(),
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodBaremetalPlatformBMCACI,
 		},

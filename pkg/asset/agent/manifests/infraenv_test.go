@@ -91,7 +91,7 @@ func TestInfraEnv_Generate(t *testing.T) {
 					Namespace: getProxyValidOptionalInstallConfig().ClusterNamespace(),
 				},
 				Spec: aiv1beta1.InfraEnvSpec{
-					Proxy:            getProxy(getProxyValidOptionalInstallConfig().Config.Proxy),
+					Proxy:            getProxy(getProxyValidOptionalInstallConfig().Config.Proxy, "192.168.122.2"),
 					SSHAuthorizedKey: strings.Trim(testSSHKey, "|\n\t"),
 					PullSecretRef: &corev1.LocalObjectReference{
 						Name: getPullSecretName(getProxyValidOptionalInstallConfig().ClusterName()),
@@ -124,7 +124,7 @@ func TestInfraEnv_Generate(t *testing.T) {
 					Namespace: getProxyValidOptionalInstallConfig().ClusterNamespace(),
 				},
 				Spec: aiv1beta1.InfraEnvSpec{
-					Proxy:            getProxy(getProxyValidOptionalInstallConfig().Config.Proxy),
+					Proxy:            getProxy(getProxyValidOptionalInstallConfig().Config.Proxy, "192.168.122.2"),
 					SSHAuthorizedKey: strings.Trim(testSSHKey, "|\n\t"),
 					PullSecretRef: &corev1.LocalObjectReference{
 						Name: getPullSecretName(getProxyValidOptionalInstallConfig().ClusterName()),

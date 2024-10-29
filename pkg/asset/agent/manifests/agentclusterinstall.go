@@ -130,6 +130,7 @@ func (*AgentClusterInstall) Dependencies() []asset.Asset {
 		&workflow.AgentWorkflow{},
 		&agent.OptionalInstallConfig{},
 		&agentconfig.AgentHosts{},
+		&agentconfig.AgentConfig{},
 	}
 }
 
@@ -140,7 +141,8 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 	agentWorkflow := &workflow.AgentWorkflow{}
 	installConfig := &agent.OptionalInstallConfig{}
 	agentHosts := &agentconfig.AgentHosts{}
-	dependencies.Get(agentWorkflow, agentHosts, installConfig)
+	agentConfig := &agentconfig.AgentConfig{}
+	dependencies.Get(agentWorkflow, agentHosts, installConfig, agentConfig)
 
 	// This manifest is not required for AddNodes workflow
 	if agentWorkflow.Workflow == workflow.AgentWorkflowTypeAddNodes {
@@ -227,7 +229,12 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 		}
 
 		if installConfig.Config.Proxy != nil {
-			agentClusterInstall.Spec.Proxy = (*hiveext.Proxy)(getProxy(installConfig.Config.Proxy))
+			rendezvousIP := ""
+			if agentConfig.Config != nil {
+				rendezvousIP = agentConfig.Config.RendezvousIP
+			}
+
+			agentClusterInstall.Spec.Proxy = (*hiveext.Proxy)(getProxy(installConfig.Config.Proxy, rendezvousIP))
 		}
 
 		if installConfig.Config.Platform.BareMetal != nil {
