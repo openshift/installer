@@ -536,6 +536,8 @@ func Convert_v1alpha7_OpenStackIdentityReference_To_v1beta1_OpenStackIdentityRef
 
 func Convert_v1beta1_OpenStackIdentityReference_To_v1alpha7_OpenStackIdentityReference(in *infrav1.OpenStackIdentityReference, out *OpenStackIdentityReference, _ apiconversion.Scope) error {
 	out.Name = in.Name
+	// Kind will be overwritten during restore if it was previously set to some other value, but if not then some value is still required
+	out.Kind = "Secret"
 	return nil
 }
 

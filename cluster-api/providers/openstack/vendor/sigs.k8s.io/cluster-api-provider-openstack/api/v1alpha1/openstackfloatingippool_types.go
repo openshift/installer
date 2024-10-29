@@ -127,6 +127,13 @@ func (r *OpenStackFloatingIPPool) GetFloatingIPTag() string {
 	return fmt.Sprintf("cluster-api-provider-openstack-fip-pool-%s", r.Name)
 }
 
+var _ infrav1.IdentityRefProvider = &OpenStackFloatingIPPool{}
+
+// GetIdentifyRef returns the FloatingIPPool's namespace and IdentityRef.
+func (r *OpenStackFloatingIPPool) GetIdentityRef() (*string, *infrav1.OpenStackIdentityReference) {
+	return &r.Namespace, &r.Spec.IdentityRef
+}
+
 func init() {
 	SchemeBuilder.Register(&OpenStackFloatingIPPool{}, &OpenStackFloatingIPPoolList{})
 }

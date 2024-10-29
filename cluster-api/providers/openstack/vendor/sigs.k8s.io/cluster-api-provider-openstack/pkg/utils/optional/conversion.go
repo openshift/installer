@@ -32,6 +32,12 @@ func RestoreInt(previous, dst *Int) {
 	}
 }
 
+func RestoreUInt16(previous, dst *UInt16) {
+	if *dst == nil || **dst == 0 {
+		*dst = *previous
+	}
+}
+
 func RestoreBool(previous, dst *Bool) {
 	if *dst == nil || !**dst {
 		*dst = *previous
@@ -70,6 +76,24 @@ func Convert_int_To_optional_Int(in *int, out *Int, _ conversion.Scope) error {
 }
 
 func Convert_optional_Int_To_int(in *Int, out *int, _ conversion.Scope) error {
+	if *in == nil {
+		*out = 0
+	} else {
+		*out = **in
+	}
+	return nil
+}
+
+func Convert_uint16_To_optional_UInt16(in *uint16, out *UInt16, _ conversion.Scope) error {
+	if *in == 0 {
+		*out = nil
+	} else {
+		*out = in
+	}
+	return nil
+}
+
+func Convert_optional_UInt16_To_uint16(in *UInt16, out *uint16, _ conversion.Scope) error {
 	if *in == nil {
 		*out = 0
 	} else {

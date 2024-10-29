@@ -19,7 +19,7 @@ package mock
 import (
 	// Runtime dependency of mockgen, required when using vendoring so go mod knows
 	// to pull it in.
-	_ "github.com/golang/mock/mockgen/model"
+	_ "go.uber.org/mock/mockgen/model"
 )
 
 //go:generate mockgen -package mock -destination=compute.go sigs.k8s.io/cluster-api-provider-openstack/pkg/clients ComputeClient

@@ -17,17 +17,12 @@ limitations under the License.
 package patch
 
 import (
-	"strings"
-
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type patchType string
-
-func (p patchType) Key() string {
-	return strings.Split(string(p), ".")[0]
-}
 
 const (
 	specPatch   patchType = "spec"
@@ -47,7 +42,9 @@ func unstructuredHasStatus(u *unstructured.Unstructured) bool {
 	return ok
 }
 
-func toUnstructured(obj runtime.Object) (*unstructured.Unstructured, error) {
+// toUnstructured converts an object to Unstructured.
+// We have to pass in a gvk as we can't rely on GVK being set in a runtime.Object.
+func toUnstructured(obj runtime.Object, gvk schema.GroupVersionKind) (*unstructured.Unstructured, error) {
 	// If the incoming object is already unstructured, perform a deep copy first
 	// otherwise DefaultUnstructuredConverter ends up returning the inner map without
 	// making a copy.
@@ -58,7 +55,10 @@ func toUnstructured(obj runtime.Object) (*unstructured.Unstructured, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &unstructured.Unstructured{Object: rawMap}, nil
+	u := &unstructured.Unstructured{Object: rawMap}
+	u.SetGroupVersionKind(gvk)
+
+	return u, nil
 }
 
 // unsafeUnstructuredCopy returns a shallow copy of the unstructured object given as input.
@@ -75,8 +75,20 @@ func unsafeUnstructuredCopy(obj *unstructured.Unstructured, focus patchType, isC
 	for key := range obj.Object {
 		value := obj.Object[key]
 
-		// Perform a shallow copy only for the keys we're interested in, or the ones that should be always preserved.
-		if key == focus.Key() || preserveUnstructuredKeys[key] {
+		preserve := false
+		switch focus {
+		case specPatch:
+			// For what we define as `spec` fields, we should preserve everything
+			// that's not `status`.
+			preserve = key != string(statusPatch)
+		case statusPatch:
+			// For status, only preserve the status fields.
+			preserve = key == string(focus)
+		}
+
+		// Perform a shallow copy only for the keys we're interested in,
+		// or the ones that should be always preserved (like metadata).
+		if preserve || preserveUnstructuredKeys[key] {
 			res.Object[key] = value
 		}
 

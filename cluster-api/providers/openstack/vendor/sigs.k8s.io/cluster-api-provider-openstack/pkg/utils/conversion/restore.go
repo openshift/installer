@@ -24,8 +24,9 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
-	hashutils "k8s.io/kubernetes/pkg/util/hash"
 	utilconversion "sigs.k8s.io/cluster-api/util/conversion"
+
+	hasher "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/hash"
 )
 
 // RestorerFor holds all field restorers for a given type T.
@@ -123,7 +124,7 @@ func (r hashedFieldRestorer[T, F]) getHash(obj T) []byte {
 
 	table := crc64.MakeTable(crc64.ECMA)
 	hash := crc64.New(table)
-	hashutils.DeepHashObject(hash, f)
+	hasher.DeepHashObject(hash, f)
 	return hash.Sum(make([]byte, 0, 8))
 }
 

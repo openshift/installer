@@ -184,16 +184,21 @@ func restorev1alpha6MachineSpec(previous *OpenStackMachineSpec, dst *OpenStackMa
 
 func restorev1beta1MachineSpec(previous *infrav1.OpenStackMachineSpec, dst *infrav1.OpenStackMachineSpec) {
 	// PropagateUplinkStatus has been added in v1beta1.
-	// We restore the whole Ports since they are anyway immutable.
-	dst.Ports = previous.Ports
 	dst.AdditionalBlockDevices = previous.AdditionalBlockDevices
 	dst.ServerGroup = previous.ServerGroup
 	dst.Image = previous.Image
 	dst.FloatingIPPoolRef = previous.FloatingIPPoolRef
+	dst.SchedulerHintAdditionalProperties = previous.SchedulerHintAdditionalProperties
 
 	if len(dst.SecurityGroups) == len(previous.SecurityGroups) {
 		for i := range dst.SecurityGroups {
 			restorev1beta1SecurityGroupParam(&previous.SecurityGroups[i], &dst.SecurityGroups[i])
+		}
+	}
+
+	if len(dst.Ports) == len(previous.Ports) {
+		for i := range dst.Ports {
+			restorev1beta1Port(&previous.Ports[i], &dst.Ports[i])
 		}
 	}
 
@@ -373,7 +378,6 @@ func Convert_v1beta1_OpenStackMachineSpec_To_v1alpha6_OpenStackMachineSpec(in *i
 	}
 
 	if in.IdentityRef != nil {
-		out.IdentityRef = &OpenStackIdentityReference{Name: in.IdentityRef.Name}
 		out.CloudName = in.IdentityRef.CloudName
 	}
 

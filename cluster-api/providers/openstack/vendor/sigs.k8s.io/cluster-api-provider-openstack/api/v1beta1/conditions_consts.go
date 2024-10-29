@@ -42,6 +42,8 @@ const (
 	InstanceDeleteFailedReason = "InstanceDeleteFailed"
 	// OpenstackErrorReason used when there is an error communicating with OpenStack.
 	OpenStackErrorReason = "OpenStackError"
+	// DependencyFailedReason indicates that a dependent object failed.
+	DependencyFailedReason = "DependencyFailed"
 )
 
 const (
