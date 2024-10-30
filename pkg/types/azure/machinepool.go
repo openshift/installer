@@ -56,6 +56,12 @@ type MachinePool struct {
 	// +optional
 	VMNetworkingType string `json:"vmNetworkingType,omitempty"`
 
+	// BootDiagnostics has the value for the storage account URI where the
+	// machine log information of the control plane is sent to.
+	// Defaults to managed for control plane if no value is mentioned.
+	// +optional
+	BootDiagnostics *BootDiagnostics `json:"bootDiagnostics,omitempty"`
+
 	// OSImage defines the image to use for the OS.
 	// +optional
 	OSImage OSImage `json:"osImage,omitempty"`
@@ -147,6 +153,27 @@ const (
 	VMnetworkingTypeAccelerated VMNetworkingCapability = "Accelerated"
 )
 
+// BootDiagnostics defines the option to set the collection of logs from
+// the machines created.
+type BootDiagnostics struct {
+	// Type specifies the boot diagnostics type for the machines created.
+	// Defaults as disabled for compute nodes and as managed for control plane
+	// nodes.
+	// Values allowed are Disabled, Managed and UserManaged.
+	// +kubebuilder:validation:Enum=Disabled;Managed;UserManaged
+	Type capz.BootDiagnosticsStorageAccountType `json:"type"`
+
+	// ResourceGroup specifies the name of the resource group where the
+	// storage account to be used for diagnostics storage is present.
+	// Only used if the type is set to UserManaged.
+	ResourceGroup string `json:"resourceGroup"`
+
+	// StorageAccountName specifies the storage account where the diagnostics
+	// logs need to be stored.
+	// Only used if the type is set to UserManaged.
+	StorageAccountName string `json:"storageAccountName"`
+}
+
 // Set sets the values from `required` to `a`.
 func (a *MachinePool) Set(required *MachinePool) {
 	if required == nil || a == nil {
@@ -192,6 +219,10 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 	if required.OSDisk.SecurityProfile != nil {
 		a.OSDisk.SecurityProfile = required.OSDisk.SecurityProfile
+	}
+
+	if required.BootDiagnostics != nil {
+		a.BootDiagnostics = required.BootDiagnostics
 	}
 
 	if required.Settings != nil {

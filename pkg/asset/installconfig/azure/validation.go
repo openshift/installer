@@ -17,6 +17,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/types"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
@@ -56,6 +57,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 		allErrs = append(allErrs, validateAzureStackClusterOSImage(StorageEndpointSuffix, ic.Azure.ClusterOSImage, field.NewPath("platform").Child("azure"))...)
 	}
 	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
+	allErrs = append(allErrs, validateBootDiagnostics(client, ic)...)
 	return allErrs.ToAggregate()
 }
 
@@ -931,4 +933,54 @@ func validateAzureStackDiskType(_ API, installConfig *types.InstallConfig) field
 	}
 
 	return allErrs
+}
+
+func validateBootDiagnostics(client API, ic *types.InstallConfig) (allErrs field.ErrorList) {
+	if ic.Azure.DefaultMachinePlatform != nil {
+		bootDiag := ic.Azure.DefaultMachinePlatform.BootDiagnostics
+		if err := checkBootDiagnosticsURI(client, bootDiag, ic.Platform.Azure.Region); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("platform", "azure", "defaultMachinePlatform",
+				"bootDiagnostics"), bootDiag, err.Error()))
+		}
+	}
+
+	if ic.ControlPlane != nil && ic.ControlPlane.Platform.Azure != nil {
+		bootDiag := ic.ControlPlane.Platform.Azure.BootDiagnostics
+		if err := checkBootDiagnosticsURI(client, bootDiag, ic.Platform.Azure.Region); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("platform", "azure", "controlPlane",
+				"bootDiagnostics"), bootDiag, err.Error()))
+		}
+	}
+
+	if ic.Compute != nil {
+		for inx, compute := range ic.Compute {
+			if compute.Platform.Azure == nil {
+				continue
+			}
+			bootDiag := compute.Platform.Azure.BootDiagnostics
+			if err := checkBootDiagnosticsURI(client, bootDiag, ic.Platform.Azure.Region); err != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("platform", "azure", fmt.Sprintf("compute[%d]", inx),
+					"bootDiagnostics"), bootDiag, err.Error()))
+			}
+		}
+	}
+	return allErrs
+}
+
+func checkBootDiagnosticsURI(client API, diag *aztypes.BootDiagnostics, region string) error {
+	missingErrorMessage := "missing %s for user managed boot diagnostics"
+	errorField := ""
+	if diag != nil && diag.Type == capz.UserManagedDiagnosticsStorage {
+		if diag.StorageAccountName != "" && diag.ResourceGroup != "" {
+			return client.CheckIfExistsStorageAccount(context.TODO(), diag.ResourceGroup, diag.StorageAccountName, region)
+		}
+		if diag.ResourceGroup == "" {
+			errorField += "resource group, "
+		}
+		if diag.StorageAccountName == "" {
+			errorField += "storage account name, "
+		}
+		return fmt.Errorf(missingErrorMessage, errorField[:len(errorField)-2])
+	}
+	return nil
 }

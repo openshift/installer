@@ -82,6 +82,31 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 		}
 	}
 
+	if p.BootDiagnostics != nil {
+		validValues := sets.NewString(string(capz.DisabledDiagnosticsStorage), string(capz.ManagedDiagnosticsStorage), string(capz.UserManagedDiagnosticsStorage))
+		if !validValues.Has(string(p.BootDiagnostics.Type)) {
+			allErrs = append(allErrs, field.NotSupported(fldPath.Child("bootDiagnostics").Child("type"), p.BootDiagnostics.Type, validValues.List()))
+		}
+		if p.BootDiagnostics.Type == capz.ManagedDiagnosticsStorage && platform.CloudName == azure.StackCloud {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("bootDiagnostics").Child("StorageAccountURI"), p.BootDiagnostics.Type, "managed type not supported by azure stack. Use UserManaged instead."))
+		}
+		if p.BootDiagnostics.Type != capz.UserManagedDiagnosticsStorage {
+			if p.BootDiagnostics.ResourceGroup != "" {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("bootDiagnostics").Child("ResourceGroup"), p.BootDiagnostics.ResourceGroup, "resourceGroup can only be specified if type is set to UserManaged."))
+			}
+			if p.BootDiagnostics.StorageAccountName != "" {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("bootDiagnostics").Child("StorageAccountName"), p.BootDiagnostics.StorageAccountName, "storageAccountName can only be specified if type is set to UserManaged."))
+			}
+		} else if p.BootDiagnostics.Type == capz.UserManagedDiagnosticsStorage {
+			if p.BootDiagnostics.ResourceGroup == "" {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("bootDiagnostics").Child("ResourceGroup"), p.BootDiagnostics.ResourceGroup, "resourceGroup must be specified if type is set to UserManaged."))
+			}
+			if p.BootDiagnostics.StorageAccountName == "" {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("bootDiagnostics").Child("StorageAccountName"), p.BootDiagnostics.StorageAccountName, "storageAccountName must be specified if type is set to UserManaged."))
+			}
+		}
+	}
+
 	allErrs = append(allErrs, validateOSImage(p, fldPath)...)
 	allErrs = append(allErrs, validateIdentity(poolName, p, fldPath.Child("identity"))...)
 

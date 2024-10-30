@@ -111,10 +111,22 @@ func (g *Gather) Run() error {
 	}
 
 	// We can only get the serial log from VM's with boot diagnostics enabled
-	bootDiagnostics := getBootDiagnostics(ctx, virtualMachines, g)
+	bootDiagnostics, customStorageURI := getBootDiagnostics(ctx, virtualMachines, g)
 	if len(bootDiagnostics) == 0 {
 		g.logger.Debug("No boot logs found")
 		return nil
+	}
+	if customStorageURI != "" {
+		storageAccount := strings.Split(strings.TrimPrefix(customStorageURI, "https://"), ".")[0]
+		account, err := getAccountsByName(ctx, storageAccount, g)
+		if err != nil {
+			return err
+		}
+		if account == nil {
+			g.logger.Debug("custom storage account uri not reachable")
+		} else {
+			accountList = append(accountList, account)
+		}
 	}
 
 	err = downloadFiles(ctx, bootDiagnostics, accountList, sharedKeyCredentials, g)
@@ -136,6 +148,26 @@ func getAccounts(ctx context.Context, g *Gather) ([]*armstorage.Account, error) 
 		accounts = append(accounts, accountListResult.Value...)
 	}
 	return accounts, nil
+}
+
+func getAccountsByName(ctx context.Context, storageAccount string, g *Gather) (*armstorage.Account, error) {
+	pager := g.accountsClient.NewListPager(nil)
+	for pager.More() {
+		accountListResult, err := pager.NextPage(ctx)
+		if err != nil {
+			return nil, errors.Wrap(err, "could not find any storage accounts")
+		}
+		for _, value := range accountListResult.Value {
+			if value == nil {
+				continue
+			}
+			account := *value
+			if account.Name != nil && *account.Name == storageAccount {
+				return value, nil
+			}
+		}
+	}
+	return nil, nil
 }
 
 func getSharedKeyCredentials(ctx context.Context, accounts []*armstorage.Account, g *Gather) ([]*azblob.SharedKeyCredential, error) {
@@ -179,8 +211,9 @@ func getVirtualMachines(ctx context.Context, g *Gather) ([]*armcompute.VirtualMa
 	return virtualMachines, nil
 }
 
-func getBootDiagnostics(ctx context.Context, virtualMachines []*armcompute.VirtualMachine, g *Gather) []string {
+func getBootDiagnostics(ctx context.Context, virtualMachines []*armcompute.VirtualMachine, g *Gather) ([]string, string) {
 	var bootDiagnostics []string
+	customStorageURI := ""
 	for _, vm := range virtualMachines {
 		if vm.Properties.DiagnosticsProfile == nil ||
 			vm.Properties.DiagnosticsProfile.BootDiagnostics == nil ||
@@ -188,6 +221,9 @@ func getBootDiagnostics(ctx context.Context, virtualMachines []*armcompute.Virtu
 			!*vm.Properties.DiagnosticsProfile.BootDiagnostics.Enabled {
 			g.logger.Debugf("No boot logs or boot diagnostics disabled for %s", *vm.Name)
 			continue
+		}
+		if vm.Properties.DiagnosticsProfile.BootDiagnostics.StorageURI != nil && *vm.Properties.DiagnosticsProfile.BootDiagnostics.StorageURI != "" {
+			customStorageURI = *vm.Properties.DiagnosticsProfile.BootDiagnostics.StorageURI
 		}
 		instanceView, err := g.virtualMachinesClient.InstanceView(ctx, g.resourceGroupName, *vm.Name, nil)
 		if err != nil {
@@ -220,7 +256,7 @@ func getBootDiagnostics(ctx context.Context, virtualMachines []*armcompute.Virtu
 		}
 	}
 
-	return bootDiagnostics
+	return bootDiagnostics, customStorageURI
 }
 
 func downloadFiles(ctx context.Context, fileURIs []string, accounts []*armstorage.Account, sharedKeyCredentials []*azblob.SharedKeyCredential, g *Gather) error {
