@@ -6,15 +6,12 @@ package power
 import (
 	"context"
 	"fmt"
-
 	"log"
 
-	st "github.com/IBM-Cloud/power-go-client/clients/instance"
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
@@ -22,103 +19,90 @@ func DataSourceIBMPIDhcp() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPIDhcpRead,
 		Schema: map[string]*schema.Schema{
-
-			// Required Arguments
+			// Arguments
 			Arg_CloudInstanceID: {
-				Type:         schema.TypeString,
+				Description:  "The GUID of the service instance associated with an account.",
 				Required:     true,
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
 			Arg_DhcpID: {
-				Type:        schema.TypeString,
+				Description: "ID of the DHCP Server.",
 				Required:    true,
-				Description: "The ID of the DHCP Server",
+				Type:        schema.TypeString,
 			},
 
 			// Attributes
 			Attr_DhcpID: {
+				Computed:    true,
+				Deprecated:  "The field is deprecated, use pi_dhcp_id instead.",
+				Description: "ID of the DHCP Server.",
 				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The ID of the DHCP Server",
 			},
-			Attr_DhcpLeases: {
-				Type:        schema.TypeList,
+			Attr_Leases: {
 				Computed:    true,
-				Description: "The list of DHCP Server PVM Instance leases",
+				Description: "List of DHCP Server PVM Instance leases.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						Attr_DhcpLeaseInstanceIP: {
-							Type:        schema.TypeString,
+						Attr_InstanceIP: {
 							Computed:    true,
-							Description: "The IP of the PVM Instance",
+							Description: "IP of the PVM Instance.",
+							Type:        schema.TypeString,
 						},
-						Attr_DhcpLeaseInstanceMac: {
-							Type:        schema.TypeString,
+						Attr_InstanceMac: {
 							Computed:    true,
-							Description: "The MAC Address of the PVM Instance",
+							Description: "MAC Address of the PVM Instance.",
+							Type:        schema.TypeString,
 						},
 					},
 				},
+				Type: schema.TypeList,
 			},
-			Attr_DhcpNetworkDeprecated: {
-				Type:        schema.TypeString,
+			Attr_NetworkID: {
 				Computed:    true,
-				Description: "The ID of the DHCP Server private network (deprecated - replaced by network_id)",
+				Description: "ID of the DHCP Server private network.",
+				Type:        schema.TypeString,
 			},
-			Attr_DhcpNetworkID: {
-				Type:        schema.TypeString,
+			Attr_NetworkName: {
 				Computed:    true,
-				Description: "The ID of the DHCP Server private network",
+				Description: "Name of the DHCP Server private network.",
+				Type:        schema.TypeString,
 			},
-			Attr_DhcpNetworkName: {
-				Type:        schema.TypeString,
+			Attr_Status: {
 				Computed:    true,
-				Description: "The name of the DHCP Server private network",
-			},
-			Attr_DhcpStatus: {
+				Description: "Status of the DHCP Server.",
 				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The status of the DHCP Server",
 			},
 		},
 	}
 }
 
 func dataSourceIBMPIDhcpRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-
-	// session
 	sess, err := meta.(conns.ClientSession).IBMPISession()
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	// arguments
 	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
 	dhcpID := d.Get(Arg_DhcpID).(string)
-
-	// client
-	client := st.NewIBMPIDhcpClient(ctx, sess, cloudInstanceID)
-
-	// get dhcp
+	client := instance.NewIBMPIDhcpClient(ctx, sess, cloudInstanceID)
 	dhcpServer, err := client.Get(dhcpID)
 	if err != nil {
 		log.Printf("[DEBUG] get DHCP failed %v", err)
 		return diag.FromErr(err)
 	}
 
-	// set attributes
 	d.SetId(fmt.Sprintf("%s/%s", cloudInstanceID, *dhcpServer.ID))
 	d.Set(Attr_DhcpID, *dhcpServer.ID)
-	d.Set(Attr_DhcpStatus, *dhcpServer.Status)
+	d.Set(Attr_Status, *dhcpServer.Status)
 
 	if dhcpServer.Network != nil {
 		dhcpNetwork := dhcpServer.Network
 		if dhcpNetwork.ID != nil {
-			d.Set(Attr_DhcpNetworkDeprecated, *dhcpNetwork.ID)
-			d.Set(Attr_DhcpNetworkID, *dhcpNetwork.ID)
+			d.Set(Attr_NetworkID, *dhcpNetwork.ID)
 		}
 		if dhcpNetwork.Name != nil {
-			d.Set(Attr_DhcpNetworkName, *dhcpNetwork.Name)
+			d.Set(Attr_NetworkName, *dhcpNetwork.Name)
 		}
 	}
 
@@ -126,11 +110,11 @@ func dataSourceIBMPIDhcpRead(ctx context.Context, d *schema.ResourceData, meta i
 		leaseList := make([]map[string]string, len(dhcpServer.Leases))
 		for i, lease := range dhcpServer.Leases {
 			leaseList[i] = map[string]string{
-				Attr_DhcpLeaseInstanceIP:  *lease.InstanceIP,
-				Attr_DhcpLeaseInstanceMac: *lease.InstanceMacAddress,
+				Attr_InstanceIP:  *lease.InstanceIP,
+				Attr_InstanceMac: *lease.InstanceMacAddress,
 			}
 		}
-		d.Set(Attr_DhcpLeases, leaseList)
+		d.Set(Attr_Leases, leaseList)
 	}
 
 	return nil

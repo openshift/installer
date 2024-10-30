@@ -46,6 +46,11 @@ func ResourceIBMEnSlackDestination() *schema.Resource {
 				Optional:    true,
 				Description: "The Destination description.",
 			},
+			"collect_failed_events": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Whether to collect the failed event in Cloud Object Storage bucket",
+			},
 			"config": {
 				Type:        schema.TypeList,
 				MaxItems:    1,
@@ -61,8 +66,18 @@ func ResourceIBMEnSlackDestination() *schema.Resource {
 								Schema: map[string]*schema.Schema{
 									"url": {
 										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "Slack webhook url. Required in case of type is incoming_webhook",
+									},
+									"type": {
+										Type:        schema.TypeString,
 										Required:    true,
-										Description: "Slack webhook url.",
+										Description: "The Slack Destination type incoming_webhook/direct_message",
+									},
+									"token": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "Slack Bot token. Required in case of type is direct_message",
 									},
 								},
 							},
@@ -106,6 +121,7 @@ func resourceIBMEnSlackDestinationCreate(context context.Context, d *schema.Reso
 	options.SetInstanceID(d.Get("instance_guid").(string))
 	options.SetName(d.Get("name").(string))
 	options.SetType(d.Get("type").(string))
+	options.SetCollectFailedEvents(d.Get("collect_failed_events").(bool))
 
 	destinationtype := d.Get("type").(string)
 	if _, ok := d.GetOk("description"); ok {
@@ -167,12 +183,16 @@ func resourceIBMEnSlackDestinationRead(context context.Context, d *schema.Resour
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting type: %s", err))
 	}
 
+	if err = d.Set("collect_failed_events", result.CollectFailedEvents); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting CollectFailedEvents: %s", err))
+	}
+
 	if err = d.Set("description", result.Description); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting description: %s", err))
 	}
 
 	if result.Config != nil {
-		err = d.Set("config", enWebhookDestinationFlattenConfig(*result.Config))
+		err = d.Set("config", enSlackDestinationFlattenConfig(*result.Config))
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("[ERROR] Error setting config %s", err))
 		}
@@ -210,12 +230,17 @@ func resourceIBMEnSlackDestinationUpdate(context context.Context, d *schema.Reso
 	options.SetInstanceID(parts[0])
 	options.SetID(parts[1])
 
-	if ok := d.HasChanges("name", "description", "config"); ok {
+	if ok := d.HasChanges("name", "description", "collect_failed_events", "config"); ok {
 		options.SetName(d.Get("name").(string))
 
 		if _, ok := d.GetOk("description"); ok {
 			options.SetDescription(d.Get("description").(string))
 		}
+
+		if _, ok := d.GetOk("collect_failed_events"); ok {
+			options.SetCollectFailedEvents(d.Get("collect_failed_events").(bool))
+		}
+
 		destinationtype := d.Get("type").(string)
 		if _, ok := d.GetOk("config"); ok {
 			config := SlackdestinationConfigMapToDestinationConfig(d.Get("config.0.params.0").(map[string]interface{}), destinationtype)
@@ -264,8 +289,28 @@ func resourceIBMEnSlackDestinationDelete(context context.Context, d *schema.Reso
 
 func SlackdestinationConfigMapToDestinationConfig(configParams map[string]interface{}, destinationtype string) en.DestinationConfig {
 	params := new(en.DestinationConfigOneOf)
-	if configParams["url"] != nil {
-		params.URL = core.StringPtr(configParams["url"].(string))
+
+	params.Type = core.StringPtr(configParams["type"].(string))
+
+	if *params.Type == "incoming_webhook" {
+
+		if configParams["url"] != nil {
+			params.URL = core.StringPtr(configParams["url"].(string))
+		}
+
+		if configParams["type"] != nil {
+			params.Type = core.StringPtr(configParams["type"].(string))
+		}
+
+	} else {
+
+		if configParams["token"] != nil {
+			params.Token = core.StringPtr(configParams["token"].(string))
+		}
+
+		if configParams["type"] != nil {
+			params.Type = core.StringPtr(configParams["type"].(string))
+		}
 	}
 
 	destinationConfig := new(en.DestinationConfig)

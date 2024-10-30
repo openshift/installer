@@ -45,6 +45,11 @@ func DataSourceIBMEnAPNSDestination() *schema.Resource {
 				Computed:    true,
 				Description: "Destination type push_ios.",
 			},
+			"collect_failed_events": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether to collect the failed event in Cloud Object Storage bucket",
+			},
 			"certificate_content_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -159,6 +164,10 @@ func dataSourceIBMEnAPNSDestinationRead(context context.Context, d *schema.Resou
 
 	if err = d.Set("type", result.Type); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting type: %s", err))
+	}
+
+	if err = d.Set("collect_failed_events", result.CollectFailedEvents); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting CollectFailedEvents: %s", err))
 	}
 
 	if err = d.Set("certificate_content_type", result.Type); err != nil {

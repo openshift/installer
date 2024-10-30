@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2020.
+ * (C) Copyright IBM Corp. 2020 - 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,15 @@ package common
 import (
 	"fmt"
 	"runtime"
+
+	"github.com/IBM/go-sdk-core/v5/core"
 )
 
 const (
-	sdkName = "platform-services-go-sdk"
+	sdkName             = "platform-services-go-sdk"
 	headerNameUserAgent = "User-Agent"
 )
 
-//
 // GetSdkHeaders - returns the set of SDK-specific headers to be included in an outgoing request.
 //
 // This function is invoked by generated service methods (i.e. methods which implement the REST API operations
@@ -40,13 +41,14 @@ const (
 // as in the example below.
 //
 // Parameters:
-//   serviceName - the name of the service as defined in the API definition (e.g. "MyService1")
-//   serviceVersion - the version of the service as defined in the API definition (e.g. "V1")
-//   operationId - the operationId as defined in the API definition (e.g. getContext)
+//
+//	serviceName - the name of the service as defined in the API definition (e.g. "MyService1")
+//	serviceVersion - the version of the service as defined in the API definition (e.g. "V1")
+//	operationId - the operationId as defined in the API definition (e.g. getContext)
 //
 // Returns:
-//   a Map which contains the set of headers to be included in the REST API request
 //
+//	a Map which contains the set of headers to be included in the REST API request
 func GetSdkHeaders(serviceName string, serviceVersion string, operationId string) map[string]string {
 	sdkHeaders := make(map[string]string)
 	sdkHeaders[headerNameUserAgent] = GetUserAgentInfo()
@@ -63,4 +65,9 @@ var systemInfo = fmt.Sprintf("(lang=go; arch=%s; os=%s; go.version=%s)", runtime
 
 func GetSystemInfo() string {
 	return systemInfo
+}
+
+func GetComponentInfo() *core.ProblemComponent {
+	// This should match the module name in go.mod.
+	return core.NewProblemComponent("github.com/IBM/platform-services-go-sdk", Version)
 }

@@ -130,7 +130,7 @@ func ResourceIBMPICloudConnection() *schema.Resource {
 				Computed:    true,
 				Description: "Cloud connection ID",
 			},
-			PICloudConnectionStatus: {
+			Attr_Status: {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Link status",
@@ -443,7 +443,7 @@ func resourceIBMPICloudConnectionRead(ctx context.Context, d *schema.ResourceDat
 	d.Set(helpers.PICloudConnectionMetered, cloudConnection.Metered)
 	d.Set(PICloudConnectionIBMIPAddress, cloudConnection.IbmIPAddress)
 	d.Set(PICloudConnectionUserIPAddress, cloudConnection.UserIPAddress)
-	d.Set(PICloudConnectionStatus, cloudConnection.LinkStatus)
+	d.Set(Attr_Status, cloudConnection.LinkStatus)
 	d.Set(PICloudConnectionPort, cloudConnection.Port)
 	d.Set(helpers.PICloudConnectionSpeed, cloudConnection.Speed)
 	d.Set(helpers.PICloudInstanceId, cloudInstanceID)

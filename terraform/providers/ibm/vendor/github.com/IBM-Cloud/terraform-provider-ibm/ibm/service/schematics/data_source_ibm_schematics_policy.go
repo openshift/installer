@@ -315,6 +315,11 @@ func dataSourceIbmSchematicsPolicyRead(context context.Context, d *schema.Resour
 		return diag.FromErr(fmt.Errorf("Error setting kind: %s", err))
 	}
 
+	if policy.Tags != nil {
+		if err = d.Set("tags", policy.Tags); err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting tags: %s", err))
+		}
+	}
 	target := []map[string]interface{}{}
 	if policy.Target != nil {
 		modelMap, err := dataSourceIbmSchematicsPolicyPolicyObjectsToMap(policy.Target)

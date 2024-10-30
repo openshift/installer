@@ -23,6 +23,14 @@ func DataSourceIBMISSSHKey() *schema.Resource {
 				Description: "Resource group ID",
 			},
 
+			"tags": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "User Tags for the ssh",
+			},
+
 			isKeyName: {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -150,6 +158,12 @@ func keyGetByName(d *schema.ResourceData, meta interface{}, name string) error {
 			if key.PublicKey != nil {
 				d.Set(isKeyPublicKey, *key.PublicKey)
 			}
+			tags, err := flex.GetGlobalTagsUsingCRN(meta, *key.CRN, "", isUserTagType)
+			if err != nil {
+				log.Printf(
+					"Error on get of resource vpc ssh key (%s) tags: %s", d.Id(), err)
+			}
+			d.Set("tags", tags)
 			accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *key.CRN, "", isKeyAccessTagType)
 			if err != nil {
 				log.Printf(

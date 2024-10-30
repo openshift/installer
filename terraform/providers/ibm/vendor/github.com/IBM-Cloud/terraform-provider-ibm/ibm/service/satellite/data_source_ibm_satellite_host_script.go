@@ -125,7 +125,7 @@ func dataSourceIBMSatelliteAttachHostScriptRead(d *schema.ResourceData, meta int
 	labels := make(map[string]string)
 	if v, ok := d.GetOk("labels"); ok {
 		l := v.(*schema.Set)
-		labels = flex.FlattenHostLabels(l.List())
+		labels = flex.FlattenKeyValues(l.List())
 		d.Set("labels", l)
 	}
 

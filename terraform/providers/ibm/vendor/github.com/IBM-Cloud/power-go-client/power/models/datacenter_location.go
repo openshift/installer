@@ -23,6 +23,10 @@ type DatacenterLocation struct {
 	// Required: true
 	Region *string `json:"region"`
 
+	// The Datacenter location region display name
+	// Required: true
+	RegionDisplayName *string `json:"regionDisplayName"`
+
 	// The Datacenter location region type
 	// Required: true
 	Type *string `json:"type"`
@@ -37,6 +41,10 @@ func (m *DatacenterLocation) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateRegion(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateRegionDisplayName(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -57,6 +65,15 @@ func (m *DatacenterLocation) Validate(formats strfmt.Registry) error {
 func (m *DatacenterLocation) validateRegion(formats strfmt.Registry) error {
 
 	if err := validate.Required("region", "body", m.Region); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *DatacenterLocation) validateRegionDisplayName(formats strfmt.Registry) error {
+
+	if err := validate.Required("regionDisplayName", "body", m.RegionDisplayName); err != nil {
 		return err
 	}
 

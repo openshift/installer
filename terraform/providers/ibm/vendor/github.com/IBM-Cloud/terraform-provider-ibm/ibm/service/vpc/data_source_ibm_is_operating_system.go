@@ -11,14 +11,16 @@ import (
 )
 
 const (
-	isOperatingSystemName         = "name"
-	isOperatingSystemArchitecture = "architecture"
-	isOperatingSystemDHOnly       = "dedicated_host_only"
-	isOperatingSystemDisplayName  = "display_name"
-	isOperatingSystemFamily       = "family"
-	isOperatingSystemHref         = "href"
-	isOperatingSystemVendor       = "vendor"
-	isOperatingSystemVersion      = "version"
+	isOperatingSystemName                   = "name"
+	isOperatingSystemArchitecture           = "architecture"
+	isOperatingSystemDHOnly                 = "dedicated_host_only"
+	isOperatingSystemDisplayName            = "display_name"
+	isOperatingSystemFamily                 = "family"
+	isOperatingSystemHref                   = "href"
+	isOperatingSystemVendor                 = "vendor"
+	isOperatingSystemVersion                = "version"
+	isOperatingSystemAllowUserImageCreation = "allow_user_image_creation"
+	isOperatingSystemUserDataFormat         = "user_data_format"
 )
 
 func DataSourceIBMISOperatingSystem() *schema.Resource {
@@ -26,7 +28,11 @@ func DataSourceIBMISOperatingSystem() *schema.Resource {
 		Read: dataSourceIBMISOperatingSystemRead,
 
 		Schema: map[string]*schema.Schema{
-
+			isOperatingSystemAllowUserImageCreation: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Users may create new images with this operating system",
+			},
 			isOperatingSystemName: {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -70,6 +76,11 @@ func DataSourceIBMISOperatingSystem() *schema.Resource {
 				Computed:    true,
 				Description: "The vendor of the operating system",
 			},
+			isOperatingSystemUserDataFormat: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The user data format for this operating system",
+			},
 		},
 	}
 }
@@ -104,5 +115,9 @@ func osGet(d *schema.ResourceData, meta interface{}, name string) error {
 	d.Set(isOperatingSystemHref, *os.Href)
 	d.Set(isOperatingSystemVendor, *os.Vendor)
 	d.Set(isOperatingSystemVersion, *os.Version)
+	if os.AllowUserImageCreation != nil {
+		d.Set(isOperatingSystemAllowUserImageCreation, *os.AllowUserImageCreation)
+	}
+	d.Set(isOperatingSystemUserDataFormat, *os.UserDataFormat)
 	return nil
 }

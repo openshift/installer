@@ -6,9 +6,10 @@ package iamidentity
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"log"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -434,14 +435,16 @@ func resourceIBMTrustedProfileTemplateAssignmentRead(context context.Context, d 
 	if err = d.Set("target", templateAssignmentResponse.Target); err != nil {
 		return diag.FromErr(fmt.Errorf("error setting target: %s", err))
 	}
+	ctx := []map[string]interface{}{}
 	if !core.IsNil(templateAssignmentResponse.Context) {
 		contextMap, err := resourceIBMTrustedProfileTemplateAssignmentResponseContextToMap(templateAssignmentResponse.Context)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		if err = d.Set("context", []map[string]interface{}{contextMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting context: %s", err))
-		}
+		ctx = append(ctx, contextMap)
+	}
+	if err = d.Set("context", ctx); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting context: %s", err))
 	}
 	if err = d.Set("account_id", templateAssignmentResponse.AccountID); err != nil {
 		return diag.FromErr(fmt.Errorf("error setting account_id: %s", err))
@@ -462,8 +465,8 @@ func resourceIBMTrustedProfileTemplateAssignmentRead(context context.Context, d 
 			return diag.FromErr(fmt.Errorf("error setting resources: %s", err))
 		}
 	}
+	history := []map[string]interface{}{}
 	if !core.IsNil(templateAssignmentResponse.History) {
-		history := []map[string]interface{}{}
 		for _, historyItem := range templateAssignmentResponse.History {
 			historyItemMap, err := resourceIBMTrustedProfileTemplateAssignmentEnityHistoryRecordToMap(&historyItem)
 			if err != nil {
@@ -471,9 +474,9 @@ func resourceIBMTrustedProfileTemplateAssignmentRead(context context.Context, d 
 			}
 			history = append(history, historyItemMap)
 		}
-		if err = d.Set("history", history); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting history: %s", err))
-		}
+	}
+	if err = d.Set("history", history); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting history: %s", err))
 	}
 	if !core.IsNil(templateAssignmentResponse.Href) {
 		if err = d.Set("href", templateAssignmentResponse.Href); err != nil {

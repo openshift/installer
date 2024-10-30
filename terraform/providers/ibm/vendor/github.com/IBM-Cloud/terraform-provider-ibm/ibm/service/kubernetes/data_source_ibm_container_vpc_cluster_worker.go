@@ -114,7 +114,7 @@ func dataSourceIBMContainerVPCClusterWorkerRead(d *schema.ResourceData, meta int
 		return err
 	}
 
-	targetEnv, err := getVpcClusterTargetHeader(d, meta)
+	targetEnv, err := getVpcClusterTargetHeader(d)
 	if err != nil {
 		return err
 	}

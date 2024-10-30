@@ -5,7 +5,6 @@ package vpc
 
 import (
 	"fmt"
-	"reflect"
 	"time"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -104,6 +103,54 @@ func DataSourceIBMISReservedIPs() *schema.Resource {
 							Computed:    true,
 							Description: "The crn for target.",
 						},
+						"target_reference": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The target this reserved IP is bound to.If absent, this reserved IP is provider-owned or unbound.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"crn": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN for this endpoint gateway.",
+									},
+									"deleted": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates the referenced resource has been deleted, and providessome supplementary information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"more_info": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Link to documentation about deleted resources.",
+												},
+											},
+										},
+									},
+									"href": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this endpoint gateway.",
+									},
+									"id": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for this endpoint gateway.",
+									},
+									"name": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The name for this endpoint gateway. The name is unique across all endpoint gateways in the VPC.",
+									},
+									"resource_type": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The resource type.",
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -158,45 +205,20 @@ func dataSdataSourceIBMISReservedIPsRead(d *schema.ResourceData, meta interface{
 		ipsOutput[isReservedIPName] = *data.Name
 		ipsOutput[isReservedIPOwner] = *data.Owner
 		ipsOutput[isReservedIPType] = *data.ResourceType
+		target := []map[string]interface{}{}
 		if data.Target != nil {
-			targetIntf := data.Target
-			switch reflect.TypeOf(targetIntf).String() {
-			case "*vpcv1.ReservedIPTargetEndpointGatewayReference":
-				{
-					target := targetIntf.(*vpcv1.ReservedIPTargetEndpointGatewayReference)
-					ipsOutput[isReservedIPTarget] = target.ID
-					ipsOutput[isReservedIPTargetCrn] = target.CRN
-				}
-			case "*vpcv1.ReservedIPTargetNetworkInterfaceReferenceTargetContext":
-				{
-					target := targetIntf.(*vpcv1.ReservedIPTargetNetworkInterfaceReferenceTargetContext)
-					ipsOutput[isReservedIPTarget] = target.ID
-				}
-			case "*vpcv1.ReservedIPTargetGenericResourceReference":
-				{
-					target := targetIntf.(*vpcv1.ReservedIPTargetGenericResourceReference)
-					ipsOutput[isReservedIPTargetCrn] = target.CRN
-				}
-			case "*vpcv1.ReservedIPTargetLoadBalancerReference":
-				{
-					target := targetIntf.(*vpcv1.ReservedIPTargetLoadBalancerReference)
-					ipsOutput[isReservedIPTarget] = target.ID
-					ipsOutput[isReservedIPTargetCrn] = target.CRN
-				}
-			case "*vpcv1.ReservedIPTargetVPNGatewayReference":
-				{
-					target := targetIntf.(*vpcv1.ReservedIPTargetVPNGatewayReference)
-					ipsOutput[isReservedIPTarget] = target.ID
-					ipsOutput[isReservedIPTargetCrn] = target.CRN
-				}
-			case "*vpcv1.ReservedIPTarget":
-				{
-					target := targetIntf.(*vpcv1.ReservedIPTarget)
-					ipsOutput[isReservedIPTarget] = target.ID
-					ipsOutput[isReservedIPTargetCrn] = target.CRN
-				}
+			modelMap, err := dataSourceIBMIsReservedIPReservedIPTargetToMap(data.Target)
+			if err != nil {
+				return err
 			}
+			target = append(target, modelMap)
 		}
+		ipsOutput["target_reference"] = target
+		if len(target) > 0 {
+			ipsOutput[isReservedIPTarget] = target[0]["id"]
+			ipsOutput[isReservedIPTargetCrn] = target[0]["crn"]
+		}
+
 		reservedIPs = append(reservedIPs, ipsOutput)
 	}
 
@@ -205,4 +227,218 @@ func dataSdataSourceIBMISReservedIPsRead(d *schema.ResourceData, meta interface{
 	d.Set(isReservedIPsCount, len(reservedIPs))
 	d.Set(isSubNetID, subnetID)
 	return nil
+}
+
+func dataSourceIBMIsReservedIPReservedIPTargetToMap(model vpcv1.ReservedIPTargetIntf) (map[string]interface{}, error) {
+	if _, ok := model.(*vpcv1.ReservedIPTargetEndpointGatewayReference); ok {
+		return dataSourceIBMIsReservedIPReservedIPTargetEndpointGatewayReferenceToMap(model.(*vpcv1.ReservedIPTargetEndpointGatewayReference))
+	} else if _, ok := model.(*vpcv1.ReservedIPTargetVirtualNetworkInterfaceReferenceReservedIPTargetContext); ok {
+		return dataSourceIBMIsReservedIPReservedIPTargetVirtualNetworkInterfaceReferenceReservedIPTargetContextToMap(model.(*vpcv1.ReservedIPTargetVirtualNetworkInterfaceReferenceReservedIPTargetContext))
+	} else if _, ok := model.(*vpcv1.ReservedIPTargetNetworkInterfaceReferenceTargetContext); ok {
+		return dataSourceIBMIsReservedIPReservedIPTargetNetworkInterfaceReferenceTargetContextToMap(model.(*vpcv1.ReservedIPTargetNetworkInterfaceReferenceTargetContext))
+	} else if _, ok := model.(*vpcv1.ReservedIPTargetBareMetalServerNetworkInterfaceReferenceTargetContext); ok {
+		return dataSourceIBMIsReservedIPReservedIPTargetBareMetalServerNetworkInterfaceReferenceTargetContextToMap(model.(*vpcv1.ReservedIPTargetBareMetalServerNetworkInterfaceReferenceTargetContext))
+	} else if _, ok := model.(*vpcv1.ReservedIPTargetLoadBalancerReference); ok {
+		return dataSourceIBMIsReservedIPReservedIPTargetLoadBalancerReferenceToMap(model.(*vpcv1.ReservedIPTargetLoadBalancerReference))
+	} else if _, ok := model.(*vpcv1.ReservedIPTargetVPNGatewayReference); ok {
+		return dataSourceIBMIsReservedIPReservedIPTargetVPNGatewayReferenceToMap(model.(*vpcv1.ReservedIPTargetVPNGatewayReference))
+	} else if _, ok := model.(*vpcv1.ReservedIPTargetVPNServerReference); ok {
+		return dataSourceIBMIsReservedIPReservedIPTargetVPNServerReferenceToMap(model.(*vpcv1.ReservedIPTargetVPNServerReference))
+	} else if _, ok := model.(*vpcv1.ReservedIPTargetGenericResourceReference); ok {
+		return dataSourceIBMIsReservedIPReservedIPTargetGenericResourceReferenceToMap(model.(*vpcv1.ReservedIPTargetGenericResourceReference))
+	} else if _, ok := model.(*vpcv1.ReservedIPTarget); ok {
+		modelMap := make(map[string]interface{})
+		model := model.(*vpcv1.ReservedIPTarget)
+		if model.CRN != nil {
+			modelMap["crn"] = model.CRN
+		}
+		if model.Deleted != nil {
+			deletedMap, err := dataSourceIBMIsReservedIPEndpointGatewayReferenceDeletedToMap(model.Deleted)
+			if err != nil {
+				return modelMap, err
+			}
+			modelMap["deleted"] = []map[string]interface{}{deletedMap}
+		}
+		if model.Href != nil {
+			modelMap["href"] = model.Href
+		}
+		if model.ID != nil {
+			modelMap["id"] = model.ID
+		}
+		if model.Name != nil {
+			modelMap["name"] = model.Name
+		}
+		if model.ResourceType != nil {
+			modelMap["resource_type"] = model.ResourceType
+		}
+		return modelMap, nil
+	} else {
+		return nil, fmt.Errorf("Unrecognized vpcv1.ReservedIPTargetIntf subtype encountered")
+	}
+}
+
+func dataSourceIBMIsReservedIPEndpointGatewayReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["more_info"] = model.MoreInfo
+	return modelMap, nil
+}
+
+func dataSourceIBMIsReservedIPReservedIPTargetEndpointGatewayReferenceToMap(model *vpcv1.ReservedIPTargetEndpointGatewayReference) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["crn"] = model.CRN
+	if model.Deleted != nil {
+		deletedMap, err := dataSourceIBMIsReservedIPEndpointGatewayReferenceDeletedToMap(model.Deleted)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["deleted"] = []map[string]interface{}{deletedMap}
+	}
+	modelMap["href"] = model.Href
+	modelMap["id"] = model.ID
+	modelMap["name"] = model.Name
+	modelMap["resource_type"] = model.ResourceType
+	return modelMap, nil
+}
+
+func dataSourceIBMIsReservedIPReservedIPTargetVirtualNetworkInterfaceReferenceReservedIPTargetContextToMap(model *vpcv1.ReservedIPTargetVirtualNetworkInterfaceReferenceReservedIPTargetContext) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["crn"] = model.CRN
+	modelMap["href"] = model.Href
+	modelMap["id"] = model.ID
+	modelMap["name"] = model.Name
+	modelMap["resource_type"] = model.ResourceType
+	return modelMap, nil
+}
+
+func dataSourceIBMIsReservedIPReservedIPTargetNetworkInterfaceReferenceTargetContextToMap(model *vpcv1.ReservedIPTargetNetworkInterfaceReferenceTargetContext) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Deleted != nil {
+		deletedMap, err := dataSourceIBMIsReservedIPNetworkInterfaceReferenceTargetContextDeletedToMap(model.Deleted)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["deleted"] = []map[string]interface{}{deletedMap}
+	}
+	modelMap["href"] = model.Href
+	modelMap["id"] = model.ID
+	modelMap["name"] = model.Name
+	modelMap["resource_type"] = model.ResourceType
+	return modelMap, nil
+}
+
+func dataSourceIBMIsReservedIPNetworkInterfaceReferenceTargetContextDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["more_info"] = model.MoreInfo
+	return modelMap, nil
+}
+
+func dataSourceIBMIsReservedIPReservedIPTargetBareMetalServerNetworkInterfaceReferenceTargetContextToMap(model *vpcv1.ReservedIPTargetBareMetalServerNetworkInterfaceReferenceTargetContext) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Deleted != nil {
+		deletedMap, err := dataSourceIBMIsReservedIPBareMetalServerNetworkInterfaceReferenceTargetContextDeletedToMap(model.Deleted)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["deleted"] = []map[string]interface{}{deletedMap}
+	}
+	modelMap["href"] = model.Href
+	modelMap["id"] = model.ID
+	modelMap["name"] = model.Name
+	modelMap["resource_type"] = model.ResourceType
+	return modelMap, nil
+}
+
+func dataSourceIBMIsReservedIPBareMetalServerNetworkInterfaceReferenceTargetContextDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["more_info"] = model.MoreInfo
+	return modelMap, nil
+}
+
+func dataSourceIBMIsReservedIPReservedIPTargetLoadBalancerReferenceToMap(model *vpcv1.ReservedIPTargetLoadBalancerReference) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["crn"] = model.CRN
+	if model.Deleted != nil {
+		deletedMap, err := dataSourceIBMIsReservedIPLoadBalancerReferenceDeletedToMap(model.Deleted)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["deleted"] = []map[string]interface{}{deletedMap}
+	}
+	modelMap["href"] = model.Href
+	modelMap["id"] = model.ID
+	modelMap["name"] = model.Name
+	modelMap["resource_type"] = model.ResourceType
+	return modelMap, nil
+}
+
+func dataSourceIBMIsReservedIPLoadBalancerReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["more_info"] = model.MoreInfo
+	return modelMap, nil
+}
+
+func dataSourceIBMIsReservedIPReservedIPTargetVPNGatewayReferenceToMap(model *vpcv1.ReservedIPTargetVPNGatewayReference) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["crn"] = model.CRN
+	if model.Deleted != nil {
+		deletedMap, err := dataSourceIBMIsReservedIPVPNGatewayReferenceDeletedToMap(model.Deleted)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["deleted"] = []map[string]interface{}{deletedMap}
+	}
+	modelMap["href"] = model.Href
+	modelMap["id"] = model.ID
+	modelMap["name"] = model.Name
+	modelMap["resource_type"] = model.ResourceType
+	return modelMap, nil
+}
+
+func dataSourceIBMIsReservedIPVPNGatewayReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["more_info"] = model.MoreInfo
+	return modelMap, nil
+}
+
+func dataSourceIBMIsReservedIPReservedIPTargetVPNServerReferenceToMap(model *vpcv1.ReservedIPTargetVPNServerReference) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["crn"] = model.CRN
+	if model.Deleted != nil {
+		deletedMap, err := dataSourceIBMIsReservedIPVPNServerReferenceDeletedToMap(model.Deleted)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["deleted"] = []map[string]interface{}{deletedMap}
+	}
+	modelMap["href"] = model.Href
+	modelMap["id"] = model.ID
+	modelMap["name"] = model.Name
+	modelMap["resource_type"] = model.ResourceType
+	return modelMap, nil
+}
+
+func dataSourceIBMIsReservedIPVPNServerReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["more_info"] = model.MoreInfo
+	return modelMap, nil
+}
+
+func dataSourceIBMIsReservedIPReservedIPTargetGenericResourceReferenceToMap(model *vpcv1.ReservedIPTargetGenericResourceReference) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["crn"] = model.CRN
+	if model.Deleted != nil {
+		deletedMap, err := dataSourceIBMIsReservedIPGenericResourceReferenceDeletedToMap(model.Deleted)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["deleted"] = []map[string]interface{}{deletedMap}
+	}
+	modelMap["resource_type"] = model.ResourceType
+	return modelMap, nil
+}
+
+func dataSourceIBMIsReservedIPGenericResourceReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["more_info"] = model.MoreInfo
+	return modelMap, nil
 }

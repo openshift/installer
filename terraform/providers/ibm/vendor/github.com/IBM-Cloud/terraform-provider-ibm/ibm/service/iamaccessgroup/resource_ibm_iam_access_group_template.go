@@ -238,7 +238,7 @@ func ResourceIBMIAMAccessGroupTemplate() *schema.Resource {
 				},
 			},
 			"policy_template_references": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				ForceNew:    true,
 				Description: "References to policy templates assigned to the access group template.",
@@ -367,7 +367,7 @@ func resourceIBMIAMAccessGroupTemplateCreate(context context.Context, d *schema.
 	}
 	if _, ok := d.GetOk("policy_template_references"); ok {
 		var policyTemplateReferences []iamaccessgroupsv2.PolicyTemplates
-		for _, v := range d.Get("policy_template_references").([]interface{}) {
+		for _, v := range d.Get("policy_template_references").(*schema.Set).List() {
 			value := v.(map[string]interface{})
 			policyTemplateReferencesItem, err := resourceIBMIAMAccessGroupTemplateMapToPolicyTemplates(value)
 			if err != nil {

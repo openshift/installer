@@ -101,7 +101,7 @@ func dataSourceIBMContainerVpcWorkerVolumeAttachmentRead(context context.Context
 	}
 
 	workersAPI := wpClient.Workers()
-	target, err := getVpcClusterTargetHeader(d, meta)
+	target, err := getVpcClusterTargetHeader(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

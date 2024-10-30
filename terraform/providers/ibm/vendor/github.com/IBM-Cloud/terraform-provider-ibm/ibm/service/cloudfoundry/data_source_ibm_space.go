@@ -53,6 +53,7 @@ func DataSourceIBMSpace() *schema.Resource {
 				Description: "The IBMID of the users who  have developer role in this space, ex - user@example.com",
 			},
 		},
+		DeprecationMessage: "This service is deprecated.",
 	}
 }
 

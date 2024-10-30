@@ -127,7 +127,7 @@ func resourceIBMContainerVpcWorkerVolumeAttachmentCreate(context context.Context
 	clusterNameorID := d.Get("cluster").(string)
 	workerID := d.Get("worker").(string)
 
-	target, err := getVpcClusterTargetHeader(d, meta)
+	target, err := getVpcClusterTargetHeader(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -156,7 +156,7 @@ func resourceIBMContainerVpcWorkerVolumeAttachmentRead(context context.Context, 
 	}
 
 	workersAPI := wpClient.Workers()
-	target, err := getVpcClusterTargetHeader(d, meta)
+	target, err := getVpcClusterTargetHeader(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -190,7 +190,7 @@ func resourceIBMContainerVpcWorkerVolumeAttachmentDelete(context context.Context
 	}
 
 	workersAPI := wpClient.Workers()
-	target, err := getVpcClusterTargetHeader(d, meta)
+	target, err := getVpcClusterTargetHeader(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -234,7 +234,7 @@ func resourceIBMContainerVpcWorkerVolumeAttachmentExists(d *schema.ResourceData,
 	}
 
 	workersAPI := wpClient.Workers()
-	target, err := getVpcClusterTargetHeader(d, meta)
+	target, err := getVpcClusterTargetHeader(d)
 	if err != nil {
 		return false, err
 	}
@@ -267,7 +267,7 @@ func waitforVolumetoAttach(d *schema.ResourceData, meta interface{}) (interface{
 
 	workersAPI := wpClient.Workers()
 
-	target, trgetErr := getVpcClusterTargetHeader(d, meta)
+	target, trgetErr := getVpcClusterTargetHeader(d)
 	if trgetErr != nil {
 		return nil, trgetErr
 	}
@@ -299,7 +299,7 @@ func waitforVolumetoAttach(d *schema.ResourceData, meta interface{}) (interface{
 		Timeout:                   d.Timeout(schema.TimeoutCreate),
 		Delay:                     10 * time.Second,
 		MinTimeout:                5 * time.Second,
-		ContinuousTargetOccurence: 5,
+		ContinuousTargetOccurence: 3,
 	}
 	return createStateConf.WaitForState()
 }
@@ -312,7 +312,7 @@ func waitForStorageAttachmentDelete(d *schema.ResourceData, meta interface{}) (i
 
 	workersAPI := wpClient.Workers()
 
-	target, trgetErr := getVpcClusterTargetHeader(d, meta)
+	target, trgetErr := getVpcClusterTargetHeader(d)
 	if trgetErr != nil {
 		return nil, trgetErr
 	}

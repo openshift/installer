@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 )
 
@@ -69,9 +70,11 @@ func ResourceIBMIsShareMountTarget() *schema.Resource {
 							Description: "href of virtual network interface",
 						},
 						"id": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "ID of this VNI",
+							Type:          schema.TypeString,
+							Optional:      true,
+							ConflictsWith: []string{"virtual_network_interface.0.primary_ip", "virtual_network_interface.0.subnet"},
+							Computed:      true,
+							Description:   "ID of this VNI",
 						},
 						"crn": {
 							Type:        schema.TypeString,
@@ -80,8 +83,32 @@ func ResourceIBMIsShareMountTarget() *schema.Resource {
 						},
 						"name": {
 							Type:        schema.TypeString,
-							Required:    true,
+							Optional:    true,
+							Computed:    true,
 							Description: "Name of this VNI",
+						},
+						"allow_ip_spoofing": &schema.Schema{
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Indicates whether source IP spoofing is allowed on this interface. If `false`, source IP spoofing is prevented on this interface. If `true`, source IP spoofing is allowed on this interface.",
+						},
+						"auto_delete": &schema.Schema{
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Computed:    true,
+							Description: "Indicates whether this virtual network interface will be automatically deleted when`target` is deleted.",
+						},
+						"enable_infrastructure_nat": &schema.Schema{
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "If `true`:- The VPC infrastructure performs any needed NAT operations.- `floating_ips` must not have more than one floating IP.If `false`:- Packets are passed unchanged to/from the network interface,  allowing the workload to perform any needed NAT operations.- `allow_ip_spoofing` must be `false`.- If the virtual network interface is attached:  - The target `resource_type` must be `bare_metal_server_network_attachment`.  - The target `interface_type` must not be `hipersocket`.",
+						},
+						"protocol_state_filtering_mode": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validate.InvokeValidator("ibm_is_virtual_network_interface", "protocol_state_filtering_mode"),
+							Description:  "The protocol state filtering mode used for this virtual network interface.",
 						},
 						"primary_ip": {
 							Type:        schema.TypeList,
@@ -161,12 +188,14 @@ func ResourceIBMIsShareMountTarget() *schema.Resource {
 						"subnet": {
 							Type:     schema.TypeString,
 							Optional: true,
+							Computed: true,
 							//ConflictsWith: []string{"virtual_network_interface.0.primary_ip"},
 							Description: "The associated subnet. Required if primary_ip is not specified.",
 						},
 					},
 				},
 			},
+
 			"vpc": {
 				Type:          schema.TypeString,
 				Optional:      true,
@@ -294,9 +323,16 @@ func resourceIBMIsShareMountTargetCreate(context context.Context, d *schema.Reso
 	} else if vniIntf, ok := d.GetOk("virtual_network_interface"); ok {
 		vniPrototype := vpcv1.ShareMountTargetVirtualNetworkInterfacePrototype{}
 		vniMap := vniIntf.([]interface{})[0].(map[string]interface{})
-		vniPrototype, err = ShareMountTargetMapToShareMountTargetPrototype(d, vniMap)
-		if err != nil {
-			return diag.FromErr(err)
+
+		VNIIdIntf, ok := vniMap["id"]
+		VNIId := VNIIdIntf.(string)
+		if ok && VNIId != "" {
+			vniPrototype.ID = &VNIId
+		} else {
+			vniPrototype, err = ShareMountTargetMapToShareMountTargetPrototype(d, vniMap, "virtual_network_interface.0.auto_delete")
+			if err != nil {
+				return diag.FromErr(err)
+			}
 		}
 		shareMountTargetPrototype.VirtualNetworkInterface = &vniPrototype
 	}
@@ -428,10 +464,19 @@ func resourceIBMIsShareMountTargetUpdate(context context.Context, d *schema.Reso
 		hasChange = true
 	}
 
-	if d.HasChange("virtual_network_interface.0.name") {
-		vniName := d.Get("virtual_network_interface.0.name").(string)
-		vniPatchModel := &vpcv1.VirtualNetworkInterfacePatch{
-			Name: &vniName,
+	if d.HasChange("virtual_network_interface.0.name") || d.HasChange("virtual_network_interface.0.auto_delete") || d.HasChange("virtual_network_interface.0.protocol_state_filtering_mode") {
+		vniPatchModel := &vpcv1.VirtualNetworkInterfacePatch{}
+		if d.HasChange("virtual_network_interface.0.name") {
+			vniName := d.Get("virtual_network_interface.0.name").(string)
+			vniPatchModel.Name = &vniName
+		}
+		if d.HasChange("virtual_network_interface.0.auto_delete") {
+			autoDelete := d.Get("virtual_network_interface.0.auto_delete").(bool)
+			vniPatchModel.AutoDelete = &autoDelete
+		}
+		if d.HasChange("virtual_network_interface.0.protocol_state_filtering_mode") {
+			psfm := d.Get("virtual_network_interface.0.protocol_state_filtering_mode").(string)
+			vniPatchModel.ProtocolStateFilteringMode = &psfm
 		}
 		vniPatch, err := vniPatchModel.AsPatch()
 		if err != nil {
@@ -669,6 +714,39 @@ func isWaitForMountTargetDelete(context context.Context, vpcClient *vpcv1.VpcV1,
 	return stateConf.WaitForState()
 }
 
+func ShareMountTargetVNIReservedIPInterfaceToMap(context context.Context, vpcClient *vpcv1.VpcV1, d *schema.ResourceData, ripRef *vpcv1.ReservedIPReference, subnetId string) (map[string]interface{}, error) {
+
+	currentPrimIp := map[string]interface{}{}
+	if ripRef.Address != nil {
+		currentPrimIp["address"] = ripRef.Address
+	}
+	if ripRef.Name != nil {
+		currentPrimIp["name"] = *ripRef.Name
+	}
+	if ripRef.ID != nil {
+		currentPrimIp["reserved_ip"] = *ripRef.ID
+	}
+	if ripRef.Href != nil {
+		currentPrimIp["href"] = *ripRef.Href
+	}
+
+	if ripRef.ResourceType != nil {
+		currentPrimIp["resource_type"] = *ripRef.ResourceType
+	}
+
+	rIpOptions := &vpcv1.GetSubnetReservedIPOptions{
+		SubnetID: &subnetId,
+		ID:       ripRef.ID,
+	}
+	rIp, response, err := vpcClient.GetSubnetReservedIP(rIpOptions)
+	if err != nil {
+		return nil, fmt.Errorf("[ERROR] Error getting network interface reserved ip(%s) from the subnet(%s): %s\n%s", *ripRef.ID, *&subnetId, err, response)
+	}
+	currentPrimIp["auto_delete"] = rIp.AutoDelete
+
+	return currentPrimIp, nil
+}
+
 func ShareMountTargetVirtualNetworkInterfaceToMap(context context.Context, vpcClient *vpcv1.VpcV1, d *schema.ResourceData, vniId string) ([]map[string]interface{}, error) {
 
 	vniSlice := make([]map[string]interface{}, 0)
@@ -690,42 +768,32 @@ func ShareMountTargetVirtualNetworkInterfaceToMap(context context.Context, vpcCl
 	vniMap["name"] = vni.Name
 	vniMap["href"] = vni.Href
 
-	primaryIpList := make([]map[string]interface{}, 0)
-	currentPrimIp := map[string]interface{}{}
+	if vni.AllowIPSpoofing != nil {
+		vniMap["allow_ip_spoofing"] = *vni.AllowIPSpoofing
+	}
+	if vni.AutoDelete != nil {
+		vniMap["auto_delete"] = *vni.AutoDelete
+	}
+	if vni.EnableInfrastructureNat != nil {
+		vniMap["enable_infrastructure_nat"] = *vni.EnableInfrastructureNat
+	}
+
 	if vni.PrimaryIP != nil {
-		if vni.PrimaryIP.Address != nil {
-			currentPrimIp["address"] = vni.PrimaryIP.Address
-		}
-		if vni.PrimaryIP.Name != nil {
-			currentPrimIp["name"] = *vni.PrimaryIP.Name
-		}
-		if vni.PrimaryIP.ID != nil {
-			currentPrimIp["reserved_ip"] = *vni.PrimaryIP.ID
-		}
-		if vni.PrimaryIP.Href != nil {
-			currentPrimIp["href"] = *vni.PrimaryIP.Href
-		}
+		primaryIpList := make([]map[string]interface{}, 0)
 
-		if vni.PrimaryIP.ResourceType != nil {
-			currentPrimIp["resource_type"] = *vni.PrimaryIP.ResourceType
-		}
-
-		rIpOptions := &vpcv1.GetSubnetReservedIPOptions{
-			SubnetID: vni.Subnet.ID,
-			ID:       vni.PrimaryIP.ID,
-		}
-		rIp, response, err := vpcClient.GetSubnetReservedIP(rIpOptions)
+		currentPrimIp, err := ShareMountTargetVNIReservedIPInterfaceToMap(context, vpcClient, d, vni.PrimaryIP, *vni.Subnet.ID)
 		if err != nil {
-			return nil, fmt.Errorf("[ERROR] Error getting network interface reserved ip(%s) attached to the virtual instance network interface(%s): %s\n%s", *vni.PrimaryIP.ID, *vni.ID, err, response)
+			return nil, err
 		}
-		currentPrimIp["auto_delete"] = rIp.AutoDelete
-
 		primaryIpList = append(primaryIpList, currentPrimIp)
 		vniMap["primary_ip"] = primaryIpList
 	}
+
 	vniMap["subnet"] = vni.Subnet.ID
 	vniMap["resource_type"] = vni.ResourceType
 	vniMap["resource_group"] = vni.ResourceGroup.ID
+	vniMap["protocol_state_filtering_mode"] = vni.ProtocolStateFilteringMode
+
 	if len(vni.SecurityGroups) != 0 {
 		secgrpList := []string{}
 		for i := 0; i < len(vni.SecurityGroups); i++ {
@@ -737,11 +805,16 @@ func ShareMountTargetVirtualNetworkInterfaceToMap(context context.Context, vpcCl
 	return vniSlice, nil
 }
 
-func ShareMountTargetMapToShareMountTargetPrototype(d *schema.ResourceData, vniMap map[string]interface{}) (vpcv1.ShareMountTargetVirtualNetworkInterfacePrototype, error) {
+func ShareMountTargetMapToShareMountTargetPrototype(d *schema.ResourceData, vniMap map[string]interface{}, autoDeleteSchema string) (vpcv1.ShareMountTargetVirtualNetworkInterfacePrototype, error) {
 	vniPrototype := vpcv1.ShareMountTargetVirtualNetworkInterfacePrototype{}
 	name, _ := vniMap["name"].(string)
 	if name != "" {
 		vniPrototype.Name = &name
+	}
+	if vniMap["protocol_state_filtering_mode"] != nil {
+		if pStateFilteringInt, ok := vniMap["protocol_state_filtering_mode"]; ok && pStateFilteringInt.(string) != "" {
+			vniPrototype.ProtocolStateFilteringMode = core.StringPtr(pStateFilteringInt.(string))
+		}
 	}
 	primaryIp, ok := vniMap["primary_ip"]
 	if ok && len(primaryIp.([]interface{})) > 0 {
@@ -771,6 +844,12 @@ func ShareMountTargetMapToShareMountTargetPrototype(d *schema.ResourceData, vniM
 		}
 		vniPrototype.PrimaryIP = primaryIpPrototype
 	}
+
+	if autoDeleteIntf, ok := d.GetOkExists(autoDeleteSchema); ok {
+		autoDeleteBool := autoDeleteIntf.(bool)
+		vniPrototype.AutoDelete = &autoDeleteBool
+	}
+
 	if subnet := vniMap["subnet"].(string); subnet != "" {
 		vniPrototype.Subnet = &vpcv1.SubnetIdentity{
 			ID: &subnet,
@@ -894,4 +973,39 @@ func mountTargetRefreshFunc(context context.Context, vpcClient *vpcv1.VpcV1, sha
 		}
 		return target, "pending", nil
 	}
+}
+func virtualNetworkInterfaceIPsReservedIPPrototypeMapToModel(modelMap map[string]interface{}) (vpcv1.VirtualNetworkInterfaceIPPrototypeIntf, error) {
+	model := &vpcv1.VirtualNetworkInterfaceIPPrototype{}
+
+	reservedIp := modelMap["reserved_ip"].(string)
+	reservedIpAddress := modelMap["address"].(string)
+	reservedIpName := modelMap["name"].(string)
+	reservedIpAutoDelete, autoDeleteOk := modelMap["auto_delete"]
+	if reservedIp != "" && (reservedIpAddress != "" || reservedIpName != "" || autoDeleteOk) {
+		return model, fmt.Errorf("[ERROR] Error creating mount target, virtual_network_interface, reserved_ip(%s) is mutually exclusive with other primary_ip attributes", reservedIp)
+	}
+	if reservedIp != "" {
+		model.ID = core.StringPtr(modelMap["id"].(string))
+	} else {
+		if reservedIpAddress != "" {
+			model.Address = &reservedIpAddress
+		}
+		if reservedIpName != "" {
+			model.Name = &reservedIpName
+		}
+		if autoDeleteOk {
+			reservedIpAutoDeleteBool := reservedIpAutoDelete.(bool)
+			model.AutoDelete = &reservedIpAutoDeleteBool
+		}
+	}
+
+	return model, nil
+}
+
+func virtualNetworkInterfaceIPsToReservedIPPrototype(modelMap map[string]interface{}) (vpcv1.VirtualNetworkInterfaceIPPrototypeIntf, error) {
+	model := &vpcv1.VirtualNetworkInterfaceIPPrototype{}
+	if modelMap["reserved_ip"] != nil && modelMap["reserved_ip"].(string) != "" {
+		model.ID = core.StringPtr(modelMap["reserved_ip"].(string))
+	}
+	return model, nil
 }
