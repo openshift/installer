@@ -15,6 +15,15 @@ import (
 
 const (
 	createNew = "<create new>"
+
+	// KubernetesAPIPrivateSuffix is the name suffix for Kubernetes API Private LB resources.
+	KubernetesAPIPrivateSuffix = "kubernetes-api-private"
+
+	// KubernetesAPIPublicSuffix is the name suffix for Kubernetes API Public LB resources.
+	KubernetesAPIPublicSuffix = "kubernetes-api-public"
+
+	// MachineConfigSuffix is the name suffix for Machine Config Server LB resources.
+	MachineConfigSuffix = "machine-config"
 )
 
 // Platform collects IBM Cloud-specific configuration.

@@ -42,6 +42,20 @@ func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 	return m.recorder
 }
 
+// CreateCISDNSRecord mocks base method.
+func (m *MockAPI) CreateCISDNSRecord(ctx context.Context, cisInstanceCRN, zoneID, recordName, cname string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateCISDNSRecord", ctx, cisInstanceCRN, zoneID, recordName, cname)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateCISDNSRecord indicates an expected call of CreateCISDNSRecord.
+func (mr *MockAPIMockRecorder) CreateCISDNSRecord(ctx, cisInstanceCRN, zoneID, recordName, cname interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCISDNSRecord", reflect.TypeOf((*MockAPI)(nil).CreateCISDNSRecord), ctx, cisInstanceCRN, zoneID, recordName, cname)
+}
+
 // CreateCOSBucket mocks base method.
 func (m *MockAPI) CreateCOSBucket(ctx context.Context, cosInstanceID, bucketName, region string) error {
 	m.ctrl.T.Helper()
@@ -83,6 +97,20 @@ func (m *MockAPI) CreateCOSObject(ctx context.Context, sourceData []byte, fileNa
 func (mr *MockAPIMockRecorder) CreateCOSObject(ctx, sourceData, fileName, cosInstanceID, bucketName, region interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCOSObject", reflect.TypeOf((*MockAPI)(nil).CreateCOSObject), ctx, sourceData, fileName, cosInstanceID, bucketName, region)
+}
+
+// CreateDNSServicesDNSRecord mocks base method.
+func (m *MockAPI) CreateDNSServicesDNSRecord(ctx context.Context, dnsInstanceID, zoneID, recordName, cname string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateDNSServicesDNSRecord", ctx, dnsInstanceID, zoneID, recordName, cname)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateDNSServicesDNSRecord indicates an expected call of CreateDNSServicesDNSRecord.
+func (mr *MockAPIMockRecorder) CreateDNSServicesDNSRecord(ctx, dnsInstanceID, zoneID, recordName, cname interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDNSServicesDNSRecord", reflect.TypeOf((*MockAPI)(nil).CreateDNSServicesDNSRecord), ctx, dnsInstanceID, zoneID, recordName, cname)
 }
 
 // CreateIAMAuthorizationPolicy mocks base method.
@@ -305,6 +333,21 @@ func (m *MockAPI) GetEncryptionKey(ctx context.Context, keyCRN string) (*respons
 func (mr *MockAPIMockRecorder) GetEncryptionKey(ctx, keyCRN interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEncryptionKey", reflect.TypeOf((*MockAPI)(nil).GetEncryptionKey), ctx, keyCRN)
+}
+
+// GetLoadBalancer mocks base method.
+func (m *MockAPI) GetLoadBalancer(ctx context.Context, loadBalancerID string) (*vpcv1.LoadBalancer, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLoadBalancer", ctx, loadBalancerID)
+	ret0, _ := ret[0].(*vpcv1.LoadBalancer)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLoadBalancer indicates an expected call of GetLoadBalancer.
+func (mr *MockAPIMockRecorder) GetLoadBalancer(ctx, loadBalancerID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLoadBalancer", reflect.TypeOf((*MockAPI)(nil).GetLoadBalancer), ctx, loadBalancerID)
 }
 
 // GetResourceGroup mocks base method.

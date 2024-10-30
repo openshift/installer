@@ -42,6 +42,8 @@ type API interface {
 	CreateCOSBucket(ctx context.Context, cosInstanceID string, bucketName string, region string) error
 	CreateCOSInstance(ctx context.Context, cosName string, resourceGroupID string) (*resourcecontrollerv2.ResourceInstance, error)
 	CreateCOSObject(ctx context.Context, sourceData []byte, fileName string, cosInstanceID string, bucketName string, region string) error
+	CreateCISDNSRecord(ctx context.Context, cisInstanceCRN string, zoneID string, recordName string, cname string) error
+	CreateDNSServicesDNSRecord(ctx context.Context, dnsInstanceID string, zoneID string, recordName string, cname string) error
 	CreateIAMAuthorizationPolicy(tx context.Context, sourceServiceName string, sourceServiceResourceType string, targetServiceName string, targetServiceInstanceID string, roles []string) error
 	CreateResourceGroup(ctx context.Context, rgName string) error
 	GetAPIKey() string
@@ -57,6 +59,7 @@ type API interface {
 	GetDNSZoneIDByName(ctx context.Context, name string, publish types.PublishingStrategy) (string, error)
 	GetDNSZones(ctx context.Context, publish types.PublishingStrategy) ([]responses.DNSZoneResponse, error)
 	GetEncryptionKey(ctx context.Context, keyCRN string) (*responses.EncryptionKeyResponse, error)
+	GetLoadBalancer(ctx context.Context, loadBalancerID string) (*vpcv1.LoadBalancer, error)
 	GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.ResourceGroup, error)
 	GetResourceGroup(ctx context.Context, nameOrID string) (*resourcemanagerv2.ResourceGroup, error)
 	GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet, error)
@@ -214,6 +217,63 @@ func (c *Client) CreateCOSObject(ctx context.Context, sourceData []byte, fileNam
 	if _, err := cosClient.PutObject(options); err != nil {
 		return fmt.Errorf("failed creating cos object: %w", err)
 	}
+	return nil
+}
+
+// CreateCISDNSRecord creates a DNS Record in the IBM Cloud Internet Services (CIS) zone based on the provided Load Balancer.
+func (c *Client) CreateCISDNSRecord(ctx context.Context, cisInstanceCRN string, zoneID string, recordName string, cname string) error {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	dnsRecordsService, err := c.getDNSRecordsAPI(cisInstanceCRN, zoneID)
+	if err != nil {
+		return fmt.Errorf("failed to create dns records service to create dns record: %w", err)
+	}
+
+	// Build the new DNS Record options.
+	recordOptions := dnsRecordsService.NewCreateDnsRecordOptions()
+	recordOptions.SetName(recordName)
+	recordOptions.SetType(dnsrecordsv1.CreateDnsRecordOptions_Type_Cname)
+	recordOptions.SetContent(cname)
+
+	// Create new DNS Record.
+	logrus.Debugf("creating cis dns record: recordName=%s, cname=%s", recordName, cname)
+	recordDetails, _, err := dnsRecordsService.CreateDnsRecordWithContext(localContext, recordOptions)
+	if err != nil {
+		return fmt.Errorf("failed to create dns record %s: %w", recordName, err)
+	}
+	logrus.Debugf("created new dns record: recordName=%s, recordID=%s", recordName, *recordDetails.Result.ID)
+	return nil
+}
+
+// CreateDNSServicesDNSRecord create a DNS Record in the DNS Serivces zone, based on provided the Load Balancer.
+func (c *Client) CreateDNSServicesDNSRecord(ctx context.Context, dnsInstanceID string, zoneID string, recordName string, cname string) error {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	dnsService, err := c.getDNSServicesAPI()
+	if err != nil {
+		return fmt.Errorf("failed to create dns services service to create dns record: %w", err)
+	}
+
+	// Build the new DNS Record options.
+	cnameRecord, err := dnsService.NewResourceRecordInputRdataRdataCnameRecord(cname)
+	if err != nil {
+		return fmt.Errorf("failed to create rdata cname record for dns services dns record: %w", err)
+	}
+	recordOptions := dnsService.NewCreateResourceRecordOptions(dnsInstanceID, zoneID)
+	recordOptions.SetName(recordName)
+	recordOptions.SetRdata(cnameRecord)
+	recordOptions.SetTTL(60)
+	recordOptions.SetType("CNAME")
+
+	// Create new DNS Record.
+	logrus.Debugf("creating dns services dns record: recordName=%s, cname=%s", recordName, cname)
+	recordDetails, _, err := dnsService.CreateResourceRecordWithContext(localContext, recordOptions)
+	if err != nil {
+		return fmt.Errorf("failed to create dns record %s: %w", recordName, err)
+	}
+	logrus.Debugf("created new dns record: recordName=%s, recordID=%s", recordName, *recordDetails.ID)
 	return nil
 }
 
@@ -466,21 +526,9 @@ func (c *Client) GetDNSInstancePermittedNetworks(ctx context.Context, dnsID stri
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
+	dnsService, err := c.getDNSServicesAPI()
 	if err != nil {
-		return nil, err
-	}
-	options := &dnssvcsv1.DnsSvcsV1Options{
-		Authenticator: authenticator,
-	}
-	// If a DNS Services service endpoint override was provided, pass it along to override the default DNS Services service endpoint
-	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceDNSServices, c.serviceEndpoints); overrideURL != "" {
-		options.URL = overrideURL
-	}
-	// Isolate DNS Services service usage for Internal (Private) clusters; within this function
-	dnsService, err := dnssvcsv1.NewDnsSvcsV1(options)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create dns services service to retrieve permitted networks: %w", err)
 	}
 
 	listPermittedNetworksOptions := dnsService.NewListPermittedNetworksOptions(dnsID, dnsZone)
@@ -537,25 +585,9 @@ func (c *Client) GetDedicatedHostProfiles(ctx context.Context, region string) ([
 // GetDNSRecordsByName gets DNS records in specific Cloud Internet Services instance
 // by its CRN, zone ID, and DNS record name.
 func (c *Client) GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID string, recordName string) ([]dnsrecordsv1.DnsrecordDetails, error) {
-	authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
+	dnsRecordsService, err := c.getDNSRecordsAPI(crnstr, zoneID)
 	if err != nil {
-		return nil, err
-	}
-	// Set CIS DNS record service options
-	options := &dnsrecordsv1.DnsRecordsV1Options{
-		Authenticator:  authenticator,
-		Crn:            core.StringPtr(crnstr),
-		ZoneIdentifier: core.StringPtr(zoneID),
-	}
-	// If a CIS service endpoint override was provided, pass it along to override the default DNS Records service
-	// dnsrecordsv1 is provided via IBM CIS endpoint
-	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceCIS, c.serviceEndpoints); overrideURL != "" {
-		options.URL = overrideURL
-	}
-	// Isolate DNS Records service (for IBM Cloud CIS) usage for External (Public) clusters; within this function
-	dnsRecordsService, err := dnsrecordsv1.NewDnsRecordsV1(options)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create dns records service to retrieve dns record: %w", err)
 	}
 
 	// Get CIS DNS records by name
@@ -607,22 +639,9 @@ func (c *Client) getDNSDNSZones(ctx context.Context) ([]responses.DNSZoneRespons
 
 	var allZones []responses.DNSZoneResponse
 	for _, instance := range listResourceInstancesResponse.Resources {
-		authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
+		dnsZoneService, err := c.getDNSZonesAPI()
 		if err != nil {
-			return nil, err
-		}
-		options := &dnszonesv1.DnsZonesV1Options{
-			Authenticator: authenticator,
-		}
-		// If a DNS Services service endpoint override was provided, pass it along to override the default DNS Zones service
-		// dnszonesv1 is provided via IBM Cloud DNS Services endpoint
-		if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceDNSServices, c.serviceEndpoints); overrideURL != "" {
-			options.URL = overrideURL
-		}
-		// Isolate DNS Zones service (for IBM Cloud DNS Services) usage for Internal (Private) clusters; within this function
-		dnsZoneService, err := dnszonesv1.NewDnsZonesV1(options)
-		if err != nil {
-			return nil, fmt.Errorf("failed to list DNS zones: %w", err)
+			return nil, fmt.Errorf("failed to create dns zones service to retrieve dns zone: %w", err)
 		}
 
 		listZonesOptions := dnsZoneService.NewListDnszonesOptions(*instance.GUID)
@@ -662,23 +681,9 @@ func (c *Client) getCISDNSZones(ctx context.Context) ([]responses.DNSZoneRespons
 
 	var allZones []responses.DNSZoneResponse
 	for _, instance := range listResourceInstancesResponse.Resources {
-		authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
+		zonesService, err := c.getCISZonesAPI(instance.CRN)
 		if err != nil {
-			return nil, err
-		}
-		options := &zonesv1.ZonesV1Options{
-			Authenticator: authenticator,
-			Crn:           instance.CRN,
-		}
-		// If a CIS service endpoint override was provided, pass it along to override the default Zones service
-		// zonesv1 is provided via IBM Cloud CIS endpoint
-		if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceCIS, c.serviceEndpoints); overrideURL != "" {
-			options.URL = overrideURL
-		}
-		// Isolate Zones service (for IBM Cloud CIS) usage for External (Public) clusters; within this function
-		zonesService, err := zonesv1.NewZonesV1(options)
-		if err != nil {
-			return nil, fmt.Errorf("failed to list DNS zones: %w", err)
+			return nil, fmt.Errorf("failed to create zones service to retrieve dns zone: %w", err)
 		}
 
 		listZonesOptions := zonesService.NewListZonesOptions()
@@ -739,11 +744,21 @@ func (c *Client) GetEncryptionKey(ctx context.Context, keyCRN string) (*response
 	return keyResponse, nil
 }
 
-// GetResourceGroup gets a resource group by its name or ID.
-func (c *Client) GetResourceGroup(ctx context.Context, nameOrID string) (*resourcemanagerv2.ResourceGroup, error) {
-	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
+// GetLoadBalancer gets a VPC Load Balancer by ID.
+func (c *Client) GetLoadBalancer(ctx context.Context, loadBalancerID string) (*vpcv1.LoadBalancer, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
+	options := c.vpcAPI.NewGetLoadBalancerOptions(loadBalancerID)
+	loadBalancer, _, err := c.vpcAPI.GetLoadBalancerWithContext(localContext, options)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve load balancer: %w", err)
+	}
+	return loadBalancer, nil
+}
+
+// GetResourceGroup gets a resource group by its name or ID.
+func (c *Client) GetResourceGroup(ctx context.Context, nameOrID string) (*resourcemanagerv2.ResourceGroup, error) {
 	groups, err := c.GetResourceGroups(ctx)
 	if err != nil {
 		return nil, err
@@ -759,7 +774,7 @@ func (c *Client) GetResourceGroup(ctx context.Context, nameOrID string) (*resour
 
 // GetResourceGroups gets the list of resource groups.
 func (c *Client) GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.ResourceGroup, error) {
-	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
 	apikey, err := c.GetAuthenticatorAPIKeyDetails(ctx)
@@ -769,7 +784,8 @@ func (c *Client) GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.Res
 
 	options := c.managementAPI.NewListResourceGroupsOptions()
 	options.SetAccountID(*apikey.AccountID)
-	listResourceGroupsResponse, _, err := c.managementAPI.ListResourceGroupsWithContext(ctx, options)
+
+	listResourceGroupsResponse, _, err := c.managementAPI.ListResourceGroupsWithContext(localContext, options)
 	if err != nil {
 		return nil, err
 	}
@@ -1000,6 +1016,101 @@ func (c *Client) loadVPCV1API() error {
 	}
 	c.vpcAPI = vpcService
 	return nil
+}
+
+// getCISZonesAPI returns a new Zones service. This function isolates the management of Zones service, as it only required for Public (External) clusters.
+// Zones is used to manage zones within IBM Cloud Internet Services (CIS) and is reliant on the CIS service endpoint.
+func (c *Client) getCISZonesAPI(instanceCRN *string) (*zonesv1.ZonesV1, error) {
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create iam authenticator for zones service: %w", err)
+	}
+	options := &zonesv1.ZonesV1Options{
+		Authenticator: authenticator,
+		Crn:           instanceCRN,
+	}
+
+	// If a CIS service endpoint override was provided, pass it along to override the default Zones service, as zonesv1 is provided via IBM Cloud CIS endpoint.
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceCIS, c.serviceEndpoints); overrideURL != "" {
+		options.URL = overrideURL
+	}
+
+	zonesService, err := zonesv1.NewZonesV1(options)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create zones service: %w", err)
+	}
+	return zonesService, nil
+}
+
+// getDNSZonesAPI returns a new DNS Zones service. This function isolates the management of DNS Zones service, as it is only required for Private (Internal) clusters currently.
+// DNS Zones is used to manage zones within IBM Cloud DNS Services and is reliant on the DNS Services service endpoint.
+func (c *Client) getDNSZonesAPI() (*dnszonesv1.DnsZonesV1, error) {
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create iam authenticator for dns zones service: %w", err)
+	}
+	options := &dnszonesv1.DnsZonesV1Options{
+		Authenticator: authenticator,
+	}
+
+	// If a DNS Services service endpoint override was provided, pass it along to override the default DNS Zones service, as dnszonesv1 is provided via IBM Cloud DNS Services endpoint.
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceDNSServices, c.serviceEndpoints); overrideURL != "" {
+		options.URL = overrideURL
+	}
+
+	dnsZoneService, err := dnszonesv1.NewDnsZonesV1(options)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create dns zones service: %w", err)
+	}
+	return dnsZoneService, nil
+}
+
+// getDNSServicesAPI returns a new DNS Services service. This function isolates the management of DNS Services service, as it is only required for Private (Internal) clusters currently.
+func (c *Client) getDNSServicesAPI() (*dnssvcsv1.DnsSvcsV1, error) {
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
+	if err != nil {
+		return nil, err
+	}
+	options := &dnssvcsv1.DnsSvcsV1Options{
+		Authenticator: authenticator,
+	}
+
+	// If a DNS Services service endpoint override was provided, pass it along to override the default DNS Services service endpoint.
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceDNSServices, c.serviceEndpoints); overrideURL != "" {
+		options.URL = overrideURL
+	}
+
+	dnsService, err := dnssvcsv1.NewDnsSvcsV1(options)
+	if err != nil {
+		return nil, err
+	}
+	return dnsService, nil
+}
+
+// getDNSRecordsAPI returns a new DNS Records service. This function isolates the management of DNS Records service, as it is only required for Public (External) clusters.
+// DNS Records is used to manage DNS records within IBM Cloud Internet Services (CIS) and is reliant on the CIS service endpoint.
+func (c *Client) getDNSRecordsAPI(instanceCRN string, zoneID string) (*dnsrecordsv1.DnsRecordsV1, error) {
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create iam authenticator for dns records service: %w", err)
+	}
+	// Set CIS DNS record service options
+	options := &dnsrecordsv1.DnsRecordsV1Options{
+		Authenticator:  authenticator,
+		Crn:            core.StringPtr(instanceCRN),
+		ZoneIdentifier: core.StringPtr(zoneID),
+	}
+
+	// If a CIS service endpoint override was provided, pass it along to override the default DNS Records service, as dnsrecordsv1 is provided via IBM CIS endpoint.
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceCIS, c.serviceEndpoints); overrideURL != "" {
+		options.URL = overrideURL
+	}
+
+	dnsRecordsService, err := dnsrecordsv1.NewDnsRecordsV1(options)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create dns records service: %w", err)
+	}
+	return dnsRecordsService, nil
 }
 
 func (c *Client) getKeyServiceAPI(crn ibmcrn.CRN) (*kpclient.Client, error) {
