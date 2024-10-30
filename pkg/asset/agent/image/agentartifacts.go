@@ -19,6 +19,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	workflowreport "github.com/openshift/installer/pkg/asset/agent/workflow/report"
 )
 
 const (
@@ -57,7 +58,7 @@ func (a *AgentArtifacts) Dependencies() []asset.Asset {
 }
 
 // Generate generates the configurations for the agent ISO image and PXE assets.
-func (a *AgentArtifacts) Generate(_ context.Context, dependencies asset.Parents) error {
+func (a *AgentArtifacts) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ignition := &Ignition{}
 	kargs := &Kargs{}
 	baseIso := &BaseIso{}
@@ -67,6 +68,10 @@ func (a *AgentArtifacts) Generate(_ context.Context, dependencies asset.Parents)
 	agentconfig := &config.AgentConfig{}
 	agentWorkflow := &workflow.AgentWorkflow{}
 	dependencies.Get(ignition, kargs, baseIso, agentManifests, agentClusterInstall, registriesConf, agentconfig, agentWorkflow)
+
+	if err := workflowreport.GetReport(ctx).Stage(workflow.StageAgentArtifacts); err != nil {
+		return err
+	}
 
 	ignitionByte, err := json.Marshal(ignition.Config)
 	if err != nil {
@@ -103,10 +108,17 @@ func (a *AgentArtifacts) Generate(_ context.Context, dependencies asset.Parents)
 
 	var agentTuiFiles []string
 	if agentClusterInstall.GetExternalPlatformName() != agent.ExternalPlatformNameOci {
+		if err := workflowreport.GetReport(ctx).SubStage(workflow.StageAgentArtifactsAgentTUI); err != nil {
+			return err
+		}
 		agentTuiFiles, err = a.fetchAgentTuiFiles(agentManifests.ClusterImageSet.Spec.ReleaseImage, agentManifests.GetPullSecretData(), registriesConf.MirrorConfig)
 		if err != nil {
 			return err
 		}
+	}
+
+	if err := workflowreport.GetReport(ctx).SubStage(workflow.StageAgentArtifactsPrepare); err != nil {
+		return err
 	}
 	err = a.prepareAgentArtifacts(a.ISOPath, agentTuiFiles)
 	if err != nil {

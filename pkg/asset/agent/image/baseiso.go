@@ -19,6 +19,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	workflowreport "github.com/openshift/installer/pkg/asset/agent/workflow/report"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/rhcos/cache"
 	"github.com/openshift/installer/pkg/types"
@@ -146,6 +147,10 @@ func (i *BaseIso) Generate(ctx context.Context, dependencies asset.Parents) erro
 	var err error
 	var baseIsoFileName string
 
+	if err := workflowreport.GetReport(ctx).Stage(workflow.StageFetchBaseISO); err != nil {
+		return err
+	}
+
 	if urlOverride, ok := os.LookupEnv("OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE"); ok && urlOverride != "" {
 		logrus.Warn("Found override for OS Image. Please be warned, this is not advised")
 		baseIsoFileName, err = cache.DownloadImageFile(urlOverride, cache.AgentApplicationName)
@@ -214,8 +219,15 @@ func (i *BaseIso) retrieveBaseIso(ctx context.Context, dependencies asset.Parent
 		// If we have the image registry location and 'oc' command is available then get from release payload
 		ocRelease := i.getRelease(agentManifests, registriesConf)
 		logrus.Info("Extracting base ISO from release payload")
+
+		if err := workflowreport.GetReport(ctx).SubStage(workflow.StageFetchBaseISOExtract); err != nil {
+			return "", err
+		}
 		baseIsoFileName, err := ocRelease.GetBaseIso(archName)
 		if err == nil {
+			if err := workflowreport.GetReport(ctx).SubStage(workflow.StageFetchBaseISOVerify); err != nil {
+				return "", err
+			}
 			i.checkReleasePayloadBaseISOVersion(ctx, ocRelease, archName)
 
 			logrus.Debugf("Extracted base ISO image %s from release payload", baseIsoFileName)
@@ -233,6 +245,9 @@ func (i *BaseIso) retrieveBaseIso(ctx context.Context, dependencies asset.Parent
 	}
 
 	logrus.Info("Downloading base ISO")
+	if err := workflowreport.GetReport(ctx).SubStage(workflow.StageFetchBaseISODownload); err != nil {
+		return "", err
+	}
 	return i.downloadIso(ctx, archName)
 }
 

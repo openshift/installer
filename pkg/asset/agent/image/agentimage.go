@@ -18,6 +18,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	workflowreport "github.com/openshift/installer/pkg/asset/agent/workflow/report"
 )
 
 const (
@@ -63,6 +64,10 @@ func (a *AgentImage) Generate(ctx context.Context, dependencies asset.Parents) e
 	agentManifests := &manifests.AgentManifests{}
 	baseIso := &BaseIso{}
 	dependencies.Get(agentArtifacts, agentManifests, baseIso, agentWorkflow, clusterInfo)
+
+	if err := workflowreport.GetReport(ctx).Stage(workflow.StageGenerateISO); err != nil {
+		return err
+	}
 
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
