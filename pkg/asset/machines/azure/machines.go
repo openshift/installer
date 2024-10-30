@@ -10,6 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	v1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
@@ -272,12 +273,42 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		AcceleratedNetworking: getVMNetworkingType(mpool.VMNetworkingType),
 		Tags:                  platform.UserTags,
 	}
+	var bootDiagnostics *machineapi.AzureDiagnostics
+	if platform.DefaultMachinePlatform != nil {
+		bootDiagnostics = getBootDiagnosticObject(platform.DefaultMachinePlatform.BootDiagnostics)
+	}
+	tempDiagnostics := getBootDiagnosticObject(mpool.BootDiagnostics)
+	if tempDiagnostics != nil {
+		bootDiagnostics = tempDiagnostics
+	}
+	if bootDiagnostics != nil {
+		spec.Diagnostics = *bootDiagnostics
+	}
 
 	if platform.CloudName == azure.StackCloud {
 		spec.AvailabilitySet = fmt.Sprintf("%s-cluster", clusterID)
 	}
 
 	return spec, nil
+}
+
+func getBootDiagnosticObject(diag *azure.BootDiagnostics) (bootDiagnostics *machineapi.AzureDiagnostics) {
+	if diag == nil {
+		return nil
+	}
+	if diag.Type == v1beta1.DisabledDiagnosticsStorage {
+		return nil
+	}
+	bootDiagnostics = &machineapi.AzureDiagnostics{Boot: &machineapi.AzureBootDiagnostics{}}
+	if diag.Type == v1beta1.ManagedDiagnosticsStorage {
+		bootDiagnostics.Boot.StorageAccountType = machineapi.AzureManagedAzureDiagnosticsStorage
+	} else {
+		bootDiagnostics.Boot.StorageAccountType = machineapi.CustomerManagedAzureDiagnosticsStorage
+		bootDiagnostics.Boot.CustomerManaged = &machineapi.AzureCustomerManagedBootDiagnostics{
+			StorageAccountURI: diag.StorageAccountURI,
+		}
+	}
+	return bootDiagnostics
 }
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
