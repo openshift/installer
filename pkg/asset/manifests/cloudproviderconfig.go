@@ -300,6 +300,11 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 			serviceGUID = installConfig.Config.PowerVS.ServiceInstanceGUID
 		}
 
+		cosRegion, err := powervstypes.COSRegionForPowerVSRegion(installConfig.Config.PowerVS.Region)
+		if err != nil {
+			return err
+		}
+
 		powervsConfig, err := powervsmanifests.CloudProviderConfig(
 			clusterID.InfraID,
 			accountID,
@@ -311,7 +316,7 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 			serviceName,
 			installConfig.Config.PowerVS.Region,
 			installConfig.Config.PowerVS.Zone,
-			installConfig.Config.PowerVS.ServiceEndpoints,
+			installConfig.PowerVS.SetDefaultPrivateServiceEndpoints(ctx, installConfig.Config.PowerVS.ServiceEndpoints, cosRegion, vpcRegion),
 		)
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")

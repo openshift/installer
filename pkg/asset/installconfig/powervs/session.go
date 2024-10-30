@@ -15,7 +15,6 @@ import (
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/form3tech-oss/jwt-go"
 	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/openshift/installer/pkg/types/powervs"
 )
@@ -427,14 +426,22 @@ func getEnv(envs []string) string {
 	return ""
 }
 
-// FilterServiceEndpoints drops service endpoint overrides that are not supported by PowerVS CAPI provider.
-func (c *BxClient) FilterServiceEndpoints(cfg *powervs.Metadata) []string {
-	capiSupported := sets.New("cos", "powervs", "rc", "rm", "vpc") // see serviceIDs array definition in https://github.com/kubernetes-sigs/cluster-api-provider-ibmcloud/blob/main/pkg/endpoints/endpoints.go
+// MapServiceEndpointsForCAPI drops service endpoint overrides that are not supported by PowerVS CAPI provider, while also translating service names.
+func (c *BxClient) MapServiceEndpointsForCAPI(cfg *powervs.Metadata) []string {
+	// Keys are what installer recognizes from install-config.yaml, and values are what PowerVS CAPI accepts
+	// Should contain only mapping for serviceIDs from https://github.com/kubernetes-sigs/cluster-api-provider-ibmcloud/blob/main/pkg/endpoints/endpoints.go
+	capiSupported := map[string]string{
+		"COS":                "cos",
+		"Power":              "powervs",
+		"ResourceController": "", // FIXME CAPI recognizes "rc," but crashes if passed in...
+		"ResourceManager":    "rm",
+		"VPC":                "vpc",
+	}
 	overrides := make([]string, 0, len(cfg.ServiceEndpoints))
 	// CAPI expects name=url pairs of service endpoints
 	for _, endpoint := range cfg.ServiceEndpoints {
-		if capiSupported.Has(endpoint.Name) {
-			overrides = append(overrides, fmt.Sprintf("%s=%s", endpoint.Name, endpoint.URL))
+		if capiName, ok := capiSupported[endpoint.Name]; ok && capiName != "" {
+			overrides = append(overrides, fmt.Sprintf("%s=%s", capiSupported[endpoint.Name], endpoint.URL))
 		} else {
 			logrus.Infof("Unsupported service endpoint skipped: %s", endpoint.Name)
 		}

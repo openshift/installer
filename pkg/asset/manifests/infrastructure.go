@@ -311,6 +311,19 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 				URL:  service.URL,
 			})
 		}
+		if installConfig.Config.Publish == types.InternalPublishingStrategy &&
+			(len(installConfig.Config.ImageDigestSources) > 0 || len(installConfig.Config.DeprecatedImageContentSources) > 0) {
+			piRegion := installConfig.Config.PowerVS.Region
+			vpcRegion, err := powervs.VPCRegionForPowerVSRegion(piRegion)
+			if err != nil {
+				return fmt.Errorf("failed to determine VPC region: %w", err)
+			}
+			cosRegion, err := powervs.COSRegionForPowerVSRegion(piRegion)
+			if err != nil {
+				return fmt.Errorf("failed to determine COS region: %w", err)
+			}
+			config.Spec.PlatformSpec.PowerVS.ServiceEndpoints = installConfig.PowerVS.SetDefaultPrivateServiceEndpoints(ctx, config.Spec.PlatformSpec.PowerVS.ServiceEndpoints, cosRegion, vpcRegion)
+		}
 		config.Status.PlatformStatus.PowerVS = &configv1.PowerVSPlatformStatus{
 			Region:           installConfig.Config.Platform.PowerVS.Region,
 			Zone:             installConfig.Config.Platform.PowerVS.Zone,

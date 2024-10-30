@@ -3,6 +3,7 @@ package cluster
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/pkg/errors"
 
@@ -97,7 +98,10 @@ func (m *Metadata) Generate(_ context.Context, parents asset.Parents) (err error
 	case vspheretypes.Name:
 		metadata.ClusterPlatformMetadata.VSphere = vsphere.Metadata(installConfig.Config)
 	case powervstypes.Name:
-		metadata.ClusterPlatformMetadata.PowerVS = powervs.Metadata(installConfig.Config, installConfig.PowerVS)
+		metadata.ClusterPlatformMetadata.PowerVS, err = powervs.Metadata(installConfig.Config, installConfig.PowerVS)
+		if err != nil {
+			return fmt.Errorf("failed to initialize PowerVS: %w", err)
+		}
 	case externaltypes.Name, nonetypes.Name:
 	case nutanixtypes.Name:
 		metadata.ClusterPlatformMetadata.Nutanix = nutanix.Metadata(installConfig.Config)
