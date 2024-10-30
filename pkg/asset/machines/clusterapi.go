@@ -281,19 +281,21 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 			return err
 		}
 
+		storageURI := fmt.Sprintf("https://%s.blob.%s", getStorageAccountName(clusterID.InfraID), session.Environment.StorageEndpointSuffix)
 		azureMachines, err := azure.GenerateMachines(clusterID.InfraID,
 			installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID),
 			session.Credentials.SubscriptionID,
 			&azure.MachineInput{
-				Subnet:          subnet,
-				Role:            "master",
-				UserDataSecret:  "master-user-data",
-				HyperVGen:       hyperVGen,
-				UseImageGallery: false,
-				Private:         installConfig.Config.Publish == types.InternalPublishingStrategy,
-				UserTags:        installConfig.Config.Platform.Azure.UserTags,
-				Platform:        installConfig.Config.Platform.Azure,
-				Pool:            &pool,
+				Subnet:            subnet,
+				Role:              "master",
+				UserDataSecret:    "master-user-data",
+				HyperVGen:         hyperVGen,
+				UseImageGallery:   false,
+				Private:           installConfig.Config.Publish == types.InternalPublishingStrategy,
+				UserTags:          installConfig.Config.Platform.Azure.UserTags,
+				Platform:          installConfig.Config.Platform.Azure,
+				Pool:              &pool,
+				StorageAccountURI: storageURI,
 			},
 		)
 		if err != nil {
@@ -577,4 +579,17 @@ func (c *ClusterAPI) Load(f asset.FileFetcher) (bool, error) {
 
 	asset.SortManifestFiles(c.FileList)
 	return len(c.FileList) > 0, nil
+}
+
+// Storage account names can't be more than 24 characters.
+func getStorageAccountName(infraID string) string {
+	storageAccountNameMax := 24
+
+	storageAccountName := strings.ReplaceAll(infraID, "-", "")
+	if len(storageAccountName) > storageAccountNameMax-2 {
+		storageAccountName = storageAccountName[:storageAccountNameMax-2]
+	}
+	storageAccountName = fmt.Sprintf("%ssa", storageAccountName)
+
+	return storageAccountName
 }

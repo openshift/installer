@@ -235,6 +235,35 @@ spec:
                       description: Azure is the configuration used when installing
                         on Azure.
                       properties:
+                        bootDiagnostics:
+                          description: |-
+                            BootDiagnostics has the value for the storage account URI where the
+                            machine log information is sent to. Defaults to managed if no value
+                            is mentioned.
+                          properties:
+                            storageAccountURI:
+                              description: |-
+                                StorageAccountURI specifies the storage account the log information
+                                needs to be stored in.
+                              type: string
+                            type:
+                              allOf:
+                              - enum:
+                                - Managed
+                                - UserManaged
+                                - Disabled
+                              - enum:
+                                - Disabled
+                                - Managed
+                                - UserManaged
+                              default: Disabled
+                              description: Type specifies the boot diagnostics type
+                                for the machines created.
+                              type: string
+                          required:
+                          - storageAccountURI
+                          - type
+                          type: object
                         encryptionAtHost:
                           description: EncryptionAtHost enables encryption at the
                             VM host.
@@ -1305,6 +1334,35 @@ spec:
                     description: Azure is the configuration used when installing on
                       Azure.
                     properties:
+                      bootDiagnostics:
+                        description: |-
+                          BootDiagnostics has the value for the storage account URI where the
+                          machine log information is sent to. Defaults to managed if no value
+                          is mentioned.
+                        properties:
+                          storageAccountURI:
+                            description: |-
+                              StorageAccountURI specifies the storage account the log information
+                              needs to be stored in.
+                            type: string
+                          type:
+                            allOf:
+                            - enum:
+                              - Managed
+                              - UserManaged
+                              - Disabled
+                            - enum:
+                              - Disabled
+                              - Managed
+                              - UserManaged
+                            default: Disabled
+                            description: Type specifies the boot diagnostics type
+                              for the machines created.
+                            type: string
+                        required:
+                        - storageAccountURI
+                        - type
+                        type: object
                       encryptionAtHost:
                         description: EncryptionAtHost enables encryption at the VM
                           host.
@@ -2819,6 +2877,35 @@ spec:
                       installing on Azure for machine pools which do not define their own
                       platform configuration.
                     properties:
+                      bootDiagnostics:
+                        description: |-
+                          BootDiagnostics has the value for the storage account URI where the
+                          machine log information is sent to. Defaults to managed if no value
+                          is mentioned.
+                        properties:
+                          storageAccountURI:
+                            description: |-
+                              StorageAccountURI specifies the storage account the log information
+                              needs to be stored in.
+                            type: string
+                          type:
+                            allOf:
+                            - enum:
+                              - Managed
+                              - UserManaged
+                              - Disabled
+                            - enum:
+                              - Disabled
+                              - Managed
+                              - UserManaged
+                            default: Disabled
+                            description: Type specifies the boot diagnostics type
+                              for the machines created.
+                            type: string
+                        required:
+                        - storageAccountURI
+                        - type
+                        type: object
                       encryptionAtHost:
                         description: EncryptionAtHost enables encryption at the VM
                           host.
