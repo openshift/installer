@@ -2,13 +2,13 @@ package configimage
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/store"
 	"github.com/openshift/installer/pkg/types/imagebased"
 )
 
@@ -41,28 +41,19 @@ func (ci *ConfigImage) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the configuration image file.
-func (ci *ConfigImage) Generate(_ context.Context, dependencies asset.Parents) error {
-	// Save the image to a temp file
+func (ci *ConfigImage) createIsoContent(assetFunction func(asset asset.Asset) error) error {
 	tmpPath, err := os.MkdirTemp("", "imagebased")
 	if err != nil {
 		return fmt.Errorf("could not create temp directory: %w", err)
 	}
-	ci.tmpPath = tmpPath
 
-	dirs := []string{
-		clusterConfigurationDir,
-		manifestsDir,
-		extraManifestsDir,
-	}
-	for _, dir := range dirs {
-		if err := os.MkdirAll(filepath.Join(ci.tmpPath, dir), 0755); err != nil {
-			return fmt.Errorf("could not create %s directory: %w", dir, err)
-		}
+	ci.tmpPath = tmpPath
+	if err := createDirs(tmpPath); err != nil {
+		return err
 	}
 
 	createFile := func(file *asset.File) error {
-		f, err := os.Create(filepath.Join(ci.tmpPath, file.Filename))
+		f, err := os.Create(filepath.Join(tmpPath, file.Filename))
 		if err != nil {
 			return fmt.Errorf("could not create %s: %w", file.Filename, err)
 		}
@@ -79,13 +70,27 @@ func (ci *ConfigImage) Generate(_ context.Context, dependencies asset.Parents) e
 		&ImageDigestSources{},
 		&ExtraManifests{},
 	} {
-		dependencies.Get(a)
+		if err := assetFunction(a); err != nil {
+			return err
+		}
 
 		for _, file := range a.Files() {
 			if err := createFile(file); err != nil {
 				return err
 			}
 		}
+	}
+	return nil
+}
+
+// Generate generates the configuration image file.
+func (ci *ConfigImage) Generate(_ context.Context, dependencies asset.Parents) error {
+	assetFunc := func(asset asset.Asset) error {
+		dependencies.Get(asset)
+		return nil
+	}
+	if err := ci.createIsoContent(assetFunc); err != nil {
+		return err
 	}
 
 	return nil
@@ -95,10 +100,20 @@ func (ci *ConfigImage) Generate(_ context.Context, dependencies asset.Parents) e
 func (ci *ConfigImage) PersistToFile(directory string) error {
 	defer os.RemoveAll(ci.tmpPath)
 
-	// If the tmpPath is not set then it means that either one of the Config
-	// dependencies or the asset itself failed for some reason
+	// If the tmpPath is not set then possibly we started with clean folder that has only openshift state file
+	// this case is part of IBFF flow, when we need to recreate iso from state file
 	if ci.tmpPath == "" {
-		return errors.New("cannot generate config image due to configuration errors")
+		astore, err := store.NewStore(directory)
+		if err != nil {
+			return err
+		}
+
+		assetFunc := func(asset asset.Asset) error {
+			return astore.Fetch(context.TODO(), asset)
+		}
+		if err := ci.createIsoContent(assetFunc); err != nil {
+			return err
+		}
 	}
 
 	configImageFile := filepath.Join(directory, configImageFilename)
@@ -130,4 +145,18 @@ func (ci *ConfigImage) Load(f asset.FileFetcher) (bool, error) {
 func (ci *ConfigImage) Files() []*asset.File {
 	// Return empty array because File will never be loaded.
 	return []*asset.File{}
+}
+
+func createDirs(tmpPath string) error {
+	dirs := []string{
+		clusterConfigurationDir,
+		manifestsDir,
+		extraManifestsDir,
+	}
+	for _, dir := range dirs {
+		if err := os.MkdirAll(filepath.Join(tmpPath, dir), 0755); err != nil {
+			return fmt.Errorf("could not create %s directory: %w", dir, err)
+		}
+	}
+	return nil
 }
