@@ -357,12 +357,6 @@ func (a *OptionalInstallConfig) validateBMCConfig(installConfig *types.InstallCo
 }
 
 func warnUnusedConfig(installConfig *types.InstallConfig) {
-	// "Proxyonly" is the default set from generic install config code
-	if installConfig.AdditionalTrustBundlePolicy != "Proxyonly" {
-		fieldPath := field.NewPath("AdditionalTrustBundlePolicy")
-		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.AdditionalTrustBundlePolicy))
-	}
-
 	for i, compute := range installConfig.Compute {
 		if compute.Hyperthreading != "Enabled" {
 			fieldPath := field.NewPath(fmt.Sprintf("Compute[%d]", i), "Hyperthreading")

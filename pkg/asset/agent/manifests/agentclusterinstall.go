@@ -114,6 +114,8 @@ type agentClusterInstallInstallConfigOverrides struct {
 	Networking *types.Networking `json:"networking,omitempty"`
 	// Allow override of CPUPartitioning
 	CPUPartitioning types.CPUPartitioningMode `json:"cpuPartitioningMode,omitempty"`
+	// Allow override of AdditionalTrustBundlePolicy
+	AdditionalTrustBundlePolicy types.PolicyType `json:"additionalTrustBundlePolicy,omitempty"`
 }
 
 var _ asset.WritableAsset = (*AgentClusterInstall)(nil)
@@ -327,6 +329,11 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 		if installConfig.Config.CPUPartitioning != "" {
 			icOverridden = true
 			icOverrides.CPUPartitioning = installConfig.Config.CPUPartitioning
+		}
+
+		if installConfig.Config.AdditionalTrustBundlePolicy != "" && installConfig.Config.AdditionalTrustBundlePolicy != types.PolicyProxyOnly {
+			icOverridden = true
+			icOverrides.AdditionalTrustBundlePolicy = installConfig.Config.AdditionalTrustBundlePolicy
 		}
 
 		if icOverridden {
