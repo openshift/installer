@@ -125,6 +125,11 @@ type InstallConfig struct {
 	// +optional
 	ControlPlane *MachinePool `json:"controlPlane,omitempty"`
 
+	// Arbiter is the configuration for the machines that comprise the
+	// arbiter nodes.
+	// +optional
+	Arbiter *MachinePool `json:"arbiter,omitempty"`
+
 	// Compute is the configuration for the machines that comprise the
 	// compute nodes.
 	// +optional
@@ -245,6 +250,13 @@ func (c *InstallConfig) IsOKD() bool {
 // bootstrapInPlace
 func (c *InstallConfig) IsSingleNodeOpenShift() bool {
 	return c.BootstrapInPlace != nil
+}
+
+// IsArbiterEnabled returns if arbiter is enabled based off of the install-config arbiter machine pool.
+func (c *InstallConfig) IsArbiterEnabled() bool {
+	return c.Arbiter != nil &&
+		c.Arbiter.Replicas != nil &&
+		*c.Arbiter.Replicas > 0
 }
 
 // CPUPartitioningMode defines how the nodes should be setup for partitioning the CPU Sets.

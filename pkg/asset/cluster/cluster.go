@@ -73,6 +73,7 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		&kubeconfig.AdminClient{},
 		&bootstrap.Bootstrap{},
 		&machine.Master{},
+		&machine.Arbiter{},
 		&machine.Worker{},
 		&machines.Worker{},
 		&machines.ClusterAPI{},
