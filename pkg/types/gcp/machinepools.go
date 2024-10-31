@@ -40,6 +40,7 @@ var (
 		"c2d": {PDStandard, PDSSD, PDBalanced},
 		"c3":  {PDSSD, PDBalanced, HyperDiskBalanced},
 		"c3d": {PDSSD, PDBalanced, HyperDiskBalanced},
+		"c4":  {HyperDiskBalanced},
 		"e2":  {PDStandard, PDSSD, PDBalanced},
 		"m1":  {PDSSD, PDBalanced, HyperDiskBalanced},
 		"n1":  {PDStandard, PDSSD, PDBalanced},
