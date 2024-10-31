@@ -72,8 +72,23 @@ func TestClusterConfiguration_Generate(t *testing.T) {
 				installConfig().build(),
 				imageBasedConfig(),
 			},
-
 			expectedConfig: clusterConfiguration().build().Config,
+		},
+		{
+			name: "valid configuration with node labels",
+			dependencies: []asset.Asset{
+				clusterID(),
+				kubeadminPassword(),
+				lbCertKey(),
+				localhostCertKey(),
+				serviceNetworkCertKey(),
+				adminKubeConfigCertKey(),
+				ingressCertKey(),
+				installConfig().build(),
+				imageBasedConfigWithNodeLabels(map[string]string{"test": "test", "label": "test"}),
+			},
+
+			expectedConfig: clusterConfigurationWithNodeLabels(map[string]string{"test": "test", "label": "test"}).build().Config,
 		},
 		{
 			name: "valid configuration with cluster and infra ID",
@@ -373,6 +388,12 @@ func clusterConfigurationWithProvidedIDs(clusterID string, infraID string) *Clus
 	ccb := clusterConfiguration()
 	ccb.ClusterConfiguration.Config.ClusterID = clusterID
 	ccb.ClusterConfiguration.Config.InfraID = infraID
+	return ccb
+}
+
+func clusterConfigurationWithNodeLabels(nodeLabels map[string]string) *ClusterConfigurationBuilder {
+	ccb := clusterConfiguration()
+	ccb.ClusterConfiguration.Config.NodeLabels = nodeLabels
 	return ccb
 }
 

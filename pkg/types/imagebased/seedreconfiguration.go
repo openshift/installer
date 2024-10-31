@@ -84,6 +84,9 @@ type SeedReconfiguration struct {
 
 	// PullSecret is the secret to use when pulling images.
 	PullSecret string `json:"pull_secret,omitempty"`
+
+	// NodeLabels The desired node labels for the SNO node.
+	NodeLabels map[string]string `json:"node_labels,omitempty"`
 }
 
 // KubeConfigCryptoRetention contains all the crypto material that is required

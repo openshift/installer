@@ -111,6 +111,7 @@ func (cc *ClusterConfiguration) Generate(_ context.Context, dependencies asset.P
 		PullSecret:            installConfig.Config.PullSecret,
 		ReleaseRegistry:       imageBasedConfig.Config.ReleaseRegistry,
 		SSHKey:                installConfig.Config.SSHKey,
+		NodeLabels:            imageBasedConfig.Config.NodeLabels,
 	}
 
 	if imageBasedConfig.Config.NetworkConfig != nil {
