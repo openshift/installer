@@ -20,6 +20,8 @@ const (
 	MachinePoolEdgeRoleName = "edge"
 	// MachinePoolControlPlaneRoleName name associated with the control plane machinepool.
 	MachinePoolControlPlaneRoleName = "master"
+	// MachinePoolArbiterRoleName name associated with the control plane machinepool for smaller sized limited nodes.
+	MachinePoolArbiterRoleName = "arbiter"
 )
 
 // HyperthreadingMode is the mode of hyperthreading for a machine.

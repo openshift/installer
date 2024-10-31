@@ -125,6 +125,11 @@ type InstallConfig struct {
 	// +optional
 	ControlPlane *MachinePool `json:"controlPlane,omitempty"`
 
+	// Arbiter is the configuration for the machines that comprise the
+	// arbiter nodes.
+	// +optional
+	Arbiter *MachinePool `json:"arbiter,omitempty"`
+
 	// Compute is the configuration for the machines that comprise the
 	// compute nodes.
 	// +optional

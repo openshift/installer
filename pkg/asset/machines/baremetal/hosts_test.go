@@ -32,6 +32,7 @@ routes:
 	testCases := []struct {
 		Scenario        string
 		Machines        []machineapi.Machine
+		ArbiterMachines []machineapi.Machine
 		Config          *types.InstallConfig
 		ExpectedSecrets []corev1.Secret
 		ExpectedHosts   []baremetalhost.BareMetalHost
@@ -265,11 +266,65 @@ routes:
 					host("master-2").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy(),
 					host("worker-0").annotation("baremetalhost.metal3.io/paused", "")).build(),
 		},
+		{
+			Scenario: "3-hosts-2-masters-no-arbiter-render",
+			Machines: machines(
+				machine("machine-0"),
+				machine("machine-1"),
+				machine("machine-2")),
+			Config: configHosts(
+				hostType("master-0").bmc("usr0", "pwd0").role("master"),
+				hostType("master-1").bmc("usr1", "pwd1").role("master"),
+				hostType("arbiter-0").bmc("usr2", "pwd2").role("arbiter")),
+
+			ExpectedSetting: settings().
+				secrets(
+					secret("master-0-bmc-secret").creds("usr0", "pwd0"),
+					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
+				).
+				hosts(
+					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
+					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy()).build(),
+		},
+		{
+			Scenario: "3-hosts-2-masters-with-1-arbiter",
+			Machines: machines(
+				machine("machine-0"),
+				machine("machine-1")),
+			ArbiterMachines: machines(
+				machine("machine-2")),
+			Config: config().withArbiter().hosts(
+				hostType("master-0").bmc("usr0", "pwd0").role("master"),
+				hostType("master-1").bmc("usr1", "pwd1").role("master"),
+				hostType("arbiter-0").bmc("usr2", "pwd2").role("arbiter")).
+				build(),
+
+			ExpectedSetting: settings().
+				secrets(
+					secret("master-0-bmc-secret").creds("usr0", "pwd0"),
+					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
+					secret("arbiter-0-bmc-secret").creds("usr2", "pwd2"),
+				).
+				hosts(
+					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
+					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
+					host("arbiter-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret-arbiter").consumerRef("machine-2").customDeploy(),
+				).build(),
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.Scenario, func(t *testing.T) {
 			settings, err := Hosts(tc.Config, tc.Machines, "user-data-secret")
+
+			arbiterSettings, arbiterErr := ArbiterHosts(tc.Config, tc.ArbiterMachines, "user-data-secret-arbiter")
+			if tc.ExpectedError == "" {
+				assert.Nil(t, arbiterErr)
+			}
+			if settings != nil && arbiterSettings != nil {
+				settings.Hosts = append(settings.Hosts, arbiterSettings.Hosts...)
+				settings.Secrets = append(settings.Secrets, arbiterSettings.Secrets...)
+			}
 
 			if tc.ExpectedError != "" {
 				assert.EqualError(t, err, tc.ExpectedError)
@@ -319,6 +374,14 @@ func (ib *installConfigBuilder) hosts(builders ...*hostTypeBuilder) *installConf
 
 	for _, hb := range builders {
 		ib.Platform.BareMetal.Hosts = append(ib.Platform.BareMetal.Hosts, hb.build())
+	}
+	return ib
+}
+
+func (ib *installConfigBuilder) withArbiter() *installConfigBuilder {
+	replicas := int64(1)
+	ib.Arbiter = &types.MachinePool{
+		Replicas: &replicas,
 	}
 	return ib
 }

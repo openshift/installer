@@ -116,9 +116,19 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 		return nil, fmt.Errorf("no baremetal platform in configuration")
 	}
 
+	isArbiterEnabled := config.Arbiter != nil &&
+		config.Arbiter.Replicas != nil &&
+		*config.Arbiter.Replicas > 0
+
 	numRequiredMasters := len(machines)
 	numMasters := 0
 	for _, host := range config.Platform.BareMetal.Hosts {
+
+		// We skip arbiter generation in this method, the arbiter machine generation will
+		// be created via ArbiterHost method
+		if host.IsArbiter() && isArbiterEnabled {
+			continue
+		}
 
 		secret, bmc := createSecret(host)
 		if secret != nil {
@@ -168,6 +178,78 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 		}
 
 		settings.Hosts = append(settings.Hosts, newHost)
+	}
+
+	return settings, nil
+}
+
+// ArbiterHosts returns the HostSettings with details of the hardware being
+// used to construct a cluster with an arbiter node.
+func ArbiterHosts(config *types.InstallConfig, machines []machineapi.Machine, userDataSecret string) (*HostSettings, error) {
+	settings := &HostSettings{}
+	isArbiterEnabled := config.Arbiter != nil &&
+		config.Arbiter.Replicas != nil &&
+		*config.Arbiter.Replicas > 0
+
+	if config.Platform.BareMetal == nil {
+		return nil, fmt.Errorf("no baremetal platform in configuration")
+	}
+
+	// If Arbiter is not enabled, nothing happens
+	if !isArbiterEnabled {
+		return nil, nil
+	}
+
+	numRequiredControlPlaneMachines := len(machines)
+	numMachines := 0
+	for _, host := range config.Platform.BareMetal.Hosts {
+		// We skip creating other host files, the master machine generation takes care of those
+		if !host.IsArbiter() {
+			continue
+		}
+
+		secret, bmc := createSecret(host)
+		if secret != nil {
+			settings.Secrets = append(settings.Secrets, *secret)
+		}
+		newHost := createBaremetalHost(host, bmc)
+
+		if host.NetworkConfig != nil {
+			networkConfigSecret, err := createNetworkConfigSecret(host)
+			if err != nil {
+				return nil, err
+			}
+			settings.NetworkConfigSecrets = append(settings.NetworkConfigSecrets, *networkConfigSecret)
+			newHost.Spec.PreprovisioningNetworkDataName = networkConfigSecret.Name
+		}
+
+		if numMachines < numRequiredControlPlaneMachines {
+			// Setting CustomDeploy early ensures that the
+			// corresponding Ironic node gets correctly configured
+			// from the beginning.
+			newHost.Spec.CustomDeploy = &baremetalhost.CustomDeploy{
+				Method: "install_coreos",
+			}
+
+			newHost.ObjectMeta.Labels = map[string]string{
+				"installer.openshift.io/role": "control-plane",
+			}
+
+			// Link the new host to the currently available machine
+			machine := machines[numMachines]
+			newHost.Spec.ConsumerRef = &corev1.ObjectReference{
+				APIVersion: machine.TypeMeta.APIVersion,
+				Kind:       machine.TypeMeta.Kind,
+				Namespace:  machine.ObjectMeta.Namespace,
+				Name:       machine.ObjectMeta.Name,
+			}
+			newHost.Spec.Online = true
+
+			// userDataSecret carries a reference to the master ignition file
+			newHost.Spec.UserData = &corev1.SecretReference{Name: userDataSecret}
+			numMachines++
+			settings.Hosts = append(settings.Hosts, newHost)
+		}
 	}
 
 	return settings, nil

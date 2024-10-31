@@ -26,6 +26,7 @@ var (
 
 	// Manifests are the manifests targeted assets.
 	Manifests = []asset.WritableAsset{
+		&machines.Arbiter{},
 		&machines.Master{},
 		&machines.Worker{},
 		&machines.ClusterAPI{},
@@ -55,6 +56,7 @@ var (
 		&password.KubeadminPassword{},
 		&machine.Master{},
 		&machine.Worker{},
+		&machine.Arbiter{},
 		&bootstrap.Bootstrap{},
 		&cluster.Metadata{},
 	}
@@ -72,6 +74,7 @@ var (
 	Cluster = []asset.WritableAsset{
 		&cluster.Metadata{},
 		&machine.MasterIgnitionCustomizations{},
+		&machine.ArbiterIgnitionCustomizations{},
 		&machine.WorkerIgnitionCustomizations{},
 		&tfvars.TerraformVariables{},
 		&kubeconfig.AdminClient{},
