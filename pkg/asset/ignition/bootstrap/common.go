@@ -126,6 +126,7 @@ func (a *Common) Dependencies() []asset.Asset {
 		&kubeconfig.LoopbackClient{},
 		&mcign.MasterIgnitionCustomizations{},
 		&mcign.WorkerIgnitionCustomizations{},
+		&machines.Arbiter{},
 		&machines.Master{},
 		&machines.Worker{},
 		&manifests.Manifests{},
@@ -315,6 +316,10 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	// Generate platform-specific bootstrap data
 	var platformData platformTemplateData
 
+	controlPlaneReplicas := *installConfig.Config.ControlPlane.Replicas
+	if installConfig.Config.Arbiter != nil {
+		controlPlaneReplicas += *installConfig.Config.Arbiter.Replicas
+	}
 	switch installConfig.Config.Platform.Name() {
 	case awstypes.Name:
 		platformData.AWS = aws.GetTemplateData(installConfig.Config.Platform.AWS)
@@ -322,7 +327,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		platformData.BareMetal = baremetal.GetTemplateData(
 			installConfig.Config.Platform.BareMetal,
 			installConfig.Config.MachineNetwork,
-			*installConfig.Config.ControlPlane.Replicas,
+			controlPlaneReplicas,
 			ironicCreds.Username,
 			ironicCreds.Password,
 			dependencies,
@@ -598,6 +603,7 @@ func (a *Common) addParentFiles(dependencies asset.Parents) {
 	for _, asset := range []asset.WritableAsset{
 		&manifests.Manifests{},
 		&manifests.Openshift{},
+		&machines.Arbiter{},
 		&machines.Master{},
 		&machines.Worker{},
 		&mcign.MasterIgnitionCustomizations{},
