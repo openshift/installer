@@ -4,6 +4,7 @@ import (
 	"net"
 	"strings"
 
+	"github.com/go-openapi/swag"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
@@ -512,8 +513,9 @@ func getGoodACI() *hiveext.AgentClusterInstall {
 						HostPrefix: 23,
 					},
 				},
-				ServiceNetwork: []string{"172.30.0.0/16"},
-				NetworkType:    "OVNKubernetes",
+				ServiceNetwork:        []string{"172.30.0.0/16"},
+				NetworkType:           "OVNKubernetes",
+				UserManagedNetworking: swag.Bool(false),
 			},
 			SSHPublicKey: strings.Trim(testSSHKey, "|\n\t"),
 			ProvisionRequirements: hiveext.ProvisionRequirements{
