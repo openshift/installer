@@ -72,7 +72,7 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 			},
 			Spec: *machineSpec,
 		}
-		openStackMachine.SetGroupVersionKind(capo.GroupVersion.WithKind("OpenStackMachine"))
+		openStackMachine.SetGroupVersionKind(capo.SchemeGroupVersion.WithKind("OpenStackMachine"))
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", openStackMachine.Name)},
@@ -96,7 +96,7 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID, role)),
 				},
 				InfrastructureRef: v1.ObjectReference{
-					APIVersion: capo.GroupVersion.String(),
+					APIVersion: capo.SchemeGroupVersion.String(),
 					Kind:       "OpenStackMachine",
 					Name:       openStackMachine.Name,
 				},
@@ -177,7 +177,7 @@ func generateMachineSpec(clusterID string, platform *openstack.Platform, mpool *
 	}
 
 	spec := capo.OpenStackMachineSpec{
-		Flavor: mpool.FlavorName,
+		Flavor: ptr.To(mpool.FlavorName),
 		IdentityRef: &capo.OpenStackIdentityReference{
 			Name:      clusterID + "-cloud-config",
 			CloudName: CloudName,
