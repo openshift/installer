@@ -193,7 +193,7 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 
 	// Agent Rest API is available
 	if agentRestAPILive {
-		exitOnErr, err := czero.MonitorStatusFromAssistedService()
+		exitOnErr, err := czero.MonitorStatusFromAssistedService(nil)
 		if err != nil {
 			return false, exitOnErr, err
 		}
@@ -214,17 +214,16 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 // After cluster or host installation has started, new events from
 // the Assisted Service API are also logged and updated to the cluster's
 // install history.
-func (czero *Cluster) MonitorStatusFromAssistedService() (bool, error) {
+func (czero *Cluster) MonitorStatusFromAssistedService(ch chan logEntry) (bool, error) {
+	logger := logrus.StandardLogger()
 	resource := "cluster"
-	logPrefix := ""
 	if czero.workflow == workflow.AgentWorkflowTypeAddNodes {
 		resource = "host"
-		logPrefix = fmt.Sprintf("Node %s: ", czero.API.Rest.NodeZeroIP)
 	}
 
 	// First time we see the agent Rest API
 	if !czero.installHistory.RestAPISeen {
-		logrus.Debugf("%sAgent Rest API Initialized", logPrefix)
+		log(Debug, "Agent Rest API Initialized", logger, ch)
 		czero.installHistory.RestAPISeen = true
 		czero.installHistory.NotReadyTime = time.Now()
 	}
@@ -256,18 +255,14 @@ func (czero *Cluster) MonitorStatusFromAssistedService() (bool, error) {
 		return false, errors.New("cluster metadata returned nil from Agent Rest API")
 	}
 
-	czero.PrintInstallStatus(clusterMetadata)
+	czero.PrintInstallStatus(clusterMetadata, ch)
 
 	// If status indicates pending action, log host info to help pinpoint what is missing
 	if (*clusterMetadata.Status != czero.installHistory.RestAPIPreviousClusterStatus) &&
 		(*clusterMetadata.Status == models.ClusterStatusInstallingPendingUserAction) {
 		for _, host := range clusterMetadata.Hosts {
 			if *host.Status == models.ClusterStatusInstallingPendingUserAction {
-				if logPrefix != "" {
-					logrus.Warningf("%s%s %s", logPrefix, host.RequestedHostname, *host.StatusInfo)
-				} else {
-					logrus.Warningf("Host %s %s", host.RequestedHostname, *host.StatusInfo)
-				}
+				log(Warning, fmt.Sprintf("Host %s %s", host.RequestedHostname, *host.StatusInfo), logger, ch)
 			}
 		}
 	}
@@ -293,7 +288,7 @@ func (czero *Cluster) MonitorStatusFromAssistedService() (bool, error) {
 		}
 	}
 
-	validationsErr := checkValidations(clusterMetadata, czero.installHistory.ValidationResults, logrus.StandardLogger(), logPrefix)
+	validationsErr := checkValidations(clusterMetadata, czero.installHistory.ValidationResults, logger, ch)
 	if validationsErr != nil {
 		return false, errors.Wrap(validationsErr, "host validations failed")
 	}
@@ -310,9 +305,9 @@ func (czero *Cluster) MonitorStatusFromAssistedService() (bool, error) {
 		// Don't print the same status message back to back
 		if *mostRecentEvent.Message != czero.installHistory.RestAPIPreviousEventMessage {
 			if *mostRecentEvent.Severity == models.EventSeverityInfo {
-				logrus.Infof("%s%s", logPrefix, *mostRecentEvent.Message)
+				log(Info, *mostRecentEvent.Message, logger, ch)
 			} else {
-				logrus.Warnf("%s%s", logPrefix, *mostRecentEvent.Message)
+				log(Warning, *mostRecentEvent.Message, logger, ch)
 			}
 		}
 		czero.installHistory.RestAPIPreviousEventMessage = *mostRecentEvent.Message
@@ -473,11 +468,11 @@ func (czero *Cluster) PrintInstallationComplete() error {
 }
 
 // PrintInstallStatus Print a human friendly message using the models from the Agent Rest API.
-func (czero *Cluster) PrintInstallStatus(cluster *models.Cluster) {
+func (czero *Cluster) PrintInstallStatus(cluster *models.Cluster, ch chan logEntry) {
 	friendlyStatus := czero.humanFriendlyClusterInstallStatus(*cluster.Status)
 	// Don't print the same status message back to back
 	if *cluster.Status != czero.installHistory.RestAPIPreviousClusterStatus {
-		logrus.Info(friendlyStatus)
+		log(Info, friendlyStatus, logrus.StandardLogger(), ch)
 	}
 }
 

@@ -37,7 +37,7 @@ func nodeJoiner() error {
 	}
 
 	nodesMonitorCmd := &cobra.Command{
-		Use:   "monitor-add-nodes",
+		Use:   "monitor-add-nodes <ip-addresses>",
 		Short: "Monitors the configured nodes while they are joining an existing cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			dir, err := cmd.Flags().GetString("dir")
