@@ -589,7 +589,7 @@ func ValidateCredentialMode(client API, ic *types.InstallConfig) field.ErrorList
 func validateZones(client API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	zones, err := client.GetZones(context.TODO(), ic.GCP.ProjectID, fmt.Sprintf("region eq .*%s", ic.GCP.Region))
+	zones, err := client.GetZones(context.TODO(), ic.GCP.ProjectID, ic.GCP.Region)
 	if err != nil {
 		return append(allErrs, field.InternalError(nil, err))
 	} else if len(zones) == 0 {

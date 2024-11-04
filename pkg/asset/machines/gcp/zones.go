@@ -29,10 +29,7 @@ func AvailabilityZones(project, region string) ([]string, error) {
 		return nil, errors.Wrap(err, "failed to create compute service")
 	}
 
-	regionURL := fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/regions/%s",
-		project, region)
-	filter := fmt.Sprintf("(region eq %s) (status eq UP)", regionURL)
-	zones, err := gcpconfig.GetZones(ctx, svc, project, filter)
+	zones, err := gcpconfig.GetZones(ctx, svc, project, region)
 	if err != nil {
 		return nil, errors.New("no zone was found")
 	}
@@ -64,7 +61,7 @@ func ZonesForInstanceType(project, region, instanceType string) ([]string, error
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
-	pZones, err := gcpconfig.GetZones(ctx, svc, project, fmt.Sprintf("(region eq .*%s) (status eq UP)", region))
+	pZones, err := gcpconfig.GetZones(ctx, svc, project, region)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get zones for project: %w", err)
 	}
