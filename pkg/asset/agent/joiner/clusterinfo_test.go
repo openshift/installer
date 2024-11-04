@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	ignutil "github.com/coreos/ignition/v2/config/util"
+	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/coreos/stream-metadata-go/stream"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -26,55 +28,25 @@ import (
 
 func TestClusterInfo_Generate(t *testing.T) {
 	cases := []struct {
-		name                string
-		workflow            workflow.AgentWorkflowType
-		nodesConfig         AddNodesConfig
-		objs                func(t *testing.T) ([]runtime.Object, []runtime.Object, []runtime.Object)
-		expectedClusterInfo ClusterInfo
-		expectedError       string
+		name                        string
+		workflow                    workflow.AgentWorkflowType
+		nodesConfig                 AddNodesConfig
+		objs                        func(t *testing.T) ([]runtime.Object, []runtime.Object, []runtime.Object)
+		overrideExpectedClusterInfo func(clusterInfo ClusterInfo) ClusterInfo
+		expectedError               string
 	}{
 		{
-			name:                "skip if not add-nodes workflow",
-			workflow:            workflow.AgentWorkflowTypeInstall,
-			expectedClusterInfo: ClusterInfo{},
+			name:     "skip if not add-nodes workflow",
+			workflow: workflow.AgentWorkflowTypeInstall,
+			overrideExpectedClusterInfo: func(clusterInfo ClusterInfo) ClusterInfo {
+				t.Helper()
+				return ClusterInfo{}
+			},
 		},
 		{
 			name:     "default",
 			workflow: workflow.AgentWorkflowTypeAddNodes,
 			objs:     defaultObjects(),
-			expectedClusterInfo: ClusterInfo{
-				ClusterID:    "1b5ba46b-7e56-47b1-a326-a9eebddfb38c",
-				ClusterName:  "ostest",
-				ReleaseImage: "registry.ci.openshift.org/ocp/release@sha256:65d9b652d0d23084bc45cb66001c22e796d43f5e9e005c2bc2702f94397d596e",
-				Version:      "4.15.0",
-				APIDNSName:   "api.ostest.test.metalkube.org",
-				Namespace:    "cluster0",
-				PullSecret:   "c3VwZXJzZWNyZXQK", // notsecret
-				UserCaBundle: "--- bundle ---",
-				Architecture: "amd64",
-				Proxy: &types.Proxy{
-					HTTPProxy:  "http://proxy",
-					HTTPSProxy: "https://proxy",
-					NoProxy:    "localhost",
-				},
-				ImageDigestSources: []types.ImageDigestSource{
-					{
-						Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
-						Mirrors: []string{
-							"registry.example.com:5000/ocp4/openshift4",
-						},
-					},
-				},
-				PlatformType:    v1beta1.BareMetalPlatformType,
-				SSHKey:          "my-ssh-key",
-				OSImage:         buildStreamData(),
-				OSImageLocation: "http://my-coreosimage-url/416.94.202402130130-0",
-				IgnitionEndpointWorker: &models.IgnitionEndpoint{
-					URL:           ptr.To("https://192.168.111.5:22623/config/worker"),
-					CaCertificate: ptr.To("LS0tL_FakeCertificate_LS0tCg=="),
-				},
-				FIPS: true,
-			},
 		},
 		{
 			name:     "architecture specified in nodesConfig as arm64 and target cluster is amd64",
@@ -96,38 +68,11 @@ func TestClusterInfo_Generate(t *testing.T) {
 				}
 				return objs, ocObjs, ocMachineConfigObjs
 			},
-			expectedClusterInfo: ClusterInfo{
-				ClusterID:    "1b5ba46b-7e56-47b1-a326-a9eebddfb38c",
-				ClusterName:  "ostest",
-				ReleaseImage: "registry.ci.openshift.org/ocp/release@sha256:65d9b652d0d23084bc45cb66001c22e796d43f5e9e005c2bc2702f94397d596e",
-				Version:      "4.15.0",
-				APIDNSName:   "api.ostest.test.metalkube.org",
-				Namespace:    "cluster0",
-				PullSecret:   "c3VwZXJzZWNyZXQK", // notsecret
-				UserCaBundle: "--- bundle ---",
-				Architecture: "arm64",
-				Proxy: &types.Proxy{
-					HTTPProxy:  "http://proxy",
-					HTTPSProxy: "https://proxy",
-					NoProxy:    "localhost",
-				},
-				ImageDigestSources: []types.ImageDigestSource{
-					{
-						Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
-						Mirrors: []string{
-							"registry.example.com:5000/ocp4/openshift4",
-						},
-					},
-				},
-				PlatformType:    v1beta1.BareMetalPlatformType,
-				SSHKey:          "my-ssh-key",
-				OSImage:         buildStreamData(),
-				OSImageLocation: "http://my-coreosimage-url/416.94.202402130130-1",
-				FIPS:            true,
-				IgnitionEndpointWorker: &models.IgnitionEndpoint{
-					URL:           ptr.To("https://192.168.111.5:22623/config/worker"),
-					CaCertificate: ptr.To("LS0tL_FakeCertificate_LS0tCg=="),
-				},
+			overrideExpectedClusterInfo: func(clusterInfo ClusterInfo) ClusterInfo {
+				t.Helper()
+				clusterInfo.Architecture = "arm64"
+				clusterInfo.OSImageLocation = "http://my-coreosimage-url/416.94.202402130130-1"
+				return clusterInfo
 			},
 		},
 		{
@@ -156,38 +101,53 @@ func TestClusterInfo_Generate(t *testing.T) {
 					SSHKey: "ssh-key-from-config",
 				},
 			},
-			expectedClusterInfo: ClusterInfo{
-				ClusterID:    "1b5ba46b-7e56-47b1-a326-a9eebddfb38c",
-				ClusterName:  "ostest",
-				ReleaseImage: "registry.ci.openshift.org/ocp/release@sha256:65d9b652d0d23084bc45cb66001c22e796d43f5e9e005c2bc2702f94397d596e",
-				Version:      "4.15.0",
-				APIDNSName:   "api.ostest.test.metalkube.org",
-				Namespace:    "cluster0",
-				PullSecret:   "c3VwZXJzZWNyZXQK", // notsecret
-				UserCaBundle: "--- bundle ---",
-				Architecture: "amd64",
-				Proxy: &types.Proxy{
-					HTTPProxy:  "http://proxy",
-					HTTPSProxy: "https://proxy",
-					NoProxy:    "localhost",
-				},
-				ImageDigestSources: []types.ImageDigestSource{
-					{
-						Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
-						Mirrors: []string{
-							"registry.example.com:5000/ocp4/openshift4",
+			overrideExpectedClusterInfo: func(clusterInfo ClusterInfo) ClusterInfo {
+				t.Helper()
+				clusterInfo.SSHKey = "ssh-key-from-config"
+				return clusterInfo
+			},
+		},
+		{
+			name:     "chrony conf",
+			workflow: workflow.AgentWorkflowTypeAddNodes,
+			objs: func(t *testing.T) ([]runtime.Object, []runtime.Object, []runtime.Object) {
+				t.Helper()
+				objs, ocObjs, ocMachineConfigObjs := defaultObjects()(t)
+				ocMachineConfigObjs = append(ocMachineConfigObjs, &machineconfigv1.MachineConfig{
+					ObjectMeta: v1.ObjectMeta{
+						Name: "50-workers-chrony-configuration",
+					},
+					Spec: machineconfigv1.MachineConfigSpec{
+						Config: runtime.RawExtension{
+							Raw: []byte(`
+ignition:
+  version: 3.2.0
+storage:
+  files:
+  - path: /etc/chrony.conf
+    mode: 420
+    overwrite: true
+    contents:
+      source: data:text/plain;charset=utf-8;base64,dW51c2VkCg==`),
+						}}})
+
+				return objs, ocObjs, ocMachineConfigObjs
+			},
+			overrideExpectedClusterInfo: func(clusterInfo ClusterInfo) ClusterInfo {
+				t.Helper()
+				clusterInfo.ChronyConf = &igntypes.File{
+					Node: igntypes.Node{
+						Path:      "/etc/chrony.conf",
+						Overwrite: ignutil.BoolToPtr(true),
+					},
+					FileEmbedded1: igntypes.FileEmbedded1{
+						Mode: ignutil.IntToPtr(0644),
+						Contents: igntypes.Resource{
+							Source: ignutil.StrToPtr("data:text/plain;charset=utf-8;base64,dW51c2VkCg=="),
 						},
 					},
-				},
-				PlatformType:    v1beta1.BareMetalPlatformType,
-				SSHKey:          "ssh-key-from-config",
-				OSImage:         buildStreamData(),
-				OSImageLocation: "http://my-coreosimage-url/416.94.202402130130-0",
-				IgnitionEndpointWorker: &models.IgnitionEndpoint{
-					URL:           ptr.To("https://192.168.111.5:22623/config/worker"),
-					CaCertificate: ptr.To("LS0tL_FakeCertificate_LS0tCg=="),
-				},
-				FIPS: true,
+				}
+				return clusterInfo
 			},
 		},
 	}
@@ -207,7 +167,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 			fakeOCClient := fakeclientconfig.NewSimpleClientset(openshiftObjects...)
 			fakeOCMachineConfigClient := fakeclientmachineconfig.NewSimpleClientset(openshiftMachineConfigObjects...)
 
-			clusterInfo := &ClusterInfo{
+			clusterInfo := ClusterInfo{
 				Client:                       fakeClient,
 				OpenshiftClient:              fakeOCClient,
 				OpenshiftMachineConfigClient: fakeOCMachineConfigClient,
@@ -215,24 +175,12 @@ func TestClusterInfo_Generate(t *testing.T) {
 			err := clusterInfo.Generate(context.Background(), parents)
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
-				assert.Equal(t, tc.expectedClusterInfo.ClusterID, clusterInfo.ClusterID)
-				assert.Equal(t, tc.expectedClusterInfo.ClusterName, clusterInfo.ClusterName)
-				assert.Equal(t, tc.expectedClusterInfo.Version, clusterInfo.Version)
-				assert.Equal(t, tc.expectedClusterInfo.ReleaseImage, clusterInfo.ReleaseImage)
-				assert.Equal(t, tc.expectedClusterInfo.APIDNSName, clusterInfo.APIDNSName)
-				assert.Equal(t, tc.expectedClusterInfo.PullSecret, clusterInfo.PullSecret)
-				assert.Equal(t, tc.expectedClusterInfo.Namespace, clusterInfo.Namespace)
-				assert.Equal(t, tc.expectedClusterInfo.UserCaBundle, clusterInfo.UserCaBundle)
-				assert.Equal(t, tc.expectedClusterInfo.Proxy, clusterInfo.Proxy)
-				assert.Equal(t, tc.expectedClusterInfo.Architecture, clusterInfo.Architecture)
-				assert.Equal(t, tc.expectedClusterInfo.ImageDigestSources, clusterInfo.ImageDigestSources)
-				assert.Equal(t, tc.expectedClusterInfo.DeprecatedImageContentSources, clusterInfo.DeprecatedImageContentSources)
-				assert.Equal(t, tc.expectedClusterInfo.PlatformType, clusterInfo.PlatformType)
-				assert.Equal(t, tc.expectedClusterInfo.SSHKey, clusterInfo.SSHKey)
-				assert.Equal(t, tc.expectedClusterInfo.OSImageLocation, clusterInfo.OSImageLocation)
-				assert.Equal(t, tc.expectedClusterInfo.OSImage, clusterInfo.OSImage)
-				assert.Equal(t, tc.expectedClusterInfo.IgnitionEndpointWorker, clusterInfo.IgnitionEndpointWorker)
-				assert.Equal(t, tc.expectedClusterInfo.FIPS, clusterInfo.FIPS)
+
+				expectedClusterInfo := defaultExpectedClusterInfo()
+				if tc.overrideExpectedClusterInfo != nil {
+					expectedClusterInfo = tc.overrideExpectedClusterInfo(expectedClusterInfo)
+				}
+				verifyClusterInfo(t, expectedClusterInfo, clusterInfo)
 			} else {
 				assert.Regexp(t, tc.expectedError, err.Error())
 			}
@@ -429,4 +377,63 @@ passwd:
 
 		return objects, openshiftObjects, openshiftMachineConfigObjects
 	}
+}
+
+func defaultExpectedClusterInfo() ClusterInfo {
+	return ClusterInfo{
+		ClusterID:    "1b5ba46b-7e56-47b1-a326-a9eebddfb38c",
+		ClusterName:  "ostest",
+		ReleaseImage: "registry.ci.openshift.org/ocp/release@sha256:65d9b652d0d23084bc45cb66001c22e796d43f5e9e005c2bc2702f94397d596e",
+		Version:      "4.15.0",
+		APIDNSName:   "api.ostest.test.metalkube.org",
+		Namespace:    "cluster0",
+		PullSecret:   "c3VwZXJzZWNyZXQK", // notsecret
+		UserCaBundle: "--- bundle ---",
+		Architecture: "amd64",
+		Proxy: &types.Proxy{
+			HTTPProxy:  "http://proxy",
+			HTTPSProxy: "https://proxy",
+			NoProxy:    "localhost",
+		},
+		ImageDigestSources: []types.ImageDigestSource{
+			{
+				Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
+				Mirrors: []string{
+					"registry.example.com:5000/ocp4/openshift4",
+				},
+			},
+		},
+		PlatformType:    v1beta1.BareMetalPlatformType,
+		SSHKey:          "my-ssh-key",
+		OSImage:         buildStreamData(),
+		OSImageLocation: "http://my-coreosimage-url/416.94.202402130130-0",
+		IgnitionEndpointWorker: &models.IgnitionEndpoint{
+			URL:           ptr.To("https://192.168.111.5:22623/config/worker"),
+			CaCertificate: ptr.To("LS0tL_FakeCertificate_LS0tCg=="),
+		},
+		FIPS: true,
+	}
+}
+
+func verifyClusterInfo(t *testing.T, expectedClusterInfo, clusterInfo ClusterInfo) {
+	t.Helper()
+	assert.Equal(t, expectedClusterInfo.ClusterID, clusterInfo.ClusterID)
+	assert.Equal(t, expectedClusterInfo.ClusterName, clusterInfo.ClusterName)
+	assert.Equal(t, expectedClusterInfo.Version, clusterInfo.Version)
+	assert.Equal(t, expectedClusterInfo.ReleaseImage, clusterInfo.ReleaseImage)
+	assert.Equal(t, expectedClusterInfo.APIDNSName, clusterInfo.APIDNSName)
+	assert.Equal(t, expectedClusterInfo.PullSecret, clusterInfo.PullSecret)
+	assert.Equal(t, expectedClusterInfo.Namespace, clusterInfo.Namespace)
+	assert.Equal(t, expectedClusterInfo.UserCaBundle, clusterInfo.UserCaBundle)
+	assert.Equal(t, expectedClusterInfo.Proxy, clusterInfo.Proxy)
+	assert.Equal(t, expectedClusterInfo.Architecture, clusterInfo.Architecture)
+	assert.Equal(t, expectedClusterInfo.ImageDigestSources, clusterInfo.ImageDigestSources)
+	assert.Equal(t, expectedClusterInfo.DeprecatedImageContentSources, clusterInfo.DeprecatedImageContentSources)
+	assert.Equal(t, expectedClusterInfo.PlatformType, clusterInfo.PlatformType)
+	assert.Equal(t, expectedClusterInfo.SSHKey, clusterInfo.SSHKey)
+	assert.Equal(t, expectedClusterInfo.OSImageLocation, clusterInfo.OSImageLocation)
+	assert.Equal(t, expectedClusterInfo.OSImage, clusterInfo.OSImage)
+	assert.Equal(t, expectedClusterInfo.IgnitionEndpointWorker, clusterInfo.IgnitionEndpointWorker)
+	assert.Equal(t, expectedClusterInfo.FIPS, clusterInfo.FIPS)
+	assert.Equal(t, expectedClusterInfo.ChronyConf, clusterInfo.ChronyConf)
 }

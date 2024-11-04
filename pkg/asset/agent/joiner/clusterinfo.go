@@ -72,6 +72,7 @@ type ClusterInfo struct {
 	IgnitionEndpointWorker        *models.IgnitionEndpoint
 	FIPS                          bool
 	Nodes                         *corev1.NodeList
+	ChronyConf                    *igntypes.File
 }
 
 var _ asset.WritableAsset = (*ClusterInfo)(nil)
@@ -119,6 +120,7 @@ func (ci *ClusterInfo) Generate(_ context.Context, dependencies asset.Parents) e
 		ci.retrieveClusterName,
 		ci.retrieveSSHKey,
 		ci.retrieveFIPS,
+		ci.retrieveWorkerChronyConfig,
 		ci.retrieveNamespace,
 	} {
 		if err := f(); err != nil {
@@ -273,6 +275,29 @@ func (ci *ClusterInfo) retrieveSSHKey() error {
 		return fmt.Errorf("cannot retrieve SSH key from machineconfig/99-worker-ssh: no SSH key found for user %s", ign.Passwd.Users[0].Name)
 	}
 	ci.SSHKey = string(ign.Passwd.Users[0].SSHAuthorizedKeys[0])
+	return nil
+}
+
+func (ci *ClusterInfo) retrieveWorkerChronyConfig() error {
+	workerMachineConfig, err := ci.OpenshiftMachineConfigClient.MachineconfigurationV1().MachineConfigs().Get(context.Background(), "50-workers-chrony-configuration", metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	var ign igntypes.Config
+	if err := yaml.Unmarshal(workerMachineConfig.Spec.Config.Raw, &ign); err != nil {
+		return err
+	}
+	for _, f := range ign.Storage.Files {
+		if f.Path != "/etc/chrony.conf" {
+			continue
+		}
+		chronyConf := f
+		ci.ChronyConf = &chronyConf
+		break
+	}
 	return nil
 }
 
