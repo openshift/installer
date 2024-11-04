@@ -39,21 +39,6 @@ type NMStateConfig struct {
 	Config              []*aiv1beta1.NMStateConfig
 }
 
-type nmStateConfig struct {
-	Interfaces []struct {
-		IPV4 struct {
-			Address []struct {
-				IP string `yaml:"ip,omitempty"`
-			} `yaml:"address,omitempty"`
-		} `yaml:"ipv4,omitempty"`
-		IPV6 struct {
-			Address []struct {
-				IP string `yaml:"ip,omitempty"`
-			} `yaml:"address,omitempty"`
-		} `yaml:"ipv6,omitempty"`
-	} `yaml:"interfaces,omitempty"`
-}
-
 var _ asset.WritableAsset = (*NMStateConfig)(nil)
 
 // Name returns a human friendly name for the asset.
@@ -260,29 +245,6 @@ func (n *NMStateConfig) validateNMStateLabels() field.ErrorList {
 	return allErrs
 }
 
-func getFirstIP(nmstateRaw []byte) (string, error) {
-	var nmStateConfig nmStateConfig
-	err := yaml.Unmarshal(nmstateRaw, &nmStateConfig)
-	if err != nil {
-		return "", fmt.Errorf("error unmarshalling NMStateConfig: %w", err)
-	}
-
-	for _, intf := range nmStateConfig.Interfaces {
-		for _, addr4 := range intf.IPV4.Address {
-			if addr4.IP != "" {
-				return addr4.IP, nil
-			}
-		}
-		for _, addr6 := range intf.IPV6.Address {
-			if addr6.IP != "" {
-				return addr6.IP, nil
-			}
-		}
-	}
-
-	return "", nil
-}
-
 // GetNodeZeroIP retrieves the first IP to be set as the node0 IP.
 // The method prioritizes the search by trying to scan first the NMState configs defined
 // in the agent-config hosts - so that it would be possible to skip the worker nodes - and then
@@ -315,7 +277,7 @@ func GetNodeZeroIP(hosts []agenttype.Host, nmStateConfigs []*aiv1beta1.NMStateCo
 
 	// Try to look for an eligible IP
 	for _, raw := range rawConfigs {
-		nodeZeroIP, err := getFirstIP(raw)
+		nodeZeroIP, err := agent.GetFirstIP(raw)
 		if err != nil {
 			return "", fmt.Errorf("error unmarshalling NMStateConfig: %w", err)
 		}
