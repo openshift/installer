@@ -9,6 +9,7 @@ import (
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -19,12 +20,13 @@ const (
 
 // SupportedInstallerPlatforms lists the supported platforms for agent installer.
 func SupportedInstallerPlatforms() []string {
-	return []string{baremetal.Name, vsphere.Name, none.Name, external.Name}
+	return []string{baremetal.Name, vsphere.Name, nutanix.Name, none.Name, external.Name}
 }
 
 var supportedHivePlatforms = []hiveext.PlatformType{
 	hiveext.BareMetalPlatformType,
 	hiveext.VSpherePlatformType,
+	hiveext.NutanixPlatformType,
 	hiveext.NonePlatformType,
 	hiveext.ExternalPlatformType,
 }

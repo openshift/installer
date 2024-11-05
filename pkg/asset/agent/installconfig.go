@@ -19,6 +19,8 @@ import (
 	baremetalvalidation "github.com/openshift/installer/pkg/types/baremetal/validation"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/nutanix"
+	nutanixvalidation "github.com/openshift/installer/pkg/types/nutanix/validation"
 	"github.com/openshift/installer/pkg/types/validation"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -147,6 +149,11 @@ func (a *OptionalInstallConfig) validatePlatformsByName(installConfig *types.Ins
 
 	if installConfig.Platform.Name() == baremetal.Name {
 		allErrs = append(allErrs, a.validateBMCConfig(installConfig)...)
+	}
+
+	if installConfig.Platform.Name() == nutanix.Name {
+		errList := nutanixvalidation.ValidatePlatform(installConfig.Platform.Nutanix, field.NewPath("platform", "nutanix"), installConfig)
+		allErrs = append(allErrs, errList...)
 	}
 
 	return allErrs
@@ -462,7 +469,23 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 			fieldPath := field.NewPath("Platform", "VSphere", "Hosts")
 			logrus.Warnf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.Hosts))
 		}
+	case nutanix.Name:
+		nutanixPlatform := installConfig.Platform.Nutanix
+
+		if nutanixPlatform.ClusterOSImage != "" {
+			fieldPath := field.NewPath("Platform", "Nutanix", "ClusterOSImage")
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, nutanixPlatform.ClusterOSImage))
+		}
+		if nutanixPlatform.DefaultMachinePlatform != nil && !reflect.DeepEqual(*nutanixPlatform.DefaultMachinePlatform, nutanix.MachinePool{}) {
+			fieldPath := field.NewPath("Platform", "Nutanix", "DefaultMachinePlatform")
+			logrus.Warnf(fmt.Sprintf("%s: %v is ignored", fieldPath, nutanixPlatform.DefaultMachinePlatform))
+		}
+		if nutanixPlatform.LoadBalancer != nil && !reflect.DeepEqual(*nutanixPlatform.LoadBalancer, configv1.NutanixPlatformLoadBalancer{}) {
+			fieldPath := field.NewPath("Platform", "Nutanix", "LoadBalancer")
+			logrus.Warnf(fmt.Sprintf("%s: %v is ignored", fieldPath, nutanixPlatform.LoadBalancer))
+		}
 	}
+
 	// "External" is the default set from generic install config code
 	if installConfig.Publish != "External" {
 		fieldPath := field.NewPath("Publish")
