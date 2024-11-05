@@ -298,7 +298,7 @@ func (c *system) Run(ctx context.Context) error {
 			&IBMCloud,
 			[]string{
 				"--provider-id-fmt=v2",
-				"--v=5",
+				"--v=2",
 				"--health-addr={{suggestHealthHostPort}}",
 				"--webhook-port={{.WebhookPort}}",
 				"--webhook-cert-dir={{.WebhookCertDir}}",
@@ -307,7 +307,7 @@ func (c *system) Run(ctx context.Context) error {
 				"IBMCLOUD_AUTH_TYPE": "iam",
 				"IBMCLOUD_APIKEY":    APIKey,
 				"IBMCLOUD_AUTH_URL":  "https://iam.cloud.ibm.com",
-				"LOGLEVEL":           "5",
+				"LOGLEVEL":           "2",
 			},
 		)
 		if cfg := metadata.PowerVS; cfg != nil && len(cfg.ServiceEndpoints) > 0 {
