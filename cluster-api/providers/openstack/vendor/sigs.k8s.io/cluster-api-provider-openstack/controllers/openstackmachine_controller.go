@@ -527,6 +527,9 @@ func openStackMachineSpecToOpenStackServerSpec(openStackMachineSpec *infrav1.Ope
 				},
 			}
 		}
+		if len(openStackMachineSpec.SecurityGroups) > 0 {
+			serverPorts[i].SecurityGroups = append(serverPorts[i].SecurityGroups, openStackMachineSpec.SecurityGroups...)
+		}
 	}
 	openStackServerSpec.Ports = serverPorts
 
