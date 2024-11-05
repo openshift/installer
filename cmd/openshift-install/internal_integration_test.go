@@ -135,6 +135,8 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 			"expandFile":              tshelpers.ExpandFile,
 			"isoContains":             tshelpers.IsoContains,
 			"isoIgnitionContains":     tshelpers.IsoIgnitionContains,
+			"isoSizeMin":              tshelpers.IsoSizeMin,
+			"isoSizeMax":              tshelpers.IsoSizeMax,
 		},
 	})
 }

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/cavaliercoder/go-cpio"
@@ -31,6 +32,8 @@ import (
 // 						   | during the comparison.																   |
 // IsoFileCmpRegEx 		   | checks that file context extracted directly from the ISO matches the content of the   | isoFileCmpRegEx node.x86_64.iso /EFI/redhat/grub.cfg expected/grub.cfg
 //						   | local file, by applying a regex comparison.										   |
+// IsoSizeMin 		   | checks that the ISO is greater than a minimum number of megabytes                         | isoSizeMin agent.x86_64.iso 100
+// IsoSizeMax 		   | checks that the ISO is less than a maximum number of megabytes                            | isoSizeMax agent.x86_64.iso 1000
 // InitrdImgContains       | check if the specified file is stored within a compressed cpio archive by scanning the| initrdImgContains agent.x86_64.iso /agent-files/agent-tui
 //                         | content of /images/ignition.img archive in the ISO                                    |
 // ------------------------|---------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------
@@ -300,6 +303,51 @@ func ExpandFile(ts *testscript.TestScript, neg bool, args []string) {
 		err = os.WriteFile(fileName, []byte(newData), 0)
 		ts.Check(err)
 	}
+}
+
+// IsoSizeMin `isoPath` `size` checks if the specified ISO is larger
+// than the specified number of bytes.
+func IsoSizeMin(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 2 {
+		ts.Fatalf("usage: IsoSizeMin isoPath size")
+	}
+
+	isoPath := args[0]
+	size, err := strconv.ParseInt(args[1], 10, 64)
+	ts.Check(err)
+	size *= 1000000
+
+	fileSize := isoSize(ts, isoPath)
+	if fileSize < size {
+		ts.Fatalf("%s of size %d bytes is less than %d", isoPath, fileSize, size)
+	}
+}
+
+// IsoSizeMax `isoPath` `size` checks if the specified ISO is smaller
+// than the specified number of bytes.
+func IsoSizeMax(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 2 {
+		ts.Fatalf("usage: IsoSizeMax isoPath size")
+	}
+
+	isoPath := args[0]
+	size, err := strconv.ParseInt(args[1], 10, 64)
+	ts.Check(err)
+	size *= 1000000
+
+	fileSize := isoSize(ts, isoPath)
+	if fileSize > size {
+		ts.Fatalf("%s of size %d bytes is greater than %d", isoPath, fileSize, size)
+	}
+}
+
+func isoSize(ts *testscript.TestScript, path string) int64 {
+	workDir := ts.Getenv("WORK")
+	isoPathAbs := filepath.Join(workDir, path)
+	fileInfo, err := os.Stat(isoPathAbs)
+	ts.Check(err)
+
+	return fileInfo.Size()
 }
 
 // ignitionStorageCmp `ignPath` `ignFile` `expectedFile` check that the content of the file
