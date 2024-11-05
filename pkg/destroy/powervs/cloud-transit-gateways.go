@@ -10,8 +10,6 @@ import (
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/networking-go-sdk/transitgatewayapisv1"
 	"k8s.io/apimachinery/pkg/util/wait"
-
-	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 )
 
 const (
@@ -398,46 +396,14 @@ func (o *ClusterUninstaller) listTransitConnections(item cloudResource) (cloudRe
 
 // We either deal with an existing TG or destroy TGs matching a name.
 func (o *ClusterUninstaller) destroyTransitGateways() error {
-	var (
-		client *powervsconfig.Client
-		tgID   string
-		item   cloudResource
-		err    error
-
-		ctx    context.Context
-		cancel func()
-	)
-
-	ctx, cancel = contextWithTimeout()
-	defer cancel()
-
 	// Old style: delete all TGs matching by name
 	if o.TransitGatewayName == "" {
 		return o.innerDestroyTransitGateways()
 	}
 
-	// New style: delete just TG connections for existing TG
-	client, err = powervsconfig.NewClient()
-	if err != nil {
-		return err
-	}
-
-	tgID, err = client.TransitGatewayID(ctx, o.TransitGatewayName)
-	if err != nil {
-		return err
-	}
-
-	item = cloudResource{
-		key:      tgID,
-		name:     o.TransitGatewayName,
-		status:   "",
-		typeName: transitGatewayConnectionTypeName,
-		id:       tgID,
-	}
-
-	err = o.destroyTransitGatewayConnections(item)
-
-	return err
+	// New style: leave the TG and its existing connections alone
+	o.Logger.Infof("Not cleaning up persistent Transit Gateway since tgName was specified")
+	return nil
 }
 
 // innerDestroyTransitGateways searches for transit gateways that have a name that starts with
