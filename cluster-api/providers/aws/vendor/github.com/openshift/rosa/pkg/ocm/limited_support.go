@@ -12,9 +12,11 @@ func (c *Client) GetLimitedSupportReasons(clusterID string) (
 		LimitedSupportReasons()
 	page := 1
 	size := 100
+	search := "override_enabled='f'"
 	for {
 		response, err := collection.List().
 			Page(page).
+			Parameter("search", search).
 			Size(size).
 			Send()
 		if err != nil {

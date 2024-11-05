@@ -304,7 +304,7 @@ func (s *FargateService) reconcileFargateIAMRole() (requeue bool, err error) {
 			s.scope.Info("no EKS fargate role specified, using role based on fargate profile name")
 			roleName, err = eks.GenerateEKSName(
 				"fargate",
-				fmt.Sprintf("%s-%s", s.scope.KubernetesClusterName(), s.scope.FargateProfile.Spec.ProfileName),
+				fmt.Sprintf("%s-%s", s.scope.ClusterName(), s.scope.FargateProfile.Spec.ProfileName),
 				maxIAMRoleNameLength,
 			)
 			if err != nil {

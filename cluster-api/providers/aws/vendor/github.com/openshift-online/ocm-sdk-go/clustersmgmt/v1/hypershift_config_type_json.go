@@ -47,11 +47,20 @@ func writeHypershiftConfig(object *HypershiftConfig, stream *jsoniter.Stream) {
 		if count > 0 {
 			stream.WriteMore()
 		}
+		stream.WriteObjectField("hcp_namespace")
+		stream.WriteString(object.hcpNamespace)
+		count++
+	}
+	present_ = object.bitmap_&2 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
 		stream.WriteObjectField("enabled")
 		stream.WriteBool(object.enabled)
 		count++
 	}
-	present_ = object.bitmap_&2 != 0
+	present_ = object.bitmap_&4 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -83,14 +92,18 @@ func readHypershiftConfig(iterator *jsoniter.Iterator) *HypershiftConfig {
 			break
 		}
 		switch field {
+		case "hcp_namespace":
+			value := iterator.ReadString()
+			object.hcpNamespace = value
+			object.bitmap_ |= 1
 		case "enabled":
 			value := iterator.ReadBool()
 			object.enabled = value
-			object.bitmap_ |= 1
+			object.bitmap_ |= 2
 		case "management_cluster":
 			value := iterator.ReadString()
 			object.managementCluster = value
-			object.bitmap_ |= 2
+			object.bitmap_ |= 4
 		default:
 			iterator.ReadAny()
 		}

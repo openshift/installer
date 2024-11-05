@@ -25,7 +25,9 @@ import (
 	"io"
 	"reflect"
 
-	"github.com/ghodss/yaml"
+	"sigs.k8s.io/yaml"
+
+	arv1 "github.com/openshift-online/ocm-sdk-go/accesstransparency/v1"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	msv1 "github.com/openshift-online/ocm-sdk-go/servicemgmt/v1"
 
@@ -64,9 +66,21 @@ func Print(resource interface{}) error {
 		if dnsdomains, ok := resource.([]*cmv1.DNSDomain); ok {
 			cmv1.MarshalDNSDomainList(dnsdomains, &b)
 		}
+	case "[]*v1.ExternalAuth":
+		if externalAuths, ok := resource.([]*cmv1.ExternalAuth); ok {
+			cmv1.MarshalExternalAuthList(externalAuths, &b)
+		}
+	case "*v1.ExternalAuth":
+		if externalAuth, ok := resource.(*cmv1.ExternalAuth); ok {
+			cmv1.MarshalExternalAuth(externalAuth, &b)
+		}
 	case "[]*v1.IdentityProvider":
 		if idps, ok := resource.([]*cmv1.IdentityProvider); ok {
 			cmv1.MarshalIdentityProviderList(idps, &b)
+		}
+	case "*v1.Ingress":
+		if ingress, ok := resource.(*cmv1.Ingress); ok {
+			cmv1.MarshalIngress(ingress, &b)
 		}
 	case "[]*v1.Ingress":
 		if ingresses, ok := resource.([]*cmv1.Ingress); ok {
@@ -108,6 +122,14 @@ func Print(resource interface{}) error {
 		if oidcConfig, ok := resource.(*cmv1.OidcConfig); ok {
 			cmv1.MarshalOidcConfig(oidcConfig, &b)
 		}
+	case "[]*v1.BreakGlassCredential":
+		if breakGlassCredentials, ok := resource.([]*cmv1.BreakGlassCredential); ok {
+			cmv1.MarshalBreakGlassCredentialList(breakGlassCredentials, &b)
+		}
+	case "*v1.BreakGlassCredential":
+		if breakGlassCredential, ok := resource.(*cmv1.BreakGlassCredential); ok {
+			cmv1.MarshalBreakGlassCredential(breakGlassCredential, &b)
+		}
 	case "[]*v1.TuningConfig":
 		if tuningConfigs, ok := resource.([]*cmv1.TuningConfig); ok {
 			cmv1.MarshalTuningConfigList(tuningConfigs, &b)
@@ -119,6 +141,14 @@ func Print(resource interface{}) error {
 	case "*v1.KubeletConfig":
 		if kubeletConfig, ok := resource.(*cmv1.KubeletConfig); ok {
 			cmv1.MarshalKubeletConfig(kubeletConfig, &b)
+		}
+	case "[]*v1.KubeletConfig":
+		if kubeletConfigs, ok := resource.([]*cmv1.KubeletConfig); ok {
+			cmv1.MarshalKubeletConfigList(kubeletConfigs, &b)
+		}
+	case "*v1.ClusterAutoscaler":
+		if autoscaler, ok := resource.(*cmv1.ClusterAutoscaler); ok {
+			cmv1.MarshalClusterAutoscaler(autoscaler, &b)
 		}
 	case "[]*v1.User":
 		if users, ok := resource.([]*cmv1.User); ok {
@@ -143,6 +173,10 @@ func Print(resource interface{}) error {
 					return err
 				}
 			}
+		}
+	case "*v1.AccessRequest":
+		if accessRequest, ok := resource.(*arv1.AccessRequest); ok {
+			arv1.MarshalAccessRequest(accessRequest, &b)
 		}
 	// default to catch non concrete types
 	default:

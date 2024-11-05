@@ -1746,7 +1746,7 @@ gorm.io/gorm/clause
 gorm.io/gorm/logger
 gorm.io/gorm/schema
 gorm.io/gorm/utils
-# k8s.io/api v0.30.3
+# k8s.io/api v0.30.5
 ## explicit; go 1.22.0
 k8s.io/api/admission/v1
 k8s.io/api/admission/v1beta1
@@ -1805,7 +1805,7 @@ k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
 k8s.io/api/storagemigration/v1alpha1
-# k8s.io/apiextensions-apiserver v0.30.3
+# k8s.io/apiextensions-apiserver v0.30.5
 ## explicit; go 1.22.0
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
@@ -1816,7 +1816,7 @@ k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset
 k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/scheme
 k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1
 k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1
-# k8s.io/apimachinery v0.30.3
+# k8s.io/apimachinery v0.30.5
 ## explicit; go 1.22.0
 k8s.io/apimachinery/pkg/api/apitesting
 k8s.io/apimachinery/pkg/api/apitesting/fuzzer
@@ -1881,13 +1881,13 @@ k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/netutil
 k8s.io/apimachinery/third_party/forked/golang/reflect
-# k8s.io/cli-runtime v0.30.3
+# k8s.io/cli-runtime v0.30.5
 ## explicit; go 1.22.0
 k8s.io/cli-runtime/pkg/genericclioptions
 k8s.io/cli-runtime/pkg/genericiooptions
 k8s.io/cli-runtime/pkg/printers
 k8s.io/cli-runtime/pkg/resource
-# k8s.io/client-go v0.30.3
+# k8s.io/client-go v0.30.5
 ## explicit; go 1.22.0
 k8s.io/client-go/applyconfigurations/admissionregistration/v1
 k8s.io/client-go/applyconfigurations/admissionregistration/v1alpha1
@@ -2111,7 +2111,7 @@ k8s.io/cloud-provider-vsphere/pkg/common/config
 ## explicit; go 1.22.0
 k8s.io/cluster-bootstrap/token/api
 k8s.io/cluster-bootstrap/token/util
-# k8s.io/component-base v0.30.3
+# k8s.io/component-base v0.30.5
 ## explicit; go 1.22.0
 k8s.io/component-base/featuregate
 k8s.io/component-base/metrics
@@ -2187,8 +2187,8 @@ sigs.k8s.io/cluster-api/util/kubeconfig
 sigs.k8s.io/cluster-api/util/labels/format
 sigs.k8s.io/cluster-api/util/secret
 sigs.k8s.io/cluster-api/util/topology
-# sigs.k8s.io/cluster-api-provider-aws/v2 v2.6.1-0.20240910142813-3f3ce5610204
-## explicit; go 1.21.0
+# sigs.k8s.io/cluster-api-provider-aws/v2 v2.6.1-0.20241026111253-5b4f7c1acb52
+## explicit; go 1.22.0
 sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1
 sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2
 sigs.k8s.io/cluster-api-provider-aws/v2/feature

@@ -179,6 +179,7 @@ var pathTreeData = `{
         },
         "aws_inquiries": {
           "machine_types": null,
+          "oidc_thumbprint": null,
           "regions": null,
           "sts_account_roles": null,
           "sts_credential_requests": null,
@@ -329,6 +330,11 @@ var pathTreeData = `{
         "flavours": {
           "-": null
         },
+        "gcp": {
+          "wif_configs": {
+            "-": null
+          }
+        },
         "gcp_inquiries": {
           "encryption_keys": null,
           "key_rings": null,
@@ -363,6 +369,9 @@ var pathTreeData = `{
           }
         },
         "provision_shards": {
+          "-": null
+        },
+        "registry_allowlists": {
           "-": null
         },
         "storage_quota_values": null,

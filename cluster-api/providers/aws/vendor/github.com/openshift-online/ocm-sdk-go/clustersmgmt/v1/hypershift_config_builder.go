@@ -24,6 +24,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 // Hypershift configuration.
 type HypershiftConfigBuilder struct {
 	bitmap_           uint32
+	hcpNamespace      string
 	managementCluster string
 	enabled           bool
 }
@@ -38,17 +39,24 @@ func (b *HypershiftConfigBuilder) Empty() bool {
 	return b == nil || b.bitmap_ == 0
 }
 
+// HCPNamespace sets the value of the 'HCP_namespace' attribute to the given value.
+func (b *HypershiftConfigBuilder) HCPNamespace(value string) *HypershiftConfigBuilder {
+	b.hcpNamespace = value
+	b.bitmap_ |= 1
+	return b
+}
+
 // Enabled sets the value of the 'enabled' attribute to the given value.
 func (b *HypershiftConfigBuilder) Enabled(value bool) *HypershiftConfigBuilder {
 	b.enabled = value
-	b.bitmap_ |= 1
+	b.bitmap_ |= 2
 	return b
 }
 
 // ManagementCluster sets the value of the 'management_cluster' attribute to the given value.
 func (b *HypershiftConfigBuilder) ManagementCluster(value string) *HypershiftConfigBuilder {
 	b.managementCluster = value
-	b.bitmap_ |= 2
+	b.bitmap_ |= 4
 	return b
 }
 
@@ -58,6 +66,7 @@ func (b *HypershiftConfigBuilder) Copy(object *HypershiftConfig) *HypershiftConf
 		return b
 	}
 	b.bitmap_ = object.bitmap_
+	b.hcpNamespace = object.hcpNamespace
 	b.enabled = object.enabled
 	b.managementCluster = object.managementCluster
 	return b
@@ -67,6 +76,7 @@ func (b *HypershiftConfigBuilder) Copy(object *HypershiftConfig) *HypershiftConf
 func (b *HypershiftConfigBuilder) Build() (object *HypershiftConfig, err error) {
 	object = new(HypershiftConfig)
 	object.bitmap_ = b.bitmap_
+	object.hcpNamespace = b.hcpNamespace
 	object.enabled = b.enabled
 	object.managementCluster = b.managementCluster
 	return
