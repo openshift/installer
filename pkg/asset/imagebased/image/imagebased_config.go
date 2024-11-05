@@ -8,10 +8,12 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	dockerref "github.com/containers/image/v5/docker/reference"
 	"github.com/sirupsen/logrus"
+	"github.com/thoas/go-funk"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
@@ -21,9 +23,13 @@ import (
 	"github.com/openshift/installer/pkg/validate"
 )
 
-var (
-	configFilename = "image-based-installation-config.yaml"
+const (
+	coreosInstallerArgsValuesRegex = `^[A-Za-z0-9@!#$%*()_+-=//.,";':{}\[\]]+$`
+)
 
+var (
+	configFilename              = "image-based-installation-config.yaml"
+	allowedFlags                = []string{"--append-karg", "--delete-karg", "--save-partlabel", "--save-partindex"}
 	defaultExtraPartitionLabel  = "varlibcontainers"
 	defaultExtraPartitionStart  = "-40G"
 	defaultExtraPartitionNumber = uint(5)
@@ -175,6 +181,9 @@ func (i *ImageBasedInstallationConfig) validate() field.ErrorList {
 		allErrs = append(allErrs, err...)
 	}
 	if err := i.validateProxy(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+	if err := i.validateCoreosInstallerArgs(); err != nil {
 		allErrs = append(allErrs, err...)
 	}
 
@@ -367,6 +376,30 @@ func (i *ImageBasedInstallationConfig) validateProxy() field.ErrorList {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("noProxy"), i.Config.Proxy.NoProxy, fmt.Sprintf(
 					"each element of noProxy must be a IP, CIDR or domain without wildcard characters, which is violated by element %d %q", idx, v)))
 			}
+		}
+	}
+
+	return allErrs
+}
+
+func (i *ImageBasedInstallationConfig) validateCoreosInstallerArgs() field.ErrorList {
+	var allErrs field.ErrorList
+	argsRe := regexp.MustCompile("^-+.*")
+	valuesRe := regexp.MustCompile(coreosInstallerArgsValuesRegex)
+
+	coreosInstallerParamsPath := field.NewPath("CoreosInstallerArgs")
+
+	for _, arg := range i.Config.CoreosInstallerArgs {
+		if argsRe.MatchString(arg) {
+			if !funk.ContainsString(allowedFlags, arg) {
+				allErrs = append(allErrs, field.Required(coreosInstallerParamsPath,
+					fmt.Sprintf("found unexpected flag %s for coreosInstallerArgs - allowed flags are %v", arg, allowedFlags)))
+			}
+			continue
+		}
+
+		if !valuesRe.MatchString(arg) {
+			allErrs = append(allErrs, field.Required(coreosInstallerParamsPath, fmt.Sprintf("found unexpected chars in value %s for installer", arg)))
 		}
 	}
 

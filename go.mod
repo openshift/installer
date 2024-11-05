@@ -100,6 +100,7 @@ require (
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
 	github.com/thedevsaddam/retry v0.0.0-20200324223450-9769a859cc6d
+	github.com/thoas/go-funk v0.9.3
 	github.com/ulikunitz/xz v0.5.12
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/vmware/govmomi v0.43.0
@@ -261,7 +262,6 @@ require (
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
 	github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace // indirect
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635 // indirect
-	github.com/thoas/go-funk v0.9.3 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
