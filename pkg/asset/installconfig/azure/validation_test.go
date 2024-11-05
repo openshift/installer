@@ -5,7 +5,6 @@ import (
 	"net"
 	"testing"
 
-	azsku "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/compute/mgmt/compute"
 	azres "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
 	azsubs "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
 	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
@@ -54,16 +53,16 @@ var (
 		"Standard_DC8s_v3":   {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64", "ConfidentialComputingType": "SGX"},
 	}
 
-	instanceTypeSku = func() []*azsku.ResourceSku {
-		instances := make([]*azsku.ResourceSku, 0, len(vmCapabilities))
+	instanceTypeSku = func() []*azenc.ResourceSku {
+		instances := make([]*azenc.ResourceSku, 0, len(vmCapabilities))
 		for typeName, capsMap := range vmCapabilities {
-			capabilities := make([]azsku.ResourceSkuCapabilities, 0, len(capsMap))
+			capabilities := make([]azenc.ResourceSkuCapabilities, 0, len(capsMap))
 			for name, value := range capsMap {
-				capabilities = append(capabilities, azsku.ResourceSkuCapabilities{
+				capabilities = append(capabilities, azenc.ResourceSkuCapabilities{
 					Name: to.StringPtr(name), Value: to.StringPtr(value),
 				})
 			}
-			instances = append(instances, &azsku.ResourceSku{
+			instances = append(instances, &azenc.ResourceSku{
 				Name: to.StringPtr(typeName), Capabilities: &capabilities,
 			})
 		}
