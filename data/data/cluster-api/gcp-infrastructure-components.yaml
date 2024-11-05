@@ -10,7 +10,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capg-system/capg-serving-cert
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.16.3
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -173,11 +173,9 @@ spec:
                       in "auto" mode. When set to false, the VPC network is created in
                       "custom" mode.
 
-
                       An auto mode VPC network starts with one subnet per region. Each
                       subnet has a predetermined range as described in Auto mode VPC
                       network IP ranges.
-
 
                       Defaults to true.
                     type: boolean
@@ -243,7 +241,6 @@ spec:
                             Purpose: The purpose of the resource.
                             If unspecified, the purpose defaults to PRIVATE_RFC_1918.
                             The enableFlowLogs field isn't supported with the purpose field set to INTERNAL_HTTPS_LOAD_BALANCER.
-
 
                             Possible values:
                               "INTERNAL_HTTPS_LOAD_BALANCER" - Subnet reserved for Internal
@@ -444,7 +441,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capg-system/capg-serving-cert
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.16.3
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -624,11 +621,9 @@ spec:
                               in "auto" mode. When set to false, the VPC network is created in
                               "custom" mode.
 
-
                               An auto mode VPC network starts with one subnet per region. Each
                               subnet has a predetermined range as described in Auto mode VPC
                               network IP ranges.
-
 
                               Defaults to true.
                             type: boolean
@@ -694,7 +689,6 @@ spec:
                                     Purpose: The purpose of the resource.
                                     If unspecified, the purpose defaults to PRIVATE_RFC_1918.
                                     The enableFlowLogs field isn't supported with the purpose field set to INTERNAL_HTTPS_LOAD_BALANCER.
-
 
                                     Possible values:
                                       "INTERNAL_HTTPS_LOAD_BALANCER" - Subnet reserved for Internal
@@ -800,7 +794,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capg-system/capg-serving-cert
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.16.3
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -886,6 +880,8 @@ spec:
                         1. "pd-standard" - Standard (HDD) persistent disk
                         2. "pd-ssd" - SSD persistent disk
                         3. "local-ssd" - Local SSD disk (https://cloud.google.com/compute/docs/disks/local-ssd).
+                        4. "pd-balanced" - Balanced Persistent Disk
+                        5. "hyperdisk-balanced" - Hyperdisk Balanced
                         Default is "pd-standard".
                       type: string
                     encryptionKey:
@@ -922,6 +918,8 @@ spec:
                               maxLength: 160
                               pattern: projects\/[-_[A-Za-z0-9]+\/locations\/[-_[A-Za-z0-9]+\/keyRings\/[-_[A-Za-z0-9]+\/cryptoKeys\/[-_[A-Za-z0-9]+
                               type: string
+                          required:
+                          - kmsKeyName
                           type: object
                         suppliedKey:
                           description: SuppliedKey provides the key used to create
@@ -1045,6 +1043,15 @@ spec:
                 description: ProviderID is the unique identifier as specified by the
                   cloud provider.
                 type: string
+              provisioningModel:
+                description: |-
+                  ProvisioningModel defines if instance is spot.
+                  If set to "Standard" while preemptible is true, then the VM will be of type "Preemptible".
+                  If "Spot", VM type is "Spot". When unspecified, defaults to "Standard".
+                enum:
+                - Standard
+                - Spot
+                type: string
               publicIP:
                 description: |-
                   PublicIP specifies whether the instance should get a public IP.
@@ -1109,6 +1116,8 @@ spec:
                   Supported types of root volumes:
                   1. "pd-standard" - Standard (HDD) persistent disk
                   2. "pd-ssd" - SSD persistent disk
+                  3. "pd-balanced" - Balanced Persistent Disk
+                  4. "hyperdisk-balanced" - Hyperdisk Balanced
                   Default is "pd-standard".
                 type: string
               rootDiskEncryptionKey:
@@ -1144,6 +1153,8 @@ spec:
                         maxLength: 160
                         pattern: projects\/[-_[A-Za-z0-9]+\/locations\/[-_[A-Za-z0-9]+\/keyRings\/[-_[A-Za-z0-9]+\/cryptoKeys\/[-_[A-Za-z0-9]+
                         type: string
+                    required:
+                    - kmsKeyName
                     type: object
                   suppliedKey:
                     description: SuppliedKey provides the key used to create or manage
@@ -1259,7 +1270,6 @@ spec:
                   reconciling the Machine and will contain a more verbose string suitable
                   for logging and human consumption.
 
-
                   This field should not be set for transitive errors that a controller
                   faces that are expected to be fixed automatically over
                   time (like service outages), but instead indicate that something is
@@ -1268,7 +1278,6 @@ spec:
                   of terminal errors would be invalid combinations of settings in the
                   spec, values that are unsupported by the controller, or the
                   responsible controller itself being critically misconfigured.
-
 
                   Any transient errors that occur during the reconciliation of Machines
                   can be added as events to the Machine object and/or logged in the
@@ -1280,7 +1289,6 @@ spec:
                   reconciling the Machine and will contain a succinct value suitable
                   for machine interpretation.
 
-
                   This field should not be set for transitive errors that a controller
                   faces that are expected to be fixed automatically over
                   time (like service outages), but instead indicate that something is
@@ -1289,7 +1297,6 @@ spec:
                   of terminal errors would be invalid combinations of settings in the
                   spec, values that are unsupported by the controller, or the
                   responsible controller itself being critically misconfigured.
-
 
                   Any transient errors that occur during the reconciliation of Machines
                   can be added as events to the Machine object and/or logged in the
@@ -1314,7 +1321,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capg-system/capg-serving-cert
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.16.3
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -1413,6 +1420,8 @@ spec:
                                 1. "pd-standard" - Standard (HDD) persistent disk
                                 2. "pd-ssd" - SSD persistent disk
                                 3. "local-ssd" - Local SSD disk (https://cloud.google.com/compute/docs/disks/local-ssd).
+                                4. "pd-balanced" - Balanced Persistent Disk
+                                5. "hyperdisk-balanced" - Hyperdisk Balanced
                                 Default is "pd-standard".
                               type: string
                             encryptionKey:
@@ -1449,6 +1458,8 @@ spec:
                                       maxLength: 160
                                       pattern: projects\/[-_[A-Za-z0-9]+\/locations\/[-_[A-Za-z0-9]+\/keyRings\/[-_[A-Za-z0-9]+\/cryptoKeys\/[-_[A-Za-z0-9]+
                                       type: string
+                                  required:
+                                  - kmsKeyName
                                   type: object
                                 suppliedKey:
                                   description: SuppliedKey provides the key used to
@@ -1574,6 +1585,15 @@ spec:
                         description: ProviderID is the unique identifier as specified
                           by the cloud provider.
                         type: string
+                      provisioningModel:
+                        description: |-
+                          ProvisioningModel defines if instance is spot.
+                          If set to "Standard" while preemptible is true, then the VM will be of type "Preemptible".
+                          If "Spot", VM type is "Spot". When unspecified, defaults to "Standard".
+                        enum:
+                        - Standard
+                        - Spot
+                        type: string
                       publicIP:
                         description: |-
                           PublicIP specifies whether the instance should get a public IP.
@@ -1638,6 +1658,8 @@ spec:
                           Supported types of root volumes:
                           1. "pd-standard" - Standard (HDD) persistent disk
                           2. "pd-ssd" - SSD persistent disk
+                          3. "pd-balanced" - Balanced Persistent Disk
+                          4. "hyperdisk-balanced" - Hyperdisk Balanced
                           Default is "pd-standard".
                         type: string
                       rootDiskEncryptionKey:
@@ -1674,6 +1696,8 @@ spec:
                                 maxLength: 160
                                 pattern: projects\/[-_[A-Za-z0-9]+\/locations\/[-_[A-Za-z0-9]+\/keyRings\/[-_[A-Za-z0-9]+\/cryptoKeys\/[-_[A-Za-z0-9]+
                                 type: string
+                            required:
+                            - kmsKeyName
                             type: object
                           suppliedKey:
                             description: SuppliedKey provides the key used to create
@@ -1778,7 +1802,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.16.3
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -1925,11 +1949,9 @@ spec:
                       in "auto" mode. When set to false, the VPC network is created in
                       "custom" mode.
 
-
                       An auto mode VPC network starts with one subnet per region. Each
                       subnet has a predetermined range as described in Auto mode VPC
                       network IP ranges.
-
 
                       Defaults to true.
                     type: boolean
@@ -1995,7 +2017,6 @@ spec:
                             Purpose: The purpose of the resource.
                             If unspecified, the purpose defaults to PRIVATE_RFC_1918.
                             The enableFlowLogs field isn't supported with the purpose field set to INTERNAL_HTTPS_LOAD_BALANCER.
-
 
                             Possible values:
                               "INTERNAL_HTTPS_LOAD_BALANCER" - Subnet reserved for Internal
@@ -2240,7 +2261,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.16.3
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -2523,7 +2544,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.16.3
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -2978,22 +2999,8 @@ rules:
   resources:
   - clusters
   - clusters/status
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - cluster.x-k8s.io
-  resources:
   - machinepools
   - machinepools/status
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - cluster.x-k8s.io
-  resources:
   - machines
   - machines/status
   verbs:
@@ -3004,97 +3011,9 @@ rules:
   - infrastructure.cluster.x-k8s.io
   resources:
   - gcpclusters
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
-  - gcpclusters/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
   - gcpmachines
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
-  - gcpmachines/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
   - gcpmanagedclusters
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
-  - gcpmanagedclusters/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
-  - gcpmanagedclusters/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
   - gcpmanagedcontrolplanes
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
-  - gcpmanagedcontrolplanes/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
-  - gcpmanagedcontrolplanes/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
   - gcpmanagedmachinepools
   verbs:
   - create
@@ -3107,16 +3026,22 @@ rules:
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
   resources:
-  - gcpmanagedmachinepools/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
+  - gcpclusters/status
+  - gcpmachines/status
+  - gcpmanagedclusters/status
+  - gcpmanagedcontrolplanes/status
   - gcpmanagedmachinepools/status
   verbs:
   - get
   - patch
+  - update
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - gcpmanagedclusters/finalizers
+  - gcpmanagedcontrolplanes/finalizers
+  - gcpmanagedmachinepools/finalizers
+  verbs:
   - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -3219,7 +3144,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        image: gcr.io/k8s-staging-cluster-api-gcp/cluster-api-gcp-controller:e2e
+        image: registry.k8s.io/cluster-api-gcp/cluster-api-gcp-controller:v1.8.0
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -3252,6 +3177,7 @@ spec:
           privileged: false
           runAsGroup: 65532
           runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert
