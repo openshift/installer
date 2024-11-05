@@ -13,6 +13,8 @@ const (
 	NewControlPlaneIAMRole         = "controlplane-iam-role-arn"
 	DeprecatedWorkerIAMRole        = "worker-iam-role"
 	NewWorkerIAMRole               = "worker-iam-role-arn"
+	DeprecatedEnvFlag              = "env"
+	NewEnvFlag                     = "url"
 )
 
 func NormalizeFlags(_ *pflag.FlagSet, name string) pflag.NormalizedName {
@@ -25,6 +27,8 @@ func NormalizeFlags(_ *pflag.FlagSet, name string) pflag.NormalizedName {
 		name = NewWorkerIAMRole
 	case DeprecatedControlPlaneIAMRole:
 		name = NewControlPlaneIAMRole
+	case DeprecatedEnvFlag:
+		name = NewEnvFlag
 	}
 	return pflag.NormalizedName(name)
 }

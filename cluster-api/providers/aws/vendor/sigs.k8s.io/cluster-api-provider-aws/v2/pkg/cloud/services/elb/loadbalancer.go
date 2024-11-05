@@ -121,6 +121,17 @@ func (s *Service) reconcileV2LB(lbSpec *infrav1.AWSLoadBalancerSpec) error {
 		return err
 	}
 
+	wReq := &elbv2.DescribeLoadBalancersInput{
+		LoadBalancerArns: aws.StringSlice([]string{lb.ARN}),
+	}
+	s.scope.Debug("Waiting for LB to become active", "api-server-lb-name", lb.Name)
+	waitStart := time.Now()
+	if err := s.ELBV2Client.WaitUntilLoadBalancerAvailableWithContext(context.TODO(), wReq); err != nil {
+		s.scope.Error(err, "failed to wait for LB to become available", "time", time.Since(waitStart))
+		return err
+	}
+	s.scope.Debug("LB reports active state", "api-server-lb-name", lb.Name, "time", time.Since(waitStart))
+
 	// set up the type for later processing
 	lb.LoadBalancerType = lbSpec.LoadBalancerType
 	if lb.IsManaged(s.scope.Name()) {

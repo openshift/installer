@@ -91,13 +91,9 @@ var AdminTokenURLs = map[string]string{
 	"integration": fmt.Sprintf("https://rh-ocm-appsre-integration.%s", cognitoURL),
 }
 
-// ClientIDs allows the value of the `--env` option to map to the Keycloak clients.
-var ClientIDs = map[string]string{
-	"production":  "console-dot",
-	"staging":     "console-dot",
-	"staging01":   "console-dot",
-	"integration": "console-dot",
-}
+// ClientID stores the client id for use with all `--env` options for Keycloak authentication flow.
+// Value is the same for all env's
+var ClientID = "console-dot"
 
 // AdminClientIDs allows the value of the `--env` option to map to the various Admin AWS Cognito user pool clients.
 var AdminClientIDs = map[string]string{

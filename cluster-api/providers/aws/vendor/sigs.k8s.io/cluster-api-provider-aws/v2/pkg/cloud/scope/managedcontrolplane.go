@@ -472,11 +472,16 @@ func (s *ManagedControlPlaneScope) Partition() string {
 
 // AdditionalControlPlaneIngressRules returns the additional ingress rules for the control plane security group.
 func (s *ManagedControlPlaneScope) AdditionalControlPlaneIngressRules() []infrav1.IngressRule {
-	return nil
+	return s.ControlPlane.Spec.NetworkSpec.DeepCopy().AdditionalControlPlaneIngressRules
 }
 
 // UnstructuredControlPlane returns the unstructured object for the control plane, if any.
 // When the reference is not set, it returns an empty object.
 func (s *ManagedControlPlaneScope) UnstructuredControlPlane() (*unstructured.Unstructured, error) {
 	return getUnstructuredControlPlane(context.TODO(), s.Client, s.Cluster)
+}
+
+// NodePortIngressRuleCidrBlocks returns the CIDR blocks for the node NodePort ingress rules.
+func (s *ManagedControlPlaneScope) NodePortIngressRuleCidrBlocks() []string {
+	return nil
 }

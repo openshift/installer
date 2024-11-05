@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"io"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -65,7 +66,43 @@ func writeManifest(object *Manifest, stream *jsoniter.Stream) {
 		count++
 	}
 	var present_ bool
-	present_ = object.bitmap_&8 != 0 && object.workloads != nil
+	present_ = object.bitmap_&8 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("creation_timestamp")
+		stream.WriteString((object.creationTimestamp).Format(time.RFC3339))
+		count++
+	}
+	present_ = object.bitmap_&16 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("live_resource")
+		stream.WriteVal(object.liveResource)
+		count++
+	}
+	present_ = object.bitmap_&32 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("spec")
+		stream.WriteVal(object.spec)
+		count++
+	}
+	present_ = object.bitmap_&64 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("updated_timestamp")
+		stream.WriteString((object.updatedTimestamp).Format(time.RFC3339))
+		count++
+	}
+	present_ = object.bitmap_&128 != 0 && object.workloads != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -108,10 +145,36 @@ func readManifest(iterator *jsoniter.Iterator) *Manifest {
 		case "href":
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
+		case "creation_timestamp":
+			text := iterator.ReadString()
+			value, err := time.Parse(time.RFC3339, text)
+			if err != nil {
+				iterator.ReportError("", err.Error())
+			}
+			object.creationTimestamp = value
+			object.bitmap_ |= 8
+		case "live_resource":
+			var value interface{}
+			iterator.ReadVal(&value)
+			object.liveResource = value
+			object.bitmap_ |= 16
+		case "spec":
+			var value interface{}
+			iterator.ReadVal(&value)
+			object.spec = value
+			object.bitmap_ |= 32
+		case "updated_timestamp":
+			text := iterator.ReadString()
+			value, err := time.Parse(time.RFC3339, text)
+			if err != nil {
+				iterator.ReportError("", err.Error())
+			}
+			object.updatedTimestamp = value
+			object.bitmap_ |= 64
 		case "workloads":
 			value := readInterfaceList(iterator)
 			object.workloads = value
-			object.bitmap_ |= 8
+			object.bitmap_ |= 128
 		default:
 			iterator.ReadAny()
 		}

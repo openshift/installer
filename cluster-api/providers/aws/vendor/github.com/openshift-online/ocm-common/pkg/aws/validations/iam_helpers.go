@@ -2,11 +2,22 @@ package validations
 
 import (
 	"fmt"
+	"maps"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+
 	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
 	semver "github.com/hashicorp/go-version"
 	. "github.com/openshift-online/ocm-common/pkg/aws/consts"
+	. "github.com/openshift-online/ocm-common/pkg/rosa/accountroles"
+	. "github.com/openshift-online/ocm-common/pkg/rosa/operatorroles"
+	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+)
+
+const (
+	duplicateIamRoleArnErrorMsg = "ROSA IAM roles must have unique ARNs " +
+		"and should not be shared with other IAM roles within the same cluster. " +
+		"Duplicated role arn: %s"
 )
 
 func GetRoleName(prefix string, role string) string {
@@ -61,4 +72,18 @@ func IamResourceHasTag(iamTags []iamtypes.Tag, tagKey string, tagValue string) b
 	}
 
 	return false
+}
+
+func IamRoleArnsValidator(cluster *cmv1.Cluster) error {
+	validatingMap := map[string]struct{}{}
+	clusterIamRoles := GetAccountRolesArnsMap(cluster)
+	maps.Copy(clusterIamRoles, GetOperatorRolesArnsMap(cluster))
+
+	for _, arn := range clusterIamRoles {
+		if _, exist := validatingMap[arn]; exist {
+			return fmt.Errorf(duplicateIamRoleArnErrorMsg, arn)
+		}
+		validatingMap[arn] = struct{}{}
+	}
+	return nil
 }
