@@ -800,8 +800,8 @@ github.com/openshift/library-go v0.0.0-20240207105404-126b47137408 h1:Evg6GEvEuy
 github.com/openshift/library-go v0.0.0-20240207105404-126b47137408/go.mod h1:ePlaOqUiPplRc++6aYdMe+2FmXb2xTNS9Nz5laG2YmI=
 github.com/openshift/machine-api-operator v0.2.1-0.20240722145313-3a817c78946a h1:0TwU3J28sQTGy/ZMVSvi3sUolH92BwlIWcf+wCJLWKE=
 github.com/openshift/machine-api-operator v0.2.1-0.20240722145313-3a817c78946a/go.mod h1:2TUb0+EfkIj5fWhGy+oR3QiANCzHTWzkyNDEknxrQJI=
-github.com/openshift/machine-api-provider-gcp v0.0.1-0.20231014045125-6096cc86f3ba h1:q9VMvYHgKq1v+3E57HIdbR9hJPNSmHDfZpOHsXC27Nk=
-github.com/openshift/machine-api-provider-gcp v0.0.1-0.20231014045125-6096cc86f3ba/go.mod h1:G1BYMrC49dMOkCEjG+LPoe0rRXFRv8o/jqLuN4fgfGM=
+github.com/openshift/machine-api-provider-gcp v0.0.1-0.20241024094404-0d6fbdb09401 h1:adlUJqvMzPbDPSUo/TIN8olPN5x0w/71plhxj6YIq9I=
+github.com/openshift/machine-api-provider-gcp v0.0.1-0.20241024094404-0d6fbdb09401/go.mod h1:5peyDQD9BPqSVTlZeGpd8cP46M50G+JEjrhRWcGb7HA=
 github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20231207164151-6b0b8ea7b16d h1:ELypg5zkw9jXCbp2jZ6iwYWTCtSqZVrxcKBQqwIgd2Y=
 github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20231207164151-6b0b8ea7b16d/go.mod h1:cF2vIryKLoYmkUAFsvFHTlChMAtMEuRDVYMiH+uFe3E=
 github.com/opentracing/opentracing-go v1.2.0 h1:uEJPy/1a5RIPAJ0Ov+OIO8OxWu77jEv+1B0VhjKrZUs=
@@ -1557,8 +1557,8 @@ sigs.k8s.io/cluster-api-provider-vsphere v1.9.3 h1:Kgo9XQYZyZVUYwzUWr351h1OJf8LY
 sigs.k8s.io/cluster-api-provider-vsphere v1.9.3/go.mod h1:t0z1hU7lR5olxrwNv9C3j5UJsjQ2KLdnQ1RaZiPkQ2A=
 sigs.k8s.io/controller-runtime v0.18.5 h1:nTHio/W+Q4aBlQMgbnC5hZb4IjIidyrizMai9P6n4Rk=
 sigs.k8s.io/controller-runtime v0.18.5/go.mod h1:TVoGrfdpbA9VRFaRnKgk9P5/atA0pMwq+f+msb9M8Sg=
-sigs.k8s.io/controller-tools v0.12.0 h1:TY6CGE6+6hzO7hhJFte65ud3cFmmZW947jajXkuDfBw=
-sigs.k8s.io/controller-tools v0.12.0/go.mod h1:rXlpTfFHZMpZA8aGq9ejArgZiieHd+fkk/fTatY8A2M=
+sigs.k8s.io/controller-tools v0.14.0 h1:rnNoCC5wSXlrNoBKKzL70LNJKIQKEzT6lloG6/LF73A=
+sigs.k8s.io/controller-tools v0.14.0/go.mod h1:TV7uOtNNnnR72SpzhStvPkoS/U5ir0nMudrkrC4M9Sc=
 sigs.k8s.io/json v0.0.0-20211020170558-c049b76a60c6/go.mod h1:p4QtZmO4uMYipTQNzagwnNoseA6OxSUutVw05NhYDRs=
 sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2/go.mod h1:B+TnT182UBxE84DiCz4CVE26eOSDAeYCpfDnC2kdKMY=
 sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd h1:EDPBXCAspyGV4jQlpZSudPeMmr1bNJefnuqLsRAsHZo=

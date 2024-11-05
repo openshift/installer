@@ -82,7 +82,7 @@ require (
 	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20220323121149-e3f2850dd519
 	github.com/openshift/hive/apis v0.0.0-20220222213051-def9088fdb5a
 	github.com/openshift/library-go v0.0.0-20240207105404-126b47137408
-	github.com/openshift/machine-api-provider-gcp v0.0.1-0.20231014045125-6096cc86f3ba
+	github.com/openshift/machine-api-provider-gcp v0.0.1-0.20241024094404-0d6fbdb09401
 	github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20231207164151-6b0b8ea7b16d
 	github.com/ovirt/go-ovirt v0.0.0-20210809163552-d4276e35d3db
 	github.com/pborman/uuid v1.2.0
@@ -128,7 +128,7 @@ require (
 	sigs.k8s.io/cluster-api-provider-openstack v0.10.3
 	sigs.k8s.io/cluster-api-provider-vsphere v1.9.3
 	sigs.k8s.io/controller-runtime v0.18.5
-	sigs.k8s.io/controller-tools v0.12.0
+	sigs.k8s.io/controller-tools v0.14.0
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd
 	sigs.k8s.io/yaml v1.4.0
 )
