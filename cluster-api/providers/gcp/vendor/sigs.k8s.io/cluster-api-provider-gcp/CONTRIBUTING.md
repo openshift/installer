@@ -62,7 +62,7 @@ Cluster API maintainers may add "LGTM" (Looks Good To Me) or an equivalent comme
 
 ### Google Doc Viewing Permissions
 
-To gain viewing permissions to google docs in this project, please join either the [kubernetes-dev](https://groups.google.com/forum/#!forum/kubernetes-dev) or [kubernetes-sig-cluster-lifecycle](https://groups.google.com/forum/#!forum/kubernetes-sig-cluster-lifecycle) google group.
+To gain viewing permissions to google docs in this project, please join either the [kubernetes-dev](https://groups.google.com/a/kubernetes.io/g/dev) or [kubernetes-sig-cluster-lifecycle](https://groups.google.com/a/kubernetes.io/g/sig-cluster-lifecycle) google group.
 
 ### Issue and Pull Request Management
 

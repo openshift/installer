@@ -74,10 +74,10 @@ func (r *GCPManagedControlPlaneReconciler) SetupWithManager(ctx context.Context,
 	}
 
 	if err = c.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, gcpManagedControlPlane.GroupVersionKind(), mgr.GetClient(), &infrav1exp.GCPManagedControlPlane{})),
-		predicates.ClusterUnpausedAndInfrastructureReady(log),
-	); err != nil {
+		source.Kind[client.Object](mgr.GetCache(), &clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, gcpManagedControlPlane.GroupVersionKind(), mgr.GetClient(), &infrav1exp.GCPManagedControlPlane{})),
+			predicates.ClusterUnpausedAndInfrastructureReady(log),
+		)); err != nil {
 		return fmt.Errorf("failed adding a watch for ready clusters: %w", err)
 	}
 
@@ -121,7 +121,7 @@ func (r *GCPManagedControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 		Namespace: gcpManagedControlPlane.Namespace,
 		Name:      cluster.Spec.InfrastructureRef.Name,
 	}
-	if err := r.Client.Get(ctx, key, managedCluster); err != nil || managedCluster == nil {
+	if err := r.Client.Get(ctx, key, managedCluster); err != nil {
 		log.Error(err, "Failed to retrieve GCPManagedCluster from the API Server")
 		return ctrl.Result{}, err
 	}

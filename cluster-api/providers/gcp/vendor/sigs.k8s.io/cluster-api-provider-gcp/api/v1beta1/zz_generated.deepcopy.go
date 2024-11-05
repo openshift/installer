@@ -475,6 +475,11 @@ func (in *GCPMachineSpec) DeepCopyInto(out *GCPMachineSpec) {
 		*out = new(ServiceAccount)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.ProvisioningModel != nil {
+		in, out := &in.ProvisioningModel, &out.ProvisioningModel
+		*out = new(ProvisioningModel)
+		**out = **in
+	}
 	if in.IPForwarding != nil {
 		in, out := &in.IPForwarding, &out.IPForwarding
 		*out = new(IPForwarding)

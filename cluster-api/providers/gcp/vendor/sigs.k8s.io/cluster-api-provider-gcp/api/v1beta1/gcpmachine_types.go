@@ -47,6 +47,8 @@ type AttachedDiskSpec struct {
 	// 1. "pd-standard" - Standard (HDD) persistent disk
 	// 2. "pd-ssd" - SSD persistent disk
 	// 3. "local-ssd" - Local SSD disk (https://cloud.google.com/compute/docs/disks/local-ssd).
+	// 4. "pd-balanced" - Balanced Persistent Disk
+	// 5. "hyperdisk-balanced" - Hyperdisk Balanced
 	// Default is "pd-standard".
 	// +optional
 	DeviceType *DiskType `json:"deviceType,omitempty"`
@@ -215,6 +217,16 @@ type CustomerEncryptionKey struct {
 	SuppliedKey *SuppliedKey `json:"suppliedKey,omitempty"`
 }
 
+// ProvisioningModel is a type for Spot VM enablement.
+type ProvisioningModel string
+
+const (
+	// ProvisioningModelStandard specifies the VM type to NOT be Spot.
+	ProvisioningModelStandard ProvisioningModel = "Standard"
+	// ProvisioningModelSpot specifies the VM type to be Spot.
+	ProvisioningModelSpot ProvisioningModel = "Spot"
+)
+
 // GCPMachineSpec defines the desired state of GCPMachine.
 type GCPMachineSpec struct {
 	// InstanceType is the type of instance to create. Example: n1.standard-2
@@ -281,6 +293,8 @@ type GCPMachineSpec struct {
 	// Supported types of root volumes:
 	// 1. "pd-standard" - Standard (HDD) persistent disk
 	// 2. "pd-ssd" - SSD persistent disk
+	// 3. "pd-balanced" - Balanced Persistent Disk
+	// 4. "hyperdisk-balanced" - Hyperdisk Balanced
 	// Default is "pd-standard".
 	// +optional
 	RootDeviceType *DiskType `json:"rootDeviceType,omitempty"`
@@ -297,6 +311,13 @@ type GCPMachineSpec struct {
 	// Preemptible defines if instance is preemptible
 	// +optional
 	Preemptible bool `json:"preemptible,omitempty"`
+
+	// ProvisioningModel defines if instance is spot.
+	// If set to "Standard" while preemptible is true, then the VM will be of type "Preemptible".
+	// If "Spot", VM type is "Spot". When unspecified, defaults to "Standard".
+	// +kubebuilder:validation:Enum=Standard;Spot
+	// +optional
+	ProvisioningModel *ProvisioningModel `json:"provisioningModel,omitempty"`
 
 	// IPForwarding Allows this instance to send and receive packets with non-matching destination or source IPs.
 	// This is required if you plan to use this instance to forward routes. Defaults to enabled.

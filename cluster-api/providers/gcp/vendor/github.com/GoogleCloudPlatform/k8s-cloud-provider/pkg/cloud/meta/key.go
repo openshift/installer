@@ -72,6 +72,18 @@ func (k *Key) Type() KeyType {
 	}
 }
 
+// Location returns the location for the key.
+func (k *Key) Location() string {
+	switch {
+	case k.Zone != "":
+		return k.Zone
+	case k.Region != "":
+		return k.Region
+	default:
+		return "global"
+	}
+}
+
 // String returns a string representation of the key.
 func (k Key) String() string {
 	switch k.Type() {

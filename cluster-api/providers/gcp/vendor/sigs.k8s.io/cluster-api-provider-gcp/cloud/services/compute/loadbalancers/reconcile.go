@@ -601,9 +601,14 @@ func (s *Service) createOrGetRegionalForwardingRule(ctx context.Context, lbname 
 	spec.LoadBalancingScheme = string(loadBalanceTrafficInternal)
 	spec.Region = s.scope.Region()
 	spec.BackendService = backendSvc.SelfLink
-	// Ports are used instead or PortRange for passthrough Load Balancer
-	// Configure ports for k8s API and ignition
-	spec.Ports = []string{"6443", "22623"}
+	// Ports is used instead or PortRange for passthrough Load Balancer
+	// Configure ports for k8s API to match the external API which is the first port of range
+	var ports []string
+	portList := strings.Split(spec.PortRange, "-")
+	ports = append(ports, portList[0])
+	// Also configure ignition port
+	ports = append(ports, "22623")
+	spec.Ports = ports
 	spec.PortRange = ""
 	subnet, err := s.getSubnet(ctx)
 	if err != nil {

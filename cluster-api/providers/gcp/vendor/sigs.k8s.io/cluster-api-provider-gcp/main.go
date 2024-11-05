@@ -50,9 +50,9 @@ import (
 )
 
 var (
-	scheme             = runtime.NewScheme()
-	setupLog           = ctrl.Log.WithName("setup")
-	diagnosticsOptions = flags.DiagnosticsOptions{}
+	scheme         = runtime.NewScheme()
+	setupLog       = ctrl.Log.WithName("setup")
+	managerOptions = flags.ManagerOptions{}
 )
 
 func init() {
@@ -93,7 +93,10 @@ func main() {
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
 
-	diagnosticsOpts := flags.GetDiagnosticsOptions(diagnosticsOptions)
+	_, metricsOptions, err := flags.GetManagerOptions(managerOptions)
+	if err != nil {
+		setupLog.Error(err, "Unable to start manager: invalid flags")
+	}
 
 	var watchNamespaces map[string]cache.Config
 	if watchNamespace != "" {
@@ -130,7 +133,7 @@ func main() {
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                  scheme,
-		Metrics:                 diagnosticsOpts,
+		Metrics:                 *metricsOptions,
 		LeaderElection:          enableLeaderElection,
 		LeaderElectionID:        "controller-leader-election-capg",
 		LeaderElectionNamespace: leaderElectionNamespace,
@@ -371,7 +374,7 @@ func initFlags(fs *pflag.FlagSet) {
 		"The maximum duration a reconcile loop can run (e.g. 90m)",
 	)
 
-	flags.AddDiagnosticsOptions(fs, &diagnosticsOptions)
+	flags.AddManagerOptions(fs, &managerOptions)
 
 	feature.MutableGates.AddFlag(fs)
 }

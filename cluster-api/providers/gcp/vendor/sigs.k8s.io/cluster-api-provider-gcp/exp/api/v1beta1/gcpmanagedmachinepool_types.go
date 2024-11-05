@@ -39,6 +39,8 @@ const (
 	SSD DiskType = "pd-ssd"
 	// Balanced disk type.
 	Balanced DiskType = "pd-balanced"
+	// HyperdiskBalanced disk type
+	HyperdiskBalanced DiskType = "hyperdisk-balanced"
 )
 
 // GCPManagedMachinePoolSpec defines the desired state of GCPManagedMachinePool.
