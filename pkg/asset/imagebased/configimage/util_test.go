@@ -111,6 +111,12 @@ func imageBasedConfig() *ImageBasedConfig {
 	return ibConfig
 }
 
+func imageBasedConfigWithNodeLabels(nodeLabels map[string]string) *ImageBasedConfig {
+	ibConfig := imageBasedConfig()
+	ibConfig.Config.NodeLabels = nodeLabels
+	return ibConfig
+}
+
 func imageBasedConfigWithSetClusterID(clusterID string, infraID string) *ImageBasedConfig {
 	ibConfig := imageBasedConfig()
 	ibConfig.Config.ClusterID = clusterID
