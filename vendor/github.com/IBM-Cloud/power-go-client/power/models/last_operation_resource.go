@@ -25,7 +25,7 @@ type LastOperationResource struct {
 
 	// state
 	// Required: true
-	// Enum: [in progress succeeded failed]
+	// Enum: ["in progress","succeeded","failed"]
 	State *string `json:"state"`
 }
 

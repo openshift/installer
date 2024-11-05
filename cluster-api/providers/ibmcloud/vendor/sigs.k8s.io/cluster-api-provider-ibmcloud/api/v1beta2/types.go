@@ -258,10 +258,10 @@ var (
 	ResourceTypeVPC = ResourceType("vpc")
 	// ResourceTypeSubnet is VPC subnet resource.
 	ResourceTypeSubnet = ResourceType("subnet")
-	// ResourceTypeComputeSubnet is a VPC subnet resource designated for the Compute (Data) Plane.
-	ResourceTypeComputeSubnet = ResourceType("computeSubnet")
 	// ResourceTypeControlPlaneSubnet is a VPC subnet resource designated for the Control Plane.
 	ResourceTypeControlPlaneSubnet = ResourceType("controlPlaneSubnet")
+	// ResourceTypeWorkerSubnet is a VPC subnet resource designated for the Worker (Data) Plane.
+	ResourceTypeWorkerSubnet = ResourceType("workerSubnet")
 	// ResourceTypeSecurityGroup is a VPC Security Group resource.
 	ResourceTypeSecurityGroup = ResourceType("securityGroup")
 	// ResourceTypeCOSInstance is IBM COS instance resource.
@@ -356,10 +356,65 @@ type IBMCloudResourceReference struct {
 	Name *string `json:"name,omitempty"`
 }
 
+// IBMCloudCatalogOffering represents an IBM Cloud Catalog Offering resource.
+// +kubebuilder:validation:XValidation:rule="(has(self.offeringCRN) && !has(self.versionCRN)) || (!has(self.offeringCRN) && has(self.versionCRN))",message="either offeringCRN or version CRN must be provided, not both"
+type IBMCloudCatalogOffering struct {
+	// OfferingCRN defines the IBM Cloud Catalog Offering CRN. Using the OfferingCRN expects that the latest version of the Offering will be used.
+	// If a specific version should be used instead, rely on VersionCRN.
+	// +optional
+	OfferingCRN *string `json:"offeringCRN,omitempty"`
+
+	// PlanCRN defines the IBM Cloud Catalog Offering Plan CRN to use for the Offering.
+	// +optional
+	PlanCRN *string `json:"planCRN,omitempty"`
+
+	// VersionCRN defines the IBM Cloud Catalog Offering Version CRN. A specific version of the Catalog Offering will be used, as defined by this CRN.
+	// +optional
+	VersionCRN *string `json:"versionCRN,omitempty"`
+}
+
 // NetworkInterface holds the network interface information like subnet id.
 type NetworkInterface struct {
+	// SecurityGroups defines a set of IBM Cloud VPC Security Groups to attach to the network interface.
+	// +optional
+	SecurityGroups []VPCResource `json:"securityGroups,omitempty"`
+
 	// Subnet ID of the network interface.
 	Subnet string `json:"subnet,omitempty"`
+}
+
+// VPCLoadBalancerBackendPoolMember represents a VPC Load Balancer Backend Pool Member.
+type VPCLoadBalancerBackendPoolMember struct {
+	// LoadBalancer defines the Load Balancer the Pool Member is for.
+	// +required
+	LoadBalancer VPCResource `json:"loadBalancer"`
+
+	// Pool defines the Load Balancer Pool the Pool Member should be in.
+	// +required
+	Pool VPCResource `json:"pool"`
+
+	// Port defines the Port the Load Balancer Pool Member listens for traffic.
+	// +required
+	Port int64 `json:"port"`
+
+	// Weight of the service member. Only applicable if the pool algorithm is "weighted_round_robin".
+	// +optional
+	Weight *int64 `json:"weight,omitempty"`
+}
+
+// VPCMachinePlacementTarget represents a VPC Machine's placement restrictions.
+// +kubebuilder:validation:XValidation:rule="(has(self.dedicatedHost) && !has(self.dedicatedHostGroup) && !has(self.placementGroup)) || (!has(self.dedicatedHost) && has(self.dedicatedHostGroup) && !has(self.placementGroup)) || (!has(self.dedicatedHost) && !has(self.dedicatedHostGroup) && has(self.placementGroup))",message="only one of dedicatedHost, dedicatedHostGroup, or placementGroup must be defined for machine placement"
+type VPCMachinePlacementTarget struct {
+	// DedicatedHost defines the Dedicated Host to place a VPC Machine (Instance) on.
+	// +optional
+	DedicatedHost *VPCResource `json:"dedicatedHost,omitempty"`
+
+	// DedicatedHostGroup defines the Dedicated Host Group to use when placing a VPC Machine (Instance).
+	// +optional
+	DedicatedHostGroup *VPCResource `json:"dedicatedHostGroup"`
+
+	// PlacementGroup defines the Placement Group to use when placing a VPC Machine (Instance).
+	PlacementGroup *VPCResource `json:"placementGroup,omitempty"`
 }
 
 // VPCSecurityGroupPortRange represents a range of ports, minimum to maximum.

@@ -59,6 +59,9 @@ const (
 
 	// ImageImportFailedReason used when the image import is failed.
 	ImageImportFailedReason = "ImageImportFailed"
+
+	// ImageReconciliationFailedReason used when an error occurs during VPC Custom Image reconciliation.
+	ImageReconciliationFailedReason = "ImageReconciliationFailed"
 )
 
 const (

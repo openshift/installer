@@ -6,6 +6,7 @@ package p_cloud_s_a_p
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -133,11 +134,13 @@ func (o *PcloudSapPostOK) Code() int {
 }
 
 func (o *PcloudSapPostOK) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostOK %s", 200, payload)
 }
 
 func (o *PcloudSapPostOK) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostOK %s", 200, payload)
 }
 
 func (o *PcloudSapPostOK) GetPayload() models.PVMInstanceList {
@@ -199,11 +202,13 @@ func (o *PcloudSapPostCreated) Code() int {
 }
 
 func (o *PcloudSapPostCreated) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostCreated  %+v", 201, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostCreated %s", 201, payload)
 }
 
 func (o *PcloudSapPostCreated) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostCreated  %+v", 201, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostCreated %s", 201, payload)
 }
 
 func (o *PcloudSapPostCreated) GetPayload() models.PVMInstanceList {
@@ -265,11 +270,13 @@ func (o *PcloudSapPostAccepted) Code() int {
 }
 
 func (o *PcloudSapPostAccepted) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostAccepted  %+v", 202, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostAccepted %s", 202, payload)
 }
 
 func (o *PcloudSapPostAccepted) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostAccepted  %+v", 202, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostAccepted %s", 202, payload)
 }
 
 func (o *PcloudSapPostAccepted) GetPayload() models.PVMInstanceList {
@@ -331,11 +338,13 @@ func (o *PcloudSapPostBadRequest) Code() int {
 }
 
 func (o *PcloudSapPostBadRequest) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostBadRequest %s", 400, payload)
 }
 
 func (o *PcloudSapPostBadRequest) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostBadRequest %s", 400, payload)
 }
 
 func (o *PcloudSapPostBadRequest) GetPayload() *models.Error {
@@ -399,11 +408,13 @@ func (o *PcloudSapPostUnauthorized) Code() int {
 }
 
 func (o *PcloudSapPostUnauthorized) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudSapPostUnauthorized) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudSapPostUnauthorized) GetPayload() *models.Error {
@@ -467,11 +478,13 @@ func (o *PcloudSapPostForbidden) Code() int {
 }
 
 func (o *PcloudSapPostForbidden) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostForbidden %s", 403, payload)
 }
 
 func (o *PcloudSapPostForbidden) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostForbidden %s", 403, payload)
 }
 
 func (o *PcloudSapPostForbidden) GetPayload() *models.Error {
@@ -535,11 +548,13 @@ func (o *PcloudSapPostNotFound) Code() int {
 }
 
 func (o *PcloudSapPostNotFound) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostNotFound %s", 404, payload)
 }
 
 func (o *PcloudSapPostNotFound) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostNotFound %s", 404, payload)
 }
 
 func (o *PcloudSapPostNotFound) GetPayload() *models.Error {
@@ -603,11 +618,13 @@ func (o *PcloudSapPostConflict) Code() int {
 }
 
 func (o *PcloudSapPostConflict) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostConflict  %+v", 409, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostConflict %s", 409, payload)
 }
 
 func (o *PcloudSapPostConflict) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostConflict  %+v", 409, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostConflict %s", 409, payload)
 }
 
 func (o *PcloudSapPostConflict) GetPayload() *models.Error {
@@ -671,11 +688,13 @@ func (o *PcloudSapPostUnprocessableEntity) Code() int {
 }
 
 func (o *PcloudSapPostUnprocessableEntity) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostUnprocessableEntity  %+v", 422, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostUnprocessableEntity %s", 422, payload)
 }
 
 func (o *PcloudSapPostUnprocessableEntity) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostUnprocessableEntity  %+v", 422, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostUnprocessableEntity %s", 422, payload)
 }
 
 func (o *PcloudSapPostUnprocessableEntity) GetPayload() *models.Error {
@@ -739,11 +758,13 @@ func (o *PcloudSapPostInternalServerError) Code() int {
 }
 
 func (o *PcloudSapPostInternalServerError) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudSapPostInternalServerError) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudSapPostInternalServerError) GetPayload() *models.Error {

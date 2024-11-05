@@ -242,6 +242,7 @@ func NewPowerVSMachineScope(params PowerVSMachineScopeParams) (scope *PowerVSMac
 
 	scope.IBMVPCClient = vpcClient
 	scope.ResourceClient = rc
+	scope.ServiceEndpoint = params.ServiceEndpoint
 	return scope, nil
 }
 
@@ -426,13 +427,19 @@ func (m *PowerVSMachineScope) createIgnitionData(data []byte) (string, error) {
 	cosServiceEndpoint := endpoints.FetchEndpoints(string(endpoints.COS), m.ServiceEndpoint)
 	if cosServiceEndpoint != "" {
 		m.Logger.V(3).Info("Overriding the default COS endpoint in ignition URL", "cosEndpoint", cosServiceEndpoint)
-		objHost = fmt.Sprintf("%s.%s", bucket, cosServiceEndpoint)
+		cosURL, _ := url.Parse(cosServiceEndpoint)
+		if cosURL.Scheme != "" {
+			objHost = fmt.Sprintf("%s.%s", bucket, cosURL.Host)
+		} else {
+			objHost = fmt.Sprintf("%s.%s", bucket, cosServiceEndpoint)
+		}
 	}
 	objectURL := &url.URL{
 		Scheme: "https",
 		Host:   objHost,
 		Path:   key,
 	}
+	m.Logger.V(3).Info("Generated Ignition URL", "objectURL", objectURL.String())
 
 	return objectURL.String(), nil
 }
@@ -962,7 +969,7 @@ func (m *PowerVSMachineScope) GetMachineInternalIP() string {
 	return ""
 }
 
-// CreateVPCLoadBalancerPoolMember creates a member in load balaner pool.
+// CreateVPCLoadBalancerPoolMember creates a member in load balancer pool.
 func (m *PowerVSMachineScope) CreateVPCLoadBalancerPoolMember() (*vpcv1.LoadBalancerPoolMember, error) { //nolint:gocyclo
 	loadBalancers := make([]infrav1beta2.VPCLoadBalancerSpec, 0)
 	if len(m.IBMPowerVSCluster.Spec.LoadBalancers) == 0 {

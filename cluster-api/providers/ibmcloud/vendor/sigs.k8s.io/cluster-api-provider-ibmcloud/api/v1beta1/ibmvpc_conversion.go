@@ -231,3 +231,11 @@ func Convert_v1beta2_IBMVPCClusterSpec_To_v1beta1_IBMVPCClusterSpec(in *infrav1b
 func Convert_v1beta2_IBMVPCClusterStatus_To_v1beta1_IBMVPCClusterStatus(in *infrav1beta2.IBMVPCClusterStatus, out *IBMVPCClusterStatus, s apiconversion.Scope) error {
 	return autoConvert_v1beta2_IBMVPCClusterStatus_To_v1beta1_IBMVPCClusterStatus(in, out, s)
 }
+
+func Convert_v1beta2_IBMVPCMachineStatus_To_v1beta1_IBMVPCMachineStatus(in *infrav1beta2.IBMVPCMachineStatus, out *IBMVPCMachineStatus, s apiconversion.Scope) error {
+	return autoConvert_v1beta2_IBMVPCMachineStatus_To_v1beta1_IBMVPCMachineStatus(in, out, s)
+}
+
+func Convert_v1beta2_NetworkInterface_To_v1beta1_NetworkInterface(in *infrav1beta2.NetworkInterface, out *NetworkInterface, s apiconversion.Scope) error {
+	return autoConvert_v1beta2_NetworkInterface_To_v1beta1_NetworkInterface(in, out, s)
+}
