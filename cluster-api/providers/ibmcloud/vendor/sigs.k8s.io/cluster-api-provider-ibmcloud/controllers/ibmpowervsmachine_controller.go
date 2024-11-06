@@ -198,6 +198,19 @@ func (r *IBMPowerVSMachineReconciler) getOrCreate(scope *scope.PowerVSMachineSco
 	return instance, err
 }
 
+// handleLoadBalancerPoolMemberConfiguration handles loadbalancer pool member creation flow.
+func (r *IBMPowerVSMachineReconciler) handleLoadBalancerPoolMemberConfiguration(machineScope *scope.PowerVSMachineScope) (ctrl.Result, error) {
+	poolMember, err := machineScope.CreateVPCLoadBalancerPoolMember()
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("failed to create loadbalancer pool member %s: %w", machineScope.IBMPowerVSMachine.Name, err)
+	}
+	if poolMember != nil && *poolMember.ProvisioningStatus != string(infrav1beta2.VPCLoadBalancerStateActive) {
+		return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
+	}
+
+	return ctrl.Result{}, nil
+}
+
 func (r *IBMPowerVSMachineReconciler) reconcileNormal(machineScope *scope.PowerVSMachineScope) (ctrl.Result, error) {
 	machineScope.Info("Reconciling IBMPowerVSMachine")
 
@@ -229,7 +242,7 @@ func (r *IBMPowerVSMachineReconciler) reconcileNormal(machineScope *scope.PowerV
 	ins, err := r.getOrCreate(machineScope)
 	if err != nil {
 		machineScope.Error(err, "Unable to create instance")
-		conditions.MarkFalse(machineScope.IBMPowerVSMachine, infrav1beta2.InstanceReadyCondition, infrav1beta2.InstanceProvisionFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
+		conditions.MarkFalse(machineScope.IBMPowerVSMachine, infrav1beta2.InstanceReadyCondition, infrav1beta2.InstanceProvisionFailedReason, capiv1beta1.ConditionSeverityError, "%s", err.Error())
 		return ctrl.Result{}, fmt.Errorf("failed to reconcile VSI for IBMPowerVSMachine %s/%s: %w", machineScope.IBMPowerVSMachine.Namespace, machineScope.IBMPowerVSMachine.Name, err)
 	}
 
@@ -262,7 +275,7 @@ func (r *IBMPowerVSMachineReconciler) reconcileNormal(machineScope *scope.PowerV
 			machineScope.SetNotReady()
 			machineScope.SetFailureReason(capierrors.UpdateMachineError)
 			machineScope.SetFailureMessage(msg)
-			conditions.MarkFalse(machineScope.IBMPowerVSMachine, infrav1beta2.InstanceReadyCondition, infrav1beta2.InstanceErroredReason, capiv1beta1.ConditionSeverityError, msg)
+			conditions.MarkFalse(machineScope.IBMPowerVSMachine, infrav1beta2.InstanceReadyCondition, infrav1beta2.InstanceErroredReason, capiv1beta1.ConditionSeverityError, "%s", msg)
 			capibmrecord.Warnf(machineScope.IBMPowerVSMachine, "FailedBuildInstance", "Failed to build the instance - %s", msg)
 			return ctrl.Result{}, nil
 		default:
@@ -286,15 +299,15 @@ func (r *IBMPowerVSMachineReconciler) reconcileNormal(machineScope *scope.PowerV
 	machineScope.Info("updating loadbalancer for machine", "name", machineScope.IBMPowerVSMachine.Name)
 	internalIP := machineScope.GetMachineInternalIP()
 	if internalIP == "" {
-		machineScope.Info("Unable to update the LoadBalancer, Machine internal IP not yet set", "machine name", machineScope.IBMPowerVSMachine.Name)
+		machineScope.Info("Unable to update the LoadBalancer, Machine internal IP not yet set", "machineName", machineScope.IBMPowerVSMachine.Name)
 		return ctrl.Result{}, nil
 	}
-	poolMember, err := machineScope.CreateVPCLoadBalancerPoolMember()
-	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("failed CreateVPCLoadBalancerPoolMember %s: %w", machineScope.IBMPowerVSMachine.Name, err)
+
+	if util.IsControlPlaneMachine(machineScope.Machine) {
+		machineScope.Info("Configuring loadbalancer configuration for control plane machine", "machineName", machineScope.IBMPowerVSMachine.Name)
+		return r.handleLoadBalancerPoolMemberConfiguration(machineScope)
 	}
-	if poolMember != nil && *poolMember.ProvisioningStatus != string(infrav1beta2.VPCLoadBalancerStateActive) {
-		return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
-	}
+	machineScope.Info("skipping loadbalancer configuration for worker machine", "machineName", machineScope.IBMPowerVSMachine.Name)
+
 	return ctrl.Result{}, nil
 }

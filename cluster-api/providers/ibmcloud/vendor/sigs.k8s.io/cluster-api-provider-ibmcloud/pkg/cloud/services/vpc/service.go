@@ -26,8 +26,14 @@ import (
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/utils"
 )
 
-// SecurityGroupByNameNotFound returns an appropriate error when security group by name not found.
-var SecurityGroupByNameNotFound = func(name string) error { return fmt.Errorf("failed to find security group by name '%s'", name) }
+// SecurityGroupByNameNotFound represents an error when security group is not found by name.
+type SecurityGroupByNameNotFound struct {
+	Name string
+}
+
+func (s *SecurityGroupByNameNotFound) Error() string {
+	return fmt.Sprintf("failed to find security group by name: %s", s.Name)
+}
 
 // Service holds the VPC Service specific information.
 type Service struct {
@@ -159,9 +165,19 @@ func (s *Service) ListKeys(options *vpcv1.ListKeysOptions) (*vpcv1.KeyCollection
 	return s.vpcService.ListKeys(options)
 }
 
+// CreateImage creates a new VPC Custom Image.
+func (s *Service) CreateImage(options *vpcv1.CreateImageOptions) (*vpcv1.Image, *core.DetailedResponse, error) {
+	return s.vpcService.CreateImage(options)
+}
+
 // ListImages returns list of images in a region.
 func (s *Service) ListImages(options *vpcv1.ListImagesOptions) (*vpcv1.ImageCollection, *core.DetailedResponse, error) {
 	return s.vpcService.ListImages(options)
+}
+
+// GetImage returns a VPC Custom image.
+func (s *Service) GetImage(options *vpcv1.GetImageOptions) (*vpcv1.Image, *core.DetailedResponse, error) {
+	return s.vpcService.GetImage(options)
 }
 
 // GetInstanceProfile returns instance profile.
@@ -211,6 +227,84 @@ func (s *Service) GetVPCByName(vpcName string) (*vpcv1.VPC, error) {
 	}
 
 	return vpc, nil
+}
+
+// GetImageByName returns the VPC Custom Image with given name. If not found, returns nil.
+func (s *Service) GetImageByName(imageName string) (*vpcv1.Image, error) {
+	var image *vpcv1.Image
+	f := func(start string) (bool, string, error) {
+		// check for existing images
+		listImagesOptions := &vpcv1.ListImagesOptions{}
+		if start != "" {
+			listImagesOptions.Start = &start
+		}
+
+		imagesList, _, err := s.ListImages(listImagesOptions)
+		if err != nil {
+			return false, "", err
+		}
+
+		if imagesList == nil {
+			return false, "", fmt.Errorf("image list returned is nil")
+		}
+
+		for i, v := range imagesList.Images {
+			if *v.Name == imageName {
+				image = &imagesList.Images[i]
+				return true, "", nil
+			}
+		}
+
+		if imagesList.Next != nil && *imagesList.Next.Href != "" {
+			return false, *imagesList.Next.Href, nil
+		}
+		return true, "", nil
+	}
+
+	if err := utils.PagingHelper(f); err != nil {
+		return nil, err
+	}
+
+	return image, nil
+}
+
+// GetVPCPublicGatewayByName returns the VPC Public Gateway with given name. If not found, returns nil.
+func (s *Service) GetVPCPublicGatewayByName(publicGatewayName string, resourceGroupID string) (*vpcv1.PublicGateway, error) {
+	var publicGateway *vpcv1.PublicGateway
+	f := func(start string) (bool, string, error) {
+		// check for existing public gateways
+		listPublicGatewaysOptions := s.vpcService.NewListPublicGatewaysOptions().SetResourceGroupID(resourceGroupID)
+		if start != "" {
+			listPublicGatewaysOptions.Start = &start
+		}
+
+		publicGatewaysList, _, err := s.vpcService.ListPublicGateways(listPublicGatewaysOptions)
+		if err != nil {
+			return false, "", err
+		}
+
+		if publicGatewaysList == nil {
+			return false, "", fmt.Errorf("public gateways list returned is nil")
+		}
+
+		for index, pg := range publicGatewaysList.PublicGateways {
+			if *pg.Name == publicGatewayName {
+				publicGateway = &publicGatewaysList.PublicGateways[index]
+				return true, "", nil
+			}
+		}
+
+		if publicGatewaysList.Next != nil && *publicGatewaysList.Next.Href != "" {
+			return false, *publicGatewaysList.Next.Href, nil
+		}
+		return true, "", nil
+	}
+
+	if err := utils.PagingHelper(f); err != nil {
+		return nil, err
+	}
+
+	return publicGateway, nil
 }
 
 // GetSubnet return subnet.
@@ -384,12 +478,31 @@ func (s *Service) GetSecurityGroupByName(name string) (*vpcv1.SecurityGroup, err
 		}
 	}
 
-	return nil, SecurityGroupByNameNotFound(name)
+	return nil, &SecurityGroupByNameNotFound{Name: name}
 }
 
 // GetSecurityGroupRule gets a specific security group rule.
 func (s *Service) GetSecurityGroupRule(options *vpcv1.GetSecurityGroupRuleOptions) (vpcv1.SecurityGroupRuleIntf, *core.DetailedResponse, error) {
 	return s.vpcService.GetSecurityGroupRule(options)
+}
+
+// ListSecurityGroupRules returns a list of security group rules.
+func (s *Service) ListSecurityGroupRules(options *vpcv1.ListSecurityGroupRulesOptions) (*vpcv1.SecurityGroupRuleCollection, *core.DetailedResponse, error) {
+	return s.vpcService.ListSecurityGroupRules(options)
+}
+
+// GetVPCZonesByRegion gets the VPC availability zones for a specific IBM Cloud region.
+func (s *Service) GetVPCZonesByRegion(region string) ([]string, error) {
+	zones := make([]string, 0)
+	options := s.vpcService.NewListRegionZonesOptions(region)
+	result, _, err := s.vpcService.ListRegionZones(options)
+	if err != nil {
+		return zones, err
+	}
+	for _, zone := range result.Zones {
+		zones = append(zones, *zone.Name)
+	}
+	return zones, nil
 }
 
 // NewService returns a new VPC Service.

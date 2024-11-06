@@ -35,15 +35,27 @@ type PodData struct {
 	// Required: true
 	Storage *int64 `json:"storage"`
 
-	// Total number of cores in the Pod
+	// Total number of usable cores in the Pod
 	// Required: true
 	TotalCores *float64 `json:"totalCores"`
 
-	// Total amount of memory in the Pod (GB)
+	// Total amount of usable memory in the Pod (GB)
 	// Required: true
 	TotalMemory *int64 `json:"totalMemory"`
 
-	// Total amount of storage in the Pod (GB)
+	// Total number of physical cores in the Pod
+	// Required: true
+	TotalPhysCores *float64 `json:"totalPhysCores"`
+
+	// Total amount of physical memory in the Pod (GB)
+	// Required: true
+	TotalPhysMemory *int64 `json:"totalPhysMemory"`
+
+	// Total amount of physical storage in the Pod (GB)
+	// Required: true
+	TotalPhysStorage *float64 `json:"totalPhysStorage"`
+
+	// Total amount of usable storage in the Pod (GB)
 	// Required: true
 	TotalStorage *int64 `json:"totalStorage"`
 }
@@ -73,6 +85,18 @@ func (m *PodData) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateTotalMemory(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateTotalPhysCores(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateTotalPhysMemory(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateTotalPhysStorage(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -134,6 +158,33 @@ func (m *PodData) validateTotalCores(formats strfmt.Registry) error {
 func (m *PodData) validateTotalMemory(formats strfmt.Registry) error {
 
 	if err := validate.Required("totalMemory", "body", m.TotalMemory); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *PodData) validateTotalPhysCores(formats strfmt.Registry) error {
+
+	if err := validate.Required("totalPhysCores", "body", m.TotalPhysCores); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *PodData) validateTotalPhysMemory(formats strfmt.Registry) error {
+
+	if err := validate.Required("totalPhysMemory", "body", m.TotalPhysMemory); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *PodData) validateTotalPhysStorage(formats strfmt.Registry) error {
+
+	if err := validate.Required("totalPhysStorage", "body", m.TotalPhysStorage); err != nil {
 		return err
 	}
 

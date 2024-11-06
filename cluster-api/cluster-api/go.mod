@@ -4,7 +4,7 @@ go 1.22.0
 
 toolchain go1.22.6
 
-require sigs.k8s.io/cluster-api v1.8.2
+require sigs.k8s.io/cluster-api v1.8.4
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
