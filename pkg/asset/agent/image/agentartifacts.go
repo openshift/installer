@@ -15,8 +15,10 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	config "github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
 
 const (
@@ -49,6 +51,8 @@ func (a *AgentArtifacts) Dependencies() []asset.Asset {
 		&manifests.AgentClusterInstall{},
 		&mirror.RegistriesConf{},
 		&config.AgentConfig{},
+		&workflow.AgentWorkflow{},
+		&joiner.ClusterInfo{},
 	}
 }
 
@@ -61,8 +65,8 @@ func (a *AgentArtifacts) Generate(_ context.Context, dependencies asset.Parents)
 	agentClusterInstall := &manifests.AgentClusterInstall{}
 	registriesConf := &mirror.RegistriesConf{}
 	agentconfig := &config.AgentConfig{}
-
-	dependencies.Get(ignition, kargs, baseIso, agentManifests, agentClusterInstall, registriesConf, agentconfig)
+	agentWorkflow := &workflow.AgentWorkflow{}
+	dependencies.Get(ignition, kargs, baseIso, agentManifests, agentClusterInstall, registriesConf, agentconfig, agentWorkflow)
 
 	ignitionByte, err := json.Marshal(ignition.Config)
 	if err != nil {
@@ -75,15 +79,26 @@ func (a *AgentArtifacts) Generate(_ context.Context, dependencies asset.Parents)
 	a.ISOPath = baseIso.File.Filename
 	a.Kargs = kargs.KernelCmdLine()
 
-	if agentconfig.Config != nil {
-		a.BootArtifactsBaseURL = strings.Trim(agentconfig.Config.BootArtifactsBaseURL, "/")
-		// External platform will always create a minimal ISO
-		a.MinimalISO = agentconfig.Config.MinimalISO || agentManifests.AgentClusterInstall.Spec.PlatformType == hiveext.ExternalPlatformType
-		if agentconfig.Config.MinimalISO {
-			logrus.Infof("Minimal ISO will be created based on configuration")
-		} else if agentManifests.AgentClusterInstall.Spec.PlatformType == hiveext.ExternalPlatformType {
-			logrus.Infof("Minimal ISO will be created for External platform")
+	switch agentWorkflow.Workflow {
+	case workflow.AgentWorkflowTypeInstall:
+		if agentconfig.Config != nil {
+			a.BootArtifactsBaseURL = strings.Trim(agentconfig.Config.BootArtifactsBaseURL, "/")
+			// External platform will always create a minimal ISO
+			a.MinimalISO = agentconfig.Config.MinimalISO || agentManifests.AgentClusterInstall.Spec.PlatformType == hiveext.ExternalPlatformType
+			if agentconfig.Config.MinimalISO {
+				logrus.Infof("Minimal ISO will be created based on configuration")
+			} else if agentManifests.AgentClusterInstall.Spec.PlatformType == hiveext.ExternalPlatformType {
+				logrus.Infof("Minimal ISO will be created for External platform")
+			}
 		}
+	case workflow.AgentWorkflowTypeAddNodes:
+		clusterInfo := &joiner.ClusterInfo{}
+		dependencies.Get(clusterInfo)
+		if clusterInfo.BootArtifactsBaseURL != "" {
+			a.BootArtifactsBaseURL = strings.Trim(clusterInfo.BootArtifactsBaseURL, "/")
+		}
+	default:
+		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
 	}
 
 	var agentTuiFiles []string

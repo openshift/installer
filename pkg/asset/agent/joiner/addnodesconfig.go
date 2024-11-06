@@ -36,14 +36,16 @@ type Config struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	CPUArchitecture string       `json:"cpuArchitecture,omitempty"`
-	SSHKey          string       `json:"sshKey,omitempty"`
-	Hosts           []agent.Host `json:"hosts,omitempty"`
+	CPUArchitecture      string       `json:"cpuArchitecture,omitempty"`
+	SSHKey               string       `json:"sshKey,omitempty"`
+	BootArtifactsBaseURL string       `json:"bootArtifactsBaseURL,omitempty"`
+	Hosts                []agent.Host `json:"hosts,omitempty"`
 }
 
 // Params is used to store the command line parameters.
 type Params struct {
-	Kubeconfig string `json:"kubeconfig,omitempty"`
+	Kubeconfig  string `json:"kubeconfig,omitempty"`
+	GeneratePXE bool   `json:"generatePXE,omitempty"`
 }
 
 // Save stores the current parameters on disk.
