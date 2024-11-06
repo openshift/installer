@@ -30,6 +30,8 @@ func ParseToken(tokenString string) (jwt.MapClaims, error) {
 }
 
 // ParseExpirationFromToken checks if the token is expired or not.
+// Returns zero time on error for consistent return type; caller should ignore time on error.
+// Otherwise returns the token expiry time.
 func ParseExpirationFromToken(tokenString string) (time.Time, error) {
 	claims, err := ParseToken(tokenString)
 	if err != nil {
