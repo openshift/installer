@@ -31,11 +31,13 @@ type OpenStackClusterTemplateSpec struct {
 }
 
 // +genclient
-// +genclient:Namespaced
 // +kubebuilder:object:root=true
+// +kubebuilder:deprecatedversion:warning="The v1alpha7 version of OpenStackClusterTemplate has been deprecated and will be removed in a future release."
 // +kubebuilder:resource:path=openstackclustertemplates,scope=Namespaced,categories=cluster-api,shortName=osct
 
 // OpenStackClusterTemplate is the Schema for the openstackclustertemplates API.
+//
+// Deprecated: v1alpha7.OpenStackClusterTemplate has been replaced by v1beta1.OpenStackClusterTemplate.
 type OpenStackClusterTemplate struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -46,6 +48,8 @@ type OpenStackClusterTemplate struct {
 //+kubebuilder:object:root=true
 
 // OpenStackClusterTemplateList contains a list of OpenStackClusterTemplate.
+//
+// Deprecated: v1alpha7.OpenStackClusterTemplateList has been replaced by v1beta1.OpenStackClusterTemplateList.
 type OpenStackClusterTemplateList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

@@ -230,10 +230,10 @@ type OpenStackClusterStatus struct {
 }
 
 // +genclient
-// +genclient:Namespaced
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=openstackclusters,scope=Namespaced,categories=cluster-api,shortName=osc
 // +kubebuilder:subresource:status
+// +kubebuilder:deprecatedversion:warning="The v1alpha7 version of OpenStackCluster has been deprecated and will be removed in a future release."
 // +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".metadata.labels.cluster\\.x-k8s\\.io/cluster-name",description="Cluster to which this OpenStackCluster belongs"
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="Cluster infrastructure is ready for OpenStack instances"
 // +kubebuilder:printcolumn:name="Network",type="string",JSONPath=".status.network.id",description="Network the cluster is using"
@@ -242,6 +242,8 @@ type OpenStackClusterStatus struct {
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of OpenStackCluster"
 
 // OpenStackCluster is the Schema for the openstackclusters API.
+//
+// Deprecated: v1alpha7.OpenStackCluster has been replaced by v1beta1.OpenStackCluster.
 type OpenStackCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -253,6 +255,8 @@ type OpenStackCluster struct {
 // +kubebuilder:object:root=true
 
 // OpenStackClusterList contains a list of OpenStackCluster.
+//
+// Deprecated: v1alpha7.OpenStackClusterList has been replaced by v1beta1.OpenStackClusterList.
 type OpenStackClusterList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

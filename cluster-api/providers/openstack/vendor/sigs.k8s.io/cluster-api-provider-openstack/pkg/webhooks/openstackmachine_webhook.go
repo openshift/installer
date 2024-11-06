@@ -24,6 +24,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -62,6 +63,12 @@ func (*openStackMachineWebhook) ValidateCreate(_ context.Context, objRaw runtime
 		}
 	}
 
+	for _, port := range newObj.Spec.Ports {
+		if ptr.Deref(port.DisablePortSecurity, false) && len(port.SecurityGroups) > 0 {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "ports"), "cannot have security groups when DisablePortSecurity is set to true"))
+		}
+	}
+
 	return aggregateObjErrors(newObj.GroupVersionKind().GroupKind(), newObj.Name, allErrs)
 }
 
@@ -74,13 +81,13 @@ func (*openStackMachineWebhook) ValidateUpdate(_ context.Context, oldObjRaw, new
 
 	newOpenStackMachine, err := runtime.DefaultUnstructuredConverter.ToUnstructured(newObj)
 	if err != nil {
-		return nil, apierrors.NewInvalid(infrav1.GroupVersion.WithKind("OpenStackMachine").GroupKind(), newObj.Name, field.ErrorList{
+		return nil, apierrors.NewInvalid(infrav1.SchemeGroupVersion.WithKind("OpenStackMachine").GroupKind(), newObj.Name, field.ErrorList{
 			field.InternalError(nil, fmt.Errorf("failed to convert new OpenStackMachine to unstructured object: %w", err)),
 		})
 	}
 	oldOpenStackMachine, err := runtime.DefaultUnstructuredConverter.ToUnstructured(oldObjRaw)
 	if err != nil {
-		return nil, apierrors.NewInvalid(infrav1.GroupVersion.WithKind("OpenStackMachine").GroupKind(), newObj.Name, field.ErrorList{
+		return nil, apierrors.NewInvalid(infrav1.SchemeGroupVersion.WithKind("OpenStackMachine").GroupKind(), newObj.Name, field.ErrorList{
 			field.InternalError(nil, fmt.Errorf("failed to convert old OpenStackMachine to unstructured object: %w", err)),
 		})
 	}

@@ -7,6 +7,22 @@ import (
 	"github.com/gophercloud/gophercloud/v2/pagination"
 )
 
+// SchedulerHints contains options for providing scheduler hints when creating
+// a Share.
+type SchedulerHints struct {
+	// DifferentHost will place the share on a different back-end that does not
+	// host the given shares.
+	DifferentHost string `json:"different_host,omitempty"`
+
+	// SameHost will place the share on a back-end that hosts the given shares.
+	SameHost string `json:"same_host,omitempty"`
+
+	// OnlyHost value must be a manage-share service host in
+	// host@backend#POOL format (admin only). Only available in and beyond
+	// API version 2.67
+	OnlyHost string `json:"only_host,omitempty"`
+}
+
 // CreateOptsBuilder allows extensions to add additional parameters to the
 // Create request.
 type CreateOptsBuilder interface {
@@ -40,6 +56,8 @@ type CreateOpts struct {
 	SnapshotID string `json:"snapshot_id,omitempty"`
 	// Determines whether or not the share is public
 	IsPublic *bool `json:"is_public,omitempty"`
+	// The UUID of the share group. Available starting from the microversion 2.31
+	ShareGroupID string `json:"share_group_id,omitempty"`
 	// Key value pairs of user defined metadata
 	Metadata map[string]string `json:"metadata,omitempty"`
 	// The UUID of the share network to which the share belongs to
@@ -48,6 +66,9 @@ type CreateOpts struct {
 	ConsistencyGroupID string `json:"consistency_group_id,omitempty"`
 	// The availability zone of the share
 	AvailabilityZone string `json:"availability_zone,omitempty"`
+	// SchedulerHints are hints for the scheduler to select the share backend
+	// Only available in and beyond API version 2.65
+	SchedulerHints *SchedulerHints `json:"scheduler_hints,omitempty"`
 }
 
 // ToShareCreateMap assembles a request body based on the contents of a

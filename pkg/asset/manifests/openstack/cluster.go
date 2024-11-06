@@ -88,7 +88,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 		}
 	}
-	openStackCluster.SetGroupVersionKind(capo.GroupVersion.WithKind("OpenStackCluster"))
+	openStackCluster.SetGroupVersionKind(capo.SchemeGroupVersion.WithKind("OpenStackCluster"))
 
 	manifests = append(manifests, &asset.RuntimeFile{
 		Object: openStackCluster,
@@ -118,7 +118,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		Manifests: manifests,
 		InfrastructureRefs: []*corev1.ObjectReference{
 			{
-				APIVersion: capo.GroupVersion.String(),
+				APIVersion: capo.SchemeGroupVersion.String(),
 				Kind:       "OpenStackCluster",
 				Name:       openStackCluster.Name,
 				Namespace:  openStackCluster.Namespace,

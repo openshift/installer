@@ -20,11 +20,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/attributestags"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/external"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
+	"github.com/gophercloud/gophercloud/v2"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/attributestags"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/external"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/networks"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/subnets"
 	"k8s.io/utils/ptr"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
@@ -34,33 +34,6 @@ import (
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/filterconvert"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/names"
 )
-
-var (
-	ErrFilterMatch     = fmt.Errorf("filter match error")
-	ErrMultipleMatches = multipleMatchesError{}
-	ErrNoMatches       = noMatchesError{}
-)
-
-type (
-	multipleMatchesError struct{}
-	noMatchesError       struct{}
-)
-
-func (e multipleMatchesError) Error() string {
-	return "filter matched more than one resource"
-}
-
-func (e multipleMatchesError) Is(err error) bool {
-	return err == ErrFilterMatch
-}
-
-func (e noMatchesError) Error() string {
-	return "filter matched no resources"
-}
-
-func (e noMatchesError) Is(err error) bool {
-	return err == ErrFilterMatch
-}
 
 type createOpts struct {
 	AdminStateUp        *bool  `json:"admin_state_up,omitempty"`
@@ -95,7 +68,7 @@ func (s *Service) ReconcileExternalNetwork(openStackCluster *infrav1.OpenStackCl
 		// Empty NetworkFilter will query all networks
 		var err error
 		network, err = s.getNetworkByFilter(&infrav1.NetworkFilter{}, ExternalNetworksOnly)
-		if errors.Is(err, ErrNoMatches) {
+		if errors.Is(err, capoerrors.ErrNoMatches) {
 			openStackCluster.Status.ExternalNetwork = nil
 			s.scope.Logger().Info("No external network found - proceeding with internal network only")
 			return nil
@@ -316,10 +289,10 @@ func (s *Service) getNetworkByFilter(filter *infrav1.NetworkFilter, opts ...GetN
 		return nil, err
 	}
 	if len(networks) == 0 {
-		return nil, ErrNoMatches
+		return nil, capoerrors.ErrNoMatches
 	}
 	if len(networks) > 1 {
-		return nil, ErrMultipleMatches
+		return nil, capoerrors.ErrMultipleMatches
 	}
 	return &networks[0], nil
 }
@@ -366,7 +339,7 @@ func (s *Service) GetSubnetsByFilter(opts subnets.ListOptsBuilder) ([]subnets.Su
 		return []subnets.Subnet{}, err
 	}
 	if len(subnetList) == 0 {
-		return nil, ErrNoMatches
+		return nil, capoerrors.ErrNoMatches
 	}
 	return subnetList, nil
 }
@@ -396,12 +369,12 @@ func (s *Service) GetNetworkSubnetByParam(networkID string, param *infrav1.Subne
 	if param.ID != nil {
 		subnet, err := s.client.GetSubnet(*param.ID)
 		if capoerrors.IsNotFound(err) {
-			return nil, ErrNoMatches
+			return nil, capoerrors.ErrNoMatches
 		}
 
 		if networkID != "" && subnet.NetworkID != networkID {
 			s.scope.Logger().V(4).Info("Subnet specified by ID does not belong to the given network", "subnetID", subnet.ID, "networkID", networkID)
-			return nil, ErrNoMatches
+			return nil, capoerrors.ErrNoMatches
 		}
 		return subnet, err
 	}
@@ -421,10 +394,10 @@ func (s *Service) GetNetworkSubnetByParam(networkID string, param *infrav1.Subne
 		return nil, err
 	}
 	if len(subnets) == 0 {
-		return nil, ErrNoMatches
+		return nil, capoerrors.ErrNoMatches
 	}
 	if len(subnets) > 1 {
-		return nil, ErrMultipleMatches
+		return nil, capoerrors.ErrMultipleMatches
 	}
 	return &subnets[0], nil
 }
