@@ -359,7 +359,6 @@ networks.config.openshift.io:
   Category: ""
   FeatureGates:
   - NetworkDiagnosticsConfig
-  - NetworkLiveMigration
   FilenameOperatorName: config-operator
   FilenameOperatorOrdering: "01"
   FilenameRunLevel: "0000_10"

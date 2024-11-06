@@ -95,6 +95,7 @@ spec:
                 - v4.14
                 - v4.15
                 - v4.16
+                - v4.17
                 - vCurrent
                 type: string
             type: object
