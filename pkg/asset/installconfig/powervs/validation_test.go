@@ -131,7 +131,7 @@ var (
 		"power-vpn-connections": false,
 	}
 	defaultSysType           = "s922"
-	newSysType               = "s1022"
+	newSysType               = "s1080"
 	invalidRegion            = "foo"
 	validServiceInstanceGUID = ""
 )
