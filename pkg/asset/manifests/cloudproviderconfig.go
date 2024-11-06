@@ -311,6 +311,7 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 			serviceName,
 			installConfig.Config.PowerVS.Region,
 			installConfig.Config.PowerVS.Zone,
+			installConfig.Config.PowerVS.ServiceEndpoints,
 		)
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")

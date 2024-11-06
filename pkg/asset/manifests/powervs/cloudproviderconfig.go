@@ -4,6 +4,10 @@ import (
 	"bytes"
 	"strings"
 	"text/template"
+
+	"github.com/sirupsen/logrus"
+
+	configv1 "github.com/openshift/api/config/v1"
 )
 
 // https://github.com/kubernetes/kubernetes/blob/368ee4bb8ee7a0c18431cd87ee49f0c890aa53e5/staging/src/k8s.io/legacy-cloud-providers/gce/gce.go#L188
@@ -35,10 +39,20 @@ type provider struct {
 	PowerVSCloudInstanceName string `gcfg:"powerVSCloudInstanceName"`
 	PowerVSRegion            string `gcfg:"powerVSRegion"`
 	PowerVSZone              string `gcfg:"powerVSZone"`
+	IamEndpointOverride      string `gcfg:"iamEndpointOverride"`
 }
 
 // CloudProviderConfig generates the cloud provider config for the IBM Power VS platform.
-func CloudProviderConfig(infraID string, accountID string, vpcName string, region string, resourceGroupName string, subnets []string, cloudInstGUID string, cloudInstName string, pvsRegion string, pvsZone string) (string, error) {
+func CloudProviderConfig(infraID string, accountID string, vpcName string, region string, resourceGroupName string, subnets []string, cloudInstGUID string, cloudInstName string, pvsRegion string, pvsZone string, endpointOverrides []configv1.PowerVSServiceEndpoint) (string, error) {
+	iamEndpointOverride := ""
+	for _, endpoint := range endpointOverrides {
+		switch endpoint.Name {
+		case string(configv1.IBMCloudServiceIAM):
+			iamEndpointOverride = endpoint.URL
+		default:
+			logrus.Debugf("Ignoring unrecognized endpoint override for cloud provider config: %s", endpoint.Name)
+		}
+	}
 	config := &config{
 		Global: global{
 			Version: "1.1.0",
@@ -60,6 +74,7 @@ func CloudProviderConfig(infraID string, accountID string, vpcName string, regio
 			PowerVSCloudInstanceName: cloudInstName,
 			PowerVSRegion:            pvsRegion,
 			PowerVSZone:              pvsZone,
+			IamEndpointOverride:      iamEndpointOverride,
 		},
 	}
 	buf := &bytes.Buffer{}
@@ -88,4 +103,5 @@ powerVSCloudInstanceID = {{.Provider.PowerVSCloudInstanceID}}
 powerVSCloudInstanceName = {{.Provider.PowerVSCloudInstanceName}}
 powerVSRegion = {{.Provider.PowerVSRegion}}
 powerVSZone = {{.Provider.PowerVSZone}}
+iamEndpointOverride = {{.Provider.IamEndpointOverride}}
 `
