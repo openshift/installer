@@ -16,7 +16,7 @@ curl_assisted_service() {
             ;;
         "PATCH")
             curl -s -S -X PATCH "${additional_options[@]}" "${baseURL}${endpoint}" \
-            -H "Authorization: ${AGENT_AUTH_TOKEN}" \
+            -H "Authorization: ${authz}" \
             -H "accept: application/json" \
             -H "Content-Type: application/json" \
             ;;
