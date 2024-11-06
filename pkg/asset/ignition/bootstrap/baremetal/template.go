@@ -119,9 +119,9 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 	templateData.ExternalMACAddress = config.ExternalMACAddress
 
 	// If the user has manually set disableVirtualMediaTLS to False in the Provisioning CR, then enable TLS in ironic.
-	// The default value of 'true' is temporary (for backporting to older releases), which will be changed to 'false' in the future.
-	templateData.DisableIronicVirtualMediaTLS = true
-	protocol := "http"
+	// The default value is 'false'.
+	templateData.DisableIronicVirtualMediaTLS = false
+	protocol := "https"
 
 	type provisioningCRTemplate struct {
 		Spec struct {
@@ -146,12 +146,10 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 	} else {
 		logrus.Errorf("No Provisioning CR data found while generating TLS certificate for ironic virtual media")
 	}
-	if provisioningCR.Spec.DisableVirtualMediaTLS != nil {
+	if provisioningCR.Spec.DisableVirtualMediaTLS != nil && *provisioningCR.Spec.DisableVirtualMediaTLS {
 		templateData.DisableIronicVirtualMediaTLS = *provisioningCR.Spec.DisableVirtualMediaTLS
-		if !*provisioningCR.Spec.DisableVirtualMediaTLS {
-			logrus.Debugf("TLS is enabled for ironic virtual media")
-			protocol = "https"
-		}
+		logrus.Debugf("TLS is disabled for ironic virtual media")
+		protocol = "http"
 	}
 	_, externalURLv6 := externalURLs(config.APIVIPs, protocol)
 	templateData.ExternalURLv6 = externalURLv6
