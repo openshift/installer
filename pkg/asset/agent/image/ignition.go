@@ -474,7 +474,7 @@ func getAddNodesEnv(clusterInfo joiner.ClusterInfo, authTokenExpiry string) stri
 	return fmt.Sprintf(`CLUSTER_ID=%s
 CLUSTER_NAME=%s
 CLUSTER_API_VIP_DNS_NAME=%s
-AGENT_AUTH_TOKEN_EXPIRY=%s
+AUTH_TOKEN_EXPIRY=%s
 `, clusterInfo.ClusterID, clusterInfo.ClusterName, clusterInfo.APIDNSName, authTokenExpiry)
 }
 
