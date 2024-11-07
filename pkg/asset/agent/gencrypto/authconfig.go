@@ -29,7 +29,7 @@ import (
 var (
 	authTokenSecretNamespace = "openshift-config" //nolint:gosec // no sensitive info
 	authTokenSecretName      = "agent-auth-token" //nolint:gosec // no sensitive info
-	authTokenSecretDataKey   = "agentAuthToken"
+	authTokenSecretDataKey   = "watcherAuthToken"
 	authTokenPublicDataKey   = "authTokenPublicKey"
 )
 
@@ -259,7 +259,7 @@ func (a *AuthConfig) createOrUpdateAuthTokenSecret(kubeconfigPath string) error 
 		}
 	} else {
 		// Update the token in asset store with the retrieved token from the cluster
-		a.AgentAuthToken = retrievedToken
+		a.WatcherAuthToken = retrievedToken
 		// get the token expiry time of the retrieved token from the cluster
 		a.AuthTokenExpiry = expiryTime.UTC().Format(time.RFC3339)
 
@@ -287,7 +287,7 @@ func (a *AuthConfig) createSecret(k8sclientset kubernetes.Interface) error {
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
-			authTokenSecretDataKey: []byte(a.AgentAuthToken),
+			authTokenSecretDataKey: []byte(a.WatcherAuthToken),
 			authTokenPublicDataKey: []byte(a.PublicKey),
 		},
 	}
@@ -302,7 +302,7 @@ func (a *AuthConfig) createSecret(k8sclientset kubernetes.Interface) error {
 }
 
 func (a *AuthConfig) refreshAuthTokenSecret(k8sclientset kubernetes.Interface, retrievedSecret *corev1.Secret) error {
-	retrievedSecret.Data[authTokenSecretDataKey] = []byte(a.AgentAuthToken)
+	retrievedSecret.Data[authTokenSecretDataKey] = []byte(a.WatcherAuthToken)
 	retrievedSecret.Data[authTokenPublicDataKey] = []byte(a.PublicKey)
 	// only for informational purposes
 	retrievedSecret.Annotations["updatedAt"] = time.Now().UTC().Format(time.RFC3339)
@@ -336,11 +336,11 @@ func GetAuthTokenFromCluster(ctx context.Context, kubeconfigPath string) (string
 }
 
 func extractAuthTokenFromSecret(secret *corev1.Secret) (string, error) {
-	existingAgentAuthToken, exists := secret.Data[authTokenSecretDataKey]
-	if !exists || len(existingAgentAuthToken) == 0 {
+	existingWatcherAuthToken, exists := secret.Data[authTokenSecretDataKey]
+	if !exists || len(existingWatcherAuthToken) == 0 {
 		return "", fmt.Errorf("auth token secret %s/%s does not contain the key %s or is empty", authTokenSecretNamespace, authTokenSecretName, authTokenSecretDataKey)
 	}
-	return string(existingAgentAuthToken), nil
+	return string(existingWatcherAuthToken), nil
 }
 
 func extractPublicKeyFromSecret(secret *corev1.Secret) (string, error) {
