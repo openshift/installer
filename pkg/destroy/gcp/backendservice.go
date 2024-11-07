@@ -17,6 +17,11 @@ const (
 )
 
 func (o *ClusterUninstaller) listBackendServices(ctx context.Context, typeName string) ([]cloudResource, error) {
+	resources := o.getPendingItems(typeName)
+	if len(resources) > 0 || o.destroyedResources.Has(typeName) {
+		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", typeName)
+		return resources, nil
+	}
 	return o.listBackendServicesWithFilter(ctx, typeName, "items(name),nextPageToken", o.clusterIDFilter(), nil)
 }
 
@@ -140,10 +145,14 @@ func (o *ClusterUninstaller) destroyBackendServices(ctx context.Context) error {
 	if items = o.getPendingItems(globalBackendServiceResource); len(items) > 0 {
 		return fmt.Errorf("%d global backend service pending", len(items))
 	}
+	o.Logger.Warnf("Adding Destroyed Resource %s", globalBackendServiceResource)
+	o.destroyedResources.Insert(globalBackendServiceResource)
 
 	if items = o.getPendingItems(regionBackendServiceResource); len(items) > 0 {
 		return fmt.Errorf("%d region backend service pending", len(items))
 	}
+	o.Logger.Warnf("Adding Destroyed Resource %s", regionBackendServiceResource)
+	o.destroyedResources.Insert(regionBackendServiceResource)
 
 	return nil
 }

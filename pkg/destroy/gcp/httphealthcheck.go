@@ -10,7 +10,16 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
+const (
+	httpHealthCheckResourceName = "httphealthcheck"
+)
+
 func (o *ClusterUninstaller) listHTTPHealthChecks(ctx context.Context) ([]cloudResource, error) {
+	resources := o.getPendingItems(httpHealthCheckResourceName)
+	if len(resources) > 0 || o.destroyedResources.Has(httpHealthCheckResourceName) {
+		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", httpHealthCheckResourceName)
+		return resources, nil
+	}
 	return o.listHTTPHealthChecksWithFilter(ctx, "items(name),nextPageToken", o.clusterIDFilter(), nil)
 }
 
@@ -34,7 +43,7 @@ func (o *ClusterUninstaller) listHTTPHealthChecksWithFilter(ctx context.Context,
 				result = append(result, cloudResource{
 					key:      item.Name,
 					name:     item.Name,
-					typeName: "httphealthcheck",
+					typeName: httpHealthCheckResourceName,
 					quota: []gcp.QuotaUsage{{
 						Metric: &gcp.Metric{
 							Service: gcp.ServiceComputeEngineAPI,
@@ -81,15 +90,17 @@ func (o *ClusterUninstaller) destroyHTTPHealthChecks(ctx context.Context) error 
 	if err != nil {
 		return err
 	}
-	items := o.insertPendingItems("httphealthcheck", found)
+	items := o.insertPendingItems(httpHealthCheckResourceName, found)
 	for _, item := range items {
 		err := o.deleteHTTPHealthCheck(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	if items = o.getPendingItems("httphealthcheck"); len(items) > 0 {
+	if items = o.getPendingItems(httpHealthCheckResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
+	o.Logger.Warnf("Adding Destroyed Resource %s", httpHealthCheckResourceName)
+	o.destroyedResources.Insert(httpHealthCheckResourceName)
 	return nil
 }

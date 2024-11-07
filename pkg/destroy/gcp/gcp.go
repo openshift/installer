@@ -19,6 +19,7 @@ import (
 	"google.golang.org/api/option"
 	"google.golang.org/api/storage/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
@@ -78,6 +79,8 @@ type ClusterUninstaller struct {
 	errorTracker
 	requestIDTracker
 	pendingItemTracker
+
+	destroyedResources sets.Set[string]
 }
 
 // New returns a GCP destroyer from ClusterMetadata.
@@ -153,6 +156,8 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create filestore service: %w", err)
 	}
+
+	o.destroyedResources = sets.Set[string]{}
 
 	err = wait.PollImmediateInfinite(
 		time.Second*10,

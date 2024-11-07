@@ -14,6 +14,11 @@ const (
 )
 
 func (o *ClusterUninstaller) listTargetTCPProxies(ctx context.Context, typeName string) ([]cloudResource, error) {
+	resources := o.getPendingItems(typeName)
+	if len(resources) > 0 || o.destroyedResources.Has(typeName) {
+		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", typeName)
+		return resources, nil
+	}
 	return o.listTargetTCPProxiesWithFilter(ctx, typeName, "items(name),nextPageToken", o.clusterIDFilter())
 }
 
@@ -89,6 +94,8 @@ func (o *ClusterUninstaller) destroyTargetTCPProxies(ctx context.Context) error 
 	if items = o.getPendingItems(globalTargetTCPProxyResource); len(items) > 0 {
 		return fmt.Errorf("%d global target tcp proxy pending", len(items))
 	}
+	o.Logger.Warnf("Adding Destroyed Resource %s", globalTargetTCPProxyResource)
+	o.destroyedResources.Insert(globalTargetTCPProxyResource)
 
 	return nil
 }

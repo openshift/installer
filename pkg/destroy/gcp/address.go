@@ -16,6 +16,11 @@ const (
 )
 
 func (o *ClusterUninstaller) listAddresses(ctx context.Context, typeName string) ([]cloudResource, error) {
+	resources := o.getPendingItems(typeName)
+	if len(resources) > 0 || o.destroyedResources.Has(typeName) {
+		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", typeName)
+		return resources, nil
+	}
 	return o.listAddressesWithFilter(ctx, typeName, "items(name,region,addressType),nextPageToken", o.clusterIDFilter())
 }
 
@@ -122,10 +127,14 @@ func (o *ClusterUninstaller) destroyAddresses(ctx context.Context) error {
 	if items = o.getPendingItems(globalAddressResource); len(items) > 0 {
 		return fmt.Errorf("%d global addresses pending", len(items))
 	}
+	o.Logger.Warnf("Adding Destroyed Resource %s", globalAddressResource)
+	o.destroyedResources.Insert(globalAddressResource)
 
 	if items = o.getPendingItems(regionalAddressResource); len(items) > 0 {
 		return fmt.Errorf("%d region addresses pending", len(items))
 	}
+	o.Logger.Warnf("Adding Destroyed Resource %s", regionalAddressResource)
+	o.destroyedResources.Insert(regionalAddressResource)
 
 	return nil
 }

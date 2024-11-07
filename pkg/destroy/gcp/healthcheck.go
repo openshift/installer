@@ -11,7 +11,17 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
+const (
+	globalHealthCheckResource   = "healthcheck"
+	regionalHealthCheckResource = "regionHealthCheck"
+)
+
 func (o *ClusterUninstaller) listHealthChecks(ctx context.Context, typeName string, listFunc healthCheckListFunc) ([]cloudResource, error) {
+	resources := o.getPendingItems(typeName)
+	if len(resources) > 0 || o.destroyedResources.Has(typeName) {
+		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", typeName)
+		return resources, nil
+	}
 	return o.listHealthChecksWithFilter(ctx, typeName, "items(name),nextPageToken", o.clusterIDFilter(), listFunc)
 }
 
@@ -73,12 +83,12 @@ func (o *ClusterUninstaller) deleteHealthCheck(ctx context.Context, item cloudRe
 func (o *ClusterUninstaller) destroyHealthChecks(ctx context.Context) error {
 	for _, hcd := range []healthCheckDestroyer{
 		{
-			itemTypeName: "healthcheck",
+			itemTypeName: globalHealthCheckResource,
 			destroyFunc:  o.healthCheckDelete,
 			listFunc:     o.healthCheckList,
 		},
 		{
-			itemTypeName: "regionHealthCheck",
+			itemTypeName: regionalHealthCheckResource,
 			destroyFunc:  o.regionHealthCheckDelete,
 			listFunc:     o.regionHealthCheckList,
 		},
@@ -97,6 +107,8 @@ func (o *ClusterUninstaller) destroyHealthChecks(ctx context.Context) error {
 		if items = o.getPendingItems(hcd.itemTypeName); len(items) > 0 {
 			return errors.Errorf("%d items pending", len(items))
 		}
+		o.Logger.Warnf("Adding Destroyed Resource %s", hcd.itemTypeName)
+		o.destroyedResources.Insert(hcd.itemTypeName)
 	}
 	return nil
 }
