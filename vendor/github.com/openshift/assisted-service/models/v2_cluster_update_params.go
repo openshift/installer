@@ -24,10 +24,6 @@ type V2ClusterUpdateParams struct {
 	// A comma-separated list of NTP sources (name or IP) going to be added to all the hosts.
 	AdditionalNtpSource *string `json:"additional_ntp_source,omitempty"`
 
-	// (DEPRECATED) The virtual IP used to reach the OpenShift cluster's API.
-	// Pattern: ^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3})|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,}))?$
-	APIVip *string `json:"api_vip,omitempty"`
-
 	// The domain name used to reach the OpenShift cluster API.
 	APIVipDNSName *string `json:"api_vip_dns_name,omitempty"`
 
@@ -68,10 +64,6 @@ type V2ClusterUpdateParams struct {
 
 	// Explicit ignition endpoint overrides the default ignition endpoint.
 	IgnitionEndpoint *IgnitionEndpoint `json:"ignition_endpoint,omitempty" gorm:"embedded;embeddedPrefix:ignition_endpoint_"`
-
-	// (DEPRECATED) The virtual IP used for cluster ingress traffic.
-	// Pattern: ^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3})|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,}))?$
-	IngressVip *string `json:"ingress_vip,omitempty"`
 
 	// The virtual IPs used for cluster ingress traffic. Enter one IP address for single-stack clusters, or up to two for dual-stack clusters (at most one IP address per IP stack used). The order of stacks should be the same as order of subnets in Cluster Networks, Service Networks, and Machine Networks.
 	IngressVips []*IngressVip `json:"ingress_vips"`
@@ -131,10 +123,6 @@ type V2ClusterUpdateParams struct {
 func (m *V2ClusterUpdateParams) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateAPIVip(formats); err != nil {
-		res = append(res, err)
-	}
-
 	if err := m.validateAPIVips(formats); err != nil {
 		res = append(res, err)
 	}
@@ -160,10 +148,6 @@ func (m *V2ClusterUpdateParams) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateIgnitionEndpoint(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateIngressVip(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -206,18 +190,6 @@ func (m *V2ClusterUpdateParams) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
-	return nil
-}
-
-func (m *V2ClusterUpdateParams) validateAPIVip(formats strfmt.Registry) error {
-	if swag.IsZero(m.APIVip) { // not required
-		return nil
-	}
-
-	if err := validate.Pattern("api_vip", "body", *m.APIVip, `^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3})|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,}))?$`); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -382,18 +354,6 @@ func (m *V2ClusterUpdateParams) validateIgnitionEndpoint(formats strfmt.Registry
 			}
 			return err
 		}
-	}
-
-	return nil
-}
-
-func (m *V2ClusterUpdateParams) validateIngressVip(formats strfmt.Registry) error {
-	if swag.IsZero(m.IngressVip) { // not required
-		return nil
-	}
-
-	if err := validate.Pattern("ingress_vip", "body", *m.IngressVip, `^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3})|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,}))?$`); err != nil {
-		return err
 	}
 
 	return nil

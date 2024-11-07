@@ -69,6 +69,12 @@ type GetSupportedFeaturesParams struct {
 	*/
 	CPUArchitecture *string
 
+	/* ExternalPlatformName.
+
+	   External platform name when platform type is set to external. The value of this parameter will be ignored if platform_type is not external.
+	*/
+	ExternalPlatformName *string
+
 	/* OpenshiftVersion.
 
 	   Version of the OpenShift cluster.
@@ -156,6 +162,17 @@ func (o *GetSupportedFeaturesParams) SetCPUArchitecture(cPUArchitecture *string)
 	o.CPUArchitecture = cPUArchitecture
 }
 
+// WithExternalPlatformName adds the externalPlatformName to the get supported features params
+func (o *GetSupportedFeaturesParams) WithExternalPlatformName(externalPlatformName *string) *GetSupportedFeaturesParams {
+	o.SetExternalPlatformName(externalPlatformName)
+	return o
+}
+
+// SetExternalPlatformName adds the externalPlatformName to the get supported features params
+func (o *GetSupportedFeaturesParams) SetExternalPlatformName(externalPlatformName *string) {
+	o.ExternalPlatformName = externalPlatformName
+}
+
 // WithOpenshiftVersion adds the openshiftVersion to the get supported features params
 func (o *GetSupportedFeaturesParams) WithOpenshiftVersion(openshiftVersion string) *GetSupportedFeaturesParams {
 	o.SetOpenshiftVersion(openshiftVersion)
@@ -198,6 +215,23 @@ func (o *GetSupportedFeaturesParams) WriteToRequest(r runtime.ClientRequest, reg
 		if qCPUArchitecture != "" {
 
 			if err := r.SetQueryParam("cpu_architecture", qCPUArchitecture); err != nil {
+				return err
+			}
+		}
+	}
+
+	if o.ExternalPlatformName != nil {
+
+		// query param external_platform_name
+		var qrExternalPlatformName string
+
+		if o.ExternalPlatformName != nil {
+			qrExternalPlatformName = *o.ExternalPlatformName
+		}
+		qExternalPlatformName := qrExternalPlatformName
+		if qExternalPlatformName != "" {
+
+			if err := r.SetQueryParam("external_platform_name", qExternalPlatformName); err != nil {
 				return err
 			}
 		}

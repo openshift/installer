@@ -17,6 +17,9 @@ import (
 // swagger:model boot
 type Boot struct {
 
+	// command line
+	CommandLine string `json:"command_line,omitempty"`
+
 	// current boot mode
 	CurrentBootMode string `json:"current_boot_mode,omitempty"`
 

@@ -41,6 +41,9 @@ type InstallCmdRequest struct {
 	// List of disks to format
 	DisksToFormat []string `json:"disks_to_format"`
 
+	// If true, assisted service will attempt to skip MCO reboot
+	EnableSkipMcoReboot bool `json:"enable_skip_mco_reboot,omitempty"`
+
 	// Guaranteed availability of the installed cluster. 'Full' installs a Highly-Available cluster
 	// over multiple master nodes whereas 'None' installs a full cluster over one node.
 	//

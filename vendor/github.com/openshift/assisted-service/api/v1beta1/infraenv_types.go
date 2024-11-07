@@ -172,6 +172,8 @@ type InfraEnvDebugInfo struct {
 	// EventsURL specifies an HTTP/S URL that contains InfraEnv events
 	// +optional
 	EventsURL string `json:"eventsURL"`
+	// StaticNetworkDownloadURL specifies an HTTP/S URL that contains the static network config
+	StaticNetworkDownloadURL string `json:"staticNetworkDownloadURL,omitempty"`
 }
 
 type BootArtifacts struct {
