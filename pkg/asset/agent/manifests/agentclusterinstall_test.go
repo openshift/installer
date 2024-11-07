@@ -117,7 +117,8 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	goodExternalOCIPlatformACI.Spec.Networking.UserManagedNetworking = &val
 	goodExternalOCIPlatformACI.Spec.PlatformType = hiveext.ExternalPlatformType
 	goodExternalOCIPlatformACI.Spec.ExternalPlatformSpec = &hiveext.ExternalPlatformSpec{
-		PlatformName: externaltype.ExternalPlatformNameOci,
+		PlatformName:           externaltype.ExternalPlatformNameOci,
+		CloudControllerManager: externaltype.CloudControllerManagerTypeExternal,
 	}
 	goodExternalOCIPlatformACI.SetAnnotations(map[string]string{
 		installConfigOverrides: `{"platform":{"external":{"platformName":"oci","cloudControllerManager":"External"}}}`,
