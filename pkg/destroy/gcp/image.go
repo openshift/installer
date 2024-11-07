@@ -10,7 +10,16 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
+const (
+	imageResourceName = "image"
+)
+
 func (o *ClusterUninstaller) listImages(ctx context.Context) ([]cloudResource, error) {
+	resources := o.getPendingItems(imageResourceName)
+	if len(resources) > 0 || o.destroyedResources.Has(imageResourceName) {
+		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", imageResourceName)
+		return resources, nil
+	}
 	return o.listImagesWithFilter(ctx, "items(name),nextPageToken", o.clusterIDFilter(), nil)
 }
 
@@ -34,7 +43,7 @@ func (o *ClusterUninstaller) listImagesWithFilter(ctx context.Context, fields st
 				result = append(result, cloudResource{
 					key:      item.Name,
 					name:     item.Name,
-					typeName: "image",
+					typeName: imageResourceName,
 					quota: []gcp.QuotaUsage{{
 						Metric: &gcp.Metric{
 							Service: gcp.ServiceComputeEngineAPI,
@@ -81,15 +90,17 @@ func (o *ClusterUninstaller) destroyImages(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	items := o.insertPendingItems("image", found)
+	items := o.insertPendingItems(imageResourceName, found)
 	for _, item := range items {
 		err := o.deleteImage(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	if items = o.getPendingItems("image"); len(items) > 0 {
+	if items = o.getPendingItems(imageResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
+	o.Logger.Warnf("Adding Destroyed Resource %s", imageResourceName)
+	o.destroyedResources.Insert(imageResourceName)
 	return nil
 }

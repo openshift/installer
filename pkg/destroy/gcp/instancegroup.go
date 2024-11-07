@@ -11,7 +11,16 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
+const (
+	instanceGroupResourceName = "instancegroup"
+)
+
 func (o *ClusterUninstaller) listInstanceGroups(ctx context.Context) ([]cloudResource, error) {
+	resources := o.getPendingItems(instanceGroupResourceName)
+	if len(resources) > 0 || o.destroyedResources.Has(instanceGroupResourceName) {
+		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", instanceGroupResourceName)
+		return resources, nil
+	}
 	return o.listInstanceGroupsWithFilter(ctx, "items/*/instanceGroups(name,selfLink,zone),nextPageToken", o.clusterIDFilter(), nil)
 }
 
@@ -37,7 +46,7 @@ func (o *ClusterUninstaller) listInstanceGroupsWithFilter(ctx context.Context, f
 					result = append(result, cloudResource{
 						key:      fmt.Sprintf("%s/%s", zoneName, item.Name),
 						name:     item.Name,
-						typeName: "instancegroup",
+						typeName: instanceGroupResourceName,
 						zone:     zoneName,
 						url:      item.SelfLink,
 						quota: []gcp.QuotaUsage{{
@@ -72,7 +81,7 @@ func (o *ClusterUninstaller) deleteInstanceGroup(ctx context.Context, item cloud
 		return errors.Wrapf(err, "failed to delete instance group %s in zone %s", item.name, item.zone)
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID("instancegroup", item.zone, item.name)
+		o.resetRequestID(instanceGroupResourceName, item.zone, item.name)
 		return errors.Errorf("failed to delete instance group %s in zone %s with error: %s", item.name, item.zone, operationErrorMessage(op))
 	}
 	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
@@ -90,15 +99,17 @@ func (o *ClusterUninstaller) destroyInstanceGroups(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	items := o.insertPendingItems("instancegroup", found)
+	items := o.insertPendingItems(instanceGroupResourceName, found)
 	for _, item := range items {
 		err := o.deleteInstanceGroup(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	if items = o.getPendingItems("instancegroup"); len(items) > 0 {
+	if items = o.getPendingItems(instanceGroupResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
+	o.Logger.Warnf("Adding Destroyed Resource %s", instanceGroupResourceName)
+	o.destroyedResources.Insert(instanceGroupResourceName)
 	return nil
 }

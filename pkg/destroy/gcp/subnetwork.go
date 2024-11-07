@@ -10,7 +10,16 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
+const (
+	subnetResourceName = "subnetwork"
+)
+
 func (o *ClusterUninstaller) listSubnetworks(ctx context.Context) ([]cloudResource, error) {
+	resources := o.getPendingItems(subnetResourceName)
+	if len(resources) > 0 || o.destroyedResources.Has(subnetResourceName) {
+		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", subnetResourceName)
+		return resources, nil
+	}
 	return o.listSubnetworksWithFilter(ctx, "items(name,network),nextPageToken", o.clusterIDFilter(), nil)
 }
 
@@ -34,7 +43,7 @@ func (o *ClusterUninstaller) listSubnetworksWithFilter(ctx context.Context, fiel
 				result = append(result, cloudResource{
 					key:      item.Name,
 					name:     item.Name,
-					typeName: "subnetwork",
+					typeName: subnetResourceName,
 					quota: []gcp.QuotaUsage{{
 						Metric: &gcp.Metric{
 							Service: gcp.ServiceComputeEngineAPI,
@@ -90,15 +99,17 @@ func (o *ClusterUninstaller) destroySubnetworks(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	items := o.insertPendingItems("subnetwork", found)
+	items := o.insertPendingItems(subnetResourceName, found)
 	for _, item := range items {
 		err := o.deleteSubnetwork(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	if items = o.getPendingItems("subnetwork"); len(items) > 0 {
+	if items = o.getPendingItems(subnetResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
+	o.Logger.Warnf("Adding Destroyed Resource %s", subnetResourceName)
+	o.destroyedResources.Insert(subnetResourceName)
 	return nil
 }

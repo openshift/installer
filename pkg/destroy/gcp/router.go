@@ -10,7 +10,16 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
+const (
+	routerResourceName = "router"
+)
+
 func (o *ClusterUninstaller) listRouters(ctx context.Context) ([]cloudResource, error) {
+	resources := o.getPendingItems(routerResourceName)
+	if len(resources) > 0 || o.destroyedResources.Has(routerResourceName) {
+		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", routerResourceName)
+		return resources, nil
+	}
 	return o.listRoutersWithFilter(ctx, "items(name),nextPageToken", o.clusterIDFilter(), nil)
 }
 
@@ -34,7 +43,7 @@ func (o *ClusterUninstaller) listRoutersWithFilter(ctx context.Context, fields s
 				result = append(result, cloudResource{
 					key:      item.Name,
 					name:     item.Name,
-					typeName: "router",
+					typeName: routerResourceName,
 					quota: []gcp.QuotaUsage{{
 						Metric: &gcp.Metric{
 							Service: gcp.ServiceComputeEngineAPI,
@@ -81,15 +90,17 @@ func (o *ClusterUninstaller) destroyRouters(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	items := o.insertPendingItems("router", found)
+	items := o.insertPendingItems(routerResourceName, found)
 	for _, item := range items {
 		err := o.deleteRouter(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	if items = o.getPendingItems("router"); len(items) > 0 {
+	if items = o.getPendingItems(routerResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
+	o.Logger.Warnf("Adding Destroyed Resource %s", subnetResourceName)
+	o.destroyedResources.Insert(subnetResourceName)
 	return nil
 }

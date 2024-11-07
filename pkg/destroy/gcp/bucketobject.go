@@ -8,6 +8,12 @@ import (
 )
 
 func (o *ClusterUninstaller) listBucketObjects(ctx context.Context, bucket cloudResource) ([]cloudResource, error) {
+	resources := o.getPendingItems(bucketObjectResourceName)
+	if len(resources) > 0 || o.destroyedResources.Has(bucketObjectResourceName) {
+		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", bucketObjectResourceName)
+		return resources, nil
+	}
+
 	o.Logger.Debugf("Listing objects for storage bucket %s", bucket.name)
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
@@ -19,7 +25,7 @@ func (o *ClusterUninstaller) listBucketObjects(ctx context.Context, bucket cloud
 			result = append(result, cloudResource{
 				key:      object.Name,
 				name:     object.Name,
-				typeName: "bucketobject",
+				typeName: bucketObjectResourceName,
 			})
 		}
 		return nil
@@ -40,5 +46,8 @@ func (o *ClusterUninstaller) deleteBucketObject(ctx context.Context, bucket clou
 	}
 	o.deletePendingItems(item.typeName, []cloudResource{item})
 	o.Logger.Infof("Deleted bucket object %s", item.name)
+
+	o.Logger.Warnf("Adding Destroyed Resource %s", bucketObjectResourceName)
+	o.destroyedResources.Insert(bucketObjectResourceName)
 	return nil
 }

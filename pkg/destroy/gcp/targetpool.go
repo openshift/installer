@@ -10,7 +10,16 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
+const (
+	targetPoolResourceName = "targetpool"
+)
+
 func (o *ClusterUninstaller) listTargetPools(ctx context.Context) ([]cloudResource, error) {
+	resources := o.getPendingItems(targetPoolResourceName)
+	if len(resources) > 0 || o.destroyedResources.Has(targetPoolResourceName) {
+		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", targetPoolResourceName)
+		return resources, nil
+	}
 	return o.listTargetPoolsWithFilter(ctx, "items(name),nextPageToken", o.clusterIDFilter(), nil)
 }
 
@@ -34,7 +43,7 @@ func (o *ClusterUninstaller) listTargetPoolsWithFilter(ctx context.Context, fiel
 				result = append(result, cloudResource{
 					key:      item.Name,
 					name:     item.Name,
-					typeName: "targetpool",
+					typeName: targetPoolResourceName,
 					quota: []gcp.QuotaUsage{{
 						Metric: &gcp.Metric{
 							Service: gcp.ServiceComputeEngineAPI,
@@ -81,15 +90,17 @@ func (o *ClusterUninstaller) destroyTargetPools(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	items := o.insertPendingItems("targetpool", found)
+	items := o.insertPendingItems(targetPoolResourceName, found)
 	for _, item := range items {
 		err := o.deleteTargetPool(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	if items = o.getPendingItems("targetpool"); len(items) > 0 {
+	if items = o.getPendingItems(targetPoolResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
+	o.Logger.Warnf("Adding Destroyed Resource %s", targetPoolResourceName)
+	o.destroyedResources.Insert(targetPoolResourceName)
 	return nil
 }

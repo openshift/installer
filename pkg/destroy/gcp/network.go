@@ -8,7 +8,16 @@ import (
 	"google.golang.org/api/googleapi"
 )
 
+const (
+	networkResourceName = "network"
+)
+
 func (o *ClusterUninstaller) listNetworks(ctx context.Context) ([]cloudResource, error) {
+	resources := o.getPendingItems(networkResourceName)
+	if len(resources) > 0 || o.destroyedResources.Has(networkResourceName) {
+		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", networkResourceName)
+		return resources, nil
+	}
 	return o.listNetworksWithFilter(ctx, "items(name,selfLink),nextPageToken", o.clusterIDFilter(), nil)
 }
 
@@ -32,7 +41,7 @@ func (o *ClusterUninstaller) listNetworksWithFilter(ctx context.Context, fields 
 				result = append(result, cloudResource{
 					key:      item.Name,
 					name:     item.Name,
-					typeName: "network",
+					typeName: networkResourceName,
 					url:      item.SelfLink,
 				})
 			}
@@ -73,7 +82,7 @@ func (o *ClusterUninstaller) destroyNetworks(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	items := o.insertPendingItems("network", found)
+	items := o.insertPendingItems(networkResourceName, found)
 	for _, item := range items {
 		foundRoutes, err := o.listNetworkRoutes(ctx, item.url)
 		if err != nil {
@@ -92,8 +101,10 @@ func (o *ClusterUninstaller) destroyNetworks(ctx context.Context) error {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	if items = o.getPendingItems("network"); len(items) > 0 {
+	if items = o.getPendingItems(networkResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
+	o.Logger.Warnf("Adding Destroyed Resource %s", networkResourceName)
+	o.destroyedResources.Insert(networkResourceName)
 	return nil
 }

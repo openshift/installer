@@ -17,6 +17,7 @@ const (
 	estimatedPVNameLength = 40
 	// Removing an extra value (-1) for the "-" separated between the storage name and the pv name
 	storageNameLength = maxGCEPDNameLength - estimatedPVNameLength - 1
+	diskResourceName  = "disk"
 )
 
 // formatClusterIDForStorage will format the Cluster ID as it will be used for destroying
@@ -46,6 +47,11 @@ func (o *ClusterUninstaller) storageLabelOrClusterIDFilter() string {
 }
 
 func (o *ClusterUninstaller) listDisks(ctx context.Context) ([]cloudResource, error) {
+	resources := o.getPendingItems(diskResourceName)
+	if len(resources) > 0 || o.destroyedResources.Has(diskResourceName) {
+		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", diskResourceName)
+		return resources, nil
+	}
 	return o.listDisksWithFilter(ctx, "items/*/disks(name,zone,type,sizeGb),nextPageToken", o.storageLabelOrClusterIDFilter(), nil)
 }
 
@@ -78,7 +84,7 @@ func (o *ClusterUninstaller) listDisksWithFilter(ctx context.Context, fields str
 						result = append(result, cloudResource{
 							key:      fmt.Sprintf("%s/%s", zone, item.Name),
 							name:     item.Name,
-							typeName: "disk",
+							typeName: diskResourceName,
 							zone:     zone,
 							quota: []gcp.QuotaUsage{{
 								Metric: &gcp.Metric{
@@ -131,15 +137,17 @@ func (o *ClusterUninstaller) destroyDisks(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	items := o.insertPendingItems("disk", found)
+	items := o.insertPendingItems(diskResourceName, found)
 	for _, item := range items {
 		err := o.deleteDisk(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	if items = o.getPendingItems("disk"); len(items) > 0 {
+	if items = o.getPendingItems(diskResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
+	o.Logger.Warnf("Adding Destroyed Resource %s", diskResourceName)
+	o.destroyedResources.Insert(diskResourceName)
 	return nil
 }

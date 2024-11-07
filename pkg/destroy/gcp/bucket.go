@@ -14,7 +14,17 @@ var (
 	multiDashes = regexp.MustCompile(`-{2,}`)
 )
 
+const (
+	bucketResourceName       = "bucket"
+	bucketObjectResourceName = "bucketobject"
+)
+
 func (o *ClusterUninstaller) listBuckets(ctx context.Context) ([]cloudResource, error) {
+	resources := o.getPendingItems(bucketResourceName)
+	if len(resources) > 0 || o.destroyedResources.Has(bucketResourceName) {
+		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", bucketResourceName)
+		return resources, nil
+	}
 	return o.listBucketsWithFilter(ctx, "items(name),nextPageToken", o.ClusterID+"-", nil)
 }
 
@@ -39,7 +49,7 @@ func (o *ClusterUninstaller) listBucketsWithFilter(ctx context.Context, fields s
 				result = append(result, cloudResource{
 					key:      item.Name,
 					name:     item.Name,
-					typeName: "bucket",
+					typeName: bucketResourceName,
 				})
 			}
 		}
@@ -71,13 +81,13 @@ func (o *ClusterUninstaller) destroyBuckets(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	items := o.insertPendingItems("bucket", found)
+	items := o.insertPendingItems(bucketResourceName, found)
 	for _, item := range items {
 		foundObjects, err := o.listBucketObjects(ctx, item)
 		if err != nil {
 			return err
 		}
-		objects := o.insertPendingItems("bucketobject", foundObjects)
+		objects := o.insertPendingItems(bucketObjectResourceName, foundObjects)
 		for _, object := range objects {
 			err = o.deleteBucketObject(ctx, item, object)
 			if err != nil {
@@ -89,8 +99,10 @@ func (o *ClusterUninstaller) destroyBuckets(ctx context.Context) error {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	if items = o.getPendingItems("bucket"); len(items) > 0 {
+	if items = o.getPendingItems(bucketResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
+	o.Logger.Warnf("Adding Destroyed Resource %s", bucketResourceName)
+	o.destroyedResources.Insert(bucketResourceName)
 	return nil
 }
