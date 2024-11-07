@@ -234,7 +234,7 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 				rendezvousIP = agentConfig.Config.RendezvousIP
 			}
 
-			agentClusterInstall.Spec.Proxy = (*hiveext.Proxy)(getProxy(installConfig.Config.Proxy, rendezvousIP))
+			agentClusterInstall.Spec.Proxy = (*hiveext.Proxy)(getProxy(installConfig.Config.Proxy, &installConfig.Config.Networking.MachineNetwork, rendezvousIP))
 		}
 
 		if installConfig.Config.Platform.BareMetal != nil {

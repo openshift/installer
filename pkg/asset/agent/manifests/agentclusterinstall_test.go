@@ -2,6 +2,7 @@ package manifests
 
 import (
 	"context"
+	"net"
 	"os"
 	"testing"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/mock"
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	externaltype "github.com/openshift/installer/pkg/types/external"
 )
@@ -38,11 +40,18 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		installConfigOverrides: `{"fips":true}`,
 	})
 
+	_, machineNetCidr, _ := net.ParseCIDR("192.168.122.0/16") //nolint:errcheck
+	machineNetwork := []types.MachineNetworkEntry{
+		{
+			CIDR: ipnet.IPNet{IPNet: *machineNetCidr},
+		},
+	}
+
 	installConfigWithProxy := getValidOptionalInstallConfig()
-	installConfigWithProxy.Config.Proxy = (*types.Proxy)(getProxy(getProxyValidOptionalInstallConfig().Config.Proxy, ""))
+	installConfigWithProxy.Config.Proxy = (*types.Proxy)(getProxy(getProxyValidOptionalInstallConfig().Config.Proxy, &machineNetwork, "192.168.122.2"))
 
 	goodProxyACI := getGoodACI()
-	goodProxyACI.Spec.Proxy = (*hiveext.Proxy)(getProxy(getProxyValidOptionalInstallConfig().Config.Proxy, "192.168.122.2"))
+	goodProxyACI.Spec.Proxy = (*hiveext.Proxy)(getProxy(getProxyValidOptionalInstallConfig().Config.Proxy, &machineNetwork, "192.168.122.2"))
 
 	goodACIDualStackVIPs := getGoodACIDualStack()
 	goodACIDualStackVIPs.Spec.APIVIPs = []string{"192.168.122.10", "2001:db8:1111:2222:ffff:ffff:ffff:cafe"}

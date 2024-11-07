@@ -2,9 +2,11 @@ package manifests
 
 import (
 	"fmt"
+	"net"
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/version"
 )
@@ -21,14 +23,31 @@ func getPullSecretName(clusterName string) string {
 	return clusterName + "-pull-secret"
 }
 
-func getProxy(proxy *types.Proxy, rendezvousIP string) *aiv1beta1.Proxy {
-	// if proxy set add the rendezvousIP to noproxy
+func getProxy(proxy *types.Proxy, machineNetwork *[]types.MachineNetworkEntry, rendezvousIP string) *aiv1beta1.Proxy {
 	noProxy := proxy.NoProxy
 	if (proxy.HTTPProxy != "" || proxy.HTTPSProxy != "") && rendezvousIP != "" {
-		if noProxy == "" {
-			noProxy = rendezvousIP
-		} else {
-			noProxy = fmt.Sprintf("%s,%s", noProxy, rendezvousIP)
+		// if proxy set, add the machineNetwork corresponding to rendezvousIP to noproxy
+		cidr := ""
+		if machineNetwork != nil {
+			for _, mn := range *machineNetwork {
+				ipNet, err := ipnet.ParseCIDR(mn.CIDR.String())
+				if err != nil {
+					continue
+				}
+				ip := net.ParseIP(rendezvousIP)
+				if ipNet.Contains(ip) {
+					cidr = mn.CIDR.String()
+					break
+				}
+			}
+		}
+
+		if cidr != "" {
+			if noProxy == "" {
+				noProxy = cidr
+			} else {
+				noProxy = fmt.Sprintf("%s,%s", noProxy, cidr)
+			}
 		}
 	}
 	return &aiv1beta1.Proxy{

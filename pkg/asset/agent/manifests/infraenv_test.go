@@ -3,6 +3,7 @@ package manifests
 import (
 	"context"
 	"errors"
+	"net"
 	"os"
 	"strings"
 	"testing"
@@ -20,10 +21,18 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/mock"
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 )
 
 func TestInfraEnv_Generate(t *testing.T) {
+
+	_, machineNetCidr, _ := net.ParseCIDR("10.10.11.0/24") //nolint:errcheck
+	machineNetwork := []types.MachineNetworkEntry{
+		{
+			CIDR: ipnet.IPNet{IPNet: *machineNetCidr},
+		},
+	}
 
 	cases := []struct {
 		name           string
@@ -79,7 +88,7 @@ func TestInfraEnv_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				&joiner.ClusterInfo{},
 				getProxyValidOptionalInstallConfig(),
-				getValidAgentConfig(),
+				getValidAgentConfigProxy(),
 			},
 			expectedConfig: &aiv1beta1.InfraEnv{
 				TypeMeta: metav1.TypeMeta{
@@ -91,7 +100,7 @@ func TestInfraEnv_Generate(t *testing.T) {
 					Namespace: getProxyValidOptionalInstallConfig().ClusterNamespace(),
 				},
 				Spec: aiv1beta1.InfraEnvSpec{
-					Proxy:            getProxy(getProxyValidOptionalInstallConfig().Config.Proxy, "192.168.122.2"),
+					Proxy:            getProxy(getProxyValidOptionalInstallConfig().Config.Proxy, &machineNetwork, "10.10.11.1"),
 					SSHAuthorizedKey: strings.Trim(testSSHKey, "|\n\t"),
 					PullSecretRef: &corev1.LocalObjectReference{
 						Name: getPullSecretName(getProxyValidOptionalInstallConfig().ClusterName()),
@@ -124,7 +133,7 @@ func TestInfraEnv_Generate(t *testing.T) {
 					Namespace: getProxyValidOptionalInstallConfig().ClusterNamespace(),
 				},
 				Spec: aiv1beta1.InfraEnvSpec{
-					Proxy:            getProxy(getProxyValidOptionalInstallConfig().Config.Proxy, "192.168.122.2"),
+					Proxy:            getProxy(getProxyValidOptionalInstallConfig().Config.Proxy, &machineNetwork, "192.168.122.2"),
 					SSHAuthorizedKey: strings.Trim(testSSHKey, "|\n\t"),
 					PullSecretRef: &corev1.LocalObjectReference{
 						Name: getPullSecretName(getProxyValidOptionalInstallConfig().ClusterName()),
