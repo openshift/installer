@@ -189,11 +189,11 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 		}
 
 		credsEncoded := base64.StdEncoding.EncodeToString(marshalled)
-		credsINIEncoded := base64.StdEncoding.EncodeToString(cloudProviderConf)
+		cloudProviderConfEncoded := base64.StdEncoding.EncodeToString(cloudProviderConf)
 		cloudCreds = cloudCredsSecretData{
 			OpenStack: &OpenStackCredsSecretData{
-				Base64encodeCloudCreds:    credsEncoded,
-				Base64encodeCloudCredsINI: credsINIEncoded,
+				Base64encodeCloudsYAML: credsEncoded,
+				Base64encodeCloudsConf: cloudProviderConfEncoded,
 			},
 		}
 	case vspheretypes.Name:
