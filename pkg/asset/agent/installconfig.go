@@ -215,9 +215,9 @@ func (a *OptionalInstallConfig) validateControlPlaneConfiguration(installConfig 
 	var fieldPath *field.Path
 
 	if installConfig.ControlPlane != nil {
-		if *installConfig.ControlPlane.Replicas != 1 && *installConfig.ControlPlane.Replicas != 3 {
+		if *installConfig.ControlPlane.Replicas < 1 || *installConfig.ControlPlane.Replicas > 5 || *installConfig.ControlPlane.Replicas == 2 {
 			fieldPath = field.NewPath("ControlPlane", "Replicas")
-			allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.ControlPlane.Replicas, fmt.Sprintf("ControlPlane.Replicas can only be set to 3 or 1. Found %v", *installConfig.ControlPlane.Replicas)))
+			allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.ControlPlane.Replicas, fmt.Sprintf("ControlPlane.Replicas can only be set to 5, 4, 3, or 1. Found %v", *installConfig.ControlPlane.Replicas)))
 		}
 	}
 	return allErrs
