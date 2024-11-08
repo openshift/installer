@@ -27,6 +27,7 @@ func (e Error) Unwrap() error { return e.err }
 
 // CloudProviderConfigSecret generates the cloud provider config for the OpenStack
 // platform, that will be stored in the system secret.
+// TODO: I think this is crud for the legacy cloud-provider and is no longer needed. Burn it with fire?
 func CloudProviderConfigSecret(cloud *clientconfig.Cloud) ([]byte, error) {
 	domainID := cloud.AuthInfo.DomainID
 	if domainID == "" {
