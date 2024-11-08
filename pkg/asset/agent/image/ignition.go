@@ -31,6 +31,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	workflowreport "github.com/openshift/installer/pkg/asset/agent/workflow/report"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/password"
@@ -113,7 +114,7 @@ func (a *Ignition) Dependencies() []asset.Asset {
 }
 
 // Generate generates the agent installer ignition.
-func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error {
+func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	agentManifests := &manifests.AgentManifests{}
 	agentConfigAsset := &agentconfig.AgentConfig{}
@@ -122,6 +123,10 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 	authConfig := &gencrypto.AuthConfig{}
 	infraEnvAsset := &common.InfraEnvID{}
 	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests, authConfig, agentWorkflow, infraEnvAsset)
+
+	if err := workflowreport.GetReport(ctx).Stage(workflow.StageIgnition); err != nil {
+		return err
+	}
 
 	pwd := &password.KubeadminPassword{}
 	dependencies.Get(pwd)

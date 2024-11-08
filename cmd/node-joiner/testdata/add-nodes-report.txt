@@ -1,0 +1,24 @@
+
+# Verify the report generation for the add-nodes command.
+
+exec node-joiner add-nodes --kubeconfig=$WORK/kubeconfig --log-level=debug --dir=$WORK
+
+grep '"id": "report-addnodes-.*'                $WORK/report.json
+grep '"id": "add-nodes-cluster-inspection"'     $WORK/report.json
+grep '"id": "create-manifest"'                  $WORK/report.json
+grep '"id": "ignition"'                         $WORK/report.json
+grep '"id": "fetch-base-iso"'                   $WORK/report.json
+grep '"id": "fetch-base-iso.extract-image"'     $WORK/report.json
+grep '"id": "fetch-base-iso.verify-version"'    $WORK/report.json
+grep '"id": "create-agent-artifacts"'           $WORK/report.json
+grep '"id": "create-agent-artifacts.agent-tui"' $WORK/report.json
+grep '"id": "create-agent-artifacts.prepare"'   $WORK/report.json
+grep '"id": "generate-iso"'                     $WORK/report.json
+grep '"exit_code": 0'                           $WORK/report.json
+
+-- nodes-config.yaml --
+hosts:
+    - hostname: extra-worker-0
+      interfaces:
+        - name: eth0
+          macAddress: 00:f4:3d:a0:0e:2b

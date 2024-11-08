@@ -29,6 +29,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	workflowreport "github.com/openshift/installer/pkg/asset/agent/workflow/report"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -93,12 +94,16 @@ func (*ClusterInfo) Dependencies() []asset.Asset {
 }
 
 // Generate generates the ClusterInfo.
-func (ci *ClusterInfo) Generate(_ context.Context, dependencies asset.Parents) error {
+func (ci *ClusterInfo) Generate(ctx context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	dependencies.Get(agentWorkflow, &ci.addNodesConfig)
 
 	if agentWorkflow.Workflow != workflow.AgentWorkflowTypeAddNodes {
 		return nil
+	}
+
+	if err := workflowreport.GetReport(ctx).Stage(workflow.StageClusterInspection); err != nil {
+		return err
 	}
 
 	err := ci.initClients()

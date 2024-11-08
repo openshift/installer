@@ -1,7 +1,6 @@
 package nodejoiner
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/image"
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	workflowreport "github.com/openshift/installer/pkg/asset/agent/workflow/report"
 	"github.com/openshift/installer/pkg/asset/store"
 )
 
@@ -34,8 +34,14 @@ func NewAddNodesCommand(directory string, kubeConfig string, generatePXE *bool) 
 		assets = append(assets, &configimage.ConfigImage{})
 	}
 
+	ctx := workflowreport.Context(string(workflow.AgentWorkflowTypeAddNodes), directory)
+
 	fetcher := store.NewAssetsFetcher(directory)
-	err = fetcher.FetchAndPersist(context.Background(), assets)
+	err = fetcher.FetchAndPersist(ctx, assets)
+
+	if reportErr := workflowreport.GetReport(ctx).Complete(err); reportErr != nil {
+		return reportErr
+	}
 
 	// Save the exit code result
 	exitCode := "0"
