@@ -2,17 +2,22 @@ package clusterapi
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
+	"net/url"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	capibmcloud "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 
+	configv1 "github.com/openshift/api/config/v1"
+	ibmcloudbootstrap "github.com/openshift/installer/pkg/asset/ignition/bootstrap/ibmcloud"
 	ibmcloudic "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
@@ -20,9 +25,10 @@ import (
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 )
 
-var _ clusterapi.Timeouts = (*Provider)(nil)
+var _ clusterapi.IgnitionProvider = (*Provider)(nil)
 var _ clusterapi.PreProvider = (*Provider)(nil)
 var _ clusterapi.Provider = (*Provider)(nil)
+var _ clusterapi.Timeouts = (*Provider)(nil)
 
 // Provider implements IBM Cloud CAPI installation.
 type Provider struct{}
@@ -118,14 +124,20 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	// NOTE(cjschaef): Support to use an existing COS Object (RHCO image file) or VPC Custom Image could be added to skip this step.
 	cosInstanceName := ibmcloudic.COSInstanceName(in.InfraID)
 	logrus.Debugf("checking for existing cos instance: %s", cosInstanceName)
+	var cosInstanceNotFoundError *ibmcloudic.COSResourceNotFoundError
 	cosInstance, err := client.GetCOSInstanceByName(ctx, cosInstanceName)
 	if err != nil {
-		logrus.Debugf("creating cos instance: %s", cosInstanceName)
-		cosInstance, err = client.CreateCOSInstance(ctx, cosInstanceName, *resourceGroup.ID)
-		if err != nil {
-			return fmt.Errorf("failed creating RHCOS image COS instance: %w", err)
+		if errors.As(err, &cosInstanceNotFoundError) {
+			// Attempt to create the COS Instance, since it was not found.
+			logrus.Debugf("creating cos instance: %s", cosInstanceName)
+			cosInstance, err = client.CreateCOSInstance(ctx, cosInstanceName, *resourceGroup.ID)
+			if err != nil {
+				return fmt.Errorf("failed creating RHCOS image COS instance: %w", err)
+			}
+			logrus.Debugf("created cos instance: %s", cosInstanceName)
+		} else {
+			return fmt.Errorf("failed checking for cos instance %s: %w", cosInstanceName, err)
 		}
-		logrus.Debugf("created cos instance: %s", cosInstanceName)
 	}
 	bucketName := ibmcloudic.VSIImageCOSBucketName(in.InfraID)
 	logrus.Debugf("checking for existing cos bucket: %s", bucketName)
@@ -231,4 +243,101 @@ func leftInContext(ctx context.Context) time.Duration {
 		return math.MaxInt64
 	}
 	return time.Until(deadline)
+}
+
+// Ignition provisions the IBM Cloud COS Bucket and Object containing the Ignition based configuration.
+// The Bootstrap ignition data is too large to be passed as userdata to the IBM Cloud VPC VSI, so instead it is pulled from COS.
+func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]*corev1.Secret, error) {
+	// Setup IBM Cloud Client.
+	metadata := ibmcloudic.NewMetadata(in.InstallConfig.Config)
+	client, err := metadata.Client()
+	if err != nil {
+		return nil, fmt.Errorf("failed creating IBM Cloud client in Ignition: %w", err)
+	}
+	region := in.InstallConfig.Config.Platform.IBMCloud.Region
+
+	// Get the Resource Group name, which should already exist, and lookup the Resource Group ID.
+	resourceGroupName := in.InfraID
+	if in.InstallConfig.Config.Platform.IBMCloud.ResourceGroupName != "" {
+		resourceGroupName = in.InstallConfig.Config.Platform.IBMCloud.ResourceGroupName
+	}
+	logrus.Debugf("retrieving resource group id for: %s", resourceGroupName)
+	resourceGroup, err := client.GetResourceGroup(ctx, resourceGroupName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve resource group %s: %w", resourceGroupName, err)
+	}
+	logrus.Debugf("retrieved resource group id: %s", *resourceGroup.ID)
+
+	// Get the COS Instance, possibly created for RHCOS image, or create the COS Instance.
+	cosInstanceName := ibmcloudic.COSInstanceName(in.InfraID)
+	var cosInstanceNotFoundError *ibmcloudic.COSResourceNotFoundError
+	cosInstance, err := client.GetCOSInstanceByName(ctx, cosInstanceName)
+	if err != nil {
+		if errors.As(err, &cosInstanceNotFoundError) {
+			// Attempt to create the COS Instance, since it was not found.
+			logrus.Debugf("creating cos instance: %s", cosInstanceName)
+			cosInstance, err = client.CreateCOSInstance(ctx, cosInstanceName, *resourceGroup.ID)
+			if err != nil {
+				return nil, fmt.Errorf("failed creating ignition COS instance: %w", err)
+			}
+			logrus.Debugf("created cos instance: %s", cosInstanceName)
+		} else {
+			return nil, fmt.Errorf("failed retrieving cos instance %s for ignition: %w", cosInstanceName, err)
+		}
+	}
+
+	// Create new bucket for bootstrap's temporary Ignition Config.
+	logrus.Debugf("fetching cos instance for cluster: %s", cosInstanceName)
+	bucketName := ibmcloudbootstrap.GetIgnitionBucketName((in.InfraID))
+	logrus.Debugf("creating cos bucket for bootstrap ignition config: %s", bucketName)
+	err = client.CreateCOSBucket(ctx, *cosInstance.ID, bucketName, region)
+	if err != nil {
+		return nil, fmt.Errorf("failed creating ignition COS bucket: %w", err)
+	}
+	logrus.Infof("created cos bucket for bootstrap ignition config: %s/%s", cosInstanceName, bucketName)
+
+	// Default to using the direct regional COS endpoint.
+	cosEndpoint := fmt.Sprintf("s3.direct.%s.cloud-object-storage.appdomain.cloud", region)
+	// Check whether an endpoint override was provided for COS.
+	if endpointURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceCOS, in.InstallConfig.Config.IBMCloud.ServiceEndpoints); endpointURL != "" {
+		cosEndpoint = endpointURL
+	}
+
+	// Upload Ignition Config to COS bucket.
+	logrus.Debugf("uploading bootstrap ignition config to bucket: %s", bucketName)
+	ignitionFile := ibmcloudbootstrap.GetIgnitionFileName()
+	err = client.CreateCOSObject(ctx, in.BootstrapIgnData, ignitionFile, *cosInstance.ID, bucketName, region)
+	if err != nil {
+		return nil, fmt.Errorf("failed uploading ignition data: %w", err)
+	}
+	logrus.Debugf("bootstrap ignition config upload complete to %s/%s/%s", cosInstanceName, bucketName, ignitionFile)
+
+	ignitionURL := url.URL{
+		Scheme: "https",
+		Host:   cosEndpoint,
+		Path:   fmt.Sprintf("%s/%s", bucketName, ignitionFile),
+	}
+
+	// Build Ignition Config for Secret to direct bootstrap to consume COS Ignition Config.
+	logrus.Debugf("building ignition config data for bootstrap secret")
+	// Get IAM token for bootstrap node to access the Ignition config in COS.
+	iamToken, err := metadata.GetIAMToken(client.GetAPIKey())
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve iam token for ignition: %w", err)
+	}
+
+	logrus.Debugf("building bootstrap ignition config for bootstrap secret")
+	// NOTE(cjschaef): Replace the reliance on using the IAM token with a Service ID credential, when working with the COS Instance.
+	ignShim, err := ibmcloudbootstrap.GenerateIgnitionShimWithCredentials(ignitionURL.String(), *iamToken)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create ignition shim: %w", err)
+	}
+	logrus.Debugf("bootstrap ignition config built for bootstrap secret")
+
+	ignSecrets := []*corev1.Secret{
+		clusterapi.IgnitionSecret(ignShim, in.InfraID, "bootstrap"),
+		clusterapi.IgnitionSecret(in.MasterIgnData, in.InfraID, "master"),
+	}
+
+	return ignSecrets, nil
 }

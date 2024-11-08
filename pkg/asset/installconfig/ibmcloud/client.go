@@ -120,6 +120,14 @@ const (
 	keyProtectDefaultURLTemplate = "https://%s.kms.cloud.ibm.com"
 )
 
+// COSResourceNotFoundError represents an error for a COS resource that is not found.
+type COSResourceNotFoundError struct{}
+
+// Error returns the error message for the COSResourceNotFoundError error type.
+func (e *COSResourceNotFoundError) Error() string {
+	return "COS Resource Not Found"
+}
+
 // VPCResourceNotFoundError represents an error for a VPC resoruce that is not found.
 type VPCResourceNotFoundError struct{}
 
@@ -513,7 +521,7 @@ func (c *Client) GetCOSInstanceByName(ctx context.Context, cosName string) (*res
 		}
 	}
 
-	return nil, fmt.Errorf("failed to find cos instance %s", cosName)
+	return nil, &COSResourceNotFoundError{}
 }
 
 // GetDNSInstance gets a specific DNS Services instance by its CRN.
