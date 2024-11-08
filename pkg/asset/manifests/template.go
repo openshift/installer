@@ -34,8 +34,8 @@ type IBMCloudCredsSecretData struct {
 
 // OpenStackCredsSecretData holds encoded credentials and is used to generate cloud-creds secret
 type OpenStackCredsSecretData struct {
-	Base64encodeCloudCreds    string
-	Base64encodeCloudCredsINI string
+	Base64encodeCloudsYAML string
+	Base64encodeCloudsConf string
 }
 
 // VSphereCredsSecretData holds encoded credentials and is used to generated cloud-creds secret
