@@ -167,7 +167,7 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 
 	if len(config.APIVIPs) > 0 {
 		templateData.APIVIPs = config.APIVIPs
-		templateData.BaremetalEndpointOverride = fmt.Sprintf("http://%s/v1", net.JoinHostPort(config.APIVIPs[0], "6385"))
+		templateData.BaremetalEndpointOverride = fmt.Sprintf("https://%s/v1", net.JoinHostPort(config.APIVIPs[0], "6385"))
 		templateData.BaremetalIntrospectionEndpointOverride = fmt.Sprintf("http://%s/v1", net.JoinHostPort(config.APIVIPs[0], "5050"))
 	}
 
