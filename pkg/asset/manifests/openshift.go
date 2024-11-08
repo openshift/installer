@@ -158,8 +158,14 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 			return err
 		}
 
-		// We need to replace the local cacert path with one that is used in OpenShift
+		var caFile []byte
 		if cloud.CACertFile != "" {
+			var err error
+			caFile, err = os.ReadFile(cloud.CACertFile)
+			if err != nil {
+				return err
+			}
+			// We need to replace the local cacert path with one that is used in OpenShift
 			cloud.CACertFile = "/etc/kubernetes/static-pod-resources/configmaps/cloud-config/ca-bundle.pem"
 		}
 
@@ -190,10 +196,12 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 
 		credsEncoded := base64.StdEncoding.EncodeToString(marshalled)
 		cloudProviderConfEncoded := base64.StdEncoding.EncodeToString(cloudProviderConf)
+		caFileEncoded := base64.StdEncoding.EncodeToString(caFile)
 		cloudCreds = cloudCredsSecretData{
 			OpenStack: &OpenStackCredsSecretData{
 				Base64encodeCloudsYAML: credsEncoded,
 				Base64encodeCloudsConf: cloudProviderConfEncoded,
+				Base64encodeCABundle:   caFileEncoded,
 			},
 		}
 	case vspheretypes.Name:
