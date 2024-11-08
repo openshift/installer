@@ -13,9 +13,9 @@ build_ironic_env() {
     # If the IP contains a colon, then it's an IPv6 address, and the HTTP
     # host needs surrounding with brackets
     if [[ "$IRONIC_IP" =~ : ]]; then
-        printf 'IRONIC_BASE_URL="http://[%s]"\n' "${IRONIC_IP}"
+        printf 'IRONIC_BASE_URL="https://[%s]"\n' "${IRONIC_IP}"
     else
-        printf 'IRONIC_BASE_URL="http://%s"\n' "${IRONIC_IP}"
+        printf 'IRONIC_BASE_URL="https://%s"\n' "${IRONIC_IP}"
     fi
 
     printf 'IRONIC_IMAGE="%s"\n' "$(image_for ironic)"
