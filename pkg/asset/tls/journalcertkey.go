@@ -34,7 +34,7 @@ func (a *JournalCertKey) Generate(ctx context.Context, dependencies asset.Parent
 		Subject:      pkix.Name{CommonName: "journal-gatewayd", Organization: []string{"OpenShift Bootstrap"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
-		Validity:     ValidityTenYears,
+		Validity:     ValidityTenYears(),
 	}
 
 	return a.SignedCertKey.Generate(ctx, cfg, ca, "journal-gatewayd", DoNotAppendParent)
