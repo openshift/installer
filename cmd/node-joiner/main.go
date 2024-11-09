@@ -38,7 +38,7 @@ func nodeJoiner() error {
 	nodesAddCmd.Flags().BoolP("pxe", "p", false, "Instead of an ISO, generates PXE artifacts that can be used to boot the configured nodes to let them join an existing cluster")
 
 	nodesMonitorCmd := &cobra.Command{
-		Use:   "monitor-add-nodes",
+		Use:   "monitor-add-nodes <ip-addresses>",
 		Short: "Monitors the configured nodes while they are joining an existing cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			dir, kubeConfig, err := getCommonFlags(cmd)
