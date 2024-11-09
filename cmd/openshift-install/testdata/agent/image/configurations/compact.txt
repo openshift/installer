@@ -54,4 +54,4 @@ rendezvousIP: 192.168.111.20
 [Manager]
 DefaultEnvironment=HTTP_PROXY="http://192.168.111.1:8215"
 DefaultEnvironment=HTTPS_PROXY="http://192.168.111.1:8215"
-DefaultEnvironment=NO_PROXY="172.22.0.0/24,virthost.ostest.test.metalkube.org,192.168.111.20"
+DefaultEnvironment=NO_PROXY="172.22.0.0/24,virthost.ostest.test.metalkube.org,192.168.111.0/24"
