@@ -380,6 +380,21 @@ func (mr *MockAPIMockRecorder) GetResourceGroups(ctx interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourceGroups", reflect.TypeOf((*MockAPI)(nil).GetResourceGroups), ctx)
 }
 
+// GetSSHKeyByPublicKey mocks base method.
+func (m *MockAPI) GetSSHKeyByPublicKey(ctx context.Context, publicKey string) (*vpcv1.Key, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSSHKeyByPublicKey", ctx, publicKey)
+	ret0, _ := ret[0].(*vpcv1.Key)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSSHKeyByPublicKey indicates an expected call of GetSSHKeyByPublicKey.
+func (mr *MockAPIMockRecorder) GetSSHKeyByPublicKey(ctx, publicKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSSHKeyByPublicKey", reflect.TypeOf((*MockAPI)(nil).GetSSHKeyByPublicKey), ctx, publicKey)
+}
+
 // GetSubnet mocks base method.
 func (m *MockAPI) GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet, error) {
 	m.ctrl.T.Helper()

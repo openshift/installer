@@ -11,12 +11,6 @@ import (
 )
 
 const (
-	// kubernetesAPIPort is the Kubernetes API port.
-	kubernetesAPIPort = 6443
-
-	// machineConfigServerPort is the Machine Config Server port.
-	machineConfigServerPort = 22623
-
 	// healthMonitorURLReadyz is the health monitoring URL used to report when healthy/ready.
 	healthMonitorURLReadyz = "/readyz"
 )
@@ -42,12 +36,12 @@ func buildPrivateLoadBalancer(infraID string, securityGroups []capibmcloud.VPCRe
 		AdditionalListeners: []capibmcloud.AdditionalListenerSpec{
 			{
 				DefaultPoolName: kubeAPIBackendPoolNamePtr,
-				Port:            kubernetesAPIPort,
+				Port:            ibmcloudic.KubernetesAPIPort,
 				Protocol:        &capibmcloud.VPCLoadBalancerListenerProtocolTCP,
 			},
 			{
 				DefaultPoolName: machineConfigBackendPoolNamePtr,
-				Port:            machineConfigServerPort,
+				Port:            ibmcloudic.MachineConfigServerPort,
 				Protocol:        &capibmcloud.VPCLoadBalancerListenerProtocolTCP,
 			},
 		},
@@ -74,7 +68,7 @@ func buildPrivateLoadBalancer(infraID string, securityGroups []capibmcloud.VPCRe
 					Delay:   60,
 					Retries: 5,
 					Timeout: 30,
-					Type:    capibmcloud.VPCLoadBalancerBackendPoolHealthMonitorTypeHTTPS,
+					Type:    capibmcloud.VPCLoadBalancerBackendPoolHealthMonitorTypeTCP,
 					URLPath: ptr.To(healthMonitorURLReadyz),
 				},
 			},
@@ -93,7 +87,7 @@ func buildPublicLoadBalancer(infraID string, securityGroups []capibmcloud.VPCRes
 		AdditionalListeners: []capibmcloud.AdditionalListenerSpec{
 			{
 				DefaultPoolName: backendPoolNamePtr,
-				Port:            kubernetesAPIPort,
+				Port:            ibmcloudic.KubernetesAPIPort,
 				Protocol:        &capibmcloud.VPCLoadBalancerListenerProtocolTCP,
 			},
 		},

@@ -5,18 +5,21 @@ import (
 
 	"k8s.io/utils/ptr"
 	capibmcloud "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
+
+	ibmcloudic "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
+	"github.com/openshift/installer/pkg/types"
 )
 
 const (
-	clusterWideSGNamePostfix  = "sg-cluster-wide"
-	openshiftNetSGNamePostfix = "sg-openshift-net"
-	kubeAPILBSGNamePostfix    = "sg-kube-api-lb"
-	controlPlaneSGNamePostfix = "sg-control-plane"
-	cpInternalSGNamePostfix   = "sg-cp-internal"
+	clusterWideSGNameSuffix  = "sg-cluster-wide"
+	openshiftNetSGNameSuffix = "sg-openshift-net"
+	kubeAPILBSGNameSuffix    = "sg-kube-api-lb"
+	controlPlaneSGNameSuffix = "sg-control-plane"
+	cpInternalSGNameSuffix   = "sg-cp-internal"
 )
 
 func buildClusterWideSecurityGroup(infraID string, allSubnets []capibmcloud.Subnet) capibmcloud.VPCSecurityGroup {
-	clusterWideSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, clusterWideSGNamePostfix))
+	clusterWideSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, clusterWideSGNameSuffix))
 
 	// Build set of Remotes for Security Group Rules
 	// - cluster-wide SSH rule (for CP and Compute subnets)
@@ -112,7 +115,7 @@ func buildClusterWideSecurityGroup(infraID string, allSubnets []capibmcloud.Subn
 }
 
 func buildOpenshiftNetSecurityGroup(infraID string, allSubnets []capibmcloud.Subnet) capibmcloud.VPCSecurityGroup {
-	openshiftNetSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, openshiftNetSGNamePostfix))
+	openshiftNetSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, openshiftNetSGNameSuffix))
 
 	// Build sets of Remotes for Security Group Rules
 	// - openshift-net TCP rule for Node Ports (for CP and Compute subnets)
@@ -256,9 +259,9 @@ func buildOpenshiftNetSecurityGroup(infraID string, allSubnets []capibmcloud.Sub
 }
 
 func buildKubeAPILBSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
-	kubeAPILBSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, kubeAPILBSGNamePostfix))
-	controlPlaneSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, controlPlaneSGNamePostfix))
-	clusterWideSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, clusterWideSGNamePostfix))
+	kubeAPILBSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, kubeAPILBSGNameSuffix))
+	controlPlaneSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, controlPlaneSGNameSuffix))
+	clusterWideSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, clusterWideSGNameSuffix))
 
 	return capibmcloud.VPCSecurityGroup{
 		Name: kubeAPILBSGNamePtr,
@@ -339,9 +342,9 @@ func buildKubeAPILBSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
 }
 
 func buildControlPlaneSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
-	controlPlaneSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, controlPlaneSGNamePostfix))
-	clusterWideSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, clusterWideSGNamePostfix))
-	kubeAPILBSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, kubeAPILBSGNamePostfix))
+	controlPlaneSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, controlPlaneSGNameSuffix))
+	clusterWideSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, clusterWideSGNameSuffix))
+	kubeAPILBSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, kubeAPILBSGNameSuffix))
 
 	return capibmcloud.VPCSecurityGroup{
 		Name: controlPlaneSGNamePtr,
@@ -423,7 +426,7 @@ func buildControlPlaneSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup
 }
 
 func buildCPInternalSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
-	cpInternalSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, cpInternalSGNamePostfix))
+	cpInternalSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, cpInternalSGNameSuffix))
 
 	return capibmcloud.VPCSecurityGroup{
 		Name: cpInternalSGNamePtr,
@@ -450,13 +453,57 @@ func buildCPInternalSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
 	}
 }
 
-func getVPCSecurityGroups(infraID string, allSubnets []capibmcloud.Subnet) []capibmcloud.VPCSecurityGroup {
-	// IBM Cloud currently relies on 5 SecurityGroups to manage traffic
-	securityGroups := make([]capibmcloud.VPCSecurityGroup, 0, 5)
+func buildBootstrapSecurityGroup(infraID string, allSubnets []capibmcloud.Subnet, publishStrategy types.PublishingStrategy) capibmcloud.VPCSecurityGroup {
+	bootstrapSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, ibmcloudic.BootstrapSGNameSuffix))
+
+	remotes := make([]capibmcloud.VPCSecurityGroupRuleRemote, 0, len(allSubnets))
+
+	// Based on the Cluster's PublishingStrategy, SSH access to the bootstrap node is restricted to within the Cluster subnets' CIDR's, or simply publicly available.
+	switch publishStrategy {
+	case types.ExternalPublishingStrategy:
+		remotes = append(remotes, capibmcloud.VPCSecurityGroupRuleRemote{
+			RemoteType: capibmcloud.VPCSecurityGroupRuleRemoteTypeAny,
+		})
+	case types.InternalPublishingStrategy:
+		for _, subnet := range allSubnets {
+			remotes = append(remotes, capibmcloud.VPCSecurityGroupRuleRemote{
+				RemoteType:     capibmcloud.VPCSecurityGroupRuleRemoteTypeCIDR,
+				CIDRSubnetName: subnet.Name,
+			})
+		}
+	}
+	return capibmcloud.VPCSecurityGroup{
+		Name: bootstrapSGNamePtr,
+		Rules: []*capibmcloud.VPCSecurityGroupRule{
+			{
+				// SSH traffic
+				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
+				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
+				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
+					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
+						MaximumPort: 22,
+						MinimumPort: 22,
+					},
+					Protocol: capibmcloud.VPCSecurityGroupRuleProtocolTCP,
+					Remotes:  remotes,
+				},
+			},
+		},
+	}
+}
+
+func getVPCSecurityGroups(infraID string, allSubnets []capibmcloud.Subnet, publishStrategy types.PublishingStrategy) []capibmcloud.VPCSecurityGroup {
+	// IBM Cloud currently relies on 5 SecurityGroups to manage traffic and 1 SecurityGroup for bootstrapping.
+	securityGroups := make([]capibmcloud.VPCSecurityGroup, 0, 6)
+	// Generate the Cluster's primary SG's.
 	securityGroups = append(securityGroups, buildClusterWideSecurityGroup(infraID, allSubnets))
 	securityGroups = append(securityGroups, buildOpenshiftNetSecurityGroup(infraID, allSubnets))
 	securityGroups = append(securityGroups, buildKubeAPILBSecurityGroup(infraID))
 	securityGroups = append(securityGroups, buildControlPlaneSecurityGroup(infraID))
 	securityGroups = append(securityGroups, buildCPInternalSecurityGroup(infraID))
+
+	// Generate the bootstrap SG.
+	securityGroups = append(securityGroups, buildBootstrapSecurityGroup(infraID, allSubnets, publishStrategy))
+
 	return securityGroups
 }
