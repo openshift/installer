@@ -404,6 +404,69 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^\[networking\.serviceNetwork\[1\]: Invalid value: "13\.0\.2\.0/24": service network must not overlap with service network 0, networking\.serviceNetwork: Invalid value: "13\.0\.0\.0/16, 13\.0\.2\.0/24": only one service network can be specified]$`,
 		},
 		{
+			name: "overlapping service network and IPv4 InternalJoinSubnet",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.ServiceNetwork[0] = *ipnet.MustParseCIDR("13.0.2.0/24")
+				c.Networking.OVNKubernetesConfig = &types.OVNKubernetesConfig{IPv4: &types.IPv4OVNKubernetesConfig{InternalJoinSubnet: ipnet.MustParseCIDR("13.0.0.0/16")}}
+				return c
+			}(),
+			expectedError: `^networking\.ovnKubernetesConfig.ipv4.internalJoinSubnet: Invalid value: "13\.0\.0\.0/16": must not overlap with serviceNetwork 13\.0\.2\.0/24$`,
+		},
+		{
+			name: "overlapping machine network and IPv4 InternalJoinSubnet",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.OVNKubernetesConfig = &types.OVNKubernetesConfig{IPv4: &types.IPv4OVNKubernetesConfig{InternalJoinSubnet: ipnet.MustParseCIDR("10.0.2.0/24")}}
+				return c
+			}(),
+			expectedError: `^networking\.ovnKubernetesConfig.ipv4.internalJoinSubnet: Invalid value: "10\.0\.2\.0/24": must not overlap with machineNetwork 10\.0\.0\.0/16$`,
+		},
+		{
+			name: "overlapping cluster network and IPv4 InternalJoinSubnet",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.OVNKubernetesConfig = &types.OVNKubernetesConfig{IPv4: &types.IPv4OVNKubernetesConfig{InternalJoinSubnet: ipnet.MustParseCIDR("192.168.0.0/16")}}
+				return c
+			}(),
+			expectedError: `^networking\.ovnKubernetesConfig\.ipv4\.internalJoinSubnet: Invalid value: "192\.168\.0\.0/16": must not overlap with clusterNetwork 192\.168\.1\.0/24$`,
+		},
+		{
+			name: "HTTPProxy overlapping with IPv4 Internal Join Subnet",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPProxy = "http://100.64.1.2:3030"
+				c.Networking = validIPv4NetworkingConfig()
+				c.Networking.OVNKubernetesConfig = &types.OVNKubernetesConfig{IPv4: &types.IPv4OVNKubernetesConfig{InternalJoinSubnet: ipnet.MustParseCIDR("100.64.0.0/16")}}
+				return c
+			}(),
+			expectedError: `^proxy.httpProxy: Invalid value: "http://100.64.1.2:3030": proxy value is part of the ovn-kubernetes IPv4 InternalJoinSubnet$`,
+		},
+		{
+			name: "invalid IPv4 InternalJoinSubnet",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.OVNKubernetesConfig = &types.OVNKubernetesConfig{IPv4: &types.IPv4OVNKubernetesConfig{InternalJoinSubnet: ipnet.MustParseCIDR("192.168.2.0/16")}}
+				return c
+			}(),
+			expectedError: `^networking\.ovnKubernetesConfig\.ipv4\.internalJoinSubnet: Invalid value: "192\.168\.2\.0/16": invalid network address. got 192\.168\.2\.0/16, expecting 192\.168\.0\.0/16$`,
+		},
+		{
+			name: "IPv4 InternalJoinSubnet too smal",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.OVNKubernetesConfig = &types.OVNKubernetesConfig{IPv4: &types.IPv4OVNKubernetesConfig{InternalJoinSubnet: ipnet.MustParseCIDR("100.64.0.0/24")}}
+				c.Networking.ClusterNetwork = []types.ClusterNetworkEntry{
+					{
+						CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+						HostPrefix: int32(23),
+					},
+				}
+				return c
+			}(),
+			expectedError: `^networking\.ovnKubernetesConfig\.ipv4\.internalJoinSubnet: Invalid value: "100\.64\.0\.0/24": ipv4InternalJoinSubnet is not large enough for the maximum number of nodes which can be supported by ClusterNetwork$`,
+		},
+		{
 			name: "missing machine networks",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
