@@ -1092,7 +1092,7 @@ github.com/opencontainers/image-spec/specs-go/v1
 # github.com/opencontainers/runtime-spec v1.2.0
 ## explicit
 github.com/opencontainers/runtime-spec/specs-go
-# github.com/openshift/api v0.0.0-20241108192208-051d53359b95
+# github.com/openshift/api v0.0.0-20241109205306-a2817b89f7e0
 ## explicit; go 1.22.0
 github.com/openshift/api/annotations
 github.com/openshift/api/config/v1
@@ -1133,7 +1133,7 @@ github.com/openshift/assisted-service/client/versions
 # github.com/openshift/assisted-service/models v0.0.0 => github.com/openshift/assisted-service/models v0.0.0-20241001055825-63e8b0d3ad63
 ## explicit; go 1.21
 github.com/openshift/assisted-service/models
-# github.com/openshift/client-go v0.0.0-20241001162912-da6d55e4611f
+# github.com/openshift/client-go v0.0.0-20241107164952-923091dd2b1a
 ## explicit; go 1.22.0
 github.com/openshift/client-go/config/applyconfigurations
 github.com/openshift/client-go/config/applyconfigurations/config/v1
@@ -1215,7 +1215,7 @@ github.com/openshift/hive/apis/hive/v1/openstack
 github.com/openshift/hive/apis/hive/v1/ovirt
 github.com/openshift/hive/apis/hive/v1/vsphere
 github.com/openshift/hive/apis/scheme
-# github.com/openshift/library-go v0.0.0-20240919205913-c96b82b3762b
+# github.com/openshift/library-go v0.0.0-20241107160307-0064ad7bd060
 ## explicit; go 1.22.0
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 github.com/openshift/library-go/pkg/config/clusterstatus
@@ -1872,7 +1872,7 @@ k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
 k8s.io/api/storagemigration/v1alpha1
-# k8s.io/apiextensions-apiserver v0.31.0
+# k8s.io/apiextensions-apiserver v0.31.1
 ## explicit; go 1.22.0
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1

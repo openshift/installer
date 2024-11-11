@@ -36,6 +36,14 @@ func AllFeatureSets() map[ClusterProfileName]map[configv1.FeatureSet]*FeatureGat
 var (
 	allFeatureGates = map[ClusterProfileName]map[configv1.FeatureSet]*FeatureGateEnabledDisabled{}
 
+	FeatureGateConsolePluginCSP = newFeatureGate("ConsolePluginContentSecurityPolicy").
+					reportProblemsToJiraComponent("Management Console").
+					contactPerson("jhadvig").
+					productScope(ocpSpecific).
+					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+					enhancementPR("https://github.com/openshift/enhancements/pull/1706").
+					mustRegister()
+
 	FeatureGateServiceAccountTokenNodeBinding = newFeatureGate("ServiceAccountTokenNodeBinding").
 							reportProblemsToJiraComponent("apiserver-auth").
 							contactPerson("stlaz").
