@@ -79,14 +79,14 @@ func CloudProviderConfigSecret(cloud *clientconfig.Cloud) ([]byte, error) {
 }
 
 func generateCloudProviderConfig(ctx context.Context, networkClient *gophercloud.ServiceClient, cloudConfig *clientconfig.Cloud, installConfig types.InstallConfig) (cloudProviderConfigData, cloudProviderConfigCABundleData string, err error) {
+	// The clouds-file path given below is hardcoded in the deployment asset for OpenStack's CCM in
+	// cluster-cloud-controller-manager-operator
+	// https://github.com/openshift/cluster-cloud-controller-manager-operator/blob/release-4.18/pkg/cloud/openstack/assets/deployment.yaml#L95-L97
 	cloudProviderConfigData = `[Global]
-secret-name = openstack-credentials
-secret-namespace = kube-system
+use-clouds = true
+clouds-file = /etc/openstack/secret/clouds.yaml
+cloud = openstack
 `
-	if regionName := cloudConfig.RegionName; regionName != "" {
-		cloudProviderConfigData += "region = " + regionName + "\n"
-	}
-
 	if caCertFile := cloudConfig.CACertFile; caCertFile != "" {
 		cloudProviderConfigData += "ca-file = /etc/kubernetes/static-pod-resources/configmaps/cloud-config/ca-bundle.pem\n"
 		caFile, err := os.ReadFile(caCertFile)
