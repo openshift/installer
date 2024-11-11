@@ -106,6 +106,12 @@ type Platform struct {
 	// +optional
 	LBType configv1.AWSLBType `json:"lbType,omitempty"`
 
+	// eipAllocations contains Elastic IP (EIP) allocations for AWS resources
+	// within the cluster.
+	//
+	// +optional
+	EIPAllocations *EIPAllocations `json:"eipAllocations,omitempty"`
+
 	// PreserveBootstrapIgnition is deprecated. Use bestEffortDeleteIgnition instead.
 	// +optional
 	PreserveBootstrapIgnition bool `json:"preserveBootstrapIgnition,omitempty"`
@@ -128,6 +134,50 @@ type Platform struct {
 	// +kubebuilder:validation:Enum="Enabled";"Disabled"
 	UserProvisionedDNS dns.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
 }
+
+// EIPAllocations contains Elastic IP (EIP) allocations for AWS resources
+// within the cluster.
+type EIPAllocations struct {
+	// IngressNetworkLoadBalancer is a list of IDs for Elastic IP (EIP) addresses that
+	// are assigned to the default AWS NLB IngressController.
+	// The following restrictions apply:
+	//
+	// eipAllocations can only be used with external scope, not internal.
+	// An EIP can be allocated to only a single IngressController.
+	// The number of EIP allocations must match the number of subnets that are used for the load balancer.
+	// Each EIP allocation must be unique.
+	// A maximum of 10 EIP allocations are permitted.
+	//
+	// See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html for general
+	// information about configuration, characteristics, and limitations of Elastic IP addresses.
+	//
+	// +openshift:enable:FeatureGate=InstallEIPForDefaultNLBIngressController
+	// +optional
+	// +listType=atomic
+	// +kubebuilder:validation:XValidation:rule=`self.all(x, self.exists_one(y, x == y))`,message="eipAllocations cannot contain duplicates"
+	// +kubebuilder:validation:MaxItems=10
+	IngressNetworkLoadBalancer []EIPAllocation `json:"ingressNetworkLoadBalancer"`
+}
+
+// EIPAllocation is an ID for an Elastic IP (EIP) address that can be allocated to an ELB in the AWS environment.
+// Values must begin with `eipalloc-` followed by exactly 17 hexadecimal (`[0-9a-fA-F]`) characters.
+// + Explanation of the regex `^eipalloc-[0-9a-fA-F]{17}$` for validating value of the EIPAllocation:
+// + ^eipalloc- ensures the string starts with "eipalloc-".
+// + [0-9a-fA-F]{17} matches exactly 17 hexadecimal characters (0-9, a-f, A-F).
+// + $ ensures the string ends after the 17 hexadecimal characters.
+// + Example of Valid and Invalid values:
+// + eipalloc-1234567890abcdef1 is valid.
+// + eipalloc-1234567890abcde is not valid (too short).
+// + eipalloc-1234567890abcdefg is not valid (contains a non-hex character 'g').
+// + Max length is calculated as follows:
+// + eipalloc- = 9 chars and 17 hexadecimal chars after `-`
+// + So, total is 17 + 9 = 26 chars required for value of an EIPAllocation.
+//
+// +kubebuilder:validation:MinLength=26
+// +kubebuilder:validation:MaxLength=26
+// +kubebuilder:validation:XValidation:rule=`self.startsWith('eipalloc-')`,message="eipAllocations should start with 'eipalloc-'"
+// +kubebuilder:validation:XValidation:rule=`self.split("-", 2)[1].matches('[0-9a-fA-F]{17}$')`,message="eipAllocations must be 'eipalloc-' followed by exactly 17 hexadecimal characters (0-9, a-f, A-F)"
+type EIPAllocation string
 
 // ServiceEndpoint store the configuration for services to
 // override existing defaults of AWS Services.

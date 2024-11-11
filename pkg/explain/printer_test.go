@@ -209,6 +209,10 @@ deleted. Enable this functionality when there are known reasons disallowing thei
 installing on AWS for machine pools which do not define their own
 platform configuration.
 
+    eipAllocations <object>
+      eipAllocations contains Elastic IP (EIP) allocations for AWS resources
+within the cluster.
+
     experimentalPropagateUserTags <boolean>
       The field is deprecated. ExperimentalPropagateUserTags is an experimental
 flag that directs in-cluster operators to include the specified

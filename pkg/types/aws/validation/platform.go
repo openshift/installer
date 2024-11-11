@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	configv1 "github.com/openshift/api/config/v1"
 	"net/url"
 	"regexp"
 	"strings"
@@ -58,6 +59,66 @@ func ValidatePlatform(p *aws.Platform, cm types.CredentialsMode, fldPath *field.
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
 
+	allErrs = append(allErrs, checkForEIPAllocationsWithNLB(p, fldPath.Child("aws", "lbType"))...)
+
+	if p != nil && p.EIPAllocations != nil && len(p.EIPAllocations.IngressNetworkLoadBalancer) > 0 {
+		var allocationIDs []string
+		for _, allocationID := range p.EIPAllocations.IngressNetworkLoadBalancer {
+			allocationIDs = append(allocationIDs, string(allocationID))
+		}
+
+		// Validate EIP allocation IDs
+		allErrs = append(allErrs, validateEIPAllocationsList(allocationIDs, fldPath.Child("aws", "eipAllocations", "ingressNetworkLoadBalancer"))...)
+	}
+	return allErrs
+}
+
+// validateEIPAllocations validates an array of EIP allocation IDs based on given rules.
+func validateEIPAllocationsList(allocationIDs []string, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	// Rule 1: Check for duplicates
+	seen := make(map[string]bool)
+	for _, id := range allocationIDs {
+		if seen[id] {
+			allErrs = append(allErrs, field.Invalid(fldPath, id, "cannot have duplicate EIP Allocation IDs"))
+		}
+		seen[id] = true
+	}
+
+	// Rule 2: Check the max length of the array
+	if len(allocationIDs) > 10 {
+		allErrs = append(allErrs, field.TooMany(fldPath, len(allocationIDs), 10))
+	}
+
+	// Regular expression to validate EIP allocation format
+	eipRegex := regexp.MustCompile(`^eipalloc-[a-fA-F0-9]{17}$`)
+
+	// Validate each allocation ID
+	for _, id := range allocationIDs {
+		if len(id) != 26 {
+			// Rule 3: Check for minimum and maximum length
+			allErrs = append(allErrs, field.Invalid(fldPath, id, "invalid EIP allocation ID length"))
+		} else if len(id) < 9 || id[:9] != "eipalloc-" {
+			// Rule 4: Value shall start with "eipalloc-"
+			allErrs = append(allErrs, field.Invalid(fldPath, id, "eipAllocations should start with 'eipalloc-'"))
+		} else if !eipRegex.MatchString(id) {
+			// Rule 5: Check if the value matches the regex
+			allErrs = append(allErrs, field.Invalid(fldPath, id, "eipAllocations must be 'eipalloc-' followed by exactly 17 hexadecimal characters (0-9, a-f, A-F)"))
+		}
+	}
+	return allErrs
+}
+
+// Checks if the type was set to NLB when eipAllocations are provided to the install-config.
+func checkForEIPAllocationsWithNLB(aws *aws.Platform, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if aws.EIPAllocations == nil || len(aws.EIPAllocations.IngressNetworkLoadBalancer) == 0 {
+		// EIPAllocations not provided
+		return nil
+	}
+	if len(aws.LBType) == 0 || (len(aws.LBType) > 0 && aws.LBType != configv1.NLB) {
+		allErrs = append(allErrs, field.Required(fldPath, "lbType NLB must be specified"))
+	}
 	return allErrs
 }
 

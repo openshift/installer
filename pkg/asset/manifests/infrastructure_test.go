@@ -199,6 +199,15 @@ func (b icBuildNamespace) withLBType(lbType configv1.AWSLBType) icOption {
 	}
 }
 
+func (b icBuildNamespace) withLBTypeAndEIPAllocations(lbType configv1.AWSLBType, eipAllocations []awstypes.EIPAllocation) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forAWS()(ic)
+		ic.Platform.AWS.LBType = lbType
+		ic.Platform.AWS.EIPAllocations = &awstypes.EIPAllocations{}
+		ic.Platform.AWS.EIPAllocations.IngressNetworkLoadBalancer = eipAllocations
+	}
+}
+
 func (b icBuildNamespace) withGCPUserProvisionedDNS(enabled string) icOption {
 	return func(ic *types.InstallConfig) {
 		b.forGCP()(ic)

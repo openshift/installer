@@ -2603,6 +2603,45 @@ spec:
                           type: string
                         type: array
                     type: object
+                  eipAllocations:
+                    description: |-
+                      eipAllocations contains Elastic IP (EIP) allocations for AWS resources
+                      within the cluster.
+                    properties:
+                      ingressNetworkLoadBalancer:
+                        description: |-
+                          IngressNetworkLoadBalancer is a list of IDs for Elastic IP (EIP) addresses that
+                          are assigned to the default AWS NLB IngressController.
+                          The following restrictions apply:
+
+                          eipAllocations can only be used with external scope, not internal.
+                          An EIP can be allocated to only a single IngressController.
+                          The number of EIP allocations must match the number of subnets that are used for the load balancer.
+                          Each EIP allocation must be unique.
+                          A maximum of 10 EIP allocations are permitted.
+
+                          See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html for general
+                          information about configuration, characteristics, and limitations of Elastic IP addresses.
+                        items:
+                          description: |-
+                            EIPAllocation is an ID for an Elastic IP (EIP) address that can be allocated to an ELB in the AWS environment.
+                            Values must begin with `eipalloc-` followed by exactly 17 hexadecimal (`[0-9a-fA-F]`) characters.
+                          maxLength: 26
+                          minLength: 26
+                          type: string
+                          x-kubernetes-validations:
+                          - message: eipAllocations should start with 'eipalloc-'
+                            rule: self.startsWith('eipalloc-')
+                          - message: eipAllocations must be 'eipalloc-' followed by
+                              exactly 17 hexadecimal characters (0-9, a-f, A-F)
+                            rule: self.split("-", 2)[1].matches('[0-9a-fA-F]{17}$')
+                        maxItems: 10
+                        type: array
+                        x-kubernetes-list-type: atomic
+                        x-kubernetes-validations:
+                        - message: eipAllocations cannot contain duplicates
+                          rule: self.all(x, self.exists_one(y, x == y))
+                    type: object
                   experimentalPropagateUserTags:
                     description: |-
                       The field is deprecated. ExperimentalPropagateUserTags is an experimental

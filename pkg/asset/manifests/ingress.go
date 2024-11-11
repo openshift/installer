@@ -162,6 +162,44 @@ func (ing *Ingress) generateDefaultIngressController(config *types.InstallConfig
 			},
 		}
 		return yaml.Marshal(obj)
+	default:
+		var obj *operatorv1.IngressController
+		var eipAllocations []aws.EIPAllocation
+		var ingressControllerEIPAllocations []operatorv1.EIPAllocation
+
+		if config.AWS != nil && config.AWS.LBType == configv1.NLB && config.AWS.EIPAllocations != nil && len(config.AWS.EIPAllocations.IngressNetworkLoadBalancer) != 0 {
+			eipAllocations = config.AWS.EIPAllocations.IngressNetworkLoadBalancer
+			for _, eipAllocation := range eipAllocations {
+				ingressControllerEIPAllocations = append(ingressControllerEIPAllocations, operatorv1.EIPAllocation(eipAllocation))
+			}
+			obj = &operatorv1.IngressController{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: operatorv1.GroupVersion.String(),
+					Kind:       "IngressController",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "openshift-ingress-operator",
+					Name:      "default",
+				},
+				Spec: operatorv1.IngressControllerSpec{
+					EndpointPublishingStrategy: &operatorv1.EndpointPublishingStrategy{
+						Type: operatorv1.LoadBalancerServiceStrategyType,
+						LoadBalancer: &operatorv1.LoadBalancerStrategy{
+							Scope: operatorv1.ExternalLoadBalancer,
+							ProviderParameters: &operatorv1.ProviderLoadBalancerParameters{
+								AWS: &operatorv1.AWSLoadBalancerParameters{
+									Type: operatorv1.AWSNetworkLoadBalancer,
+									NetworkLoadBalancerParameters: &operatorv1.AWSNetworkLoadBalancerParameters{
+										EIPAllocations: ingressControllerEIPAllocations,
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+			return yaml.Marshal(obj)
+		}
 	}
 	return nil, nil
 }

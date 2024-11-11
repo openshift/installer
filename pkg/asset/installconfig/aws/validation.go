@@ -4,26 +4,25 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
-	"net/http"
-	"net/url"
-	"sort"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/route53"
-	"github.com/sirupsen/logrus"
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/util/validation/field"
-
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/dns"
+	"github.com/sirupsen/logrus"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+	"net"
+	"net/http"
+	"net/url"
+	"sort"
+	"strings"
 )
 
 type resourceRequirements struct {
@@ -49,6 +48,7 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 		return errors.New(field.Required(field.NewPath("platform", "aws"), "AWS validation requires an AWS platform configuration").Error())
 	}
 	allErrs = append(allErrs, validateAMI(ctx, config)...)
+	allErrs = append(allErrs, validateEIPAllocations(ctx, meta, field.NewPath("platform", "aws", "eipAllocations", "ingressNetworkLoadBalancer"), config)...)
 	allErrs = append(allErrs, validatePublicIpv4Pool(ctx, meta, field.NewPath("platform", "aws", "publicIpv4PoolId"), config)...)
 	allErrs = append(allErrs, validatePlatform(ctx, meta, field.NewPath("platform", "aws"), config.Platform.AWS, config.Networking, config.Publish)...)
 
@@ -164,6 +164,122 @@ func validateAMI(ctx context.Context, config *types.InstallConfig) field.ErrorLi
 
 	// fail validation since we do not have an AMI to use
 	return field.ErrorList{field.Required(field.NewPath("platform", "aws", "amiID"), "AMI must be provided")}
+}
+
+// filterNotAvaibleEIPErrors checks if a given EIP allocation ID exists.
+func filterNotAvaibleEIPErrors(allErrs field.ErrorList) []error {
+	var invalidAndNotFoundEIPList []error
+	for _, err := range allErrs {
+		// Handle specific AWS error for non-existent allocation ID
+		if strings.Contains(err.Error(), "InvalidAllocationID.NotFound") {
+			invalidAndNotFoundEIPList = append(invalidAndNotFoundEIPList, err)
+		}
+	}
+	if len(invalidAndNotFoundEIPList) > 0 {
+		return invalidAndNotFoundEIPList
+	}
+	return nil
+}
+
+func validateEIPAllocations(ctx context.Context, meta *Metadata, fldPath *field.Path, config *types.InstallConfig) field.ErrorList {
+	if config.Platform.AWS.EIPAllocations == nil || len(config.Platform.AWS.EIPAllocations.IngressNetworkLoadBalancer) == 0 {
+		return nil
+	}
+
+	var eipAllocations []awstypes.EIPAllocation
+	allErrs := field.ErrorList{}
+
+	if config.Platform.AWS != nil && config.Platform.AWS.EIPAllocations != nil && len(config.Platform.AWS.EIPAllocations.IngressNetworkLoadBalancer) == 0 {
+		return nil
+	} else if len(config.Platform.AWS.EIPAllocations.IngressNetworkLoadBalancer) > 0 {
+		eipAllocations = config.Platform.AWS.EIPAllocations.IngressNetworkLoadBalancer
+	}
+	var allocationIDs []string
+	for _, allocationID := range eipAllocations {
+		allocationIDs = append(allocationIDs, string(allocationID))
+	}
+
+	sess, err := meta.Session(ctx)
+	if err != nil {
+		return append(allErrs, field.Invalid(fldPath, nil, fmt.Sprintf("unable to start a session: %s", err.Error())))
+	}
+
+	client := ec2.New(sess, aws.NewConfig().WithRegion(config.Platform.AWS.Region))
+
+	// Prepare input for DescribeAddresses call
+	input := &ec2.DescribeAddressesInput{
+		AllocationIds: aws.StringSlice(allocationIDs),
+	}
+
+	result, err := client.DescribeAddresses(input)
+	if err != nil {
+		err = fmt.Errorf("failed to make a describe AWS API call for eipAllocation due to error %s:", err)
+		allErrs = append(allErrs, field.InternalError(fldPath, err))
+	}
+
+	// Check if eipAllocations exist
+	eipNotAvailableErrors := filterNotAvaibleEIPErrors(allErrs)
+	if err != nil {
+		err = fmt.Errorf("eipAllocations does not exists due to error %s:", eipNotAvailableErrors)
+		return append(allErrs, field.InternalError(fldPath, err))
+	}
+
+	// Get all associated EIPs in the list
+	associatedEIPs, err := getAssociatedEIPs(result)
+	if err != nil {
+		err = fmt.Errorf("failure checking EIPs associations: %v:", err)
+		return append(allErrs, field.InternalError(fldPath, err))
+	}
+
+	// Print error if EIPs are associated
+	if len(associatedEIPs) > 0 {
+		return append(allErrs, field.Invalid(fldPath, associatedEIPs, fmt.Errorf("eipAllocations %s can't be used as %s are already associated", config.Platform.AWS.EIPAllocations.IngressNetworkLoadBalancer, associatedEIPs).Error()))
+	}
+
+	// BYO Subnets
+	if len(config.Platform.AWS.Subnets) != 0 {
+		if err = compareBYOSubnetsWithEIPAllocations(config); err != nil {
+			return append(allErrs, field.Invalid(fldPath, nil, err.Error()))
+		}
+	} else { // Installer Created Subnets
+		allzones, err := meta.AvailabilityZones(ctx)
+		if err != nil {
+			return append(allErrs, field.InternalError(fldPath, err))
+		}
+		if err = compareInstallerCreatedSubnetsWithEIPAllocations(config, allzones); err != nil {
+			return append(allErrs, field.Invalid(fldPath, nil, err.Error()))
+		}
+	}
+	return nil
+}
+
+func compareBYOSubnetsWithEIPAllocations(config *types.InstallConfig) error {
+	if len(config.Platform.AWS.Subnets) != len(config.Platform.AWS.EIPAllocations.IngressNetworkLoadBalancer) {
+		return fmt.Errorf("number of subnets (%d) must match number of eipAllocations (%d)", len(config.Platform.AWS.Subnets), len(config.Platform.AWS.EIPAllocations.IngressNetworkLoadBalancer))
+	}
+	return nil
+}
+
+func compareInstallerCreatedSubnetsWithEIPAllocations(config *types.InstallConfig, allzones []string) error {
+	// Compare eip allocations with Availability Zones.
+	if config.Platform.AWS != nil && config.Platform.AWS.EIPAllocations != nil && len(config.Platform.AWS.EIPAllocations.IngressNetworkLoadBalancer) != 0 && len(allzones) != len(config.Platform.AWS.EIPAllocations.IngressNetworkLoadBalancer) {
+		return fmt.Errorf("number of Availability Zones %d in the region != to the number of eipAllocations %d", len(allzones), len(config.Platform.AWS.EIPAllocations.IngressNetworkLoadBalancer))
+	}
+	return nil
+}
+
+// getAssociatedEIPs returns a list of associated EIP allocation IDs from the input array.
+func getAssociatedEIPs(result *ec2.DescribeAddressesOutput) ([]string, error) {
+
+	// Slice to store associated EIP allocation IDs
+	var associatedEIPs []string
+	for _, address := range result.Addresses {
+		if address.AssociationId != nil {
+			associatedEIPs = append(associatedEIPs, *address.AllocationId)
+		}
+	}
+
+	return associatedEIPs, nil
 }
 
 func validatePublicIpv4Pool(ctx context.Context, meta *Metadata, fldPath *field.Path, config *types.InstallConfig) field.ErrorList {

@@ -6,11 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestValidatePlatform(t *testing.T) {
@@ -151,16 +152,6 @@ func TestValidatePlatform(t *testing.T) {
 			expected: `^\Qtest-path.userTags[Name]: Invalid value: "test-cluster": "Name" key is not allowed for user defined tags\E$`,
 		},
 		{
-			name: "invalid userTags, key with kubernetes.io/cluster/",
-			platform: &aws.Platform{
-				Region: "us-east-1",
-				UserTags: map[string]string{
-					"kubernetes.io/cluster/test-cluster": "shared",
-				},
-			},
-			expected: `^\Qtest-path.userTags[kubernetes.io/cluster/test-cluster]: Invalid value: "shared": Keys with prefix 'kubernetes.io/cluster/' are not allowed for user defined tags\E$`,
-		},
-		{
 			name: "invalid userTags, value with invalid characters",
 			platform: &aws.Platform{
 				Region: "us-east-1",
@@ -179,6 +170,16 @@ func TestValidatePlatform(t *testing.T) {
 				},
 				PropagateUserTag: true,
 			},
+		},
+		{
+			name: "invalid userTags, key with kubernetes.io/cluster/",
+			platform: &aws.Platform{
+				Region: "us-east-1",
+				UserTags: map[string]string{
+					"kubernetes.io/cluster/test-cluster": "shared",
+				},
+			},
+			expected: `^\Qtest-path.userTags[kubernetes.io/cluster/test-cluster]: Invalid value: "shared": key is in the kubernetes.io namespace\E$`,
 		},
 		{
 			name: "valid userTags",
@@ -203,7 +204,7 @@ func TestValidatePlatform(t *testing.T) {
 				Region:         "us-east-1",
 				HostedZoneRole: "test-hosted-zone-role",
 			},
-			expected: `^test-path\.hostedZoneRole: Invalid value: "test-hosted-zone-role": may not specify a role to assume for hosted zone operations without also specifying a hosted zone$`,
+			expected: `^\[test-path\.hostedZoneRole: Invalid value: "test-hosted-zone-role": may not specify a role to assume for hosted zone operations without also specifying a hosted zone, test-path\.credentialsMode: Forbidden: when specifying a hostedZoneRole, either Passthrough or Manual credential mode must be specified\]$`,
 		},
 		{
 			name:     "valid hosted zone & role should not throw an error",
@@ -223,7 +224,150 @@ func TestValidatePlatform(t *testing.T) {
 				HostedZone:     "test-hosted-zone",
 				HostedZoneRole: "test-hosted-zone-role",
 			},
-			expected: `^test-path\.hostedZoneRole: Forbidden: when specifying a hostedZoneRole, either Passthrough or Manual credential mode must be specified$`,
+			expected: `^test-path\.credentialsMode: Forbidden: when specifying a hostedZoneRole, either Passthrough or Manual credential mode must be specified$`,
+		},
+		{
+			name:     "valid when LBType is present while providing eipAllocations",
+			credMode: types.PassthroughCredentialsMode,
+			platform: &aws.Platform{
+				Region:         "us-east-1",
+				Subnets:        []string{"test-subnet"},
+				HostedZone:     "test-hosted-zone",
+				HostedZoneRole: "test-hosted-zone-role",
+				LBType:         configv1.NLB,
+				EIPAllocations: &aws.EIPAllocations{
+					IngressNetworkLoadBalancer: []aws.EIPAllocation{"eipalloc-1234567890abcdefa"},
+				},
+			},
+		},
+		{
+			name:     "valid when LBType is present while providing eipAllocations",
+			credMode: types.PassthroughCredentialsMode,
+			platform: &aws.Platform{
+				Region:         "us-east-1",
+				Subnets:        []string{"test-subnet"},
+				HostedZone:     "test-hosted-zone",
+				HostedZoneRole: "test-hosted-zone-role",
+				LBType:         "",
+				EIPAllocations: &aws.EIPAllocations{
+					IngressNetworkLoadBalancer: []aws.EIPAllocation{"eipalloc-1234567890abcdefa"},
+				},
+			},
+			expected: `^test-path\.aws\.lbType: Required value: lbType NLB must be specified$`,
+		},
+		{
+			name:     "Valid EIP Allocations",
+			credMode: types.PassthroughCredentialsMode,
+			platform: &aws.Platform{
+				Region:         "us-east-1",
+				Subnets:        []string{"test-subnet"},
+				HostedZone:     "test-hosted-zone",
+				HostedZoneRole: "test-hosted-zone-role",
+				LBType:         configv1.NLB,
+				EIPAllocations: &aws.EIPAllocations{
+					IngressNetworkLoadBalancer: []aws.EIPAllocation{"eipalloc-1234567890abcdefa"},
+				},
+			},
+		},
+		{
+			name:     "Duplicate Allocation IDs",
+			credMode: types.PassthroughCredentialsMode,
+			platform: &aws.Platform{
+				Region:         "us-east-1",
+				Subnets:        []string{"test-subnet1", "test-subnet2"},
+				HostedZone:     "test-hosted-zone",
+				HostedZoneRole: "test-hosted-zone-role",
+				LBType:         configv1.NLB,
+				EIPAllocations: &aws.EIPAllocations{
+					IngressNetworkLoadBalancer: []aws.EIPAllocation{"eipalloc-1234567890abcdefa", "eipalloc-1234567890abcdefa"},
+				},
+			},
+			expected: `^test-path\.aws\.eipAllocations\.ingressNetworkLoadBalancer: Invalid value: "eipalloc-1234567890abcdefa": cannot have duplicate EIP Allocation IDs?`,
+		},
+		{
+			name:     "Too Many Allocation IDs",
+			credMode: types.PassthroughCredentialsMode,
+			platform: &aws.Platform{
+				Region:         "us-east-1",
+				Subnets:        []string{"test-subnet1", "test-subnet2"},
+				HostedZone:     "test-hosted-zone",
+				HostedZoneRole: "test-hosted-zone-role",
+				LBType:         configv1.NLB,
+				EIPAllocations: &aws.EIPAllocations{
+					IngressNetworkLoadBalancer: []aws.EIPAllocation{"eipalloc-0123456789abcdef0",
+						"eipalloc-0abcdef1234567891",
+						"eipalloc-0abcdef1234567892",
+						"eipalloc-0abcdef1234567893",
+						"eipalloc-0abcdef1234567894",
+						"eipalloc-0abcdef1234567895",
+						"eipalloc-0abcdef1234567896",
+						"eipalloc-0abcdef1234567897",
+						"eipalloc-0abcdef1234567898",
+						"eipalloc-0abcdef1234567899",
+						"eipalloc-0abcdef123456789a"},
+				},
+			},
+			expected: `^test-path\.aws\.eipAllocations\.ingressNetworkLoadBalancer: Too many: 11: must have at most 10 items?`,
+		},
+		{
+			name:     "Invalid Prefix",
+			credMode: types.PassthroughCredentialsMode,
+			platform: &aws.Platform{
+				Region:         "us-east-1",
+				Subnets:        []string{"test-subnet"},
+				HostedZone:     "test-hosted-zone",
+				HostedZoneRole: "test-hosted-zone-role",
+				LBType:         configv1.NLB,
+				EIPAllocations: &aws.EIPAllocations{
+					IngressNetworkLoadBalancer: []aws.EIPAllocation{"zipalloc-1234567890abcdefa"},
+				},
+			},
+			expected: `^test-path\.aws\.eipAllocations\.ingressNetworkLoadBalancer: Invalid value: "zipalloc-1234567890abcdefa": eipAllocations should start with 'eipalloc-'?`,
+		},
+		{
+			name:     "Invalid Characters",
+			credMode: types.PassthroughCredentialsMode,
+			platform: &aws.Platform{
+				Region:         "us-east-1",
+				Subnets:        []string{"test-subnet"},
+				HostedZone:     "test-hosted-zone",
+				HostedZoneRole: "test-hosted-zone-role",
+				LBType:         configv1.NLB,
+				EIPAllocations: &aws.EIPAllocations{
+					IngressNetworkLoadBalancer: []aws.EIPAllocation{"eipalloc-0123456789abcdezz"},
+				},
+			},
+			expected: `^test-path\.aws\.eipAllocations\.ingressNetworkLoadBalancer: Invalid value: "eipalloc-0123456789abcdezz": eipAllocations must be 'eipalloc-' followed by exactly 17 hexadecimal characters (0-9, a-f, A-F)?`,
+		},
+		{
+			name:     "Invalid Length (Too Short)",
+			credMode: types.PassthroughCredentialsMode,
+			platform: &aws.Platform{
+				Region:         "us-east-1",
+				Subnets:        []string{"test-subnet"},
+				HostedZone:     "test-hosted-zone",
+				HostedZoneRole: "test-hosted-zone-role",
+				LBType:         configv1.NLB,
+				EIPAllocations: &aws.EIPAllocations{
+					IngressNetworkLoadBalancer: []aws.EIPAllocation{"eipalloc-01234567"},
+				},
+			},
+			expected: `test-path\.aws\.eipAllocations\.ingressNetworkLoadBalancer: Invalid value: "eipalloc-01234567": invalid EIP allocation ID length`,
+		},
+		{
+			name:     "Invalid Length (Too Long)",
+			credMode: types.PassthroughCredentialsMode,
+			platform: &aws.Platform{
+				Region:         "us-east-1",
+				Subnets:        []string{"test-subnet"},
+				HostedZone:     "test-hosted-zone",
+				HostedZoneRole: "test-hosted-zone-role",
+				LBType:         configv1.NLB,
+				EIPAllocations: &aws.EIPAllocations{
+					IngressNetworkLoadBalancer: []aws.EIPAllocation{"eipalloc-0123456789abcdef012345"},
+				},
+			},
+			expected: `test-path\.aws\.eipAllocations\.ingressNetworkLoadBalancer: Invalid value: "eipalloc-0123456789abcdef012345": invalid EIP allocation ID length`,
 		},
 	}
 	for _, tc := range cases {
@@ -232,7 +376,7 @@ func TestValidatePlatform(t *testing.T) {
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {
-				assert.Regexp(t, tc.credMode, err)
+				assert.Regexp(t, tc.expected, err)
 			}
 		})
 	}
