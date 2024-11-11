@@ -1896,6 +1896,27 @@ func (StaticIPAMRoutes) SwaggerDoc() map[string]string {
 	return map_StaticIPAMRoutes
 }
 
+var map_OLM = map[string]string{
+	"":         "OLM provides information to configure an operator to manage the OLM controllers\n\nCompatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).",
+	"metadata": "metadata is the standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+	"spec":     "spec holds user settable values for configuration",
+	"status":   "status holds observed values from the cluster. They may not be overridden.",
+}
+
+func (OLM) SwaggerDoc() map[string]string {
+	return map_OLM
+}
+
+var map_OLMList = map[string]string{
+	"":         "OLMList is a collection of items\n\nCompatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).",
+	"metadata": "metadata is the standard list's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+	"items":    "Items contains the items",
+}
+
+func (OLMList) SwaggerDoc() map[string]string {
+	return map_OLMList
+}
+
 var map_OpenShiftAPIServer = map[string]string{
 	"":         "OpenShiftAPIServer provides information to configure an operator to manage openshift-apiserver.\n\nCompatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).",
 	"metadata": "metadata is the standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
