@@ -401,6 +401,10 @@ type Networking struct {
 	// +optional
 	ClusterNetworkMTU uint32 `json:"clusterNetworkMTU,omitempty"`
 
+	// OVNKubernetesConfig provides configuration for ovn-kubernetes as the default
+	// pod network when NetworkType is set to OVNKubernetes.
+	OVNKubernetesConfig *OVNKubernetesConfig `json:"ovnKubernetesConfig,omitempty"`
+
 	// Deprecated types, scheduled to be removed
 
 	// Deprecated way to configure an IP address pool for machines.
@@ -444,6 +448,29 @@ type ClusterNetworkEntry struct {
 	// This is the length in bits - so a 9 here will allocate a /23.
 	// +optional
 	DeprecatedHostSubnetLength int32 `json:"hostSubnetLength,omitempty"`
+}
+
+// OVNKubernetesConfig configures the ovn-kubernetes sdn plugin.
+type OVNKubernetesConfig struct {
+	// ipv4 allows users to configure IP settings for IPv4 connections. When omitted,
+	// this means no opinions and the default configuration is used. Check individual
+	// fields within ipv4 for details of default values.
+	// +optional
+	IPv4 *IPv4OVNKubernetesConfig `json:"ipv4,omitempty"`
+}
+
+// IPv4OVNKubernetesConfig is IPv4 configuration for the ovn-kubernetes sdn plugin.
+type IPv4OVNKubernetesConfig struct {
+	// internalJoinSubnet is a v4 subnet used internally by ovn-kubernetes in case the
+	// default one is being already used by something else. It must not overlap with
+	// any other subnet being used by OpenShift or by the node network. The size of the
+	// subnet must be larger than the number of nodes. The value cannot be changed
+	// after installation.
+	// The current default value is 100.64.0.0/16
+	// The subnet must be large enough to accommodate one IP per node in your cluster
+	// The value must be in proper IPV4 CIDR format
+	// +optional
+	InternalJoinSubnet *ipnet.IPNet `json:"internalJoinSubnet,omitempty"`
 }
 
 // Proxy defines the proxy settings for the cluster.
