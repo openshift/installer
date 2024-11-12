@@ -28,7 +28,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/defaults"
-	"github.com/openshift/installer/pkg/types/external"
+	external "github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -206,6 +206,9 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 			agentClusterInstall.Spec.ExternalPlatformSpec = &hiveext.ExternalPlatformSpec{
 				PlatformName: installConfig.Config.Platform.External.PlatformName,
 			}
+		}
+		if installConfig.Config.Platform.Name() == external.Name && installConfig.Config.Platform.External.PlatformName == external.ExternalPlatformNameOci {
+			agentClusterInstall.Spec.ExternalPlatformSpec.CloudControllerManager = external.CloudControllerManagerTypeExternal
 		}
 
 		if installConfig.Config.Platform.Name() == none.Name || installConfig.Config.Platform.Name() == external.Name {
