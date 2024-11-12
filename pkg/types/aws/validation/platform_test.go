@@ -171,6 +171,16 @@ func TestValidatePlatform(t *testing.T) {
 			expected: `^\Qtest-path.userTags[usage-user]: Invalid value: "cloud-team-rebase-bot[bot]": value contains invalid characters`,
 		},
 		{
+			name: "valid userTags, value with spaces",
+			platform: &aws.Platform{
+				Region: "us-east-1",
+				UserTags: map[string]string{
+					"test-key": "this test has spaces",
+				},
+				PropagateUserTag: true,
+			},
+		},
+		{
 			name: "valid userTags",
 			platform: &aws.Platform{
 				Region: "us-east-1",
