@@ -17,12 +17,11 @@ const (
 )
 
 func (o *ClusterUninstaller) listBackendServices(ctx context.Context, typeName string) ([]cloudResource, error) {
-	resources := o.getPendingItems(typeName)
-	if len(resources) > 0 || o.destroyedResources.Has(typeName) {
-		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", typeName)
-		return resources, nil
+	resources, err := o.listBackendServicesWithFilter(ctx, typeName, "items(name),nextPageToken", o.clusterIDFilter(), nil)
+	if err == nil {
+		o.filteredResources.Insert(typeName)
 	}
-	return o.listBackendServicesWithFilter(ctx, typeName, "items(name),nextPageToken", o.clusterIDFilter(), nil)
+	return resources, err
 }
 
 func backendServiceBelongsToInstanceGroup(item *compute.BackendService, igURLs sets.Set[string]) bool {
@@ -123,17 +122,27 @@ func (o *ClusterUninstaller) deleteBackendService(ctx context.Context, item clou
 // destroyBackendServices removes all backend services resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyBackendServices(ctx context.Context) error {
-	found, err := o.listBackendServices(ctx, globalBackendServiceResource)
-	if err != nil {
-		return err
-	}
-	items := o.insertPendingItems(globalBackendServiceResource, found)
+	items := []cloudResource{}
 
-	found, err = o.listBackendServices(ctx, regionBackendServiceResource)
-	if err != nil {
-		return err
+	if cachedResources, ok := o.findCachedResources(globalBackendServiceResource); !ok {
+		found, err := o.listBackendServices(ctx, globalBackendServiceResource)
+		if err != nil {
+			return err
+		}
+		items = o.insertPendingItems(globalBackendServiceResource, found)
+	} else {
+		items = append(items, cachedResources...)
 	}
-	items = append(items, o.insertPendingItems(regionBackendServiceResource, found)...)
+
+	if cachedResources, ok := o.findCachedResources(regionBackendServiceResource); !ok {
+		found, err := o.listBackendServices(ctx, regionBackendServiceResource)
+		if err != nil {
+			return err
+		}
+		items = append(items, o.insertPendingItems(regionBackendServiceResource, found)...)
+	} else {
+		items = append(items, cachedResources...)
+	}
 
 	for _, item := range items {
 		err := o.deleteBackendService(ctx, item)
@@ -145,13 +154,13 @@ func (o *ClusterUninstaller) destroyBackendServices(ctx context.Context) error {
 	if items = o.getPendingItems(globalBackendServiceResource); len(items) > 0 {
 		return fmt.Errorf("%d global backend service pending", len(items))
 	}
-	o.Logger.Warnf("Adding Destroyed Resource %s", globalBackendServiceResource)
+	o.Logger.Debugf("Adding Destroyed Resource %s", globalBackendServiceResource)
 	o.destroyedResources.Insert(globalBackendServiceResource)
 
 	if items = o.getPendingItems(regionBackendServiceResource); len(items) > 0 {
 		return fmt.Errorf("%d region backend service pending", len(items))
 	}
-	o.Logger.Warnf("Adding Destroyed Resource %s", regionBackendServiceResource)
+	o.Logger.Debugf("Adding Destroyed Resource %s", regionBackendServiceResource)
 	o.destroyedResources.Insert(regionBackendServiceResource)
 
 	return nil

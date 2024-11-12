@@ -16,12 +16,11 @@ const (
 )
 
 func (o *ClusterUninstaller) listAddresses(ctx context.Context, typeName string) ([]cloudResource, error) {
-	resources := o.getPendingItems(typeName)
-	if len(resources) > 0 || o.destroyedResources.Has(typeName) {
-		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", typeName)
-		return resources, nil
+	resources, err := o.listAddressesWithFilter(ctx, typeName, "items(name,region,addressType),nextPageToken", o.clusterIDFilter())
+	if err == nil {
+		o.filteredResources.Insert(typeName)
 	}
-	return o.listAddressesWithFilter(ctx, typeName, "items(name,region,addressType),nextPageToken", o.clusterIDFilter())
+	return resources, err
 }
 
 // listAddressesWithFilter lists addresses in the project that satisfy the filter criteria.
@@ -105,17 +104,27 @@ func (o *ClusterUninstaller) deleteAddress(ctx context.Context, item cloudResour
 // destroyAddresses removes all address resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyAddresses(ctx context.Context) error {
-	found, err := o.listAddresses(ctx, globalAddressResource)
-	if err != nil {
-		return err
-	}
-	items := o.insertPendingItems(globalAddressResource, found)
+	items := []cloudResource{}
 
-	found, err = o.listAddresses(ctx, regionalAddressResource)
-	if err != nil {
-		return err
+	if cachedResources, ok := o.findCachedResources(globalAddressResource); !ok {
+		found, err := o.listAddresses(ctx, globalAddressResource)
+		if err != nil {
+			return err
+		}
+		items = o.insertPendingItems(globalAddressResource, found)
+	} else {
+		items = append(items, cachedResources...)
 	}
-	items = append(items, o.insertPendingItems(regionalAddressResource, found)...)
+
+	if cachedResources, ok := o.findCachedResources(regionalAddressResource); !ok {
+		found, err := o.listAddresses(ctx, regionalAddressResource)
+		if err != nil {
+			return err
+		}
+		items = append(items, o.insertPendingItems(regionalAddressResource, found)...)
+	} else {
+		items = append(items, cachedResources...)
+	}
 
 	for _, item := range items {
 		err := o.deleteAddress(ctx, item)
@@ -127,13 +136,13 @@ func (o *ClusterUninstaller) destroyAddresses(ctx context.Context) error {
 	if items = o.getPendingItems(globalAddressResource); len(items) > 0 {
 		return fmt.Errorf("%d global addresses pending", len(items))
 	}
-	o.Logger.Warnf("Adding Destroyed Resource %s", globalAddressResource)
+	o.Logger.Debugf("Adding Destroyed Resource %s", globalAddressResource)
 	o.destroyedResources.Insert(globalAddressResource)
 
 	if items = o.getPendingItems(regionalAddressResource); len(items) > 0 {
-		return fmt.Errorf("%d region addresses pending", len(items))
+		return fmt.Errorf("%d regional addresses pending", len(items))
 	}
-	o.Logger.Warnf("Adding Destroyed Resource %s", regionalAddressResource)
+	o.Logger.Debugf("Adding Destroyed Resource %s", regionalAddressResource)
 	o.destroyedResources.Insert(regionalAddressResource)
 
 	return nil

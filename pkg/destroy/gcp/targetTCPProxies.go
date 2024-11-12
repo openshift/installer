@@ -14,12 +14,11 @@ const (
 )
 
 func (o *ClusterUninstaller) listTargetTCPProxies(ctx context.Context, typeName string) ([]cloudResource, error) {
-	resources := o.getPendingItems(typeName)
-	if len(resources) > 0 || o.destroyedResources.Has(typeName) {
-		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", typeName)
-		return resources, nil
+	resources, err := o.listTargetTCPProxiesWithFilter(ctx, typeName, "items(name),nextPageToken", o.clusterIDFilter())
+	if err == nil {
+		o.filteredResources.Insert(globalTargetTCPProxyResource)
 	}
-	return o.listTargetTCPProxiesWithFilter(ctx, typeName, "items(name),nextPageToken", o.clusterIDFilter())
+	return resources, err
 }
 
 // listTargetTCPProxiesWithFilter lists target TCP Proxies in the project that satisfy the filter criteria.
@@ -78,11 +77,17 @@ func (o *ClusterUninstaller) deleteTargetTCPProxy(ctx context.Context, item clou
 // destroyTargetTCPProxies removes all target tcp proxy resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyTargetTCPProxies(ctx context.Context) error {
-	found, err := o.listTargetTCPProxies(ctx, globalTargetTCPProxyResource)
-	if err != nil {
-		return err
+	items := []cloudResource{}
+
+	if cachedResources, ok := o.findCachedResources(globalTargetTCPProxyResource); !ok {
+		found, err := o.listTargetTCPProxies(ctx, globalTargetTCPProxyResource)
+		if err != nil {
+			return err
+		}
+		items = o.insertPendingItems(globalTargetTCPProxyResource, found)
+	} else {
+		items = append(items, cachedResources...)
 	}
-	items := o.insertPendingItems(globalTargetTCPProxyResource, found)
 
 	for _, item := range items {
 		err := o.deleteTargetTCPProxy(ctx, item)
@@ -94,7 +99,7 @@ func (o *ClusterUninstaller) destroyTargetTCPProxies(ctx context.Context) error 
 	if items = o.getPendingItems(globalTargetTCPProxyResource); len(items) > 0 {
 		return fmt.Errorf("%d global target tcp proxy pending", len(items))
 	}
-	o.Logger.Warnf("Adding Destroyed Resource %s", globalTargetTCPProxyResource)
+	o.Logger.Debugf("Adding Destroyed Resource %s", globalTargetTCPProxyResource)
 	o.destroyedResources.Insert(globalTargetTCPProxyResource)
 
 	return nil

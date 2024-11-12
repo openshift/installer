@@ -20,12 +20,11 @@ const (
 )
 
 func (o *ClusterUninstaller) listBuckets(ctx context.Context) ([]cloudResource, error) {
-	resources := o.getPendingItems(bucketResourceName)
-	if len(resources) > 0 || o.destroyedResources.Has(bucketResourceName) {
-		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", bucketResourceName)
-		return resources, nil
+	resources, err := o.listBucketsWithFilter(ctx, "items(name),nextPageToken", o.ClusterID+"-", nil)
+	if err == nil {
+		o.filteredResources.Insert(bucketResourceName)
 	}
-	return o.listBucketsWithFilter(ctx, "items(name),nextPageToken", o.ClusterID+"-", nil)
+	return resources, err
 }
 
 // listBucketsWithFilter lists buckets in the project that satisfy the filter criteria.
@@ -77,12 +76,29 @@ func (o *ClusterUninstaller) deleteBucket(ctx context.Context, item cloudResourc
 // destroyBuckets finds all gcs buckets that have a name prefixed
 // with the cluster's infra ID. It then removes all the objects in each bucket and deletes it.
 func (o *ClusterUninstaller) destroyBuckets(ctx context.Context) error {
-	found, err := o.listBuckets(ctx)
-	if err != nil {
-		return err
+	items := []cloudResource{}
+	if cachedResources, ok := o.findCachedResources(bucketResourceName); !ok {
+		found, err := o.listBuckets(ctx)
+		if err != nil {
+			return err
+		}
+		items = o.insertPendingItems(bucketResourceName, found)
+	} else {
+		items = append(items, cachedResources...)
 	}
-	items := o.insertPendingItems(bucketResourceName, found)
+
 	for _, item := range items {
+		foundObjects := []cloudResource{}
+		if cachedResources, ok := o.findCachedResources(bucketObjectResourceName); !ok {
+			found, err := o.listBucketObjects(ctx, item)
+			if err != nil {
+				return err
+			}
+			foundObjects = o.insertPendingItems(bucketObjectResourceName, found)
+		} else {
+			foundObjects = append(foundObjects, cachedResources...)
+		}
+
 		foundObjects, err := o.listBucketObjects(ctx, item)
 		if err != nil {
 			return err
@@ -102,7 +118,7 @@ func (o *ClusterUninstaller) destroyBuckets(ctx context.Context) error {
 	if items = o.getPendingItems(bucketResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
-	o.Logger.Warnf("Adding Destroyed Resource %s", bucketResourceName)
+	o.Logger.Debugf("Adding Destroyed Resource %s", bucketResourceName)
 	o.destroyedResources.Insert(bucketResourceName)
 	return nil
 }

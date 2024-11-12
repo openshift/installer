@@ -15,12 +15,11 @@ const (
 )
 
 func (o *ClusterUninstaller) listHTTPHealthChecks(ctx context.Context) ([]cloudResource, error) {
-	resources := o.getPendingItems(httpHealthCheckResourceName)
-	if len(resources) > 0 || o.destroyedResources.Has(httpHealthCheckResourceName) {
-		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", httpHealthCheckResourceName)
-		return resources, nil
+	resources, err := o.listHTTPHealthChecksWithFilter(ctx, "items(name),nextPageToken", o.clusterIDFilter(), nil)
+	if err == nil {
+		o.filteredResources.Insert(httpHealthCheckResourceName)
 	}
-	return o.listHTTPHealthChecksWithFilter(ctx, "items(name),nextPageToken", o.clusterIDFilter(), nil)
+	return resources, err
 }
 
 // listHTTPHealthChecksWithFilter lists HTTP Health Checks in the project that satisfy the filter criteria.
@@ -86,11 +85,18 @@ func (o *ClusterUninstaller) deleteHTTPHealthCheck(ctx context.Context, item clo
 // destroyHTTPHealthChecks removes all HTTP health check resources that have a name prefixed
 // with the cluster's infra ID
 func (o *ClusterUninstaller) destroyHTTPHealthChecks(ctx context.Context) error {
-	found, err := o.listHTTPHealthChecks(ctx)
-	if err != nil {
-		return err
+	items := []cloudResource{}
+
+	if cachedResources, ok := o.findCachedResources(httpHealthCheckResourceName); !ok {
+		found, err := o.listHTTPHealthChecks(ctx)
+		if err != nil {
+			return err
+		}
+		items = o.insertPendingItems(httpHealthCheckResourceName, found)
+	} else {
+		items = append(items, cachedResources...)
 	}
-	items := o.insertPendingItems(httpHealthCheckResourceName, found)
+
 	for _, item := range items {
 		err := o.deleteHTTPHealthCheck(ctx, item)
 		if err != nil {

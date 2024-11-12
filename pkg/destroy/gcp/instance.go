@@ -12,6 +12,11 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
+const (
+	instanceResourceName     = "instance"
+	stopInstanceResourceName = "stopinstance"
+)
+
 // getInstanceNameAndZone extracts an instance and zone name from an instance URL in the form:
 // https://www.googleapis.com/compute/v1/projects/project-id/zones/us-central1-a/instances/instance-name
 // After splitting the service's base path with the work `/projects/`, you get:
@@ -36,6 +41,7 @@ func (o *ClusterUninstaller) listInstances(ctx context.Context) ([]cloudResource
 	if err != nil {
 		return nil, err
 	}
+	o.filteredResources.Insert(instanceResourceName)
 	return append(byName, byLabel...), nil
 }
 
@@ -62,7 +68,7 @@ func (o *ClusterUninstaller) listInstancesWithFilter(ctx context.Context, fields
 						key:      fmt.Sprintf("%s/%s", zoneName, item.Name),
 						name:     item.Name,
 						status:   item.Status,
-						typeName: "instance",
+						typeName: instanceResourceName,
 						zone:     zoneName,
 						quota: []gcp.QuotaUsage{{
 							Metric: &gcp.Metric{
@@ -110,11 +116,17 @@ func (o *ClusterUninstaller) deleteInstance(ctx context.Context, item cloudResou
 // destroyInstances searches for instances across all zones that have a name that starts with
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyInstances(ctx context.Context) error {
-	found, err := o.listInstances(ctx)
-	if err != nil {
-		return err
+	items := []cloudResource{}
+	if cachedResources, ok := o.findCachedResources(instanceResourceName); !ok {
+		found, err := o.listInstances(ctx)
+		if err != nil {
+			return err
+		}
+		items = o.insertPendingItems(instanceResourceName, found)
+	} else {
+		items = append(items, cachedResources...)
 	}
-	items := o.insertPendingItems("instance", found)
+
 	errs := []error{}
 	for _, item := range items {
 		err := o.deleteInstance(ctx, item)
@@ -122,8 +134,13 @@ func (o *ClusterUninstaller) destroyInstances(ctx context.Context) error {
 			errs = append(errs, err)
 		}
 	}
-	items = o.getPendingItems("instance")
-	return aggregateError(errs, len(items))
+
+	if items = o.getPendingItems(instanceResourceName); len(items) > 0 {
+		return errors.Errorf("%d items pending", len(items))
+	}
+	o.Logger.Debugf("Adding Destroyed Resource %s", instanceResourceName)
+	o.destroyedResources.Insert(instanceResourceName)
+	return nil
 }
 
 func (o *ClusterUninstaller) stopInstance(ctx context.Context, item cloudResource) error {
@@ -132,21 +149,21 @@ func (o *ClusterUninstaller) stopInstance(ctx context.Context, item cloudResourc
 	defer cancel()
 	op, err := o.computeSvc.Instances.
 		Stop(o.ProjectID, item.zone, item.name).
-		RequestId(o.requestID("stopinstance", item.zone, item.name)).
+		RequestId(o.requestID(stopInstanceResourceName, item.zone, item.name)).
 		DiscardLocalSsd(true).
 		Context(ctx).
 		Do()
 	if err != nil && !isNoOp(err) {
-		o.resetRequestID("stopinstance", item.zone, item.name)
+		o.resetRequestID(stopInstanceResourceName, item.zone, item.name)
 		return errors.Wrapf(err, "failed to stop instance %s in zone %s", item.name, item.zone)
 	}
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID("stopinstance", item.zone, item.name)
+		o.resetRequestID(stopInstanceResourceName, item.zone, item.name)
 		return errors.Errorf("failed to stop instance %s in zone %s with error: %s", item.name, item.zone, operationErrorMessage(op))
 	}
 	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
-		o.resetRequestID("stopinstance", item.name)
-		o.deletePendingItems("stopinstance", []cloudResource{item})
+		o.resetRequestID(stopInstanceResourceName, item.name)
+		o.deletePendingItems(stopInstanceResourceName, []cloudResource{item})
 		o.Logger.Infof("Stopped instance %s", item.name)
 	}
 	return nil
@@ -155,26 +172,35 @@ func (o *ClusterUninstaller) stopInstance(ctx context.Context, item cloudResourc
 // stopComputeInstances searches for instances across all zones that have a name that starts with
 // the infra ID prefix and are not yet stopped. It then stops each instance found.
 func (o *ClusterUninstaller) stopInstances(ctx context.Context) error {
-	found, err := o.listInstances(ctx)
-	if err != nil {
-		return err
-	}
-	for _, item := range found {
-		if item.status != "TERMINATED" {
-			// we record instance quota when we delete the instance, not when we terminate it
-			item.quota = nil
-			o.insertPendingItems("stopinstance", []cloudResource{item})
+	items, ok := o.findCachedResources(instanceResourceName)
+	if !ok {
+		found, err := o.listInstances(ctx)
+		if err != nil {
+			return err
+		}
+		for _, item := range found {
+			if item.status != "TERMINATED" {
+				// we record instance quota when we delete the instance, not when we terminate it
+				item.quota = nil
+				o.insertPendingItems(stopInstanceResourceName, []cloudResource{item})
+			}
+			o.insertPendingItems(instanceResourceName, []cloudResource{item})
 		}
 	}
-	items := o.getPendingItems("stopinstance")
+
+	if items == nil {
+		items = o.getPendingItems(stopInstanceResourceName)
+	}
 	for _, item := range items {
 		err := o.stopInstance(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	if items = o.getPendingItems("stopinstance"); len(items) > 0 {
+	if items = o.getPendingItems(stopInstanceResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
+	o.Logger.Debugf("Adding Destroyed Resource %s", stopInstanceResourceName)
+	o.destroyedResources.Insert(stopInstanceResourceName)
 	return nil
 }

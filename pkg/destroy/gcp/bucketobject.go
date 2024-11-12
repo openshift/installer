@@ -8,12 +8,6 @@ import (
 )
 
 func (o *ClusterUninstaller) listBucketObjects(ctx context.Context, bucket cloudResource) ([]cloudResource, error) {
-	resources := o.getPendingItems(bucketObjectResourceName)
-	if len(resources) > 0 || o.destroyedResources.Has(bucketObjectResourceName) {
-		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", bucketObjectResourceName)
-		return resources, nil
-	}
-
 	o.Logger.Debugf("Listing objects for storage bucket %s", bucket.name)
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
@@ -33,6 +27,7 @@ func (o *ClusterUninstaller) listBucketObjects(ctx context.Context, bucket cloud
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to fetch objects for bucket %s", bucket.name)
 	}
+	o.filteredResources.Insert(bucketObjectResourceName)
 	return result, nil
 }
 

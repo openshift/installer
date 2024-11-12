@@ -15,12 +15,11 @@ const (
 )
 
 func (o *ClusterUninstaller) listRouters(ctx context.Context) ([]cloudResource, error) {
-	resources := o.getPendingItems(routerResourceName)
-	if len(resources) > 0 || o.destroyedResources.Has(routerResourceName) {
-		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", routerResourceName)
-		return resources, nil
+	resources, err := o.listRoutersWithFilter(ctx, "items(name),nextPageToken", o.clusterIDFilter(), nil)
+	if err == nil {
+		o.filteredResources.Insert(routerResourceName)
 	}
-	return o.listRoutersWithFilter(ctx, "items(name),nextPageToken", o.clusterIDFilter(), nil)
+	return resources, err
 }
 
 // listRoutersWithFilter lists routers in the project that satisfy the filter criteria.
@@ -86,11 +85,17 @@ func (o *ClusterUninstaller) deleteRouter(ctx context.Context, item cloudResourc
 // destroyRouters removes all router resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyRouters(ctx context.Context) error {
-	found, err := o.listRouters(ctx)
-	if err != nil {
-		return err
+	items := []cloudResource{}
+	if cachedResources, ok := o.findCachedResources(routerResourceName); !ok {
+		found, err := o.listRouters(ctx)
+		if err != nil {
+			return err
+		}
+		items = o.insertPendingItems(routerResourceName, found)
+	} else {
+		items = append(items, cachedResources...)
 	}
-	items := o.insertPendingItems(routerResourceName, found)
+
 	for _, item := range items {
 		err := o.deleteRouter(ctx, item)
 		if err != nil {
@@ -100,7 +105,7 @@ func (o *ClusterUninstaller) destroyRouters(ctx context.Context) error {
 	if items = o.getPendingItems(routerResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
-	o.Logger.Warnf("Adding Destroyed Resource %s", subnetResourceName)
-	o.destroyedResources.Insert(subnetResourceName)
+	o.Logger.Debugf("Adding Destroyed Resource %s", routerResourceName)
+	o.destroyedResources.Insert(routerResourceName)
 	return nil
 }

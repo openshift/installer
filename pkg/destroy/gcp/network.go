@@ -13,12 +13,11 @@ const (
 )
 
 func (o *ClusterUninstaller) listNetworks(ctx context.Context) ([]cloudResource, error) {
-	resources := o.getPendingItems(networkResourceName)
-	if len(resources) > 0 || o.destroyedResources.Has(networkResourceName) {
-		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", networkResourceName)
-		return resources, nil
+	resources, err := o.listNetworksWithFilter(ctx, "items(name,selfLink),nextPageToken", o.clusterIDFilter(), nil)
+	if err == nil {
+		o.filteredResources.Insert(networkResourceName)
 	}
-	return o.listNetworksWithFilter(ctx, "items(name,selfLink),nextPageToken", o.clusterIDFilter(), nil)
+	return resources, err
 }
 
 // listNetworksWithFilter lists addresses in the project that satisfy the filter criteria.
@@ -78,11 +77,18 @@ func (o *ClusterUninstaller) deleteNetwork(ctx context.Context, item cloudResour
 // destroyNetworks removes all vpc network resources prefixed
 // with the cluster's infra ID, and deletes all of the routes.
 func (o *ClusterUninstaller) destroyNetworks(ctx context.Context) error {
-	found, err := o.listNetworks(ctx)
-	if err != nil {
-		return err
+	items := []cloudResource{}
+
+	if cachedResources, ok := o.findCachedResources(networkResourceName); !ok {
+		found, err := o.listNetworks(ctx)
+		if err != nil {
+			return err
+		}
+		items = o.insertPendingItems(networkResourceName, found)
+	} else {
+		items = append(items, cachedResources...)
 	}
-	items := o.insertPendingItems(networkResourceName, found)
+
 	for _, item := range items {
 		foundRoutes, err := o.listNetworkRoutes(ctx, item.url)
 		if err != nil {
@@ -104,7 +110,7 @@ func (o *ClusterUninstaller) destroyNetworks(ctx context.Context) error {
 	if items = o.getPendingItems(networkResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
-	o.Logger.Warnf("Adding Destroyed Resource %s", networkResourceName)
+	o.Logger.Debugf("Adding Destroyed Resource %s", networkResourceName)
 	o.destroyedResources.Insert(networkResourceName)
 	return nil
 }

@@ -15,12 +15,11 @@ const (
 )
 
 func (o *ClusterUninstaller) listImages(ctx context.Context) ([]cloudResource, error) {
-	resources := o.getPendingItems(imageResourceName)
-	if len(resources) > 0 || o.destroyedResources.Has(imageResourceName) {
-		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", imageResourceName)
-		return resources, nil
+	resources, err := o.listImagesWithFilter(ctx, "items(name),nextPageToken", o.clusterIDFilter(), nil)
+	if err == nil {
+		o.filteredResources.Insert(imageResourceName)
 	}
-	return o.listImagesWithFilter(ctx, "items(name),nextPageToken", o.clusterIDFilter(), nil)
+	return resources, err
 }
 
 // listImagesWithFilter lists addresses in the project that satisfy the filter criteria.
@@ -86,11 +85,18 @@ func (o *ClusterUninstaller) deleteImage(ctx context.Context, item cloudResource
 // destroyImages removes all image resources with a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyImages(ctx context.Context) error {
-	found, err := o.listImages(ctx)
-	if err != nil {
-		return err
+	items := []cloudResource{}
+
+	if cachedResources, ok := o.findCachedResources(imageResourceName); !ok {
+		found, err := o.listImages(ctx)
+		if err != nil {
+			return err
+		}
+		items = o.insertPendingItems(imageResourceName, found)
+	} else {
+		items = append(items, cachedResources...)
 	}
-	items := o.insertPendingItems(imageResourceName, found)
+
 	for _, item := range items {
 		err := o.deleteImage(ctx, item)
 		if err != nil {

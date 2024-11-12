@@ -35,20 +35,12 @@ var (
 	longTimeout    = 10 * time.Minute
 )
 
-type resourceScope string
-
 const (
 	// capgProviderOwnedLabelFmt is the format string for the label
 	// used for resources created by the Cluster API GCP provider.
 	capgProviderOwnedLabelFmt = "capg-cluster-%s"
 
-	// gcpGlobalResource is an identifier to indicate that the resource(s)
-	// that are being deleted are globally scoped.
-	gcpGlobalResource resourceScope = "global"
-
-	// gcpRegionalResource is an identifier to indicate that the resource(s)
-	// that are being deleted are regionally scoped.
-	gcpRegionalResource resourceScope = "regional"
+	defaultClusterFilter = "default"
 )
 
 // ClusterUninstaller holds the various options for the cluster we want to delete
@@ -81,6 +73,7 @@ type ClusterUninstaller struct {
 	pendingItemTracker
 
 	destroyedResources sets.Set[string]
+	filteredResources  sets.Set[string]
 }
 
 // New returns a GCP destroyer from ClusterMetadata.
@@ -95,6 +88,8 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		cloudControllerUID: gcptypes.CloudControllerUID(metadata.InfraID),
 		requestIDTracker:   newRequestIDTracker(),
 		pendingItemTracker: newPendingItemTracker(),
+		destroyedResources: sets.Set[string]{},
+		filteredResources:  sets.Set[string]{},
 	}, nil
 }
 
@@ -157,8 +152,6 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		return nil, fmt.Errorf("failed to create filestore service: %w", err)
 	}
 
-	o.destroyedResources = sets.Set[string]{}
-
 	err = wait.PollImmediateInfinite(
 		time.Second*10,
 		o.destroyCluster,
@@ -173,33 +166,34 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 
 func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 	stagedFuncs := [][]struct {
-		name    string
-		execute func(ctx context.Context) error
+		name      string
+		execute   func(ctx context.Context) error
+		resources []string
 	}{{
-		{name: "Stop instances", execute: o.stopInstances},
+		{name: "Stop instances", execute: o.stopInstances, resources: []string{stopInstanceResourceName}},
 	}, {
-		{name: "Cloud controller resources", execute: o.discoverCloudControllerResources},
+		{name: "Cloud controller resources", execute: o.discoverCloudControllerResources, resources: []string{}},
 	}, {
-		{name: "Instances", execute: o.destroyInstances},
-		{name: "Disks", execute: o.destroyDisks},
-		{name: "Service accounts", execute: o.destroyServiceAccounts},
-		{name: "Images", execute: o.destroyImages},
-		{name: "DNS", execute: o.destroyDNS},
-		{name: "Buckets", execute: o.destroyBuckets},
-		{name: "Routes", execute: o.destroyRoutes},
-		{name: "Firewalls", execute: o.destroyFirewalls},
-		{name: "Addresses", execute: o.destroyAddresses},
-		{name: "Forwarding rules", execute: o.destroyForwardingRules},
-		{name: "Target Pools", execute: o.destroyTargetPools},
-		{name: "Instance groups", execute: o.destroyInstanceGroups},
-		{name: "Target TCP Proxies", execute: o.destroyTargetTCPProxies},
-		{name: "Backend services", execute: o.destroyBackendServices},
-		{name: "Health checks", execute: o.destroyHealthChecks},
-		{name: "HTTP Health checks", execute: o.destroyHTTPHealthChecks},
-		{name: "Routers", execute: o.destroyRouters},
-		{name: "Subnetworks", execute: o.destroySubnetworks},
-		{name: "Networks", execute: o.destroyNetworks},
-		{name: "Filestores", execute: o.destroyFilestores},
+		{name: "Instances", execute: o.destroyInstances, resources: []string{instanceResourceName}},
+		{name: "Disks", execute: o.destroyDisks, resources: []string{diskResourceName}},
+		{name: "Service accounts", execute: o.destroyServiceAccounts, resources: []string{}},
+		{name: "Images", execute: o.destroyImages, resources: []string{imageResourceName}},
+		{name: "DNS", execute: o.destroyDNS, resources: []string{}},
+		{name: "Buckets", execute: o.destroyBuckets, resources: []string{bucketResourceName, bucketObjectResourceName}},
+		{name: "Routes", execute: o.destroyRoutes, resources: []string{}},
+		{name: "Firewalls", execute: o.destroyFirewalls, resources: []string{firewallResourceName}},
+		{name: "Addresses", execute: o.destroyAddresses, resources: []string{globalAddressResource, regionalAddressResource}},
+		{name: "Forwarding rules", execute: o.destroyForwardingRules, resources: []string{globalForwardingRuleResourceName, regionForwardingRuleResourceName}},
+		{name: "Target Pools", execute: o.destroyTargetPools, resources: []string{targetPoolResourceName}},
+		{name: "Instance groups", execute: o.destroyInstanceGroups, resources: []string{instanceGroupResourceName}},
+		{name: "Target TCP Proxies", execute: o.destroyTargetTCPProxies, resources: []string{globalTargetTCPProxyResource}},
+		{name: "Backend services", execute: o.destroyBackendServices, resources: []string{globalBackendServiceResource, regionBackendServiceResource}},
+		{name: "Health checks", execute: o.destroyHealthChecks, resources: []string{globalHealthCheckResource, regionalHealthCheckResource}},
+		{name: "HTTP Health checks", execute: o.destroyHTTPHealthChecks, resources: []string{httpHealthCheckResourceName}},
+		{name: "Routers", execute: o.destroyRouters, resources: []string{routerResourceName}},
+		{name: "Subnetworks", execute: o.destroySubnetworks, resources: []string{subnetResourceName}},
+		{name: "Networks", execute: o.destroyNetworks, resources: []string{networkResourceName}},
+		{name: "Filestores", execute: o.destroyFilestores, resources: []string{}},
 	}}
 
 	// create the main Context, so all stages can accept and make context children
@@ -209,10 +203,21 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 	for _, stage := range stagedFuncs {
 		if done {
 			for _, f := range stage {
-				err := f.execute(ctx)
-				if err != nil {
-					o.Logger.Debugf("%s: %v", f.name, err)
-					done = false
+				shouldExecute := true
+				for _, resourceName := range f.resources {
+					o.Logger.Warnf("searching for %s -> %t", resourceName, o.destroyedResources.Has(resourceName))
+					shouldExecute = shouldExecute && !o.destroyedResources.Has(resourceName)
+					o.Logger.Warnf("should execute = %t", shouldExecute)
+				}
+
+				if shouldExecute {
+					err := f.execute(ctx)
+					if err != nil {
+						o.Logger.Debugf("%s: %v", f.name, err)
+						done = false
+					}
+				} else {
+					o.Logger.Warnf("Skipping execution of %s", f.name)
 				}
 			}
 		}
@@ -392,6 +397,18 @@ func (t *pendingItemTracker) deletePendingItems(itemType string, items []cloudRe
 	lastFound = lastFound.delete(items...)
 	t.pendingItems[itemType] = lastFound
 	return lastFound.list()
+}
+
+func (o *ClusterUninstaller) findCachedResources(resourceName string) ([]cloudResource, bool) {
+	if o.filteredResources.Has(resourceName) {
+		resources := o.getPendingItems(resourceName)
+		if len(resources) > 0 || o.destroyedResources.Has(resourceName) {
+			o.Logger.Debugf("found cached %s cloud resources", resourceName)
+			return resources, true
+		}
+	}
+
+	return nil, false
 }
 
 func isErrorStatus(code int64) bool {

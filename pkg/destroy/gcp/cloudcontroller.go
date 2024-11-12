@@ -66,18 +66,18 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 	loadBalancerNameFilter := fmt.Sprintf("name eq \"%s\"", loadBalancerName)
 
 	// Discover associated addresses: loadBalancerName
-	found, err := o.listAddressesWithFilter(ctx, "regionaddress", "items(name),nextPageToken", loadBalancerNameFilter)
+	found, err := o.listAddressesWithFilter(ctx, regionalAddressResource, "items(name),nextPageToken", loadBalancerNameFilter)
 	if err != nil {
 		return err
 	}
-	o.insertPendingItems("address", found)
+	o.insertPendingItems(regionalAddressResource, found)
 
 	// Discover associated firewall rules: loadBalancerName
 	found, err = o.listFirewallsWithFilter(ctx, "items(name),nextPageToken", loadBalancerNameFilter, nil)
 	if err != nil {
 		return err
 	}
-	o.insertPendingItems("firewall", found)
+	o.insertPendingItems(firewallResourceName, found)
 
 	// Discover associated firewall rules: loadBalancerName-hc
 	filter := fmt.Sprintf("name eq \"%s-hc\"", loadBalancerName)
@@ -85,7 +85,7 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 	if err != nil {
 		return err
 	}
-	o.insertPendingItems("firewall", found)
+	o.insertPendingItems(firewallResourceName, found)
 
 	// Discover associated firewall rules: k8s-fw-loadBalancerName
 	filter = fmt.Sprintf("name eq \"k8s-fw-%s\"", loadBalancerName)
@@ -93,7 +93,7 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 	if err != nil {
 		return err
 	}
-	o.insertPendingItems("firewall", found)
+	o.insertPendingItems(firewallResourceName, found)
 
 	// Discover associated firewall rules: k8s-loadBalancerName-http-hc
 	filter = fmt.Sprintf("name eq \"k8s-%s-http-hc\"", loadBalancerName)
@@ -101,14 +101,14 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 	if err != nil {
 		return err
 	}
-	o.insertPendingItems("firewall", found)
+	o.insertPendingItems(firewallResourceName, found)
 
 	// Discover associated forwarding rules: loadBalancerName
-	found, err = o.listForwardingRulesWithFilter(ctx, "items(name),nextPageToken", loadBalancerNameFilter, nil, gcpRegionalResource)
+	found, err = o.listForwardingRulesWithFilter(ctx, regionForwardingRuleResourceName, "items(name),nextPageToken", loadBalancerNameFilter)
 	if err != nil {
 		return err
 	}
-	o.insertPendingItems("forwardingrule", found)
+	o.insertPendingItems(regionForwardingRuleResourceName, found)
 
 	// Discover associated target tcp proxies: loadBalancerName
 	found, err = o.listTargetTCPProxiesWithFilter(ctx, globalTargetTCPProxyResource, "items(name),nextPageToken", loadBalancerNameFilter)
@@ -118,18 +118,18 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 	o.insertPendingItems(globalTargetTCPProxyResource, found)
 
 	// Discover associated health checks: loadBalancerName
-	found, err = o.listHealthChecksWithFilter(ctx, "healthcheck", "items(name),nextPageToken", loadBalancerNameFilter, o.healthCheckList)
+	found, err = o.listHealthChecksWithFilter(ctx, globalHealthCheckResource, "items(name),nextPageToken", loadBalancerNameFilter, o.healthCheckList)
 	if err != nil {
 		return err
 	}
-	o.insertPendingItems("healthcheck", found)
+	o.insertPendingItems(globalHealthCheckResource, found)
 
 	// Discover associated http health checks: loadBalancerName
 	found, err = o.listHTTPHealthChecksWithFilter(ctx, "items(name),nextPageToken", loadBalancerNameFilter, nil)
 	if err != nil {
 		return err
 	}
-	o.insertPendingItems("httphealthcheck", found)
+	o.insertPendingItems(httpHealthCheckResourceName, found)
 
 	return nil
 }
@@ -165,9 +165,9 @@ func (o *ClusterUninstaller) discoverCloudControllerResources(ctx context.Contex
 				errs = append(errs, err)
 			}
 		}
-		o.insertPendingItems("backendservice", backends)
+		o.insertPendingItems(regionBackendServiceResource, backends)
 	}
-	o.insertPendingItems("instancegroup", instanceGroups)
+	o.insertPendingItems(instanceGroupResourceName, instanceGroups)
 
 	// Get a list of known cluster instances
 	instances, err := o.listInstances(ctx)
@@ -187,24 +187,24 @@ func (o *ClusterUninstaller) discoverCloudControllerResources(ctx context.Contex
 			errs = append(errs, err)
 		}
 	}
-	o.insertPendingItems("targetpool", pools)
+	o.insertPendingItems(targetPoolResourceName, pools)
 
 	// cloudControllerUID related items
 	if len(o.cloudControllerUID) > 0 {
 		// Discover Cloud Controller health checks: k8s-cloudControllerUID-node
 		filter := fmt.Sprintf("name eq \"k8s-%s-node\"", o.cloudControllerUID)
-		found, err := o.listHealthChecksWithFilter(ctx, "healthcheck", "items(name),nextPageToken", filter, o.healthCheckList)
+		found, err := o.listHealthChecksWithFilter(ctx, globalHealthCheckResource, "items(name),nextPageToken", filter, o.healthCheckList)
 		if err != nil {
 			return err
 		}
-		o.insertPendingItems("healthcheck", found)
+		o.insertPendingItems(globalHealthCheckResource, found)
 
 		// Discover Cloud Controller http health checks: k8s-cloudControllerUID-node
 		found, err = o.listHTTPHealthChecksWithFilter(ctx, "items(name),nextPageToken", filter, nil)
 		if err != nil {
 			return err
 		}
-		o.insertPendingItems("httphealthcheck", found)
+		o.insertPendingItems(httpHealthCheckResourceName, found)
 
 		// Discover Cloud Controller firewall rules: k8s-cloudControllerUID-node-hc, k8s-cloudControllerUID-node-http-hc
 		filter = fmt.Sprintf("name eq \"k8s-%s-node-hc\"", o.cloudControllerUID)
@@ -212,14 +212,14 @@ func (o *ClusterUninstaller) discoverCloudControllerResources(ctx context.Contex
 		if err != nil {
 			return err
 		}
-		o.insertPendingItems("firewall", found)
+		o.insertPendingItems(firewallResourceName, found)
 
 		filter = fmt.Sprintf("name eq \"k8s-%s-node-http-hc\"", o.cloudControllerUID)
 		found, err = o.listFirewallsWithFilter(ctx, "items(name),nextPageToken", filter, nil)
 		if err != nil {
 			return err
 		}
-		o.insertPendingItems("firewall", found)
+		o.insertPendingItems(firewallResourceName, found)
 	}
 
 	return aggregateError(errs, 0)

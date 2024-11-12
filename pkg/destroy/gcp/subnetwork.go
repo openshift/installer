@@ -15,12 +15,11 @@ const (
 )
 
 func (o *ClusterUninstaller) listSubnetworks(ctx context.Context) ([]cloudResource, error) {
-	resources := o.getPendingItems(subnetResourceName)
-	if len(resources) > 0 || o.destroyedResources.Has(subnetResourceName) {
-		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", subnetResourceName)
-		return resources, nil
+	resources, err := o.listSubnetworksWithFilter(ctx, "items(name,network),nextPageToken", o.clusterIDFilter(), nil)
+	if err == nil {
+		o.filteredResources.Insert(subnetResourceName)
 	}
-	return o.listSubnetworksWithFilter(ctx, "items(name,network),nextPageToken", o.clusterIDFilter(), nil)
+	return resources, err
 }
 
 // listSubnetworksWithFilter lists subnetworks in the project that satisfy the filter criteria.
@@ -95,11 +94,17 @@ func (o *ClusterUninstaller) deleteSubnetwork(ctx context.Context, item cloudRes
 // destroySubNetworks removes all subnetwork resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroySubnetworks(ctx context.Context) error {
-	found, err := o.listSubnetworks(ctx)
-	if err != nil {
-		return err
+	items := []cloudResource{}
+	if cachedResources, ok := o.findCachedResources(subnetResourceName); !ok {
+		found, err := o.listSubnetworks(ctx)
+		if err != nil {
+			return err
+		}
+		items = o.insertPendingItems(subnetResourceName, found)
+	} else {
+		items = append(items, cachedResources...)
 	}
-	items := o.insertPendingItems(subnetResourceName, found)
+
 	for _, item := range items {
 		err := o.deleteSubnetwork(ctx, item)
 		if err != nil {
@@ -109,7 +114,7 @@ func (o *ClusterUninstaller) destroySubnetworks(ctx context.Context) error {
 	if items = o.getPendingItems(subnetResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
-	o.Logger.Warnf("Adding Destroyed Resource %s", subnetResourceName)
+	o.Logger.Debugf("Adding Destroyed Resource %s", subnetResourceName)
 	o.destroyedResources.Insert(subnetResourceName)
 	return nil
 }

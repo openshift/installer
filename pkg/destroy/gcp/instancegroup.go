@@ -16,12 +16,11 @@ const (
 )
 
 func (o *ClusterUninstaller) listInstanceGroups(ctx context.Context) ([]cloudResource, error) {
-	resources := o.getPendingItems(instanceGroupResourceName)
-	if len(resources) > 0 || o.destroyedResources.Has(instanceGroupResourceName) {
-		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", instanceGroupResourceName)
-		return resources, nil
+	resources, err := o.listInstanceGroupsWithFilter(ctx, "items/*/instanceGroups(name,selfLink,zone),nextPageToken", o.clusterIDFilter(), nil)
+	if err == nil {
+		o.filteredResources.Insert(instanceGroupResourceName)
 	}
-	return o.listInstanceGroupsWithFilter(ctx, "items/*/instanceGroups(name,selfLink,zone),nextPageToken", o.clusterIDFilter(), nil)
+	return resources, err
 }
 
 // listInstanceGroupsWithFilter lists addresses in the project that satisfy the filter criteria.
@@ -95,11 +94,18 @@ func (o *ClusterUninstaller) deleteInstanceGroup(ctx context.Context, item cloud
 // destroyInstanceGroups searches for instance groups that have a name prefixed
 // with the cluster's infra ID, and then deletes each instance found.
 func (o *ClusterUninstaller) destroyInstanceGroups(ctx context.Context) error {
-	found, err := o.listInstanceGroups(ctx)
-	if err != nil {
-		return err
+	items := []cloudResource{}
+
+	if cachedResources, ok := o.findCachedResources(instanceGroupResourceName); !ok {
+		found, err := o.listInstanceGroups(ctx)
+		if err != nil {
+			return err
+		}
+		items = o.insertPendingItems(instanceGroupResourceName, found)
+	} else {
+		items = append(items, cachedResources...)
 	}
-	items := o.insertPendingItems(instanceGroupResourceName, found)
+
 	for _, item := range items {
 		err := o.deleteInstanceGroup(ctx, item)
 		if err != nil {
@@ -109,7 +115,7 @@ func (o *ClusterUninstaller) destroyInstanceGroups(ctx context.Context) error {
 	if items = o.getPendingItems(instanceGroupResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
-	o.Logger.Warnf("Adding Destroyed Resource %s", instanceGroupResourceName)
+	o.Logger.Debugf("Adding Destroyed Resource %s", instanceGroupResourceName)
 	o.destroyedResources.Insert(instanceGroupResourceName)
 	return nil
 }

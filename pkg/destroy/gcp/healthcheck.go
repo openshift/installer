@@ -17,12 +17,11 @@ const (
 )
 
 func (o *ClusterUninstaller) listHealthChecks(ctx context.Context, typeName string, listFunc healthCheckListFunc) ([]cloudResource, error) {
-	resources := o.getPendingItems(typeName)
-	if len(resources) > 0 || o.destroyedResources.Has(typeName) {
-		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", typeName)
-		return resources, nil
+	resources, err := o.listHealthChecksWithFilter(ctx, typeName, "items(name),nextPageToken", o.clusterIDFilter(), listFunc)
+	if err == nil {
+		o.filteredResources.Insert(typeName)
 	}
-	return o.listHealthChecksWithFilter(ctx, typeName, "items(name),nextPageToken", o.clusterIDFilter(), listFunc)
+	return resources, err
 }
 
 // listHealthChecksWithFilter lists health checks in the project that satisfy the filter criteria.
@@ -81,7 +80,9 @@ func (o *ClusterUninstaller) deleteHealthCheck(ctx context.Context, item cloudRe
 // destroyHealthChecks removes all health check resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyHealthChecks(ctx context.Context) error {
-	for _, hcd := range []healthCheckDestroyer{
+	items := []cloudResource{}
+
+	destroyResources := []healthCheckDestroyer{
 		{
 			itemTypeName: globalHealthCheckResource,
 			destroyFunc:  o.healthCheckDelete,
@@ -92,12 +93,21 @@ func (o *ClusterUninstaller) destroyHealthChecks(ctx context.Context) error {
 			destroyFunc:  o.regionHealthCheckDelete,
 			listFunc:     o.regionHealthCheckList,
 		},
-	} {
-		found, err := o.listHealthChecks(ctx, hcd.itemTypeName, hcd.listFunc)
-		if err != nil {
-			return err
+	}
+
+	for _, hcd := range destroyResources {
+		if cachedResources, ok := o.findCachedResources(hcd.itemTypeName); !ok {
+			found, err := o.listHealthChecks(ctx, hcd.itemTypeName, hcd.listFunc)
+			if err != nil {
+				return err
+			}
+			items = append(items, o.insertPendingItems(hcd.itemTypeName, found)...)
+		} else {
+			items = append(items, cachedResources...)
 		}
-		items := o.insertPendingItems(hcd.itemTypeName, found)
+	}
+
+	for _, hcd := range destroyResources {
 		for _, item := range items {
 			err := o.deleteHealthCheck(ctx, item, hcd.destroyFunc)
 			if err != nil {
@@ -107,7 +117,7 @@ func (o *ClusterUninstaller) destroyHealthChecks(ctx context.Context) error {
 		if items = o.getPendingItems(hcd.itemTypeName); len(items) > 0 {
 			return errors.Errorf("%d items pending", len(items))
 		}
-		o.Logger.Warnf("Adding Destroyed Resource %s", hcd.itemTypeName)
+		o.Logger.Debugf("Adding Destroyed Resource %s", hcd.itemTypeName)
 		o.destroyedResources.Insert(hcd.itemTypeName)
 	}
 	return nil

@@ -47,12 +47,11 @@ func (o *ClusterUninstaller) storageLabelOrClusterIDFilter() string {
 }
 
 func (o *ClusterUninstaller) listDisks(ctx context.Context) ([]cloudResource, error) {
-	resources := o.getPendingItems(diskResourceName)
-	if len(resources) > 0 || o.destroyedResources.Has(diskResourceName) {
-		o.Logger.Debugf("found cloud resources for %s, skipping the api call with a filter", diskResourceName)
-		return resources, nil
+	resources, err := o.listDisksWithFilter(ctx, "items/*/disks(name,zone,type,sizeGb),nextPageToken", o.storageLabelOrClusterIDFilter(), nil)
+	if err == nil {
+		o.filteredResources.Insert(diskResourceName)
 	}
-	return o.listDisksWithFilter(ctx, "items/*/disks(name,zone,type,sizeGb),nextPageToken", o.storageLabelOrClusterIDFilter(), nil)
+	return resources, err
 }
 
 // listDisksWithFilter lists disks in the project that satisfy the filter criteria.
@@ -133,11 +132,18 @@ func (o *ClusterUninstaller) deleteDisk(ctx context.Context, item cloudResource)
 // destroyDisks removes all disk resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyDisks(ctx context.Context) error {
-	found, err := o.listDisks(ctx)
-	if err != nil {
-		return err
+	items := []cloudResource{}
+
+	if cachedResources, ok := o.findCachedResources(diskResourceName); !ok {
+		found, err := o.listDisks(ctx)
+		if err != nil {
+			return err
+		}
+		items = o.insertPendingItems(diskResourceName, found)
+	} else {
+		items = append(items, cachedResources...)
 	}
-	items := o.insertPendingItems(diskResourceName, found)
+
 	for _, item := range items {
 		err := o.deleteDisk(ctx, item)
 		if err != nil {
@@ -147,7 +153,7 @@ func (o *ClusterUninstaller) destroyDisks(ctx context.Context) error {
 	if items = o.getPendingItems(diskResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
-	o.Logger.Warnf("Adding Destroyed Resource %s", diskResourceName)
+	o.Logger.Debugf("Adding Destroyed Resource %s", diskResourceName)
 	o.destroyedResources.Insert(diskResourceName)
 	return nil
 }

@@ -11,12 +11,20 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
+const (
+	firewallResourceName = "firewall"
+)
+
 func (o *ClusterUninstaller) listFirewalls(ctx context.Context) ([]cloudResource, error) {
 	// The firewall rules that the destroyer is searching for here include a
 	// pattern before and after the cluster ID. Use a regular expression that allows
 	// wildcard values before and after the cluster ID.
 	filter := fmt.Sprintf("name eq .*%s.*", o.ClusterID)
-	return o.listFirewallsWithFilter(ctx, "items(name),nextPageToken", filter, nil)
+	resources, err := o.listFirewallsWithFilter(ctx, "items(name),nextPageToken", filter, nil)
+	if err == nil {
+		o.filteredResources.Insert(firewallResourceName)
+	}
+	return resources, err
 }
 
 // listFirewallsWithFilter lists firewall rules in the project that satisfy the filter criteria.
@@ -43,7 +51,7 @@ func (o *ClusterUninstaller) listFirewallsWithFilter(ctx context.Context, fields
 						key:      item.Name,
 						name:     item.Name,
 						project:  projectID,
-						typeName: "firewall",
+						typeName: firewallResourceName,
 						quota: []gcp.QuotaUsage{{
 							Metric: &gcp.Metric{
 								Service: gcp.ServiceComputeEngineAPI,
@@ -105,19 +113,27 @@ func (o *ClusterUninstaller) deleteFirewall(ctx context.Context, item cloudResou
 // destroyFirewalls removes all firewall resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyFirewalls(ctx context.Context) error {
-	found, err := o.listFirewalls(ctx)
-	if err != nil {
-		return err
+	items := []cloudResource{}
+	if cachedResources, ok := o.findCachedResources(firewallResourceName); !ok {
+		found, err := o.listFirewalls(ctx)
+		if err != nil {
+			return err
+		}
+		items = o.insertPendingItems(firewallResourceName, found)
+	} else {
+		items = append(items, cachedResources...)
 	}
-	items := o.insertPendingItems("firewall", found)
+
 	for _, item := range items {
 		err := o.deleteFirewall(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	if items = o.getPendingItems("firewall"); len(items) > 0 {
+	if items = o.getPendingItems(firewallResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
+	o.Logger.Debugf("Adding Destroyed Resource %s", firewallResourceName)
+	o.destroyedResources.Insert(firewallResourceName)
 	return nil
 }
