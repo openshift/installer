@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 
 	"github.com/openshift/installer/pkg/types/gcp"
@@ -14,35 +15,41 @@ const (
 )
 
 func (o *ClusterUninstaller) listTargetTCPProxies(ctx context.Context, typeName string) ([]cloudResource, error) {
-	return o.listTargetTCPProxiesWithFilter(ctx, typeName, "items(name),nextPageToken", o.clusterIDFilter())
+	return o.listTargetTCPProxiesWithFilter(ctx, typeName, "items(name),nextPageToken", o.isClusterResource)
 }
 
 // listTargetTCPProxiesWithFilter lists target TCP Proxies in the project that satisfy the filter criteria.
-func (o *ClusterUninstaller) listTargetTCPProxiesWithFilter(ctx context.Context, typeName, fields, filter string) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listTargetTCPProxiesWithFilter(ctx context.Context, typeName, fields string, filterFunc resourceFilterFunc) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing target tcp proxies")
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
-	list, err := o.computeSvc.TargetTcpProxies.List(o.ProjectID).Filter(filter).Fields(googleapi.Field(fields)).Context(ctx).Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed to list target tcp proxies: %w", err)
+	result := []cloudResource{}
+
+	pagesFunc := func(list *compute.TargetTcpProxyList) error {
+		for _, item := range list.Items {
+			if filterFunc(item.Name) {
+				o.Logger.Debugf("Found target TCP proxy: %s", item.Name)
+				result = append(result, cloudResource{
+					key:      item.Name,
+					name:     item.Name,
+					typeName: typeName,
+					quota: []gcp.QuotaUsage{{
+						Metric: &gcp.Metric{
+							Service: gcp.ServiceComputeEngineAPI,
+							Limit:   "target_tcp_proxy",
+						},
+						Amount: 1,
+					}},
+				})
+			}
+		}
+		return nil
 	}
 
-	result := []cloudResource{}
-	for _, item := range list.Items {
-		o.Logger.Debugf("Found target TCP proxy: %s", item.Name)
-		result = append(result, cloudResource{
-			key:      item.Name,
-			name:     item.Name,
-			typeName: typeName,
-			quota: []gcp.QuotaUsage{{
-				Metric: &gcp.Metric{
-					Service: gcp.ServiceComputeEngineAPI,
-					Limit:   "target_tcp_proxy",
-				},
-				Amount: 1,
-			}},
-		})
+	err := o.computeSvc.TargetTcpProxies.List(o.ProjectID).Fields(googleapi.Field(fields)).Pages(ctx, pagesFunc)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list target tcp proxies: %w", err)
 	}
 
 	return result, nil

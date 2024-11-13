@@ -16,25 +16,53 @@ const (
 )
 
 func (o *ClusterUninstaller) listAddresses(ctx context.Context, typeName string) ([]cloudResource, error) {
-	return o.listAddressesWithFilter(ctx, typeName, "items(name,region,addressType),nextPageToken", o.clusterIDFilter())
+	return o.listAddressesWithFilter(ctx, typeName, "items(name,region,addressType),nextPageToken", o.isClusterResource)
 }
 
 // listAddressesWithFilter lists addresses in the project that satisfy the filter criteria.
 // The fields parameter specifies which fields should be returned in the result, the filter string contains
 // a filter string passed to the API to filter results.
-func (o *ClusterUninstaller) listAddressesWithFilter(ctx context.Context, typeName, fields, filter string) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listAddressesWithFilter(ctx context.Context, typeName, fields string, filterFunc resourceFilterFunc) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing addresses")
+	result := []cloudResource{}
+
+	pagesFunc := func(list *compute.AddressList) error {
+		for _, item := range list.Items {
+			o.Logger.Debugf("Found address (%s): %s", typeName, item.Name)
+			if filterFunc(item.Name) {
+				var quota []gcp.QuotaUsage
+				if item.AddressType == "INTERNAL" {
+					quota = []gcp.QuotaUsage{{
+						Metric: &gcp.Metric{
+							Service: gcp.ServiceComputeEngineAPI,
+							Limit:   "internal_addresses",
+							Dimensions: map[string]string{
+								"region": getNameFromURL("regions", item.Region),
+							},
+						},
+						Amount: 1,
+					}}
+				}
+				result = append(result, cloudResource{
+					key:      item.Name,
+					name:     item.Name,
+					typeName: typeName,
+					quota:    quota,
+				})
+			}
+		}
+		return nil
+	}
 
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	var err error
-	var list *compute.AddressList
 	switch typeName {
 	case globalAddressResource:
-		list, err = o.computeSvc.GlobalAddresses.List(o.ProjectID).Filter(filter).Fields(googleapi.Field(fields)).Context(ctx).Do()
+		err = o.computeSvc.GlobalAddresses.List(o.ProjectID).Fields(googleapi.Field(fields)).Pages(ctx, pagesFunc)
 	case regionalAddressResource:
-		list, err = o.computeSvc.Addresses.List(o.ProjectID, o.Region).Filter(filter).Fields(googleapi.Field(fields)).Context(ctx).Do()
+		err = o.computeSvc.Addresses.List(o.ProjectID, o.Region).Fields(googleapi.Field(fields)).Pages(ctx, pagesFunc)
 	default:
 		return nil, fmt.Errorf("invalid address type %q", typeName)
 	}
@@ -43,25 +71,6 @@ func (o *ClusterUninstaller) listAddressesWithFilter(ctx context.Context, typeNa
 		return nil, fmt.Errorf("failed to list addresses: %w", err)
 	}
 
-	result := []cloudResource{}
-	for _, item := range list.Items {
-		o.Logger.Debugf("Found address: %s, type: %s", item.Name, item.AddressType)
-		result = append(result, cloudResource{
-			key:      item.Name,
-			name:     item.Name,
-			typeName: typeName,
-			quota: []gcp.QuotaUsage{{
-				Metric: &gcp.Metric{
-					Service: gcp.ServiceComputeEngineAPI,
-					Limit:   "addresses",
-					Dimensions: map[string]string{
-						"region": getNameFromURL("regions", item.Region),
-					},
-				},
-				Amount: 1,
-			}},
-		})
-	}
 	return result, nil
 }
 
@@ -100,31 +109,24 @@ func (o *ClusterUninstaller) deleteAddress(ctx context.Context, item cloudResour
 // destroyAddresses removes all address resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyAddresses(ctx context.Context) error {
-	found, err := o.listAddresses(ctx, globalAddressResource)
-	if err != nil {
-		return err
-	}
-	items := o.insertPendingItems(globalAddressResource, found)
-
-	found, err = o.listAddresses(ctx, regionalAddressResource)
-	if err != nil {
-		return err
-	}
-	items = append(items, o.insertPendingItems(regionalAddressResource, found)...)
-
-	for _, item := range items {
-		err := o.deleteAddress(ctx, item)
+	addressTypes := []string{globalAddressResource, regionalAddressResource}
+	for _, addressType := range addressTypes {
+		found, err := o.listAddresses(ctx, addressType)
 		if err != nil {
-			o.errorTracker.suppressWarning(item.key, err, o.Logger)
+			return err
 		}
-	}
+		items := o.insertPendingItems(addressType, found)
 
-	if items = o.getPendingItems(globalAddressResource); len(items) > 0 {
-		return fmt.Errorf("%d global addresses pending", len(items))
-	}
+		for _, item := range items {
+			err := o.deleteAddress(ctx, item)
+			if err != nil {
+				o.errorTracker.suppressWarning(item.key, err, o.Logger)
+			}
+		}
 
-	if items = o.getPendingItems(regionalAddressResource); len(items) > 0 {
-		return fmt.Errorf("%d region addresses pending", len(items))
+		if items := o.getPendingItems(addressType); len(items) > 0 {
+			return fmt.Errorf("%d %s resources pending", len(items), addressType)
+		}
 	}
 
 	return nil

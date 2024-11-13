@@ -14,7 +14,7 @@ func (o *ClusterUninstaller) filestoreParentPath() string {
 }
 
 func (o *ClusterUninstaller) clusterFilestoreLabelFilter() string {
-	return fmt.Sprintf("labels.%s = \"owned\"", fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, o.ClusterID))
+	return fmt.Sprintf("labels.%s = \"%s\"", fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, o.ClusterID), ownedLabelValue)
 }
 
 func (o *ClusterUninstaller) listFilestores(ctx context.Context) ([]cloudResource, error) {
