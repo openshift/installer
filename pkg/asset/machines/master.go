@@ -30,7 +30,6 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/baremetal"
@@ -340,12 +339,11 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 		mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Azure)
 
-		session, err := installConfig.Azure.Session()
+		client, err := installConfig.Azure.Client()
 		if err != nil {
-			return errors.Wrap(err, "failed to fetch session")
+			return err
 		}
 
-		client := icazure.NewClient(session)
 		if len(mpool.Zones) == 0 {
 			azs, err := client.GetAvailabilityZones(ctx, ic.Platform.Azure.Region, mpool.InstanceType)
 			if err != nil {

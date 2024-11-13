@@ -226,11 +226,10 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Azure)
 
-		session, err := installConfig.Azure.Session()
+		client, err := installConfig.Azure.Client()
 		if err != nil {
-			return fmt.Errorf("failed to fetch session: %w", err)
+			return err
 		}
-		client := icazure.NewClient(session)
 
 		if len(mpool.Zones) == 0 {
 			azs, err := client.GetAvailabilityZones(ctx, ic.Platform.Azure.Region, mpool.InstanceType)
@@ -273,6 +272,11 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		subnet := ic.Azure.ControlPlaneSubnet
 
 		hyperVGen, err := icazure.GetHyperVGenerationVersion(capabilities, "")
+		if err != nil {
+			return err
+		}
+
+		session, err := installConfig.Azure.Session()
 		if err != nil {
 			return err
 		}
