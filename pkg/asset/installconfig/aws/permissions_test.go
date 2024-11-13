@@ -732,3 +732,33 @@ func TestDeleteIgnitionPermissions(t *testing.T) {
 		assert.NotContains(t, requiredPerms, PermissionDeleteIgnitionObjects)
 	})
 }
+
+func TestIncludesInstanceType(t *testing.T) {
+	const instanceType = "m7a.2xlarge"
+	t.Run("Should be true when instance type specified for", func(t *testing.T) {
+		t.Run("defaultMachinePlatform", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.AWS.DefaultMachinePlatform = &aws.MachinePool{
+				InstanceType: instanceType,
+			}
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.Contains(t, requiredPerms, PermissionValidateInstanceType)
+		})
+		t.Run("controlPlane", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.ControlPlane.Platform.AWS.InstanceType = instanceType
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.Contains(t, requiredPerms, PermissionValidateInstanceType)
+		})
+		t.Run("compute", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.Compute[0].Platform.AWS.InstanceType = instanceType
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.Contains(t, requiredPerms, PermissionValidateInstanceType)
+		})
+	})
+	t.Run("Should be false when instance type is not set", func(t *testing.T) {
+		ic := validInstallConfig()
+		assert.NotContains(t, RequiredPermissionGroups(ic), PermissionValidateInstanceType)
+	})
+}

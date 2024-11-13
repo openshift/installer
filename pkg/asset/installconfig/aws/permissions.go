@@ -62,6 +62,9 @@ const (
 	// PermissionDeleteIgnitionObjects is a permission set required when `preserveBootstrapIgnition` is not set.
 	PermissionDeleteIgnitionObjects PermissionGroup = "delete-ignition-objects"
 
+	// PermissionValidateInstanceType is a permission set required when validating instance types.
+	PermissionValidateInstanceType PermissionGroup = "permission-validate-instance-type"
+
 	// PermissionMintCreds is a permission set required when minting credentials.
 	PermissionMintCreds PermissionGroup = "permission-mint-creds"
 
@@ -307,6 +310,10 @@ var permissions = map[PermissionGroup][]string{
 		// Needed by capa which always deletes the ignition objects once the VMs are up.
 		"s3:DeleteObject",
 	},
+	PermissionValidateInstanceType: {
+		// Needed to validate instance availability in region
+		"ec2:DescribeInstanceTypes",
+	},
 	// From: https://github.com/openshift/cloud-credential-operator/blob/master/pkg/aws/utils.go
 	// TODO: export these in CCO so we don't have to duplicate them here.
 	PermissionMintCreds: {
@@ -486,6 +493,10 @@ func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 		permissionGroups = append(permissionGroups, PermissionCreateInstanceProfile)
 	}
 
+	if includesInstanceType(ic) {
+		permissionGroups = append(permissionGroups, PermissionValidateInstanceType)
+	}
+
 	return permissionGroups
 }
 
@@ -623,4 +634,20 @@ func includesCreateInstanceProfile(installConfig *types.InstallConfig) bool {
 	mpool := aws.MachinePool{}
 	mpool.Set(installConfig.AWS.DefaultMachinePlatform)
 	return len(mpool.IAMProfile) == 0
+}
+
+// includesInstanceType checks if at least one instance type is specified in the install-config.
+func includesInstanceType(installConfig *types.InstallConfig) bool {
+	mpool := aws.MachinePool{}
+	mpool.Set(installConfig.AWS.DefaultMachinePlatform)
+
+	if mp := installConfig.ControlPlane; mp != nil {
+		mpool.Set(mp.Platform.AWS)
+	}
+
+	for _, compute := range installConfig.Compute {
+		mpool.Set(compute.Platform.AWS)
+	}
+
+	return len(mpool.InstanceType) > 0
 }
