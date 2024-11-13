@@ -3,18 +3,24 @@ package clusterapi
 import (
 	"context"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/wait"
+	capibmcloud "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
+	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	ibmcloudic "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
+	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	"github.com/openshift/installer/pkg/rhcos/cache"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 )
 
+var _ clusterapi.Timeouts = (*Provider)(nil)
 var _ clusterapi.PreProvider = (*Provider)(nil)
 var _ clusterapi.Provider = (*Provider)(nil)
 
@@ -31,6 +37,12 @@ func (p Provider) Name() string {
 func (p Provider) NetworkTimeout() time.Duration {
 	// IBM Cloud requires additional time for VPC Custom Image creation and Load Balancer reconciliation.
 	return 30 * time.Minute
+}
+
+// ProvisionTimeout allows platform provider to override the timeout
+// when waiting for the machines to provision.
+func (p Provider) ProvisionTimeout() time.Duration {
+	return 15 * time.Minute
 }
 
 // PublicGatherEndpoint indicates that machine ready checks should NOT wait for an ExternalIP
@@ -76,9 +88,27 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		if err := client.CreateResourceGroup(ctx, resourceGroupName); err != nil {
 			return fmt.Errorf("failed creating new resource group: %w", err)
 		}
-		// Retrieve the newly created resource group
-		resourceGroup, err = client.GetResourceGroup(ctx, resourceGroupName)
+		// Retrieve the newly created resource group.
+		// Use retry logic to wait for the new resource group if necessary.
+		backoff := wait.Backoff{
+			Duration: 10 * time.Second,
+			Factor:   1.1,
+			Cap:      leftInContext(ctx),
+			Steps:    math.MaxInt32,
+		}
+
+		var lastErr error
+		err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
+			resourceGroup, lastErr = client.GetResourceGroup(ctx, resourceGroupName)
+			if lastErr == nil {
+				return true, nil
+			}
+			return false, nil
+		})
 		if err != nil {
+			if lastErr != nil {
+				err = lastErr
+			}
 			return fmt.Errorf("failed retrieving new resource group: %w", err)
 		}
 		logrus.Debugf("created resource group: %s", resourceGroupName)
@@ -136,4 +166,69 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	logrus.Debugf("created iam authorization for vpc to cos access")
 
 	return nil
+}
+
+// InfraReady is called once cluster.Status.InfrastructureReady is true.
+func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
+	// 1. Collect necessary details from Cluster resource.
+	// 2. Create DNS Records for the Control Plane's Load Balancers (one for public LB - 'api' and one for private LB - 'api-int'). For Public/External clusters, records in the CIS instance is created. For Private/Internal cluster, the records are created in the DNS Services instance.
+
+	// Setup IBM Cloud Client.
+	metadata := ibmcloudic.NewMetadata(in.InstallConfig.Config)
+	client, err := metadata.Client()
+	if err != nil {
+		return fmt.Errorf("failed creating IBM Cloud client in InfraReady: %w", err)
+	}
+
+	ibmcloudCluster := &capibmcloud.IBMVPCCluster{}
+
+	// Get the cluster from the provider.
+	key := crclient.ObjectKey{
+		Name:      in.InfraID,
+		Namespace: capiutils.Namespace,
+	}
+	logrus.Debugf("InfraReady: clusterKey = %+v", key)
+	if err = in.Client.Get(ctx, key, ibmcloudCluster); err != nil {
+		return fmt.Errorf("failed to get ibmcloud cluster in InfraReady: %w", err)
+	}
+	logrus.Debugf("InfraReady: ibmcloudCluster = %+v", ibmcloudCluster)
+	logrus.Debugf("InfraReady: ibmcloudCluster.Status = %+v", ibmcloudCluster.Status)
+	if ibmcloudCluster.Status.Network == nil || ibmcloudCluster.Status.Network.VPC == nil || ibmcloudCluster.Status.Network.VPC.ID == "" {
+		return fmt.Errorf("vpc missing from ibmcloudCluster.Status in InfraReady")
+	}
+	logrus.Debugf("InfraReady: ibmcloudCluster.Status.Network.VPC.ID = %s", ibmcloudCluster.Status.Network.VPC.ID)
+
+	// Collect the Load Balancer's and their hostnames to use for DNS Record creation.
+	if len(ibmcloudCluster.Status.Network.LoadBalancers) == 0 {
+		return fmt.Errorf("load balancers missing from ibmcloudCluster.Status in InfraReady")
+	}
+
+	for lbID, lb := range ibmcloudCluster.Status.Network.LoadBalancers {
+		// Verify that the Load Balancer is ready (active).
+		if lb.State != capibmcloud.VPCLoadBalancerStateActive {
+			return fmt.Errorf("load balancer %s is not ready, infrastructure not ready: %s", lbID, lb.State)
+		}
+		// Lookup Load Balancer details to use during DNS Record creation.
+		lbDetails, err := client.GetLoadBalancer(ctx, lbID)
+		if err != nil {
+			return fmt.Errorf("failed retrieving load balancer for dns record creation: %w", err)
+		} else if lbDetails == nil {
+			return fmt.Errorf("failed to find load balancer for dns record creation by id: %s", lbID)
+		}
+		err = metadata.CreateDNSRecord(ctx, in.InstallConfig.Config.ClusterDomain(), lbDetails)
+		if err != nil {
+			return fmt.Errorf("failed to create dns record for load balancer: %w", err)
+		}
+		logrus.Debug("dns record created for load balancer", "hostName", *lbDetails.Hostname)
+	}
+
+	return nil
+}
+
+func leftInContext(ctx context.Context) time.Duration {
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		return math.MaxInt64
+	}
+	return time.Until(deadline)
 }
