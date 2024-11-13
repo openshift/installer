@@ -31,6 +31,8 @@ func TestAuthConfig_Generate(t *testing.T) {
 			assert.NoError(t, err)
 			assert.NotEmpty(t, authConfigAsset.PublicKey)
 			assert.NotEmpty(t, authConfigAsset.AgentAuthToken)
+			assert.NotEmpty(t, authConfigAsset.UserAuthToken)
+			assert.NotEmpty(t, authConfigAsset.WatcherAuthToken)
 
 			// All the 3 tokens should be unique
 			assert.NotEqual(t, authConfigAsset.AgentAuthToken, authConfigAsset.UserAuthToken)

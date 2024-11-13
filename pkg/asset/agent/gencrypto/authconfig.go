@@ -71,26 +71,26 @@ func (a *AuthConfig) Generate(_ context.Context, dependencies asset.Parents) err
 
 	a.PublicKey = encodedPubKeyPEM
 
+	tokens := map[string]*string{
+		agentPersona:   &a.AgentAuthToken,
+		userPersona:    &a.UserAuthToken,
+		watcherPersona: &a.WatcherAuthToken,
+	}
+
+	generateAndAssignToken := func(persona, privateKey string, expiry *time.Time) (string, error) {
+		return generateToken(persona, privateKey, expiry)
+	}
+
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
 		// Auth tokens do not expire
-		agentAuthToken, err := generateToken(agentPersona, privateKey, nil)
-		if err != nil {
-			return err
+		for persona, tokenField := range tokens {
+			token, err := generateAndAssignToken(persona, privateKey, nil)
+			if err != nil {
+				return err
+			}
+			*tokenField = token
 		}
-		a.AgentAuthToken = agentAuthToken
-
-		userAuthToken, err := generateToken(userPersona, privateKey, nil)
-		if err != nil {
-			return err
-		}
-		a.UserAuthToken = userAuthToken
-
-		watcherAuthToken, err := generateToken(watcherPersona, privateKey, nil)
-		if err != nil {
-			return err
-		}
-		a.WatcherAuthToken = watcherAuthToken
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		addNodesConfig := &joiner.AddNodesConfig{}
@@ -100,23 +100,13 @@ func (a *AuthConfig) Generate(_ context.Context, dependencies asset.Parents) err
 		expiry := time.Now().UTC().Add(48 * time.Hour)
 		a.AuthTokenExpiry = expiry.Format(time.RFC3339)
 
-		agentAuthToken, err := generateToken(agentPersona, privateKey, &expiry)
-		if err != nil {
-			return err
+		for persona, tokenField := range tokens {
+			token, err := generateAndAssignToken(persona, privateKey, &expiry)
+			if err != nil {
+				return err
+			}
+			*tokenField = token
 		}
-		a.AgentAuthToken = agentAuthToken
-
-		userAuthToken, err := generateToken(userPersona, privateKey, &expiry)
-		if err != nil {
-			return err
-		}
-		a.UserAuthToken = userAuthToken
-
-		watcherAuthToken, err := generateToken(watcherPersona, privateKey, &expiry)
-		if err != nil {
-			return err
-		}
-		a.WatcherAuthToken = watcherAuthToken
 
 		err = a.createOrUpdateAuthTokenSecret(addNodesConfig.Params.Kubeconfig)
 		if err != nil {
