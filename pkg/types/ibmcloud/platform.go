@@ -46,6 +46,9 @@ const (
 
 	// IBMCloudServiceVPCVar is the variable name used by the IBM Cloud Terraform Provider to override the VPC endpoint.
 	IBMCloudServiceVPCVar string = "IBMCLOUD_IS_NG_API_ENDPOINT"
+
+	// IBMCloudInfrastructureSecurityGroupTargetReference is the name of a generic IBM Cloud Infrastructure Security Group target.
+	IBMCloudInfrastructureSecurityGroupTargetReference string = "*vpcv1.SecurityGroupTargetReference"
 )
 
 var (

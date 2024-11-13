@@ -45,7 +45,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}
 	vpcName := platform.GetVPCName()
 	if vpcName == "" {
-		vpcName = fmt.Sprintf("%s-vpc", clusterID.InfraID)
+		vpcName = ibmcloudic.VPCName(clusterID.InfraID)
 	}
 
 	// NOTE(cjschaef): Add support to use existing Image details, rather than always creating a new VPC Custom Image.
