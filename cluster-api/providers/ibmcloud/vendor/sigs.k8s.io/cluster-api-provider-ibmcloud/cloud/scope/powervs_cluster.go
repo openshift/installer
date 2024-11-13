@@ -1281,7 +1281,7 @@ func (s *PowerVSClusterScope) ReconcileVPCSecurityGroups() error {
 
 		sg, ruleIDs, err := s.validateVPCSecurityGroup(securityGroup)
 		if err != nil {
-			return fmt.Errorf("failed to validate existing security group: %w", err)
+			return fmt.Errorf("failed to validate existing security group: %s", err)
 		}
 		if sg != nil {
 			s.V(3).Info("VPC security group already exists", "name", *sg.Name)

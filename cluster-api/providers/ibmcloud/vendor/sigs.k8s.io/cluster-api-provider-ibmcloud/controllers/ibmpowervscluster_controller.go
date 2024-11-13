@@ -36,7 +36,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	capiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
@@ -382,7 +384,7 @@ func (r *IBMPowerVSClusterReconciler) reconcileDelete(ctx context.Context, clust
 
 	clusterScope.Info("Deleting VPC security group")
 	if err := clusterScope.DeleteVPCSecurityGroups(); err != nil {
-		allErrs = append(allErrs, errors.Wrapf(err, "failed to delete VPC subnet"))
+		allErrs = append(allErrs, errors.Wrapf(err, "failed to delete VPC security group"))
 	}
 
 	clusterScope.Info("Deleting VPC subnet")
@@ -562,8 +564,21 @@ func (c clusterDescendants) filterOwnedDescendants(cluster *infrav1beta2.IBMPowe
 
 // SetupWithManager creates a new IBMPowerVSCluster controller for a manager.
 func (r *IBMPowerVSClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
+	controller, err := ctrl.NewControllerManagedBy(mgr).
 		For(&infrav1beta2.IBMPowerVSCluster{}).
 		WithEventFilter(predicates.ResourceIsNotExternallyManaged(ctrl.LoggerFrom(ctx))).
-		Complete(r)
+		WithEventFilter(predicates.ResourceNotPaused(ctrl.LoggerFrom(ctx))).
+		Build(r)
+	if err != nil {
+		return errors.Wrap(err, "error creating controller")
+	}
+	// Add a watch on capiv1beta1.Cluster object for unpause notifications.
+	if err = controller.Watch(
+		source.Kind[client.Object](mgr.GetCache(), &capiv1beta1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1beta2.GroupVersion.WithKind("IBMPowerVSCluster"), mgr.GetClient(), &infrav1beta2.IBMPowerVSCluster{})),
+			predicates.ClusterUnpaused(ctrl.LoggerFrom(ctx)),
+		)); err != nil {
+		return errors.Wrap(err, "failed adding a watch for ready clusters")
+	}
+	return nil
 }

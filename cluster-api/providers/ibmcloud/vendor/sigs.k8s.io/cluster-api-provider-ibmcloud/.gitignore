@@ -41,3 +41,6 @@ vendor/sigs.k8s.io/cluster-api/docs/book/*.json
 # release
 _artifacts/
 out/
+
+#ide settings
+.vscode/
