@@ -20,6 +20,7 @@ import (
 // API represents the calls made to the API.
 type API interface {
 	GetVirtualNetwork(ctx context.Context, resourceGroupName, virtualNetwork string) (*aznetwork.VirtualNetwork, error)
+	CheckIPAddressAvailability(ctx context.Context, resourceGroupName, virtualNetwork, ipAddr string) (*aznetwork.IPAddressAvailabilityResult, error)
 	GetComputeSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*aznetwork.Subnet, error)
 	GetControlPlaneSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*aznetwork.Subnet, error)
 	ListLocations(ctx context.Context) (*[]azsubs.Location, error)
@@ -57,7 +58,7 @@ func (c *Client) GetVirtualNetwork(ctx context.Context, resourceGroupName, virtu
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	vnetClient, err := c.GetVirtualNetworksClient(ctx)
+	vnetClient, err := c.getVirtualNetworksClient(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -68,6 +69,24 @@ func (c *Client) GetVirtualNetwork(ctx context.Context, resourceGroupName, virtu
 	}
 
 	return &vnet, nil
+}
+
+// CheckIPAddressAvailability checks availability of an IP address in an Azure virtual network.
+func (c *Client) CheckIPAddressAvailability(ctx context.Context, resourceGroupName, virtualNetwork, ipAddr string) (*aznetwork.IPAddressAvailabilityResult, error) {
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	vnetClient, err := c.getVirtualNetworksClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	availability, err := vnetClient.CheckIPAddressAvailability(ctx, resourceGroupName, virtualNetwork, ipAddr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get azure ip availability: %w", err)
+	}
+
+	return &availability, nil
 }
 
 // getSubnet gets an Azure subnet by name
@@ -99,7 +118,7 @@ func (c *Client) GetControlPlaneSubnet(ctx context.Context, resourceGroupName, v
 }
 
 // getVnetsClient sets up a new client to retrieve vnets
-func (c *Client) GetVirtualNetworksClient(ctx context.Context) (*aznetwork.VirtualNetworksClient, error) {
+func (c *Client) getVirtualNetworksClient(ctx context.Context) (*aznetwork.VirtualNetworksClient, error) {
 	vnetsClient := aznetwork.NewVirtualNetworksClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
 	vnetsClient.Authorizer = c.ssn.Authorizer
 	return &vnetsClient, nil
