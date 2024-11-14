@@ -1,14 +1,39 @@
 package agent
 
 import (
+	"fmt"
+
+	"github.com/go-openapi/swag"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/yaml"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
+	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/vsphere"
+)
+
+type nmStateConfig struct {
+	Interfaces []struct {
+		IPV4 struct {
+			Address []struct {
+				IP string `yaml:"ip,omitempty"`
+			} `yaml:"address,omitempty"`
+		} `yaml:"ipv4,omitempty"`
+		IPV6 struct {
+			Address []struct {
+				IP string `yaml:"ip,omitempty"`
+			} `yaml:"address,omitempty"`
+		} `yaml:"ipv6,omitempty"`
+	} `yaml:"interfaces,omitempty"`
+}
+
+const (
+	// ExternalPlatformNameOci is the name of the external platform for OCP.
+	ExternalPlatformNameOci = "oci"
 )
 
 // SupportedInstallerPlatforms lists the supported platforms for agent installer.
@@ -80,4 +105,65 @@ func DetermineReleaseImageArch(pullSecret, pullSpec string) (string, error) {
 	}
 	logrus.Debugf("Release Image arch is: %s", releaseArch)
 	return releaseArch, nil
+}
+
+// GetUserManagedNetworkingByPlatformType returns the expected value for userManagedNetworking
+// based on the current platform type.
+func GetUserManagedNetworkingByPlatformType(platformType hiveext.PlatformType) *bool {
+	switch platformType {
+	case hiveext.NonePlatformType, hiveext.ExternalPlatformType:
+		logrus.Debugf("Setting UserManagedNetworking to true for %s platform", platformType)
+		return swag.Bool(true)
+	default:
+		return swag.Bool(false)
+	}
+}
+
+// GetFirstIP returns the firt IP found in the nmstate configuration for this host.
+func GetFirstIP(nmstateRaw []byte) (string, error) {
+	var nmStateConfig nmStateConfig
+	err := yaml.Unmarshal(nmstateRaw, &nmStateConfig)
+	if err != nil {
+		return "", fmt.Errorf("error unmarshalling NMStateConfig: %w", err)
+	}
+
+	for _, intf := range nmStateConfig.Interfaces {
+		for _, addr4 := range intf.IPV4.Address {
+			if addr4.IP != "" {
+				return addr4.IP, nil
+			}
+		}
+		for _, addr6 := range intf.IPV6.Address {
+			if addr6.IP != "" {
+				return addr6.IP, nil
+			}
+		}
+	}
+
+	return "", nil
+}
+
+// GetAllHostIPs returns a map of host IPs from the nmstate configuration for this host.
+func GetAllHostIPs(config aiv1beta1.NetConfig) (map[string]struct{}, error) {
+	var nmStateConfig nmStateConfig
+	hostIPs := make(map[string]struct{})
+
+	err := yaml.Unmarshal(config.Raw, &nmStateConfig)
+	if err != nil {
+		return hostIPs, fmt.Errorf("error unmarshalling NMStateConfig: %w", err)
+	}
+
+	for _, intf := range nmStateConfig.Interfaces {
+		for _, addr4 := range intf.IPV4.Address {
+			if addr4.IP != "" {
+				hostIPs[addr4.IP] = struct{}{}
+			}
+		}
+		for _, addr6 := range intf.IPV6.Address {
+			if addr6.IP != "" {
+				hostIPs[addr6.IP] = struct{}{}
+			}
+		}
+	}
+	return hostIPs, nil
 }
