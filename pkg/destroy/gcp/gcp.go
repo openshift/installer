@@ -215,6 +215,32 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 	return done, nil
 }
 
+type resourceFilter func(context.Context) ([]cloudResource, error)
+type resourceDeleter func(ctx context.Context, item cloudResource) error
+
+func (o *ClusterUninstaller) standardDestroy(ctx context.Context, resourceType string, listFunc resourceFilter, deleteFunc resourceDeleter) error {
+	found, err := listFunc(ctx)
+	if err != nil {
+		return err
+	}
+	// TODO confirm we don't need this check, filestore delete returns nil here sometimes
+	// I believe insertPendingitems saefly handles nil values
+	// if found == nil {
+	// 	o.Logger.Debugf("no %s resources found, skipping destroy", resourceType)
+	// }
+	items := o.insertPendingItems(resourceType, found)
+	for _, item := range items {
+		err := deleteFunc(ctx, item)
+		if err != nil {
+			o.errorTracker.suppressWarning(item.key, err, o.Logger)
+		}
+	}
+	if items = o.getPendingItems(resourceType); len(items) > 0 {
+		return errors.Errorf("%d items pending", len(items))
+	}
+	return nil
+}
+
 // getZoneName extracts a zone name from a zone URL
 func (o *ClusterUninstaller) getZoneName(zoneURL string) string {
 	return getNameFromURL("zones", zoneURL)

@@ -30,6 +30,10 @@ func (o *ClusterUninstaller) listFilestores(ctx context.Context) ([]cloudResourc
 	for nextPageToken != "" {
 		instances, err := lCall.Do()
 		if err != nil {
+			if isForbidden(err) {
+				o.Logger.Warning("Skipping deletion of filestores: insufficient Filestore API permissions or API disabled")
+				return nil, nil
+			}
 			return nil, fmt.Errorf("error retrieving filestore instances: %w", err)
 		}
 
@@ -72,24 +76,5 @@ func (o *ClusterUninstaller) deleteFilestore(ctx context.Context, item cloudReso
 }
 
 func (o *ClusterUninstaller) destroyFilestores(ctx context.Context) error {
-	found, err := o.listFilestores(ctx)
-	if err != nil {
-		if isForbidden(err) {
-			o.Logger.Warning("Skipping deletion of filestores: insufficient Filestore API permissions or API disabled")
-			return nil
-		}
-		return err
-	}
-	items := o.insertPendingItems("filestore", found)
-	for _, item := range items {
-		err := o.deleteFilestore(ctx, item)
-		if err != nil {
-			o.errorTracker.suppressWarning(item.key, err, o.Logger)
-		}
-	}
-	if items = o.getPendingItems("filestore"); len(items) > 0 {
-		return fmt.Errorf("%d items pending", len(items))
-	}
-
-	return nil
+	return o.standardDestroy(ctx, "filestore", o.listFilestores, o.deleteFilestore)
 }

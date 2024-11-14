@@ -127,19 +127,5 @@ func (o *ClusterUninstaller) deleteDisk(ctx context.Context, item cloudResource)
 // destroyDisks removes all disk resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyDisks(ctx context.Context) error {
-	found, err := o.listDisks(ctx)
-	if err != nil {
-		return err
-	}
-	items := o.insertPendingItems("disk", found)
-	for _, item := range items {
-		err := o.deleteDisk(ctx, item)
-		if err != nil {
-			o.errorTracker.suppressWarning(item.key, err, o.Logger)
-		}
-	}
-	if items = o.getPendingItems("disk"); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
-	}
-	return nil
+	return o.standardDestroy(ctx, "disk", o.listDisks, o.deleteDisk)
 }

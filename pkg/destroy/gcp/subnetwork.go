@@ -86,19 +86,5 @@ func (o *ClusterUninstaller) deleteSubnetwork(ctx context.Context, item cloudRes
 // destroySubNetworks removes all subnetwork resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroySubnetworks(ctx context.Context) error {
-	found, err := o.listSubnetworks(ctx)
-	if err != nil {
-		return err
-	}
-	items := o.insertPendingItems("subnetwork", found)
-	for _, item := range items {
-		err := o.deleteSubnetwork(ctx, item)
-		if err != nil {
-			o.errorTracker.suppressWarning(item.key, err, o.Logger)
-		}
-	}
-	if items = o.getPendingItems("subnetwork"); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
-	}
-	return nil
+	return o.standardDestroy(ctx, "subnetwork", o.listSubnetworks, o.deleteSubnetwork)
 }

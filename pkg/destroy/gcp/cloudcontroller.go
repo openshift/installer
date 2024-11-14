@@ -111,7 +111,7 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 	o.insertPendingItems("forwardingrule", found)
 
 	// Discover associated target tcp proxies: loadBalancerName
-	found, err = o.listTargetTCPProxiesWithFilter(ctx, globalTargetTCPProxyResource, "items(name),nextPageToken", loadBalancerNameFilter)
+	found, err = o.listTargetTCPProxiesWithFilter(ctx, "items(name),nextPageToken", loadBalancerNameFilter)
 	if err != nil {
 		return err
 	}

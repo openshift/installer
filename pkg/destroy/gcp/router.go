@@ -77,19 +77,5 @@ func (o *ClusterUninstaller) deleteRouter(ctx context.Context, item cloudResourc
 // destroyRouters removes all router resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyRouters(ctx context.Context) error {
-	found, err := o.listRouters(ctx)
-	if err != nil {
-		return err
-	}
-	items := o.insertPendingItems("router", found)
-	for _, item := range items {
-		err := o.deleteRouter(ctx, item)
-		if err != nil {
-			o.errorTracker.suppressWarning(item.key, err, o.Logger)
-		}
-	}
-	if items = o.getPendingItems("router"); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
-	}
-	return nil
+	return o.standardDestroy(ctx, "router", o.listRouters, o.deleteRouter)
 }

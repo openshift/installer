@@ -86,19 +86,5 @@ func (o *ClusterUninstaller) deleteRoute(ctx context.Context, item cloudResource
 // destroyRutes removes all route resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyRoutes(ctx context.Context) error {
-	found, err := o.listRoutes(ctx)
-	if err != nil {
-		return err
-	}
-	items := o.insertPendingItems("route", found)
-	for _, item := range items {
-		err := o.deleteRoute(ctx, item)
-		if err != nil {
-			o.errorTracker.suppressWarning(item.key, err, o.Logger)
-		}
-	}
-	if items = o.getPendingItems("route"); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
-	}
-	return nil
+	return o.standardDestroy(ctx, "route", o.listRoutes, o.deleteRoute)
 }

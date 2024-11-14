@@ -77,19 +77,5 @@ func (o *ClusterUninstaller) deleteImage(ctx context.Context, item cloudResource
 // destroyImages removes all image resources with a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyImages(ctx context.Context) error {
-	found, err := o.listImages(ctx)
-	if err != nil {
-		return err
-	}
-	items := o.insertPendingItems("image", found)
-	for _, item := range items {
-		err := o.deleteImage(ctx, item)
-		if err != nil {
-			o.errorTracker.suppressWarning(item.key, err, o.Logger)
-		}
-	}
-	if items = o.getPendingItems("image"); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
-	}
-	return nil
+	return o.standardDestroy(ctx, "image", o.listImages, o.deleteImage)
 }
