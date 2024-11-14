@@ -27,6 +27,11 @@ bootkube_podman_run() {
     podman run --quiet --net=host --rm "${@}"
 }
 
+bootkube_dump_image_refs() {
+	# Dump out image reference file
+	podman run --quiet --rm --net=none --entrypoint="cat" "${RELEASE_IMAGE_DIGEST}" "/release-manifests/image-references" > image-references
+}
+
 wait_for_etcd_cluster() {
     until bootkube_podman_run \
         --name etcdctl \
@@ -213,6 +218,9 @@ then
 
 	rm --recursive --force kube-apiserver-bootstrap
 
+	# Dump out image reference file so KASO can consume additional image references
+	bootkube_dump_image_refs
+
 	bootkube_podman_run  \
 		--name kube-apiserver-render \
 		--volume "$PWD:/assets:z" \
@@ -230,7 +238,8 @@ then
 		--infra-config-file=/assets/manifests/cluster-infrastructure-02-config.yml \
 		--rendered-manifest-files=/assets/manifests \
 		--payload-version=$VERSION \
-		--operand-kubernetes-version="${KUBERNETES_VERSION}"
+		--operand-kubernetes-version="${KUBERNETES_VERSION}" \
+		--image-references=/assets/image-references
 
 	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
 	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
@@ -408,7 +417,7 @@ then
 	fi
 
 	# Dump out image reference file so MCO can consume multiple/additional image references
-	podman run --quiet --rm --net=none --entrypoint="cat" "${RELEASE_IMAGE_DIGEST}" "/release-manifests/image-references" > image-references
+	bootkube_dump_image_refs
 
 	# NOTICE: If you change this, you probably also want to change https://github.com/openshift/hypershift/blob/f7e79bf1dc7e90000984bf9ffeafa740defbee0a/ignition-server/controllers/local_ignitionprovider.go
 	bootkube_podman_run \
