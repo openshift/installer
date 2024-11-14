@@ -10,7 +10,7 @@ cluster_id=""
 while [[ "${cluster_id}" = "" ]]
 do
     # Get cluster id
-    cluster_id=$(curl_assisted_service "/clusters" GET "$USER_AUTH_TOKEN" | jq -r .[].id)
+    cluster_id=$(curl_assisted_service "/clusters" GET | jq -r .[].id)
     if [[ "${cluster_id}" = "" ]]; then
         sleep 2
     fi
@@ -24,7 +24,7 @@ status_issue="90_add-node"
 host_ready=false
 while [[ $host_ready == false ]]
 do
-    host_status=$(curl_assisted_service "/infra-envs/${INFRA_ENV_ID}/hosts" GET "$USER_AUTH_TOKEN" | jq -r ".[].status")
+    host_status=$(curl_assisted_service "/infra-envs/${INFRA_ENV_ID}/hosts" GET | jq -r ".[].status")
     if [[ "${host_status}" != "known" ]]; then
         printf '\\e{yellow}Waiting for the host to be ready' | set_issue "${status_issue}"
         sleep 10
@@ -33,12 +33,12 @@ do
     fi
 done
 
-HOST_ID=$(curl_assisted_service "/infra-envs/${INFRA_ENV_ID}/hosts" GET "$USER_AUTH_TOKEN" | jq -r '.[].id')
+HOST_ID=$(curl_assisted_service "/infra-envs/${INFRA_ENV_ID}/hosts" GET | jq -r '.[].id')
 printf '\nHost %s is ready for installation\n' "${HOST_ID}" 1>&2
 clear_issue "${status_issue}"
 
 # Add the current host to the cluster
-res=$(curl_assisted_service "/infra-envs/${INFRA_ENV_ID}/hosts/${HOST_ID}/actions/install" POST "$USER_AUTH_TOKEN" -w "%{http_code}" -o /dev/null)
+res=$(curl_assisted_service "/infra-envs/${INFRA_ENV_ID}/hosts/${HOST_ID}/actions/install" POST -w "%{http_code}" -o /dev/null)
 if [[ $res = "202" ]]; then 
     printf '\nHost installation started\n' 1>&2
 else
