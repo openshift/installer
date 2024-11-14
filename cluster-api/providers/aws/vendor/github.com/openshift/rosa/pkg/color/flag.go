@@ -67,3 +67,7 @@ func UseColor() bool {
 		return (stdout.Mode()&os.ModeDevice != 0) && (stdout.Mode()&os.ModeNamedPipe == 0)
 	}
 }
+
+func SetColor(colorOption string) {
+	color = colorOption
+}

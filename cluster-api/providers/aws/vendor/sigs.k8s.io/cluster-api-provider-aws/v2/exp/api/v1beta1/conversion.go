@@ -42,8 +42,9 @@ func (src *AWSMachinePool) ConvertTo(dstRaw conversion.Hub) error {
 	if restored.Spec.SuspendProcesses != nil {
 		dst.Spec.SuspendProcesses = restored.Spec.SuspendProcesses
 	}
-	if dst.Spec.RefreshPreferences != nil && restored.Spec.RefreshPreferences != nil {
+	if restored.Spec.RefreshPreferences != nil {
 		dst.Spec.RefreshPreferences.Disable = restored.Spec.RefreshPreferences.Disable
+		dst.Spec.RefreshPreferences.MaxHealthyPercentage = restored.Spec.RefreshPreferences.MaxHealthyPercentage
 	}
 	if restored.Spec.AWSLaunchTemplate.InstanceMetadataOptions != nil {
 		dst.Spec.AWSLaunchTemplate.InstanceMetadataOptions = restored.Spec.AWSLaunchTemplate.InstanceMetadataOptions

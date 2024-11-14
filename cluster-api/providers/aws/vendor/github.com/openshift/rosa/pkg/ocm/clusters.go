@@ -141,9 +141,10 @@ type Spec struct {
 	AdditionalTrustBundle     *string
 
 	// HyperShift options:
-	Hypershift     Hypershift
-	BillingAccount string
-	NoCni          bool
+	Hypershift                  Hypershift
+	BillingAccount              string
+	NoCni                       bool
+	AdditionalAllowedPrincipals []string
 
 	// Audit Log Forwarding
 	AuditLogRoleARN *string
@@ -173,6 +174,15 @@ type Spec struct {
 
 	// Control Plane Machine Pool attributes
 	AdditionalControlPlaneSecurityGroupIds []string
+
+	// Registry Config
+	AllowedRegistries          []string
+	BlockedRegistries          []string
+	InsecureRegistries         []string
+	AllowedRegistriesForImport string
+	PlatformAllowlist          string
+	AdditionalTrustedCaFile    string
+	AdditionalTrustedCa        map[string]string
 }
 
 // Volume represents a volume property for a disk
@@ -268,7 +278,7 @@ var accountRoleTypeFieldMap = map[string]string{
 	aws.WorkerAccountRoleType:       "aws.sts.instance_iam_roles.worker_role_arn",
 }
 
-func getAccountRoleClusterFilter(aws *aws.Creator, role *aws.Role) (string, error) {
+func getAccountRoleClusterFilter(aws *aws.Creator, role aws.Role) (string, error) {
 	query := getClusterFilter(aws)
 	accountRoleField := accountRoleTypeFieldMap[role.RoleType]
 	if accountRoleField == "" {
@@ -280,7 +290,7 @@ func getAccountRoleClusterFilter(aws *aws.Creator, role *aws.Role) (string, erro
 	return fmt.Sprintf("%s AND %s='%s'", query, accountRoleField, role.RoleARN), nil
 }
 
-func (c *Client) GetClustersUsingAccountRole(aws *aws.Creator, role *aws.Role, count int) ([]*cmv1.Cluster, error) {
+func (c *Client) GetClustersUsingAccountRole(aws *aws.Creator, role aws.Role, count int) ([]*cmv1.Cluster, error) {
 	query, err := getAccountRoleClusterFilter(aws, role)
 	if err != nil {
 		return nil, err
@@ -628,11 +638,27 @@ func (c *Client) UpdateCluster(clusterKey string, creator *aws.Creator, config S
 		clusterBuilder.Hypershift(hyperShiftBuilder)
 	}
 
-	// Edit audit log role arn
-	if config.AuditLogRoleARN != nil {
+	registryConfigBuilder, err := BuildRegistryConfig(config)
+	if err != nil {
+		return err
+	}
+	if registryConfigBuilder != nil {
+		clusterBuilder.RegistryConfig(registryConfigBuilder)
+	}
+
+	if config.AuditLogRoleARN != nil || config.AdditionalAllowedPrincipals != nil || config.BillingAccount != "" {
 		awsBuilder := cmv1.NewAWS()
-		auditLogBuiler := cmv1.NewAuditLog().RoleArn(*config.AuditLogRoleARN)
-		awsBuilder = awsBuilder.AuditLog(auditLogBuiler)
+		if config.AdditionalAllowedPrincipals != nil {
+			awsBuilder = awsBuilder.AdditionalAllowedPrincipals(config.AdditionalAllowedPrincipals...)
+		}
+		// Edit audit log role arn
+		if config.AuditLogRoleARN != nil {
+			auditLogBuiler := cmv1.NewAuditLog().RoleArn(*config.AuditLogRoleARN)
+			awsBuilder = awsBuilder.AuditLog(auditLogBuiler)
+		}
+		if config.BillingAccount != "" {
+			awsBuilder.BillingAccountID(config.BillingAccount)
+		}
 		clusterBuilder.AWS(awsBuilder)
 	}
 
@@ -672,17 +698,25 @@ func (c *Client) DeleteCluster(clusterKey string, bestEffort bool,
 	return cluster, nil
 }
 
+func (c *Client) UpdateClusterDeletionProtection(clusterId string, deleteProtection *cmv1.DeleteProtection) error {
+	response, err := c.ocm.ClustersMgmt().V1().Clusters().
+		Cluster(clusterId).
+		DeleteProtection().
+		Update().
+		Body(deleteProtection).
+		Send()
+	if err != nil {
+		return handleErr(response.Error(), err)
+	}
+	return nil
+}
+
 // EnsureNoPendingClusters ensures that no clusters are pending in the account. For non-STS clusters,
 // the osdCcsAdmin user credentials are used to create the cluster, and it is required that these credentials
 // are rotated between cluster creation. If a user is creating a non-STS cluster, we need to therefore make sure
 // no other clusters are pending in the account in order to ensure no race condition occurs.
 func (c *Client) EnsureNoPendingClusters(awsCreator *aws.Creator) error {
-	reporter, err := rprtr.New().
-		Build()
-	if err != nil {
-		return fmt.Errorf("Error creating cluster reporter: %w", err)
-	}
-
+	reporter := rprtr.CreateReporter()
 	/**
 	1) Poll the cluster with same arn from ocm
 	2) Check the status and if pending enter to a loop until it becomes installing
@@ -712,12 +746,7 @@ func (c *Client) EnsureNoPendingClusters(awsCreator *aws.Creator) error {
 }
 
 func (c *Client) createClusterSpec(config Spec) (*cmv1.Cluster, error) {
-	reporter, err := rprtr.New().
-		Build()
-	if err != nil {
-		return nil, fmt.Errorf("Error creating cluster reporter: %v", err)
-	}
-
+	reporter := rprtr.CreateReporter()
 	clusterProperties := map[string]string{}
 
 	if config.CustomProperties != nil {
@@ -746,7 +775,7 @@ func (c *Client) createClusterSpec(config Spec) (*cmv1.Cluster, error) {
 	}
 
 	clusterProperties[ocmConsts.CreatorArn] = config.AWSCreator.ARN
-	clusterProperties[properties.CLIVersion] = info.Version
+	clusterProperties[properties.CLIVersion] = info.DefaultVersion
 
 	// Create the cluster:
 	clusterBuilder := cmv1.NewCluster().
@@ -770,6 +799,14 @@ func (c *Client) createClusterSpec(config Spec) (*cmv1.Cluster, error) {
 
 	if config.DisableWorkloadMonitoring != nil {
 		clusterBuilder = clusterBuilder.DisableUserWorkloadMonitoring(*config.DisableWorkloadMonitoring)
+	}
+
+	registryConfigBuilder, err := BuildRegistryConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	if registryConfigBuilder != nil {
+		clusterBuilder.RegistryConfig(registryConfigBuilder)
 	}
 
 	if config.Flavour != "" {
@@ -884,6 +921,10 @@ func (c *Client) createClusterSpec(config Spec) (*cmv1.Cluster, error) {
 		awsBuilder = awsBuilder.AdditionalControlPlaneSecurityGroupIds(config.AdditionalControlPlaneSecurityGroupIds...)
 	}
 
+	if len(config.AdditionalAllowedPrincipals) > 0 {
+		awsBuilder = awsBuilder.AdditionalAllowedPrincipals(config.AdditionalAllowedPrincipals...)
+	}
+
 	if config.SubnetIds != nil {
 		awsBuilder = awsBuilder.SubnetIDs(config.SubnetIds...)
 	}
@@ -935,7 +976,7 @@ func (c *Client) createClusterSpec(config Spec) (*cmv1.Cluster, error) {
 		stsBuilder = stsBuilder.InstanceIAMRoles(instanceIAMRolesBuilder)
 
 		mode := false
-		if config.Mode == aws.ModeAuto {
+		if config.Mode == "auto" {
 			mode = true
 		}
 		stsBuilder.AutoMode(mode)

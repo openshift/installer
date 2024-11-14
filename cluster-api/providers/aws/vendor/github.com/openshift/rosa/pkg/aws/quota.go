@@ -1,11 +1,13 @@
 package aws
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/servicequotas"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/servicequotas"
+	servicequotastypes "github.com/aws/aws-sdk-go-v2/service/servicequotas/types"
 )
 
 type quota struct {
@@ -14,6 +16,8 @@ type quota struct {
 	QuotaCode    string
 	DesiredValue *float64
 }
+
+const IAMServiceCode = "iam"
 
 // List of service quotas we verify for cluster installs
 // to support 5 x multi zone clusters
@@ -96,7 +100,7 @@ func (c *awsClient) ValidateQuota() (bool, error) {
 		}
 
 		serviceQuota, err := GetServiceQuota(serviceQuotas, quota.QuotaCode)
-		if err != nil || serviceQuota == nil || (*serviceQuota).Value == nil {
+		if err != nil || (serviceQuota).Value == nil {
 			return false, fmt.Errorf("Error getting AWS service quota: %s %v", quota.ServiceCode, err)
 		}
 
@@ -119,30 +123,42 @@ func (c *awsClient) ValidateQuota() (bool, error) {
 }
 
 // ListServiceQuotas list available quotas for service
-func ListServiceQuotas(client *awsClient, serviceCode string) ([]*servicequotas.ServiceQuota, error) {
-	var serviceQuotas []*servicequotas.ServiceQuota
+func ListServiceQuotas(client *awsClient, serviceCode string) ([]servicequotastypes.ServiceQuota, error) {
+	// Create a ServiceQuotas client
+	var serviceQuotas []servicequotastypes.ServiceQuota
 
 	// Paginate through quota results
-	listServiceQuotasInput := &servicequotas.ListServiceQuotasInput{ServiceCode: &serviceCode}
-	err := client.servicequotasClient.ListServiceQuotasPages(listServiceQuotasInput,
-		func(page *servicequotas.ListServiceQuotasOutput, lastPage bool) bool {
-			serviceQuotas = append(serviceQuotas, page.Quotas...)
-			return page.NextToken != nil
+	paginator := servicequotas.NewListServiceQuotasPaginator(
+		client.serviceQuotasClient, &servicequotas.ListServiceQuotasInput{
+			ServiceCode: &serviceCode,
 		})
-	if err != nil {
-		return nil, err
+
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.Background())
+		if err != nil {
+			return nil, err
+		}
+		serviceQuotas = append(serviceQuotas, page.Quotas...)
 	}
 
-	return serviceQuotas, err
+	return serviceQuotas, nil
 }
 
 // GetServiceQuota extract service quota for the list of service quotas
-func GetServiceQuota(serviceQuotas []*servicequotas.ServiceQuota,
-	quotaCode string) (*servicequotas.ServiceQuota, error) {
+func GetServiceQuota(serviceQuotas []servicequotastypes.ServiceQuota,
+	quotaCode string) (servicequotastypes.ServiceQuota, error) {
 	for _, serviceQuota := range serviceQuotas {
 		if *serviceQuota.QuotaCode == quotaCode {
 			return serviceQuota, nil
 		}
 	}
-	return nil, fmt.Errorf("Unable to find quota with service code: %s", quotaCode)
+	return servicequotastypes.ServiceQuota{}, fmt.Errorf("Unable to find quota with service code: %s", quotaCode)
+}
+
+func (c *awsClient) GetIAMServiceQuota(quotaCode string) (
+	*servicequotas.GetServiceQuotaOutput, error) {
+	return c.iamQuotaClient.GetServiceQuota(context.Background(), &servicequotas.GetServiceQuotaInput{
+		ServiceCode: aws.String(IAMServiceCode),
+		QuotaCode:   aws.String(quotaCode),
+	})
 }

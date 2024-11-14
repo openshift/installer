@@ -8,21 +8,24 @@ import (
 	commonUtils "github.com/openshift-online/ocm-common/pkg/utils"
 )
 
-func IntValidator(val interface{}) error {
+func Int32Validator(val interface{}) error {
 	if val == "" { // if a value is not passed it should not throw an error (optional value)
 		return nil
 	}
-	_, err := strconv.Atoi(fmt.Sprintf("%v", val))
-	return err
+	_, err := strconv.ParseInt(fmt.Sprintf("%v", val), 10, 32)
+	if err != nil {
+		return fmt.Errorf("Should provide an integer number between -2147483648 to 2147483647.")
+	}
+	return nil
 }
 
-func NonNegativeIntValidator(val interface{}) error {
+func NonNegativeInt32Validator(val interface{}) error {
 	if val == "" { // if a value is not passed it should not throw an error (optional value)
 		return nil
 	}
-	number, err := strconv.Atoi(fmt.Sprintf("%v", val))
+	number, err := strconv.ParseInt(fmt.Sprintf("%v", val), 10, 32)
 	if err != nil {
-		return fmt.Errorf("Failed parsing '%v' to an integer number.", val)
+		return fmt.Errorf("Should provide an integer number between 0 to 2147483647.")
 	}
 
 	if number < 0 {

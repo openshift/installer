@@ -258,3 +258,13 @@ func ChunkSlice[T any](slice []T, chunkSize int) [][]T {
 func IsBYOVPC(cluster *cmv1.Cluster) bool {
 	return len(cluster.AWS().SubnetIDs()) > 0
 }
+
+func FilterEmptyStrings(strings []string) []string {
+	var filteredResult []string
+	for _, str := range strings {
+		if str != "" {
+			filteredResult = append(filteredResult, str)
+		}
+	}
+	return filteredResult
+}

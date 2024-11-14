@@ -134,17 +134,17 @@ func (r *AWSManagedClusterReconciler) SetupWithManager(ctx context.Context, mgr 
 
 	// Add a watch for clusterv1.Cluster unpaise
 	if err = controller.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1.GroupVersion.WithKind("AWSManagedCluster"), mgr.GetClient(), &infrav1.AWSManagedCluster{})),
-		predicates.ClusterUnpaused(log.GetLogger()),
+		source.Kind[client.Object](mgr.GetCache(), &clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1.GroupVersion.WithKind("AWSManagedCluster"), mgr.GetClient(), &infrav1.AWSManagedCluster{})),
+			predicates.ClusterUnpaused(log.GetLogger())),
 	); err != nil {
 		return fmt.Errorf("failed adding a watch for ready clusters: %w", err)
 	}
 
 	// Add a watch for AWSManagedControlPlane
 	if err = controller.Watch(
-		source.Kind(mgr.GetCache(), &ekscontrolplanev1.AWSManagedControlPlane{}),
-		handler.EnqueueRequestsFromMapFunc(r.managedControlPlaneToManagedCluster(ctx, log)),
+		source.Kind[client.Object](mgr.GetCache(), &ekscontrolplanev1.AWSManagedControlPlane{},
+			handler.EnqueueRequestsFromMapFunc(r.managedControlPlaneToManagedCluster(ctx, log))),
 	); err != nil {
 		return fmt.Errorf("failed adding watch on AWSManagedControlPlane: %w", err)
 	}

@@ -591,7 +591,6 @@ func (s *Service) getSecurityGroupIngressRules(role infrav1.SecurityGroupRole) (
 			},
 		}
 	}
-	cidrBlocks := []string{services.AnyIPv4CidrBlock}
 	switch role {
 	case infrav1.SecurityGroupBastion:
 		return infrav1.IngressRules{
@@ -645,6 +644,10 @@ func (s *Service) getSecurityGroupIngressRules(role infrav1.SecurityGroupRole) (
 		return append(cniRules, rules...), nil
 
 	case infrav1.SecurityGroupNode:
+		cidrBlocks := []string{services.AnyIPv4CidrBlock}
+		if scopeCidrBlocks := s.scope.NodePortIngressRuleCidrBlocks(); len(scopeCidrBlocks) > 0 {
+			cidrBlocks = scopeCidrBlocks
+		}
 		rules := infrav1.IngressRules{
 			{
 				Description: "Node Port Services",
@@ -679,12 +682,11 @@ func (s *Service) getSecurityGroupIngressRules(role infrav1.SecurityGroupRole) (
 		}
 		return append(cniRules, rules...), nil
 	case infrav1.SecurityGroupEKSNodeAdditional:
+		ingressRules := s.scope.AdditionalControlPlaneIngressRules()
 		if s.scope.Bastion().Enabled {
-			return infrav1.IngressRules{
-				s.defaultSSHIngressRule(s.scope.SecurityGroups()[infrav1.SecurityGroupBastion].ID),
-			}, nil
+			ingressRules = append(ingressRules, s.defaultSSHIngressRule(s.scope.SecurityGroups()[infrav1.SecurityGroupBastion].ID))
 		}
-		return infrav1.IngressRules{}, nil
+		return ingressRules, nil
 	case infrav1.SecurityGroupAPIServerLB:
 		kubeletRules := s.getIngressRulesToAllowKubeletToAccessTheControlPlaneLB()
 		customIngressRules, err := s.processIngressRulesSGs(s.getControlPlaneLBIngressRules())
