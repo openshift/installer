@@ -77,15 +77,11 @@ func (a *AuthConfig) Generate(_ context.Context, dependencies asset.Parents) err
 		watcherPersona: &a.WatcherAuthToken,
 	}
 
-	generateAndAssignToken := func(persona, privateKey string, expiry *time.Time) (string, error) {
-		return generateToken(persona, privateKey, expiry)
-	}
-
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
 		// Auth tokens do not expire
 		for persona, tokenField := range tokens {
-			token, err := generateAndAssignToken(persona, privateKey, nil)
+			token, err := generateToken(persona, privateKey, nil)
 			if err != nil {
 				return err
 			}
@@ -101,7 +97,7 @@ func (a *AuthConfig) Generate(_ context.Context, dependencies asset.Parents) err
 		a.AuthTokenExpiry = expiry.Format(time.RFC3339)
 
 		for persona, tokenField := range tokens {
-			token, err := generateAndAssignToken(persona, privateKey, &expiry)
+			token, err := generateToken(persona, privateKey, &expiry)
 			if err != nil {
 				return err
 			}
