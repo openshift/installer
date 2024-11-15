@@ -26,6 +26,7 @@ const (
 
 // machineTypePrefixArchitectureMap contains a map of (machineTypePrefix, architecture) tuples
 var machineTypePrefixArchitectureMap = map[string]NormalizedArch{
+	"c4a": ArchitectureArm64,
 	"t2a": ArchitectureArm64,
 }
 
