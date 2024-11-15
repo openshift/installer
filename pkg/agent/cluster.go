@@ -79,7 +79,7 @@ func NewCluster(ctx context.Context, assetDir, rendezvousIP, kubeconfigPath, ssh
 			return nil, err
 		}
 	case workflow.AgentWorkflowTypeAddNodes:
-		watcherAuthToken, err = gencrypto.GetAuthTokenFromCluster(ctx, kubeconfigPath)
+		watcherAuthToken, err = gencrypto.GetWatcherAuthTokenFromCluster(ctx, kubeconfigPath)
 		if err != nil {
 			return nil, err
 		}
