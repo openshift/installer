@@ -29,6 +29,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/gcp"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/vsphere"
 	mcign "github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -40,6 +41,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -99,6 +101,7 @@ type bootstrapTemplateData struct {
 type platformTemplateData struct {
 	BareMetal *baremetal.TemplateData
 	VSphere   *vsphere.TemplateData
+	GCP       *gcp.TemplateData
 }
 
 // Common is an asset that generates the ignition config for bootstrap nodes.
@@ -314,6 +317,8 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 			ironicCreds.Password,
 			dependencies,
 		)
+	case gcptypes.Name:
+		platformData.GCP = gcp.GetTemplateData(installConfig.Config.Platform.GCP)
 	case vspheretypes.Name:
 		platformData.VSphere = vsphere.GetTemplateData(installConfig.Config.Platform.VSphere)
 	}
