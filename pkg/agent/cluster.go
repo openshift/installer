@@ -479,11 +479,11 @@ func (czero *Cluster) PrintInstallStatus(cluster *models.Cluster, ch chan logEnt
 // CanConnectToNodeZero Checks if NodeZero is reachable.
 func (czero *Cluster) CanConnectToNodeZero() bool {
 	ip := czero.API.Rest.NodeZeroIP
-	port := 22
+	port := "22"
 
-	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, port))
+	conn, err := net.Dial("tcp", net.JoinHostPort(ip, port))
 	if err != nil {
-		logrus.Debugf("Failed to connect to the Rendezvous Host on port 22: %s", err)
+		logrus.Debugf("Failed to connect to the Rendezvous Host on port %s: %s", port, err)
 		return false
 	}
 	conn.Close()
