@@ -38,7 +38,7 @@ unqualified-search-registries = []
 CLUSTER_ID=c37c9544-4320-4380-9d8b-0753a4d9ea57
 CLUSTER_NAME=ostest
 CLUSTER_API_VIP_DNS_NAME=api.ostest.test.metalkube.org
-AGENT_AUTH_TOKEN_EXPIRY=.*
+AUTH_TOKEN_EXPIRY=.*
 -- expected/grub.cfg --
 .*fips=1.*
 -- expected/import-cluster-config.json --

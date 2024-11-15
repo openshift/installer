@@ -29,16 +29,21 @@ import (
 var (
 	authTokenSecretNamespace = "openshift-config" //nolint:gosec // no sensitive info
 	authTokenSecretName      = "agent-auth-token" //nolint:gosec // no sensitive info
-	authTokenSecretDataKey   = "agentAuthToken"
+	authTokenSecretDataKey   = "watcherAuthToken"
 	authTokenPublicDataKey   = "authTokenPublicKey"
 )
 
 // AuthType holds the authenticator type for agent based installer.
-const AuthType = "agent-installer-local"
+const (
+	AuthType       = "agent-installer-local"
+	agentPersona   = "agentAuth"
+	userPersona    = "userAuth"
+	watcherPersona = "watcherAuth"
+)
 
 // AuthConfig is an asset that generates ECDSA public/private keys, JWT token.
 type AuthConfig struct {
-	PublicKey, AgentAuthToken, AgentAuthTokenExpiry, AuthType string
+	PublicKey, AgentAuthToken, UserAuthToken, WatcherAuthToken, AuthTokenExpiry, AuthType string
 }
 
 var _ asset.Asset = (*AuthConfig)(nil)
@@ -66,26 +71,38 @@ func (a *AuthConfig) Generate(_ context.Context, dependencies asset.Parents) err
 
 	a.PublicKey = encodedPubKeyPEM
 
+	tokens := map[string]*string{
+		agentPersona:   &a.AgentAuthToken,
+		userPersona:    &a.UserAuthToken,
+		watcherPersona: &a.WatcherAuthToken,
+	}
+
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
 		// Auth tokens do not expire
-		token, err := generateToken(privateKey, nil)
-		if err != nil {
-			return err
+		for persona, tokenField := range tokens {
+			token, err := generateToken(persona, privateKey, nil)
+			if err != nil {
+				return err
+			}
+			*tokenField = token
 		}
-		a.AgentAuthToken = token
+
 	case workflow.AgentWorkflowTypeAddNodes:
 		addNodesConfig := &joiner.AddNodesConfig{}
 		dependencies.Get(addNodesConfig)
 
 		// Auth tokens expires after 48 hours
 		expiry := time.Now().UTC().Add(48 * time.Hour)
-		a.AgentAuthTokenExpiry = expiry.Format(time.RFC3339)
-		token, err := generateToken(privateKey, &expiry)
-		if err != nil {
-			return err
+		a.AuthTokenExpiry = expiry.Format(time.RFC3339)
+
+		for persona, tokenField := range tokens {
+			token, err := generateToken(persona, privateKey, &expiry)
+			if err != nil {
+				return err
+			}
+			*tokenField = token
 		}
-		a.AgentAuthToken = token
 
 		err = a.createOrUpdateAuthTokenSecret(addNodesConfig.Params.Kubeconfig)
 		if err != nil {
@@ -147,10 +164,11 @@ func keyPairPEM() (string, string, error) {
 }
 
 // generateToken returns a JWT token based on the private key.
-func generateToken(privateKkeyPem string, expiry *time.Time) (string, error) {
+func generateToken(userPersona string, privateKeyPem string, expiry *time.Time) (string, error) {
 	// Create the JWT claims
-	claims := jwt.MapClaims{}
-
+	claims := jwt.MapClaims{
+		"auth_scheme": userPersona,
+	}
 	// Set the expiry time if provided
 	if expiry != nil {
 		claims["exp"] = expiry.Unix()
@@ -159,7 +177,7 @@ func generateToken(privateKkeyPem string, expiry *time.Time) (string, error) {
 	// Create the token using the ES256 signing method and the claims
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
 
-	priv, err := jwt.ParseECPrivateKeyFromPEM([]byte(privateKkeyPem))
+	priv, err := jwt.ParseECPrivateKeyFromPEM([]byte(privateKeyPem))
 	if err != nil {
 		return "", err
 	}
@@ -227,9 +245,9 @@ func (a *AuthConfig) createOrUpdateAuthTokenSecret(kubeconfigPath string) error 
 		}
 	} else {
 		// Update the token in asset store with the retrieved token from the cluster
-		a.AgentAuthToken = retrievedToken
+		a.WatcherAuthToken = retrievedToken
 		// get the token expiry time of the retrieved token from the cluster
-		a.AgentAuthTokenExpiry = expiryTime.UTC().Format(time.RFC3339)
+		a.AuthTokenExpiry = expiryTime.UTC().Format(time.RFC3339)
 
 		retrievedPublicKey, err := extractPublicKeyFromSecret(retrievedSecret)
 		if err != nil {
@@ -237,7 +255,7 @@ func (a *AuthConfig) createOrUpdateAuthTokenSecret(kubeconfigPath string) error 
 		}
 		// Update the asset store with the retrieved public key associated with the valid token from the cluster
 		a.PublicKey = retrievedPublicKey
-		logrus.Infof("Reusing existing auth token (valid up to %s)", a.AgentAuthTokenExpiry)
+		logrus.Infof("Reusing existing auth token (valid up to %s)", a.AuthTokenExpiry)
 	}
 	return err
 }
@@ -250,12 +268,12 @@ func (a *AuthConfig) createSecret(k8sclientset kubernetes.Interface) error {
 			// only for informational purposes
 			Annotations: map[string]string{
 				"updatedAt": "", // Initially set to empty
-				"expiresAt": a.AgentAuthTokenExpiry,
+				"expiresAt": a.AuthTokenExpiry,
 			},
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
-			authTokenSecretDataKey: []byte(a.AgentAuthToken),
+			authTokenSecretDataKey: []byte(a.WatcherAuthToken),
 			authTokenPublicDataKey: []byte(a.PublicKey),
 		},
 	}
@@ -263,24 +281,24 @@ func (a *AuthConfig) createSecret(k8sclientset kubernetes.Interface) error {
 	if err != nil {
 		return fmt.Errorf("failed to create secret: %w", err)
 	}
-	logrus.Infof("Generated auth token (valid up to %s)", a.AgentAuthTokenExpiry)
+	logrus.Infof("Generated auth token (valid up to %s)", a.AuthTokenExpiry)
 	logrus.Infof("Created secret %s/%s", authTokenSecretNamespace, authTokenSecretName)
 
 	return nil
 }
 
 func (a *AuthConfig) refreshAuthTokenSecret(k8sclientset kubernetes.Interface, retrievedSecret *corev1.Secret) error {
-	retrievedSecret.Data[authTokenSecretDataKey] = []byte(a.AgentAuthToken)
+	retrievedSecret.Data[authTokenSecretDataKey] = []byte(a.WatcherAuthToken)
 	retrievedSecret.Data[authTokenPublicDataKey] = []byte(a.PublicKey)
 	// only for informational purposes
 	retrievedSecret.Annotations["updatedAt"] = time.Now().UTC().Format(time.RFC3339)
-	retrievedSecret.Annotations["expiresAt"] = a.AgentAuthTokenExpiry
+	retrievedSecret.Annotations["expiresAt"] = a.AuthTokenExpiry
 
 	_, err := k8sclientset.CoreV1().Secrets(authTokenSecretNamespace).Update(context.TODO(), retrievedSecret, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
-	logrus.Infof("Auth token regenerated (valid up to %s)", a.AgentAuthTokenExpiry)
+	logrus.Infof("Auth token regenerated (valid up to %s)", a.AuthTokenExpiry)
 	logrus.Infof("Updated secret %s/%s", authTokenSecretNamespace, authTokenSecretName)
 	return nil
 }
@@ -304,11 +322,11 @@ func GetAuthTokenFromCluster(ctx context.Context, kubeconfigPath string) (string
 }
 
 func extractAuthTokenFromSecret(secret *corev1.Secret) (string, error) {
-	existingAgentAuthToken, exists := secret.Data[authTokenSecretDataKey]
-	if !exists || len(existingAgentAuthToken) == 0 {
+	existingWatcherAuthToken, exists := secret.Data[authTokenSecretDataKey]
+	if !exists || len(existingWatcherAuthToken) == 0 {
 		return "", fmt.Errorf("auth token secret %s/%s does not contain the key %s or is empty", authTokenSecretNamespace, authTokenSecretName, authTokenSecretDataKey)
 	}
-	return string(existingAgentAuthToken), nil
+	return string(existingWatcherAuthToken), nil
 }
 
 func extractPublicKeyFromSecret(secret *corev1.Secret) (string, error) {

@@ -31,6 +31,32 @@ func TestAuthConfig_Generate(t *testing.T) {
 			assert.NoError(t, err)
 			assert.NotEmpty(t, authConfigAsset.PublicKey)
 			assert.NotEmpty(t, authConfigAsset.AgentAuthToken)
+			assert.NotEmpty(t, authConfigAsset.UserAuthToken)
+			assert.NotEmpty(t, authConfigAsset.WatcherAuthToken)
+
+			// All the 3 tokens should be unique
+			assert.NotEqual(t, authConfigAsset.AgentAuthToken, authConfigAsset.UserAuthToken)
+			assert.NotEqual(t, authConfigAsset.AgentAuthToken, authConfigAsset.WatcherAuthToken)
+			assert.NotEqual(t, authConfigAsset.UserAuthToken, authConfigAsset.WatcherAuthToken)
+
+			// verify each token is signed with correct persona
+			claims, err := ParseToken(authConfigAsset.AgentAuthToken)
+			assert.NoError(t, err)
+			persona, ok := claims["auth_scheme"].(string)
+			assert.Equal(t, persona, agentPersona)
+			assert.Equal(t, ok, true)
+
+			claims, err = ParseToken(authConfigAsset.UserAuthToken)
+			assert.NoError(t, err)
+			persona, ok = claims["auth_scheme"].(string)
+			assert.Equal(t, persona, userPersona)
+			assert.Equal(t, ok, true)
+
+			claims, err = ParseToken(authConfigAsset.WatcherAuthToken)
+			assert.NoError(t, err)
+			persona, ok = claims["auth_scheme"].(string)
+			assert.Equal(t, persona, watcherPersona)
+			assert.Equal(t, ok, true)
 		})
 	}
 }

@@ -14,7 +14,7 @@ EnvironmentFile=/usr/local/share/assisted-service/assisted-service.env
 ExecStartPre=/bin/rm -f %t/%n.ctr-id
 ExecStartPre=/bin/mkdir -p %t/agent-installer /etc/assisted/hostconfig
 ExecStartPre=/usr/local/bin/wait-for-assisted-service.sh
-ExecStart=podman run --net host --cidfile=%t/%n.ctr-id --cgroups=no-conmon --log-driver=journald --restart=on-failure:10 --pod-id-file=%t/assisted-service-pod.pod-id --replace --name=apply-host-config -v /etc/assisted/hostconfig:/etc/assisted/hostconfig -v %t/agent-installer:/var/run/agent-installer:z --env SERVICE_BASE_URL --env INFRA_ENV_ID --env WORKFLOW_TYPE --env AGENT_AUTH_TOKEN $SERVICE_IMAGE /usr/local/bin/agent-installer-client configure
+ExecStart=podman run --net host --cidfile=%t/%n.ctr-id --cgroups=no-conmon --log-driver=journald --restart=on-failure:10 --pod-id-file=%t/assisted-service-pod.pod-id --replace --name=apply-host-config -v /etc/assisted/hostconfig:/etc/assisted/hostconfig -v %t/agent-installer:/var/run/agent-installer:z --env SERVICE_BASE_URL --env INFRA_ENV_ID --env WORKFLOW_TYPE --env USER_AUTH_TOKEN $SERVICE_IMAGE /usr/local/bin/agent-installer-client configure
 ExecStop=/usr/bin/podman stop --ignore --cidfile=%t/%n.ctr-id
 ExecStopPost=/usr/bin/podman rm -f --ignore --cidfile=%t/%n.ctr-id
 

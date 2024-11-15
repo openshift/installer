@@ -9,7 +9,7 @@ status_issue="65_token"
 
 export TZ=UTC
 check_token_expiry() {
-  expiry_epoch=$(date -d "${AGENT_AUTH_TOKEN_EXPIRY}" +%s)
+  expiry_epoch=$(date -d "${AUTH_TOKEN_EXPIRY}" +%s)
   current_epoch=$(date +%s)
 
   if [ "$current_epoch" -gt "$expiry_epoch" ]; then
