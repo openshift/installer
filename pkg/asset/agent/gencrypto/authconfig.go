@@ -26,17 +26,14 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
 
-var (
+const (
 	authTokenSecretNamespace = "openshift-config" //nolint:gosec // no sensitive info
 	authTokenSecretName      = "agent-auth-token" //nolint:gosec // no sensitive info
 	agentAuthKey             = "agentAuthToken"
 	userAuthKey              = "userAuthToken"
 	watcherAuthKey           = "watcherAuthToken"
 	authTokenPublicDataKey   = "authTokenPublicKey"
-)
-
-// AuthType holds the authenticator type for agent based installer.
-const (
+	// AuthType holds the authenticator type for agent based installer.
 	AuthType       = "agent-installer-local"
 	agentPersona   = "agentAuth"
 	userPersona    = "userAuth"
@@ -331,19 +328,28 @@ func GetWatcherAuthTokenFromCluster(ctx context.Context, kubeconfigPath string) 
 }
 
 func extractAuthTokensFromSecret(secret *corev1.Secret) (string, string, string, error) {
-	existingAgentAuthToken, exists := secret.Data[userAuthKey]
-	if !exists || len(existingAgentAuthToken) == 0 {
+	// Check for agentAuthKey, which must exist in both old (4.17) and new versions (4.18+)
+	existingAgentAuthToken, agentAuthTokenExists := secret.Data[agentAuthKey]
+	if !agentAuthTokenExists || len(existingAgentAuthToken) == 0 {
 		return "", "", "", fmt.Errorf("auth token secret %s/%s does not contain the key %s or is empty", authTokenSecretNamespace, authTokenSecretName, agentAuthKey)
 	}
 
-	existingUserAuthToken, exists := secret.Data[userAuthKey]
-	if !exists || len(existingUserAuthToken) == 0 {
-		return "", "", "", fmt.Errorf("auth token secret %s/%s does not contain the key %s or is empty", authTokenSecretNamespace, authTokenSecretName, userAuthKey)
+	existingUserAuthToken, userAuthTokenExists := secret.Data[userAuthKey]
+	existingWatcherAuthToken, watcherAuthTokenExists := secret.Data[watcherAuthKey]
+
+	// Handle old version compatibility for OCP 4.17
+	if !userAuthTokenExists && !watcherAuthTokenExists {
+		// For old version OCP 4.17, where only agentAuthToken is present
+		return string(existingAgentAuthToken), "", "", nil
 	}
-	existingWatcherAuthToken, exists := secret.Data[watcherAuthKey]
-	if !exists || len(existingWatcherAuthToken) == 0 {
-		return "", "", "", fmt.Errorf("auth token secret %s/%s does not contain the key %s or is empty", authTokenSecretNamespace, authTokenSecretName, watcherAuthKey)
+
+	// Handle cases where new keys are missing in OCP 4.18+
+	if (!userAuthTokenExists || len(existingUserAuthToken) == 0) || (!watcherAuthTokenExists || len(existingWatcherAuthToken) == 0) {
+		return "", "", "", fmt.Errorf("auth token secret %s/%s is missing one or more required keys (%s, %s, or %s) or they are empty",
+			authTokenSecretNamespace, authTokenSecretName, agentAuthKey, userAuthKey, watcherAuthKey)
 	}
+
+	// Return all keys if present
 	return string(existingAgentAuthToken), string(existingUserAuthToken), string(existingWatcherAuthToken), nil
 }
 
