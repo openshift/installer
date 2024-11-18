@@ -287,10 +287,33 @@ func (r *IBMVPCClusterReconciler) reconcileCluster(clusterScope *scope.VPCCluste
 	clusterScope.Info("Reconciliation of Security Groups complete")
 	conditions.MarkTrue(clusterScope.IBMVPCCluster, infrav1beta2.VPCSecurityGroupReadyCondition)
 
-	// TODO(cjschaef): add remaining resource reconciliation.
+	// Reconcile the cluster's Load Balancers
+	clusterScope.Info("Reconciling Load Balancers")
+	if requeue, err := clusterScope.ReconcileLoadBalancers(); err != nil {
+		clusterScope.Error(err, "failed to reconcile Load Balancers")
+		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.LoadBalancerReadyCondition, infrav1beta2.LoadBalancerReconciliationFailedReason, capiv1beta1.ConditionSeverityError, "%s", err.Error())
+		return reconcile.Result{}, err
+	} else if requeue {
+		clusterScope.Info("Load Balancers creation is pending, requeueing")
+		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
+	}
+	clusterScope.Info("Reconciliation of Load Balancers complete")
+	conditions.MarkTrue(clusterScope.IBMVPCCluster, infrav1beta2.LoadBalancerReadyCondition)
+
+	// Collect cluster's Load Balancer hostname for spec.
+	hostName, err := clusterScope.GetLoadBalancerHostName()
+	if err != nil {
+		return reconcile.Result{}, fmt.Errorf("error retrieving load balancer hostname: %w", err)
+	} else if hostName == nil || *hostName == "" {
+		clusterScope.Info("No Load Balancer hostname found, requeueing")
+		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
+	}
 
 	// Mark cluster as ready.
+	clusterScope.IBMVPCCluster.Spec.ControlPlaneEndpoint.Host = *hostName
+	clusterScope.IBMVPCCluster.Spec.ControlPlaneEndpoint.Port = clusterScope.GetAPIServerPort()
 	clusterScope.IBMVPCCluster.Status.Ready = true
+	clusterScope.Info("cluster infrastructure is now ready for cluster", "clusterName", clusterScope.IBMVPCCluster.Name)
 	return ctrl.Result{}, nil
 }
 

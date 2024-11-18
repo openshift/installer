@@ -198,11 +198,11 @@ func (r *IBMPowerVSCluster) validateIBMPowerVSClusterCreateInfraPrereq() (allErr
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.vpc"), r.Spec.VPC, "value of VPC is empty"))
 	}
 
-	if r.Spec.VPC.Region == nil {
+	if r.Spec.VPC != nil && r.Spec.VPC.Region == nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.vpc.region"), r.Spec.VPC.Region, "value of VPC region is empty"))
 	}
 
-	if r.Spec.VPC.Region != nil && !regionUtil.ValidateVPCRegion(*r.Spec.VPC.Region) {
+	if r.Spec.VPC != nil && r.Spec.VPC.Region != nil && !regionUtil.ValidateVPCRegion(*r.Spec.VPC.Region) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.vpc.region"), r.Spec.VPC.Region, fmt.Sprintf("vpc region '%s' is not supported", *r.Spec.VPC.Region)))
 	}
 
