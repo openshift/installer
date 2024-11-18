@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/x509"
 	"fmt"
 	"net"
 	"os"
@@ -53,6 +52,7 @@ import (
 	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/vsphere"
+	"github.com/openshift/installer/pkg/utils"
 	baremetalutils "github.com/openshift/installer/pkg/utils/baremetal"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
 	"github.com/openshift/library-go/pkg/route/routeapihelpers"
@@ -219,7 +219,7 @@ func clusterCreatePostRun(ctx context.Context) (int, error) {
 	//
 	// Wait for the cluster to initialize.
 	//
-	err = waitForInstallComplete(ctx, config, command.RootOpts.Dir)
+	err = waitForInstallComplete(ctx, config)
 	if err != nil {
 		if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
 			logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
@@ -341,52 +341,6 @@ func runTargetCmd(ctx context.Context, targets ...asset.WritableAsset) func(cmd 
 			logrus.Infof(logging.LogCreatedFiles(cmd.Name(), command.RootOpts.Dir, targets))
 		}
 	}
-}
-
-// addRouterCAToClusterCA adds router CA to cluster CA in kubeconfig
-func addRouterCAToClusterCA(ctx context.Context, config *rest.Config, directory string) (err error) {
-	client, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return errors.Wrap(err, "creating a Kubernetes client")
-	}
-
-	// Configmap may not exist. log and accept not-found errors with configmap.
-	caConfigMap, err := client.CoreV1().ConfigMaps("openshift-config-managed").Get(ctx, "default-ingress-cert", metav1.GetOptions{})
-	if err != nil {
-		return errors.Wrap(err, "fetching default-ingress-cert configmap from openshift-config-managed namespace")
-	}
-
-	routerCrtBytes := []byte(caConfigMap.Data["ca-bundle.crt"])
-	kubeconfig := filepath.Join(directory, "auth", "kubeconfig")
-	kconfig, err := clientcmd.LoadFromFile(kubeconfig)
-	if err != nil {
-		return errors.Wrap(err, "loading kubeconfig")
-	}
-
-	if kconfig == nil || len(kconfig.Clusters) == 0 {
-		return errors.New("kubeconfig is missing expected data")
-	}
-
-	for _, c := range kconfig.Clusters {
-		clusterCABytes := c.CertificateAuthorityData
-		if len(clusterCABytes) == 0 {
-			return errors.New("kubeconfig CertificateAuthorityData not found")
-		}
-		certPool := x509.NewCertPool()
-		if !certPool.AppendCertsFromPEM(clusterCABytes) {
-			return errors.New("cluster CA found in kubeconfig not valid PEM format")
-		}
-		if !certPool.AppendCertsFromPEM(routerCrtBytes) {
-			return errors.New("ca-bundle.crt from default-ingress-cert configmap not valid PEM format")
-		}
-
-		newCA := append(routerCrtBytes, clusterCABytes...)
-		c.CertificateAuthorityData = newCA
-	}
-	if err := clientcmd.WriteToFile(*kconfig, kubeconfig); err != nil {
-		return errors.Wrap(err, "writing kubeconfig")
-	}
-	return nil
 }
 
 func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *clusterCreateError {
@@ -791,12 +745,12 @@ func logComplete(directory, consoleURL string) error {
 	return nil
 }
 
-func waitForInstallComplete(ctx context.Context, config *rest.Config, directory string) error {
+func waitForInstallComplete(ctx context.Context, config *rest.Config) error {
 	if err := waitForInitializedCluster(ctx, config); err != nil {
 		return err
 	}
 
-	if err := addRouterCAToClusterCA(ctx, config, command.RootOpts.Dir); err != nil {
+	if err := utils.AddRouterCAToClusterCA(ctx, command.RootOpts.Dir); err != nil {
 		return err
 	}
 

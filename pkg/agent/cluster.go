@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	"github.com/openshift/installer/pkg/utils"
 )
 
 // Cluster is a struct designed to help interact with the cluster that is
@@ -59,6 +60,7 @@ type clusterInstallStatusHistory struct {
 	ClusterConsoleRouteCreated                          bool
 	ClusterConsoleRouteURLCreated                       bool
 	ClusterInstallComplete                              bool
+	RouterCertsAdded                                    bool
 	NotReadyTime                                        time.Time
 	ValidationResults                                   *validationResults
 	ClusterInitTime                                     time.Time
@@ -357,9 +359,18 @@ func (czero *Cluster) IsInstallComplete() (bool, error) {
 		}
 	}
 
+	if !czero.installHistory.RouterCertsAdded {
+		if err := utils.AddRouterCAToClusterCA(czero.Ctx, czero.assetDir); err != nil {
+			return false, errors.Wrap(err, "Error while adding router CA to cluster CA")
+		}
+		logrus.Info("Router CA added to cluster CA in kubeconfig")
+		czero.installHistory.RouterCertsAdded = true
+	}
+
 	if czero.installHistory.ClusterOperatorsInitialized &&
 		czero.installHistory.ClusterConsoleRouteCreated &&
-		czero.installHistory.ClusterConsoleRouteURLCreated {
+		czero.installHistory.ClusterConsoleRouteURLCreated &&
+		czero.installHistory.RouterCertsAdded {
 		czero.installHistory.ClusterInstallComplete = true
 		return true, nil
 	}

@@ -85,7 +85,7 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 				logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
 			}
 
-			err = waitForInstallComplete(ctx, config, command.RootOpts.Dir)
+			err = waitForInstallComplete(ctx, config)
 			if err != nil {
 				if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
 					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
