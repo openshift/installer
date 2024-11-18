@@ -10,19 +10,22 @@ import (
 
 	ignutil "github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/cmd/openshift-install/command"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/lbconfig"
+	"github.com/openshift/installer/pkg/asset/tls"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 
 const (
-	infrastructureFilepath   = "/opt/openshift/manifests/cluster-infrastructure-02-config.yml"
-	masterPointerIgnFilePath = "/opt/openshift/openshift/99_openshift-installer-ignition_master.yaml"
+	infrastructureFilepath = "/opt/openshift/manifests/cluster-infrastructure-02-config.yml"
+	mcsCertKeyFilepath     = "/opt/openshift/manifests/machine-config-server-tls-secret.yaml"
 
 	// replaceable is the string that precedes the encoded data in the ignition data.
 	// The data must be replaced before decoding the string, and the string must be
@@ -54,6 +57,10 @@ func EditIgnition(in IgnitionInput, platform string, publicIPAddresses, privateI
 	}
 	if err := asset.NewDefaultFileWriter(lbConfig).PersistToFile(command.RootOpts.Dir); err != nil {
 		return nil, nil, fmt.Errorf("failed to save %s to state file: %w", lbConfig.Name(), err)
+	}
+	err = updateMCSCertKey(in, platform, in.RootCA, privateIPAddresses)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to update MCS Cert and Key in the bootstrap ignition: %w", err)
 	}
 
 	editedIgnBytes, err := json.Marshal(ignData)
@@ -154,4 +161,50 @@ func updatePointerIgnition(in IgnitionInput, privateLBs []string, role string) (
 		return editedIgnBytes, nil
 	}
 	return in.MasterIgnData, nil
+}
+
+func updateMCSCertKey(in IgnitionInput, platform string, rootCA *tls.RootCA, privateLBs []string) error {
+	if len(privateLBs) > 0 {
+		keyRaw, certRaw, err := tls.RegenerateMCSCertKey(in.InstallConfig, in.RootCA, privateLBs)
+		if err != nil {
+			return fmt.Errorf("failed to regenerate MCS Cert and Key: %w", err)
+		}
+
+		// Manipulating the bootstrap ignition
+		config := &igntypes.Config{}
+		err = json.Unmarshal(in.BootstrapIgnData, config)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal bootstrap ignition: %w", err)
+		}
+
+		for i, fileData := range config.Storage.Files {
+			if fileData.Path == mcsCertKeyFilepath {
+				contents := config.Storage.Files[i].Contents.Source
+				replaced := strings.Replace(*contents, replaceable, "", 1)
+
+				rawDecodedText, err := base64.StdEncoding.DecodeString(replaced)
+				if err != nil {
+					return fmt.Errorf("failed to decode contents of ignition file %s: %w", mcsCertKeyFilepath, err)
+				}
+				mcsSecret := &corev1.Secret{}
+				if err := yaml.Unmarshal(rawDecodedText, mcsSecret); err != nil {
+					return fmt.Errorf("failed to unmarshal MCSCertKey within ignition: %w", err)
+				}
+				mcsSecret.Data[corev1.TLSCertKey] = certRaw
+				mcsSecret.Data[corev1.TLSPrivateKeyKey] = keyRaw
+				// convert the mcsSecret back to an encoded string
+				mcsSecretContents, err := yaml.Marshal(mcsSecret)
+				if err != nil {
+					return fmt.Errorf("failed to marshal MCS Secret: %w", err)
+				}
+				encoded := fmt.Sprintf("%s%s", replaceable, base64.StdEncoding.EncodeToString(mcsSecretContents))
+				// replace the contents with the edited information
+				config.Storage.Files[i].Contents.Source = &encoded
+
+				logrus.Debugf("Updated MCSCertKey file %s with new cert and key", mcsCertKeyFilepath)
+				break
+			}
+		}
+	}
+	return nil
 }

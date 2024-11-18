@@ -32,6 +32,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	capimanifests "github.com/openshift/installer/pkg/asset/manifests/clusterapi"
 	"github.com/openshift/installer/pkg/asset/rhcos"
+	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/clusterapi"
 	"github.com/openshift/installer/pkg/infrastructure"
 	"github.com/openshift/installer/pkg/metrics/timer"
@@ -82,6 +83,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
 	masterIgnAsset := &machine.Master{}
 	tfvarsAsset := &tfvars.TerraformVariables{}
+	rootCA := &tls.RootCA{}
 	parents.Get(
 		manifestsAsset,
 		workersAsset,
@@ -94,6 +96,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		masterIgnAsset,
 		capiMachinesAsset,
 		tfvarsAsset,
+		rootCA,
 	)
 
 	var clusterIDs []string
@@ -288,6 +291,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 			InfraID:          clusterID.InfraID,
 			InstallConfig:    installConfig,
 			TFVarsAsset:      tfvarsAsset,
+			RootCA:           rootCA,
 		}
 
 		timer.StartTimer(ignitionStage)

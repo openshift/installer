@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/rhcos"
+	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -67,6 +68,7 @@ type IgnitionInput struct {
 	InfraID          string
 	InstallConfig    *installconfig.InstallConfig
 	TFVarsAsset      *tfvars.TerraformVariables
+	RootCA           *tls.RootCA
 }
 
 // InfraReadyProvider defines the InfraReady hook, which is
