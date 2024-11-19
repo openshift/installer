@@ -16,9 +16,9 @@ import (
 	"github.com/openshift/installer/pkg/types/dns"
 )
 
-func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, error) {
+func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, []byte, error) {
 	if in.InstallConfig.Config.AWS.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
-		return in.BootstrapIgnData, nil
+		return in.BootstrapIgnData, in.MasterIgnData, nil
 	}
 
 	awsCluster := &capa.AWSCluster{}
@@ -27,12 +27,12 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, err
 		Namespace: capiutils.Namespace,
 	}
 	if err := in.Client.Get(ctx, key, awsCluster); err != nil {
-		return nil, fmt.Errorf("failed to get AWSCluster: %w", err)
+		return nil, nil, fmt.Errorf("failed to get AWSCluster: %w", err)
 	}
 
 	awsSession, err := in.InstallConfig.AWS.Session(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get aws session: %w", err)
+		return nil, nil, fmt.Errorf("failed to get aws session: %w", err)
 	}
 
 	// There is no direct access to load balancer IP addresses, so the security groups
@@ -51,7 +51,7 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, err
 	}
 	nicOutput, err := ec2.New(awsSession).DescribeNetworkInterfacesWithContext(ctx, &nicInput)
 	if err != nil {
-		return nil, fmt.Errorf("failed to describe network interfaces: %w", err)
+		return nil, nil, fmt.Errorf("failed to describe network interfaces: %w", err)
 	}
 
 	// The only network interfaces existing at this stage are those from the load balancers.

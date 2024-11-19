@@ -74,3 +74,20 @@ func (a *MCSCertKey) Generate(ctx context.Context, dependencies asset.Parents) e
 func (a *MCSCertKey) Name() string {
 	return "Certificate (mcs)"
 }
+
+// RegenerateMCSCertKey generates the cert/key pair based on input values.
+func RegenerateMCSCertKey(ic *installconfig.InstallConfig, ca *RootCA, privateLBs []string) ([]byte, []byte, error) {
+	hostname := internalAPIAddress(ic.Config)
+	cfg := &CertCfg{
+		Subject:      pkix.Name{CommonName: "system:machine-config-server"},
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		Validity:     ValidityTenYears,
+	}
+	cfg.IPAddresses = []net.IP{}
+	cfg.DNSNames = []string{hostname}
+	for _, ip := range privateLBs {
+		cfg.IPAddresses = append(cfg.IPAddresses, net.ParseIP(ip))
+		cfg.DNSNames = append(cfg.DNSNames, ip)
+	}
+	return RegenerateSignedCertKey(cfg, ca, DoNotAppendParent)
+}
