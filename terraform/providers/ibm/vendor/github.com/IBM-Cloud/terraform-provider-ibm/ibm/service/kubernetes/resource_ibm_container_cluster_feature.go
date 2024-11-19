@@ -6,6 +6,7 @@ package kubernetes
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -326,7 +327,7 @@ func resourceIBMContainerClusterFeatureUpdate(d *schema.ResourceData, meta inter
 	return resourceIBMContainerClusterFeatureRead(d, meta)
 }
 
-// WaitForClusterAvailable Waits for cluster creation
+// WaitForClusterAvailableForFeatureUpdate Waits for cluster creation
 func WaitForClusterAvailableForFeatureUpdate(cluster string, timeout time.Duration, meta interface{}, target v1.ClusterTargetHeader) (interface{}, error) {
 	csClient, err := meta.(conns.ClientSession).ContainerAPI()
 	if err != nil {
@@ -345,6 +346,23 @@ func WaitForClusterAvailableForFeatureUpdate(cluster string, timeout time.Durati
 	}
 
 	return stateConf.WaitForState()
+}
+
+func clusterStateRefreshFunc(client v1.Clusters, instanceID string, target v1.ClusterTargetHeader) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		clusterFields, err := client.FindWithOutShowResourcesCompatible(instanceID, target)
+		if err != nil {
+			return nil, "", fmt.Errorf("[ERROR] clusterStateRefreshFunc Error retrieving cluster: %s", err)
+		}
+		// Check active transactions
+		log.Println("Checking cluster")
+		//Check for cluster state to be normal
+		log.Println("Checking cluster state", strings.Compare(clusterFields.State, clusterNormal))
+		if strings.Compare(clusterFields.State, clusterNormal) != 0 {
+			return clusterFields, clusterProvisioning, nil
+		}
+		return clusterFields, clusterNormal, nil
+	}
 }
 
 func WaitForWorkerAvailableForFeatureUpdate(cluster string, timeout time.Duration, meta interface{}, target v1.ClusterTargetHeader) (interface{}, error) {

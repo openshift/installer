@@ -97,22 +97,7 @@ func resourceIbmIsShareReplicaOperationsCreate(context context.Context, d *schem
 	share_id := d.Get("share_replica").(string)
 
 	splitShare := d.Get("split_share").(bool)
-	getShareSourceOptions := &vpcv1.GetShareSourceOptions{
-		ShareID: &share_id,
-	}
 
-	sourceShare, response, err := vpcClient.GetShareSourceWithContext(context, getShareSourceOptions)
-	if err != nil || sourceShare == nil {
-		if response != nil {
-			if response.StatusCode == 404 {
-				d.SetId("")
-			}
-			log.Printf("[DEBUG] GetShareWithContext failed %s\n%s", err, response)
-			return nil
-		}
-		log.Printf("[DEBUG] GetShareWithContext failed %s\n", err)
-		return diag.FromErr(fmt.Errorf("[DEBUG] GetShareWithContext failed %s\n", err))
-	}
 	if !splitShare {
 		fallback_policy := d.Get("fallback_policy").(string)
 		timeout := d.Get("timeout").(int)
@@ -139,10 +124,6 @@ func resourceIbmIsShareReplicaOperationsCreate(context context.Context, d *schem
 		}
 	}
 	_, err = isWaitForShareReplicationJobDone(context, vpcClient, share_id, d, d.Timeout(schema.TimeoutCreate))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	_, err = isWaitForShareReplicationJobDone(context, vpcClient, *sourceShare.ID, d, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return diag.FromErr(err)
 	}

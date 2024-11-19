@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2022.
+ * (C) Copyright IBM Corp. 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 99-SNAPSHOT-df265cd0-20221201-141156
+ * IBM OpenAPI SDK Code Generator Version: 3.84.0-a4533f12-20240103-170852
  */
 
 // Package zonessettingsv1 : Operations and models for the ZonesSettingsV1 service
@@ -4271,6 +4271,254 @@ func (zonesSettings *ZonesSettingsV1) UpdateCiphersWithContext(ctx context.Conte
 	return
 }
 
+// GetOriginMaxHttpVersion : Get origin max http version setting
+// Get origin max http version setting for a zone.
+func (zonesSettings *ZonesSettingsV1) GetOriginMaxHttpVersion(getOriginMaxHttpVersionOptions *GetOriginMaxHttpVersionOptions) (result *OriginMaxHttpVersionResp, response *core.DetailedResponse, err error) {
+	return zonesSettings.GetOriginMaxHttpVersionWithContext(context.Background(), getOriginMaxHttpVersionOptions)
+}
+
+// GetOriginMaxHttpVersionWithContext is an alternate form of the GetOriginMaxHttpVersion method which supports a Context parameter
+func (zonesSettings *ZonesSettingsV1) GetOriginMaxHttpVersionWithContext(ctx context.Context, getOriginMaxHttpVersionOptions *GetOriginMaxHttpVersionOptions) (result *OriginMaxHttpVersionResp, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(getOriginMaxHttpVersionOptions, "getOriginMaxHttpVersionOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"crn":             *zonesSettings.Crn,
+		"zone_identifier": *zonesSettings.ZoneIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/origin_max_http_version`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range getOriginMaxHttpVersionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("zones_settings", "V1", "GetOriginMaxHttpVersion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = zonesSettings.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOriginMaxHttpVersionResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateOriginMaxHttpVersion : Update origin max http version setting
+// Update origin max http version setting for a zone.
+func (zonesSettings *ZonesSettingsV1) UpdateOriginMaxHttpVersion(updateOriginMaxHttpVersionOptions *UpdateOriginMaxHttpVersionOptions) (result *OriginMaxHttpVersionResp, response *core.DetailedResponse, err error) {
+	return zonesSettings.UpdateOriginMaxHttpVersionWithContext(context.Background(), updateOriginMaxHttpVersionOptions)
+}
+
+// UpdateOriginMaxHttpVersionWithContext is an alternate form of the UpdateOriginMaxHttpVersion method which supports a Context parameter
+func (zonesSettings *ZonesSettingsV1) UpdateOriginMaxHttpVersionWithContext(ctx context.Context, updateOriginMaxHttpVersionOptions *UpdateOriginMaxHttpVersionOptions) (result *OriginMaxHttpVersionResp, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(updateOriginMaxHttpVersionOptions, "updateOriginMaxHttpVersionOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"crn":             *zonesSettings.Crn,
+		"zone_identifier": *zonesSettings.ZoneIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/origin_max_http_version`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range updateOriginMaxHttpVersionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("zones_settings", "V1", "UpdateOriginMaxHttpVersion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if updateOriginMaxHttpVersionOptions.Value != nil {
+		body["value"] = updateOriginMaxHttpVersionOptions.Value
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = zonesSettings.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOriginMaxHttpVersionResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetOriginPostQuantumEncryption : Get origin post quantum encryption setting
+// Get origin post quantum encryption setting for a zone.
+func (zonesSettings *ZonesSettingsV1) GetOriginPostQuantumEncryption(getOriginPostQuantumEncryptionOptions *GetOriginPostQuantumEncryptionOptions) (result *OriginPostQuantumEncryptionResp, response *core.DetailedResponse, err error) {
+	return zonesSettings.GetOriginPostQuantumEncryptionWithContext(context.Background(), getOriginPostQuantumEncryptionOptions)
+}
+
+// GetOriginPostQuantumEncryptionWithContext is an alternate form of the GetOriginPostQuantumEncryption method which supports a Context parameter
+func (zonesSettings *ZonesSettingsV1) GetOriginPostQuantumEncryptionWithContext(ctx context.Context, getOriginPostQuantumEncryptionOptions *GetOriginPostQuantumEncryptionOptions) (result *OriginPostQuantumEncryptionResp, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(getOriginPostQuantumEncryptionOptions, "getOriginPostQuantumEncryptionOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"crn":             *zonesSettings.Crn,
+		"zone_identifier": *zonesSettings.ZoneIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/cache/origin_post_quantum_encryption`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range getOriginPostQuantumEncryptionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("zones_settings", "V1", "GetOriginPostQuantumEncryption")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = zonesSettings.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOriginPostQuantumEncryptionResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateOriginPostQuantumEncryption : Update origin post quantum encryption setting
+// Update origin post quantum encryption setting for a zone.
+func (zonesSettings *ZonesSettingsV1) UpdateOriginPostQuantumEncryption(updateOriginPostQuantumEncryptionOptions *UpdateOriginPostQuantumEncryptionOptions) (result *OriginPostQuantumEncryptionResp, response *core.DetailedResponse, err error) {
+	return zonesSettings.UpdateOriginPostQuantumEncryptionWithContext(context.Background(), updateOriginPostQuantumEncryptionOptions)
+}
+
+// UpdateOriginPostQuantumEncryptionWithContext is an alternate form of the UpdateOriginPostQuantumEncryption method which supports a Context parameter
+func (zonesSettings *ZonesSettingsV1) UpdateOriginPostQuantumEncryptionWithContext(ctx context.Context, updateOriginPostQuantumEncryptionOptions *UpdateOriginPostQuantumEncryptionOptions) (result *OriginPostQuantumEncryptionResp, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(updateOriginPostQuantumEncryptionOptions, "updateOriginPostQuantumEncryptionOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"crn":             *zonesSettings.Crn,
+		"zone_identifier": *zonesSettings.ZoneIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.PUT)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/cache/origin_post_quantum_encryption`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range updateOriginPostQuantumEncryptionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("zones_settings", "V1", "UpdateOriginPostQuantumEncryption")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if updateOriginPostQuantumEncryptionOptions.Value != nil {
+		body["value"] = updateOriginPostQuantumEncryptionOptions.Value
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = zonesSettings.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOriginPostQuantumEncryptionResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
 // AlwaysUseHttpsRespResult : Container for response information.
 type AlwaysUseHttpsRespResult struct {
 	// ID.
@@ -4855,6 +5103,42 @@ func (*ZonesSettingsV1) NewGetOpportunisticOnionOptions() *GetOpportunisticOnion
 
 // SetHeaders : Allow user to set Headers
 func (options *GetOpportunisticOnionOptions) SetHeaders(param map[string]string) *GetOpportunisticOnionOptions {
+	options.Headers = param
+	return options
+}
+
+// GetOriginMaxHttpVersionOptions : The GetOriginMaxHttpVersion options.
+type GetOriginMaxHttpVersionOptions struct {
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetOriginMaxHttpVersionOptions : Instantiate GetOriginMaxHttpVersionOptions
+func (*ZonesSettingsV1) NewGetOriginMaxHttpVersionOptions() *GetOriginMaxHttpVersionOptions {
+	return &GetOriginMaxHttpVersionOptions{}
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetOriginMaxHttpVersionOptions) SetHeaders(param map[string]string) *GetOriginMaxHttpVersionOptions {
+	options.Headers = param
+	return options
+}
+
+// GetOriginPostQuantumEncryptionOptions : The GetOriginPostQuantumEncryption options.
+type GetOriginPostQuantumEncryptionOptions struct {
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetOriginPostQuantumEncryptionOptions : Instantiate GetOriginPostQuantumEncryptionOptions
+func (*ZonesSettingsV1) NewGetOriginPostQuantumEncryptionOptions() *GetOriginPostQuantumEncryptionOptions {
+	return &GetOriginPostQuantumEncryptionOptions{}
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetOriginPostQuantumEncryptionOptions) SetHeaders(param map[string]string) *GetOriginPostQuantumEncryptionOptions {
 	options.Headers = param
 	return options
 }
@@ -5781,6 +6065,90 @@ type OriginErrorPagePassThruRespResult struct {
 // UnmarshalOriginErrorPagePassThruRespResult unmarshals an instance of OriginErrorPagePassThruRespResult from the specified map of raw messages.
 func UnmarshalOriginErrorPagePassThruRespResult(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(OriginErrorPagePassThruRespResult)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// OriginMaxHttpVersionRespResult : Container for response information.
+type OriginMaxHttpVersionRespResult struct {
+	// ID.
+	ID *string `json:"id" validate:"required"`
+
+	// Value.
+	Value *string `json:"value" validate:"required"`
+
+	// Editable.
+	Editable *bool `json:"editable" validate:"required"`
+
+	// Modified date.
+	ModifiedOn *strfmt.DateTime `json:"modified_on" validate:"required"`
+}
+
+// UnmarshalOriginMaxHttpVersionRespResult unmarshals an instance of OriginMaxHttpVersionRespResult from the specified map of raw messages.
+func UnmarshalOriginMaxHttpVersionRespResult(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(OriginMaxHttpVersionRespResult)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// OriginPostQuantumEncryptionRespResult : Container for response information.
+type OriginPostQuantumEncryptionRespResult struct {
+	// ID.
+	ID *string `json:"id" validate:"required"`
+
+	// Value.
+	Value *string `json:"value" validate:"required"`
+
+	// Editable.
+	Editable *bool `json:"editable" validate:"required"`
+
+	// Modified date.
+	ModifiedOn *strfmt.DateTime `json:"modified_on" validate:"required"`
+}
+
+// Constants associated with the OriginPostQuantumEncryptionRespResult.Value property.
+// Value.
+const (
+	OriginPostQuantumEncryptionRespResult_Value_Off       = "off"
+	OriginPostQuantumEncryptionRespResult_Value_Preferred = "preferred"
+	OriginPostQuantumEncryptionRespResult_Value_Supported = "supported"
+)
+
+// UnmarshalOriginPostQuantumEncryptionRespResult unmarshals an instance of OriginPostQuantumEncryptionRespResult from the specified map of raw messages.
+func UnmarshalOriginPostQuantumEncryptionRespResult(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(OriginPostQuantumEncryptionRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
 		return
@@ -6933,6 +7301,74 @@ func (_options *UpdateOpportunisticOnionOptions) SetValue(value string) *UpdateO
 
 // SetHeaders : Allow user to set Headers
 func (options *UpdateOpportunisticOnionOptions) SetHeaders(param map[string]string) *UpdateOpportunisticOnionOptions {
+	options.Headers = param
+	return options
+}
+
+// UpdateOriginMaxHttpVersionOptions : The UpdateOriginMaxHttpVersion options.
+type UpdateOriginMaxHttpVersionOptions struct {
+	// Value.
+	Value *string `json:"value,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewUpdateOriginMaxHttpVersionOptions : Instantiate UpdateOriginMaxHttpVersionOptions
+func (*ZonesSettingsV1) NewUpdateOriginMaxHttpVersionOptions() *UpdateOriginMaxHttpVersionOptions {
+	return &UpdateOriginMaxHttpVersionOptions{}
+}
+
+// SetValue : Allow user to set Value
+func (_options *UpdateOriginMaxHttpVersionOptions) SetValue(value string) *UpdateOriginMaxHttpVersionOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateOriginMaxHttpVersionOptions) SetHeaders(param map[string]string) *UpdateOriginMaxHttpVersionOptions {
+	options.Headers = param
+	return options
+}
+
+// UpdateOriginPostQuantumEncryptionOptions : The UpdateOriginPostQuantumEncryption options.
+type UpdateOriginPostQuantumEncryptionOptions struct {
+	// Instructs CIS to use Post-Quantum (PQ) key agreement algorithms when connecting to your origin.
+	// - `preferred`: Instructs CIS to opportunistically send a Post-Quantum keyshare in the first message to the origin
+	// for fastest connections when the origin supports and prefers PQ.
+	// - `supported`: The PQ algorithms are advertised but used only when requested by the origin.
+	// - `off`: The PQ algorithms are not advertised.
+	Value *string `json:"value,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the UpdateOriginPostQuantumEncryptionOptions.Value property.
+// Instructs CIS to use Post-Quantum (PQ) key agreement algorithms when connecting to your origin.
+// - `preferred`: Instructs CIS to opportunistically send a Post-Quantum keyshare in the first message to the origin for
+// fastest connections when the origin supports and prefers PQ.
+// - `supported`: The PQ algorithms are advertised but used only when requested by the origin.
+// - `off`: The PQ algorithms are not advertised.
+const (
+	UpdateOriginPostQuantumEncryptionOptions_Value_Off       = "off"
+	UpdateOriginPostQuantumEncryptionOptions_Value_Preferred = "preferred"
+	UpdateOriginPostQuantumEncryptionOptions_Value_Supported = "supported"
+)
+
+// NewUpdateOriginPostQuantumEncryptionOptions : Instantiate UpdateOriginPostQuantumEncryptionOptions
+func (*ZonesSettingsV1) NewUpdateOriginPostQuantumEncryptionOptions() *UpdateOriginPostQuantumEncryptionOptions {
+	return &UpdateOriginPostQuantumEncryptionOptions{}
+}
+
+// SetValue : Allow user to set Value
+func (_options *UpdateOriginPostQuantumEncryptionOptions) SetValue(value string) *UpdateOriginPostQuantumEncryptionOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateOriginPostQuantumEncryptionOptions) SetHeaders(param map[string]string) *UpdateOriginPostQuantumEncryptionOptions {
 	options.Headers = param
 	return options
 }
@@ -8307,6 +8743,82 @@ type OriginErrorPagePassThruResp struct {
 func UnmarshalOriginErrorPagePassThruResp(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(OriginErrorPagePassThruResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalOriginErrorPagePassThruRespResult)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// OriginMaxHttpVersionResp : Origin max http version response.
+type OriginMaxHttpVersionResp struct {
+	// Container for response information.
+	Result *OriginMaxHttpVersionRespResult `json:"result" validate:"required"`
+
+	// Was the get successful.
+	Success *bool `json:"success" validate:"required"`
+
+	// Array of errors encountered.
+	Errors [][]string `json:"errors" validate:"required"`
+
+	// Array of messages returned.
+	Messages [][]string `json:"messages" validate:"required"`
+}
+
+// UnmarshalOriginMaxHttpVersionResp unmarshals an instance of OriginMaxHttpVersionResp from the specified map of raw messages.
+func UnmarshalOriginMaxHttpVersionResp(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(OriginMaxHttpVersionResp)
+	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalOriginMaxHttpVersionRespResult)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// OriginPostQuantumEncryptionResp : Origin post quantum encryption response.
+type OriginPostQuantumEncryptionResp struct {
+	// Container for response information.
+	Result *OriginPostQuantumEncryptionRespResult `json:"result" validate:"required"`
+
+	// Was the get successful.
+	Success *bool `json:"success" validate:"required"`
+
+	// Array of errors encountered.
+	Errors [][]string `json:"errors" validate:"required"`
+
+	// Array of messages returned.
+	Messages [][]string `json:"messages" validate:"required"`
+}
+
+// UnmarshalOriginPostQuantumEncryptionResp unmarshals an instance of OriginPostQuantumEncryptionResp from the specified map of raw messages.
+func UnmarshalOriginPostQuantumEncryptionResp(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(OriginPostQuantumEncryptionResp)
+	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalOriginPostQuantumEncryptionRespResult)
 	if err != nil {
 		return
 	}

@@ -14,6 +14,7 @@ import (
 
 	"github.com/IBM/go-sdk-core/v3/core"
 	"github.com/IBM/networking-go-sdk/directlinkv1"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -451,9 +452,19 @@ func ResourceIBMDLGateway() *schema.Resource {
 				Description: "Indicates whether gateway was created through a provider portal",
 			},
 			dlVlan: {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "VLAN allocated for this gateway",
+				Type:          schema.TypeInt,
+				Optional:      true,
+				Computed:      true,
+				Description:   "VLAN allocated for this gateway",
+				ConflictsWith: []string{"remove_vlan"},
+				ValidateFunc:  validate.InvokeValidator("ibm_dl_gateway", dlVlan),
+			},
+			dlRemoveVlan: {
+				Type:          schema.TypeBool,
+				Optional:      true,
+				Default:       false,
+				ConflictsWith: []string{"vlan"},
+				Description:   "Remove VLAN allocated for this dedicated gateway",
 			},
 			dlBgpIbmAsn: {
 				Type:        schema.TypeInt,
@@ -639,6 +650,14 @@ func ResourceIBMDLGatewayValidator() *validate.ResourceValidator {
 			Required:                   true,
 			MinValue:                   "3",
 			MaxValue:                   "10"})
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 dlVlan,
+			ValidateFunctionIdentifier: validate.IntBetween,
+			Type:                       validate.TypeInt,
+			MinValue:                   "2",
+			MaxValue:                   "3967"})
 
 	ibmISDLGatewayResourceValidator := validate.ResourceValidator{ResourceName: "ibm_dl_gateway", Schema: validateSchema}
 	return &ibmISDLGatewayResourceValidator
@@ -859,6 +878,11 @@ func resourceIBMdlGatewayCreate(d *schema.ResourceData, meta interface{}) error 
 		if default_import_route_filter, ok := d.GetOk(dlDefault_import_route_filter); ok {
 			gatewayDedicatedTemplateModel.DefaultImportRouteFilter = NewStrPointer(default_import_route_filter.(string))
 		}
+
+		if vlan, ok := d.GetOk(dlVlan); ok {
+			mapped_vlan := int64(vlan.(int))
+			gatewayDedicatedTemplateModel.Vlan = &mapped_vlan
+		}
 		createGatewayOptionsModel.GatewayTemplate = gatewayDedicatedTemplateModel
 
 	} else if dtype == "connect" {
@@ -1070,14 +1094,16 @@ func resourceIBMdlGatewayRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	log.Printf("[INFO] Calling getgateway api: %s", dtype)
 
-	instance, response, err := directLink.GetGateway(getOptions)
-	if err != nil {
+	instanceIntf, response, err := directLink.GetGateway(getOptions)
+	if (err != nil) || (instanceIntf == nil) {
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")
 			return nil
 		}
 		return fmt.Errorf("[ERROR] Error Getting Direct Link Gateway (%s Template): %s\n%s", dtype, err, response)
 	}
+
+	instance := instanceIntf.(*directlinkv1.GetGatewayResponse)
 	if instance.Name != nil {
 		d.Set(dlName, *instance.Name)
 	}
@@ -1134,7 +1160,10 @@ func resourceIBMdlGatewayRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	if instance.Vlan != nil {
 		d.Set(dlVlan, *instance.Vlan)
+	} else {
+		d.Set(dlVlan, nil)
 	}
+
 	if instance.Global != nil {
 		d.Set(dlGlobal, *instance.Global)
 	}
@@ -1294,10 +1323,12 @@ func isDirectLinkRefreshFunc(client *directlinkv1.DirectLinkV1, id string) resou
 		getOptions := &directlinkv1.GetGatewayOptions{
 			ID: &id,
 		}
-		instance, response, err := client.GetGateway(getOptions)
-		if err != nil {
+		instanceIntf, response, err := client.GetGateway(getOptions)
+		if (err != nil) || (instanceIntf == nil) {
 			return nil, "", fmt.Errorf("[ERROR] Error Getting Direct Link: %s\n%s", err, response)
 		}
+
+		instance := instanceIntf.(*directlinkv1.GetGatewayResponse)
 		if *instance.OperationalStatus == "provisioned" || *instance.OperationalStatus == "failed" || *instance.OperationalStatus == "create_rejected" {
 			return instance, dlGatewayProvisioningDone, nil
 		}
@@ -1316,15 +1347,14 @@ func resourceIBMdlGatewayUpdate(d *schema.ResourceData, meta interface{}) error 
 	getOptions := &directlinkv1.GetGatewayOptions{
 		ID: &ID,
 	}
-	instance, detail, err := directLink.GetGateway(getOptions)
+	instanceIntf, detail, err := directLink.GetGateway(getOptions)
 
-	if err != nil {
+	if (err != nil) || (instanceIntf == nil) {
 		log.Printf("Error fetching Direct Link Gateway :%s", detail)
 		return err
 	}
-
-	updateGatewayOptionsModel := &directlinkv1.UpdateGatewayOptions{}
-	updateGatewayOptionsModel.ID = &ID
+	instance := instanceIntf.(*directlinkv1.GetGatewayResponse)
+	gatewayPatchTemplateModel := map[string]interface{}{}
 	dtype := *instance.Type
 
 	if d.HasChange(dlTags) {
@@ -1338,23 +1368,23 @@ func resourceIBMdlGatewayUpdate(d *schema.ResourceData, meta interface{}) error 
 
 	if d.HasChange(dlName) {
 		name := d.Get(dlName).(string)
-		updateGatewayOptionsModel.Name = &name
+		gatewayPatchTemplateModel["name"] = &name
 	}
 	if d.HasChange(dlSpeedMbps) {
 		speed := int64(d.Get(dlSpeedMbps).(int))
-		updateGatewayOptionsModel.SpeedMbps = &speed
+		gatewayPatchTemplateModel["speed_mbps"] = &speed
 	}
 	if d.HasChange(dlBgpAsn) {
 		bgpAsn := int64(d.Get(dlBgpAsn).(int))
-		updateGatewayOptionsModel.BgpAsn = &bgpAsn
+		gatewayPatchTemplateModel["bgp_asn"] = &bgpAsn
 	}
 	if d.HasChange(dlBgpCerCidr) {
 		bgpCerCidr := d.Get(dlBgpCerCidr).(string)
-		updateGatewayOptionsModel.BgpCerCidr = &bgpCerCidr
+		gatewayPatchTemplateModel["bgp_cer_cidr"] = &bgpCerCidr
 	}
 	if d.HasChange(dlBgpIbmCidr) {
 		bgpIbmCidr := d.Get(dlBgpIbmCidr).(string)
-		updateGatewayOptionsModel.BgpIbmCidr = &bgpIbmCidr
+		gatewayPatchTemplateModel["bgp_ibm_cidr"] = &bgpIbmCidr
 	}
 	if d.HasChange(dlAsPrepends) {
 		listGatewayAsPrependsOptions := directLink.NewListGatewayAsPrependsOptions(ID)
@@ -1522,29 +1552,29 @@ func resourceIBMdlGatewayUpdate(d *schema.ResourceData, meta interface{}) error 
 		}
 	*/
 	if d.HasChange(dlDefault_export_route_filter) {
-		updateGatewayOptionsModel.DefaultExportRouteFilter = NewStrPointer(d.Get(dlDefault_export_route_filter).(string))
+		gatewayPatchTemplateModel["default_export_route_filter"] = NewStrPointer(d.Get(dlDefault_export_route_filter).(string))
 	}
 	if d.HasChange(dlDefault_import_route_filter) {
-		updateGatewayOptionsModel.DefaultImportRouteFilter = NewStrPointer(d.Get(dlDefault_import_route_filter).(string))
+		gatewayPatchTemplateModel["default_import_route_filter"] = NewStrPointer(d.Get(dlDefault_import_route_filter).(string))
 	}
 	if d.HasChange(dlGlobal) {
 		global := d.Get(dlGlobal).(bool)
-		updateGatewayOptionsModel.Global = &global
+		gatewayPatchTemplateModel["global"] = &global
 	}
 	if d.HasChange(dlMetered) {
 		metered := d.Get(dlMetered).(bool)
-		updateGatewayOptionsModel.Metered = &metered
+		gatewayPatchTemplateModel["metered"] = &metered
 	}
 	if d.HasChange(dlAuthenticationKey) {
 		authenticationKeyCrn := d.Get(dlAuthenticationKey).(string)
 		authenticationKeyPatchTemplate := new(directlinkv1.GatewayPatchTemplateAuthenticationKey)
 		authenticationKeyPatchTemplate.Crn = &authenticationKeyCrn
-		updateGatewayOptionsModel = updateGatewayOptionsModel.SetAuthenticationKey(authenticationKeyPatchTemplate)
+		gatewayPatchTemplateModel["authentication_key"] = authenticationKeyPatchTemplate
 	}
 
 	if mode, ok := d.GetOk(dlConnectionMode); ok && d.HasChange(dlConnectionMode) {
 		updatedConnectionMode := mode.(string)
-		updateGatewayOptionsModel.ConnectionMode = &updatedConnectionMode
+		gatewayPatchTemplateModel["connection_mode"] = &updatedConnectionMode
 	}
 
 	var updatedBfdConfig directlinkv1.GatewayBfdPatchTemplate
@@ -1559,7 +1589,7 @@ func resourceIBMdlGatewayUpdate(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	if !reflect.DeepEqual(updatedBfdConfig, directlinkv1.GatewayBfdPatchTemplate{}) {
-		updateGatewayOptionsModel.BfdConfig = &updatedBfdConfig
+		gatewayPatchTemplateModel["bfd_config"] = &updatedBfdConfig
 	}
 
 	if dtype == "dedicated" {
@@ -1596,14 +1626,28 @@ func resourceIBMdlGatewayUpdate(d *schema.ResourceData, meta interface{}) error 
 					gatewayMacsecConfigTemplatePatchModel.WindowSize = &windowSizeint
 				}
 			}
-			updateGatewayOptionsModel.MacsecConfig = gatewayMacsecConfigTemplatePatchModel
+			gatewayPatchTemplateModel["macsec_config"] = gatewayMacsecConfigTemplatePatchModel
 		} else {
-			updateGatewayOptionsModel.MacsecConfig = nil
+			gatewayPatchTemplateModel["macsec_config"] = nil
+		}
+		if d.HasChange(dlVlan) {
+			if _, ok := d.GetOk(dlVlan); ok {
+				vlan := int64(d.Get(dlVlan).(int))
+				gatewayPatchTemplateModel["vlan"] = &vlan
+			}
+		}
+		if removeVlanOk, ok := d.GetOk(dlRemoveVlan); ok && !d.IsNewResource() {
+			removeVlan := removeVlanOk.(bool)
+			if removeVlan {
+				gatewayPatchTemplateModel["vlan"] = nil
+			}
 		}
 	}
 	name := d.Get(dlName).(string)
-	updateGatewayOptionsModel.Name = &name
-	_, response, err := directLink.UpdateGateway(updateGatewayOptionsModel)
+	gatewayPatchTemplateModel["name"] = &name
+
+	patchGatewayOptions := directLink.NewUpdateGatewayOptions(ID, gatewayPatchTemplateModel)
+	_, response, err := directLink.UpdateGateway(patchGatewayOptions)
 	if err != nil {
 		log.Printf("[DEBUG] Update Direct Link Gateway err %s\n%s", err, response)
 		return err
@@ -1645,13 +1689,15 @@ func resourceIBMdlGatewayExists(d *schema.ResourceData, meta interface{}) (bool,
 	getOptions := &directlinkv1.GetGatewayOptions{
 		ID: &ID,
 	}
-	_, response, err := directLink.GetGateway(getOptions)
-	if err != nil {
+	instanceIntf, response, err := directLink.GetGateway(getOptions)
+
+	if (err != nil) || (instanceIntf == nil) {
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")
 			return false, nil
 		}
 		return false, fmt.Errorf("[ERROR] Error Getting Direct Link Gateway : %s\n%s", err, response)
 	}
+	_ = instanceIntf.(*directlinkv1.GetGatewayResponse)
 	return true, nil
 }

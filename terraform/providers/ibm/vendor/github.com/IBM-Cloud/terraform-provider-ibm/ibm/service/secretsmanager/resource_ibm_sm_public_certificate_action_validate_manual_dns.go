@@ -6,6 +6,7 @@ package secretsmanager
 import (
 	"context"
 	"fmt"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"log"
@@ -40,7 +41,8 @@ func ResourceIbmSmPublicCertificateActionValidateManualDns() *schema.Resource {
 func resourceIbmSmPublicCertificateActionValidateManualDnsCreateOrUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", PublicCertConfigActionValidateManualDNSResourceName, "create/update")
+		return tfErr.GetDiag()
 	}
 
 	region := getRegion(secretsManagerClient, d)
@@ -75,13 +77,14 @@ func validateManualDns(context context.Context, d *schema.ResourceData, secretsM
 	_, response, err := secretsManagerClient.CreateSecretActionWithContext(context, createActionOptions)
 	if err != nil {
 		log.Printf("[DEBUG] CreateSecretActionWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateSecretActionWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateSecretActionWithContext failed: %s\n%s", err.Error(), response), PublicCertConfigActionValidateManualDNSResourceName, "create")
+		return tfErr.GetDiag()
 	}
 
 	_, err = waitForIbmSmPublicCertificateCreate(secretsManagerClient, d, "pre_activation", "active")
 	if err != nil {
-		return diag.FromErr(fmt.Errorf(
-			"Error waiting for resource IbmSmPublicCertificateActionValidateManualDns (%s) to be created: %s", d.Id(), err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error waiting for resource IbmSmPublicCertificateActionValidateManualDns (%s) to be created: %s", d.Id(), err.Error()), PublicCertConfigActionValidateManualDNSResourceName, "create")
+		return tfErr.GetDiag()
 	}
 	return nil
 }

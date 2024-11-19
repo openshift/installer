@@ -5,7 +5,6 @@ package scc
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -313,13 +312,13 @@ func dataSourceIbmSccLatestReportsRead(context context.Context, d *schema.Resour
 	reportLatest, response, err := resultsClient.GetLatestReportsWithContext(context, getLatestReportsOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetLatestReportsWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetLatestReportsWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetLatestReportsWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(dataSourceIbmSccLatestReportsID(d))
 
 	if err = d.Set("home_account_id", reportLatest.HomeAccountID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting home_account_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting home_account_id: %s", err))
 	}
 
 	controlsSummary := []map[string]interface{}{}
@@ -331,7 +330,7 @@ func dataSourceIbmSccLatestReportsRead(context context.Context, d *schema.Resour
 		controlsSummary = append(controlsSummary, modelMap)
 	}
 	if err = d.Set("controls_summary", controlsSummary); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting controls_summary %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting controls_summary %s", err))
 	}
 
 	evaluationsSummary := []map[string]interface{}{}
@@ -343,7 +342,7 @@ func dataSourceIbmSccLatestReportsRead(context context.Context, d *schema.Resour
 		evaluationsSummary = append(evaluationsSummary, modelMap)
 	}
 	if err = d.Set("evaluations_summary", evaluationsSummary); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting evaluations_summary %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting evaluations_summary %s", err))
 	}
 
 	score := []map[string]interface{}{}
@@ -355,7 +354,7 @@ func dataSourceIbmSccLatestReportsRead(context context.Context, d *schema.Resour
 		score = append(score, modelMap)
 	}
 	if err = d.Set("score", score); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting score %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting score %s", err))
 	}
 
 	reports := []map[string]interface{}{}
@@ -369,7 +368,7 @@ func dataSourceIbmSccLatestReportsRead(context context.Context, d *schema.Resour
 		}
 	}
 	if err = d.Set("reports", reports); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting reports %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting reports %s", err))
 	}
 
 	return nil

@@ -18,7 +18,7 @@ import (
 type SharedProcessorPoolServer struct {
 
 	// The amount of cpus for the server
-	Cpus int64 `json:"Cpus,omitempty"`
+	Cpus float64 `json:"Cpus,omitempty"`
 
 	// Identifies if uncapped or not
 	Uncapped bool `json:"Uncapped,omitempty"`
@@ -39,7 +39,7 @@ type SharedProcessorPoolServer struct {
 	Status string `json:"status,omitempty"`
 
 	// The amout of vcpus for the server
-	Vcpus float64 `json:"vcpus,omitempty"`
+	Vcpus int64 `json:"vcpus,omitempty"`
 }
 
 // Validate validates this shared processor pool server

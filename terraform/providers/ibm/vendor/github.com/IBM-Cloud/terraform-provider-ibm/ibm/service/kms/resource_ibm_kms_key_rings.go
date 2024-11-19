@@ -39,9 +39,10 @@ func ResourceIBMKmskeyRings() *schema.Resource {
 			"force_delete": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: "set to true to force delete this key ring. This allows key ring deletion as long as all keys inside have key state equals to 5 (destroyed). Keys are moved to the default key ring.",
+				Description: "(Deprecated) set to true to force delete this key ring. This allows key ring deletion as long as all keys inside have key state equals to 5 (destroyed). Keys are moved to the default key ring.",
 				ForceNew:    false,
 				Default:     false,
+				Deprecated:  "force_delete is now deprecated. Please remove all references to this field.",
 			},
 			"endpoint_type": {
 				Type:         schema.TypeString,
@@ -123,10 +124,11 @@ func resourceIBMKmsKeyRingRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	_, err = kpAPI.GetKeyRings(context.Background())
 	if err != nil {
-		kpError := err.(*kp.Error)
-		if kpError.StatusCode == 404 || kpError.StatusCode == 409 {
-			d.SetId("")
-			return nil
+		if kpError, ok := err.(*kp.Error); ok {
+			if kpError.StatusCode == 404 || kpError.StatusCode == 409 {
+				d.SetId("")
+				return nil
+			}
 		}
 		return fmt.Errorf("[ERROR] Get Key Rings failed with error: %s", err)
 	}
@@ -148,17 +150,13 @@ func resourceIBMKmsKeyRingDelete(d *schema.ResourceData, meta interface{}) error
 	if err != nil {
 		return err
 	}
-	force_delete := d.Get("force_delete").(bool)
 
-	err = kpAPI.DeleteKeyRing(context.Background(), id[0], kp.WithForce(force_delete))
+	err = kpAPI.DeleteKeyRing(context.Background(), id[0], kp.WithForce(true))
 	if err != nil {
-		kpError := err.(*kp.Error)
-		// Key ring deletion used to occur by silencing the 409 failed deletion and allowing instance deletion to clean it up
-		// Will be deprecated in the future in favor of force_delete flag
-		if kpError.StatusCode == 404 || kpError.StatusCode == 409 {
-			return nil
-		} else {
-			return fmt.Errorf(" failed to Destroy key ring with error: %s", err)
+		if kpError, ok := err.(*kp.Error); ok {
+			if kpError.StatusCode == 404 {
+				return nil
+			}
 		}
 	}
 	return nil

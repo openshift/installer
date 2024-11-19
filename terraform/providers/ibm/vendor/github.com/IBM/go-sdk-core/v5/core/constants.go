@@ -83,4 +83,7 @@ const (
 	ERRORMSG_IAM_GETTOKEN_ERROR      = "IAM 'get token' error, status code %d received from '%s': %s" // #nosec G101
 	ERRORMSG_UNABLE_RETRIEVE_IITOKEN = "unable to retrieve instance identity token value: %s"         // #nosec G101
 	ERRORMSG_VPCMDS_OPERATION_ERROR  = "VPC metadata service error, status code %d received from '%s': %s"
+
+	// The name of this module - matches the value in the go.mod file.
+	MODULE_NAME = "github.com/IBM/go-sdk-core/v5"
 )

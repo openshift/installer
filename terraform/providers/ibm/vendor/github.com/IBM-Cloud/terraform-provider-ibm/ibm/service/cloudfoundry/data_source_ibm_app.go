@@ -89,6 +89,7 @@ func DataSourceIBMApp() *schema.Resource {
 				Computed:    true,
 			},
 		},
+		DeprecationMessage: "This service is deprecated.",
 	}
 }
 

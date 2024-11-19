@@ -67,7 +67,7 @@ func dataSourceIBMKMSKeyRingsRead(d *schema.ResourceData, meta interface{}) erro
 	if err != nil || keys == nil {
 		return fmt.Errorf("[ERROR] Get Key Rings failed with error: %s", err)
 	}
-	if keys == nil || keys.KeyRings == nil || len(keys.KeyRings) == 0 {
+	if keys.KeyRings == nil || len(keys.KeyRings) == 0 {
 		return fmt.Errorf("[ERROR] No key Rings in instance  %s", instanceID)
 	}
 

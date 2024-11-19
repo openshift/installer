@@ -43,6 +43,50 @@ func DataSourceIBMIsBareMetalServerProfiles() *schema.Resource {
 							Description: "The name for this bare metal server profile",
 						},
 
+						// vni
+						"virtual_network_interfaces_supported": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "Indicates whether this profile supports virtual network interfaces.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"type": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The type for this profile field.",
+									},
+									"value": &schema.Schema{
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "The value for this profile field.",
+									},
+								},
+							},
+						},
+						"network_attachment_count": &schema.Schema{
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"max": &schema.Schema{
+										Type:        schema.TypeInt,
+										Computed:    true,
+										Description: "The maximum value for this profile field.",
+									},
+									"min": &schema.Schema{
+										Type:        schema.TypeInt,
+										Computed:    true,
+										Description: "The minimum value for this profile field.",
+									},
+									"type": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The type for this profile field.",
+									},
+								},
+							},
+						},
+
 						isBareMetalServerProfileFamily: {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -114,6 +158,34 @@ func DataSourceIBMIsBareMetalServerProfiles() *schema.Resource {
 										Type:        schema.TypeInt,
 										Computed:    true,
 										Description: "The value for this profile field",
+									},
+									"default": &schema.Schema{
+										Type:        schema.TypeInt,
+										Computed:    true,
+										Description: "The default value for this profile field.",
+									},
+									"max": &schema.Schema{
+										Type:        schema.TypeInt,
+										Computed:    true,
+										Description: "The maximum value for this profile field.",
+									},
+									"min": &schema.Schema{
+										Type:        schema.TypeInt,
+										Computed:    true,
+										Description: "The minimum value for this profile field.",
+									},
+									"step": &schema.Schema{
+										Type:        schema.TypeInt,
+										Computed:    true,
+										Description: "The increment step value for this profile field.",
+									},
+									"values": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The permitted values for this profile field.",
+										Elem: &schema.Schema{
+											Type: schema.TypeInt,
+										},
 									},
 								},
 							},
@@ -373,9 +445,27 @@ func dataSourceIBMIsBareMetalServerProfilesRead(context context.Context, d *sche
 		if profile.Bandwidth != nil {
 			bwList := make([]map[string]interface{}, 0)
 			bw := profile.Bandwidth.(*vpcv1.BareMetalServerProfileBandwidth)
-			bandwidth := map[string]interface{}{
-				isBareMetalServerProfileType:  *bw.Type,
-				isBareMetalServerProfileValue: *bw.Value,
+			bandwidth := map[string]interface{}{}
+			if bw.Type != nil {
+				bandwidth[isBareMetalServerProfileType] = *bw.Type
+			}
+			if bw.Value != nil {
+				bandwidth[isBareMetalServerProfileValue] = *bw.Value
+			}
+			if bw.Values != nil && len(bw.Values) > 0 {
+				bandwidth[isBareMetalServerProfileValues] = bw.Values
+			}
+			if bw.Default != nil {
+				bandwidth["default"] = flex.IntValue(bw.Default)
+			}
+			if bw.Max != nil {
+				bandwidth["max"] = flex.IntValue(bw.Max)
+			}
+			if bw.Min != nil {
+				bandwidth["min"] = flex.IntValue(bw.Min)
+			}
+			if bw.Step != nil {
+				bandwidth["step"] = flex.IntValue(bw.Step)
 			}
 			bwList = append(bwList, bandwidth)
 			l[isBareMetalServerProfileBandwidth] = bwList
@@ -431,6 +521,26 @@ func dataSourceIBMIsBareMetalServerProfilesRead(context context.Context, d *sche
 			l[isBareMetalServerProfileCPUSocketCount] = scList
 		}
 
+		// vni
+		virtualNetworkInterfacesSupported := []map[string]interface{}{}
+		if profile.VirtualNetworkInterfacesSupported != nil {
+			modelMap, err := dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileVirtualNetworkInterfacesSupportedToMap(profile.VirtualNetworkInterfacesSupported)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			virtualNetworkInterfacesSupported = append(virtualNetworkInterfacesSupported, modelMap)
+		}
+		l["virtual_network_interfaces_supported"] = virtualNetworkInterfacesSupported
+		networkAttachmentCount := []map[string]interface{}{}
+		if profile.NetworkAttachmentCount != nil {
+			modelMap, err := dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileNetworkAttachmentCountToMap(profile.NetworkAttachmentCount)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			networkAttachmentCount = append(networkAttachmentCount, modelMap)
+		}
+		l["network_attachment_count"] = networkAttachmentCount
+
 		if profile.Memory != nil {
 			memList := make([]map[string]interface{}, 0)
 			mem := profile.Memory.(*vpcv1.BareMetalServerProfileMemory)
@@ -441,7 +551,7 @@ func dataSourceIBMIsBareMetalServerProfilesRead(context context.Context, d *sche
 			memList = append(memList, m)
 			l[isBareMetalServerProfileMemory] = memList
 		}
-		l[isBareMetalServerProfileRT] = *profile.ResourceType
+		l[isBareMetalServerProfileRT] = profile.ResourceType
 		if profile.SupportedTrustedPlatformModuleModes != nil {
 			list := make([]map[string]interface{}, 0)
 			var stpmmlist []string

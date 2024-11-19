@@ -64,6 +64,30 @@ func ResourceIBMEnSlackSubscription() *schema.Resource {
 							Optional:    true,
 							Description: "attachment color code",
 						},
+						"template_id_notification": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The templete id for notification",
+						},
+						"channels": &schema.Schema{
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: "List of channels.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"id": &schema.Schema{
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "channel id.",
+									},
+									"operation": &schema.Schema{
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "The channel operation type. The values are add/remove",
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -230,7 +254,10 @@ func resourceIBMEnSlackSubscriptionUpdate(context context.Context, d *schema.Res
 			options.SetDescription(d.Get("description").(string))
 		}
 
-		_, attributes := slackattributesMapToAttributes(d.Get("attributes.0").(map[string]interface{}))
+		attributes, err := resourceIBMEnSubscriptionMapToSubscriptionUpdateAttributes(d.Get("attributes.0").(map[string]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		options.SetAttributes(&attributes)
 
 		_, response, err := enClient.UpdateSubscriptionWithContext(context, options)
@@ -274,14 +301,72 @@ func resourceIBMEnSlackSubscriptionDelete(context context.Context, d *schema.Res
 	return nil
 }
 
-func slackattributesMapToAttributes(attributeMap map[string]interface{}) (en.SubscriptionCreateAttributes, en.SubscriptionUpdateAttributesSlackAttributes) {
-	attributesCreate := en.SubscriptionCreateAttributes{}
-	attributesUpdate := en.SubscriptionUpdateAttributesSlackAttributes{}
+func slackattributesMapToAttributes(modelMap map[string]interface{}) (en.SubscriptionCreateAttributes, error) {
+	model := en.SubscriptionCreateAttributes{}
 
-	if attributeMap["attachment_color"] != nil {
-		attributesCreate.AttachmentColor = core.StringPtr(attributeMap["attachment_color"].(string))
-		attributesUpdate.AttachmentColor = core.StringPtr(attributeMap["attachment_color"].(string))
+	if modelMap["template_id_notification"] != nil && modelMap["template_id_notification"].(string) != "" {
+		model.TemplateIDNotification = core.StringPtr(modelMap["template_id_notification"].(string))
+	}
+	if modelMap["template_id_invitation"] != nil && modelMap["template_id_invitation"].(string) != "" {
+		model.TemplateIDInvitation = core.StringPtr(modelMap["template_id_invitation"].(string))
 	}
 
-	return attributesCreate, attributesUpdate
+	if modelMap["attachment_color"] != nil && modelMap["attachment_color"].(string) != "" {
+		model.AttachmentColor = core.StringPtr(modelMap["attachment_color"].(string))
+	}
+	if modelMap["channels"] != nil {
+		channels := []en.ChannelCreateAttributes{}
+		for _, channelsItem := range modelMap["channels"].([]interface{}) {
+			channelsItemModel, err := resourceIBMEnSubscriptionMapToChannelCreateAttributes(channelsItem.(map[string]interface{}))
+			if err != nil {
+				return model, err
+			}
+			channels = append(channels, *channelsItemModel)
+		}
+		model.Channels = channels
+	}
+	return model, nil
+}
+
+func resourceIBMEnSubscriptionMapToChannelCreateAttributes(modelMap map[string]interface{}) (*en.ChannelCreateAttributes, error) {
+	model := &en.ChannelCreateAttributes{}
+	model.ID = core.StringPtr(modelMap["id"].(string))
+	return model, nil
+}
+
+func resourceIBMEnSubscriptionMapToSubscriptionUpdateAttributes(modelMap map[string]interface{}) (en.SubscriptionUpdateAttributes, error) {
+	model := en.SubscriptionUpdateAttributes{}
+
+	if modelMap["template_id_notification"] != nil && modelMap["template_id_notification"].(string) != "" {
+		model.TemplateIDNotification = core.StringPtr(modelMap["template_id_notification"].(string))
+	}
+
+	if modelMap["attachment_color"] != nil && modelMap["attachment_color"].(string) != "" {
+		model.AttachmentColor = core.StringPtr(modelMap["attachment_color"].(string))
+	}
+	if modelMap["channels"] != nil {
+		channels := []en.ChannelUpdateAttributes{}
+		for _, channelsItem := range modelMap["channels"].([]interface{}) {
+			channelsItemModel, err := resourceIBMEnSubscriptionMapToChannelUpdateAttributes(channelsItem.(map[string]interface{}))
+			if err != nil {
+				return model, err
+			}
+			channels = append(channels, *channelsItemModel)
+		}
+		model.Channels = channels
+	}
+	return model, nil
+}
+
+func resourceIBMEnSubscriptionChannelCreateAttributesToMap(model *en.ChannelCreateAttributes) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["id"] = model.ID
+	return modelMap, nil
+}
+
+func resourceIBMEnSubscriptionMapToChannelUpdateAttributes(modelMap map[string]interface{}) (*en.ChannelUpdateAttributes, error) {
+	model := &en.ChannelUpdateAttributes{}
+	model.ID = core.StringPtr(modelMap["id"].(string))
+	model.Operation = core.StringPtr(modelMap["operation"].(string))
+	return model, nil
 }

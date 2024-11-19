@@ -1,5 +1,5 @@
 /**
- * © Copyright IBM Corporation 2020. All Rights Reserved.
+ * © Copyright IBM Corporation 2020, 2023. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,12 +52,9 @@ func (s *session) getCookie() *http.Cookie {
 	return s.cookie
 }
 
-// isValid checks if session has the cookie and it hasn't expired yet
+// isValid checks if the auth cookie hasn't expired yet
 func (s *session) isValid() bool {
-	if s.cookie != nil && time.Now().Before(s.expires) {
-		return true
-	}
-	return false
+	return time.Now().Before(s.expires)
 }
 
 // needsRefresh atomically identifies if the cookie is near of the expiration time

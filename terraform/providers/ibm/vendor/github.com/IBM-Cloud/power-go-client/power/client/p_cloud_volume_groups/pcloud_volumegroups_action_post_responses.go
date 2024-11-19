@@ -6,6 +6,7 @@ package p_cloud_volume_groups
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -115,11 +116,13 @@ func (o *PcloudVolumegroupsActionPostAccepted) Code() int {
 }
 
 func (o *PcloudVolumegroupsActionPostAccepted) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostAccepted  %+v", 202, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostAccepted %s", 202, payload)
 }
 
 func (o *PcloudVolumegroupsActionPostAccepted) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostAccepted  %+v", 202, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostAccepted %s", 202, payload)
 }
 
 func (o *PcloudVolumegroupsActionPostAccepted) GetPayload() models.Object {
@@ -181,11 +184,13 @@ func (o *PcloudVolumegroupsActionPostBadRequest) Code() int {
 }
 
 func (o *PcloudVolumegroupsActionPostBadRequest) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostBadRequest %s", 400, payload)
 }
 
 func (o *PcloudVolumegroupsActionPostBadRequest) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostBadRequest %s", 400, payload)
 }
 
 func (o *PcloudVolumegroupsActionPostBadRequest) GetPayload() *models.Error {
@@ -249,11 +254,13 @@ func (o *PcloudVolumegroupsActionPostUnauthorized) Code() int {
 }
 
 func (o *PcloudVolumegroupsActionPostUnauthorized) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudVolumegroupsActionPostUnauthorized) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudVolumegroupsActionPostUnauthorized) GetPayload() *models.Error {
@@ -317,11 +324,13 @@ func (o *PcloudVolumegroupsActionPostForbidden) Code() int {
 }
 
 func (o *PcloudVolumegroupsActionPostForbidden) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostForbidden %s", 403, payload)
 }
 
 func (o *PcloudVolumegroupsActionPostForbidden) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostForbidden %s", 403, payload)
 }
 
 func (o *PcloudVolumegroupsActionPostForbidden) GetPayload() *models.Error {
@@ -385,11 +394,13 @@ func (o *PcloudVolumegroupsActionPostNotFound) Code() int {
 }
 
 func (o *PcloudVolumegroupsActionPostNotFound) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostNotFound %s", 404, payload)
 }
 
 func (o *PcloudVolumegroupsActionPostNotFound) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostNotFound %s", 404, payload)
 }
 
 func (o *PcloudVolumegroupsActionPostNotFound) GetPayload() *models.Error {
@@ -453,11 +464,13 @@ func (o *PcloudVolumegroupsActionPostUnprocessableEntity) Code() int {
 }
 
 func (o *PcloudVolumegroupsActionPostUnprocessableEntity) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostUnprocessableEntity  %+v", 422, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostUnprocessableEntity %s", 422, payload)
 }
 
 func (o *PcloudVolumegroupsActionPostUnprocessableEntity) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostUnprocessableEntity  %+v", 422, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostUnprocessableEntity %s", 422, payload)
 }
 
 func (o *PcloudVolumegroupsActionPostUnprocessableEntity) GetPayload() *models.Error {
@@ -521,11 +534,13 @@ func (o *PcloudVolumegroupsActionPostInternalServerError) Code() int {
 }
 
 func (o *PcloudVolumegroupsActionPostInternalServerError) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudVolumegroupsActionPostInternalServerError) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudVolumegroupsActionPostInternalServerError) GetPayload() *models.Error {
