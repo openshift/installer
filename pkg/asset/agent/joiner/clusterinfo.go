@@ -134,7 +134,11 @@ func (ci *ClusterInfo) Generate(ctx context.Context, dependencies asset.Parents)
 			return err
 		}
 	}
-	return ci.validate().ToAggregate()
+
+	if err = ci.validate().ToAggregate(); err != nil {
+		return err
+	}
+	return ci.reportResult(ctx)
 }
 
 func (ci *ClusterInfo) initClients() error {
@@ -561,4 +565,21 @@ func (ci *ClusterInfo) toTypesPlatform(platformType configv1.PlatformType) (type
 	}
 
 	return platform, nil
+}
+
+func (ci *ClusterInfo) reportResult(ctx context.Context) error {
+	results := map[string]string{
+		"Version":      ci.Version,
+		"ReleaseImage": ci.ReleaseImage,
+		"OSImage":      ci.OSImageLocation,
+		"PlatformType": string(ci.PlatformType),
+		"Architecture": ci.Architecture,
+	}
+
+	data, err := json.Marshal(results)
+	if err != nil {
+		return err
+	}
+
+	return workflowreport.GetReport(ctx).StageResult(workflow.StageClusterInspection, string(data))
 }
