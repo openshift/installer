@@ -87,6 +87,7 @@ spec:
                   - CloudCredential
                   - Ingress
                   - CloudControllerManager
+                  - OperatorLifecycleManagerV1
                   type: string
                 type: array
               baselineCapabilitySet:
