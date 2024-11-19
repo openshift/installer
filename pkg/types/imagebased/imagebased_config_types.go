@@ -62,7 +62,7 @@ type InstallationConfig struct {
 	AdditionalTrustBundle string `json:"additionalTrustBundle,omitempty"`
 
 	// ExtraPartitionLabel label of extra partition used for /var/lib/containers.
-	// Default is varlibcontainers
+	// Default is var-lib-containers
 	// +optional
 	ExtraPartitionLabel string `json:"extraPartitionLabel,omitempty"`
 
