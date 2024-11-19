@@ -9,9 +9,11 @@ import (
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
+	"k8s.io/utils/ptr"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 )
 
 const (
@@ -266,6 +268,21 @@ func (m *Metadata) ControlPlaneSubnets(ctx context.Context) (map[string]Subnet, 
 	}
 
 	return m.controlPlaneSubnets, nil
+}
+
+// GetIAMToken will retrieve an IAM access token using an IAM Authenticator and API Key.
+func (m *Metadata) GetIAMToken(apiKey string) (*string, error) {
+	// Get the IAM Service endpoint override, if one was supplied for the authenticator.
+	authenticator, err := NewIamAuthenticator(apiKey, ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceIAM, m.serviceEndpoints))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create authenticator to get iam token: %w", err)
+	}
+
+	token, err := authenticator.GetToken()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get iam token: %w", err)
+	}
+	return ptr.To(token), nil
 }
 
 // Client returns a client used for making API calls to IBM Cloud services.
