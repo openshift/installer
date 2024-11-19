@@ -10,8 +10,8 @@ github.com/IBM/networking-go-sdk v0.45.0 h1:tYgDhVDpgKvELNY7tcodbZ4ny9fatpEWM6Pw
 github.com/IBM/networking-go-sdk v0.45.0/go.mod h1:NnJPA1e5GWr5opJe+5Hs6e1G6RcBIFz64TrkZsdnSp8=
 github.com/IBM/platform-services-go-sdk v0.71.0 h1:8miTTzH42EO+HslEOc8YWpL+RlJjgezM88R1SxL3fWY=
 github.com/IBM/platform-services-go-sdk v0.71.0/go.mod h1:1yvG28ExlZ09gfBPH7flAQ6eZf7kYA4hbEEyYlbT97Y=
-github.com/IBM/vpc-go-sdk v0.61.0 h1:VXT8ZwOQtl15/RSInj9+Z4OQC/vhE/Owoauu128BO4M=
-github.com/IBM/vpc-go-sdk v0.61.0/go.mod h1:swmxiYLT+OfBsBYqJWGeRd6NPmBk4u/het2PZdtzIaw=
+github.com/IBM/vpc-go-sdk v0.62.0 h1:Xga74D70ziD7nzm51ue3othHz1epMLVkGP/L6/Be+/0=
+github.com/IBM/vpc-go-sdk v0.62.0/go.mod h1:VBR6bAznHsNCFA89Ue4JFQpqCcFp8F5neqbCFCyks4Q=
 github.com/MakeNowJust/heredoc v1.0.0 h1:cXCdzVdstXyiTqTvfqk9SDHpKNjxuom+DOlyEeQ4pzQ=
 github.com/MakeNowJust/heredoc v1.0.0/go.mod h1:mG5amYoWBHf8vpLOuehzbGGw0EHxpZZ6lCpQ4fNJ8LE=
 github.com/Masterminds/goutils v1.1.1 h1:5nUrii3FMTL5diU80unEVvNevw1nH4+ZV4DSLVJLSYI=
@@ -420,8 +420,8 @@ sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.30.0 h1:Tc9rS7JJoZ9sl
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.30.0/go.mod h1:1ewhL9l1gkPcU/IU/6rFYfikf+7Y5imWv7ARVbBOzNs=
 sigs.k8s.io/cluster-api v1.8.4 h1:jBKQH1H/HUdUFk8T6qDzIxZJfWw1F5ZP0ZpYQJDmTHs=
 sigs.k8s.io/cluster-api v1.8.4/go.mod h1:pXv5LqLxuIbhGIXykyNKiJh+KrLweSBajVHHitPLyoY=
-sigs.k8s.io/cluster-api-provider-ibmcloud v0.9.0-beta.1.0.20241112150649-a71c64ac9c72 h1:nngVioknILWvXeLoerkrPmEnt8KcUEVEW5uuZcRfrQc=
-sigs.k8s.io/cluster-api-provider-ibmcloud v0.9.0-beta.1.0.20241112150649-a71c64ac9c72/go.mod h1:K//5tM5Jt17ep8WTYKPP4TP/FZ9dgyvHIqR42YoDClo=
+sigs.k8s.io/cluster-api-provider-ibmcloud v0.9.0-beta.1.0.20241119124454-8460807566cf h1:+LJjq1mofEVhFomXfawWVFcoP7BIDZLx1uXnsZYagI0=
+sigs.k8s.io/cluster-api-provider-ibmcloud v0.9.0-beta.1.0.20241119124454-8460807566cf/go.mod h1:8Z8Y4CckaQsE2ljGjpzJ3tp8UDC192TmIQOQkFocVS4=
 sigs.k8s.io/controller-runtime v0.18.5 h1:nTHio/W+Q4aBlQMgbnC5hZb4IjIidyrizMai9P6n4Rk=
 sigs.k8s.io/controller-runtime v0.18.5/go.mod h1:TVoGrfdpbA9VRFaRnKgk9P5/atA0pMwq+f+msb9M8Sg=
 sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd h1:EDPBXCAspyGV4jQlpZSudPeMmr1bNJefnuqLsRAsHZo=

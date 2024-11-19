@@ -142,8 +142,8 @@ github.com/IBM/networking-go-sdk v0.45.0 h1:tYgDhVDpgKvELNY7tcodbZ4ny9fatpEWM6Pw
 github.com/IBM/networking-go-sdk v0.45.0/go.mod h1:NnJPA1e5GWr5opJe+5Hs6e1G6RcBIFz64TrkZsdnSp8=
 github.com/IBM/platform-services-go-sdk v0.71.0 h1:8miTTzH42EO+HslEOc8YWpL+RlJjgezM88R1SxL3fWY=
 github.com/IBM/platform-services-go-sdk v0.71.0/go.mod h1:1yvG28ExlZ09gfBPH7flAQ6eZf7kYA4hbEEyYlbT97Y=
-github.com/IBM/vpc-go-sdk v0.61.0 h1:VXT8ZwOQtl15/RSInj9+Z4OQC/vhE/Owoauu128BO4M=
-github.com/IBM/vpc-go-sdk v0.61.0/go.mod h1:swmxiYLT+OfBsBYqJWGeRd6NPmBk4u/het2PZdtzIaw=
+github.com/IBM/vpc-go-sdk v0.62.0 h1:Xga74D70ziD7nzm51ue3othHz1epMLVkGP/L6/Be+/0=
+github.com/IBM/vpc-go-sdk v0.62.0/go.mod h1:VBR6bAznHsNCFA89Ue4JFQpqCcFp8F5neqbCFCyks4Q=
 github.com/MakeNowJust/heredoc v1.0.0 h1:cXCdzVdstXyiTqTvfqk9SDHpKNjxuom+DOlyEeQ4pzQ=
 github.com/MakeNowJust/heredoc v1.0.0/go.mod h1:mG5amYoWBHf8vpLOuehzbGGw0EHxpZZ6lCpQ4fNJ8LE=
 github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=
@@ -1559,8 +1559,8 @@ sigs.k8s.io/cluster-api-provider-azure v1.15.1-0.20240617212811-a52056dfb88c h1:
 sigs.k8s.io/cluster-api-provider-azure v1.15.1-0.20240617212811-a52056dfb88c/go.mod h1:dqGwr0KL+jdgqnHPTCfCI5TccFtH1MgTnv1vx3wXEak=
 sigs.k8s.io/cluster-api-provider-gcp v1.7.1-0.20240724153512-c3b8b533143c h1:ynsoxyNN9W0iXJzBYflyj6KGFciLRyjwBBin8e/oeSo=
 sigs.k8s.io/cluster-api-provider-gcp v1.7.1-0.20240724153512-c3b8b533143c/go.mod h1:fCQNidlw4j6MoNbnHaogLi12eHQWH1//FHlDsZafeEc=
-sigs.k8s.io/cluster-api-provider-ibmcloud v0.9.0-beta.1.0.20241112150649-a71c64ac9c72 h1:nngVioknILWvXeLoerkrPmEnt8KcUEVEW5uuZcRfrQc=
-sigs.k8s.io/cluster-api-provider-ibmcloud v0.9.0-beta.1.0.20241112150649-a71c64ac9c72/go.mod h1:K//5tM5Jt17ep8WTYKPP4TP/FZ9dgyvHIqR42YoDClo=
+sigs.k8s.io/cluster-api-provider-ibmcloud v0.9.0-beta.1.0.20241119124454-8460807566cf h1:+LJjq1mofEVhFomXfawWVFcoP7BIDZLx1uXnsZYagI0=
+sigs.k8s.io/cluster-api-provider-ibmcloud v0.9.0-beta.1.0.20241119124454-8460807566cf/go.mod h1:8Z8Y4CckaQsE2ljGjpzJ3tp8UDC192TmIQOQkFocVS4=
 sigs.k8s.io/cluster-api-provider-openstack v0.11.1 h1:j3aBJr5DozXbOT25QHmbDdCKs6OJT886woMEkzgwLLE=
 sigs.k8s.io/cluster-api-provider-openstack v0.11.1/go.mod h1:fH/eFFSgLtfyNB1OvYVPhrIdM7zhxAAkWbuJhr3ObpM=
 sigs.k8s.io/cluster-api-provider-vsphere v1.11.1 h1:hwQEMOiC0zNIRNl5qG1x+IyAAoN32WhQrXo2ANjD+CQ=
