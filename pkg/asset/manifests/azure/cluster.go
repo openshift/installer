@@ -262,12 +262,8 @@ func getNextAvailableIP(ctx context.Context, installConfig *installconfig.Instal
 	if err != nil {
 		return "", fmt.Errorf("failed to get azure client: %w", err)
 	}
-	vClient, err := client.GetVirtualNetworksClient(ctx)
-	if err != nil {
-		return "", fmt.Errorf("failed to get azure virtual network client: %w", err)
-	}
 
-	availableIP, err := vClient.CheckIPAddressAvailability(ctx, installConfig.Config.Azure.NetworkResourceGroupName, installConfig.Config.Azure.VirtualNetwork, lbip)
+	availableIP, err := client.CheckIPAddressAvailability(ctx, installConfig.Config.Azure.NetworkResourceGroupName, installConfig.Config.Azure.VirtualNetwork, lbip)
 	if err != nil {
 		return "", fmt.Errorf("failed to get azure ip availability: %w", err)
 	}
