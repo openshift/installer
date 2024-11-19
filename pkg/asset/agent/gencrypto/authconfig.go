@@ -293,8 +293,13 @@ func (a *AuthConfig) createSecret(k8sclientset kubernetes.Interface) error {
 
 func (a *AuthConfig) refreshAuthTokenSecret(k8sclientset kubernetes.Interface, retrievedSecret *corev1.Secret) error {
 	retrievedSecret.Data[agentAuthKey] = []byte(a.AgentAuthToken)
-	retrievedSecret.Data[userAuthKey] = []byte(a.UserAuthToken)
-	retrievedSecret.Data[watcherAuthKey] = []byte(a.WatcherAuthToken)
+	// Update userAuthKey and watcherAuthKey only if they exist in the secret
+	if _, exists := retrievedSecret.Data[userAuthKey]; exists {
+		retrievedSecret.Data[userAuthKey] = []byte(a.UserAuthToken)
+	}
+	if _, exists := retrievedSecret.Data[watcherAuthKey]; exists {
+		retrievedSecret.Data[watcherAuthKey] = []byte(a.WatcherAuthToken)
+	}
 	retrievedSecret.Data[authTokenPublicDataKey] = []byte(a.PublicKey)
 	// only for informational purposes
 	retrievedSecret.Annotations["updatedAt"] = time.Now().UTC().Format(time.RFC3339)
