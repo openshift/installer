@@ -67,6 +67,8 @@ func (*DNS) Dependencies() []asset.Asset {
 }
 
 // Generate generates the DNS config and its CRD.
+//
+//nolint:gocyclo
 func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
@@ -162,12 +164,14 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error {
 
 		// Set the private zone
 		privateZoneID := fmt.Sprintf("%s-private-zone", clusterID.InfraID)
-		zone, err := client.GetDNSZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.ClusterDomain(), false)
-		if err != nil {
-			return errors.Wrapf(err, "failed to get private zone for %q", installConfig.Config.BaseDomain)
-		}
-		if zone != nil {
-			privateZoneID = zone.Name
+		if installConfig.Config.GCP.NetworkProjectID != "" {
+			zone, err := client.GetDNSZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.ClusterDomain(), false)
+			if err != nil {
+				return fmt.Errorf("failed to get private zone for %q: %w", installConfig.Config.BaseDomain, err)
+			}
+			if zone != nil {
+				privateZoneID = zone.Name
+			}
 		}
 		config.Spec.PrivateZone = &configv1.DNSZone{ID: privateZoneID}
 
