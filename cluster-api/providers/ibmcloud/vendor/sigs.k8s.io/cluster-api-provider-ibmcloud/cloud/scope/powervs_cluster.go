@@ -1259,7 +1259,7 @@ func (s *PowerVSClusterScope) ReconcileVPCSecurityGroups() error {
 		if securityGroup.Name != nil {
 			securityGroupID, securityGroupRuleIDs, _ = s.GetVPCSecurityGroupByName(*securityGroup.Name)
 		} else {
-			_, securityGroupRuleIDs, _ = s.GetVPCSecurityGroupByID(*securityGroup.ID)
+			securityGroupID, securityGroupRuleIDs, _ = s.GetVPCSecurityGroupByID(*securityGroup.ID)
 		}
 
 		if securityGroupID != nil && securityGroupRuleIDs != nil {
@@ -1333,7 +1333,7 @@ func (s *PowerVSClusterScope) createVPCSecurityGroupRule(securityGroupID, direct
 			if err != nil {
 				return fmt.Errorf("failed to find VPC security group by name '%s', err: %w", *remote.SecurityGroupName, err)
 			}
-			if sg.Name != nil {
+			if sg == nil {
 				return fmt.Errorf("VPC security group by name '%s' does not exist", *remote.SecurityGroupName)
 			}
 			s.V(3).Info("Creating VPC security group rule", "securityGroupID", *securityGroupID, "direction", *direction, "protocol", *protocol, "securityGroup", *remote.SecurityGroupName, "securityGroupCRN", *sg.CRN)
@@ -1511,10 +1511,6 @@ func (s *PowerVSClusterScope) validateSecurityGroupRule(originalSecurityGroupRul
 	}
 
 	protocol := string(rule.Protocol)
-	portMin := rule.PortRange.MinimumPort
-	portMax := rule.PortRange.MaximumPort
-	icmpCode := rule.ICMPCode
-	icmpType := rule.ICMPType
 
 	for _, ogRuleIntf := range originalSecurityGroupRules {
 		switch reflect.TypeOf(ogRuleIntf).String() {
@@ -1531,6 +1527,8 @@ func (s *PowerVSClusterScope) validateSecurityGroupRule(originalSecurityGroupRul
 				}
 			}
 		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp":
+			portMin := rule.PortRange.MinimumPort
+			portMax := rule.PortRange.MaximumPort
 			ogRule := ogRuleIntf.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp)
 			ruleID = ogRule.ID
 
@@ -1543,6 +1541,8 @@ func (s *PowerVSClusterScope) validateSecurityGroupRule(originalSecurityGroupRul
 				}
 			}
 		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp":
+			icmpCode := rule.ICMPCode
+			icmpType := rule.ICMPType
 			ogRule := ogRuleIntf.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp)
 			ruleID = ogRule.ID
 
@@ -1624,7 +1624,7 @@ func (s *PowerVSClusterScope) validateVPCSecurityGroup(securityGroup infrav1beta
 			return nil, nil, nil
 		}
 	}
-	if securityGroupDet != nil && *securityGroupDet.VPC.ID != *s.GetVPCID() {
+	if securityGroupDet.VPC == nil || securityGroupDet.VPC.ID == nil || *securityGroupDet.VPC.ID != *s.GetVPCID() {
 		return nil, nil, fmt.Errorf("VPC security group by name exists but is not attached to VPC")
 	}
 
@@ -1633,7 +1633,7 @@ func (s *PowerVSClusterScope) validateVPCSecurityGroup(securityGroup infrav1beta
 		return nil, nil, fmt.Errorf("failed to validate VPC security group rules: %v", err)
 	}
 	if !ok {
-		if _, _, controllerCreated := s.GetVPCSecurityGroupByName(*securityGroup.Name); !*controllerCreated {
+		if _, _, controllerCreated := s.GetVPCSecurityGroupByName(*securityGroup.Name); controllerCreated != nil && !*controllerCreated {
 			return nil, nil, fmt.Errorf("VPC security group by name exists but rules are not matching")
 		}
 		return nil, nil, s.createVPCSecurityGroupRulesAndSetStatus(securityGroup.Rules, securityGroupDet.ID, securityGroupDet.Name)

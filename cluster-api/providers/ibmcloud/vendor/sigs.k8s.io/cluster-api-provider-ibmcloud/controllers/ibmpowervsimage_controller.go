@@ -66,19 +66,25 @@ func (r *IBMPowerVSImageReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{}, err
 	}
 
-	cluster, err := scope.GetClusterByName(ctx, r.Client, ibmImage.Namespace, ibmImage.Spec.ClusterName)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	// Create the scope.
-	imageScope, err := scope.NewPowerVSImageScope(scope.PowerVSImageScopeParams{
+	var cluster *infrav1beta2.IBMPowerVSCluster
+	scopeParams := scope.PowerVSImageScopeParams{
 		Client:          r.Client,
 		Logger:          log,
 		IBMPowerVSImage: ibmImage,
-		Zone:            cluster.Spec.Zone,
 		ServiceEndpoint: r.ServiceEndpoint,
-	})
+	}
+
+	// Externally managed clusters might not be available during image deletion. Get the cluster only when image is still not deleted.
+	if ibmImage.DeletionTimestamp.IsZero() {
+		cluster, err = scope.GetClusterByName(ctx, r.Client, ibmImage.Namespace, ibmImage.Spec.ClusterName)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		scopeParams.Zone = cluster.Spec.Zone
+	}
+
+	// Create the scope
+	imageScope, err := scope.NewPowerVSImageScope(scopeParams)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to create scope: %w", err)
 	}

@@ -60,6 +60,45 @@ func (s *Service) ListInstances(options *vpcv1.ListInstancesOptions) (*vpcv1.Ins
 	return s.vpcService.ListInstances(options)
 }
 
+// GetDedicatedHostByName returns Dedicated Host with given name. If not found, returns nil.
+func (s *Service) GetDedicatedHostByName(dHostName string) (*vpcv1.DedicatedHost, error) {
+	var dHost *vpcv1.DedicatedHost
+	f := func(start string) (bool, string, error) {
+		// check for existing Dedicated Hosts
+		listDedicatedHostsOptions := &vpcv1.ListDedicatedHostsOptions{}
+		if start != "" {
+			listDedicatedHostsOptions.Start = &start
+		}
+
+		dHostsList, _, err := s.vpcService.ListDedicatedHosts(listDedicatedHostsOptions)
+		if err != nil {
+			return false, "", err
+		}
+
+		if dHostsList == nil {
+			return false, "", fmt.Errorf("dedicated hosts list returned is nil")
+		}
+
+		for index, dH := range dHostsList.DedicatedHosts {
+			if *dH.Name == dHostName {
+				dHost = &dHostsList.DedicatedHosts[index]
+				return true, "", nil
+			}
+		}
+
+		if dHostsList.Next != nil && *dHostsList.Next.Href != "" {
+			return false, *dHostsList.Next.Href, nil
+		}
+		return true, "", nil
+	}
+
+	if err := utils.PagingHelper(f); err != nil {
+		return nil, err
+	}
+
+	return dHost, nil
+}
+
 // CreateVPC creates a new VPC.
 func (s *Service) CreateVPC(options *vpcv1.CreateVPCOptions) (*vpcv1.VPC, *core.DetailedResponse, error) {
 	return s.vpcService.CreateVPC(options)
@@ -349,6 +388,27 @@ func (s *Service) GetVPCSubnetByName(subnetName string) (*vpcv1.Subnet, error) {
 	}
 
 	return subnet, nil
+}
+
+// GetLoadBalancerPoolByName returns a Load Balancer Pool with the given name, in the provided Load Balancer. If not found, returns nil.
+func (s *Service) GetLoadBalancerPoolByName(loadBalancerID string, poolName string) (*vpcv1.LoadBalancerPool, error) {
+	listLoadBalancerPoolsOptions := &vpcv1.ListLoadBalancerPoolsOptions{}
+	listLoadBalancerPoolsOptions.SetLoadBalancerID(loadBalancerID)
+
+	pools, _, err := s.vpcService.ListLoadBalancerPools(listLoadBalancerPoolsOptions)
+	if err != nil {
+		return nil, fmt.Errorf("error listing pools for load balancer %s: %w", loadBalancerID, err)
+	} else if pools == nil {
+		return nil, fmt.Errorf("error no pools for load balancer: %s", loadBalancerID)
+	}
+
+	for _, pool := range pools.Pools {
+		if pool.Name != nil && *pool.Name == poolName {
+			return &pool, nil
+		}
+	}
+
+	return nil, nil
 }
 
 // GetLoadBalancerByName returns loadBalancer with given name. If not found, returns nil.

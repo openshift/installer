@@ -193,6 +193,16 @@ type IBMVPCMachine struct {
 	Status IBMVPCMachineStatus `json:"status,omitempty"`
 }
 
+// GetConditions returns the observations of the operational state of the IBMVPCMachine resource.
+func (r *IBMVPCMachine) GetConditions() capiv1beta1.Conditions {
+	return r.Status.Conditions
+}
+
+// SetConditions sets the underlying service state of the IBMVPCMachine to the predescribed clusterv1.Conditions.
+func (r *IBMVPCMachine) SetConditions(conditions capiv1beta1.Conditions) {
+	r.Status.Conditions = conditions
+}
+
 //+kubebuilder:object:root=true
 
 // IBMVPCMachineList contains a list of IBMVPCMachine.
