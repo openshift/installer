@@ -272,6 +272,7 @@ var permissions = map[PermissionGroup][]string{
 	// Permissions required for deleting a cluster with shared instance profiles
 	PermissionDeleteSharedInstanceProfile: {
 		"iam:UntagInstanceProfile",
+		"tag:UnTagResources",
 	},
 	PermissionCreateHostedZone: {
 		"route53:CreateHostedZone",
