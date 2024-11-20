@@ -709,12 +709,16 @@ func (a *Common) load(f asset.FileFetcher, filename string) (found bool, err err
 	}
 
 	a.File, a.Config = file, config
-	warnIfCertificatesExpired(a.Config)
-	return true, nil
+	err = warnIfCertificatesExpired(a.Config)
+	if err != nil {
+		logrus.Warnf("Please regenerate ignition configuration files in a new directory.")
+	}
+
+	return true, err
 }
 
 // warnIfCertificatesExpired checks for expired certificates and warns if so
-func warnIfCertificatesExpired(config *igntypes.Config) {
+func warnIfCertificatesExpired(config *igntypes.Config) error {
 	expiredCerts := 0
 	for _, file := range config.Storage.Files {
 		if filepath.Ext(file.Path) == ".crt" && file.Contents.Source != nil {
@@ -734,7 +738,7 @@ func warnIfCertificatesExpired(config *igntypes.Config) {
 				cert, err := x509.ParseCertificate(block.Bytes)
 				if err == nil {
 					if time.Now().UTC().After(cert.NotAfter) {
-						logrus.Warnf("Bootstrap Ignition-Config Certificate %s expired at %s.", path.Base(file.Path), cert.NotAfter.Format(time.RFC3339))
+						logrus.Errorf("Bootstrap Ignition-Config Certificate %s expired at %s.", path.Base(file.Path), cert.NotAfter.Format(time.RFC3339))
 						expiredCerts++
 					}
 				} else {
@@ -748,6 +752,7 @@ func warnIfCertificatesExpired(config *igntypes.Config) {
 	}
 
 	if expiredCerts > 0 {
-		logrus.Warnf("Bootstrap Ignition-Config: %d certificates expired. Installation attempts with the created Ignition-Configs will possibly fail.", expiredCerts)
+		return fmt.Errorf("%d certificates expired", expiredCerts)
 	}
+	return nil
 }
