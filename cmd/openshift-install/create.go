@@ -412,7 +412,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 	previousErrorSuffix := ""
 	timer.StartTimer("API")
 
-	if assetStore, err := assetstore.NewStore(command.RootOpts.Dir); err == nil {
+	if assetStore, err := assetstore.NewStore(command.RootOpts.Dir, true); err == nil {
 		checkIfAgentCommand(assetStore)
 	}
 
@@ -449,7 +449,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 
 	var platformName string
 
-	if assetStore, err := assetstore.NewStore(command.RootOpts.Dir); err == nil {
+	if assetStore, err := assetstore.NewStore(command.RootOpts.Dir, true); err == nil {
 		if installConfig, err := assetStore.Load(&installconfig.InstallConfig{}); err == nil && installConfig != nil {
 			platformName = installConfig.(*installconfig.InstallConfig).Config.Platform.Name()
 		}
@@ -560,7 +560,7 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 	timeout := 40 * time.Minute
 
 	// Wait longer for baremetal, due to length of time it takes to boot
-	if assetStore, err := assetstore.NewStore(command.RootOpts.Dir); err == nil {
+	if assetStore, err := assetstore.NewStore(command.RootOpts.Dir, true); err == nil {
 		if installConfig, err := assetStore.Load(&installconfig.InstallConfig{}); err == nil && installConfig != nil {
 			if installConfig.(*installconfig.InstallConfig).Config.Platform.Name() == baremetal.Name {
 				timeout = 60 * time.Minute
@@ -855,7 +855,7 @@ func meetsStabilityThreshold(progressing *configv1.ClusterOperatorStatusConditio
 }
 
 func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error {
-	assetStore, err := assetstore.NewStore(command.RootOpts.Dir)
+	assetStore, err := assetstore.NewStore(command.RootOpts.Dir, true)
 	if err != nil {
 		return fmt.Errorf("failed to create asset store: %w", err)
 	}
