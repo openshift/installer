@@ -35,20 +35,32 @@ type provider struct {
 	G2VPCName                string `gcfg:"g2VpcName"`
 	G2WorkerServiceAccountID string `gcfg:"g2workerServiceAccountID"`
 	G2VPCSubnetNames         string `gcfg:"g2VpcSubnetNames"`
+	G2EndpointOverride       string `gcfg:"g2EndpointOverride"`
 	PowerVSCloudInstanceID   string `gcfg:"powerVSCloudInstanceID"`
 	PowerVSCloudInstanceName string `gcfg:"powerVSCloudInstanceName"`
 	PowerVSRegion            string `gcfg:"powerVSRegion"`
 	PowerVSZone              string `gcfg:"powerVSZone"`
 	IamEndpointOverride      string `gcfg:"iamEndpointOverride"`
+	PowerVSEndpointOverride  string `gcfg:"powerVSEndpointOverride"`
+	RcEndpointOverride       string `gcfg:"rcEndpointOverride"`
 }
 
 // CloudProviderConfig generates the cloud provider config for the IBM Power VS platform.
 func CloudProviderConfig(infraID string, accountID string, vpcName string, region string, resourceGroupName string, subnets []string, cloudInstGUID string, cloudInstName string, pvsRegion string, pvsZone string, endpointOverrides []configv1.PowerVSServiceEndpoint) (string, error) {
 	iamEndpointOverride := ""
+	rcEndpointOverride := ""
+	powerVSEndpointOverride := ""
+	vpcEndpointOverride := ""
 	for _, endpoint := range endpointOverrides {
 		switch endpoint.Name {
 		case string(configv1.IBMCloudServiceIAM):
 			iamEndpointOverride = endpoint.URL
+		case string(configv1.IBMCloudServiceResourceController):
+			rcEndpointOverride = endpoint.URL
+		case "Power": // FIXME configv1.IBMCloudServicePower?
+			powerVSEndpointOverride = endpoint.URL
+		case string(configv1.IBMCloudServiceVPC):
+			vpcEndpointOverride = endpoint.URL
 		default:
 			logrus.Debugf("Ignoring unrecognized endpoint override for cloud provider config: %s", endpoint.Name)
 		}
@@ -74,7 +86,10 @@ func CloudProviderConfig(infraID string, accountID string, vpcName string, regio
 			PowerVSCloudInstanceName: cloudInstName,
 			PowerVSRegion:            pvsRegion,
 			PowerVSZone:              pvsZone,
+			G2EndpointOverride:       vpcEndpointOverride,
 			IamEndpointOverride:      iamEndpointOverride,
+			PowerVSEndpointOverride:  powerVSEndpointOverride,
+			RcEndpointOverride:       rcEndpointOverride,
 		},
 	}
 	buf := &bytes.Buffer{}
@@ -103,5 +118,8 @@ powerVSCloudInstanceID = {{.Provider.PowerVSCloudInstanceID}}
 powerVSCloudInstanceName = {{.Provider.PowerVSCloudInstanceName}}
 powerVSRegion = {{.Provider.PowerVSRegion}}
 powerVSZone = {{.Provider.PowerVSZone}}
+g2EndpointOverride = {{.Provider.G2EndpointOverride}}
 iamEndpointOverride = {{.Provider.IamEndpointOverride}}
+powerVSEndpointOverride = {{.Provider.PowerVSEndpointOverride}}
+rcEndpointOverride = {{.Provider.RcEndpointOverride}}
 `

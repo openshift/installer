@@ -344,8 +344,8 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 				"LOGLEVEL":           "2",
 			},
 		)
-		if cfg := metadata.PowerVS; cfg != nil && len(cfg.ServiceEndpoints) > 0 {
-			overrides := bxClient.FilterServiceEndpoints(cfg)
+		if cfg := metadata.PowerVS; cfg != nil {
+			overrides := bxClient.MapServiceEndpointsForCAPI(cfg)
 			if len(overrides) > 0 {
 				controller.Args = append(controller.Args, fmt.Sprintf("--service-endpoint=%s:%s", cfg.Region, strings.Join(overrides, ",")))
 			}

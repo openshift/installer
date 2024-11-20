@@ -125,6 +125,21 @@ func (mr *MockAPIMockRecorder) CreateSSHKey(ctx, serviceInstance, zone, sshKeyNa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSSHKey", reflect.TypeOf((*MockAPI)(nil).CreateSSHKey), ctx, serviceInstance, zone, sshKeyName, sshKey)
 }
 
+// CreateVirtualPrivateEndpointGateway mocks base method.
+func (m *MockAPI) CreateVirtualPrivateEndpointGateway(ctx context.Context, name, vpcID, subnetID, rgID, targetCRN string) (*vpcv1.EndpointGateway, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateVirtualPrivateEndpointGateway", ctx, name, vpcID, subnetID, rgID, targetCRN)
+	ret0, _ := ret[0].(*vpcv1.EndpointGateway)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateVirtualPrivateEndpointGateway indicates an expected call of CreateVirtualPrivateEndpointGateway.
+func (mr *MockAPIMockRecorder) CreateVirtualPrivateEndpointGateway(ctx, name, vpcID, subnetID, rgID, targetCRN interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateVirtualPrivateEndpointGateway", reflect.TypeOf((*MockAPI)(nil).CreateVirtualPrivateEndpointGateway), ctx, name, vpcID, subnetID, rgID, targetCRN)
+}
+
 // EnableDNSCustomResolver mocks base method.
 func (m *MockAPI) EnableDNSCustomResolver(ctx context.Context, dnsID, resolverID string) (*dnssvcsv1.CustomResolver, error) {
 	m.ctrl.T.Helper()

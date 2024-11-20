@@ -9,9 +9,19 @@ import (
 
 	"github.com/IBM-Cloud/bluemix-go/crn"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
+)
+
+const (
+	cosCrnTempl = "crn:v1:bluemix:public:cloud-object-storage:global:::endpoint:s3.direct.%s.cloud-object-storage.appdomain.cloud"
+	dnsCrn      = "crn:v1:bluemix:public:dns-svcs:global::::"
+	iamCrn      = "crn:v1:bluemix:public:iam-svcs:global:::endpoint:private.iam.cloud.ibm.com"
+	rcCrn       = "crn:v1:bluemix:public:resource-controller:global:::endpoint:private.resource-controller.cloud.ibm.com"
+	vpcCrnTempl = "crn:v1:bluemix:public:is:%s:::endpoint:%s.private.iaas.cloud.ibm.com"
 )
 
 //go:generate mockgen -source=./metadata.go -destination=./mock/powervsmetadata_generated.go -package=mock
@@ -490,4 +500,118 @@ func leftInContext(ctx context.Context) time.Duration {
 	}
 
 	return time.Until(deadline)
+}
+
+// SetDefaultPrivateServiceEndpoints sets service endpoint overrides as needed for Disconnected install.
+func (m *Metadata) SetDefaultPrivateServiceEndpoints(ctx context.Context, overrides []configv1.PowerVSServiceEndpoint, cosRegion string, vpcRegion string) []configv1.PowerVSServiceEndpoint {
+	overrides = addOverride(overrides, "COS", fmt.Sprintf("https://s3.direct.%s.cloud-object-storage.appdomain.cloud", cosRegion))
+	overrides = addOverride(overrides, "DNSServices", "https://api.private.dns-svcs.cloud.ibm.com")
+	overrides = addOverride(overrides, "IAM", "https://private.iam.cloud.ibm.com")
+	overrides = addOverride(overrides, "Power", fmt.Sprintf("https://private.%s.power-iaas.cloud.ibm.com", vpcRegion))
+	overrides = addOverride(overrides, "ResourceController", "https://private.resource-controller.cloud.ibm.com")
+	overrides = addOverride(overrides, "VPC", fmt.Sprintf("https://%s.private.iaas.cloud.ibm.com", vpcRegion))
+	return overrides
+}
+
+func addOverride(overrides []configv1.PowerVSServiceEndpoint, name string, url string) []configv1.PowerVSServiceEndpoint {
+	found := false
+	for _, service := range overrides {
+		if service.Name == name {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return append(overrides, configv1.PowerVSServiceEndpoint{Name: name, URL: url})
+	}
+	return overrides
+}
+
+// CreateVirtualPrivateEndpointGateways checks and creates necessary VPEs in given target VPC for Disconnected install.
+func (m *Metadata) CreateVirtualPrivateEndpointGateways(ctx context.Context, infraID string, region string, vpcID string, subnetID string, groupID string, endpointOverrides []configv1.PowerVSServiceEndpoint) error {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	client, err := m.client()
+	if err != nil {
+		return err
+	}
+
+	endpoint, err := m.fetchEndpointOverride(endpointOverrides, "IAM")
+	if err != nil {
+		return fmt.Errorf("failed to fetch endpoint override found for IAM: %w", err)
+	}
+	if endpoint == "" {
+		name := fmt.Sprintf("%s-vpe-iam", infraID)
+		logrus.Debugf("InfraReady: Ensuring VPE gateway for IAM %v", iamCrn)
+		_, err = client.CreateVirtualPrivateEndpointGateway(ctx, name, vpcID, subnetID, groupID, iamCrn)
+		if err != nil {
+			return fmt.Errorf("failed to create VPE: %w", err)
+		}
+	}
+
+	endpoint, err = m.fetchEndpointOverride(endpointOverrides, "COS")
+	if err != nil {
+		return fmt.Errorf("failed to fetch endpoint override found for COS: %w", err)
+	}
+	if endpoint == "" {
+		name := fmt.Sprintf("%s-vpe-cos", infraID)
+		cosCrn := fmt.Sprintf(cosCrnTempl, region)
+		logrus.Debugf("InfraReady: Ensuring VPE gateway for COS %v", cosCrn)
+		_, err = client.CreateVirtualPrivateEndpointGateway(ctx, name, vpcID, subnetID, groupID, cosCrn)
+		if err != nil {
+			return fmt.Errorf("failed to create VPE: %w", err)
+		}
+	}
+
+	endpoint, err = m.fetchEndpointOverride(endpointOverrides, "DNSServices")
+	if err != nil {
+		return fmt.Errorf("failed to fetch endpoint override found for DNS: %w", err)
+	}
+	if endpoint == "" {
+		name := fmt.Sprintf("%s-vpe-dns", infraID)
+		logrus.Debugf("InfraReady: Ensuring VPE gateway for DNS services %v", dnsCrn)
+		_, err = client.CreateVirtualPrivateEndpointGateway(ctx, name, vpcID, subnetID, groupID, dnsCrn)
+		if err != nil {
+			return fmt.Errorf("failed to create VPE: %w", err)
+		}
+	}
+
+	endpoint, err = m.fetchEndpointOverride(endpointOverrides, string(configv1.IBMCloudServiceResourceController))
+	if err != nil {
+		return fmt.Errorf("failed to fetch endpoint override found for RC: %w", err)
+	}
+	if endpoint == "" {
+		name := fmt.Sprintf("%s-vpe-rc", infraID)
+		logrus.Debugf("InfraReady: Ensuring VPE gateway for RC %v", rcCrn)
+		_, err = client.CreateVirtualPrivateEndpointGateway(ctx, name, vpcID, subnetID, groupID, rcCrn)
+		if err != nil {
+			return fmt.Errorf("failed to create VPE: %w", err)
+		}
+	}
+
+	endpoint, err = m.fetchEndpointOverride(endpointOverrides, string(configv1.IBMCloudServiceVPC))
+	if err != nil {
+		return fmt.Errorf("failed to fetch endpoint override found for VPC: %w", err)
+	}
+	if endpoint == "" {
+		name := fmt.Sprintf("%s-vpe-vpc", infraID)
+		vpcCrn := fmt.Sprintf(vpcCrnTempl, region, region)
+		logrus.Debugf("InfraReady: Ensuring VPE gateway for VPC %v", vpcCrn)
+		_, err = client.CreateVirtualPrivateEndpointGateway(ctx, name, vpcID, subnetID, groupID, vpcCrn)
+		if err != nil {
+			return fmt.Errorf("failed to create VPE: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (m *Metadata) fetchEndpointOverride(overrides []configv1.PowerVSServiceEndpoint, svcID string) (string, error) {
+	for _, endpoint := range overrides {
+		if endpoint.Name == svcID {
+			return endpoint.URL, nil
+		}
+	}
+	return "", nil
 }

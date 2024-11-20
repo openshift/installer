@@ -163,6 +163,19 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	if err != nil {
 		return fmt.Errorf("failed to add ping security group rule: %w", err)
 	}
+
+	if in.InstallConfig.Config.Publish == types.InternalPublishingStrategy &&
+		(len(in.InstallConfig.Config.ImageDigestSources) > 0 || len(in.InstallConfig.Config.DeprecatedImageContentSources) > 0) {
+		vpcID := *powerVSCluster.Status.VPC.ID
+		logrus.Debugf("InfraReady: Ensuring necessary VPE gateways are in place in VPC %v", vpcID)
+		groupID := *powerVSCluster.Status.ResourceGroup.ID
+		subnetID := *powerVSCluster.Status.VPCSubnet[*powerVSCluster.Spec.VPCSubnets[1].Name].ID
+		err = in.InstallConfig.PowerVS.CreateVirtualPrivateEndpointGateways(ctx, in.InfraID, vpcRegion, vpcID, subnetID, groupID, in.InstallConfig.Config.PowerVS.ServiceEndpoints)
+		if err != nil {
+			return fmt.Errorf("failed to create VPE: %w", err)
+		}
+	}
+
 	return nil
 }
 
