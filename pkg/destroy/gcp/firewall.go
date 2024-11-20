@@ -105,19 +105,5 @@ func (o *ClusterUninstaller) deleteFirewall(ctx context.Context, item cloudResou
 // destroyFirewalls removes all firewall resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyFirewalls(ctx context.Context) error {
-	found, err := o.listFirewalls(ctx)
-	if err != nil {
-		return err
-	}
-	items := o.insertPendingItems("firewall", found)
-	for _, item := range items {
-		err := o.deleteFirewall(ctx, item)
-		if err != nil {
-			o.errorTracker.suppressWarning(item.key, err, o.Logger)
-		}
-	}
-	if items = o.getPendingItems("firewall"); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
-	}
-	return nil
+	return o.standardDestroy(ctx, "firewall", o.listFirewalls, o.deleteFirewall)
 }

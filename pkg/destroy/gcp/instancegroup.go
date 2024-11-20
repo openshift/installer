@@ -86,19 +86,5 @@ func (o *ClusterUninstaller) deleteInstanceGroup(ctx context.Context, item cloud
 // destroyInstanceGroups searches for instance groups that have a name prefixed
 // with the cluster's infra ID, and then deletes each instance found.
 func (o *ClusterUninstaller) destroyInstanceGroups(ctx context.Context) error {
-	found, err := o.listInstanceGroups(ctx)
-	if err != nil {
-		return err
-	}
-	items := o.insertPendingItems("instancegroup", found)
-	for _, item := range items {
-		err := o.deleteInstanceGroup(ctx, item)
-		if err != nil {
-			o.errorTracker.suppressWarning(item.key, err, o.Logger)
-		}
-	}
-	if items = o.getPendingItems("instancegroup"); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
-	}
-	return nil
+	return o.standardDestroy(ctx, "instancegroup", o.listInstanceGroups, o.deleteInstanceGroup)
 }

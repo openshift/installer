@@ -13,12 +13,12 @@ const (
 	globalTargetTCPProxyResource = "targettcpproxy"
 )
 
-func (o *ClusterUninstaller) listTargetTCPProxies(ctx context.Context, typeName string) ([]cloudResource, error) {
-	return o.listTargetTCPProxiesWithFilter(ctx, typeName, "items(name),nextPageToken", o.clusterIDFilter())
+func (o *ClusterUninstaller) listTargetTCPProxies(ctx context.Context) ([]cloudResource, error) {
+	return o.listTargetTCPProxiesWithFilter(ctx, "items(name),nextPageToken", o.clusterIDFilter())
 }
 
 // listTargetTCPProxiesWithFilter lists target TCP Proxies in the project that satisfy the filter criteria.
-func (o *ClusterUninstaller) listTargetTCPProxiesWithFilter(ctx context.Context, typeName, fields, filter string) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listTargetTCPProxiesWithFilter(ctx context.Context, fields, filter string) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing target tcp proxies")
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
@@ -34,7 +34,7 @@ func (o *ClusterUninstaller) listTargetTCPProxiesWithFilter(ctx context.Context,
 		result = append(result, cloudResource{
 			key:      item.Name,
 			name:     item.Name,
-			typeName: typeName,
+			typeName: globalTargetTCPProxyResource,
 			quota: []gcp.QuotaUsage{{
 				Metric: &gcp.Metric{
 					Service: gcp.ServiceComputeEngineAPI,
@@ -73,22 +73,5 @@ func (o *ClusterUninstaller) deleteTargetTCPProxy(ctx context.Context, item clou
 // destroyTargetTCPProxies removes all target tcp proxy resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyTargetTCPProxies(ctx context.Context) error {
-	found, err := o.listTargetTCPProxies(ctx, globalTargetTCPProxyResource)
-	if err != nil {
-		return err
-	}
-	items := o.insertPendingItems(globalTargetTCPProxyResource, found)
-
-	for _, item := range items {
-		err := o.deleteTargetTCPProxy(ctx, item)
-		if err != nil {
-			o.errorTracker.suppressWarning(item.key, err, o.Logger)
-		}
-	}
-
-	if items = o.getPendingItems(globalTargetTCPProxyResource); len(items) > 0 {
-		return fmt.Errorf("%d global target tcp proxy pending", len(items))
-	}
-
-	return nil
+	return o.standardDestroy(ctx, globalTargetTCPProxyResource, o.listTargetTCPProxies, o.deleteTargetTCPProxy)
 }

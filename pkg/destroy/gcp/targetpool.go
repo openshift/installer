@@ -77,19 +77,5 @@ func (o *ClusterUninstaller) deleteTargetPool(ctx context.Context, item cloudRes
 // destroyTargetPools removes target pools resources that have a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyTargetPools(ctx context.Context) error {
-	found, err := o.listTargetPools(ctx)
-	if err != nil {
-		return err
-	}
-	items := o.insertPendingItems("targetpool", found)
-	for _, item := range items {
-		err := o.deleteTargetPool(ctx, item)
-		if err != nil {
-			o.errorTracker.suppressWarning(item.key, err, o.Logger)
-		}
-	}
-	if items = o.getPendingItems("targetpool"); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
-	}
-	return nil
+	return o.standardDestroy(ctx, "targetpool", o.listTargetPools, o.deleteTargetPool)
 }

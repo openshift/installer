@@ -77,19 +77,5 @@ func (o *ClusterUninstaller) deleteHTTPHealthCheck(ctx context.Context, item clo
 // destroyHTTPHealthChecks removes all HTTP health check resources that have a name prefixed
 // with the cluster's infra ID
 func (o *ClusterUninstaller) destroyHTTPHealthChecks(ctx context.Context) error {
-	found, err := o.listHTTPHealthChecks(ctx)
-	if err != nil {
-		return err
-	}
-	items := o.insertPendingItems("httphealthcheck", found)
-	for _, item := range items {
-		err := o.deleteHTTPHealthCheck(ctx, item)
-		if err != nil {
-			o.errorTracker.suppressWarning(item.key, err, o.Logger)
-		}
-	}
-	if items = o.getPendingItems("httphealthcheck"); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
-	}
-	return nil
+	return o.standardDestroy(ctx, "httphealthcheck", o.listHTTPHealthChecks, o.deleteHTTPHealthCheck)
 }
