@@ -1,6 +1,7 @@
 package nodejoiner
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -18,8 +19,12 @@ const (
 )
 
 // NewAddNodesCommand creates a new command for add nodes.
-func NewAddNodesCommand(directory string, kubeConfig string, generatePXE *bool) error {
-	err := saveParams(directory, kubeConfig, generatePXE)
+func NewAddNodesCommand(directory string, kubeConfig string, generatePXE bool, generateConfigISO bool) error {
+	if generatePXE && generateConfigISO {
+		return fmt.Errorf("invalid configuration found")
+	}
+
+	err := saveParams(directory, kubeConfig)
 	if err != nil {
 		return err
 	}
@@ -27,12 +32,16 @@ func NewAddNodesCommand(directory string, kubeConfig string, generatePXE *bool) 
 	assets := []asset.WritableAsset{
 		&workflow.AgentWorkflowAddNodes{},
 	}
-	if *generatePXE {
-		assets = append(assets, &image.AgentPXEFiles{})
-	} else {
-		assets = append(assets, &image.AgentImage{})
-		assets = append(assets, &configimage.ConfigImage{})
+	var targetAsset asset.WritableAsset
+	switch {
+	case generatePXE:
+		targetAsset = &image.AgentPXEFiles{}
+	case generateConfigISO:
+		targetAsset = &configimage.ConfigImage{}
+	default:
+		targetAsset = &image.AgentImage{}
 	}
+	assets = append(assets, targetAsset)
 
 	ctx := workflowreport.Context(string(workflow.AgentWorkflowTypeAddNodes), directory)
 
@@ -55,16 +64,11 @@ func NewAddNodesCommand(directory string, kubeConfig string, generatePXE *bool) 
 	return err
 }
 
-func saveParams(directory, kubeConfig string, generatePXE *bool) error {
+func saveParams(directory, kubeConfig string) error {
 	// Store the current parameters into the assets folder, so
 	// that they could be retrieved later by the assets
-	genPXE := false
-	if generatePXE != nil {
-		genPXE = *generatePXE
-	}
 	params := joiner.Params{
-		Kubeconfig:  kubeConfig,
-		GeneratePXE: genPXE,
+		Kubeconfig: kubeConfig,
 	}
 	return params.Save(directory)
 }
