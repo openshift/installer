@@ -258,7 +258,7 @@ var permissions = map[PermissionGroup][]string{
 	},
 	// Permissions required for deleting a cluster with shared network resources
 	PermissionDeleteSharedNetworking: {
-		"tag:UnTagResources",
+		"tag:UntagResources",
 	},
 	// Permissions required for creating an instance role
 	PermissionCreateInstanceRole: {
@@ -281,7 +281,7 @@ var permissions = map[PermissionGroup][]string{
 	// Permissions required for deleting a cluster with shared instance profiles
 	PermissionDeleteSharedInstanceProfile: {
 		"iam:UntagInstanceProfile",
-		"tag:UnTagResources",
+		"tag:UntagResources",
 	},
 	PermissionCreateHostedZone: {
 		"route53:CreateHostedZone",
