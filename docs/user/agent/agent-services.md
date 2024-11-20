@@ -1,10 +1,10 @@
 # Agent-based Installer Services
 
-## Automated Flow
+## Install workflow
 
-![Automated Flow](./agent_installer_services-automated_flow.png)
+![Install workflow](./agent_installer_services-install_workflow.png)
 
-In the automated flow, all information needed to configure a cluster is included in the agent ISO.
+In the install workflow, all information needed to configure a cluster is included in the agent ISO.
 When the agent ISO is booted, agent-tui and nmstate libraries are copied to the host from initrd. This copy 
 step is required because the agent-tui and nmstate libraries are too big to fit into the Ignition config.
 
@@ -22,6 +22,20 @@ step is required because the agent-tui and nmstate libraries are too big to fit 
 * install-status - determines the current install status and writes it out to /etc/issue.d/
 * apply-host-config - applies root device hints and roles specified in agent-config.yaml
 * start-cluster-installation - calls assisted-service REST-API to start cluster installation when all hosts are in ready state and have passed validations
+
+## Add-nodes workflow
+
+![Add-nodes workflow](./agent_installer_services-add_nodes_workflow.png)
+
+The add-nodes workflow is used to generate an ISO image for adding one or more nodes to a target cluster. It is very similar to the install workflow, with
+the following exceptions (highlighted in green in the previous picture):
+
+* agent-auth-token-status - checks if the auth tokens are expired or not, informing the user and blocking the installation
+* node-zero - automatically configures the localhost as the rendezvous node
+* agent-import-cluster - imports an already existing cluster in assisted-service
+* agent-add-node - starts the installation on the current node for adding it to the target cluster
+
+----
 
 ## Appliance flow using unconfigured ignition and config image
 
