@@ -678,4 +678,12 @@ var (
 						enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 						enhancementPR("https://github.com/openshift/enhancements/pull/1697").
 						mustRegister()
+
+	FeatureGateNutanixMultiSubnets = newFeatureGate("NutanixMultiSubnets").
+					reportProblemsToJiraComponent("Cloud Compute / Nutanix Provider").
+					contactPerson("yanhli").
+					productScope(ocpSpecific).
+					enhancementPR("https://github.com/openshift/enhancements/pull/1711").
+					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+					mustRegister()
 )
