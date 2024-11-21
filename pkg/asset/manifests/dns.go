@@ -225,6 +225,11 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error {
 	return nil
 }
 
+// GCPNetworkName create the full resource name for a network.
+func GCPNetworkName(project, network string) string {
+	return fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/global/networks/%s", project, network)
+}
+
 // GetGCPPrivateZoneName attempts to find the name of the private zone for GCP installs. When a shared vpc install
 // occurs, a precreated zone may be used. If a zone is found (in this instance), then the zone should be paired with
 // the network that is supplied through the install config (when applicable).
@@ -237,12 +242,7 @@ func GetGCPPrivateZoneName(ctx context.Context, client *icgcp.Client, installCon
 		}
 		if zone != nil {
 			if installConfig.Config.GCP.Network != "" {
-				expectedNetworkURL := fmt.Sprintf(
-					"https://www.googleapis.com/compute/v1/projects/%s/global/networks/%s",
-					installConfig.Config.GCP.NetworkProjectID,
-					installConfig.Config.GCP.Network,
-				)
-
+				expectedNetworkURL := GCPNetworkName(installConfig.Config.GCP.NetworkProjectID, installConfig.Config.GCP.Network)
 				for _, network := range zone.PrivateVisibilityConfig.Networks {
 					if network.NetworkUrl == expectedNetworkURL {
 						privateZoneID = zone.Name
