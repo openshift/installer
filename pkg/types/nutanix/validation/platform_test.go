@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -147,7 +148,27 @@ func TestValidatePlatform(t *testing.T) {
 				p.SubnetUUIDs[0] = ""
 				return p
 			}(),
-			expectedError: `^test-path\.subnet: Required value: must specify the subnet$`,
+			expectedError: `^test-path\.subnetUUIDs: Required value: must specify at least one subnet$`,
+		},
+		{
+			name: "too many subnet items",
+			platform: func() *nutanix.Platform {
+				p := validPlatform()
+				for i := 1; i <= 32; i++ {
+					p.SubnetUUIDs = append(p.SubnetUUIDs, fmt.Sprintf("subnet-%v", i))
+				}
+				return p
+			}(),
+			expectedError: `^test-path\.subnetUUIDs: Too many: 33: must have at most 32 items$`,
+		},
+		{
+			name: "duplicate subnet item",
+			platform: func() *nutanix.Platform {
+				p := validPlatform()
+				p.SubnetUUIDs = append(p.SubnetUUIDs, p.SubnetUUIDs[0])
+				return p
+			}(),
+			expectedError: `^test-path\.subnetUUIDs: Invalid value: "b06179c8-dea3-4f8e-818a-b2e88fbc2201": should not configure duplicate value$`,
 		},
 		{
 			name: "Capital letters in Prism Central",

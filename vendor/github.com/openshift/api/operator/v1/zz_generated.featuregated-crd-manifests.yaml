@@ -350,7 +350,7 @@ olms.operator.openshift.io:
   Annotations: {}
   ApprovedPRNumber: https://github.com/openshift/api/pull/1504
   CRDName: olms.operator.openshift.io
-  Capability: ""
+  Capability: OperatorLifecycleManagerV1
   Category: ""
   FeatureGates:
   - NewOLM

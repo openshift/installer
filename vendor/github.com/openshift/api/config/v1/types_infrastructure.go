@@ -1739,6 +1739,7 @@ type NutanixPlatformSpec struct {
 	// failureDomains configures failure domains information for the Nutanix platform.
 	// When set, the failure domains defined here may be used to spread Machines across
 	// prism element clusters to improve fault tolerance of the cluster.
+	// +openshift:validation:FeatureGateAwareMaxItems:featureGate=NutanixMultiSubnets,maxItems=32
 	// +listType=map
 	// +listMapKey=name
 	// +optional
@@ -1765,13 +1766,15 @@ type NutanixFailureDomain struct {
 	Cluster NutanixResourceIdentifier `json:"cluster"`
 
 	// subnets holds a list of identifiers (one or more) of the cluster's network subnets
+	// If the feature gate NutanixMultiSubnets is enabled, up to 32 subnets may be configured.
 	// for the Machine's VM to connect to. The subnet identifiers (uuid or name) can be
 	// obtained from the Prism Central console or using the prism_central API.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinItems=1
-	// +kubebuilder:validation:MaxItems=1
-	// +listType=map
-	// +listMapKey=type
+	// +openshift:validation:FeatureGateAwareMaxItems:featureGate="",maxItems=1
+	// +openshift:validation:FeatureGateAwareMaxItems:featureGate=NutanixMultiSubnets,maxItems=32
+	// +openshift:validation:FeatureGateAwareXValidation:featureGate=NutanixMultiSubnets,rule="self.all(x, self.exists_one(y, x == y))",message="each subnet must be unique"
+	// +listType=atomic
 	Subnets []NutanixResourceIdentifier `json:"subnets"`
 }
 
