@@ -175,6 +175,11 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 			return err
 		}
 
+		err = powervsconfig.ValidateSystemTypeForZone(client, ic.Config)
+		if err != nil {
+			return err
+		}
+
 		err = powervsconfig.ValidateServiceInstance(client, ic.Config)
 		if err != nil {
 			return err
