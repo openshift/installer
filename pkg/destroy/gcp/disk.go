@@ -3,6 +3,7 @@ package gcp
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	"google.golang.org/api/compute/v1"
@@ -17,6 +18,10 @@ const (
 	estimatedPVNameLength = 40
 	// Removing an extra value (-1) for the "-" separated between the storage name and the pv name
 	storageNameLength = maxGCEPDNameLength - estimatedPVNameLength - 1
+)
+
+const (
+	diskResourceName = "disk"
 )
 
 // formatClusterIDForStorage will format the Cluster ID as it will be used for destroying
@@ -36,7 +41,7 @@ func (o *ClusterUninstaller) storageIDFilter() string {
 }
 
 func (o *ClusterUninstaller) storageLabelFilter() string {
-	return fmt.Sprintf("labels.%s = \"owned\"", fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, o.formatClusterIDForStorage()))
+	return fmt.Sprintf("labels.%s = \"%s\"", ownedLabelValue, fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, o.formatClusterIDForStorage()))
 }
 
 // storageLabelOrClusterIDFilter will perform the search for resources with the ClusterID, but
@@ -46,26 +51,38 @@ func (o *ClusterUninstaller) storageLabelOrClusterIDFilter() string {
 }
 
 func (o *ClusterUninstaller) listDisks(ctx context.Context) ([]cloudResource, error) {
-	return o.listDisksWithFilter(ctx, "items/*/disks(name,zone,type,sizeGb),nextPageToken", o.storageLabelOrClusterIDFilter(), nil)
+	return o.listDisksWithFilter(ctx, "items/*/disks(name,zone,type,sizeGb),nextPageToken", func(item *compute.Disk) bool {
+		if o.isClusterResource(item.Name) || strings.HasPrefix(item.Name, o.formatClusterIDForStorage()) {
+			return true
+		}
+
+		// TODO: do labels get formatted as labels.%s, or is this only for filters
+		for key, value := range item.Labels {
+			if key == fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, o.ClusterID) && value == ownedLabelValue {
+				return true
+			} else if key == fmt.Sprintf(capgProviderOwnedLabelFmt, o.ClusterID) && value == ownedLabelValue {
+				return true
+			}
+		}
+		return false
+	})
 }
 
 // listDisksWithFilter lists disks in the project that satisfy the filter criteria.
 // The fields parameter specifies which fields should be returned in the result, the filter string contains
 // a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
 // that determines whether a particular result should be returned or not.
-func (o *ClusterUninstaller) listDisksWithFilter(ctx context.Context, fields string, filter string, filterFunc func(*compute.Disk) bool) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listDisksWithFilter(ctx context.Context, fields string, filterFunc func(*compute.Disk) bool) ([]cloudResource, error) {
 	o.Logger.Debug("Listing disks")
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	result := []cloudResource{}
 	req := o.computeSvc.Disks.AggregatedList(o.ProjectID).Fields(googleapi.Field(fields))
-	if len(filter) > 0 {
-		req = req.Filter(filter)
-	}
+
 	err := req.Pages(ctx, func(list *compute.DiskAggregatedList) error {
 		for _, scopedList := range list.Items {
 			for _, item := range scopedList.Disks {
-				if filterFunc == nil || filterFunc != nil && filterFunc(item) {
+				if filterFunc(item) {
 					// Regional disks are replicated in multiple zones, so we
 					// need to destroy all the replicas
 					zoneUrls := item.ReplicaZones
@@ -78,7 +95,7 @@ func (o *ClusterUninstaller) listDisksWithFilter(ctx context.Context, fields str
 						result = append(result, cloudResource{
 							key:      fmt.Sprintf("%s/%s", zone, item.Name),
 							name:     item.Name,
-							typeName: "disk",
+							typeName: diskResourceName,
 							zone:     zone,
 							quota: []gcp.QuotaUsage{{
 								Metric: &gcp.Metric{
@@ -131,14 +148,14 @@ func (o *ClusterUninstaller) destroyDisks(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	items := o.insertPendingItems("disk", found)
+	items := o.insertPendingItems(diskResourceName, found)
 	for _, item := range items {
 		err := o.deleteDisk(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	if items = o.getPendingItems("disk"); len(items) > 0 {
+	if items = o.getPendingItems(diskResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
 	return nil

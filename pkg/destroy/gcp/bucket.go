@@ -2,7 +2,9 @@ package gcp
 
 import (
 	"context"
+	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/pkg/errors"
 	"google.golang.org/api/googleapi"
@@ -14,39 +16,44 @@ var (
 	multiDashes = regexp.MustCompile(`-{2,}`)
 )
 
+const (
+	bucketResourceName = "bucket"
+)
+
 func (o *ClusterUninstaller) listBuckets(ctx context.Context) ([]cloudResource, error) {
-	return o.listBucketsWithFilter(ctx, "items(name),nextPageToken", o.ClusterID+"-", nil)
+	return o.listBucketsWithFilter(ctx, "items(name),nextPageToken",
+		func(itemName string) bool {
+			prefix := multiDashes.ReplaceAllString(o.ClusterID+"-", "-")
+			return strings.HasPrefix(itemName, prefix)
+		})
 }
 
 // listBucketsWithFilter lists buckets in the project that satisfy the filter criteria.
 // The fields parameter specifies which fields should be returned in the result, the filter string contains
 // a prefix string passed to the API to filter results. The filterFunc is a client-side filtering function
 // that determines whether a particular result should be returned or not.
-func (o *ClusterUninstaller) listBucketsWithFilter(ctx context.Context, fields string, prefix string, filterFunc func(*storage.Bucket) bool) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listBucketsWithFilter(ctx context.Context, fields string, filterFunc resourceFilterFunc) ([]cloudResource, error) {
 	o.Logger.Debug("Listing storage buckets")
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	result := []cloudResource{}
 	req := o.storageSvc.Buckets.List(o.ProjectID).Fields(googleapi.Field(fields))
-	if len(prefix) > 0 {
-		prefix = multiDashes.ReplaceAllString(prefix, "-")
-		req = req.Prefix(prefix)
-	}
+
 	err := req.Pages(ctx, func(list *storage.Buckets) error {
 		for _, item := range list.Items {
-			if filterFunc == nil || filterFunc != nil && filterFunc(item) {
+			if filterFunc(item.Name) {
 				o.Logger.Debugf("Found bucket: %s", item.Name)
 				result = append(result, cloudResource{
 					key:      item.Name,
 					name:     item.Name,
-					typeName: "bucket",
+					typeName: bucketResourceName,
 				})
 			}
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch object storage buckets")
+		return nil, fmt.Errorf("failed to fetch object storage buckets: %w", err)
 	}
 	return result, nil
 }
@@ -71,13 +78,13 @@ func (o *ClusterUninstaller) destroyBuckets(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	items := o.insertPendingItems("bucket", found)
+	items := o.insertPendingItems(bucketResourceName, found)
 	for _, item := range items {
 		foundObjects, err := o.listBucketObjects(ctx, item)
 		if err != nil {
 			return err
 		}
-		objects := o.insertPendingItems("bucketobject", foundObjects)
+		objects := o.insertPendingItems(bucketObjectResourceName, foundObjects)
 		for _, object := range objects {
 			err = o.deleteBucketObject(ctx, item, object)
 			if err != nil {
@@ -89,7 +96,7 @@ func (o *ClusterUninstaller) destroyBuckets(ctx context.Context) error {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	if items = o.getPendingItems("bucket"); len(items) > 0 {
+	if items = o.getPendingItems(bucketResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
 	return nil
