@@ -122,6 +122,13 @@ func CreateGalleryImage(ctx context.Context, in *CreateGalleryImageInput) (*Crea
 		}
 		features = append(features, to.Ptr(feature))
 	}
+	if in.HyperVGeneration == armcompute.HyperVGenerationV2 {
+		feature := armcompute.GalleryImageFeature{
+			Name:  to.Ptr("DiskControllerTypes"),
+			Value: to.Ptr("SCSI, NVMe"),
+		}
+		features = append(features, to.Ptr(feature))
+	}
 
 	galleryImagesClient := in.ComputeClientFactory.NewGalleryImagesClient()
 	galleryImagesPoller, err := galleryImagesClient.BeginCreateOrUpdate(
