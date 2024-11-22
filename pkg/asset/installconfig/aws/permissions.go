@@ -116,6 +116,7 @@ var permissions = map[PermissionGroup][]string{
 		"ec2:DescribeVpcClassicLinkDnsSupport",
 		"ec2:DescribeVpcEndpoints",
 		"ec2:DescribeVpcs",
+		"ec2:GetConsoleOutput", // for gathering VM console logs in case of failure.
 		"ec2:GetEbsDefaultKmsKeyId",
 		"ec2:ModifyInstanceAttribute",
 		"ec2:ModifyNetworkInterfaceAttribute",
