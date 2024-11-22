@@ -41,7 +41,7 @@ var (
 		validPrivateSubnetUSSouth2ID,
 	}
 	validUserID = "valid-user@example.com"
-	validZone   = "dal10"
+	validZone   = "dal12"
 
 	existingDNSRecordsResponse = []powervs.DNSRecordResponse{
 		{
@@ -132,7 +132,7 @@ var (
 	}
 	defaultSysType           = "s922"
 	newSysType               = "s1022"
-	invalidRegion            = "foo"
+	invalidZone              = "dal11"
 	validServiceInstanceGUID = ""
 )
 
@@ -561,22 +561,22 @@ func TestValidatePERAvailability(t *testing.T) {
 	}
 }
 
-func TestValidateSystemTypeForRegion(t *testing.T) {
+func TestValidateSystemTypeForZone(t *testing.T) {
 	cases := []struct {
 		name     string
 		edits    editFunctions
 		errorMsg string
 	}{
 		{
-			name: "Unknown Region specified",
+			name: "Unknown Zone specified",
 			edits: editFunctions{
 				func(ic *types.InstallConfig) {
-					ic.Platform.PowerVS.Region = invalidRegion
+					ic.Platform.PowerVS.Zone = invalidZone
 					ic.ControlPlane.Platform.PowerVS = validMachinePool()
 					ic.ControlPlane.Platform.PowerVS.SysType = defaultSysType
 				},
 			},
-			errorMsg: fmt.Sprintf("failed to obtain available SysTypes for: %s", invalidRegion),
+			errorMsg: fmt.Sprintf("failed to obtain available SysTypes for: %s", invalidZone),
 		},
 		{
 			name: "No Platform block",
@@ -597,21 +597,23 @@ func TestValidateSystemTypeForRegion(t *testing.T) {
 			errorMsg: "",
 		},
 		{
-			name: "Unavailable SysType specified for Dallas Region",
+			name: "Unavailable SysType specified for dal12 zone",
 			edits: editFunctions{
 				func(ic *types.InstallConfig) {
 					ic.Platform.PowerVS.Region = validRegion
+					ic.Platform.PowerVS.Zone = validZone
 					ic.ControlPlane.Platform.PowerVS = validMachinePool()
 					ic.ControlPlane.Platform.PowerVS.SysType = newSysType
 				},
 			},
-			errorMsg: fmt.Sprintf("%s is not available in: %s", newSysType, validRegion),
+			errorMsg: fmt.Sprintf("%s is not available in: %s", newSysType, validZone),
 		},
 		{
-			name: "Good Region/SysType combo specified",
+			name: "Good Zone/SysType combo specified",
 			edits: editFunctions{
 				func(ic *types.InstallConfig) {
 					ic.Platform.PowerVS.Region = validRegion
+					ic.Platform.PowerVS.Zone = validZone
 					ic.ControlPlane.Platform.PowerVS = validMachinePool()
 					ic.ControlPlane.Platform.PowerVS.SysType = defaultSysType
 				},
@@ -634,7 +636,7 @@ func TestValidateSystemTypeForRegion(t *testing.T) {
 				edit(editedInstallConfig)
 			}
 
-			aggregatedErrors := powervs.ValidateSystemTypeForRegion(powervsClient, editedInstallConfig)
+			aggregatedErrors := powervs.ValidateSystemTypeForZone(powervsClient, editedInstallConfig)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {
