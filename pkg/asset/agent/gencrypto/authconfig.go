@@ -26,15 +26,14 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
 
-var (
+const (
 	authTokenSecretNamespace = "openshift-config" //nolint:gosec // no sensitive info
 	authTokenSecretName      = "agent-auth-token" //nolint:gosec // no sensitive info
-	authTokenSecretDataKey   = "watcherAuthToken"
+	agentAuthKey             = "agentAuthToken"
+	userAuthKey              = "userAuthToken"
+	watcherAuthKey           = "watcherAuthToken"
 	authTokenPublicDataKey   = "authTokenPublicKey"
-)
-
-// AuthType holds the authenticator type for agent based installer.
-const (
+	// AuthType holds the authenticator type for agent based installer.
 	AuthType       = "agent-installer-local"
 	agentPersona   = "agentAuth"
 	userPersona    = "userAuth"
@@ -226,11 +225,12 @@ func (a *AuthConfig) createOrUpdateAuthTokenSecret(kubeconfigPath string) error 
 	}
 
 	// if the secret exists in the cluster, get the token
-	retrievedToken, err := extractAuthTokenFromSecret(retrievedSecret)
+	retrievedAgentAuthToken, retrievedUserAuthToken, retrievedWatcherAuthToken, err := extractAuthTokensFromSecret(retrievedSecret)
 	if err != nil {
 		return err
 	}
-	expiryTime, err := ParseExpirationFromToken(retrievedToken)
+	// All auth tokens expire at the same time so we could only check any 1 token to get the expiry time
+	expiryTime, err := ParseExpirationFromToken(retrievedAgentAuthToken)
 	if err != nil {
 		return err
 	}
@@ -245,7 +245,9 @@ func (a *AuthConfig) createOrUpdateAuthTokenSecret(kubeconfigPath string) error 
 		}
 	} else {
 		// Update the token in asset store with the retrieved token from the cluster
-		a.WatcherAuthToken = retrievedToken
+		a.AgentAuthToken = retrievedAgentAuthToken
+		a.UserAuthToken = retrievedUserAuthToken
+		a.WatcherAuthToken = retrievedWatcherAuthToken
 		// get the token expiry time of the retrieved token from the cluster
 		a.AuthTokenExpiry = expiryTime.UTC().Format(time.RFC3339)
 
@@ -273,7 +275,9 @@ func (a *AuthConfig) createSecret(k8sclientset kubernetes.Interface) error {
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
-			authTokenSecretDataKey: []byte(a.WatcherAuthToken),
+			agentAuthKey:           []byte(a.AgentAuthToken),
+			userAuthKey:            []byte(a.UserAuthToken),
+			watcherAuthKey:         []byte(a.WatcherAuthToken),
 			authTokenPublicDataKey: []byte(a.PublicKey),
 		},
 	}
@@ -288,7 +292,14 @@ func (a *AuthConfig) createSecret(k8sclientset kubernetes.Interface) error {
 }
 
 func (a *AuthConfig) refreshAuthTokenSecret(k8sclientset kubernetes.Interface, retrievedSecret *corev1.Secret) error {
-	retrievedSecret.Data[authTokenSecretDataKey] = []byte(a.WatcherAuthToken)
+	retrievedSecret.Data[agentAuthKey] = []byte(a.AgentAuthToken)
+	// Update userAuthKey and watcherAuthKey only if they exist in the secret
+	if _, exists := retrievedSecret.Data[userAuthKey]; exists {
+		retrievedSecret.Data[userAuthKey] = []byte(a.UserAuthToken)
+	}
+	if _, exists := retrievedSecret.Data[watcherAuthKey]; exists {
+		retrievedSecret.Data[watcherAuthKey] = []byte(a.WatcherAuthToken)
+	}
 	retrievedSecret.Data[authTokenPublicDataKey] = []byte(a.PublicKey)
 	// only for informational purposes
 	retrievedSecret.Annotations["updatedAt"] = time.Now().UTC().Format(time.RFC3339)
@@ -303,8 +314,8 @@ func (a *AuthConfig) refreshAuthTokenSecret(k8sclientset kubernetes.Interface, r
 	return nil
 }
 
-// GetAuthTokenFromCluster returns a token string stored as the secret from the cluster.
-func GetAuthTokenFromCluster(ctx context.Context, kubeconfigPath string) (string, error) {
+// GetWatcherAuthTokenFromCluster returns a watcherAuth token string stored as the secret from the cluster.
+func GetWatcherAuthTokenFromCluster(ctx context.Context, kubeconfigPath string) (string, error) {
 	client, err := initClient(kubeconfigPath)
 	if err != nil {
 		return "", err
@@ -314,19 +325,37 @@ func GetAuthTokenFromCluster(ctx context.Context, kubeconfigPath string) (string
 	if err != nil {
 		return "", err
 	}
-	authToken, err := extractAuthTokenFromSecret(retrievedSecret)
+	_, _, watcherAuthToken, err := extractAuthTokensFromSecret(retrievedSecret)
 	if err != nil {
 		return "", err
 	}
-	return authToken, err
+	return watcherAuthToken, err
 }
 
-func extractAuthTokenFromSecret(secret *corev1.Secret) (string, error) {
-	existingWatcherAuthToken, exists := secret.Data[authTokenSecretDataKey]
-	if !exists || len(existingWatcherAuthToken) == 0 {
-		return "", fmt.Errorf("auth token secret %s/%s does not contain the key %s or is empty", authTokenSecretNamespace, authTokenSecretName, authTokenSecretDataKey)
+func extractAuthTokensFromSecret(secret *corev1.Secret) (string, string, string, error) {
+	// Check for agentAuthKey, which must exist in both old (4.17) and new versions (4.18+)
+	existingAgentAuthToken, agentAuthTokenExists := secret.Data[agentAuthKey]
+	if !agentAuthTokenExists || len(existingAgentAuthToken) == 0 {
+		return "", "", "", fmt.Errorf("auth token secret %s/%s does not contain the key %s or is empty", authTokenSecretNamespace, authTokenSecretName, agentAuthKey)
 	}
-	return string(existingWatcherAuthToken), nil
+
+	existingUserAuthToken, userAuthTokenExists := secret.Data[userAuthKey]
+	existingWatcherAuthToken, watcherAuthTokenExists := secret.Data[watcherAuthKey]
+
+	// Handle old version compatibility for OCP 4.17
+	if !userAuthTokenExists && !watcherAuthTokenExists {
+		// For old version OCP 4.17, where only agentAuthToken is present
+		return string(existingAgentAuthToken), "", "", nil
+	}
+
+	// Handle cases where new keys are missing in OCP 4.18+
+	if (!userAuthTokenExists || len(existingUserAuthToken) == 0) || (!watcherAuthTokenExists || len(existingWatcherAuthToken) == 0) {
+		return "", "", "", fmt.Errorf("auth token secret %s/%s is missing one or more required keys (%s, %s, or %s) or they are empty",
+			authTokenSecretNamespace, authTokenSecretName, agentAuthKey, userAuthKey, watcherAuthKey)
+	}
+
+	// Return all keys if present
+	return string(existingAgentAuthToken), string(existingUserAuthToken), string(existingWatcherAuthToken), nil
 }
 
 func extractPublicKeyFromSecret(secret *corev1.Secret) (string, error) {
