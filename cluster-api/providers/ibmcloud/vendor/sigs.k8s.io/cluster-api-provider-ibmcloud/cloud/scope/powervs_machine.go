@@ -1005,7 +1005,7 @@ func (m *PowerVSMachineScope) CreateVPCLoadBalancerPoolMember() (*vpcv1.LoadBala
 		if val, ok := m.IBMPowerVSCluster.Status.LoadBalancers[lb.Name]; ok {
 			lbID = val.ID
 		} else {
-			return nil, fmt.Errorf("failed to find VPC load balancer ID ")
+			return nil, fmt.Errorf("failed to find VPC load balancer ID")
 		}
 		loadBalancer, _, err := m.IBMVPCClient.GetLoadBalancer(&vpcv1.GetLoadBalancerOptions{
 			ID: lbID,

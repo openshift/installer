@@ -143,11 +143,11 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	capiConsolidatedSubnets := consolidateCAPISubnets(capiControlPlaneSubnets, capiComputeSubnets)
 
 	// Build the necessary Security Groups and Rules for the Cluster.
-	vpcSecurityGroups := getVPCSecurityGroups(clusterID.InfraID, capiConsolidatedSubnets)
+	vpcSecurityGroups := getVPCSecurityGroups(clusterID.InfraID, capiConsolidatedSubnets, installConfig.Config.Publish)
 	// Build the Security Groups for the Load Balancers.
 	loadBalancerSecurityGroups := []capibmcloud.VPCResource{
 		{
-			Name: ptr.To(fmt.Sprintf("%s-%s", clusterID.InfraID, kubeAPILBSGNamePostfix)),
+			Name: ptr.To(fmt.Sprintf("%s-%s", clusterID.InfraID, kubeAPILBSGNameSuffix)),
 		},
 	}
 
