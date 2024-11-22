@@ -53,6 +53,21 @@ func (mr *MockAPIMockRecorder) AreMarketplaceImageTermsAccepted(ctx, publisher, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AreMarketplaceImageTermsAccepted", reflect.TypeOf((*MockAPI)(nil).AreMarketplaceImageTermsAccepted), ctx, publisher, offer, sku)
 }
 
+// CheckIPAddressAvailability mocks base method.
+func (m *MockAPI) CheckIPAddressAvailability(ctx context.Context, resourceGroupName, virtualNetwork, ipAddr string) (*network.IPAddressAvailabilityResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckIPAddressAvailability", ctx, resourceGroupName, virtualNetwork, ipAddr)
+	ret0, _ := ret[0].(*network.IPAddressAvailabilityResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckIPAddressAvailability indicates an expected call of CheckIPAddressAvailability.
+func (mr *MockAPIMockRecorder) CheckIPAddressAvailability(ctx, resourceGroupName, virtualNetwork, ipAddr interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckIPAddressAvailability", reflect.TypeOf((*MockAPI)(nil).CheckIPAddressAvailability), ctx, resourceGroupName, virtualNetwork, ipAddr)
+}
+
 // GetAvailabilityZones mocks base method.
 func (m *MockAPI) GetAvailabilityZones(ctx context.Context, region, instanceType string) ([]string, error) {
 	m.ctrl.T.Helper()
