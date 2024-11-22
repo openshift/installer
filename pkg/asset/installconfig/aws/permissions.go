@@ -291,6 +291,10 @@ var permissions = map[PermissionGroup][]string{
 		"kms:ListGrants",
 	},
 	PermissionPublicIpv4Pool: {
+		// Needed by CAPA to allocate an IP from the pool.
+		"ec2:AllocateAddress",
+		// Needed by CAPA to associate an IP with an instance.
+		"ec2:AssociateAddress",
 		// Needed to check the IP pools during install-config validation
 		"ec2:DescribePublicIpv4Pools",
 		// Needed by terraform because of bootstrap EIP created
