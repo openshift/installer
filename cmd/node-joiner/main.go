@@ -32,10 +32,15 @@ func nodeJoiner() error {
 			if err != nil {
 				return err
 			}
-			return nodejoiner.NewAddNodesCommand(dir, kubeConfig, &generatePXE)
+			generateConfigISO, err := cmd.Flags().GetBool("config-iso")
+			if err != nil {
+				return err
+			}
+			return nodejoiner.NewAddNodesCommand(dir, kubeConfig, generatePXE, generateConfigISO)
 		},
 	}
 	nodesAddCmd.Flags().BoolP("pxe", "p", false, "Instead of an ISO, generates PXE artifacts that can be used to boot the configured nodes to let them join an existing cluster")
+	nodesAddCmd.Flags().BoolP("config-iso", "", false, "Generates the config ISO instead of the standard ISO")
 
 	nodesMonitorCmd := &cobra.Command{
 		Use:   "monitor-add-nodes <ip-addresses>",

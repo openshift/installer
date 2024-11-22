@@ -44,8 +44,7 @@ type Config struct {
 
 // Params is used to store the command line parameters.
 type Params struct {
-	Kubeconfig  string `json:"kubeconfig,omitempty"`
-	GeneratePXE bool   `json:"generatePXE,omitempty"`
+	Kubeconfig string `json:"kubeconfig,omitempty"`
 }
 
 // Save stores the current parameters on disk.
