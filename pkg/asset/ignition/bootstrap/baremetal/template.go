@@ -86,6 +86,9 @@ type TemplateData struct {
 
 	// DisableIronicVirtualMediaTLS enables or disables TLS in ironic virtual media deployments
 	DisableIronicVirtualMediaTLS bool
+
+	// AdditionalNTPServers holds a list of additional NTP servers to be used for provisioning
+	AdditionalNTPServers []string
 }
 
 func externalURLs(apiVIPs []string, protocol string) (externalURLv4 string, externalURLv6 string) {
@@ -117,6 +120,10 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 	templateData.ExternalStaticGateway = config.BootstrapExternalStaticGateway
 	templateData.ExternalStaticDNS = config.BootstrapExternalStaticDNS
 	templateData.ExternalMACAddress = config.ExternalMACAddress
+
+	if len(config.AdditionalNTPServers) > 0 {
+		templateData.AdditionalNTPServers = config.AdditionalNTPServers
+	}
 
 	// If the user has manually set disableVirtualMediaTLS to False in the Provisioning CR, then enable TLS in ironic.
 	// The default value is 'false'.

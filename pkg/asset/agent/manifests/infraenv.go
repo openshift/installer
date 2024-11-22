@@ -74,6 +74,12 @@ func (i *InfraEnv) Generate(_ context.Context, dependencies asset.Parents) error
 				i.Config.Spec.AdditionalNTPSources = agentConfig.Config.AdditionalNTPSources
 			}
 
+			if installConfig.Config.BareMetal != nil {
+				if i.Config.Spec.AdditionalNTPSources == nil && installConfig.Config.BareMetal.AdditionalNTPServers != nil {
+					i.Config.Spec.AdditionalNTPSources = installConfig.Config.BareMetal.AdditionalNTPServers
+				}
+			}
+
 		}
 
 	case workflow.AgentWorkflowTypeAddNodes:

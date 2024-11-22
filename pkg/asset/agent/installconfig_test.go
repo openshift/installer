@@ -803,6 +803,9 @@ platform:
     clusterOSImage: https://mirror.example.com/images/metal.qcow2.gz?sha256=3b5a8
     bootstrapExternalStaticIP: 192.1168.122.50
     bootstrapExternalStaticGateway: gateway
+    AdditionalNTPServers:
+        - "10.0.1.1"
+        - "10.0.1.2"
     hosts:
       - name: host1
         bootMACAddress: 52:54:01:aa:aa:a1
@@ -911,6 +914,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 						ClusterOSImage:                 "https://mirror.example.com/images/metal.qcow2.gz?sha256=3b5a8",
 						BootstrapExternalStaticIP:      "192.1168.122.50",
 						BootstrapExternalStaticGateway: "gateway",
+						AdditionalNTPServers:           []string{"10.0.1.1", "10.0.1.2"},
 					},
 				},
 				PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,

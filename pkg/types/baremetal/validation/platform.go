@@ -124,6 +124,18 @@ func validateOSImageURI(uri string) error {
 	return nil
 }
 
+// ValidateNTPServers checks list of NTP servers strings are valid IPs or domain names.
+func ValidateNTPServers(servers []string, fldPath *field.Path) (allErrs field.ErrorList) {
+	for i, server := range servers {
+		if ipErr := validate.IP(server); ipErr != nil {
+			if domainErr := validate.DomainName(server, true); domainErr != nil {
+				allErrs = append(allErrs, field.Invalid(fldPath, servers[i], "NTP server is not a valid IP or domain name"))
+			}
+		}
+	}
+	return
+}
+
 // validateDHCPRange ensures the provided range is valid, and that provisioning service IP's do not overlap.
 func validateDHCPRange(p *baremetal.Platform, fldPath *field.Path) (allErrs field.ErrorList) {
 	dhcpRange := strings.Split(p.ProvisioningDHCPRange, ",")
@@ -579,6 +591,10 @@ func ValidateProvisioningNetworking(p *baremetal.Platform, n *types.Networking, 
 		if !p.ProvisioningNetworkCIDR.IP.Equal(expectedIP) {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkCIDR"), p.ProvisioningNetworkCIDR,
 				fmt.Sprintf("provisioningNetworkCIDR has host bits set, expected %s/%d", expectedIP, expectedLen)))
+		}
+
+		if len(p.AdditionalNTPServers) > 0 {
+			allErrs = append(allErrs, ValidateNTPServers(p.AdditionalNTPServers, fldPath)...)
 		}
 
 		if p.ProvisioningDHCPRange != "" {
