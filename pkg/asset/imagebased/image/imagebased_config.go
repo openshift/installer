@@ -30,7 +30,7 @@ const (
 var (
 	configFilename              = "image-based-installation-config.yaml"
 	allowedFlags                = []string{"--append-karg", "--delete-karg", "--save-partlabel", "--save-partindex"}
-	defaultExtraPartitionLabel  = "varlibcontainers"
+	defaultExtraPartitionLabel  = "var-lib-containers"
 	defaultExtraPartitionStart  = "-40G"
 	defaultExtraPartitionNumber = uint(5)
 )

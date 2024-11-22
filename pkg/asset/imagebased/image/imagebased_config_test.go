@@ -393,7 +393,7 @@ func ibiConfig() *ImageBasedInstallationConfigBuilder {
 			SeedVersion:          "4.16.0",
 			InstallationDisk:     "/dev/vda",
 			ExtraPartitionStart:  "-40G",
-			ExtraPartitionLabel:  "varlibcontainers",
+			ExtraPartitionLabel:  defaultExtraPartitionLabel,
 			ExtraPartitionNumber: 5,
 			Shutdown:             false,
 			SSHKey:               "",
