@@ -821,3 +821,39 @@ func TestIncludesAssumeRole(t *testing.T) {
 		assert.NotContains(t, requiredPerms, PermissionAssumeRole)
 	})
 }
+
+func TestIncludesWavelengthZones(t *testing.T) {
+	t.Run("Should be true when edge compute specified with WL zones", func(t *testing.T) {
+		ic := validInstallConfig()
+		ic.Compute = append(ic.Compute, types.MachinePool{
+			Name: "edge",
+			Platform: types.MachinePoolPlatform{
+				AWS: &aws.MachinePool{
+					Zones: []string{"us-west-2-pdx-1a", "us-west-2-wl1-sea-wlz-1"},
+				},
+			},
+		})
+		requiredPerms := RequiredPermissionGroups(ic)
+		assert.Contains(t, requiredPerms, PermissionCarrierGateway)
+	})
+	t.Run("Should be false when", func(t *testing.T) {
+		t.Run("edge compute specified without WL zones", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.Compute = append(ic.Compute, types.MachinePool{
+				Name: "edge",
+				Platform: types.MachinePoolPlatform{
+					AWS: &aws.MachinePool{
+						Zones: []string{"us-west-1a", "us-west-2-pdx-1a"},
+					},
+				},
+			})
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionCarrierGateway)
+		})
+		t.Run("edge compute not specified", func(t *testing.T) {
+			ic := validInstallConfig()
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionCarrierGateway)
+		})
+	})
+}
