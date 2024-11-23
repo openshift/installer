@@ -224,11 +224,10 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Azure)
 
-		session, err := installConfig.Azure.Session()
+		client, err := installConfig.Azure.Client()
 		if err != nil {
-			return fmt.Errorf("failed to fetch session: %w", err)
+			return err
 		}
-		client := icazure.NewClient(session)
 
 		if len(mpool.Zones) == 0 {
 			// if no azs are given we set to []string{""} for convenience over later operations.
@@ -276,6 +275,11 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		useImageGallery := false
 		masterUserDataSecretName := "master-user-data"
 		resourceGroupName := installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID)
+
+		session, err := installConfig.Azure.Session()
+		if err != nil {
+			return err
+		}
 
 		azureMachines, err := azure.GenerateMachines(installConfig.Config.Platform.Azure, &pool, masterUserDataSecretName, clusterID.InfraID, "master", capabilities, useImageGallery, installConfig.Config.Platform.Azure.UserTags, hyperVGen, subnet, resourceGroupName, session.Credentials.SubscriptionID)
 		if err != nil {
