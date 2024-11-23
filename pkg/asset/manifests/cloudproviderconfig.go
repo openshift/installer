@@ -23,6 +23,7 @@ import (
 	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
 	powervsmanifests "github.com/openshift/installer/pkg/asset/manifests/powervs"
 	vspheremanifests "github.com/openshift/installer/pkg/asset/manifests/vsphere"
+	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
@@ -304,6 +305,11 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 		if err != nil {
 			return err
 		}
+		overrides := installConfig.Config.PowerVS.ServiceEndpoints
+		if installConfig.Config.Publish == types.InternalPublishingStrategy &&
+			(len(installConfig.Config.ImageDigestSources) > 0 || len(installConfig.Config.DeprecatedImageContentSources) > 0) {
+			overrides = installConfig.PowerVS.SetDefaultPrivateServiceEndpoints(ctx, installConfig.Config.PowerVS.ServiceEndpoints, cosRegion, vpcRegion)
+		}
 
 		powervsConfig, err := powervsmanifests.CloudProviderConfig(
 			clusterID.InfraID,
@@ -316,7 +322,7 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 			serviceName,
 			installConfig.Config.PowerVS.Region,
 			installConfig.Config.PowerVS.Zone,
-			installConfig.PowerVS.SetDefaultPrivateServiceEndpoints(ctx, installConfig.Config.PowerVS.ServiceEndpoints, cosRegion, vpcRegion),
+			overrides,
 		)
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
