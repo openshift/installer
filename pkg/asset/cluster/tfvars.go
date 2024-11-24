@@ -379,7 +379,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, w := range workers {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AzureMachineProviderSpec)
 		}
-		client := aztypes.NewClient(session)
+		client, err := installConfig.Azure.Client()
+		if err != nil {
+			return err
+		}
 		hyperVGeneration, err := client.GetHyperVGenerationVersion(context.TODO(), masterConfigs[0].VMSize, masterConfigs[0].Location, "")
 		if err != nil {
 			return err
