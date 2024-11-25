@@ -772,11 +772,12 @@ func (PromQLClusterCondition) SwaggerDoc() map[string]string {
 }
 
 var map_Release = map[string]string{
-	"":         "Release represents an OpenShift release image and associated metadata.",
-	"version":  "version is a semantic version identifying the update version. When this field is part of spec, version is optional if image is specified.",
-	"image":    "image is a container image location that contains the update. When this field is part of spec, image is optional if version is specified and the availableUpdates field contains a matching version.",
-	"url":      "url contains information about this release. This URL is set by the 'url' metadata property on a release or the metadata returned by the update API and should be displayed as a link in user interfaces. The URL field may not be set for test or nightly releases.",
-	"channels": "channels is the set of Cincinnati channels to which the release currently belongs.",
+	"":             "Release represents an OpenShift release image and associated metadata.",
+	"architecture": "architecture is an optional field that indicates the value of the cluster architecture. In this context cluster architecture means either a single architecture or a multi architecture. Valid values are 'Multi' and empty.",
+	"version":      "version is a semantic version identifying the update version. When this field is part of spec, version is optional if image is specified.",
+	"image":        "image is a container image location that contains the update. When this field is part of spec, image is optional if version is specified and the availableUpdates field contains a matching version.",
+	"url":          "url contains information about this release. This URL is set by the 'url' metadata property on a release or the metadata returned by the update API and should be displayed as a link in user interfaces. The URL field may not be set for test or nightly releases.",
+	"channels":     "channels is the set of Cincinnati channels to which the release currently belongs.",
 }
 
 func (Release) SwaggerDoc() map[string]string {

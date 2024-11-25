@@ -746,6 +746,16 @@ type Update struct {
 // Release represents an OpenShift release image and associated metadata.
 // +k8s:deepcopy-gen=true
 type Release struct {
+	// architecture is an optional field that indicates the
+	// value of the cluster architecture. In this context cluster
+	// architecture means either a single architecture or a multi
+	// architecture.
+	// Valid values are 'Multi' and empty.
+	//
+	// +openshift:enable:FeatureGate=ImageStreamImportMode
+	// +optional
+	Architecture ClusterVersionArchitecture `json:"architecture,omitempty"`
+
 	// version is a semantic version identifying the update version. When this
 	// field is part of spec, version is optional if image is specified.
 	// +required
