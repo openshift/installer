@@ -26,11 +26,13 @@ import (
 const (
 	infrastructureFilepath = "/opt/openshift/manifests/cluster-infrastructure-02-config.yml"
 	mcsCertKeyFilepath     = "/opt/openshift/manifests/machine-config-server-tls-secret.yaml"
+	mcsKeyFile             = "/opt/openshift/tls/machine-config-server.key"
+	mcsCertFile            = "/opt/openshift/tls/machine-config-server.crt"
 
-	// replaceable is the string that precedes the encoded data in the ignition data.
+	// header is the string that precedes the encoded data in the ignition data.
 	// The data must be replaced before decoding the string, and the string must be
 	// prepended to the encoded data.
-	replaceable = "data:text/plain;charset=utf-8;base64,"
+	header = "data:text/plain;charset=utf-8;base64,"
 )
 
 // EditIgnition attempts to edit the contents of the bootstrap ignition when the user has selected
@@ -58,7 +60,7 @@ func EditIgnition(in IgnitionInput, platform string, publicIPAddresses, privateI
 	if err := asset.NewDefaultFileWriter(lbConfig).PersistToFile(command.RootOpts.Dir); err != nil {
 		return nil, nil, fmt.Errorf("failed to save %s to state file: %w", lbConfig.Name(), err)
 	}
-	err = updateMCSCertKey(in, platform, in.RootCA, privateIPAddresses)
+	err = updateMCSCertKey(in, platform, ignData, privateIPAddresses)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to update MCS Cert and Key in the bootstrap ignition: %w", err)
 	}
@@ -82,10 +84,8 @@ func addLoadBalancersToInfra(platform string, config *igntypes.Config, publicLBs
 	for i, fileData := range config.Storage.Files {
 		// update the contents of this file
 		if fileData.Path == infrastructureFilepath {
-			contents := config.Storage.Files[i].Contents.Source
-			replaced := strings.Replace(*contents, replaceable, "", 1)
-
-			rawDecodedText, err := base64.StdEncoding.DecodeString(replaced)
+			contents := strings.Split(*config.Storage.Files[i].Contents.Source, ",")
+			rawDecodedText, err := base64.StdEncoding.DecodeString(contents[1])
 			if err != nil {
 				return fmt.Errorf("failed to decode contents of ignition file: %w", err)
 			}
@@ -128,7 +128,7 @@ func addLoadBalancersToInfra(platform string, config *igntypes.Config, publicLBs
 				return fmt.Errorf("failed to marshal infrastructure: %w", err)
 			}
 
-			encoded := fmt.Sprintf("%s%s", replaceable, base64.StdEncoding.EncodeToString(infraContents))
+			encoded := fmt.Sprintf("%s%s", header, base64.StdEncoding.EncodeToString(infraContents))
 			// replace the contents with the edited information
 			config.Storage.Files[i].Contents.Source = &encoded
 
@@ -163,26 +163,18 @@ func updatePointerIgnition(in IgnitionInput, privateLBs []string, role string) (
 	return in.MasterIgnData, nil
 }
 
-func updateMCSCertKey(in IgnitionInput, platform string, rootCA *tls.RootCA, privateLBs []string) error {
+func updateMCSCertKey(in IgnitionInput, platform string, config *igntypes.Config, privateLBs []string) error {
 	if len(privateLBs) > 0 {
 		keyRaw, certRaw, err := tls.RegenerateMCSCertKey(in.InstallConfig, in.RootCA, privateLBs)
 		if err != nil {
 			return fmt.Errorf("failed to regenerate MCS Cert and Key: %w", err)
 		}
 
-		// Manipulating the bootstrap ignition
-		config := &igntypes.Config{}
-		err = json.Unmarshal(in.BootstrapIgnData, config)
-		if err != nil {
-			return fmt.Errorf("failed to unmarshal bootstrap ignition: %w", err)
-		}
-
 		for i, fileData := range config.Storage.Files {
-			if fileData.Path == mcsCertKeyFilepath {
-				contents := config.Storage.Files[i].Contents.Source
-				replaced := strings.Replace(*contents, replaceable, "", 1)
-
-				rawDecodedText, err := base64.StdEncoding.DecodeString(replaced)
+			switch fileData.Path {
+			case mcsCertKeyFilepath:
+				contents := strings.Split(*config.Storage.Files[i].Contents.Source, ",")
+				rawDecodedText, err := base64.StdEncoding.DecodeString(contents[1])
 				if err != nil {
 					return fmt.Errorf("failed to decode contents of ignition file %s: %w", mcsCertKeyFilepath, err)
 				}
@@ -197,12 +189,21 @@ func updateMCSCertKey(in IgnitionInput, platform string, rootCA *tls.RootCA, pri
 				if err != nil {
 					return fmt.Errorf("failed to marshal MCS Secret: %w", err)
 				}
-				encoded := fmt.Sprintf("%s%s", replaceable, base64.StdEncoding.EncodeToString(mcsSecretContents))
+				encoded := fmt.Sprintf("%s%s", header, base64.StdEncoding.EncodeToString(mcsSecretContents))
 				// replace the contents with the edited information
 				config.Storage.Files[i].Contents.Source = &encoded
 
 				logrus.Debugf("Updated MCSCertKey file %s with new cert and key", mcsCertKeyFilepath)
-				break
+			case mcsKeyFile:
+				encoded := fmt.Sprintf("%s%s", header, base64.StdEncoding.EncodeToString(keyRaw))
+				// replace the contents with the edited information
+				config.Storage.Files[i].Contents.Source = &encoded
+				logrus.Debugf("Updated MCSKey file %s with new key", mcsKeyFile)
+			case mcsCertFile:
+				encoded := fmt.Sprintf("%s%s", header, base64.StdEncoding.EncodeToString(certRaw))
+				// replace the contents with the edited information
+				config.Storage.Files[i].Contents.Source = &encoded
+				logrus.Debugf("Updated MCSCert file %s with new cert", mcsCertFile)
 			}
 		}
 	}
