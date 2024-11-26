@@ -191,7 +191,13 @@ looks like this:
         prometheusTls: {}
 ```
 
-After saving the file and letting the change propagate, verify that you receive
+After saving the file make sure you see the following
+```bash
+$ oc -n openstack get openstackcontrolplane/controlplane
+NAME           STATUS   MESSAGE
+controlplane   False    Setup complete
+```
+Let the change propagate and verify that you receive
 OpenStack metrics in the external Prometheus.
 
 #### Set up remote-write from the OCP cluster-monitoring-operator
