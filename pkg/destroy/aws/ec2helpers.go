@@ -843,7 +843,7 @@ func deleteEC2VPCEndpointService(ctx context.Context, client *ec2.EC2, id string
 		logger.Warn("Unable to get the list of VPC endpoint connections connected to service: ", err)
 		logger.Warn("Attempting to delete the VPC Endpoint Service")
 	} else {
-		endpointList := make([]*string, len(output.VpcEndpointConnections))
+		endpointList := make([]*string, 0, len(output.VpcEndpointConnections))
 		for _, endpoint := range output.VpcEndpointConnections {
 			if aws.StringValue(endpoint.VpcEndpointState) != "rejected" {
 				endpointList = append(endpointList, endpoint.VpcEndpointId)
