@@ -19,6 +19,7 @@ func TestExtraManifests_Load(t *testing.T) {
 		files          []string
 		yamlFetchError error
 		ymlFetchError  error
+		jsonFetchError error
 
 		expectedFound bool
 		expectedFiles []string
@@ -46,16 +47,25 @@ func TestExtraManifests_Load(t *testing.T) {
 			expectedFiles: []string{"/extra-manifests/another-test.yml"},
 		},
 		{
-			name: "both",
+			name:  "only-json",
+			files: []string{"/extra-manifests/test.json"},
+
+			expectedFound: true,
+			expectedFiles: []string{"/extra-manifests/test.json"},
+		},
+		{
+			name: "all",
 			files: []string{
 				"/extra-manifests/test.yaml",
 				"/extra-manifests/another-test.yml",
+				"/extra-manifests/test.json",
 			},
 
 			expectedFound: true,
 			expectedFiles: []string{
 				"/extra-manifests/test.yaml",
 				"/extra-manifests/another-test.yml",
+				"/extra-manifests/test.json",
 			},
 		},
 		{
@@ -70,12 +80,23 @@ func TestExtraManifests_Load(t *testing.T) {
 
 			expectedError: "failed to load *.yml files: file does not exist",
 		},
+		{
+			name:           "error",
+			jsonFetchError: os.ErrNotExist,
+
+			expectedError: "failed to load *.json files: file does not exist",
+		},
 	}
+
+	yamlPattern := "extra-manifests/*.yaml"
+	ymlPattern := "extra-manifests/*.yml"
+	jsonPattern := "extra-manifests/*.json"
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			yamlFiles := []*asset.File{}
 			ymlFiles := []*asset.File{}
+			jsonFiles := []*asset.File{}
 			for _, f := range tc.files {
 				assetFile := &asset.File{
 					Filename: f,
@@ -87,6 +108,8 @@ func TestExtraManifests_Load(t *testing.T) {
 					yamlFiles = append(yamlFiles, assetFile)
 				case ".yml":
 					ymlFiles = append(ymlFiles, assetFile)
+				case ".json":
+					jsonFiles = append(jsonFiles, assetFile)
 				default:
 					t.Error("invalid extension")
 				}
@@ -96,21 +119,22 @@ func TestExtraManifests_Load(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			fileFetcher := mock.NewMockFileFetcher(mockCtrl)
+
 			if tc.yamlFetchError != nil {
-				fileFetcher.EXPECT().FetchByPattern("extra-manifests/*.yaml").Return(
-					[]*asset.File{},
-					tc.yamlFetchError,
-				)
+				fileFetcher.EXPECT().FetchByPattern(yamlPattern).Return([]*asset.File{}, tc.yamlFetchError)
 			} else {
-				fileFetcher.EXPECT().FetchByPattern("extra-manifests/*.yaml").Return(yamlFiles, nil)
+				fileFetcher.EXPECT().FetchByPattern(yamlPattern).Return(yamlFiles, nil)
 
 				if tc.ymlFetchError != nil {
-					fileFetcher.EXPECT().FetchByPattern("extra-manifests/*.yml").Return(
-						[]*asset.File{},
-						tc.ymlFetchError,
-					)
+					fileFetcher.EXPECT().FetchByPattern(ymlPattern).Return([]*asset.File{}, tc.ymlFetchError)
 				} else {
-					fileFetcher.EXPECT().FetchByPattern("extra-manifests/*.yml").Return(ymlFiles, nil)
+					fileFetcher.EXPECT().FetchByPattern(ymlPattern).Return(ymlFiles, nil)
+
+					if tc.jsonFetchError != nil {
+						fileFetcher.EXPECT().FetchByPattern(jsonPattern).Return([]*asset.File{}, tc.jsonFetchError)
+					} else {
+						fileFetcher.EXPECT().FetchByPattern(jsonPattern).Return(jsonFiles, nil)
+					}
 				}
 			}
 
