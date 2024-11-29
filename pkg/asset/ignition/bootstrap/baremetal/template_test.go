@@ -59,6 +59,7 @@ func TestTemplatingManagedIPv6(t *testing.T) {
 		ProvisioningDHCPRange:   "fd2e:6f44:5dd8:b856::1,fd2e:6f44:5dd8::ff",
 		BootstrapProvisioningIP: "fd2e:6f44:5dd8:b856::2",
 		ProvisioningNetwork:     baremetal.ManagedProvisioningNetwork,
+		APIVIPs:                 []string{"53.78.144.26", "d601:602e:6397:a048:f516:dc63:1e83:fcaa"},
 	}
 	openshiftDependency := []asset.Asset{
 		&manifests.Openshift{},
@@ -74,6 +75,7 @@ func TestTemplatingManagedIPv6(t *testing.T) {
 	assert.Equal(t, result.ProvisioningIP, "fd2e:6f44:5dd8:b856::2")
 	assert.Equal(t, result.IronicUsername, "bootstrap-ironic-user")
 	assert.Equal(t, result.IronicPassword, "passw0rd")
+	assert.Equal(t, result.ExternalURLv6, "https://[d601:602e:6397:a048:f516:dc63:1e83:fcaa]:6183/")
 }
 
 func TestTemplatingUnmanagedIPv6(t *testing.T) {
@@ -97,4 +99,5 @@ func TestTemplatingUnmanagedIPv6(t *testing.T) {
 	assert.Equal(t, result.ProvisioningDHCPAllowList, "")
 	assert.Equal(t, result.IronicUsername, "bootstrap-ironic-user")
 	assert.Equal(t, result.IronicPassword, "passw0rd")
+	assert.Equal(t, result.ExternalURLv6, "")
 }

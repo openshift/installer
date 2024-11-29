@@ -95,7 +95,11 @@ func externalURLs(apiVIPs []string, protocol string) (externalURLv4 string, exte
 	if len(apiVIPs) > 1 {
 		// IPv6 BMCs may not be able to reach IPv4 servers, use the right callback URL for them.
 		// Warning: when backporting to 4.12 or earlier, change the port to 80!
-		externalURL := fmt.Sprintf("%s://%s/", protocol, net.JoinHostPort(apiVIPs[1], "6180"))
+		port := "6180"
+		if protocol == "https" {
+			port = "6183"
+		}
+		externalURL := fmt.Sprintf("%s://%s/", protocol, net.JoinHostPort(apiVIPs[1], port))
 		if utilsnet.IsIPv6String(apiVIPs[1]) {
 			externalURLv6 = externalURL
 		}
