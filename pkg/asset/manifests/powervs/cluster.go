@@ -2,9 +2,7 @@ package powervs
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
-	"math/big"
 
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -24,7 +22,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	var (
 		manifests          []*asset.RuntimeFile
 		network            string
-		dhcpSubnet         = "192.168.0.0/24"
+		dhcpSubnet         string
 		service            capibm.IBMPowerVSResourceReference
 		vpcName            string
 		vpcRegion          string
@@ -56,11 +54,12 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	network = fmt.Sprintf("%s-network", clusterID.InfraID)
 
-	n, err := rand.Int(rand.Reader, big.NewInt(253))
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate random subnet: %w", err)
+	logrus.Debugf("GenerateClusterAssets: len MachineNetwork = %d", len(installConfig.Config.Networking.MachineNetwork))
+	dhcpSubnet = installConfig.Config.Networking.MachineNetwork[0].CIDR.String()
+	if numNetworks := len(installConfig.Config.Networking.MachineNetwork); numNetworks > 1 {
+		logrus.Infof("Warning: %d machineNetwork found! Ignoring all except the first.", numNetworks)
 	}
-	dhcpSubnet = fmt.Sprintf("192.168.%d.0/24", n.Int64())
+	logrus.Debugf("GenerateClusterAssets: dhcpSubnet = %s", dhcpSubnet)
 
 	if installConfig.Config.PowerVS.ServiceInstanceGUID == "" {
 		serviceName := fmt.Sprintf("%s-power-iaas", clusterID.InfraID)
