@@ -75,6 +75,10 @@ const (
 	// PermissionCarrierGateway is a permission set required when an edge compute pool with WL zones is set in the install-config.
 	PermissionCarrierGateway PermissionGroup = "permission-create-carrier-gateway"
 
+	// PermissionEdgeDefaultInstance is a permission set required when an edge compute pool is set without an instance
+	// type in the install-config.
+	PermissionEdgeDefaultInstance PermissionGroup = "permission-edge-default-instance"
+
 	// PermissionMintCreds is a permission set required when minting credentials.
 	PermissionMintCreds PermissionGroup = "permission-mint-creds"
 
@@ -347,6 +351,10 @@ var permissions = map[PermissionGroup][]string{
 		// Needed to delete Carrier Gateways.
 		"ec2:DeleteCarrierGateway",
 	},
+	PermissionEdgeDefaultInstance: {
+		// Needed to filter zones by instance type
+		"ec2:DescribeInstanceTypeOfferings",
+	},
 	// From: https://github.com/openshift/cloud-credential-operator/blob/master/pkg/aws/utils.go
 	// TODO: export these in CCO so we don't have to duplicate them here.
 	PermissionMintCreds: {
@@ -542,6 +550,10 @@ func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 		permissionGroups = append(permissionGroups, PermissionCarrierGateway)
 	}
 
+	if includesEdgeDefaultInstanceType(ic) {
+		permissionGroups = append(permissionGroups, PermissionEdgeDefaultInstance)
+	}
+
 	return permissionGroups
 }
 
@@ -734,5 +746,18 @@ func includesWavelengthZones(installConfig *types.InstallConfig) bool {
 		}
 	}
 
+	return false
+}
+
+// includesEdgeDefaultInstanceType checks if any edge machine pool is specified without an instance type.
+func includesEdgeDefaultInstanceType(installConfig *types.InstallConfig) bool {
+	for _, mpool := range installConfig.Compute {
+		if mpool.Name != types.MachinePoolEdgeRoleName {
+			continue
+		}
+		if mpool.Platform.AWS == nil || len(mpool.Platform.AWS.InstanceType) == 0 {
+			return true
+		}
+	}
 	return false
 }
