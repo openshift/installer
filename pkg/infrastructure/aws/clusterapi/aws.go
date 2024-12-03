@@ -174,7 +174,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		}
 
 		pubLB := awsCluster.Status.Network.SecondaryAPIServerELB
-		aliasZoneID, err := getHostedZoneIDForNLB(ctx, awsSession, awsCluster.Spec.Region, pubLB.DNSName)
+		aliasZoneID, err := getHostedZoneIDForNLB(ctx, awsSession, awsCluster.Spec.Region, pubLB.Name)
 		if err != nil {
 			return fmt.Errorf("failed to find HostedZone ID for NLB: %w", err)
 		}
