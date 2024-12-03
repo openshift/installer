@@ -210,6 +210,11 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 		if err := addDay2IgnitionEndpoints(&config, *clusterInfo); err != nil {
 			return err
 		}
+		// Configure the live environment with the chrony configuration provided by the
+		// cluster, to allow using the same NTP servers.
+		if clusterInfo.ChronyConf != nil {
+			config.Storage.Files = append(config.Storage.Files, *clusterInfo.ChronyConf)
+		}
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
