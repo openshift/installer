@@ -117,7 +117,7 @@ type RegistriesConf struct {
 // RegistriesConfig holds the data extracted from registries.conf
 type RegistriesConfig struct {
 	Location string
-	Mirror   string
+	Mirrors  []string
 }
 
 var _ asset.WritableAsset = (*RegistriesConf)(nil)
@@ -303,13 +303,16 @@ func (i *RegistriesConf) setMirrorConfig(registriesConf *sysregistriesv2.V2Regis
 	for i, reg := range registriesConf.Registries {
 		mirrorConfig[i] = RegistriesConfig{
 			Location: reg.Location,
-			Mirror:   reg.Mirrors[0].Location,
+		}
+		for _, mirror := range reg.Mirrors {
+			mirrorConfig[i].Mirrors = append(mirrorConfig[i].Mirrors, mirror.Location)
 		}
 	}
 	i.MirrorConfig = mirrorConfig
 }
 
 // GetMirrorFromRelease gets the matching mirror configured for the releaseImage.
+// If multiple mirrors are configured the first one is returned.
 func GetMirrorFromRelease(releaseImage string, registriesConfig *RegistriesConf) string {
 	source := regexp.MustCompile(`^(.+?)(@sha256)?:(.+)`).FindStringSubmatch(releaseImage)
 	for _, config := range registriesConfig.MirrorConfig {
@@ -318,9 +321,9 @@ func GetMirrorFromRelease(releaseImage string, registriesConfig *RegistriesConf)
 			switch len(source) {
 			case 4:
 				// Has Sha256
-				return fmt.Sprintf("%s%s:%s", config.Mirror, source[2], source[3])
+				return fmt.Sprintf("%s%s:%s", config.Mirrors[0], source[2], source[3])
 			case 3:
-				return fmt.Sprintf("%s:%s", config.Mirror, source[2])
+				return fmt.Sprintf("%s:%s", config.Mirrors[0], source[2])
 			}
 		}
 	}

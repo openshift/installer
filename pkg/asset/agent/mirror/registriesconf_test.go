@@ -202,6 +202,68 @@ unqualified-search-registries = []
 `,
 		},
 		{
+			name: "image-digest-sources-multiple-mirrors",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
+				&agent.OptionalInstallConfig{
+					Supplied: true,
+					AssetBase: installconfig.AssetBase{
+						Config: &types.InstallConfig{
+							ObjectMeta: v1.ObjectMeta{
+								Namespace: "cluster-0",
+							},
+							ImageDigestSources: []types.ImageDigestSource{
+								{
+									Source: "registry.ci.openshift.org/ocp/release",
+									Mirrors: []string{
+										"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+										"virthost.ostest.test.metalkube.org:5000/localimages/ocp-release",
+									},
+								},
+								{
+									Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
+									Mirrors: []string{
+										"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+										"virthost.ostest.test.metalkube.org:5000/localimages/ocp-release",
+									},
+								},
+							},
+						},
+					},
+				},
+				&releaseimage.Image{
+					PullSpec: "registry.ci.openshift.org/ocp/release:4.11.0-0.ci-2022-05-16-202609",
+				},
+			},
+			expectedConfig: `credential-helpers = []
+short-name-mode = ""
+unqualified-search-registries = []
+
+[[registry]]
+  location = "registry.ci.openshift.org/ocp/release"
+  mirror-by-digest-only = true
+  prefix = ""
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/ocp-release"
+
+[[registry]]
+  location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+  mirror-by-digest-only = true
+  prefix = ""
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/ocp-release"
+`,
+		},
+		{
 			name: "add-nodes command - missing-config",
 			dependencies: []asset.Asset{
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
@@ -222,12 +284,14 @@ unqualified-search-registries = []
 							Source: "registry.ci.openshift.org/ocp/release",
 							Mirrors: []string{
 								"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+								"virthost.ostest.test.metalkube.org:5000/localimages/ocp-release",
 							},
 						},
 						{
 							Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
 							Mirrors: []string{
 								"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+								"virthost.ostest.test.metalkube.org:5000/localimages/ocp-release",
 							},
 						},
 					},
@@ -247,6 +311,9 @@ unqualified-search-registries = []
   [[registry.mirror]]
     location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
 
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/ocp-release"
+
 [[registry]]
   location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
   mirror-by-digest-only = true
@@ -254,6 +321,9 @@ unqualified-search-registries = []
 
   [[registry.mirror]]
     location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/ocp-release"
 `,
 		},
 	}
