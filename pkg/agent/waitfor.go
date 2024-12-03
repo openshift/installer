@@ -50,26 +50,3 @@ func WaitForBootstrapComplete(cluster *Cluster) error {
 
 	return nil
 }
-
-// WaitForInstallComplete Waits for the cluster installation triggered by the
-// agent installer to be complete.
-func WaitForInstallComplete(cluster *Cluster) error {
-	timeout := 90 * time.Minute
-	waitContext, cancel := context.WithTimeout(cluster.Ctx, timeout)
-	defer cancel()
-
-	wait.Until(func() {
-		installed, err := cluster.IsInstallComplete()
-		if installed && err == nil {
-			logrus.Info("Cluster is installed")
-			cancel()
-		}
-
-	}, 2*time.Second, waitContext.Done())
-
-	waitErr := waitContext.Err()
-	if waitErr != nil && waitErr != context.Canceled {
-		return errors.Wrap(waitErr, "Cluster installation timed out")
-	}
-	return nil
-}
