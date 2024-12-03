@@ -106,6 +106,25 @@ func DataSourceIBMIsSecurityGroupRules() *schema.Resource {
 								},
 							},
 						},
+						"local": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The local IP address or range of local IP addresses to which this rule will allow inbound traffic (or from which, for outbound traffic). A CIDR block of 0.0.0.0/0 allows traffic to all local IP addresses (or from all local IP addresses, for outbound rules).",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"address": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The IP address.This property may add support for IPv6 addresses in the future. When processing a value in this property, verify that the address is in an expected format. If it is not, log an error. Optionally halt processing and surface the error, or bypass the resource on which the unexpected IP address format was encountered.",
+									},
+									"cidr_block": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CIDR block. This property may add support for IPv6 CIDR blocks in the future. When processing a value in this property, verify that the CIDR block is in an expected format. If it is not, log an error. Optionally halt processing and surface the error, or bypass the resource on which the unexpected CIDR block format was encountered.",
+									},
+								},
+							},
+						},
 						"code": &schema.Schema{
 							Type:        schema.TypeInt,
 							Computed:    true,
@@ -168,6 +187,13 @@ func dataSourceIBMIsSecurityGroupRulesRead(d *schema.ResourceData, meta interfac
 					remoteList = append(remoteList, remoteMap)
 					l["remote"] = remoteList
 				}
+				// nested map for local.
+				if rulex.Local != nil {
+					localList := []map[string]interface{}{}
+					localMap := dataSourceSecurityGroupRuleLocalToMap(rulex.Local.(*vpcv1.SecurityGroupRuleLocal))
+					localList = append(localList, localMap)
+					l["local"] = localList
+				}
 
 			}
 		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp":
@@ -177,15 +203,26 @@ func dataSourceIBMIsSecurityGroupRulesRead(d *schema.ResourceData, meta interfac
 				l["href"] = *rulex.Href
 				l["id"] = *rulex.ID
 				l["ip_version"] = *rulex.IPVersion
-				l["code"] = *rulex.Code
+				if rulex.Code != nil {
+					l["code"] = *rulex.Code
+				}
 				l["protocol"] = *rulex.Protocol
-				l["type"] = *rulex.Type
+				if rulex.Type != nil {
+					l["type"] = *rulex.Type
+				}
 				// remote
 				if rulex.Remote != nil {
 					remoteList := []map[string]interface{}{}
 					remoteMap := dataSourceSecurityGroupRuleRemoteToMap(rulex.Remote.(*vpcv1.SecurityGroupRuleRemote))
 					remoteList = append(remoteList, remoteMap)
 					l["remote"] = remoteList
+				}
+				// nested map for local.
+				if rulex.Local != nil {
+					localList := []map[string]interface{}{}
+					localMap := dataSourceSecurityGroupRuleLocalToMap(rulex.Local.(*vpcv1.SecurityGroupRuleLocal))
+					localList = append(localList, localMap)
+					l["local"] = localList
 				}
 			}
 		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp":
@@ -205,6 +242,13 @@ func dataSourceIBMIsSecurityGroupRulesRead(d *schema.ResourceData, meta interfac
 					remoteList = append(remoteList, remoteMap)
 					l["remote"] = remoteList
 				}
+				// nested map for local.
+				if rulex.Local != nil {
+					localList := []map[string]interface{}{}
+					localMap := dataSourceSecurityGroupRuleLocalToMap(rulex.Local.(*vpcv1.SecurityGroupRuleLocal))
+					localList = append(localList, localMap)
+					l["local"] = localList
+				}
 			}
 		}
 		rulesInfo = append(rulesInfo, l)
@@ -219,7 +263,7 @@ func dataSourceIBMIsSecurityGroupRulesID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
 
-func dataSourceSecurityGroupRuleCollectionRemoteDeletedToMap(deletedItem *vpcv1.SecurityGroupReferenceDeleted) (resultMap map[string]interface{}) {
+func dataSourceSecurityGroupRuleCollectionRemoteDeletedToMap(deletedItem *vpcv1.Deleted) (resultMap map[string]interface{}) {
 	resultMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2017, 2021 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package database
@@ -276,6 +276,29 @@ func DataSourceIBMDatabaseInstance() *schema.Resource {
 										Type:        schema.TypeBool,
 										Computed:    true,
 										Description: "Can the disk size be scaled down as well as up",
+									},
+								},
+							},
+						},
+						"host_flavor": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"id": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The host flavor id",
+									},
+									"name": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The host flavor name",
+									},
+									"hosting_size": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The host flavor size",
 									},
 								},
 							},
@@ -624,12 +647,6 @@ func dataSourceIBMDatabaseInstanceRead(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("[ERROR] Error getting database client settings: %s", err)
 	}
 
-	icdClient, err := meta.(conns.ClientSession).ICDAPI()
-	if err != nil {
-		return fmt.Errorf("[ERROR] Error getting database client settings: %s", err)
-	}
-
-	icdId := flex.EscapeUrlParm(instance.ID)
 	getDeploymentInfoOptions := &clouddatabasesv5.GetDeploymentInfoOptions{
 		ID: core.StringPtr(instance.ID),
 	}
@@ -651,7 +668,11 @@ func dataSourceIBMDatabaseInstanceRead(d *schema.ResourceData, meta interface{})
 		d.Set("platform_options", flex.ExpandPlatformOptions(*deployment))
 	}
 
-	groupList, err := icdClient.Groups().GetGroups(icdId)
+	listDeploymentScalingGroupsOptions := &clouddatabasesv5.ListDeploymentScalingGroupsOptions{
+		ID: core.StringPtr(instance.ID),
+	}
+
+	groupList, _, err := cloudDatabasesClient.ListDeploymentScalingGroups(listDeploymentScalingGroupsOptions)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error getting database groups: %s", err)
 	}
@@ -664,7 +685,7 @@ func dataSourceIBMDatabaseInstanceRead(d *schema.ResourceData, meta interface{})
 
 	autoscalingGroup, _, err := cloudDatabasesClient.GetAutoscalingConditions(getAutoscalingConditionsOptions)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error getting database autoscaling groups: %s", err)
+		return fmt.Errorf("[ERROR] Error getting database autoscaling groups: %s\n Hint: Check if there is a mismatch between your database location and IBMCLOUD_REGION", err)
 	}
 	d.Set("auto_scaling", flattenAutoScalingGroup(*autoscalingGroup))
 

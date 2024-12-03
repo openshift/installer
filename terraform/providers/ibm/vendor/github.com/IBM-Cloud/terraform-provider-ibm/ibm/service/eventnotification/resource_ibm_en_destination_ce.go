@@ -38,13 +38,18 @@ func ResourceIBMEnCodeEngineDestination() *schema.Resource {
 			},
 			"type": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "The type of Destination Webhook.",
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "The Destination description.",
+			},
+			"collect_failed_events": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Whether to collect the failed event in Cloud Object Storage bucket",
 			},
 			"config": {
 				Type:        schema.TypeList,
@@ -61,13 +66,28 @@ func ResourceIBMEnCodeEngineDestination() *schema.Resource {
 								Schema: map[string]*schema.Schema{
 									"url": {
 										Type:        schema.TypeString,
-										Required:    true,
+										Optional:    true,
 										Description: "URL of code engine project.",
 									},
 									"verb": {
 										Type:        schema.TypeString,
-										Required:    true,
+										Optional:    true,
 										Description: "HTTP method of webhook.",
+									},
+									"type": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "The code engine destination type.",
+									},
+									"project_crn": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "CRN of the code engine project.",
+									},
+									"job_name": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "Name of the code engine job.",
 									},
 									"custom_headers": {
 										Type:        schema.TypeMap,
@@ -123,13 +143,14 @@ func resourceIBMEnCodeEngineDestinationCreate(context context.Context, d *schema
 	options.SetInstanceID(d.Get("instance_guid").(string))
 	options.SetName(d.Get("name").(string))
 	options.SetType(d.Get("type").(string))
+	options.SetCollectFailedEvents(d.Get("collect_failed_events").(bool))
 
 	destinationtype := d.Get("type").(string)
 	if _, ok := d.GetOk("description"); ok {
 		options.SetDescription(d.Get("description").(string))
 	}
 	if _, ok := d.GetOk("config"); ok {
-		config := WebhookdestinationConfigMapToDestinationConfig(d.Get("config.0.params.0").(map[string]interface{}), destinationtype)
+		config := CodeEnginedestinationConfigMapToDestinationConfig(d.Get("config.0.params.0").(map[string]interface{}), destinationtype)
 		options.SetConfig(&config)
 	}
 
@@ -140,7 +161,7 @@ func resourceIBMEnCodeEngineDestinationCreate(context context.Context, d *schema
 
 	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *result.ID))
 
-	return resourceIBMEnWebhookDestinationRead(context, d, meta)
+	return resourceIBMEnCodeEngineDestinationRead(context, d, meta)
 }
 
 func resourceIBMEnCodeEngineDestinationRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -182,6 +203,10 @@ func resourceIBMEnCodeEngineDestinationRead(context context.Context, d *schema.R
 
 	if err = d.Set("type", result.Type); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting type: %s", err))
+	}
+
+	if err = d.Set("collect_failed_events", result.CollectFailedEvents); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting CollectFailedEvents: %s", err))
 	}
 
 	if err = d.Set("description", result.Description); err != nil {
@@ -227,12 +252,17 @@ func resourceIBMEnCodeEngineDestinationUpdate(context context.Context, d *schema
 	options.SetInstanceID(parts[0])
 	options.SetID(parts[1])
 
-	if ok := d.HasChanges("name", "description", "config"); ok {
+	if ok := d.HasChanges("name", "description", "collect_failed_events", "config"); ok {
 		options.SetName(d.Get("name").(string))
 
 		if _, ok := d.GetOk("description"); ok {
 			options.SetDescription(d.Get("description").(string))
 		}
+
+		if _, ok := d.GetOk("collect_failed_events"); ok {
+			options.SetCollectFailedEvents(d.Get("collect_failed_events").(bool))
+		}
+
 		destinationtype := d.Get("type").(string)
 		if _, ok := d.GetOk("config"); ok {
 			config := CodeEnginedestinationConfigMapToDestinationConfig(d.Get("config.0.params.0").(map[string]interface{}), destinationtype)
@@ -281,29 +311,52 @@ func resourceIBMEnCodeEngineDestinationDelete(context context.Context, d *schema
 
 func CodeEnginedestinationConfigMapToDestinationConfig(configParams map[string]interface{}, destinationtype string) en.DestinationConfig {
 	params := new(en.DestinationConfigOneOf)
-	if configParams["url"] != nil {
-		params.URL = core.StringPtr(configParams["url"].(string))
-	}
 
-	if configParams["verb"] != nil {
-		params.Verb = core.StringPtr(configParams["verb"].(string))
-	}
+	params.Type = core.StringPtr(configParams["type"].(string))
+	// destination_type := core.StringPtr(configParams["type"].(string))
 
-	if configParams["custom_headers"] != nil {
-		var customHeaders = make(map[string]string)
-		for k, v := range configParams["custom_headers"].(map[string]interface{}) {
-			customHeaders[k] = v.(string)
+	if *params.Type == "application" {
+
+		if configParams["url"] != nil {
+			params.URL = core.StringPtr(configParams["url"].(string))
 		}
-		params.CustomHeaders = customHeaders
+
+		if configParams["verb"] != nil {
+			params.Verb = core.StringPtr(configParams["verb"].(string))
+		}
+
+		if configParams["custom_headers"] != nil {
+			var customHeaders = make(map[string]string)
+			for k, v := range configParams["custom_headers"].(map[string]interface{}) {
+				customHeaders[k] = v.(string)
+			}
+			params.CustomHeaders = customHeaders
+		}
+
+		if configParams["sensitive_headers"] != nil {
+			sensitiveHeaders := []string{}
+			for _, sensitiveHeadersItem := range configParams["sensitive_headers"].([]interface{}) {
+				sensitiveHeaders = append(sensitiveHeaders, sensitiveHeadersItem.(string))
+			}
+			params.SensitiveHeaders = sensitiveHeaders
+		}
+
+	} else {
+
+		if configParams["job_name"] != nil {
+			params.JobName = core.StringPtr(configParams["job_name"].(string))
+		}
+
+		if configParams["project_crn"] != nil {
+			params.ProjectCRN = core.StringPtr(configParams["project_crn"].(string))
+		}
+
 	}
 
-	if configParams["sensitive_headers"] != nil {
-		sensitiveHeaders := []string{}
-		for _, sensitiveHeadersItem := range configParams["sensitive_headers"].([]interface{}) {
-			sensitiveHeaders = append(sensitiveHeaders, sensitiveHeadersItem.(string))
-		}
-		params.SensitiveHeaders = sensitiveHeaders
-	}
+	// if configParams["type"] != nil {
+	// 	params.Type = core.StringPtr(configParams["type"].(string))
+	// }
+
 	destinationConfig := new(en.DestinationConfig)
 	destinationConfig.Params = params
 	return *destinationConfig

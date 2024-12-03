@@ -45,6 +45,11 @@ func DataSourceIBMEnHuaweiDestination() *schema.Resource {
 				Computed:    true,
 				Description: "Destination type push_android.",
 			},
+			"collect_failed_events": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether to collect the failed event in Cloud Object Storage bucket",
+			},
 			"config": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -131,6 +136,10 @@ func dataSourceIBMEnHuaweiDestinationRead(context context.Context, d *schema.Res
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting type: %s", err))
 	}
 
+	if err = d.Set("collect_failed_events", result.CollectFailedEvents); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting CollectFailedEvents: %s", err))
+	}
+
 	if result.Config != nil {
 		err = d.Set("config", enHuaweiDestinationFlattenConfig(*result.Config))
 		if err != nil {
@@ -193,6 +202,5 @@ func enHuaweiDestinationConfigParamsToMap(paramsItem en.DestinationConfigOneOfIn
 	if params.ClientSecret != nil {
 		paramsMap["client_secret"] = params.ClientSecret
 	}
-
 	return paramsMap
 }

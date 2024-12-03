@@ -6,6 +6,7 @@ package p_cloud_images
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -127,11 +128,13 @@ func (o *PcloudCloudinstancesImagesPostOK) Code() int {
 }
 
 func (o *PcloudCloudinstancesImagesPostOK) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostOK %s", 200, payload)
 }
 
 func (o *PcloudCloudinstancesImagesPostOK) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostOK %s", 200, payload)
 }
 
 func (o *PcloudCloudinstancesImagesPostOK) GetPayload() *models.Image {
@@ -195,11 +198,13 @@ func (o *PcloudCloudinstancesImagesPostCreated) Code() int {
 }
 
 func (o *PcloudCloudinstancesImagesPostCreated) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostCreated  %+v", 201, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostCreated %s", 201, payload)
 }
 
 func (o *PcloudCloudinstancesImagesPostCreated) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostCreated  %+v", 201, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostCreated %s", 201, payload)
 }
 
 func (o *PcloudCloudinstancesImagesPostCreated) GetPayload() *models.Image {
@@ -263,11 +268,13 @@ func (o *PcloudCloudinstancesImagesPostBadRequest) Code() int {
 }
 
 func (o *PcloudCloudinstancesImagesPostBadRequest) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostBadRequest %s", 400, payload)
 }
 
 func (o *PcloudCloudinstancesImagesPostBadRequest) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostBadRequest %s", 400, payload)
 }
 
 func (o *PcloudCloudinstancesImagesPostBadRequest) GetPayload() *models.Error {
@@ -331,11 +338,13 @@ func (o *PcloudCloudinstancesImagesPostUnauthorized) Code() int {
 }
 
 func (o *PcloudCloudinstancesImagesPostUnauthorized) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudCloudinstancesImagesPostUnauthorized) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudCloudinstancesImagesPostUnauthorized) GetPayload() *models.Error {
@@ -399,11 +408,13 @@ func (o *PcloudCloudinstancesImagesPostForbidden) Code() int {
 }
 
 func (o *PcloudCloudinstancesImagesPostForbidden) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostForbidden %s", 403, payload)
 }
 
 func (o *PcloudCloudinstancesImagesPostForbidden) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostForbidden %s", 403, payload)
 }
 
 func (o *PcloudCloudinstancesImagesPostForbidden) GetPayload() *models.Error {
@@ -467,11 +478,13 @@ func (o *PcloudCloudinstancesImagesPostNotFound) Code() int {
 }
 
 func (o *PcloudCloudinstancesImagesPostNotFound) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostNotFound %s", 404, payload)
 }
 
 func (o *PcloudCloudinstancesImagesPostNotFound) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostNotFound %s", 404, payload)
 }
 
 func (o *PcloudCloudinstancesImagesPostNotFound) GetPayload() *models.Error {
@@ -535,11 +548,13 @@ func (o *PcloudCloudinstancesImagesPostConflict) Code() int {
 }
 
 func (o *PcloudCloudinstancesImagesPostConflict) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostConflict  %+v", 409, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostConflict %s", 409, payload)
 }
 
 func (o *PcloudCloudinstancesImagesPostConflict) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostConflict  %+v", 409, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostConflict %s", 409, payload)
 }
 
 func (o *PcloudCloudinstancesImagesPostConflict) GetPayload() *models.Error {
@@ -603,11 +618,13 @@ func (o *PcloudCloudinstancesImagesPostUnprocessableEntity) Code() int {
 }
 
 func (o *PcloudCloudinstancesImagesPostUnprocessableEntity) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostUnprocessableEntity  %+v", 422, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostUnprocessableEntity %s", 422, payload)
 }
 
 func (o *PcloudCloudinstancesImagesPostUnprocessableEntity) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostUnprocessableEntity  %+v", 422, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostUnprocessableEntity %s", 422, payload)
 }
 
 func (o *PcloudCloudinstancesImagesPostUnprocessableEntity) GetPayload() *models.Error {
@@ -671,11 +688,13 @@ func (o *PcloudCloudinstancesImagesPostInternalServerError) Code() int {
 }
 
 func (o *PcloudCloudinstancesImagesPostInternalServerError) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudCloudinstancesImagesPostInternalServerError) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudCloudinstancesImagesPostInternalServerError) GetPayload() *models.Error {

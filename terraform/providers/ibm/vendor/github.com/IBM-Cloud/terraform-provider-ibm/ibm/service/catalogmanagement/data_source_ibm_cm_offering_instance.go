@@ -9,6 +9,7 @@ import (
 	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -108,6 +109,16 @@ func DataSourceIBMCmOfferingInstance() *schema.Resource {
 				Computed:    true,
 				Description: "channel to target for the operator subscription. Required for operator bundles",
 			},
+			"plan_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "id of the plan",
+			},
+			"parent_crn": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "CRN of parent instance",
+			},
 		},
 	}
 }
@@ -115,7 +126,9 @@ func DataSourceIBMCmOfferingInstance() *schema.Resource {
 func dataSourceIBMCmOfferingInstanceRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	catalogManagementClient, err := meta.(conns.ClientSession).CatalogManagementV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_cm_offering_instance", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getOfferingInstanceOptions := &catalogmanagementv1.GetOfferingInstanceOptions{}
@@ -124,59 +137,102 @@ func dataSourceIBMCmOfferingInstanceRead(context context.Context, d *schema.Reso
 
 	offeringInstance, response, err := catalogManagementClient.GetOfferingInstanceWithContext(context, getOfferingInstanceOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetOfferingInstanceWithContext failed %s\n%s", err, response)
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetOfferingInstanceWithContext failed %s\n%s", err, response), "(Data) ibm_cm_object", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(*offeringInstance.ID)
 
 	if err = d.Set("url", offeringInstance.URL); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting url: %s", err), "(Data) ibm_cm_offering_instance", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("crn", offeringInstance.CRN); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting crn: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting crn: %s", err), "(Data) ibm_cm_offering_instance", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("_rev", offeringInstance.Rev); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting _rev: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting _rev: %s", err), "(Data) ibm_cm_offering_instance", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("label", offeringInstance.Label); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting label: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting label: %s", err), "(Data) ibm_cm_offering_instance", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("catalog_id", offeringInstance.CatalogID); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting catalog_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting catalog_id: %s", err), "(Data) ibm_cm_offering_instance", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("offering_id", offeringInstance.OfferingID); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting offering_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting offering_id: %s", err), "(Data) ibm_cm_offering_instance", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("kind_format", offeringInstance.KindFormat); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting kind_format: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting kind_format: %s", err), "(Data) ibm_cm_offering_instance", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("version", offeringInstance.Version); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting version: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting version: %s", err), "(Data) ibm_cm_offering_instance", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("cluster_id", offeringInstance.ClusterID); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting cluster_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting cluster_id: %s", err), "(Data) ibm_cm_offering_instance", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("cluster_region", offeringInstance.ClusterRegion); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting cluster_region: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting cluster_region: %s", err), "(Data) ibm_cm_offering_instance", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("cluster_namespaces", offeringInstance.ClusterNamespaces); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting cluster_namespaces: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting cluster_namespaces: %s", err), "(Data) ibm_cm_offering_instance", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("cluster_all_namespaces", offeringInstance.ClusterAllNamespaces); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting cluster_all_namespaces: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting cluster_all_namespaces: %s", err), "(Data) ibm_cm_offering_instance", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("schematics_workspace_id", offeringInstance.SchematicsWorkspaceID); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting schematics_workspace_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting schematics_workspace_id: %s", err), "(Data) ibm_cm_offering_instance", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("resource_group_id", offeringInstance.ResourceGroupID); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting resource_group_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting resource_group_id: %s", err), "(Data) ibm_cm_offering_instance", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("install_plan", offeringInstance.InstallPlan); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting install_plan: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting install_plan: %s", err), "(Data) ibm_cm_offering_instance", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("channel", offeringInstance.Channel); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting channel: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting channel: %s", err), "(Data) ibm_cm_offering_instance", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+	}
+	if err = d.Set("plan_id", offeringInstance.PlanID); err != nil {
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting plan_id: %s", err), "(Data) ibm_cm_offering_instance", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+	}
+	if err = d.Set("parent_crn", offeringInstance.ParentCRN); err != nil {
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting parent_crn: %s", err), "(Data) ibm_cm_offering_instance", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	return nil

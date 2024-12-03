@@ -27,7 +27,7 @@ type StorageType struct {
 	Description string `json:"description,omitempty"`
 
 	// State of the storage type (active or inactive)
-	// Enum: [active inactive]
+	// Enum: ["active","inactive"]
 	State *string `json:"state,omitempty"`
 
 	// Storage type

@@ -58,6 +58,13 @@ func DataSourceIBMResourceKey() *schema.Resource {
 				Description: "Status of resource key",
 			},
 
+			// ### Modification addded onetime_credentials to Resource scehama
+			"onetime_credentials": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "onetime_credentials of resource key",
+			},
+
 			"credentials": {
 				Description: "Credentials asociated with the key",
 				Sensitive:   true,
@@ -162,6 +169,8 @@ func dataSourceIBMResourceKeyRead(d *schema.ResourceData, meta interface{}) erro
 		d.Set("role", roleCrn[strings.LastIndex(roleCrn, ":")+1:])
 	}
 
+	// ### Modification for onetime_credientails
+	d.Set("onetime_credentials", key.OnetimeCredentials)
 	d.Set("credentials", flex.Flatten(key.Credentials))
 	creds, err := json.Marshal(key.Credentials)
 	if err != nil {

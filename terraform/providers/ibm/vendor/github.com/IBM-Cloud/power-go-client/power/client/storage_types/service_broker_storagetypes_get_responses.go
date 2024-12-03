@@ -6,6 +6,7 @@ package storage_types
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -115,11 +116,13 @@ func (o *ServiceBrokerStoragetypesGetOK) Code() int {
 }
 
 func (o *ServiceBrokerStoragetypesGetOK) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetOK %s", 200, payload)
 }
 
 func (o *ServiceBrokerStoragetypesGetOK) String() string {
-	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetOK %s", 200, payload)
 }
 
 func (o *ServiceBrokerStoragetypesGetOK) GetPayload() models.StorageTypes {
@@ -181,11 +184,13 @@ func (o *ServiceBrokerStoragetypesGetBadRequest) Code() int {
 }
 
 func (o *ServiceBrokerStoragetypesGetBadRequest) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBrokerStoragetypesGetBadRequest) String() string {
-	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBrokerStoragetypesGetBadRequest) GetPayload() *models.Error {
@@ -249,11 +254,13 @@ func (o *ServiceBrokerStoragetypesGetUnauthorized) Code() int {
 }
 
 func (o *ServiceBrokerStoragetypesGetUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceBrokerStoragetypesGetUnauthorized) String() string {
-	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceBrokerStoragetypesGetUnauthorized) GetPayload() *models.Error {
@@ -317,11 +324,13 @@ func (o *ServiceBrokerStoragetypesGetForbidden) Code() int {
 }
 
 func (o *ServiceBrokerStoragetypesGetForbidden) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetForbidden %s", 403, payload)
 }
 
 func (o *ServiceBrokerStoragetypesGetForbidden) String() string {
-	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetForbidden %s", 403, payload)
 }
 
 func (o *ServiceBrokerStoragetypesGetForbidden) GetPayload() *models.Error {
@@ -385,11 +394,13 @@ func (o *ServiceBrokerStoragetypesGetNotFound) Code() int {
 }
 
 func (o *ServiceBrokerStoragetypesGetNotFound) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetNotFound %s", 404, payload)
 }
 
 func (o *ServiceBrokerStoragetypesGetNotFound) String() string {
-	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetNotFound %s", 404, payload)
 }
 
 func (o *ServiceBrokerStoragetypesGetNotFound) GetPayload() *models.Error {
@@ -453,11 +464,13 @@ func (o *ServiceBrokerStoragetypesGetUnprocessableEntity) Code() int {
 }
 
 func (o *ServiceBrokerStoragetypesGetUnprocessableEntity) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetUnprocessableEntity  %+v", 422, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetUnprocessableEntity %s", 422, payload)
 }
 
 func (o *ServiceBrokerStoragetypesGetUnprocessableEntity) String() string {
-	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetUnprocessableEntity  %+v", 422, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetUnprocessableEntity %s", 422, payload)
 }
 
 func (o *ServiceBrokerStoragetypesGetUnprocessableEntity) GetPayload() *models.Error {
@@ -521,11 +534,13 @@ func (o *ServiceBrokerStoragetypesGetInternalServerError) Code() int {
 }
 
 func (o *ServiceBrokerStoragetypesGetInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetInternalServerError %s", 500, payload)
 }
 
 func (o *ServiceBrokerStoragetypesGetInternalServerError) String() string {
-	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetInternalServerError %s", 500, payload)
 }
 
 func (o *ServiceBrokerStoragetypesGetInternalServerError) GetPayload() *models.Error {

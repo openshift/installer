@@ -5,84 +5,79 @@ package power
 
 import (
 	"context"
-
 	"log"
 
-	st "github.com/IBM-Cloud/power-go-client/clients/instance"
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
-
-	"github.com/IBM-Cloud/power-go-client/helpers"
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-)
-
-const (
-	StorageTypesCapacity = "storage_types_capacity"
 )
 
 func DataSourceIBMPIStorageTypesCapacity() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPIStorageTypesCapacityRead,
 		Schema: map[string]*schema.Schema{
-			helpers.PICloudInstanceId: {
-				Type:         schema.TypeString,
+			// Arguments
+			Arg_CloudInstanceID: {
+				Description:  "The GUID of the service instance associated with an account.",
 				Required:     true,
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
-			// Computed Attributes
-			MaximumStorageAllocation: {
-				Type:        schema.TypeMap,
+
+			// Attributes
+			Attr_MaximumStorageAllocation: {
 				Computed:    true,
-				Description: "Maximum storage allocation",
+				Description: "Maximum storage allocation.",
+				Type:        schema.TypeMap,
 			},
-			StorageTypesCapacity: {
+			Attr_StorageTypesCapacity: {
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "Storage types capacity",
+				Description: "List of storage types capacity.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						MaximumStorageAllocation: {
+						Attr_MaximumStorageAllocation: {
+							Computed:    true,
+							Description: "Maximum storage allocation.",
 							Type:        schema.TypeMap,
-							Computed:    true,
-							Description: "Maximum storage allocation",
 						},
-						StoragePoolsCapacity: {
-							Type:        schema.TypeList,
+						Attr_StoragePoolsCapacity: {
 							Computed:    true,
-							Description: "Storage pools capacity",
+							Description: "List of storage types capacity.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									MaxAllocationSize: {
+									Attr_MaxAllocationSize: {
+										Computed:    true,
+										Description: "Maximum allocation storage size (GB).",
 										Type:        schema.TypeInt,
-										Computed:    true,
-										Description: "Maximum allocation storage size (GB)",
 									},
-									PoolName: {
+									Attr_PoolName: {
+										Computed:    true,
+										Description: "The pool name.",
 										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "Pool name",
 									},
-									StorageType: {
+									Attr_StorageType: {
+										Computed:    true,
+										Description: "Storage type of the storage pool.",
 										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "Storage type of the storage pool",
 									},
-									TotalCapacity: {
+									Attr_TotalCapacity: {
+										Computed:    true,
+										Description: "Total pool capacity (GB).",
 										Type:        schema.TypeInt,
-										Computed:    true,
-										Description: "Total pool capacity (GB)",
 									},
 								},
 							},
+							Type: schema.TypeList,
 						},
-						StorageType: {
-							Type:        schema.TypeString,
+						Attr_StorageType: {
 							Computed:    true,
-							Description: "The storage type",
+							Description: "The storage type.",
+							Type:        schema.TypeString,
 						},
 					},
 				},
@@ -97,9 +92,9 @@ func dataSourceIBMPIStorageTypesCapacityRead(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
 
-	client := st.NewIBMPIStorageCapacityClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPIStorageCapacityClient(ctx, sess, cloudInstanceID)
 	stc, err := client.GetAllStorageTypesCapacity()
 	if err != nil {
 		log.Printf("[ERROR] get all storage types capacity failed %v", err)
@@ -112,11 +107,11 @@ func dataSourceIBMPIStorageTypesCapacityRead(ctx context.Context, d *schema.Reso
 	if stc.MaximumStorageAllocation != nil {
 		msa := stc.MaximumStorageAllocation
 		data := map[string]interface{}{
-			MaxAllocationSize: *msa.MaxAllocationSize,
-			StoragePool:       *msa.StoragePool,
-			StorageType:       *msa.StorageType,
+			Attr_MaxAllocationSize: *msa.MaxAllocationSize,
+			Attr_StoragePool:       *msa.StoragePool,
+			Attr_StorageType:       *msa.StorageType,
 		}
-		d.Set(MaximumStorageAllocation, flex.Flatten(data))
+		d.Set(Attr_MaximumStorageAllocation, flex.Flatten(data))
 	}
 	stcResult := make([]map[string]interface{}, 0, len(stc.StorageTypesCapacity))
 	for _, st := range stc.StorageTypesCapacity {
@@ -124,28 +119,28 @@ func dataSourceIBMPIStorageTypesCapacityRead(ctx context.Context, d *schema.Reso
 		if st.MaximumStorageAllocation != nil {
 			msa := st.MaximumStorageAllocation
 			data := map[string]interface{}{
-				MaxAllocationSize: *msa.MaxAllocationSize,
-				StoragePool:       *msa.StoragePool,
-				StorageType:       *msa.StorageType,
+				Attr_MaxAllocationSize: *msa.MaxAllocationSize,
+				Attr_StoragePool:       *msa.StoragePool,
+				Attr_StorageType:       *msa.StorageType,
 			}
-			stResult[MaximumStorageAllocation] = flex.Flatten(data)
+			stResult[Attr_MaximumStorageAllocation] = flex.Flatten(data)
 		}
 		spc := make([]map[string]interface{}, 0, len(st.StoragePoolsCapacity))
 		for _, sp := range st.StoragePoolsCapacity {
 			data := map[string]interface{}{
-				MaxAllocationSize: *sp.MaxAllocationSize,
-				PoolName:          sp.PoolName,
-				StorageType:       sp.StorageType,
-				TotalCapacity:     sp.TotalCapacity,
+				Attr_MaxAllocationSize: *sp.MaxAllocationSize,
+				Attr_PoolName:          sp.PoolName,
+				Attr_StorageType:       sp.StorageType,
+				Attr_TotalCapacity:     sp.TotalCapacity,
 			}
 			spc = append(spc, data)
 		}
-		stResult[StoragePoolsCapacity] = spc
-		stResult[StorageType] = st.StorageType
+		stResult[Attr_StoragePoolsCapacity] = spc
+		stResult[Attr_StorageType] = st.StorageType
 		stcResult = append(stcResult, stResult)
 	}
 
-	d.Set(StorageTypesCapacity, stcResult)
+	d.Set(Attr_StorageTypesCapacity, stcResult)
 
 	return nil
 }

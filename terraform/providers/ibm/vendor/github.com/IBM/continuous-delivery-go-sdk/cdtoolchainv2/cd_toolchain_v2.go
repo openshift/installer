@@ -493,6 +493,86 @@ func (cdToolchain *CdToolchainV2) UpdateToolchainWithContext(ctx context.Context
 	return
 }
 
+// CreateToolchainEvent : Create a toolchain event
+// Creates and sends a custom event to Event Notifications. This requires an Event Notification tool. This method is
+// BETA and subject to change.
+func (cdToolchain *CdToolchainV2) CreateToolchainEvent(createToolchainEventOptions *CreateToolchainEventOptions) (result *ToolchainEventPost, response *core.DetailedResponse, err error) {
+	return cdToolchain.CreateToolchainEventWithContext(context.Background(), createToolchainEventOptions)
+}
+
+// CreateToolchainEventWithContext is an alternate form of the CreateToolchainEvent method which supports a Context parameter
+func (cdToolchain *CdToolchainV2) CreateToolchainEventWithContext(ctx context.Context, createToolchainEventOptions *CreateToolchainEventOptions) (result *ToolchainEventPost, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createToolchainEventOptions, "createToolchainEventOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(createToolchainEventOptions, "createToolchainEventOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"toolchain_id": *createToolchainEventOptions.ToolchainID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = cdToolchain.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(cdToolchain.Service.Options.URL, `/toolchains/{toolchain_id}/events`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range createToolchainEventOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("cd_toolchain", "V2", "CreateToolchainEvent")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if createToolchainEventOptions.Title != nil {
+		body["title"] = createToolchainEventOptions.Title
+	}
+	if createToolchainEventOptions.Description != nil {
+		body["description"] = createToolchainEventOptions.Description
+	}
+	if createToolchainEventOptions.ContentType != nil {
+		body["content_type"] = createToolchainEventOptions.ContentType
+	}
+	if createToolchainEventOptions.Data != nil {
+		body["data"] = createToolchainEventOptions.Data
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = cdToolchain.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalToolchainEventPost)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
 // ListTools : Get a list of tools bound to a toolchain
 // Returns a list of tools bound to a toolchain that the caller is authorized to access and that meet the provided query
 // parameters.
@@ -872,6 +952,81 @@ func (_options *CreateToolOptions) SetParameters(parameters map[string]interface
 
 // SetHeaders : Allow user to set Headers
 func (options *CreateToolOptions) SetHeaders(param map[string]string) *CreateToolOptions {
+	options.Headers = param
+	return options
+}
+
+// CreateToolchainEventOptions : The CreateToolchainEvent options.
+type CreateToolchainEventOptions struct {
+	// ID of the toolchain to send events from.
+	ToolchainID *string `json:"toolchain_id" validate:"required,ne="`
+
+	// Event title.
+	Title *string `json:"title" validate:"required"`
+
+	// Describes the event.
+	Description *string `json:"description" validate:"required"`
+
+	// The content type of the attached data. Supported values are `text/plain`, `application/json`, and `none`.
+	ContentType *string `json:"content_type" validate:"required"`
+
+	// Additional data to be added with the event. The format must correspond to the value of `content_type`.
+	Data *ToolchainEventPrototypeData `json:"data,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the CreateToolchainEventOptions.ContentType property.
+// The content type of the attached data. Supported values are `text/plain`, `application/json`, and `none`.
+const (
+	CreateToolchainEventOptionsContentTypeApplicationJSONConst = "application/json"
+	CreateToolchainEventOptionsContentTypeNoneConst = "none"
+	CreateToolchainEventOptionsContentTypeTextPlainConst = "text/plain"
+)
+
+// NewCreateToolchainEventOptions : Instantiate CreateToolchainEventOptions
+func (*CdToolchainV2) NewCreateToolchainEventOptions(toolchainID string, title string, description string, contentType string) *CreateToolchainEventOptions {
+	return &CreateToolchainEventOptions{
+		ToolchainID: core.StringPtr(toolchainID),
+		Title: core.StringPtr(title),
+		Description: core.StringPtr(description),
+		ContentType: core.StringPtr(contentType),
+	}
+}
+
+// SetToolchainID : Allow user to set ToolchainID
+func (_options *CreateToolchainEventOptions) SetToolchainID(toolchainID string) *CreateToolchainEventOptions {
+	_options.ToolchainID = core.StringPtr(toolchainID)
+	return _options
+}
+
+// SetTitle : Allow user to set Title
+func (_options *CreateToolchainEventOptions) SetTitle(title string) *CreateToolchainEventOptions {
+	_options.Title = core.StringPtr(title)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *CreateToolchainEventOptions) SetDescription(description string) *CreateToolchainEventOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetContentType : Allow user to set ContentType
+func (_options *CreateToolchainEventOptions) SetContentType(contentType string) *CreateToolchainEventOptions {
+	_options.ContentType = core.StringPtr(contentType)
+	return _options
+}
+
+// SetData : Allow user to set Data
+func (_options *CreateToolchainEventOptions) SetData(data *ToolchainEventPrototypeData) *CreateToolchainEventOptions {
+	_options.Data = data
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateToolchainEventOptions) SetHeaders(param map[string]string) *CreateToolchainEventOptions {
 	options.Headers = param
 	return options
 }
@@ -1532,6 +1687,73 @@ func UnmarshalToolchainCollectionPrevious(m map[string]json.RawMessage, result i
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ToolchainEventPost : Response structure for POST toolchain event.
+type ToolchainEventPost struct {
+	// Event ID.
+	ID *string `json:"id" validate:"required"`
+}
+
+// UnmarshalToolchainEventPost unmarshals an instance of ToolchainEventPost from the specified map of raw messages.
+func UnmarshalToolchainEventPost(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ToolchainEventPost)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ToolchainEventPrototypeData : Additional data to be added with the event. The format must correspond to the value of `content_type`.
+type ToolchainEventPrototypeData struct {
+	// Contains JSON data to be added with the event. `content_type` must be set to `application/json`.
+	ApplicationJSON *ToolchainEventPrototypeDataApplicationJSON `json:"application_json,omitempty"`
+
+	// Contains text data to be added with the event. `content_type` must be set to `text/plain`.
+	TextPlain *string `json:"text_plain,omitempty"`
+}
+
+// UnmarshalToolchainEventPrototypeData unmarshals an instance of ToolchainEventPrototypeData from the specified map of raw messages.
+func UnmarshalToolchainEventPrototypeData(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ToolchainEventPrototypeData)
+	err = core.UnmarshalModel(m, "application_json", &obj.ApplicationJSON, UnmarshalToolchainEventPrototypeDataApplicationJSON)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "text_plain", &obj.TextPlain)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ToolchainEventPrototypeDataApplicationJSON : Contains JSON data to be added with the event. `content_type` must be set to `application/json`.
+type ToolchainEventPrototypeDataApplicationJSON struct {
+	// JSON-formatted key-value pairs representing any additional information to be included with the event.
+	Content map[string]interface{} `json:"content" validate:"required"`
+}
+
+// NewToolchainEventPrototypeDataApplicationJSON : Instantiate ToolchainEventPrototypeDataApplicationJSON (Generic Model Constructor)
+func (*CdToolchainV2) NewToolchainEventPrototypeDataApplicationJSON(content map[string]interface{}) (_model *ToolchainEventPrototypeDataApplicationJSON, err error) {
+	_model = &ToolchainEventPrototypeDataApplicationJSON{
+		Content: content,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalToolchainEventPrototypeDataApplicationJSON unmarshals an instance of ToolchainEventPrototypeDataApplicationJSON from the specified map of raw messages.
+func UnmarshalToolchainEventPrototypeDataApplicationJSON(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ToolchainEventPrototypeDataApplicationJSON)
+	err = core.UnmarshalPrimitive(m, "content", &obj.Content)
 	if err != nil {
 		return
 	}

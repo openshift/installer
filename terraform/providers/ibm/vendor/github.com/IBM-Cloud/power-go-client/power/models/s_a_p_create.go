@@ -20,6 +20,12 @@ import (
 // swagger:model SAPCreate
 type SAPCreate struct {
 
+	// Indicates if the boot volume should be replication enabled or not
+	BootVolumeReplicationEnabled *bool `json:"bootVolumeReplicationEnabled,omitempty"`
+
+	// The deployment of a dedicated host
+	DeploymentTarget *DeploymentTarget `json:"deploymentTarget,omitempty"`
+
 	// Custom SAP Deployment Type Information (For Internal Use Only)
 	DeploymentType string `json:"deploymentType,omitempty"`
 
@@ -48,6 +54,9 @@ type SAPCreate struct {
 	// Required: true
 	ProfileID *string `json:"profileID"`
 
+	// Indicates the replication site of the boot volume
+	ReplicationSites []string `json:"replicationSites"`
+
 	// The name of the SSH Key to provide to the server for authenticating
 	SSHKeyName string `json:"sshKeyName,omitempty"`
 
@@ -63,8 +72,11 @@ type SAPCreate struct {
 	// System type used to host the instance. Only e880, e980, e1080 are supported
 	SysType string `json:"sysType,omitempty"`
 
-	// Cloud init user defined data
+	// Cloud init user defined data; For FLS, only cloud-config instance-data is supported and data must not be compressed or exceed 63K
 	UserData string `json:"userData,omitempty"`
+
+	// user tags
+	UserTags Tags `json:"userTags,omitempty"`
 
 	// List of Volume IDs to attach to the pvm-instance on creation
 	VolumeIDs []string `json:"volumeIDs"`
@@ -73,6 +85,10 @@ type SAPCreate struct {
 // Validate validates this s a p create
 func (m *SAPCreate) Validate(formats strfmt.Registry) error {
 	var res []error
+
+	if err := m.validateDeploymentTarget(formats); err != nil {
+		res = append(res, err)
+	}
 
 	if err := m.validateImageID(formats); err != nil {
 		res = append(res, err)
@@ -102,9 +118,32 @@ func (m *SAPCreate) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateUserTags(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *SAPCreate) validateDeploymentTarget(formats strfmt.Registry) error {
+	if swag.IsZero(m.DeploymentTarget) { // not required
+		return nil
+	}
+
+	if m.DeploymentTarget != nil {
+		if err := m.DeploymentTarget.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("deploymentTarget")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("deploymentTarget")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -217,9 +256,30 @@ func (m *SAPCreate) validateStorageAffinity(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *SAPCreate) validateUserTags(formats strfmt.Registry) error {
+	if swag.IsZero(m.UserTags) { // not required
+		return nil
+	}
+
+	if err := m.UserTags.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("userTags")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("userTags")
+		}
+		return err
+	}
+
+	return nil
+}
+
 // ContextValidate validate this s a p create based on the context it is used
 func (m *SAPCreate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
+
+	if err := m.contextValidateDeploymentTarget(ctx, formats); err != nil {
+		res = append(res, err)
+	}
 
 	if err := m.contextValidateInstances(ctx, formats); err != nil {
 		res = append(res, err)
@@ -237,9 +297,34 @@ func (m *SAPCreate) ContextValidate(ctx context.Context, formats strfmt.Registry
 		res = append(res, err)
 	}
 
+	if err := m.contextValidateUserTags(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *SAPCreate) contextValidateDeploymentTarget(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.DeploymentTarget != nil {
+
+		if swag.IsZero(m.DeploymentTarget) { // not required
+			return nil
+		}
+
+		if err := m.DeploymentTarget.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("deploymentTarget")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("deploymentTarget")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -323,6 +408,20 @@ func (m *SAPCreate) contextValidateStorageAffinity(ctx context.Context, formats 
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *SAPCreate) contextValidateUserTags(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.UserTags.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("userTags")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("userTags")
+		}
+		return err
 	}
 
 	return nil

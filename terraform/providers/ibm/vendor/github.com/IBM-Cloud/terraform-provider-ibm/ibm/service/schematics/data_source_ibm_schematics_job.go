@@ -4212,7 +4212,7 @@ func dataSourceJobLogSummaryToMap(logSummaryItem schematicsv1.JobLogSummary) (lo
 	return logSummaryMap
 }
 
-func dataSourceJobLogSummaryLogErrorsToMap(logErrorsItem schematicsv1.JobLogSummaryLogErrorsItem) (logErrorsMap map[string]interface{}) {
+func dataSourceJobLogSummaryLogErrorsToMap(logErrorsItem schematicsv1.JobLogSummaryLogErrors) (logErrorsMap map[string]interface{}) {
 	logErrorsMap = map[string]interface{}{}
 
 	if logErrorsItem.ErrorCode != nil {

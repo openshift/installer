@@ -213,10 +213,11 @@ func resourceIBMKmsKeyPolicyRead(context context.Context, d *schema.ResourceData
 	}
 	key, err := kpAPI.GetKey(context, keyid)
 	if err != nil {
-		kpError := err.(*kp.Error)
-		if kpError.StatusCode == 404 || kpError.StatusCode == 409 {
-			d.SetId("")
-			return nil
+		if kpError, ok := err.(*kp.Error); ok {
+			if kpError.StatusCode == 404 || kpError.StatusCode == 409 {
+				d.SetId("")
+				return nil
+			}
 		}
 		return diag.Errorf("Get Key failed with error while reading policies: %s", err)
 	} else if key.State == 5 { //Refers to Deleted state of the Key

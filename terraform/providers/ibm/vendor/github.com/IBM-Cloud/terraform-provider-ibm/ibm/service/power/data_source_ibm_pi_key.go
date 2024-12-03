@@ -6,79 +6,65 @@ package power
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-
 	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/power-go-client/helpers"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func DataSourceIBMPIKey() *schema.Resource {
-
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPIKeyRead,
 		Schema: map[string]*schema.Schema{
-
 			// Arguments
-			Arg_KeyName: {
-				Type:         schema.TypeString,
+			Arg_CloudInstanceID: {
+				Description:  "The GUID of the service instance associated with an account.",
 				Required:     true,
-				Description:  "SSH key name for a pcloud tenant",
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
-			Arg_CloudInstanceID: {
-				Type:         schema.TypeString,
+			Arg_KeyName: {
+				Description:  "User defined name for the SSH key.",
 				Required:     true,
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
 
 			// Attributes
-			Attr_KeyCreationDate: {
-				Type:        schema.TypeString,
+			Attr_CreationDate: {
 				Computed:    true,
-				Description: "Date of sshkey creation",
-			},
-			Attr_Key: {
+				Description: "Date of SSH Key creation.",
 				Type:        schema.TypeString,
+			},
+			Attr_SSHKey: {
+				Computed:    true,
+				Description: "SSH RSA key.",
 				Sensitive:   true,
-				Computed:    true,
-				Description: "SSH RSA key",
-			},
-			"sshkey": {
-				Type:       schema.TypeString,
-				Sensitive:  true,
-				Computed:   true,
-				Deprecated: "This field is deprecated, use ssh_key instead",
+				Type:        schema.TypeString,
 			},
 		},
 	}
 }
 
 func dataSourceIBMPIKeyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-
-	// session
 	sess, err := meta.(conns.ClientSession).IBMPISession()
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	// arguments
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
 
-	// get key
 	sshkeyC := instance.NewIBMPIKeyClient(ctx, sess, cloudInstanceID)
 	sshkeydata, err := sshkeyC.Get(d.Get(helpers.PIKeyName).(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	// set attributes
 	d.SetId(*sshkeydata.Name)
-	d.Set(Attr_KeyCreationDate, sshkeydata.CreationDate.String())
-	d.Set(Attr_Key, sshkeydata.SSHKey)
-	d.Set("sshkey", sshkeydata.SSHKey) // TODO: deprecated, to remove
+	d.Set(Attr_CreationDate, sshkeydata.CreationDate.String())
+	d.Set(Attr_SSHKey, sshkeydata.SSHKey)
 
 	return nil
 }

@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2023.
+ * (C) Copyright IBM Corp. 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.64.1-cee95189-20230124-211647
+ * IBM OpenAPI SDK Code Generator Version: 3.89.1-ed9d96f4-20240417-193115
  */
 
 // Package enterprisemanagementv1 : Operations and models for the EnterpriseManagementV1 service
@@ -64,22 +64,26 @@ func NewEnterpriseManagementV1UsingExternalConfig(options *EnterpriseManagementV
 	if options.Authenticator == nil {
 		options.Authenticator, err = core.GetAuthenticatorFromEnvironment(options.ServiceName)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "env-auth-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	enterpriseManagement, err = NewEnterpriseManagementV1(options)
+	err = core.RepurposeSDKProblem(err, "new-client-error")
 	if err != nil {
 		return
 	}
 
 	err = enterpriseManagement.Service.ConfigureService(options.ServiceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client-config-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = enterpriseManagement.Service.SetServiceURL(options.URL)
+		err = core.RepurposeSDKProblem(err, "url-set-error")
 	}
 	return
 }
@@ -93,12 +97,14 @@ func NewEnterpriseManagementV1(options *EnterpriseManagementV1Options) (service 
 
 	baseService, err := core.NewBaseService(serviceOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "new-base-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = baseService.SetServiceURL(options.URL)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-url-error", common.GetComponentInfo())
 			return
 		}
 	}
@@ -112,7 +118,7 @@ func NewEnterpriseManagementV1(options *EnterpriseManagementV1Options) (service 
 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
-	return "", fmt.Errorf("service does not support regional URLs")
+	return "", core.SDKErrorf(nil, "service does not support regional URLs", "no-regional-support", common.GetComponentInfo())
 }
 
 // Clone makes a copy of "enterpriseManagement" suitable for processing requests.
@@ -127,7 +133,11 @@ func (enterpriseManagement *EnterpriseManagementV1) Clone() *EnterpriseManagemen
 
 // SetServiceURL sets the service URL
 func (enterpriseManagement *EnterpriseManagementV1) SetServiceURL(url string) error {
-	return enterpriseManagement.Service.SetServiceURL(url)
+	err := enterpriseManagement.Service.SetServiceURL(url)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-set-error", common.GetComponentInfo())
+	}
+	return err
 }
 
 // GetServiceURL returns the service URL
@@ -169,17 +179,21 @@ func (enterpriseManagement *EnterpriseManagementV1) DisableRetries() {
 // enterprise account, and the source account becomes a child account in the hierarchy. The user that you assign as the
 // enterprise primary contact is also assigned as the owner of the enterprise account.
 func (enterpriseManagement *EnterpriseManagementV1) CreateEnterprise(createEnterpriseOptions *CreateEnterpriseOptions) (result *CreateEnterpriseResponse, response *core.DetailedResponse, err error) {
-	return enterpriseManagement.CreateEnterpriseWithContext(context.Background(), createEnterpriseOptions)
+	result, response, err = enterpriseManagement.CreateEnterpriseWithContext(context.Background(), createEnterpriseOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateEnterpriseWithContext is an alternate form of the CreateEnterprise method which supports a Context parameter
 func (enterpriseManagement *EnterpriseManagementV1) CreateEnterpriseWithContext(ctx context.Context, createEnterpriseOptions *CreateEnterpriseOptions) (result *CreateEnterpriseResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createEnterpriseOptions, "createEnterpriseOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createEnterpriseOptions, "createEnterpriseOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -188,6 +202,7 @@ func (enterpriseManagement *EnterpriseManagementV1) CreateEnterpriseWithContext(
 	builder.EnableGzipCompression = enterpriseManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(enterpriseManagement.Service.Options.URL, `/enterprises`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -217,22 +232,27 @@ func (enterpriseManagement *EnterpriseManagementV1) CreateEnterpriseWithContext(
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = enterpriseManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_enterprise", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCreateEnterpriseResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -251,13 +271,16 @@ func (enterpriseManagement *EnterpriseManagementV1) CreateEnterpriseWithContext(
 // account IDs match, authentication isn't performed and the enterprise information is returned. If the account IDs
 // don't match, authentication is performed and only then is the enterprise information returned in the response.
 func (enterpriseManagement *EnterpriseManagementV1) ListEnterprises(listEnterprisesOptions *ListEnterprisesOptions) (result *ListEnterprisesResponse, response *core.DetailedResponse, err error) {
-	return enterpriseManagement.ListEnterprisesWithContext(context.Background(), listEnterprisesOptions)
+	result, response, err = enterpriseManagement.ListEnterprisesWithContext(context.Background(), listEnterprisesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListEnterprisesWithContext is an alternate form of the ListEnterprises method which supports a Context parameter
 func (enterpriseManagement *EnterpriseManagementV1) ListEnterprisesWithContext(ctx context.Context, listEnterprisesOptions *ListEnterprisesOptions) (result *ListEnterprisesResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listEnterprisesOptions, "listEnterprisesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -266,6 +289,7 @@ func (enterpriseManagement *EnterpriseManagementV1) ListEnterprisesWithContext(c
 	builder.EnableGzipCompression = enterpriseManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(enterpriseManagement.Service.Options.URL, `/enterprises`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -297,17 +321,21 @@ func (enterpriseManagement *EnterpriseManagementV1) ListEnterprisesWithContext(c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = enterpriseManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_enterprises", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListEnterprisesResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -320,17 +348,21 @@ func (enterpriseManagement *EnterpriseManagementV1) ListEnterprisesWithContext(c
 // Retrieve an enterprise by the `enterprise_id` parameter. All data related to the enterprise is returned only if the
 // caller has access to retrieve the enterprise.
 func (enterpriseManagement *EnterpriseManagementV1) GetEnterprise(getEnterpriseOptions *GetEnterpriseOptions) (result *Enterprise, response *core.DetailedResponse, err error) {
-	return enterpriseManagement.GetEnterpriseWithContext(context.Background(), getEnterpriseOptions)
+	result, response, err = enterpriseManagement.GetEnterpriseWithContext(context.Background(), getEnterpriseOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetEnterpriseWithContext is an alternate form of the GetEnterprise method which supports a Context parameter
 func (enterpriseManagement *EnterpriseManagementV1) GetEnterpriseWithContext(ctx context.Context, getEnterpriseOptions *GetEnterpriseOptions) (result *Enterprise, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getEnterpriseOptions, "getEnterpriseOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getEnterpriseOptions, "getEnterpriseOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -343,6 +375,7 @@ func (enterpriseManagement *EnterpriseManagementV1) GetEnterpriseWithContext(ctx
 	builder.EnableGzipCompression = enterpriseManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(enterpriseManagement.Service.Options.URL, `/enterprises/{enterprise_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -358,17 +391,21 @@ func (enterpriseManagement *EnterpriseManagementV1) GetEnterpriseWithContext(ctx
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = enterpriseManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_enterprise", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEnterprise)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -381,17 +418,21 @@ func (enterpriseManagement *EnterpriseManagementV1) GetEnterpriseWithContext(ctx
 // Update the name, domain, or IAM ID of the primary contact for an existing enterprise. The new primary contact must
 // already be a user in the enterprise account.
 func (enterpriseManagement *EnterpriseManagementV1) UpdateEnterprise(updateEnterpriseOptions *UpdateEnterpriseOptions) (response *core.DetailedResponse, err error) {
-	return enterpriseManagement.UpdateEnterpriseWithContext(context.Background(), updateEnterpriseOptions)
+	response, err = enterpriseManagement.UpdateEnterpriseWithContext(context.Background(), updateEnterpriseOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateEnterpriseWithContext is an alternate form of the UpdateEnterprise method which supports a Context parameter
 func (enterpriseManagement *EnterpriseManagementV1) UpdateEnterpriseWithContext(ctx context.Context, updateEnterpriseOptions *UpdateEnterpriseOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateEnterpriseOptions, "updateEnterpriseOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateEnterpriseOptions, "updateEnterpriseOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -404,6 +445,7 @@ func (enterpriseManagement *EnterpriseManagementV1) UpdateEnterpriseWithContext(
 	builder.EnableGzipCompression = enterpriseManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(enterpriseManagement.Service.Options.URL, `/enterprises/{enterprise_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -429,15 +471,22 @@ func (enterpriseManagement *EnterpriseManagementV1) UpdateEnterpriseWithContext(
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = enterpriseManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_enterprise", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -451,17 +500,21 @@ func (enterpriseManagement *EnterpriseManagementV1) UpdateEnterpriseWithContext(
 // into the enterprise. <br/></br>For more information about impacts to the account, see [Adding accounts to an
 // enterprise](https://{DomainName}/docs/account?topic=account-enterprise-add).
 func (enterpriseManagement *EnterpriseManagementV1) ImportAccountToEnterprise(importAccountToEnterpriseOptions *ImportAccountToEnterpriseOptions) (response *core.DetailedResponse, err error) {
-	return enterpriseManagement.ImportAccountToEnterpriseWithContext(context.Background(), importAccountToEnterpriseOptions)
+	response, err = enterpriseManagement.ImportAccountToEnterpriseWithContext(context.Background(), importAccountToEnterpriseOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ImportAccountToEnterpriseWithContext is an alternate form of the ImportAccountToEnterprise method which supports a Context parameter
 func (enterpriseManagement *EnterpriseManagementV1) ImportAccountToEnterpriseWithContext(ctx context.Context, importAccountToEnterpriseOptions *ImportAccountToEnterpriseOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(importAccountToEnterpriseOptions, "importAccountToEnterpriseOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(importAccountToEnterpriseOptions, "importAccountToEnterpriseOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -475,6 +528,7 @@ func (enterpriseManagement *EnterpriseManagementV1) ImportAccountToEnterpriseWit
 	builder.EnableGzipCompression = enterpriseManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(enterpriseManagement.Service.Options.URL, `/enterprises/{enterprise_id}/import/accounts/{account_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -497,15 +551,22 @@ func (enterpriseManagement *EnterpriseManagementV1) ImportAccountToEnterpriseWit
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = enterpriseManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "import_account_to_enterprise", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -516,17 +577,21 @@ func (enterpriseManagement *EnterpriseManagementV1) ImportAccountToEnterpriseWit
 // owner must have a valid IBMid that's registered with IBM Cloud, but they don't need to be a user in the enterprise
 // account.
 func (enterpriseManagement *EnterpriseManagementV1) CreateAccount(createAccountOptions *CreateAccountOptions) (result *CreateAccountResponse, response *core.DetailedResponse, err error) {
-	return enterpriseManagement.CreateAccountWithContext(context.Background(), createAccountOptions)
+	result, response, err = enterpriseManagement.CreateAccountWithContext(context.Background(), createAccountOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateAccountWithContext is an alternate form of the CreateAccount method which supports a Context parameter
 func (enterpriseManagement *EnterpriseManagementV1) CreateAccountWithContext(ctx context.Context, createAccountOptions *CreateAccountOptions) (result *CreateAccountResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createAccountOptions, "createAccountOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createAccountOptions, "createAccountOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -535,6 +600,7 @@ func (enterpriseManagement *EnterpriseManagementV1) CreateAccountWithContext(ctx
 	builder.EnableGzipCompression = enterpriseManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(enterpriseManagement.Service.Options.URL, `/accounts`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -562,24 +628,32 @@ func (enterpriseManagement *EnterpriseManagementV1) CreateAccountWithContext(ctx
 	if createAccountOptions.Traits != nil {
 		body["traits"] = createAccountOptions.Traits
 	}
+	if createAccountOptions.Options != nil {
+		body["options"] = createAccountOptions.Options
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = enterpriseManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_account", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCreateAccountResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -599,13 +673,16 @@ func (enterpriseManagement *EnterpriseManagementV1) CreateAccountWithContext(ctx
 // returned. Authentication is performed on all the accounts before they are returned to the user to ensure that only
 // those accounts are returned to which the calling identity has access to.
 func (enterpriseManagement *EnterpriseManagementV1) ListAccounts(listAccountsOptions *ListAccountsOptions) (result *ListAccountsResponse, response *core.DetailedResponse, err error) {
-	return enterpriseManagement.ListAccountsWithContext(context.Background(), listAccountsOptions)
+	result, response, err = enterpriseManagement.ListAccountsWithContext(context.Background(), listAccountsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListAccountsWithContext is an alternate form of the ListAccounts method which supports a Context parameter
 func (enterpriseManagement *EnterpriseManagementV1) ListAccountsWithContext(ctx context.Context, listAccountsOptions *ListAccountsOptions) (result *ListAccountsResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listAccountsOptions, "listAccountsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -614,6 +691,7 @@ func (enterpriseManagement *EnterpriseManagementV1) ListAccountsWithContext(ctx 
 	builder.EnableGzipCompression = enterpriseManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(enterpriseManagement.Service.Options.URL, `/accounts`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -648,17 +726,21 @@ func (enterpriseManagement *EnterpriseManagementV1) ListAccountsWithContext(ctx 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = enterpriseManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_accounts", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListAccountsResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -671,17 +753,21 @@ func (enterpriseManagement *EnterpriseManagementV1) ListAccountsWithContext(ctx 
 // Retrieve an account by the `account_id` parameter. All data related to the account is returned only if the caller has
 // access to retrieve the account.
 func (enterpriseManagement *EnterpriseManagementV1) GetAccount(getAccountOptions *GetAccountOptions) (result *Account, response *core.DetailedResponse, err error) {
-	return enterpriseManagement.GetAccountWithContext(context.Background(), getAccountOptions)
+	result, response, err = enterpriseManagement.GetAccountWithContext(context.Background(), getAccountOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAccountWithContext is an alternate form of the GetAccount method which supports a Context parameter
 func (enterpriseManagement *EnterpriseManagementV1) GetAccountWithContext(ctx context.Context, getAccountOptions *GetAccountOptions) (result *Account, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getAccountOptions, "getAccountOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getAccountOptions, "getAccountOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -694,6 +780,7 @@ func (enterpriseManagement *EnterpriseManagementV1) GetAccountWithContext(ctx co
 	builder.EnableGzipCompression = enterpriseManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(enterpriseManagement.Service.Options.URL, `/accounts/{account_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -709,17 +796,21 @@ func (enterpriseManagement *EnterpriseManagementV1) GetAccountWithContext(ctx co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = enterpriseManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_account", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccount)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -731,17 +822,21 @@ func (enterpriseManagement *EnterpriseManagementV1) GetAccountWithContext(ctx co
 // UpdateAccount : Move an account within the enterprise
 // Move an account to a different parent within the same enterprise.
 func (enterpriseManagement *EnterpriseManagementV1) UpdateAccount(updateAccountOptions *UpdateAccountOptions) (response *core.DetailedResponse, err error) {
-	return enterpriseManagement.UpdateAccountWithContext(context.Background(), updateAccountOptions)
+	response, err = enterpriseManagement.UpdateAccountWithContext(context.Background(), updateAccountOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateAccountWithContext is an alternate form of the UpdateAccount method which supports a Context parameter
 func (enterpriseManagement *EnterpriseManagementV1) UpdateAccountWithContext(ctx context.Context, updateAccountOptions *UpdateAccountOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateAccountOptions, "updateAccountOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateAccountOptions, "updateAccountOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -754,6 +849,7 @@ func (enterpriseManagement *EnterpriseManagementV1) UpdateAccountWithContext(ctx
 	builder.EnableGzipCompression = enterpriseManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(enterpriseManagement.Service.Options.URL, `/accounts/{account_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -773,15 +869,22 @@ func (enterpriseManagement *EnterpriseManagementV1) UpdateAccountWithContext(ctx
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = enterpriseManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_account", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -790,17 +893,21 @@ func (enterpriseManagement *EnterpriseManagementV1) UpdateAccountWithContext(ctx
 // Remove an account from the enterprise its currently in. After an account is removed, it will be canceled and cannot
 // be reactivated.
 func (enterpriseManagement *EnterpriseManagementV1) DeleteAccount(deleteAccountOptions *DeleteAccountOptions) (response *core.DetailedResponse, err error) {
-	return enterpriseManagement.DeleteAccountWithContext(context.Background(), deleteAccountOptions)
+	response, err = enterpriseManagement.DeleteAccountWithContext(context.Background(), deleteAccountOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteAccountWithContext is an alternate form of the DeleteAccount method which supports a Context parameter
 func (enterpriseManagement *EnterpriseManagementV1) DeleteAccountWithContext(ctx context.Context, deleteAccountOptions *DeleteAccountOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteAccountOptions, "deleteAccountOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteAccountOptions, "deleteAccountOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -813,6 +920,7 @@ func (enterpriseManagement *EnterpriseManagementV1) DeleteAccountWithContext(ctx
 	builder.EnableGzipCompression = enterpriseManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(enterpriseManagement.Service.Options.URL, `/accounts/{account_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -827,10 +935,16 @@ func (enterpriseManagement *EnterpriseManagementV1) DeleteAccountWithContext(ctx
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = enterpriseManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_account", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -840,17 +954,21 @@ func (enterpriseManagement *EnterpriseManagementV1) DeleteAccountWithContext(ctx
 // must have an existing enterprise. The API creates an account group entity under the parent that is specified in the
 // payload of the request. The request also takes in the name and the primary contact of this new account group.
 func (enterpriseManagement *EnterpriseManagementV1) CreateAccountGroup(createAccountGroupOptions *CreateAccountGroupOptions) (result *CreateAccountGroupResponse, response *core.DetailedResponse, err error) {
-	return enterpriseManagement.CreateAccountGroupWithContext(context.Background(), createAccountGroupOptions)
+	result, response, err = enterpriseManagement.CreateAccountGroupWithContext(context.Background(), createAccountGroupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateAccountGroupWithContext is an alternate form of the CreateAccountGroup method which supports a Context parameter
 func (enterpriseManagement *EnterpriseManagementV1) CreateAccountGroupWithContext(ctx context.Context, createAccountGroupOptions *CreateAccountGroupOptions) (result *CreateAccountGroupResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createAccountGroupOptions, "createAccountGroupOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createAccountGroupOptions, "createAccountGroupOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -859,6 +977,7 @@ func (enterpriseManagement *EnterpriseManagementV1) CreateAccountGroupWithContex
 	builder.EnableGzipCompression = enterpriseManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(enterpriseManagement.Service.Options.URL, `/account-groups`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -885,22 +1004,27 @@ func (enterpriseManagement *EnterpriseManagementV1) CreateAccountGroupWithContex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = enterpriseManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_account_group", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCreateAccountGroupResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -921,13 +1045,16 @@ func (enterpriseManagement *EnterpriseManagementV1) CreateAccountGroupWithContex
 // they are returned to the user to ensure that only those account groups are returned to which the calling identity has
 // access.
 func (enterpriseManagement *EnterpriseManagementV1) ListAccountGroups(listAccountGroupsOptions *ListAccountGroupsOptions) (result *ListAccountGroupsResponse, response *core.DetailedResponse, err error) {
-	return enterpriseManagement.ListAccountGroupsWithContext(context.Background(), listAccountGroupsOptions)
+	result, response, err = enterpriseManagement.ListAccountGroupsWithContext(context.Background(), listAccountGroupsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListAccountGroupsWithContext is an alternate form of the ListAccountGroups method which supports a Context parameter
 func (enterpriseManagement *EnterpriseManagementV1) ListAccountGroupsWithContext(ctx context.Context, listAccountGroupsOptions *ListAccountGroupsOptions) (result *ListAccountGroupsResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listAccountGroupsOptions, "listAccountGroupsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -936,6 +1063,7 @@ func (enterpriseManagement *EnterpriseManagementV1) ListAccountGroupsWithContext
 	builder.EnableGzipCompression = enterpriseManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(enterpriseManagement.Service.Options.URL, `/account-groups`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -970,17 +1098,21 @@ func (enterpriseManagement *EnterpriseManagementV1) ListAccountGroupsWithContext
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = enterpriseManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_account_groups", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListAccountGroupsResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -993,17 +1125,21 @@ func (enterpriseManagement *EnterpriseManagementV1) ListAccountGroupsWithContext
 // Retrieve an account by the `account_group_id` parameter. All data related to the account group is returned only if
 // the caller has access to retrieve the account group.
 func (enterpriseManagement *EnterpriseManagementV1) GetAccountGroup(getAccountGroupOptions *GetAccountGroupOptions) (result *AccountGroup, response *core.DetailedResponse, err error) {
-	return enterpriseManagement.GetAccountGroupWithContext(context.Background(), getAccountGroupOptions)
+	result, response, err = enterpriseManagement.GetAccountGroupWithContext(context.Background(), getAccountGroupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAccountGroupWithContext is an alternate form of the GetAccountGroup method which supports a Context parameter
 func (enterpriseManagement *EnterpriseManagementV1) GetAccountGroupWithContext(ctx context.Context, getAccountGroupOptions *GetAccountGroupOptions) (result *AccountGroup, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getAccountGroupOptions, "getAccountGroupOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getAccountGroupOptions, "getAccountGroupOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1016,6 +1152,7 @@ func (enterpriseManagement *EnterpriseManagementV1) GetAccountGroupWithContext(c
 	builder.EnableGzipCompression = enterpriseManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(enterpriseManagement.Service.Options.URL, `/account-groups/{account_group_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1031,17 +1168,21 @@ func (enterpriseManagement *EnterpriseManagementV1) GetAccountGroupWithContext(c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = enterpriseManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_account_group", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountGroup)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1054,17 +1195,21 @@ func (enterpriseManagement *EnterpriseManagementV1) GetAccountGroupWithContext(c
 // Update the name or IAM ID of the primary contact for an existing account group. The new primary contact must already
 // be a user in the enterprise account.
 func (enterpriseManagement *EnterpriseManagementV1) UpdateAccountGroup(updateAccountGroupOptions *UpdateAccountGroupOptions) (response *core.DetailedResponse, err error) {
-	return enterpriseManagement.UpdateAccountGroupWithContext(context.Background(), updateAccountGroupOptions)
+	response, err = enterpriseManagement.UpdateAccountGroupWithContext(context.Background(), updateAccountGroupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateAccountGroupWithContext is an alternate form of the UpdateAccountGroup method which supports a Context parameter
 func (enterpriseManagement *EnterpriseManagementV1) UpdateAccountGroupWithContext(ctx context.Context, updateAccountGroupOptions *UpdateAccountGroupOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateAccountGroupOptions, "updateAccountGroupOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateAccountGroupOptions, "updateAccountGroupOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1077,6 +1222,7 @@ func (enterpriseManagement *EnterpriseManagementV1) UpdateAccountGroupWithContex
 	builder.EnableGzipCompression = enterpriseManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(enterpriseManagement.Service.Options.URL, `/account-groups/{account_group_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1099,15 +1245,22 @@ func (enterpriseManagement *EnterpriseManagementV1) UpdateAccountGroupWithContex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = enterpriseManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_account_group", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -1117,17 +1270,21 @@ func (enterpriseManagement *EnterpriseManagementV1) UpdateAccountGroupWithContex
 // groups, the delete request will fail. This API doesn't perform a recursive delete on the child account groups, it
 // only deletes the current account group.
 func (enterpriseManagement *EnterpriseManagementV1) DeleteAccountGroup(deleteAccountGroupOptions *DeleteAccountGroupOptions) (response *core.DetailedResponse, err error) {
-	return enterpriseManagement.DeleteAccountGroupWithContext(context.Background(), deleteAccountGroupOptions)
+	response, err = enterpriseManagement.DeleteAccountGroupWithContext(context.Background(), deleteAccountGroupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteAccountGroupWithContext is an alternate form of the DeleteAccountGroup method which supports a Context parameter
 func (enterpriseManagement *EnterpriseManagementV1) DeleteAccountGroupWithContext(ctx context.Context, deleteAccountGroupOptions *DeleteAccountGroupOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteAccountGroupOptions, "deleteAccountGroupOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteAccountGroupOptions, "deleteAccountGroupOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1140,6 +1297,7 @@ func (enterpriseManagement *EnterpriseManagementV1) DeleteAccountGroupWithContex
 	builder.EnableGzipCompression = enterpriseManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(enterpriseManagement.Service.Options.URL, `/account-groups/{account_group_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1154,12 +1312,21 @@ func (enterpriseManagement *EnterpriseManagementV1) DeleteAccountGroupWithContex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = enterpriseManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_account_group", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
+}
+func getServiceComponentInfo() *core.ProblemComponent {
+	return core.NewProblemComponent(DefaultServiceName, "1.0")
 }
 
 // Account : An account resource.
@@ -1221,70 +1388,87 @@ func UnmarshalAccount(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Account)
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "parent", &obj.Parent)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parent-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enterprise_account_id", &obj.EnterpriseAccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enterprise_account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enterprise_id", &obj.EnterpriseID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enterprise_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enterprise_path", &obj.EnterprisePath)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enterprise_path-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "owner_iam_id", &obj.OwnerIamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "owner_iam_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "paid", &obj.Paid)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "paid-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "owner_email", &obj.OwnerEmail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "owner_email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_enterprise_account", &obj.IsEnterpriseAccount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_enterprise_account-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_by", &obj.CreatedBy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_by", &obj.UpdatedBy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_by-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1344,62 +1528,77 @@ func UnmarshalAccountGroup(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(AccountGroup)
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "parent", &obj.Parent)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parent-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enterprise_account_id", &obj.EnterpriseAccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enterprise_account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enterprise_id", &obj.EnterpriseID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enterprise_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enterprise_path", &obj.EnterprisePath)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enterprise_path-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "primary_contact_iam_id", &obj.PrimaryContactIamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "primary_contact_iam_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "primary_contact_email", &obj.PrimaryContactEmail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "primary_contact_email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_by", &obj.CreatedBy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_by", &obj.UpdatedBy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_by-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1466,6 +1665,7 @@ func UnmarshalCreateAccountGroupResponse(m map[string]json.RawMessage, result in
 	obj := new(CreateAccountGroupResponse)
 	err = core.UnmarshalPrimitive(m, "account_group_id", &obj.AccountGroupID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_group_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1485,9 +1685,13 @@ type CreateAccountOptions struct {
 	OwnerIamID *string `json:"owner_iam_id" validate:"required"`
 
 	// The traits object can be used to set properties on child accounts of an enterprise. You can pass a field to opt-out
-	// of Multi-Factor Authentication setting or setup enterprise IAM settings when creating a child account in the
-	// enterprise. This is an optional field.
+	// of the default multi-factor authentication setting or enable enterprise-managed IAM when creating a child account in
+	// the enterprise. This is an optional field.
 	Traits *CreateAccountRequestTraits `json:"traits,omitempty"`
+
+	// The options object can be used to set properties on child accounts of an enterprise. You can pass a field to to
+	// create IAM service id with IAM api key when creating a child account in the enterprise. This is an optional field.
+	Options *CreateAccountRequestOptions `json:"options,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1526,22 +1730,51 @@ func (_options *CreateAccountOptions) SetTraits(traits *CreateAccountRequestTrai
 	return _options
 }
 
+// SetOptions : Allow user to set Options
+func (_options *CreateAccountOptions) SetOptions(options *CreateAccountRequestOptions) *CreateAccountOptions {
+	_options.Options = options
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *CreateAccountOptions) SetHeaders(param map[string]string) *CreateAccountOptions {
 	options.Headers = param
 	return options
 }
 
+// CreateAccountRequestOptions : The options object can be used to set properties on child accounts of an enterprise. You can pass a field to to
+// create IAM service id with IAM api key when creating a child account in the enterprise. This is an optional field.
+type CreateAccountRequestOptions struct {
+	// By default create_iam_service_id_with_apikey_and_owner_policies is turned off for a newly created child account. You
+	// can enable this property by passing 'true' in this boolean field. IAM service id has account owner IAM policies and
+	// the API key associated with it can generate a token and setup resources in the account. This is an optional field.
+	CreateIamServiceIDWithApikeyAndOwnerPolicies *bool `json:"create_iam_service_id_with_apikey_and_owner_policies,omitempty"`
+}
+
+// UnmarshalCreateAccountRequestOptions unmarshals an instance of CreateAccountRequestOptions from the specified map of raw messages.
+func UnmarshalCreateAccountRequestOptions(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(CreateAccountRequestOptions)
+	err = core.UnmarshalPrimitive(m, "create_iam_service_id_with_apikey_and_owner_policies", &obj.CreateIamServiceIDWithApikeyAndOwnerPolicies)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "create_iam_service_id_with_apikey_and_owner_policies-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // CreateAccountRequestTraits : The traits object can be used to set properties on child accounts of an enterprise. You can pass a field to opt-out
-// of Multi-Factor Authentication setting or setup enterprise IAM settings when creating a child account in the
-// enterprise. This is an optional field.
+// of the default multi-factor authentication setting or enable enterprise-managed IAM when creating a child account in
+// the enterprise. This is an optional field.
 type CreateAccountRequestTraits struct {
-	// By default MFA will be enabled on a child account. To opt out, pass the traits object with the mfa field set to
-	// empty string. This is an optional field.
+	// By default MFA is set to `NONE_NO_ROPC` on a child account, which disables CLI logins with only a password. To opt
+	// out, pass the traits object with the mfa field set to empty string. This is an optional field.
 	Mfa *string `json:"mfa,omitempty"`
 
-	// The Enterprise IAM settings property will be turned off for a newly created child account by default. You can enable
-	// this property by passing 'true' in this boolean field. This is an optional field.
+	// By default enterprise-managed IAM is turned off for a newly created child account. You can enable this property by
+	// passing 'true' in this boolean field. Enabling enterprise-managed IAM allows the enterprise account to assign IAM
+	// resources, like access groups, trusted profiles, and account settings, to the child account. This is an optional
+	// field.
 	EnterpriseIamManaged *bool `json:"enterprise_iam_managed,omitempty"`
 }
 
@@ -1550,10 +1783,12 @@ func UnmarshalCreateAccountRequestTraits(m map[string]json.RawMessage, result in
 	obj := new(CreateAccountRequestTraits)
 	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enterprise_iam_managed", &obj.EnterpriseIamManaged)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enterprise_iam_managed-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1564,6 +1799,15 @@ func UnmarshalCreateAccountRequestTraits(m map[string]json.RawMessage, result in
 type CreateAccountResponse struct {
 	// The ID of the account entity that was created.
 	AccountID *string `json:"account_id,omitempty"`
+
+	// The iam_service_id of the account entity that was created.
+	IamServiceID *string `json:"iam_service_id,omitempty"`
+
+	// The iam_apikey_id of the account entity that was created.
+	IamApikeyID *string `json:"iam_apikey_id,omitempty"`
+
+	// The iam_apikey of the account entity with owner iam policies that was created.
+	IamApikey *string `json:"iam_apikey,omitempty"`
 }
 
 // UnmarshalCreateAccountResponse unmarshals an instance of CreateAccountResponse from the specified map of raw messages.
@@ -1571,6 +1815,22 @@ func UnmarshalCreateAccountResponse(m map[string]json.RawMessage, result interfa
 	obj := new(CreateAccountResponse)
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "iam_service_id", &obj.IamServiceID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_service_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "iam_apikey_id", &obj.IamApikeyID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_apikey_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "iam_apikey", &obj.IamApikey)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_apikey-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1649,10 +1909,12 @@ func UnmarshalCreateEnterpriseResponse(m map[string]json.RawMessage, result inte
 	obj := new(CreateEnterpriseResponse)
 	err = core.UnmarshalPrimitive(m, "enterprise_id", &obj.EnterpriseID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enterprise_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enterprise_account_id", &obj.EnterpriseAccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enterprise_account_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1744,6 +2006,9 @@ type Enterprise struct {
 	// The email of the primary contact of the enterprise.
 	PrimaryContactEmail *string `json:"primary_contact_email,omitempty"`
 
+	// The ID of the account that is used to create the enterprise.
+	SourceAccountID *string `json:"source_account_id,omitempty"`
+
 	// The time stamp at which the enterprise was created.
 	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
 
@@ -1762,54 +2027,72 @@ func UnmarshalEnterprise(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(Enterprise)
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enterprise_account_id", &obj.EnterpriseAccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enterprise_account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "domain", &obj.Domain)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "domain-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "primary_contact_iam_id", &obj.PrimaryContactIamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "primary_contact_iam_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "primary_contact_email", &obj.PrimaryContactEmail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "primary_contact_email-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "source_account_id", &obj.SourceAccountID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "source_account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_by", &obj.CreatedBy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_by", &obj.UpdatedBy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_by-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2047,14 +2330,17 @@ func UnmarshalListAccountGroupsResponse(m map[string]json.RawMessage, result int
 	obj := new(ListAccountGroupsResponse)
 	err = core.UnmarshalPrimitive(m, "rows_count", &obj.RowsCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rows_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "next_url", &obj.NextURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalAccountGroup)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2067,8 +2353,11 @@ func (resp *ListAccountGroupsResponse) GetNextNextDocid() (*string, error) {
 		return nil, nil
 	}
 	next_docid, err := core.GetQueryParam(resp.NextURL, "next_docid")
-	if err != nil || next_docid == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if next_docid == nil {
+		return nil, nil
 	}
 	return next_docid, nil
 }
@@ -2162,14 +2451,17 @@ func UnmarshalListAccountsResponse(m map[string]json.RawMessage, result interfac
 	obj := new(ListAccountsResponse)
 	err = core.UnmarshalPrimitive(m, "rows_count", &obj.RowsCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rows_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "next_url", &obj.NextURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalAccount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2182,8 +2474,11 @@ func (resp *ListAccountsResponse) GetNextNextDocid() (*string, error) {
 		return nil, nil
 	}
 	next_docid, err := core.GetQueryParam(resp.NextURL, "next_docid")
-	if err != nil || next_docid == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if next_docid == nil {
+		return nil, nil
 	}
 	return next_docid, nil
 }
@@ -2268,14 +2563,17 @@ func UnmarshalListEnterprisesResponse(m map[string]json.RawMessage, result inter
 	obj := new(ListEnterprisesResponse)
 	err = core.UnmarshalPrimitive(m, "rows_count", &obj.RowsCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rows_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "next_url", &obj.NextURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalEnterprise)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2288,8 +2586,11 @@ func (resp *ListEnterprisesResponse) GetNextNextDocid() (*string, error) {
 		return nil, nil
 	}
 	next_docid, err := core.GetQueryParam(resp.NextURL, "next_docid")
-	if err != nil || next_docid == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if next_docid == nil {
+		return nil, nil
 	}
 	return next_docid, nil
 }
@@ -2446,7 +2747,7 @@ type EnterprisesPager struct {
 // NewEnterprisesPager returns a new EnterprisesPager instance.
 func (enterpriseManagement *EnterpriseManagementV1) NewEnterprisesPager(options *ListEnterprisesOptions) (pager *EnterprisesPager, err error) {
 	if options.NextDocid != nil && *options.NextDocid != "" {
-		err = fmt.Errorf("the 'options.NextDocid' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.NextDocid' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -2474,6 +2775,7 @@ func (pager *EnterprisesPager) GetNextWithContext(ctx context.Context) (page []E
 
 	result, _, err := pager.client.ListEnterprisesWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -2482,7 +2784,8 @@ func (pager *EnterprisesPager) GetNextWithContext(ctx context.Context) (page []E
 		var next_docid *string
 		next_docid, err = core.GetQueryParam(result.NextURL, "next_docid")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'next_docid' query parameter from URL '%s': %s", *result.NextURL, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'next_docid' query parameter from URL '%s': %s", *result.NextURL, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = next_docid
@@ -2501,6 +2804,7 @@ func (pager *EnterprisesPager) GetAllWithContext(ctx context.Context) (allItems 
 		var nextPage []Enterprise
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -2510,12 +2814,16 @@ func (pager *EnterprisesPager) GetAllWithContext(ctx context.Context) (allItems 
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *EnterprisesPager) GetNext() (page []Enterprise, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *EnterprisesPager) GetAll() (allItems []Enterprise, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // AccountsPager can be used to simplify the use of the "ListAccounts" method.
@@ -2531,7 +2839,7 @@ type AccountsPager struct {
 // NewAccountsPager returns a new AccountsPager instance.
 func (enterpriseManagement *EnterpriseManagementV1) NewAccountsPager(options *ListAccountsOptions) (pager *AccountsPager, err error) {
 	if options.NextDocid != nil && *options.NextDocid != "" {
-		err = fmt.Errorf("the 'options.NextDocid' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.NextDocid' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -2559,6 +2867,7 @@ func (pager *AccountsPager) GetNextWithContext(ctx context.Context) (page []Acco
 
 	result, _, err := pager.client.ListAccountsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -2567,7 +2876,8 @@ func (pager *AccountsPager) GetNextWithContext(ctx context.Context) (page []Acco
 		var next_docid *string
 		next_docid, err = core.GetQueryParam(result.NextURL, "next_docid")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'next_docid' query parameter from URL '%s': %s", *result.NextURL, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'next_docid' query parameter from URL '%s': %s", *result.NextURL, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = next_docid
@@ -2586,6 +2896,7 @@ func (pager *AccountsPager) GetAllWithContext(ctx context.Context) (allItems []A
 		var nextPage []Account
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -2595,12 +2906,16 @@ func (pager *AccountsPager) GetAllWithContext(ctx context.Context) (allItems []A
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *AccountsPager) GetNext() (page []Account, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *AccountsPager) GetAll() (allItems []Account, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // AccountGroupsPager can be used to simplify the use of the "ListAccountGroups" method.
@@ -2616,7 +2931,7 @@ type AccountGroupsPager struct {
 // NewAccountGroupsPager returns a new AccountGroupsPager instance.
 func (enterpriseManagement *EnterpriseManagementV1) NewAccountGroupsPager(options *ListAccountGroupsOptions) (pager *AccountGroupsPager, err error) {
 	if options.NextDocid != nil && *options.NextDocid != "" {
-		err = fmt.Errorf("the 'options.NextDocid' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.NextDocid' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -2644,6 +2959,7 @@ func (pager *AccountGroupsPager) GetNextWithContext(ctx context.Context) (page [
 
 	result, _, err := pager.client.ListAccountGroupsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -2652,7 +2968,8 @@ func (pager *AccountGroupsPager) GetNextWithContext(ctx context.Context) (page [
 		var next_docid *string
 		next_docid, err = core.GetQueryParam(result.NextURL, "next_docid")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'next_docid' query parameter from URL '%s': %s", *result.NextURL, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'next_docid' query parameter from URL '%s': %s", *result.NextURL, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = next_docid
@@ -2671,6 +2988,7 @@ func (pager *AccountGroupsPager) GetAllWithContext(ctx context.Context) (allItem
 		var nextPage []AccountGroup
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -2680,10 +2998,14 @@ func (pager *AccountGroupsPager) GetAllWithContext(ctx context.Context) (allItem
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *AccountGroupsPager) GetNext() (page []AccountGroup, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *AccountGroupsPager) GetAll() (allItems []AccountGroup, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }

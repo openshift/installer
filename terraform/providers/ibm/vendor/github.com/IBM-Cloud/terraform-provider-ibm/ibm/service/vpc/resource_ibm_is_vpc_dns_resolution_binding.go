@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -23,6 +25,10 @@ func ResourceIBMIsVPCDnsResolutionBinding() *schema.Resource {
 		UpdateContext: resourceIBMIsVPCDnsResolutionBindingUpdate,
 		DeleteContext: resourceIBMIsVPCDnsResolutionBindingDelete,
 		Importer:      &schema.ResourceImporter{},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(10 * time.Minute),
+			Delete: schema.DefaultTimeout(10 * time.Minute),
+		},
 
 		Schema: map[string]*schema.Schema{
 			"vpc_id": &schema.Schema{
@@ -34,6 +40,35 @@ func ResourceIBMIsVPCDnsResolutionBinding() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The date and time that the DNS resolution binding was created.",
+			},
+			"health_reasons": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The reasons for the current `health_state` (if any).The enumerated reason code values for this property will expand in the future. When processing this property, check for and log unknown values. Optionally halt processing and surface the error, or bypass the resource on which the unexpected reason code was encountered.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"code": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A snake case string succinctly identifying the reason for this health state.",
+						},
+						"message": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "An explanation of the reason for this health state.",
+						},
+						"more_info": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Link to documentation about the reason for this health state.",
+						},
+					},
+				},
+			},
+			"health_state": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The health of this resource.- `ok`: No abnormal behavior detected- `degraded`: Experiencing compromised performance, capacity, or connectivity- `faulted`: Completely unreachable, inoperative, or otherwise entirely incapacitated- `inapplicable`: The health state does not apply because of the current lifecycle state. A resource with a lifecycle state of `failed` or `deleting` will have a health state of `inapplicable`. A `pending` resource may also have this state.",
 			},
 			"endpoint_gateways": &schema.Schema{
 				Type:        schema.TypeList,
@@ -268,11 +303,20 @@ func resourceIBMIsVPCDnsResolutionBindingCreate(context context.Context, d *sche
 		return diag.FromErr(fmt.Errorf("CreateVPCDnsResolutionBindingWithContext failed %s\n%s", err, response))
 	}
 	d.SetId(MakeTerraformVPCDNSID(spokeVPCID, *vpcdnsResolutionBinding.ID))
-
-	err = resourceIBMIsVPCDnsResolutionBindingGet(vpcdnsResolutionBinding, d)
+	intf, err := isWaitForVpcDnsCreated(sess, spokeVPCID, *vpcdnsResolutionBinding.ID, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	if vpcdnsResolutionBinding, ok := intf.(*vpcv1.VpcdnsResolutionBinding); ok {
+		err = resourceIBMIsVPCDnsResolutionBindingGet(vpcdnsResolutionBinding, d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		return resourceIBMIsVPCDnsResolutionBindingRead(context, d, meta)
+	}
+
 	return nil
 }
 func resourceIBMIsVPCDnsResolutionBindingRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -331,7 +375,20 @@ func resourceIBMIsVPCDnsResolutionBindingGet(vpcdnsResolutionBinding *vpcv1.Vpcd
 	if err := d.Set("lifecycle_state", vpcdnsResolutionBinding.LifecycleState); err != nil {
 		return fmt.Errorf("[ERROR] Error setting lifecycle_state: %s", err)
 	}
-
+	healthReasons := []map[string]interface{}{}
+	for _, healthReasonsItem := range vpcdnsResolutionBinding.HealthReasons {
+		healthReasonsItemMap, err := resourceIBMIsVPCDnsResolutionBindingVpcdnsResolutionBindingHealthReasonToMap(&healthReasonsItem)
+		if err != nil {
+			return err
+		}
+		healthReasons = append(healthReasons, healthReasonsItemMap)
+	}
+	if err := d.Set("health_reasons", healthReasons); err != nil {
+		return fmt.Errorf("[ERROR] Error setting health_reasons: %s", err)
+	}
+	if err := d.Set("health_state", vpcdnsResolutionBinding.HealthState); err != nil {
+		return fmt.Errorf("[ERROR] Error setting health_state: %s", err)
+	}
 	if err := d.Set("name", vpcdnsResolutionBinding.Name); err != nil {
 		return fmt.Errorf("[ERROR] Error setting name: %s", err)
 	}
@@ -404,12 +461,16 @@ func resourceIBMIsVPCDnsResolutionBindingDelete(context context.Context, d *sche
 	deleteVPCDnsResolutionBindingOptions.SetVPCID(vpcId)
 	deleteVPCDnsResolutionBindingOptions.SetID(id)
 
-	_, response, err := sess.DeleteVPCDnsResolutionBindingWithContext(context, deleteVPCDnsResolutionBindingOptions)
+	dns, response, err := sess.DeleteVPCDnsResolutionBindingWithContext(context, deleteVPCDnsResolutionBindingOptions)
 	if err != nil {
 		log.Printf("[DEBUG] DeleteVPCDnsResolutionBindingWithContext failed %s\n%s", err, response)
 		if response.StatusCode != 404 {
 			return diag.FromErr(fmt.Errorf("DeleteVPCDnsResolutionBindingWithContext failed %s\n%s", err, response))
 		}
+	}
+	_, err = isWaitForVpcDnsDeleted(sess, vpcId, id, d.Timeout(schema.TimeoutDelete), dns)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	d.SetId("")
 	return nil
@@ -429,4 +490,86 @@ func ParseVPCDNSTerraformID(s string) (string, string, error) {
 		return "", "", fmt.Errorf("invalid terraform Id %s (one or more empty segments)", s)
 	}
 	return segments[0], segments[1], nil
+}
+
+func isWaitForVpcDnsDeleted(sess *vpcv1.VpcV1, vpcid, id string, timeout time.Duration, dns *vpcv1.VpcdnsResolutionBinding) (interface{}, error) {
+	log.Printf("Waiting for vpc dns (%s) to be deleted.", id)
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"deleting", "pending", "updating", "waiting"},
+		Target:     []string{"stable", "failed", "suspended", ""},
+		Refresh:    isVpcDnsDeleteRefreshFunc(sess, vpcid, id, dns),
+		Timeout:    timeout,
+		Delay:      10 * time.Second,
+		MinTimeout: 10 * time.Second,
+	}
+
+	return stateConf.WaitForState()
+}
+
+func isVpcDnsDeleteRefreshFunc(sess *vpcv1.VpcV1, vpcid, id string, dns *vpcv1.VpcdnsResolutionBinding) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		getVPCDnsResolutionBindingOptions := &vpcv1.GetVPCDnsResolutionBindingOptions{}
+
+		getVPCDnsResolutionBindingOptions.SetVPCID(vpcid)
+		getVPCDnsResolutionBindingOptions.SetID(id)
+
+		vpcdnsResolutionBinding, response, err := sess.GetVPCDnsResolutionBinding(getVPCDnsResolutionBindingOptions)
+		if vpcdnsResolutionBinding == nil {
+			vpcdnsResolutionBinding = dns
+		}
+		if err != nil {
+			if response != nil && response.StatusCode == 404 {
+				return vpcdnsResolutionBinding, "", nil
+			}
+			return vpcdnsResolutionBinding, "", fmt.Errorf("[ERROR] Error getting vpcdnsResolutionBinding: %s\n%s", err, response)
+		}
+		return vpcdnsResolutionBinding, *vpcdnsResolutionBinding.LifecycleState, err
+	}
+}
+
+func isWaitForVpcDnsCreated(sess *vpcv1.VpcV1, vpcid, id string, timeout time.Duration) (interface{}, error) {
+	log.Printf("Waiting for vpc dns (%s) to be created.", id)
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"deleting", "pending", "updating", "waiting"},
+		Target:     []string{"stable", "failed", "suspended", ""},
+		Refresh:    isVpcDnsCreateRefreshFunc(sess, vpcid, id),
+		Timeout:    timeout,
+		Delay:      10 * time.Second,
+		MinTimeout: 10 * time.Second,
+	}
+
+	return stateConf.WaitForState()
+}
+
+func isVpcDnsCreateRefreshFunc(sess *vpcv1.VpcV1, vpcid, id string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		getVPCDnsResolutionBindingOptions := &vpcv1.GetVPCDnsResolutionBindingOptions{}
+
+		getVPCDnsResolutionBindingOptions.SetVPCID(vpcid)
+		getVPCDnsResolutionBindingOptions.SetID(id)
+
+		vpcdnsResolutionBinding, response, err := sess.GetVPCDnsResolutionBinding(getVPCDnsResolutionBindingOptions)
+		if err != nil {
+			if response != nil && response.StatusCode == 404 {
+				return vpcdnsResolutionBinding, "", nil
+			}
+			return vpcdnsResolutionBinding, "", fmt.Errorf("[ERROR] Error getting vpcdnsResolutionBinding: %s\n%s", err, response)
+		}
+		if *vpcdnsResolutionBinding.LifecycleState == "failed" || *vpcdnsResolutionBinding.LifecycleState == "suspended" {
+			return vpcdnsResolutionBinding, "", fmt.Errorf("[ERROR] DnsResolutionBinding in %s state", *vpcdnsResolutionBinding.LifecycleState)
+		}
+		return vpcdnsResolutionBinding, *vpcdnsResolutionBinding.LifecycleState, err
+	}
+}
+
+func resourceIBMIsVPCDnsResolutionBindingVpcdnsResolutionBindingHealthReasonToMap(model *vpcv1.VpcdnsResolutionBindingHealthReason) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["code"] = model.Code
+	modelMap["message"] = model.Message
+	if model.MoreInfo != nil {
+		modelMap["more_info"] = model.MoreInfo
+	}
+	return modelMap, nil
 }

@@ -4,9 +4,9 @@
 package cloudant
 
 import (
-	"fmt"
 	"log"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/resourcecontroller"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -144,7 +144,7 @@ func dataSourceIBMCloudantRead(d *schema.ResourceData, meta interface{}) error {
 func setCloudantServerInformation(client *cloudantv1.CloudantV1, d *schema.ResourceData) error {
 	serverInformation, err := readCloudantServerInformation(client)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error retrieving server information: %s", err)
+		return flex.FmtErrorf("[ERROR] Error retrieving server information: %s", err)
 	}
 
 	if serverInformation.Vendor != nil && serverInformation.Vendor.Version != nil {

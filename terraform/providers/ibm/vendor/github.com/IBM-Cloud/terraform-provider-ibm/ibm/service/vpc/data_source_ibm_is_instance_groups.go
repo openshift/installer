@@ -496,7 +496,7 @@ func DataSourceIBMIsInstanceGroupsInstanceTemplateReferenceToMap(model *vpcv1.In
 	return modelMap, nil
 }
 
-func DataSourceIBMIsInstanceGroupsInstanceTemplateReferenceDeletedToMap(model *vpcv1.InstanceTemplateReferenceDeleted) (map[string]interface{}, error) {
+func DataSourceIBMIsInstanceGroupsInstanceTemplateReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.MoreInfo != nil {
 		modelMap["more_info"] = *model.MoreInfo
@@ -525,7 +525,7 @@ func DataSourceIBMIsInstanceGroupsLoadBalancerPoolReferenceToMap(model *vpcv1.Lo
 	return modelMap, nil
 }
 
-func DataSourceIBMIsInstanceGroupsLoadBalancerPoolReferenceDeletedToMap(model *vpcv1.LoadBalancerPoolReferenceDeleted) (map[string]interface{}, error) {
+func DataSourceIBMIsInstanceGroupsLoadBalancerPoolReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.MoreInfo != nil {
 		modelMap["more_info"] = *model.MoreInfo
@@ -554,7 +554,7 @@ func DataSourceIBMIsInstanceGroupsInstanceGroupManagerReferenceToMap(model *vpcv
 	return modelMap, nil
 }
 
-func DataSourceIBMIsInstanceGroupsInstanceGroupManagerReferenceDeletedToMap(model *vpcv1.InstanceGroupManagerReferenceDeleted) (map[string]interface{}, error) {
+func DataSourceIBMIsInstanceGroupsInstanceGroupManagerReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.MoreInfo != nil {
 		modelMap["more_info"] = *model.MoreInfo
@@ -603,7 +603,7 @@ func DataSourceIBMIsInstanceGroupsSubnetReferenceToMap(model *vpcv1.SubnetRefere
 	return modelMap, nil
 }
 
-func DataSourceIBMIsInstanceGroupsSubnetReferenceDeletedToMap(model *vpcv1.SubnetReferenceDeleted) (map[string]interface{}, error) {
+func DataSourceIBMIsInstanceGroupsSubnetReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.MoreInfo != nil {
 		modelMap["more_info"] = *model.MoreInfo
@@ -638,7 +638,7 @@ func DataSourceIBMIsInstanceGroupsVPCReferenceToMap(model *vpcv1.VPCReference) (
 	return modelMap, nil
 }
 
-func DataSourceIBMIsInstanceGroupsVPCReferenceDeletedToMap(model *vpcv1.VPCReferenceDeleted) (map[string]interface{}, error) {
+func DataSourceIBMIsInstanceGroupsVPCReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.MoreInfo != nil {
 		modelMap["more_info"] = *model.MoreInfo

@@ -15,54 +15,52 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	DatacenterRegion = "region"
-	DatacenterType   = "type"
-	DatacenterUrl    = "url"
-)
-
 func DataSourceIBMPIDatacenter() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPIDatacenterRead,
 		Schema: map[string]*schema.Schema{
+			// Arguments
 			Arg_DatacenterZone: {
-				Type:         schema.TypeString,
+				Description:  "Datacenter zone you want to retrieve.",
 				Optional:     true,
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
+
+			// Attributes
 			Attr_DatacenterCapabilities: {
-				Type:        schema.TypeMap,
 				Computed:    true,
-				Description: "Datacenter Capabilities",
+				Description: "Datacenter Capabilities.",
 				Elem: &schema.Schema{
 					Type: schema.TypeBool,
 				},
+				Type: schema.TypeMap,
 			},
 			Attr_DatacenterHref: {
-				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Datacenter href",
+				Description: "Datacenter href.",
+				Type:        schema.TypeString,
 			},
 			Attr_DatacenterLocation: {
-				Type:        schema.TypeMap,
 				Computed:    true,
-				Description: "Datacenter location",
+				Description: "Datacenter location.",
+				Type:        schema.TypeMap,
 			},
 			Attr_DatacenterStatus: {
-				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Datacenter status",
+				Description: "Datacenter status, active,maintenance or down.",
+				Type:        schema.TypeString,
 			},
 			Attr_DatacenterType: {
-				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Datacenter type",
+				Description: "Datacenter type, off-premises or on-premises.",
+				Type:        schema.TypeString,
 			},
 		},
 	}
 }
+
 func dataSourceIBMPIDatacenterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// session
 	sess, err := meta.(conns.ClientSession).IBMPISession()
 	if err != nil {
 		return diag.FromErr(err)
@@ -81,14 +79,14 @@ func dataSourceIBMPIDatacenterRead(ctx context.Context, d *schema.ResourceData, 
 	d.SetId(genID)
 	d.Set(Attr_DatacenterCapabilities, dcData.Capabilities)
 	dclocation := map[string]interface{}{
-		DatacenterRegion: *dcData.Location.Region,
-		DatacenterType:   *dcData.Location.Type,
-		DatacenterUrl:    *dcData.Location.URL,
+		Attr_Region: *dcData.Location.Region,
+		Attr_Type:   *dcData.Location.Type,
+		Attr_URL:    *dcData.Location.URL,
 	}
+	d.Set(Attr_DatacenterHref, dcData.Href)
 	d.Set(Attr_DatacenterLocation, flex.Flatten(dclocation))
 	d.Set(Attr_DatacenterStatus, dcData.Status)
 	d.Set(Attr_DatacenterType, dcData.Type)
-	d.Set(Attr_DatacenterHref, dcData.Href)
 
 	return nil
 }

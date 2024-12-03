@@ -122,7 +122,7 @@ func resourceIBMIamTrustedProfileIdentityCreate(context context.Context, d *sche
 		return diag.FromErr(fmt.Errorf("SetProfileIdentityWithContext failed %s\n%s", err, response))
 	}
 
-	d.SetId(fmt.Sprintf("%s/%s/%s", *setProfileIdentityOptions.ProfileID, *setProfileIdentityOptions.IdentityType, *profileIdentityResponse.Identifier))
+	d.SetId(fmt.Sprintf("%s|%s|%s", *setProfileIdentityOptions.ProfileID, *setProfileIdentityOptions.IdentityType, *profileIdentityResponse.Identifier))
 
 	return resourceIBMIamTrustedProfileIdentityRead(context, d, meta)
 }
@@ -135,14 +135,18 @@ func resourceIBMIamTrustedProfileIdentityRead(context context.Context, d *schema
 
 	getProfileIdentityOptions := &iamidentityv1.GetProfileIdentityOptions{}
 
-	parts, err := flex.SepIdParts(d.Id(), "/")
-	if err != nil {
-		return diag.FromErr(err)
+	parts_to_use, original_err := flex.SepIdParts(d.Id(), "|")
+	if original_err != nil {
+		parts, err := flex.SepIdParts(d.Id(), "/") // compatability - can be removed in future release
+		if err != nil {
+			return diag.FromErr(original_err)
+		}
+		parts_to_use = parts
 	}
 
-	getProfileIdentityOptions.SetProfileID(parts[0])
-	getProfileIdentityOptions.SetIdentityType(parts[1])
-	getProfileIdentityOptions.SetIdentifierID(parts[2])
+	getProfileIdentityOptions.SetProfileID(parts_to_use[0])
+	getProfileIdentityOptions.SetIdentityType(parts_to_use[1])
+	getProfileIdentityOptions.SetIdentifierID(parts_to_use[2])
 
 	profileIdentityResponse, response, err := iamIdentityClient.GetProfileIdentityWithContext(context, getProfileIdentityOptions)
 	if err != nil {
@@ -153,6 +157,8 @@ func resourceIBMIamTrustedProfileIdentityRead(context context.Context, d *schema
 		log.Printf("[DEBUG] GetProfileIdentityWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("GetProfileIdentityWithContext failed %s\n%s", err, response))
 	}
+
+	d.SetId(fmt.Sprintf("%s|%s|%s", *getProfileIdentityOptions.ProfileID, *getProfileIdentityOptions.IdentityType, *getProfileIdentityOptions.IdentifierID))
 
 	if err = d.Set("profile_id", getProfileIdentityOptions.ProfileID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting profile_id: %s", err))
@@ -188,14 +194,18 @@ func resourceIBMIamTrustedProfileIdentityDelete(context context.Context, d *sche
 
 	deleteProfileIdentityOptions := &iamidentityv1.DeleteProfileIdentityOptions{}
 
-	parts, err := flex.SepIdParts(d.Id(), "/")
-	if err != nil {
-		return diag.FromErr(err)
+	parts_to_use, original_err := flex.SepIdParts(d.Id(), "|")
+	if original_err != nil {
+		parts, err := flex.SepIdParts(d.Id(), "/") // compatability - remove in future release
+		if err != nil {
+			return diag.FromErr(original_err)
+		}
+		parts_to_use = parts
 	}
 
-	deleteProfileIdentityOptions.SetProfileID(parts[0])
-	deleteProfileIdentityOptions.SetIdentityType(parts[1])
-	deleteProfileIdentityOptions.SetIdentifierID(parts[2])
+	deleteProfileIdentityOptions.SetProfileID(parts_to_use[0])
+	deleteProfileIdentityOptions.SetIdentityType(parts_to_use[1])
+	deleteProfileIdentityOptions.SetIdentifierID(parts_to_use[2])
 
 	response, err := iamIdentityClient.DeleteProfileIdentityWithContext(context, deleteProfileIdentityOptions)
 	if err != nil {

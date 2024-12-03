@@ -10,13 +10,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/networking-go-sdk/transitgatewayapisv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 )
 
 const (
@@ -348,10 +349,8 @@ func resourceIBMTransitGatewayUpdate(d *schema.ResourceData, meta interface{}) e
 		}
 	}
 	if d.HasChange(tgGlobal) {
-		if tgwglobal, ok := d.GetOk(tgGlobal); ok {
-			global := tgwglobal.(bool)
-			updateTransitGatewayOptions.Global = &global
-		}
+		global := d.Get(tgGlobal).(bool)
+		updateTransitGatewayOptions.Global = &global
 	}
 	if d.HasChange(tgGatewayTags) {
 		oldList, newList := d.GetChange(tgGatewayTags)

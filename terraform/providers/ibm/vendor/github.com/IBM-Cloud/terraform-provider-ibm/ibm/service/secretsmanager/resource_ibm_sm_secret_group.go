@@ -6,6 +6,7 @@ package secretsmanager
 import (
 	"context"
 	"fmt"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"log"
 	"strings"
 
@@ -34,13 +35,13 @@ func ResourceIbmSmSecretGroup() *schema.Resource {
 			"name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validate.InvokeValidator("ibm_sm_secret_group", "name"),
+				ValidateFunc: validate.InvokeValidator(SecretGroupResourceName, "name"),
 				Description:  "The name of your secret group.",
 			},
 			"description": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validate.InvokeValidator("ibm_sm_secret_group", "description"),
+				ValidateFunc: validate.InvokeValidator(SecretGroupResourceName, "description"),
 				Description:  "An extended description of your secret group.To protect your privacy, do not use personal data, such as your name or location, as a description for your secret group.",
 			},
 			"created_at": &schema.Schema{
@@ -80,14 +81,15 @@ func ResourceIbmSmSecretGroupValidator() *validate.ResourceValidator {
 		},
 	)
 
-	resourceValidator := validate.ResourceValidator{ResourceName: "ibm_sm_secret_group", Schema: validateSchema}
+	resourceValidator := validate.ResourceValidator{ResourceName: SecretGroupResourceName, Schema: validateSchema}
 	return &resourceValidator
 }
 
 func resourceIbmSmSecretGroupCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", SecretGroupResourceName, "create")
+		return tfErr.GetDiag()
 	}
 
 	region := getRegion(secretsManagerClient, d)
@@ -104,7 +106,8 @@ func resourceIbmSmSecretGroupCreate(context context.Context, d *schema.ResourceD
 	secretGroup, response, err := secretsManagerClient.CreateSecretGroupWithContext(context, createSecretGroupOptions)
 	if err != nil {
 		log.Printf("[DEBUG] CreateSecretGroupWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateSecretGroupWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateSecretGroupWithContext failed: %s\n%s", err.Error(), response), SecretGroupResourceName, "create")
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s/%s", region, instanceId, *secretGroup.ID))
@@ -116,12 +119,14 @@ func resourceIbmSmSecretGroupCreate(context context.Context, d *schema.ResourceD
 func resourceIbmSmSecretGroupRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", SecretGroupResourceName, "read")
+		return tfErr.GetDiag()
 	}
 
 	id := strings.Split(d.Id(), "/")
 	if len(id) != 3 {
-		return diag.Errorf("Wrong format of resource ID. To import a secret group use the format `<region>/<instance_id>/<secret_group_id>`")
+		tfErr := flex.TerraformErrorf(nil, "Wrong format of resource ID. To import a secret group use the format `<region>/<instance_id>/<secret_group_id>`", SecretGroupResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	region := id[0]
 	instanceId := id[1]
@@ -139,29 +144,37 @@ func resourceIbmSmSecretGroupRead(context context.Context, d *schema.ResourceDat
 			return nil
 		}
 		log.Printf("[DEBUG] GetSecretGroupWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetSecretGroupWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetSecretGroupWithContext failed %s\n%s", err, response), SecretGroupResourceName, "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("secret_group_id", secretGroupId); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting secret_group_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting secret_group_id"), SecretGroupResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("instance_id", instanceId); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting instance_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting instance_id"), SecretGroupResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("region", region); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting region: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting region"), SecretGroupResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("name", secretGroup.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name"), SecretGroupResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("description", secretGroup.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting description"), SecretGroupResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_at", DateTimeToRFC3339(secretGroup.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_at"), SecretGroupResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated_at", DateTimeToRFC3339(secretGroup.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at"), SecretGroupResourceName, "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil
@@ -170,7 +183,8 @@ func resourceIbmSmSecretGroupRead(context context.Context, d *schema.ResourceDat
 func resourceIbmSmSecretGroupUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", SecretGroupResourceName, "update")
+		return tfErr.GetDiag()
 	}
 
 	id := strings.Split(d.Id(), "/")
@@ -202,7 +216,8 @@ func resourceIbmSmSecretGroupUpdate(context context.Context, d *schema.ResourceD
 		_, response, err := secretsManagerClient.UpdateSecretGroupWithContext(context, updateSecretGroupOptions)
 		if err != nil {
 			log.Printf("[DEBUG] UpdateSecretGroupWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdateSecretGroupWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateSecretGroupWithContext failed %s\n%s", err, response), SecretGroupResourceName, "update")
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -212,7 +227,8 @@ func resourceIbmSmSecretGroupUpdate(context context.Context, d *schema.ResourceD
 func resourceIbmSmSecretGroupDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", SecretGroupResourceName, "delete")
+		return tfErr.GetDiag()
 	}
 
 	id := strings.Split(d.Id(), "/")
@@ -228,7 +244,8 @@ func resourceIbmSmSecretGroupDelete(context context.Context, d *schema.ResourceD
 	response, err := secretsManagerClient.DeleteSecretGroupWithContext(context, deleteSecretGroupOptions)
 	if err != nil {
 		log.Printf("[DEBUG] DeleteSecretGroupWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteSecretGroupWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteSecretGroupWithContext failed %s\n%s", err, response), SecretGroupResourceName, "delete")
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")

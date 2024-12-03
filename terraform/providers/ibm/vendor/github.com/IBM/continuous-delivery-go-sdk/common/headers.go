@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2019, 2020.
+ * (C) Copyright IBM Corp. 2019, 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ package common
 import (
 	"fmt"
 	"runtime"
+
+	"github.com/IBM/go-sdk-core/v5/core"
 )
 
 const (
@@ -79,4 +81,9 @@ var systemInfo = fmt.Sprintf("(lang=go; arch=%s; os=%s; go.version=%s)", runtime
 
 func GetSystemInfo() string {
 	return systemInfo
+}
+
+func GetComponentInfo() *core.ProblemComponent {
+	// This should match the module name in go.mod.
+	return core.NewProblemComponent("github.ibm.com/CloudEngineering/go-sdk-template", Version)
 }

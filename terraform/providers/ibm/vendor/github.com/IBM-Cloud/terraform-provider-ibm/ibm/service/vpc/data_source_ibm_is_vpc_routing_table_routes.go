@@ -221,6 +221,9 @@ func dataSourceIBMISVPCRoutingTableRoutesList(d *schema.ResourceData, meta inter
 		if instance.LifecycleState != nil {
 			route[isRoutingTableRouteLifecycleState] = *instance.LifecycleState
 		}
+		if instance.Action != nil {
+			route[isRoutingTableRouteAction] = *instance.Action
+		}
 		if instance.Advertise != nil {
 			route["advertise"] = *instance.Advertise
 		}
@@ -351,7 +354,7 @@ func DataSourceIBMIsRouteCreatorVPNServerReferenceToMap(model *vpcv1.RouteCreato
 	return modelMap, nil
 }
 
-func DataSourceIBMIsRouteVPNGatewayReferenceDeletedToMap(model *vpcv1.VPNGatewayReferenceDeleted) (map[string]interface{}, error) {
+func DataSourceIBMIsRouteVPNGatewayReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.MoreInfo != nil {
 		modelMap["more_info"] = *model.MoreInfo
@@ -359,7 +362,7 @@ func DataSourceIBMIsRouteVPNGatewayReferenceDeletedToMap(model *vpcv1.VPNGateway
 	return modelMap, nil
 }
 
-func DataSourceIBMIsRouteVPNServerReferenceDeletedToMap(model *vpcv1.VPNServerReferenceDeleted) (map[string]interface{}, error) {
+func DataSourceIBMIsRouteVPNServerReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.MoreInfo != nil {
 		modelMap["more_info"] = *model.MoreInfo
