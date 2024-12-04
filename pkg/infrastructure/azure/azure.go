@@ -62,10 +62,23 @@ var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
 var _ clusterapi.PostProvider = (*Provider)(nil)
 var _ clusterapi.IgnitionProvider = (*Provider)(nil)
 var _ clusterapi.PostDestroyer = (*Provider)(nil)
+var _ clusterapi.Timeouts = (*Provider)(nil)
 
 // Name returns the name of the provider.
 func (p *Provider) Name() string {
 	return aztypes.Name
+}
+
+// NetworkTimeout uses the default timeout of 15 minutes to satisfy the Timeouts interface.
+// Azure only needs special handling for machine provisioning timeouts.
+func (p Provider) NetworkTimeout() time.Duration {
+	return 15 * time.Minute
+}
+
+// ProvisionTimeout bumps the machine provisioning timeout due to
+// https://issues.redhat.com/browse/OCPBUGS-43625.
+func (p Provider) ProvisionTimeout() time.Duration {
+	return 20 * time.Minute
 }
 
 // PublicGatherEndpoint indicates that machine ready checks should NOT wait for an ExternalIP
