@@ -48,7 +48,7 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 					MirrorConfig: []mirror.RegistriesConfig{
 						{
 							Location: "some.registry.org/release",
-							Mirror:   "some.mirror.org",
+							Mirrors:  []string{"some.mirror.org"},
 						},
 					},
 				},
