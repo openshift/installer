@@ -8,5 +8,5 @@ import "embed"
 // this package and no other codebases should either, as we intend to remove it
 // once ARO has moved off the wrapper.
 
-//go:embed bootstrap/* manifests/* coreos/*
+//go:embed all:bootstrap manifests/* coreos/*
 var _ embed.FS
