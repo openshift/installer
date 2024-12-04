@@ -51,12 +51,11 @@ func (o *ClusterUninstaller) storageLabelOrClusterIDFilter() string {
 }
 
 func (o *ClusterUninstaller) listDisks(ctx context.Context) ([]cloudResource, error) {
-	return o.listDisksWithFilter(ctx, "items/*/disks(name,zone,type,sizeGb),nextPageToken", func(item *compute.Disk) bool {
+	return o.listDisksWithFilter(ctx, "items/*/disks(name,zone,type,sizeGb,labels),nextPageToken", func(item *compute.Disk) bool {
 		if o.isClusterResource(item.Name) || strings.HasPrefix(item.Name, o.formatClusterIDForStorage()) {
 			return true
 		}
 
-		// TODO: do labels get formatted as labels.%s, or is this only for filters
 		for key, value := range item.Labels {
 			if key == fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, o.ClusterID) && value == ownedLabelValue {
 				return true
