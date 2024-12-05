@@ -16,6 +16,7 @@ import (
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -26,6 +27,7 @@ type AgentPXEFiles struct {
 	tmpPath              string
 	bootArtifactsBaseURL string
 	kernelArgs           string
+	filePrefix           string
 }
 
 type coreOSKargs struct {
@@ -38,13 +40,15 @@ var _ asset.WritableAsset = (*AgentPXEFiles)(nil)
 func (a *AgentPXEFiles) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&AgentArtifacts{},
+		&workflow.AgentWorkflow{},
 	}
 }
 
 // Generate generates the image files for PXE asset.
 func (a *AgentPXEFiles) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentArtifacts := &AgentArtifacts{}
-	dependencies.Get(agentArtifacts)
+	agentWorkflow := &workflow.AgentWorkflow{}
+	dependencies.Get(agentArtifacts, agentWorkflow)
 
 	a.tmpPath = agentArtifacts.TmpPath
 
@@ -64,6 +68,15 @@ func (a *AgentPXEFiles) Generate(_ context.Context, dependencies asset.Parents) 
 		return err
 	}
 	a.kernelArgs = kernelArgs + string(agentArtifacts.Kargs)
+
+	switch agentWorkflow.Workflow {
+	case workflow.AgentWorkflowTypeInstall:
+		a.filePrefix = agentFilePrefix
+	case workflow.AgentWorkflowTypeAddNodes:
+		a.filePrefix = nodeFilePrefix
+	default:
+		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
+	}
 	return nil
 }
 
@@ -84,12 +97,12 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		return err
 	}
 
-	err = extractRootFS(bootArtifactsFullPath, a.tmpPath, a.cpuArch)
+	err = extractRootFS(bootArtifactsFullPath, a.tmpPath, a.filePrefix, a.cpuArch)
 	if err != nil {
 		return err
 	}
 
-	agentInitrdFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("agent.%s-initrd.img", a.cpuArch))
+	agentInitrdFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-initrd.img", a.filePrefix, a.cpuArch))
 	err = copyfile(agentInitrdFile, a.imageReader)
 	if err != nil {
 		return err
@@ -108,7 +121,7 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		kernelFileType = "vmlinuz"
 	}
 
-	agentVmlinuzFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("agent.%s-%s", a.cpuArch, kernelFileType))
+	agentVmlinuzFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-%s", a.filePrefix, a.cpuArch, kernelFileType))
 	kernelReader, err := os.Open(filepath.Join(a.tmpPath, "images", "pxeboot", kernelFileType))
 	if err != nil {
 		return err
@@ -186,11 +199,11 @@ boot
 `
 
 	iPXEScript := fmt.Sprintf(iPXEScriptTemplate, a.bootArtifactsBaseURL,
-		fmt.Sprintf("agent.%s-initrd.img", a.cpuArch), a.bootArtifactsBaseURL,
-		fmt.Sprintf("agent.%s-vmlinuz", a.cpuArch), a.bootArtifactsBaseURL,
-		fmt.Sprintf("agent.%s-rootfs.img", a.cpuArch), a.kernelArgs)
+		fmt.Sprintf("%s.%s-initrd.img", a.filePrefix, a.cpuArch), a.bootArtifactsBaseURL,
+		fmt.Sprintf("%s.%s-vmlinuz", a.filePrefix, a.cpuArch), a.bootArtifactsBaseURL,
+		fmt.Sprintf("%s.%s-rootfs.img", a.filePrefix, a.cpuArch), a.kernelArgs)
 
-	iPXEFile := fmt.Sprintf("agent.%s.ipxe", a.cpuArch)
+	iPXEFile := fmt.Sprintf("%s.%s.ipxe", a.filePrefix, a.cpuArch)
 
 	err := os.WriteFile(filepath.Join(pxeAssetsFullPath, iPXEFile), []byte(iPXEScript), 0600)
 	if err != nil {
@@ -238,13 +251,13 @@ func (a *AgentPXEFiles) handleAdditionals390xArtifacts(bootArtifactsFullPath str
 		return err
 	}
 
-	agentInitrdAddrFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("agent.%s-initrd.addrsize", a.cpuArch))
+	agentInitrdAddrFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-initrd.addrsize", a.filePrefix, a.cpuArch))
 	err = copyfile(agentInitrdAddrFile, addrsizeFile)
 	if err != nil {
 		return err
 	}
 
-	agentINSFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("agent.%s-generic.ins", a.cpuArch))
+	agentINSFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-generic.ins", a.filePrefix, a.cpuArch))
 	genericReader, err := os.Open(filepath.Join(a.tmpPath, "generic.ins"))
 	if err != nil {
 		return err
