@@ -26,6 +26,10 @@ const (
 	// bootArtifactsPath is the path where boot files are created.
 	// e.g. initrd, kernel and rootfs.
 	bootArtifactsPath = "boot-artifacts"
+	// agentFilePrefix is the prefix used for day 1 images.
+	agentFilePrefix = "agent"
+	// nodeFilePrefix is the prefix used for day 2 images.
+	nodeFilePrefix = "node"
 )
 
 // AgentArtifacts is an asset that generates all the artifacts that could be used
@@ -241,8 +245,8 @@ func createDir(bootArtifactsFullPath string) error {
 	return nil
 }
 
-func extractRootFS(bootArtifactsFullPath, agentISOPath, arch string) error {
-	agentRootfsimgFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("agent.%s-rootfs.img", arch))
+func extractRootFS(bootArtifactsFullPath, agentISOPath, filePrefix, arch string) error {
+	agentRootfsimgFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-rootfs.img", filePrefix, arch))
 	rootfsReader, err := os.Open(filepath.Join(agentISOPath, "images", "pxeboot", "rootfs.img"))
 	if err != nil {
 		return err
