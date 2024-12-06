@@ -807,3 +807,17 @@ func TestIncludesZones(t *testing.T) {
 		assert.Contains(t, requiredPerms, PermissionDefaultZones)
 	})
 }
+
+func TestIncludesAssumeRole(t *testing.T) {
+	t.Run("Should be true when IAM role specified", func(t *testing.T) {
+		ic := validInstallConfig()
+		ic.AWS.HostedZoneRole = "custom-role"
+		requiredPerms := RequiredPermissionGroups(ic)
+		assert.Contains(t, requiredPerms, PermissionAssumeRole)
+	})
+	t.Run("Should be false when IAM role not specified", func(t *testing.T) {
+		ic := validInstallConfig()
+		requiredPerms := RequiredPermissionGroups(ic)
+		assert.NotContains(t, requiredPerms, PermissionAssumeRole)
+	})
+}

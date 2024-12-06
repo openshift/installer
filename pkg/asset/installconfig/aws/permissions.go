@@ -68,6 +68,9 @@ const (
 	// PermissionDefaultZones is a permission set required when zones are not set in the install-config.
 	PermissionDefaultZones PermissionGroup = "permission-default-zones"
 
+	// PermissionAssumeRole is a permission set required when an IAM role to be assumed is set in the install-config.
+	PermissionAssumeRole PermissionGroup = "permission-assume-role"
+
 	// PermissionMintCreds is a permission set required when minting credentials.
 	PermissionMintCreds PermissionGroup = "permission-mint-creds"
 
@@ -324,6 +327,10 @@ var permissions = map[PermissionGroup][]string{
 		// Needed to filter zones by instance type
 		"ec2:DescribeInstanceTypeOfferings",
 	},
+	PermissionAssumeRole: {
+		// Needed so the installer can use the provided custom IAM role
+		"sts:AssumeRole",
+	},
 	// From: https://github.com/openshift/cloud-credential-operator/blob/master/pkg/aws/utils.go
 	// TODO: export these in CCO so we don't have to duplicate them here.
 	PermissionMintCreds: {
@@ -511,6 +518,10 @@ func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 		permissionGroups = append(permissionGroups, PermissionDefaultZones)
 	}
 
+	if includesAssumeRole(ic) {
+		permissionGroups = append(permissionGroups, PermissionAssumeRole)
+	}
+
 	return permissionGroups
 }
 
@@ -681,4 +692,9 @@ func includesZones(installConfig *types.InstallConfig) bool {
 	}
 
 	return len(mpool.Zones) > 0 || len(installConfig.AWS.Subnets) > 0
+}
+
+// includesAssumeRole checks if a custom IAM role is specified in the install-config.
+func includesAssumeRole(installConfig *types.InstallConfig) bool {
+	return len(installConfig.AWS.HostedZoneRole) > 0
 }
