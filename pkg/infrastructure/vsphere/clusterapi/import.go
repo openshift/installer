@@ -90,10 +90,14 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 	}
 
 	clusterHostSystems, err := cluster.Hosts(ctx)
-
 	if err != nil {
 		return fmt.Errorf("failed to get cluster hosts: %w", err)
 	}
+
+	if len(clusterHostSystems) == 0 {
+		return fmt.Errorf("the vCenter cluster %s has no ESXi nodes", failureDomain.Topology.ComputeCluster)
+	}
+
 	resourcePool, err := session.Finder.ResourcePool(ctx, failureDomain.Topology.ResourcePool)
 	if err != nil {
 		return fmt.Errorf("failed to find resource pool: %w", err)
