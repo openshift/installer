@@ -4,15 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
 const (
-	globalTargetTCPProxyResource   = "targettcpproxy"
-	regionalTargetTCPProxyResource = "regiontargettcpproxy"
+	globalTargetTCPProxyResource = "targettcpproxy"
 )
 
 func (o *ClusterUninstaller) listTargetTCPProxies(ctx context.Context, typeName string) ([]cloudResource, error) {
@@ -25,17 +23,7 @@ func (o *ClusterUninstaller) listTargetTCPProxiesWithFilter(ctx context.Context,
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
-	var err error
-	var list *compute.TargetTcpProxyList
-	switch typeName {
-	case globalTargetTCPProxyResource:
-		list, err = o.computeSvc.TargetTcpProxies.List(o.ProjectID).Filter(filter).Fields(googleapi.Field(fields)).Context(ctx).Do()
-	case regionalTargetTCPProxyResource:
-		list, err = o.computeSvc.RegionTargetTcpProxies.List(o.ProjectID, o.Region).Filter(filter).Fields(googleapi.Field(fields)).Context(ctx).Do()
-	default:
-		return nil, fmt.Errorf("invalid target tcp proxy type %q", typeName)
-	}
-
+	list, err := o.computeSvc.TargetTcpProxies.List(o.ProjectID).Filter(filter).Fields(googleapi.Field(fields)).Context(ctx).Do()
 	if err != nil {
 		return nil, fmt.Errorf("failed to list target tcp proxies: %w", err)
 	}
@@ -65,17 +53,7 @@ func (o *ClusterUninstaller) deleteTargetTCPProxy(ctx context.Context, item clou
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
-	var err error
-	var op *compute.Operation
-	switch item.typeName {
-	case globalTargetTCPProxyResource:
-		op, err = o.computeSvc.TargetTcpProxies.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
-	case regionalTargetTCPProxyResource:
-		op, err = o.computeSvc.RegionTargetTcpProxies.Delete(o.ProjectID, o.Region, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
-	default:
-		return fmt.Errorf("invalid target tcp proxy type %q", item.typeName)
-	}
-
+	op, err := o.computeSvc.TargetTcpProxies.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
 		o.resetRequestID(item.typeName, item.name)
 		return fmt.Errorf("failed to target tcp proxy %s: %w", item.name, err)
@@ -101,12 +79,6 @@ func (o *ClusterUninstaller) destroyTargetTCPProxies(ctx context.Context) error 
 	}
 	items := o.insertPendingItems(globalTargetTCPProxyResource, found)
 
-	found, err = o.listTargetTCPProxies(ctx, regionalTargetTCPProxyResource)
-	if err != nil {
-		return err
-	}
-	items = append(items, o.insertPendingItems(regionalTargetTCPProxyResource, found)...)
-
 	for _, item := range items {
 		err := o.deleteTargetTCPProxy(ctx, item)
 		if err != nil {
@@ -116,10 +88,6 @@ func (o *ClusterUninstaller) destroyTargetTCPProxies(ctx context.Context) error 
 
 	if items = o.getPendingItems(globalTargetTCPProxyResource); len(items) > 0 {
 		return fmt.Errorf("%d global target tcp proxy pending", len(items))
-	}
-
-	if items = o.getPendingItems(regionalTargetTCPProxyResource); len(items) > 0 {
-		return fmt.Errorf("%d region target tcp proxy pending", len(items))
 	}
 
 	return nil
