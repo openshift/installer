@@ -33,8 +33,14 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		c.Networking = &types.Networking{}
 	}
 	if len(c.Networking.MachineNetwork) == 0 {
-		c.Networking.MachineNetwork = []types.MachineNetworkEntry{
-			{CIDR: *DefaultMachineCIDR},
+		if c.Platform.PowerVS != nil {
+			c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+				{CIDR: *powervsdefaults.DefaultMachineCIDR},
+			}
+		} else {
+			c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+				{CIDR: *DefaultMachineCIDR},
+			}
 		}
 	}
 	if c.Networking.NetworkType == "" {
@@ -109,9 +115,6 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		}
 	case c.Platform.PowerVS != nil:
 		powervsdefaults.SetPlatformDefaults(c.Platform.PowerVS)
-		c.Networking.MachineNetwork = []types.MachineNetworkEntry{
-			{CIDR: *powervsdefaults.DefaultMachineCIDR},
-		}
 	case c.Platform.None != nil:
 		nonedefaults.SetPlatformDefaults(c.Platform.None)
 	case c.Platform.Nutanix != nil:
