@@ -447,7 +447,7 @@ func dataSourceBackupPolicyJobBackupPolicyPlanToMap(backupPolicyPlanItem vpcv1.B
 	return backupPolicyPlanMap
 }
 
-func dataSourceBackupPolicyJobBackupPolicyPlanDeletedToMap(deletedItem vpcv1.BackupPolicyPlanReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceBackupPolicyJobBackupPolicyPlanDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {
@@ -537,7 +537,7 @@ func resourceIBMIsBackupPolicyPlanRemoteRegionReferenceToMap(model *vpcv1.Region
 	return modelMap, nil
 }
 
-func dataSourceBackupPolicyJobSourceVolumeDeletedToMap(deletedItem vpcv1.VolumeReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceBackupPolicyJobSourceVolumeDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {
@@ -578,7 +578,7 @@ func dataSourceBackupPolicyJobSourceInstanceToMap(sourceVolumeItem vpcv1.BackupP
 	return sourceVolumeMap
 }
 
-func dataSourceBackupPolicyJobSourceInstanceDeletedToMap(deletedItem vpcv1.InstanceReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceBackupPolicyJobSourceInstanceDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {
@@ -650,7 +650,7 @@ func dataSourceBackupPolicyJobTargetSnapshotToMap(targetSnapshotItem vpcv1.Snaps
 	return targetSnapshotMap
 }
 
-func dataSourceBackupPolicyJobTargetSnapshotDeletedToMap(deletedItem vpcv1.SnapshotReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceBackupPolicyJobTargetSnapshotDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

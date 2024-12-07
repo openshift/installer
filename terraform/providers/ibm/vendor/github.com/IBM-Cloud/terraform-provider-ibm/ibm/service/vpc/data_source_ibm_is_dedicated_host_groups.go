@@ -300,7 +300,7 @@ func dataSourceDedicatedHostGroupCollectionGroupsToMap(groupsItem vpcv1.Dedicate
 	return groupsMap
 }
 
-func dataSourceDedicatedHostGroupCollectionDedicatedHostsDeletedToMap(deletedItem vpcv1.DedicatedHostReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceDedicatedHostGroupCollectionDedicatedHostsDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

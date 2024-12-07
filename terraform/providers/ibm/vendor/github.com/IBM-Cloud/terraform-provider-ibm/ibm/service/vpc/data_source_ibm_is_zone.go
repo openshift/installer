@@ -14,6 +14,9 @@ const (
 	isZoneName   = "name"
 	isZoneRegion = "region"
 	isZoneStatus = "status"
+
+	isZoneDataCenter    = "data_center"
+	isZoneUniversalName = "universal_name"
 )
 
 func DataSourceIBMISZone() *schema.Resource {
@@ -33,6 +36,14 @@ func DataSourceIBMISZone() *schema.Resource {
 			},
 
 			isZoneStatus: {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			isZoneDataCenter: {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			isZoneUniversalName: {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -65,5 +76,11 @@ func zoneGet(d *schema.ResourceData, meta interface{}, regionName, zoneName stri
 	d.Set(isZoneName, *zone.Name)
 	d.Set(isZoneRegion, *zone.Region.Name)
 	d.Set(isZoneStatus, *zone.Status)
+	if zone.DataCenter != nil {
+		d.Set(isZoneDataCenter, *zone.DataCenter)
+	}
+	if zone.UniversalName != nil {
+		d.Set(isZoneUniversalName, *zone.UniversalName)
+	}
 	return nil
 }

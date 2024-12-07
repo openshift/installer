@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const (
@@ -38,6 +40,19 @@ func DataSourceIBMContainerVPCCluster() *schema.Resource {
 				ValidateFunc: validate.InvokeDataSourceValidator(
 					"ibm_container_vpc_cluster",
 					"name"),
+			},
+			"wait_till": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringInSlice([]string{masterNodeReady, oneWorkerNodeReady, ingressReady, clusterNormal}, true),
+				Description:  "wait_till can be configured for Master Ready, One worker Ready, Ingress Ready or Normal",
+			},
+			"wait_till_timeout": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Default:      "20",
+				Description:  "timeout for wait_till in minutes",
+				RequiredWith: []string{"wait_till"},
 			},
 			"worker_count": {
 				Description: "Number of workers",
@@ -252,7 +267,10 @@ func DataSourceIBMContainerVPCCluster() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-
+			"vpe_service_endpoint_url": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"crn": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -358,26 +376,47 @@ func dataSourceIBMContainerClusterVPCRead(d *schema.ResourceData, meta interface
 		return err
 	}
 
-	targetEnv, err := getVpcClusterTargetHeader(d, meta)
+	targetEnv, err := getVpcClusterTargetHeader(d)
 	if err != nil {
 		return err
 	}
-
-	var clusterID string
+	var clusterNameOrID string
 
 	if v, ok := d.GetOk("cluster_name_id"); ok {
-		clusterID = v.(string)
+		clusterNameOrID = v.(string)
 	}
 	if v, ok := d.GetOk("name"); ok {
-		clusterID = v.(string)
+		clusterNameOrID = v.(string)
 	}
 
-	cls, err := csClient.Clusters().GetCluster(clusterID, targetEnv)
+	// timeoutStage will define the timeout stage
+	var timeoutStage string
+	var timeout time.Duration = 20 * time.Minute
+	if v, ok := d.GetOk("wait_till"); ok {
+		timeoutStage = strings.ToLower(v.(string))
+		timeoutInt := d.Get("wait_till_timeout").(int)
+		timeout = time.Duration(timeoutInt) * time.Minute
+	}
+
+	cls, err := csClient.Clusters().GetCluster(clusterNameOrID, targetEnv)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error retrieving container vpc cluster: %s", err)
 	}
 
 	d.SetId(cls.ID)
+
+	if timeoutStage != "" {
+		err = waitForVpcCluster(d, meta, timeoutStage, timeout)
+		if err != nil {
+			return err
+		}
+
+		cls, err = csClient.Clusters().GetCluster(clusterNameOrID, targetEnv)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error retrieving container vpc cluster: %s", err)
+		}
+	}
+
 	d.Set("crn", cls.CRN)
 	d.Set("status", cls.Lifecycle.MasterStatus)
 	d.Set("health", cls.Lifecycle.MasterHealth)
@@ -395,12 +434,13 @@ func dataSourceIBMContainerClusterVPCRead(d *schema.ResourceData, meta interface
 	d.Set("resource_group_id", cls.ResourceGroupID)
 	d.Set("public_service_endpoint_url", cls.ServiceEndpoints.PublicServiceEndpointURL)
 	d.Set("private_service_endpoint_url", cls.ServiceEndpoints.PrivateServiceEndpointURL)
+	d.Set("vpe_service_endpoint_url", cls.VirtualPrivateEndpointURL)
 	d.Set("public_service_endpoint", cls.ServiceEndpoints.PublicServiceEndpointEnabled)
 	d.Set("private_service_endpoint", cls.ServiceEndpoints.PrivateServiceEndpointEnabled)
 	d.Set("ingress_hostname", cls.Ingress.HostName)
 	d.Set("ingress_secret", cls.Ingress.SecretName)
 
-	workerFields, err := csClient.Workers().ListWorkers(clusterID, false, targetEnv)
+	workerFields, err := csClient.Workers().ListWorkers(clusterNameOrID, false, targetEnv)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error retrieving workers for cluster: %s", err)
 	}
@@ -412,7 +452,7 @@ func dataSourceIBMContainerClusterVPCRead(d *schema.ResourceData, meta interface
 	d.Set("workers", workers)
 
 	//Get worker pools
-	pools, err := csClient.WorkerPools().ListWorkerPools(clusterID, targetEnv)
+	pools, err := csClient.WorkerPools().ListWorkerPools(clusterNameOrID, targetEnv)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error retrieving worker pools for container vpc cluster: %s", err)
 	}
@@ -420,9 +460,9 @@ func dataSourceIBMContainerClusterVPCRead(d *schema.ResourceData, meta interface
 	d.Set("worker_pools", flex.FlattenVpcWorkerPools(pools))
 
 	if !strings.HasSuffix(cls.MasterKubeVersion, _OPENSHIFT) {
-		albs, err := csClient.Albs().ListClusterAlbs(clusterID, targetEnv)
-		if err != nil && !strings.Contains(err.Error(), "The specified cluster is a lite cluster.") {
-			return fmt.Errorf("[ERROR] Error retrieving alb's of the cluster %s: %s", clusterID, err)
+		albs, err := csClient.Albs().ListClusterAlbs(clusterNameOrID, targetEnv)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error retrieving alb's of the cluster %s: %s", clusterNameOrID, err)
 		}
 
 		filterType := d.Get("alb_type").(string)
@@ -449,7 +489,7 @@ func dataSourceIBMContainerClusterVPCRead(d *schema.ResourceData, meta interface
 	if err != nil {
 		return err
 	}
-	apikeyConfig, err := apikeyAPI.GetApiKeyInfo(clusterID, v1targetEnv)
+	apikeyConfig, err := apikeyAPI.GetApiKeyInfo(clusterNameOrID, v1targetEnv)
 	if err != nil {
 		log.Printf("Error in GetApiKeyInfo, %s", err)
 		//return err

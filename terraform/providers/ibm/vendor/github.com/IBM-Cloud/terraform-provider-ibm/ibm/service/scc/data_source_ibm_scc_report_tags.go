@@ -5,7 +5,6 @@ package scc
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/scc-go-sdk/v5/securityandcompliancecenterapiv3"
 )
 
@@ -77,7 +77,7 @@ func dataSourceIbmSccReportTagsRead(context context.Context, d *schema.ResourceD
 	reportTags, response, err := resultsClient.GetReportTagsWithContext(context, getReportTagsOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetReportTagsWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetReportTagsWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetReportTagsWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(dataSourceIbmSccReportTagsID(d))
@@ -91,7 +91,7 @@ func dataSourceIbmSccReportTagsRead(context context.Context, d *schema.ResourceD
 		tags = append(tags, modelMap)
 	}
 	if err = d.Set("tags", tags); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting tags %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting tags %s", err))
 	}
 
 	return nil

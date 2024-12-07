@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package codeengine
@@ -27,52 +27,57 @@ func ResourceIbmCodeEngineConfigMap() *schema.Resource {
 		Importer:      &schema.ResourceImporter{},
 
 		Schema: map[string]*schema.Schema{
-			"project_id": &schema.Schema{
+			"project_id": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_config_map", "project_id"),
 				Description:  "The ID of the project.",
 			},
-			"name": &schema.Schema{
+			"data": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "The key-value pair for the config map. Values must be specified in `KEY=VALUE` format.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"name": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_config_map", "name"),
-				Description:  "The name of the config map. Use a name that is unique within the project.",
+				Description:  "The name of the config map.",
 			},
-			"data": &schema.Schema{
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "The key-value pair for the config map. Values must be specified in `KEY=VALUE` format. Each `KEY` field must consist of alphanumeric characters, `-`, `_` or `.` and must not be exceed a max length of 253 characters. Each `VALUE` field can consists of any character and must not be exceed a max length of 1048576 characters.",
-				Elem:        &schema.Schema{Type: schema.TypeString},
-			},
-			"created_at": &schema.Schema{
+			"created_at": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The timestamp when the resource was created.",
 			},
-			"entity_tag": &schema.Schema{
+			"entity_tag": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The version of the config map instance, which is used to achieve optimistic locking.",
 			},
-			"href": &schema.Schema{
+			"href": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "When you provision a new config map,  a URL is created identifying the location of the instance.",
 			},
-			"config_map_id": &schema.Schema{
+			"config_map_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The identifier of the resource.",
 			},
-			"resource_type": &schema.Schema{
+			"region": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The region of the project the resource is located in. Possible values: 'au-syd', 'br-sao', 'ca-tor', 'eu-de', 'eu-gb', 'jp-osa', 'jp-tok', 'us-east', 'us-south'.",
+			},
+			"resource_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The type of the config map.",
 			},
-			"etag": &schema.Schema{
+			"etag": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -110,7 +115,9 @@ func ResourceIbmCodeEngineConfigMapValidator() *validate.ResourceValidator {
 func resourceIbmCodeEngineConfigMapCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_config_map", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	createConfigMapOptions := &codeenginev2.CreateConfigMapOptions{}
@@ -125,10 +132,11 @@ func resourceIbmCodeEngineConfigMapCreate(context context.Context, d *schema.Res
 		createConfigMapOptions.SetData(data)
 	}
 
-	configMap, response, err := codeEngineClient.CreateConfigMapWithContext(context, createConfigMapOptions)
+	configMap, _, err := codeEngineClient.CreateConfigMapWithContext(context, createConfigMapOptions)
 	if err != nil {
-		log.Printf("[DEBUG] CreateConfigMapWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateConfigMapWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateConfigMapWithContext failed: %s", err.Error()), "ibm_code_engine_config_map", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *createConfigMapOptions.ProjectID, *configMap.Name))
@@ -139,14 +147,17 @@ func resourceIbmCodeEngineConfigMapCreate(context context.Context, d *schema.Res
 func resourceIbmCodeEngineConfigMapRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_config_map", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getConfigMapOptions := &codeenginev2.GetConfigMapOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_config_map", "read")
+		return tfErr.GetDiag()
 	}
 
 	getConfigMapOptions.SetProjectID(parts[0])
@@ -158,15 +169,13 @@ func resourceIbmCodeEngineConfigMapRead(context context.Context, d *schema.Resou
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetConfigMapWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetConfigMapWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetConfigMapWithContext failed: %s", err.Error()), "ibm_code_engine_config_map", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("project_id", configMap.ProjectID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting project_id: %s", err))
-	}
-	if err = d.Set("name", configMap.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		return diag.FromErr(fmt.Errorf("error setting project_id: %s", err))
 	}
 	if !core.IsNil(configMap.Data) {
 		data := make(map[string]string)
@@ -174,34 +183,43 @@ func resourceIbmCodeEngineConfigMapRead(context context.Context, d *schema.Resou
 			data[k] = string(v)
 		}
 		if err = d.Set("data", data); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting data: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting data: %s", err))
 		}
+	}
+	if err = d.Set("name", configMap.Name); err != nil {
+		return diag.FromErr(fmt.Errorf("error setting name: %s", err))
 	}
 	if !core.IsNil(configMap.CreatedAt) {
 		if err = d.Set("created_at", configMap.CreatedAt); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting created_at: %s", err))
 		}
 	}
 	if err = d.Set("entity_tag", configMap.EntityTag); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting entity_tag: %s", err))
+		return diag.FromErr(fmt.Errorf("error setting entity_tag: %s", err))
 	}
 	if !core.IsNil(configMap.Href) {
 		if err = d.Set("href", configMap.Href); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting href: %s", err))
 		}
 	}
 	if !core.IsNil(configMap.ID) {
 		if err = d.Set("config_map_id", configMap.ID); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting config_map_id: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting config_map_id: %s", err))
+		}
+	}
+	if !core.IsNil(configMap.Region) {
+		if err = d.Set("region", configMap.Region); err != nil {
+			return diag.FromErr(fmt.Errorf("error setting region: %s", err))
 		}
 	}
 	if !core.IsNil(configMap.ResourceType) {
 		if err = d.Set("resource_type", configMap.ResourceType); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting resource_type: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting resource_type: %s", err))
 		}
 	}
 	if err = d.Set("etag", response.Headers.Get("Etag")); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting etag: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting etag: %s", err), "ibm_code_engine_config_map", "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil
@@ -210,14 +228,17 @@ func resourceIbmCodeEngineConfigMapRead(context context.Context, d *schema.Resou
 func resourceIbmCodeEngineConfigMapUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_config_map", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	replaceConfigMapOptions := &codeenginev2.ReplaceConfigMapOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_config_map", "update")
+		return tfErr.GetDiag()
 	}
 
 	replaceConfigMapOptions.SetProjectID(parts[0])
@@ -225,9 +246,11 @@ func resourceIbmCodeEngineConfigMapUpdate(context context.Context, d *schema.Res
 
 	hasChange := false
 
-	if d.HasChange("name") {
-		replaceConfigMapOptions.SetName(d.Get("name").(string))
-		hasChange = true
+	if d.HasChange("project_id") {
+		errMsg := fmt.Sprintf("Cannot update resource property \"%s\" with the ForceNew annotation."+
+			" The resource must be re-created to update this property.", "project_id")
+		tfErr := flex.TerraformErrorf(err, errMsg, "ibm_code_engine_config_map", "update")
+		return tfErr.GetDiag()
 	}
 	if d.HasChange("data") {
 		data := make(map[string]string)
@@ -240,10 +263,11 @@ func resourceIbmCodeEngineConfigMapUpdate(context context.Context, d *schema.Res
 	replaceConfigMapOptions.SetIfMatch(d.Get("etag").(string))
 
 	if hasChange {
-		_, response, err := codeEngineClient.ReplaceConfigMapWithContext(context, replaceConfigMapOptions)
+		_, _, err = codeEngineClient.ReplaceConfigMapWithContext(context, replaceConfigMapOptions)
 		if err != nil {
-			log.Printf("[DEBUG] ReplaceConfigMapWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("ReplaceConfigMapWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ReplaceConfigMapWithContext failed: %s", err.Error()), "ibm_code_engine_config_map", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -253,23 +277,27 @@ func resourceIbmCodeEngineConfigMapUpdate(context context.Context, d *schema.Res
 func resourceIbmCodeEngineConfigMapDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_config_map", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	deleteConfigMapOptions := &codeenginev2.DeleteConfigMapOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_config_map", "delete")
+		return tfErr.GetDiag()
 	}
 
 	deleteConfigMapOptions.SetProjectID(parts[0])
 	deleteConfigMapOptions.SetName(parts[1])
 
-	response, err := codeEngineClient.DeleteConfigMapWithContext(context, deleteConfigMapOptions)
+	_, err = codeEngineClient.DeleteConfigMapWithContext(context, deleteConfigMapOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeleteConfigMapWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteConfigMapWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteConfigMapWithContext failed: %s", err.Error()), "ibm_code_engine_config_map", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")

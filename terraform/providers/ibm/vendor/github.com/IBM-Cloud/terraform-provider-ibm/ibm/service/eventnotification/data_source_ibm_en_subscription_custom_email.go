@@ -95,24 +95,6 @@ func DataSourceIBMEnCustomEmailSubscription() *schema.Resource {
 							Computed:    true,
 							Description: "The templete id for invitation",
 						},
-						// "invited": {
-						// 	Type:        schema.TypeList,
-						// 	Optional:    true,
-						// 	Computed:    true,
-						// 	Description: "The email id to be invited",
-						// },
-						// "subscribed": {
-						// 	Type:        schema.TypeList,
-						// 	Optional:    true,
-						// 	Computed:    true,
-						// 	Description: "The Email address which should be subscribed from smtp_ibm.",
-						// },
-						// "unsubscribed": {
-						// 	Type:        schema.TypeList,
-						// 	Optional:    true,
-						// 	Computed:    true,
-						// 	Description: "The Email address which should be unsubscribed from smtp_ibm.",
-						// },
 						"invited": {
 							Type:        schema.TypeList,
 							Computed:    true,
@@ -234,7 +216,7 @@ func dataSourceIBMEnCustomEmailSubscriptionRead(context context.Context, d *sche
 	}
 
 	if result.Attributes != nil {
-		if err = d.Set("attributes", enEmailSubscriptionFlattenAttributes(result.Attributes)); err != nil {
+		if err = d.Set("attributes", enCustomEmailSubscriptionFlattenAttributes(result.Attributes)); err != nil {
 			return diag.FromErr(fmt.Errorf("[ERROR] Error setting attributes %s", err))
 		}
 	}
@@ -248,22 +230,6 @@ func enCustomEmailSubscriptionFlattenAttributes(result en.SubscriptionAttributes
 	attributes := result.(*en.SubscriptionAttributes)
 
 	finalMap := enCustomEmailSubscriptionToMap(attributes)
-	// finalList = append(finalList, finalMap)
-	// invitedmap := make(map[string]interface{})
-	// if attributes.Invited != nil {
-	// 	invitedmap["invited"] = attributes.Invited
-	// }
-	// finalList = append(finalList, invitedmap)
-	// subscribedmap := make(map[string]interface{})
-	// if attributes.Subscribed != nil {
-	// 	subscribedmap["subscribed"] = attributes.Subscribed
-	// }
-	// finalList = append(finalList, subscribedmap)
-	// unsubscribedmap := make(map[string]interface{})
-	// if attributes.Unsubscribed != nil {
-	// 	unsubscribedmap["unsubscribed"] = attributes.Unsubscribed
-	// }
-	// finalList = append(finalList, unsubscribedmap)
 	finalList = append(finalList, finalMap)
 
 	return finalList

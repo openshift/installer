@@ -5,7 +5,6 @@ package scc
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -324,33 +323,33 @@ func dataSourceIbmSccReportControlsRead(context context.Context, d *schema.Resou
 	reportControls, response, err := resultsClient.GetReportControlsWithContext(context, getReportControlsOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetReportControlsWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetReportControlsWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetReportControlsWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(dataSourceIbmSccReportControlsID(d))
 
 	if err = d.Set("total_count", flex.IntValue(reportControls.TotalCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting total_count: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting total_count: %s", err))
 	}
 
 	if err = d.Set("compliant_count", flex.IntValue(reportControls.CompliantCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting compliant_count: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting compliant_count: %s", err))
 	}
 
 	if err = d.Set("not_compliant_count", flex.IntValue(reportControls.NotCompliantCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting not_compliant_count: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting not_compliant_count: %s", err))
 	}
 
 	if err = d.Set("unable_to_perform_count", flex.IntValue(reportControls.UnableToPerformCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting unable_to_perform_count: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting unable_to_perform_count: %s", err))
 	}
 
 	if err = d.Set("user_evaluation_required_count", flex.IntValue(reportControls.UserEvaluationRequiredCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting user_evaluation_required_count: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting user_evaluation_required_count: %s", err))
 	}
 
 	if err = d.Set("home_account_id", reportControls.HomeAccountID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting home_account_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting home_account_id: %s", err))
 	}
 
 	controls := []map[string]interface{}{}
@@ -364,7 +363,7 @@ func dataSourceIbmSccReportControlsRead(context context.Context, d *schema.Resou
 		}
 	}
 	if err = d.Set("controls", controls); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting controls %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting controls %s", err))
 	}
 
 	return nil

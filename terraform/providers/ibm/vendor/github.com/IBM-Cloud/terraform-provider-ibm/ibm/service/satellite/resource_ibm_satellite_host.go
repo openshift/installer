@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2017, 2021 All Rights Reserved.
+// Copyright IBM Corp. 2017, 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package satellite
@@ -121,9 +121,16 @@ func ResourceIBMSatelliteHostValidator() *validate.ResourceValidator {
 	satelliteHostResourceValidator := validate.ResourceValidator{ResourceName: "ibm_satellite_host", Schema: validateSchema}
 	return &satelliteHostResourceValidator
 }
+
 func resourceIBMSatelliteHostCreate(d *schema.ResourceData, meta interface{}) error {
-	hostName := d.Get(hostID).(string)
+	hostNameOrID := d.Get(hostID).(string)
 	location := d.Get(hostLocation).(string)
+
+	//Check host attached to location
+	hostStatus, err := waitForHostAttachment(hostNameOrID, location, d, meta)
+	if err != nil {
+		return fmt.Errorf("[ERROR] Error waiting for attaching host (%s) to be succeeded: %s", hostNameOrID, err)
+	}
 
 	satClient, err := meta.(conns.ClientSession).SatelliteClientSession()
 	if err != nil {
@@ -138,18 +145,12 @@ func resourceIBMSatelliteHostCreate(d *schema.ResourceData, meta interface{}) er
 	} else {
 		hostAssignOptions.Cluster = flex.PtrToString(location)
 	}
-	hostAssignOptions.HostID = flex.PtrToString(hostName)
-
-	//Check host attached to location
-	hostStatus, err := waitForHostAttachment(hostName, location, d, meta)
-	if err != nil {
-		return fmt.Errorf("[ERROR] Error waiting for attaching host (%s) to be succeeded: %s", hostName, err)
-	}
+	hostAssignOptions.HostID = flex.PtrToString(hostNameOrID)
 
 	labels := make(map[string]string)
 	if _, ok := d.GetOk(hostLabels); ok {
 		l := d.Get(hostLabels).(*schema.Set)
-		labels = flex.FlattenHostLabels(l.List())
+		labels = flex.FlattenKeyValues(l.List())
 		hostAssignOptions.Labels = labels
 	} else {
 		hostAssignOptions.Labels = labels
@@ -170,12 +171,12 @@ func resourceIBMSatelliteHostCreate(d *schema.ResourceData, meta interface{}) er
 		}
 	}
 
-	d.SetId(fmt.Sprintf("%s/%s", location, hostName))
+	d.SetId(fmt.Sprintf("%s/%s", location, hostNameOrID))
 
 	//Wait for host to reach normal state
-	_, err = waitForHostAttachment(hostName, location, d, meta)
+	_, err = waitForHostAttachment(hostNameOrID, location, d, meta)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error waiting for host (%s) to get normal state: %s", hostName, err)
+		return fmt.Errorf("[ERROR] Error waiting for host (%s) to get normal state: %s", hostNameOrID, err)
 	}
 	wait, ok := d.GetOk("wait_till")
 	if ok && wait.(string) == "location_normal" {
@@ -197,7 +198,7 @@ func resourceIBMSatelliteHostRead(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("[ERROR] Incorrect ID %s: Id should be a combination of location/hostName", d.Id())
 	}
 	location := parts[0]
-	hostName := parts[1]
+	hostNameOrID := parts[1]
 
 	satClient, err := meta.(conns.ClientSession).SatelliteClientSession()
 	if err != nil {
@@ -218,9 +219,9 @@ func resourceIBMSatelliteHostRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	for _, h := range hostList {
-		if hostName == *h.Name || hostName == *h.ID {
+		if hostNameOrID == flex.StringValue(h.Name) || hostNameOrID == flex.StringValue(h.ID) {
 			d.Set(hostLocation, location)
-			d.Set("host_id", hostName)
+			d.Set("host_id", hostNameOrID)
 
 			if _, ok := d.GetOk(hostLabels); ok {
 				l := d.Get(hostLabels).(*schema.Set)
@@ -228,7 +229,7 @@ func resourceIBMSatelliteHostRead(d *schema.ResourceData, meta interface{}) erro
 			}
 
 			if h.Health != nil {
-				d.Set(hostState, *h.Health.Status)
+				d.Set(hostState, flex.StringValue(h.Health.Status))
 			}
 
 			if _, ok := d.GetOk(hostCluster); ok {
@@ -238,8 +239,8 @@ func resourceIBMSatelliteHostRead(d *schema.ResourceData, meta interface{}) erro
 			}
 
 			if h.Assignment != nil {
-				d.Set(hostWorkerPool, *h.Assignment.WorkerPoolName)
-				d.Set(hostZone, *h.Assignment.Zone)
+				d.Set(hostWorkerPool, flex.StringValue(h.Assignment.WorkerPoolName))
+				d.Set(hostZone, flex.StringValue(h.Assignment.Zone))
 			}
 		}
 	}
@@ -268,7 +269,7 @@ func resourceIBMSatelliteHostUpdate(d *schema.ResourceData, meta interface{}) er
 		labels := make(map[string]string)
 		if _, ok := d.GetOk(hostLabels); ok {
 			l := d.Get(hostLabels).(*schema.Set)
-			labels = flex.FlattenHostLabels(l.List())
+			labels = flex.FlattenKeyValues(l.List())
 			updateHostOptions.Labels = labels
 		}
 		response, err := satClient.UpdateSatelliteHost(updateHostOptions)
@@ -287,7 +288,7 @@ func resourceIBMSatelliteHostDelete(d *schema.ResourceData, meta interface{}) er
 	}
 
 	location := parts[0]
-	hostID := parts[1]
+	hostNameorID := parts[1]
 	satClient, err := meta.(conns.ClientSession).SatelliteClientSession()
 	if err != nil {
 		return err
@@ -295,7 +296,7 @@ func resourceIBMSatelliteHostDelete(d *schema.ResourceData, meta interface{}) er
 
 	removeSatHostOptions := &kubernetesserviceapiv1.RemoveSatelliteHostOptions{}
 	removeSatHostOptions.Controller = &location
-	removeSatHostOptions.HostID = &hostID
+	removeSatHostOptions.HostID = &hostNameorID
 
 	response, err := satClient.RemoveSatelliteHost(removeSatHostOptions)
 	if err != nil {
@@ -309,7 +310,7 @@ func resourceIBMSatelliteHostDelete(d *schema.ResourceData, meta interface{}) er
 	return nil
 }
 
-func waitForHostAttachment(hostName, location string, d *schema.ResourceData, meta interface{}) (interface{}, error) {
+func waitForHostAttachment(hostNameOrID, location string, d *schema.ResourceData, meta interface{}) (interface{}, error) {
 	satClient, err := meta.(conns.ClientSession).SatelliteClientSession()
 	if err != nil {
 		return false, err
@@ -325,20 +326,19 @@ func waitForHostAttachment(hostName, location string, d *schema.ResourceData, me
 			hostList, resp, err := satClient.GetSatelliteHosts(attachOptions)
 			if err != nil {
 				if apiErr, ok := err.(bmxerror.RequestFailure); ok && apiErr.StatusCode() != 404 {
-					return nil, "", fmt.Errorf("[ERROR] The satellite host (%s) failed to attached: %v\n%s", hostName, err, resp)
+					return nil, "", fmt.Errorf("[ERROR] The satellite host (%s) failed to attached: %v\n%s", hostNameOrID, err, resp)
 				}
 			}
 
-			if hostList != nil {
-				for _, h := range hostList {
-					if h.Health != nil {
-						if (hostName == *h.Name) && (*h.Health.Status == rsHostNormalStatus || *h.Health.Status == rsHostReadyStatus) {
-							return *h.Health.Status, *h.Health.Status, err
-						}
+			for _, h := range hostList {
+				if h.Health != nil {
+					if (hostNameOrID == flex.StringValue(h.Name) || hostNameOrID == flex.StringValue(h.ID)) &&
+						(flex.StringValue(h.Health.Status) == rsHostNormalStatus || flex.StringValue(h.Health.Status) == rsHostReadyStatus) {
+						return flex.StringValue(h.Health.Status), flex.StringValue(h.Health.Status), err
 					}
 				}
 			}
-			return hostName, rsHostProvisioningStatus, nil
+			return hostNameOrID, rsHostProvisioningStatus, nil
 		},
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      60 * time.Second,

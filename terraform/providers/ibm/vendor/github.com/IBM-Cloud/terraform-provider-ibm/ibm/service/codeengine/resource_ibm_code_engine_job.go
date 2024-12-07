@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package codeengine
@@ -27,86 +27,83 @@ func ResourceIbmCodeEngineJob() *schema.Resource {
 		Importer:      &schema.ResourceImporter{},
 
 		Schema: map[string]*schema.Schema{
-			"project_id": &schema.Schema{
+			"project_id": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_job", "project_id"),
 				Description:  "The ID of the project.",
 			},
-			"image_reference": &schema.Schema{
+			"image_reference": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_job", "image_reference"),
 				Description:  "The name of the image that is used for this job. The format is `REGISTRY/NAMESPACE/REPOSITORY:TAG` where `REGISTRY` and `TAG` are optional. If `REGISTRY` is not specified, the default is `docker.io`. If `TAG` is not specified, the default is `latest`. If the image reference points to a registry that requires authentication, make sure to also specify the property `image_secret`.",
 			},
-			"name": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validate.InvokeValidator("ibm_code_engine_job", "name"),
-				Description:  "The name of the job. Use a name that is unique within the project.",
-			},
-			"image_secret": &schema.Schema{
+			"image_secret": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_job", "image_secret"),
 				Description:  "The name of the image registry access secret. The image registry access secret is used to authenticate with a private registry when you download the container image. If the image reference points to a registry that requires authentication, the job / job runs will be created but submitted job runs will fail, until this property is provided, too. This property must not be set on a job run, which references a job template.",
 			},
-			"run_arguments": &schema.Schema{
+			"name": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_code_engine_job", "name"),
+				Description:  "The name of the job.",
+			},
+			"run_arguments": {
 				Type:        schema.TypeList,
 				Optional:    true,
-				MinItems:    0,
 				Description: "Set arguments for the job that are passed to start job run containers. If not specified an empty string array will be applied and the arguments specified by the container image, will be used to start the container.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			"run_as_user": &schema.Schema{
+			"run_as_user": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     0,
-				Description: "The user ID (UID) to run the application (e.g., 1001).",
+				Description: "The user ID (UID) to run the job.",
 			},
-			"run_commands": &schema.Schema{
+			"run_commands": {
 				Type:        schema.TypeList,
 				Optional:    true,
-				MinItems:    0,
 				Description: "Set commands for the job that are passed to start job run containers. If not specified an empty string array will be applied and the command specified by the container image, will be used to start the container.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			"run_env_variables": &schema.Schema{
+			"run_env_variables": {
 				Type:        schema.TypeList,
 				Optional:    true,
-				MinItems:    0,
-				Description: "Optional references to config maps, secrets or a literal values.",
+				Description: "References to config maps, secrets or literal values, which are exposed as environment variables in the job run.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"key": &schema.Schema{
+						"key": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "The key to reference as environment variable.",
 						},
-						"name": &schema.Schema{
+						"name": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "The name of the environment variable.",
 						},
-						"prefix": &schema.Schema{
+						"prefix": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "A prefix that can be added to all keys of a full secret or config map reference.",
 						},
-						"reference": &schema.Schema{
+						"reference": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "The name of the secret or config map.",
 						},
-						"type": &schema.Schema{
+						"type": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Default:     "literal",
 							Description: "Specify the type of the environment variable.",
 						},
-						"value": &schema.Schema{
+						"value": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "The literal value of the environment variable.",
@@ -114,43 +111,42 @@ func ResourceIbmCodeEngineJob() *schema.Resource {
 					},
 				},
 			},
-			"run_mode": &schema.Schema{
+			"run_mode": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      "task",
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_job", "run_mode"),
-				Description:  "The mode for runs of the job. Valid values are `task` and `daemon`. In `task` mode, the `scale_max_execution_time` and `scale_retry_limit` properties apply. In `daemon` mode, since there is no timeout and failed instances are restarted indefinitely, the `scale_max_execution_time` and `scale_retry_limit` properties are not allowed.",
+				Description:  "The mode for runs of the job. Valid values are `task` and `daemon`. In `task` mode, the `max_execution_time` and `retry_limit` properties apply. In `daemon` mode, since there is no timeout and failed instances are restarted indefinitely, the `max_execution_time` and `retry_limit` properties are not allowed.",
 			},
-			"run_service_account": &schema.Schema{
+			"run_service_account": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      "default",
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_job", "run_service_account"),
 				Description:  "The name of the service account. For built-in service accounts, you can use the shortened names `manager`, `none`, `reader`, and `writer`. This property must not be set on a job run, which references a job template.",
 			},
-			"run_volume_mounts": &schema.Schema{
+			"run_volume_mounts": {
 				Type:        schema.TypeList,
 				Optional:    true,
-				MinItems:    0,
-				Description: "Optional mounts of config maps or a secrets.",
+				Description: "Optional mounts of config maps or secrets.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"mount_path": &schema.Schema{
+						"mount_path": {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "The path that should be mounted.",
 						},
-						"name": &schema.Schema{
+						"name": {
 							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Optional name of the mount. If not set, it will be generated based on the `ref` and a random ID. In case the `ref` is longer than 58 characters, it will be cut off.",
+							Required:    true,
+							Description: "The name of the mount.",
 						},
-						"reference": &schema.Schema{
+						"reference": {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "The name of the referenced secret or config map.",
 						},
-						"type": &schema.Schema{
+						"type": {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "Specify the type of the volume mount. Allowed types are: 'config_map', 'secret'.",
@@ -158,72 +154,87 @@ func ResourceIbmCodeEngineJob() *schema.Resource {
 					},
 				},
 			},
-			"scale_array_spec": &schema.Schema{
+			"scale_array_spec": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      "0",
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_job", "scale_array_spec"),
-				Description:  "Define a custom set of array indices as comma-separated list containing single values and hyphen-separated ranges like `5,12-14,23,27`. Each instance can pick up its array index via environment variable `JOB_INDEX`. The number of unique array indices specified here determines the number of job instances to run.",
+				Description:  "Define a custom set of array indices as a comma-separated list containing single values and hyphen-separated ranges, such as  5,12-14,23,27. Each instance gets its array index value from the environment variable JOB_INDEX. The number of unique array indices that you specify with this parameter determines the number of job instances to run.",
 			},
-			"scale_cpu_limit": &schema.Schema{
+			"scale_cpu_limit": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      "1",
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_job", "scale_cpu_limit"),
 				Description:  "Optional amount of CPU set for the instance of the job. For valid values see [Supported memory and CPU combinations](https://cloud.ibm.com/docs/codeengine?topic=codeengine-mem-cpu-combo).",
 			},
-			"scale_ephemeral_storage_limit": &schema.Schema{
+			"scale_ephemeral_storage_limit": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      "400M",
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_job", "scale_ephemeral_storage_limit"),
 				Description:  "Optional amount of ephemeral storage to set for the instance of the job. The amount specified as ephemeral storage, must not exceed the amount of `scale_memory_limit`. The units for specifying ephemeral storage are Megabyte (M) or Gigabyte (G), whereas G and M are the shorthand expressions for GB and MB. For more information see [Units of measurement](https://cloud.ibm.com/docs/codeengine?topic=codeengine-mem-cpu-combo#unit-measurements).",
 			},
-			"scale_max_execution_time": &schema.Schema{
+			"scale_max_execution_time": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     7200,
 				Description: "The maximum execution time in seconds for runs of the job. This property can only be specified if `run_mode` is `task`.",
 			},
-			"scale_memory_limit": &schema.Schema{
+			"scale_memory_limit": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      "4G",
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_job", "scale_memory_limit"),
 				Description:  "Optional amount of memory set for the instance of the job. For valid values see [Supported memory and CPU combinations](https://cloud.ibm.com/docs/codeengine?topic=codeengine-mem-cpu-combo). The units for specifying memory are Megabyte (M) or Gigabyte (G), whereas G and M are the shorthand expressions for GB and MB. For more information see [Units of measurement](https://cloud.ibm.com/docs/codeengine?topic=codeengine-mem-cpu-combo#unit-measurements).",
 			},
-			"scale_retry_limit": &schema.Schema{
+			"scale_retry_limit": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     3,
 				Description: "The number of times to rerun an instance of the job before the job is marked as failed. This property can only be specified if `run_mode` is `task`.",
 			},
-			"created_at": &schema.Schema{
+			"build": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Reference to a build that is associated with the job.",
+			},
+			"build_run": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Reference to a build run that is associated with the job.",
+			},
+			"created_at": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The timestamp when the resource was created.",
 			},
-			"entity_tag": &schema.Schema{
+			"entity_tag": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The version of the job instance, which is used to achieve optimistic locking.",
 			},
-			"href": &schema.Schema{
+			"href": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "When you provision a new job,  a URL is created identifying the location of the instance.",
 			},
-			"job_id": &schema.Schema{
+			"job_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The identifier of the resource.",
 			},
-			"resource_type": &schema.Schema{
+			"region": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The region of the project the resource is located in. Possible values: 'au-syd', 'br-sao', 'ca-tor', 'eu-de', 'eu-gb', 'jp-osa', 'jp-tok', 'us-east', 'us-south'.",
+			},
+			"resource_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The type of the job.",
 			},
-			"etag": &schema.Schema{
+			"etag": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -253,15 +264,6 @@ func ResourceIbmCodeEngineJobValidator() *validate.ResourceValidator {
 			MaxValueLength:             256,
 		},
 		validate.ValidateSchema{
-			Identifier:                 "name",
-			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
-			Type:                       validate.TypeString,
-			Required:                   true,
-			Regexp:                     `^[a-z0-9]([\-a-z0-9]*[a-z0-9])?$`,
-			MinValueLength:             1,
-			MaxValueLength:             63,
-		},
-		validate.ValidateSchema{
 			Identifier:                 "image_secret",
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
@@ -269,6 +271,15 @@ func ResourceIbmCodeEngineJobValidator() *validate.ResourceValidator {
 			Regexp:                     `^[a-z0-9]([\-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([\-a-z0-9]*[a-z0-9])?)*$`,
 			MinValueLength:             1,
 			MaxValueLength:             253,
+		},
+		validate.ValidateSchema{
+			Identifier:                 "name",
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			Regexp:                     `^[a-z0-9]([\-a-z0-9]*[a-z0-9])?$`,
+			MinValueLength:             1,
+			MaxValueLength:             63,
 		},
 		validate.ValidateSchema{
 			Identifier:                 "run_mode",
@@ -333,7 +344,9 @@ func ResourceIbmCodeEngineJobValidator() *validate.ResourceValidator {
 func resourceIbmCodeEngineJobCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_job", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	createJobOptions := &codeenginev2.CreateJobOptions{}
@@ -412,10 +425,11 @@ func resourceIbmCodeEngineJobCreate(context context.Context, d *schema.ResourceD
 		createJobOptions.SetScaleRetryLimit(int64(d.Get("scale_retry_limit").(int)))
 	}
 
-	job, response, err := codeEngineClient.CreateJobWithContext(context, createJobOptions)
+	job, _, err := codeEngineClient.CreateJobWithContext(context, createJobOptions)
 	if err != nil {
-		log.Printf("[DEBUG] CreateJobWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateJobWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateJobWithContext failed: %s", err.Error()), "ibm_code_engine_job", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *createJobOptions.ProjectID, *job.Name))
@@ -426,14 +440,17 @@ func resourceIbmCodeEngineJobCreate(context context.Context, d *schema.ResourceD
 func resourceIbmCodeEngineJobRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getJobOptions := &codeenginev2.GetJobOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_job", "read")
+		return tfErr.GetDiag()
 	}
 
 	getJobOptions.SetProjectID(parts[0])
@@ -445,130 +462,147 @@ func resourceIbmCodeEngineJobRead(context context.Context, d *schema.ResourceDat
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetJobWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetJobWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetJobWithContext failed: %s", err.Error()), "ibm_code_engine_job", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("project_id", job.ProjectID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting project_id: %s", err))
+		return diag.FromErr(fmt.Errorf("error setting project_id: %s", err))
 	}
 	if err = d.Set("image_reference", job.ImageReference); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting image_reference: %s", err))
-	}
-	if err = d.Set("name", job.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		return diag.FromErr(fmt.Errorf("error setting image_reference: %s", err))
 	}
 	if !core.IsNil(job.ImageSecret) {
 		if err = d.Set("image_secret", job.ImageSecret); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting image_secret: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting image_secret: %s", err))
 		}
+	}
+	if err = d.Set("name", job.Name); err != nil {
+		return diag.FromErr(fmt.Errorf("error setting name: %s", err))
 	}
 	if !core.IsNil(job.RunArguments) {
 		if err = d.Set("run_arguments", job.RunArguments); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting run_arguments: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting run_arguments: %s", err))
 		}
 	}
 	if !core.IsNil(job.RunAsUser) {
 		if err = d.Set("run_as_user", flex.IntValue(job.RunAsUser)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting run_as_user: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting run_as_user: %s", err))
 		}
 	}
 	if !core.IsNil(job.RunCommands) {
 		if err = d.Set("run_commands", job.RunCommands); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting run_commands: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting run_commands: %s", err))
 		}
 	}
 	if !core.IsNil(job.RunEnvVariables) {
 		runEnvVariables := []map[string]interface{}{}
 		for _, runEnvVariablesItem := range job.RunEnvVariables {
-			runEnvVariablesItemMap, err := resourceIbmCodeEngineJobEnvVarToMap(&runEnvVariablesItem)
+			runEnvVariablesItemMap, err := resourceIbmCodeEngineJobEnvVarToMap(&runEnvVariablesItem) /* #nosec G601 */
 			if err != nil {
 				return diag.FromErr(err)
 			}
 			runEnvVariables = append(runEnvVariables, runEnvVariablesItemMap)
 		}
 		if err = d.Set("run_env_variables", runEnvVariables); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting run_env_variables: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting run_env_variables: %s", err))
 		}
 	}
 	if !core.IsNil(job.RunMode) {
 		if err = d.Set("run_mode", job.RunMode); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting run_mode: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting run_mode: %s", err))
 		}
 	}
 	if !core.IsNil(job.RunServiceAccount) {
 		if err = d.Set("run_service_account", job.RunServiceAccount); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting run_service_account: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting run_service_account: %s", err))
 		}
 	}
 	if !core.IsNil(job.RunVolumeMounts) {
 		runVolumeMounts := []map[string]interface{}{}
 		for _, runVolumeMountsItem := range job.RunVolumeMounts {
-			runVolumeMountsItemMap, err := resourceIbmCodeEngineJobVolumeMountToMap(&runVolumeMountsItem)
+			runVolumeMountsItemMap, err := resourceIbmCodeEngineJobVolumeMountToMap(&runVolumeMountsItem) /* #nosec G601 */
 			if err != nil {
 				return diag.FromErr(err)
 			}
 			runVolumeMounts = append(runVolumeMounts, runVolumeMountsItemMap)
 		}
 		if err = d.Set("run_volume_mounts", runVolumeMounts); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting run_volume_mounts: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting run_volume_mounts: %s", err))
 		}
 	}
 	if !core.IsNil(job.ScaleArraySpec) {
 		if err = d.Set("scale_array_spec", job.ScaleArraySpec); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting scale_array_spec: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting scale_array_spec: %s", err))
 		}
 	}
 	if !core.IsNil(job.ScaleCpuLimit) {
 		if err = d.Set("scale_cpu_limit", job.ScaleCpuLimit); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting scale_cpu_limit: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting scale_cpu_limit: %s", err))
 		}
 	}
 	if !core.IsNil(job.ScaleEphemeralStorageLimit) {
 		if err = d.Set("scale_ephemeral_storage_limit", job.ScaleEphemeralStorageLimit); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting scale_ephemeral_storage_limit: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting scale_ephemeral_storage_limit: %s", err))
 		}
 	}
 	if !core.IsNil(job.ScaleMaxExecutionTime) {
 		if err = d.Set("scale_max_execution_time", flex.IntValue(job.ScaleMaxExecutionTime)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting scale_max_execution_time: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting scale_max_execution_time: %s", err))
 		}
 	}
 	if !core.IsNil(job.ScaleMemoryLimit) {
 		if err = d.Set("scale_memory_limit", job.ScaleMemoryLimit); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting scale_memory_limit: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting scale_memory_limit: %s", err))
 		}
 	}
 	if !core.IsNil(job.ScaleRetryLimit) {
 		if err = d.Set("scale_retry_limit", flex.IntValue(job.ScaleRetryLimit)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting scale_retry_limit: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting scale_retry_limit: %s", err))
+		}
+	}
+	if !core.IsNil(job.Build) {
+		if err = d.Set("build", job.Build); err != nil {
+			return diag.FromErr(fmt.Errorf("error setting build: %s", err))
+		}
+	}
+	if !core.IsNil(job.BuildRun) {
+		if err = d.Set("build_run", job.BuildRun); err != nil {
+			return diag.FromErr(fmt.Errorf("error setting build_run: %s", err))
 		}
 	}
 	if !core.IsNil(job.CreatedAt) {
 		if err = d.Set("created_at", job.CreatedAt); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting created_at: %s", err))
 		}
 	}
 	if err = d.Set("entity_tag", job.EntityTag); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting entity_tag: %s", err))
+		return diag.FromErr(fmt.Errorf("error setting entity_tag: %s", err))
 	}
 	if !core.IsNil(job.Href) {
 		if err = d.Set("href", job.Href); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting href: %s", err))
 		}
 	}
 	if !core.IsNil(job.ID) {
 		if err = d.Set("job_id", job.ID); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting job_id: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting job_id: %s", err))
+		}
+	}
+	if !core.IsNil(job.Region) {
+		if err = d.Set("region", job.Region); err != nil {
+			return diag.FromErr(fmt.Errorf("error setting region: %s", err))
 		}
 	}
 	if !core.IsNil(job.ResourceType) {
 		if err = d.Set("resource_type", job.ResourceType); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting resource_type: %s", err))
+			return diag.FromErr(fmt.Errorf("error setting resource_type: %s", err))
 		}
 	}
 	if err = d.Set("etag", response.Headers.Get("Etag")); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting etag: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting etag: %s", err), "ibm_code_engine_job", "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil
@@ -577,14 +611,17 @@ func resourceIbmCodeEngineJobRead(context context.Context, d *schema.ResourceDat
 func resourceIbmCodeEngineJobUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_job", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	updateJobOptions := &codeenginev2.UpdateJobOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_job", "update")
+		return tfErr.GetDiag()
 	}
 
 	updateJobOptions.SetProjectID(parts[0])
@@ -593,10 +630,15 @@ func resourceIbmCodeEngineJobUpdate(context context.Context, d *schema.ResourceD
 	hasChange := false
 
 	patchVals := &codeenginev2.JobPatch{}
-	if d.HasChange("image_reference") || d.HasChange("name") {
+	if d.HasChange("project_id") {
+		errMsg := fmt.Sprintf("Cannot update resource property \"%s\" with the ForceNew annotation."+
+			" The resource must be re-created to update this property.", "project_id")
+		tfErr := flex.TerraformErrorf(err, errMsg, "ibm_code_engine_job", "update")
+		return tfErr.GetDiag()
+	}
+	if d.HasChange("image_reference") {
 		newImageReference := d.Get("image_reference").(string)
 		patchVals.ImageReference = &newImageReference
-		updateJobOptions.SetName(d.Get("name").(string))
 		hasChange = true
 	}
 	if d.HasChange("image_secret") {
@@ -697,10 +739,11 @@ func resourceIbmCodeEngineJobUpdate(context context.Context, d *schema.ResourceD
 
 	if hasChange {
 		updateJobOptions.Job, _ = patchVals.AsPatch()
-		_, response, err := codeEngineClient.UpdateJobWithContext(context, updateJobOptions)
+		_, _, err = codeEngineClient.UpdateJobWithContext(context, updateJobOptions)
 		if err != nil {
-			log.Printf("[DEBUG] UpdateJobWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdateJobWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateJobWithContext failed: %s", err.Error()), "ibm_code_engine_job", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -710,23 +753,27 @@ func resourceIbmCodeEngineJobUpdate(context context.Context, d *schema.ResourceD
 func resourceIbmCodeEngineJobDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_job", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	deleteJobOptions := &codeenginev2.DeleteJobOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_code_engine_job", "delete")
+		return tfErr.GetDiag()
 	}
 
 	deleteJobOptions.SetProjectID(parts[0])
 	deleteJobOptions.SetName(parts[1])
 
-	response, err := codeEngineClient.DeleteJobWithContext(context, deleteJobOptions)
+	_, err = codeEngineClient.DeleteJobWithContext(context, deleteJobOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeleteJobWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteJobWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteJobWithContext failed: %s", err.Error()), "ibm_code_engine_job", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")
@@ -782,9 +829,7 @@ func resourceIbmCodeEngineJobEnvVarToMap(model *codeenginev2.EnvVar) (map[string
 	if model.Reference != nil {
 		modelMap["reference"] = model.Reference
 	}
-	if model.Type != nil {
-		modelMap["type"] = model.Type
-	}
+	modelMap["type"] = model.Type
 	if model.Value != nil {
 		modelMap["value"] = model.Value
 	}
@@ -794,9 +839,7 @@ func resourceIbmCodeEngineJobEnvVarToMap(model *codeenginev2.EnvVar) (map[string
 func resourceIbmCodeEngineJobVolumeMountToMap(model *codeenginev2.VolumeMount) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["mount_path"] = model.MountPath
-	if model.Name != nil {
-		modelMap["name"] = model.Name
-	}
+	modelMap["name"] = model.Name
 	modelMap["reference"] = model.Reference
 	modelMap["type"] = model.Type
 	return modelMap, nil

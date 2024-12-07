@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2023.
+ * (C) Copyright IBM Corp. 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.83.0-adaf0721-20231212-210453
+ * IBM OpenAPI SDK Code Generator Version: 3.90.0-5aad763d-20240506-203857
  */
 
 // Package mqcloudv1 : Operations and models for the MqcloudV1 service
@@ -38,7 +38,7 @@ import (
 
 // MqcloudV1 : The MQ on Cloud API defines a REST API interface to work with MQ on Cloud service in IBM Cloud.
 //
-// API Version: 1.0.0
+// API Version: 1.0.1
 type MqcloudV1 struct {
 	Service *core.BaseService
 
@@ -77,22 +77,26 @@ func NewMqcloudV1UsingExternalConfig(options *MqcloudV1Options) (mqcloud *Mqclou
 	if options.Authenticator == nil {
 		options.Authenticator, err = core.GetAuthenticatorFromEnvironment(options.ServiceName)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "env-auth-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	mqcloud, err = NewMqcloudV1(options)
+	err = core.RepurposeSDKProblem(err, "new-client-error")
 	if err != nil {
 		return
 	}
 
 	err = mqcloud.Service.ConfigureService(options.ServiceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client-config-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = mqcloud.Service.SetServiceURL(options.URL)
+		err = core.RepurposeSDKProblem(err, "url-set-error")
 	}
 	return
 }
@@ -106,17 +110,20 @@ func NewMqcloudV1(options *MqcloudV1Options) (service *MqcloudV1, err error) {
 
 	err = core.ValidateStruct(options, "options")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "invalid-global-options", common.GetComponentInfo())
 		return
 	}
 
 	baseService, err := core.NewBaseService(serviceOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "new-base-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = baseService.SetServiceURL(options.URL)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-url-error", common.GetComponentInfo())
 			return
 		}
 	}
@@ -131,7 +138,7 @@ func NewMqcloudV1(options *MqcloudV1Options) (service *MqcloudV1, err error) {
 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
-	return "", fmt.Errorf("service does not support regional URLs")
+	return "", core.SDKErrorf(nil, "service does not support regional URLs", "no-regional-support", common.GetComponentInfo())
 }
 
 // Clone makes a copy of "mqcloud" suitable for processing requests.
@@ -151,7 +158,11 @@ func ConstructServiceURL(providedUrlVariables map[string]string) (string, error)
 
 // SetServiceURL sets the service URL
 func (mqcloud *MqcloudV1) SetServiceURL(url string) error {
-	return mqcloud.Service.SetServiceURL(url)
+	err := mqcloud.Service.SetServiceURL(url)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-set-error", common.GetComponentInfo())
+	}
+	return err
 }
 
 // GetServiceURL returns the service URL
@@ -188,17 +199,21 @@ func (mqcloud *MqcloudV1) DisableRetries() {
 // GetUsageDetails : Get the usage details
 // Get the usage details.
 func (mqcloud *MqcloudV1) GetUsageDetails(getUsageDetailsOptions *GetUsageDetailsOptions) (result *Usage, response *core.DetailedResponse, err error) {
-	return mqcloud.GetUsageDetailsWithContext(context.Background(), getUsageDetailsOptions)
+	result, response, err = mqcloud.GetUsageDetailsWithContext(context.Background(), getUsageDetailsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetUsageDetailsWithContext is an alternate form of the GetUsageDetails method which supports a Context parameter
 func (mqcloud *MqcloudV1) GetUsageDetailsWithContext(ctx context.Context, getUsageDetailsOptions *GetUsageDetailsOptions) (result *Usage, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getUsageDetailsOptions, "getUsageDetailsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getUsageDetailsOptions, "getUsageDetailsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -211,6 +226,7 @@ func (mqcloud *MqcloudV1) GetUsageDetailsWithContext(ctx context.Context, getUsa
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/usage`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -229,17 +245,21 @@ func (mqcloud *MqcloudV1) GetUsageDetailsWithContext(ctx context.Context, getUsa
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_usage_details", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalUsage)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -251,17 +271,21 @@ func (mqcloud *MqcloudV1) GetUsageDetailsWithContext(ctx context.Context, getUsa
 // GetOptions : Return configuration options (eg, available deployment locations, queue manager sizes)
 // Return configuration options (eg, available deployment locations, queue manager sizes).
 func (mqcloud *MqcloudV1) GetOptions(getOptionsOptions *GetOptionsOptions) (result *ConfigurationOptions, response *core.DetailedResponse, err error) {
-	return mqcloud.GetOptionsWithContext(context.Background(), getOptionsOptions)
+	result, response, err = mqcloud.GetOptionsWithContext(context.Background(), getOptionsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOptionsWithContext is an alternate form of the GetOptions method which supports a Context parameter
 func (mqcloud *MqcloudV1) GetOptionsWithContext(ctx context.Context, getOptionsOptions *GetOptionsOptions) (result *ConfigurationOptions, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getOptionsOptions, "getOptionsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getOptionsOptions, "getOptionsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -274,6 +298,7 @@ func (mqcloud *MqcloudV1) GetOptionsWithContext(ctx context.Context, getOptionsO
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/options`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -292,17 +317,21 @@ func (mqcloud *MqcloudV1) GetOptionsWithContext(ctx context.Context, getOptionsO
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_options", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalConfigurationOptions)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -314,17 +343,21 @@ func (mqcloud *MqcloudV1) GetOptionsWithContext(ctx context.Context, getOptionsO
 // CreateQueueManager : Create a new queue manager
 // Create a new queue manager.
 func (mqcloud *MqcloudV1) CreateQueueManager(createQueueManagerOptions *CreateQueueManagerOptions) (result *QueueManagerTaskStatus, response *core.DetailedResponse, err error) {
-	return mqcloud.CreateQueueManagerWithContext(context.Background(), createQueueManagerOptions)
+	result, response, err = mqcloud.CreateQueueManagerWithContext(context.Background(), createQueueManagerOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateQueueManagerWithContext is an alternate form of the CreateQueueManager method which supports a Context parameter
 func (mqcloud *MqcloudV1) CreateQueueManagerWithContext(ctx context.Context, createQueueManagerOptions *CreateQueueManagerOptions) (result *QueueManagerTaskStatus, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createQueueManagerOptions, "createQueueManagerOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createQueueManagerOptions, "createQueueManagerOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -337,6 +370,7 @@ func (mqcloud *MqcloudV1) CreateQueueManagerWithContext(ctx context.Context, cre
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -372,22 +406,27 @@ func (mqcloud *MqcloudV1) CreateQueueManagerWithContext(ctx context.Context, cre
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_queue_manager", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalQueueManagerTaskStatus)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -399,17 +438,21 @@ func (mqcloud *MqcloudV1) CreateQueueManagerWithContext(ctx context.Context, cre
 // ListQueueManagers : Get list of queue managers
 // Get a list of the queue manager summaries which exist in this service instance.
 func (mqcloud *MqcloudV1) ListQueueManagers(listQueueManagersOptions *ListQueueManagersOptions) (result *QueueManagerDetailsCollection, response *core.DetailedResponse, err error) {
-	return mqcloud.ListQueueManagersWithContext(context.Background(), listQueueManagersOptions)
+	result, response, err = mqcloud.ListQueueManagersWithContext(context.Background(), listQueueManagersOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListQueueManagersWithContext is an alternate form of the ListQueueManagers method which supports a Context parameter
 func (mqcloud *MqcloudV1) ListQueueManagersWithContext(ctx context.Context, listQueueManagersOptions *ListQueueManagersOptions) (result *QueueManagerDetailsCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listQueueManagersOptions, "listQueueManagersOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listQueueManagersOptions, "listQueueManagersOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -422,6 +465,7 @@ func (mqcloud *MqcloudV1) ListQueueManagersWithContext(ctx context.Context, list
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -447,17 +491,21 @@ func (mqcloud *MqcloudV1) ListQueueManagersWithContext(ctx context.Context, list
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_queue_managers", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalQueueManagerDetailsCollection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -469,17 +517,21 @@ func (mqcloud *MqcloudV1) ListQueueManagersWithContext(ctx context.Context, list
 // GetQueueManager : Get details of a queue manager
 // Get the details of a given queue manager.
 func (mqcloud *MqcloudV1) GetQueueManager(getQueueManagerOptions *GetQueueManagerOptions) (result *QueueManagerDetails, response *core.DetailedResponse, err error) {
-	return mqcloud.GetQueueManagerWithContext(context.Background(), getQueueManagerOptions)
+	result, response, err = mqcloud.GetQueueManagerWithContext(context.Background(), getQueueManagerOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetQueueManagerWithContext is an alternate form of the GetQueueManager method which supports a Context parameter
 func (mqcloud *MqcloudV1) GetQueueManagerWithContext(ctx context.Context, getQueueManagerOptions *GetQueueManagerOptions) (result *QueueManagerDetails, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getQueueManagerOptions, "getQueueManagerOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getQueueManagerOptions, "getQueueManagerOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -493,6 +545,7 @@ func (mqcloud *MqcloudV1) GetQueueManagerWithContext(ctx context.Context, getQue
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers/{queue_manager_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -511,17 +564,21 @@ func (mqcloud *MqcloudV1) GetQueueManagerWithContext(ctx context.Context, getQue
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_queue_manager", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalQueueManagerDetails)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -533,17 +590,21 @@ func (mqcloud *MqcloudV1) GetQueueManagerWithContext(ctx context.Context, getQue
 // DeleteQueueManager : Delete a queue manager
 // Delete a queue manager.
 func (mqcloud *MqcloudV1) DeleteQueueManager(deleteQueueManagerOptions *DeleteQueueManagerOptions) (result *QueueManagerTaskStatus, response *core.DetailedResponse, err error) {
-	return mqcloud.DeleteQueueManagerWithContext(context.Background(), deleteQueueManagerOptions)
+	result, response, err = mqcloud.DeleteQueueManagerWithContext(context.Background(), deleteQueueManagerOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteQueueManagerWithContext is an alternate form of the DeleteQueueManager method which supports a Context parameter
 func (mqcloud *MqcloudV1) DeleteQueueManagerWithContext(ctx context.Context, deleteQueueManagerOptions *DeleteQueueManagerOptions) (result *QueueManagerTaskStatus, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteQueueManagerOptions, "deleteQueueManagerOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteQueueManagerOptions, "deleteQueueManagerOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -557,6 +618,7 @@ func (mqcloud *MqcloudV1) DeleteQueueManagerWithContext(ctx context.Context, del
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers/{queue_manager_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -575,17 +637,21 @@ func (mqcloud *MqcloudV1) DeleteQueueManagerWithContext(ctx context.Context, del
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_queue_manager", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalQueueManagerTaskStatus)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -597,17 +663,21 @@ func (mqcloud *MqcloudV1) DeleteQueueManagerWithContext(ctx context.Context, del
 // SetQueueManagerVersion : Upgrade a queue manager
 // Upgrade a queue manager.
 func (mqcloud *MqcloudV1) SetQueueManagerVersion(setQueueManagerVersionOptions *SetQueueManagerVersionOptions) (result *QueueManagerTaskStatus, response *core.DetailedResponse, err error) {
-	return mqcloud.SetQueueManagerVersionWithContext(context.Background(), setQueueManagerVersionOptions)
+	result, response, err = mqcloud.SetQueueManagerVersionWithContext(context.Background(), setQueueManagerVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // SetQueueManagerVersionWithContext is an alternate form of the SetQueueManagerVersion method which supports a Context parameter
 func (mqcloud *MqcloudV1) SetQueueManagerVersionWithContext(ctx context.Context, setQueueManagerVersionOptions *SetQueueManagerVersionOptions) (result *QueueManagerTaskStatus, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(setQueueManagerVersionOptions, "setQueueManagerVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(setQueueManagerVersionOptions, "setQueueManagerVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -621,6 +691,7 @@ func (mqcloud *MqcloudV1) SetQueueManagerVersionWithContext(ctx context.Context,
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers/{queue_manager_id}/version`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -644,22 +715,27 @@ func (mqcloud *MqcloudV1) SetQueueManagerVersionWithContext(ctx context.Context,
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "set_queue_manager_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalQueueManagerTaskStatus)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -671,17 +747,21 @@ func (mqcloud *MqcloudV1) SetQueueManagerVersionWithContext(ctx context.Context,
 // GetQueueManagerAvailableUpgradeVersions : Get the list of available versions that this queue manager can be upgraded to
 // Get the list of available versions that this queue manager can be upgraded to.
 func (mqcloud *MqcloudV1) GetQueueManagerAvailableUpgradeVersions(getQueueManagerAvailableUpgradeVersionsOptions *GetQueueManagerAvailableUpgradeVersionsOptions) (result *QueueManagerVersionUpgrades, response *core.DetailedResponse, err error) {
-	return mqcloud.GetQueueManagerAvailableUpgradeVersionsWithContext(context.Background(), getQueueManagerAvailableUpgradeVersionsOptions)
+	result, response, err = mqcloud.GetQueueManagerAvailableUpgradeVersionsWithContext(context.Background(), getQueueManagerAvailableUpgradeVersionsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetQueueManagerAvailableUpgradeVersionsWithContext is an alternate form of the GetQueueManagerAvailableUpgradeVersions method which supports a Context parameter
 func (mqcloud *MqcloudV1) GetQueueManagerAvailableUpgradeVersionsWithContext(ctx context.Context, getQueueManagerAvailableUpgradeVersionsOptions *GetQueueManagerAvailableUpgradeVersionsOptions) (result *QueueManagerVersionUpgrades, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getQueueManagerAvailableUpgradeVersionsOptions, "getQueueManagerAvailableUpgradeVersionsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getQueueManagerAvailableUpgradeVersionsOptions, "getQueueManagerAvailableUpgradeVersionsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -695,6 +775,7 @@ func (mqcloud *MqcloudV1) GetQueueManagerAvailableUpgradeVersionsWithContext(ctx
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers/{queue_manager_id}/available_versions`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -713,17 +794,21 @@ func (mqcloud *MqcloudV1) GetQueueManagerAvailableUpgradeVersionsWithContext(ctx
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_queue_manager_available_upgrade_versions", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalQueueManagerVersionUpgrades)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -735,17 +820,21 @@ func (mqcloud *MqcloudV1) GetQueueManagerAvailableUpgradeVersionsWithContext(ctx
 // GetQueueManagerConnectionInfo : Get connection information for a queue manager
 // Get connection information for a queue manager.
 func (mqcloud *MqcloudV1) GetQueueManagerConnectionInfo(getQueueManagerConnectionInfoOptions *GetQueueManagerConnectionInfoOptions) (result *ConnectionInfo, response *core.DetailedResponse, err error) {
-	return mqcloud.GetQueueManagerConnectionInfoWithContext(context.Background(), getQueueManagerConnectionInfoOptions)
+	result, response, err = mqcloud.GetQueueManagerConnectionInfoWithContext(context.Background(), getQueueManagerConnectionInfoOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetQueueManagerConnectionInfoWithContext is an alternate form of the GetQueueManagerConnectionInfo method which supports a Context parameter
 func (mqcloud *MqcloudV1) GetQueueManagerConnectionInfoWithContext(ctx context.Context, getQueueManagerConnectionInfoOptions *GetQueueManagerConnectionInfoOptions) (result *ConnectionInfo, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getQueueManagerConnectionInfoOptions, "getQueueManagerConnectionInfoOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getQueueManagerConnectionInfoOptions, "getQueueManagerConnectionInfoOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -759,6 +848,7 @@ func (mqcloud *MqcloudV1) GetQueueManagerConnectionInfoWithContext(ctx context.C
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers/{queue_manager_id}/connection_info`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -777,17 +867,21 @@ func (mqcloud *MqcloudV1) GetQueueManagerConnectionInfoWithContext(ctx context.C
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_queue_manager_connection_info", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalConnectionInfo)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -799,17 +893,21 @@ func (mqcloud *MqcloudV1) GetQueueManagerConnectionInfoWithContext(ctx context.C
 // GetQueueManagerStatus : Get the status of the queue manager
 // Get the status of the queue manager instance.
 func (mqcloud *MqcloudV1) GetQueueManagerStatus(getQueueManagerStatusOptions *GetQueueManagerStatusOptions) (result *QueueManagerStatus, response *core.DetailedResponse, err error) {
-	return mqcloud.GetQueueManagerStatusWithContext(context.Background(), getQueueManagerStatusOptions)
+	result, response, err = mqcloud.GetQueueManagerStatusWithContext(context.Background(), getQueueManagerStatusOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetQueueManagerStatusWithContext is an alternate form of the GetQueueManagerStatus method which supports a Context parameter
 func (mqcloud *MqcloudV1) GetQueueManagerStatusWithContext(ctx context.Context, getQueueManagerStatusOptions *GetQueueManagerStatusOptions) (result *QueueManagerStatus, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getQueueManagerStatusOptions, "getQueueManagerStatusOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getQueueManagerStatusOptions, "getQueueManagerStatusOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -823,6 +921,7 @@ func (mqcloud *MqcloudV1) GetQueueManagerStatusWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers/{queue_manager_id}/status`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -841,17 +940,21 @@ func (mqcloud *MqcloudV1) GetQueueManagerStatusWithContext(ctx context.Context, 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_queue_manager_status", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalQueueManagerStatus)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -863,17 +966,21 @@ func (mqcloud *MqcloudV1) GetQueueManagerStatusWithContext(ctx context.Context, 
 // ListUsers : Get a list of users for an instance
 // Get a list of users for an instance.
 func (mqcloud *MqcloudV1) ListUsers(listUsersOptions *ListUsersOptions) (result *UserDetailsCollection, response *core.DetailedResponse, err error) {
-	return mqcloud.ListUsersWithContext(context.Background(), listUsersOptions)
+	result, response, err = mqcloud.ListUsersWithContext(context.Background(), listUsersOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListUsersWithContext is an alternate form of the ListUsers method which supports a Context parameter
 func (mqcloud *MqcloudV1) ListUsersWithContext(ctx context.Context, listUsersOptions *ListUsersOptions) (result *UserDetailsCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listUsersOptions, "listUsersOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listUsersOptions, "listUsersOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -886,6 +993,7 @@ func (mqcloud *MqcloudV1) ListUsersWithContext(ctx context.Context, listUsersOpt
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/users`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -911,17 +1019,21 @@ func (mqcloud *MqcloudV1) ListUsersWithContext(ctx context.Context, listUsersOpt
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_users", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalUserDetailsCollection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -933,17 +1045,21 @@ func (mqcloud *MqcloudV1) ListUsersWithContext(ctx context.Context, listUsersOpt
 // CreateUser : Add a user to an instance
 // Add a user to an instance.
 func (mqcloud *MqcloudV1) CreateUser(createUserOptions *CreateUserOptions) (result *UserDetails, response *core.DetailedResponse, err error) {
-	return mqcloud.CreateUserWithContext(context.Background(), createUserOptions)
+	result, response, err = mqcloud.CreateUserWithContext(context.Background(), createUserOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateUserWithContext is an alternate form of the CreateUser method which supports a Context parameter
 func (mqcloud *MqcloudV1) CreateUserWithContext(ctx context.Context, createUserOptions *CreateUserOptions) (result *UserDetails, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createUserOptions, "createUserOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createUserOptions, "createUserOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -956,6 +1072,7 @@ func (mqcloud *MqcloudV1) CreateUserWithContext(ctx context.Context, createUserO
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/users`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -982,22 +1099,27 @@ func (mqcloud *MqcloudV1) CreateUserWithContext(ctx context.Context, createUserO
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_user", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalUserDetails)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1009,17 +1131,21 @@ func (mqcloud *MqcloudV1) CreateUserWithContext(ctx context.Context, createUserO
 // GetUser : Get a user for an instance
 // Get a user for an instance.
 func (mqcloud *MqcloudV1) GetUser(getUserOptions *GetUserOptions) (result *UserDetails, response *core.DetailedResponse, err error) {
-	return mqcloud.GetUserWithContext(context.Background(), getUserOptions)
+	result, response, err = mqcloud.GetUserWithContext(context.Background(), getUserOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetUserWithContext is an alternate form of the GetUser method which supports a Context parameter
 func (mqcloud *MqcloudV1) GetUserWithContext(ctx context.Context, getUserOptions *GetUserOptions) (result *UserDetails, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getUserOptions, "getUserOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getUserOptions, "getUserOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1033,6 +1159,7 @@ func (mqcloud *MqcloudV1) GetUserWithContext(ctx context.Context, getUserOptions
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/users/{user_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1051,17 +1178,21 @@ func (mqcloud *MqcloudV1) GetUserWithContext(ctx context.Context, getUserOptions
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_user", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalUserDetails)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1073,17 +1204,21 @@ func (mqcloud *MqcloudV1) GetUserWithContext(ctx context.Context, getUserOptions
 // DeleteUser : Delete a user for an instance
 // Delete a user for an instance.
 func (mqcloud *MqcloudV1) DeleteUser(deleteUserOptions *DeleteUserOptions) (response *core.DetailedResponse, err error) {
-	return mqcloud.DeleteUserWithContext(context.Background(), deleteUserOptions)
+	response, err = mqcloud.DeleteUserWithContext(context.Background(), deleteUserOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteUserWithContext is an alternate form of the DeleteUser method which supports a Context parameter
 func (mqcloud *MqcloudV1) DeleteUserWithContext(ctx context.Context, deleteUserOptions *DeleteUserOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteUserOptions, "deleteUserOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteUserOptions, "deleteUserOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1097,6 +1232,7 @@ func (mqcloud *MqcloudV1) DeleteUserWithContext(ctx context.Context, deleteUserO
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/users/{user_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1114,10 +1250,16 @@ func (mqcloud *MqcloudV1) DeleteUserWithContext(ctx context.Context, deleteUserO
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = mqcloud.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_user", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -1125,17 +1267,21 @@ func (mqcloud *MqcloudV1) DeleteUserWithContext(ctx context.Context, deleteUserO
 // ListApplications : Get a list of applications for an instance
 // Get a list of applications for an instance.
 func (mqcloud *MqcloudV1) ListApplications(listApplicationsOptions *ListApplicationsOptions) (result *ApplicationDetailsCollection, response *core.DetailedResponse, err error) {
-	return mqcloud.ListApplicationsWithContext(context.Background(), listApplicationsOptions)
+	result, response, err = mqcloud.ListApplicationsWithContext(context.Background(), listApplicationsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListApplicationsWithContext is an alternate form of the ListApplications method which supports a Context parameter
 func (mqcloud *MqcloudV1) ListApplicationsWithContext(ctx context.Context, listApplicationsOptions *ListApplicationsOptions) (result *ApplicationDetailsCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listApplicationsOptions, "listApplicationsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listApplicationsOptions, "listApplicationsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1148,6 +1294,7 @@ func (mqcloud *MqcloudV1) ListApplicationsWithContext(ctx context.Context, listA
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/applications`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1173,17 +1320,21 @@ func (mqcloud *MqcloudV1) ListApplicationsWithContext(ctx context.Context, listA
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_applications", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalApplicationDetailsCollection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1195,17 +1346,21 @@ func (mqcloud *MqcloudV1) ListApplicationsWithContext(ctx context.Context, listA
 // CreateApplication : Add an application to an instance
 // Add an application to an instance.
 func (mqcloud *MqcloudV1) CreateApplication(createApplicationOptions *CreateApplicationOptions) (result *ApplicationCreated, response *core.DetailedResponse, err error) {
-	return mqcloud.CreateApplicationWithContext(context.Background(), createApplicationOptions)
+	result, response, err = mqcloud.CreateApplicationWithContext(context.Background(), createApplicationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateApplicationWithContext is an alternate form of the CreateApplication method which supports a Context parameter
 func (mqcloud *MqcloudV1) CreateApplicationWithContext(ctx context.Context, createApplicationOptions *CreateApplicationOptions) (result *ApplicationCreated, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createApplicationOptions, "createApplicationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createApplicationOptions, "createApplicationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1218,6 +1373,7 @@ func (mqcloud *MqcloudV1) CreateApplicationWithContext(ctx context.Context, crea
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/applications`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1241,22 +1397,27 @@ func (mqcloud *MqcloudV1) CreateApplicationWithContext(ctx context.Context, crea
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_application", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalApplicationCreated)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1268,17 +1429,21 @@ func (mqcloud *MqcloudV1) CreateApplicationWithContext(ctx context.Context, crea
 // GetApplication : Get an application for an instance
 // Get an application for an instance.
 func (mqcloud *MqcloudV1) GetApplication(getApplicationOptions *GetApplicationOptions) (result *ApplicationDetails, response *core.DetailedResponse, err error) {
-	return mqcloud.GetApplicationWithContext(context.Background(), getApplicationOptions)
+	result, response, err = mqcloud.GetApplicationWithContext(context.Background(), getApplicationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetApplicationWithContext is an alternate form of the GetApplication method which supports a Context parameter
 func (mqcloud *MqcloudV1) GetApplicationWithContext(ctx context.Context, getApplicationOptions *GetApplicationOptions) (result *ApplicationDetails, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getApplicationOptions, "getApplicationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getApplicationOptions, "getApplicationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1292,6 +1457,7 @@ func (mqcloud *MqcloudV1) GetApplicationWithContext(ctx context.Context, getAppl
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/applications/{application_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1310,17 +1476,21 @@ func (mqcloud *MqcloudV1) GetApplicationWithContext(ctx context.Context, getAppl
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_application", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalApplicationDetails)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1332,17 +1502,21 @@ func (mqcloud *MqcloudV1) GetApplicationWithContext(ctx context.Context, getAppl
 // DeleteApplication : Delete an application from an instance
 // Delete an application from an instance.
 func (mqcloud *MqcloudV1) DeleteApplication(deleteApplicationOptions *DeleteApplicationOptions) (response *core.DetailedResponse, err error) {
-	return mqcloud.DeleteApplicationWithContext(context.Background(), deleteApplicationOptions)
+	response, err = mqcloud.DeleteApplicationWithContext(context.Background(), deleteApplicationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteApplicationWithContext is an alternate form of the DeleteApplication method which supports a Context parameter
 func (mqcloud *MqcloudV1) DeleteApplicationWithContext(ctx context.Context, deleteApplicationOptions *DeleteApplicationOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteApplicationOptions, "deleteApplicationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteApplicationOptions, "deleteApplicationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1356,6 +1530,7 @@ func (mqcloud *MqcloudV1) DeleteApplicationWithContext(ctx context.Context, dele
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/applications/{application_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1373,10 +1548,16 @@ func (mqcloud *MqcloudV1) DeleteApplicationWithContext(ctx context.Context, dele
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = mqcloud.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_application", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -1384,17 +1565,21 @@ func (mqcloud *MqcloudV1) DeleteApplicationWithContext(ctx context.Context, dele
 // CreateApplicationApikey : Create a new apikey for an application
 // Create a new apikey for an application.
 func (mqcloud *MqcloudV1) CreateApplicationApikey(createApplicationApikeyOptions *CreateApplicationApikeyOptions) (result *ApplicationAPIKeyCreated, response *core.DetailedResponse, err error) {
-	return mqcloud.CreateApplicationApikeyWithContext(context.Background(), createApplicationApikeyOptions)
+	result, response, err = mqcloud.CreateApplicationApikeyWithContext(context.Background(), createApplicationApikeyOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateApplicationApikeyWithContext is an alternate form of the CreateApplicationApikey method which supports a Context parameter
 func (mqcloud *MqcloudV1) CreateApplicationApikeyWithContext(ctx context.Context, createApplicationApikeyOptions *CreateApplicationApikeyOptions) (result *ApplicationAPIKeyCreated, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createApplicationApikeyOptions, "createApplicationApikeyOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createApplicationApikeyOptions, "createApplicationApikeyOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1408,6 +1593,7 @@ func (mqcloud *MqcloudV1) CreateApplicationApikeyWithContext(ctx context.Context
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/applications/{application_id}/api_key`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1431,22 +1617,27 @@ func (mqcloud *MqcloudV1) CreateApplicationApikeyWithContext(ctx context.Context
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_application_apikey", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalApplicationAPIKeyCreated)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1455,20 +1646,24 @@ func (mqcloud *MqcloudV1) CreateApplicationApikeyWithContext(ctx context.Context
 	return
 }
 
-// CreateTrustStorePemCertificate : Upload a certificate
+// CreateTrustStorePemCertificate : Upload a trust store certificate
 // Import TLS certificate from a single self-contained PEM file to the truststore.
 func (mqcloud *MqcloudV1) CreateTrustStorePemCertificate(createTrustStorePemCertificateOptions *CreateTrustStorePemCertificateOptions) (result *TrustStoreCertificateDetails, response *core.DetailedResponse, err error) {
-	return mqcloud.CreateTrustStorePemCertificateWithContext(context.Background(), createTrustStorePemCertificateOptions)
+	result, response, err = mqcloud.CreateTrustStorePemCertificateWithContext(context.Background(), createTrustStorePemCertificateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateTrustStorePemCertificateWithContext is an alternate form of the CreateTrustStorePemCertificate method which supports a Context parameter
 func (mqcloud *MqcloudV1) CreateTrustStorePemCertificateWithContext(ctx context.Context, createTrustStorePemCertificateOptions *CreateTrustStorePemCertificateOptions) (result *TrustStoreCertificateDetails, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createTrustStorePemCertificateOptions, "createTrustStorePemCertificateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createTrustStorePemCertificateOptions, "createTrustStorePemCertificateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1482,6 +1677,7 @@ func (mqcloud *MqcloudV1) CreateTrustStorePemCertificateWithContext(ctx context.
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers/{queue_manager_id}/certificates/trust_store`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1504,17 +1700,21 @@ func (mqcloud *MqcloudV1) CreateTrustStorePemCertificateWithContext(ctx context.
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_trust_store_pem_certificate", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustStoreCertificateDetails)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1523,20 +1723,24 @@ func (mqcloud *MqcloudV1) CreateTrustStorePemCertificateWithContext(ctx context.
 	return
 }
 
-// ListTrustStoreCertificates : List certificates
+// ListTrustStoreCertificates : List trust store certificates
 // Get the list of certificates in the queue manager's certificate trust store.
 func (mqcloud *MqcloudV1) ListTrustStoreCertificates(listTrustStoreCertificatesOptions *ListTrustStoreCertificatesOptions) (result *TrustStoreCertificateDetailsCollection, response *core.DetailedResponse, err error) {
-	return mqcloud.ListTrustStoreCertificatesWithContext(context.Background(), listTrustStoreCertificatesOptions)
+	result, response, err = mqcloud.ListTrustStoreCertificatesWithContext(context.Background(), listTrustStoreCertificatesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListTrustStoreCertificatesWithContext is an alternate form of the ListTrustStoreCertificates method which supports a Context parameter
 func (mqcloud *MqcloudV1) ListTrustStoreCertificatesWithContext(ctx context.Context, listTrustStoreCertificatesOptions *ListTrustStoreCertificatesOptions) (result *TrustStoreCertificateDetailsCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listTrustStoreCertificatesOptions, "listTrustStoreCertificatesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listTrustStoreCertificatesOptions, "listTrustStoreCertificatesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1550,6 +1754,7 @@ func (mqcloud *MqcloudV1) ListTrustStoreCertificatesWithContext(ctx context.Cont
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers/{queue_manager_id}/certificates/trust_store`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1568,17 +1773,21 @@ func (mqcloud *MqcloudV1) ListTrustStoreCertificatesWithContext(ctx context.Cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_trust_store_certificates", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustStoreCertificateDetailsCollection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1590,17 +1799,21 @@ func (mqcloud *MqcloudV1) ListTrustStoreCertificatesWithContext(ctx context.Cont
 // GetTrustStoreCertificate : Get a trust store certificate
 // Get a trust store certificate from a queue manager.
 func (mqcloud *MqcloudV1) GetTrustStoreCertificate(getTrustStoreCertificateOptions *GetTrustStoreCertificateOptions) (result *TrustStoreCertificateDetails, response *core.DetailedResponse, err error) {
-	return mqcloud.GetTrustStoreCertificateWithContext(context.Background(), getTrustStoreCertificateOptions)
+	result, response, err = mqcloud.GetTrustStoreCertificateWithContext(context.Background(), getTrustStoreCertificateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetTrustStoreCertificateWithContext is an alternate form of the GetTrustStoreCertificate method which supports a Context parameter
 func (mqcloud *MqcloudV1) GetTrustStoreCertificateWithContext(ctx context.Context, getTrustStoreCertificateOptions *GetTrustStoreCertificateOptions) (result *TrustStoreCertificateDetails, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getTrustStoreCertificateOptions, "getTrustStoreCertificateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getTrustStoreCertificateOptions, "getTrustStoreCertificateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1615,6 +1828,7 @@ func (mqcloud *MqcloudV1) GetTrustStoreCertificateWithContext(ctx context.Contex
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers/{queue_manager_id}/certificates/trust_store/{certificate_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1633,17 +1847,21 @@ func (mqcloud *MqcloudV1) GetTrustStoreCertificateWithContext(ctx context.Contex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_trust_store_certificate", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustStoreCertificateDetails)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1655,17 +1873,21 @@ func (mqcloud *MqcloudV1) GetTrustStoreCertificateWithContext(ctx context.Contex
 // DeleteTrustStoreCertificate : Delete a trust store certificate
 // Delete a trust store certificate.
 func (mqcloud *MqcloudV1) DeleteTrustStoreCertificate(deleteTrustStoreCertificateOptions *DeleteTrustStoreCertificateOptions) (response *core.DetailedResponse, err error) {
-	return mqcloud.DeleteTrustStoreCertificateWithContext(context.Background(), deleteTrustStoreCertificateOptions)
+	response, err = mqcloud.DeleteTrustStoreCertificateWithContext(context.Background(), deleteTrustStoreCertificateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteTrustStoreCertificateWithContext is an alternate form of the DeleteTrustStoreCertificate method which supports a Context parameter
 func (mqcloud *MqcloudV1) DeleteTrustStoreCertificateWithContext(ctx context.Context, deleteTrustStoreCertificateOptions *DeleteTrustStoreCertificateOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteTrustStoreCertificateOptions, "deleteTrustStoreCertificateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteTrustStoreCertificateOptions, "deleteTrustStoreCertificateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1680,6 +1902,7 @@ func (mqcloud *MqcloudV1) DeleteTrustStoreCertificateWithContext(ctx context.Con
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers/{queue_manager_id}/certificates/trust_store/{certificate_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1697,10 +1920,16 @@ func (mqcloud *MqcloudV1) DeleteTrustStoreCertificateWithContext(ctx context.Con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = mqcloud.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_trust_store_certificate", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -1708,17 +1937,21 @@ func (mqcloud *MqcloudV1) DeleteTrustStoreCertificateWithContext(ctx context.Con
 // DownloadTrustStoreCertificate : Download a queue manager's certificate from its trust store
 // Download the specified trust store certificate PEM file from the queue manager.
 func (mqcloud *MqcloudV1) DownloadTrustStoreCertificate(downloadTrustStoreCertificateOptions *DownloadTrustStoreCertificateOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return mqcloud.DownloadTrustStoreCertificateWithContext(context.Background(), downloadTrustStoreCertificateOptions)
+	result, response, err = mqcloud.DownloadTrustStoreCertificateWithContext(context.Background(), downloadTrustStoreCertificateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DownloadTrustStoreCertificateWithContext is an alternate form of the DownloadTrustStoreCertificate method which supports a Context parameter
 func (mqcloud *MqcloudV1) DownloadTrustStoreCertificateWithContext(ctx context.Context, downloadTrustStoreCertificateOptions *DownloadTrustStoreCertificateOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(downloadTrustStoreCertificateOptions, "downloadTrustStoreCertificateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(downloadTrustStoreCertificateOptions, "downloadTrustStoreCertificateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1733,6 +1966,7 @@ func (mqcloud *MqcloudV1) DownloadTrustStoreCertificateWithContext(ctx context.C
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers/{queue_manager_id}/certificates/trust_store/{certificate_id}/download`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1751,28 +1985,38 @@ func (mqcloud *MqcloudV1) DownloadTrustStoreCertificateWithContext(ctx context.C
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = mqcloud.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "download_trust_store_certificate", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
 
-// CreateKeyStorePemCertificate : Upload a certificate
+// CreateKeyStorePemCertificate : Upload a key store certificate
 // Import TLS certificate from a single self-contained PEM file into the queue manager's key store.
 func (mqcloud *MqcloudV1) CreateKeyStorePemCertificate(createKeyStorePemCertificateOptions *CreateKeyStorePemCertificateOptions) (result *KeyStoreCertificateDetails, response *core.DetailedResponse, err error) {
-	return mqcloud.CreateKeyStorePemCertificateWithContext(context.Background(), createKeyStorePemCertificateOptions)
+	result, response, err = mqcloud.CreateKeyStorePemCertificateWithContext(context.Background(), createKeyStorePemCertificateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateKeyStorePemCertificateWithContext is an alternate form of the CreateKeyStorePemCertificate method which supports a Context parameter
 func (mqcloud *MqcloudV1) CreateKeyStorePemCertificateWithContext(ctx context.Context, createKeyStorePemCertificateOptions *CreateKeyStorePemCertificateOptions) (result *KeyStoreCertificateDetails, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createKeyStorePemCertificateOptions, "createKeyStorePemCertificateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createKeyStorePemCertificateOptions, "createKeyStorePemCertificateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1786,6 +2030,7 @@ func (mqcloud *MqcloudV1) CreateKeyStorePemCertificateWithContext(ctx context.Co
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers/{queue_manager_id}/certificates/key_store`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1808,17 +2053,21 @@ func (mqcloud *MqcloudV1) CreateKeyStorePemCertificateWithContext(ctx context.Co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_key_store_pem_certificate", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalKeyStoreCertificateDetails)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1827,20 +2076,24 @@ func (mqcloud *MqcloudV1) CreateKeyStorePemCertificateWithContext(ctx context.Co
 	return
 }
 
-// ListKeyStoreCertificates : List certificates
+// ListKeyStoreCertificates : List key store certificates
 // Get a list of certificates in the queue manager's certificate key store.
 func (mqcloud *MqcloudV1) ListKeyStoreCertificates(listKeyStoreCertificatesOptions *ListKeyStoreCertificatesOptions) (result *KeyStoreCertificateDetailsCollection, response *core.DetailedResponse, err error) {
-	return mqcloud.ListKeyStoreCertificatesWithContext(context.Background(), listKeyStoreCertificatesOptions)
+	result, response, err = mqcloud.ListKeyStoreCertificatesWithContext(context.Background(), listKeyStoreCertificatesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListKeyStoreCertificatesWithContext is an alternate form of the ListKeyStoreCertificates method which supports a Context parameter
 func (mqcloud *MqcloudV1) ListKeyStoreCertificatesWithContext(ctx context.Context, listKeyStoreCertificatesOptions *ListKeyStoreCertificatesOptions) (result *KeyStoreCertificateDetailsCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listKeyStoreCertificatesOptions, "listKeyStoreCertificatesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listKeyStoreCertificatesOptions, "listKeyStoreCertificatesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1854,6 +2107,7 @@ func (mqcloud *MqcloudV1) ListKeyStoreCertificatesWithContext(ctx context.Contex
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers/{queue_manager_id}/certificates/key_store`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1872,17 +2126,21 @@ func (mqcloud *MqcloudV1) ListKeyStoreCertificatesWithContext(ctx context.Contex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_key_store_certificates", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalKeyStoreCertificateDetailsCollection)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1894,17 +2152,21 @@ func (mqcloud *MqcloudV1) ListKeyStoreCertificatesWithContext(ctx context.Contex
 // GetKeyStoreCertificate : Get a key store certificate for queue manager
 // Get a key store certificate for queue manager.
 func (mqcloud *MqcloudV1) GetKeyStoreCertificate(getKeyStoreCertificateOptions *GetKeyStoreCertificateOptions) (result *KeyStoreCertificateDetails, response *core.DetailedResponse, err error) {
-	return mqcloud.GetKeyStoreCertificateWithContext(context.Background(), getKeyStoreCertificateOptions)
+	result, response, err = mqcloud.GetKeyStoreCertificateWithContext(context.Background(), getKeyStoreCertificateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetKeyStoreCertificateWithContext is an alternate form of the GetKeyStoreCertificate method which supports a Context parameter
 func (mqcloud *MqcloudV1) GetKeyStoreCertificateWithContext(ctx context.Context, getKeyStoreCertificateOptions *GetKeyStoreCertificateOptions) (result *KeyStoreCertificateDetails, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getKeyStoreCertificateOptions, "getKeyStoreCertificateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getKeyStoreCertificateOptions, "getKeyStoreCertificateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1919,6 +2181,7 @@ func (mqcloud *MqcloudV1) GetKeyStoreCertificateWithContext(ctx context.Context,
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers/{queue_manager_id}/certificates/key_store/{certificate_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1937,17 +2200,21 @@ func (mqcloud *MqcloudV1) GetKeyStoreCertificateWithContext(ctx context.Context,
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_key_store_certificate", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalKeyStoreCertificateDetails)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1959,17 +2226,21 @@ func (mqcloud *MqcloudV1) GetKeyStoreCertificateWithContext(ctx context.Context,
 // DeleteKeyStoreCertificate : Delete a queue manager's key store certificate
 // Delete a queue manager's key store certificate.
 func (mqcloud *MqcloudV1) DeleteKeyStoreCertificate(deleteKeyStoreCertificateOptions *DeleteKeyStoreCertificateOptions) (response *core.DetailedResponse, err error) {
-	return mqcloud.DeleteKeyStoreCertificateWithContext(context.Background(), deleteKeyStoreCertificateOptions)
+	response, err = mqcloud.DeleteKeyStoreCertificateWithContext(context.Background(), deleteKeyStoreCertificateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteKeyStoreCertificateWithContext is an alternate form of the DeleteKeyStoreCertificate method which supports a Context parameter
 func (mqcloud *MqcloudV1) DeleteKeyStoreCertificateWithContext(ctx context.Context, deleteKeyStoreCertificateOptions *DeleteKeyStoreCertificateOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteKeyStoreCertificateOptions, "deleteKeyStoreCertificateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteKeyStoreCertificateOptions, "deleteKeyStoreCertificateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1984,6 +2255,7 @@ func (mqcloud *MqcloudV1) DeleteKeyStoreCertificateWithContext(ctx context.Conte
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers/{queue_manager_id}/certificates/key_store/{certificate_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2001,10 +2273,16 @@ func (mqcloud *MqcloudV1) DeleteKeyStoreCertificateWithContext(ctx context.Conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = mqcloud.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_key_store_certificate", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -2012,17 +2290,21 @@ func (mqcloud *MqcloudV1) DeleteKeyStoreCertificateWithContext(ctx context.Conte
 // DownloadKeyStoreCertificate : Download a queue manager's certificate from its key store
 // Download the specified key store certificate PEM file from the queue manager.
 func (mqcloud *MqcloudV1) DownloadKeyStoreCertificate(downloadKeyStoreCertificateOptions *DownloadKeyStoreCertificateOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return mqcloud.DownloadKeyStoreCertificateWithContext(context.Background(), downloadKeyStoreCertificateOptions)
+	result, response, err = mqcloud.DownloadKeyStoreCertificateWithContext(context.Background(), downloadKeyStoreCertificateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DownloadKeyStoreCertificateWithContext is an alternate form of the DownloadKeyStoreCertificate method which supports a Context parameter
 func (mqcloud *MqcloudV1) DownloadKeyStoreCertificateWithContext(ctx context.Context, downloadKeyStoreCertificateOptions *DownloadKeyStoreCertificateOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(downloadKeyStoreCertificateOptions, "downloadKeyStoreCertificateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(downloadKeyStoreCertificateOptions, "downloadKeyStoreCertificateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2037,6 +2319,7 @@ func (mqcloud *MqcloudV1) DownloadKeyStoreCertificateWithContext(ctx context.Con
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers/{queue_manager_id}/certificates/key_store/{certificate_id}/download`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2055,10 +2338,16 @@ func (mqcloud *MqcloudV1) DownloadKeyStoreCertificateWithContext(ctx context.Con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = mqcloud.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "download_key_store_certificate", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -2066,17 +2355,21 @@ func (mqcloud *MqcloudV1) DownloadKeyStoreCertificateWithContext(ctx context.Con
 // GetCertificateAmsChannels : Get the AMS channels that are configured with this key store certificate
 // Get the AMS channels that are configured with this key store certificate.
 func (mqcloud *MqcloudV1) GetCertificateAmsChannels(getCertificateAmsChannelsOptions *GetCertificateAmsChannelsOptions) (result *ChannelsDetails, response *core.DetailedResponse, err error) {
-	return mqcloud.GetCertificateAmsChannelsWithContext(context.Background(), getCertificateAmsChannelsOptions)
+	result, response, err = mqcloud.GetCertificateAmsChannelsWithContext(context.Background(), getCertificateAmsChannelsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetCertificateAmsChannelsWithContext is an alternate form of the GetCertificateAmsChannels method which supports a Context parameter
 func (mqcloud *MqcloudV1) GetCertificateAmsChannelsWithContext(ctx context.Context, getCertificateAmsChannelsOptions *GetCertificateAmsChannelsOptions) (result *ChannelsDetails, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getCertificateAmsChannelsOptions, "getCertificateAmsChannelsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getCertificateAmsChannelsOptions, "getCertificateAmsChannelsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2091,6 +2384,7 @@ func (mqcloud *MqcloudV1) GetCertificateAmsChannelsWithContext(ctx context.Conte
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers/{queue_manager_id}/certificates/key_store/{certificate_id}/config/ams`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2109,17 +2403,21 @@ func (mqcloud *MqcloudV1) GetCertificateAmsChannelsWithContext(ctx context.Conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_certificate_ams_channels", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalChannelsDetails)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2131,17 +2429,21 @@ func (mqcloud *MqcloudV1) GetCertificateAmsChannelsWithContext(ctx context.Conte
 // SetCertificateAmsChannels : Update the AMS channels that are configured with this key store certificate
 // Update the AMS channels that are configured with this key store certificate.
 func (mqcloud *MqcloudV1) SetCertificateAmsChannels(setCertificateAmsChannelsOptions *SetCertificateAmsChannelsOptions) (result *ChannelsDetails, response *core.DetailedResponse, err error) {
-	return mqcloud.SetCertificateAmsChannelsWithContext(context.Background(), setCertificateAmsChannelsOptions)
+	result, response, err = mqcloud.SetCertificateAmsChannelsWithContext(context.Background(), setCertificateAmsChannelsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // SetCertificateAmsChannelsWithContext is an alternate form of the SetCertificateAmsChannels method which supports a Context parameter
 func (mqcloud *MqcloudV1) SetCertificateAmsChannelsWithContext(ctx context.Context, setCertificateAmsChannelsOptions *SetCertificateAmsChannelsOptions) (result *ChannelsDetails, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(setCertificateAmsChannelsOptions, "setCertificateAmsChannelsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(setCertificateAmsChannelsOptions, "setCertificateAmsChannelsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2156,6 +2458,7 @@ func (mqcloud *MqcloudV1) SetCertificateAmsChannelsWithContext(ctx context.Conte
 	builder.EnableGzipCompression = mqcloud.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(mqcloud.Service.Options.URL, `/v1/{service_instance_guid}/queue_managers/{queue_manager_id}/certificates/key_store/{certificate_id}/config/ams`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2182,28 +2485,36 @@ func (mqcloud *MqcloudV1) SetCertificateAmsChannelsWithContext(ctx context.Conte
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = mqcloud.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "set_certificate_ams_channels", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalChannelsDetails)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
 	}
 
 	return
+}
+func getServiceComponentInfo() *core.ProblemComponent {
+	return core.NewProblemComponent(DefaultServiceName, "1.0.1")
 }
 
 // ApplicationAPIKeyCreated : A response to creating a new api key, giving the only chance to collect the new apikey.
@@ -2223,14 +2534,17 @@ func UnmarshalApplicationAPIKeyCreated(m map[string]json.RawMessage, result inte
 	obj := new(ApplicationAPIKeyCreated)
 	err = core.UnmarshalPrimitive(m, "api_key_name", &obj.ApiKeyName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "api_key_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "api_key_id", &obj.ApiKeyID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "api_key_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "api_key", &obj.ApiKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "api_key-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2266,30 +2580,37 @@ func UnmarshalApplicationCreated(m map[string]json.RawMessage, result interface{
 	obj := new(ApplicationCreated)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "create_api_key_uri", &obj.CreateApiKeyURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "create_api_key_uri-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "api_key_name", &obj.ApiKeyName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "api_key_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "api_key_id", &obj.ApiKeyID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "api_key_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "api_key", &obj.ApiKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "api_key-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2316,18 +2637,22 @@ func UnmarshalApplicationDetails(m map[string]json.RawMessage, result interface{
 	obj := new(ApplicationDetails)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "create_api_key_uri", &obj.CreateApiKeyURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "create_api_key_uri-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2360,26 +2685,32 @@ func UnmarshalApplicationDetailsCollection(m map[string]json.RawMessage, result 
 	obj := new(ApplicationDetailsCollection)
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalFirst)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalNext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPrevious)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "applications", &obj.Applications, UnmarshalApplicationDetails)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "applications-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2392,15 +2723,37 @@ func (resp *ApplicationDetailsCollection) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
+}
+
+// CertificateConfiguration : The configuration details for this certificate.
+type CertificateConfiguration struct {
+	// A list of channels that are configured with this certificate.
+	Ams *ChannelsDetails `json:"ams" validate:"required"`
+}
+
+// UnmarshalCertificateConfiguration unmarshals an instance of CertificateConfiguration from the specified map of raw messages.
+func UnmarshalCertificateConfiguration(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(CertificateConfiguration)
+	err = core.UnmarshalModel(m, "ams", &obj.Ams, UnmarshalChannelsDetails)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ams-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
 // ChannelDetails : A channel's information that is configured with this certificate.
@@ -2414,6 +2767,7 @@ func UnmarshalChannelDetails(m map[string]json.RawMessage, result interface{}) (
 	obj := new(ChannelDetails)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2431,6 +2785,7 @@ func UnmarshalChannelsDetails(m map[string]json.RawMessage, result interface{}) 
 	obj := new(ChannelsDetails)
 	err = core.UnmarshalModel(m, "channels", &obj.Channels, UnmarshalChannelDetails)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "channels-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2451,10 +2806,12 @@ func UnmarshalClientConnection(m map[string]json.RawMessage, result interface{})
 	obj := new(ClientConnection)
 	err = core.UnmarshalModel(m, "connection", &obj.Connection, UnmarshalConnectionDetails)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "connection-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "queueManager", &obj.QueueManager)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "queueManager-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2471,14 +2828,15 @@ type ConfigurationOptions struct {
 
 	// List of queue manager versions.
 	Versions []string `json:"versions,omitempty"`
+
+	// The latest Queue manager version.
+	LatestVersion *string `json:"latest_version,omitempty"`
 }
 
 // Constants associated with the ConfigurationOptions.Sizes property.
-// The queue manager sizes of deployment available. Deployment of lite queue managers for aws_us_east_1 and
-// aws_eu_west_1 locations is not available.
+// The queue manager sizes of deployment available.
 const (
 	ConfigurationOptions_Sizes_Large  = "large"
-	ConfigurationOptions_Sizes_Lite   = "lite"
 	ConfigurationOptions_Sizes_Medium = "medium"
 	ConfigurationOptions_Sizes_Small  = "small"
 	ConfigurationOptions_Sizes_Xsmall = "xsmall"
@@ -2489,14 +2847,22 @@ func UnmarshalConfigurationOptions(m map[string]json.RawMessage, result interfac
 	obj := new(ConfigurationOptions)
 	err = core.UnmarshalPrimitive(m, "locations", &obj.Locations)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "locations-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "sizes", &obj.Sizes)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sizes-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "versions", &obj.Versions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "versions-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "latest_version", &obj.LatestVersion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "latest_version-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2517,10 +2883,12 @@ func UnmarshalConnectionDetails(m map[string]json.RawMessage, result interface{}
 	obj := new(ConnectionDetails)
 	err = core.UnmarshalPrimitive(m, "host", &obj.Host)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "host-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "port", &obj.Port)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "port-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2538,6 +2906,7 @@ func UnmarshalConnectionInfo(m map[string]json.RawMessage, result interface{}) (
 	obj := new(ConnectionInfo)
 	err = core.UnmarshalModel(m, "channel", &obj.Channel, UnmarshalConnectionInfoChannel)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "channel-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2564,18 +2933,22 @@ func UnmarshalConnectionInfoChannel(m map[string]json.RawMessage, result interfa
 	obj := new(ConnectionInfoChannel)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "clientConnection", &obj.ClientConnection, UnmarshalClientConnection)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "clientConnection-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "transmissionSecurity", &obj.TransmissionSecurity, UnmarshalTransmissionSecurity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "transmissionSecurity-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2737,8 +3110,7 @@ type CreateQueueManagerOptions struct {
 	// The locations in which the queue manager could be deployed.
 	Location *string `json:"location" validate:"required"`
 
-	// The queue manager sizes of deployment available. Deployment of lite queue managers for aws_us_east_1 and
-	// aws_eu_west_1 locations is not available.
+	// The queue manager sizes of deployment available.
 	Size *string `json:"size" validate:"required"`
 
 	// A displayable name for the queue manager - limited only in length.
@@ -2752,11 +3124,9 @@ type CreateQueueManagerOptions struct {
 }
 
 // Constants associated with the CreateQueueManagerOptions.Size property.
-// The queue manager sizes of deployment available. Deployment of lite queue managers for aws_us_east_1 and
-// aws_eu_west_1 locations is not available.
+// The queue manager sizes of deployment available.
 const (
 	CreateQueueManagerOptions_Size_Large  = "large"
-	CreateQueueManagerOptions_Size_Lite   = "lite"
 	CreateQueueManagerOptions_Size_Medium = "medium"
 	CreateQueueManagerOptions_Size_Small  = "small"
 	CreateQueueManagerOptions_Size_Xsmall = "xsmall"
@@ -3237,6 +3607,7 @@ func UnmarshalFirst(m map[string]json.RawMessage, result interface{}) (err error
 	obj := new(First)
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3714,6 +4085,9 @@ type KeyStoreCertificateDetails struct {
 
 	// The URL for this key store certificate.
 	Href *string `json:"href" validate:"required"`
+
+	// The configuration details for this certificate.
+	Config *CertificateConfiguration `json:"config" validate:"required"`
 }
 
 // Constants associated with the KeyStoreCertificateDetails.CertificateType property.
@@ -3727,58 +4101,77 @@ func UnmarshalKeyStoreCertificateDetails(m map[string]json.RawMessage, result in
 	obj := new(KeyStoreCertificateDetails)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "label-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "certificate_type", &obj.CertificateType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "certificate_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "fingerprint_sha256", &obj.FingerprintSha256)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "fingerprint_sha256-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "subject_dn", &obj.SubjectDn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subject_dn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "subject_cn", &obj.SubjectCn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subject_cn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "issuer_dn", &obj.IssuerDn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "issuer_dn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "issuer_cn", &obj.IssuerCn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "issuer_cn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "issued", &obj.Issued)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "issued-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "expiry", &obj.Expiry)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "expiry-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_default", &obj.IsDefault)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_default-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "dns_names_total_count", &obj.DnsNamesTotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "dns_names_total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "dns_names", &obj.DnsNames)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "dns_names-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "config", &obj.Config, UnmarshalCertificateConfiguration)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "config-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3799,10 +4192,12 @@ func UnmarshalKeyStoreCertificateDetailsCollection(m map[string]json.RawMessage,
 	obj := new(KeyStoreCertificateDetailsCollection)
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "key_store", &obj.KeyStore, UnmarshalKeyStoreCertificateDetails)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "key_store-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4034,6 +4429,7 @@ func UnmarshalNext(m map[string]json.RawMessage, result interface{}) (err error)
 	obj := new(Next)
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4051,6 +4447,7 @@ func UnmarshalPrevious(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(Previous)
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4071,8 +4468,7 @@ type QueueManagerDetails struct {
 	// The locations in which the queue manager could be deployed.
 	Location *string `json:"location" validate:"required"`
 
-	// The queue manager sizes of deployment available. Deployment of lite queue managers for aws_us_east_1 and
-	// aws_eu_west_1 locations is not available.
+	// The queue manager sizes of deployment available.
 	Size *string `json:"size" validate:"required"`
 
 	// A reference uri to get deployment status of the queue manager.
@@ -4107,11 +4503,9 @@ type QueueManagerDetails struct {
 }
 
 // Constants associated with the QueueManagerDetails.Size property.
-// The queue manager sizes of deployment available. Deployment of lite queue managers for aws_us_east_1 and
-// aws_eu_west_1 locations is not available.
+// The queue manager sizes of deployment available.
 const (
 	QueueManagerDetails_Size_Large  = "large"
-	QueueManagerDetails_Size_Lite   = "lite"
 	QueueManagerDetails_Size_Medium = "medium"
 	QueueManagerDetails_Size_Small  = "small"
 	QueueManagerDetails_Size_Xsmall = "xsmall"
@@ -4122,62 +4516,77 @@ func UnmarshalQueueManagerDetails(m map[string]json.RawMessage, result interface
 	obj := new(QueueManagerDetails)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "display_name", &obj.DisplayName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "display_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "location", &obj.Location)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "location-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "size", &obj.Size)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "size-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status_uri", &obj.StatusURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status_uri-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "web_console_url", &obj.WebConsoleURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "web_console_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "rest_api_endpoint_url", &obj.RestApiEndpointURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rest_api_endpoint_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "administrator_api_endpoint_url", &obj.AdministratorApiEndpointURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "administrator_api_endpoint_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "connection_info_uri", &obj.ConnectionInfoURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "connection_info_uri-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "date_created", &obj.DateCreated)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "date_created-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "upgrade_available", &obj.UpgradeAvailable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "upgrade_available-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "available_upgrade_versions_uri", &obj.AvailableUpgradeVersionsURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "available_upgrade_versions_uri-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4210,26 +4619,32 @@ func UnmarshalQueueManagerDetailsCollection(m map[string]json.RawMessage, result
 	obj := new(QueueManagerDetailsCollection)
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalFirst)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalNext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPrevious)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "queue_managers", &obj.QueueManagers, UnmarshalQueueManagerDetails)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "queue_managers-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4242,12 +4657,16 @@ func (resp *QueueManagerDetailsCollection) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -4292,6 +4711,7 @@ func UnmarshalQueueManagerStatus(m map[string]json.RawMessage, result interface{
 	obj := new(QueueManagerStatus)
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4315,14 +4735,17 @@ func UnmarshalQueueManagerTaskStatus(m map[string]json.RawMessage, result interf
 	obj := new(QueueManagerTaskStatus)
 	err = core.UnmarshalPrimitive(m, "queue_manager_uri", &obj.QueueManagerURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "queue_manager_uri-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "queue_manager_status_uri", &obj.QueueManagerStatusURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "queue_manager_status_uri-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "queue_manager_id", &obj.QueueManagerID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "queue_manager_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4343,10 +4766,12 @@ func UnmarshalQueueManagerVersionUpgrade(m map[string]json.RawMessage, result in
 	obj := new(QueueManagerVersionUpgrade)
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target_date", &obj.TargetDate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_date-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4367,10 +4792,12 @@ func UnmarshalQueueManagerVersionUpgrades(m map[string]json.RawMessage, result i
 	obj := new(QueueManagerVersionUpgrades)
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "versions", &obj.Versions, UnmarshalQueueManagerVersionUpgrade)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "versions-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4510,6 +4937,7 @@ func UnmarshalTransmissionSecurity(m map[string]json.RawMessage, result interfac
 	obj := new(TransmissionSecurity)
 	err = core.UnmarshalPrimitive(m, "cipherSpecification", &obj.CipherSpecification)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cipherSpecification-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4566,50 +4994,62 @@ func UnmarshalTrustStoreCertificateDetails(m map[string]json.RawMessage, result 
 	obj := new(TrustStoreCertificateDetails)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "label-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "certificate_type", &obj.CertificateType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "certificate_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "fingerprint_sha256", &obj.FingerprintSha256)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "fingerprint_sha256-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "subject_dn", &obj.SubjectDn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subject_dn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "subject_cn", &obj.SubjectCn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subject_cn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "issuer_dn", &obj.IssuerDn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "issuer_dn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "issuer_cn", &obj.IssuerCn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "issuer_cn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "issued", &obj.Issued)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "issued-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "expiry", &obj.Expiry)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "expiry-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "trusted", &obj.Trusted)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "trusted-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4630,10 +5070,12 @@ func UnmarshalTrustStoreCertificateDetailsCollection(m map[string]json.RawMessag
 	obj := new(TrustStoreCertificateDetailsCollection)
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "trust_store", &obj.TrustStore, UnmarshalTrustStoreCertificateDetails)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "trust_store-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4654,10 +5096,12 @@ func UnmarshalUsage(m map[string]json.RawMessage, result interface{}) (err error
 	obj := new(Usage)
 	err = core.UnmarshalPrimitive(m, "vpc_entitlement", &obj.VpcEntitlement)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "vpc_entitlement-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "vpc_usage", &obj.VpcUsage)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "vpc_usage-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4685,18 +5129,22 @@ func UnmarshalUserDetails(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(UserDetails)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "email", &obj.Email)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4729,26 +5177,32 @@ func UnmarshalUserDetailsCollection(m map[string]json.RawMessage, result interfa
 	obj := new(UserDetailsCollection)
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalFirst)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalNext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPrevious)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "users", &obj.Users, UnmarshalUserDetails)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "users-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4761,12 +5215,16 @@ func (resp *UserDetailsCollection) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -4785,7 +5243,7 @@ type QueueManagersPager struct {
 // NewQueueManagersPager returns a new QueueManagersPager instance.
 func (mqcloud *MqcloudV1) NewQueueManagersPager(options *ListQueueManagersOptions) (pager *QueueManagersPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -4813,6 +5271,7 @@ func (pager *QueueManagersPager) GetNextWithContext(ctx context.Context) (page [
 
 	result, _, err := pager.client.ListQueueManagersWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -4821,7 +5280,8 @@ func (pager *QueueManagersPager) GetNextWithContext(ctx context.Context) (page [
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -4840,6 +5300,7 @@ func (pager *QueueManagersPager) GetAllWithContext(ctx context.Context) (allItem
 		var nextPage []QueueManagerDetails
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -4849,12 +5310,16 @@ func (pager *QueueManagersPager) GetAllWithContext(ctx context.Context) (allItem
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *QueueManagersPager) GetNext() (page []QueueManagerDetails, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *QueueManagersPager) GetAll() (allItems []QueueManagerDetails, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UsersPager can be used to simplify the use of the "ListUsers" method.
@@ -4870,7 +5335,7 @@ type UsersPager struct {
 // NewUsersPager returns a new UsersPager instance.
 func (mqcloud *MqcloudV1) NewUsersPager(options *ListUsersOptions) (pager *UsersPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -4898,6 +5363,7 @@ func (pager *UsersPager) GetNextWithContext(ctx context.Context) (page []UserDet
 
 	result, _, err := pager.client.ListUsersWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -4906,7 +5372,8 @@ func (pager *UsersPager) GetNextWithContext(ctx context.Context) (page []UserDet
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -4925,6 +5392,7 @@ func (pager *UsersPager) GetAllWithContext(ctx context.Context) (allItems []User
 		var nextPage []UserDetails
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -4934,12 +5402,16 @@ func (pager *UsersPager) GetAllWithContext(ctx context.Context) (allItems []User
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *UsersPager) GetNext() (page []UserDetails, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *UsersPager) GetAll() (allItems []UserDetails, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ApplicationsPager can be used to simplify the use of the "ListApplications" method.
@@ -4955,7 +5427,7 @@ type ApplicationsPager struct {
 // NewApplicationsPager returns a new ApplicationsPager instance.
 func (mqcloud *MqcloudV1) NewApplicationsPager(options *ListApplicationsOptions) (pager *ApplicationsPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -4983,6 +5455,7 @@ func (pager *ApplicationsPager) GetNextWithContext(ctx context.Context) (page []
 
 	result, _, err := pager.client.ListApplicationsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -4991,7 +5464,8 @@ func (pager *ApplicationsPager) GetNextWithContext(ctx context.Context) (page []
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -5010,6 +5484,7 @@ func (pager *ApplicationsPager) GetAllWithContext(ctx context.Context) (allItems
 		var nextPage []ApplicationDetails
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -5019,10 +5494,14 @@ func (pager *ApplicationsPager) GetAllWithContext(ctx context.Context) (allItems
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *ApplicationsPager) GetNext() (page []ApplicationDetails, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *ApplicationsPager) GetAll() (allItems []ApplicationDetails, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }

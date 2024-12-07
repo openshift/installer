@@ -791,7 +791,7 @@ func resourceIBMIsVPNServerReservedIPReferenceToMap(reservedIPReference vpcv1.Re
 	return reservedIPReferenceMap
 }
 
-func resourceIBMIsVPNServerReservedIPReferenceDeletedToMap(reservedIPReferenceDeleted vpcv1.ReservedIPReferenceDeleted) map[string]interface{} {
+func resourceIBMIsVPNServerReservedIPReferenceDeletedToMap(reservedIPReferenceDeleted vpcv1.Deleted) map[string]interface{} {
 	reservedIPReferenceDeletedMap := map[string]interface{}{}
 
 	reservedIPReferenceDeletedMap["more_info"] = reservedIPReferenceDeleted.MoreInfo
@@ -817,7 +817,7 @@ func resourceIBMIsVPNServerVPCReferenceToMap(vpcRef vpcv1.VPCReference) map[stri
 	return vpcMap
 }
 
-func resourceIBMIsVPNServerVPCReferenceDeletedToMap(vpcRefDeleted vpcv1.VPCReferenceDeleted) map[string]interface{} {
+func resourceIBMIsVPNServerVPCReferenceDeletedToMap(vpcRefDeleted vpcv1.Deleted) map[string]interface{} {
 	vpcRefDeletedMap := map[string]interface{}{}
 	vpcRefDeletedMap["more_info"] = vpcRefDeleted.MoreInfo
 	return vpcRefDeletedMap

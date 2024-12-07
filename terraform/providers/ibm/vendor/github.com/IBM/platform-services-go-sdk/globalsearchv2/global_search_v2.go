@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2023.
+ * (C) Copyright IBM Corp. 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.82.1-2082d402-20231115-195014
+ * IBM OpenAPI SDK Code Generator Version: 3.87.0-91c7c775-20240320-213027
  */
 
 // Package globalsearchv2 : Operations and models for the GlobalSearchV2 service
@@ -37,10 +37,10 @@ import (
 // GlobalSearchV2 : Search for resources with the global and shared resource properties repository that is integrated in
 // the IBM Cloud platform. The search repository stores and searches cloud resources attributes, which categorize or
 // classify resources. A resource is a physical or logical component that can be created or reserved for an application
-// or service instance. They are owned by resource providers, such as Cloud Foundry, IBM Kubernetes Service, or resource
-// controller in IBM Cloud. Resources are uniquely identified by a Cloud Resource Name (CRN) or by an IMS ID. The
-// properties of a resource include tags and system properties. Both properties are defined in an IBM Cloud billing
-// account, and span across many regions.
+// or service instance. They are owned by resource providers, such as IBM Kubernetes Service, or resource controller in
+// IBM Cloud. Resources are uniquely identified by a Cloud Resource Name (CRN) or by an IMS ID. The properties of a
+// resource include tags and system properties. Both properties are defined in an IBM Cloud billing account, and span
+// across many regions.
 //
 // API Version: 2.0.1
 type GlobalSearchV2 struct {
@@ -69,22 +69,26 @@ func NewGlobalSearchV2UsingExternalConfig(options *GlobalSearchV2Options) (globa
 	if options.Authenticator == nil {
 		options.Authenticator, err = core.GetAuthenticatorFromEnvironment(options.ServiceName)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "env-auth-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	globalSearch, err = NewGlobalSearchV2(options)
+	err = core.RepurposeSDKProblem(err, "new-client-error")
 	if err != nil {
 		return
 	}
 
 	err = globalSearch.Service.ConfigureService(options.ServiceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client-config-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = globalSearch.Service.SetServiceURL(options.URL)
+		err = core.RepurposeSDKProblem(err, "url-set-error")
 	}
 	return
 }
@@ -98,12 +102,14 @@ func NewGlobalSearchV2(options *GlobalSearchV2Options) (service *GlobalSearchV2,
 
 	baseService, err := core.NewBaseService(serviceOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "new-base-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = baseService.SetServiceURL(options.URL)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-url-error", common.GetComponentInfo())
 			return
 		}
 	}
@@ -117,7 +123,7 @@ func NewGlobalSearchV2(options *GlobalSearchV2Options) (service *GlobalSearchV2,
 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
-	return "", fmt.Errorf("service does not support regional URLs")
+	return "", core.SDKErrorf(nil, "service does not support regional URLs", "no-regional-support", common.GetComponentInfo())
 }
 
 // Clone makes a copy of "globalSearch" suitable for processing requests.
@@ -132,7 +138,11 @@ func (globalSearch *GlobalSearchV2) Clone() *GlobalSearchV2 {
 
 // SetServiceURL sets the service URL
 func (globalSearch *GlobalSearchV2) SetServiceURL(url string) error {
-	return globalSearch.Service.SetServiceURL(url)
+	err := globalSearch.Service.SetServiceURL(url)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-set-error", common.GetComponentInfo())
+	}
+	return err
 }
 
 // GetServiceURL returns the service URL
@@ -167,8 +177,8 @@ func (globalSearch *GlobalSearchV2) DisableRetries() {
 }
 
 // Search : Find instances of resources (v3)
-// Find Cloud Foundry resources, IAM-enabled resources, or storage and network resources that run on classic
-// infrastructure in a specific account ID. You can apply query strings if necessary.
+// Find IAM-enabled resources or storage and network resources that run on classic infrastructure in a specific account
+// ID. You can apply query strings if necessary.
 //
 // To filter results, you can insert a string by using the Lucene syntax and the query string is parsed into a series of
 // terms and operators. A term can be a single word or a phrase, in which case the search is performed for all the
@@ -178,20 +188,27 @@ func (globalSearch *GlobalSearchV2) DisableRetries() {
 //
 // You must use `/v3/resources/search` when you need to fetch more than `10000` resource items. On the first call, the
 // operation returns a live cursor on the data that you must use on all the subsequent calls to get the next batch of
-// results until you get the empty result set. By default, the fields that are returned for every resource are "crn",
-// "name", "family", "type", and "account_id". You can specify the subset of the fields you want in your request.
+// results until you get the empty result set.
+//
+// By default, the fields that are returned for every resource are `crn`, `name`,
+// `family`, `type`, and `account_id`. You can specify the subset of the fields you want in your request using the
+// `fields` request body attribute. Set `"fields": ["*"]` to discover the set of fields which are available to request.
 func (globalSearch *GlobalSearchV2) Search(searchOptions *SearchOptions) (result *ScanResult, response *core.DetailedResponse, err error) {
-	return globalSearch.SearchWithContext(context.Background(), searchOptions)
+	result, response, err = globalSearch.SearchWithContext(context.Background(), searchOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // SearchWithContext is an alternate form of the Search method which supports a Context parameter
 func (globalSearch *GlobalSearchV2) SearchWithContext(ctx context.Context, searchOptions *SearchOptions) (result *ScanResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(searchOptions, "searchOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(searchOptions, "searchOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -200,6 +217,7 @@ func (globalSearch *GlobalSearchV2) SearchWithContext(ctx context.Context, searc
 	builder.EnableGzipCompression = globalSearch.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalSearch.Service.Options.URL, `/v3/resources/search`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -218,9 +236,6 @@ func (globalSearch *GlobalSearchV2) SearchWithContext(ctx context.Context, searc
 	}
 	if searchOptions.XCorrelationID != nil {
 		builder.AddHeader("x-correlation-id", fmt.Sprint(*searchOptions.XCorrelationID))
-	}
-	if searchOptions.TransactionID != nil {
-		builder.AddHeader("transaction-id", fmt.Sprint(*searchOptions.TransactionID))
 	}
 
 	if searchOptions.AccountID != nil {
@@ -250,6 +265,9 @@ func (globalSearch *GlobalSearchV2) SearchWithContext(ctx context.Context, searc
 	if searchOptions.CanTag != nil {
 		builder.AddQuery("can_tag", fmt.Sprint(*searchOptions.CanTag))
 	}
+	if searchOptions.IsProjectResource != nil {
+		builder.AddQuery("is_project_resource", fmt.Sprint(*searchOptions.IsProjectResource))
+	}
 
 	body := make(map[string]interface{})
 	if searchOptions.Query != nil {
@@ -263,28 +281,36 @@ func (globalSearch *GlobalSearchV2) SearchWithContext(ctx context.Context, searc
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = globalSearch.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "search", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalScanResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
 	}
 
 	return
+}
+func getServiceComponentInfo() *core.ProblemComponent {
+	return core.NewProblemComponent(DefaultServiceName, "2.0.1")
 }
 
 // ResultItem : A resource returned in a search result, which is identified by its `crn`. It contains other properties that depend on
@@ -335,6 +361,9 @@ func (o *ResultItem) MarshalJSON() (buffer []byte, err error) {
 		m["crn"] = o.CRN
 	}
 	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -343,6 +372,7 @@ func UnmarshalResultItem(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(ResultItem)
 	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "crn")
@@ -350,7 +380,7 @@ func UnmarshalResultItem(m map[string]json.RawMessage, result interface{}) (err 
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
 		if e != nil {
-			err = e
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
 			return
 		}
 		obj.SetProperty(k, v)
@@ -367,8 +397,9 @@ type ScanResult struct {
 	// Value of the limit parameter specified by the user.
 	Limit *int64 `json:"limit" validate:"required"`
 
-	// The array of results. Each item represents a resource. An empty array signals the end of the result set, which means
-	// there are no more results to fetch.
+	// The array of results. Each item represents a resource. For each resource, the requested `fields` are returned. If
+	// you did not set the `fields` request body parameter, then the `account_id`, `name`, `type`, `family`, and `crn` are
+	// returned. An empty array signals the end of the result set, which means there are no more results to fetch.
 	Items []ResultItem `json:"items" validate:"required"`
 }
 
@@ -377,14 +408,17 @@ func UnmarshalScanResult(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(ScanResult)
 	err = core.UnmarshalPrimitive(m, "search_cursor", &obj.SearchCursor)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "search_cursor-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "items", &obj.Items, UnmarshalResultItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "items-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -397,7 +431,8 @@ type SearchOptions struct {
 	Query *string `json:"query,omitempty"`
 
 	// The list of the fields returned by the search. By default, the returned fields are the `account_id`, `name`, `type`,
-	// `family`, and `crn`. For all queries, `crn` is always returned.
+	// `family`, and `crn`. For all queries, `crn` is always returned. You may set `"fields": ["*"]` to discover the set of
+	// fields available to request.
 	Fields []string `json:"fields,omitempty"`
 
 	// An opaque cursor that is returned on each call and that must be set on the subsequent call to get the next batch of
@@ -418,11 +453,6 @@ type SearchOptions struct {
 	// 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
 	// (version 4) UUID.
 	XCorrelationID *string `json:"x-correlation-id,omitempty"`
-
-	// An alphanumeric string that can be used to trace a request across services. If not specified, it automatically
-	// generated with the prefix "gst-".
-	// Deprecated: this field is deprecated and may be removed in a future release.
-	TransactionID *string `json:"transaction-id,omitempty"`
 
 	// The account ID to filter resources.
 	AccountID *string `json:"account_id,omitempty"`
@@ -460,6 +490,12 @@ type SearchOptions struct {
 	// (only a GhoST admin can use this parameter). If false (default), only resources user can view are returned; if true,
 	// only resources that user has permissions for tagging are returned (_for administrators only_).
 	CanTag *string `json:"can_tag,omitempty"`
+
+	// Determines if documents belonging to Project family should be included in result set or not. Possible values are
+	// false (default), true or any. If false, documents belonging to all families except Project are returned; if true,
+	// only documents belonging to Project family are returned; if any, documents of any family are returned. Only
+	// authorized ServiceIds can use this query parameter.
+	IsProjectResource *string `json:"is_project_resource,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -504,6 +540,17 @@ const (
 	SearchOptionsCanTagTrueConst = "true"
 )
 
+// Constants associated with the SearchOptions.IsProjectResource property.
+// Determines if documents belonging to Project family should be included in result set or not. Possible values are
+// false (default), true or any. If false, documents belonging to all families except Project are returned; if true,
+// only documents belonging to Project family are returned; if any, documents of any family are returned. Only
+// authorized ServiceIds can use this query parameter.
+const (
+	SearchOptionsIsProjectResourceAnyConst = "any"
+	SearchOptionsIsProjectResourceFalseConst = "false"
+	SearchOptionsIsProjectResourceTrueConst = "true"
+)
+
 // NewSearchOptions : Instantiate SearchOptions
 func (*GlobalSearchV2) NewSearchOptions() *SearchOptions {
 	return &SearchOptions{}
@@ -536,13 +583,6 @@ func (_options *SearchOptions) SetXRequestID(xRequestID string) *SearchOptions {
 // SetXCorrelationID : Allow user to set XCorrelationID
 func (_options *SearchOptions) SetXCorrelationID(xCorrelationID string) *SearchOptions {
 	_options.XCorrelationID = core.StringPtr(xCorrelationID)
-	return _options
-}
-
-// SetTransactionID : Allow user to set TransactionID
-// Deprecated: this method is deprecated and may be removed in a future release.
-func (_options *SearchOptions) SetTransactionID(transactionID string) *SearchOptions {
-	_options.TransactionID = core.StringPtr(transactionID)
 	return _options
 }
 
@@ -597,6 +637,12 @@ func (_options *SearchOptions) SetImpersonateUser(impersonateUser string) *Searc
 // SetCanTag : Allow user to set CanTag
 func (_options *SearchOptions) SetCanTag(canTag string) *SearchOptions {
 	_options.CanTag = core.StringPtr(canTag)
+	return _options
+}
+
+// SetIsProjectResource : Allow user to set IsProjectResource
+func (_options *SearchOptions) SetIsProjectResource(isProjectResource string) *SearchOptions {
+	_options.IsProjectResource = core.StringPtr(isProjectResource)
 	return _options
 }
 

@@ -8,7 +8,7 @@ import (
 	"github.com/IBM-Cloud/bluemix-go/endpoints"
 )
 
-//ServiceName ..
+// ServiceName ..
 type ServiceName string
 
 const (
@@ -68,7 +68,7 @@ const (
 	FunctionsService ServiceName = ServiceName("functions")
 )
 
-//Config ...
+// Config ...
 type Config struct {
 	IBMID string
 
@@ -105,8 +105,8 @@ type Config struct {
 	UserAgent     string
 }
 
-//Copy allows the configuration to be overriden or added
-//Typically the endpoints etc
+// Copy allows the configuration to be overriden or added
+// Typically the endpoints etc
 func (c *Config) Copy(mccpgs ...*Config) *Config {
 	out := new(Config)
 	*out = *c
@@ -121,7 +121,7 @@ func (c *Config) Copy(mccpgs ...*Config) *Config {
 	return out
 }
 
-//ValidateConfigForService ...
+// ValidateConfigForService ...
 func (c *Config) ValidateConfigForService(svc ServiceName) error {
 	if (c.IBMID == "" || c.IBMIDPassword == "") && c.BluemixAPIKey == "" && (c.IAMAccessToken == "" || c.IAMRefreshToken == "") {
 		return bmxerror.New(ErrInsufficientCredentials, "Please check the documentation on how to configure the IBM Cloud credentials")

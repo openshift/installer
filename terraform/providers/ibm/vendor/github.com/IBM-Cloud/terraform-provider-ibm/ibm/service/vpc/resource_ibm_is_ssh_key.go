@@ -143,7 +143,7 @@ func ResourceIBMISSSHKey() *schema.Resource {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_ssh_key", "accesstag")},
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_ssh_key", "access_tag")},
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "List of access management tags for SSH key",
 			},

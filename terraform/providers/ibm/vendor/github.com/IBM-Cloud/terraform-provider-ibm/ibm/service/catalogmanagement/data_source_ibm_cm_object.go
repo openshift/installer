@@ -196,7 +196,9 @@ func DataSourceIBMCmObject() *schema.Resource {
 func dataSourceIBMCmObjectRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	catalogManagementClient, err := meta.(conns.ClientSession).CatalogManagementV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_cm_object", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getObjectOptions := &catalogmanagementv1.GetObjectOptions{}
@@ -206,109 +208,144 @@ func dataSourceIBMCmObjectRead(context context.Context, d *schema.ResourceData, 
 
 	catalogObject, response, err := catalogManagementClient.GetObjectWithContext(context, getObjectOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetObjectWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetObjectWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetObjectWithContext failed %s\n%s", err, response), "(Data) ibm_cm_object", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(*getObjectOptions.ObjectIdentifier)
 
 	if err = d.Set("catalog_object_id", catalogObject.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting catalog_object_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting catalog_object_id: %s", err), "(Data) ibm_cm_object", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("name", catalogObject.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_cm_object", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("rev", catalogObject.Rev); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting rev: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting rev: %s", err), "(Data) ibm_cm_object", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("crn", catalogObject.CRN); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting crn: %s", err), "(Data) ibm_cm_object", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("url", catalogObject.URL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting url: %s", err), "(Data) ibm_cm_object", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("parent_id", catalogObject.ParentID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting parent_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting parent_id: %s", err), "(Data) ibm_cm_object", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if catalogObject.LabelI18n != nil {
 		if err = d.Set("label_i18n", catalogObject.LabelI18n); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting label_i18n: %s", err))
-		}
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting label_i18n %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting label_i18n: %s", err), "(Data) ibm_cm_object", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
 	if err = d.Set("label", catalogObject.Label); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting label: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting label: %s", err), "(Data) ibm_cm_object", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("created", flex.DateTimeToString(catalogObject.Created)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created: %s", err), "(Data) ibm_cm_object", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("updated", flex.DateTimeToString(catalogObject.Updated)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated: %s", err), "(Data) ibm_cm_object", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("short_description", catalogObject.ShortDescription); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting short_description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting short_description: %s", err), "(Data) ibm_cm_object", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if catalogObject.ShortDescriptionI18n != nil {
 		if err = d.Set("short_description_i18n", catalogObject.ShortDescriptionI18n); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting short_description_i18n: %s", err))
-		}
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting short_description_i18n %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting short_description_i18n: %s", err), "(Data) ibm_cm_object", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
 	if err = d.Set("kind", catalogObject.Kind); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting kind: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting kind: %s", err), "(Data) ibm_cm_object", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	publish := []map[string]interface{}{}
 	if catalogObject.Publish != nil {
 		modelMap, err := dataSourceIBMCmObjectPublishObjectToMap(catalogObject.Publish)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_cm_object", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		publish = append(publish, modelMap)
 	}
 	if err = d.Set("publish", publish); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting publish %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting publish: %s", err), "(Data) ibm_cm_object", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	state := []map[string]interface{}{}
 	if catalogObject.State != nil {
 		modelMap, err := dataSourceIBMCmObjectStateToMap(catalogObject.State)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_cm_object", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		state = append(state, modelMap)
 	}
 	if err = d.Set("state", state); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting state %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting state: %s", err), "(Data) ibm_cm_object", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("catalog_name", catalogObject.CatalogName); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting catalog_name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting catalog_name: %s", err), "(Data) ibm_cm_object", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if catalogObject.Data != nil {
 		dataString, err := json.Marshal(catalogObject.Data)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting data, error with json marshal: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting data, error with json marshal: %s", err), "(Data) ibm_cm_object", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("data", string(dataString)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting data: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting data: %s", err), "(Data) ibm_cm_object", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -325,12 +362,6 @@ func dataSourceIBMCmObjectPublishObjectToMap(model *catalogmanagementv1.PublishO
 	}
 	if model.PublicApproved != nil {
 		modelMap["public_approved"] = *model.PublicApproved
-	}
-	if model.PortalApprovalRecord != nil {
-		modelMap["portal_approval_record"] = *model.PortalApprovalRecord
-	}
-	if model.PortalURL != nil {
-		modelMap["portal_url"] = *model.PortalURL
 	}
 	return modelMap, nil
 }

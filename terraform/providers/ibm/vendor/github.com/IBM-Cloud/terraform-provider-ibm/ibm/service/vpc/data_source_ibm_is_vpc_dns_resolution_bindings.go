@@ -138,6 +138,35 @@ func DataSourceIBMIsVPCDnsResolutionBindings() *schema.Resource {
 							Computed:    true,
 							Description: "The URL for this DNS resolution binding.",
 						},
+						"health_reasons": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The reasons for the current `health_state` (if any).The enumerated reason code values for this property will expand in the future. When processing this property, check for and log unknown values. Optionally halt processing and surface the error, or bypass the resource on which the unexpected reason code was encountered.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"code": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "A snake case string succinctly identifying the reason for this health state.",
+									},
+									"message": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "An explanation of the reason for this health state.",
+									},
+									"more_info": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about the reason for this health state.",
+									},
+								},
+							},
+						},
+						"health_state": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The health of this resource.- `ok`: No abnormal behavior detected- `degraded`: Experiencing compromised performance, capacity, or connectivity- `faulted`: Completely unreachable, inoperative, or otherwise entirely incapacitated- `inapplicable`: The health state does not apply because of the current lifecycle state. A resource with a lifecycle state of `failed` or `deleting` will have a health state of `inapplicable`. A `pending` resource may also have this state.",
+						},
 						isVPCDnsResolutionBindingLifecycleState: &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -300,7 +329,18 @@ func dataSourceIBMIsVPCDnsResolutionBindingsRead(context context.Context, d *sch
 			l[isVPCDnsResolutionBindingHref] = dns.Href
 
 			l[isVPCDnsResolutionBindingResourceType] = dns.ResourceType
-
+			healthReasons := []map[string]interface{}{}
+			if dns.HealthReasons != nil {
+				for _, modelItem := range dns.HealthReasons {
+					modelMap, err := dataSourceIBMIsVPCDnsResolutionBindingVpcdnsResolutionBindingHealthReasonToMap(&modelItem)
+					if err != nil {
+						return diag.FromErr(err)
+					}
+					healthReasons = append(healthReasons, modelMap)
+				}
+			}
+			l["health_reasons"] = healthReasons
+			l["health_state"] = dns.HealthState
 			vpc := []map[string]interface{}{}
 			if dns.VPC != nil {
 				modelMap, err := dataSourceIBMIsVPCDnsResolutionBindingVPCReferenceRemoteToMap(dns.VPC)

@@ -40,6 +40,11 @@ const (
 	tgRemoteTunnelIp                    = "remote_tunnel_ip"
 	tgZone                              = "zone"
 	tgMtu                               = "mtu"
+	tgDefaultPrefixFilter               = "default_prefix_filter"
+	tgrGREtunnels                       = "tunnels"
+	tgGreTunnelId                       = "tunnel_id"
+	tgGreTunnelStatus                   = "status"
+	tgconTunnelName                     = "name"
 )
 
 func ResourceIBMTransitGatewayConnection() *schema.Resource {
@@ -74,7 +79,7 @@ func ResourceIBMTransitGatewayConnection() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_tg_connection", tgNetworkType),
-				Description:  "Defines what type of network is connected via this connection. Allowable values (classic,directlink,vpc,gre_tunnel,unbound_gre_tunnel,power_virtual_server)",
+				Description:  "Defines what type of network is connected via this connection. Allowable values (classic,directlink,vpc,gre_tunnel,unbound_gre_tunnel,power_virtual_server,redundant_gre)",
 			},
 			tgName: {
 				Type:         schema.TypeString,
@@ -177,13 +182,103 @@ func ResourceIBMTransitGatewayConnection() *schema.Resource {
 				Computed:    true,
 				Description: "The crn of the transit gateway",
 			},
+			tgDefaultPrefixFilter: {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_tg_connection_prefix_filter", tgAction),
+				Description:  "Whether to permit or deny the prefix filter",
+			},
+			tgrGREtunnels: {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				ForceNew:    false,
+				Description: "List of GRE tunnels for a transit gateway redundant GRE tunnel connection. This field is required for 'redundant_gre' connections",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						tgconTunnelName: {
+							Type:         schema.TypeString,
+							Required:     true,
+							ForceNew:     false,
+							ValidateFunc: validate.InvokeValidator("ibm_tg_connection", tgName),
+							Description:  "The user-defined name for this tunnel connection.",
+						},
+						tgLocalGatewayIp: {
+							Type:        schema.TypeString,
+							Required:    true,
+							ForceNew:    true,
+							Description: "The local gateway IP address. This field only applies to network type 'gre_tunnel' and 'unbound_gre_tunnel' connections.",
+						},
+						tgLocalTunnelIp: {
+							Type:        schema.TypeString,
+							Required:    true,
+							ForceNew:    true,
+							Description: "The local tunnel IP address. This field only applies to network type 'gre_tunnel' and 'unbound_gre_tunnel' connections.",
+						},
+						tgRemoteGatewayIp: {
+							Type:        schema.TypeString,
+							Required:    true,
+							ForceNew:    true,
+							Description: "The remote gateway IP address. This field only applies to network type 'gre_tunnel' and 'unbound_gre_tunnel' connections.",
+						},
+						tgRemoteTunnelIp: {
+							Type:        schema.TypeString,
+							Required:    true,
+							ForceNew:    true,
+							Description: "The remote tunnel IP address. This field only applies to network type 'gre_tunnel' and 'unbound_gre_tunnel' connections.",
+						},
+						tgZone: {
+							Type:        schema.TypeString,
+							Required:    true,
+							ForceNew:    true,
+							Description: "Location of GRE tunnel. This field only applies to network type 'gre_tunnel' and 'unbound_gre_tunnel' connections.",
+						},
+						tgCreatedAt: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The date and time that this connection was created",
+						},
+						tgUpdatedAt: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The date and time that this connection was last updated",
+						},
+						tgGreTunnelStatus: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "What is the current configuration state of this connection. Possible values: [attached,failed,pending,deleting,detaching,detached]",
+						},
+						tgGreTunnelId: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The Transit Gateway Connection tunnel identifier",
+						},
+						tgMtu: {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						tgLocalBgpAsn: {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Optional:    true,
+							Description: "The local network BGP ASN. This field only applies to network type 'gre_tunnel' and 'unbound_gre_tunnel' connections.",
+						},
+						tgRemoteBgpAsn: {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Computed:    true,
+							Description: "The remote network BGP ASN. This field only applies to network type 'gre_tunnel' and 'unbound_gre_tunnel' connections.",
+						},
+					},
+				},
+			},
 		},
 	}
 }
 func ResourceIBMTransitGatewayConnectionValidator() *validate.ResourceValidator {
 
 	validateSchema := make([]validate.ValidateSchema, 0)
-	networkType := "classic, directlink, vpc, gre_tunnel, unbound_gre_tunnel, power_virtual_server"
+	networkType := "classic, directlink, vpc, gre_tunnel, unbound_gre_tunnel, power_virtual_server,redundant_gre"
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 tgNetworkType,
@@ -266,6 +361,57 @@ func resourceIBMTransitGatewayConnectionCreate(d *schema.ResourceData, meta inte
 		createTransitGatewayConnectionOptions.SetZone(zoneIdentity)
 	}
 
+	if _, ok := d.GetOk(tgDefaultPrefixFilter); ok {
+		if "redundant_gre" == networkType {
+			err = fmt.Errorf("[ERROR] Error default_prefix_filter is not allowed for connection type %s,", networkType)
+			log.Printf("[ERROR] Error default_prefix_filter is not allowed for connection type %s ", networkType)
+			return err
+		}
+		default_prefix_filter := d.Get(tgDefaultPrefixFilter).(string)
+		createTransitGatewayConnectionOptions.SetPrefixFiltersDefault(default_prefix_filter)
+	}
+
+	tunnelCreateList := make([]transitgatewayapisv1.TransitGatewayRedundantGRETunnelTemplate, 0)
+
+	if _, ok := d.GetOk(tgrGREtunnels); ok {
+		tunnelList := d.Get(tgrGREtunnels).(*schema.Set).List()
+		for _, tunnel := range tunnelList {
+			tunnelData := tunnel.(map[string]interface{})
+
+			tunnelTemplateModel := new(transitgatewayapisv1.TransitGatewayRedundantGRETunnelTemplate)
+
+			if _, ok := tunnelData[tgLocalGatewayIp]; ok {
+				tunnelTemplateModel.LocalGatewayIp = NewStrPointer(tunnelData[tgLocalGatewayIp].(string))
+			}
+			if _, ok := tunnelData[tgLocalTunnelIp]; ok {
+				tunnelTemplateModel.LocalTunnelIp = NewStrPointer(tunnelData[tgLocalTunnelIp].(string))
+			}
+
+			if _, ok := tunnelData[tgRemoteGatewayIp]; ok {
+				tunnelTemplateModel.RemoteGatewayIp = NewStrPointer(tunnelData[tgRemoteGatewayIp].(string))
+			}
+
+			if _, ok := tunnelData[tgRemoteTunnelIp]; ok {
+				tunnelTemplateModel.RemoteTunnelIp = NewStrPointer(tunnelData[tgRemoteTunnelIp].(string))
+			}
+			if _, ok := tunnelData[tgRemoteBgpAsn]; ok && (int64)(tunnelData[tgRemoteBgpAsn].(int)) > 0 {
+				tunnelTemplateModel.RemoteBgpAsn = NewInt64Pointer(int64(tunnelData[tgRemoteBgpAsn].(int)))
+			}
+			if _, ok := tunnelData[tgconTunnelName]; ok {
+				tunnelTemplateModel.Name = NewStrPointer(tunnelData[tgconTunnelName].(string))
+			}
+			if _, ok := tunnelData[tgZone]; ok {
+				zoneIdentity := &transitgatewayapisv1.ZoneIdentity{}
+				zoneIdentity.Name = NewStrPointer(tunnelData[tgZone].(string))
+				tunnelTemplateModel.Zone = zoneIdentity
+			}
+			tunnelCreateList = append(tunnelCreateList, *tunnelTemplateModel)
+		}
+	}
+	if len(tunnelCreateList) > 0 {
+		createTransitGatewayConnectionOptions.SetTunnels(tunnelCreateList)
+	}
+
 	tgConnections, response, err := client.CreateTransitGatewayConnection(createTransitGatewayConnectionOptions)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Create Transit Gateway connection err %s\n%s", err, response)
@@ -305,7 +451,6 @@ func isTransitGatewayConnectionRefreshFunc(client *transitgatewayapisv1.TransitG
 		parts, err := flex.IdParts(id)
 		if err != nil {
 			return nil, "", fmt.Errorf("[ERROR] Error Getting Transit Gateway connection: %s", err)
-			//	return err
 		}
 
 		gatewayId := parts[0]
@@ -374,6 +519,11 @@ func resourceIBMTransitGatewayConnectionRead(d *schema.ResourceData, meta interf
 	if instance.RequestStatus != nil {
 		d.Set(tgRequestStatus, *instance.RequestStatus)
 	}
+
+	if instance.PrefixFiltersDefault != nil {
+		d.Set(tgDefaultPrefixFilter, *instance.PrefixFiltersDefault)
+	}
+
 	d.Set(tgConnectionId, *instance.ID)
 	d.Set(tgGatewayId, gatewayId)
 	getTransitGatewayOptions := &transitgatewayapisv1.GetTransitGatewayOptions{
@@ -385,6 +535,53 @@ func resourceIBMTransitGatewayConnectionRead(d *schema.ResourceData, meta interf
 	}
 	d.Set(flex.RelatedCRN, *tgw.Crn)
 
+	// read the tunnels
+	rGREtunnels := make([]map[string]interface{}, 0)
+	for _, rGREtunnel := range instance.Tunnels {
+
+		tunnel := map[string]interface{}{}
+		if rGREtunnel.ID != nil {
+			tunnel[tgGreTunnelId] = *rGREtunnel.ID
+		}
+		if rGREtunnel.LocalGatewayIp != nil {
+			tunnel[tgLocalGatewayIp] = *rGREtunnel.LocalGatewayIp
+		}
+		if rGREtunnel.LocalTunnelIp != nil {
+			tunnel[tgLocalTunnelIp] = *rGREtunnel.LocalTunnelIp
+		}
+		if rGREtunnel.RemoteGatewayIp != nil {
+			tunnel[tgRemoteGatewayIp] = *rGREtunnel.RemoteGatewayIp
+		}
+		if rGREtunnel.RemoteTunnelIp != nil {
+			tunnel[tgRemoteTunnelIp] = *rGREtunnel.RemoteTunnelIp
+		}
+		if rGREtunnel.Mtu != nil {
+			tunnel[tgMtu] = *rGREtunnel.Mtu
+		}
+		if rGREtunnel.RemoteBgpAsn != nil {
+			tunnel[tgRemoteBgpAsn] = *rGREtunnel.RemoteBgpAsn
+		}
+		if rGREtunnel.Name != nil {
+			tunnel[tgconTunnelName] = *rGREtunnel.Name
+		}
+		if rGREtunnel.Zone.Name != nil {
+			tunnel[tgZone] = *rGREtunnel.Zone.Name
+		}
+		if rGREtunnel.LocalBgpAsn != nil {
+			tunnel[tgLocalBgpAsn] = *rGREtunnel.LocalBgpAsn
+		}
+		if rGREtunnel.Status != nil {
+			tunnel[tgGreTunnelStatus] = *rGREtunnel.Status
+		}
+		if rGREtunnel.CreatedAt != nil {
+			tunnel[tgCreatedAt] = rGREtunnel.CreatedAt.String()
+		}
+		if rGREtunnel.UpdatedAt != nil {
+			tunnel[tgUpdatedAt] = rGREtunnel.UpdatedAt.String()
+		}
+		rGREtunnels = append(rGREtunnels, tunnel)
+	}
+	d.Set(tgrGREtunnels, rGREtunnels)
 	return nil
 }
 
@@ -419,6 +616,12 @@ func resourceIBMTransitGatewayConnectionUpdate(d *schema.ResourceData, meta inte
 		if d.Get(tgName) != nil {
 			name := d.Get(tgName).(string)
 			updateTransitGatewayConnectionOptions.Name = &name
+		}
+	}
+	if d.HasChange(tgDefaultPrefixFilter) {
+		if d.Get(tgDefaultPrefixFilter) != nil {
+			prefixFilter := d.Get(tgDefaultPrefixFilter).(string)
+			updateTransitGatewayConnectionOptions.PrefixFiltersDefault = &prefixFilter
 		}
 	}
 
@@ -536,4 +739,12 @@ func resourceIBMTransitGatewayConnectionExists(d *schema.ResourceData, meta inte
 	}
 
 	return true, nil
+}
+
+func NewInt64Pointer(v int64) *int64 {
+	return &v
+}
+
+func NewStrPointer(v string) *string {
+	return &v
 }
