@@ -38,6 +38,7 @@ func DataSourceIBMServiceKey() *schema.Resource {
 				Description: "The guid of the space in which the service instance is present",
 			},
 		},
+		DeprecationMessage: "This service is deprecated.",
 	}
 }
 

@@ -4,7 +4,6 @@
 package catalogmanagement
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -116,6 +115,16 @@ func ResourceIBMCmOfferingInstance() *schema.Resource {
 				Optional:    true,
 				Description: "channel to target for the operator subscription. Required for operator bundles",
 			},
+			"plan_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "id of the plan",
+			},
+			"parent_crn": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "CRN of parent instance",
+			},
 			"wait_until_successful": {
 				Type:             schema.TypeBool,
 				Optional:         true,
@@ -182,6 +191,12 @@ func resourceIBMCmOfferingInstanceCreate(d *schema.ResourceData, meta interface{
 	if _, ok := d.GetOk("channel"); ok {
 		createOfferingInstanceOptions.SetChannel(d.Get("channel").(string))
 	}
+	if _, ok := d.GetOk("plan_id"); ok {
+		createOfferingInstanceOptions.SetPlanID(d.Get("plan_id").(string))
+	}
+	if _, ok := d.GetOk("parent_crn"); ok {
+		createOfferingInstanceOptions.SetParentCRN(d.Get("parent_crn").(string))
+	}
 
 	offeringInstance, response, err := catalogManagementClient.CreateOfferingInstance(createOfferingInstanceOptions)
 	if err != nil {
@@ -218,7 +233,7 @@ func waitUntilSuccess(d *schema.ResourceData, meta interface{}) (interface{}, er
 		Refresh: func() (interface{}, string, error) {
 			offeringInstance, _, err := catalogManagementClient.GetOfferingInstance(getOfferingInstanceOptions)
 			if err != nil {
-				return nil, "", fmt.Errorf("[ERROR] Error retrieving offering instance: %s", err)
+				return nil, "", flex.FmtErrorf("[ERROR] Error retrieving offering instance: %s", err)
 			}
 
 			return offeringInstance, *offeringInstance.LastOperation.State, nil
@@ -252,48 +267,54 @@ func resourceIBMCmOfferingInstanceRead(d *schema.ResourceData, meta interface{})
 	}
 
 	if err = d.Set("url", offeringInstance.URL); err != nil {
-		return fmt.Errorf("[ERROR] Error setting url: %s", err)
+		return flex.FmtErrorf("[ERROR] Error setting url: %s", err)
 	}
 	if err = d.Set("crn", offeringInstance.CRN); err != nil {
-		return fmt.Errorf("[ERROR] Error setting crn: %s", err)
+		return flex.FmtErrorf("[ERROR] Error setting crn: %s", err)
 	}
 	if err = d.Set("label", offeringInstance.Label); err != nil {
-		return fmt.Errorf("[ERROR] Error setting label: %s", err)
+		return flex.FmtErrorf("[ERROR] Error setting label: %s", err)
 	}
 	if err = d.Set("catalog_id", offeringInstance.CatalogID); err != nil {
-		return fmt.Errorf("[ERROR] Error setting catalog_id: %s", err)
+		return flex.FmtErrorf("[ERROR] Error setting catalog_id: %s", err)
 	}
 	if err = d.Set("offering_id", offeringInstance.OfferingID); err != nil {
-		return fmt.Errorf("[ERROR] Error setting offering_id: %s", err)
+		return flex.FmtErrorf("[ERROR] Error setting offering_id: %s", err)
 	}
 	if err = d.Set("kind_format", offeringInstance.KindFormat); err != nil {
-		return fmt.Errorf("[ERROR] Error setting kind_format: %s", err)
+		return flex.FmtErrorf("[ERROR] Error setting kind_format: %s", err)
 	}
 	if err = d.Set("version", offeringInstance.Version); err != nil {
-		return fmt.Errorf("[ERROR] Error setting version: %s", err)
+		return flex.FmtErrorf("[ERROR] Error setting version: %s", err)
 	}
 	if err = d.Set("cluster_id", offeringInstance.ClusterID); err != nil {
-		return fmt.Errorf("[ERROR] Error setting cluster_id: %s", err)
+		return flex.FmtErrorf("[ERROR] Error setting cluster_id: %s", err)
 	}
 	if err = d.Set("cluster_region", offeringInstance.ClusterRegion); err != nil {
-		return fmt.Errorf("[ERROR] Error setting cluster_region: %s", err)
+		return flex.FmtErrorf("[ERROR] Error setting cluster_region: %s", err)
 	}
 	if offeringInstance.ClusterNamespaces != nil {
 		if err = d.Set("cluster_namespaces", offeringInstance.ClusterNamespaces); err != nil {
-			return fmt.Errorf("[ERROR] Error setting cluster_namespaces: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting cluster_namespaces: %s", err)
 		}
 	}
 	if err = d.Set("cluster_all_namespaces", offeringInstance.ClusterAllNamespaces); err != nil {
-		return fmt.Errorf("[ERROR] Error setting cluster_all_namespaces: %s", err)
+		return flex.FmtErrorf("[ERROR] Error setting cluster_all_namespaces: %s", err)
 	}
 	if err = d.Set("schematics_workspace_id", offeringInstance.SchematicsWorkspaceID); err != nil {
-		return fmt.Errorf("[ERROR] Error setting schematics_workspace_id: %s", err)
+		return flex.FmtErrorf("[ERROR] Error setting schematics_workspace_id: %s", err)
 	}
 	if err = d.Set("install_plan", offeringInstance.InstallPlan); err != nil {
-		return fmt.Errorf("[ERROR] Error setting install_plan: %s", err)
+		return flex.FmtErrorf("[ERROR] Error setting install_plan: %s", err)
 	}
 	if err = d.Set("channel", offeringInstance.Channel); err != nil {
-		return fmt.Errorf("[ERROR] Error setting channel: %s", err)
+		return flex.FmtErrorf("[ERROR] Error setting channel: %s", err)
+	}
+	if err = d.Set("plan_id", offeringInstance.PlanID); err != nil {
+		return flex.FmtErrorf("[ERROR] Error setting plan_id: %s", err)
+	}
+	if err = d.Set("parent_crn", offeringInstance.ParentCRN); err != nil {
+		return flex.FmtErrorf("[ERROR] Error setting parent_crn: %s", err)
 	}
 
 	return nil
@@ -367,6 +388,12 @@ func resourceIBMCmOfferingInstanceUpdate(d *schema.ResourceData, meta interface{
 	}
 	if _, ok := d.GetOk("channel"); ok {
 		putOfferingInstanceOptions.SetChannel(d.Get("channel").(string))
+	}
+	if _, ok := d.GetOk("plan_id"); ok {
+		putOfferingInstanceOptions.SetPlanID(d.Get("plan_id").(string))
+	}
+	if _, ok := d.GetOk("parent_crn"); ok {
+		putOfferingInstanceOptions.SetParentCRN(d.Get("parent_crn").(string))
 	}
 
 	_, response, err = catalogManagementClient.PutOfferingInstance(putOfferingInstanceOptions)

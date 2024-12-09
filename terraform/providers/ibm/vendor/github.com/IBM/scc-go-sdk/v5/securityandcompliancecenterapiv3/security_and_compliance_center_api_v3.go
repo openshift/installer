@@ -122,6 +122,7 @@ func GetServiceURLForRegion(region string) (string, error) {
 		"au-syd":   "https://au-syd.compliance.cloud.ibm.com",   // The API endpoint in the au-syd region
 		"ca-tor":   "https://ca-tor.compliance.cloud.ibm.com",   // The API endpoint in the ca-tor region
 		"eu-de":    "https://eu-de.compliance.cloud.ibm.com",    // The API endpoint in the eu-de region
+		"eu-es":    "https://eu-es.compliance.cloud.ibm.com",    // The API endpoint in the eu-es region
 		"eu-fr2":   "https://eu-fr2.compliance.cloud.ibm.com",   // The API endpoint in the eu-fr2 region
 		"us-south": "https://us-south.compliance.cloud.ibm.com", // The API endpoint in the us-south region
 	}
@@ -982,6 +983,9 @@ func (securityAndComplianceCenterApi *SecurityAndComplianceCenterApiV3) CreatePr
 	}
 	if createProfileOptions.ProfileType != nil {
 		body["profile_type"] = createProfileOptions.ProfileType
+	}
+	if createProfileOptions.ProfileVersion != nil {
+		body["profile_version"] = createProfileOptions.ProfileVersion
 	}
 	if createProfileOptions.Controls != nil {
 		body["controls"] = createProfileOptions.Controls
@@ -3188,7 +3192,8 @@ func (securityAndComplianceCenterApi *SecurityAndComplianceCenterApiV3) GetProvi
 	builder := core.NewRequestBuilder(core.GET)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = securityAndComplianceCenterApi.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(securityAndComplianceCenterApi.Service.Options.URL, `/v3/provider_types/{provider_type_id}`, pathParamsMap)
+	instanceURL, err := getInstanceBasedURL(securityAndComplianceCenterApi.Service.Options.URL, *getProviderTypeByIdOptions.InstanceID)
+	_, err = builder.ResolveRequestURL(instanceURL, `/provider_types/{provider_type_id}`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -3738,7 +3743,7 @@ type AdditionalTargetAttribute struct {
 	Operator *string `json:"operator,omitempty"`
 
 	// The value.
-	Value *string `json:"value,omitempty"`
+	Value interface{} `json:"value,omitempty"`
 }
 
 // Constants associated with the AdditionalTargetAttribute.Operator property.
@@ -5350,6 +5355,9 @@ type CreateProfileOptions struct {
 	// The profile type.
 	ProfileType *string `json:"profile_type" validate:"required"`
 
+	// The profile version.
+	ProfileVersion *string `json:"profile_version,omitempty"`
+
 	// The controls that are in the profile.
 	Controls []ProfileControlsPrototype `json:"controls" validate:"required"`
 
@@ -5410,6 +5418,12 @@ func (_options *CreateProfileOptions) SetProfileDescription(profileDescription s
 // SetProfileType : Allow user to set ProfileType
 func (_options *CreateProfileOptions) SetProfileType(profileType string) *CreateProfileOptions {
 	_options.ProfileType = core.StringPtr(profileType)
+	return _options
+}
+
+// SetProfileVersion : Allow user to set ProfileVersion
+func (_options *CreateProfileOptions) SetProfileVersion(profileVersion string) *CreateProfileOptions {
+	_options.ProfileVersion = core.StringPtr(profileVersion)
 	return _options
 }
 
@@ -6654,6 +6668,9 @@ func (options *GetProfileOptions) SetHeaders(param map[string]string) *GetProfil
 
 // GetProviderTypeByIdOptions : The GetProviderTypeByID options.
 type GetProviderTypeByIdOptions struct {
+	// ID of the instance
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
 	// The provider type ID.
 	ProviderTypeID *string `json:"provider_type_id" validate:"required,ne="`
 
@@ -6672,10 +6689,17 @@ type GetProviderTypeByIdOptions struct {
 }
 
 // NewGetProviderTypeByIdOptions : Instantiate GetProviderTypeByIdOptions
-func (*SecurityAndComplianceCenterApiV3) NewGetProviderTypeByIdOptions(providerTypeID string) *GetProviderTypeByIdOptions {
+func (*SecurityAndComplianceCenterApiV3) NewGetProviderTypeByIdOptions(instanceID, providerTypeID string) *GetProviderTypeByIdOptions {
 	return &GetProviderTypeByIdOptions{
+		InstanceID:     core.StringPtr(instanceID),
 		ProviderTypeID: core.StringPtr(providerTypeID),
 	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *GetProviderTypeByIdOptions) SetInstanceID(instanceID string) *GetProviderTypeByIdOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetProviderTypeID : Allow user to set ProviderTypeID
@@ -10639,19 +10663,27 @@ func UnmarshalReportViolationsDrift(m map[string]json.RawMessage, result interfa
 }
 
 // RequiredConfig : The required configurations.
-// Models which "extend" this model:
-// - RequiredConfigRequiredConfigAnd
-// - RequiredConfigRequiredConfigOr
-// - RequiredConfigRequiredConfigBase
 type RequiredConfig struct {
 	// The required config description.
 	Description *string `json:"description,omitempty"`
 
 	// The `AND` required configurations.
-	And []RequiredConfigItemsIntf `json:"and,omitempty"`
+	And RequiredConfigItems `json:"and,omitempty"`
 
 	// The `OR` required configurations.
-	Or []RequiredConfigItemsIntf `json:"or,omitempty"`
+	Or RequiredConfigItems `json:"or,omitempty"`
+
+	// The `Any` required configrations.
+	Any *RequiredConfigSubRule `json:"any,omitempty"`
+
+	// The `AnyIf` required configrations.
+	AnyIf *RequiredConfigSubRule `json:"any_ifexists,omitempty"`
+
+	// The `All` required configrations.
+	All *RequiredConfigSubRule `json:"all,omitempty"`
+
+	// The `AllIf` required configrations.
+	AllIf *RequiredConfigSubRule `json:"all_ifexists,omitempty"`
 
 	// The property.
 	Property *string `json:"property,omitempty"`
@@ -10702,15 +10734,31 @@ type RequiredConfigIntf interface {
 // UnmarshalRequiredConfig unmarshals an instance of RequiredConfig from the specified map of raw messages.
 func UnmarshalRequiredConfig(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(RequiredConfig)
+	err = core.UnmarshalModel(m, "and", &obj.And, UnmarshalRequiredConfig)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "or", &obj.Or, UnmarshalRequiredConfig)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "any", &obj.Any, UnmarshalRequiredConfigSubRule)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "any_ifexists", &obj.AnyIf, UnmarshalRequiredConfigSubRule)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "all", &obj.All, UnmarshalRequiredConfigSubRule)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "all_ifexists", &obj.AllIf, UnmarshalRequiredConfigSubRule)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "and", &obj.And, UnmarshalRequiredConfigItems)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "or", &obj.Or, UnmarshalRequiredConfigItems)
 	if err != nil {
 		return
 	}
@@ -10731,90 +10779,32 @@ func UnmarshalRequiredConfig(m map[string]json.RawMessage, result interface{}) (
 }
 
 // RequiredConfigItems : RequiredConfigItems struct
-// Models which "extend" this model:
-// - RequiredConfigItemsRequiredConfigOr
-// - RequiredConfigItemsRequiredConfigAnd
-// - RequiredConfigItemsRequiredConfigBase
-type RequiredConfigItems struct {
-	// The required config description.
-	Description *string `json:"description,omitempty"`
+type RequiredConfigItems []RequiredConfigIntf
 
-	// The `OR` required configurations.
-	Or []RequiredConfigItemsIntf `json:"or,omitempty"`
-
-	// The `AND` required configurations.
-	And []RequiredConfigItemsIntf `json:"and,omitempty"`
-
-	// The property.
-	Property *string `json:"property,omitempty"`
-
-	// The operator.
-	Operator *string `json:"operator,omitempty"`
-
-	// Schema for any JSON type.
-	Value interface{} `json:"value,omitempty"`
-}
-
-// Constants associated with the RequiredConfigItems.Operator property.
-// The operator.
-const (
-	RequiredConfigItems_Operator_DaysLessThan         = "days_less_than"
-	RequiredConfigItems_Operator_IpsEquals            = "ips_equals"
-	RequiredConfigItems_Operator_IpsInRange           = "ips_in_range"
-	RequiredConfigItems_Operator_IpsNotEquals         = "ips_not_equals"
-	RequiredConfigItems_Operator_IsEmpty              = "is_empty"
-	RequiredConfigItems_Operator_IsFalse              = "is_false"
-	RequiredConfigItems_Operator_IsNotEmpty           = "is_not_empty"
-	RequiredConfigItems_Operator_IsTrue               = "is_true"
-	RequiredConfigItems_Operator_NumEquals            = "num_equals"
-	RequiredConfigItems_Operator_NumGreaterThan       = "num_greater_than"
-	RequiredConfigItems_Operator_NumGreaterThanEquals = "num_greater_than_equals"
-	RequiredConfigItems_Operator_NumLessThan          = "num_less_than"
-	RequiredConfigItems_Operator_NumLessThanEquals    = "num_less_than_equals"
-	RequiredConfigItems_Operator_NumNotEquals         = "num_not_equals"
-	RequiredConfigItems_Operator_StringContains       = "string_contains"
-	RequiredConfigItems_Operator_StringEquals         = "string_equals"
-	RequiredConfigItems_Operator_StringMatch          = "string_match"
-	RequiredConfigItems_Operator_StringNotContains    = "string_not_contains"
-	RequiredConfigItems_Operator_StringNotEquals      = "string_not_equals"
-	RequiredConfigItems_Operator_StringNotMatch       = "string_not_match"
-	RequiredConfigItems_Operator_StringsAllowed       = "strings_allowed"
-	RequiredConfigItems_Operator_StringsInList        = "strings_in_list"
-	RequiredConfigItems_Operator_StringsRequired      = "strings_required"
-)
-
-func (*RequiredConfigItems) isaRequiredConfigItems() bool {
+func (*RequiredConfigItems) isaRequiredConfig() bool {
 	return true
 }
 
-type RequiredConfigItemsIntf interface {
-	isaRequiredConfigItems() bool
+type RequiredConfigSubRule struct {
+	// The rule target.
+	Target *Target `json:"target" validate:"required"`
+
+	// The required configurations.
+	RequiredConfig *RequiredConfig `json:"required_config" validate:"required"`
 }
 
-// UnmarshalRequiredConfigItems unmarshals an instance of RequiredConfigItems from the specified map of raw messages.
-func UnmarshalRequiredConfigItems(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(RequiredConfigItems)
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+func (*RequiredConfigSubRule) isaRequiredConfig() bool {
+	return true
+}
+
+// UnmarshalRequiredConfigSubRule unmarshals an instance of RequiredConfigSubRule from the specified map of raw messages
+func UnmarshalRequiredConfigSubRule(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RequiredConfigSubRule)
+	err = core.UnmarshalModel(m, "target", &obj.Target, UnmarshalTarget)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "or", &obj.Or, UnmarshalRequiredConfigItems)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "and", &obj.And, UnmarshalRequiredConfigItems)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "property", &obj.Property)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "operator", &obj.Operator)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	err = core.UnmarshalModel(m, "required_config", &obj.RequiredConfig, UnmarshalRequiredConfig)
 	if err != nil {
 		return
 	}
@@ -11207,6 +11197,9 @@ type Rule struct {
 
 	// The list of labels.
 	Labels []string `json:"labels" validate:"required"`
+
+	// The remediation associated with the rule
+	Remediation *Remediation `json:"remediation,omitempty"`
 }
 
 // Constants associated with the Rule.Type property.
@@ -11215,6 +11208,25 @@ const (
 	Rule_Type_SystemDefined = "system_defined"
 	Rule_Type_UserDefined   = "user_defined"
 )
+
+// NewRequiredConfigBase : Instantiate RequiredConfigBase (Generic Model Constructor)
+func (*SecurityAndComplianceCenterApiV3) NewRequiredConfigBase(property string, operator string) (_model *RequiredConfig, err error) {
+	_model = &RequiredConfig{
+		Property: core.StringPtr(property),
+		Operator: core.StringPtr(operator),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// NewRequiredConfigBase : Instantiate RequiredConfigBase (Generic Model Constructor)
+func (*SecurityAndComplianceCenterApiV3) NewRequiredConfigItems(items ...RequiredConfigIntf) (_model *RequiredConfigItems, err error) {
+	_model = new(RequiredConfigItems)
+	for _, item := range items {
+		*_model = append(*_model, item)
+	}
+	return
+}
 
 // UnmarshalRule unmarshals an instance of Rule from the specified map of raw messages.
 func UnmarshalRule(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -11264,6 +11276,10 @@ func UnmarshalRule(m map[string]json.RawMessage, result interface{}) (err error)
 		return
 	}
 	err = core.UnmarshalModel(m, "required_config", &obj.RequiredConfig, UnmarshalRequiredConfig)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "remediation", &obj.Remediation, UnmarshalRemediation)
 	if err != nil {
 		return
 	}
@@ -11580,6 +11596,58 @@ type Target struct {
 
 	// The list of targets supported properties.
 	AdditionalTargetAttributes []AdditionalTargetAttribute `json:"additional_target_attributes,omitempty"`
+
+	// The reference name when used in the required config of a rule.
+	ReferenceName *string `json:"ref,omitempty"`
+}
+
+// Remediation : The guidelines to accomadate to the rule if provided.
+type Remediation struct {
+	// The url links associated with Remediation
+	Links []Link `json:"links,omitempty"`
+	// The description of the Remediation
+	Description string `json:"description,omitempty"`
+	// The text that provides guidelines for remediation in stringify HTML
+	GuidelineText string `json:"guideline_text,omitempty"`
+}
+
+func UnmarshalRemediation(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Remediation)
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "guideline_text", &obj.GuidelineText)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "links", &obj.Links, UnmarshalLink)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+type Link struct {
+	// The descriptive title of the hyperlink
+	Text string `json:"text,omitempty"`
+	// The reference URL for the entries.
+	Href string `json:"href,omitempty"`
+}
+
+func UnmarshalLink(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Link)
+	err = core.UnmarshalPrimitive(m, "text", &obj.Text)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
 // NewTarget : Instantiate Target (Generic Model Constructor)
@@ -11608,6 +11676,10 @@ func UnmarshalTarget(m map[string]json.RawMessage, result interface{}) (err erro
 		return
 	}
 	err = core.UnmarshalModel(m, "additional_target_attributes", &obj.AdditionalTargetAttributes, UnmarshalAdditionalTargetAttribute)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ref", &obj.ReferenceName)
 	if err != nil {
 		return
 	}
@@ -11831,284 +11903,6 @@ func (_options *UpdateSettingsOptions) SetXRequestID(xRequestID string) *UpdateS
 func (options *UpdateSettingsOptions) SetHeaders(param map[string]string) *UpdateSettingsOptions {
 	options.Headers = param
 	return options
-}
-
-// RequiredConfigItemsRequiredConfigAnd : RequiredConfigItemsRequiredConfigAnd struct
-// This model "extends" RequiredConfigItems
-type RequiredConfigItemsRequiredConfigAnd struct {
-	// The required config description.
-	Description *string `json:"description,omitempty"`
-
-	// The `AND` required configurations.
-	And []RequiredConfigItemsIntf `json:"and,omitempty"`
-}
-
-func (*RequiredConfigItemsRequiredConfigAnd) isaRequiredConfigItems() bool {
-	return true
-}
-
-// UnmarshalRequiredConfigItemsRequiredConfigAnd unmarshals an instance of RequiredConfigItemsRequiredConfigAnd from the specified map of raw messages.
-func UnmarshalRequiredConfigItemsRequiredConfigAnd(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(RequiredConfigItemsRequiredConfigAnd)
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "and", &obj.And, UnmarshalRequiredConfigItems)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// RequiredConfigItemsRequiredConfigBase : The required configuration base object.
-// This model "extends" RequiredConfigItems
-type RequiredConfigItemsRequiredConfigBase struct {
-	// The required config description.
-	Description *string `json:"description,omitempty"`
-
-	// The property.
-	Property *string `json:"property" validate:"required"`
-
-	// The operator.
-	Operator *string `json:"operator" validate:"required"`
-
-	// Schema for any JSON type.
-	Value interface{} `json:"value,omitempty"`
-}
-
-// Constants associated with the RequiredConfigItemsRequiredConfigBase.Operator property.
-// The operator.
-const (
-	RequiredConfigItemsRequiredConfigBase_Operator_DaysLessThan         = "days_less_than"
-	RequiredConfigItemsRequiredConfigBase_Operator_IpsEquals            = "ips_equals"
-	RequiredConfigItemsRequiredConfigBase_Operator_IpsInRange           = "ips_in_range"
-	RequiredConfigItemsRequiredConfigBase_Operator_IpsNotEquals         = "ips_not_equals"
-	RequiredConfigItemsRequiredConfigBase_Operator_IsEmpty              = "is_empty"
-	RequiredConfigItemsRequiredConfigBase_Operator_IsFalse              = "is_false"
-	RequiredConfigItemsRequiredConfigBase_Operator_IsNotEmpty           = "is_not_empty"
-	RequiredConfigItemsRequiredConfigBase_Operator_IsTrue               = "is_true"
-	RequiredConfigItemsRequiredConfigBase_Operator_NumEquals            = "num_equals"
-	RequiredConfigItemsRequiredConfigBase_Operator_NumGreaterThan       = "num_greater_than"
-	RequiredConfigItemsRequiredConfigBase_Operator_NumGreaterThanEquals = "num_greater_than_equals"
-	RequiredConfigItemsRequiredConfigBase_Operator_NumLessThan          = "num_less_than"
-	RequiredConfigItemsRequiredConfigBase_Operator_NumLessThanEquals    = "num_less_than_equals"
-	RequiredConfigItemsRequiredConfigBase_Operator_NumNotEquals         = "num_not_equals"
-	RequiredConfigItemsRequiredConfigBase_Operator_StringContains       = "string_contains"
-	RequiredConfigItemsRequiredConfigBase_Operator_StringEquals         = "string_equals"
-	RequiredConfigItemsRequiredConfigBase_Operator_StringMatch          = "string_match"
-	RequiredConfigItemsRequiredConfigBase_Operator_StringNotContains    = "string_not_contains"
-	RequiredConfigItemsRequiredConfigBase_Operator_StringNotEquals      = "string_not_equals"
-	RequiredConfigItemsRequiredConfigBase_Operator_StringNotMatch       = "string_not_match"
-	RequiredConfigItemsRequiredConfigBase_Operator_StringsAllowed       = "strings_allowed"
-	RequiredConfigItemsRequiredConfigBase_Operator_StringsInList        = "strings_in_list"
-	RequiredConfigItemsRequiredConfigBase_Operator_StringsRequired      = "strings_required"
-)
-
-// NewRequiredConfigItemsRequiredConfigBase : Instantiate RequiredConfigItemsRequiredConfigBase (Generic Model Constructor)
-func (*SecurityAndComplianceCenterApiV3) NewRequiredConfigItemsRequiredConfigBase(property string, operator string) (_model *RequiredConfigItemsRequiredConfigBase, err error) {
-	_model = &RequiredConfigItemsRequiredConfigBase{
-		Property: core.StringPtr(property),
-		Operator: core.StringPtr(operator),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
-}
-
-func (*RequiredConfigItemsRequiredConfigBase) isaRequiredConfigItems() bool {
-	return true
-}
-
-// UnmarshalRequiredConfigItemsRequiredConfigBase unmarshals an instance of RequiredConfigItemsRequiredConfigBase from the specified map of raw messages.
-func UnmarshalRequiredConfigItemsRequiredConfigBase(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(RequiredConfigItemsRequiredConfigBase)
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "property", &obj.Property)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "operator", &obj.Operator)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// RequiredConfigItemsRequiredConfigOr : The `OR` required configurations.
-// This model "extends" RequiredConfigItems
-type RequiredConfigItemsRequiredConfigOr struct {
-	// The required config description.
-	Description *string `json:"description,omitempty"`
-
-	// The `OR` required configurations.
-	Or []RequiredConfigItemsIntf `json:"or,omitempty"`
-}
-
-func (*RequiredConfigItemsRequiredConfigOr) isaRequiredConfigItems() bool {
-	return true
-}
-
-// UnmarshalRequiredConfigItemsRequiredConfigOr unmarshals an instance of RequiredConfigItemsRequiredConfigOr from the specified map of raw messages.
-func UnmarshalRequiredConfigItemsRequiredConfigOr(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(RequiredConfigItemsRequiredConfigOr)
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "or", &obj.Or, UnmarshalRequiredConfigItems)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// RequiredConfigRequiredConfigAnd : RequiredConfigRequiredConfigAnd struct
-// This model "extends" RequiredConfig
-type RequiredConfigRequiredConfigAnd struct {
-	// The required config description.
-	Description *string `json:"description,omitempty"`
-
-	// The `AND` required configurations.
-	And []RequiredConfigItemsIntf `json:"and,omitempty"`
-}
-
-func (*RequiredConfigRequiredConfigAnd) isaRequiredConfig() bool {
-	return true
-}
-
-// UnmarshalRequiredConfigRequiredConfigAnd unmarshals an instance of RequiredConfigRequiredConfigAnd from the specified map of raw messages.
-func UnmarshalRequiredConfigRequiredConfigAnd(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(RequiredConfigRequiredConfigAnd)
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "and", &obj.And, UnmarshalRequiredConfigItems)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// RequiredConfigRequiredConfigBase : The required configuration base object.
-// This model "extends" RequiredConfig
-type RequiredConfigRequiredConfigBase struct {
-	// The required config description.
-	Description *string `json:"description,omitempty"`
-
-	// The property.
-	Property *string `json:"property" validate:"required"`
-
-	// The operator.
-	Operator *string `json:"operator" validate:"required"`
-
-	// Schema for any JSON type.
-	Value interface{} `json:"value,omitempty"`
-}
-
-// Constants associated with the RequiredConfigRequiredConfigBase.Operator property.
-// The operator.
-const (
-	RequiredConfigRequiredConfigBase_Operator_DaysLessThan         = "days_less_than"
-	RequiredConfigRequiredConfigBase_Operator_IpsEquals            = "ips_equals"
-	RequiredConfigRequiredConfigBase_Operator_IpsInRange           = "ips_in_range"
-	RequiredConfigRequiredConfigBase_Operator_IpsNotEquals         = "ips_not_equals"
-	RequiredConfigRequiredConfigBase_Operator_IsEmpty              = "is_empty"
-	RequiredConfigRequiredConfigBase_Operator_IsFalse              = "is_false"
-	RequiredConfigRequiredConfigBase_Operator_IsNotEmpty           = "is_not_empty"
-	RequiredConfigRequiredConfigBase_Operator_IsTrue               = "is_true"
-	RequiredConfigRequiredConfigBase_Operator_NumEquals            = "num_equals"
-	RequiredConfigRequiredConfigBase_Operator_NumGreaterThan       = "num_greater_than"
-	RequiredConfigRequiredConfigBase_Operator_NumGreaterThanEquals = "num_greater_than_equals"
-	RequiredConfigRequiredConfigBase_Operator_NumLessThan          = "num_less_than"
-	RequiredConfigRequiredConfigBase_Operator_NumLessThanEquals    = "num_less_than_equals"
-	RequiredConfigRequiredConfigBase_Operator_NumNotEquals         = "num_not_equals"
-	RequiredConfigRequiredConfigBase_Operator_StringContains       = "string_contains"
-	RequiredConfigRequiredConfigBase_Operator_StringEquals         = "string_equals"
-	RequiredConfigRequiredConfigBase_Operator_StringMatch          = "string_match"
-	RequiredConfigRequiredConfigBase_Operator_StringNotContains    = "string_not_contains"
-	RequiredConfigRequiredConfigBase_Operator_StringNotEquals      = "string_not_equals"
-	RequiredConfigRequiredConfigBase_Operator_StringNotMatch       = "string_not_match"
-	RequiredConfigRequiredConfigBase_Operator_StringsAllowed       = "strings_allowed"
-	RequiredConfigRequiredConfigBase_Operator_StringsInList        = "strings_in_list"
-	RequiredConfigRequiredConfigBase_Operator_StringsRequired      = "strings_required"
-)
-
-// NewRequiredConfigRequiredConfigBase : Instantiate RequiredConfigRequiredConfigBase (Generic Model Constructor)
-func (*SecurityAndComplianceCenterApiV3) NewRequiredConfigRequiredConfigBase(property string, operator string) (_model *RequiredConfigRequiredConfigBase, err error) {
-	_model = &RequiredConfigRequiredConfigBase{
-		Property: core.StringPtr(property),
-		Operator: core.StringPtr(operator),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
-}
-
-func (*RequiredConfigRequiredConfigBase) isaRequiredConfig() bool {
-	return true
-}
-
-// UnmarshalRequiredConfigRequiredConfigBase unmarshals an instance of RequiredConfigRequiredConfigBase from the specified map of raw messages.
-func UnmarshalRequiredConfigRequiredConfigBase(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(RequiredConfigRequiredConfigBase)
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "property", &obj.Property)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "operator", &obj.Operator)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// RequiredConfigRequiredConfigOr : The `OR` required configurations.
-// This model "extends" RequiredConfig
-type RequiredConfigRequiredConfigOr struct {
-	// The required config description.
-	Description *string `json:"description,omitempty"`
-
-	// The `OR` required configurations.
-	Or []RequiredConfigItemsIntf `json:"or,omitempty"`
-}
-
-func (*RequiredConfigRequiredConfigOr) isaRequiredConfig() bool {
-	return true
-}
-
-// UnmarshalRequiredConfigRequiredConfigOr unmarshals an instance of RequiredConfigRequiredConfigOr from the specified map of raw messages.
-func UnmarshalRequiredConfigRequiredConfigOr(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(RequiredConfigRequiredConfigOr)
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "or", &obj.Or, UnmarshalRequiredConfigItems)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
 }
 
 // ControlLibrariesPager can be used to simplify the use of the "ListControlLibraries" method.

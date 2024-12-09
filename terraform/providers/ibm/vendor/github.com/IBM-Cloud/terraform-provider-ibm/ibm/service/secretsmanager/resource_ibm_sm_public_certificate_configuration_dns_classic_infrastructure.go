@@ -6,6 +6,7 @@ package secretsmanager
 import (
 	"context"
 	"fmt"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"log"
 	"strings"
 
@@ -41,13 +42,13 @@ func ResourceIbmSmPublicCertificateConfigurationDNSClassicInfrastructure() *sche
 			"classic_infrastructure_username": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validate.InvokeValidator("ibm_sm_public_certificate_configuration_dns_classic_infrastructure", "classic_infrastructure_username"),
+				ValidateFunc: validate.InvokeValidator(PublicCertConfigDnsClassicInfrastructureResourceName, "classic_infrastructure_username"),
 				Description:  "The username that is associated with your classic infrastructure account.In most cases, your classic infrastructure username is your `<account_id>_<email_address>`. For more information, see the [docs](https://cloud.ibm.com/docs/account?topic=account-classic_keys).",
 			},
 			"classic_infrastructure_password": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validate.InvokeValidator("ibm_sm_public_certificate_configuration_dns_classic_infrastructure", "classic_infrastructure_password"),
+				ValidateFunc: validate.InvokeValidator(PublicCertConfigDnsClassicInfrastructureResourceName, "classic_infrastructure_password"),
 				Description:  "Your classic infrastructure API key.For information about viewing and accessing your classic infrastructure API key, see the [docs](https://cloud.ibm.com/docs/account?topic=account-classic_keys).",
 			},
 			"secret_type": &schema.Schema{
@@ -97,14 +98,15 @@ func ResourceIbmSmPublicCertificateConfigurationDNSClassicInfrastructureValidato
 		},
 	)
 
-	resourceValidator := validate.ResourceValidator{ResourceName: "ibm_sm_public_certificate_configuration_dns_classic_infrastructure", Schema: validateSchema}
+	resourceValidator := validate.ResourceValidator{ResourceName: PublicCertConfigDnsClassicInfrastructureResourceName, Schema: validateSchema}
 	return &resourceValidator
 }
 
 func resourceIbmSmPublicCertificateConfigurationDNSClassicInfrastructureCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", PublicCertConfigDnsClassicInfrastructureResourceName, "create")
+		return tfErr.GetDiag()
 	}
 
 	region := getRegion(secretsManagerClient, d)
@@ -127,14 +129,16 @@ func resourceIbmSmPublicCertificateConfigurationDNSClassicInfrastructureCreate(c
 	}
 	convertedModel, err := resourceIbmSmConfigurationPublicCertificateClassicInfrastructureMapToPublicCertificateConfigurationDNSClassicInfrastructurePrototype(bodyModelMap)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", PublicCertConfigDnsClassicInfrastructureResourceName, "create")
+		return tfErr.GetDiag()
 	}
 	createConfigurationOptions.SetConfigurationPrototype(convertedModel)
 
 	configurationIntf, response, err := secretsManagerClient.CreateConfigurationWithContext(context, createConfigurationOptions)
 	if err != nil {
 		log.Printf("[DEBUG] CreateConfigurationWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateConfigurationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateConfigurationWithContext failed: %s\n%s", err.Error(), response), PublicCertConfigDnsClassicInfrastructureResourceName, "create")
+		return tfErr.GetDiag()
 	}
 
 	configuration := configurationIntf.(*secretsmanagerv2.PublicCertificateConfigurationDNSClassicInfrastructure)
@@ -146,12 +150,14 @@ func resourceIbmSmPublicCertificateConfigurationDNSClassicInfrastructureCreate(c
 func resourceIbmSmPublicCertificateConfigurationDNSClassicInfrastructureRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", PublicCertConfigDnsClassicInfrastructureResourceName, "read")
+		return tfErr.GetDiag()
 	}
 
 	id := strings.Split(d.Id(), "/")
 	if len(id) != 3 {
-		return diag.Errorf("Wrong format of resource ID. To import a DNS configuration use the format `<region>/<instance_id>/<name>`")
+		tfErr := flex.TerraformErrorf(nil, "Wrong format of resource ID. To import a DNS configuration use the format `<region>/<instance_id>/<name>`", PublicCertConfigDnsClassicInfrastructureResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	region := id[0]
 	instanceId := id[1]
@@ -168,45 +174,56 @@ func resourceIbmSmPublicCertificateConfigurationDNSClassicInfrastructureRead(con
 			return nil
 		}
 		log.Printf("[DEBUG] GetConfigurationWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetConfigurationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetConfigurationWithContext failed %s\n%s", err, response), PublicCertConfigDnsClassicInfrastructureResourceName, "read")
+		return tfErr.GetDiag()
 	}
 
 	configuration := configurationIntf.(*secretsmanagerv2.PublicCertificateConfigurationDNSClassicInfrastructure)
 	if err = d.Set("instance_id", instanceId); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting instance_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting instance_id"), PublicCertConfigDnsClassicInfrastructureResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("region", region); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting region: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting region"), PublicCertConfigDnsClassicInfrastructureResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if !core.IsNil(configuration.ConfigType) {
 		if err = d.Set("config_type", configuration.ConfigType); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting config_type: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting config_type"), PublicCertConfigDnsClassicInfrastructureResourceName, "read")
+			return tfErr.GetDiag()
 		}
 	}
 	if !core.IsNil(configuration.ClassicInfrastructureUsername) {
 		if err = d.Set("classic_infrastructure_username", configuration.ClassicInfrastructureUsername); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting classic_infrastructure_username: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting classic_infrastructure_username"), PublicCertConfigDnsClassicInfrastructureResourceName, "read")
+			return tfErr.GetDiag()
 		}
 	}
 	if !core.IsNil(configuration.ClassicInfrastructurePassword) {
 		if err = d.Set("classic_infrastructure_password", configuration.ClassicInfrastructurePassword); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting classic_infrastructure_password: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting classic_infrastructure_password"), PublicCertConfigDnsClassicInfrastructureResourceName, "read")
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("name", configuration.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting config name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name"), PublicCertConfigDnsClassicInfrastructureResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("secret_type", configuration.SecretType); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting secret_type: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting secret_type"), PublicCertConfigDnsClassicInfrastructureResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_by", configuration.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_by"), PublicCertConfigDnsClassicInfrastructureResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_at", DateTimeToRFC3339(configuration.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_at"), PublicCertConfigDnsClassicInfrastructureResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated_at", DateTimeToRFC3339(configuration.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at"), PublicCertConfigDnsClassicInfrastructureResourceName, "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil
@@ -215,7 +232,8 @@ func resourceIbmSmPublicCertificateConfigurationDNSClassicInfrastructureRead(con
 func resourceIbmSmPublicCertificateConfigurationDNSClassicInfrastructureUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", PublicCertConfigDnsClassicInfrastructureResourceName, "update")
+		return tfErr.GetDiag()
 	}
 
 	id := strings.Split(d.Id(), "/")
@@ -246,7 +264,8 @@ func resourceIbmSmPublicCertificateConfigurationDNSClassicInfrastructureUpdate(c
 		_, response, err := secretsManagerClient.UpdateConfigurationWithContext(context, updateConfigurationOptions)
 		if err != nil {
 			log.Printf("[DEBUG] UpdateConfigurationWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdateConfigurationWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateConfigurationWithContext failed %s\n%s", err, response), PublicCertConfigDnsClassicInfrastructureResourceName, "update")
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -256,7 +275,8 @@ func resourceIbmSmPublicCertificateConfigurationDNSClassicInfrastructureUpdate(c
 func resourceIbmSmPublicCertificateConfigurationDNSClassicInfrastructureDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", PublicCertConfigDnsClassicInfrastructureResourceName, "delete")
+		return tfErr.GetDiag()
 	}
 
 	id := strings.Split(d.Id(), "/")
@@ -271,7 +291,8 @@ func resourceIbmSmPublicCertificateConfigurationDNSClassicInfrastructureDelete(c
 	response, err := secretsManagerClient.DeleteConfigurationWithContext(context, deleteConfigurationOptions)
 	if err != nil {
 		log.Printf("[DEBUG] DeleteConfigurationWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteConfigurationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteConfigurationWithContext failed %s\n%s", err, response), PublicCertConfigDnsClassicInfrastructureResourceName, "delete")
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")

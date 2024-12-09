@@ -7,84 +7,76 @@ import (
 	"context"
 	"log"
 
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-
-	st "github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/power-go-client/helpers"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 )
 
 func DataSourceIBMPIKeys() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPIKeysRead,
 		Schema: map[string]*schema.Schema{
-
 			// Arguments
 			Arg_CloudInstanceID: {
-				Type:         schema.TypeString,
+				Description:  "The GUID of the service instance associated with an account.",
 				Required:     true,
-				Description:  "PI cloud instance ID",
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
 
 			// Attributes
 			Attr_Keys: {
-				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "SSH Keys",
+				Description: "List of all the SSH keys.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						Attr_KeyName: {
-							Type:        schema.TypeString,
+						Attr_CreationDate: {
 							Computed:    true,
-							Description: "User defined name for the SSH key",
+							Description: "Date of SSH key creation.",
+							Type:        schema.TypeString,
 						},
-						Attr_Key: {
-							Type:        schema.TypeString,
+						Attr_Name: {
 							Computed:    true,
-							Description: "SSH RSA key",
+							Description: "User defined name for the SSH key.",
+							Type:        schema.TypeString,
 						},
-						Attr_KeyCreationDate: {
-							Type:        schema.TypeString,
+						Attr_SSHKey: {
 							Computed:    true,
-							Description: "Date of SSH key creation",
+							Description: "SSH RSA key.",
+							Type:        schema.TypeString,
 						},
 					},
 				},
+				Type: schema.TypeList,
 			},
 		},
 	}
 }
 
 func dataSourceIBMPIKeysRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-
-	// session
 	sess, err := meta.(conns.ClientSession).IBMPISession()
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	// arguments
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
 
-	// get keys
-	client := st.NewIBMPIKeyClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPIKeyClient(ctx, sess, cloudInstanceID)
 	sshKeys, err := client.GetAll()
 	if err != nil {
 		log.Printf("[ERROR] get all keys failed %v", err)
 		return diag.FromErr(err)
 	}
 
-	// set attributes
 	result := make([]map[string]interface{}, 0, len(sshKeys.SSHKeys))
 	for _, sshKey := range sshKeys.SSHKeys {
 		key := map[string]interface{}{
-			Attr_KeyName:         sshKey.Name,
-			Attr_Key:             sshKey.SSHKey,
-			Attr_KeyCreationDate: sshKey.CreationDate.String(),
+			Attr_CreationDate: sshKey.CreationDate.String(),
+			Attr_Name:         sshKey.Name,
+			Attr_SSHKey:       sshKey.SSHKey,
 		}
 		result = append(result, key)
 	}

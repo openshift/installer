@@ -3701,7 +3701,7 @@ func resourceIBMSchematicsJobMapToJobLogSummary(jobLogSummaryMap map[string]inte
 		jobLogSummary.ElapsedTime = core.Float64Ptr(jobLogSummaryMap["elapsed_time"].(float64))
 	}
 	if jobLogSummaryMap["log_errors"] != nil {
-		logErrors := []schematicsv1.JobLogSummaryLogErrorsItem{}
+		logErrors := []schematicsv1.JobLogSummaryLogErrors{}
 		for _, logErrorsItem := range jobLogSummaryMap["log_errors"].([]interface{}) {
 			logErrorsItemModel := resourceIBMSchematicsJobMapToJobLogSummaryLogErrors(logErrorsItem.(map[string]interface{}))
 			logErrors = append(logErrors, logErrorsItemModel)
@@ -3732,8 +3732,8 @@ func resourceIBMSchematicsJobMapToJobLogSummary(jobLogSummaryMap map[string]inte
 	return jobLogSummary
 }
 
-func resourceIBMSchematicsJobMapToJobLogSummaryLogErrors(jobLogSummaryLogErrorsMap map[string]interface{}) schematicsv1.JobLogSummaryLogErrorsItem {
-	jobLogSummaryLogErrors := schematicsv1.JobLogSummaryLogErrorsItem{}
+func resourceIBMSchematicsJobMapToJobLogSummaryLogErrors(jobLogSummaryLogErrorsMap map[string]interface{}) schematicsv1.JobLogSummaryLogErrors {
+	jobLogSummaryLogErrors := schematicsv1.JobLogSummaryLogErrors{}
 
 	if jobLogSummaryLogErrorsMap["error_code"] != nil {
 		jobLogSummaryLogErrors.ErrorCode = core.StringPtr(jobLogSummaryLogErrorsMap["error_code"].(string))
@@ -4803,7 +4803,7 @@ func resourceIBMSchematicsJobJobLogSummaryToMap(jobLogSummary schematicsv1.JobLo
 	return jobLogSummaryMap
 }
 
-func resourceIBMSchematicsJobJobLogSummaryLogErrorsToMap(jobLogSummaryLogErrors schematicsv1.JobLogSummaryLogErrorsItem) map[string]interface{} {
+func resourceIBMSchematicsJobJobLogSummaryLogErrorsToMap(jobLogSummaryLogErrors schematicsv1.JobLogSummaryLogErrors) map[string]interface{} {
 	jobLogSummaryLogErrorsMap := map[string]interface{}{}
 
 	if jobLogSummaryLogErrors.ErrorCode != nil {

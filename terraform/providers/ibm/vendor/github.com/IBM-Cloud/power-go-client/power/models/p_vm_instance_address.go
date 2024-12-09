@@ -46,6 +46,16 @@ func (m PVMInstanceAddress) MarshalJSON() ([]byte, error) {
 
 // Validate validates this p VM instance address
 func (m *PVMInstanceAddress) Validate(formats strfmt.Registry) error {
+	var res []error
+
+	// validation for a type composition with PVMInstanceNetwork
+	if err := m.PVMInstanceNetwork.Validate(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
 	return nil
 }
 

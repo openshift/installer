@@ -19,6 +19,9 @@ import (
 // swagger:model volumesAttach
 type VolumesAttach struct {
 
+	// Primary Boot Volume Id
+	BootVolumeID string `json:"bootVolumeID,omitempty"`
+
 	// List of volumes to be attached to a PVM instance
 	// Required: true
 	VolumeIDs []string `json:"volumeIDs"`

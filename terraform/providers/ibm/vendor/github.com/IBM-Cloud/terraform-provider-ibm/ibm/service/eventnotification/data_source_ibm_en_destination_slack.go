@@ -45,6 +45,11 @@ func DataSourceIBMEnSlackDestination() *schema.Resource {
 				Computed:    true,
 				Description: "Destination type slack.",
 			},
+			"collect_failed_events": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether to collect the failed event in Cloud Object Storage bucket",
+			},
 			"config": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -60,6 +65,16 @@ func DataSourceIBMEnSlackDestination() *schema.Resource {
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "Slack webhook url",
+									},
+									"type": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The Slack Destination type incoming_webhook/direct_message",
+									},
+									"token": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Slack Bot token. Required in case of type is direct_message",
 									},
 								},
 							},
@@ -121,6 +136,10 @@ func dataSourceIBMEnSlackDestinationRead(context context.Context, d *schema.Reso
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting type: %s", err))
 	}
 
+	if err = d.Set("collect_failed_events", result.CollectFailedEvents); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting CollectFailedEvents: %s", err))
+	}
+
 	if result.Config != nil {
 		err = d.Set("config", enSlackDestinationFlattenConfig(*result.Config))
 		if err != nil {
@@ -174,6 +193,14 @@ func enSlackDestinationConfigParamsToMap(paramsItem en.DestinationConfigOneOfInt
 
 	if params.URL != nil {
 		paramsMap["url"] = params.URL
+	}
+
+	if params.Type != nil {
+		paramsMap["type"] = params.Type
+	}
+
+	if params.Token != nil {
+		paramsMap["token"] = params.Token
 	}
 	return paramsMap
 }

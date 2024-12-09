@@ -17,7 +17,7 @@ import (
 
 // IKEPolicyUpdate IKE Policy object used for update
 //
-// Min Properties: 1
+// MinProperties: 1
 //
 // swagger:model IKEPolicyUpdate
 type IKEPolicyUpdate struct {
@@ -27,12 +27,12 @@ type IKEPolicyUpdate struct {
 
 	// DH group of the IKE Policy
 	// Example: 2
-	// Enum: [1 2 5 14 19 20 24]
+	// Enum: [1,2,5,14,19,20,24]
 	DhGroup int64 `json:"dhGroup,omitempty"`
 
 	// encryption of the IKE Policy
 	// Example: aes-256-cbc
-	// Enum: [aes-256-cbc aes-192-cbc aes-128-cbc aes-256-gcm aes-128-gcm 3des-cbc]
+	// Enum: ["aes-256-cbc","aes-192-cbc","aes-128-cbc","aes-256-gcm","aes-128-gcm","3des-cbc"]
 	Encryption string `json:"encryption,omitempty"`
 
 	// key lifetime
@@ -49,7 +49,7 @@ type IKEPolicyUpdate struct {
 
 	// version of the IKE Policy
 	// Example: 2
-	// Enum: [1 2]
+	// Enum: [1,2]
 	Version int64 `json:"version,omitempty"`
 
 	// i k e policy update additional properties
@@ -66,12 +66,12 @@ func (m *IKEPolicyUpdate) UnmarshalJSON(data []byte) error {
 
 		// DH group of the IKE Policy
 		// Example: 2
-		// Enum: [1 2 5 14 19 20 24]
+		// Enum: [1,2,5,14,19,20,24]
 		DhGroup int64 `json:"dhGroup,omitempty"`
 
 		// encryption of the IKE Policy
 		// Example: aes-256-cbc
-		// Enum: [aes-256-cbc aes-192-cbc aes-128-cbc aes-256-gcm aes-128-gcm 3des-cbc]
+		// Enum: ["aes-256-cbc","aes-192-cbc","aes-128-cbc","aes-256-gcm","aes-128-gcm","3des-cbc"]
 		Encryption string `json:"encryption,omitempty"`
 
 		// key lifetime
@@ -88,7 +88,7 @@ func (m *IKEPolicyUpdate) UnmarshalJSON(data []byte) error {
 
 		// version of the IKE Policy
 		// Example: 2
-		// Enum: [1 2]
+		// Enum: [1,2]
 		Version int64 `json:"version,omitempty"`
 	}
 	if err := json.Unmarshal(data, &stage1); err != nil {
@@ -143,12 +143,12 @@ func (m IKEPolicyUpdate) MarshalJSON() ([]byte, error) {
 
 		// DH group of the IKE Policy
 		// Example: 2
-		// Enum: [1 2 5 14 19 20 24]
+		// Enum: [1,2,5,14,19,20,24]
 		DhGroup int64 `json:"dhGroup,omitempty"`
 
 		// encryption of the IKE Policy
 		// Example: aes-256-cbc
-		// Enum: [aes-256-cbc aes-192-cbc aes-128-cbc aes-256-gcm aes-128-gcm 3des-cbc]
+		// Enum: ["aes-256-cbc","aes-192-cbc","aes-128-cbc","aes-256-gcm","aes-128-gcm","3des-cbc"]
 		Encryption string `json:"encryption,omitempty"`
 
 		// key lifetime
@@ -165,7 +165,7 @@ func (m IKEPolicyUpdate) MarshalJSON() ([]byte, error) {
 
 		// version of the IKE Policy
 		// Example: 2
-		// Enum: [1 2]
+		// Enum: [1,2]
 		Version int64 `json:"version,omitempty"`
 	}
 

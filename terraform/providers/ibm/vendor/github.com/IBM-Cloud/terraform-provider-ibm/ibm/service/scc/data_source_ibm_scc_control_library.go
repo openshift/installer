@@ -287,65 +287,65 @@ func dataSourceIbmSccControlLibraryRead(context context.Context, d *schema.Resou
 	controlLibrary, response, err := securityandcompliancecenterapiClient.GetControlLibraryWithContext(context, getControlLibraryOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetControlLibraryWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetControlLibraryWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetControlLibraryWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(fmt.Sprintf("%s", *getControlLibraryOptions.ControlLibrariesID))
 
 	if err = d.Set("account_id", controlLibrary.AccountID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting account_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting account_id: %s", err))
 	}
 
 	if err = d.Set("control_library_name", controlLibrary.ControlLibraryName); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting control_library_name: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting control_library_name: %s", err))
 	}
 
 	if err = d.Set("control_library_description", controlLibrary.ControlLibraryDescription); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting control_library_description: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting control_library_description: %s", err))
 	}
 
 	if err = d.Set("control_library_type", controlLibrary.ControlLibraryType); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting control_library_type: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting control_library_type: %s", err))
 	}
 
 	if err = d.Set("version_group_label", controlLibrary.VersionGroupLabel); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting version_group_label: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting version_group_label: %s", err))
 	}
 
 	if err = d.Set("control_library_version", controlLibrary.ControlLibraryVersion); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting control_library_version: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting control_library_version: %s", err))
 	}
 
 	if err = d.Set("created_on", flex.DateTimeToString(controlLibrary.CreatedOn)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_on: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting created_on: %s", err))
 	}
 
 	if err = d.Set("created_by", controlLibrary.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting created_by: %s", err))
 	}
 
 	if err = d.Set("updated_on", flex.DateTimeToString(controlLibrary.UpdatedOn)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_on: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting updated_on: %s", err))
 	}
 
 	if err = d.Set("updated_by", controlLibrary.UpdatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_by: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting updated_by: %s", err))
 	}
 
 	if err = d.Set("latest", controlLibrary.Latest); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting latest: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting latest: %s", err))
 	}
 
 	if err = d.Set("hierarchy_enabled", controlLibrary.HierarchyEnabled); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting hierarchy_enabled: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting hierarchy_enabled: %s", err))
 	}
 
 	if err = d.Set("controls_count", flex.IntValue(controlLibrary.ControlsCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting controls_count: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting controls_count: %s", err))
 	}
 
 	if err = d.Set("control_parents_count", flex.IntValue(controlLibrary.ControlParentsCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting control_parents_count: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting control_parents_count: %s", err))
 	}
 
 	controls := []map[string]interface{}{}
@@ -359,7 +359,7 @@ func dataSourceIbmSccControlLibraryRead(context context.Context, d *schema.Resou
 		}
 	}
 	if err = d.Set("controls", controls); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting controls %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting controls %s", err))
 	}
 
 	return nil
