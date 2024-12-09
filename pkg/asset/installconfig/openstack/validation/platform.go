@@ -15,6 +15,13 @@ import (
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
+const (
+	// MTU of 1280 is the minimum allowed for IPv6 + 100 for the
+	// OVN-Kubernetes encapsulation overhead
+	// https://issues.redhat.com/browse/OCPBUGS-2921
+	minimumMTUv6 = 1380
+)
+
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *openstack.Platform, n *types.Networking, ci *CloudInfo) field.ErrorList {
 	var allErrs field.ErrorList
@@ -90,6 +97,9 @@ func validateControlPlanePort(p *openstack.Platform, n *types.Networking, ci *Cl
 		} else if ci.ControlPlanePortNetwork.ID != networkID {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("controlPlanePort").Child("network"), networkDetail, "network must contain subnets"))
 		}
+	}
+	if hasIPv6Subnet && ci.ControlPlanePortNetwork != nil && ci.ControlPlanePortNetwork.MTU < minimumMTUv6 {
+		allErrs = append(allErrs, field.InternalError(fldPath.Child("controlPlanePort").Child("network"), fmt.Errorf("network should have an MTU of at least %d", minimumMTUv6)))
 	}
 	return allErrs
 }
