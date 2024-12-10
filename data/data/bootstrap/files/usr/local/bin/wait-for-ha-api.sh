@@ -20,7 +20,7 @@ wait_for_ha_api() {
         sleep 5
     done
 
-    echo "Waiting for at least 2 available IP addresses for the default/kubernetes service"
+    echo "Waiting for at least 3 available IP addresses for the default/kubernetes service"
     while ! is_api_available
     do
         sleep 5
@@ -57,27 +57,26 @@ is_topology_ha() {
 
 ##
 ## for HA cluster, we mark the bootstrap process as complete when there
-## are at least two IP addresses available to the endpoints
-## of the default/kubernetes service object.
-## TODO: move this to kas operator as a subcommand of the render command
+## are at least two nodes for which a revision has been successfully rolled out.
+## NOTE: the bootstrap instance is not included in the nodeStatuses
 is_api_available() {
-    output=$(oc --kubeconfig="$KUBECONFIG" get endpoints kubernetes --namespace=default -o jsonpath='{range @.subsets[*]}{range @.addresses[*]}{.ip}{" "}' 2>&1 )
+    output=$(oc --kubeconfig="$KUBECONFIG" get kubeapiservers cluster -o jsonpath='{range @.status.nodeStatuses[?(@.currentRevision>0)]}{.nodeName}{" "}{end}' 2>&1 )
     # shellcheck disable=SC2124
     status=$?
     if [[ $status -ne 0 ]]
     then
-	echo "The following error happened while retrieving the default/kubernetes endpoint object"
+	echo "The following error happened while retrieving the kubeapiservers/cluster object"
 	echo "$output"
 	return 1
     fi
-    
-    echo "Got the following addresses for the default/kubernetes endpoint object: $output"
+
+    echo "Got the following nodes with revision rolled out: $output"
     count=$(echo "$output" | wc -w)
     if [[ ! $count -gt 1 ]]
     then
 	return 1
     fi
-    
-    echo "Got at least 2 available addresses for the default/kubernetes service"
+
+    echo "Got at least 2 nodes with successful revision rolled out"
     return 0
 }
