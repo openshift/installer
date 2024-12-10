@@ -1006,7 +1006,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 	case vsphere.Name:
 		t.FileList = make([]*asset.File, 0)
-		logrus.Warn("installing on vSphere via terraform is no longer supported")
 		return nil
 	case nutanix.Name:
 		controlPlanes, err := mastersAsset.Machines()
