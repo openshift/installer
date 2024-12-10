@@ -583,9 +583,8 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			mpool.Set(ic.Platform.VSphere.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.VSphere)
 			pool.Platform.VSphere = &mpool
-			templateName := clusterID.InfraID + "-rhcos"
 
-			sets, err := vsphere.MachineSets(clusterID.InfraID, ic, &pool, templateName, "worker", workerUserDataSecretName)
+			sets, err := vsphere.MachineSets(clusterID.InfraID, ic, &pool, "worker", workerUserDataSecretName)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -596,9 +595,8 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			// If static IPs are configured, we must generate worker machines and scale the machinesets to 0.
 			if ic.Platform.VSphere.Hosts != nil {
 				logrus.Debug("Generating worker machines with static IPs.")
-				templateName := clusterID.InfraID + "-rhcos"
 
-				data, err := vsphere.Machines(clusterID.InfraID, ic, &pool, templateName, "worker", workerUserDataSecretName)
+				data, err := vsphere.Machines(clusterID.InfraID, ic, &pool, "worker", workerUserDataSecretName)
 				if err != nil {
 					return errors.Wrap(err, "failed to create worker machine objects")
 				}

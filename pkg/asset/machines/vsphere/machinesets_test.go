@@ -97,7 +97,6 @@ var machineComputePoolUndefinedZones = types.MachinePool{
 
 func TestConfigMachinesets(t *testing.T) {
 	clusterID := "test"
-	osImage := "test-cluster-xyzxyz-rhcos"
 	installConfig, err := parseInstallConfig()
 
 	if err != nil {
@@ -241,7 +240,7 @@ func TestConfigMachinesets(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.testCase, func(t *testing.T) {
-			machineSets, err := MachineSets(clusterID, tc.installConfig, tc.machinePool, osImage, "", "")
+			machineSets, err := MachineSets(clusterID, tc.installConfig, tc.machinePool, "", "")
 			assertOnUnexpectedErrorState(t, tc.expectedError, err)
 
 			if len(tc.workspaces) > 0 {
