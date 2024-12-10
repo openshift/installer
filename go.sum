@@ -772,8 +772,8 @@ github.com/opencontainers/image-spec v1.1.0 h1:8SG7/vwALn54lVB/0yZ/MMwhFrPYtpEHQ
 github.com/opencontainers/image-spec v1.1.0/go.mod h1:W4s4sFTMaBeK1BQLXbG4AdM2szdn85PY75RI83NrTrM=
 github.com/opencontainers/runtime-spec v1.2.0 h1:z97+pHb3uELt/yiAWD691HNHQIF07bE7dzrbT927iTk=
 github.com/opencontainers/runtime-spec v1.2.0/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
-github.com/openshift/api v0.0.0-20241124010541-a09992e80c68 h1:t3Ji1VIkNbjQzI+q2sbJyI19fnBs930VGug9kqPi9bo=
-github.com/openshift/api v0.0.0-20241124010541-a09992e80c68/go.mod h1:Shkl4HanLwDiiBzakv+con/aMGnVE2MAGvoKp5oyYUo=
+github.com/openshift/api v0.0.0-20241203091751-58d4ac495429 h1:fz+u78YFRL14rXqBKWIVYK04mUOy6LccHe3wQsUS3iI=
+github.com/openshift/api v0.0.0-20241203091751-58d4ac495429/go.mod h1:Shkl4HanLwDiiBzakv+con/aMGnVE2MAGvoKp5oyYUo=
 github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6 h1:U6ve+dnHlHhAELoxX+rdFOHVhoaYl0l9qtxwYtsO6C0=
 github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6/go.mod h1:o2H5VwQhUD8P6XsK6dRmKpCCJqVvv12KJQZBXmcCXCU=
 github.com/openshift/assisted-service v1.0.10-0.20230830164851-6573b5d7021d h1:CKw2Y4EdaFsMoqAdr2Tq0nlYTaaXmCRdP0gOu7pN64U=
@@ -788,8 +788,8 @@ github.com/openshift/baremetal-operator/apis v0.0.0-20231128154154-6736c9b9c6c8 
 github.com/openshift/baremetal-operator/apis v0.0.0-20231128154154-6736c9b9c6c8/go.mod h1:CvKrrnAcvvtrZIc9y9WaqWmJhK0AJ9sWnh+VP4d7jcM=
 github.com/openshift/baremetal-operator/pkg/hardwareutils v0.0.0-20231128154154-6736c9b9c6c8 h1:38vY9w7dXqB7tI9g1GCUnpahNDyBbp9Yylq+BQ154YE=
 github.com/openshift/baremetal-operator/pkg/hardwareutils v0.0.0-20231128154154-6736c9b9c6c8/go.mod h1:399nvdaqoU9rTI25UdFw2EWcVjmJPpeZPIhfDAIx/XU=
-github.com/openshift/client-go v0.0.0-20241107164952-923091dd2b1a h1:h3F55x+zOXwSG4okUlXmOlU/5CQ7Ve2HKxYjseJPVoY=
-github.com/openshift/client-go v0.0.0-20241107164952-923091dd2b1a/go.mod h1:JBIcn1JfD/JCpGYnRRT0+HLxrleF/Y7T3Y/t0p8o5jk=
+github.com/openshift/client-go v0.0.0-20241203091221-452dfb8fa071 h1:l0++HnGVKBcs8kXFL/1yeozxioxPGNpp0PYe3Y+0sq4=
+github.com/openshift/client-go v0.0.0-20241203091221-452dfb8fa071/go.mod h1:gL0laCCiIaNTNw1ZsMQZXBVu2NeQFpNWm9bLtYO9+ZU=
 github.com/openshift/cloud-credential-operator v0.0.0-20240404165937-5e8812d64187 h1:v2D/+SWsOPsl4Syz1SVjo7m3L0ethuRGR++ubsb89oA=
 github.com/openshift/cloud-credential-operator v0.0.0-20240404165937-5e8812d64187/go.mod h1:eyA6FG71366St6Q1TW+jXdQbald0rUwtEPhAREMlyhA=
 github.com/openshift/cloud-provider-vsphere v1.19.1-0.20240626105621-6464d0bb4928 h1:gX0HAKR0f40xmMWlUSn8DBMCjip8Iuzg5XToWAv6Uzw=
@@ -808,8 +808,8 @@ github.com/openshift/custom-resource-status v1.1.3-0.20220503160415-f2fdb4999d87
 github.com/openshift/custom-resource-status v1.1.3-0.20220503160415-f2fdb4999d87/go.mod h1:DB/Mf2oTeiAmVVX1gN+NEqweonAPY0TKUwADizj8+ZA=
 github.com/openshift/hive/apis v0.0.0-20231220215202-ad99b9e52d27 h1:9C86viyQl7HE9yg7Gctgx803Oq6DbrCUAberyMVcWDE=
 github.com/openshift/hive/apis v0.0.0-20231220215202-ad99b9e52d27/go.mod h1:RRH8lt09SAiPECNdsbh7Gun0lkcRWi1nYKq6tDp5WxQ=
-github.com/openshift/library-go v0.0.0-20241107160307-0064ad7bd060 h1:jiDC7d8d+jmjv2WfiMY0+Uf55q11MGyYkGGqXnfqWTU=
-github.com/openshift/library-go v0.0.0-20241107160307-0064ad7bd060/go.mod h1:9B1MYPoLtP9tqjWxcbUNVpwxy68zOH/3EIP6c31dAM0=
+github.com/openshift/library-go v0.0.0-20241210171208-85e36bca7246 h1:HpUROtJipZRTCLLGlSrl+fwniNb9Z1q1trPOUFSXhvI=
+github.com/openshift/library-go v0.0.0-20241210171208-85e36bca7246/go.mod h1:eGSI6tp7yUVr4V2d0WrVt2l5s3iCwAh8Hi0RC9Fo16U=
 github.com/openshift/machine-api-operator v0.2.1-0.20240930121047-57b7917e6140 h1:VKn644y4Ra94L8YZ3JT8ZuOZMEspZt8yoIjHeaRM3pA=
 github.com/openshift/machine-api-operator v0.2.1-0.20240930121047-57b7917e6140/go.mod h1:JEUa45hXYbC6tDpLjJCRuLXIKs7pdcawDkodqfZuQEE=
 github.com/openshift/machine-api-provider-gcp v0.0.1-0.20241021180644-0eca0846914a h1:2/DQryD6yCabqVtYLELnsrzX8SLUuGJEABvHrd4x5/U=
