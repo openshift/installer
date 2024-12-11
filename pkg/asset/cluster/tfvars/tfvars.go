@@ -516,14 +516,10 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 				publicZoneName = publicZone.Name
 			}
 
-			if installConfig.Config.GCP.NetworkProjectID != "" {
-				privateZone, err := client.GetDNSZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.ClusterDomain(), false)
-				if err != nil {
-					return errors.Wrapf(err, "failed to get GCP private zone")
-				}
-				if privateZone != nil {
-					privateZoneName = privateZone.Name
-				}
+			// Set the private zone
+			privateZoneName, err = manifests.GetGCPPrivateZoneName(ctx, client, installConfig, clusterID.InfraID)
+			if err != nil {
+				return fmt.Errorf("failed to find gcp private dns zone: %w", err)
 			}
 		}
 
