@@ -716,7 +716,7 @@ func TestIgnition_getMirrorFromRelease(t *testing.T) {
 				MirrorConfig: []mirror.RegistriesConfig{
 					{
 						Location: "some.registry.org/release",
-						Mirror:   "some.mirror.org",
+						Mirrors:  []string{"some.mirror.org"},
 					},
 				},
 			},
@@ -733,7 +733,7 @@ func TestIgnition_getMirrorFromRelease(t *testing.T) {
 				MirrorConfig: []mirror.RegistriesConfig{
 					{
 						Location: "registry.ci.openshift.org/ocp/release",
-						Mirror:   "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+						Mirrors:  []string{"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"},
 					},
 				},
 			},
@@ -750,15 +750,38 @@ func TestIgnition_getMirrorFromRelease(t *testing.T) {
 				MirrorConfig: []mirror.RegistriesConfig{
 					{
 						Location: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
-						Mirror:   "localhost:5000/openshift4/openshift/release",
+						Mirrors:  []string{"localhost:5000/openshift4/openshift/release"},
 					},
 					{
 						Location: "quay.io/openshift-release-dev/ocp-release",
-						Mirror:   "localhost:5000/openshift-release-dev/ocp-release",
+						Mirrors:  []string{"localhost:5000/openshift-release-dev/ocp-release"},
 					},
 				},
 			},
 			expectedMirror: "localhost:5000/openshift-release-dev/ocp-release@sha256:300bce8246cf880e792e106607925de0a404484637627edf5f517375517d54a4",
+		},
+		{
+			name:    "mirror-match-multiple-mirrors",
+			release: "registry.ci.openshift.org/ocp/release:4.18.0-0.nightly-foo",
+			registriesConf: mirror.RegistriesConf{
+				File: &asset.File{
+					Filename: "registries.conf",
+					Data:     []byte(""),
+				},
+				MirrorConfig: []mirror.RegistriesConfig{
+					{
+						Location: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
+						Mirrors: []string{"virthost.ostest.test.metalkube.org:5000/localimages/ocp-release",
+							"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"},
+					},
+					{
+						Location: "registry.ci.openshift.org/ocp/release",
+						Mirrors: []string{"virthost.ostest.test.metalkube.org:5000/localimages/ocp-release",
+							"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"},
+					},
+				},
+			},
+			expectedMirror: "virthost.ostest.test.metalkube.org:5000/localimages/ocp-release:4.18.0-0.nightly-foo",
 		},
 	}
 	for _, tc := range cases {
@@ -793,7 +816,7 @@ func TestIgnition_getPublicContainerRegistries(t *testing.T) {
 				MirrorConfig: []mirror.RegistriesConfig{
 					{
 						Location: "some.registry.org/release",
-						Mirror:   "some.mirror.org",
+						Mirrors:  []string{"some.mirror.org"},
 					},
 				},
 			},
@@ -809,11 +832,11 @@ func TestIgnition_getPublicContainerRegistries(t *testing.T) {
 				MirrorConfig: []mirror.RegistriesConfig{
 					{
 						Location: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
-						Mirror:   "localhost:5000/openshift4/openshift/release",
+						Mirrors:  []string{"localhost:5000/openshift4/openshift/release"},
 					},
 					{
 						Location: "registry.ci.openshift.org/ocp/release",
-						Mirror:   "localhost:5000/openshift-release-dev/ocp-release",
+						Mirrors:  []string{"localhost:5000/openshift-release-dev/ocp-release"},
 					},
 				},
 			},
@@ -829,11 +852,11 @@ func TestIgnition_getPublicContainerRegistries(t *testing.T) {
 				MirrorConfig: []mirror.RegistriesConfig{
 					{
 						Location: "registry.ci.openshift.org/ocp-v4.0-art-dev",
-						Mirror:   "localhost:5000/openshift4/openshift/release",
+						Mirrors:  []string{"localhost:5000/openshift4/openshift/release"},
 					},
 					{
 						Location: "registry.ci.openshift.org/ocp/release",
-						Mirror:   "localhost:5000/openshift-release-dev/ocp-release",
+						Mirrors:  []string{"localhost:5000/openshift-release-dev/ocp-release"},
 					},
 				},
 			},
