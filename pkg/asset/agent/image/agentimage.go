@@ -242,7 +242,7 @@ func (a *AgentImage) PersistToFile(directory string) error {
 			if err != nil {
 				return err
 			}
-			err = extractRootFS(bootArtifactsFullPath, a.tmpPath, a.cpuArch)
+			err = extractRootFS(bootArtifactsFullPath, a.tmpPath, agentFilePrefix, a.cpuArch)
 			if err != nil {
 				return err
 			}
