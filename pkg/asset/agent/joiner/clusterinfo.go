@@ -254,6 +254,19 @@ func (ci *ClusterInfo) retrieveArchitecture() error {
 func (ci *ClusterInfo) retrieveFIPS() error {
 	workerMachineConfig, err := ci.OpenshiftMachineConfigClient.MachineconfigurationV1().MachineConfigs().Get(context.Background(), "99-worker-fips", metav1.GetOptions{})
 	if err != nil {
+		// Older oc client may not have sufficient permissions,
+		// falling back to previous implementation.
+		if errors.IsForbidden(err) {
+			installConfig, err := ci.retrieveInstallConfig()
+			if err != nil {
+				if errors.IsNotFound(err) {
+					return nil
+				}
+				return err
+			}
+			ci.FIPS = installConfig.FIPS
+			return nil
+		}
 		// This resource is not created when FIPS is not enabled
 		if errors.IsNotFound(err) {
 			return nil
@@ -273,6 +286,19 @@ func (ci *ClusterInfo) retrieveSSHKey() error {
 
 	workerMachineConfig, err := ci.OpenshiftMachineConfigClient.MachineconfigurationV1().MachineConfigs().Get(context.Background(), "99-worker-ssh", metav1.GetOptions{})
 	if err != nil {
+		// Older oc client may not have sufficient permissions,
+		// falling back to previous implementation.
+		if errors.IsForbidden(err) {
+			installConfig, err := ci.retrieveInstallConfig()
+			if err != nil {
+				if errors.IsNotFound(err) {
+					return nil
+				}
+				return err
+			}
+			ci.SSHKey = installConfig.SSHKey
+			return nil
+		}
 		return err
 	}
 	var ign igntypes.Config
@@ -292,6 +318,11 @@ func (ci *ClusterInfo) retrieveSSHKey() error {
 func (ci *ClusterInfo) retrieveWorkerChronyConfig() error {
 	workerMachineConfig, err := ci.OpenshiftMachineConfigClient.MachineconfigurationV1().MachineConfigs().Get(context.Background(), "50-workers-chrony-configuration", metav1.GetOptions{})
 	if err != nil {
+		// Older oc client may not have sufficient permissions,
+		// falling back to previous implementation.
+		if errors.IsForbidden(err) {
+			return nil
+		}
 		if errors.IsNotFound(err) {
 			return nil
 		}
@@ -319,9 +350,39 @@ func (ci *ClusterInfo) retrieveBootArtifactsBaseURL() error {
 	return nil
 }
 
+func (ci *ClusterInfo) retrieveInstallConfig() (*types.InstallConfig, error) {
+	clusterConfig, err := ci.Client.CoreV1().ConfigMaps("kube-system").Get(context.Background(), "cluster-config-v1", metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	data, ok := clusterConfig.Data["install-config"]
+	if !ok {
+		return nil, fmt.Errorf("cannot find install-config data")
+	}
+
+	installConfig := types.InstallConfig{}
+	if err = yaml.Unmarshal([]byte(data), &installConfig); err != nil {
+		return nil, err
+	}
+	return &installConfig, nil
+}
+
 func (ci *ClusterInfo) retrieveImageDigestMirrorSets() error {
 	imageDigestMirrorSets, err := ci.OpenshiftClient.ConfigV1().ImageDigestMirrorSets().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
+		// Older oc client may not have sufficient permissions,
+		// falling back to previous implementation.
+		if errors.IsForbidden(err) {
+			installConfig, err := ci.retrieveInstallConfig()
+			if err != nil {
+				if errors.IsNotFound(err) {
+					return nil
+				}
+				return err
+			}
+			ci.ImageDigestSources = installConfig.ImageDigestSources
+			return nil
+		}
 		if !errors.IsNotFound(err) {
 			return err
 		}
@@ -346,6 +407,19 @@ func (ci *ClusterInfo) retrieveImageDigestMirrorSets() error {
 func (ci *ClusterInfo) retrieveImageContentPolicies() error {
 	imageContentPolicies, err := ci.OpenshiftClient.ConfigV1().ImageContentPolicies().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
+		// Older oc client may not have sufficient permissions,
+		// falling back to previous implementation.
+		if errors.IsForbidden(err) {
+			installConfig, err := ci.retrieveInstallConfig()
+			if err != nil {
+				if errors.IsNotFound(err) {
+					return nil
+				}
+				return err
+			}
+			ci.DeprecatedImageContentSources = installConfig.DeprecatedImageContentSources
+			return nil
+		}
 		if !errors.IsNotFound(err) {
 			return err
 		}
