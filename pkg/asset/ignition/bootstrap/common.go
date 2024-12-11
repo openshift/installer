@@ -39,6 +39,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
+	aztypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -223,7 +224,8 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 		}},
 	)
 
-	if platform == nutanixtypes.Name {
+	switch platform {
+	case nutanixtypes.Name:
 		// Inserts the file "/etc/hostname" with the bootstrap machine name to the bootstrap ignition data
 		hostname := fmt.Sprintf("%s-bootstrap", clusterID.InfraID)
 		hostnameFile := igntypes.File{
@@ -239,6 +241,9 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 			},
 		}
 		a.Config.Storage.Files = append(a.Config.Storage.Files, hostnameFile)
+	case aztypes.Name:
+		// See https://issues.redhat.com/browse/OCPBUGS-43625
+		ignition.AppendVarPartition(a.Config)
 	}
 
 	return nil
