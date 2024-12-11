@@ -42,6 +42,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	aztypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
@@ -229,7 +230,8 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 		}},
 	)
 
-	if platform == nutanixtypes.Name {
+	switch platform {
+	case nutanixtypes.Name:
 		// Inserts the file "/etc/hostname" with the bootstrap machine name to the bootstrap ignition data
 		hostname := fmt.Sprintf("%s-bootstrap", clusterID.InfraID)
 		hostnameFile := igntypes.File{
@@ -245,6 +247,26 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 			},
 		}
 		a.Config.Storage.Files = append(a.Config.Storage.Files, hostnameFile)
+	case aztypes.Name:
+		// See https://github.com/coreos/fedora-coreos-tracker/issues/1183#issuecomment-1150140690
+		a.Config.Storage.Disks = append(a.Config.Storage.Disks, igntypes.Disk{
+			Device: "/dev/disk/by-id/coreos-boot-disk",
+			Partitions: []igntypes.Partition{
+				{
+					Label:   ptr.To("root"),
+					Number:  4,
+					SizeMiB: ptr.To(0),
+					Resize:  ptr.To(true),
+				},
+			},
+		})
+		a.Config.Storage.Filesystems = append(a.Config.Storage.Filesystems, igntypes.Filesystem{
+			Device:         "/dev/disk/by-partlabel/root",
+			WipeFilesystem: ptr.To(true),
+			Format:         ptr.To("xfs"),
+			Label:          ptr.To("root"),
+			Options:        []igntypes.FilesystemOption{"-m", "reflink=1"},
+		})
 	}
 
 	return nil
