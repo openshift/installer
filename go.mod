@@ -104,12 +104,12 @@ require (
 	github.com/ulikunitz/xz v0.5.12
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/vmware/govmomi v0.43.0
-	golang.org/x/crypto v0.29.0
+	golang.org/x/crypto v0.31.0
 	golang.org/x/oauth2 v0.23.0
-	golang.org/x/sync v0.9.0
-	golang.org/x/sys v0.27.0
-	golang.org/x/term v0.26.0
-	golang.org/x/text v0.20.0
+	golang.org/x/sync v0.10.0
+	golang.org/x/sys v0.28.0
+	golang.org/x/term v0.27.0
+	golang.org/x/text v0.21.0
 	google.golang.org/api v0.189.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240711142825-46eb208f015d
 	google.golang.org/grpc v1.65.0
