@@ -526,19 +526,13 @@ func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset
 // If the bootstrap etcd member is cleaned up before it has been removed from the etcd cluster, the
 // etcd cluster cannot maintain quorum through the rollout of any single permanent member.
 func waitForEtcdBootstrapMemberRemoval(ctx context.Context, config *rest.Config) error {
-	timeout := 5 * time.Minute
-
-	untilTime := time.Now().Add(timeout)
-	timezone, _ := untilTime.Zone()
-	logrus.Infof("Waiting up to %v (until %v %s) for the bootstrap etcd member to be removed...",
-		timeout, untilTime.Format(time.Kitchen), timezone)
-
+	logrus.Info("Waiting for the bootstrap etcd member to be removed...")
 	client, err := operatorclient.NewForConfig(config)
 	if err != nil {
 		return fmt.Errorf("error creating operator client: %w", err)
 	}
 	// Validate the etcd operator has removed the bootstrap etcd member
-	return wait.PollUntilContextTimeout(ctx, 1*time.Second, timeout, true, func(ctx context.Context) (done bool, err error) {
+	if err := wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(ctx context.Context) (done bool, err error) {
 		etcd, err := client.OperatorV1().Etcds().Get(ctx, "cluster", metav1.GetOptions{})
 		if err != nil {
 			logrus.Debugf("Error getting etcd operator singleton, retrying: %v", err)
@@ -551,7 +545,12 @@ func waitForEtcdBootstrapMemberRemoval(ctx context.Context, config *rest.Config)
 			}
 		}
 		return false, nil
-	})
+	}); err != nil {
+		logrus.Warnf("Bootstrap etcd member may not have been removed: %v", err)
+		return err
+	}
+	logrus.Info("Bootstrap etcd member has been removed")
+	return nil
 }
 
 // waitForInitializedCluster watches the ClusterVersion waiting for confirmation
