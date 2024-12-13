@@ -171,7 +171,7 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 
 	// Create IAM authorization for VPC to COS access for Custom Image Creation
 	logrus.Debugf("creating iam authorization for vpc to cos access")
-	err = client.CreateIAMAuthorizationPolicy(ctx, "is", "image", "cloud-object-storage", *cosInstance.ID, []string{"crn:v1:bluemix:public:iam::::serviceRole:Reader"})
+	err = client.CreateIAMAuthorizationPolicy(ctx, "is", "image", "cloud-object-storage", *cosInstance.GUID, []string{"crn:v1:bluemix:public:iam::::serviceRole:Reader"})
 	if err != nil {
 		return fmt.Errorf("failed creating vpc-cos IAM authorization policy: %w", err)
 	}
