@@ -49,7 +49,6 @@
     "nodeSubnetRef" : "[concat(variables('virtualNetworkID'), '/subnets/', variables('nodeSubnetName'))]",
     "infraLoadBalancerName" : "[parameters('baseName')]",
     "sshKeyPath" : "/home/core/.ssh/authorized_keys",
-    "identityName" : "[concat(parameters('baseName'), '-identity')]",
     "imageName" : "[parameters('baseName')]",
     "masterAvailabilitySetName" : "[concat(parameters('baseName'), '-cluster')]",
     "numberOfNodes" : "[parameters('numberOfNodes')]",
