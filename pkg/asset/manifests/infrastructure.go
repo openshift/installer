@@ -330,7 +330,7 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 			ResourceGroup:    installConfig.Config.Platform.PowerVS.PowerVSResourceGroup,
 			CISInstanceCRN:   cisInstanceCRN,
 			DNSInstanceCRN:   dnsInstanceCRN,
-			ServiceEndpoints: installConfig.Config.Platform.PowerVS.ServiceEndpoints,
+			ServiceEndpoints: config.Spec.PlatformSpec.PowerVS.ServiceEndpoints,
 		}
 	case nutanix.Name:
 		config.Spec.PlatformSpec.Type = configv1.NutanixPlatformType

@@ -43,6 +43,7 @@ type provider struct {
 	IamEndpointOverride      string `gcfg:"iamEndpointOverride"`
 	PowerVSEndpointOverride  string `gcfg:"powerVSEndpointOverride"`
 	RcEndpointOverride       string `gcfg:"rcEndpointOverride"`
+	RmEndpointOverride       string `gcfg:"rmEndpointOverride"`
 }
 
 // CloudProviderConfig generates the cloud provider config for the IBM Power VS platform.
@@ -51,12 +52,15 @@ func CloudProviderConfig(infraID string, accountID string, vpcName string, regio
 	rcEndpointOverride := ""
 	powerVSEndpointOverride := ""
 	vpcEndpointOverride := ""
+	rmEndpointOverride := ""
 	for _, endpoint := range endpointOverrides {
 		switch endpoint.Name {
 		case string(configv1.IBMCloudServiceIAM):
 			iamEndpointOverride = endpoint.URL
 		case string(configv1.IBMCloudServiceResourceController):
 			rcEndpointOverride = endpoint.URL
+		case string(configv1.IBMCloudServiceResourceManager):
+			rmEndpointOverride = endpoint.URL
 		case "Power": // FIXME configv1.IBMCloudServicePower?
 			powerVSEndpointOverride = endpoint.URL
 		case string(configv1.IBMCloudServiceVPC):
@@ -90,6 +94,7 @@ func CloudProviderConfig(infraID string, accountID string, vpcName string, regio
 			IamEndpointOverride:      iamEndpointOverride,
 			PowerVSEndpointOverride:  powerVSEndpointOverride,
 			RcEndpointOverride:       rcEndpointOverride,
+			RmEndpointOverride:       rmEndpointOverride,
 		},
 	}
 	buf := &bytes.Buffer{}
@@ -122,4 +127,5 @@ g2EndpointOverride = {{.Provider.G2EndpointOverride}}
 iamEndpointOverride = {{.Provider.IamEndpointOverride}}
 powerVSEndpointOverride = {{.Provider.PowerVSEndpointOverride}}
 rcEndpointOverride = {{.Provider.RcEndpointOverride}}
+rmEndpointOverride = {{.Provider.RmEndpointOverride}}
 `

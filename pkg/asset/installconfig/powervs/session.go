@@ -434,7 +434,7 @@ func (c *BxClient) MapServiceEndpointsForCAPI(cfg *powervs.Metadata) []string {
 		"COS":                "cos",
 		"Power":              "powervs",
 		"ResourceController": "", // FIXME CAPI recognizes "rc," but crashes if passed in...
-		"ResourceManager":    "rm",
+		"ResourceManager":    "", // FIXME? masters unable to get their ignition if "rm" override is present...
 		"VPC":                "vpc",
 	}
 	overrides := make([]string, 0, len(cfg.ServiceEndpoints))
