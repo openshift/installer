@@ -566,8 +566,8 @@ func (c clusterDescendants) filterOwnedDescendants(cluster *infrav1beta2.IBMPowe
 func (r *IBMPowerVSClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
 	controller, err := ctrl.NewControllerManagedBy(mgr).
 		For(&infrav1beta2.IBMPowerVSCluster{}).
-		WithEventFilter(predicates.ResourceIsNotExternallyManaged(ctrl.LoggerFrom(ctx))).
-		WithEventFilter(predicates.ResourceNotPaused(ctrl.LoggerFrom(ctx))).
+		WithEventFilter(predicates.ResourceIsNotExternallyManaged(r.Scheme, ctrl.LoggerFrom(ctx))).
+		WithEventFilter(predicates.ResourceNotPaused(r.Scheme, ctrl.LoggerFrom(ctx))).
 		Build(r)
 	if err != nil {
 		return errors.Wrap(err, "error creating controller")
@@ -576,7 +576,7 @@ func (r *IBMPowerVSClusterReconciler) SetupWithManager(ctx context.Context, mgr 
 	if err = controller.Watch(
 		source.Kind[client.Object](mgr.GetCache(), &capiv1beta1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1beta2.GroupVersion.WithKind("IBMPowerVSCluster"), mgr.GetClient(), &infrav1beta2.IBMPowerVSCluster{})),
-			predicates.ClusterUnpaused(ctrl.LoggerFrom(ctx)),
+			predicates.ClusterUnpaused(r.Scheme, ctrl.LoggerFrom(ctx)),
 		)); err != nil {
 		return errors.Wrap(err, "failed adding a watch for ready clusters")
 	}
