@@ -63,9 +63,13 @@ const (
 
 // ErrClusterLocked is returned in methods that require cluster-level locking
 // if the cluster is already locked by another concurrent call.
+//
+// Deprecated: This will be removed in Cluster API v1.10, use clustercache.ErrClusterNotConnected instead.
 var ErrClusterLocked = errors.New("cluster is locked already")
 
 // ClusterCacheTracker manages client caches for workload clusters.
+//
+// Deprecated: This will be removed in Cluster API v1.10, use clustercache.ClusterCache instead.
 type ClusterCacheTracker struct {
 	log logr.Logger
 
@@ -108,6 +112,8 @@ type ClusterCacheTracker struct {
 
 // ClusterCacheTrackerOptions defines options to configure
 // a ClusterCacheTracker.
+//
+// Deprecated: This will be removed in Cluster API v1.10, use clustercache.ClusterCache instead.
 type ClusterCacheTrackerOptions struct {
 	// SecretCachingClient is a client which caches secrets.
 	// If set it will be used to read the kubeconfig secret.
@@ -172,6 +178,8 @@ func setDefaultOptions(opts *ClusterCacheTrackerOptions) {
 }
 
 // NewClusterCacheTracker creates a new ClusterCacheTracker.
+//
+// Deprecated: This will be removed in Cluster API v1.10, use clustercache.SetupWithManager instead.
 func NewClusterCacheTracker(manager ctrl.Manager, options ClusterCacheTrackerOptions) (*ClusterCacheTracker, error) {
 	setDefaultOptions(&options)
 
@@ -504,7 +512,9 @@ func (t *ClusterCacheTracker) createCachedClient(ctx context.Context, config *re
 		return nil, errors.Wrapf(err, "error creating cached client for remote cluster %q: error creating cache", cluster.String())
 	}
 
-	cacheCtx, cacheCtxCancel := context.WithCancel(ctx)
+	// Use a context that is independent of the passed in context, so the cache doesn't get stopped
+	// when the passed in context is canceled.
+	cacheCtx, cacheCtxCancel := context.WithCancel(context.Background())
 
 	// We need to be able to stop the cache's shared informers, so wrap this in a stoppableCache.
 	cache := &stoppableCache{
@@ -541,7 +551,7 @@ func (t *ClusterCacheTracker) createCachedClient(ctx context.Context, config *re
 	defer cacheSyncCtxCancel()
 	if !cache.WaitForCacheSync(cacheSyncCtx) {
 		cache.Stop()
-		return nil, fmt.Errorf("failed waiting for cache for remote cluster %v to sync: %w", cluster, cacheCtx.Err())
+		return nil, fmt.Errorf("failed waiting for cache for remote cluster %v to sync: %w", cluster, cacheSyncCtx.Err())
 	}
 
 	// Wrap the cached client with a client that sets timeouts on all Get and List calls

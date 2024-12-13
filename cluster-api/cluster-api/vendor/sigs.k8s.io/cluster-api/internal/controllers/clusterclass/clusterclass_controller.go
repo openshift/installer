@@ -32,6 +32,7 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -44,13 +45,12 @@ import (
 	runtimev1 "sigs.k8s.io/cluster-api/exp/runtime/api/v1alpha1"
 	runtimehooksv1 "sigs.k8s.io/cluster-api/exp/runtime/hooks/api/v1alpha1"
 	"sigs.k8s.io/cluster-api/feature"
-	tlog "sigs.k8s.io/cluster-api/internal/log"
 	runtimeclient "sigs.k8s.io/cluster-api/internal/runtime/client"
 	"sigs.k8s.io/cluster-api/internal/topology/variables"
-	"sigs.k8s.io/cluster-api/util/annotations"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/conversion"
 	"sigs.k8s.io/cluster-api/util/patch"
+	"sigs.k8s.io/cluster-api/util/paused"
 	"sigs.k8s.io/cluster-api/util/predicates"
 )
 
@@ -70,15 +70,22 @@ type Reconciler struct {
 }
 
 func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
+	if r.Client == nil {
+		return errors.New("Client must not be nil")
+	}
+	if feature.Gates.Enabled(feature.RuntimeSDK) && r.RuntimeClient == nil {
+		return errors.New("RuntimeClient must not be nil")
+	}
+
+	predicateLog := ctrl.LoggerFrom(ctx).WithValues("controller", "clusterclass")
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&clusterv1.ClusterClass{}).
-		Named("clusterclass").
 		WithOptions(options).
 		Watches(
 			&runtimev1.ExtensionConfig{},
 			handler.EnqueueRequestsFromMapFunc(r.extensionConfigToClusterClass),
 		).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), predicateLog, r.WatchFilterValue)).
 		Complete(r)
 
 	if err != nil {
@@ -87,9 +94,7 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 	return nil
 }
 
-func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
-	log := ctrl.LoggerFrom(ctx)
-
+func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (retres ctrl.Result, reterr error) {
 	clusterClass := &clusterv1.ClusterClass{}
 	if err := r.Client.Get(ctx, req.NamespacedName, clusterClass); err != nil {
 		if apierrors.IsNotFound(err) {
@@ -99,14 +104,16 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 		return ctrl.Result{}, err
 	}
 
-	// Return early if the ClusterClass is paused.
-	if annotations.HasPaused(clusterClass) {
-		log.Info("Reconciliation is paused for this object")
-		return ctrl.Result{}, nil
+	if isPaused, conditionChanged, err := paused.EnsurePausedCondition(ctx, r.Client, nil, clusterClass); err != nil || isPaused || conditionChanged {
+		return ctrl.Result{}, err
 	}
 
 	if !clusterClass.ObjectMeta.DeletionTimestamp.IsZero() {
 		return ctrl.Result{}, nil
+	}
+
+	s := &scope{
+		clusterClass: clusterClass,
 	}
 
 	patchHelper, err := patch.NewHelper(clusterClass, r.Client)
@@ -115,8 +122,20 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 	}
 
 	defer func() {
+		updateStatus(ctx, s)
+
+		patchOpts := []patch.Option{
+			patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
+				clusterv1.ClusterClassRefVersionsUpToDateCondition,
+				clusterv1.ClusterClassVariablesReconciledCondition,
+			}},
+			patch.WithOwnedV1Beta2Conditions{Conditions: []string{
+				clusterv1.ClusterClassRefVersionsUpToDateV1Beta2Condition,
+				clusterv1.ClusterClassVariablesReadyV1Beta2Condition,
+			}},
+		}
+
 		// Patch ObservedGeneration only if the reconciliation completed successfully
-		patchOpts := []patch.Option{}
 		if reterr == nil {
 			patchOpts = append(patchOpts, patch.WithStatusObservedGeneration{})
 		}
@@ -124,25 +143,63 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 			reterr = kerrors.NewAggregate([]error{reterr, err})
 			return
 		}
+
+		if reterr != nil {
+			retres = ctrl.Result{}
+		}
 	}()
-	return ctrl.Result{}, r.reconcile(ctx, clusterClass)
+
+	reconcileNormal := []clusterClassReconcileFunc{
+		r.reconcileExternalReferences,
+		r.reconcileVariables,
+	}
+	return doReconcile(ctx, reconcileNormal, s)
 }
 
-func (r *Reconciler) reconcile(ctx context.Context, clusterClass *clusterv1.ClusterClass) error {
-	if err := r.reconcileVariables(ctx, clusterClass); err != nil {
-		return err
-	}
-	outdatedRefs, err := r.reconcileExternalReferences(ctx, clusterClass)
-	if err != nil {
-		return err
+type clusterClassReconcileFunc func(context.Context, *scope) (ctrl.Result, error)
+
+func doReconcile(ctx context.Context, phases []clusterClassReconcileFunc, s *scope) (ctrl.Result, error) {
+	res := ctrl.Result{}
+	errs := []error{}
+	for _, phase := range phases {
+		// Call the inner reconciliation methods.
+		phaseResult, err := phase(ctx, s)
+		if err != nil {
+			errs = append(errs, err)
+		}
+		if len(errs) > 0 {
+			continue
+		}
+		res = util.LowestNonZeroResult(res, phaseResult)
 	}
 
-	reconcileConditions(clusterClass, outdatedRefs)
+	if len(errs) > 0 {
+		return ctrl.Result{}, kerrors.NewAggregate(errs)
+	}
 
-	return nil
+	return res, nil
 }
 
-func (r *Reconciler) reconcileExternalReferences(ctx context.Context, clusterClass *clusterv1.ClusterClass) (map[*corev1.ObjectReference]*corev1.ObjectReference, error) {
+// scope holds the different objects that are read and used during the reconcile.
+type scope struct {
+	// clusterClass is the ClusterClass object being reconciled.
+	// It is set at the beginning of the reconcile function.
+	clusterClass *clusterv1.ClusterClass
+
+	reconcileExternalReferencesError error
+	outdatedExternalReferences       []outdatedRef
+
+	variableDiscoveryError error
+}
+
+type outdatedRef struct {
+	Outdated *corev1.ObjectReference
+	UpToDate *corev1.ObjectReference
+}
+
+func (r *Reconciler) reconcileExternalReferences(ctx context.Context, s *scope) (ctrl.Result, error) {
+	clusterClass := s.clusterClass
+
 	// Collect all the reference from the ClusterClass to templates.
 	refs := []*corev1.ObjectReference{}
 
@@ -182,7 +239,7 @@ func (r *Reconciler) reconcileExternalReferences(ctx context.Context, clusterCla
 	// or MachinePool classes.
 	errs := []error{}
 	reconciledRefs := sets.Set[string]{}
-	outdatedRefs := map[*corev1.ObjectReference]*corev1.ObjectReference{}
+	outdatedRefs := []outdatedRef{}
 	for i := range refs {
 		ref := refs[i]
 		uniqueKey := uniqueObjectRefKey(ref)
@@ -209,16 +266,25 @@ func (r *Reconciler) reconcileExternalReferences(ctx context.Context, clusterCla
 			errs = append(errs, err)
 		}
 		if ref.GroupVersionKind().Version != updatedRef.GroupVersionKind().Version {
-			outdatedRefs[ref] = updatedRef
+			outdatedRefs = append(outdatedRefs, outdatedRef{
+				Outdated: ref,
+				UpToDate: updatedRef,
+			})
 		}
 	}
 	if len(errs) > 0 {
-		return nil, kerrors.NewAggregate(errs)
+		err := kerrors.NewAggregate(errs)
+		s.reconcileExternalReferencesError = err
+		return ctrl.Result{}, err
 	}
-	return outdatedRefs, nil
+
+	s.outdatedExternalReferences = outdatedRefs
+	return ctrl.Result{}, nil
 }
 
-func (r *Reconciler) reconcileVariables(ctx context.Context, clusterClass *clusterv1.ClusterClass) error {
+func (r *Reconciler) reconcileVariables(ctx context.Context, s *scope) (ctrl.Result, error) {
+	clusterClass := s.clusterClass
+
 	errs := []error{}
 	allVariableDefinitions := map[string]*clusterv1.ClusterClassStatusVariable{}
 	// Add inline variable definitions to the ClusterClass status.
@@ -267,10 +333,10 @@ func (r *Reconciler) reconcileVariables(ctx context.Context, clusterClass *clust
 		}
 	}
 	if len(errs) > 0 {
+		err := kerrors.NewAggregate(errs)
+		s.variableDiscoveryError = errors.Wrapf(err, "VariableDiscovery failed")
 		// TODO: Decide whether to remove old variables if discovery fails.
-		conditions.MarkFalse(clusterClass, clusterv1.ClusterClassVariablesReconciledCondition, clusterv1.VariableDiscoveryFailedReason, clusterv1.ConditionSeverityError,
-			"VariableDiscovery failed: %s", kerrors.NewAggregate(errs))
-		return errors.Wrapf(kerrors.NewAggregate(errs), "failed to discover variables for ClusterClass %s", clusterClass.Name)
+		return ctrl.Result{}, errors.Wrapf(err, "failed to discover variables for ClusterClass %s", clusterClass.Name)
 	}
 
 	statusVarList := []clusterv1.ClusterClassStatusVariable{}
@@ -294,37 +360,11 @@ func (r *Reconciler) reconcileVariables(ctx context.Context, clusterClass *clust
 
 	if len(variablesWithConflict) > 0 {
 		err := fmt.Errorf("the following variables have conflicting schemas: %s", strings.Join(variablesWithConflict, ","))
-		conditions.MarkFalse(clusterClass, clusterv1.ClusterClassVariablesReconciledCondition, clusterv1.VariableDiscoveryFailedReason, clusterv1.ConditionSeverityError,
-			"VariableDiscovery failed: %s", err)
-		return errors.Wrapf(err, "failed to discover variables for ClusterClass %s", clusterClass.Name)
+		s.variableDiscoveryError = errors.Wrapf(err, "VariableDiscovery failed")
+		return ctrl.Result{}, errors.Wrapf(err, "failed to discover variables for ClusterClass %s", clusterClass.Name)
 	}
 
-	conditions.MarkTrue(clusterClass, clusterv1.ClusterClassVariablesReconciledCondition)
-	return nil
-}
-
-func reconcileConditions(clusterClass *clusterv1.ClusterClass, outdatedRefs map[*corev1.ObjectReference]*corev1.ObjectReference) {
-	if len(outdatedRefs) > 0 {
-		var msg []string
-		for currentRef, updatedRef := range outdatedRefs {
-			msg = append(msg, fmt.Sprintf("Ref %q should be %q", refString(currentRef), refString(updatedRef)))
-		}
-		conditions.Set(
-			clusterClass,
-			conditions.FalseCondition(
-				clusterv1.ClusterClassRefVersionsUpToDateCondition,
-				clusterv1.ClusterClassOutdatedRefVersionsReason,
-				clusterv1.ConditionSeverityWarning,
-				strings.Join(msg, ", "),
-			),
-		)
-		return
-	}
-
-	conditions.Set(
-		clusterClass,
-		conditions.TrueCondition(clusterv1.ClusterClassRefVersionsUpToDateCondition),
-	)
+	return ctrl.Result{}, nil
 }
 
 func addNewStatusVariable(variable clusterv1.ClusterClassVariable, from string) *clusterv1.ClusterClassStatusVariable {
@@ -367,20 +407,12 @@ func refString(ref *corev1.ObjectReference) string {
 }
 
 func (r *Reconciler) reconcileExternal(ctx context.Context, clusterClass *clusterv1.ClusterClass, ref *corev1.ObjectReference) error {
-	log := ctrl.LoggerFrom(ctx)
-
-	obj, err := external.Get(ctx, r.Client, ref, clusterClass.Namespace)
+	obj, err := external.Get(ctx, r.Client, ref)
 	if err != nil {
 		if apierrors.IsNotFound(errors.Cause(err)) {
-			return errors.Wrapf(err, "Could not find external object for the ClusterClass. refGroupVersionKind: %s, refName: %s", ref.GroupVersionKind(), ref.Name)
+			return errors.Wrapf(err, "Could not find external object for the ClusterClass. refGroupVersionKind: %s, refName: %s, refNamespace: %s", ref.GroupVersionKind(), ref.Name, ref.Namespace)
 		}
-		return errors.Wrapf(err, "failed to get the external object for the ClusterClass. refGroupVersionKind: %s, refName: %s", ref.GroupVersionKind(), ref.Name)
-	}
-
-	// If referenced object is paused, return early.
-	if annotations.HasPaused(obj) {
-		log.V(3).Info("External object referenced is paused", "refGroupVersionKind", ref.GroupVersionKind(), "refName", ref.Name)
-		return nil
+		return errors.Wrapf(err, "failed to get the external object for the ClusterClass. refGroupVersionKind: %s, refName: %s, refNamespace: %s", ref.GroupVersionKind(), ref.Name, ref.Namespace)
 	}
 
 	// Initialize the patch helper.
@@ -389,9 +421,9 @@ func (r *Reconciler) reconcileExternal(ctx context.Context, clusterClass *cluste
 		return err
 	}
 
-	// Set external object ControllerReference to the ClusterClass.
+	// Set external object owner reference to the ClusterClass.
 	if err := controllerutil.SetOwnerReference(clusterClass, obj, r.Client.Scheme()); err != nil {
-		return errors.Wrapf(err, "failed to set ClusterClass owner reference for %s", tlog.KObj{Obj: obj})
+		return errors.Wrapf(err, "failed to set ClusterClass owner reference for %s %s", obj.GetKind(), klog.KObj(obj))
 	}
 
 	// Patch the external object.

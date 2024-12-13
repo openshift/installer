@@ -140,6 +140,7 @@ Cluster API maintains the most recent release/releases for all supported API and
 
 | Minor Release | API Version  | Supported Until                                |
 |---------------|--------------|------------------------------------------------|
+| v1.9.x        | **v1beta1**  | when v1.11.0 will be released                  |
 | v1.8.x        | **v1beta1**  | when v1.10.0 will be released                  |
 | v1.7.x        | **v1beta1**  | when v1.9.0 will be released                   |
 | v1.6.x        | **v1beta1**  | EOL since 2024-08-12 - v1.8.0 release date     |
@@ -232,8 +233,8 @@ The [template](https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/pro
   - Issues can be placed on the roadmap during planning if there is one or more folks
     that can dedicate time to writing a CAEP and/or implementing it after approval.
 - A proposal SHOULD be introduced and discussed during the weekly community meetings or on the
- [Kubernetes SIG Cluster Lifecycle mailing list](https://groups.google.com/forum/#!forum/kubernetes-sig-cluster-lifecycle).
-  - Submit and discuss proposals using a collaborative writing platform, preferably Google Docs, share documents with edit permissions with the [Kubernetes SIG Cluster Lifecycle mailing list](https://groups.google.com/forum/#!forum/kubernetes-sig-cluster-lifecycle).
+ [SIG Cluster Lifecycle mailing list](https://groups.google.com/a/kubernetes.io/g/sig-cluster-lifecycle).
+  - Submit and discuss proposals using a collaborative writing platform, preferably Google Docs, share documents with edit permissions with the [SIG Cluster Lifecycle mailing list](https://groups.google.com/a/kubernetes.io/g/sig-cluster-lifecycle).
 - A proposal in a Google Doc MUST turn into a [Pull Request](https://github.com/kubernetes-sigs/cluster-api/pulls).
 - Proposals MUST be merged and in `implementable` state to be considered part of a major or minor release.
 
@@ -508,8 +509,7 @@ quick-start-d5ufye   quick-start-ntysk0-md-0   quick-start-ntysk0   1           
 
 To gain viewing permissions to google docs in this project, please join either the
 [kubernetes-dev](https://groups.google.com/forum/#!forum/kubernetes-dev) or
-[kubernetes-sig-cluster-lifecycle](https://groups.google.com/forum/#!forum/kubernetes-sig-cluster-lifecycle) google
-group.
+[sig-cluster-lifecycle](https://groups.google.com/a/kubernetes.io/g/sig-cluster-lifecycle) google group.
 
 ## Issue and Pull Request Management
 
