@@ -455,14 +455,6 @@ func removeNodeServiceAllRule(ctx context.Context, session *session.Session, sgI
 					{CidrIp: aws.String("0.0.0.0/0")},
 				},
 			},
-			{
-				IpProtocol: aws.String("tcp"),
-				FromPort:   aws.Int64(30000),
-				ToPort:     aws.Int64(32767),
-				Ipv6Ranges: []*ec2.Ipv6Range{
-					{CidrIpv6: aws.String("::/0")},
-				},
-			},
 		},
 	}
 	_, err := ec2.New(session).RevokeSecurityGroupIngressWithContext(ctx, input)
