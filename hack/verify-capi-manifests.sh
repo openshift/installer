@@ -70,9 +70,9 @@ if [ "$IS_CONTAINER" != "" ]; then
 	git diff --exit-code
 else
 	podman run --rm \
-	  --env IS_CONTAINER=TRUE \
-	  --volume "${PWD}:/go/src/github.com/openshift/installer:z" \
-	  --workdir /go/src/github.com/openshift/installer \
-	  docker.io/golang:1.21 \
-	  ./hack/verify-capi-manifests.sh "${@}"
+		--env IS_CONTAINER=TRUE \
+		--volume "${PWD}:/go/src/github.com/openshift/installer:z" \
+		--workdir /go/src/github.com/openshift/installer \
+		docker.io/golang:1.22 \
+		./hack/verify-capi-manifests.sh "${@}"
 fi
