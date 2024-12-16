@@ -66,14 +66,15 @@ data "azurerm_user_assigned_identity" "keyvault_identity" {
 }
 
 resource "azurerm_storage_account" "cluster" {
-  name                            = "cluster${var.random_storage_account_suffix}"
-  resource_group_name             = data.azurerm_resource_group.main.name
-  location                        = var.azure_region
-  account_tier                    = var.azure_keyvault_name != "" ? "Premium" : "Standard"
-  account_replication_type        = "LRS"
-  min_tls_version                 = contains(local.environments_with_min_tls_version, var.azure_environment) ? "TLS1_2" : null
-  allow_nested_items_to_be_public = var.azure_keyvault_name != "" ? true : false
-  tags                            = var.azure_extra_tags
+  name                             = "cluster${var.random_storage_account_suffix}"
+  resource_group_name              = data.azurerm_resource_group.main.name
+  location                         = var.azure_region
+  account_tier                     = var.azure_keyvault_name != "" ? "Premium" : "Standard"
+  account_replication_type         = "LRS"
+  min_tls_version                  = contains(local.environments_with_min_tls_version, var.azure_environment) ? "TLS1_2" : null
+  allow_nested_items_to_be_public  = var.azure_keyvault_name != "" ? true : false
+  tags                             = var.azure_extra_tags
+  cross_tenant_replication_enabled = false
 
   dynamic "customer_managed_key" {
     for_each = var.azure_keyvault_name != "" ? [1] : []
