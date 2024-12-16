@@ -90,12 +90,13 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		Location: to.Ptr(in.Region),
 		SKU:      &sku,
 		Properties: &armstorage.AccountPropertiesCreateParameters{
-			AllowBlobPublicAccess: to.Ptr(false),
-			AllowSharedKeyAccess:  to.Ptr(true),
-			IsLocalUserEnabled:    to.Ptr(true),
-			LargeFileSharesState:  to.Ptr(armstorage.LargeFileSharesStateEnabled),
-			PublicNetworkAccess:   to.Ptr(armstorage.PublicNetworkAccessEnabled),
-			MinimumTLSVersion:     &minimumTLSVersion,
+			AllowBlobPublicAccess:       to.Ptr(false),
+			AllowSharedKeyAccess:        to.Ptr(true),
+			IsLocalUserEnabled:          to.Ptr(true),
+			LargeFileSharesState:        to.Ptr(armstorage.LargeFileSharesStateEnabled),
+			PublicNetworkAccess:         to.Ptr(armstorage.PublicNetworkAccessEnabled),
+			MinimumTLSVersion:           &minimumTLSVersion,
+			AllowCrossTenantReplication: to.Ptr(false), // must remain false to comply with BAFIN and PCI-DSS regulations
 		},
 		Tags: in.Tags,
 	}
