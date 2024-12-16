@@ -2,7 +2,7 @@
 
 MANIFESTS_DIR="/go/src/github.com/openshift/installer/data/data/cluster-api"
 
-generate_provider_manifest() {
+generate_capi_manifest() {
 	provider="$(basename "$1")"
 
 	# Skip azureaso for now
@@ -27,14 +27,19 @@ generate_provider_manifest() {
 	pushd "${clone_path}"
 	git checkout "${revision}"
 	case "${provider}" in
-		vsphere)
-			make release-manifests-all
-			;;
-		*)
-			make release-manifests
-			;;
+	vsphere)
+		make release-manifests-all
+		;;
+	*)
+		make release-manifests
+		;;
 	esac
-	cp out/infrastructure-components.yaml "${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
+
+	if [ "${provider}" = "cluster-api" ]; then
+		cp out/cluster-api-components.yaml "${MANIFESTS_DIR}/core-components.yaml"
+	else
+		cp out/infrastructure-components.yaml "${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
+	fi
 	popd
 }
 
@@ -53,12 +58,13 @@ if [ "$IS_CONTAINER" != "" ]; then
 
 	if [ $# -gt 0 ]; then
 		for target in "${@}"; do
-			generate_provider_manifest "${target}"
+			generate_capi_manifest "${target}"
 		done
 	else
 		find cluster-api/providers -maxdepth 1 -mindepth 1 -type d -print0 | while read -r -d '' dir; do
-			generate_provider_manifest "${dir}"
+			generate_capi_manifest "${dir}"
 		done
+		generate_capi_manifest "cluster-api/cluster-api"
 	fi
 
 	git diff --exit-code
