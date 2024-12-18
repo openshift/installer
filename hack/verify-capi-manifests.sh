@@ -5,42 +5,49 @@ MANIFESTS_DIR="/go/src/github.com/openshift/installer/data/data/cluster-api"
 generate_capi_manifest() {
 	provider="$(basename "$1")"
 
-	# Skip azureaso for now
-	if [ "${provider}" = "azureaso" ]; then
-		return 0
-	fi
-
 	echo "Generating ${provider} manifest"
 	pushd "$1"
 	# Parse provider module URL and revision
-	provider_go_module="$(grep _ tools.go | awk '{ print $2 }' | sed 's|"||g')"
 	# Workaround the import path for azure-service-operator being different from the module path
-	#provider_go_module="$(echo ${provider_go_module} | sed 's|/cmd/controller$||g')"
-	info_path="$(go mod download -json "${provider_go_module}" | jq '.Info' | sed 's|"||g')"
+	provider_go_module="$(grep _ tools.go | awk '{ print $2 }' | sed 's|"||g' | sed 's|/cmd/controller$||g')"
+	mod_info="$(go mod download -json "${provider_go_module}")"
 	popd
+	version="$(echo "${mod_info}" | jq '.Version' | sed 's|"||g')"
+	info_path="$(echo "${mod_info}" | jq '.Info' | sed 's|"||g')"
 	repo_origin="$(jq '.Origin.URL' "${info_path}" | sed 's|"||g')"
 	revision="$(jq '.Origin.Hash' "${info_path}" | sed 's|"||g')"
 
-	# Generate provider manifest from specified revision
-	clone_path="$(mktemp -d)"
-	git clone "${repo_origin}" "${clone_path}"
-	pushd "${clone_path}"
-	git checkout "${revision}"
-	case "${provider}" in
-	vsphere)
-		make release-manifests-all
-		;;
-	*)
-		make release-manifests
-		;;
-	esac
-
-	if [ "${provider}" = "cluster-api" ]; then
-		cp out/cluster-api-components.yaml "${MANIFESTS_DIR}/core-components.yaml"
+	if [ "${provider}" = "azureaso" ]; then
+		# Just copy the CRD from upstream
+		curl -fSsL "https://github.com/Azure/azure-service-operator/releases/download/${version}/azureserviceoperator_${version}.yaml" -o "${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
+		echo "---" >>"${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
+		curl -fSsL "https://github.com/Azure/azure-service-operator/releases/download/${version}/azureserviceoperator_customresourcedefinitions_${version}.yaml" >>"${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
 	else
-		cp out/infrastructure-components.yaml "${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
+		# Generate provider manifest from specified revision
+		clone_path="$(mktemp -d)"
+		git clone "${repo_origin}" "${clone_path}"
+		pushd "${clone_path}"
+		git checkout "${revision}"
+		case "${provider}" in
+		vsphere)
+			make release-manifests-all
+			;;
+		*)
+			make release-manifests
+			;;
+		esac
+
+		case "${provider}" in
+		cluster-api)
+			cp out/cluster-api-components.yaml "${MANIFESTS_DIR}/core-components.yaml"
+			;;
+		*)
+			cp out/infrastructure-components.yaml "${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
+			;;
+		esac
+		popd
+		rm -rf "${clone_path}"
 	fi
-	popd
 }
 
 if [ "$IS_CONTAINER" != "" ]; then
