@@ -3,6 +3,7 @@ package joiner
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	ignutil "github.com/coreos/ignition/v2/config/util"
@@ -10,10 +11,14 @@ import (
 	"github.com/coreos/stream-metadata-go/stream"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes/fake"
+	faketesting "k8s.io/client-go/testing"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
 	machineconfigv1 "github.com/openshift/api/machineconfiguration/v1"
@@ -27,6 +32,13 @@ import (
 )
 
 func TestClusterInfo_Generate(t *testing.T) {
+	type fakeClientErr struct {
+		verb     string
+		resource string
+		name     string
+		err      error
+	}
+
 	cases := []struct {
 		name                        string
 		workflow                    workflow.AgentWorkflowType
@@ -34,6 +46,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 		objs                        func(t *testing.T) ([]runtime.Object, []runtime.Object, []runtime.Object)
 		overrideExpectedClusterInfo func(clusterInfo ClusterInfo) ClusterInfo
 		expectedError               string
+		fakeClientError             *fakeClientErr
 	}{
 		{
 			name:     "skip if not add-nodes workflow",
@@ -150,6 +163,59 @@ storage:
 				return clusterInfo
 			},
 		},
+		{
+			name:     "fallback for icsp",
+			workflow: workflow.AgentWorkflowTypeAddNodes,
+			objs:     defaultObjects(),
+			fakeClientError: &fakeClientErr{
+				verb:     "list",
+				resource: "imagecontentpolicies",
+				err:      errors.NewForbidden(schema.GroupResource{}, "", nil),
+			},
+		},
+		{
+			name:     "fallback for idms",
+			workflow: workflow.AgentWorkflowTypeAddNodes,
+			objs:     defaultObjects(),
+			fakeClientError: &fakeClientErr{
+				verb:     "list",
+				resource: "imagedigestmirrorsets",
+				err:      errors.NewForbidden(schema.GroupResource{}, "", nil),
+			},
+		},
+		{
+			name:     "fallback for chrony (skipped)",
+			workflow: workflow.AgentWorkflowTypeAddNodes,
+			objs:     defaultObjects(),
+			fakeClientError: &fakeClientErr{
+				verb:     "get",
+				resource: "machineconfigs",
+				name:     "50-workers-chrony-configuration",
+				err:      errors.NewForbidden(schema.GroupResource{}, "", nil),
+			},
+		},
+		{
+			name:     "fallback for fips",
+			workflow: workflow.AgentWorkflowTypeAddNodes,
+			objs:     defaultObjects(),
+			fakeClientError: &fakeClientErr{
+				verb:     "get",
+				resource: "machineconfigs",
+				name:     "99-worker-fips",
+				err:      errors.NewForbidden(schema.GroupResource{}, "", nil),
+			},
+		},
+		{
+			name:     "fallback for ssh",
+			workflow: workflow.AgentWorkflowTypeAddNodes,
+			objs:     defaultObjects(),
+			fakeClientError: &fakeClientErr{
+				verb:     "get",
+				resource: "machineconfigs",
+				name:     "99-worker-ssh",
+				err:      errors.NewForbidden(schema.GroupResource{}, "", nil),
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -166,6 +232,35 @@ storage:
 			fakeClient := fake.NewSimpleClientset(objects...)
 			fakeOCClient := fakeclientconfig.NewSimpleClientset(openshiftObjects...)
 			fakeOCMachineConfigClient := fakeclientmachineconfig.NewSimpleClientset(openshiftMachineConfigObjects...)
+
+			if tc.fakeClientError != nil {
+				switch tc.fakeClientError.resource {
+				case "machineconfigs":
+					fakeOCMachineConfigClient.PrependReactor(tc.fakeClientError.verb, tc.fakeClientError.resource, func(action faketesting.Action) (handled bool, ret runtime.Object, err error) {
+						getAction, ok := action.(faketesting.GetAction)
+						if ok && getAction.GetName() == tc.fakeClientError.name {
+							return true, nil, errors.NewForbidden(
+								schema.GroupResource{Group: "", Resource: tc.fakeClientError.resource},
+								tc.fakeClientError.name,
+								fmt.Errorf("access denied"),
+							)
+						}
+						return false, nil, nil
+					})
+				case "imagedigestmirrorsets", "imagecontentpolicies":
+					fakeOCClient.PrependReactor(tc.fakeClientError.verb, tc.fakeClientError.resource, func(action faketesting.Action) (handled bool, ret runtime.Object, err error) {
+						listAction, ok := action.(faketesting.ListAction)
+						if ok && listAction.GetResource().Resource == tc.fakeClientError.resource {
+							return true, nil, errors.NewForbidden(
+								schema.GroupResource{Group: "", Resource: tc.fakeClientError.resource},
+								tc.fakeClientError.name,
+								fmt.Errorf("access denied"),
+							)
+						}
+						return false, nil, nil
+					})
+				}
+			}
 
 			clusterInfo := ClusterInfo{
 				Client:                       fakeClient,
@@ -233,6 +328,32 @@ func makeCoreOsBootImages(t *testing.T, st *stream.Stream) string {
 	return string(data)
 }
 
+func makeInstallConfig(t *testing.T) string {
+	t.Helper()
+	ic := &types.InstallConfig{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "ostest",
+		},
+		BaseDomain: "test.metalkube.org",
+		ImageDigestSources: []types.ImageDigestSource{
+			{
+				Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
+				Mirrors: []string{
+					"registry.example.com:5000/ocp4/openshift4",
+				},
+			},
+		},
+		SSHKey: "my-ssh-key",
+		FIPS:   true,
+	}
+	data, err := yaml.Marshal(ic)
+	if err != nil {
+		t.Error(err)
+	}
+
+	return string(data)
+}
+
 func defaultObjects() func(t *testing.T) ([]runtime.Object, []runtime.Object, []runtime.Object) {
 	return func(t *testing.T) ([]runtime.Object, []runtime.Object, []runtime.Object) {
 		t.Helper()
@@ -265,6 +386,15 @@ func defaultObjects() func(t *testing.T) ([]runtime.Object, []runtime.Object, []
 					NodeInfo: corev1.NodeSystemInfo{
 						Architecture: "amd64",
 					},
+				},
+			},
+			&corev1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "cluster-config-v1",
+					Namespace: "kube-system",
+				},
+				Data: map[string]string{
+					"install-config": makeInstallConfig(t),
 				},
 			},
 			&corev1.ConfigMap{
