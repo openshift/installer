@@ -72,10 +72,10 @@ func ValidateMachinePool(p *powervs.MachinePool, fldPath *field.Path) field.Erro
 
 	// Validate SysType
 	if p.SysType != "" {
-		const sysTypeRegex = `^(?:e980|s922(-.*|))$`
+		const sysTypeRegex = `^(?:e980|e1080|s1022|s922(-.*|))$`
 		// Allowing for a staging-only pattern of s922-* but not exposing here
 		if !regexp.MustCompile(sysTypeRegex).MatchString(p.SysType) {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("sysType"), p.SysType, "system type must be one of {e980,s922}"))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("sysType"), p.SysType, "system type must be one of {e980,e1080,s922,s1022}"))
 		}
 	}
 
