@@ -7863,8 +7863,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.uid
-        image: gcr.io/k8s-staging-capi-vsphere/cluster-api-vsphere-controller:main
-        imagePullPolicy: Always
+        image: registry.k8s.io/cluster-api-vsphere/cluster-api-vsphere-controller:v1.11.1
+        imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
             path: /healthz

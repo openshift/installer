@@ -17916,7 +17916,7 @@ spec:
         env:
         - name: AWS_SHARED_CREDENTIALS_FILE
           value: /home/.aws/credentials
-        image: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller:v2.5.1
+        image: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller:v2.6.0
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
