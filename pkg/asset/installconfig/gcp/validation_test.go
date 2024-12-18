@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"cloud.google.com/go/kms/apiv1/kmspb"
 	logrusTest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -109,6 +110,60 @@ var (
 	validNetworkProject      = func(ic *types.InstallConfig) { ic.GCP.NetworkProjectID = validProjectName }
 	validateXpnSA            = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.GCP.ServiceAccount = validXpnSA }
 	invalidateXpnSA          = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.GCP.ServiceAccount = invalidXpnSA }
+
+	invalidDefaultMachineKeyRing = func(ic *types.InstallConfig) {
+		ic.GCP.DefaultMachinePlatform = &gcp.MachinePool{}
+		ic.GCP.DefaultMachinePlatform.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &gcp.KMSKeyReference{
+					Name:    "invalidKeyName",
+					KeyRing: "invalidKeyRingName",
+				},
+			},
+		}
+	}
+
+	validCPKMSKeyRing = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.GCP.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &gcp.KMSKeyReference{
+					Name:    "validKeyName",
+					KeyRing: "validKeyRingName",
+				},
+			},
+		}
+	}
+	invalidateCPKMSKeyRing = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.GCP.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &gcp.KMSKeyReference{
+					Name:    "invalidKeyName",
+					KeyRing: "invalidKeyRingName",
+				},
+			},
+		}
+	}
+
+	validComputeKMSKeyRing = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.GCP.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &gcp.KMSKeyReference{
+					Name:    "validKeyName",
+					KeyRing: "validKeyRingName",
+				},
+			},
+		}
+	}
+	invalidateComputeKMSKeyRing = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.GCP.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &gcp.KMSKeyReference{
+					Name:    "validKeyName",
+					KeyRing: "invalidKeyRingName",
+				},
+			},
+		}
+	}
 
 	machineTypeAPIResult = map[string]*compute.MachineType{
 		"n1-standard-1":     {GuestCpus: 1, MemoryMb: 3840},
@@ -323,6 +378,34 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			expectedError:  true,
 			expectedErrMsg: "controlPlane.platform.gcp.serviceAccount: Internal error\"",
 		},
+		{
+			name:          "Valid Control Plane KMS Key",
+			edits:         editFunctions{validCPKMSKeyRing},
+			expectedError: false,
+		},
+		{
+			name:           "Invalid Control Plane KMS Key",
+			edits:          editFunctions{invalidateCPKMSKeyRing},
+			expectedError:  true,
+			expectedErrMsg: "platform.gcp.controlPlane.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data",
+		},
+		{
+			name:          "Valid Compute KMS Key",
+			edits:         editFunctions{validComputeKMSKeyRing},
+			expectedError: false,
+		},
+		{
+			name:           "Invalid Compute KMS Key",
+			edits:          editFunctions{invalidateComputeKMSKeyRing},
+			expectedError:  true,
+			expectedErrMsg: "platform.gcp.compute.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data",
+		},
+		{
+			name:           "Valid Control Plane Invalid Compute Invalid Default Machine KMS Key",
+			edits:          editFunctions{validCPKMSKeyRing, invalidateComputeKMSKeyRing, invalidDefaultMachineKeyRing},
+			expectedError:  true,
+			expectedErrMsg: "platform.gcp.compute.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data, platform.gcp.defaultMachinePool.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data",
+		},
 	}
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -378,6 +461,12 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 
 	gcpClient.EXPECT().GetServiceAccount(gomock.Any(), validProjectName, validXpnSA).Return(validXpnSA, nil).AnyTimes()
 	gcpClient.EXPECT().GetServiceAccount(gomock.Any(), validProjectName, invalidXpnSA).Return("", fmt.Errorf("controlPlane.platform.gcp.serviceAccount: Internal error\"")).AnyTimes()
+
+	validKeyRing := &kmspb.KeyRing{
+		Name: "validKeyRingName",
+	}
+	gcpClient.EXPECT().GetKeyRing(gomock.Any(), "validKeyRingName").Return(validKeyRing, nil).AnyTimes()
+	gcpClient.EXPECT().GetKeyRing(gomock.Any(), "invalidKeyRingName").Return(nil, fmt.Errorf("failed to find key ring invalidKeyRingName: data")).AnyTimes()
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

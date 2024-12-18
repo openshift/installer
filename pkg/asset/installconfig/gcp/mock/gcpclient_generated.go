@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	kmspb "cloud.google.com/go/kms/apiv1/kmspb"
 	gomock "go.uber.org/mock/gomock"
 	google "golang.org/x/oauth2/google"
 	cloudresourcemanager "google.golang.org/api/cloudresourcemanager/v3"
@@ -117,6 +118,21 @@ func (m *MockAPI) GetImage(ctx context.Context, name, project string) (*compute.
 func (mr *MockAPIMockRecorder) GetImage(ctx, name, project any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetImage", reflect.TypeOf((*MockAPI)(nil).GetImage), ctx, name, project)
+}
+
+// GetKeyRing mocks base method.
+func (m *MockAPI) GetKeyRing(ctx context.Context, keyRingName string) (*kmspb.KeyRing, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetKeyRing", ctx, keyRingName)
+	ret0, _ := ret[0].(*kmspb.KeyRing)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetKeyRing indicates an expected call of GetKeyRing.
+func (mr *MockAPIMockRecorder) GetKeyRing(ctx, keyRingName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetKeyRing", reflect.TypeOf((*MockAPI)(nil).GetKeyRing), ctx, keyRingName)
 }
 
 // GetMachineType mocks base method.
