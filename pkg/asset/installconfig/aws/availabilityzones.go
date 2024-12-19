@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 
 	typesaws "github.com/openshift/installer/pkg/types/aws"
+	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 )
 
 // Zones stores the map of Zone attributes indexed by Zone Name.
@@ -95,7 +96,7 @@ func availabilityZones(ctx context.Context, session *session.Session, region str
 	if len(zones) == 0 {
 		return nil, fmt.Errorf("no zones with type availability-zone in %s", region)
 	}
-	return zones, nil
+	return awsdefaults.SupportedZones(zones), nil
 }
 
 // edgeZones retrieves a list of zones type 'local-zone' and 'wavelength-zone' in the region.

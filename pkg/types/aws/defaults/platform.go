@@ -3,6 +3,8 @@ package defaults
 import (
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/util/sets"
+
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -24,6 +26,10 @@ var (
 			// "us-east-1":      {"m6g.xlarge", "m6gd.xlarge"},
 		},
 	}
+	// Skip undesired zones in the discovery.
+	// - us-east-1e is a well-known limited zone, with limited offering of
+	// 	 instance types supported by installer.
+	skippedZones = []string{"us-east-1e"}
 )
 
 // SetPlatformDefaults sets the defaults for the platform.
@@ -71,4 +77,9 @@ func InstanceTypes(region string, arch types.Architecture, topology configv1.Top
 			"r5.2xlarge",
 		}
 	}
+}
+
+// SupportedZones returns the list of supported zones.
+func SupportedZones(zones []string) []string {
+	return sets.List(sets.New(zones...).Difference(sets.New(skippedZones...)))
 }
