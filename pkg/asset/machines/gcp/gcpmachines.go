@@ -143,6 +143,7 @@ func createGCPMachine(name string, installConfig *installconfig.InstallConfig, i
 			RootDeviceSize:        mpool.OSDisk.DiskSizeGB,
 			AdditionalNetworkTags: mpool.Tags,
 			ResourceManagerTags:   gcpmanifests.GetTagsFromInstallConfig(installConfig),
+			IPForwarding:          ptr.To(capg.IPForwardingDisabled),
 		},
 	}
 	gcpMachine.SetGroupVersionKind(capg.GroupVersion.WithKind("GCPMachine"))
