@@ -398,6 +398,11 @@ func (ci *ClusterInfo) retrieveWorkerChronyConfig() error {
 
 	workerMachineConfig, err := ci.DynamicClient.Resource(mcfgv1.GroupVersion.WithResource("machineconfigs")).Get(context.Background(), "50-workers-chrony-configuration", metav1.GetOptions{})
 	if err != nil {
+		// Older oc client may not have sufficient permissions,
+		// falling back to previous implementation (skip).
+		if errors.IsForbidden(err) {
+			return nil
+		}
 		if errors.IsNotFound(err) {
 			return nil
 		}
