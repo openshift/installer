@@ -35,18 +35,13 @@ func (o *ClusterUninstaller) getInstanceNameAndZone(instanceURL string) (string,
 }
 
 func (o *ClusterUninstaller) listInstances(ctx context.Context) ([]cloudResource, error) {
-	byName, err := o.listInstancesWithFilter(ctx, "items/*/instances(name,zone,status,machineType),nextPageToken",
+	instances, err := o.listInstancesWithFilter(ctx, "items/*/instances(name,zone,status,machineType,labels),nextPageToken",
 		func(item *compute.Instance) bool {
-			return o.isClusterResource(item.Name)
-		})
-	if err != nil {
-		return nil, err
-	}
+			if o.isClusterResource(item.Name) {
+				return true
+			}
 
-	byLabel, err := o.listInstancesWithFilter(ctx, "items/*/instances(name,zone,status,machineType),nextPageToken",
-		func(item *compute.Instance) bool {
 			for key, value := range item.Labels {
-				// TODO: do labels get formatted as labels.%s, or is this only for filters
 				if key == fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, o.ClusterID) && value == ownedLabelValue {
 					return true
 				} else if key == fmt.Sprintf(capgProviderOwnedLabelFmt, o.ClusterID) && value == ownedLabelValue {
@@ -58,7 +53,7 @@ func (o *ClusterUninstaller) listInstances(ctx context.Context) ([]cloudResource
 	if err != nil {
 		return nil, err
 	}
-	return append(byName, byLabel...), nil
+	return instances, nil
 }
 
 // listInstancesWithFilter lists instances in the project that satisfy the filter criteria.
