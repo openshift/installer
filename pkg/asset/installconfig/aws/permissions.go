@@ -4,6 +4,7 @@ package aws
 import (
 	"errors"
 	"fmt"
+	"regexp"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/sirupsen/logrus"
@@ -70,6 +71,9 @@ const (
 
 	// PermissionAssumeRole is a permission set required when an IAM role to be assumed is set in the install-config.
 	PermissionAssumeRole PermissionGroup = "permission-assume-role"
+
+	// PermissionCarrierGateway is a permission set required when an edge compute pool with WL zones is set in the install-config.
+	PermissionCarrierGateway PermissionGroup = "permission-create-carrier-gateway"
 
 	// PermissionMintCreds is a permission set required when minting credentials.
 	PermissionMintCreds PermissionGroup = "permission-mint-creds"
@@ -336,6 +340,13 @@ var permissions = map[PermissionGroup][]string{
 		// Needed so the installer can use the provided custom IAM role
 		"sts:AssumeRole",
 	},
+	PermissionCarrierGateway: {
+		// Needed by CAPA to create Carrier Gateways.
+		"ec2:DescribeCarrierGateways",
+		"ec2:CreateCarrierGateway",
+		// Needed to delete Carrier Gateways.
+		"ec2:DeleteCarrierGateway",
+	},
 	// From: https://github.com/openshift/cloud-credential-operator/blob/master/pkg/aws/utils.go
 	// TODO: export these in CCO so we don't have to duplicate them here.
 	PermissionMintCreds: {
@@ -527,6 +538,10 @@ func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 		permissionGroups = append(permissionGroups, PermissionAssumeRole)
 	}
 
+	if includesWavelengthZones(ic) {
+		permissionGroups = append(permissionGroups, PermissionCarrierGateway)
+	}
+
 	return permissionGroups
 }
 
@@ -702,4 +717,22 @@ func includesZones(installConfig *types.InstallConfig) bool {
 // includesAssumeRole checks if a custom IAM role is specified in the install-config.
 func includesAssumeRole(installConfig *types.InstallConfig) bool {
 	return len(installConfig.AWS.HostedZoneRole) > 0
+}
+
+func includesWavelengthZones(installConfig *types.InstallConfig) bool {
+	// Examples of WL zones: us-east-1-wl1-atl-wlz-1, eu-west-2-wl1-lon-wlz-1, eu-west-2-wl2-man-wlz1 ...
+	isWLZoneRegex := regexp.MustCompile(`wl\d\-.*$`)
+
+	for _, mpool := range installConfig.Compute {
+		if mpool.Name != types.MachinePoolEdgeRoleName || mpool.Platform.AWS == nil {
+			continue
+		}
+		for _, zone := range mpool.Platform.AWS.Zones {
+			if isWLZoneRegex.MatchString(zone) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
