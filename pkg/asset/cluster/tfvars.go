@@ -875,6 +875,16 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 		err = powervsconfig.ValidatePERAvailability(client, installConfig.Config)
 		transitGatewayEnabled := err == nil
+		cpStanza := installConfig.Config.ControlPlane
+		if cpStanza == nil || cpStanza.Platform.PowerVS == nil || cpStanza.Platform.PowerVS.SysType == "" {
+			sysTypes, err := powervs.AvailableSysTypes(installConfig.Config.PowerVS.Region, installConfig.Config.PowerVS.Zone)
+			if err != nil {
+				return err
+			}
+			for i := range masters {
+				masterConfigs[i].SystemType = sysTypes[0]
+			}
+		}
 
 		serviceInstanceCRN, err := client.ServiceInstanceIDToCRN(ctx, installConfig.Config.PowerVS.ServiceInstanceID)
 		if err != nil {

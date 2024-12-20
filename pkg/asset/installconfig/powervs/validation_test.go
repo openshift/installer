@@ -45,7 +45,7 @@ var (
 		validPrivateSubnetUSSouth2ID,
 	}
 	validUserID = "valid-user@example.com"
-	validZone   = "dal10"
+	validZone   = "dal12"
 
 	existingDNSRecordsResponse = []powervs.DNSRecordResponse{
 		{
@@ -134,6 +134,10 @@ var (
 		"disaster-recover-site": true,
 		"power-vpn-connections": false,
 	}
+	defaultSysType           = "s922"
+	newSysType               = "s1022"
+	invalidZone              = "dal11"
+	validServiceInstanceGUID = ""
 )
 
 func validInstallConfig() *types.InstallConfig {
@@ -725,6 +729,140 @@ func TestValidatePERAvailability(t *testing.T) {
 			}
 
 			aggregatedErrors := powervs.ValidatePERAvailability(powervsClient, editedInstallConfig)
+			if tc.errorMsg != "" {
+				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
+			} else {
+				assert.NoError(t, aggregatedErrors)
+			}
+		})
+	}
+}
+
+func TestValidateSystemTypeForZone(t *testing.T) {
+	cases := []struct {
+		name     string
+		edits    editFunctions
+		errorMsg string
+	}{
+		{
+			name: "Unknown Zone specified",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.PowerVS.Zone = invalidZone
+					ic.ControlPlane.Platform.PowerVS = validMachinePool()
+					ic.ControlPlane.Platform.PowerVS.SysType = defaultSysType
+				},
+			},
+			errorMsg: fmt.Sprintf("failed to obtain available SysTypes for: %s", invalidZone),
+		},
+		{
+			name: "No Platform block",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.ControlPlane.Platform.PowerVS = nil
+				},
+			},
+			errorMsg: "",
+		},
+		{
+			name: "Structure present, but no SysType specified",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.ControlPlane.Platform.PowerVS = validMachinePool()
+				},
+			},
+			errorMsg: "",
+		},
+		{
+			name: "Unavailable SysType specified for dal12 zone",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.PowerVS.Region = validRegion
+					ic.Platform.PowerVS.Zone = validZone
+					ic.ControlPlane.Platform.PowerVS = validMachinePool()
+					ic.ControlPlane.Platform.PowerVS.SysType = newSysType
+				},
+			},
+			errorMsg: fmt.Sprintf("%s is not available in: %s", newSysType, validZone),
+		},
+		{
+			name: "Good Zone/SysType combo specified",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.PowerVS.Region = validRegion
+					ic.Platform.PowerVS.Zone = validZone
+					ic.ControlPlane.Platform.PowerVS = validMachinePool()
+					ic.ControlPlane.Platform.PowerVS.SysType = defaultSysType
+				},
+			},
+			errorMsg: "",
+		},
+	}
+	setMockEnvVars()
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	powervsClient := mock.NewMockAPI(mockCtrl)
+
+	// Run tests
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+
+			aggregatedErrors := powervs.ValidateSystemTypeForZone(powervsClient, editedInstallConfig)
+			if tc.errorMsg != "" {
+				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
+			} else {
+				assert.NoError(t, aggregatedErrors)
+			}
+		})
+	}
+}
+
+func TestValidateServiceInstance(t *testing.T) {
+	cases := []struct {
+		name     string
+		edits    editFunctions
+		errorMsg string
+	}{
+		{
+			name:     "valid install config",
+			edits:    editFunctions{},
+			errorMsg: "",
+		},
+		{
+			name: "invalid install config",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.PowerVS.ServiceInstanceGUID = "invalid-uuid"
+				},
+			},
+			errorMsg: "platform:powervs:serviceInstanceGUID has an invalid guid",
+		},
+	}
+	setMockEnvVars()
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	powervsClient := mock.NewMockAPI(mockCtrl)
+
+	// FIX: Unexpected call to *mock.MockAPI.ListServiceInstances([context.TODO.WithDeadline(2023-12-02 08:38:15.542340268 -0600 CST m=+300.012357408 [4m59.999979046s])]) at validation.go:289 because: there are no expected calls of the method "ListServiceInstances" for that receiver
+	powervsClient.EXPECT().ListServiceInstances(gomock.Any()).AnyTimes()
+
+	// Run tests
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+
+			aggregatedErrors := powervs.ValidateServiceInstance(powervsClient, editedInstallConfig)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {

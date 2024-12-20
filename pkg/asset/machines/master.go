@@ -479,7 +479,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 		vsphere.ConfigMasters(machines, clusterID.InfraID)
 	case powervstypes.Name:
-		mpool := defaultPowerVSMachinePoolPlatform()
+		mpool := defaultPowerVSMachinePoolPlatform(ic)
 		mpool.Set(ic.Platform.PowerVS.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.PowerVS)
 		// Only the service instance is guaranteed to exist and be passed via the install config

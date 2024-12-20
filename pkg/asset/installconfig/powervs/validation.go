@@ -263,7 +263,30 @@ func ValidateResourceGroup(client API, ic *types.InstallConfig) error {
 	return nil
 }
 
-// ValidateServiceInstance validates the service instance in our install config.
+// ValidateSystemTypeForZone checks if the specified sysType is available in the target zone.
+func ValidateSystemTypeForZone(client API, ic *types.InstallConfig) error {
+	if ic.ControlPlane == nil || ic.ControlPlane.Platform.PowerVS == nil || ic.ControlPlane.Platform.PowerVS.SysType == "" {
+		return nil
+	}
+	availableOnes, err := powervstypes.AvailableSysTypes(ic.PowerVS.Region, ic.PowerVS.Zone)
+	if err != nil {
+		return fmt.Errorf("failed to obtain available SysTypes for: %s", ic.PowerVS.Zone)
+	}
+	requested := ic.ControlPlane.Platform.PowerVS.SysType
+	found := false
+	for i := range availableOnes {
+		if requested == availableOnes[i] {
+			found = true
+			break
+		}
+	}
+	if found {
+		return nil
+	}
+	return fmt.Errorf("%s is not available in: %s", requested, ic.PowerVS.Zone)
+}
+
+// ValidateServiceInstance validates the optional service instance GUID in our install config.
 func ValidateServiceInstance(client API, ic *types.InstallConfig) error {
 	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Minute)
 	defer cancel()
