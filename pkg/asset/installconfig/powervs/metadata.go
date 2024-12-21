@@ -505,7 +505,7 @@ func leftInContext(ctx context.Context) time.Duration {
 // SetDefaultPrivateServiceEndpoints sets service endpoint overrides as needed for Disconnected install.
 func (m *Metadata) SetDefaultPrivateServiceEndpoints(ctx context.Context, overrides []configv1.PowerVSServiceEndpoint, cosRegion string, vpcRegion string) []configv1.PowerVSServiceEndpoint {
 	overrides = addOverride(overrides, string(configv1.IBMCloudServiceCOS), fmt.Sprintf("https://s3.direct.%s.cloud-object-storage.appdomain.cloud", cosRegion))
-	overrides = addOverride(overrides, string(configv1.IBMCloudServiceDNSServices), "https://api.private.dns-svcs.cloud.ibm.com")
+	overrides = addOverride(overrides, string(configv1.IBMCloudServiceDNSServices), "https://api.private.dns-svcs.cloud.ibm.com/v1")
 	overrides = addOverride(overrides, string(configv1.IBMCloudServiceIAM), "https://private.iam.cloud.ibm.com")
 	overrides = addOverride(overrides, "Power", fmt.Sprintf("https://private.%s.power-iaas.cloud.ibm.com", vpcRegion)) // FIXME confiv1.IBMCloudServicePower?
 	overrides = addOverride(overrides, string(configv1.IBMCloudServiceResourceController), "https://private.resource-controller.cloud.ibm.com")
