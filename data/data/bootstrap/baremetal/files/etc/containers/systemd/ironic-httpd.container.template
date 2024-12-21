@@ -20,6 +20,7 @@ Volume=ironic.volume:/shared:z
 {{ if not .PlatformData.BareMetal.DisableIronicVirtualMediaTLS }}
 Volume=/opt/openshift/tls/ironic/:/certs/vmedia/:z
 {{ end }}
+Volume=/opt/openshift/tls/ironic/:/certs/ironic/:z
 Environment="IRONIC_RAMDISK_SSH_KEY=${IRONIC_RAMDISK_SSH_KEY}"
 Environment="PROVISIONING_INTERFACE=${PROVISIONING_INTERFACE}"
 Environment="HTTP_PORT=${HTTP_PORT}"
