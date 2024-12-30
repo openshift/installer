@@ -6,6 +6,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
+// Zone holds the sysTypes for a zone in a IBM Power VS region.
+type Zone struct {
+	SysTypes []string
+}
+
 // Since there is no API to query these, we have to hard-code them here.
 
 // Region describes resources associated with a region in Power VS.
@@ -15,8 +20,7 @@ type Region struct {
 	Description string
 	VPCRegion   string
 	COSRegion   string
-	Zones       []string
-	SysTypes    []string
+	Zones       map[string]Zone
 }
 
 // Regions holds the regions for IBM Power VS, and descriptions used during the survey.
@@ -25,36 +29,62 @@ var Regions = map[string]Region{
 		Description: "Dallas, USA",
 		VPCRegion:   "us-south",
 		COSRegion:   "us-south",
-		Zones:       []string{"dal10", "dal12"},
-		SysTypes:    []string{"s922", "e980"},
+		Zones: map[string]Zone{
+			"dal10": {
+				SysTypes: []string{"s922", "s1022", "e980", "e1080"},
+			},
+			"dal12": {
+				SysTypes: []string{"s922", "e980"},
+			},
+		},
 	},
 	"eu-de": {
 		Description: "Frankfurt, Germany",
 		VPCRegion:   "eu-de",
 		COSRegion:   "eu-de",
-		Zones:       []string{"eu-de-1", "eu-de-2"},
-		SysTypes:    []string{"s922", "e980"},
+		Zones: map[string]Zone{
+			"eu-de-1": {
+				SysTypes: []string{"s922", "s1022", "e980"},
+			},
+			"eu-de-2": {
+				SysTypes: []string{"s922", "e980"},
+			},
+		},
 	},
 	"mad": {
 		Description: "Madrid, Spain",
 		VPCRegion:   "eu-es",
 		COSRegion:   "eu-de", // @HACK - PowerVS says COS not supported in this region
-		Zones:       []string{"mad02", "mad04"},
-		SysTypes:    []string{"s1022"},
+		Zones: map[string]Zone{
+			"mad02": {
+				SysTypes: []string{"s922", "s1022", "e980"},
+			},
+			"mad04": {
+				SysTypes: []string{"s1022", "e980", "e1080"},
+			},
+		},
 	},
 	"sao": {
 		Description: "São Paulo, Brazil",
 		VPCRegion:   "br-sao",
-		COSRegion:   "br-sao",
-		Zones:       []string{"sao04"},
-		SysTypes:    []string{"s922", "e980"},
+		Zones: map[string]Zone{
+			"sao01": {
+				SysTypes: []string{"s922", "e980"},
+			},
+		},
 	},
 	"wdc": {
 		Description: "Washington DC, USA",
 		VPCRegion:   "us-east",
 		COSRegion:   "us-east",
-		Zones:       []string{"wdc06", "wdc07"},
-		SysTypes:    []string{"s922", "e980"},
+		Zones: map[string]Zone{
+			"wdc06": {
+				SysTypes: []string{"s922", "e980"},
+			},
+			"wdc07": {
+				SysTypes: []string{"s922", "s1022", "e980", "e1080"},
+			},
+		},
 	},
 }
 
@@ -94,7 +124,7 @@ func ValidateVPCRegion(region string) bool {
 func ValidateZone(zone string) bool {
 	for r := range Regions {
 		for z := range Regions[r].Zones {
-			if zone == Regions[r].Zones[z] {
+			if zone == z {
 				return true
 			}
 		}
@@ -107,7 +137,7 @@ func ZoneNames() []string {
 	zones := []string{}
 	for r := range Regions {
 		for z := range Regions[r].Zones {
-			zones = append(zones, Regions[r].Zones[z])
+			zones = append(zones, z)
 		}
 	}
 	return zones
@@ -117,7 +147,7 @@ func ZoneNames() []string {
 func RegionFromZone(zone string) string {
 	for r := range Regions {
 		for z := range Regions[r].Zones {
-			if zone == Regions[r].Zones[z] {
+			if zone == z {
 				return r
 			}
 		}
@@ -126,19 +156,26 @@ func RegionFromZone(zone string) string {
 }
 
 // AvailableSysTypes returns the default system type for the zone.
-func AvailableSysTypes(region string) ([]string, error) {
+func AvailableSysTypes(region string, zone string) ([]string, error) {
 	knownRegion, ok := Regions[region]
 	if !ok {
 		return nil, fmt.Errorf("unknown region name provided")
 	}
-	return knownRegion.SysTypes, nil
+	var knownZone Zone
+	knownZone, ok = knownRegion.Zones[zone]
+	if !ok {
+		return nil, fmt.Errorf("unknown zone name provided")
+	}
+	return knownZone.SysTypes, nil
 }
 
 // AllKnownSysTypes returns aggregated known system types from all regions.
 func AllKnownSysTypes() sets.Set[string] {
 	sysTypes := sets.New[string]()
-	for _, region := range Regions {
-		sysTypes.Insert(region.SysTypes...)
+	for region := range Regions {
+		for _, zones := range Regions[region].Zones {
+			sysTypes.Insert(zones.SysTypes...)
+		}
 	}
 	return sysTypes
 }
