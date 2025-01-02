@@ -196,6 +196,45 @@ spec:
                     description: Azure is the configuration used when installing on
                       Azure.
                     properties:
+                      bootDiagnostics:
+                        description: |-
+                          BootDiagnostics has the value for the storage account URI where the
+                          machine log information of the control plane is sent to.
+                          Defaults to managed for control plane if no value is mentioned.
+                        properties:
+                          resourceGroup:
+                            description: |-
+                              ResourceGroup specifies the name of the resource group where the
+                              storage account to be used for diagnostics storage is present.
+                              Only used if the type is set to UserManaged.
+                            type: string
+                          storageAccountName:
+                            description: |-
+                              StorageAccountName specifies the storage account where the diagnostics
+                              logs need to be stored.
+                              Only used if the type is set to UserManaged.
+                            type: string
+                          type:
+                            allOf:
+                            - enum:
+                              - Managed
+                              - UserManaged
+                              - Disabled
+                            - enum:
+                              - Disabled
+                              - Managed
+                              - UserManaged
+                            description: |-
+                              Type specifies the boot diagnostics type for the machines created.
+                              Defaults as disabled for compute nodes and as managed for control plane
+                              nodes.
+                              Values allowed are Disabled, Managed and UserManaged.
+                            type: string
+                        required:
+                        - resourceGroup
+                        - storageAccountName
+                        - type
+                        type: object
                       encryptionAtHost:
                         description: EncryptionAtHost enables encryption at the VM
                           host.
