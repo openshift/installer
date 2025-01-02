@@ -468,7 +468,8 @@ func (c *Client) CheckIfExistsStorageAccount(ctx context.Context, resourceGroup,
 	}
 	validSKUs := sets.NewString(string(azstorage.SKUNameStandardGRS), string(azstorage.SKUNameStandardRAGRS), string(azstorage.SKUNameStandardLRS))
 	if resp.Account.SKU != nil && resp.Account.SKU.Name != nil && !validSKUs.Has(string(*resp.Account.SKU.Name)) {
-		return fmt.Errorf("%s is not supported, supported values are %s,%s,%s", string(*resp.Account.SKU.Name), []interface{}{validSKUs.List()})
+		stringSKUs := validSKUs.List()
+		return fmt.Errorf("%s is not supported, supported values are %s,%s,%s", string(*resp.Account.SKU.Name), stringSKUs[0], stringSKUs[1], stringSKUs[2])
 	}
 	return err
 }
