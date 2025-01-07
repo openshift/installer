@@ -317,6 +317,7 @@ infrastructures.config.openshift.io:
   - GCPLabelsTags
   - NutanixMultiSubnets
   - VSphereControlPlaneMachineSet
+  - VSphereHostVMGroupZonal
   - VSphereMultiNetworks
   - VSphereMultiVCenters
   FilenameOperatorName: config-operator

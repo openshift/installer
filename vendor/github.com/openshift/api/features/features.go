@@ -84,14 +84,6 @@ var (
 							enableIn(configv1.Default, configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 							mustRegister()
 
-	FeatureGateCSIDriverSharedResource = newFeatureGate("CSIDriverSharedResource").
-						reportProblemsToJiraComponent("builds").
-						contactPerson("adkaplan").
-						productScope(ocpSpecific).
-						enhancementPR("https://github.com/openshift/enhancements/pull/1056").
-						enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
-						mustRegister()
-
 	FeatureGateBuildCSIVolumes = newFeatureGate("BuildCSIVolumes").
 					reportProblemsToJiraComponent("builds").
 					contactPerson("adkaplan").
@@ -203,6 +195,14 @@ var (
 						enableIn(configv1.Default, configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 						mustRegister()
 
+	FeatureGateVSphereHostVMGroupZonal = newFeatureGate("VSphereHostVMGroupZonal").
+						reportProblemsToJiraComponent("splat").
+						contactPerson("jcpowermac").
+						productScope(ocpSpecific).
+						enhancementPR("https://github.com/openshift/enhancements/pull/1677").
+						enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+						mustRegister()
+
 	FeatureGateVSphereMultiVCenters = newFeatureGate("VSphereMultiVCenters").
 					reportProblemsToJiraComponent("splat").
 					contactPerson("vr4manta").
@@ -224,6 +224,14 @@ var (
 						contactPerson("thejasn").
 						productScope(ocpSpecific).
 						enhancementPR(legacyFeatureGateWithoutEnhancement).
+						enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+						mustRegister()
+
+	FeatureGateCPMSMachineNamePrefix = newFeatureGate("CPMSMachineNamePrefix").
+						reportProblemsToJiraComponent("Cloud Compute / ControlPlaneMachineSet").
+						contactPerson("chiragkyal").
+						productScope(ocpSpecific).
+						enhancementPR("https://github.com/openshift/enhancements/pull/1714").
 						enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 						mustRegister()
 

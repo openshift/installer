@@ -82,8 +82,16 @@ type bootkubeTemplateData struct {
 	IsOKD                      bool
 	McsTLSCert                 string
 	McsTLSKey                  string
+	McsHostName                string
+	McsTLSCertNotAfter         string
+	McsTLSCertNotBefore        string
 	PullSecretBase64           string
 	RootCaCert                 string
+	RootCACertBase64           string
+	RootCASignerKeyBase64      string
+	RootCAIssuerName           string
+	RootCANotAfter             string
+	RootCANotBefore            string
 	WorkerIgnConfig            string
 }
 

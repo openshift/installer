@@ -37,6 +37,8 @@ var (
 	// ManifestTemplates are the manifest-templates targeted assets.
 	ManifestTemplates = []asset.WritableAsset{
 		&bootkube.KubeCloudConfig{},
+		&bootkube.MachineConfigServerCASecret{},
+		&bootkube.MachineConfigServerCAConfigMap{},
 		&bootkube.MachineConfigServerTLSSecret{},
 		&bootkube.CVOOverrides{},
 		&bootkube.KubeSystemConfigmapRootCA{},

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: machine-config-server-ca
+  namespace: openshift-machine-config-operator
+  annotations:
+    openshift.io/description: CA bundle that stores all valid CAs for the MachineConfigServer TLS certificate
+    openshift.io/owning-component: machine-config-operator
+  labels:
+    auth.openshift.io/managed-certificate-type: ca-bundle
+data:
+  ca-bundle.crt: |
+    {{.RootCaCert | indent 4}}

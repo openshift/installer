@@ -1092,7 +1092,7 @@ github.com/opencontainers/image-spec/specs-go/v1
 # github.com/opencontainers/runtime-spec v1.2.0
 ## explicit
 github.com/opencontainers/runtime-spec/specs-go
-# github.com/openshift/api v0.0.0-20241124010541-a09992e80c68
+# github.com/openshift/api v0.0.0-20241203091751-58d4ac495429
 ## explicit; go 1.22.0
 github.com/openshift/api/annotations
 github.com/openshift/api/config/v1
@@ -1133,7 +1133,7 @@ github.com/openshift/assisted-service/client/versions
 # github.com/openshift/assisted-service/models v0.0.0 => github.com/openshift/assisted-service/models v0.0.0-20241001055825-63e8b0d3ad63
 ## explicit; go 1.21
 github.com/openshift/assisted-service/models
-# github.com/openshift/client-go v0.0.0-20241107164952-923091dd2b1a
+# github.com/openshift/client-go v0.0.0-20241203091221-452dfb8fa071
 ## explicit; go 1.22.0
 github.com/openshift/client-go/config/applyconfigurations
 github.com/openshift/client-go/config/applyconfigurations/config/v1
@@ -1222,11 +1222,12 @@ github.com/openshift/hive/apis/hive/v1/openstack
 github.com/openshift/hive/apis/hive/v1/ovirt
 github.com/openshift/hive/apis/hive/v1/vsphere
 github.com/openshift/hive/apis/scheme
-# github.com/openshift/library-go v0.0.0-20241107160307-0064ad7bd060
+# github.com/openshift/library-go v0.0.0-20241210171208-85e36bca7246
 ## explicit; go 1.22.0
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 github.com/openshift/library-go/pkg/config/clusterstatus
 github.com/openshift/library-go/pkg/config/leaderelection
+github.com/openshift/library-go/pkg/crypto
 github.com/openshift/library-go/pkg/image/dockerv1client
 github.com/openshift/library-go/pkg/route/routeapihelpers
 # github.com/openshift/machine-api-operator v0.2.1-0.20240930121047-57b7917e6140
@@ -1959,6 +1960,9 @@ k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/netutil
 k8s.io/apimachinery/third_party/forked/golang/reflect
+# k8s.io/apiserver v0.31.1
+## explicit; go 1.22.0
+k8s.io/apiserver/pkg/authentication/user
 # k8s.io/cli-runtime v0.31.1
 ## explicit; go 1.22.0
 k8s.io/cli-runtime/pkg/genericclioptions
