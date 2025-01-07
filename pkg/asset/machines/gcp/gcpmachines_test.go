@@ -216,6 +216,7 @@ func getBaseGCPMachine() *capg.GCPMachine {
 				Scopes: []string{compute.CloudPlatformScope},
 			},
 			ResourceManagerTags: []capg.ResourceManagerTag{},
+			IPForwarding:        ptr.To(capg.IPForwardingDisabled),
 		},
 	}
 	gcpMachine.SetGroupVersionKind(capg.GroupVersion.WithKind("GCPMachine"))
