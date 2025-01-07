@@ -66,7 +66,7 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 	// OVA name must not exceed 80 characters
 	if len(name) > 80 {
 		logrus.Warningf("Unable to generate ova template name due to exceeding 80 characters. Cluster=\"%v\" Failure Domain=\"%v\" results in \"%v\"", clusterID, failureDomain.Name, name)
-		return fmt.Errorf("ova name length exceeed 80 characters.  %v has length %d.", name, len(name))
+		return fmt.Errorf("ova name \"%v\" exceeed 80 characters (%d)", name, len(name))
 	}
 
 	archive := &importer.TapeArchive{Path: cachedImage}
