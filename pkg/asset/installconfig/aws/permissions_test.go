@@ -857,3 +857,68 @@ func TestIncludesWavelengthZones(t *testing.T) {
 		})
 	})
 }
+
+func TestIncludesEdgeDefaultInstance(t *testing.T) {
+	t.Run("Should be true when at least one edge compute pool specified", func(t *testing.T) {
+		t.Run("without platform", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.Compute = append(ic.Compute, types.MachinePool{
+				Name: "edge",
+			})
+			ic.Compute = append(ic.Compute, types.MachinePool{
+				Name: "edge",
+				Platform: types.MachinePoolPlatform{
+					AWS: &aws.MachinePool{
+						Zones:        []string{"us-west-2-pdx-1a", "us-west-2-wl1-sea-wlz-1"},
+						InstanceType: "m6a.xlarge",
+					},
+				},
+			})
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.Contains(t, requiredPerms, PermissionEdgeDefaultInstance)
+		})
+		t.Run("without instance type", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.Compute = append(ic.Compute, types.MachinePool{
+				Name: "edge",
+				Platform: types.MachinePoolPlatform{
+					AWS: &aws.MachinePool{
+						Zones: []string{"us-west-2-pdx-1a", "us-west-2-wl1-sea-wlz-1"},
+					},
+				},
+			})
+			ic.Compute = append(ic.Compute, types.MachinePool{
+				Name: "edge",
+				Platform: types.MachinePoolPlatform{
+					AWS: &aws.MachinePool{
+						Zones:        []string{"us-west-2-pdx-1a", "us-west-2-wl1-sea-wlz-1"},
+						InstanceType: "m6a.xlarge",
+					},
+				},
+			})
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.Contains(t, requiredPerms, PermissionEdgeDefaultInstance)
+		})
+	})
+	t.Run("Should be false when", func(t *testing.T) {
+		t.Run("edge compute specified with instance type", func(t *testing.T) {
+			ic := validInstallConfig()
+			ic.Compute = append(ic.Compute, types.MachinePool{
+				Name: "edge",
+				Platform: types.MachinePoolPlatform{
+					AWS: &aws.MachinePool{
+						Zones:        []string{"us-west-1a", "us-west-2-pdx-1a"},
+						InstanceType: "m6a.xlarge",
+					},
+				},
+			})
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionEdgeDefaultInstance)
+		})
+		t.Run("edge compute not specified", func(t *testing.T) {
+			ic := validInstallConfig()
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionEdgeDefaultInstance)
+		})
+	})
+}

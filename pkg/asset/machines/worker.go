@@ -405,10 +405,9 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				instanceTypes := awsdefaults.InstanceTypes(installConfig.Config.Platform.AWS.Region, arch, configv1.HighlyAvailableTopologyMode)
 				switch pool.Name {
 				case types.MachinePoolEdgeRoleName:
-					ok := awsSetPreferredInstanceByEdgeZone(ctx, instanceTypes, installConfig.AWS, zones)
-					if !ok {
-						logrus.Warnf("failed to find preferred instance type for one or more zones in the %s pool, using default: %s", pool.Name, instanceTypes[0])
-						mpool.InstanceType = instanceTypes[0]
+					if !awsSetPreferredInstanceByEdgeZone(ctx, instanceTypes, installConfig.AWS, zones) {
+						// Using the default instance type from the non-edge pool often fails.
+						return fmt.Errorf("failed to find instance type for one or more zones in the %s pool. Please specify an instance type in the install-config.yaml", pool.Name)
 					}
 				default:
 					mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, instanceTypes, mpool.Zones)
