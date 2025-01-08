@@ -157,7 +157,7 @@ func (a *PlatformProvisionCheck) Generate(ctx context.Context, dependencies asse
 			return err
 		}
 
-		err = powervsconfig.ValidateSystemTypeForRegion(client, ic.Config)
+		err = powervsconfig.ValidateSystemTypeForZone(client, ic.Config)
 		if err != nil {
 			return err
 		}

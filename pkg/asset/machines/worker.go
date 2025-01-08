@@ -187,11 +187,11 @@ func defaultPowerVSMachinePoolPlatform(ic *types.InstallConfig) powervstypes.Mac
 		SysType:    "s922",
 	}
 
-	sysTypes, err = powervstypes.AvailableSysTypes(ic.PowerVS.Region)
+	sysTypes, err = powervstypes.AvailableSysTypes(ic.PowerVS.Region, ic.PowerVS.Zone)
 	if err == nil {
 		defaultMp.SysType = sysTypes[0]
 	} else {
-		logrus.Warnf("For given region %v, AvailableSysTypes returns %v", ic.PowerVS.Region, err)
+		logrus.Warnf("For given zone %v, AvailableSysTypes returns %v", ic.PowerVS.Zone, err)
 	}
 
 	return defaultMp
