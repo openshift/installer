@@ -224,6 +224,10 @@ func (a *InstallConfig) platformValidation(ctx context.Context) error {
 		return icopenstack.Validate(ctx, a.Config)
 	}
 	if a.Config.Platform.PowerVS != nil {
+		err := icpowervs.ValidateServiceEndpoints(a.Config)
+		if err != nil {
+			return err
+		}
 		return icpowervs.Validate(a.Config)
 	}
 	if a.Config.Platform.Nutanix != nil {

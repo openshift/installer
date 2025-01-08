@@ -68,3 +68,6 @@ type Platform struct {
 	// +optional
 	TGName string `json:"tgName,omitempty"`
 }
+
+// PowerVSServiceOverrides is Comprehensive list of all valid service endpoint names.
+var PowerVSServiceOverrides = []string{"CIS", "COS", "COSConfig", "DNSServices", "GlobalCatalog", "GlobalSearch", "GlobalTagging", "HyperProtect", "IAM", "KeyProtect", "Power", "ResourceController", "ResourceManager", "VPC"}
