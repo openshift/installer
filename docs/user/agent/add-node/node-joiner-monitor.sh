@@ -1,4 +1,14 @@
 #!/bin/bash
+#
+# Deprecated
+#
+# For OpenShift 4.17 and later, the node-joiner.sh and node-joiner-monitor.sh
+# scripts cannot be used. The node-joiner scripts were created for
+# OpenShift 4.16 as a development preview. They have been deprecated and
+# replaced by the "oc adm node-image" command.
+# See https://docs.openshift.com/container-platform/4.17/nodes/nodes/nodes-nodes-adding-node-iso.html
+# for more details.
+#
 
 set -eu
 
