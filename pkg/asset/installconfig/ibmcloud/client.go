@@ -20,6 +20,7 @@ import (
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/responses"
@@ -584,8 +585,13 @@ func (c *Client) GetVPC(ctx context.Context, vpcID string) (*vpcv1.VPC, error) {
 		}
 
 		if vpc, detailedResponse, err := c.vpcAPI.GetVPC(c.vpcAPI.NewGetVPCOptions(vpcID)); err != nil {
-			if detailedResponse.GetStatusCode() != http.StatusNotFound {
-				return nil, err
+			if detailedResponse != nil {
+				// If the response code signifies the VPC was not found, simply move on to the next region; otherwise we log the response
+				if detailedResponse.GetStatusCode() != http.StatusNotFound {
+					logrus.Warnf("Unexpected response while checking VPC %s in %s region: %s", vpcID, *region.Name, detailedResponse)
+				}
+			} else {
+				logrus.Warnf("Failure collecting VPC %s in %s: %q", vpcID, *region.Name, err)
 			}
 		} else if vpc != nil {
 			return vpc, nil
@@ -632,10 +638,14 @@ func (c *Client) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, 
 			return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
 		}
 
-		vpcs, detailedResponse, err := c.vpcAPI.ListVpcsWithContext(ctx, c.vpcAPI.NewListVpcsOptions())
-		if err != nil {
-			if detailedResponse.GetStatusCode() != http.StatusNotFound {
-				return nil, err
+		if vpcs, detailedResponse, err := c.vpcAPI.ListVpcsWithContext(ctx, c.vpcAPI.NewListVpcsOptions()); err != nil {
+			if detailedResponse != nil {
+				// If the response code signifies no VPCs were not found, we simply move on to the next region; otherwise log the response
+				if detailedResponse.GetStatusCode() != http.StatusNotFound {
+					logrus.Warnf("Unexpected response while checking %s region: %s", *region.Name, detailedResponse)
+				}
+			} else {
+				logrus.Warnf("Failure collecting VPCs in %s: %q", *region.Name, err)
 			}
 		} else {
 			for _, vpc := range vpcs.Vpcs {
