@@ -5,7 +5,7 @@ metadata:
   namespace: openshift-machine-config-operator
   annotations:
     openshift.io/description: CA bundle that stores all valid CAs for the MachineConfigServer TLS certificate
-    openshift.io/owning-component: machine-config-operator
+    openshift.io/owning-component: Machine Config Operator
   labels:
     auth.openshift.io/managed-certificate-type: ca-bundle
 data:
