@@ -382,6 +382,7 @@ func getDefaultEnabledServices() []string {
 		"oci-eval-user-data.service",
 		"iscsistart.service",
 		"set-hostname.service",
+		"iscsiadm.service",
 	}
 }
 
