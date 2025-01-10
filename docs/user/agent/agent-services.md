@@ -22,6 +22,8 @@ step is required because the agent-tui and nmstate libraries are too big to fit 
 * install-status - determines the current install status and writes it out to /etc/issue.d/
 * apply-host-config - applies root device hints and roles specified in agent-config.yaml
 * start-cluster-installation - calls assisted-service REST-API to start cluster installation when all hosts are in ready state and have passed validations
+* iscsistart - calls the iscsistart utility which allows an iSCSI session to be started for booting off an iSCSI target
+* iscsiadm - calls the iscsiadm utility that will start iscsid to manage the iSCSI session needed to install the final rhcos image
 
 ## Add-nodes workflow
 
