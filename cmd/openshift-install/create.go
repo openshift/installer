@@ -198,6 +198,20 @@ func clusterCreatePostRun(ctx context.Context) (int, error) {
 	}
 	timer.StopTimer("Bootstrap Complete")
 
+	// In CI, we want to collect an installer log bundle so we can examine bootstrap logs that aren't
+	// collectable anywhere else.
+	if gatherBootstrap, ok := os.LookupEnv("OPENSHIFT_INSTALL_GATHER_BOOTSTRAP"); ok && gatherBootstrap != "" {
+		timer.StartTimer("Bootstrap Gather")
+		logrus.Infof("OPENSHIFT_INSTALL_GATHER_BOOTSTRAP is set, will attempt to gather a log bundle")
+		bundlePath, gatherErr := runGatherBootstrapCmd(ctx, command.RootOpts.Dir)
+		if gatherErr != nil {
+			logrus.Warningf("Attempted to gather debug logs, and it failed: ", gatherErr)
+		} else {
+			logrus.Infof("Bootstrap gather logs captured here %q", bundlePath)
+		}
+		timer.StopTimer("Bootstrap Gather")
+	}
+
 	//
 	// Wait for the bootstrap to be destroyed.
 	//
