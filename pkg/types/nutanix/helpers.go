@@ -27,7 +27,7 @@ const (
 	metadataFilePath = "openstack/latest/meta_data.json"
 	userDataFilePath = "openstack/latest/user_data"
 	sleepTime        = 10 * time.Second
-	timeout          = 5 * time.Minute
+	timeout          = 20 * time.Minute
 
 	// Category Key format: "kubernetes-io-cluster-<cluster-id>".
 	categoryKeyPrefix = "kubernetes-io-cluster-"
