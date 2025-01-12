@@ -482,6 +482,9 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		return fmt.Errorf("loadSDKServices: NewTransitGatewayApisV1: %w", err)
 	}
 
+	ctx, cancel := contextWithTimeout()
+	defer cancel()
+
 	// Either CISInstanceCRN is set or DNSInstanceCRN is set. Both should not be set at the same time,
 	// but check both just to be safe.
 	if len(o.CISInstanceCRN) > 0 {
@@ -497,9 +500,6 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		if err != nil {
 			return fmt.Errorf("loadSDKServices: creating zonesSvc: %w", err)
 		}
-
-		ctx, cancel := contextWithTimeout()
-		defer cancel()
 
 		// Get the Zone ID
 		zoneOptions := o.zonesSvc.NewListZonesOptions()
@@ -574,6 +574,23 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		}
 	}
 
+	o.Logger.Debugf("loadSDKServices: o.resourceGroupID = %s", o.resourceGroupID)
+	// If the user passes in a human readable resource group id, then we need to convert it to a UUID
+	listGroupOptions := o.managementSvc.NewListResourceGroupsOptions()
+	groups, _, err := o.managementSvc.ListResourceGroupsWithContext(ctx, listGroupOptions)
+	if err != nil {
+		return fmt.Errorf("loadSDKServices: Failed to list resource groups: %w", err)
+	}
+	for _, group := range groups.Resources {
+		if *group.Name == o.resourceGroupID {
+			o.Logger.Debugf("loadSDKServices: resource FOUND: %s %s", *group.Name, *group.ID)
+			o.resourceGroupID = *group.ID
+		} else {
+			o.Logger.Debugf("loadSDKServices: resource SKIP:  %s %s", *group.Name, *group.ID)
+		}
+	}
+	o.Logger.Debugf("loadSDKServices: o.resourceGroupID = %s", o.resourceGroupID)
+
 	// If we should have created a service instance dynamically
 	if o.ServiceGUID == "" {
 		serviceName = fmt.Sprintf("%s-power-iaas", o.InfraID)
@@ -631,26 +648,10 @@ func (o *ClusterUninstaller) ServiceInstanceNameToGUID(ctx context.Context, name
 		perPage   int64 = 10
 		moreData        = true
 		nextURL   *string
-		groupID   = o.resourceGroupID
 	)
 
-	o.Logger.Debugf("ServiceInstanceNameToGUID: groupID = %s", groupID)
-	// If the user passes in a human readable group id, then we need to convert it to a UUID
-	listGroupOptions := o.managementSvc.NewListResourceGroupsOptions()
-	groups, _, err := o.managementSvc.ListResourceGroupsWithContext(ctx, listGroupOptions)
-	if err != nil {
-		return "", fmt.Errorf("failed to list resource groups: %w", err)
-	}
-	for _, group := range groups.Resources {
-		o.Logger.Debugf("ServiceInstanceNameToGUID: group.Name = %s", *group.Name)
-		if *group.Name == groupID {
-			groupID = *group.ID
-		}
-	}
-	o.Logger.Debugf("ServiceInstanceNameToGUID: groupID = %s", groupID)
-
 	options = o.controllerSvc.NewListResourceInstancesOptions()
-	options.SetResourceGroupID(groupID)
+	options.SetResourceGroupID(o.resourceGroupID)
 	// resource ID for Power Systems Virtual Server in the Global catalog
 	options.SetResourceID(powerIAASResourceID)
 	options.SetLimit(perPage)

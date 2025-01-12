@@ -30,8 +30,9 @@ func (o *ClusterUninstaller) listSecurityGroups() (cloudResources, error) {
 	}
 
 	options := o.vpcSvc.NewListSecurityGroupsOptions()
-	resources, _, err := o.vpcSvc.ListSecurityGroupsWithContext(ctx, options)
+	options.SetResourceGroupID(o.resourceGroupID)
 
+	resources, _, err := o.vpcSvc.ListSecurityGroupsWithContext(ctx, options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list security groups: %w", err)
 	}

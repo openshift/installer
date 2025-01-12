@@ -20,26 +20,6 @@ const (
 	virtualServerResourceID = "abd259f0-9990-11e8-acc8-b9f54a8f1661"
 )
 
-// convertResourceGroupNameToID converts a resource group name/id to an id.
-func (o *ClusterUninstaller) convertResourceGroupNameToID(resourceGroupID string) (string, error) {
-	listResourceGroupsOptions := o.managementSvc.NewListResourceGroupsOptions()
-
-	resourceGroups, _, err := o.managementSvc.ListResourceGroups(listResourceGroupsOptions)
-	if err != nil {
-		return "", err
-	}
-
-	for _, resourceGroup := range resourceGroups.Resources {
-		if *resourceGroup.Name == resourceGroupID {
-			return *resourceGroup.ID, nil
-		} else if *resourceGroup.ID == resourceGroupID {
-			return resourceGroupID, nil
-		}
-	}
-
-	return "", fmt.Errorf("failed to find resource group %v", resourceGroupID)
-}
-
 // listServiceInstances list service instances for the cluster.
 func (o *ClusterUninstaller) listServiceInstances() (cloudResources, error) {
 	o.Logger.Debugf("Listing service instances")
@@ -55,24 +35,17 @@ func (o *ClusterUninstaller) listServiceInstances() (cloudResources, error) {
 	}
 
 	var (
-		resourceGroupID string
-		options         *resourcecontrollerv2.ListResourceInstancesOptions
-		resources       *resourcecontrollerv2.ResourceInstancesList
-		err             error
-		perPage         int64 = 10
-		moreData              = true
-		nextURL         *string
+		options   *resourcecontrollerv2.ListResourceInstancesOptions
+		resources *resourcecontrollerv2.ResourceInstancesList
+		err       error
+		perPage   int64 = 10
+		moreData        = true
+		nextURL   *string
 	)
-
-	resourceGroupID, err = o.convertResourceGroupNameToID(o.resourceGroupID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert resourceGroupID: %w", err)
-	}
-	o.Logger.Debugf("listServiceInstances: converted %v to %v", o.resourceGroupID, resourceGroupID)
 
 	options = o.controllerSvc.NewListResourceInstancesOptions()
 	// options.SetType("resource_instance")
-	options.SetResourceGroupID(resourceGroupID)
+	options.SetResourceGroupID(o.resourceGroupID)
 	options.SetResourceID(virtualServerResourceID)
 	options.SetLimit(perPage)
 

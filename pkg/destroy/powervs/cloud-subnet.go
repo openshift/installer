@@ -30,8 +30,9 @@ func (o *ClusterUninstaller) listCloudSubnets() (cloudResources, error) {
 	}
 
 	options := o.vpcSvc.NewListSubnetsOptions()
-	subnets, detailedResponse, err := o.vpcSvc.ListSubnets(options)
+	options.SetResourceGroupID(o.resourceGroupID)
 
+	subnets, detailedResponse, err := o.vpcSvc.ListSubnets(options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list subnets and the response is: %s: %w", detailedResponse, err)
 	}
