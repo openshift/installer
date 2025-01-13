@@ -13,13 +13,16 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
+	mcfgv1 "github.com/openshift/api/machineconfiguration/v1"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
@@ -47,6 +50,7 @@ import (
 type ClusterInfo struct {
 	Client          kubernetes.Interface
 	OpenshiftClient configclient.Interface
+	DynamicClient   dynamic.Interface
 
 	ClusterID                     string
 	ClusterName                   string
@@ -67,6 +71,7 @@ type ClusterInfo struct {
 	IgnitionEndpointWorker        *models.IgnitionEndpoint
 	FIPS                          bool
 	Nodes                         *corev1.NodeList
+	ChronyConf                    *igntypes.File
 }
 
 var _ asset.WritableAsset = (*ClusterInfo)(nil)
@@ -138,6 +143,10 @@ func (ci *ClusterInfo) Generate(_ context.Context, dependencies asset.Parents) e
 	if err != nil {
 		return err
 	}
+	err = ci.retrieveWorkerChronyConfig()
+	if err != nil {
+		return err
+	}
 
 	ci.Namespace = "cluster0"
 
@@ -171,6 +180,12 @@ func (ci *ClusterInfo) initClients(kubeconfig string) error {
 		return err
 	}
 	ci.Client = k8sclientset
+
+	dynamicClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	ci.DynamicClient = dynamicClient
 
 	return err
 }
@@ -373,6 +388,52 @@ func (ci *ClusterInfo) retrievePlatformType() error {
 	}
 
 	ci.PlatformType = agent.HivePlatformType(platform)
+	return nil
+}
+
+func (ci *ClusterInfo) retrieveWorkerChronyConfig() error {
+	if ci.DynamicClient == nil {
+		return nil
+	}
+
+	workerMachineConfig, err := ci.DynamicClient.Resource(mcfgv1.GroupVersion.WithResource("machineconfigs")).Get(context.Background(), "50-workers-chrony-configuration", metav1.GetOptions{})
+	if err != nil {
+		// Older oc client may not have sufficient permissions,
+		// falling back to previous implementation (skip).
+		if errors.IsForbidden(err) {
+			return nil
+		}
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+
+	rawConfig, ok, err := unstructured.NestedMap(workerMachineConfig.Object, "spec", "config")
+	if !ok {
+		return fmt.Errorf("error while fetching worker machine config")
+	}
+	if err != nil {
+		return err
+	}
+
+	rawJSON, err := json.Marshal(rawConfig)
+	if err != nil {
+		return err
+	}
+
+	var ign igntypes.Config
+	if err := yaml.Unmarshal(rawJSON, &ign); err != nil {
+		return err
+	}
+	for _, f := range ign.Storage.Files {
+		if f.Path != "/etc/chrony.conf" {
+			continue
+		}
+		chronyConf := f
+		ci.ChronyConf = &chronyConf
+		break
+	}
 	return nil
 }
 
