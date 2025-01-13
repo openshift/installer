@@ -205,7 +205,7 @@ func clusterCreatePostRun(ctx context.Context) (int, error) {
 		logrus.Infof("OPENSHIFT_INSTALL_GATHER_BOOTSTRAP is set, will attempt to gather a log bundle")
 		bundlePath, gatherErr := runGatherBootstrapCmd(ctx, command.RootOpts.Dir)
 		if gatherErr != nil {
-			logrus.Warningf("Attempted to gather debug logs, and it failed: ", gatherErr)
+			logrus.Warningf("Attempted to gather debug logs, and it failed: %q ", gatherErr)
 		} else {
 			logrus.Infof("Bootstrap gather logs captured here %q", bundlePath)
 		}
