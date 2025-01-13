@@ -58,6 +58,27 @@ type Platform struct {
 	// +default="Disabled"
 	// +kubebuilder:validation:Enum="Enabled";"Disabled"
 	UserProvisionedDNS dns.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
+
+	// ServiceEndpoints list contains custom endpoints which will override default
+	// service endpoint of GCP Services.
+	// There must be only one ServiceEndpoint for a service.
+	// +optional
+	ServiceEndpoints []ServiceEndpoint `json:"serviceEndpoints,omitempty"`
+}
+
+// ServiceEndpoint stores the configuration for services to
+// override existing defaults of GCP Services.
+type ServiceEndpoint struct {
+	// Name is the name of the GCP service.
+	// This must be provided and cannot be empty.
+	Name string `json:"name"`
+
+	// URL is fully qualified URI with scheme https, that overrides the default generated
+	// endpoint for a client.
+	// This must be provided and cannot be empty.
+	//
+	// +kubebuilder:validation:Pattern=`^https://`
+	URL string `json:"url"`
 }
 
 // UserLabel is a label to apply to GCP resources created for the cluster.
