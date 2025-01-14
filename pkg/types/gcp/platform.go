@@ -6,6 +6,23 @@ import (
 	"github.com/openshift/installer/pkg/types/dns"
 )
 
+const (
+	// CloudResourceManagerServiceName is the name and internal key for the cloud resource manager API endpoint.
+	CloudResourceManagerServiceName = "cloudresourcemanager"
+	// ComputeServiceName is the name and internal key for the compute API endpoint.
+	ComputeServiceName = "compute"
+	// DNSServiceName is the name and internal key for the DNS API endpoint.
+	DNSServiceName = "dns"
+	// FileServiceName is the name and internal key for the file API endpoint.
+	FileServiceName = "file"
+	// IAMServiceName is the name and internal key for the IAM API endpoint.
+	IAMServiceName = "iam"
+	// ServiceUsageServiceName is the name and internal key for the service usage API endpoint.
+	ServiceUsageServiceName = "serviceusage"
+	// StorageServiceName is the name and internal key for the storage API endpoint.
+	StorageServiceName = "storage"
+)
+
 // Platform stores all the global configuration that all machinesets
 // use.
 type Platform struct {
