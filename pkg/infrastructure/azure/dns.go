@@ -50,6 +50,7 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 	for k, v := range in.InstallConfig.Config.Azure.UserTags {
 		azureTags[k] = ptr.To(v)
 	}
+	azureTags[fmt.Sprintf("kubernetes.io_cluster.%s", in.InfraID)] = ptr.To("owned")
 	azureCluster := &capz.AzureCluster{}
 	key := client.ObjectKey{
 		Name:      in.InfraID,
