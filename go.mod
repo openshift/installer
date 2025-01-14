@@ -1,8 +1,8 @@
 module github.com/openshift/installer
 
-go 1.22.0
+go 1.22.1
 
-toolchain go1.22.4
+toolchain go1.23.3
 
 require (
 	cloud.google.com/go/monitoring v1.20.1
@@ -70,8 +70,8 @@ require (
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.4.0
 	github.com/microsoft/kiota-authentication-azure-go v0.6.0
 	github.com/microsoftgraph/msgraph-sdk-go v0.59.0
-	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.3.3-0.20240416171357-98239ba02cb2
-	github.com/nutanix-cloud-native/prism-go-client v0.3.4
+	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.5.3
+	github.com/nutanix-cloud-native/prism-go-client v0.5.0
 	github.com/onsi/gomega v1.35.1
 	github.com/openshift/api v0.0.0-20241124010541-a09992e80c68
 	github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6

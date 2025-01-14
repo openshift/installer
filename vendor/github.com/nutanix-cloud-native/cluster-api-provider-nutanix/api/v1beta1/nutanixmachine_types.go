@@ -52,7 +52,9 @@ type NutanixMachineSpec struct {
 	// SPEC FIELDS - desired state of NutanixMachine
 	// Important: Run "make" to regenerate code after modifying this file
 
-	ProviderID string `json:"providerID"`
+	// ProviderID is the unique identifier as specified by the cloud provider.
+	// +optional
+	ProviderID string `json:"providerID,omitempty"`
 	// vcpusPerSocket is the number of vCPUs per socket of the VM
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Minimum=1
