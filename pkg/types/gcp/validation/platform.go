@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"sort"
 
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -77,6 +78,16 @@ var (
 
 	// userLabelKeyPrefixRegex is for verifying that the label key does not contain restricted prefixes.
 	userLabelKeyPrefixRegex = regexp.MustCompile(`^(?i)(kubernetes\-io|openshift\-io)`)
+
+	supportedEndpointNames = sets.New(
+		gcp.CloudResourceManagerServiceName,
+		gcp.ComputeServiceName,
+		gcp.DNSServiceName,
+		gcp.FileServiceName,
+		gcp.IAMServiceName,
+		gcp.ServiceUsageServiceName,
+		gcp.StorageServiceName,
+	)
 )
 
 const (
@@ -169,8 +180,11 @@ func validateServiceEndpoints(endpoints []gcp.ServiceEndpoint, fldPath *field.Pa
 	tracker := map[string]int{}
 	for idx, e := range endpoints {
 		fldp := fldPath.Index(idx)
-		if eidx, ok := tracker[e.Name]; ok {
-			allErrs = append(allErrs, field.Invalid(fldp.Child("name"), e.Name, fmt.Sprintf("duplicate service endpoint not allowed for %s, service endpoint already defined at %s", e.Name, fldPath.Index(eidx))))
+		if !supportedEndpointNames.Has(e.Name) {
+			allErrs = append(allErrs, field.NotSupported(fldp.Child("name"), e.Name, sets.List(supportedEndpointNames)))
+		}
+		if _, ok := tracker[e.Name]; ok {
+			allErrs = append(allErrs, field.Duplicate(fldp.Child("name"), e.Name))
 		} else {
 			tracker[e.Name] = idx
 		}
