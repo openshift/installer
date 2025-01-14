@@ -153,6 +153,114 @@ func TestValidatePlatform(t *testing.T) {
 			credentialsMode: types.MintCredentialsMode,
 			valid:           false,
 		},
+		{
+			name: "invalid gcp endpoint blank name",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				ServiceEndpoints: []gcp.ServiceEndpoint{
+					{
+						Name: "",
+						URL:  "https://my-custom-endpoint.example.com/copmute/v1/",
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			name: "invalid gcp endpoint invalid name",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				ServiceEndpoints: []gcp.ServiceEndpoint{
+					{
+						Name: "badname",
+						URL:  "https://my-custom-endpoint.example.com/copmute/v1/",
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			name: "invalid gcp endpoint duplicate name",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				ServiceEndpoints: []gcp.ServiceEndpoint{
+					{
+						Name: "compute",
+						URL:  "https://my-custom-endpoint.example.com/compute/v1/",
+					},
+					{
+						Name: "compute",
+						URL:  "https://my-custom-endpoint.example.com/compute/v2/",
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			name: "invalid gcp endpoint url blank",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				ServiceEndpoints: []gcp.ServiceEndpoint{
+					{
+						Name: "compute",
+						URL:  "",
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			name: "invalid scheme gcp endpoint url",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				ServiceEndpoints: []gcp.ServiceEndpoint{
+					{
+						Name: "compute",
+						URL:  "http://my-custom-endpoint.example.com/compute/v1/",
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			name: "valid gcp endpoint",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				ServiceEndpoints: []gcp.ServiceEndpoint{
+					{
+						Name: "compute",
+						URL:  "https://my-custom-endpoint.example.com/compute/v1/",
+					},
+				},
+			},
+			valid: true,
+		},
+		{
+			name: "invalid gcp endpoint relative path",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				ServiceEndpoints: []gcp.ServiceEndpoint{
+					{
+						Name: "compute",
+						URL:  "/compute/v1/",
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			name: "valid gcp endpoint url no scheme",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				ServiceEndpoints: []gcp.ServiceEndpoint{
+					{
+						Name: "compute",
+						URL:  "my-custom-endpoint.example.com/compute/v1/",
+					},
+				},
+			},
+			valid: true,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
