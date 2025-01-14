@@ -58,6 +58,7 @@ type localControlPlane struct {
 	KubeconfigPath string
 	EtcdLog        *os.File
 	APIServerLog   *os.File
+	APIServerArgs  map[string]string
 }
 
 // Run launches the local control plane.
@@ -98,12 +99,16 @@ func (c *localControlPlane) Run(ctx context.Context) error {
 				Out:     c.EtcdLog,
 				Err:     c.EtcdLog,
 			},
-			APIServer: &envtest.APIServer{
-				Out: c.APIServerLog,
-				Err: c.APIServerLog,
-			},
 		},
 	}
+	apiServer := &envtest.APIServer{
+		Out: c.APIServerLog,
+		Err: c.APIServerLog,
+	}
+	for key, value := range c.APIServerArgs {
+		apiServer.Configure().Set(key, value)
+	}
+	c.Env.ControlPlane.APIServer = apiServer
 	c.Cfg, err = c.Env.Start()
 	if err != nil {
 		return err
