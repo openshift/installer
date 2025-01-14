@@ -48,7 +48,9 @@ RUN ln -s /go/src/github.com/openshift/installer/azure-cli/bin/az /bin/az
 
 COPY --from=govc /govc /bin/govc
 
+# Install repo for gcloud and use env var to include /etc/yum.repos.d in the CI context build repo search path
 RUN sh -c 'echo -e "[google-cloud-cli]\nname=Google Cloud CLI\nbaseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el9-x86_64\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=0\ngpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg" > /etc/yum.repos.d/google-cloud-sdk.repo'
+ENV ART_DNF_WRAPPER_POLICY=append
 
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \      
