@@ -58,6 +58,37 @@ type Platform struct {
 	// +default="Disabled"
 	// +kubebuilder:validation:Enum="Enabled";"Disabled"
 	UserProvisionedDNS dns.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
+
+	// ServiceEndpoints contains the url endpoints for overriding GCP APIs. An unset field indicates that the
+	// default API endpoint will be used.
+	// +optional
+	ServiceEndpoints CustomServiceEndpoints `json:"serviceEndpoints,omitempty"`
+}
+
+// CustomServiceEndpoints contains all the custom endpoints that the user may override. Each field corresponds to
+// a service where the expected value is the url that is used to override the default API endpoint.
+type CustomServiceEndpoints struct {
+
+	// CloudResourceManagerServiceEndpoint is the custom endpoint url for the Cloud Resource Manager Service
+	CloudResourceManagerServiceEndpoint string `json:"cloudResourceManager,omitempty"`
+
+	// ComputeServiceEndpoint is the custom endpoint url for the Compute Service
+	ComputeServiceEndpoint string `json:"compute,omitempty"`
+
+	// DNSServiceEndpoint is the custom endpoint url for the DNS Service
+	DNSServiceEndpoint string `json:"dns,omitempty"`
+
+	// FileServiceEndpoint is the custom endpoint url for the File Service
+	FileServiceEndpoint string `json:"file,omitempty"`
+
+	// IAMServiceEndpoint is the custom endpoint url for the IAM Service
+	IAMServiceEndpoint string `json:"iam,omitempty"`
+
+	// ServiceUsageServiceEndpoint is the custom endpoint url for the Service Usage Service
+	ServiceUsageServiceEndpoint string `json:"serviceUsage,omitempty"`
+
+	// StorageServiceEndpoint is the custom endpoint url for the Storage Service
+	StorageServiceEndpoint string `json:"storage,omitempty"`
 }
 
 // UserLabel is a label to apply to GCP resources created for the cluster.

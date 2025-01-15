@@ -153,6 +153,37 @@ func TestValidatePlatform(t *testing.T) {
 			credentialsMode: types.MintCredentialsMode,
 			valid:           false,
 		},
+
+		{
+			name: "valid compute custom endpoint",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				ServiceEndpoints: gcp.CustomServiceEndpoints{
+					ComputeServiceEndpoint: "https://my-custom-endpoint.example.com/compute/v1/",
+				},
+			},
+			valid: true,
+		},
+		{
+			name: "invalid scheme compute custom endpoint",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				ServiceEndpoints: gcp.CustomServiceEndpoints{
+					ComputeServiceEndpoint: "http://my-custom-endpoint.example.com/compute/v1/",
+				},
+			},
+			valid: false,
+		},
+		{
+			name: "invalid hostname compute custom endpoint",
+			platform: &gcp.Platform{
+				Region: "us-east1",
+				ServiceEndpoints: gcp.CustomServiceEndpoints{
+					ComputeServiceEndpoint: "https://",
+				},
+			},
+			valid: false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
