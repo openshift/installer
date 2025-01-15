@@ -82,6 +82,21 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 	result := make([]*asset.RuntimeFile, 0, len(machines))
 	staticIP := false
 
+	/* We don't have a good way to determine if an install is UPI or IPI
+	   Previously we were able to just say if there are no VIPs defined its UPI.
+	   It isn't documented _but_ you can set VIPs in a UPI scenario and the assisted installer
+	   exploits this. For our customers that are using UPI though there might be scenarios
+	   where the network is unavailable (probably related to NSX-T). To work around this issue
+	   as port group name is not required we are going to skip any network gathering functions in capi
+	   manifest creation.
+	*/
+
+	// if isVipDefined is true then this is most likely IPI perform network checks
+	isVipDefined := false
+	if len(config.VSphere.APIVIPs) >= 1 || len(config.VSphere.IngressVIPs) >= 1 {
+		isVipDefined = true
+	}
+
 	for mIndex, machine := range machines {
 		providerSpec, ok := machine.Spec.ProviderSpec.Value.Object.(*machinev1.VSphereMachineProviderSpec)
 		if !ok {
@@ -99,9 +114,12 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 
 		capvNetworkDevices := []capv.NetworkDeviceSpec{}
 		for _, networkDevice := range providerSpec.Network.Devices {
-			networkName, err := getNetworkInventoryPath(vcenterContext, networkDevice.NetworkName, providerSpec)
-			if err != nil {
-				return nil, fmt.Errorf("unable to get network inventory path: %w", err)
+			networkName := ""
+			if isVipDefined {
+				networkName, err = getNetworkInventoryPath(vcenterContext, networkDevice.NetworkName, providerSpec)
+				if err != nil {
+					return nil, fmt.Errorf("unable to get network inventory path: %w", err)
+				}
 			}
 			deviceSpec := capv.NetworkDeviceSpec{
 				NetworkName: networkName,
