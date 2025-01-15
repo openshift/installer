@@ -200,8 +200,17 @@ func (a *AgentHosts) validateRendezvousIPNotWorker(rendezvousIP string, hosts []
 
 	if rendezvousIP != "" {
 		for i, host := range hosts {
+			if host.Role != workerRole {
+				continue
+			}
 			hostPath := field.NewPath("Hosts").Index(i)
-			if strings.Contains(string(host.NetworkConfig.Raw), rendezvousIP) && host.Role == workerRole {
+			hostIPs, err := agentAsset.GetAllHostIPs(host.NetworkConfig)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(hostPath, host.NetworkConfig, err.Error()))
+				continue
+			}
+			_, found := hostIPs[rendezvousIP]
+			if found {
 				errMsg := "Host " + host.Hostname + " has role 'worker' and has the rendezvousIP assigned to it. The rendezvousIP must be assigned to a control plane host."
 				allErrs = append(allErrs, field.Forbidden(hostPath.Child("Host"), errMsg))
 			}

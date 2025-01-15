@@ -70,6 +70,36 @@ const (
   state: up
   type: ethernet
 `
+	agentNetworkConfigEmbeddedRendezvousIPOne = `interfaces:
+- ipv4:
+    address:
+    - ip: 192.168.111.1
+      prefix-length: 24
+    dhcp: false
+    enabled: true
+  mac-address: 28:d2:44:d2:b2:1b
+  name: eth0
+  state: up
+  type: ethernet
+`
+	agentNetworkConfigEmbeddedRendezvousIPTwo = `interfaces:
+- ipv4:
+    address:
+    - ip: 192.168.111.2
+      prefix-length: 24
+    dhcp: false
+    enabled: true
+  mac-address: 28:d2:44:d2:b2:1b
+  name: eth0
+  state: up
+  type: ethernet
+routes:
+  config:
+  - destination: 0.0.0.0/0
+    next-hop-address: 192.168.111.126
+    next-hop-interface: eth0
+    table-id: 254
+`
 )
 
 func TestAgentHosts_Generate(t *testing.T) {
@@ -289,6 +319,18 @@ func TestAgentHosts_Generate(t *testing.T) {
 			expectedError:  "invalid Hosts configuration: [Hosts[0].Interfaces: Required value: at least one interface must be defined for each node, Hosts[1].Interfaces: Required value: at least one interface must be defined for each node, Hosts[2].Interfaces: Required value: at least one interface must be defined for each node]",
 			expectedConfig: nil,
 		},
+		{
+			name: "rendezvousip-in-worker-config",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.AddNodesConfig{},
+				getNoHostsInstallConfig(),
+				getAgentConfigMultiHostEmbeddedRendezvousIP(),
+			},
+			expectedConfig: agentHosts().hosts(
+				agentHost().name("test").role("master").interfaces(iface("enp3s1", "28:d2:44:d2:b2:1a")).deviceHint().networkConfig(agentNetworkConfigEmbeddedRendezvousIPOne),
+				agentHost().name("test-2").role("worker").interfaces(iface("enp3s1", "28:d2:44:d2:b2:1b")).networkConfig(agentNetworkConfigEmbeddedRendezvousIPTwo)),
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -413,6 +455,14 @@ func getAgentConfigMultiHost() *AgentConfig {
 		},
 	}
 	a.Config.Hosts = append(a.Config.Hosts, host)
+	return a
+}
+
+func getAgentConfigMultiHostEmbeddedRendezvousIP() *AgentConfig {
+	a := getAgentConfigMultiHost()
+	a.Config.RendezvousIP = "192.168.111.1"
+	a.Config.Hosts[0].NetworkConfig.Raw = []byte(agentNetworkConfigEmbeddedRendezvousIPOne)
+	a.Config.Hosts[1].NetworkConfig.Raw = []byte(agentNetworkConfigEmbeddedRendezvousIPTwo)
 	return a
 }
 
