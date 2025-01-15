@@ -18,7 +18,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
 
-// Cluster is a struct designed to help interact with the cluster that is
+// Cluster is a struct designed to help interact with the cluster that is 
 // currently being installed by agent installer.
 type Cluster struct {
 	Ctx                    context.Context
