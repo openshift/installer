@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	resourcemanager "google.golang.org/api/cloudresourcemanager/v1"
 	"google.golang.org/api/googleapi"
-	iam "google.golang.org/api/iam/v1"
+	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/option"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -102,7 +102,8 @@ func CreateServiceAccount(ctx context.Context, infraID, projectID, role string) 
 // AddServiceAccountRoles adds predefined roles for service account.
 func AddServiceAccountRoles(ctx context.Context, projectID, serviceAccountID string, roles []string) error {
 	// Get cloudresourcemanager service
-	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
+	// The context timeout must be greater in time than the exponential backoff below
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*2)
 	defer cancel()
 
 	ssn, err := gcp.GetSession(ctx)
@@ -116,8 +117,9 @@ func AddServiceAccountRoles(ctx context.Context, projectID, serviceAccountID str
 
 	backoff := wait.Backoff{
 		Duration: 2 * time.Second,
+		Factor:   2.0,
 		Jitter:   1.0,
-		Steps:    5,
+		Steps:    retryCount,
 	}
 	// Get and set the policy in a backoff loop.
 	// If the policy set fails, the policy must be retrieved again via the get before retrying the set.
@@ -134,8 +136,7 @@ func AddServiceAccountRoles(ctx context.Context, projectID, serviceAccountID str
 
 		member := fmt.Sprintf("serviceAccount:%s", serviceAccountID)
 		for _, role := range roles {
-			err = addMemberToRole(policy, role, member)
-			if err != nil {
+			if err := addMemberToRole(policy, role, member); err != nil {
 				return false, fmt.Errorf("failed to add role %s to %s: %w", role, member, err)
 			}
 		}
@@ -145,6 +146,15 @@ func AddServiceAccountRoles(ctx context.Context, projectID, serviceAccountID str
 			if isConflictError(err) {
 				lastErr = err
 				logrus.Debugf("Concurrent IAM policy changes, restarting read/modify/write")
+				return false, nil
+			} else if isBadStatusError(err) {
+				// Documented here, https://cloud.google.com/iam/docs/retry-strategy, google
+				// indicates that a service account may be created but not active for up to
+				// 60 seconds. This behavior was causing a failure here when setting the policy
+				// resulting in a 400 error from the API. If this error occurs retry with an
+				// exponential backoff.
+				lastErr = err
+				logrus.Debugf("bad request, unexpected error: %s", err.Error())
 				return false, nil
 			}
 			return false, fmt.Errorf("failed to set IAM policy, unexpected error: %w", err)
@@ -222,4 +232,9 @@ func isQuotaExceededError(err error) bool {
 		return true
 	}
 	return false
+}
+
+func isBadStatusError(err error) bool {
+	var ae *googleapi.Error
+	return errors.As(err, &ae) && (ae.Code == http.StatusBadRequest)
 }
