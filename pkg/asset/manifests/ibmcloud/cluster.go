@@ -72,6 +72,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		// Use provided Control Plane zones, or default to all zones in the Region.
 		if installConfig.Config.ControlPlane.Platform.IBMCloud != nil && len(installConfig.Config.ControlPlane.Platform.IBMCloud.Zones) != 0 {
 			zones = installConfig.Config.ControlPlane.Platform.IBMCloud.Zones
+		} else if platform.DefaultMachinePlatform != nil && len(platform.DefaultMachinePlatform.Zones) != 0 {
+			zones = platform.DefaultMachinePlatform.Zones
 		} else {
 			var err error
 			zones, err = client.GetVPCZonesForRegion(context.TODO(), platform.Region)
@@ -115,6 +117,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		// NOTE(cjschaef): We only process the first Compute definition, which may result in complications if additional Compute definitions request different Zones.
 		if installConfig.Config.Compute[0].Platform.IBMCloud != nil && len(installConfig.Config.Compute[0].Platform.IBMCloud.Zones) != 0 {
 			zones = installConfig.Config.Compute[0].Platform.IBMCloud.Zones
+		} else if platform.DefaultMachinePlatform != nil && len(platform.DefaultMachinePlatform.Zones) != 0 {
+			zones = platform.DefaultMachinePlatform.Zones
 		} else {
 			var err error
 			zones, err = client.GetVPCZonesForRegion(context.TODO(), platform.Region)
