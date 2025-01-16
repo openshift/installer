@@ -24,6 +24,7 @@ func (o *ClusterUninstaller) listCloudInstances() (cloudResources, error) {
 	defer cancel()
 
 	options := o.vpcSvc.NewListInstancesOptions()
+	options.SetResourceGroupID(o.resourceGroupID)
 
 	// https://raw.githubusercontent.com/IBM/vpc-go-sdk/master/vpcv1/vpc_v1.go
 	resources, _, err := o.vpcSvc.ListInstancesWithContext(ctx, options)

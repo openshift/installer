@@ -46,6 +46,7 @@ func (o *ClusterUninstaller) listCOSInstances() (cloudResources, error) {
 	options = o.controllerSvc.NewListResourceInstancesOptions()
 	options.Limit = &perPage
 	options.SetResourceID(cosResourceID)
+	options.SetResourceGroupID(o.resourceGroupID)
 	options.SetType("service_instance")
 
 	result := []cloudResource{}
@@ -97,6 +98,7 @@ func (o *ClusterUninstaller) listCOSInstances() (cloudResources, error) {
 		options = o.controllerSvc.NewListResourceInstancesOptions()
 		options.Limit = &perPage
 		options.SetResourceID(cosResourceID)
+		options.SetResourceGroupID(o.resourceGroupID)
 		options.SetType("service_instance")
 
 		moreData = true

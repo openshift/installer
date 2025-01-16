@@ -45,6 +45,7 @@ func (o *ClusterUninstaller) listCloudSSHKeys() (cloudResources, error) {
 
 	listKeysOptions = o.vpcSvc.NewListKeysOptions()
 	listKeysOptions.SetLimit(perPage)
+	listKeysOptions.SetResourceGroupID(o.resourceGroupID)
 
 	result := []cloudResource{}
 
@@ -94,6 +95,8 @@ func (o *ClusterUninstaller) listCloudSSHKeys() (cloudResources, error) {
 
 		listKeysOptions = o.vpcSvc.NewListKeysOptions()
 		listKeysOptions.SetLimit(perPage)
+		listKeysOptions.SetResourceGroupID(o.resourceGroupID)
+
 		moreData = true
 
 		for moreData {

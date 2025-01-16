@@ -30,8 +30,9 @@ func (o *ClusterUninstaller) listVPCs() (cloudResources, error) {
 	}
 
 	options := o.vpcSvc.NewListVpcsOptions()
-	vpcs, _, err := o.vpcSvc.ListVpcs(options)
+	options.SetResourceGroupID(o.resourceGroupID)
 
+	vpcs, _, err := o.vpcSvc.ListVpcs(options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list vps: %w", err)
 	}

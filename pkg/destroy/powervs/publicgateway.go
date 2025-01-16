@@ -24,6 +24,8 @@ func (o *ClusterUninstaller) listAttachedSubnets(publicGatewayID string) (cloudR
 	defer cancel()
 
 	options := o.vpcSvc.NewListSubnetsOptions()
+	options.SetResourceGroupID(o.resourceGroupID)
+
 	resources, _, err := o.vpcSvc.ListSubnetsWithContext(ctx, options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list subnets: %w", err)
@@ -36,7 +38,7 @@ func (o *ClusterUninstaller) listAttachedSubnets(publicGatewayID string) (cloudR
 				key:      *subnet.ID,
 				name:     *subnet.Name,
 				status:   *subnet.Status,
-				typeName: cloudSubnetTypeName,
+				typeName: publicGatewayTypeName,
 				id:       *subnet.ID,
 			})
 		}
@@ -72,8 +74,8 @@ func (o *ClusterUninstaller) listPublicGateways() (cloudResources, error) {
 	}
 
 	listPublicGatewaysOptions = o.vpcSvc.NewListPublicGatewaysOptions()
-
 	listPublicGatewaysOptions.SetLimit(perPage)
+	listPublicGatewaysOptions.SetResourceGroupID(o.resourceGroupID)
 
 	result := []cloudResource{}
 
@@ -124,6 +126,7 @@ func (o *ClusterUninstaller) listPublicGateways() (cloudResources, error) {
 
 		listPublicGatewaysOptions = o.vpcSvc.NewListPublicGatewaysOptions()
 		listPublicGatewaysOptions.SetLimit(perPage)
+		listPublicGatewaysOptions.SetResourceGroupID(o.resourceGroupID)
 
 		for moreData {
 			publicGatewayCollection, detailedResponse, err = o.vpcSvc.ListPublicGatewaysWithContext(ctx, listPublicGatewaysOptions)
