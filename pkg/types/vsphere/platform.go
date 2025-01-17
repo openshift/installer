@@ -8,8 +8,8 @@ import (
 // +kubebuilder:validation:Enum="";thin;thick;eagerZeroedThick
 type DiskType string
 
-// FailureDomainType is the name of the failure domain type.
-// There are two defined failure domains currently, Datacenter and ComputeCluster.
+// FailureDomainType is the string representation name of the failure domain type.
+// There are three defined failure domains types currently, Datacenter, ComputeCluster and HostGroup.
 // Each represents a vCenter object type within a vSphere environment.
 // +kubebuilder:validation:Enum=HostGroup;Datacenter;ComputeCluster
 type FailureDomainType string
@@ -38,6 +38,15 @@ const (
 	ComputeRole = "compute"
 	// BootstrapRole represents bootstrap nodes.
 	BootstrapRole = "bootstrap"
+)
+
+const (
+	// HostGroupFailureDomain is a failure domain for a vCenter vm-host group.
+	HostGroupFailureDomain FailureDomainType = "HostGroup"
+	// ComputeClusterFailureDomain is a failure domain for a vCenter compute cluster.
+	ComputeClusterFailureDomain FailureDomainType = "ComputeCluster"
+	// DatacenterFailureDomain is a failure domain for a vCenter datacenter.
+	DatacenterFailureDomain FailureDomainType = "Datacenter"
 )
 
 // Platform stores any global configuration used for vsphere platforms.
@@ -159,11 +168,21 @@ type FailureDomain struct {
 	// region defines a FailureDomainCoordinate which
 	// includes the name of the vCenter tag, the failure domain type
 	// and the name of the vCenter tag category.
+
+	// The region is the name of the tag in vCenter that is associated with the
+	// tag category `openshift-region`. The region name must match the tag name
+	// and must exist prior to installation. When the regionType is Datacenter
+	// the tag must be attached to the toplogy.datacenter object in vCenter.
+	// When the regionType is ComputeCluster the tag must be attached to the topology.computeCluster
+	// object in vCenter.
 	// +kubebuilder:validation:Required
 	Region string `json:"region"`
-	// zone defines a VSpherePlatformFailureDomain which
-	// includes the name of the vCenter tag, the failure domain type
-	// and the name of the vCenter tag category.
+	// The zone is the name of the tag in vCenter that is associated with
+	// the tag category `openshift-zone`. The zone name must match the tag name
+	// and must exist prior to installation. When zoneType is HostGroup the
+	// ESXi hosts defined in the provided in the topology.hostGroup field must be tagged.
+	// When the zoneType is ComputeCluster the tag must be attached to the topology.computeCluster
+	// object in vCenter.
 	// +kubebuilder:validation:Required
 	Zone string `json:"zone"`
 	// server is the fully-qualified domain name or the IP address of the vCenter server.
@@ -174,6 +193,22 @@ type FailureDomain struct {
 	// Topology describes a given failure domain using vSphere constructs
 	// +kubebuilder:validation:Required
 	Topology Topology `json:"topology"`
+
+	// regionType is the type of failure domain region, the current values are "Datacenter" and "ComputeCluster"
+	// +kubebuilder:validation:Enum=Datacenter;ComputeCluster
+	// When regionType is Datacenter the zoneType must be ComputeCluster.
+	// When regionType is ComputeCluster the zoneType must be HostGroup
+	// +optional
+	RegionType FailureDomainType `json:"regionType,omitempty"`
+	// zoneType is the type of the failure domain zone, the current values are "ComputeCluster" and "HostGroup"
+
+	// When zoneType is ComputeCluster the regionType must be Datacenter
+	// When zoneType is HostGroup the regionType must be ComputeCluster
+	// If the zoneType is HostGroup topology.hostGroup must be defined and exist in vCenter
+	// prior to installation.
+	// +kubebuilder:validation:Enum=ComputeCluster;HostGroup
+	// +optional
+	ZoneType FailureDomainType `json:"zoneType,omitempty"`
 }
 
 // Topology holds the required and optional vCenter objects - datacenter,
@@ -225,6 +260,13 @@ type Topology struct {
 	// +kubebuilder:example=`urn:vmomi:InventoryServiceTag:5736bf56-49f5-4667-b38c-b97e09dc9578:GLOBAL`
 	// +optional
 	TagIDs []string `json:"tagIDs,omitempty"`
+
+	// hostGroup is the name of the vm-host group of type host within vCenter for this failure domain.
+	// hostGroup is limited to 80 characters.
+	// This field is required when the ZoneType is HostGroup
+	// +kubebuilder:validation:MaxLength=80
+	// +optional
+	HostGroup string `json:"hostGroup,omitempty"`
 }
 
 // VCenter stores the vCenter connection fields

@@ -1092,7 +1092,7 @@ github.com/opencontainers/image-spec/specs-go/v1
 # github.com/opencontainers/runtime-spec v1.2.0
 ## explicit
 github.com/opencontainers/runtime-spec/specs-go
-# github.com/openshift/api v0.0.0-20241203091751-58d4ac495429
+# github.com/openshift/api v0.0.0-20241216151652-de9de05a8e43
 ## explicit; go 1.22.0
 github.com/openshift/api/annotations
 github.com/openshift/api/config/v1
@@ -1222,7 +1222,7 @@ github.com/openshift/hive/apis/hive/v1/openstack
 github.com/openshift/hive/apis/hive/v1/ovirt
 github.com/openshift/hive/apis/hive/v1/vsphere
 github.com/openshift/hive/apis/scheme
-# github.com/openshift/library-go v0.0.0-20241210171208-85e36bca7246
+# github.com/openshift/library-go v0.0.0-20241216140520-201d816c66f0
 ## explicit; go 1.22.0
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 github.com/openshift/library-go/pkg/config/clusterstatus
@@ -1493,6 +1493,9 @@ go.starlark.net/resolve
 go.starlark.net/starlark
 go.starlark.net/starlarkstruct
 go.starlark.net/syntax
+# go.uber.org/mock v0.5.0
+## explicit; go 1.22
+go.uber.org/mock/gomock
 # go.uber.org/multierr v1.11.0
 ## explicit; go 1.19
 go.uber.org/multierr

@@ -73,7 +73,7 @@ require (
 	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.3.3-0.20240416171357-98239ba02cb2
 	github.com/nutanix-cloud-native/prism-go-client v0.3.4
 	github.com/onsi/gomega v1.35.1
-	github.com/openshift/api v0.0.0-20241203091751-58d4ac495429
+	github.com/openshift/api v0.0.0-20241216151652-de9de05a8e43
 	github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6
 	github.com/openshift/assisted-service/api v0.0.0
 	github.com/openshift/assisted-service/client v0.0.0
@@ -84,7 +84,7 @@ require (
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20230308152226-83c0473d4429
 	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20220323121149-e3f2850dd519
 	github.com/openshift/hive/apis v0.0.0-20231220215202-ad99b9e52d27
-	github.com/openshift/library-go v0.0.0-20241210171208-85e36bca7246
+	github.com/openshift/library-go v0.0.0-20241216140520-201d816c66f0
 	github.com/openshift/machine-api-provider-gcp v0.0.1-0.20241021180644-0eca0846914a
 	github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20231207164151-6b0b8ea7b16d
 	github.com/ovirt/go-ovirt v0.0.0-20210809163552-d4276e35d3db
@@ -104,6 +104,7 @@ require (
 	github.com/ulikunitz/xz v0.5.12
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/vmware/govmomi v0.43.0
+	go.uber.org/mock v0.5.0
 	golang.org/x/crypto v0.31.0
 	golang.org/x/oauth2 v0.23.0
 	golang.org/x/sync v0.10.0

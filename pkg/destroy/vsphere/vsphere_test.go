@@ -7,11 +7,11 @@ import (
 	"io"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware/govmomi/vim25/mo"
 	vspheretypes "github.com/vmware/govmomi/vim25/types"
+	gomock "go.uber.org/mock/gomock"
 
 	"github.com/openshift/installer/pkg/destroy/vsphere/mock"
 	"github.com/openshift/installer/pkg/types"

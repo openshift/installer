@@ -5,11 +5,13 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	capv "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
+	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // GenerateClusterAssets generates the manifests for the cluster-api.
@@ -67,6 +69,68 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 
 		assetOutput.InfrastructureRefs = append(assetOutput.InfrastructureRefs, infra)
+	}
+
+	for _, failureDomain := range installConfig.Config.VSphere.FailureDomains {
+		if failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
+			dz := &capv.VSphereDeploymentZone{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: failureDomain.Name,
+				},
+				Spec: capv.VSphereDeploymentZoneSpec{
+					Server:        fmt.Sprintf("https://%s", failureDomain.Server),
+					FailureDomain: failureDomain.Name,
+					ControlPlane:  ptr.To(true),
+					PlacementConstraint: capv.PlacementConstraint{
+						ResourcePool: failureDomain.Topology.ResourcePool,
+						Folder:       failureDomain.Topology.Folder,
+					},
+				},
+			}
+
+			dz.SetGroupVersionKind(capv.GroupVersion.WithKind("VSphereDeploymentZone"))
+
+			fd := &capv.VSphereFailureDomain{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: failureDomain.Name,
+				},
+				Spec: capv.VSphereFailureDomainSpec{
+					Region: capv.FailureDomain{
+						Name:        failureDomain.Region,
+						Type:        capv.FailureDomainType(failureDomain.RegionType),
+						TagCategory: "openshift-region",
+					},
+					Zone: capv.FailureDomain{
+						Name:        failureDomain.Zone,
+						Type:        capv.FailureDomainType(failureDomain.ZoneType),
+						TagCategory: "openshift-zone",
+					},
+					Topology: capv.Topology{
+						Datacenter:     failureDomain.Topology.Datacenter,
+						ComputeCluster: &failureDomain.Topology.ComputeCluster,
+						Hosts: &capv.FailureDomainHosts{
+							VMGroupName:   fmt.Sprintf("%s-%s", clusterID.InfraID, failureDomain.Name),
+							HostGroupName: failureDomain.Topology.HostGroup,
+						},
+						Networks:  failureDomain.Topology.Networks,
+						Datastore: failureDomain.Topology.Datastore,
+					},
+				},
+			}
+			fd.SetGroupVersionKind(capv.GroupVersion.WithKind("VSphereFailureDomain"))
+
+			manifests = append(manifests, &asset.RuntimeFile{
+				Object: fd,
+				File:   asset.File{Filename: fmt.Sprintf("01_vsphere-failuredomain-%s.yaml", failureDomain.Name)},
+			})
+
+			manifests = append(manifests, &asset.RuntimeFile{
+				Object: dz,
+				File:   asset.File{Filename: fmt.Sprintf("01_vsphere-deploymentzone-%s.yaml", failureDomain.Name)},
+			})
+		}
 	}
 
 	assetOutput.Manifests = manifests

@@ -256,7 +256,7 @@ var (
 							contactPerson("jcaamano").
 							productScope(ocpSpecific).
 							enhancementPR(legacyFeatureGateWithoutEnhancement).
-							enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+							enableIn(configv1.Default, configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 							mustRegister()
 
 	FeatureGateRouteAdvertisements = newFeatureGate("RouteAdvertisements").
@@ -693,5 +693,29 @@ var (
 					productScope(ocpSpecific).
 					enhancementPR("https://github.com/openshift/enhancements/pull/1711").
 					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+					mustRegister()
+
+	FeatureGateKMSEncryptionProvider = newFeatureGate("KMSEncryptionProvider").
+						reportProblemsToJiraComponent("kube-apiserver").
+						contactPerson("swghosh").
+						productScope(ocpSpecific).
+						enhancementPR("https://github.com/openshift/enhancements/pull/1682").
+						enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+						mustRegister()
+
+	FeatureGateHighlyAvailableArbiter = newFeatureGate("HighlyAvailableArbiter").
+						reportProblemsToJiraComponent("TwoNode / Arbiter").
+						contactPerson("eggfoobar").
+						productScope(ocpSpecific).
+						enhancementPR("https://github.com/openshift/enhancements/pull/1674").
+						enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+						mustRegister()
+
+	FeatureGateCVOConfiguration = newFeatureGate("ClusterVersionOperatorConfiguration").
+					reportProblemsToJiraComponent("Cluster Version Operator").
+					contactPerson("dhurta").
+					productScope(ocpSpecific).
+					enhancementPR("https://github.com/openshift/enhancements/pull/1492").
+					enableIn(configv1.DevPreviewNoUpgrade).
 					mustRegister()
 )

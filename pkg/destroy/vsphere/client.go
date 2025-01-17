@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/pbm"
 	pbmtypes "github.com/vmware/govmomi/pbm/types"
@@ -34,6 +35,7 @@ type API interface {
 	DeleteStoragePolicy(ctx context.Context, policyName string) error
 	DeleteTag(ctx context.Context, id string) error
 	DeleteTagCategory(ctx context.Context, id string) error
+	DeleteHostZoneObjects(ctx context.Context, infraID string) error
 }
 
 // Client makes calls to the Azure API.
@@ -280,4 +282,77 @@ func (c *Client) DeleteTagCategory(ctx context.Context, categoryName string) err
 	}
 
 	return utilerrors.NewAggregate(errs)
+}
+
+// DeleteHostZoneObjects removes from the vCenter cluster the associated OCP cluster's vm-host group (VirtualMachine)
+// and the vm-host affinity rule.
+func (c *Client) DeleteHostZoneObjects(ctx context.Context, infraID string) error {
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+
+	finder := find.NewFinder(c.client, false)
+
+	datacenters, err := finder.DatacenterList(ctx, "/...")
+	if err != nil {
+		return err
+	}
+
+	for _, dc := range datacenters {
+		finder = finder.SetDatacenter(dc)
+		clusterObjs, err := finder.ClusterComputeResourceList(ctx, "/...")
+		if err != nil {
+			return err
+		}
+
+		for _, ccr := range clusterObjs {
+			clusterConfigSpec := &types.ClusterConfigSpecEx{}
+
+			clusterConfig, err := ccr.Configuration(ctx)
+			if err != nil {
+				return err
+			}
+
+			for _, r := range clusterConfig.Rule {
+				if rule, ok := r.(*types.ClusterVmHostRuleInfo); ok {
+					if strings.Contains(rule.Name, infraID) {
+						clusterConfigSpec.RulesSpec = append(clusterConfigSpec.RulesSpec, types.ClusterRuleSpec{
+							ArrayUpdateSpec: types.ArrayUpdateSpec{
+								Operation: "remove",
+								RemoveKey: rule.GetClusterRuleInfo().Key,
+							},
+							Info: &rule.ClusterRuleInfo,
+						})
+					}
+				}
+			}
+
+			for _, g := range clusterConfig.Group {
+				if vmg, ok := g.(*types.ClusterVmGroup); ok {
+					if strings.Contains(vmg.Name, infraID) {
+						clusterConfigSpec.GroupSpec = append(clusterConfigSpec.GroupSpec, types.ClusterGroupSpec{
+							ArrayUpdateSpec: types.ArrayUpdateSpec{
+								Operation: "remove",
+								RemoveKey: vmg.Name,
+							},
+							Info: &vmg.ClusterGroupInfo,
+						})
+					}
+				}
+			}
+
+			// If the rules or group spec are empty there is no need to modify the cluster
+			if len(clusterConfigSpec.RulesSpec) != 0 || len(clusterConfigSpec.GroupSpec) != 0 {
+				task, err := ccr.Reconfigure(ctx, clusterConfigSpec, true)
+				if err != nil {
+					return err
+				}
+
+				if err := task.Wait(ctx); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
 }

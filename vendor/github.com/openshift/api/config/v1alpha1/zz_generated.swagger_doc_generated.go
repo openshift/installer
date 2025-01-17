@@ -41,10 +41,10 @@ func (BackupSpec) SwaggerDoc() map[string]string {
 
 var map_EtcdBackupSpec = map[string]string{
 	"":                "EtcdBackupSpec provides configuration for automated etcd backups to the cluster-etcd-operator",
-	"schedule":        "Schedule defines the recurring backup schedule in Cron format every 2 hours: 0 */2 * * * every day at 3am: 0 3 * * * Empty string means no opinion and the platform is left to choose a reasonable default which is subject to change without notice. The current default is \"no backups\", but will change in the future.",
+	"schedule":        "schedule defines the recurring backup schedule in Cron format every 2 hours: 0 */2 * * * every day at 3am: 0 3 * * * Empty string means no opinion and the platform is left to choose a reasonable default which is subject to change without notice. The current default is \"no backups\", but will change in the future.",
 	"timeZone":        "The time zone name for the given schedule, see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones. If not specified, this will default to the time zone of the kube-controller-manager process. See https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#time-zones",
-	"retentionPolicy": "RetentionPolicy defines the retention policy for retaining and deleting existing backups.",
-	"pvcName":         "PVCName specifies the name of the PersistentVolumeClaim (PVC) which binds a PersistentVolume where the etcd backup files would be saved The PVC itself must always be created in the \"openshift-etcd\" namespace If the PVC is left unspecified \"\" then the platform will choose a reasonable default location to save the backup. In the future this would be backups saved across the control-plane master nodes.",
+	"retentionPolicy": "retentionPolicy defines the retention policy for retaining and deleting existing backups.",
+	"pvcName":         "pvcName specifies the name of the PersistentVolumeClaim (PVC) which binds a PersistentVolume where the etcd backup files would be saved The PVC itself must always be created in the \"openshift-etcd\" namespace If the PVC is left unspecified \"\" then the platform will choose a reasonable default location to save the backup. In the future this would be backups saved across the control-plane master nodes.",
 }
 
 func (EtcdBackupSpec) SwaggerDoc() map[string]string {
@@ -53,7 +53,7 @@ func (EtcdBackupSpec) SwaggerDoc() map[string]string {
 
 var map_RetentionNumberConfig = map[string]string{
 	"":                   "RetentionNumberConfig specifies the configuration of the retention policy on the number of backups",
-	"maxNumberOfBackups": "MaxNumberOfBackups defines the maximum number of backups to retain. If the existing number of backups saved is equal to MaxNumberOfBackups then the oldest backup will be removed before a new backup is initiated.",
+	"maxNumberOfBackups": "maxNumberOfBackups defines the maximum number of backups to retain. If the existing number of backups saved is equal to MaxNumberOfBackups then the oldest backup will be removed before a new backup is initiated.",
 }
 
 func (RetentionNumberConfig) SwaggerDoc() map[string]string {
@@ -62,9 +62,9 @@ func (RetentionNumberConfig) SwaggerDoc() map[string]string {
 
 var map_RetentionPolicy = map[string]string{
 	"":                "RetentionPolicy defines the retention policy for retaining and deleting existing backups. This struct is a discriminated union that allows users to select the type of retention policy from the supported types.",
-	"retentionType":   "RetentionType sets the type of retention policy. Currently, the only valid policies are retention by number of backups (RetentionNumber), by the size of backups (RetentionSize). More policies or types may be added in the future. Empty string means no opinion and the platform is left to choose a reasonable default which is subject to change without notice. The current default is RetentionNumber with 15 backups kept.",
-	"retentionNumber": "RetentionNumber configures the retention policy based on the number of backups",
-	"retentionSize":   "RetentionSize configures the retention policy based on the size of backups",
+	"retentionType":   "retentionType sets the type of retention policy. Currently, the only valid policies are retention by number of backups (RetentionNumber), by the size of backups (RetentionSize). More policies or types may be added in the future. Empty string means no opinion and the platform is left to choose a reasonable default which is subject to change without notice. The current default is RetentionNumber with 15 backups kept.",
+	"retentionNumber": "retentionNumber configures the retention policy based on the number of backups",
+	"retentionSize":   "retentionSize configures the retention policy based on the size of backups",
 }
 
 func (RetentionPolicy) SwaggerDoc() map[string]string {
@@ -73,7 +73,7 @@ func (RetentionPolicy) SwaggerDoc() map[string]string {
 
 var map_RetentionSizeConfig = map[string]string{
 	"":                   "RetentionSizeConfig specifies the configuration of the retention policy on the total size of backups",
-	"maxSizeOfBackupsGb": "MaxSizeOfBackupsGb defines the total size in GB of backups to retain. If the current total size backups exceeds MaxSizeOfBackupsGb then the oldest backup will be removed before a new backup is initiated.",
+	"maxSizeOfBackupsGb": "maxSizeOfBackupsGb defines the total size in GB of backups to retain. If the current total size backups exceeds MaxSizeOfBackupsGb then the oldest backup will be removed before a new backup is initiated.",
 }
 
 func (RetentionSizeConfig) SwaggerDoc() map[string]string {

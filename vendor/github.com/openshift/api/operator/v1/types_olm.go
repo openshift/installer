@@ -56,6 +56,6 @@ type OLMList struct {
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ListMeta `json:"metadata"`
 
-	// Items contains the items
+	// items contains the items
 	Items []OLM `json:"items"`
 }
