@@ -109,6 +109,7 @@ var permissions = map[PermissionGroup][]string{
 		"ec2:DescribeInstanceAttribute",
 		"ec2:DescribeInstanceCreditSpecifications",
 		"ec2:DescribeInstances",
+		"ec2:DescribeInstanceTypeOfferings", // Needed to filter zones by instance type
 		"ec2:DescribeInternetGateways",
 		"ec2:DescribeKeyPairs",
 		"ec2:DescribeNatGateways",
@@ -337,8 +338,6 @@ var permissions = map[PermissionGroup][]string{
 	PermissionDefaultZones: {
 		// Needed to list the zones available in the region
 		"ec2:DescribeAvailabilityZones",
-		// Needed to filter zones by instance type
-		"ec2:DescribeInstanceTypeOfferings",
 	},
 	PermissionAssumeRole: {
 		// Needed so the installer can use the provided custom IAM role
