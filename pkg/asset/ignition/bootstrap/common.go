@@ -443,16 +443,17 @@ func AddStorageFiles(config *igntypes.Config, base string, uri string, templateD
 
 	var mode int
 	appendToFile := false
-	if parentDir == "bin" || parentDir == "dispatcher.d" {
+	switch {
+	case parentDir == "bin", parentDir == "dispatcher.d", parentDir == "system-generators":
 		mode = 0555
-	} else if filename == "motd" || filename == "containers.conf" {
+	case filename == "motd", filename == "containers.conf":
 		mode = 0644
 		appendToFile = true
-	} else if filename == "registries.conf" {
+	case filename == "registries.conf":
 		// Having the mode be private breaks rpm-ostree, xref
 		// https://github.com/openshift/installer/pull/6789
 		mode = 0644
-	} else {
+	default:
 		mode = 0600
 	}
 	ign := ignition.FileFromBytes(strings.TrimSuffix(base, ".template"), "root", mode, data)

@@ -1,0 +1,87 @@
+#!/bin/bash
+set -euo pipefail
+
+# shellcheck source=release-image.sh.template
+. /usr/local/bin/release-image.sh
+
+# yuck... this is a good argument for renaming the node image to just `node` in both OCP and OKD
+coreos_img=rhel-coreos
+{{ if .IsOKD }}
+coreos_img=stream-coreos
+{{ end }}
+until COREOS_IMAGE=$(image_for ${coreos_img}); do
+    echo 'Failed to query release image; retrying...'
+    sleep 10
+done
+
+# need to use rpm-ostree here since `bootc status` doesn't work in the live ISO currently
+# https://github.com/containers/bootc/issues/1043
+booted_version=$(rpm-ostree status --json | jq -r .deployments[0].version)
+
+echo "Currently on CoreOS version $booted_version"
+echo "Target node image is $COREOS_IMAGE"
+
+# try to do this in the system repo so we get hardlinks and the checkout is
+# read-only, but fallback to using /var if we're in the live environment since
+# that's truly read-only
+ostree_repo=/ostree/repo
+ostree_checkout="${ostree_repo}/tmp/node-image"
+hardlink='-H'
+if grep -q coreos.liveiso= /proc/cmdline; then
+    ostree_repo=/var/ostree-container/repo
+    ostree_checkout=/var/ostree-container/checkout
+    mkdir -p "${ostree_repo}"
+    echo "In live ISO; creating temporary repo to pull node image"
+    ostree init --mode=bare --repo="${ostree_repo}"
+    # if there are layers, import all the content in the system repo for
+    # layer-level deduping
+    if [ -d /ostree/repo/refs/heads/ostree/container ]; then
+        echo "Importing base content from system repo for deduplication"
+        ostree pull-local --repo="${ostree_repo}" /ostree/repo
+    fi
+    # but we won't be able to force hardlinks cross-device
+    hardlink=''
+else
+    # (remember, we're MountFlags=slave)
+    mount -o rw,remount /sysroot
+fi
+
+# Use ostree stack to pull the container here. This gives us efficient
+# downloading with layers we already have, and also handles SELinux.
+echo "Pulling ${COREOS_IMAGE}"
+while ! ostree container image pull --authfile "/root/.docker/config.json" \
+  "${ostree_repo}" ostree-unverified-image:docker://"${COREOS_IMAGE}"; do
+    echo 'Failed to fetch release image; retrying...'
+    sleep 10
+done
+
+# ideally, `ostree container image pull` would support `--write-ref` or a
+# command to escape a pullspec, but for now it's pretty easy to tell which ref
+# it is since it's the only docker one
+ref=$(ostree refs --repo "${ostree_repo}" | grep ^ostree/container/image/docker)
+if [ $(echo "$ref" | wc -l) != 1 ]; then
+    echo "Expected single docker ref, found:"
+    echo "$ref"
+    exit 1
+fi
+ostree refs --repo "${ostree_repo}" "$ref" --create coreos/node-image
+
+# massive hack to make ostree admin config-diff work in live ISO where /etc
+# is actually on a separate mount and not the deployment root proper... should
+# enhance libostree for this (remember, we're MountFlags=slave)
+if grep -q coreos.liveiso= /proc/cmdline; then
+    mount -o bind,ro /etc /ostree/deploy/*/deploy/*/etc
+fi
+
+# get all state files in /etc; this is a cheap way to get "3-way /etc merge" semantics
+etc_keep=$(ostree admin config-diff | cut -f5 -d' ' | sed -e 's,^,/usr/etc/,')
+
+# check out the commit
+echo "Checking out node image content"
+ostree checkout --repo "${ostree_repo}" ${hardlink} coreos/node-image "${ostree_checkout}" --skip-list=<(cat <<< "$etc_keep")
+
+# in the assisted-installer case, nuke the temporary repo to save RAM
+if grep -q coreos.liveiso= /proc/cmdline; then
+    echo "Deleting temporary repo"
+    rm -rf "${ostree_repo}"
+fi

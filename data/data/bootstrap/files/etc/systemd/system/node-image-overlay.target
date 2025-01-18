@@ -1,0 +1,9 @@
+[Unit]
+Description=Node Image Overlay Target
+Requires=basic.target
+
+# for easier debugging
+Requires=sshd.service getty.target systemd-user-sessions.service
+
+Requires=node-image-overlay.service
+Requires=node-image-finish.service
