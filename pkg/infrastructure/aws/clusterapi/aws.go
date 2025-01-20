@@ -100,7 +100,6 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		clusterapi.IgnitionSecret(editedBootstrapIgn, in.InfraID, "bootstrap"),
 		clusterapi.IgnitionSecret(editedMasterIgn, in.InfraID, "master"),
 	}
-
 	return ignSecrets, nil
 }
 

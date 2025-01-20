@@ -129,7 +129,7 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 
 	if c.Arbiter != nil {
 		if c.EnabledFeatureGates().Enabled(features.FeatureGateHighlyAvailableArbiter) {
-			allErrs = append(allErrs, validateArbiter(&c.Platform, c.Arbiter, field.NewPath("arbiter"))...)
+			allErrs = append(allErrs, validateArbiter(&c.Platform, c.Arbiter, c.ControlPlane, field.NewPath("arbiter"))...)
 		} else {
 			allErrs = append(allErrs, field.Forbidden(field.NewPath("arbiter"), fmt.Sprintf("%s feature must be enabled in order to use arbiter cluster deployment", features.FeatureGateHighlyAvailableArbiter)))
 		}
@@ -675,15 +675,24 @@ func validateControlPlane(platform *types.Platform, pool *types.MachinePool, fld
 	return allErrs
 }
 
-func validateArbiter(platform *types.Platform, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
+func validateArbiter(platform *types.Platform, arbiterPool, masterPool *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if pool.Name != types.MachinePoolArbiterRoleName {
-		allErrs = append(allErrs, field.NotSupported(fldPath.Child("name"), pool.Name, []string{types.MachinePoolArbiterRoleName}))
+	if platform != nil && platform.BareMetal == nil {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("platform"), platform.Name(), []string{baremetal.Name}))
 	}
-	if pool.Replicas != nil && *pool.Replicas == 0 {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "number of arbiter replicas must be positive"))
+	if arbiterPool.Name != types.MachinePoolArbiterRoleName {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("name"), arbiterPool.Name, []string{types.MachinePoolArbiterRoleName}))
 	}
-	allErrs = append(allErrs, ValidateMachinePool(platform, pool, fldPath)...)
+	if arbiterPool.Replicas != nil && *arbiterPool.Replicas == 0 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), arbiterPool.Replicas, "number of arbiter replicas must be positive"))
+	}
+	if masterPool.Replicas == nil || *masterPool.Replicas < 2 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), masterPool.Replicas, "number of controlPlane replicas must be at least 2 for arbiter deployments"))
+	}
+	if arbiterPool.Replicas != nil && *arbiterPool.Replicas == 0 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), arbiterPool.Replicas, "number of arbiter replicas must be positive"))
+	}
+	allErrs = append(allErrs, ValidateMachinePool(platform, arbiterPool, fldPath)...)
 	return allErrs
 }
 

@@ -124,8 +124,8 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
 	masterIgnAsset := &machine.Master{}
 	arbiterIgnAsset := &machine.Arbiter{}
-	arbiterAsset := &machines.Arbiter{}
 	mastersAsset := &machines.Master{}
+	arbiterAsset := &machines.Arbiter{}
 	workersAsset := &machines.Worker{}
 	manifestsAsset := &manifests.Manifests{}
 	rhcosImage := new(rhcos.Image)

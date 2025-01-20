@@ -114,14 +114,12 @@ func (m *Arbiter) Generate(ctx context.Context, dependencies asset.Parents) erro
 	mign := &machine.Arbiter{}
 	dependencies.Get(clusterID, installConfig, rhcosImage, mign)
 
-	// #nosec G101
-	arbiterUserDataSecretName := "arbiter-user-data" // nolint:ineffassign
-
 	ic := installConfig.Config
 
 	if ic.Arbiter == nil {
 		return nil
-	} else if installConfig.Config.Platform.Name() != baremetaltypes.Name {
+	}
+	if ic.Platform.Name() != baremetaltypes.Name {
 		return fmt.Errorf("only BareMetal platform is supported for Arbiter deployments")
 	}
 
@@ -130,20 +128,17 @@ func (m *Arbiter) Generate(ctx context.Context, dependencies asset.Parents) erro
 	machines := []machinev1beta1.Machine{}
 	var ipClaims []ipamv1.IPAddressClaim
 	var ipAddrs []ipamv1.IPAddress
-	switch ic.Platform.Name() {
-	case baremetaltypes.Name:
-		mpool := defaultBareMetalMachinePoolPlatform()
-		mpool.Set(ic.Platform.BareMetal.DefaultMachinePlatform)
-		mpool.Set(pool.Platform.BareMetal)
-		pool.Platform.BareMetal = &mpool
 
-		// Use managed user data secret, since we always have up to date images
-		// available in the cluster
-		arbiterUserDataSecretName = "arbiter-user-data-managed" // #nosec G101 //nolint:ineffassign
-		enabledCaps := installConfig.Config.GetEnabledCapabilities()
-		if !enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) {
-			break
-		}
+	mpool := defaultBareMetalMachinePoolPlatform()
+	mpool.Set(ic.Platform.BareMetal.DefaultMachinePlatform)
+	mpool.Set(pool.Platform.BareMetal)
+	pool.Platform.BareMetal = &mpool
+
+	// Use managed user data secret, since we always have up to date images
+	// available in the cluster
+	arbiterUserDataSecretName := "arbiter-user-data-managed" // #nosec G101
+	enabledCaps := installConfig.Config.GetEnabledCapabilities()
+	if enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) {
 		machines, err = baremetal.Machines(clusterID.InfraID, ic, &pool, "arbiter", arbiterUserDataSecretName)
 		if err != nil {
 			return errors.Wrap(err, "failed to create arbiter machine objects")
@@ -171,9 +166,6 @@ func (m *Arbiter) Generate(ctx context.Context, dependencies asset.Parents) erro
 			return err
 		}
 		m.NetworkConfigSecretFiles = append(m.NetworkConfigSecretFiles, networkSecrets...)
-
-	default:
-		return fmt.Errorf("invalid Platform")
 	}
 
 	data, err := userDataSecret(arbiterUserDataSecretName, mign.File.Data)

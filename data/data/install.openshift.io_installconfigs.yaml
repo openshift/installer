@@ -73,6 +73,7 @@ spec:
                   Name is the name of the machine pool.
                   For the control plane machine pool, the name will always be "master".
                   For the compute machine pools, the only valid name is "worker".
+                  For the arbiter machine pools, the only valid name is "arbiter".
                 type: string
               platform:
                 description: Platform is configuration for machine pool specific to
@@ -1204,6 +1205,7 @@ spec:
                     Name is the name of the machine pool.
                     For the control plane machine pool, the name will always be "master".
                     For the compute machine pools, the only valid name is "worker".
+                    For the arbiter machine pools, the only valid name is "arbiter".
                   type: string
                 platform:
                   description: Platform is configuration for machine pool specific
@@ -2274,6 +2276,7 @@ spec:
                   Name is the name of the machine pool.
                   For the control plane machine pool, the name will always be "master".
                   For the compute machine pools, the only valid name is "worker".
+                  For the arbiter machine pools, the only valid name is "arbiter".
                 type: string
               platform:
                 description: Platform is configuration for machine pool specific to
