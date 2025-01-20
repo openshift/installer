@@ -331,6 +331,8 @@ func validateHostsCount(hosts []*baremetal.Host, installConfig *types.InstallCon
 			logrus.Warn(fmt.Sprintf("Host %s hasn't any role configured", h.Name))
 			if numMasters < numRequiredMasters {
 				numMasters++
+			} else if numArbiters < numRequiredArbiters {
+				numArbiters++
 			} else if numWorkers < numRequiredWorkers {
 				numWorkers++
 			}

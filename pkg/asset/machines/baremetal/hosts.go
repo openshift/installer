@@ -200,8 +200,8 @@ func ArbiterHosts(config *types.InstallConfig, machines []machineapi.Machine, us
 		return nil, nil
 	}
 
-	numRequiredControlPlaneMachines := len(machines)
-	numMachines := 0
+	numRequiredArbiters := len(machines)
+	numArbiterMachines := 0
 	for _, host := range config.Platform.BareMetal.Hosts {
 		// We skip creating other host files, the master machine generation takes care of those
 		if !host.IsArbiter() {
@@ -223,7 +223,7 @@ func ArbiterHosts(config *types.InstallConfig, machines []machineapi.Machine, us
 			newHost.Spec.PreprovisioningNetworkDataName = networkConfigSecret.Name
 		}
 
-		if numMachines < numRequiredControlPlaneMachines {
+		if numArbiterMachines < numRequiredArbiters {
 			// Setting CustomDeploy early ensures that the
 			// corresponding Ironic node gets correctly configured
 			// from the beginning.
@@ -236,7 +236,7 @@ func ArbiterHosts(config *types.InstallConfig, machines []machineapi.Machine, us
 			}
 
 			// Link the new host to the currently available machine
-			machine := machines[numMachines]
+			machine := machines[numArbiterMachines]
 			newHost.Spec.ConsumerRef = &corev1.ObjectReference{
 				APIVersion: machine.TypeMeta.APIVersion,
 				Kind:       machine.TypeMeta.Kind,
@@ -245,9 +245,9 @@ func ArbiterHosts(config *types.InstallConfig, machines []machineapi.Machine, us
 			}
 			newHost.Spec.Online = true
 
-			// userDataSecret carries a reference to the master ignition file
+			// userDataSecret carries a reference to the arbiter ignition file
 			newHost.Spec.UserData = &corev1.SecretReference{Name: userDataSecret}
-			numMachines++
+			numArbiterMachines++
 			settings.Hosts = append(settings.Hosts, newHost)
 		}
 	}
