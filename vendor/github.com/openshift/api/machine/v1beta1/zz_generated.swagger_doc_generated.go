@@ -783,6 +783,16 @@ func (NetworkSpec) SwaggerDoc() map[string]string {
 	return map_NetworkSpec
 }
 
+var map_VSphereDisk = map[string]string{
+	"":        "VSphereDisk describes additional disks for vSphere.",
+	"name":    "name is used to identify the disk definition. name is required needs to be unique so that it can be used to clearly identify purpose of the disk. It must be at most 80 characters in length and must consist only of alphanumeric characters, hyphens and underscores, and must start and end with an alphanumeric character.",
+	"sizeGiB": "sizeGiB is the size of the disk in GiB. The maximum supported size is 57742 GiB.",
+}
+
+func (VSphereDisk) SwaggerDoc() map[string]string {
+	return map_VSphereDisk
+}
+
 var map_VSphereMachineProviderSpec = map[string]string{
 	"":                  "VSphereMachineProviderSpec is the type that will be embedded in a Machine.Spec.ProviderSpec field for an VSphere virtual machine. It is used by the vSphere machine actuator to create a single Machine. Compatibility level 2: Stable within a major release for a minimum of 9 months or 3 minor releases (whichever is longer).",
 	"userDataSecret":    "userDataSecret contains a local reference to a secret that contains the UserData to apply to the instance",
@@ -797,6 +807,7 @@ var map_VSphereMachineProviderSpec = map[string]string{
 	"tagIDs":            "tagIDs is an optional set of tags to add to an instance. Specified tagIDs must use URN-notation instead of display names. A maximum of 10 tag IDs may be specified.",
 	"snapshot":          "snapshot is the name of the snapshot from which the VM was cloned",
 	"cloneMode":         "cloneMode specifies the type of clone operation. The LinkedClone mode is only support for templates that have at least one snapshot. If the template has no snapshots, then CloneMode defaults to FullClone. When LinkedClone mode is enabled the DiskGiB field is ignored as it is not possible to expand disks of linked clones. Defaults to FullClone. When using LinkedClone, if no snapshots exist for the source template, falls back to FullClone.",
+	"dataDisks":         "dataDisks is a list of non OS disks to be created and attached to the VM.  The max number of disk allowed to be attached is currently 29.  The max number of disks for any controller is 30, but VM template will always have OS disk so that will leave 29 disks on any controller type.",
 }
 
 func (VSphereMachineProviderSpec) SwaggerDoc() map[string]string {

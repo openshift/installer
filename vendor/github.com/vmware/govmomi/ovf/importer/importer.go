@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -58,15 +57,16 @@ type Importer struct {
 	Manifest map[string]*library.Checksum
 }
 
-func (imp *Importer) ReadManifest(fpath string) error {
+func (imp *Importer) manifestPath(fpath string) string {
 	base := filepath.Base(fpath)
 	ext := filepath.Ext(base)
-	mfName := strings.Replace(base, ext, ".mf", 1)
+	return filepath.Join(filepath.Dir(fpath), strings.Replace(base, ext, ".mf", 1))
+}
 
-	mf, _, err := imp.Archive.Open(mfName)
+func (imp *Importer) ReadManifest(fpath string) error {
+	mf, _, err := imp.Archive.Open(imp.manifestPath(fpath))
 	if err != nil {
-		msg := fmt.Sprintf("manifest %q: %s", mf, err)
-		fmt.Fprintln(os.Stderr, msg)
+		msg := fmt.Sprintf("failed to read manifest %q: %s", mf, err)
 		return errors.New(msg)
 	}
 	imp.Manifest, err = library.ReadManifest(mf)
@@ -161,6 +161,7 @@ func (imp *Importer) Import(ctx context.Context, fpath string, opts Options) (*t
 
 	info, err := lease.Wait(ctx, spec.FileItem)
 	if err != nil {
+		_ = lease.Abort(ctx, nil)
 		return nil, err
 	}
 
@@ -169,6 +170,11 @@ func (imp *Importer) Import(ctx context.Context, fpath string, opts Options) (*t
 
 	for _, i := range info.Items {
 		if err := imp.Upload(ctx, lease, i); err != nil {
+			_ = lease.Abort(ctx, &types.LocalizedMethodFault{
+				Fault: &types.FileFault{
+					File: i.Path,
+				},
+			})
 			return nil, err
 		}
 	}

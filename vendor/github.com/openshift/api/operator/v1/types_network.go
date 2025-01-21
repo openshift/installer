@@ -550,6 +550,8 @@ type HybridOverlayConfig struct {
 }
 
 // +kubebuilder:validation:XValidation:rule="self == oldSelf || has(self.mode)",message="ipsecConfig.mode is required"
+// +kubebuilder:validation:XValidation:rule="has(self.mode) && self.mode == 'Full' ?  true : !has(self.full)",message="full is forbidden when mode is not Full"
+// +union
 type IPsecConfig struct {
 	// mode defines the behaviour of the ipsec configuration within the platform.
 	// Valid values are `Disabled`, `External` and `Full`.
@@ -561,7 +563,43 @@ type IPsecConfig struct {
 	// this is left to the user to configure.
 	// +kubebuilder:validation:Enum=Disabled;External;Full
 	// +optional
+	// +unionDiscriminator
 	Mode IPsecMode `json:"mode,omitempty"`
+
+	// full defines configuration parameters for the IPsec `Full` mode.
+	// This is permitted only when mode is configured with `Full`,
+	// and forbidden otherwise.
+	// +unionMember,optional
+	// +optional
+	Full *IPsecFullModeConfig `json:"full,omitempty"`
+}
+
+type Encapsulation string
+
+const (
+	// EncapsulationAlways always enable UDP encapsulation regardless of whether NAT is detected.
+	EncapsulationAlways = "Always"
+	// EncapsulationNever never enable UDP encapsulation even if NAT is present.
+	EncapsulationNever = "Never"
+	// EncapsulationAuto enable UDP encapsulation based on the detection of NAT.
+	EncapsulationAuto = "Auto"
+)
+
+// IPsecFullModeConfig defines configuration parameters for the IPsec `Full` mode.
+// +kubebuilder:validation:MinProperties:=1
+type IPsecFullModeConfig struct {
+	// encapsulation option to configure libreswan on how inter-pod traffic across nodes
+	// are encapsulated to handle NAT traversal. When configured it uses UDP port 4500
+	// for the encapsulation.
+	// Valid values are Always, Never, Auto and omitted.
+	// Always means enable UDP encapsulation regardless of whether NAT is detected.
+	// Disable means never enable UDP encapsulation even if NAT is present.
+	// Auto means enable UDP encapsulation based on the detection of NAT.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable
+	// default, which is subject to change over time. The current default is Auto.
+	// +kubebuilder:validation:Enum:=Always;Never;Auto
+	// +optional
+	Encapsulation Encapsulation `json:"encapsulation,omitempty"`
 }
 
 type IPForwardingMode string

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017-2023 VMware, Inc. All Rights Reserved.
+Copyright (c) 2017-2024 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -212,16 +212,21 @@ func (v *ContainerView) find(root mo.Reference, ref types.ManagedObjectReference
 func (v *ContainerView) PutObject(obj mo.Reference) {
 	ref := obj.Reference()
 
-	if v.include(ref) && v.find(v.root, ref, types.NewBool(false)) {
-		Map.Update(v, []types.PropertyChange{{Name: "view", Val: append(v.View, ref)}})
-	}
+	ctx := SpoofContext()
+	ctx.WithLock(v, func() {
+		if v.include(ref) && v.find(v.root, ref, types.NewBool(false)) {
+			ctx.Update(v, []types.PropertyChange{{Name: "view", Val: append(v.View, ref)}})
+		}
+	})
 }
 
 func (v *ContainerView) RemoveObject(ctx *Context, obj types.ManagedObjectReference) {
-	ctx.Map.RemoveReference(ctx, v, &v.View, obj)
+	ctx.WithLock(v, func() {
+		ctx.Map.RemoveReference(ctx, v, &v.View, obj)
+	})
 }
 
-func (*ContainerView) UpdateObject(mo.Reference, []types.PropertyChange) {}
+func (*ContainerView) UpdateObject(*Context, mo.Reference, []types.PropertyChange) {}
 
 func (m *ViewManager) CreateListView(ctx *Context, req *types.CreateListView) soap.HasFault {
 	body := new(methods.CreateListViewBody)
@@ -246,7 +251,7 @@ type ListView struct {
 }
 
 func (v *ListView) update(ctx *Context) {
-	ctx.Map.Update(v, []types.PropertyChange{{Name: "view", Val: v.View}})
+	ctx.Update(v, []types.PropertyChange{{Name: "view", Val: v.View}})
 }
 
 func (v *ListView) add(ctx *Context, refs []types.ManagedObjectReference) []types.ManagedObjectReference {
@@ -275,9 +280,6 @@ func (v *ListView) ModifyListView(ctx *Context, req *types.ModifyListView) soap.
 
 	for _, ref := range req.Remove {
 		RemoveReference(&v.View, ref)
-		if ctx.Map.Get(ref) == nil {
-			body.Res.Returnval = append(body.Res.Returnval, ref)
-		}
 	}
 
 	if len(req.Remove) != 0 || len(req.Add) != 0 {

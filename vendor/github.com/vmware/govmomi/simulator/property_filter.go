@@ -31,18 +31,58 @@ type PropertyFilter struct {
 
 	pc   *PropertyCollector
 	refs map[types.ManagedObjectReference]struct{}
+	sync bool
 }
+
+func (f *PropertyFilter) UpdateObject(ctx *Context, o mo.Reference, changes []types.PropertyChange) {
+	// A PropertyFilter's traversal spec is "applied" on the initial call to WaitForUpdates,
+	// with matching objects tracked in the `refs` field.
+	// New and deleted objects matching the filter are accounted for within PropertyCollector.
+	// But when an object used for the traversal itself is updated (e.g. ListView),
+	// we need to update the tracked `refs` on the next call to WaitForUpdates.
+	ref := o.Reference()
+
+	for _, set := range f.Spec.ObjectSet {
+		if set.Obj == ref && len(set.SelectSet) != 0 {
+			ctx.WithLock(f, func() { f.sync = true })
+			break
+		}
+	}
+}
+
+func (_ *PropertyFilter) PutObject(_ mo.Reference) {}
+
+func (_ *PropertyFilter) RemoveObject(_ *Context, _ types.ManagedObjectReference) {}
 
 func (f *PropertyFilter) DestroyPropertyFilter(ctx *Context, c *types.DestroyPropertyFilter) soap.HasFault {
 	body := &methods.DestroyPropertyFilterBody{}
 
-	RemoveReference(&f.pc.Filter, c.This)
+	ctx.WithLock(f.pc, func() {
+		RemoveReference(&f.pc.Filter, c.This)
+	})
 
 	ctx.Session.Remove(ctx, c.This)
 
 	body.Res = &types.DestroyPropertyFilterResponse{}
 
 	return body
+}
+
+func (f *PropertyFilter) collect(ctx *Context) (*types.RetrieveResult, types.BaseMethodFault) {
+	req := &types.RetrievePropertiesEx{
+		SpecSet: []types.PropertyFilterSpec{f.Spec},
+	}
+	return collect(ctx, req)
+}
+
+func (f *PropertyFilter) update(ctx *Context) {
+	ctx.WithLock(f, func() {
+		if f.sync {
+			f.sync = false
+			clear(f.refs)
+			_, _ = f.collect(ctx)
+		}
+	})
 }
 
 // matches returns true if the change matches one of the filter Spec.PropSet
@@ -52,7 +92,11 @@ func (f *PropertyFilter) matches(ctx *Context, ref types.ManagedObjectReference,
 	for _, p := range f.Spec.PropSet {
 		if p.Type != ref.Type {
 			if kind == nil {
-				kind = getManagedObject(ctx.Map.Get(ref)).Type()
+				obj := ctx.Map.Get(ref)
+				if obj == nil { // object may have since been deleted
+					continue
+				}
+				kind = getManagedObject(obj).Type()
 			}
 			// e.g. ManagedEntity, ComputeResource
 			field, ok := kind.FieldByName(p.Type)
