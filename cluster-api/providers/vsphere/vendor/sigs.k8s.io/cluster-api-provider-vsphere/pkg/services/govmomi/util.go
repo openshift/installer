@@ -194,11 +194,11 @@ func reconcileVSphereVMWhenNetworkIsReady(ctx context.Context, virtualMachineCtx
 			// Wait for the VM to be powered on.
 			powerOnTaskInfo, err := powerOnTask.WaitForResult(ctx)
 			if err != nil && powerOnTaskInfo == nil {
-				return nil, nil, errors.Wrapf(err, "failed to wait for power on op for vm %s", ctx)
+				return nil, nil, errors.Wrapf(err, "failed to wait for power on op for vm %s", virtualMachineCtx)
 			}
 			powerState, err := virtualMachineCtx.Obj.PowerState(ctx)
 			if err != nil {
-				return nil, nil, errors.Wrapf(err, "failed to get power state for vm %s", ctx)
+				return nil, nil, errors.Wrapf(err, "failed to get power state for vm %s", virtualMachineCtx)
 			}
 			if powerState != types.VirtualMachinePowerStatePoweredOn {
 				return nil, nil, errors.Errorf(
@@ -208,7 +208,7 @@ func reconcileVSphereVMWhenNetworkIsReady(ctx context.Context, virtualMachineCtx
 
 			// Wait for all NICs to have valid MAC addresses.
 			if err := waitForMacAddresses(ctx, virtualMachineCtx); err != nil {
-				return nil, nil, errors.Wrapf(err, "failed to wait for mac addresses for vm %s", ctx)
+				return nil, nil, errors.Wrapf(err, "failed to wait for mac addresses for vm %s", virtualMachineCtx)
 			}
 
 			// Get all the MAC addresses. This is done separately from waiting
@@ -217,7 +217,7 @@ func reconcileVSphereVMWhenNetworkIsReady(ctx context.Context, virtualMachineCtx
 			// specs, and not the propery change order.
 			_, macToDeviceIndex, deviceToMacIndex, err := getMacAddresses(ctx, virtualMachineCtx)
 			if err != nil {
-				return nil, nil, errors.Wrapf(err, "failed to get mac addresses for vm %s", ctx)
+				return nil, nil, errors.Wrapf(err, "failed to get mac addresses for vm %s", virtualMachineCtx)
 			}
 
 			// Wait for the IP addresses to show up for the VM.

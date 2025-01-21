@@ -335,7 +335,7 @@ func (vms *VMService) reconcileMetadata(ctx context.Context, virtualMachineCtx *
 	log.Info("Updating VM metadata")
 	taskRef, err := vms.setMetadata(ctx, virtualMachineCtx, newMetadata)
 	if err != nil {
-		return false, errors.Wrapf(err, "unable to set metadata on vm %s", ctx)
+		return false, errors.Wrapf(err, "unable to set metadata on vm %s", virtualMachineCtx)
 	}
 
 	virtualMachineCtx.VSphereVM.Status.TaskRef = taskRef
@@ -356,7 +356,7 @@ func (vms *VMService) reconcilePowerState(ctx context.Context, virtualMachineCtx
 		task, err := virtualMachineCtx.Obj.PowerOn(ctx)
 		if err != nil {
 			conditions.MarkFalse(virtualMachineCtx.VSphereVM, infrav1.VMProvisionedCondition, infrav1.PoweringOnFailedReason, clusterv1.ConditionSeverityWarning, err.Error())
-			return false, errors.Wrapf(err, "failed to trigger power on op for vm %s", ctx)
+			return false, errors.Wrapf(err, "failed to trigger power on op for vm %s", virtualMachineCtx)
 		}
 		conditions.MarkFalse(virtualMachineCtx.VSphereVM, infrav1.VMProvisionedCondition, infrav1.PoweringOnReason, clusterv1.ConditionSeverityInfo, "")
 
@@ -376,7 +376,7 @@ func (vms *VMService) reconcilePowerState(ctx context.Context, virtualMachineCtx
 		log.Info("VM is powered on")
 		return true, nil
 	default:
-		return false, errors.Errorf("unexpected power state %q for vm %s", powerState, ctx)
+		return false, errors.Errorf("unexpected power state %q for vm %s", powerState, virtualMachineCtx)
 	}
 }
 
@@ -465,7 +465,7 @@ func (vms *VMService) reconcileStoragePolicy(ctx context.Context, virtualMachine
 			DeviceChange: changes,
 		})
 		if err != nil {
-			return errors.Wrapf(err, "unable to set storagePolicy on vm %s", ctx)
+			return errors.Wrapf(err, "unable to set storagePolicy on vm %s", virtualMachineCtx)
 		}
 		virtualMachineCtx.VSphereVM.Status.TaskRef = task.Reference().Value
 	}
@@ -492,7 +492,7 @@ func (vms *VMService) reconcileHardwareVersion(ctx context.Context, virtualMachi
 			log.Info("Upgrading hardware version", "fromVersion", virtualMachine.Config.Version, "toVersion", virtualMachineCtx.VSphereVM.Spec.HardwareVersion)
 			task, err := virtualMachineCtx.Obj.UpgradeVM(ctx, virtualMachineCtx.VSphereVM.Spec.HardwareVersion)
 			if err != nil {
-				return false, errors.Wrapf(err, "error trigging upgrade op for machine %s", ctx)
+				return false, errors.Wrapf(err, "error trigging upgrade op for machine %s", virtualMachineCtx)
 			}
 			virtualMachineCtx.VSphereVM.Status.TaskRef = task.Reference().Value
 			return false, nil
@@ -535,7 +535,7 @@ func (vms *VMService) reconcilePCIDevices(ctx context.Context, virtualMachineCtx
 		}
 		log.Info("PCI devices to be added", "number", len(specsToBeAdded))
 		if err := virtualMachineCtx.Obj.AddDevice(ctx, pci.ConstructDeviceSpecs(specsToBeAdded)...); err != nil {
-			return errors.Wrapf(err, "error adding pci devices for %q", ctx)
+			return errors.Wrapf(err, "error adding pci devices for %q", virtualMachineCtx)
 		}
 	}
 	return nil
@@ -550,7 +550,7 @@ func (vms *VMService) getMetadata(ctx context.Context, virtualMachineCtx *virtua
 	)
 
 	if err := pc.RetrieveOne(ctx, virtualMachineCtx.Ref, props, &obj); err != nil {
-		return "", errors.Wrapf(err, "unable to fetch props %v for vm %s", props, ctx)
+		return "", errors.Wrapf(err, "unable to fetch props %v for vm %s", props, virtualMachineCtx)
 	}
 	if obj.Config == nil {
 		return "", nil
@@ -571,7 +571,7 @@ func (vms *VMService) getMetadata(ctx context.Context, virtualMachineCtx *virtua
 
 	metadataBuf, err := base64.StdEncoding.DecodeString(metadataBase64)
 	if err != nil {
-		return "", errors.Wrapf(err, "unable to decode metadata for %s", ctx)
+		return "", errors.Wrapf(err, "unable to decode metadata for %s", virtualMachineCtx)
 	}
 
 	return string(metadataBuf), nil
@@ -599,7 +599,7 @@ func (vms *VMService) setMetadata(ctx context.Context, virtualMachineCtx *virtua
 		ExtraConfig: extraConfig,
 	})
 	if err != nil {
-		return "", errors.Wrapf(err, "unable to set metadata on vm %s", ctx)
+		return "", errors.Wrapf(err, "unable to set metadata on vm %s", virtualMachineCtx)
 	}
 
 	return task.Reference().Value, nil
@@ -641,7 +641,7 @@ func (vms *VMService) getBootstrapData(ctx context.Context, vmCtx *capvcontext.V
 		Name:      vmCtx.VSphereVM.Spec.BootstrapRef.Name,
 	}
 	if err := vmCtx.Client.Get(ctx, secretKey, secret); err != nil {
-		return nil, "", errors.Wrapf(err, "failed to get bootstrap data secret for %s", ctx)
+		return nil, "", errors.Wrapf(err, "failed to get bootstrap data secret for %s", vmCtx)
 	}
 
 	format, ok := secret.Data["format"]

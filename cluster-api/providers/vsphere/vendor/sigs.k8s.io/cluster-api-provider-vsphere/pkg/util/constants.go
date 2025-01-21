@@ -36,8 +36,9 @@ network:
       set-name: "eth{{ $i }}"
       {{- end }}
       wakeonlan: true
-      {{- if or $net.DHCP4 $net.DHCP6 }}
       dhcp4: {{ $net.DHCP4 }}
+      dhcp6: {{ $net.DHCP6 }}
+      accept-ra: {{ $net.DHCP6 }}   
 	  {{- if $net.DHCP4Overrides }}
       dhcp4-overrides:
 	    {{- if $net.DHCP4Overrides.Hostname }}
@@ -68,7 +69,6 @@ network:
         use-routes: "{{ $net.DHCP4Overrides.UseRoutes }}"
 	    {{- end }}
 	  {{- end }}
-      dhcp6: {{ $net.DHCP6 }}
 	  {{- if $net.DHCP6Overrides }}
       dhcp6-overrides:
 	    {{- if $net.DHCP6Overrides.Hostname }}
@@ -99,7 +99,6 @@ network:
         use-routes: "{{ $net.DHCP6Overrides.UseRoutes }}"
 	    {{- end }}
 	  {{- end }}
-      {{- end }}
       {{- if $net.IPAddrs }}
       addresses:
       {{- range $net.IPAddrs }}
