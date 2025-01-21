@@ -90,18 +90,8 @@ func (o *ClusterUninstaller) deleteAddress(ctx context.Context, item cloudResour
 		return fmt.Errorf("invalid address type %q", item.typeName)
 	}
 
-	if err != nil && !isNoOp(err) {
-		o.resetRequestID(item.typeName, item.name)
-		return fmt.Errorf("failed to delete address %s: %w", item.name, err)
-	}
-	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID(item.typeName, item.name)
-		return fmt.Errorf("failed to delete address %s with error: %s", item.name, operationErrorMessage(op))
-	}
-	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
-		o.resetRequestID(item.typeName, item.name)
-		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted address %s", item.name)
+	if err = o.handleOperation(op, err, item, "address"); err != nil {
+		return err
 	}
 	return nil
 }

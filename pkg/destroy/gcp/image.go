@@ -59,18 +59,8 @@ func (o *ClusterUninstaller) deleteImage(ctx context.Context, item cloudResource
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.Images.Delete(o.ProjectID, item.name).Context(ctx).RequestId(o.requestID(item.typeName, item.name)).Do()
-	if err != nil && !isNoOp(err) {
-		o.resetRequestID(item.typeName, item.name)
-		return errors.Wrapf(err, "failed to delete image %s", item.name)
-	}
-	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID(item.typeName, item.name)
-		return errors.Errorf("failed to delete image %s with error: %s", item.name, operationErrorMessage(op))
-	}
-	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
-		o.resetRequestID(item.typeName, item.name)
-		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted image %s", item.name)
+	if err = o.handleOperation(op, err, item, "image"); err != nil {
+		return err
 	}
 	return nil
 }

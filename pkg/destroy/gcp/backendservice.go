@@ -85,18 +85,8 @@ func (o *ClusterUninstaller) deleteBackendService(ctx context.Context, item clou
 		return fmt.Errorf("invalid backend service type %q", item.typeName)
 	}
 
-	if err != nil && !isNoOp(err) {
-		o.resetRequestID(item.typeName, item.name)
-		return fmt.Errorf("failed to delete backend service %s: %w", item.name, err)
-	}
-	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID(item.typeName, item.name)
-		return fmt.Errorf("failed to delete backend service %s with error: %s", item.name, operationErrorMessage(op))
-	}
-	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
-		o.resetRequestID(item.typeName, item.name)
-		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted backend service %s", item.name)
+	if err = o.handleOperation(op, err, item, "backend service"); err != nil {
+		return err
 	}
 	return nil
 }

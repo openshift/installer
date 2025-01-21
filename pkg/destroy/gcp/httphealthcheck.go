@@ -60,18 +60,8 @@ func (o *ClusterUninstaller) deleteHTTPHealthCheck(ctx context.Context, item clo
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.HttpHealthChecks.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
-	if err != nil && !isNoOp(err) {
-		o.resetRequestID(item.typeName, item.name)
-		return errors.Wrapf(err, "failed to delete HTTP health check %s", item.name)
-	}
-	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID(item.typeName, item.name)
-		return errors.Errorf("failed to delete HTTP health check %s with error: %s", item.name, operationErrorMessage(op))
-	}
-	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
-		o.resetRequestID(item.typeName, item.name)
-		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted HTTP health check %s", item.name)
+	if err = o.handleOperation(op, err, item, "HTTP health check"); err != nil {
+		return err
 	}
 	return nil
 }
