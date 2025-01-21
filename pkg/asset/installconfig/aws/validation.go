@@ -9,14 +9,14 @@ import (
 	"net/url"
 	"sort"
 
+	awsv2 "github.com/aws/aws-sdk-go-v2/aws"
+	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/sirupsen/logrus"
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -48,7 +48,8 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 	if config.Platform.AWS == nil {
 		return errors.New(field.Required(field.NewPath("platform", "aws"), "AWS validation requires an AWS platform configuration").Error())
 	}
-	allErrs = append(allErrs, validateAMI(ctx, config)...)
+
+	allErrs = append(allErrs, validateAMI(ctx, meta, config)...)
 	allErrs = append(allErrs, validatePublicIpv4Pool(ctx, meta, field.NewPath("platform", "aws", "publicIpv4PoolId"), config)...)
 	allErrs = append(allErrs, validatePlatform(ctx, meta, field.NewPath("platform", "aws"), config.Platform.AWS, config.Networking, config.Publish)...)
 
@@ -119,7 +120,7 @@ func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, 
 	return allErrs
 }
 
-func validateAMI(ctx context.Context, config *types.InstallConfig) field.ErrorList {
+func validateAMI(ctx context.Context, meta *Metadata, config *types.InstallConfig) field.ErrorList {
 	// accept AMI from the rhcos stream metadata
 	if rhcos.AMIRegions(config.ControlPlane.Architecture).Has(config.Platform.AWS.Region) {
 		return nil
@@ -142,6 +143,7 @@ func validateAMI(ctx context.Context, config *types.InstallConfig) field.ErrorLi
 	if config.ControlPlane != nil && config.ControlPlane.Platform.AWS != nil {
 		controlPlaneHasAMISpecified = config.ControlPlane.Platform.AWS.AMIID != ""
 	}
+
 	computesHaveAMISpecified := true
 	for _, c := range config.Compute {
 		if c.Replicas != nil && *c.Replicas == 0 {
@@ -151,13 +153,27 @@ func validateAMI(ctx context.Context, config *types.InstallConfig) field.ErrorLi
 			computesHaveAMISpecified = false
 		}
 	}
+
 	if controlPlaneHasAMISpecified && computesHaveAMISpecified {
 		return nil
 	}
 
-	// accept AMI that can be copied from us-east-1 if the region is in the standard AWS partition
-	if partition, partitionFound := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), config.Platform.AWS.Region); partitionFound {
-		if partition.ID() == endpoints.AwsPartitionID {
+	regions, err := meta.Regions(ctx)
+	if err != nil {
+		return field.ErrorList{field.InternalError(field.NewPath("platform", "aws", "region"), fmt.Errorf("failed to get list of regions: %w", err))}
+	}
+
+	if sets.New(regions...).Has(config.Platform.AWS.Region) {
+		resolver := ec2v2.NewDefaultEndpointResolver()
+		options := ec2v2.EndpointResolverOptions{
+			DisableHTTPS:         false,
+			UseDualStackEndpoint: awsv2.DualStackEndpointStateDisabled,
+		}
+		defaultEndpoint, err := resolver.ResolveEndpoint(config.Platform.AWS.Region, options)
+		if err != nil {
+			return field.ErrorList{field.InternalError(field.NewPath("platform", "aws", "region"), fmt.Errorf("failed to resolve ec2 endpoint: %w", err))}
+		}
+		if defaultEndpoint.PartitionID == endpoints.AwsPartitionID {
 			return nil
 		}
 	}
@@ -471,51 +487,19 @@ func validateDuplicateSubnetZones(fldPath *field.Path, subnets Subnets, idxMap m
 
 func validateServiceEndpoints(fldPath *field.Path, region string, services []awstypes.ServiceEndpoint) field.ErrorList {
 	allErrs := field.ErrorList{}
-	ec2Endpoint := ""
+	// Validate the endpoint overrides for all provided services.
+	// The following is the list of required services by the installer. When
+	// an override is not provided for these services, the default endpoint will be used.
+	//	"ec2", "elasticloadbalancing", "iam", "route53", "s3", "sts", "tagging",
 	for id, service := range services {
 		err := validateEndpointAccessibility(service.URL)
 		if err != nil {
+			logrus.Debugf("failed to access %s endpoint at %s", service.Name, service.URL)
 			allErrs = append(allErrs, field.Invalid(fldPath.Index(id).Child("url"), service.URL, err.Error()))
-			continue
-		}
-		if service.Name == ec2.ServiceName {
-			ec2Endpoint = service.URL
 		}
 	}
 
-	if partition, partitionFound := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), region); partitionFound {
-		if _, ok := partition.Regions()[region]; !ok && ec2Endpoint == "" {
-			err := validateRegion(region)
-			if err != nil {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("region"), region, err.Error()))
-			}
-		}
-		return allErrs
-	}
-
-	resolver := newAWSResolver(region, services)
-	var errs []error
-	for _, service := range requiredServices {
-		_, err := resolver.EndpointFor(service, region, endpoints.StrictMatchingOption)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("failed to find endpoint for service %q: %w", service, err))
-		}
-	}
-	if err := utilerrors.NewAggregate(errs); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath, services, err.Error()))
-	}
 	return allErrs
-}
-
-func validateRegion(region string) error {
-	ses, err := GetSessionWithOptions(func(sess *session.Options) {
-		sess.Config.Region = aws.String(region)
-	})
-	if err != nil {
-		return err
-	}
-	ec2Session := ec2.New(ses)
-	return validateEndpointAccessibility(ec2Session.Endpoint)
 }
 
 func validateZoneLocal(ctx context.Context, meta *Metadata, fldPath *field.Path, zoneName string) *field.Error {
