@@ -56,11 +56,12 @@ func AddVsphereClusterIdentityControllerToManager(ctx context.Context, controlle
 		Client:               controllerManagerCtx.Client,
 		Recorder:             mgr.GetEventRecorderFor("vsphereclusteridentity-controller"),
 	}
+	predicateLog := ctrl.LoggerFrom(ctx).WithValues("controller", "vsphereclusteridentity")
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&infrav1.VSphereClusterIdentity{}).
 		WithOptions(options).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), controllerManagerCtx.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), predicateLog, controllerManagerCtx.WatchFilterValue)).
 		Complete(reconciler)
 }
 
