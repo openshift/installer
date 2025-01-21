@@ -1,11 +1,11 @@
 /*
-Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+Copyright (c) 2017-2024 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -89,13 +89,13 @@ func networkSummary(n *mo.Network) types.BaseNetworkSummary {
 
 func folderPutChild(ctx *Context, f *mo.Folder, o mo.Entity) {
 	ctx.WithLock(f, func() {
-		// Need to update ChildEntity before Map.Put for ContainerView updates to work properly
-		f.ChildEntity = append(f.ChildEntity, ctx.Map.reference(o))
-		ctx.Map.PutEntity(f, o)
-
-		folderUpdate(ctx, f, o, ctx.Map.AddReference)
-
 		ctx.WithLock(o, func() {
+			// Need to update ChildEntity before Map.Put for ContainerView updates to work properly
+			f.ChildEntity = append(f.ChildEntity, ctx.Map.reference(o))
+			ctx.Map.PutEntity(f, o)
+
+			folderUpdate(ctx, f, o, ctx.Map.AddReference)
+
 			switch e := o.(type) {
 			case *mo.Network:
 				e.Summary = networkSummary(e)
@@ -110,7 +110,10 @@ func folderPutChild(ctx *Context, f *mo.Folder, o mo.Entity) {
 
 func folderRemoveChild(ctx *Context, f *mo.Folder, o mo.Reference) {
 	ctx.Map.Remove(ctx, o.Reference())
+	folderRemoveReference(ctx, f, o)
+}
 
+func folderRemoveReference(ctx *Context, f *mo.Folder, o mo.Reference) {
 	ctx.WithLock(f, func() {
 		RemoveReference(&f.ChildEntity, o.Reference())
 
@@ -205,7 +208,7 @@ func (f *Folder) CreateFolder(ctx *Context, c *types.CreateFolder) soap.HasFault
 		if obj := ctx.Map.FindByName(name, f.ChildEntity); obj != nil {
 			r.Fault_ = Fault("", &types.DuplicateName{
 				Name:   name,
-				Object: f.Self,
+				Object: obj.Reference(),
 			})
 
 			return r
@@ -247,7 +250,7 @@ func (f *Folder) CreateStoragePod(ctx *Context, c *types.CreateStoragePod) soap.
 		if obj := ctx.Map.FindByName(c.Name, f.ChildEntity); obj != nil {
 			r.Fault_ = Fault("", &types.DuplicateName{
 				Name:   c.Name,
-				Object: f.Self,
+				Object: obj.Reference(),
 			})
 
 			return r
@@ -298,7 +301,7 @@ func (f *Folder) CreateDatacenter(ctx *Context, c *types.CreateDatacenter) soap.
 	if folderHasChildType(&f.Folder, "Datacenter") && folderHasChildType(&f.Folder, "Folder") {
 		dc := NewDatacenter(ctx, &f.Folder)
 
-		ctx.Map.Update(dc, []types.PropertyChange{
+		ctx.Update(dc, []types.PropertyChange{
 			{Name: "name", Val: c.Name},
 		})
 
@@ -402,6 +405,32 @@ func (c *createVM) Run(task *Task) (types.AnyType, types.BaseMethodFault) {
 		vm.Runtime.Host = c.req.Host
 	}
 
+	if cryptoSpec, ok := c.req.Config.Crypto.(*types.CryptoSpecEncrypt); ok {
+		if cryptoSpec.CryptoKeyId.KeyId == "" {
+			if cryptoSpec.CryptoKeyId.ProviderId == nil {
+				providerID, keyID := getDefaultProvider(c.ctx, vm, true)
+				if providerID == "" {
+					return nil, &types.InvalidVmConfig{Property: "configSpec.crypto"}
+				}
+				vm.Config.KeyId = &types.CryptoKeyId{
+					KeyId: keyID,
+					ProviderId: &types.KeyProviderId{
+						Id: providerID,
+					},
+				}
+			} else {
+				providerID := cryptoSpec.CryptoKeyId.ProviderId.Id
+				keyID := generateKeyForProvider(c.ctx, providerID)
+				vm.Config.KeyId = &types.CryptoKeyId{
+					KeyId: keyID,
+					ProviderId: &types.KeyProviderId{
+						Id: providerID,
+					},
+				}
+			}
+		}
+	}
+
 	vm.Guest = &types.GuestInfo{
 		ToolsStatus:        types.VirtualMachineToolsStatusToolsNotInstalled,
 		ToolsVersion:       "0",
@@ -461,7 +490,7 @@ func (c *createVM) Run(task *Task) (types.AnyType, types.BaseMethodFault) {
 
 	vm.RefreshStorageInfo(c.ctx, nil)
 
-	c.ctx.Map.Update(vm, []types.PropertyChange{
+	c.ctx.Update(vm, []types.PropertyChange{
 		{Name: "name", Val: c.req.Config.Name},
 	})
 
@@ -570,7 +599,7 @@ func (f *Folder) MoveIntoFolderTask(ctx *Context, c *types.MoveIntoFolder_Task) 
 				return nil, &types.NotSupported{}
 			}
 
-			folderRemoveChild(ctx, &parent.Folder, ref)
+			folderRemoveReference(ctx, &parent.Folder, ref)
 			folderPutChild(ctx, &f.Folder, obj)
 		}
 
@@ -743,6 +772,332 @@ func (f *Folder) DestroyTask(ctx *Context, req *types.Destroy_Task) soap.HasFaul
 	}
 }
 
+func addPlacementFault(body *methods.PlaceVmsXClusterBody, vmName string, vmRef *types.ManagedObjectReference, poolRef types.ManagedObjectReference) {
+	faults := types.PlaceVmsXClusterResultPlacementFaults{
+		VmName:       vmName,
+		ResourcePool: poolRef,
+		Vm:           vmRef,
+		Faults: []types.LocalizedMethodFault{
+			{
+				Fault: &types.GenericDrsFault{},
+			},
+		},
+	}
+	body.Res.Returnval.Faults = append(body.Res.Returnval.Faults, faults)
+}
+
+func generateRelocatePlacementAction(ctx *Context, inputRelocateSpec *types.VirtualMachineRelocateSpec, pool *ResourcePool,
+	cluster *ClusterComputeResource, hostRequired, datastoreRequired bool) *types.ClusterClusterRelocatePlacementAction {
+	var relocateSpec *types.VirtualMachineRelocateSpec
+
+	placementAction := types.ClusterClusterRelocatePlacementAction{
+		Pool: pool.Self,
+	}
+
+	if hostRequired {
+		randomHost := cluster.Host[rand.Intn(len(cluster.Host))]
+		placementAction.TargetHost = &randomHost
+	}
+
+	if datastoreRequired {
+		relocateSpec = inputRelocateSpec
+
+		ds := ctx.Map.Get(cluster.Datastore[rand.Intn(len(cluster.Datastore))]).(*Datastore)
+
+		relocateSpec.Datastore = types.NewReference(ds.Reference())
+
+		for _, diskLocator := range relocateSpec.Disk {
+			diskLocator.Datastore = ds.Reference()
+		}
+	}
+
+	placementAction.RelocateSpec = relocateSpec
+	return &placementAction
+}
+
+func generateRecommendationForRelocate(ctx *Context, req *types.PlaceVmsXCluster) *methods.PlaceVmsXClusterBody {
+
+	pools := req.PlacementSpec.ResourcePools
+	specs := req.PlacementSpec.VmPlacementSpecs
+
+	body := new(methods.PlaceVmsXClusterBody)
+	body.Res = new(types.PlaceVmsXClusterResponse)
+	hostRequired := req.PlacementSpec.HostRecommRequired != nil && *req.PlacementSpec.HostRecommRequired
+	datastoreRequired := req.PlacementSpec.DatastoreRecommRequired != nil && *req.PlacementSpec.DatastoreRecommRequired
+
+	for _, spec := range specs {
+
+		// The RelocateSpec must be set.
+		if spec.RelocateSpec == nil {
+			body.Fault_ = Fault("", &types.InvalidArgument{InvalidProperty: "relocateSpec"})
+			return body
+		}
+
+		// The VM Reference must be set.
+		if spec.Vm == nil {
+			body.Fault_ = Fault("", &types.InvalidArgument{InvalidProperty: "vm"})
+			return body
+		}
+
+		vmRef := ctx.Map.Get(*spec.Vm)
+		if vmRef == nil {
+			body.Fault_ = Fault("", &types.InvalidArgument{InvalidProperty: "vm"})
+			return body
+		}
+
+		vm := vmRef.(*VirtualMachine)
+		pool := ctx.Map.Get(pools[rand.Intn(len(pools))]).(*ResourcePool)
+		cluster := ctx.Map.Get(pool.Owner).(*ClusterComputeResource)
+
+		if len(cluster.Host) == 0 {
+			addPlacementFault(body, spec.ConfigSpec.Name, &vm.Self, pool.Self)
+			continue
+		}
+
+		reco := types.ClusterRecommendation{
+			Key:        "1",
+			Type:       "V1",
+			Time:       time.Now(),
+			Rating:     1,
+			Reason:     string(types.RecommendationReasonCodeXClusterPlacement),
+			ReasonText: string(types.RecommendationReasonCodeXClusterPlacement),
+			Target:     &cluster.Self,
+		}
+
+		placementAction := generateRelocatePlacementAction(ctx, spec.RelocateSpec, pool, cluster, hostRequired, datastoreRequired)
+
+		reco.Action = append(reco.Action, placementAction)
+
+		body.Res.Returnval.PlacementInfos = append(body.Res.Returnval.PlacementInfos,
+			types.PlaceVmsXClusterResultPlacementInfo{
+				VmName:         vm.Name,
+				Recommendation: reco,
+				Vm:             &vm.Self,
+			},
+		)
+	}
+	return body
+}
+
+func generateReconfigurePlacementAction(ctx *Context, inputConfigSpec *types.VirtualMachineConfigSpec, pool *ResourcePool,
+	cluster *ClusterComputeResource, hostRequired, datastoreRequired bool) *types.ClusterClusterReconfigurePlacementAction {
+	var configSpec *types.VirtualMachineConfigSpec
+
+	placementAction := types.ClusterClusterReconfigurePlacementAction{
+		Pool: pool.Self,
+	}
+
+	if hostRequired {
+		randomHost := cluster.Host[rand.Intn(len(cluster.Host))]
+		placementAction.TargetHost = &randomHost
+	}
+
+	if datastoreRequired {
+		configSpec = inputConfigSpec
+
+		ds := ctx.Map.Get(cluster.Datastore[rand.Intn(len(cluster.Datastore))]).(*Datastore)
+
+		fillConfigSpecWithDatastore(ctx, inputConfigSpec, configSpec, ds)
+	}
+
+	placementAction.ConfigSpec = configSpec
+	return &placementAction
+}
+
+func generateRecommendationForReconfigure(ctx *Context, req *types.PlaceVmsXCluster) *methods.PlaceVmsXClusterBody {
+
+	pools := req.PlacementSpec.ResourcePools
+	specs := req.PlacementSpec.VmPlacementSpecs
+
+	body := new(methods.PlaceVmsXClusterBody)
+	body.Res = new(types.PlaceVmsXClusterResponse)
+	hostRequired := req.PlacementSpec.HostRecommRequired != nil && *req.PlacementSpec.HostRecommRequired
+	datastoreRequired := req.PlacementSpec.DatastoreRecommRequired != nil && *req.PlacementSpec.DatastoreRecommRequired
+
+	for _, spec := range specs {
+
+		// Only a single pool must be set
+		if len(pools) != 1 {
+			body.Fault_ = Fault("", &types.InvalidArgument{InvalidProperty: "resourcePools"})
+			return body
+		}
+
+		// The RelocateSpec must not be set.
+		if spec.RelocateSpec != nil {
+			body.Fault_ = Fault("", &types.InvalidArgument{InvalidProperty: "relocateSpec"})
+			return body
+		}
+
+		// The VM Reference must be set.
+		if spec.Vm == nil {
+			body.Fault_ = Fault("", &types.InvalidArgument{InvalidProperty: "vm"})
+			return body
+		}
+
+		vmRef := ctx.Map.Get(*spec.Vm)
+		if vmRef == nil {
+			body.Fault_ = Fault("", &types.InvalidArgument{InvalidProperty: "vm"})
+			return body
+		}
+
+		vm := vmRef.(*VirtualMachine)
+
+		// Use VM's current host
+		host := Map.Get(vm.Runtime.Host.Reference()).(*HostSystem)
+
+		if host.Parent.Type != "ClusterComputeResource" {
+			addPlacementFault(body, spec.ConfigSpec.Name, &vm.Self, host.Self)
+			continue
+		}
+
+		cluster := ctx.Map.Get(*host.Parent).(*ClusterComputeResource)
+		pool := ctx.Map.Get(*cluster.ResourcePool).(*ResourcePool)
+
+		reco := types.ClusterRecommendation{
+			Key:        "1",
+			Type:       "V1",
+			Time:       time.Now(),
+			Rating:     1,
+			Reason:     string(types.RecommendationReasonCodeXClusterPlacement),
+			ReasonText: string(types.RecommendationReasonCodeXClusterPlacement),
+			Target:     &cluster.Self,
+		}
+
+		placementAction := generateReconfigurePlacementAction(ctx, &spec.ConfigSpec, pool, cluster, hostRequired, datastoreRequired)
+
+		reco.Action = append(reco.Action, placementAction)
+
+		body.Res.Returnval.PlacementInfos = append(body.Res.Returnval.PlacementInfos,
+			types.PlaceVmsXClusterResultPlacementInfo{
+				VmName:         vm.Name,
+				Recommendation: reco,
+				Vm:             &vm.Self,
+			},
+		)
+	}
+	return body
+}
+
+func fillConfigSpecWithDatastore(ctx *Context, inputConfigSpec, configSpec *types.VirtualMachineConfigSpec, ds *Datastore) {
+	if configSpec.Files == nil {
+		configSpec.Files = new(types.VirtualMachineFileInfo)
+	}
+	configSpec.Files.VmPathName = fmt.Sprintf("[%[1]s] %[2]s/%[2]s.vmx", ds.Name, inputConfigSpec.Name)
+
+	for _, change := range configSpec.DeviceChange {
+		dspec := change.GetVirtualDeviceConfigSpec()
+
+		if dspec.FileOperation != types.VirtualDeviceConfigSpecFileOperationCreate {
+			continue
+		}
+
+		switch dspec.Operation {
+		case types.VirtualDeviceConfigSpecOperationAdd:
+			device := dspec.Device
+			d := device.GetVirtualDevice()
+
+			switch device.(type) {
+			case *types.VirtualDisk:
+				switch b := d.Backing.(type) {
+				case types.BaseVirtualDeviceFileBackingInfo:
+					info := b.GetVirtualDeviceFileBackingInfo()
+					info.Datastore = types.NewReference(ds.Reference())
+
+					var dsPath object.DatastorePath
+					if dsPath.FromString(info.FileName) {
+						dsPath.Datastore = ds.Name
+						info.FileName = dsPath.String()
+					}
+				}
+			}
+		}
+	}
+}
+
+func generateInitialPlacementAction(ctx *Context, inputConfigSpec *types.VirtualMachineConfigSpec, pool *ResourcePool,
+	cluster *ClusterComputeResource, hostRequired, datastoreRequired bool) *types.ClusterClusterInitialPlacementAction {
+	var configSpec *types.VirtualMachineConfigSpec
+
+	placementAction := types.ClusterClusterInitialPlacementAction{
+		Pool: pool.Self,
+	}
+
+	if hostRequired {
+		randomHost := cluster.Host[rand.Intn(len(cluster.Host))]
+		placementAction.TargetHost = &randomHost
+	}
+
+	if datastoreRequired {
+		configSpec = inputConfigSpec
+
+		// TODO: This is just an initial implementation aimed at returning some data but it is not
+		// necessarily fully consistent, like we should ensure the host, if also required, has the
+		// datastore mounted.
+		ds := ctx.Map.Get(cluster.Datastore[rand.Intn(len(cluster.Datastore))]).(*Datastore)
+
+		fillConfigSpecWithDatastore(ctx, inputConfigSpec, configSpec, ds)
+	}
+
+	placementAction.ConfigSpec = configSpec
+	return &placementAction
+}
+
+func generateRecommendationForCreateAndPowerOn(ctx *Context, req *types.PlaceVmsXCluster) *methods.PlaceVmsXClusterBody {
+
+	pools := req.PlacementSpec.ResourcePools
+	specs := req.PlacementSpec.VmPlacementSpecs
+
+	body := new(methods.PlaceVmsXClusterBody)
+	body.Res = new(types.PlaceVmsXClusterResponse)
+	hostRequired := req.PlacementSpec.HostRecommRequired != nil && *req.PlacementSpec.HostRecommRequired
+	datastoreRequired := req.PlacementSpec.DatastoreRecommRequired != nil && *req.PlacementSpec.DatastoreRecommRequired
+
+	for _, spec := range specs {
+
+		// The RelocateSpec must not be set.
+		if spec.RelocateSpec != nil {
+			body.Fault_ = Fault("", &types.InvalidArgument{InvalidProperty: "relocateSpec"})
+			return body
+		}
+
+		// The name in the ConfigSpec must set.
+		if spec.ConfigSpec.Name == "" {
+			body.Fault_ = Fault("", &types.InvalidArgument{InvalidProperty: "configSpec.name"})
+			return body
+		}
+
+		pool := ctx.Map.Get(pools[rand.Intn(len(pools))]).(*ResourcePool)
+		cluster := ctx.Map.Get(pool.Owner).(*ClusterComputeResource)
+
+		if len(cluster.Host) == 0 {
+			addPlacementFault(body, spec.ConfigSpec.Name, nil, pool.Self)
+			continue
+		}
+
+		reco := types.ClusterRecommendation{
+			Key:        "1",
+			Type:       "V1",
+			Time:       time.Now(),
+			Rating:     1,
+			Reason:     string(types.RecommendationReasonCodeXClusterPlacement),
+			ReasonText: string(types.RecommendationReasonCodeXClusterPlacement),
+			Target:     &cluster.Self,
+		}
+
+		placementAction := generateInitialPlacementAction(ctx, &spec.ConfigSpec, pool, cluster, hostRequired, datastoreRequired)
+
+		reco.Action = append(reco.Action, placementAction)
+
+		body.Res.Returnval.PlacementInfos = append(body.Res.Returnval.PlacementInfos,
+			types.PlaceVmsXClusterResultPlacementInfo{
+				VmName:         spec.ConfigSpec.Name,
+				Recommendation: reco,
+			},
+		)
+	}
+	return body
+}
+
 func (f *Folder) PlaceVmsXCluster(ctx *Context, req *types.PlaceVmsXCluster) soap.HasFault {
 	body := new(methods.PlaceVmsXClusterBody)
 
@@ -776,115 +1131,28 @@ func (f *Folder) PlaceVmsXCluster(ctx *Context, req *types.PlaceVmsXCluster) soa
 		clusters[pool.Owner] = struct{}{}
 	}
 
-	// MVP: Only a single VM is supported.
+	// MVP: Only a single VM placement spec is supported.
 	if len(specs) != 1 {
 		body.Fault_ = Fault("", &types.InvalidArgument{InvalidProperty: "vmPlacementSpecs"})
 		return body
 	}
 
-	for _, spec := range specs {
-		if spec.ConfigSpec.Name == "" {
-			body.Fault_ = Fault("", &types.InvalidArgument{InvalidProperty: "configSpec.name"})
-			return body
-		}
+	placementType := types.PlaceVmsXClusterSpecPlacementType(req.PlacementSpec.PlacementType)
+
+	// An empty placement type defaults to CreateAndPowerOn.
+	if req.PlacementSpec.PlacementType == "" {
+		placementType = types.PlaceVmsXClusterSpecPlacementTypeCreateAndPowerOn
 	}
 
-	body.Res = new(types.PlaceVmsXClusterResponse)
-	hostRequired := req.PlacementSpec.HostRecommRequired != nil && *req.PlacementSpec.HostRecommRequired
-	datastoreRequired := req.PlacementSpec.DatastoreRecommRequired != nil && *req.PlacementSpec.DatastoreRecommRequired
-
-	for _, spec := range specs {
-		pool := ctx.Map.Get(pools[rand.Intn(len(pools))]).(*ResourcePool)
-		cluster := ctx.Map.Get(pool.Owner).(*ClusterComputeResource)
-
-		if len(cluster.Host) == 0 {
-			faults := types.PlaceVmsXClusterResultPlacementFaults{
-				VmName:       spec.ConfigSpec.Name,
-				ResourcePool: pool.Self,
-				Faults: []types.LocalizedMethodFault{
-					{
-						Fault: &types.GenericDrsFault{},
-					},
-				},
-			}
-			body.Res.Returnval.Faults = append(body.Res.Returnval.Faults, faults)
-		} else {
-			var configSpec *types.VirtualMachineConfigSpec
-
-			res := types.ClusterRecommendation{
-				Key:        "1",
-				Type:       "V1",
-				Time:       time.Now(),
-				Rating:     1,
-				Reason:     string(types.RecommendationReasonCodeXClusterPlacement),
-				ReasonText: string(types.RecommendationReasonCodeXClusterPlacement),
-				Target:     &cluster.Self,
-			}
-
-			placementAction := types.ClusterClusterInitialPlacementAction{
-				Pool: pool.Self,
-			}
-
-			if hostRequired {
-				randomHost := cluster.Host[rand.Intn(len(cluster.Host))]
-				placementAction.TargetHost = &randomHost
-			}
-
-			if datastoreRequired {
-				configSpec = &spec.ConfigSpec
-
-				// TODO: This is just an initial implementation aimed at returning some data but it is not
-				// necessarily fully consistent, like we should ensure the host, if also required, has the
-				// datastore mounted.
-				ds := ctx.Map.Get(cluster.Datastore[rand.Intn(len(cluster.Datastore))]).(*Datastore)
-
-				if configSpec.Files == nil {
-					configSpec.Files = new(types.VirtualMachineFileInfo)
-				}
-				configSpec.Files.VmPathName = fmt.Sprintf("[%[1]s] %[2]s/%[2]s.vmx", ds.Name, spec.ConfigSpec.Name)
-
-				for _, change := range configSpec.DeviceChange {
-					dspec := change.GetVirtualDeviceConfigSpec()
-
-					if dspec.FileOperation != types.VirtualDeviceConfigSpecFileOperationCreate {
-						continue
-					}
-
-					switch dspec.Operation {
-					case types.VirtualDeviceConfigSpecOperationAdd:
-						device := dspec.Device
-						d := device.GetVirtualDevice()
-
-						switch device.(type) {
-						case *types.VirtualDisk:
-							switch b := d.Backing.(type) {
-							case types.BaseVirtualDeviceFileBackingInfo:
-								info := b.GetVirtualDeviceFileBackingInfo()
-								info.Datastore = types.NewReference(ds.Reference())
-
-								var dsPath object.DatastorePath
-								if dsPath.FromString(info.FileName) {
-									dsPath.Datastore = ds.Name
-									info.FileName = dsPath.String()
-								}
-							}
-						}
-					}
-				}
-
-				placementAction.ConfigSpec = configSpec
-			}
-
-			res.Action = append(res.Action, &placementAction)
-
-			body.Res.Returnval.PlacementInfos = append(body.Res.Returnval.PlacementInfos,
-				types.PlaceVmsXClusterResultPlacementInfo{
-					VmName:         spec.ConfigSpec.Name,
-					Recommendation: res,
-				},
-			)
-		}
+	switch placementType {
+	case types.PlaceVmsXClusterSpecPlacementTypeCreateAndPowerOn:
+		return generateRecommendationForCreateAndPowerOn(ctx, req)
+	case types.PlaceVmsXClusterSpecPlacementTypeRelocate:
+		return generateRecommendationForRelocate(ctx, req)
+	case types.PlaceVmsXClusterSpecPlacementTypeReconfigure:
+		return generateRecommendationForReconfigure(ctx, req)
 	}
 
+	body.Fault_ = Fault("", &types.InvalidArgument{InvalidProperty: "placementType"})
 	return body
 }

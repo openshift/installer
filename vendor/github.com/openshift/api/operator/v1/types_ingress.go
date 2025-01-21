@@ -258,6 +258,75 @@ type IngressControllerSpec struct {
 	//
 	// +optional
 	HTTPCompression HTTPCompressionPolicy `json:"httpCompression,omitempty"`
+
+	// idleConnectionTerminationPolicy maps directly to HAProxy's
+	// idle-close-on-response option and controls whether HAProxy
+	// keeps idle frontend connections open during a soft stop
+	// (router reload).
+	//
+	// Allowed values for this field are "Immediate" and
+	// "Deferred". The default value is "Immediate".
+	//
+	// When set to "Immediate", idle connections are closed
+	// immediately during router reloads. This ensures immediate
+	// propagation of route changes but may impact clients
+	// sensitive to connection resets.
+	//
+	// When set to "Deferred", HAProxy will maintain idle
+	// connections during a soft reload instead of closing them
+	// immediately. These connections remain open until any of the
+	// following occurs:
+	//
+	//   - A new request is received on the connection, in which
+	//     case HAProxy handles it in the old process and closes
+	//     the connection after sending the response.
+	//
+	//   - HAProxy's `timeout http-keep-alive` duration expires
+	//     (300 seconds in OpenShift's configuration, not
+	//     configurable).
+	//
+	//   - The client's keep-alive timeout expires, causing the
+	//     client to close the connection.
+	//
+	// Setting Deferred can help prevent errors in clients or load
+	// balancers that do not properly handle connection resets.
+	// Additionally, this option allows you to retain the pre-2.4
+	// HAProxy behaviour: in HAProxy version 2.2 (OpenShift
+	// versions < 4.14), maintaining idle connections during a
+	// soft reload was the default behaviour, but starting with
+	// HAProxy 2.4, the default changed to closing idle
+	// connections immediately.
+	//
+	// Important Consideration:
+	//
+	//   - Using Deferred will result in temporary inconsistencies
+	//     for the first request on each persistent connection
+	//     after a route update and router reload. This request
+	//     will be processed by the old HAProxy process using its
+	//     old configuration. Subsequent requests will use the
+	//     updated configuration.
+	//
+	// Operational Considerations:
+	//
+	//   - Keeping idle connections open during reloads may lead
+	//     to an accumulation of old HAProxy processes if
+	//     connections remain idle for extended periods,
+	//     especially in environments where frequent reloads
+	//     occur.
+	//
+	//   - Consider monitoring the number of HAProxy processes in
+	//     the router pods when Deferred is set.
+	//
+	//   - You may need to enable or adjust the
+	//     `ingress.operator.openshift.io/hard-stop-after`
+	//     duration (configured via an annotation on the
+	//     IngressController resource) in environments with
+	//     frequent reloads to prevent resource exhaustion.
+	//
+	// +optional
+	// +kubebuilder:default:="Immediate"
+	// +default="Immediate"
+	IdleConnectionTerminationPolicy IngressControllerConnectionTerminationPolicy `json:"idleConnectionTerminationPolicy,omitempty"`
 }
 
 // httpCompressionPolicy turns on compression for the specified MIME types.
@@ -2033,3 +2102,23 @@ type IngressControllerList struct {
 
 	Items []IngressController `json:"items"`
 }
+
+// IngressControllerConnectionTerminationPolicy defines the behaviour
+// for handling idle connections during a soft reload of the router.
+//
+// +kubebuilder:validation:Enum=Immediate;Deferred
+type IngressControllerConnectionTerminationPolicy string
+
+const (
+	// IngressControllerConnectionTerminationPolicyImmediate specifies
+	// that idle connections should be closed immediately during a
+	// router reload.
+	IngressControllerConnectionTerminationPolicyImmediate IngressControllerConnectionTerminationPolicy = "Immediate"
+
+	// IngressControllerConnectionTerminationPolicyDeferred
+	// specifies that idle connections should remain open until a
+	// terminating event, such as a new request, the expiration of
+	// the proxy keep-alive timeout, or the client closing the
+	// connection.
+	IngressControllerConnectionTerminationPolicyDeferred IngressControllerConnectionTerminationPolicy = "Deferred"
+)

@@ -93,8 +93,8 @@ const (
 
 // VirtualMachineCloneSpec is information used to clone a virtual machine.
 type VirtualMachineCloneSpec struct {
-	// Template is the name or inventory path of the template used to clone
-	// the virtual machine.
+	// Template is the name, inventory path, managed object reference or the managed
+	// object ID of the template used to clone the virtual machine.
 	// +kubebuilder:validation:MinLength=1
 	Template string `json:"template"`
 
@@ -127,19 +127,19 @@ type VirtualMachineCloneSpec struct {
 	// +optional
 	Thumbprint string `json:"thumbprint,omitempty"`
 
-	// Datacenter is the name or inventory path of the datacenter in which the
-	// virtual machine is created/located.
+	// Datacenter is the name, inventory path, managed object reference or the managed
+	// object ID of the datacenter in which the virtual machine is created/located.
 	// Defaults to * which selects the default datacenter.
 	// +optional
 	Datacenter string `json:"datacenter,omitempty"`
 
-	// Folder is the name or inventory path of the folder in which the
-	// virtual machine is created/located.
+	// Folder is the name, inventory path, managed object reference or the managed
+	// object ID of the folder in which the virtual machine is created/located.
 	// +optional
 	Folder string `json:"folder,omitempty"`
 
-	// Datastore is the name or inventory path of the datastore in which the
-	// virtual machine is created/located.
+	// Datastore is the name, inventory path, managed object reference or the managed
+	// object ID of the datastore in which the virtual machine is created/located.
 	// +optional
 	Datastore string `json:"datastore,omitempty"`
 
@@ -148,8 +148,8 @@ type VirtualMachineCloneSpec struct {
 	// +optional
 	StoragePolicyName string `json:"storagePolicyName,omitempty"`
 
-	// ResourcePool is the name or inventory path of the resource pool in which
-	// the virtual machine is created/located.
+	// ResourcePool is the name, inventory path, managed object reference or the managed
+	// object ID in which the virtual machine is created/located.
 	// +optional
 	ResourcePool string `json:"resourcePool,omitempty"`
 
@@ -203,6 +203,23 @@ type VirtualMachineCloneSpec struct {
 	// Check the compatibility with the ESXi version before setting the value.
 	// +optional
 	HardwareVersion string `json:"hardwareVersion,omitempty"`
+	// DataDisks are additional disks to add to the VM that are not part of the VM's OVA template.
+	// +optional
+	// +listType=map
+	// +listMapKey=name
+	// +kubebuilder:validation:MaxItems=29
+	DataDisks []VSphereDisk `json:"dataDisks,omitempty"`
+}
+
+// VSphereDisk is an additional disk to add to the VM that is not part of the VM OVA template.
+type VSphereDisk struct {
+	// Name is used to identify the disk definition. Name is required and needs to be unique so that it can be used to
+	// clearly identify purpose of the disk.
+	// +kubebuilder:validation:Required
+	Name string `json:"name,omitempty"`
+	// SizeGiB is the size of the disk in GiB.
+	// +kubebuilder:validation:Required
+	SizeGiB int32 `json:"sizeGiB"`
 }
 
 // VSphereMachineTemplateResource describes the data needed to create a VSphereMachine from a template.
@@ -279,8 +296,8 @@ type PCIDeviceSpec struct {
 // NetworkSpec defines the virtual machine's network configuration.
 type NetworkSpec struct {
 	// Devices is the list of network devices used by the virtual machine.
-	// TODO(akutz) Make sure at least one network matches the
-	//             ClusterSpec.CloudProviderConfiguration.Network.Name
+	//
+	// TODO(akutz) Make sure at least one network matches the ClusterSpec.CloudProviderConfiguration.Network.Name
 	Devices []NetworkDeviceSpec `json:"devices"`
 
 	// Routes is a list of optional, static routes applied to the virtual
@@ -299,8 +316,8 @@ type NetworkSpec struct {
 // NetworkDeviceSpec defines the network configuration for a virtual machine's
 // network device.
 type NetworkDeviceSpec struct {
-	// NetworkName is the name of the vSphere network to which the device
-	// will be connected.
+	// NetworkName is the name, managed object reference or the managed
+	// object ID of the vSphere network to which the device will be connected.
 	NetworkName string `json:"networkName"`
 
 	// DeviceName may be used to explicitly assign a name to the network device
