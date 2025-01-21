@@ -172,7 +172,6 @@ func (a *InstallConfig) finish(ctx context.Context, filename string) error {
 	if err := a.platformValidation(ctx); err != nil {
 		return err
 	}
-
 	return a.RecordFile()
 }
 
