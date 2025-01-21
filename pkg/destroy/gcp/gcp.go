@@ -399,3 +399,25 @@ func operationErrorMessage(op *compute.Operation) string {
 	}
 	return strings.Join(errs, ", ")
 }
+
+func (o *ClusterUninstaller) handleOperation(op *compute.Operation, err error, item cloudResource, resourceType string) error {
+	identifier := []string{item.typeName, item.name}
+	if item.zone != "" {
+		identifier = []string{item.typeName, item.zone, item.name}
+	}
+
+	if err != nil && !isNoOp(err) {
+		o.resetRequestID(identifier...)
+		return fmt.Errorf("failed to delete %s %s: %w", resourceType, item.name, err)
+	}
+	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID(identifier...)
+		return fmt.Errorf("failed to delete %s %s with error: %s", resourceType, item.name, operationErrorMessage(op))
+	}
+	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
+		o.resetRequestID(identifier...)
+		o.deletePendingItems(item.typeName, []cloudResource{item})
+		o.Logger.Infof("Deleted %s %s", resourceType, item.name)
+	}
+	return nil
+}

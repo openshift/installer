@@ -124,18 +124,8 @@ func (o *ClusterUninstaller) deleteDisk(ctx context.Context, item cloudResource)
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.Disks.Delete(o.ProjectID, item.zone, item.name).RequestId(o.requestID(item.typeName, item.zone, item.name)).Context(ctx).Do()
-	if err != nil && !isNoOp(err) {
-		o.resetRequestID(item.typeName, item.zone, item.name)
-		return errors.Wrapf(err, "failed to delete disk %s in zone %s", item.name, item.zone)
-	}
-	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID(item.typeName, item.zone, item.name)
-		return errors.Errorf("failed to delete disk %s in zone %s with error: %s", item.name, item.zone, operationErrorMessage(op))
-	}
-	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
-		o.resetRequestID(item.typeName, item.name)
-		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted disk %s", item.name)
+	if err = o.handleOperation(op, err, item, "disk"); err != nil {
+		return err
 	}
 	return nil
 }
