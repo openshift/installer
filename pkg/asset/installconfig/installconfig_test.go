@@ -2,7 +2,7 @@ package installconfig
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"os"
 	"testing"
 
@@ -175,7 +175,7 @@ metadata:
 		},
 		{
 			name:          "error fetching file",
-			fetchError:    errors.New("fetch failed"),
+			fetchError:    fmt.Errorf("fetch failed"),
 			expectedError: true,
 		},
 		{

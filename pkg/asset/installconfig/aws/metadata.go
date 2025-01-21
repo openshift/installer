@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sync"
 
+	awsv2 "github.com/aws/aws-sdk-go-v2/aws"
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 
@@ -17,7 +18,9 @@ import (
 // from external APIs).
 type Metadata struct {
 	session           *session.Session
+	config            *awsv2.Config
 	availabilityZones []string
+	availableRegions  []string
 	edgeZones         []string
 	privateSubnets    Subnets
 	publicSubnets     Subnets
@@ -58,6 +61,17 @@ func (m *Metadata) unlockedSession(ctx context.Context) (*session.Session, error
 	return m.session, nil
 }
 
+func (m *Metadata) unlockedConfig(_ context.Context) (*awsv2.Config, error) {
+	if m.config == nil {
+		cfg, err := GetConfigWithOptions(context.Background(), m.Region, "ec2", m.Services)
+		if err != nil {
+			return nil, fmt.Errorf("creating AWS configuration: %w", err)
+		}
+		m.config = &cfg
+	}
+	return m.config, nil
+}
+
 // AvailabilityZones retrieves a list of availability zones for the configured region.
 func (m *Metadata) AvailabilityZones(ctx context.Context) ([]string, error) {
 	m.mutex.Lock()
@@ -75,6 +89,25 @@ func (m *Metadata) AvailabilityZones(ctx context.Context) ([]string, error) {
 	}
 
 	return m.availabilityZones, nil
+}
+
+// Regions retrieves a list of all regions.
+func (m *Metadata) Regions(ctx context.Context) ([]string, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if len(m.availableRegions) == 0 {
+		cfg, err := m.unlockedConfig(ctx)
+		if err != nil {
+			return nil, err
+		}
+		m.availableRegions, err = GetRegions(ctx, *cfg, false)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving Regions: %w", err)
+		}
+	}
+
+	return m.availableRegions, nil
 }
 
 // EdgeZones retrieves a list of Local and Wavelength zones for the configured region.
