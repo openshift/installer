@@ -144,10 +144,6 @@ func (a *AgentHosts) validateHostInterfaces(hostPath *field.Path, host agent.Hos
 	var allErrs field.ErrorList
 
 	interfacePath := hostPath.Child("Interfaces")
-	if len(host.Interfaces) == 0 {
-		allErrs = append(allErrs, field.Required(interfacePath, "at least one interface must be defined for each node"))
-	}
-
 	for j := range host.Interfaces {
 		mac := host.Interfaces[j].MacAddress
 		macAddressPath := interfacePath.Index(j).Child("macAddress")
