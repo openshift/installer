@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"google.golang.org/api/compute/v1"
+	"google.golang.org/api/googleapi"
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
@@ -40,14 +41,40 @@ func (o *ClusterUninstaller) listCloudControllerBackendServices(ctx context.Cont
 				return false
 			}
 
+			// During cluster creation, the backends may be empty in the Backend Service. When this is the case,
+			// the cluster uninstaller does not know if the resource should actually be considered for deletion.
+			// Search for a resource that should be related to the Backend Service, a Firewall Rule. The firewall
+			// rule should have tags that include the cluster ID in the name.
+			// TODO: when/if the shared tag is used this could pose future problems (until the backend service can be tagged).
+			// TODO: When backend services can be tagged, use the resource manager to get tags for the backend service.
+
+			fwList, err := o.computeSvc.Firewalls.List(o.ProjectID).Fields(googleapi.Field("items(name,targetTags),nextPageToken")).Context(ctx).Do()
+			if err != nil {
+				o.Logger.Debugf("failed to list firewall rules associated with backend service %s: %v", item.Name, err)
+				return false
+			}
+			for _, fw := range fwList.Items {
+				if strings.Contains(fw.Name, item.Name) {
+					for _, tag := range fw.TargetTags {
+						// These tags are in the form {o.ClusterID}-worker
+						if strings.Contains(tag, o.ClusterID) {
+							return true
+						}
+					}
+				}
+			}
+
 			urls := sets.Set[string]{}
 			for _, instanceGroup := range instanceGroups {
 				urls.Insert(instanceGroup.url)
 			}
-
 			if len(item.Backends) == 0 {
 				return false
 			}
+
+			// If the backends for the Backend Service are not empty, compare them to the instance
+			// group urls to determine if they are associated with each other. A match indicates that
+			// this Backend Service is part of the cluster being destroyed.
 			for _, backend := range item.Backends {
 				if !urls.Has(backend.Group) {
 					return false
@@ -153,6 +180,13 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 	}
 	o.insertPendingItems(regionHealthCheckResource, found)
 
+	// Discover associated health checks: loadBalancerName - GLOBAL
+	found, err = o.listHealthChecksWithFilter(ctx, globalHealthCheckResource, "items(name),nextPageToken", loadBalancerFilterFunc)
+	if err != nil {
+		return err
+	}
+	o.insertPendingItems(globalHealthCheckResource, found)
+
 	// Discover associated http health checks: loadBalancerName
 	found, err = o.listHTTPHealthChecksWithFilter(ctx, "items(name),nextPageToken", loadBalancerFilterFunc)
 	if err != nil {
@@ -194,7 +228,7 @@ func (o *ClusterUninstaller) discoverCloudControllerResources(ctx context.Contex
 				errs = append(errs, err)
 			}
 		}
-		o.insertPendingItems("backendservice", backends)
+		o.insertPendingItems(regionBackendServiceResource, backends)
 	}
 	o.insertPendingItems(instanceGroupResourceName, instanceGroups)
 
