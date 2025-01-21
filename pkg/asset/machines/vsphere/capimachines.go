@@ -156,6 +156,19 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			return nil, fmt.Errorf("unable to find failure domain for machine %s", machine.Name)
 		}
 
+		// If we have additional disks to add to VM, lets iterate through them and add to CAPV machine
+		if len(providerSpec.DataDisks) > 0 {
+			dataDisks := []capv.VSphereDisk{}
+			for _, disk := range providerSpec.DataDisks {
+				newDisk := capv.VSphereDisk{
+					Name:    disk.Name,
+					SizeGiB: disk.SizeGiB,
+				}
+				dataDisks = append(dataDisks, newDisk)
+			}
+			vsphereMachine.Spec.DataDisks = dataDisks
+		}
+
 		vsphereMachine.SetGroupVersionKind(capv.GroupVersion.WithKind("VSphereMachine"))
 		capvMachines = append(capvMachines, vsphereMachine)
 

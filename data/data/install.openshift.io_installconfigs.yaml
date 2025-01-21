@@ -1149,6 +1149,38 @@ spec:
                             cores to assign a vm.
                           format: int32
                           type: integer
+                        dataDisks:
+                          description: DataDisks are additional disks to add to the
+                            VM that are not part of the VM's OVA template.
+                          items:
+                            description: DataDisk defines a data disk to add to the
+                              VM that is not part of the VM OVA template.
+                            properties:
+                              name:
+                                description: |-
+                                  name is used to identify the disk definition. name is required needs to be unique so that it can be used to
+                                  clearly identify purpose of the disk.
+                                example: images_1
+                                maxLength: 80
+                                pattern: ^[a-zA-Z0-9]([-_a-zA-Z0-9]*[a-zA-Z0-9])?$
+                                type: string
+                              sizeGiB:
+                                description: |-
+                                  sizeGiB is the size of the disk in GiB.
+                                  The maximum supported size is 16384 GiB.
+                                format: int32
+                                maximum: 16384
+                                minimum: 1
+                                type: integer
+                            required:
+                            - name
+                            - sizeGiB
+                            type: object
+                          maxItems: 29
+                          type: array
+                          x-kubernetes-list-map-keys:
+                          - name
+                          x-kubernetes-list-type: map
                         memoryMB:
                           description: Memory is the size of a VM's memory in MB.
                           format: int64
@@ -2215,6 +2247,38 @@ spec:
                           cores to assign a vm.
                         format: int32
                         type: integer
+                      dataDisks:
+                        description: DataDisks are additional disks to add to the
+                          VM that are not part of the VM's OVA template.
+                        items:
+                          description: DataDisk defines a data disk to add to the
+                            VM that is not part of the VM OVA template.
+                          properties:
+                            name:
+                              description: |-
+                                name is used to identify the disk definition. name is required needs to be unique so that it can be used to
+                                clearly identify purpose of the disk.
+                              example: images_1
+                              maxLength: 80
+                              pattern: ^[a-zA-Z0-9]([-_a-zA-Z0-9]*[a-zA-Z0-9])?$
+                              type: string
+                            sizeGiB:
+                              description: |-
+                                sizeGiB is the size of the disk in GiB.
+                                The maximum supported size is 16384 GiB.
+                              format: int32
+                              maximum: 16384
+                              minimum: 1
+                              type: integer
+                          required:
+                          - name
+                          - sizeGiB
+                          type: object
+                        maxItems: 29
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
                       memoryMB:
                         description: Memory is the size of a VM's memory in MB.
                         format: int64
@@ -5009,6 +5073,38 @@ spec:
                           cores to assign a vm.
                         format: int32
                         type: integer
+                      dataDisks:
+                        description: DataDisks are additional disks to add to the
+                          VM that are not part of the VM's OVA template.
+                        items:
+                          description: DataDisk defines a data disk to add to the
+                            VM that is not part of the VM OVA template.
+                          properties:
+                            name:
+                              description: |-
+                                name is used to identify the disk definition. name is required needs to be unique so that it can be used to
+                                clearly identify purpose of the disk.
+                              example: images_1
+                              maxLength: 80
+                              pattern: ^[a-zA-Z0-9]([-_a-zA-Z0-9]*[a-zA-Z0-9])?$
+                              type: string
+                            sizeGiB:
+                              description: |-
+                                sizeGiB is the size of the disk in GiB.
+                                The maximum supported size is 16384 GiB.
+                              format: int32
+                              maximum: 16384
+                              minimum: 1
+                              type: integer
+                          required:
+                          - name
+                          - sizeGiB
+                          type: object
+                        maxItems: 29
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
                       memoryMB:
                         description: Memory is the size of a VM's memory in MB.
                         format: int64

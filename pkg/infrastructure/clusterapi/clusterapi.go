@@ -629,7 +629,8 @@ func checkMachineReady(machine *clusterv1.Machine, requirePublicIP bool) (bool, 
 		logrus.Debugf("Machine %s has not yet provisioned: %s", machine.Name, machine.Status.Phase)
 		return false, nil
 	} else if machine.Status.Phase == string(clusterv1.MachinePhaseFailed) {
-		msg := ptr.Deref(machine.Status.FailureMessage, "machine.Status.FailureMessage was not set")
+		//TODO: We need to update this to use non deprecated field
+		msg := ptr.Deref(machine.Status.FailureMessage, "machine.Status.FailureMessage was not set") //nolint:staticcheck
 		return false, fmt.Errorf("machine %s failed to provision: %s", machine.Name, msg)
 	}
 	logrus.Debugf("Machine %s has status: %s", machine.Name, machine.Status.Phase)
