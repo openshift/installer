@@ -709,7 +709,7 @@ func TestValidate(t *testing.T) {
 		availZones:     validAvailZones(),
 		privateSubnets: validPrivateSubnets(),
 		publicSubnets:  validPublicSubnets(),
-		expectErr:      `^platform\.aws\.serviceEndpoints: Invalid value: (.|\n)*: \[failed to find endpoint for service "ec2": (.|\n)*, failed to find endpoint for service "elasticloadbalancing": (.|\n)*, failed to find endpoint for service "iam": (.|\n)*, failed to find endpoint for service "route53": (.|\n)*, failed to find endpoint for service "s3": (.|\n)*, failed to find endpoint for service "sts": (.|\n)*, failed to find endpoint for service "tagging": (.|\n)*\]$`,
+		expectErr:      `^platform\.aws\.serviceEndpoints: Invalid value: (.|\n)*: \[platform\.aws\.serviceEndpoints: Invalid value: "test-region": failed to access default ec2 endpoint, platform\.aws\.serviceEndpoints: Invalid value: "test-region": failed to access default elasticloadbalancing endpoint, platform\.aws\.serviceEndpoints: Invalid value: "test-region": failed to access default s3 endpoint, platform\.aws\.serviceEndpoints: Invalid value: "test-region": failed to access default sts endpoint, platform\.aws\.serviceEndpoints: Invalid value: "test-region": failed to access default tagging endpoint\]$`,
 	}, {
 		name: "custom region invalid service endpoints some provided",
 		installConfig: func() *types.InstallConfig {
@@ -722,7 +722,7 @@ func TestValidate(t *testing.T) {
 		availZones:     validAvailZones(),
 		privateSubnets: validPrivateSubnets(),
 		publicSubnets:  validPublicSubnets(),
-		expectErr:      `^platform\.aws\.serviceEndpoints: Invalid value: (.|\n)*: \[failed to find endpoint for service "elasticloadbalancing": (.|\n)*, failed to find endpoint for service "route53": (.|\n)*, failed to find endpoint for service "sts": (.|\n)*, failed to find endpoint for service "tagging": (.|\n)*$`,
+		expectErr:      `^platform\.aws\.serviceEndpoints: Invalid value: \[\]aws.ServiceEndpoint\{aws\.ServiceEndpoint\{Name:\"ec2\", URL:\"e2e.local\"\}, aws\.ServiceEndpoint\{Name:\"s3\", URL:\"e2e.local\"}, aws\.ServiceEndpoint\{Name:\"iam\", URL:\"e2e.local\"}}: \[platform\.aws\.serviceEndpoints: Invalid value: \"test-region\": failed to access default elasticloadbalancing endpoint, platform\.aws\.serviceEndpoints: Invalid value: \"test-region\": failed to access default sts endpoint, platform\.aws\.serviceEndpoints: Invalid value: \"test-region\": failed to access default tagging endpoint\]$`,
 	}, {
 		name: "custom region valid service endpoints",
 		installConfig: func() *types.InstallConfig {
@@ -746,6 +746,7 @@ func TestValidate(t *testing.T) {
 		availZones:     validAvailZones(),
 		privateSubnets: validPrivateSubnets(),
 		publicSubnets:  validPublicSubnets(),
+		expectErr:      "platform.aws.amiID: Required value: AMI must be provided",
 	}, {
 		name: "accept platform-level AMI",
 		installConfig: func() *types.InstallConfig {

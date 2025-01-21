@@ -3,10 +3,8 @@ package aws
 import (
 	"fmt"
 	"sort"
-	"strings"
 
 	survey "github.com/AlecAivazis/survey/v2"
-	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/types/aws"
@@ -17,22 +15,6 @@ import (
 func Platform() (*aws.Platform, error) {
 	architecture := version.DefaultArch()
 	regions := knownPublicRegions(architecture)
-	longRegions := make([]string, 0, len(regions))
-	shortRegions := make([]string, 0, len(regions))
-	for id, location := range regions {
-		longRegions = append(longRegions, fmt.Sprintf("%s (%s)", id, location))
-		shortRegions = append(shortRegions, id)
-	}
-	var regionTransform survey.Transformer = func(ans interface{}) interface{} {
-		switch v := ans.(type) {
-		case core.OptionAnswer:
-			return core.OptionAnswer{Value: strings.SplitN(v.Value, " ", 2)[0], Index: v.Index}
-		case string:
-			return strings.SplitN(v, " ", 2)[0]
-		}
-		return ""
-	}
-
 	defaultRegion := "us-east-1"
 	if !IsKnownPublicRegion(defaultRegion, architecture) {
 		panic(fmt.Sprintf("installer bug: invalid default AWS region %q", defaultRegion))
@@ -52,8 +34,7 @@ func Platform() (*aws.Platform, error) {
 		}
 	}
 
-	sort.Strings(longRegions)
-	sort.Strings(shortRegions)
+	sort.Strings(regions)
 
 	var region string
 	err = survey.Ask([]*survey.Question{
@@ -61,18 +42,9 @@ func Platform() (*aws.Platform, error) {
 			Prompt: &survey.Select{
 				Message: "Region",
 				Help:    "The AWS region to be used for installation.",
-				Default: fmt.Sprintf("%s (%s)", defaultRegion, regions[defaultRegion]),
-				Options: longRegions,
+				Default: defaultRegion,
+				Options: regions,
 			},
-			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				choice := regionTransform(ans).(core.OptionAnswer).Value
-				i := sort.SearchStrings(shortRegions, choice)
-				if i == len(shortRegions) || shortRegions[i] != choice {
-					return fmt.Errorf("invalid region %q", choice)
-				}
-				return nil
-			}),
-			Transform: regionTransform,
 		},
 	}, &region)
 	if err != nil {
