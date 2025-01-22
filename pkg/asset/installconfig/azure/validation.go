@@ -712,7 +712,7 @@ func validateResourceGroup(client API, fieldPath *field.Path, platform *aztypes.
 	}
 
 	// ARO provisions Azure resources before resolving the asset graph.
-	if !platform.IsARO() {
+	if aro, err := client.CheckIfARO(context.TODO(), platform.ResourceGroupName); err != nil || !aro {
 		ids, err := client.ListResourceIDsByGroup(context.TODO(), platform.ResourceGroupName)
 		if err != nil {
 			return append(allErrs, field.InternalError(fieldPath.Child("resourceGroupName"), fmt.Errorf("failed to list resources in the resource group: %w", err)))
