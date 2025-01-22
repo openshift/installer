@@ -143,11 +143,11 @@ func (o *ClusterUninstaller) stopInstance(ctx context.Context, item cloudResourc
 		o.resetRequestID(stopInstanceResourceName, item.zone, item.name)
 		return errors.Wrapf(err, "failed to stop instance %s in zone %s", item.name, item.zone)
 	}
-	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+	if op != nil && op.Status == DONE && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID(stopInstanceResourceName, item.zone, item.name)
 		return errors.Errorf("failed to stop instance %s in zone %s with error: %s", item.name, item.zone, operationErrorMessage(op))
 	}
-	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
+	if (err != nil && isNoOp(err)) || (op != nil && op.Status == DONE) {
 		o.resetRequestID(stopInstanceResourceName, item.name)
 		o.deletePendingItems(stopInstanceResourceName, []cloudResource{item})
 		o.Logger.Infof("Stopped instance %s", item.name)

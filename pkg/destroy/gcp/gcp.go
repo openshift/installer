@@ -40,6 +40,9 @@ const (
 	capgProviderOwnedLabelFmt = "capg-cluster-%s"
 
 	ownedLabelValue = "owned"
+
+	// DONE represents the done status for a compute service operation.
+	DONE = "DONE"
 )
 
 // ClusterUninstaller holds the various options for the cluster we want to delete
@@ -408,7 +411,6 @@ func operationErrorMessage(op *compute.Operation) string {
 }
 
 func (o *ClusterUninstaller) handleOperation(ctx context.Context, op *compute.Operation, err error, item cloudResource, resourceType string) error {
-
 	identifier := []string{item.typeName, item.name}
 	if item.zone != "" {
 		identifier = []string{item.typeName, item.zone, item.name}
@@ -422,11 +424,11 @@ func (o *ClusterUninstaller) handleOperation(ctx context.Context, op *compute.Op
 	// wait for operation to complete before checking any further
 	op, err = o.waitFor(ctx, op, item)
 
-	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+	if op != nil && op.Status == DONE && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID(identifier...)
 		return fmt.Errorf("failed to delete %s %s with error: %s", resourceType, item.name, operationErrorMessage(op))
 	}
-	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
+	if (err != nil && isNoOp(err)) || (op != nil && op.Status == DONE) {
 		o.resetRequestID(identifier...)
 		o.deletePendingItems(item.typeName, []cloudResource{item})
 		o.Logger.Infof("Deleted %s %s", resourceType, item.name)
