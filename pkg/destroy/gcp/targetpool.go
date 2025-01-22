@@ -64,10 +64,8 @@ func (o *ClusterUninstaller) deleteTargetPool(ctx context.Context, item cloudRes
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.TargetPools.Delete(o.ProjectID, o.Region, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
-	if err = o.handleOperation(op, err, item, "target pool"); err != nil {
-		return err
-	}
-	return nil
+	item.scope = regional
+	return o.handleOperation(ctx, op, err, item, "target pool")
 }
 
 // destroyTargetPools removes target pools resources that have a name prefixed

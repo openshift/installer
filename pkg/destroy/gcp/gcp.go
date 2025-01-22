@@ -51,12 +51,15 @@ type ClusterUninstaller struct {
 	PrivateZoneDomain string
 	ClusterID         string
 
-	computeSvc *compute.Service
-	iamSvc     *iam.Service
-	dnsSvc     *dns.Service
-	storageSvc *storage.Service
-	rmSvc      *resourcemanager.Service
-	fileSvc    *file.Service
+	computeSvc  *compute.Service
+	iamSvc      *iam.Service
+	dnsSvc      *dns.Service
+	storageSvc  *storage.Service
+	rmSvc       *resourcemanager.Service
+	fileSvc     *file.Service
+	regionOpSvc *compute.RegionOperationsService
+	globalOpSvc *compute.GlobalOperationsService
+	zonalOpSvc  *compute.ZoneOperationsService
 
 	// cpusByMachineType caches the number of CPUs per machine type, used in quota
 	// calculations on deletion
@@ -104,6 +107,10 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create compute service")
 	}
+
+	o.regionOpSvc = compute.NewRegionOperationsService(o.computeSvc)
+	o.globalOpSvc = compute.NewGlobalOperationsService(o.computeSvc)
+	o.zonalOpSvc = compute.NewZoneOperationsService(o.computeSvc)
 
 	cctx, cancel := context.WithTimeout(ctx, longTimeout)
 	defer cancel()
@@ -400,7 +407,8 @@ func operationErrorMessage(op *compute.Operation) string {
 	return strings.Join(errs, ", ")
 }
 
-func (o *ClusterUninstaller) handleOperation(op *compute.Operation, err error, item cloudResource, resourceType string) error {
+func (o *ClusterUninstaller) handleOperation(ctx context.Context, op *compute.Operation, err error, item cloudResource, resourceType string) error {
+
 	identifier := []string{item.typeName, item.name}
 	if item.zone != "" {
 		identifier = []string{item.typeName, item.zone, item.name}
@@ -410,6 +418,10 @@ func (o *ClusterUninstaller) handleOperation(op *compute.Operation, err error, i
 		o.resetRequestID(identifier...)
 		return fmt.Errorf("failed to delete %s %s: %w", resourceType, item.name, err)
 	}
+
+	// wait for operation to complete before checking any further
+	op, err = o.waitFor(ctx, op, item)
+
 	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID(identifier...)
 		return fmt.Errorf("failed to delete %s %s with error: %s", resourceType, item.name, operationErrorMessage(op))
@@ -420,4 +432,17 @@ func (o *ClusterUninstaller) handleOperation(op *compute.Operation, err error, i
 		o.Logger.Infof("Deleted %s %s", resourceType, item.name)
 	}
 	return nil
+}
+
+func (o *ClusterUninstaller) waitFor(ctx context.Context, op *compute.Operation, item cloudResource) (*compute.Operation, error) {
+	switch item.scope {
+	case zonal:
+		return o.zonalOpSvc.Wait(o.ProjectID, item.zone, op.Name).Context(ctx).Do()
+	case regional:
+		return o.regionOpSvc.Wait(o.ProjectID, o.Region, op.Name).Context(ctx).Do()
+	case global:
+		return o.globalOpSvc.Wait(o.ProjectID, op.Name).Context(ctx).Do()
+	default:
+		return nil, fmt.Errorf("unrecognized scope %q for %s", item.scope, item.name)
+	}
 }

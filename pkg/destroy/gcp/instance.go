@@ -106,10 +106,8 @@ func (o *ClusterUninstaller) deleteInstance(ctx context.Context, item cloudResou
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.Instances.Delete(o.ProjectID, item.zone, item.name).RequestId(o.requestID(item.typeName, item.zone, item.name)).Context(ctx).Do()
-	if err = o.handleOperation(op, err, item, "instance"); err != nil {
-		return err
-	}
-	return nil
+	item.scope = zonal
+	return o.handleOperation(ctx, op, err, item, "instance")
 }
 
 // destroyInstances searches for instances across all zones that have a name that starts with

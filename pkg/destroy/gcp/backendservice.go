@@ -79,16 +79,15 @@ func (o *ClusterUninstaller) deleteBackendService(ctx context.Context, item clou
 	switch item.typeName {
 	case globalBackendServiceResource:
 		op, err = o.computeSvc.BackendServices.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
+		item.scope = global
 	case regionBackendServiceResource:
 		op, err = o.computeSvc.RegionBackendServices.Delete(o.ProjectID, o.Region, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
+		item.scope = regional
 	default:
 		return fmt.Errorf("invalid backend service type %q", item.typeName)
 	}
 
-	if err = o.handleOperation(op, err, item, "backend service"); err != nil {
-		return err
-	}
-	return nil
+	return o.handleOperation(ctx, op, err, item, "backend service")
 }
 
 // destroyBackendServices removes all backend services resources that have a name prefixed

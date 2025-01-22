@@ -59,10 +59,8 @@ func (o *ClusterUninstaller) deleteRouter(ctx context.Context, item cloudResourc
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.Routers.Delete(o.ProjectID, o.Region, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
-	if err = o.handleOperation(op, err, item, "router"); err != nil {
-		return err
-	}
-	return nil
+	item.scope = global
+	return o.handleOperation(ctx, op, err, item, "router")
 }
 
 // destroyRouters removes all router resources that have a name prefixed

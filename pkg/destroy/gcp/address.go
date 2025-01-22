@@ -84,16 +84,15 @@ func (o *ClusterUninstaller) deleteAddress(ctx context.Context, item cloudResour
 	switch item.typeName {
 	case globalAddressResource:
 		op, err = o.computeSvc.GlobalAddresses.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
+		item.scope = global
 	case regionalAddressResource:
 		op, err = o.computeSvc.Addresses.Delete(o.ProjectID, o.Region, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
+		item.scope = regional
 	default:
 		return fmt.Errorf("invalid address type %q", item.typeName)
 	}
 
-	if err = o.handleOperation(op, err, item, "address"); err != nil {
-		return err
-	}
-	return nil
+	return o.handleOperation(ctx, op, err, item, "address")
 }
 
 // destroyAddresses removes all address resources that have a name prefixed

@@ -89,10 +89,8 @@ func (o *ClusterUninstaller) deleteFirewall(ctx context.Context, item cloudResou
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.Firewalls.Delete(item.project, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
-	if err = o.handleOperation(op, err, item, "firewall"); err != nil {
-		return err
-	}
-	return nil
+	item.scope = global
+	return o.handleOperation(ctx, op, err, item, "firewall")
 }
 
 // destroyFirewalls removes all firewall resources that have a name prefixed
