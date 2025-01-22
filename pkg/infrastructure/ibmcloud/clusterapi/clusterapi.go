@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	"github.com/openshift/installer/pkg/rhcos/cache"
+	"github.com/openshift/installer/pkg/types"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 )
 
@@ -184,6 +185,7 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
 	// 1. Collect necessary details from Cluster resource.
 	// 2. Create DNS Records for the Control Plane's Load Balancers (one for public LB - 'api' and one for private LB - 'api-int'). For Public/External clusters, records in the CIS instance is created. For Private/Internal cluster, the records are created in the DNS Services instance.
+	// 3. For Private/Internal cluster, add the VPC to the DNS Services Zone's Permitted Networks, if not already there.
 
 	// Setup IBM Cloud Client.
 	metadata := ibmcloudic.NewMetadata(in.InstallConfig.Config)
@@ -232,6 +234,20 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 			return fmt.Errorf("failed to create dns record for load balancer: %w", err)
 		}
 		logrus.Debug("dns record created for load balancer", "hostName", *lbDetails.Hostname)
+	}
+
+	// For Private/Internal cluster, check DNS Services Zone's Permitted Network.
+	if in.InstallConfig.Config.Publish == types.InternalPublishingStrategy {
+		// Determine whether the VPC is already a Permitted Network, if not, add the VPC to the DNS Services Zone's Permitted Networks.
+		// Since this check is based on the value provided for vpcName in the InstallConfig, pass that value to help shortcut the check (when vpcName is empty or not provided, assume a new VPC was created and thus needs to be added to Permitted Networks).
+		if permitted, err := metadata.IsVPCPermittedNetwork(ctx, in.InstallConfig.Config.IBMCloud.VPCName); err != nil {
+			return fmt.Errorf("failed to check whether vpc is a permitted network: %w", err)
+		} else if !permitted {
+			err = metadata.AddVPCToPermittedNetworks(ctx, ibmcloudCluster.Status.Network.VPC.ID)
+			if err != nil {
+				return fmt.Errorf("failed to add vpc %s to dns services permitted networks: %w", ibmcloudCluster.Status.Network.VPC.ID, err)
+			}
+		}
 	}
 
 	return nil
