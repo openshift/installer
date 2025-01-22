@@ -61,7 +61,7 @@ func (h *Host) IsWorker() bool {
 	return h.Role == workerRole
 }
 
-var sortIndex = map[string]int{masterRole: -1, workerRole: 0, "": 1}
+var sortIndex = map[string]int{masterRole: -1, arbiterRole: 0, workerRole: 1, "": 2}
 
 // CompareByRole allows to compare two hosts by the Role
 func (h *Host) CompareByRole(k *Host) bool {
