@@ -29,10 +29,6 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/vsphere"
 )
 
-var (
-	deleteVolumes bool
-)
-
 func newDestroyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "destroy",
@@ -52,11 +48,19 @@ func newDestroyClusterCmd() *cobra.Command {
 		Use:   "cluster",
 		Short: "Destroy an OpenShift cluster",
 		Args:  cobra.ExactArgs(0),
-		Run: func(_ *cobra.Command, _ []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			cleanup := command.SetupFileHook(command.RootOpts.Dir)
 			defer cleanup()
+			destroyVolumes, err := cmd.Flags().GetBool("destroy-persistent-volumes")
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			kubeConfig, err := cmd.Flags().GetString("kubeconfig")
+			if err != nil {
+				logrus.Fatal(err)
+			}
 
-			err := runDestroyCmd(command.RootOpts.Dir, os.Getenv("OPENSHIFT_INSTALL_REPORT_QUOTA_FOOTPRINT") == "true")
+			err = runDestroyCmd(command.RootOpts.Dir, os.Getenv("OPENSHIFT_INSTALL_REPORT_QUOTA_FOOTPRINT") == "true", destroyVolumes, kubeConfig)
 			if err != nil {
 				logrus.Fatal(err)
 			}
@@ -64,15 +68,16 @@ func newDestroyClusterCmd() *cobra.Command {
 		},
 	}
 
-	// todo: jcallen: **** DO NOT MERGE ****, set to always delete...
-	destroyCmd.Flags().BoolVar(&deleteVolumes, "destroy-volumes", true, "Destroy persistent volumes before cluster destroy")
+	destroyCmd.Flags().Bool("destroy-persistent-volumes", false, "Destroy persistent volumes")
+	destroyCmd.Flags().String("kubeconfig", "", "Destroy persistent volumes")
 
+	destroyCmd.MarkFlagsRequiredTogether("kubeconfig", "destroy-persistent-volumes")
 	return destroyCmd
 }
 
-func runDestroyCmd(directory string, reportQuota bool) error {
+func runDestroyCmd(directory string, reportQuota bool, destroyVolumes bool, kubeConfig string) error {
 	timer.StartTimer(timer.TotalTimeElapsed)
-	destroyer, err := destroy.New(logrus.StandardLogger(), directory, deleteVolumes)
+	destroyer, err := destroy.New(logrus.StandardLogger(), directory, destroyVolumes, kubeConfig)
 	if err != nil {
 		return fmt.Errorf("failed while preparing to destroy cluster: %w", err)
 	}

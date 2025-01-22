@@ -3,25 +3,30 @@ package destroy
 import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"os"
 
 	"github.com/openshift/installer/pkg/asset/cluster/metadata"
 	"github.com/openshift/installer/pkg/destroy/providers"
 )
 
 // New returns a Destroyer based on `metadata.json` in `rootDir`.
-func New(logger logrus.FieldLogger, rootDir string, deleteVolumes bool) (providers.Destroyer, error) {
+func New(logger logrus.FieldLogger, rootDir string, destroyVolumes bool, kubeConfig string) (providers.Destroyer, error) {
 	clusterMetadata, err := metadata.Load(rootDir)
 	if err != nil {
 		return nil, err
 	}
 
-	// todo: jcallen: need to think if this makes sense because we could
-	// todo: still remove cns volumes for the vSphere case
-	clusterMetadata.DeleteVolumes = false
-	if clusterMetadata.Auth != nil {
-		if len(*clusterMetadata.Auth) > 0 {
-			clusterMetadata.DeleteVolumes = deleteVolumes
+	if destroyVolumes {
+		clusterMetadata.DestroyVolumes = destroyVolumes
+
+		// todo: jcallen - do we need this?
+		clusterMetadata.KubeConfig = kubeConfig
+		auth, err := getKubeConfigAuth(kubeConfig)
+		if err != nil {
+			return nil, errors.Wrapf(err, "could not get auth kubeconfig")
+
 		}
+		clusterMetadata.Auth = &auth
 	}
 
 	platform := clusterMetadata.Platform()
@@ -34,4 +39,17 @@ func New(logger logrus.FieldLogger, rootDir string, deleteVolumes bool) (provide
 		return nil, errors.Errorf("no destroyers registered for %q", platform)
 	}
 	return creator(logger, clusterMetadata)
+}
+
+func getKubeConfigAuth(kubeConfig string) ([]byte, error) {
+	_, err := os.Stat(kubeConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	auth, err := os.ReadFile(kubeConfig)
+	if err != nil {
+		return nil, err
+	}
+	return auth, nil
 }

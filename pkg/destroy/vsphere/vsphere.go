@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	corev1 "k8s.io/api/core/v1"
 	"strings"
 	"syscall"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/vim25/mo"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	errorsutil "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -67,10 +69,13 @@ func newWithClient(logger logrus.FieldLogger, metadata *installertypes.ClusterMe
 		clients:       clients,
 		Logger:        logger,
 		KubeClientset: nil,
-		deleteVolumes: metadata.DeleteVolumes,
+		deleteVolumes: metadata.DestroyVolumes,
 	}
 
-	if metadata.DeleteVolumes {
+	if metadata.DestroyVolumes {
+
+		// this of course should be a utility function but for now leaving it here
+
 		config, err := clientcmd.RESTConfigFromKubeConfig(*metadata.Auth)
 		if err == nil {
 			clientset, err := kubernetes.NewForConfig(config)
@@ -314,6 +319,82 @@ func isTransientError(err error) bool {
 	return errorsutil.IsTooManyRequests(err)
 }
 
+func disableClusterVersionOperator(ctx context.Context, clientSet *kubernetes.Clientset) error {
+	scale := autoscalingv1.Scale{
+		Spec: autoscalingv1.ScaleSpec{
+			Replicas: 0,
+		},
+	}
+	if _, err := clientSet.AppsV1().Deployments("openshift-cluster-version").UpdateScale(ctx, "cluster-version-operator", &scale, metav1.UpdateOptions{}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func walkOwnerReferences(ctx context.Context, clientSet *kubernetes.Clientset, owner metav1.OwnerReference) (metav1.OwnerReference, error) {
+	parent := owner
+
+	switch parent.Kind {
+	case "Deployment", "DaemonSet", "StatefulSet":
+		return parent, nil
+	}
+
+	parent, err := walkOwnerReferences(ctx, clientSet, owner)
+	if err != nil {
+		return parent, err
+	}
+
+	return parent, nil
+}
+
+type PodVolumeAssociation struct {
+	PersistentVolumeClaim *corev1.PersistentVolumeClaim
+	PersistentVolume      *corev1.PersistentVolume
+	Pod                   *corev1.Pod
+}
+
+func associateVolumesAndPods(ctx context.Context, clientSet *kubernetes.Clientset) ([]PodVolumeAssociation, error) {
+	var pvaList []PodVolumeAssociation
+
+	namespaceList, err := clientSet.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, n := range namespaceList.Items {
+		podList, err := clientSet.CoreV1().Pods(n.Name).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return nil, err
+		}
+
+		for _, pod := range podList.Items {
+			for _, vol := range pod.Spec.Volumes {
+				if vol.PersistentVolumeClaim != nil {
+					pvc, err := clientSet.CoreV1().PersistentVolumeClaims(n.Name).Get(ctx, vol.PersistentVolumeClaim.ClaimName, metav1.GetOptions{})
+					if err != nil {
+						return nil, err
+					}
+
+					pv, err := clientSet.CoreV1().PersistentVolumes().Get(ctx, pvc.Spec.VolumeName, metav1.GetOptions{})
+
+					if err != nil {
+						return nil, err
+					}
+
+					pvaList = append(pvaList, PodVolumeAssociation{
+						PersistentVolumeClaim: pvc,
+						PersistentVolume:      pv,
+						Pod:                   &pod,
+					})
+				}
+			}
+		}
+	}
+
+	return pvaList, nil
+}
+
 func (o *ClusterUninstaller) deletePersistentVolumes(ctx context.Context) error {
 	if o.KubeClientset == nil {
 		return nil
@@ -321,6 +402,18 @@ func (o *ClusterUninstaller) deletePersistentVolumes(ctx context.Context) error 
 
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
 	defer cancel()
+
+	o.Logger.Debug("Disabling Cluster Version Operator")
+	if err := disableClusterVersionOperator(ctx, o.KubeClientset); err != nil {
+		return err
+	}
+
+	//dynamicClient := dynamic.New(o.KubeClientset.RESTClient())
+
+	//dynamicClient.Resource(schema.GroupVersionResource{}).Get()
+
+	//dynamicClient.Resource()
+
 	removeFinalizer := []jsonPatch{{
 		Op:    "remove",
 		Path:  "/metadata/finalizers",
@@ -334,26 +427,29 @@ func (o *ClusterUninstaller) deletePersistentVolumes(ctx context.Context) error 
 		return err
 	}
 
-	pvList, err := o.KubeClientset.CoreV1().PersistentVolumes().List(ctx, metav1.ListOptions{})
+	pvas, err := associateVolumesAndPods(ctx, o.KubeClientset)
 	if err != nil {
-		o.Logger.Warnf("Unable to list persistent volumes: %v", err)
+		return err
+	}
+
+	if len(pvas) == 0 {
 		return nil
 	}
 
-	if len(pvList.Items) == 0 {
-		return nil
-	}
+	for _, a := range pvas {
+		if a.PersistentVolume.Status.Phase == corev1.VolumeBound {
+			o.Logger.Debugf("pod %s has a claim %s bound to volume %s ", a.Pod.Name, a.PersistentVolumeClaim.Name, a.PersistentVolume.Name)
+		}
 
-	for _, pv := range pvList.Items {
-		o.Logger.Debugf("deleting volume %s", pv.Name)
-		err = o.KubeClientset.CoreV1().PersistentVolumes().Delete(ctx, pv.Name, metav1.DeleteOptions{})
+		o.Logger.Debugf("deleting volume %s", a.PersistentVolume.Name)
 
+		err = o.KubeClientset.CoreV1().PersistentVolumes().Delete(ctx, a.PersistentVolume.Name, metav1.DeleteOptions{})
 		if err != nil {
 			o.Logger.Warnf("Unable to delete persistent volumes: %v", err)
 			return nil
 		}
 
-		_, err := o.KubeClientset.CoreV1().PersistentVolumes().Patch(ctx, pv.Name, types.JSONPatchType, removeFinalizerBytes, metav1.PatchOptions{})
+		_, err := o.KubeClientset.CoreV1().PersistentVolumes().Patch(ctx, a.PersistentVolume.Name, types.JSONPatchType, removeFinalizerBytes, metav1.PatchOptions{})
 		if err != nil {
 			o.Logger.Warnf("Unable to patch persistent volumes: %v", err)
 			return nil
@@ -387,18 +483,20 @@ func (o *ClusterUninstaller) deleteCnsVolumes(ctx context.Context) error {
 	defer cancel()
 	o.Logger.Debug("Delete CNS Volumes")
 
-	cnsVolumes, err := o.client.GetCnsVolumes(ctx, o.InfraID)
-	if err != nil {
-		return err
-	}
-
-	for _, cv := range cnsVolumes {
-		cnsVolumeLogger := o.Logger.WithField("CNS Volume", cv.VolumeId.Id)
-		err := o.client.DeleteCnsVolumes(ctx, cv)
+	for _, client := range o.clients {
+		cnsVolumes, err := client.GetCnsVolumes(ctx, o.InfraID)
 		if err != nil {
 			return err
 		}
-		cnsVolumeLogger.Info("Destroyed")
+
+		for _, cv := range cnsVolumes {
+			cnsVolumeLogger := o.Logger.WithField("CNS Volume", cv.VolumeId.Id)
+			err := client.DeleteCnsVolumes(ctx, cv)
+			if err != nil {
+				return err
+			}
+			cnsVolumeLogger.Info("Destroyed")
+		}
 	}
 
 	return nil
