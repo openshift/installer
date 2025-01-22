@@ -86,16 +86,15 @@ func (o *ClusterUninstaller) deleteForwardingRule(ctx context.Context, item clou
 	switch item.typeName {
 	case globalForwardingRuleResource:
 		op, err = o.computeSvc.GlobalForwardingRules.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
+		item.scope = global
 	case regionForwardingRuleResource:
 		op, err = o.computeSvc.ForwardingRules.Delete(o.ProjectID, o.Region, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
+		item.scope = regional
 	default:
 		return fmt.Errorf("invalid forwarding rule type %q", item.typeName)
 	}
 
-	if err = o.handleOperation(op, err, item, "forwarding rule"); err != nil {
-		return err
-	}
-	return nil
+	return o.handleOperation(ctx, op, err, item, "forwarding rule")
 }
 
 // destroyForwardingRules removes all forwarding rules with a name prefixed

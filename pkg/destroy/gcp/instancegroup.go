@@ -68,10 +68,8 @@ func (o *ClusterUninstaller) deleteInstanceGroup(ctx context.Context, item cloud
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.InstanceGroups.Delete(o.ProjectID, item.zone, item.name).RequestId(o.requestID(item.typeName, item.zone, item.name)).Context(ctx).Do()
-	if err = o.handleOperation(op, err, item, "instance group"); err != nil {
-		return err
-	}
-	return nil
+	item.scope = zonal
+	return o.handleOperation(ctx, op, err, item, "instance group")
 }
 
 // destroyInstanceGroups searches for instance groups that have a name prefixed

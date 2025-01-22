@@ -78,16 +78,15 @@ func (o *ClusterUninstaller) deleteHealthCheck(ctx context.Context, item cloudRe
 	switch item.typeName {
 	case globalHealthCheckResource:
 		op, err = o.computeSvc.HealthChecks.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
+		item.scope = global
 	case regionHealthCheckResource:
 		op, err = o.computeSvc.RegionHealthChecks.Delete(o.ProjectID, o.Region, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
+		item.scope = regional
 	default:
 		return fmt.Errorf("invalid health check type %q", item.typeName)
 	}
 
-	if err = o.handleOperation(op, err, item, "health check"); err != nil {
-		return err
-	}
-	return nil
+	return o.handleOperation(ctx, op, err, item, "health check")
 }
 
 // destroyHealthChecks removes all health check resources that have a name prefixed

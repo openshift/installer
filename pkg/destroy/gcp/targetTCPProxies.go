@@ -61,10 +61,8 @@ func (o *ClusterUninstaller) deleteTargetTCPProxy(ctx context.Context, item clou
 	defer cancel()
 
 	op, err := o.computeSvc.TargetTcpProxies.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
-	if err = o.handleOperation(op, err, item, "target tcp proxy"); err != nil {
-		return err
-	}
-	return nil
+	item.scope = global
+	return o.handleOperation(ctx, op, err, item, "target tcp proxy")
 }
 
 // destroyTargetTCPProxies removes all target tcp proxy resources that have a name prefixed

@@ -53,10 +53,8 @@ func (o *ClusterUninstaller) deleteNetwork(ctx context.Context, item cloudResour
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.Networks.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
-	if err = o.handleOperation(op, err, item, "network"); err != nil {
-		return err
-	}
-	return nil
+	item.scope = global
+	return o.handleOperation(ctx, op, err, item, "network")
 }
 
 // destroyNetworks removes all vpc network resources prefixed

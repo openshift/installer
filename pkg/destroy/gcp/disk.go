@@ -124,10 +124,8 @@ func (o *ClusterUninstaller) deleteDisk(ctx context.Context, item cloudResource)
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.Disks.Delete(o.ProjectID, item.zone, item.name).RequestId(o.requestID(item.typeName, item.zone, item.name)).Context(ctx).Do()
-	if err = o.handleOperation(op, err, item, "disk"); err != nil {
-		return err
-	}
-	return nil
+	item.scope = zonal
+	return o.handleOperation(ctx, op, err, item, "disk")
 }
 
 // destroyDisks removes all disk resources that have a name prefixed

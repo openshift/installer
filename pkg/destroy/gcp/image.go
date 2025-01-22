@@ -59,10 +59,8 @@ func (o *ClusterUninstaller) deleteImage(ctx context.Context, item cloudResource
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.Images.Delete(o.ProjectID, item.name).Context(ctx).RequestId(o.requestID(item.typeName, item.name)).Do()
-	if err = o.handleOperation(op, err, item, "image"); err != nil {
-		return err
-	}
-	return nil
+	item.scope = global
+	return o.handleOperation(ctx, op, err, item, "image")
 }
 
 // destroyImages removes all image resources with a name prefixed
