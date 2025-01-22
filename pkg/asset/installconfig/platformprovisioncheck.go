@@ -19,6 +19,7 @@ import (
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	vsconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -82,6 +83,19 @@ func (a *PlatformProvisionCheck) Generate(ctx context.Context, dependencies asse
 		client, err := ic.Azure.Client()
 		if err != nil {
 			return err
+		}
+		isAro := false
+		if ic.Config.Azure.ResourceGroupName != "" {
+			isAro, err = client.CheckIfARO(ctx, ic.Config.Azure.ResourceGroupName)
+			if err != nil {
+				return err
+			}
+		}
+
+		if isAro || ic.Config.Publish != types.InternalPublishingStrategy {
+			if ic.Config.Azure.BaseDomainResourceGroupName == "" {
+				return field.Required(field.NewPath("baseDomainResourceGroupName"), "baseDomainResourceGroupName is the resource group name where the azure dns zone is deployed")
+			}
 		}
 		return azconfig.ValidateForProvisioning(client, ic.Config)
 	case baremetal.Name:
