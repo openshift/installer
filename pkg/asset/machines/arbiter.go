@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -393,21 +392,4 @@ func (m *Arbiter) Machines() ([]machinev1beta1.Machine, error) {
 	}
 
 	return machines, nil
-}
-
-// IPAddresses returns IPAddress manifest structures.
-func (m *Arbiter) IPAddresses() ([]ipamv1.IPAddress, error) {
-	ipAddresses := []ipamv1.IPAddress{}
-	for i, file := range m.IPAddrFiles {
-		logrus.Debugf("Attempting to load address %v.", file.Filename)
-		address := &ipamv1.IPAddress{}
-		err := yaml.Unmarshal(file.Data, &address)
-		if err != nil {
-			return ipAddresses, errors.Wrapf(err, "unable to unmarshal ip address %d", i)
-		}
-
-		ipAddresses = append(ipAddresses, *address)
-	}
-
-	return ipAddresses, nil
 }
