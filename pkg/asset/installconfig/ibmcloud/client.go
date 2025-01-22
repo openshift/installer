@@ -44,6 +44,7 @@ type API interface {
 	CreateCOSObject(ctx context.Context, sourceData []byte, fileName string, cosInstanceID string, bucketName string, region string) error
 	CreateCISDNSRecord(ctx context.Context, cisInstanceCRN string, zoneID string, recordName string, cname string) error
 	CreateDNSServicesDNSRecord(ctx context.Context, dnsInstanceID string, zoneID string, recordName string, cname string) error
+	CreateDNSServicesPermittedNetwork(ctx context.Context, dnsInstanceID string, dnsZoneID string, vpcCRN string) error
 	CreateIAMAuthorizationPolicy(tx context.Context, sourceServiceName string, sourceServiceResourceType string, targetServiceName string, targetServiceInstanceID string, roles []string) error
 	CreateResourceGroup(ctx context.Context, rgName string) error
 	GetAPIKey() string
@@ -283,6 +284,30 @@ func (c *Client) CreateDNSServicesDNSRecord(ctx context.Context, dnsInstanceID s
 		return fmt.Errorf("failed to create dns record %s: %w", recordName, err)
 	}
 	logrus.Debugf("created new dns record: recordName=%s, recordID=%s", recordName, *recordDetails.ID)
+	return nil
+}
+
+// CreateDNSServicesPermittedNetwork will create a new VPC Permitted Network in the specified DNS Services Instance and Zone.
+func (c *Client) CreateDNSServicesPermittedNetwork(ctx context.Context, dnsInstanceID string, dnsZoneID string, vpcCRN string) error {
+	dnsServices, err := c.getDNSServicesAPI()
+	if err != nil {
+		return fmt.Errorf("failed to create dns services service to create permitted network: %w", err)
+	}
+
+	// Build the new Permitted Network options.
+	permitOptions := dnsServices.NewCreatePermittedNetworkOptions(dnsInstanceID, dnsZoneID)
+	// Set the network type (to VPC) and VPC details
+	permitOptions.Type = ptr.To(dnssvcsv1.CreatePermittedNetworkOptions_Type_Vpc)
+	permitOptions.PermittedNetwork = &dnssvcsv1.PermittedNetworkVpc{
+		VpcCrn: ptr.To(vpcCRN),
+	}
+
+	// Create the new Permitted Network.
+	result, _, err := dnsServices.CreatePermittedNetworkWithContext(ctx, permitOptions)
+	if err != nil {
+		return fmt.Errorf("failed to create permitted network: %w", err)
+	}
+	logrus.Debugf("created new dns services permitted network: dnsInstanceID=%s, dnsZoneID=%s, vpcCRN=%s, permittedNetworkID=%s", dnsInstanceID, dnsZoneID, vpcCRN, *result.ID)
 	return nil
 }
 
