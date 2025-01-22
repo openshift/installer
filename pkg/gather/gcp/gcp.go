@@ -59,10 +59,7 @@ func New(logger logrus.FieldLogger, serialLogBundle string, bootstrap string, ma
 
 // Run is the entrypoint to start the gather process.
 func (g *Gather) Run() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
-
-	svc, err := compute.NewService(ctx, option.WithCredentials(g.credentials))
+	svc, err := compute.NewService(context.Background(), option.WithCredentials(g.credentials))
 	if err != nil {
 		return err
 	}
@@ -77,6 +74,9 @@ func (g *Gather) Run() error {
 	if err != nil && !errors.Is(err, os.ErrExist) {
 		return err
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
 
 	req := svc.Instances.AggregatedList(g.credentials.ProjectID).Filter(fmt.Sprintf("name = %s-*", g.infraID))
 	err = req.Pages(ctx, func(list *compute.InstanceAggregatedList) error {
