@@ -9,6 +9,7 @@ import (
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/types/imagebased"
 )
 
@@ -36,7 +37,7 @@ var _ asset.WritableAsset = (*ConfigImage)(nil)
 func (ci *ConfigImage) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&ClusterConfiguration{},
-		&ImageDigestSources{},
+		&manifests.ImageDigestMirrorSet{},
 		&ExtraManifests{},
 	}
 }
@@ -76,7 +77,7 @@ func (ci *ConfigImage) Generate(_ context.Context, dependencies asset.Parents) e
 
 	for _, a := range []asset.WritableAsset{
 		&ClusterConfiguration{},
-		&ImageDigestSources{},
+		&manifests.ImageDigestMirrorSet{},
 		&ExtraManifests{},
 	} {
 		dependencies.Get(a)
