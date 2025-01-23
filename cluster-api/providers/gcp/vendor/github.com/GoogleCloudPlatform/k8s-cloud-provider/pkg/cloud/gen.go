@@ -3652,12 +3652,12 @@ func (g *GCEAddresses) Insert(ctx context.Context, key *meta.Key, obj *computega
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAddresses.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAddresses.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -3693,12 +3693,12 @@ func (g *GCEAddresses) Delete(ctx context.Context, key *meta.Key, options ...Opt
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAddresses.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAddresses.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -4116,12 +4116,12 @@ func (g *GCEAlphaAddresses) Insert(ctx context.Context, key *meta.Key, obj *comp
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaAddresses.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaAddresses.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -4157,12 +4157,12 @@ func (g *GCEAlphaAddresses) Delete(ctx context.Context, key *meta.Key, options .
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaAddresses.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaAddresses.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -4580,12 +4580,12 @@ func (g *GCEBetaAddresses) Insert(ctx context.Context, key *meta.Key, obj *compu
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaAddresses.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaAddresses.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -4621,12 +4621,12 @@ func (g *GCEBetaAddresses) Delete(ctx context.Context, key *meta.Key, options ..
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaAddresses.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaAddresses.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -5003,12 +5003,12 @@ func (g *GCEAlphaGlobalAddresses) Insert(ctx context.Context, key *meta.Key, obj
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaGlobalAddresses.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaGlobalAddresses.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -5044,12 +5044,12 @@ func (g *GCEAlphaGlobalAddresses) Delete(ctx context.Context, key *meta.Key, opt
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaGlobalAddresses.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaGlobalAddresses.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -5370,12 +5370,12 @@ func (g *GCEBetaGlobalAddresses) Insert(ctx context.Context, key *meta.Key, obj 
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaGlobalAddresses.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaGlobalAddresses.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -5411,12 +5411,12 @@ func (g *GCEBetaGlobalAddresses) Delete(ctx context.Context, key *meta.Key, opti
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaGlobalAddresses.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaGlobalAddresses.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -5737,12 +5737,12 @@ func (g *GCEGlobalAddresses) Insert(ctx context.Context, key *meta.Key, obj *com
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEGlobalAddresses.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEGlobalAddresses.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -5778,12 +5778,12 @@ func (g *GCEGlobalAddresses) Delete(ctx context.Context, key *meta.Key, options 
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEGlobalAddresses.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEGlobalAddresses.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -6202,12 +6202,12 @@ func (g *GCEBackendServices) Insert(ctx context.Context, key *meta.Key, obj *com
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBackendServices.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBackendServices.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -6243,12 +6243,12 @@ func (g *GCEBackendServices) Delete(ctx context.Context, key *meta.Key, options 
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBackendServices.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBackendServices.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -6338,12 +6338,12 @@ func (g *GCEBackendServices) AddSignedUrlKey(ctx context.Context, key *meta.Key,
 	call := g.s.GA.BackendServices.AddSignedUrlKey(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBackendServices.AddSignedUrlKey(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBackendServices.AddSignedUrlKey(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -6380,12 +6380,12 @@ func (g *GCEBackendServices) DeleteSignedUrlKey(ctx context.Context, key *meta.K
 	call := g.s.GA.BackendServices.DeleteSignedUrlKey(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBackendServices.DeleteSignedUrlKey(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBackendServices.DeleteSignedUrlKey(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -6455,12 +6455,12 @@ func (g *GCEBackendServices) Patch(ctx context.Context, key *meta.Key, arg0 *com
 	call := g.s.GA.BackendServices.Patch(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBackendServices.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBackendServices.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -6497,12 +6497,12 @@ func (g *GCEBackendServices) SetSecurityPolicy(ctx context.Context, key *meta.Ke
 	call := g.s.GA.BackendServices.SetSecurityPolicy(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBackendServices.SetSecurityPolicy(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBackendServices.SetSecurityPolicy(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -6539,12 +6539,12 @@ func (g *GCEBackendServices) Update(ctx context.Context, key *meta.Key, arg0 *co
 	call := g.s.GA.BackendServices.Update(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBackendServices.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBackendServices.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -6956,12 +6956,12 @@ func (g *GCEBetaBackendServices) Insert(ctx context.Context, key *meta.Key, obj 
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaBackendServices.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaBackendServices.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -6997,12 +6997,12 @@ func (g *GCEBetaBackendServices) Delete(ctx context.Context, key *meta.Key, opti
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaBackendServices.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaBackendServices.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -7092,12 +7092,12 @@ func (g *GCEBetaBackendServices) AddSignedUrlKey(ctx context.Context, key *meta.
 	call := g.s.Beta.BackendServices.AddSignedUrlKey(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaBackendServices.AddSignedUrlKey(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaBackendServices.AddSignedUrlKey(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -7134,12 +7134,12 @@ func (g *GCEBetaBackendServices) DeleteSignedUrlKey(ctx context.Context, key *me
 	call := g.s.Beta.BackendServices.DeleteSignedUrlKey(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaBackendServices.DeleteSignedUrlKey(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaBackendServices.DeleteSignedUrlKey(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -7176,12 +7176,12 @@ func (g *GCEBetaBackendServices) Patch(ctx context.Context, key *meta.Key, arg0 
 	call := g.s.Beta.BackendServices.Patch(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaBackendServices.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaBackendServices.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -7218,12 +7218,12 @@ func (g *GCEBetaBackendServices) SetSecurityPolicy(ctx context.Context, key *met
 	call := g.s.Beta.BackendServices.SetSecurityPolicy(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaBackendServices.SetSecurityPolicy(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaBackendServices.SetSecurityPolicy(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -7260,12 +7260,12 @@ func (g *GCEBetaBackendServices) Update(ctx context.Context, key *meta.Key, arg0
 	call := g.s.Beta.BackendServices.Update(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaBackendServices.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaBackendServices.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -7677,12 +7677,12 @@ func (g *GCEAlphaBackendServices) Insert(ctx context.Context, key *meta.Key, obj
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaBackendServices.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaBackendServices.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -7718,12 +7718,12 @@ func (g *GCEAlphaBackendServices) Delete(ctx context.Context, key *meta.Key, opt
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaBackendServices.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaBackendServices.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -7813,12 +7813,12 @@ func (g *GCEAlphaBackendServices) AddSignedUrlKey(ctx context.Context, key *meta
 	call := g.s.Alpha.BackendServices.AddSignedUrlKey(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaBackendServices.AddSignedUrlKey(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaBackendServices.AddSignedUrlKey(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -7855,12 +7855,12 @@ func (g *GCEAlphaBackendServices) DeleteSignedUrlKey(ctx context.Context, key *m
 	call := g.s.Alpha.BackendServices.DeleteSignedUrlKey(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaBackendServices.DeleteSignedUrlKey(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaBackendServices.DeleteSignedUrlKey(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -7897,12 +7897,12 @@ func (g *GCEAlphaBackendServices) Patch(ctx context.Context, key *meta.Key, arg0
 	call := g.s.Alpha.BackendServices.Patch(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaBackendServices.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaBackendServices.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -7939,12 +7939,12 @@ func (g *GCEAlphaBackendServices) SetSecurityPolicy(ctx context.Context, key *me
 	call := g.s.Alpha.BackendServices.SetSecurityPolicy(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaBackendServices.SetSecurityPolicy(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaBackendServices.SetSecurityPolicy(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -7981,12 +7981,12 @@ func (g *GCEAlphaBackendServices) Update(ctx context.Context, key *meta.Key, arg
 	call := g.s.Alpha.BackendServices.Update(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaBackendServices.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaBackendServices.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -8353,12 +8353,12 @@ func (g *GCERegionBackendServices) Insert(ctx context.Context, key *meta.Key, ob
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionBackendServices.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERegionBackendServices.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -8394,12 +8394,12 @@ func (g *GCERegionBackendServices) Delete(ctx context.Context, key *meta.Key, op
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionBackendServices.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERegionBackendServices.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -8466,12 +8466,12 @@ func (g *GCERegionBackendServices) Patch(ctx context.Context, key *meta.Key, arg
 	call := g.s.GA.RegionBackendServices.Patch(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionBackendServices.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCERegionBackendServices.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -8508,12 +8508,12 @@ func (g *GCERegionBackendServices) SetSecurityPolicy(ctx context.Context, key *m
 	call := g.s.GA.RegionBackendServices.SetSecurityPolicy(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionBackendServices.SetSecurityPolicy(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCERegionBackendServices.SetSecurityPolicy(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -8550,12 +8550,12 @@ func (g *GCERegionBackendServices) Update(ctx context.Context, key *meta.Key, ar
 	call := g.s.GA.RegionBackendServices.Update(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionBackendServices.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCERegionBackendServices.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -8922,12 +8922,12 @@ func (g *GCEAlphaRegionBackendServices) Insert(ctx context.Context, key *meta.Ke
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionBackendServices.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaRegionBackendServices.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -8963,12 +8963,12 @@ func (g *GCEAlphaRegionBackendServices) Delete(ctx context.Context, key *meta.Ke
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionBackendServices.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaRegionBackendServices.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -9035,12 +9035,12 @@ func (g *GCEAlphaRegionBackendServices) Patch(ctx context.Context, key *meta.Key
 	call := g.s.Alpha.RegionBackendServices.Patch(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionBackendServices.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaRegionBackendServices.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -9077,12 +9077,12 @@ func (g *GCEAlphaRegionBackendServices) SetSecurityPolicy(ctx context.Context, k
 	call := g.s.Alpha.RegionBackendServices.SetSecurityPolicy(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionBackendServices.SetSecurityPolicy(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaRegionBackendServices.SetSecurityPolicy(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -9119,12 +9119,12 @@ func (g *GCEAlphaRegionBackendServices) Update(ctx context.Context, key *meta.Ke
 	call := g.s.Alpha.RegionBackendServices.Update(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionBackendServices.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaRegionBackendServices.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -9491,12 +9491,12 @@ func (g *GCEBetaRegionBackendServices) Insert(ctx context.Context, key *meta.Key
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionBackendServices.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaRegionBackendServices.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -9532,12 +9532,12 @@ func (g *GCEBetaRegionBackendServices) Delete(ctx context.Context, key *meta.Key
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionBackendServices.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaRegionBackendServices.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -9604,12 +9604,12 @@ func (g *GCEBetaRegionBackendServices) Patch(ctx context.Context, key *meta.Key,
 	call := g.s.Beta.RegionBackendServices.Patch(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionBackendServices.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaRegionBackendServices.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -9646,12 +9646,12 @@ func (g *GCEBetaRegionBackendServices) SetSecurityPolicy(ctx context.Context, ke
 	call := g.s.Beta.RegionBackendServices.SetSecurityPolicy(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionBackendServices.SetSecurityPolicy(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaRegionBackendServices.SetSecurityPolicy(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -9688,12 +9688,12 @@ func (g *GCEBetaRegionBackendServices) Update(ctx context.Context, key *meta.Key
 	call := g.s.Beta.RegionBackendServices.Update(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionBackendServices.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaRegionBackendServices.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -10030,12 +10030,12 @@ func (g *GCEDisks) Insert(ctx context.Context, key *meta.Key, obj *computega.Dis
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEDisks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEDisks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -10071,12 +10071,12 @@ func (g *GCEDisks) Delete(ctx context.Context, key *meta.Key, options ...Option)
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEDisks.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEDisks.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -10110,12 +10110,12 @@ func (g *GCEDisks) Resize(ctx context.Context, key *meta.Key, arg0 *computega.Di
 	call := g.s.GA.Disks.Resize(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEDisks.Resize(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEDisks.Resize(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -10452,12 +10452,12 @@ func (g *GCERegionDisks) Insert(ctx context.Context, key *meta.Key, obj *compute
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionDisks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERegionDisks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -10493,12 +10493,12 @@ func (g *GCERegionDisks) Delete(ctx context.Context, key *meta.Key, options ...O
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionDisks.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERegionDisks.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -10532,12 +10532,12 @@ func (g *GCERegionDisks) Resize(ctx context.Context, key *meta.Key, arg0 *comput
 	call := g.s.GA.RegionDisks.Resize(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionDisks.Resize(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCERegionDisks.Resize(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -10881,12 +10881,12 @@ func (g *GCEAlphaFirewalls) Insert(ctx context.Context, key *meta.Key, obj *comp
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaFirewalls.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaFirewalls.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -10922,12 +10922,12 @@ func (g *GCEAlphaFirewalls) Delete(ctx context.Context, key *meta.Key, options .
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaFirewalls.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaFirewalls.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -10961,12 +10961,12 @@ func (g *GCEAlphaFirewalls) Patch(ctx context.Context, key *meta.Key, arg0 *comp
 	call := g.s.Alpha.Firewalls.Patch(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaFirewalls.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaFirewalls.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -11003,12 +11003,12 @@ func (g *GCEAlphaFirewalls) Update(ctx context.Context, key *meta.Key, arg0 *com
 	call := g.s.Alpha.Firewalls.Update(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaFirewalls.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaFirewalls.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -11352,12 +11352,12 @@ func (g *GCEBetaFirewalls) Insert(ctx context.Context, key *meta.Key, obj *compu
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaFirewalls.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaFirewalls.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -11393,12 +11393,12 @@ func (g *GCEBetaFirewalls) Delete(ctx context.Context, key *meta.Key, options ..
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaFirewalls.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaFirewalls.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -11432,12 +11432,12 @@ func (g *GCEBetaFirewalls) Patch(ctx context.Context, key *meta.Key, arg0 *compu
 	call := g.s.Beta.Firewalls.Patch(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaFirewalls.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaFirewalls.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -11474,12 +11474,12 @@ func (g *GCEBetaFirewalls) Update(ctx context.Context, key *meta.Key, arg0 *comp
 	call := g.s.Beta.Firewalls.Update(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaFirewalls.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaFirewalls.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -11823,12 +11823,12 @@ func (g *GCEFirewalls) Insert(ctx context.Context, key *meta.Key, obj *computega
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEFirewalls.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEFirewalls.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -11864,12 +11864,12 @@ func (g *GCEFirewalls) Delete(ctx context.Context, key *meta.Key, options ...Opt
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEFirewalls.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEFirewalls.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -11903,12 +11903,12 @@ func (g *GCEFirewalls) Patch(ctx context.Context, key *meta.Key, arg0 *computega
 	call := g.s.GA.Firewalls.Patch(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEFirewalls.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEFirewalls.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -11945,12 +11945,12 @@ func (g *GCEFirewalls) Update(ctx context.Context, key *meta.Key, arg0 *computeg
 	call := g.s.GA.Firewalls.Update(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEFirewalls.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEFirewalls.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -12394,12 +12394,12 @@ func (g *GCEAlphaNetworkFirewallPolicies) Insert(ctx context.Context, key *meta.
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaNetworkFirewallPolicies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaNetworkFirewallPolicies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -12435,12 +12435,12 @@ func (g *GCEAlphaNetworkFirewallPolicies) Delete(ctx context.Context, key *meta.
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaNetworkFirewallPolicies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaNetworkFirewallPolicies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -12474,12 +12474,12 @@ func (g *GCEAlphaNetworkFirewallPolicies) AddAssociation(ctx context.Context, ke
 	call := g.s.Alpha.NetworkFirewallPolicies.AddAssociation(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaNetworkFirewallPolicies.AddAssociation(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaNetworkFirewallPolicies.AddAssociation(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -12516,12 +12516,12 @@ func (g *GCEAlphaNetworkFirewallPolicies) AddRule(ctx context.Context, key *meta
 	call := g.s.Alpha.NetworkFirewallPolicies.AddRule(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaNetworkFirewallPolicies.AddRule(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaNetworkFirewallPolicies.AddRule(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -12558,12 +12558,12 @@ func (g *GCEAlphaNetworkFirewallPolicies) CloneRules(ctx context.Context, key *m
 	call := g.s.Alpha.NetworkFirewallPolicies.CloneRules(projectID, key.Name)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaNetworkFirewallPolicies.CloneRules(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaNetworkFirewallPolicies.CloneRules(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -12699,12 +12699,12 @@ func (g *GCEAlphaNetworkFirewallPolicies) Patch(ctx context.Context, key *meta.K
 	call := g.s.Alpha.NetworkFirewallPolicies.Patch(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaNetworkFirewallPolicies.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaNetworkFirewallPolicies.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -12741,12 +12741,12 @@ func (g *GCEAlphaNetworkFirewallPolicies) PatchRule(ctx context.Context, key *me
 	call := g.s.Alpha.NetworkFirewallPolicies.PatchRule(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaNetworkFirewallPolicies.PatchRule(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaNetworkFirewallPolicies.PatchRule(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -12783,12 +12783,12 @@ func (g *GCEAlphaNetworkFirewallPolicies) RemoveAssociation(ctx context.Context,
 	call := g.s.Alpha.NetworkFirewallPolicies.RemoveAssociation(projectID, key.Name)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaNetworkFirewallPolicies.RemoveAssociation(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaNetworkFirewallPolicies.RemoveAssociation(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -12825,12 +12825,12 @@ func (g *GCEAlphaNetworkFirewallPolicies) RemoveRule(ctx context.Context, key *m
 	call := g.s.Alpha.NetworkFirewallPolicies.RemoveRule(projectID, key.Name)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaNetworkFirewallPolicies.RemoveRule(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaNetworkFirewallPolicies.RemoveRule(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -13343,12 +13343,12 @@ func (g *GCEAlphaRegionNetworkFirewallPolicies) Insert(ctx context.Context, key 
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionNetworkFirewallPolicies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaRegionNetworkFirewallPolicies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -13384,12 +13384,12 @@ func (g *GCEAlphaRegionNetworkFirewallPolicies) Delete(ctx context.Context, key 
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionNetworkFirewallPolicies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaRegionNetworkFirewallPolicies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -13423,12 +13423,12 @@ func (g *GCEAlphaRegionNetworkFirewallPolicies) AddAssociation(ctx context.Conte
 	call := g.s.Alpha.RegionNetworkFirewallPolicies.AddAssociation(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionNetworkFirewallPolicies.AddAssociation(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaRegionNetworkFirewallPolicies.AddAssociation(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -13465,12 +13465,12 @@ func (g *GCEAlphaRegionNetworkFirewallPolicies) AddRule(ctx context.Context, key
 	call := g.s.Alpha.RegionNetworkFirewallPolicies.AddRule(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionNetworkFirewallPolicies.AddRule(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaRegionNetworkFirewallPolicies.AddRule(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -13507,12 +13507,12 @@ func (g *GCEAlphaRegionNetworkFirewallPolicies) CloneRules(ctx context.Context, 
 	call := g.s.Alpha.RegionNetworkFirewallPolicies.CloneRules(projectID, key.Region, key.Name)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionNetworkFirewallPolicies.CloneRules(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaRegionNetworkFirewallPolicies.CloneRules(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -13648,12 +13648,12 @@ func (g *GCEAlphaRegionNetworkFirewallPolicies) Patch(ctx context.Context, key *
 	call := g.s.Alpha.RegionNetworkFirewallPolicies.Patch(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionNetworkFirewallPolicies.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaRegionNetworkFirewallPolicies.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -13690,12 +13690,12 @@ func (g *GCEAlphaRegionNetworkFirewallPolicies) PatchRule(ctx context.Context, k
 	call := g.s.Alpha.RegionNetworkFirewallPolicies.PatchRule(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionNetworkFirewallPolicies.PatchRule(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaRegionNetworkFirewallPolicies.PatchRule(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -13732,12 +13732,12 @@ func (g *GCEAlphaRegionNetworkFirewallPolicies) RemoveAssociation(ctx context.Co
 	call := g.s.Alpha.RegionNetworkFirewallPolicies.RemoveAssociation(projectID, key.Region, key.Name)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionNetworkFirewallPolicies.RemoveAssociation(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaRegionNetworkFirewallPolicies.RemoveAssociation(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -13774,12 +13774,12 @@ func (g *GCEAlphaRegionNetworkFirewallPolicies) RemoveRule(ctx context.Context, 
 	call := g.s.Alpha.RegionNetworkFirewallPolicies.RemoveRule(projectID, key.Region, key.Name)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionNetworkFirewallPolicies.RemoveRule(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaRegionNetworkFirewallPolicies.RemoveRule(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -13863,6 +13863,7 @@ type ForwardingRules interface {
 	List(ctx context.Context, region string, fl *filter.F, options ...Option) ([]*computega.ForwardingRule, error)
 	Insert(ctx context.Context, key *meta.Key, obj *computega.ForwardingRule, options ...Option) error
 	Delete(ctx context.Context, key *meta.Key, options ...Option) error
+	Patch(context.Context, *meta.Key, *computega.ForwardingRule, ...Option) error
 	SetLabels(context.Context, *meta.Key, *computega.RegionSetLabelsRequest, ...Option) error
 	SetTarget(context.Context, *meta.Key, *computega.TargetReference, ...Option) error
 }
@@ -13904,6 +13905,7 @@ type MockForwardingRules struct {
 	ListHook      func(ctx context.Context, region string, fl *filter.F, m *MockForwardingRules, options ...Option) (bool, []*computega.ForwardingRule, error)
 	InsertHook    func(ctx context.Context, key *meta.Key, obj *computega.ForwardingRule, m *MockForwardingRules, options ...Option) (bool, error)
 	DeleteHook    func(ctx context.Context, key *meta.Key, m *MockForwardingRules, options ...Option) (bool, error)
+	PatchHook     func(context.Context, *meta.Key, *computega.ForwardingRule, *MockForwardingRules, ...Option) error
 	SetLabelsHook func(context.Context, *meta.Key, *computega.RegionSetLabelsRequest, *MockForwardingRules, ...Option) error
 	SetTargetHook func(context.Context, *meta.Key, *computega.TargetReference, *MockForwardingRules, ...Option) error
 
@@ -14055,6 +14057,14 @@ func (m *MockForwardingRules) Obj(o *computega.ForwardingRule) *MockForwardingRu
 	return &MockForwardingRulesObj{o}
 }
 
+// Patch is a mock for the corresponding method.
+func (m *MockForwardingRules) Patch(ctx context.Context, key *meta.Key, arg0 *computega.ForwardingRule, options ...Option) error {
+	if m.PatchHook != nil {
+		return m.PatchHook(ctx, key, arg0, m)
+	}
+	return nil
+}
+
 // SetLabels is a mock for the corresponding method.
 func (m *MockForwardingRules) SetLabels(ctx context.Context, key *meta.Key, arg0 *computega.RegionSetLabelsRequest, options ...Option) error {
 	if m.SetLabelsHook != nil {
@@ -14192,12 +14202,12 @@ func (g *GCEForwardingRules) Insert(ctx context.Context, key *meta.Key, obj *com
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEForwardingRules.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEForwardingRules.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -14233,17 +14243,59 @@ func (g *GCEForwardingRules) Delete(ctx context.Context, key *meta.Key, options 
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEForwardingRules.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEForwardingRules.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
 	err = g.s.WaitForCompletion(ctx, op)
 	klog.V(4).Infof("GCEForwardingRules.Delete(%v, %v) = %v", ctx, key, err)
+	return err
+}
+
+// Patch is a method on GCEForwardingRules.
+func (g *GCEForwardingRules) Patch(ctx context.Context, key *meta.Key, arg0 *computega.ForwardingRule, options ...Option) error {
+	opts := mergeOptions(options)
+	klog.V(5).Infof("GCEForwardingRules.Patch(%v, %v, %v, ...): called", ctx, key, opts)
+
+	if !key.Valid() {
+		klog.V(2).Infof("GCEForwardingRules.Patch(%v, %v, %v, ...): key is invalid (%#v)", ctx, key, opts, key)
+		return fmt.Errorf("invalid GCE key (%+v)", key)
+	}
+	projectID := getProjectID(ctx, g.s.ProjectRouter, opts, "ga", "ForwardingRules")
+	ck := &CallContextKey{
+		ProjectID: projectID,
+		Operation: "Patch",
+		Version:   meta.Version("ga"),
+		Service:   "ForwardingRules",
+	}
+	klog.V(5).Infof("GCEForwardingRules.Patch(%v, %v, ...): projectID = %v, ck = %+v", ctx, key, projectID, ck)
+	callObserverStart(ctx, ck)
+	if err := g.s.RateLimiter.Accept(ctx, ck); err != nil {
+		klog.V(4).Infof("GCEForwardingRules.Patch(%v, %v, ...): RateLimiter error: %v", ctx, key, err)
+		return err
+	}
+	call := g.s.GA.ForwardingRules.Patch(projectID, key.Region, key.Name, arg0)
+	call.Context(ctx)
+	op, err := call.Do()
+	klog.V(4).Infof("GCEForwardingRules.Patch(%v, %v, ...) = %+v", ctx, key, err)
+
+	if err != nil {
+		callObserverEnd(ctx, ck, err)
+		g.s.RateLimiter.Observe(ctx, err, ck)
+
+		return err
+	}
+
+	err = g.s.WaitForCompletion(ctx, op)
+	callObserverEnd(ctx, ck, err)
+	g.s.RateLimiter.Observe(ctx, err, ck) // XXX
+
+	klog.V(4).Infof("GCEForwardingRules.Patch(%v, %v, ...) = %+v", ctx, key, err)
 	return err
 }
 
@@ -14272,12 +14324,12 @@ func (g *GCEForwardingRules) SetLabels(ctx context.Context, key *meta.Key, arg0 
 	call := g.s.GA.ForwardingRules.SetLabels(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEForwardingRules.SetLabels(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEForwardingRules.SetLabels(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -14314,12 +14366,12 @@ func (g *GCEForwardingRules) SetTarget(ctx context.Context, key *meta.Key, arg0 
 	call := g.s.GA.ForwardingRules.SetTarget(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEForwardingRules.SetTarget(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEForwardingRules.SetTarget(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -14337,6 +14389,7 @@ type AlphaForwardingRules interface {
 	List(ctx context.Context, region string, fl *filter.F, options ...Option) ([]*computealpha.ForwardingRule, error)
 	Insert(ctx context.Context, key *meta.Key, obj *computealpha.ForwardingRule, options ...Option) error
 	Delete(ctx context.Context, key *meta.Key, options ...Option) error
+	Patch(context.Context, *meta.Key, *computealpha.ForwardingRule, ...Option) error
 	SetLabels(context.Context, *meta.Key, *computealpha.RegionSetLabelsRequest, ...Option) error
 	SetTarget(context.Context, *meta.Key, *computealpha.TargetReference, ...Option) error
 }
@@ -14378,6 +14431,7 @@ type MockAlphaForwardingRules struct {
 	ListHook      func(ctx context.Context, region string, fl *filter.F, m *MockAlphaForwardingRules, options ...Option) (bool, []*computealpha.ForwardingRule, error)
 	InsertHook    func(ctx context.Context, key *meta.Key, obj *computealpha.ForwardingRule, m *MockAlphaForwardingRules, options ...Option) (bool, error)
 	DeleteHook    func(ctx context.Context, key *meta.Key, m *MockAlphaForwardingRules, options ...Option) (bool, error)
+	PatchHook     func(context.Context, *meta.Key, *computealpha.ForwardingRule, *MockAlphaForwardingRules, ...Option) error
 	SetLabelsHook func(context.Context, *meta.Key, *computealpha.RegionSetLabelsRequest, *MockAlphaForwardingRules, ...Option) error
 	SetTargetHook func(context.Context, *meta.Key, *computealpha.TargetReference, *MockAlphaForwardingRules, ...Option) error
 
@@ -14529,6 +14583,14 @@ func (m *MockAlphaForwardingRules) Obj(o *computealpha.ForwardingRule) *MockForw
 	return &MockForwardingRulesObj{o}
 }
 
+// Patch is a mock for the corresponding method.
+func (m *MockAlphaForwardingRules) Patch(ctx context.Context, key *meta.Key, arg0 *computealpha.ForwardingRule, options ...Option) error {
+	if m.PatchHook != nil {
+		return m.PatchHook(ctx, key, arg0, m)
+	}
+	return nil
+}
+
 // SetLabels is a mock for the corresponding method.
 func (m *MockAlphaForwardingRules) SetLabels(ctx context.Context, key *meta.Key, arg0 *computealpha.RegionSetLabelsRequest, options ...Option) error {
 	if m.SetLabelsHook != nil {
@@ -14666,12 +14728,12 @@ func (g *GCEAlphaForwardingRules) Insert(ctx context.Context, key *meta.Key, obj
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaForwardingRules.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaForwardingRules.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -14707,17 +14769,59 @@ func (g *GCEAlphaForwardingRules) Delete(ctx context.Context, key *meta.Key, opt
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaForwardingRules.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaForwardingRules.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
 	err = g.s.WaitForCompletion(ctx, op)
 	klog.V(4).Infof("GCEAlphaForwardingRules.Delete(%v, %v) = %v", ctx, key, err)
+	return err
+}
+
+// Patch is a method on GCEAlphaForwardingRules.
+func (g *GCEAlphaForwardingRules) Patch(ctx context.Context, key *meta.Key, arg0 *computealpha.ForwardingRule, options ...Option) error {
+	opts := mergeOptions(options)
+	klog.V(5).Infof("GCEAlphaForwardingRules.Patch(%v, %v, %v, ...): called", ctx, key, opts)
+
+	if !key.Valid() {
+		klog.V(2).Infof("GCEAlphaForwardingRules.Patch(%v, %v, %v, ...): key is invalid (%#v)", ctx, key, opts, key)
+		return fmt.Errorf("invalid GCE key (%+v)", key)
+	}
+	projectID := getProjectID(ctx, g.s.ProjectRouter, opts, "alpha", "ForwardingRules")
+	ck := &CallContextKey{
+		ProjectID: projectID,
+		Operation: "Patch",
+		Version:   meta.Version("alpha"),
+		Service:   "ForwardingRules",
+	}
+	klog.V(5).Infof("GCEAlphaForwardingRules.Patch(%v, %v, ...): projectID = %v, ck = %+v", ctx, key, projectID, ck)
+	callObserverStart(ctx, ck)
+	if err := g.s.RateLimiter.Accept(ctx, ck); err != nil {
+		klog.V(4).Infof("GCEAlphaForwardingRules.Patch(%v, %v, ...): RateLimiter error: %v", ctx, key, err)
+		return err
+	}
+	call := g.s.Alpha.ForwardingRules.Patch(projectID, key.Region, key.Name, arg0)
+	call.Context(ctx)
+	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaForwardingRules.Patch(%v, %v, ...) = %+v", ctx, key, err)
+
+	if err != nil {
+		callObserverEnd(ctx, ck, err)
+		g.s.RateLimiter.Observe(ctx, err, ck)
+
+		return err
+	}
+
+	err = g.s.WaitForCompletion(ctx, op)
+	callObserverEnd(ctx, ck, err)
+	g.s.RateLimiter.Observe(ctx, err, ck) // XXX
+
+	klog.V(4).Infof("GCEAlphaForwardingRules.Patch(%v, %v, ...) = %+v", ctx, key, err)
 	return err
 }
 
@@ -14746,12 +14850,12 @@ func (g *GCEAlphaForwardingRules) SetLabels(ctx context.Context, key *meta.Key, 
 	call := g.s.Alpha.ForwardingRules.SetLabels(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaForwardingRules.SetLabels(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaForwardingRules.SetLabels(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -14788,12 +14892,12 @@ func (g *GCEAlphaForwardingRules) SetTarget(ctx context.Context, key *meta.Key, 
 	call := g.s.Alpha.ForwardingRules.SetTarget(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaForwardingRules.SetTarget(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaForwardingRules.SetTarget(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -14811,6 +14915,7 @@ type BetaForwardingRules interface {
 	List(ctx context.Context, region string, fl *filter.F, options ...Option) ([]*computebeta.ForwardingRule, error)
 	Insert(ctx context.Context, key *meta.Key, obj *computebeta.ForwardingRule, options ...Option) error
 	Delete(ctx context.Context, key *meta.Key, options ...Option) error
+	Patch(context.Context, *meta.Key, *computebeta.ForwardingRule, ...Option) error
 	SetLabels(context.Context, *meta.Key, *computebeta.RegionSetLabelsRequest, ...Option) error
 	SetTarget(context.Context, *meta.Key, *computebeta.TargetReference, ...Option) error
 }
@@ -14852,6 +14957,7 @@ type MockBetaForwardingRules struct {
 	ListHook      func(ctx context.Context, region string, fl *filter.F, m *MockBetaForwardingRules, options ...Option) (bool, []*computebeta.ForwardingRule, error)
 	InsertHook    func(ctx context.Context, key *meta.Key, obj *computebeta.ForwardingRule, m *MockBetaForwardingRules, options ...Option) (bool, error)
 	DeleteHook    func(ctx context.Context, key *meta.Key, m *MockBetaForwardingRules, options ...Option) (bool, error)
+	PatchHook     func(context.Context, *meta.Key, *computebeta.ForwardingRule, *MockBetaForwardingRules, ...Option) error
 	SetLabelsHook func(context.Context, *meta.Key, *computebeta.RegionSetLabelsRequest, *MockBetaForwardingRules, ...Option) error
 	SetTargetHook func(context.Context, *meta.Key, *computebeta.TargetReference, *MockBetaForwardingRules, ...Option) error
 
@@ -15003,6 +15109,14 @@ func (m *MockBetaForwardingRules) Obj(o *computebeta.ForwardingRule) *MockForwar
 	return &MockForwardingRulesObj{o}
 }
 
+// Patch is a mock for the corresponding method.
+func (m *MockBetaForwardingRules) Patch(ctx context.Context, key *meta.Key, arg0 *computebeta.ForwardingRule, options ...Option) error {
+	if m.PatchHook != nil {
+		return m.PatchHook(ctx, key, arg0, m)
+	}
+	return nil
+}
+
 // SetLabels is a mock for the corresponding method.
 func (m *MockBetaForwardingRules) SetLabels(ctx context.Context, key *meta.Key, arg0 *computebeta.RegionSetLabelsRequest, options ...Option) error {
 	if m.SetLabelsHook != nil {
@@ -15140,12 +15254,12 @@ func (g *GCEBetaForwardingRules) Insert(ctx context.Context, key *meta.Key, obj 
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaForwardingRules.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaForwardingRules.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -15181,17 +15295,59 @@ func (g *GCEBetaForwardingRules) Delete(ctx context.Context, key *meta.Key, opti
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaForwardingRules.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaForwardingRules.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
 	err = g.s.WaitForCompletion(ctx, op)
 	klog.V(4).Infof("GCEBetaForwardingRules.Delete(%v, %v) = %v", ctx, key, err)
+	return err
+}
+
+// Patch is a method on GCEBetaForwardingRules.
+func (g *GCEBetaForwardingRules) Patch(ctx context.Context, key *meta.Key, arg0 *computebeta.ForwardingRule, options ...Option) error {
+	opts := mergeOptions(options)
+	klog.V(5).Infof("GCEBetaForwardingRules.Patch(%v, %v, %v, ...): called", ctx, key, opts)
+
+	if !key.Valid() {
+		klog.V(2).Infof("GCEBetaForwardingRules.Patch(%v, %v, %v, ...): key is invalid (%#v)", ctx, key, opts, key)
+		return fmt.Errorf("invalid GCE key (%+v)", key)
+	}
+	projectID := getProjectID(ctx, g.s.ProjectRouter, opts, "beta", "ForwardingRules")
+	ck := &CallContextKey{
+		ProjectID: projectID,
+		Operation: "Patch",
+		Version:   meta.Version("beta"),
+		Service:   "ForwardingRules",
+	}
+	klog.V(5).Infof("GCEBetaForwardingRules.Patch(%v, %v, ...): projectID = %v, ck = %+v", ctx, key, projectID, ck)
+	callObserverStart(ctx, ck)
+	if err := g.s.RateLimiter.Accept(ctx, ck); err != nil {
+		klog.V(4).Infof("GCEBetaForwardingRules.Patch(%v, %v, ...): RateLimiter error: %v", ctx, key, err)
+		return err
+	}
+	call := g.s.Beta.ForwardingRules.Patch(projectID, key.Region, key.Name, arg0)
+	call.Context(ctx)
+	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaForwardingRules.Patch(%v, %v, ...) = %+v", ctx, key, err)
+
+	if err != nil {
+		callObserverEnd(ctx, ck, err)
+		g.s.RateLimiter.Observe(ctx, err, ck)
+
+		return err
+	}
+
+	err = g.s.WaitForCompletion(ctx, op)
+	callObserverEnd(ctx, ck, err)
+	g.s.RateLimiter.Observe(ctx, err, ck) // XXX
+
+	klog.V(4).Infof("GCEBetaForwardingRules.Patch(%v, %v, ...) = %+v", ctx, key, err)
 	return err
 }
 
@@ -15220,12 +15376,12 @@ func (g *GCEBetaForwardingRules) SetLabels(ctx context.Context, key *meta.Key, a
 	call := g.s.Beta.ForwardingRules.SetLabels(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaForwardingRules.SetLabels(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaForwardingRules.SetLabels(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -15262,12 +15418,12 @@ func (g *GCEBetaForwardingRules) SetTarget(ctx context.Context, key *meta.Key, a
 	call := g.s.Beta.ForwardingRules.SetTarget(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaForwardingRules.SetTarget(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaForwardingRules.SetTarget(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -15285,6 +15441,7 @@ type AlphaGlobalForwardingRules interface {
 	List(ctx context.Context, fl *filter.F, options ...Option) ([]*computealpha.ForwardingRule, error)
 	Insert(ctx context.Context, key *meta.Key, obj *computealpha.ForwardingRule, options ...Option) error
 	Delete(ctx context.Context, key *meta.Key, options ...Option) error
+	Patch(context.Context, *meta.Key, *computealpha.ForwardingRule, ...Option) error
 	SetLabels(context.Context, *meta.Key, *computealpha.GlobalSetLabelsRequest, ...Option) error
 	SetTarget(context.Context, *meta.Key, *computealpha.TargetReference, ...Option) error
 }
@@ -15326,6 +15483,7 @@ type MockAlphaGlobalForwardingRules struct {
 	ListHook      func(ctx context.Context, fl *filter.F, m *MockAlphaGlobalForwardingRules, options ...Option) (bool, []*computealpha.ForwardingRule, error)
 	InsertHook    func(ctx context.Context, key *meta.Key, obj *computealpha.ForwardingRule, m *MockAlphaGlobalForwardingRules, options ...Option) (bool, error)
 	DeleteHook    func(ctx context.Context, key *meta.Key, m *MockAlphaGlobalForwardingRules, options ...Option) (bool, error)
+	PatchHook     func(context.Context, *meta.Key, *computealpha.ForwardingRule, *MockAlphaGlobalForwardingRules, ...Option) error
 	SetLabelsHook func(context.Context, *meta.Key, *computealpha.GlobalSetLabelsRequest, *MockAlphaGlobalForwardingRules, ...Option) error
 	SetTargetHook func(context.Context, *meta.Key, *computealpha.TargetReference, *MockAlphaGlobalForwardingRules, ...Option) error
 
@@ -15474,6 +15632,14 @@ func (m *MockAlphaGlobalForwardingRules) Obj(o *computealpha.ForwardingRule) *Mo
 	return &MockGlobalForwardingRulesObj{o}
 }
 
+// Patch is a mock for the corresponding method.
+func (m *MockAlphaGlobalForwardingRules) Patch(ctx context.Context, key *meta.Key, arg0 *computealpha.ForwardingRule, options ...Option) error {
+	if m.PatchHook != nil {
+		return m.PatchHook(ctx, key, arg0, m)
+	}
+	return nil
+}
+
 // SetLabels is a mock for the corresponding method.
 func (m *MockAlphaGlobalForwardingRules) SetLabels(ctx context.Context, key *meta.Key, arg0 *computealpha.GlobalSetLabelsRequest, options ...Option) error {
 	if m.SetLabelsHook != nil {
@@ -15611,12 +15777,12 @@ func (g *GCEAlphaGlobalForwardingRules) Insert(ctx context.Context, key *meta.Ke
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaGlobalForwardingRules.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaGlobalForwardingRules.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -15652,17 +15818,59 @@ func (g *GCEAlphaGlobalForwardingRules) Delete(ctx context.Context, key *meta.Ke
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaGlobalForwardingRules.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaGlobalForwardingRules.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
 	err = g.s.WaitForCompletion(ctx, op)
 	klog.V(4).Infof("GCEAlphaGlobalForwardingRules.Delete(%v, %v) = %v", ctx, key, err)
+	return err
+}
+
+// Patch is a method on GCEAlphaGlobalForwardingRules.
+func (g *GCEAlphaGlobalForwardingRules) Patch(ctx context.Context, key *meta.Key, arg0 *computealpha.ForwardingRule, options ...Option) error {
+	opts := mergeOptions(options)
+	klog.V(5).Infof("GCEAlphaGlobalForwardingRules.Patch(%v, %v, %v, ...): called", ctx, key, opts)
+
+	if !key.Valid() {
+		klog.V(2).Infof("GCEAlphaGlobalForwardingRules.Patch(%v, %v, %v, ...): key is invalid (%#v)", ctx, key, opts, key)
+		return fmt.Errorf("invalid GCE key (%+v)", key)
+	}
+	projectID := getProjectID(ctx, g.s.ProjectRouter, opts, "alpha", "GlobalForwardingRules")
+	ck := &CallContextKey{
+		ProjectID: projectID,
+		Operation: "Patch",
+		Version:   meta.Version("alpha"),
+		Service:   "GlobalForwardingRules",
+	}
+	klog.V(5).Infof("GCEAlphaGlobalForwardingRules.Patch(%v, %v, ...): projectID = %v, ck = %+v", ctx, key, projectID, ck)
+	callObserverStart(ctx, ck)
+	if err := g.s.RateLimiter.Accept(ctx, ck); err != nil {
+		klog.V(4).Infof("GCEAlphaGlobalForwardingRules.Patch(%v, %v, ...): RateLimiter error: %v", ctx, key, err)
+		return err
+	}
+	call := g.s.Alpha.GlobalForwardingRules.Patch(projectID, key.Name, arg0)
+	call.Context(ctx)
+	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaGlobalForwardingRules.Patch(%v, %v, ...) = %+v", ctx, key, err)
+
+	if err != nil {
+		callObserverEnd(ctx, ck, err)
+		g.s.RateLimiter.Observe(ctx, err, ck)
+
+		return err
+	}
+
+	err = g.s.WaitForCompletion(ctx, op)
+	callObserverEnd(ctx, ck, err)
+	g.s.RateLimiter.Observe(ctx, err, ck) // XXX
+
+	klog.V(4).Infof("GCEAlphaGlobalForwardingRules.Patch(%v, %v, ...) = %+v", ctx, key, err)
 	return err
 }
 
@@ -15691,12 +15899,12 @@ func (g *GCEAlphaGlobalForwardingRules) SetLabels(ctx context.Context, key *meta
 	call := g.s.Alpha.GlobalForwardingRules.SetLabels(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaGlobalForwardingRules.SetLabels(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaGlobalForwardingRules.SetLabels(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -15733,12 +15941,12 @@ func (g *GCEAlphaGlobalForwardingRules) SetTarget(ctx context.Context, key *meta
 	call := g.s.Alpha.GlobalForwardingRules.SetTarget(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaGlobalForwardingRules.SetTarget(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaGlobalForwardingRules.SetTarget(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -15756,6 +15964,7 @@ type BetaGlobalForwardingRules interface {
 	List(ctx context.Context, fl *filter.F, options ...Option) ([]*computebeta.ForwardingRule, error)
 	Insert(ctx context.Context, key *meta.Key, obj *computebeta.ForwardingRule, options ...Option) error
 	Delete(ctx context.Context, key *meta.Key, options ...Option) error
+	Patch(context.Context, *meta.Key, *computebeta.ForwardingRule, ...Option) error
 	SetLabels(context.Context, *meta.Key, *computebeta.GlobalSetLabelsRequest, ...Option) error
 	SetTarget(context.Context, *meta.Key, *computebeta.TargetReference, ...Option) error
 }
@@ -15797,6 +16006,7 @@ type MockBetaGlobalForwardingRules struct {
 	ListHook      func(ctx context.Context, fl *filter.F, m *MockBetaGlobalForwardingRules, options ...Option) (bool, []*computebeta.ForwardingRule, error)
 	InsertHook    func(ctx context.Context, key *meta.Key, obj *computebeta.ForwardingRule, m *MockBetaGlobalForwardingRules, options ...Option) (bool, error)
 	DeleteHook    func(ctx context.Context, key *meta.Key, m *MockBetaGlobalForwardingRules, options ...Option) (bool, error)
+	PatchHook     func(context.Context, *meta.Key, *computebeta.ForwardingRule, *MockBetaGlobalForwardingRules, ...Option) error
 	SetLabelsHook func(context.Context, *meta.Key, *computebeta.GlobalSetLabelsRequest, *MockBetaGlobalForwardingRules, ...Option) error
 	SetTargetHook func(context.Context, *meta.Key, *computebeta.TargetReference, *MockBetaGlobalForwardingRules, ...Option) error
 
@@ -15945,6 +16155,14 @@ func (m *MockBetaGlobalForwardingRules) Obj(o *computebeta.ForwardingRule) *Mock
 	return &MockGlobalForwardingRulesObj{o}
 }
 
+// Patch is a mock for the corresponding method.
+func (m *MockBetaGlobalForwardingRules) Patch(ctx context.Context, key *meta.Key, arg0 *computebeta.ForwardingRule, options ...Option) error {
+	if m.PatchHook != nil {
+		return m.PatchHook(ctx, key, arg0, m)
+	}
+	return nil
+}
+
 // SetLabels is a mock for the corresponding method.
 func (m *MockBetaGlobalForwardingRules) SetLabels(ctx context.Context, key *meta.Key, arg0 *computebeta.GlobalSetLabelsRequest, options ...Option) error {
 	if m.SetLabelsHook != nil {
@@ -16082,12 +16300,12 @@ func (g *GCEBetaGlobalForwardingRules) Insert(ctx context.Context, key *meta.Key
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaGlobalForwardingRules.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaGlobalForwardingRules.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -16123,17 +16341,59 @@ func (g *GCEBetaGlobalForwardingRules) Delete(ctx context.Context, key *meta.Key
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaGlobalForwardingRules.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaGlobalForwardingRules.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
 	err = g.s.WaitForCompletion(ctx, op)
 	klog.V(4).Infof("GCEBetaGlobalForwardingRules.Delete(%v, %v) = %v", ctx, key, err)
+	return err
+}
+
+// Patch is a method on GCEBetaGlobalForwardingRules.
+func (g *GCEBetaGlobalForwardingRules) Patch(ctx context.Context, key *meta.Key, arg0 *computebeta.ForwardingRule, options ...Option) error {
+	opts := mergeOptions(options)
+	klog.V(5).Infof("GCEBetaGlobalForwardingRules.Patch(%v, %v, %v, ...): called", ctx, key, opts)
+
+	if !key.Valid() {
+		klog.V(2).Infof("GCEBetaGlobalForwardingRules.Patch(%v, %v, %v, ...): key is invalid (%#v)", ctx, key, opts, key)
+		return fmt.Errorf("invalid GCE key (%+v)", key)
+	}
+	projectID := getProjectID(ctx, g.s.ProjectRouter, opts, "beta", "GlobalForwardingRules")
+	ck := &CallContextKey{
+		ProjectID: projectID,
+		Operation: "Patch",
+		Version:   meta.Version("beta"),
+		Service:   "GlobalForwardingRules",
+	}
+	klog.V(5).Infof("GCEBetaGlobalForwardingRules.Patch(%v, %v, ...): projectID = %v, ck = %+v", ctx, key, projectID, ck)
+	callObserverStart(ctx, ck)
+	if err := g.s.RateLimiter.Accept(ctx, ck); err != nil {
+		klog.V(4).Infof("GCEBetaGlobalForwardingRules.Patch(%v, %v, ...): RateLimiter error: %v", ctx, key, err)
+		return err
+	}
+	call := g.s.Beta.GlobalForwardingRules.Patch(projectID, key.Name, arg0)
+	call.Context(ctx)
+	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaGlobalForwardingRules.Patch(%v, %v, ...) = %+v", ctx, key, err)
+
+	if err != nil {
+		callObserverEnd(ctx, ck, err)
+		g.s.RateLimiter.Observe(ctx, err, ck)
+
+		return err
+	}
+
+	err = g.s.WaitForCompletion(ctx, op)
+	callObserverEnd(ctx, ck, err)
+	g.s.RateLimiter.Observe(ctx, err, ck) // XXX
+
+	klog.V(4).Infof("GCEBetaGlobalForwardingRules.Patch(%v, %v, ...) = %+v", ctx, key, err)
 	return err
 }
 
@@ -16162,12 +16422,12 @@ func (g *GCEBetaGlobalForwardingRules) SetLabels(ctx context.Context, key *meta.
 	call := g.s.Beta.GlobalForwardingRules.SetLabels(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaGlobalForwardingRules.SetLabels(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaGlobalForwardingRules.SetLabels(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -16204,12 +16464,12 @@ func (g *GCEBetaGlobalForwardingRules) SetTarget(ctx context.Context, key *meta.
 	call := g.s.Beta.GlobalForwardingRules.SetTarget(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaGlobalForwardingRules.SetTarget(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaGlobalForwardingRules.SetTarget(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -16227,6 +16487,7 @@ type GlobalForwardingRules interface {
 	List(ctx context.Context, fl *filter.F, options ...Option) ([]*computega.ForwardingRule, error)
 	Insert(ctx context.Context, key *meta.Key, obj *computega.ForwardingRule, options ...Option) error
 	Delete(ctx context.Context, key *meta.Key, options ...Option) error
+	Patch(context.Context, *meta.Key, *computega.ForwardingRule, ...Option) error
 	SetLabels(context.Context, *meta.Key, *computega.GlobalSetLabelsRequest, ...Option) error
 	SetTarget(context.Context, *meta.Key, *computega.TargetReference, ...Option) error
 }
@@ -16268,6 +16529,7 @@ type MockGlobalForwardingRules struct {
 	ListHook      func(ctx context.Context, fl *filter.F, m *MockGlobalForwardingRules, options ...Option) (bool, []*computega.ForwardingRule, error)
 	InsertHook    func(ctx context.Context, key *meta.Key, obj *computega.ForwardingRule, m *MockGlobalForwardingRules, options ...Option) (bool, error)
 	DeleteHook    func(ctx context.Context, key *meta.Key, m *MockGlobalForwardingRules, options ...Option) (bool, error)
+	PatchHook     func(context.Context, *meta.Key, *computega.ForwardingRule, *MockGlobalForwardingRules, ...Option) error
 	SetLabelsHook func(context.Context, *meta.Key, *computega.GlobalSetLabelsRequest, *MockGlobalForwardingRules, ...Option) error
 	SetTargetHook func(context.Context, *meta.Key, *computega.TargetReference, *MockGlobalForwardingRules, ...Option) error
 
@@ -16416,6 +16678,14 @@ func (m *MockGlobalForwardingRules) Obj(o *computega.ForwardingRule) *MockGlobal
 	return &MockGlobalForwardingRulesObj{o}
 }
 
+// Patch is a mock for the corresponding method.
+func (m *MockGlobalForwardingRules) Patch(ctx context.Context, key *meta.Key, arg0 *computega.ForwardingRule, options ...Option) error {
+	if m.PatchHook != nil {
+		return m.PatchHook(ctx, key, arg0, m)
+	}
+	return nil
+}
+
 // SetLabels is a mock for the corresponding method.
 func (m *MockGlobalForwardingRules) SetLabels(ctx context.Context, key *meta.Key, arg0 *computega.GlobalSetLabelsRequest, options ...Option) error {
 	if m.SetLabelsHook != nil {
@@ -16553,12 +16823,12 @@ func (g *GCEGlobalForwardingRules) Insert(ctx context.Context, key *meta.Key, ob
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEGlobalForwardingRules.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEGlobalForwardingRules.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -16594,17 +16864,59 @@ func (g *GCEGlobalForwardingRules) Delete(ctx context.Context, key *meta.Key, op
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEGlobalForwardingRules.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEGlobalForwardingRules.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
 	err = g.s.WaitForCompletion(ctx, op)
 	klog.V(4).Infof("GCEGlobalForwardingRules.Delete(%v, %v) = %v", ctx, key, err)
+	return err
+}
+
+// Patch is a method on GCEGlobalForwardingRules.
+func (g *GCEGlobalForwardingRules) Patch(ctx context.Context, key *meta.Key, arg0 *computega.ForwardingRule, options ...Option) error {
+	opts := mergeOptions(options)
+	klog.V(5).Infof("GCEGlobalForwardingRules.Patch(%v, %v, %v, ...): called", ctx, key, opts)
+
+	if !key.Valid() {
+		klog.V(2).Infof("GCEGlobalForwardingRules.Patch(%v, %v, %v, ...): key is invalid (%#v)", ctx, key, opts, key)
+		return fmt.Errorf("invalid GCE key (%+v)", key)
+	}
+	projectID := getProjectID(ctx, g.s.ProjectRouter, opts, "ga", "GlobalForwardingRules")
+	ck := &CallContextKey{
+		ProjectID: projectID,
+		Operation: "Patch",
+		Version:   meta.Version("ga"),
+		Service:   "GlobalForwardingRules",
+	}
+	klog.V(5).Infof("GCEGlobalForwardingRules.Patch(%v, %v, ...): projectID = %v, ck = %+v", ctx, key, projectID, ck)
+	callObserverStart(ctx, ck)
+	if err := g.s.RateLimiter.Accept(ctx, ck); err != nil {
+		klog.V(4).Infof("GCEGlobalForwardingRules.Patch(%v, %v, ...): RateLimiter error: %v", ctx, key, err)
+		return err
+	}
+	call := g.s.GA.GlobalForwardingRules.Patch(projectID, key.Name, arg0)
+	call.Context(ctx)
+	op, err := call.Do()
+	klog.V(4).Infof("GCEGlobalForwardingRules.Patch(%v, %v, ...) = %+v", ctx, key, err)
+
+	if err != nil {
+		callObserverEnd(ctx, ck, err)
+		g.s.RateLimiter.Observe(ctx, err, ck)
+
+		return err
+	}
+
+	err = g.s.WaitForCompletion(ctx, op)
+	callObserverEnd(ctx, ck, err)
+	g.s.RateLimiter.Observe(ctx, err, ck) // XXX
+
+	klog.V(4).Infof("GCEGlobalForwardingRules.Patch(%v, %v, ...) = %+v", ctx, key, err)
 	return err
 }
 
@@ -16633,12 +16945,12 @@ func (g *GCEGlobalForwardingRules) SetLabels(ctx context.Context, key *meta.Key,
 	call := g.s.GA.GlobalForwardingRules.SetLabels(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEGlobalForwardingRules.SetLabels(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEGlobalForwardingRules.SetLabels(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -16675,12 +16987,12 @@ func (g *GCEGlobalForwardingRules) SetTarget(ctx context.Context, key *meta.Key,
 	call := g.s.GA.GlobalForwardingRules.SetTarget(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEGlobalForwardingRules.SetTarget(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEGlobalForwardingRules.SetTarget(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -17014,12 +17326,12 @@ func (g *GCEHealthChecks) Insert(ctx context.Context, key *meta.Key, obj *comput
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEHealthChecks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEHealthChecks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -17055,12 +17367,12 @@ func (g *GCEHealthChecks) Delete(ctx context.Context, key *meta.Key, options ...
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEHealthChecks.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEHealthChecks.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -17094,12 +17406,12 @@ func (g *GCEHealthChecks) Update(ctx context.Context, key *meta.Key, arg0 *compu
 	call := g.s.GA.HealthChecks.Update(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEHealthChecks.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEHealthChecks.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -17433,12 +17745,12 @@ func (g *GCEAlphaHealthChecks) Insert(ctx context.Context, key *meta.Key, obj *c
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaHealthChecks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaHealthChecks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -17474,12 +17786,12 @@ func (g *GCEAlphaHealthChecks) Delete(ctx context.Context, key *meta.Key, option
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaHealthChecks.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaHealthChecks.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -17513,12 +17825,12 @@ func (g *GCEAlphaHealthChecks) Update(ctx context.Context, key *meta.Key, arg0 *
 	call := g.s.Alpha.HealthChecks.Update(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaHealthChecks.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaHealthChecks.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -17852,12 +18164,12 @@ func (g *GCEBetaHealthChecks) Insert(ctx context.Context, key *meta.Key, obj *co
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaHealthChecks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaHealthChecks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -17893,12 +18205,12 @@ func (g *GCEBetaHealthChecks) Delete(ctx context.Context, key *meta.Key, options
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaHealthChecks.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaHealthChecks.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -17932,12 +18244,12 @@ func (g *GCEBetaHealthChecks) Update(ctx context.Context, key *meta.Key, arg0 *c
 	call := g.s.Beta.HealthChecks.Update(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaHealthChecks.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaHealthChecks.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -18274,12 +18586,12 @@ func (g *GCEAlphaRegionHealthChecks) Insert(ctx context.Context, key *meta.Key, 
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionHealthChecks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaRegionHealthChecks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -18315,12 +18627,12 @@ func (g *GCEAlphaRegionHealthChecks) Delete(ctx context.Context, key *meta.Key, 
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionHealthChecks.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaRegionHealthChecks.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -18354,12 +18666,12 @@ func (g *GCEAlphaRegionHealthChecks) Update(ctx context.Context, key *meta.Key, 
 	call := g.s.Alpha.RegionHealthChecks.Update(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionHealthChecks.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaRegionHealthChecks.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -18696,12 +19008,12 @@ func (g *GCEBetaRegionHealthChecks) Insert(ctx context.Context, key *meta.Key, o
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionHealthChecks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaRegionHealthChecks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -18737,12 +19049,12 @@ func (g *GCEBetaRegionHealthChecks) Delete(ctx context.Context, key *meta.Key, o
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionHealthChecks.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaRegionHealthChecks.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -18776,12 +19088,12 @@ func (g *GCEBetaRegionHealthChecks) Update(ctx context.Context, key *meta.Key, a
 	call := g.s.Beta.RegionHealthChecks.Update(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionHealthChecks.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaRegionHealthChecks.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -19118,12 +19430,12 @@ func (g *GCERegionHealthChecks) Insert(ctx context.Context, key *meta.Key, obj *
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionHealthChecks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERegionHealthChecks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -19159,12 +19471,12 @@ func (g *GCERegionHealthChecks) Delete(ctx context.Context, key *meta.Key, optio
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionHealthChecks.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERegionHealthChecks.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -19198,12 +19510,12 @@ func (g *GCERegionHealthChecks) Update(ctx context.Context, key *meta.Key, arg0 
 	call := g.s.GA.RegionHealthChecks.Update(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionHealthChecks.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCERegionHealthChecks.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -19537,12 +19849,12 @@ func (g *GCEHttpHealthChecks) Insert(ctx context.Context, key *meta.Key, obj *co
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEHttpHealthChecks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEHttpHealthChecks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -19578,12 +19890,12 @@ func (g *GCEHttpHealthChecks) Delete(ctx context.Context, key *meta.Key, options
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEHttpHealthChecks.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEHttpHealthChecks.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -19617,12 +19929,12 @@ func (g *GCEHttpHealthChecks) Update(ctx context.Context, key *meta.Key, arg0 *c
 	call := g.s.GA.HttpHealthChecks.Update(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEHttpHealthChecks.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEHttpHealthChecks.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -19956,12 +20268,12 @@ func (g *GCEHttpsHealthChecks) Insert(ctx context.Context, key *meta.Key, obj *c
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEHttpsHealthChecks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEHttpsHealthChecks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -19997,12 +20309,12 @@ func (g *GCEHttpsHealthChecks) Delete(ctx context.Context, key *meta.Key, option
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEHttpsHealthChecks.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEHttpsHealthChecks.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -20036,12 +20348,12 @@ func (g *GCEHttpsHealthChecks) Update(ctx context.Context, key *meta.Key, arg0 *
 	call := g.s.GA.HttpsHealthChecks.Update(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEHttpsHealthChecks.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEHttpsHealthChecks.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -20408,12 +20720,12 @@ func (g *GCEInstanceGroups) Insert(ctx context.Context, key *meta.Key, obj *comp
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEInstanceGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEInstanceGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -20449,12 +20761,12 @@ func (g *GCEInstanceGroups) Delete(ctx context.Context, key *meta.Key, options .
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEInstanceGroups.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEInstanceGroups.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -20488,12 +20800,12 @@ func (g *GCEInstanceGroups) AddInstances(ctx context.Context, key *meta.Key, arg
 	call := g.s.GA.InstanceGroups.AddInstances(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEInstanceGroups.AddInstances(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEInstanceGroups.AddInstances(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -20582,12 +20894,12 @@ func (g *GCEInstanceGroups) RemoveInstances(ctx context.Context, key *meta.Key, 
 	call := g.s.GA.InstanceGroups.RemoveInstances(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEInstanceGroups.RemoveInstances(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEInstanceGroups.RemoveInstances(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -20624,12 +20936,12 @@ func (g *GCEInstanceGroups) SetNamedPorts(ctx context.Context, key *meta.Key, ar
 	call := g.s.GA.InstanceGroups.SetNamedPorts(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEInstanceGroups.SetNamedPorts(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEInstanceGroups.SetNamedPorts(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -20976,12 +21288,12 @@ func (g *GCEInstances) Insert(ctx context.Context, key *meta.Key, obj *computega
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEInstances.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEInstances.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -21017,12 +21329,12 @@ func (g *GCEInstances) Delete(ctx context.Context, key *meta.Key, options ...Opt
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEInstances.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEInstances.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -21056,12 +21368,12 @@ func (g *GCEInstances) AttachDisk(ctx context.Context, key *meta.Key, arg0 *comp
 	call := g.s.GA.Instances.AttachDisk(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEInstances.AttachDisk(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEInstances.AttachDisk(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -21098,12 +21410,12 @@ func (g *GCEInstances) DetachDisk(ctx context.Context, key *meta.Key, arg0 strin
 	call := g.s.GA.Instances.DetachDisk(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEInstances.DetachDisk(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEInstances.DetachDisk(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -21460,12 +21772,12 @@ func (g *GCEBetaInstances) Insert(ctx context.Context, key *meta.Key, obj *compu
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaInstances.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaInstances.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -21501,12 +21813,12 @@ func (g *GCEBetaInstances) Delete(ctx context.Context, key *meta.Key, options ..
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaInstances.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaInstances.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -21540,12 +21852,12 @@ func (g *GCEBetaInstances) AttachDisk(ctx context.Context, key *meta.Key, arg0 *
 	call := g.s.Beta.Instances.AttachDisk(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaInstances.AttachDisk(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaInstances.AttachDisk(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -21582,12 +21894,12 @@ func (g *GCEBetaInstances) DetachDisk(ctx context.Context, key *meta.Key, arg0 s
 	call := g.s.Beta.Instances.DetachDisk(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaInstances.DetachDisk(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaInstances.DetachDisk(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -21624,12 +21936,12 @@ func (g *GCEBetaInstances) UpdateNetworkInterface(ctx context.Context, key *meta
 	call := g.s.Beta.Instances.UpdateNetworkInterface(projectID, key.Zone, key.Name, arg0, arg1)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaInstances.UpdateNetworkInterface(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaInstances.UpdateNetworkInterface(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -21986,12 +22298,12 @@ func (g *GCEAlphaInstances) Insert(ctx context.Context, key *meta.Key, obj *comp
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaInstances.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaInstances.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -22027,12 +22339,12 @@ func (g *GCEAlphaInstances) Delete(ctx context.Context, key *meta.Key, options .
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaInstances.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaInstances.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -22066,12 +22378,12 @@ func (g *GCEAlphaInstances) AttachDisk(ctx context.Context, key *meta.Key, arg0 
 	call := g.s.Alpha.Instances.AttachDisk(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaInstances.AttachDisk(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaInstances.AttachDisk(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -22108,12 +22420,12 @@ func (g *GCEAlphaInstances) DetachDisk(ctx context.Context, key *meta.Key, arg0 
 	call := g.s.Alpha.Instances.DetachDisk(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaInstances.DetachDisk(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaInstances.DetachDisk(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -22150,12 +22462,12 @@ func (g *GCEAlphaInstances) UpdateNetworkInterface(ctx context.Context, key *met
 	call := g.s.Alpha.Instances.UpdateNetworkInterface(projectID, key.Zone, key.Name, arg0, arg1)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaInstances.UpdateNetworkInterface(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaInstances.UpdateNetworkInterface(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -22522,12 +22834,12 @@ func (g *GCEInstanceGroupManagers) Insert(ctx context.Context, key *meta.Key, ob
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEInstanceGroupManagers.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEInstanceGroupManagers.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -22563,12 +22875,12 @@ func (g *GCEInstanceGroupManagers) Delete(ctx context.Context, key *meta.Key, op
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEInstanceGroupManagers.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEInstanceGroupManagers.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -22602,12 +22914,12 @@ func (g *GCEInstanceGroupManagers) CreateInstances(ctx context.Context, key *met
 	call := g.s.GA.InstanceGroupManagers.CreateInstances(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEInstanceGroupManagers.CreateInstances(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEInstanceGroupManagers.CreateInstances(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -22644,12 +22956,12 @@ func (g *GCEInstanceGroupManagers) DeleteInstances(ctx context.Context, key *met
 	call := g.s.GA.InstanceGroupManagers.DeleteInstances(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEInstanceGroupManagers.DeleteInstances(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEInstanceGroupManagers.DeleteInstances(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -22686,12 +22998,12 @@ func (g *GCEInstanceGroupManagers) Resize(ctx context.Context, key *meta.Key, ar
 	call := g.s.GA.InstanceGroupManagers.Resize(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEInstanceGroupManagers.Resize(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEInstanceGroupManagers.Resize(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -22728,12 +23040,12 @@ func (g *GCEInstanceGroupManagers) SetInstanceTemplate(ctx context.Context, key 
 	call := g.s.GA.InstanceGroupManagers.SetInstanceTemplate(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEInstanceGroupManagers.SetInstanceTemplate(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEInstanceGroupManagers.SetInstanceTemplate(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -23057,12 +23369,12 @@ func (g *GCEInstanceTemplates) Insert(ctx context.Context, key *meta.Key, obj *c
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEInstanceTemplates.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEInstanceTemplates.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -23098,12 +23410,12 @@ func (g *GCEInstanceTemplates) Delete(ctx context.Context, key *meta.Key, option
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEInstanceTemplates.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEInstanceTemplates.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -23484,12 +23796,12 @@ func (g *GCEImages) Insert(ctx context.Context, key *meta.Key, obj *computega.Im
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEImages.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEImages.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -23525,12 +23837,12 @@ func (g *GCEImages) Delete(ctx context.Context, key *meta.Key, options ...Option
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEImages.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEImages.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -23630,12 +23942,12 @@ func (g *GCEImages) Patch(ctx context.Context, key *meta.Key, arg0 *computega.Im
 	call := g.s.GA.Images.Patch(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEImages.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEImages.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -23705,12 +24017,12 @@ func (g *GCEImages) SetLabels(ctx context.Context, key *meta.Key, arg0 *computeg
 	call := g.s.GA.Images.SetLabels(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEImages.SetLabels(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEImages.SetLabels(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -24127,12 +24439,12 @@ func (g *GCEBetaImages) Insert(ctx context.Context, key *meta.Key, obj *computeb
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaImages.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaImages.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -24168,12 +24480,12 @@ func (g *GCEBetaImages) Delete(ctx context.Context, key *meta.Key, options ...Op
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaImages.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaImages.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -24273,12 +24585,12 @@ func (g *GCEBetaImages) Patch(ctx context.Context, key *meta.Key, arg0 *computeb
 	call := g.s.Beta.Images.Patch(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaImages.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaImages.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -24348,12 +24660,12 @@ func (g *GCEBetaImages) SetLabels(ctx context.Context, key *meta.Key, arg0 *comp
 	call := g.s.Beta.Images.SetLabels(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaImages.SetLabels(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaImages.SetLabels(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -24770,12 +25082,12 @@ func (g *GCEAlphaImages) Insert(ctx context.Context, key *meta.Key, obj *compute
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaImages.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaImages.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -24811,12 +25123,12 @@ func (g *GCEAlphaImages) Delete(ctx context.Context, key *meta.Key, options ...O
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaImages.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaImages.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -24916,12 +25228,12 @@ func (g *GCEAlphaImages) Patch(ctx context.Context, key *meta.Key, arg0 *compute
 	call := g.s.Alpha.Images.Patch(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaImages.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaImages.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -24991,12 +25303,12 @@ func (g *GCEAlphaImages) SetLabels(ctx context.Context, key *meta.Key, arg0 *com
 	call := g.s.Alpha.Images.SetLabels(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaImages.SetLabels(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaImages.SetLabels(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -25353,12 +25665,12 @@ func (g *GCEAlphaNetworks) Insert(ctx context.Context, key *meta.Key, obj *compu
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaNetworks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaNetworks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -25394,12 +25706,12 @@ func (g *GCEAlphaNetworks) Delete(ctx context.Context, key *meta.Key, options ..
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaNetworks.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaNetworks.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -25720,12 +26032,12 @@ func (g *GCEBetaNetworks) Insert(ctx context.Context, key *meta.Key, obj *comput
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaNetworks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaNetworks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -25761,12 +26073,12 @@ func (g *GCEBetaNetworks) Delete(ctx context.Context, key *meta.Key, options ...
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaNetworks.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaNetworks.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -26087,12 +26399,12 @@ func (g *GCENetworks) Insert(ctx context.Context, key *meta.Key, obj *computega.
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCENetworks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCENetworks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -26128,12 +26440,12 @@ func (g *GCENetworks) Delete(ctx context.Context, key *meta.Key, options ...Opti
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCENetworks.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCENetworks.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -26525,12 +26837,12 @@ func (g *GCEAlphaNetworkEndpointGroups) Insert(ctx context.Context, key *meta.Ke
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaNetworkEndpointGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaNetworkEndpointGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -26566,12 +26878,12 @@ func (g *GCEAlphaNetworkEndpointGroups) Delete(ctx context.Context, key *meta.Ke
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaNetworkEndpointGroups.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaNetworkEndpointGroups.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -26661,12 +26973,12 @@ func (g *GCEAlphaNetworkEndpointGroups) AttachNetworkEndpoints(ctx context.Conte
 	call := g.s.Alpha.NetworkEndpointGroups.AttachNetworkEndpoints(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaNetworkEndpointGroups.AttachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaNetworkEndpointGroups.AttachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -26703,12 +27015,12 @@ func (g *GCEAlphaNetworkEndpointGroups) DetachNetworkEndpoints(ctx context.Conte
 	call := g.s.Alpha.NetworkEndpointGroups.DetachNetworkEndpoints(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaNetworkEndpointGroups.DetachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaNetworkEndpointGroups.DetachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -27155,12 +27467,12 @@ func (g *GCEBetaNetworkEndpointGroups) Insert(ctx context.Context, key *meta.Key
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaNetworkEndpointGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaNetworkEndpointGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -27196,12 +27508,12 @@ func (g *GCEBetaNetworkEndpointGroups) Delete(ctx context.Context, key *meta.Key
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaNetworkEndpointGroups.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaNetworkEndpointGroups.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -27291,12 +27603,12 @@ func (g *GCEBetaNetworkEndpointGroups) AttachNetworkEndpoints(ctx context.Contex
 	call := g.s.Beta.NetworkEndpointGroups.AttachNetworkEndpoints(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaNetworkEndpointGroups.AttachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaNetworkEndpointGroups.AttachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -27333,12 +27645,12 @@ func (g *GCEBetaNetworkEndpointGroups) DetachNetworkEndpoints(ctx context.Contex
 	call := g.s.Beta.NetworkEndpointGroups.DetachNetworkEndpoints(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaNetworkEndpointGroups.DetachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaNetworkEndpointGroups.DetachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -27785,12 +28097,12 @@ func (g *GCENetworkEndpointGroups) Insert(ctx context.Context, key *meta.Key, ob
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCENetworkEndpointGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCENetworkEndpointGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -27826,12 +28138,12 @@ func (g *GCENetworkEndpointGroups) Delete(ctx context.Context, key *meta.Key, op
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCENetworkEndpointGroups.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCENetworkEndpointGroups.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -27921,12 +28233,12 @@ func (g *GCENetworkEndpointGroups) AttachNetworkEndpoints(ctx context.Context, k
 	call := g.s.GA.NetworkEndpointGroups.AttachNetworkEndpoints(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCENetworkEndpointGroups.AttachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCENetworkEndpointGroups.AttachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -27963,12 +28275,12 @@ func (g *GCENetworkEndpointGroups) DetachNetworkEndpoints(ctx context.Context, k
 	call := g.s.GA.NetworkEndpointGroups.DetachNetworkEndpoints(projectID, key.Zone, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCENetworkEndpointGroups.DetachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCENetworkEndpointGroups.DetachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -28374,12 +28686,12 @@ func (g *GCEAlphaGlobalNetworkEndpointGroups) Insert(ctx context.Context, key *m
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaGlobalNetworkEndpointGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaGlobalNetworkEndpointGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -28415,12 +28727,12 @@ func (g *GCEAlphaGlobalNetworkEndpointGroups) Delete(ctx context.Context, key *m
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaGlobalNetworkEndpointGroups.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaGlobalNetworkEndpointGroups.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -28454,12 +28766,12 @@ func (g *GCEAlphaGlobalNetworkEndpointGroups) AttachNetworkEndpoints(ctx context
 	call := g.s.Alpha.GlobalNetworkEndpointGroups.AttachNetworkEndpoints(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaGlobalNetworkEndpointGroups.AttachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaGlobalNetworkEndpointGroups.AttachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -28496,12 +28808,12 @@ func (g *GCEAlphaGlobalNetworkEndpointGroups) DetachNetworkEndpoints(ctx context
 	call := g.s.Alpha.GlobalNetworkEndpointGroups.DetachNetworkEndpoints(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaGlobalNetworkEndpointGroups.DetachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaGlobalNetworkEndpointGroups.DetachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -28907,12 +29219,12 @@ func (g *GCEBetaGlobalNetworkEndpointGroups) Insert(ctx context.Context, key *me
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaGlobalNetworkEndpointGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaGlobalNetworkEndpointGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -28948,12 +29260,12 @@ func (g *GCEBetaGlobalNetworkEndpointGroups) Delete(ctx context.Context, key *me
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaGlobalNetworkEndpointGroups.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaGlobalNetworkEndpointGroups.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -28987,12 +29299,12 @@ func (g *GCEBetaGlobalNetworkEndpointGroups) AttachNetworkEndpoints(ctx context.
 	call := g.s.Beta.GlobalNetworkEndpointGroups.AttachNetworkEndpoints(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaGlobalNetworkEndpointGroups.AttachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaGlobalNetworkEndpointGroups.AttachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -29029,12 +29341,12 @@ func (g *GCEBetaGlobalNetworkEndpointGroups) DetachNetworkEndpoints(ctx context.
 	call := g.s.Beta.GlobalNetworkEndpointGroups.DetachNetworkEndpoints(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaGlobalNetworkEndpointGroups.DetachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaGlobalNetworkEndpointGroups.DetachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -29440,12 +29752,12 @@ func (g *GCEGlobalNetworkEndpointGroups) Insert(ctx context.Context, key *meta.K
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEGlobalNetworkEndpointGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEGlobalNetworkEndpointGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -29481,12 +29793,12 @@ func (g *GCEGlobalNetworkEndpointGroups) Delete(ctx context.Context, key *meta.K
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEGlobalNetworkEndpointGroups.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEGlobalNetworkEndpointGroups.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -29520,12 +29832,12 @@ func (g *GCEGlobalNetworkEndpointGroups) AttachNetworkEndpoints(ctx context.Cont
 	call := g.s.GA.GlobalNetworkEndpointGroups.AttachNetworkEndpoints(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEGlobalNetworkEndpointGroups.AttachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEGlobalNetworkEndpointGroups.AttachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -29562,12 +29874,12 @@ func (g *GCEGlobalNetworkEndpointGroups) DetachNetworkEndpoints(ctx context.Cont
 	call := g.s.GA.GlobalNetworkEndpointGroups.DetachNetworkEndpoints(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEGlobalNetworkEndpointGroups.DetachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEGlobalNetworkEndpointGroups.DetachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -29976,12 +30288,12 @@ func (g *GCEAlphaRegionNetworkEndpointGroups) Insert(ctx context.Context, key *m
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionNetworkEndpointGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaRegionNetworkEndpointGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -30017,12 +30329,12 @@ func (g *GCEAlphaRegionNetworkEndpointGroups) Delete(ctx context.Context, key *m
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionNetworkEndpointGroups.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaRegionNetworkEndpointGroups.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -30056,12 +30368,12 @@ func (g *GCEAlphaRegionNetworkEndpointGroups) AttachNetworkEndpoints(ctx context
 	call := g.s.Alpha.RegionNetworkEndpointGroups.AttachNetworkEndpoints(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionNetworkEndpointGroups.AttachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaRegionNetworkEndpointGroups.AttachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -30098,12 +30410,12 @@ func (g *GCEAlphaRegionNetworkEndpointGroups) DetachNetworkEndpoints(ctx context
 	call := g.s.Alpha.RegionNetworkEndpointGroups.DetachNetworkEndpoints(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionNetworkEndpointGroups.DetachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaRegionNetworkEndpointGroups.DetachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -30512,12 +30824,12 @@ func (g *GCEBetaRegionNetworkEndpointGroups) Insert(ctx context.Context, key *me
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionNetworkEndpointGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaRegionNetworkEndpointGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -30553,12 +30865,12 @@ func (g *GCEBetaRegionNetworkEndpointGroups) Delete(ctx context.Context, key *me
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionNetworkEndpointGroups.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaRegionNetworkEndpointGroups.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -30592,12 +30904,12 @@ func (g *GCEBetaRegionNetworkEndpointGroups) AttachNetworkEndpoints(ctx context.
 	call := g.s.Beta.RegionNetworkEndpointGroups.AttachNetworkEndpoints(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionNetworkEndpointGroups.AttachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaRegionNetworkEndpointGroups.AttachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -30634,12 +30946,12 @@ func (g *GCEBetaRegionNetworkEndpointGroups) DetachNetworkEndpoints(ctx context.
 	call := g.s.Beta.RegionNetworkEndpointGroups.DetachNetworkEndpoints(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionNetworkEndpointGroups.DetachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaRegionNetworkEndpointGroups.DetachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -31048,12 +31360,12 @@ func (g *GCERegionNetworkEndpointGroups) Insert(ctx context.Context, key *meta.K
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionNetworkEndpointGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERegionNetworkEndpointGroups.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -31089,12 +31401,12 @@ func (g *GCERegionNetworkEndpointGroups) Delete(ctx context.Context, key *meta.K
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionNetworkEndpointGroups.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERegionNetworkEndpointGroups.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -31128,12 +31440,12 @@ func (g *GCERegionNetworkEndpointGroups) AttachNetworkEndpoints(ctx context.Cont
 	call := g.s.GA.RegionNetworkEndpointGroups.AttachNetworkEndpoints(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionNetworkEndpointGroups.AttachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCERegionNetworkEndpointGroups.AttachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -31170,12 +31482,12 @@ func (g *GCERegionNetworkEndpointGroups) DetachNetworkEndpoints(ctx context.Cont
 	call := g.s.GA.RegionNetworkEndpointGroups.DetachNetworkEndpoints(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionNetworkEndpointGroups.DetachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCERegionNetworkEndpointGroups.DetachNetworkEndpoints(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -31886,12 +32198,12 @@ func (g *GCEAlphaRouters) Insert(ctx context.Context, key *meta.Key, obj *comput
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRouters.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaRouters.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -31927,12 +32239,12 @@ func (g *GCEAlphaRouters) Delete(ctx context.Context, key *meta.Key, options ...
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRouters.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaRouters.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -32055,12 +32367,12 @@ func (g *GCEAlphaRouters) Patch(ctx context.Context, key *meta.Key, arg0 *comput
 	call := g.s.Alpha.Routers.Patch(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRouters.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaRouters.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -32531,12 +32843,12 @@ func (g *GCEBetaRouters) Insert(ctx context.Context, key *meta.Key, obj *compute
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRouters.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaRouters.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -32572,12 +32884,12 @@ func (g *GCEBetaRouters) Delete(ctx context.Context, key *meta.Key, options ...O
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRouters.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaRouters.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -32700,12 +33012,12 @@ func (g *GCEBetaRouters) Patch(ctx context.Context, key *meta.Key, arg0 *compute
 	call := g.s.Beta.Routers.Patch(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRouters.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaRouters.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -33166,12 +33478,12 @@ func (g *GCERouters) Insert(ctx context.Context, key *meta.Key, obj *computega.R
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERouters.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERouters.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -33207,12 +33519,12 @@ func (g *GCERouters) Delete(ctx context.Context, key *meta.Key, options ...Optio
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERouters.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERouters.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -33335,12 +33647,12 @@ func (g *GCERouters) Patch(ctx context.Context, key *meta.Key, arg0 *computega.R
 	call := g.s.GA.Routers.Patch(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCERouters.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCERouters.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -33697,12 +34009,12 @@ func (g *GCERoutes) Insert(ctx context.Context, key *meta.Key, obj *computega.Ro
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERoutes.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERoutes.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -33738,12 +34050,12 @@ func (g *GCERoutes) Delete(ctx context.Context, key *meta.Key, options ...Option
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERoutes.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERoutes.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -34114,12 +34426,12 @@ func (g *GCEBetaSecurityPolicies) Insert(ctx context.Context, key *meta.Key, obj
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaSecurityPolicies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaSecurityPolicies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -34155,12 +34467,12 @@ func (g *GCEBetaSecurityPolicies) Delete(ctx context.Context, key *meta.Key, opt
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaSecurityPolicies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaSecurityPolicies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -34194,12 +34506,12 @@ func (g *GCEBetaSecurityPolicies) AddRule(ctx context.Context, key *meta.Key, ar
 	call := g.s.Beta.SecurityPolicies.AddRule(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaSecurityPolicies.AddRule(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaSecurityPolicies.AddRule(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -34269,12 +34581,12 @@ func (g *GCEBetaSecurityPolicies) Patch(ctx context.Context, key *meta.Key, arg0
 	call := g.s.Beta.SecurityPolicies.Patch(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaSecurityPolicies.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaSecurityPolicies.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -34311,12 +34623,12 @@ func (g *GCEBetaSecurityPolicies) PatchRule(ctx context.Context, key *meta.Key, 
 	call := g.s.Beta.SecurityPolicies.PatchRule(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaSecurityPolicies.PatchRule(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaSecurityPolicies.PatchRule(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -34353,12 +34665,12 @@ func (g *GCEBetaSecurityPolicies) RemoveRule(ctx context.Context, key *meta.Key,
 	call := g.s.Beta.SecurityPolicies.RemoveRule(projectID, key.Name)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaSecurityPolicies.RemoveRule(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaSecurityPolicies.RemoveRule(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -34695,12 +35007,12 @@ func (g *GCEServiceAttachments) Insert(ctx context.Context, key *meta.Key, obj *
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEServiceAttachments.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEServiceAttachments.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -34736,12 +35048,12 @@ func (g *GCEServiceAttachments) Delete(ctx context.Context, key *meta.Key, optio
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEServiceAttachments.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEServiceAttachments.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -34775,12 +35087,12 @@ func (g *GCEServiceAttachments) Patch(ctx context.Context, key *meta.Key, arg0 *
 	call := g.s.GA.ServiceAttachments.Patch(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEServiceAttachments.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEServiceAttachments.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -35117,12 +35429,12 @@ func (g *GCEBetaServiceAttachments) Insert(ctx context.Context, key *meta.Key, o
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaServiceAttachments.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaServiceAttachments.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -35158,12 +35470,12 @@ func (g *GCEBetaServiceAttachments) Delete(ctx context.Context, key *meta.Key, o
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaServiceAttachments.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaServiceAttachments.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -35197,12 +35509,12 @@ func (g *GCEBetaServiceAttachments) Patch(ctx context.Context, key *meta.Key, ar
 	call := g.s.Beta.ServiceAttachments.Patch(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaServiceAttachments.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaServiceAttachments.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -35539,12 +35851,12 @@ func (g *GCEAlphaServiceAttachments) Insert(ctx context.Context, key *meta.Key, 
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaServiceAttachments.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaServiceAttachments.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -35580,12 +35892,12 @@ func (g *GCEAlphaServiceAttachments) Delete(ctx context.Context, key *meta.Key, 
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaServiceAttachments.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaServiceAttachments.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -35619,12 +35931,12 @@ func (g *GCEAlphaServiceAttachments) Patch(ctx context.Context, key *meta.Key, a
 	call := g.s.Alpha.ServiceAttachments.Patch(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaServiceAttachments.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaServiceAttachments.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -35948,12 +36260,12 @@ func (g *GCESslCertificates) Insert(ctx context.Context, key *meta.Key, obj *com
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCESslCertificates.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCESslCertificates.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -35989,12 +36301,12 @@ func (g *GCESslCertificates) Delete(ctx context.Context, key *meta.Key, options 
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCESslCertificates.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCESslCertificates.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -36315,12 +36627,12 @@ func (g *GCEBetaSslCertificates) Insert(ctx context.Context, key *meta.Key, obj 
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaSslCertificates.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaSslCertificates.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -36356,12 +36668,12 @@ func (g *GCEBetaSslCertificates) Delete(ctx context.Context, key *meta.Key, opti
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaSslCertificates.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaSslCertificates.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -36682,12 +36994,12 @@ func (g *GCEAlphaSslCertificates) Insert(ctx context.Context, key *meta.Key, obj
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaSslCertificates.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaSslCertificates.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -36723,12 +37035,12 @@ func (g *GCEAlphaSslCertificates) Delete(ctx context.Context, key *meta.Key, opt
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaSslCertificates.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaSslCertificates.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -37052,12 +37364,12 @@ func (g *GCEAlphaRegionSslCertificates) Insert(ctx context.Context, key *meta.Ke
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionSslCertificates.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaRegionSslCertificates.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -37093,12 +37405,12 @@ func (g *GCEAlphaRegionSslCertificates) Delete(ctx context.Context, key *meta.Ke
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionSslCertificates.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaRegionSslCertificates.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -37422,12 +37734,12 @@ func (g *GCEBetaRegionSslCertificates) Insert(ctx context.Context, key *meta.Key
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionSslCertificates.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaRegionSslCertificates.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -37463,12 +37775,12 @@ func (g *GCEBetaRegionSslCertificates) Delete(ctx context.Context, key *meta.Key
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionSslCertificates.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaRegionSslCertificates.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -37792,12 +38104,12 @@ func (g *GCERegionSslCertificates) Insert(ctx context.Context, key *meta.Key, ob
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionSslCertificates.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERegionSslCertificates.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -37833,12 +38145,12 @@ func (g *GCERegionSslCertificates) Delete(ctx context.Context, key *meta.Key, op
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionSslCertificates.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERegionSslCertificates.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -38072,12 +38384,12 @@ func (g *GCESslPolicies) Insert(ctx context.Context, key *meta.Key, obj *compute
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCESslPolicies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCESslPolicies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -38113,12 +38425,12 @@ func (g *GCESslPolicies) Delete(ctx context.Context, key *meta.Key, options ...O
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCESslPolicies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCESslPolicies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -38352,12 +38664,12 @@ func (g *GCERegionSslPolicies) Insert(ctx context.Context, key *meta.Key, obj *c
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionSslPolicies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERegionSslPolicies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -38393,12 +38705,12 @@ func (g *GCERegionSslPolicies) Delete(ctx context.Context, key *meta.Key, option
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionSslPolicies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERegionSslPolicies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -38771,12 +39083,12 @@ func (g *GCEAlphaSubnetworks) Insert(ctx context.Context, key *meta.Key, obj *co
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaSubnetworks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaSubnetworks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -38812,12 +39124,12 @@ func (g *GCEAlphaSubnetworks) Delete(ctx context.Context, key *meta.Key, options
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaSubnetworks.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaSubnetworks.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -38901,12 +39213,12 @@ func (g *GCEAlphaSubnetworks) Patch(ctx context.Context, key *meta.Key, arg0 *co
 	call := g.s.Alpha.Subnetworks.Patch(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaSubnetworks.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaSubnetworks.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -39282,12 +39594,12 @@ func (g *GCEBetaSubnetworks) Insert(ctx context.Context, key *meta.Key, obj *com
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaSubnetworks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaSubnetworks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -39323,12 +39635,12 @@ func (g *GCEBetaSubnetworks) Delete(ctx context.Context, key *meta.Key, options 
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaSubnetworks.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaSubnetworks.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -39412,12 +39724,12 @@ func (g *GCEBetaSubnetworks) Patch(ctx context.Context, key *meta.Key, arg0 *com
 	call := g.s.Beta.Subnetworks.Patch(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaSubnetworks.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaSubnetworks.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -39793,12 +40105,12 @@ func (g *GCESubnetworks) Insert(ctx context.Context, key *meta.Key, obj *compute
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCESubnetworks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCESubnetworks.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -39834,12 +40146,12 @@ func (g *GCESubnetworks) Delete(ctx context.Context, key *meta.Key, options ...O
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCESubnetworks.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCESubnetworks.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -39923,12 +40235,12 @@ func (g *GCESubnetworks) Patch(ctx context.Context, key *meta.Key, arg0 *compute
 	call := g.s.GA.Subnetworks.Patch(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCESubnetworks.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCESubnetworks.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -40262,12 +40574,12 @@ func (g *GCEAlphaTargetHttpProxies) Insert(ctx context.Context, key *meta.Key, o
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaTargetHttpProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaTargetHttpProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -40303,12 +40615,12 @@ func (g *GCEAlphaTargetHttpProxies) Delete(ctx context.Context, key *meta.Key, o
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaTargetHttpProxies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaTargetHttpProxies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -40342,12 +40654,12 @@ func (g *GCEAlphaTargetHttpProxies) SetUrlMap(ctx context.Context, key *meta.Key
 	call := g.s.Alpha.TargetHttpProxies.SetUrlMap(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaTargetHttpProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaTargetHttpProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -40681,12 +40993,12 @@ func (g *GCEBetaTargetHttpProxies) Insert(ctx context.Context, key *meta.Key, ob
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaTargetHttpProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaTargetHttpProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -40722,12 +41034,12 @@ func (g *GCEBetaTargetHttpProxies) Delete(ctx context.Context, key *meta.Key, op
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaTargetHttpProxies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaTargetHttpProxies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -40761,12 +41073,12 @@ func (g *GCEBetaTargetHttpProxies) SetUrlMap(ctx context.Context, key *meta.Key,
 	call := g.s.Beta.TargetHttpProxies.SetUrlMap(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaTargetHttpProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaTargetHttpProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -41100,12 +41412,12 @@ func (g *GCETargetHttpProxies) Insert(ctx context.Context, key *meta.Key, obj *c
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCETargetHttpProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCETargetHttpProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -41141,12 +41453,12 @@ func (g *GCETargetHttpProxies) Delete(ctx context.Context, key *meta.Key, option
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCETargetHttpProxies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCETargetHttpProxies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -41180,12 +41492,12 @@ func (g *GCETargetHttpProxies) SetUrlMap(ctx context.Context, key *meta.Key, arg
 	call := g.s.GA.TargetHttpProxies.SetUrlMap(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCETargetHttpProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCETargetHttpProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -41522,12 +41834,12 @@ func (g *GCEAlphaRegionTargetHttpProxies) Insert(ctx context.Context, key *meta.
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionTargetHttpProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaRegionTargetHttpProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -41563,12 +41875,12 @@ func (g *GCEAlphaRegionTargetHttpProxies) Delete(ctx context.Context, key *meta.
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionTargetHttpProxies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaRegionTargetHttpProxies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -41602,12 +41914,12 @@ func (g *GCEAlphaRegionTargetHttpProxies) SetUrlMap(ctx context.Context, key *me
 	call := g.s.Alpha.RegionTargetHttpProxies.SetUrlMap(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionTargetHttpProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaRegionTargetHttpProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -41944,12 +42256,12 @@ func (g *GCEBetaRegionTargetHttpProxies) Insert(ctx context.Context, key *meta.K
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionTargetHttpProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaRegionTargetHttpProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -41985,12 +42297,12 @@ func (g *GCEBetaRegionTargetHttpProxies) Delete(ctx context.Context, key *meta.K
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionTargetHttpProxies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaRegionTargetHttpProxies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -42024,12 +42336,12 @@ func (g *GCEBetaRegionTargetHttpProxies) SetUrlMap(ctx context.Context, key *met
 	call := g.s.Beta.RegionTargetHttpProxies.SetUrlMap(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionTargetHttpProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaRegionTargetHttpProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -42366,12 +42678,12 @@ func (g *GCERegionTargetHttpProxies) Insert(ctx context.Context, key *meta.Key, 
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionTargetHttpProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERegionTargetHttpProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -42407,12 +42719,12 @@ func (g *GCERegionTargetHttpProxies) Delete(ctx context.Context, key *meta.Key, 
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionTargetHttpProxies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERegionTargetHttpProxies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -42446,12 +42758,12 @@ func (g *GCERegionTargetHttpProxies) SetUrlMap(ctx context.Context, key *meta.Ke
 	call := g.s.GA.RegionTargetHttpProxies.SetUrlMap(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionTargetHttpProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCERegionTargetHttpProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -42815,12 +43127,12 @@ func (g *GCETargetHttpsProxies) Insert(ctx context.Context, key *meta.Key, obj *
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCETargetHttpsProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCETargetHttpsProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -42856,12 +43168,12 @@ func (g *GCETargetHttpsProxies) Delete(ctx context.Context, key *meta.Key, optio
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCETargetHttpsProxies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCETargetHttpsProxies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -42895,12 +43207,12 @@ func (g *GCETargetHttpsProxies) SetCertificateMap(ctx context.Context, key *meta
 	call := g.s.GA.TargetHttpsProxies.SetCertificateMap(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCETargetHttpsProxies.SetCertificateMap(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCETargetHttpsProxies.SetCertificateMap(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -42937,12 +43249,12 @@ func (g *GCETargetHttpsProxies) SetSslCertificates(ctx context.Context, key *met
 	call := g.s.GA.TargetHttpsProxies.SetSslCertificates(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCETargetHttpsProxies.SetSslCertificates(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCETargetHttpsProxies.SetSslCertificates(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -42979,12 +43291,12 @@ func (g *GCETargetHttpsProxies) SetSslPolicy(ctx context.Context, key *meta.Key,
 	call := g.s.GA.TargetHttpsProxies.SetSslPolicy(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCETargetHttpsProxies.SetSslPolicy(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCETargetHttpsProxies.SetSslPolicy(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -43021,12 +43333,12 @@ func (g *GCETargetHttpsProxies) SetUrlMap(ctx context.Context, key *meta.Key, ar
 	call := g.s.GA.TargetHttpsProxies.SetUrlMap(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCETargetHttpsProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCETargetHttpsProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -43390,12 +43702,12 @@ func (g *GCEAlphaTargetHttpsProxies) Insert(ctx context.Context, key *meta.Key, 
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaTargetHttpsProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaTargetHttpsProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -43431,12 +43743,12 @@ func (g *GCEAlphaTargetHttpsProxies) Delete(ctx context.Context, key *meta.Key, 
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaTargetHttpsProxies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaTargetHttpsProxies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -43470,12 +43782,12 @@ func (g *GCEAlphaTargetHttpsProxies) SetCertificateMap(ctx context.Context, key 
 	call := g.s.Alpha.TargetHttpsProxies.SetCertificateMap(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaTargetHttpsProxies.SetCertificateMap(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaTargetHttpsProxies.SetCertificateMap(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -43512,12 +43824,12 @@ func (g *GCEAlphaTargetHttpsProxies) SetSslCertificates(ctx context.Context, key
 	call := g.s.Alpha.TargetHttpsProxies.SetSslCertificates(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaTargetHttpsProxies.SetSslCertificates(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaTargetHttpsProxies.SetSslCertificates(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -43554,12 +43866,12 @@ func (g *GCEAlphaTargetHttpsProxies) SetSslPolicy(ctx context.Context, key *meta
 	call := g.s.Alpha.TargetHttpsProxies.SetSslPolicy(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaTargetHttpsProxies.SetSslPolicy(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaTargetHttpsProxies.SetSslPolicy(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -43596,12 +43908,12 @@ func (g *GCEAlphaTargetHttpsProxies) SetUrlMap(ctx context.Context, key *meta.Ke
 	call := g.s.Alpha.TargetHttpsProxies.SetUrlMap(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaTargetHttpsProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaTargetHttpsProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -43965,12 +44277,12 @@ func (g *GCEBetaTargetHttpsProxies) Insert(ctx context.Context, key *meta.Key, o
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaTargetHttpsProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaTargetHttpsProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -44006,12 +44318,12 @@ func (g *GCEBetaTargetHttpsProxies) Delete(ctx context.Context, key *meta.Key, o
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaTargetHttpsProxies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaTargetHttpsProxies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -44045,12 +44357,12 @@ func (g *GCEBetaTargetHttpsProxies) SetCertificateMap(ctx context.Context, key *
 	call := g.s.Beta.TargetHttpsProxies.SetCertificateMap(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaTargetHttpsProxies.SetCertificateMap(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaTargetHttpsProxies.SetCertificateMap(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -44087,12 +44399,12 @@ func (g *GCEBetaTargetHttpsProxies) SetSslCertificates(ctx context.Context, key 
 	call := g.s.Beta.TargetHttpsProxies.SetSslCertificates(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaTargetHttpsProxies.SetSslCertificates(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaTargetHttpsProxies.SetSslCertificates(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -44129,12 +44441,12 @@ func (g *GCEBetaTargetHttpsProxies) SetSslPolicy(ctx context.Context, key *meta.
 	call := g.s.Beta.TargetHttpsProxies.SetSslPolicy(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaTargetHttpsProxies.SetSslPolicy(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaTargetHttpsProxies.SetSslPolicy(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -44171,12 +44483,12 @@ func (g *GCEBetaTargetHttpsProxies) SetUrlMap(ctx context.Context, key *meta.Key
 	call := g.s.Beta.TargetHttpsProxies.SetUrlMap(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaTargetHttpsProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaTargetHttpsProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -44533,12 +44845,12 @@ func (g *GCEAlphaRegionTargetHttpsProxies) Insert(ctx context.Context, key *meta
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionTargetHttpsProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaRegionTargetHttpsProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -44574,12 +44886,12 @@ func (g *GCEAlphaRegionTargetHttpsProxies) Delete(ctx context.Context, key *meta
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionTargetHttpsProxies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaRegionTargetHttpsProxies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -44613,12 +44925,12 @@ func (g *GCEAlphaRegionTargetHttpsProxies) Patch(ctx context.Context, key *meta.
 	call := g.s.Alpha.RegionTargetHttpsProxies.Patch(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionTargetHttpsProxies.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaRegionTargetHttpsProxies.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -44655,12 +44967,12 @@ func (g *GCEAlphaRegionTargetHttpsProxies) SetSslCertificates(ctx context.Contex
 	call := g.s.Alpha.RegionTargetHttpsProxies.SetSslCertificates(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionTargetHttpsProxies.SetSslCertificates(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaRegionTargetHttpsProxies.SetSslCertificates(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -44697,12 +45009,12 @@ func (g *GCEAlphaRegionTargetHttpsProxies) SetUrlMap(ctx context.Context, key *m
 	call := g.s.Alpha.RegionTargetHttpsProxies.SetUrlMap(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionTargetHttpsProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaRegionTargetHttpsProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -45059,12 +45371,12 @@ func (g *GCEBetaRegionTargetHttpsProxies) Insert(ctx context.Context, key *meta.
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionTargetHttpsProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaRegionTargetHttpsProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -45100,12 +45412,12 @@ func (g *GCEBetaRegionTargetHttpsProxies) Delete(ctx context.Context, key *meta.
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionTargetHttpsProxies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaRegionTargetHttpsProxies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -45139,12 +45451,12 @@ func (g *GCEBetaRegionTargetHttpsProxies) Patch(ctx context.Context, key *meta.K
 	call := g.s.Beta.RegionTargetHttpsProxies.Patch(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionTargetHttpsProxies.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaRegionTargetHttpsProxies.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -45181,12 +45493,12 @@ func (g *GCEBetaRegionTargetHttpsProxies) SetSslCertificates(ctx context.Context
 	call := g.s.Beta.RegionTargetHttpsProxies.SetSslCertificates(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionTargetHttpsProxies.SetSslCertificates(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaRegionTargetHttpsProxies.SetSslCertificates(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -45223,12 +45535,12 @@ func (g *GCEBetaRegionTargetHttpsProxies) SetUrlMap(ctx context.Context, key *me
 	call := g.s.Beta.RegionTargetHttpsProxies.SetUrlMap(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionTargetHttpsProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaRegionTargetHttpsProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -45585,12 +45897,12 @@ func (g *GCERegionTargetHttpsProxies) Insert(ctx context.Context, key *meta.Key,
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionTargetHttpsProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERegionTargetHttpsProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -45626,12 +45938,12 @@ func (g *GCERegionTargetHttpsProxies) Delete(ctx context.Context, key *meta.Key,
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionTargetHttpsProxies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERegionTargetHttpsProxies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -45665,12 +45977,12 @@ func (g *GCERegionTargetHttpsProxies) Patch(ctx context.Context, key *meta.Key, 
 	call := g.s.GA.RegionTargetHttpsProxies.Patch(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionTargetHttpsProxies.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCERegionTargetHttpsProxies.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -45707,12 +46019,12 @@ func (g *GCERegionTargetHttpsProxies) SetSslCertificates(ctx context.Context, ke
 	call := g.s.GA.RegionTargetHttpsProxies.SetSslCertificates(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionTargetHttpsProxies.SetSslCertificates(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCERegionTargetHttpsProxies.SetSslCertificates(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -45749,12 +46061,12 @@ func (g *GCERegionTargetHttpsProxies) SetUrlMap(ctx context.Context, key *meta.K
 	call := g.s.GA.RegionTargetHttpsProxies.SetUrlMap(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionTargetHttpsProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCERegionTargetHttpsProxies.SetUrlMap(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -46101,12 +46413,12 @@ func (g *GCETargetPools) Insert(ctx context.Context, key *meta.Key, obj *compute
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCETargetPools.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCETargetPools.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -46142,12 +46454,12 @@ func (g *GCETargetPools) Delete(ctx context.Context, key *meta.Key, options ...O
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCETargetPools.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCETargetPools.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -46181,12 +46493,12 @@ func (g *GCETargetPools) AddInstance(ctx context.Context, key *meta.Key, arg0 *c
 	call := g.s.GA.TargetPools.AddInstance(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCETargetPools.AddInstance(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCETargetPools.AddInstance(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -46223,12 +46535,12 @@ func (g *GCETargetPools) RemoveInstance(ctx context.Context, key *meta.Key, arg0
 	call := g.s.GA.TargetPools.RemoveInstance(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCETargetPools.RemoveInstance(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCETargetPools.RemoveInstance(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -46562,12 +46874,12 @@ func (g *GCEAlphaTargetTcpProxies) Insert(ctx context.Context, key *meta.Key, ob
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaTargetTcpProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaTargetTcpProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -46603,12 +46915,12 @@ func (g *GCEAlphaTargetTcpProxies) Delete(ctx context.Context, key *meta.Key, op
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaTargetTcpProxies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaTargetTcpProxies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -46642,12 +46954,12 @@ func (g *GCEAlphaTargetTcpProxies) SetBackendService(ctx context.Context, key *m
 	call := g.s.Alpha.TargetTcpProxies.SetBackendService(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaTargetTcpProxies.SetBackendService(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaTargetTcpProxies.SetBackendService(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -46981,12 +47293,12 @@ func (g *GCEBetaTargetTcpProxies) Insert(ctx context.Context, key *meta.Key, obj
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaTargetTcpProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaTargetTcpProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -47022,12 +47334,12 @@ func (g *GCEBetaTargetTcpProxies) Delete(ctx context.Context, key *meta.Key, opt
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaTargetTcpProxies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaTargetTcpProxies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -47061,12 +47373,12 @@ func (g *GCEBetaTargetTcpProxies) SetBackendService(ctx context.Context, key *me
 	call := g.s.Beta.TargetTcpProxies.SetBackendService(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaTargetTcpProxies.SetBackendService(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaTargetTcpProxies.SetBackendService(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -47400,12 +47712,12 @@ func (g *GCETargetTcpProxies) Insert(ctx context.Context, key *meta.Key, obj *co
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCETargetTcpProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCETargetTcpProxies.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -47441,12 +47753,12 @@ func (g *GCETargetTcpProxies) Delete(ctx context.Context, key *meta.Key, options
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCETargetTcpProxies.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCETargetTcpProxies.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -47480,12 +47792,12 @@ func (g *GCETargetTcpProxies) SetBackendService(ctx context.Context, key *meta.K
 	call := g.s.GA.TargetTcpProxies.SetBackendService(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCETargetTcpProxies.SetBackendService(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCETargetTcpProxies.SetBackendService(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -47819,12 +48131,12 @@ func (g *GCEAlphaUrlMaps) Insert(ctx context.Context, key *meta.Key, obj *comput
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaUrlMaps.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaUrlMaps.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -47860,12 +48172,12 @@ func (g *GCEAlphaUrlMaps) Delete(ctx context.Context, key *meta.Key, options ...
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaUrlMaps.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaUrlMaps.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -47899,12 +48211,12 @@ func (g *GCEAlphaUrlMaps) Update(ctx context.Context, key *meta.Key, arg0 *compu
 	call := g.s.Alpha.UrlMaps.Update(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaUrlMaps.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaUrlMaps.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -48238,12 +48550,12 @@ func (g *GCEBetaUrlMaps) Insert(ctx context.Context, key *meta.Key, obj *compute
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaUrlMaps.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaUrlMaps.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -48279,12 +48591,12 @@ func (g *GCEBetaUrlMaps) Delete(ctx context.Context, key *meta.Key, options ...O
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaUrlMaps.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaUrlMaps.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -48318,12 +48630,12 @@ func (g *GCEBetaUrlMaps) Update(ctx context.Context, key *meta.Key, arg0 *comput
 	call := g.s.Beta.UrlMaps.Update(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaUrlMaps.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaUrlMaps.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -48657,12 +48969,12 @@ func (g *GCEUrlMaps) Insert(ctx context.Context, key *meta.Key, obj *computega.U
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEUrlMaps.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEUrlMaps.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -48698,12 +49010,12 @@ func (g *GCEUrlMaps) Delete(ctx context.Context, key *meta.Key, options ...Optio
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEUrlMaps.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEUrlMaps.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -48737,12 +49049,12 @@ func (g *GCEUrlMaps) Update(ctx context.Context, key *meta.Key, arg0 *computega.
 	call := g.s.GA.UrlMaps.Update(projectID, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEUrlMaps.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEUrlMaps.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -49079,12 +49391,12 @@ func (g *GCEAlphaRegionUrlMaps) Insert(ctx context.Context, key *meta.Key, obj *
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionUrlMaps.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaRegionUrlMaps.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -49120,12 +49432,12 @@ func (g *GCEAlphaRegionUrlMaps) Delete(ctx context.Context, key *meta.Key, optio
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionUrlMaps.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEAlphaRegionUrlMaps.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -49159,12 +49471,12 @@ func (g *GCEAlphaRegionUrlMaps) Update(ctx context.Context, key *meta.Key, arg0 
 	call := g.s.Alpha.RegionUrlMaps.Update(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEAlphaRegionUrlMaps.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEAlphaRegionUrlMaps.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -49501,12 +49813,12 @@ func (g *GCEBetaRegionUrlMaps) Insert(ctx context.Context, key *meta.Key, obj *c
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionUrlMaps.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaRegionUrlMaps.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -49542,12 +49854,12 @@ func (g *GCEBetaRegionUrlMaps) Delete(ctx context.Context, key *meta.Key, option
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionUrlMaps.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCEBetaRegionUrlMaps.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -49581,12 +49893,12 @@ func (g *GCEBetaRegionUrlMaps) Update(ctx context.Context, key *meta.Key, arg0 *
 	call := g.s.Beta.RegionUrlMaps.Update(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCEBetaRegionUrlMaps.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCEBetaRegionUrlMaps.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -49923,12 +50235,12 @@ func (g *GCERegionUrlMaps) Insert(ctx context.Context, key *meta.Key, obj *compu
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionUrlMaps.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERegionUrlMaps.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -49964,12 +50276,12 @@ func (g *GCERegionUrlMaps) Delete(ctx context.Context, key *meta.Key, options ..
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionUrlMaps.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("GCERegionUrlMaps.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -50003,12 +50315,12 @@ func (g *GCERegionUrlMaps) Update(ctx context.Context, key *meta.Key, arg0 *comp
 	call := g.s.GA.RegionUrlMaps.Update(projectID, key.Region, key.Name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("GCERegionUrlMaps.Update(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("GCERegionUrlMaps.Update(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -50547,12 +50859,12 @@ func (g *TDTcpRoutes) Insert(ctx context.Context, key *meta.Key, obj *networkser
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("TDTcpRoutes.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("TDTcpRoutes.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -50589,12 +50901,12 @@ func (g *TDTcpRoutes) Delete(ctx context.Context, key *meta.Key, options ...Opti
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("TDTcpRoutes.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("TDTcpRoutes.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -50629,12 +50941,12 @@ func (g *TDTcpRoutes) Patch(ctx context.Context, key *meta.Key, arg0 *networkser
 	call := g.s.NetworkServicesGA.TcpRoutes.Patch(name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("TDTcpRoutes.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("TDTcpRoutes.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -50968,12 +51280,12 @@ func (g *TDBetaTcpRoutes) Insert(ctx context.Context, key *meta.Key, obj *networ
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("TDBetaTcpRoutes.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("TDBetaTcpRoutes.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -51010,12 +51322,12 @@ func (g *TDBetaTcpRoutes) Delete(ctx context.Context, key *meta.Key, options ...
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("TDBetaTcpRoutes.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("TDBetaTcpRoutes.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -51050,12 +51362,12 @@ func (g *TDBetaTcpRoutes) Patch(ctx context.Context, key *meta.Key, arg0 *networ
 	call := g.s.NetworkServicesBeta.TcpRoutes.Patch(name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("TDBetaTcpRoutes.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("TDBetaTcpRoutes.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -51389,12 +51701,12 @@ func (g *TDMeshes) Insert(ctx context.Context, key *meta.Key, obj *networkservic
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("TDMeshes.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("TDMeshes.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -51431,12 +51743,12 @@ func (g *TDMeshes) Delete(ctx context.Context, key *meta.Key, options ...Option)
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("TDMeshes.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("TDMeshes.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -51471,12 +51783,12 @@ func (g *TDMeshes) Patch(ctx context.Context, key *meta.Key, arg0 *networkservic
 	call := g.s.NetworkServicesGA.Meshes.Patch(name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("TDMeshes.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("TDMeshes.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -51810,12 +52122,12 @@ func (g *TDBetaMeshes) Insert(ctx context.Context, key *meta.Key, obj *networkse
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("TDBetaMeshes.Insert(%v, %v, ...) = %+v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("TDBetaMeshes.Insert(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 
@@ -51852,12 +52164,12 @@ func (g *TDBetaMeshes) Delete(ctx context.Context, key *meta.Key, options ...Opt
 	call.Context(ctx)
 
 	op, err := call.Do()
+	klog.V(4).Infof("TDBetaMeshes.Delete(%v, %v) = %v", ctx, key, err)
 
 	callObserverEnd(ctx, ck, err)
 	g.s.RateLimiter.Observe(ctx, err, ck)
 
 	if err != nil {
-		klog.V(4).Infof("TDBetaMeshes.Delete(%v, %v) = %v", ctx, key, err)
 		return err
 	}
 
@@ -51892,12 +52204,12 @@ func (g *TDBetaMeshes) Patch(ctx context.Context, key *meta.Key, arg0 *networkse
 	call := g.s.NetworkServicesBeta.Meshes.Patch(name, arg0)
 	call.Context(ctx)
 	op, err := call.Do()
+	klog.V(4).Infof("TDBetaMeshes.Patch(%v, %v, ...) = %+v", ctx, key, err)
 
 	if err != nil {
 		callObserverEnd(ctx, ck, err)
 		g.s.RateLimiter.Observe(ctx, err, ck)
 
-		klog.V(4).Infof("TDBetaMeshes.Patch(%v, %v, ...) = %+v", ctx, key, err)
 		return err
 	}
 

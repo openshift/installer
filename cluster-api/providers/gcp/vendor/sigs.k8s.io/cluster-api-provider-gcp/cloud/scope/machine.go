@@ -402,6 +402,16 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 			Preemptible: m.GCPMachine.Spec.Preemptible,
 		},
 	}
+	if m.GCPMachine.Spec.ProvisioningModel != nil {
+		switch *m.GCPMachine.Spec.ProvisioningModel {
+		case infrav1.ProvisioningModelSpot:
+			instance.Scheduling.ProvisioningModel = "SPOT"
+		case infrav1.ProvisioningModelStandard:
+			instance.Scheduling.ProvisioningModel = "STANDARD"
+		default:
+			log.Error(errors.New("Invalid value"), "Unknown ProvisioningModel value", "Spec.ProvisioningModel", *m.GCPMachine.Spec.ProvisioningModel)
+		}
+	}
 
 	instance.CanIpForward = true
 	if m.GCPMachine.Spec.IPForwarding != nil && *m.GCPMachine.Spec.IPForwarding == infrav1.IPForwardingDisabled {
@@ -439,6 +449,19 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 		enabled := *m.GCPMachine.Spec.ConfidentialCompute == infrav1.ConfidentialComputePolicyEnabled
 		instance.ConfidentialInstanceConfig = &compute.ConfidentialInstanceConfig{
 			EnableConfidentialCompute: enabled,
+		}
+	}
+	if m.GCPMachine.Spec.ConfidentialInstanceType != nil {
+		if instance.ConfidentialInstanceConfig == nil {
+			instance.ConfidentialInstanceConfig = &compute.ConfidentialInstanceConfig{}
+		}
+		switch *m.GCPMachine.Spec.ConfidentialInstanceType {
+		case infrav1.ConfidentialVMTechSEV:
+			instance.ConfidentialInstanceConfig.ConfidentialInstanceType = "SEV"
+		case infrav1.ConfidentialVMTechSEVSNP:
+			instance.ConfidentialInstanceConfig.ConfidentialInstanceType = "SEV_SNP"
+		default:
+			log.Error(errors.New("Invalid value"), "Unknown ConfidentialInstanceType value", "Spec.ConfidentialInstanceType", *m.GCPMachine.Spec.ConfidentialInstanceType)
 		}
 	}
 
