@@ -14,7 +14,7 @@ import (
 )
 
 // tagRegex is used to check that the keys and values of a tag contain only valid characters.
-var tagRegex = regexp.MustCompile(`^[0-9A-Za-z_.:/=+-@]*$`)
+var tagRegex = regexp.MustCompile(`^[0-9A-Za-z_.:/=+-@\p{Z}]*$`)
 
 // kubernetesNamespaceRegex is used to check that a tag key is not in the kubernetes.io namespace.
 var kubernetesNamespaceRegex = regexp.MustCompile(`^([^/]*\.)?kubernetes.io/`)
