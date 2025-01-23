@@ -111,14 +111,23 @@ type MachinePool struct {
 	// +optional
 	OnHostMaintenance string `json:"onHostMaintenance,omitempty"`
 
-	// ConfidentialCompute Defines whether the instance should have confidential compute enabled.
+	// confidentialCompute Defines whether the instance should have confidential compute enabled.
 	// If enabled OnHostMaintenance is required to be set to "Terminate".
 	// If omitted, the platform chooses a default, which is subject to change over time, currently that default is false.
+	// If confidentialInstanceType is configured, even if confidentialCompute is Disabled, a confidential compute instance will be configured.
 	// +kubebuilder:default="Disabled"
 	// +default="Disabled"
 	// +kubebuilder:validation:Enum=Enabled;Disabled
 	// +optional
 	ConfidentialCompute string `json:"confidentialCompute,omitempty"`
+
+	// confidentialInstanceType determines the required type of confidential computing technology.
+	// confidentialInstanceType will precede confidentialCompute. That is, if confidentialCompute is "Disabled" but a valid confidentialInstanceType is specified, a confidential instance will be configured.
+	// If confidentialInstanceType isn't set and confidentialCompute is "Enabled" the platform will set the default, which is subject to change over time. Currently the default is "sev" for "c2d", "c3d", and "n2d" machineTypes. For the other machine cases, a valid confidentialInstanceType must be specified.
+	// If confidentialCompute is "Disabled", then the default will be not configuring a confidential instance type.
+	// +kubebuilder:validation:Enum=sev;sev-snp;
+	// +optional
+	ConfidentialInstanceType string `json:"confidentialInstanceType,omitempty"`
 
 	// ServiceAccount is the email of a gcp service account to be used during installations.
 	// The provided service account can be attached to both control-plane nodes
@@ -207,6 +216,10 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 	if required.ConfidentialCompute != "" {
 		a.ConfidentialCompute = required.ConfidentialCompute
+	}
+
+	if required.ConfidentialInstanceType != "" {
+		a.ConfidentialInstanceType = required.ConfidentialInstanceType
 	}
 
 	if required.ServiceAccount != "" {
