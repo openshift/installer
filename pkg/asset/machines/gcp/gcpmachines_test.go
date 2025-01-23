@@ -51,6 +51,11 @@ func Test_GenerateMachines(t *testing.T) {
 			expectedGCPConfig: getGCPMachineWithConfidentialCompute(),
 		},
 		{
+			name:              "confidentialinstancetype",
+			installConfig:     getICWithConfidentialInstanceType(),
+			expectedGCPConfig: getGCPMachineWithConfidentialCompute(),
+		},
+		{
 			name:              "secureboot",
 			installConfig:     getICWithSecureBoot(),
 			expectedGCPConfig: getGCPMachineWithSecureBoot(),
@@ -158,6 +163,12 @@ func getICWithConfidentialCompute() *installconfig.InstallConfig {
 	return ic
 }
 
+func getICWithConfidentialInstanceType() *installconfig.InstallConfig {
+	ic := getBaseInstallConfig()
+	ic.Config.Platform.GCP.DefaultMachinePlatform = &gcptypes.MachinePool{ConfidentialInstanceType: "sev-snp"}
+	return ic
+}
+
 func getICWithSecureBoot() *installconfig.InstallConfig {
 	ic := getBaseInstallConfig()
 	ic.Config.Platform.GCP.DefaultMachinePlatform = &gcptypes.MachinePool{SecureBoot: "Enabled"}
@@ -243,6 +254,13 @@ func getGCPMachineWithConfidentialCompute() *capg.GCPMachine {
 	gcpMachine := getBaseGCPMachine()
 	var cc capg.ConfidentialComputePolicy = "Enabled"
 	gcpMachine.Spec.ConfidentialCompute = &cc
+	return gcpMachine
+}
+
+func getGCPMachineWithConfidentialInstanceType() *capg.GCPMachine {
+	gcpMachine := getBaseGCPMachine()
+	var cc capg.ConfidentialVMTechnology = "sev-snp"
+	gcpMachine.Spec.ConfidentialInstanceType = &cc
 	return gcpMachine
 }
 
