@@ -10,7 +10,7 @@ run:
   - ^scripts
   - ^terraform
   - ^upi
-  go: '1.22'
+  go: '1.23'
   modules-download-mode: vendor
   allow-parallel-runners: true
 output:

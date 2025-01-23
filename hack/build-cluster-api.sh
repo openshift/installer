@@ -5,7 +5,7 @@ set -e
 TARGET_OS_ARCH=$(go env GOOS)_$(go env GOARCH)
 CLUSTER_API_BIN_DIR="${PWD}/cluster-api/bin/${TARGET_OS_ARCH}"
 CLUSTER_API_MIRROR_DIR="${PWD}/pkg/clusterapi/mirror/"
-ENVTEST_K8S_VERSION="1.31.0"
+ENVTEST_K8S_VERSION="1.32.0"
 ENVTEST_ARCH=$(go env GOOS)-$(go env GOARCH)
 
 copy_cluster_api_to_mirror() {
