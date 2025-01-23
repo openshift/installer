@@ -2,9 +2,12 @@ package vsphere
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/informers"
+	"k8s.io/client-go/tools/cache"
+	"log"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -13,9 +16,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/vim25/mo"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
+
 	errorsutil "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -23,6 +26,8 @@ import (
 
 	"github.com/openshift/installer/pkg/destroy/providers"
 	installertypes "github.com/openshift/installer/pkg/types"
+
+	"k8s.io/kubectl/pkg/drain"
 )
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
@@ -332,26 +337,41 @@ func disableClusterVersionOperator(ctx context.Context, clientSet *kubernetes.Cl
 	return nil
 }
 
-func walkOwnerReferences(ctx context.Context, clientSet *kubernetes.Clientset, owner metav1.OwnerReference) (metav1.OwnerReference, error) {
-	parent := owner
-
-	switch parent.Kind {
+/*
+func walkOwnerReferences(ctx context.Context, clientSet *kubernetes.Clientset, dynamicClient *dynamic.DynamicClient, ownerRef metav1.OwnerReference, namespace string) (metav1.OwnerReference, error) {
+	switch ownerRef.Kind {
 	case "Deployment", "DaemonSet", "StatefulSet":
-		return parent, nil
+		return ownerRef, nil
 	}
 
-	parent, err := walkOwnerReferences(ctx, clientSet, owner)
+	//what if there is more than one owner?
+
+	gvr := schema.GroupVersionResource{
+		Group:    "",
+		Version:  "",
+		Resource: ownerRef.Kind,
+	}
+
+	unstructured, err := dynamicClient.Resource(gvr).Namespace(namespace).Get(ctx, ownerRef.Name, metav1.GetOptions{})
 	if err != nil {
-		return parent, err
+		return ownerRef, err
 	}
 
-	return parent, nil
+	ownerRefs := unstructured.GetOwnerReferences()
+
+	// we are only using the first one
+	ownerRef = ownerRefs[0]
+
+	return walkOwnerReferences(ctx, clientSet, dynamicClient, ownerRef, namespace)
 }
+
+*/
 
 type PodVolumeAssociation struct {
 	PersistentVolumeClaim *corev1.PersistentVolumeClaim
 	PersistentVolume      *corev1.PersistentVolume
 	Pod                   *corev1.Pod
+	Namespace             *corev1.Namespace
 }
 
 func associateVolumesAndPods(ctx context.Context, clientSet *kubernetes.Clientset) ([]PodVolumeAssociation, error) {
@@ -386,6 +406,7 @@ func associateVolumesAndPods(ctx context.Context, clientSet *kubernetes.Clientse
 						PersistentVolumeClaim: pvc,
 						PersistentVolume:      pv,
 						Pod:                   &pod,
+						Namespace:             &n,
 					})
 				}
 			}
@@ -393,6 +414,54 @@ func associateVolumesAndPods(ctx context.Context, clientSet *kubernetes.Clientse
 	}
 
 	return pvaList, nil
+}
+
+func (o *ClusterUninstaller) drainNodes(ctx context.Context) error {
+	drainHelper := &drain.Helper{
+		Ctx:                             ctx,
+		Client:                          o.KubeClientset,
+		Force:                           true,
+		GracePeriodSeconds:              0,
+		IgnoreAllDaemonSets:             true,
+		Timeout:                         0,
+		DeleteEmptyDirData:              true,
+		Selector:                        "",
+		PodSelector:                     "",
+		ChunkSize:                       0,
+		DisableEviction:                 true,
+		SkipWaitForDeleteTimeoutSeconds: 0,
+		AdditionalFilters:               nil,
+		Out:                             log.Writer(),
+		ErrOut:                          log.Writer(),
+		DryRunStrategy:                  0,
+		OnPodDeletedOrEvicted:           nil,
+		OnPodDeletionOrEvictionFinished: func(pod *corev1.Pod, usingEviction bool, err error) {},
+		OnPodDeletionOrEvictionStarted:  func(pod *corev1.Pod, usingEviction bool) {},
+	}
+
+	nodeList, err := o.KubeClientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+
+	for _, node := range nodeList.Items {
+		if _, ok := node.Labels["node-role.kubernetes.io/worker"]; ok {
+			o.Logger.Debugf("cordoning node: %s", node.Name)
+			if err := drain.RunCordonOrUncordon(drainHelper, &node, true); err != nil {
+				return err
+			}
+		}
+	}
+	for _, node := range nodeList.Items {
+		if _, ok := node.Labels["node-role.kubernetes.io/worker"]; ok {
+			o.Logger.Debugf("draining node: %s", node.Name)
+			if err := drain.RunNodeDrain(drainHelper, node.Name); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (o *ClusterUninstaller) deletePersistentVolumes(ctx context.Context) error {
@@ -403,29 +472,34 @@ func (o *ClusterUninstaller) deletePersistentVolumes(ctx context.Context) error 
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
 	defer cancel()
 
-	o.Logger.Debug("Disabling Cluster Version Operator")
-	if err := disableClusterVersionOperator(ctx, o.KubeClientset); err != nil {
+	/*
+		o.Logger.Debug("Disabling Cluster Version Operator")
+		if err := disableClusterVersionOperator(ctx, o.KubeClientset); err != nil {
+			return err
+		}
+
+	*/
+
+	if err := o.drainNodes(ctx); err != nil {
 		return err
 	}
 
 	//dynamicClient := dynamic.New(o.KubeClientset.RESTClient())
 
-	//dynamicClient.Resource(schema.GroupVersionResource{}).Get()
+	/*
+		removeFinalizer := []jsonPatch{{
+			Op:    "remove",
+			Path:  "/metadata/finalizers",
+			Value: "kubernetes",
+		}}
 
-	//dynamicClient.Resource()
 
-	removeFinalizer := []jsonPatch{{
-		Op:    "remove",
-		Path:  "/metadata/finalizers",
-		Value: "kubernetes",
-	}}
+			removeFinalizerBytes, err := json.Marshal(removeFinalizer)
+			if err != nil {
+				return err
+			}
 
-	// todo: maybe the errors should be checked for cluster not available...
-
-	removeFinalizerBytes, err := json.Marshal(removeFinalizer)
-	if err != nil {
-		return err
-	}
+	*/
 
 	pvas, err := associateVolumesAndPods(ctx, o.KubeClientset)
 	if err != nil {
@@ -437,10 +511,73 @@ func (o *ClusterUninstaller) deletePersistentVolumes(ctx context.Context) error 
 	}
 
 	for _, a := range pvas {
-		if a.PersistentVolume.Status.Phase == corev1.VolumeBound {
-			o.Logger.Debugf("pod %s has a claim %s bound to volume %s ", a.Pod.Name, a.PersistentVolumeClaim.Name, a.PersistentVolume.Name)
+		o.Logger.Debugf("deleting volume claim %s", a.PersistentVolumeClaim.Name)
+		if err := o.KubeClientset.CoreV1().PersistentVolumeClaims(a.Namespace.Name).Delete(ctx, a.PersistentVolumeClaim.Name, metav1.DeleteOptions{}); err != nil {
+			return err
+		}
+	}
+
+	sharedInformer := informers.NewSharedInformerFactory(o.KubeClientset, time.Second*15)
+
+	pvcInformer := sharedInformer.Core().V1().PersistentVolumeClaims()
+	pvInformer := sharedInformer.Core().V1().PersistentVolumes()
+
+	_, err = pvcInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		DeleteFunc: func(obj interface{}) {
+			if pvc, ok := obj.(*corev1.PersistentVolumeClaim); ok {
+
+				o.Logger.Debugf("informer: deleting volume claim %s", pvc.Name)
+				/*
+					pvas = slices.DeleteFunc(pvas, func(pva PodVolumeAssociation) bool {
+						// todo: jcallen do I really want to delete this?
+						return pva.PersistentVolumeClaim.Name == pvc.Name
+					})
+
+				*/
+			}
+		},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	_, err = pvInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		DeleteFunc: func(obj interface{}) {
+			if pv, ok := obj.(*corev1.PersistentVolume); ok {
+				pvas = slices.DeleteFunc(pvas, func(pva PodVolumeAssociation) bool {
+					return pva.PersistentVolume.Name == pv.Name
+				})
+			}
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	stopCh := make(chan struct{})
+	sharedInformer.Start(stopCh)
+	sharedInformer.WaitForCacheSync(stopCh)
+
+	if err := wait.ExponentialBackoff(wait.Backoff{
+		Duration: time.Second * 5,
+		Factor:   1.5,
+		Jitter:   1.5,
+		Steps:    30,
+		Cap:      time.Minute * 5, // todo: jcallen: is this right???
+	}, func() (bool, error) {
+		if len(pvas) == 0 {
+			stopCh <- struct{}{}
+			return true, nil
 		}
 
+		return false, nil
+
+	}); err != nil {
+		return err
+	}
+
+	/*
 		o.Logger.Debugf("deleting volume %s", a.PersistentVolume.Name)
 
 		err = o.KubeClientset.CoreV1().PersistentVolumes().Delete(ctx, a.PersistentVolume.Name, metav1.DeleteOptions{})
@@ -454,26 +591,8 @@ func (o *ClusterUninstaller) deletePersistentVolumes(ctx context.Context) error 
 			o.Logger.Warnf("Unable to patch persistent volumes: %v", err)
 			return nil
 		}
-	}
 
-	// todo: is there another way to know if a PV once deleted has been reconciled?
-	time.Sleep(time.Second * 30)
-
-	for {
-		pvList, err := o.KubeClientset.CoreV1().PersistentVolumes().List(ctx, metav1.ListOptions{})
-		if err != nil {
-			o.Logger.Warnf("Unable to list persistent volumes: %v", err)
-			return nil
-		}
-
-		o.Logger.Debugf("%d remaining persistent volumes", len(pvList.Items))
-
-		if len(pvList.Items) == 0 {
-			break
-		}
-
-		time.Sleep(time.Second * 30)
-	}
+	*/
 
 	return nil
 }
@@ -519,10 +638,13 @@ func (o *ClusterUninstaller) destroyCluster(ctx context.Context) (bool, error) {
 				Execute: o.deletePersistentVolumes,
 			})
 		}
-		deleteVolumeStagedFunctions = append(deleteVolumeStagedFunctions, StagedFunctions{
-			Name:    "Delete CNS Volumes",
-			Execute: o.deleteCnsVolumes,
-		})
+		/*
+			deleteVolumeStagedFunctions = append(deleteVolumeStagedFunctions, StagedFunctions{
+				Name:    "Delete CNS Volumes",
+				Execute: o.deleteCnsVolumes,
+			})
+
+		*/
 		stagedFuncs = append(stagedFuncs, deleteVolumeStagedFunctions)
 	}
 
