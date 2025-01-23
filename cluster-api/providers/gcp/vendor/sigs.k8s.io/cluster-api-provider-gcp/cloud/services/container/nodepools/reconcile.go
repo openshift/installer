@@ -149,7 +149,7 @@ func (s *Service) Reconcile(ctx context.Context) (ctrl.Result, error) {
 		log.Info("Node pool config update required", "request", nodePoolUpdateConfigRequest)
 		err = s.updateNodePoolConfig(ctx, nodePoolUpdateConfigRequest)
 		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("node pool config update (either version/labels/taints/locations/image type/network tag/linux node config or all) failed: %s", err)
+			return ctrl.Result{}, fmt.Errorf("node pool config update (either version/labels/taints/locations/image type/network tag/linux node config or all) failed: %w", err)
 		}
 		log.Info("Node pool config updating in progress")
 		s.scope.GCPManagedMachinePool.Status.Ready = true
