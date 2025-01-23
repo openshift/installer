@@ -21,6 +21,7 @@ func DataSourceIBMAppDomainPrivate() *schema.Resource {
 				Required:    true,
 			},
 		},
+		DeprecationMessage: "This service is deprecated.",
 	}
 }
 

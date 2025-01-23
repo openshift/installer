@@ -37,7 +37,7 @@ type StoragePool struct {
 
 	// state of storage pool
 	// Required: true
-	// Enum: [closed opened]
+	// Enum: ["closed","opened"]
 	State *string `json:"state"`
 
 	// type of storage pool

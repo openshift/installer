@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2023.
+ * (C) Copyright IBM Corp. 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.82.1-2082d402-20231115-195014
+ * IBM OpenAPI SDK Code Generator Version: 3.87.0-91c7c775-20240320-213027
  */
 
 // Package globaltaggingv1 : Operations and models for the GlobalTaggingV1 service
@@ -39,7 +39,9 @@ import (
 // create tags in two formats: `key:value` or `label`. The tagging API supports three types of tag: `user` `service`,
 // and `access` tags. `service` tags cannot be attached to IMS resources. `service` tags must be in the form
 // `service_prefix:tag_label` where `service_prefix` identifies the Service owning the tag. `access` tags cannot be
-// attached to IMS and Cloud Foundry resources. They must be in the form `key:value`.
+// attached to IMS and Cloud Foundry resources. They must be in the form `key:value`. You can replace all resource's
+// tags using the `replace` query parameter in the attach operation. You can update the `value` of a resource's tag in
+// the format `key:value`, using the `update` query parameter in the attach operation.
 //
 // API Version: 1.2.0
 type GlobalTaggingV1 struct {
@@ -68,22 +70,26 @@ func NewGlobalTaggingV1UsingExternalConfig(options *GlobalTaggingV1Options) (glo
 	if options.Authenticator == nil {
 		options.Authenticator, err = core.GetAuthenticatorFromEnvironment(options.ServiceName)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "env-auth-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	globalTagging, err = NewGlobalTaggingV1(options)
+	err = core.RepurposeSDKProblem(err, "new-client-error")
 	if err != nil {
 		return
 	}
 
 	err = globalTagging.Service.ConfigureService(options.ServiceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client-config-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = globalTagging.Service.SetServiceURL(options.URL)
+		err = core.RepurposeSDKProblem(err, "url-set-error")
 	}
 	return
 }
@@ -97,12 +103,14 @@ func NewGlobalTaggingV1(options *GlobalTaggingV1Options) (service *GlobalTagging
 
 	baseService, err := core.NewBaseService(serviceOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "new-base-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = baseService.SetServiceURL(options.URL)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-url-error", common.GetComponentInfo())
 			return
 		}
 	}
@@ -116,7 +124,7 @@ func NewGlobalTaggingV1(options *GlobalTaggingV1Options) (service *GlobalTagging
 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
-	return "", fmt.Errorf("service does not support regional URLs")
+	return "", core.SDKErrorf(nil, "service does not support regional URLs", "no-regional-support", common.GetComponentInfo())
 }
 
 // Clone makes a copy of "globalTagging" suitable for processing requests.
@@ -131,7 +139,11 @@ func (globalTagging *GlobalTaggingV1) Clone() *GlobalTaggingV1 {
 
 // SetServiceURL sets the service URL
 func (globalTagging *GlobalTaggingV1) SetServiceURL(url string) error {
-	return globalTagging.Service.SetServiceURL(url)
+	err := globalTagging.Service.SetServiceURL(url)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-set-error", common.GetComponentInfo())
+	}
+	return err
 }
 
 // GetServiceURL returns the service URL
@@ -169,13 +181,16 @@ func (globalTagging *GlobalTaggingV1) DisableRetries() {
 // Lists all tags that are in a billing account. Use the `attached_to` parameter to return the list of tags that are
 // attached to the specified resource.
 func (globalTagging *GlobalTaggingV1) ListTags(listTagsOptions *ListTagsOptions) (result *TagList, response *core.DetailedResponse, err error) {
-	return globalTagging.ListTagsWithContext(context.Background(), listTagsOptions)
+	result, response, err = globalTagging.ListTagsWithContext(context.Background(), listTagsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListTagsWithContext is an alternate form of the ListTags method which supports a Context parameter
 func (globalTagging *GlobalTaggingV1) ListTagsWithContext(ctx context.Context, listTagsOptions *ListTagsOptions) (result *TagList, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listTagsOptions, "listTagsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -184,6 +199,7 @@ func (globalTagging *GlobalTaggingV1) ListTagsWithContext(ctx context.Context, l
 	builder.EnableGzipCompression = globalTagging.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalTagging.Service.Options.URL, `/v3/tags`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -201,9 +217,6 @@ func (globalTagging *GlobalTaggingV1) ListTagsWithContext(ctx context.Context, l
 	}
 	if listTagsOptions.XCorrelationID != nil {
 		builder.AddHeader("x-correlation-id", fmt.Sprint(*listTagsOptions.XCorrelationID))
-	}
-	if listTagsOptions.TransactionID != nil {
-		builder.AddHeader("transaction-id", fmt.Sprint(*listTagsOptions.TransactionID))
 	}
 
 	if listTagsOptions.AccountID != nil {
@@ -239,17 +252,21 @@ func (globalTagging *GlobalTaggingV1) ListTagsWithContext(ctx context.Context, l
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = globalTagging.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_tags", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTagList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -263,17 +280,21 @@ func (globalTagging *GlobalTaggingV1) ListTagsWithContext(ctx context.Context, l
 // access to tag resources](https://cloud.ibm.com/docs/account?topic=account-access) documentation. `service` and `user`
 // tags cannot be created upfront. They are created when they are attached for the first time to a resource.
 func (globalTagging *GlobalTaggingV1) CreateTag(createTagOptions *CreateTagOptions) (result *CreateTagResults, response *core.DetailedResponse, err error) {
-	return globalTagging.CreateTagWithContext(context.Background(), createTagOptions)
+	result, response, err = globalTagging.CreateTagWithContext(context.Background(), createTagOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateTagWithContext is an alternate form of the CreateTag method which supports a Context parameter
 func (globalTagging *GlobalTaggingV1) CreateTagWithContext(ctx context.Context, createTagOptions *CreateTagOptions) (result *CreateTagResults, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createTagOptions, "createTagOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createTagOptions, "createTagOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -282,6 +303,7 @@ func (globalTagging *GlobalTaggingV1) CreateTagWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = globalTagging.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalTagging.Service.Options.URL, `/v3/tags`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -301,9 +323,6 @@ func (globalTagging *GlobalTaggingV1) CreateTagWithContext(ctx context.Context, 
 	if createTagOptions.XCorrelationID != nil {
 		builder.AddHeader("x-correlation-id", fmt.Sprint(*createTagOptions.XCorrelationID))
 	}
-	if createTagOptions.TransactionID != nil {
-		builder.AddHeader("transaction-id", fmt.Sprint(*createTagOptions.TransactionID))
-	}
 
 	if createTagOptions.AccountID != nil {
 		builder.AddQuery("account_id", fmt.Sprint(*createTagOptions.AccountID))
@@ -318,22 +337,27 @@ func (globalTagging *GlobalTaggingV1) CreateTagWithContext(ctx context.Context, 
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = globalTagging.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_tag", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCreateTagResults)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -345,13 +369,16 @@ func (globalTagging *GlobalTaggingV1) CreateTagWithContext(ctx context.Context, 
 // DeleteTagAll : Delete all unused tags
 // Delete the tags that are not attached to any resource.
 func (globalTagging *GlobalTaggingV1) DeleteTagAll(deleteTagAllOptions *DeleteTagAllOptions) (result *DeleteTagsResult, response *core.DetailedResponse, err error) {
-	return globalTagging.DeleteTagAllWithContext(context.Background(), deleteTagAllOptions)
+	result, response, err = globalTagging.DeleteTagAllWithContext(context.Background(), deleteTagAllOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteTagAllWithContext is an alternate form of the DeleteTagAll method which supports a Context parameter
 func (globalTagging *GlobalTaggingV1) DeleteTagAllWithContext(ctx context.Context, deleteTagAllOptions *DeleteTagAllOptions) (result *DeleteTagsResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(deleteTagAllOptions, "deleteTagAllOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -360,6 +387,7 @@ func (globalTagging *GlobalTaggingV1) DeleteTagAllWithContext(ctx context.Contex
 	builder.EnableGzipCompression = globalTagging.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalTagging.Service.Options.URL, `/v3/tags`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -378,9 +406,6 @@ func (globalTagging *GlobalTaggingV1) DeleteTagAllWithContext(ctx context.Contex
 	if deleteTagAllOptions.XCorrelationID != nil {
 		builder.AddHeader("x-correlation-id", fmt.Sprint(*deleteTagAllOptions.XCorrelationID))
 	}
-	if deleteTagAllOptions.TransactionID != nil {
-		builder.AddHeader("transaction-id", fmt.Sprint(*deleteTagAllOptions.TransactionID))
-	}
 
 	if deleteTagAllOptions.Providers != nil {
 		builder.AddQuery("providers", fmt.Sprint(*deleteTagAllOptions.Providers))
@@ -394,17 +419,21 @@ func (globalTagging *GlobalTaggingV1) DeleteTagAllWithContext(ctx context.Contex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = globalTagging.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_tag_all", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDeleteTagsResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -416,17 +445,21 @@ func (globalTagging *GlobalTaggingV1) DeleteTagAllWithContext(ctx context.Contex
 // DeleteTag : Delete an unused tag
 // Delete an existing tag. A tag can be deleted only if it is not attached to any resource.
 func (globalTagging *GlobalTaggingV1) DeleteTag(deleteTagOptions *DeleteTagOptions) (result *DeleteTagResults, response *core.DetailedResponse, err error) {
-	return globalTagging.DeleteTagWithContext(context.Background(), deleteTagOptions)
+	result, response, err = globalTagging.DeleteTagWithContext(context.Background(), deleteTagOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteTagWithContext is an alternate form of the DeleteTag method which supports a Context parameter
 func (globalTagging *GlobalTaggingV1) DeleteTagWithContext(ctx context.Context, deleteTagOptions *DeleteTagOptions) (result *DeleteTagResults, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteTagOptions, "deleteTagOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteTagOptions, "deleteTagOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -439,6 +472,7 @@ func (globalTagging *GlobalTaggingV1) DeleteTagWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = globalTagging.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalTagging.Service.Options.URL, `/v3/tags/{tag_name}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -457,9 +491,6 @@ func (globalTagging *GlobalTaggingV1) DeleteTagWithContext(ctx context.Context, 
 	if deleteTagOptions.XCorrelationID != nil {
 		builder.AddHeader("x-correlation-id", fmt.Sprint(*deleteTagOptions.XCorrelationID))
 	}
-	if deleteTagOptions.TransactionID != nil {
-		builder.AddHeader("transaction-id", fmt.Sprint(*deleteTagOptions.TransactionID))
-	}
 
 	if deleteTagOptions.Providers != nil {
 		builder.AddQuery("providers", strings.Join(deleteTagOptions.Providers, ","))
@@ -473,17 +504,21 @@ func (globalTagging *GlobalTaggingV1) DeleteTagWithContext(ctx context.Context, 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = globalTagging.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_tag", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDeleteTagResults)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -496,17 +531,21 @@ func (globalTagging *GlobalTaggingV1) DeleteTagWithContext(ctx context.Context, 
 // Attaches one or more tags to one or more resources. Each resource can have no more than 1000 tags per each 'user' and
 // 'service' type, and no more than 250 'access' tags (which is the account limit).
 func (globalTagging *GlobalTaggingV1) AttachTag(attachTagOptions *AttachTagOptions) (result *TagResults, response *core.DetailedResponse, err error) {
-	return globalTagging.AttachTagWithContext(context.Background(), attachTagOptions)
+	result, response, err = globalTagging.AttachTagWithContext(context.Background(), attachTagOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // AttachTagWithContext is an alternate form of the AttachTag method which supports a Context parameter
 func (globalTagging *GlobalTaggingV1) AttachTagWithContext(ctx context.Context, attachTagOptions *AttachTagOptions) (result *TagResults, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(attachTagOptions, "attachTagOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(attachTagOptions, "attachTagOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -515,6 +554,7 @@ func (globalTagging *GlobalTaggingV1) AttachTagWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = globalTagging.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalTagging.Service.Options.URL, `/v3/tags/attach`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -534,15 +574,18 @@ func (globalTagging *GlobalTaggingV1) AttachTagWithContext(ctx context.Context, 
 	if attachTagOptions.XCorrelationID != nil {
 		builder.AddHeader("x-correlation-id", fmt.Sprint(*attachTagOptions.XCorrelationID))
 	}
-	if attachTagOptions.TransactionID != nil {
-		builder.AddHeader("transaction-id", fmt.Sprint(*attachTagOptions.TransactionID))
-	}
 
 	if attachTagOptions.AccountID != nil {
 		builder.AddQuery("account_id", fmt.Sprint(*attachTagOptions.AccountID))
 	}
 	if attachTagOptions.TagType != nil {
 		builder.AddQuery("tag_type", fmt.Sprint(*attachTagOptions.TagType))
+	}
+	if attachTagOptions.Replace != nil {
+		builder.AddQuery("replace", fmt.Sprint(*attachTagOptions.Replace))
+	}
+	if attachTagOptions.Update != nil {
+		builder.AddQuery("update", fmt.Sprint(*attachTagOptions.Update))
 	}
 
 	body := make(map[string]interface{})
@@ -557,22 +600,27 @@ func (globalTagging *GlobalTaggingV1) AttachTagWithContext(ctx context.Context, 
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = globalTagging.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "attach_tag", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTagResults)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -584,17 +632,21 @@ func (globalTagging *GlobalTaggingV1) AttachTagWithContext(ctx context.Context, 
 // DetachTag : Detach tags
 // Detaches one or more tags from one or more resources.
 func (globalTagging *GlobalTaggingV1) DetachTag(detachTagOptions *DetachTagOptions) (result *TagResults, response *core.DetailedResponse, err error) {
-	return globalTagging.DetachTagWithContext(context.Background(), detachTagOptions)
+	result, response, err = globalTagging.DetachTagWithContext(context.Background(), detachTagOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DetachTagWithContext is an alternate form of the DetachTag method which supports a Context parameter
 func (globalTagging *GlobalTaggingV1) DetachTagWithContext(ctx context.Context, detachTagOptions *DetachTagOptions) (result *TagResults, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(detachTagOptions, "detachTagOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(detachTagOptions, "detachTagOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -603,6 +655,7 @@ func (globalTagging *GlobalTaggingV1) DetachTagWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = globalTagging.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(globalTagging.Service.Options.URL, `/v3/tags/detach`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -621,9 +674,6 @@ func (globalTagging *GlobalTaggingV1) DetachTagWithContext(ctx context.Context, 
 	}
 	if detachTagOptions.XCorrelationID != nil {
 		builder.AddHeader("x-correlation-id", fmt.Sprint(*detachTagOptions.XCorrelationID))
-	}
-	if detachTagOptions.TransactionID != nil {
-		builder.AddHeader("transaction-id", fmt.Sprint(*detachTagOptions.TransactionID))
 	}
 
 	if detachTagOptions.AccountID != nil {
@@ -645,28 +695,36 @@ func (globalTagging *GlobalTaggingV1) DetachTagWithContext(ctx context.Context, 
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = globalTagging.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "detach_tag", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTagResults)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
 	}
 
 	return
+}
+func getServiceComponentInfo() *core.ProblemComponent {
+	return core.NewProblemComponent(DefaultServiceName, "1.2.0")
 }
 
 // AttachTagOptions : The AttachTag options.
@@ -695,11 +753,6 @@ type AttachTagOptions struct {
 	// (version 4) UUID.
 	XCorrelationID *string `json:"x-correlation-id,omitempty"`
 
-	// An alphanumeric string that can be used to trace a request across services. If not specified, it automatically
-	// generated with the prefix "gst-".
-	// Deprecated: this field is deprecated and may be removed in a future release.
-	TransactionID *string `json:"transaction-id,omitempty"`
-
 	// The ID of the billing account of the tagged resource. It is a required parameter if `tag_type` is set to `service`.
 	// Otherwise, it is inferred from the authorization IAM token.
 	AccountID *string `json:"account_id,omitempty"`
@@ -707,6 +760,17 @@ type AttachTagOptions struct {
 	// The type of the tag. Supported values are `user`, `service` and `access`. `service` and `access` are not supported
 	// for IMS resources.
 	TagType *string `json:"tag_type,omitempty"`
+
+	// Flag to request replacement of all attached tags. Set `true` if you want to replace all tags attached to the
+	// resource with the current ones. Default value is false.
+	Replace *bool `json:"replace,omitempty"`
+
+	// Flag to request update of attached tags in the format `key:value`. Here's how it works for each tag in the request
+	// body: If the tag to attach is in the format `key:value`, the System will atomically detach all existing tags
+	// starting with `key:` and attach the new `key:value` tag. If no such tags exist, a new `key:value` tag will be
+	// attached. If the tag is not in the `key:value` format (e.g., a simple label), the System will attach the label as
+	// usual. The update query parameter is available for user and access management tags, but not for service tags.
+	Update *bool `json:"update,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -758,13 +822,6 @@ func (_options *AttachTagOptions) SetXCorrelationID(xCorrelationID string) *Atta
 	return _options
 }
 
-// SetTransactionID : Allow user to set TransactionID
-// Deprecated: this method is deprecated and may be removed in a future release.
-func (_options *AttachTagOptions) SetTransactionID(transactionID string) *AttachTagOptions {
-	_options.TransactionID = core.StringPtr(transactionID)
-	return _options
-}
-
 // SetAccountID : Allow user to set AccountID
 func (_options *AttachTagOptions) SetAccountID(accountID string) *AttachTagOptions {
 	_options.AccountID = core.StringPtr(accountID)
@@ -774,6 +831,18 @@ func (_options *AttachTagOptions) SetAccountID(accountID string) *AttachTagOptio
 // SetTagType : Allow user to set TagType
 func (_options *AttachTagOptions) SetTagType(tagType string) *AttachTagOptions {
 	_options.TagType = core.StringPtr(tagType)
+	return _options
+}
+
+// SetReplace : Allow user to set Replace
+func (_options *AttachTagOptions) SetReplace(replace bool) *AttachTagOptions {
+	_options.Replace = core.BoolPtr(replace)
+	return _options
+}
+
+// SetUpdate : Allow user to set Update
+func (_options *AttachTagOptions) SetUpdate(update bool) *AttachTagOptions {
+	_options.Update = core.BoolPtr(update)
 	return _options
 }
 
@@ -802,11 +871,6 @@ type CreateTagOptions struct {
 	// 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
 	// (version 4) UUID.
 	XCorrelationID *string `json:"x-correlation-id,omitempty"`
-
-	// An alphanumeric string that can be used to trace a request across services. If not specified, it automatically
-	// generated with the prefix "gst-".
-	// Deprecated: this field is deprecated and may be removed in a future release.
-	TransactionID *string `json:"transaction-id,omitempty"`
 
 	// The ID of the billing account where the tag must be created.
 	AccountID *string `json:"account_id,omitempty"`
@@ -849,13 +913,6 @@ func (_options *CreateTagOptions) SetXCorrelationID(xCorrelationID string) *Crea
 	return _options
 }
 
-// SetTransactionID : Allow user to set TransactionID
-// Deprecated: this method is deprecated and may be removed in a future release.
-func (_options *CreateTagOptions) SetTransactionID(transactionID string) *CreateTagOptions {
-	_options.TransactionID = core.StringPtr(transactionID)
-	return _options
-}
-
 // SetAccountID : Allow user to set AccountID
 func (_options *CreateTagOptions) SetAccountID(accountID string) *CreateTagOptions {
 	_options.AccountID = core.StringPtr(accountID)
@@ -885,6 +942,7 @@ func UnmarshalCreateTagResults(m map[string]json.RawMessage, result interface{})
 	obj := new(CreateTagResults)
 	err = core.UnmarshalModel(m, "results", &obj.Results, UnmarshalCreateTagResultsResultsItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "results-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -905,10 +963,12 @@ func UnmarshalCreateTagResultsResultsItem(m map[string]json.RawMessage, result i
 	obj := new(CreateTagResultsResultsItem)
 	err = core.UnmarshalPrimitive(m, "tag_name", &obj.TagName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tag_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_error", &obj.IsError)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_error-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -931,11 +991,6 @@ type DeleteTagAllOptions struct {
 	// 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
 	// (version 4) UUID.
 	XCorrelationID *string `json:"x-correlation-id,omitempty"`
-
-	// An alphanumeric string that can be used to trace a request across services. If not specified, it automatically
-	// generated with the prefix "gst-".
-	// Deprecated: this field is deprecated and may be removed in a future release.
-	TransactionID *string `json:"transaction-id,omitempty"`
 
 	// Select a provider. Supported values are `ghost` and `ims`.
 	Providers *string `json:"providers,omitempty"`
@@ -985,13 +1040,6 @@ func (_options *DeleteTagAllOptions) SetXCorrelationID(xCorrelationID string) *D
 	return _options
 }
 
-// SetTransactionID : Allow user to set TransactionID
-// Deprecated: this method is deprecated and may be removed in a future release.
-func (_options *DeleteTagAllOptions) SetTransactionID(transactionID string) *DeleteTagAllOptions {
-	_options.TransactionID = core.StringPtr(transactionID)
-	return _options
-}
-
 // SetProviders : Allow user to set Providers
 func (_options *DeleteTagAllOptions) SetProviders(providers string) *DeleteTagAllOptions {
 	_options.Providers = core.StringPtr(providers)
@@ -1035,11 +1083,6 @@ type DeleteTagOptions struct {
 	// 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
 	// (version 4) UUID.
 	XCorrelationID *string `json:"x-correlation-id,omitempty"`
-
-	// An alphanumeric string that can be used to trace a request across services. If not specified, it automatically
-	// generated with the prefix "gst-".
-	// Deprecated: this field is deprecated and may be removed in a future release.
-	TransactionID *string `json:"transaction-id,omitempty"`
 
 	// Select a provider. Supported values are `ghost` and `ims`. To delete tags both in Global Search and Tagging and in
 	// IMS, use `ghost,ims`.
@@ -1097,13 +1140,6 @@ func (_options *DeleteTagOptions) SetXCorrelationID(xCorrelationID string) *Dele
 	return _options
 }
 
-// SetTransactionID : Allow user to set TransactionID
-// Deprecated: this method is deprecated and may be removed in a future release.
-func (_options *DeleteTagOptions) SetTransactionID(transactionID string) *DeleteTagOptions {
-	_options.TransactionID = core.StringPtr(transactionID)
-	return _options
-}
-
 // SetProviders : Allow user to set Providers
 func (_options *DeleteTagOptions) SetProviders(providers []string) *DeleteTagOptions {
 	_options.Providers = providers
@@ -1139,6 +1175,7 @@ func UnmarshalDeleteTagResults(m map[string]json.RawMessage, result interface{})
 	obj := new(DeleteTagResults)
 	err = core.UnmarshalModel(m, "results", &obj.Results, UnmarshalDeleteTagResultsItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "results-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1205,6 +1242,9 @@ func (o *DeleteTagResultsItem) MarshalJSON() (buffer []byte, err error) {
 		m["is_error"] = o.IsError
 	}
 	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -1213,11 +1253,13 @@ func UnmarshalDeleteTagResultsItem(m map[string]json.RawMessage, result interfac
 	obj := new(DeleteTagResultsItem)
 	err = core.UnmarshalPrimitive(m, "provider", &obj.Provider)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "provider-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "provider")
 	err = core.UnmarshalPrimitive(m, "is_error", &obj.IsError)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_error-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "is_error")
@@ -1225,7 +1267,7 @@ func UnmarshalDeleteTagResultsItem(m map[string]json.RawMessage, result interfac
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
 		if e != nil {
-			err = e
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
 			return
 		}
 		obj.SetProperty(k, v)
@@ -1251,14 +1293,17 @@ func UnmarshalDeleteTagsResult(m map[string]json.RawMessage, result interface{})
 	obj := new(DeleteTagsResult)
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "items", &obj.Items, UnmarshalDeleteTagsResultItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "items-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1279,10 +1324,12 @@ func UnmarshalDeleteTagsResultItem(m map[string]json.RawMessage, result interfac
 	obj := new(DeleteTagsResultItem)
 	err = core.UnmarshalPrimitive(m, "tag_name", &obj.TagName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tag_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_error", &obj.IsError)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_error-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1314,11 +1361,6 @@ type DetachTagOptions struct {
 	// 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
 	// (version 4) UUID.
 	XCorrelationID *string `json:"x-correlation-id,omitempty"`
-
-	// An alphanumeric string that can be used to trace a request across services. If not specified, it automatically
-	// generated with the prefix "gst-".
-	// Deprecated: this field is deprecated and may be removed in a future release.
-	TransactionID *string `json:"transaction-id,omitempty"`
 
 	// The ID of the billing account of the untagged resource. It is a required parameter if `tag_type` is set to
 	// `service`, otherwise it is inferred from the authorization IAM token.
@@ -1378,13 +1420,6 @@ func (_options *DetachTagOptions) SetXCorrelationID(xCorrelationID string) *Deta
 	return _options
 }
 
-// SetTransactionID : Allow user to set TransactionID
-// Deprecated: this method is deprecated and may be removed in a future release.
-func (_options *DetachTagOptions) SetTransactionID(transactionID string) *DetachTagOptions {
-	_options.TransactionID = core.StringPtr(transactionID)
-	return _options
-}
-
 // SetAccountID : Allow user to set AccountID
 func (_options *DetachTagOptions) SetAccountID(accountID string) *DetachTagOptions {
 	_options.AccountID = core.StringPtr(accountID)
@@ -1419,11 +1454,6 @@ type ListTagsOptions struct {
 	// 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
 	// (version 4) UUID.
 	XCorrelationID *string `json:"x-correlation-id,omitempty"`
-
-	// An alphanumeric string that can be used to trace a request across services. If not specified, it automatically
-	// generated with the prefix "gst-".
-	// Deprecated: this field is deprecated and may be removed in a future release.
-	TransactionID *string `json:"transaction-id,omitempty"`
 
 	// The ID of the billing account to list the tags for. If it is not set, then it is taken from the authorization token.
 	// This parameter is required if `tag_type` is set to `service`.
@@ -1503,13 +1533,6 @@ func (_options *ListTagsOptions) SetXRequestID(xRequestID string) *ListTagsOptio
 // SetXCorrelationID : Allow user to set XCorrelationID
 func (_options *ListTagsOptions) SetXCorrelationID(xCorrelationID string) *ListTagsOptions {
 	_options.XCorrelationID = core.StringPtr(xCorrelationID)
-	return _options
-}
-
-// SetTransactionID : Allow user to set TransactionID
-// Deprecated: this method is deprecated and may be removed in a future release.
-func (_options *ListTagsOptions) SetTransactionID(transactionID string) *ListTagsOptions {
-	_options.TransactionID = core.StringPtr(transactionID)
 	return _options
 }
 
@@ -1594,6 +1617,9 @@ func (*GlobalTaggingV1) NewResource(resourceID string) (_model *Resource, err er
 		ResourceID: core.StringPtr(resourceID),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -1602,10 +1628,12 @@ func UnmarshalResource(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(Resource)
 	err = core.UnmarshalPrimitive(m, "resource_id", &obj.ResourceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1623,6 +1651,7 @@ func UnmarshalTag(m map[string]json.RawMessage, result interface{}) (err error) 
 	obj := new(Tag)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1649,18 +1678,22 @@ func UnmarshalTagList(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(TagList)
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "items", &obj.Items, UnmarshalTag)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "items-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1678,6 +1711,7 @@ func UnmarshalTagResults(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(TagResults)
 	err = core.UnmarshalModel(m, "results", &obj.Results, UnmarshalTagResultsItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "results-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -1698,10 +1732,12 @@ func UnmarshalTagResultsItem(m map[string]json.RawMessage, result interface{}) (
 	obj := new(TagResultsItem)
 	err = core.UnmarshalPrimitive(m, "resource_id", &obj.ResourceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_error", &obj.IsError)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_error-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))

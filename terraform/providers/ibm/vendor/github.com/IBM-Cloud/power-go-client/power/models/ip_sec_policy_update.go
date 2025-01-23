@@ -17,7 +17,7 @@ import (
 
 // IPSecPolicyUpdate IPSEc Policy object used for update
 //
-// Min Properties: 1
+// MinProperties: 1
 //
 // swagger:model IPSecPolicyUpdate
 type IPSecPolicyUpdate struct {
@@ -27,12 +27,12 @@ type IPSecPolicyUpdate struct {
 
 	// Diffie-Hellman group
 	// Example: 2
-	// Enum: [1 2 5 14 19 20 24]
+	// Enum: [1,2,5,14,19,20,24]
 	DhGroup int64 `json:"dhGroup,omitempty"`
 
 	// connection encryption policy
 	// Example: aes-256-cbc
-	// Enum: [aes-256-cbc aes-192-cbc aes-128-cbc aes-256-gcm aes-192-gcm aes-128-gcm 3des-cbc]
+	// Enum: ["aes-256-cbc","aes-192-cbc","aes-128-cbc","aes-256-gcm","aes-192-gcm","aes-128-gcm","3des-cbc"]
 	Encryption string `json:"encryption,omitempty"`
 
 	// key lifetime
@@ -62,12 +62,12 @@ func (m *IPSecPolicyUpdate) UnmarshalJSON(data []byte) error {
 
 		// Diffie-Hellman group
 		// Example: 2
-		// Enum: [1 2 5 14 19 20 24]
+		// Enum: [1,2,5,14,19,20,24]
 		DhGroup int64 `json:"dhGroup,omitempty"`
 
 		// connection encryption policy
 		// Example: aes-256-cbc
-		// Enum: [aes-256-cbc aes-192-cbc aes-128-cbc aes-256-gcm aes-192-gcm aes-128-gcm 3des-cbc]
+		// Enum: ["aes-256-cbc","aes-192-cbc","aes-128-cbc","aes-256-gcm","aes-192-gcm","aes-128-gcm","3des-cbc"]
 		Encryption string `json:"encryption,omitempty"`
 
 		// key lifetime
@@ -133,12 +133,12 @@ func (m IPSecPolicyUpdate) MarshalJSON() ([]byte, error) {
 
 		// Diffie-Hellman group
 		// Example: 2
-		// Enum: [1 2 5 14 19 20 24]
+		// Enum: [1,2,5,14,19,20,24]
 		DhGroup int64 `json:"dhGroup,omitempty"`
 
 		// connection encryption policy
 		// Example: aes-256-cbc
-		// Enum: [aes-256-cbc aes-192-cbc aes-128-cbc aes-256-gcm aes-192-gcm aes-128-gcm 3des-cbc]
+		// Enum: ["aes-256-cbc","aes-192-cbc","aes-128-cbc","aes-256-gcm","aes-192-gcm","aes-128-gcm","3des-cbc"]
 		Encryption string `json:"encryption,omitempty"`
 
 		// key lifetime

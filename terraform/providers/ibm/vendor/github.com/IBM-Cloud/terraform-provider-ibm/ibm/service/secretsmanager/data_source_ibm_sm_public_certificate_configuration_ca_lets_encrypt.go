@@ -6,6 +6,7 @@ package secretsmanager
 import (
 	"context"
 	"fmt"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -63,7 +64,8 @@ func DataSourceIbmSmPublicCertificateConfigurationCALetsEncrypt() *schema.Resour
 func dataSourceIbmSmPublicCertificateConfigurationCALetsEncryptRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", fmt.Sprintf("(Data) %s", PublicCertConfigCALetsEncryptResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	region := getRegion(secretsManagerClient, d)
@@ -77,38 +79,46 @@ func dataSourceIbmSmPublicCertificateConfigurationCALetsEncryptRead(context cont
 	publicCertificateConfigurationCALetsEncryptIntf, response, err := secretsManagerClient.GetConfigurationWithContext(context, getConfigurationOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetConfigurationWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetConfigurationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetConfigurationWithContext failed %s\n%s", err, response), fmt.Sprintf("(Data) %s", PublicCertConfigCALetsEncryptResourceName), "read")
+		return tfErr.GetDiag()
 	}
 	publicCertificateConfigurationCALetsEncrypt := publicCertificateConfigurationCALetsEncryptIntf.(*secretsmanagerv2.PublicCertificateConfigurationCALetsEncrypt)
 
 	d.SetId(fmt.Sprintf("%s/%s/%s", region, instanceId, *getConfigurationOptions.Name))
 
 	if err = d.Set("region", region); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting region: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting region"), fmt.Sprintf("(Data) %s", PublicCertConfigCALetsEncryptResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("created_by", publicCertificateConfigurationCALetsEncrypt.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_by"), fmt.Sprintf("(Data) %s", PublicCertConfigCALetsEncryptResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("created_at", DateTimeToRFC3339(publicCertificateConfigurationCALetsEncrypt.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_at"), fmt.Sprintf("(Data) %s", PublicCertConfigCALetsEncryptResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("updated_at", DateTimeToRFC3339(publicCertificateConfigurationCALetsEncrypt.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at"), fmt.Sprintf("(Data) %s", PublicCertConfigCALetsEncryptResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("lets_encrypt_environment", publicCertificateConfigurationCALetsEncrypt.LetsEncryptEnvironment); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting lets_encrypt_environment: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting lets_encrypt_environment"), fmt.Sprintf("(Data) %s", PublicCertConfigCALetsEncryptResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("lets_encrypt_private_key", publicCertificateConfigurationCALetsEncrypt.LetsEncryptPrivateKey); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting lets_encrypt_private_key: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting lets_encrypt_private_key"), fmt.Sprintf("(Data) %s", PublicCertConfigCALetsEncryptResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("lets_encrypt_preferred_chain", publicCertificateConfigurationCALetsEncrypt.LetsEncryptPreferredChain); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting lets_encrypt_preferred_chain: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting lets_encrypt_preferred_chain"), fmt.Sprintf("(Data) %s", PublicCertConfigCALetsEncryptResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil

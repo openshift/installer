@@ -22,7 +22,7 @@ type VolumeGroupActionStart struct {
 
 	// Indicates the source of the action
 	// Required: true
-	// Enum: [master aux]
+	// Enum: ["master","aux"]
 	Source *string `json:"source"`
 }
 

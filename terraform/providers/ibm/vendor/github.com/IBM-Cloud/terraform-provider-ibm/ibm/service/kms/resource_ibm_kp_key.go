@@ -87,25 +87,25 @@ func ResourceIBMkey() *schema.Resource {
 			flex.ResourceName: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The name of the resource",
+				Description: "The name of the resource",
 			},
 
 			flex.ResourceCRN: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The crn of the resource",
+				Description: "The crn of the resource",
 			},
 
 			flex.ResourceStatus: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The status of the resource",
+				Description: "The status of the resource",
 			},
 
 			flex.ResourceGroupName: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The resource group name in which resource is provisioned",
+				Description: "The resource group name in which resource is provisioned",
 			},
 			flex.ResourceControllerURL: {
 				Type:        schema.TypeString,
@@ -267,9 +267,10 @@ func resourceIBMKeyExists(d *schema.ResourceData, meta interface{}) (bool, error
 	// keyid := d.Id()
 	_, err = api.GetKey(context.Background(), keyid)
 	if err != nil {
-		kpError := err.(*kp.Error)
-		if kpError.StatusCode == 404 {
-			return false, nil
+		if kpError, ok := err.(*kp.Error); ok {
+			if kpError.StatusCode == 404 {
+				return false, nil
+			}
 		}
 		return false, err
 	}

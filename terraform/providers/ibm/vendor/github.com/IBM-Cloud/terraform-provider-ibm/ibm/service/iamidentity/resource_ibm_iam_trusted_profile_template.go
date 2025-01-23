@@ -6,9 +6,10 @@ package iamidentity
 import (
 	"context"
 	"fmt"
+	"log"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -152,7 +153,7 @@ func ResourceIBMTrustedProfileTemplate() *schema.Resource {
 				},
 			},
 			"policy_template_references": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Existing policy templates that you can reference to assign access in the trusted profile component.",
 				Elem: &schema.Resource{
@@ -291,7 +292,7 @@ func resourceIBMTrustedProfileTemplateCreate(context context.Context, d *schema.
 	}
 	if _, ok := d.GetOk("policy_template_references"); ok {
 		var policyTemplateReferences []iamidentityv1.PolicyTemplateReference
-		for _, v := range d.Get("policy_template_references").([]interface{}) {
+		for _, v := range d.Get("policy_template_references").(*schema.Set).List() {
 			value := v.(map[string]interface{})
 			policyTemplateReferencesItem, err := resourceIBMTrustedProfileTemplateMapToPolicyTemplateReference(value)
 			if err != nil {
@@ -356,7 +357,7 @@ func resourceIBMTrustedProfileTemplateCreateVersion(context context.Context, d *
 	}
 	if _, ok := d.GetOk("policy_template_references"); ok {
 		var policyTemplateReferences []iamidentityv1.PolicyTemplateReference
-		for _, v := range d.Get("policy_template_references").([]interface{}) {
+		for _, v := range d.Get("policy_template_references").(*schema.Set).List() {
 			value := v.(map[string]interface{})
 			policyTemplateReferencesItem, err := resourceIBMTrustedProfileTemplateMapToPolicyTemplateReference(value)
 			if err != nil {
@@ -553,7 +554,7 @@ func resourceIBMTrustedProfileTemplateUpdate(context context.Context, d *schema.
 	}
 	if d.HasChange("policy_template_references") {
 		var policyTemplateReferences []iamidentityv1.PolicyTemplateReference
-		for _, v := range d.Get("policy_template_references").([]interface{}) {
+		for _, v := range d.Get("policy_template_references").(*schema.Set).List() {
 			value := v.(map[string]interface{})
 			policyTemplateReferencesItem, err := resourceIBMTrustedProfileTemplateMapToPolicyTemplateReference(value)
 			if err != nil {

@@ -109,6 +109,7 @@ type IngressStatusState struct {
 // IngressStatus struct for the top level ingress status, for a cluster
 type IngressStatus struct {
 	Cluster                string `json:"cluster"`
+	Enabled                bool   `json:"enabled"`
 	Status                 string `json:"status"`
 	NonTranslatedStatus    string `json:"nonTranslatedStatus"`
 	Message                string `json:"message"`

@@ -6,6 +6,7 @@ package iaas_service_broker
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -103,11 +104,13 @@ func (o *ServiceBrokerVersionOK) Code() int {
 }
 
 func (o *ServiceBrokerVersionOK) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionOK %s", 200, payload)
 }
 
 func (o *ServiceBrokerVersionOK) String() string {
-	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionOK %s", 200, payload)
 }
 
 func (o *ServiceBrokerVersionOK) GetPayload() *models.Version {
@@ -171,11 +174,13 @@ func (o *ServiceBrokerVersionBadRequest) Code() int {
 }
 
 func (o *ServiceBrokerVersionBadRequest) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBrokerVersionBadRequest) String() string {
-	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBrokerVersionBadRequest) GetPayload() *models.Error {
@@ -239,11 +244,13 @@ func (o *ServiceBrokerVersionUnauthorized) Code() int {
 }
 
 func (o *ServiceBrokerVersionUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceBrokerVersionUnauthorized) String() string {
-	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceBrokerVersionUnauthorized) GetPayload() *models.Error {
@@ -307,11 +314,13 @@ func (o *ServiceBrokerVersionForbidden) Code() int {
 }
 
 func (o *ServiceBrokerVersionForbidden) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionForbidden %s", 403, payload)
 }
 
 func (o *ServiceBrokerVersionForbidden) String() string {
-	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionForbidden %s", 403, payload)
 }
 
 func (o *ServiceBrokerVersionForbidden) GetPayload() *models.Error {
@@ -375,11 +384,13 @@ func (o *ServiceBrokerVersionNotFound) Code() int {
 }
 
 func (o *ServiceBrokerVersionNotFound) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionNotFound %s", 404, payload)
 }
 
 func (o *ServiceBrokerVersionNotFound) String() string {
-	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionNotFound %s", 404, payload)
 }
 
 func (o *ServiceBrokerVersionNotFound) GetPayload() *models.Error {

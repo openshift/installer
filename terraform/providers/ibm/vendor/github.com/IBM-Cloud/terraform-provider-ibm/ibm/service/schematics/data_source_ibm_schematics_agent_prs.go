@@ -74,13 +74,8 @@ func dataSourceIbmSchematicsAgentPrsRead(context context.Context, d *schema.Reso
 	}
 
 	getAgentDataOptions := &schematicsv1.GetAgentDataOptions{
-		// XFeatureAgents: core.BoolPtr(true),
 		Profile: core.StringPtr("detailed"),
 	}
-	ff := map[string]string{
-		"X-Feature-Agents": "true",
-	}
-	getAgentDataOptions.Headers = ff
 	getAgentDataOptions.SetAgentID(d.Get("agent_id").(string))
 
 	agentData, response, err := schematicsClient.GetAgentDataWithContext(context, getAgentDataOptions)

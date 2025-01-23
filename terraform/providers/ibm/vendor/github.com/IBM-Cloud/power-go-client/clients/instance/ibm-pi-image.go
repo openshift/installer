@@ -79,6 +79,10 @@ func (f *IBMPIImageClient) Create(body *models.CreateImage) (*models.Image, erro
 
 // Import an Image
 func (f *IBMPIImageClient) CreateCosImage(body *models.CreateCosImageImportJob) (imageJob *models.JobReference, err error) {
+	// Check for satellite differences in this endpoint
+	if !f.session.IsOnPrem() && body.Checksum {
+		return nil, fmt.Errorf("checksum parameter is not supported off-premise")
+	}
 	params := p_cloud_images.NewPcloudV1CloudinstancesCosimagesPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
@@ -94,6 +98,10 @@ func (f *IBMPIImageClient) CreateCosImage(body *models.CreateCosImageImportJob) 
 
 // Export an Image
 func (f *IBMPIImageClient) ExportImage(id string, body *models.ExportImage) (*models.JobReference, error) {
+	// Check for satellite differences in this endpoint
+	if !f.session.IsOnPrem() && body.Checksum {
+		return nil, fmt.Errorf("checksum parameter is not supported off-premise")
+	}
 	params := p_cloud_images.NewPcloudV2ImagesExportPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithImageID(id).WithBody(body)

@@ -1975,24 +1975,6 @@ func DataSourceIBMCmOffering() *schema.Resource {
 				Description: "A list of account IDs to add to this offering's access list.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			"permit_request_ibm_public_publish": &schema.Schema{
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Deprecated:  "This argument is deprecated",
-				Description: "Is it permitted to request publishing to IBM or Public.",
-			},
-			"ibm_publish_approved": &schema.Schema{
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Deprecated:  "This argument is deprecated",
-				Description: "Indicates if this offering has been approved for use by all IBMers.",
-			},
-			"public_publish_approved": &schema.Schema{
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Deprecated:  "This argument is deprecated",
-				Description: "Indicates if this offering has been approved for use by all IBM Cloud users.",
-			},
 			"public_original_crn": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -2034,12 +2016,6 @@ func DataSourceIBMCmOffering() *schema.Resource {
 				Computed:    true,
 				Description: "Determine if this offering should be displayed in the Consumption UI.",
 			},
-			// "provider": &schema.Schema{
-			// 	Type:        schema.TypeString,
-			// 	Computed:    true,
-			// 	Deprecated:  "This argument is deprecated",
-			// 	Description: "Deprecated - Provider of this offering.",
-			// },
 			"provider_info": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -2464,7 +2440,9 @@ func DataSourceIBMCmOffering() *schema.Resource {
 func dataSourceIBMCmOfferingRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	catalogManagementClient, err := meta.(conns.ClientSession).CatalogManagementV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getOfferingOptions := &catalogmanagementv1.GetOfferingOptions{}
@@ -2472,57 +2450,75 @@ func dataSourceIBMCmOfferingRead(context context.Context, d *schema.ResourceData
 	getOfferingOptions.SetCatalogIdentifier(d.Get("catalog_id").(string))
 	getOfferingOptions.SetOfferingID(d.Get("offering_id").(string))
 
-	offering, response, err := catalogManagementClient.GetOfferingWithContext(context, getOfferingOptions)
+	offering, response, err := FetchOfferingWithAllVersions(context, catalogManagementClient, getOfferingOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetOfferingWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetOfferingWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetOfferingWithContext failed %s\n%s", err, response), "(Data) ibm_cm_object", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(*getOfferingOptions.OfferingID)
 
 	if err = d.Set("rev", offering.Rev); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting rev: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting rev: %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("offering_identifier", offering.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting rev: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting offering_identifier: %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("url", offering.URL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting url: %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("crn", offering.CRN); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting crn: %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("label", offering.Label); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting label: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting label: %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if offering.LabelI18n != nil {
 		if err = d.Set("label_i18n", offering.LabelI18n); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting label_i18n: %s", err))
-		}
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting label_i18n %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting label_i18n: : %s", err), "(Data) ibm_cm_offering", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
 	if err = d.Set("name", offering.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("offering_icon_url", offering.OfferingIconURL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting offering_icon_url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting offering_icon_url: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("offering_docs_url", offering.OfferingDocsURL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting offering_docs_url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting offering_docs_url: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("offering_support_url", offering.OfferingSupportURL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting offering_support_url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting offering_support_url: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	tags := []string{}
@@ -2530,7 +2526,9 @@ func dataSourceIBMCmOfferingRead(context context.Context, d *schema.ResourceData
 		tags = offering.Tags
 	}
 	if err = d.Set("tags", tags); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting tags: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting tags: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	keywords := []string{}
@@ -2538,52 +2536,64 @@ func dataSourceIBMCmOfferingRead(context context.Context, d *schema.ResourceData
 		keywords = offering.Keywords
 	}
 	if err = d.Set("keywords", keywords); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting keywords: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting keywords: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	rating := []map[string]interface{}{}
 	if offering.Rating != nil {
 		modelMap, err := dataSourceIBMCmOfferingRatingToMap(offering.Rating)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_cm_offering", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		rating = append(rating, modelMap)
 	}
 	if err = d.Set("rating", rating); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting rating %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting rating : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("created", flex.DateTimeToString(offering.Created)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("updated", flex.DateTimeToString(offering.Updated)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("short_description", offering.ShortDescription); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting short_description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting short_description: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if offering.ShortDescriptionI18n != nil {
 		if err = d.Set("short_description_i18n", offering.ShortDescriptionI18n); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting short_description_i18n: %s", err))
-		}
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting short_description_i18n %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting short_description_i18n: : %s", err), "(Data) ibm_cm_offering", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
 	if err = d.Set("long_description", offering.LongDescription); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting long_description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting long_description: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if offering.LongDescriptionI18n != nil {
 		if err = d.Set("long_description_i18n", offering.LongDescriptionI18n); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting long_description_i18n: %s", err))
-		}
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting long_description_i18n %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting long_description_i18n: : %s", err), "(Data) ibm_cm_offering", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -2592,13 +2602,17 @@ func dataSourceIBMCmOfferingRead(context context.Context, d *schema.ResourceData
 		for _, modelItem := range offering.Features {
 			modelMap, err := dataSourceIBMCmOfferingFeatureToMap(&modelItem)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_cm_offering", "read")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			features = append(features, modelMap)
 		}
 	}
 	if err = d.Set("features", features); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting features %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting features : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	kinds := []map[string]interface{}{}
@@ -2606,69 +2620,83 @@ func dataSourceIBMCmOfferingRead(context context.Context, d *schema.ResourceData
 		for _, modelItem := range offering.Kinds {
 			modelMap, err := dataSourceIBMCmOfferingKindToMap(&modelItem)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_cm_offering", "read")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			kinds = append(kinds, modelMap)
 		}
 	}
 	if err = d.Set("kinds", kinds); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting kinds %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting kinds : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("pc_managed", offering.PcManaged); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting pc_managed: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting pc_managed: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("publish_approved", offering.PublishApproved); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting publish_approved: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting publish_approved: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("share_with_all", offering.ShareWithAll); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting share_with_all: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting share_with_all: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("share_with_ibm", offering.ShareWithIBM); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting share_with_ibm: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting share_with_ibm: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("share_enabled", offering.ShareEnabled); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting share_enabled: %s", err))
-	}
-
-	if err = d.Set("permit_request_ibm_public_publish", offering.PermitRequestIBMPublicPublish); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting permit_request_ibm_public_publish: %s", err))
-	}
-
-	if err = d.Set("ibm_publish_approved", offering.IBMPublishApproved); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting ibm_publish_approved: %s", err))
-	}
-
-	if err = d.Set("public_publish_approved", offering.PublicPublishApproved); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting public_publish_approved: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting share_enabled: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("public_original_crn", offering.PublicOriginalCRN); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting public_original_crn: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting public_original_crn: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("publish_public_crn", offering.PublishPublicCRN); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting publish_public_crn: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting publish_public_crn: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("portal_approval_record", offering.PortalApprovalRecord); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting portal_approval_record: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting portal_approval_record: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("portal_ui_url", offering.PortalUIURL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting portal_ui_url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting portal_ui_url: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("catalog_id", offering.CatalogID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting catalog_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting catalog_id: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("catalog_name", offering.CatalogName); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting catalog_name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting catalog_name: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if offering.Metadata != nil {
@@ -2678,47 +2706,54 @@ func dataSourceIBMCmOfferingRead(context context.Context, d *schema.ResourceData
 		}
 
 		if err = d.Set("metadata", flex.Flatten(convertedMap)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting metadata: %s", err))
-		}
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting metadata %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting metadata: : %s", err), "(Data) ibm_cm_offering", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
 	if err = d.Set("disclaimer", offering.Disclaimer); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting disclaimer: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting disclaimer: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("hidden", offering.Hidden); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting hidden: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting hidden: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
-
-	// if err = d.Set("provider", offering.Provider); err != nil {
-	// 	return diag.FromErr(fmt.Errorf("Error setting provider: %s", err))
-	// }
 
 	providerInfo := []map[string]interface{}{}
 	if offering.ProviderInfo != nil {
 		modelMap, err := dataSourceIBMCmOfferingProviderInfoToMap(offering.ProviderInfo)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_cm_offering", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		providerInfo = append(providerInfo, modelMap)
 	}
 	if err = d.Set("provider_info", providerInfo); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting provider_info %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting provider_info : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	repoInfo := []map[string]interface{}{}
 	if offering.RepoInfo != nil {
 		modelMap, err := dataSourceIBMCmOfferingRepoInfoToMap(offering.RepoInfo)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_cm_offering", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		repoInfo = append(repoInfo, modelMap)
 	}
 	if err = d.Set("repo_info", repoInfo); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting repo_info %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting repo_info : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	imagePullKeys := []map[string]interface{}{}
@@ -2726,25 +2761,33 @@ func dataSourceIBMCmOfferingRead(context context.Context, d *schema.ResourceData
 		for _, modelItem := range offering.ImagePullKeys {
 			modelMap, err := dataSourceIBMCmOfferingImagePullKeyToMap(&modelItem)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_cm_offering", "read")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			imagePullKeys = append(imagePullKeys, modelMap)
 		}
 	}
 	if err = d.Set("image_pull_keys", imagePullKeys); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting image_pull_keys %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting image_pull_keys : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	support := []map[string]interface{}{}
 	if offering.Support != nil {
 		modelMap, err := dataSourceIBMCmOfferingSupportToMap(offering.Support)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_cm_offering", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		support = append(support, modelMap)
 	}
 	if err = d.Set("support", support); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting support %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting support : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	media := []map[string]interface{}{}
@@ -2752,29 +2795,39 @@ func dataSourceIBMCmOfferingRead(context context.Context, d *schema.ResourceData
 		for _, modelItem := range offering.Media {
 			modelMap, err := dataSourceIBMCmOfferingMediaItemToMap(&modelItem)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_cm_offering", "read")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			media = append(media, modelMap)
 		}
 	}
 	if err = d.Set("media", media); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting media %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting media : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	deprecatePending := []map[string]interface{}{}
 	if offering.DeprecatePending != nil {
 		modelMap, err := dataSourceIBMCmOfferingDeprecatePendingToMap(offering.DeprecatePending)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_cm_offering", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		deprecatePending = append(deprecatePending, modelMap)
 	}
 	if err = d.Set("deprecate_pending", deprecatePending); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting deprecate_pending %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting deprecate_pending : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("product_kind", offering.ProductKind); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting product_kind: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting product_kind: : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	badges := []map[string]interface{}{}
@@ -2782,13 +2835,17 @@ func dataSourceIBMCmOfferingRead(context context.Context, d *schema.ResourceData
 		for _, modelItem := range offering.Badges {
 			modelMap, err := dataSourceIBMCmOfferingBadgeToMap(&modelItem)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_cm_offering", "read")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			badges = append(badges, modelMap)
 		}
 	}
 	if err = d.Set("badges", badges); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting badges %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting badges : %s", err), "(Data) ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	return nil
@@ -2852,9 +2909,6 @@ func dataSourceIBMCmOfferingKindToMap(model *catalogmanagementv1.Kind) (map[stri
 	}
 	if model.Metadata != nil {
 		metadataMap := make(map[string]interface{}, len(model.Metadata))
-		// k, v unused
-		// for k, v := range model.Metadata {
-		// }
 		modelMap["metadata"] = flex.Flatten(metadataMap)
 	}
 	if model.Tags != nil {
@@ -2975,10 +3029,6 @@ func dataSourceIBMCmOfferingVersionToMap(model *catalogmanagementv1.Version) (ma
 		}
 		modelMap["iam_permissions"] = iamPermissions
 	}
-	// if model.Metadata != nil {
-	// 	metadataSlice := []map[string]interface{}{model.Metadata}
-	// 	modelMap["metadata"] = metadataSlice
-	// }
 	metadata := []map[string]interface{}{}
 	if model.Metadata != nil {
 		var modelMapVSI map[string]interface{}
@@ -3144,7 +3194,7 @@ func dataSourceIBMCmOfferingConfigurationToMap(model *catalogmanagementv1.Config
 	if model.DefaultValue != nil {
 		defaultValueJson, err := json.Marshal(model.DefaultValue)
 		if err != nil {
-			return nil, fmt.Errorf("[ERROR] Error marshalling the version configuration default_value: %s", err)
+			return nil, flex.FmtErrorf("[ERROR] Error marshalling the version configuration default_value: %s", err)
 		}
 		defaultValueString, _ := strconv.Unquote(string(defaultValueJson))
 		modelMap["default_value"] = defaultValueString
@@ -3296,8 +3346,6 @@ func dataSourceIBMCmOfferingValidationToMap(model *catalogmanagementv1.Validatio
 	}
 	if model.Target != nil {
 		targetMap := make(map[string]interface{}, len(model.Target))
-		// for k, v := range model.Target {
-		// }
 		modelMap["target"] = flex.Flatten(targetMap)
 	}
 	if model.Message != nil {
@@ -3586,8 +3634,6 @@ func dataSourceIBMCmOfferingProjectToMap(model *catalogmanagementv1.Project) (ma
 	}
 	if model.Metadata != nil {
 		metadataMap := make(map[string]interface{}, len(model.Metadata))
-		// for k, v := range model.Metadata {
-		// }
 		modelMap["metadata"] = flex.Flatten(metadataMap)
 	}
 	if model.PastBreakdown != nil {
@@ -3650,8 +3696,6 @@ func dataSourceIBMCmOfferingCostResourceToMap(model *catalogmanagementv1.CostRes
 	}
 	if model.Metadata != nil {
 		metadataMap := make(map[string]interface{}, len(model.Metadata))
-		// for k, v := range model.Metadata {
-		// }
 		modelMap["metadata"] = flex.Flatten(metadataMap)
 	}
 	if model.HourlyCost != nil {

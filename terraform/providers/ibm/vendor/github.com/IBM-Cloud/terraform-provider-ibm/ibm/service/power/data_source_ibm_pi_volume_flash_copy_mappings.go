@@ -6,75 +6,76 @@ package power
 import (
 	"context"
 
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-
-	"github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/power-go-client/helpers"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 )
 
 func DataSourceIBMPIVolumeFlashCopyMappings() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPIVolumeFlashCopyMappings,
 		Schema: map[string]*schema.Schema{
-			helpers.PIVolumeId: {
-				Type:         schema.TypeString,
+			// Arguments
+			Arg_CloudInstanceID: {
+				Description:  "The GUID of the service instance associated with an account.",
 				Required:     true,
-				Description:  "Volume ID",
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
-			helpers.PICloudInstanceId: {
-				Type:         schema.TypeString,
+			Arg_VolumeID: {
+				Description:  "The ID of the volume for which you want to retrieve detailed information.",
 				Required:     true,
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
 
-			// Computed Attributes
-			"flash_copy_mappings": {
-				Type:     schema.TypeList,
-				Computed: true,
+			// Attributes
+			Attr_FlashCopyMappings: {
+				Computed:    true,
+				Description: "List of flash copy mappings details of a volume.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"copy_rate": {
+						Attr_CopyRate: {
+							Computed:    true,
+							Description: "The rate of flash copy operation of a volume.",
 							Type:        schema.TypeInt,
-							Computed:    true,
-							Description: "Indicates the rate of flash copy operation of a volume",
 						},
-						"flash_copy_name": {
+						Attr_FlashCopyName: {
+							Computed:    true,
+							Description: "The flash copy name of the volume.",
 							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "Indicates flash copy name of the volume",
 						},
-						"progress": {
+						Attr_Progress: {
+							Computed:    true,
+							Description: "The progress of flash copy operation.",
 							Type:        schema.TypeInt,
-							Computed:    true,
-							Description: "Indicates the progress of flash copy operation",
 						},
-						"source_volume_name": {
-							Type:        schema.TypeString,
+						Attr_SourceVolumeName: {
 							Computed:    true,
-							Description: "Indicates name of the source volume",
+							Description: "The name of the source volume.",
+							Type:        schema.TypeString,
 						},
-						"start_time": {
-							Type:        schema.TypeString,
+						Attr_StartTime: {
 							Computed:    true,
-							Description: "Indicates the start time of flash copy operation",
+							Description: "The start time of flash copy operation.",
+							Type:        schema.TypeString,
 						},
-						"status": {
-							Type:        schema.TypeString,
+						Attr_Status: {
 							Computed:    true,
-							Description: "Copy status of a volume",
+							Description: "The copy status of a volume.",
+							Type:        schema.TypeString,
 						},
-						"target_volume_name": {
-							Type:        schema.TypeString,
+						Attr_TargetVolumeName: {
 							Computed:    true,
-							Description: "Indicates name of the target volume",
+							Description: "The name of the target volume.",
+							Type:        schema.TypeString,
 						},
 					},
 				},
+				Type: schema.TypeList,
 			},
 		},
 	}
@@ -86,9 +87,9 @@ func dataSourceIBMPIVolumeFlashCopyMappings(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
 	volClient := instance.NewIBMPIVolumeClient(ctx, sess, cloudInstanceID)
-	volData, err := volClient.GetVolumeFlashCopyMappings(d.Get(helpers.PIVolumeId).(string))
+	volData, err := volClient.GetVolumeFlashCopyMappings(d.Get(Arg_VolumeID).(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -97,22 +98,22 @@ func dataSourceIBMPIVolumeFlashCopyMappings(ctx context.Context, d *schema.Resou
 	for _, i := range volData {
 		if i != nil {
 			l := map[string]interface{}{
-				"copy_rate":          i.CopyRate,
-				"progress":           i.Progress,
-				"source_volume_name": i.SourceVolumeName,
-				"start_time":         i.StartTime.String(),
-				"status":             i.Status,
-				"target_volume_name": i.TargetVolumeName,
+				Attr_CopyRate:         i.CopyRate,
+				Attr_Progress:         i.Progress,
+				Attr_SourceVolumeName: i.SourceVolumeName,
+				Attr_StartTime:        i.StartTime.String(),
+				Attr_Status:           i.Status,
+				Attr_TargetVolumeName: i.TargetVolumeName,
 			}
 			if i.FlashCopyName != nil {
-				l["flash_copy_name"] = i.FlashCopyName
+				l[Attr_FlashCopyName] = i.FlashCopyName
 			}
 			results = append(results, l)
 		}
 	}
 	var clientgenU, _ = uuid.GenerateUUID()
 	d.SetId(clientgenU)
-	d.Set("flash_copy_mappings", results)
+	d.Set(Attr_FlashCopyMappings, results)
 
 	return nil
 }

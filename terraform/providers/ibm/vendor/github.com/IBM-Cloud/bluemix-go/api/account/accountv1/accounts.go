@@ -34,6 +34,8 @@ type Accounts interface {
 	InviteAccountUser(accountGuid string, userEmail string) (AccountInviteResponse, error)
 	DeleteAccountUser(accountGuid string, userGuid string) error
 	FindAccountUserByUserId(accountGuid string, userId string) (*models.AccountUser, error)
+	List() ([]models.V2Account, error)
+	Get(accountId string) (models.V1Account, error)
 }
 
 type account struct {
@@ -238,4 +240,38 @@ func (a *account) FindAccountUserByUserId(accountGuid string, userId string) (*m
 		accountUser := queryResp.AccountUsers[0].ToModel()
 		return &accountUser, nil
 	}
+}
+
+func (a *account) List() ([]models.V2Account, error) {
+	var accounts []models.V2Account
+	resp, err := a.client.GetPaginated("/coe/v2/accounts", NewAccountPaginatedResources(AccountResource{}), func(resource interface{}) bool {
+		if accountResource, ok := resource.(AccountResource); ok {
+			accounts = append(accounts, accountResource.ToModel())
+			return true
+		}
+		return false
+	})
+
+	if resp.StatusCode == 404 {
+		return []models.V2Account{}, nil
+	}
+
+	return accounts, err
+}
+
+func (a *account) Get(accountId string) (models.V1Account, error) {
+	account := models.V1Account{}
+	response, err := a.client.Get(fmt.Sprintf("/coe/v2/accounts/%s", accountId), &account)
+	if err != nil {
+
+		if response.StatusCode == 404 {
+			return models.V1Account{}, bmxerror.New(ErrCodeNoAccountExists,
+				fmt.Sprintf("Account %q does not exists", accountId))
+		}
+		return models.V1Account{}, err
+
+	}
+
+	return account, nil
+
 }

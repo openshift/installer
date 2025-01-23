@@ -175,11 +175,15 @@ func validateName(s map[string]interface{}, t string) error {
 func resourceIBMEventStreamsSchemaCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schemaregistryClient, err := meta.(conns.ClientSession).ESschemaRegistrySession()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMEventStreamsSchemaCreate schemaregistryClient: %s", err), "ibm_event_streams_schema", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	adminURL, instanceCRN, err := getInstanceURL(d, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMEventStreamsSchemaCreate getInstanceURL: %s", err), "ibm_event_streams_schema", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	schemaregistryClient.SetServiceURL(adminURL)
 	createSchemaOptions := &schemaregistryv1.CreateSchemaOptions{}
@@ -195,8 +199,9 @@ func resourceIBMEventStreamsSchemaCreate(context context.Context, d *schema.Reso
 
 	schemaMetadata, response, err := schemaregistryClient.CreateSchemaWithContext(context, createSchemaOptions)
 	if err != nil || schemaMetadata == nil {
-		log.Printf("[DEBUG] CreateSchemaWithContext failed with error: %s and response: \n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateSchemaWithContext failed with eror: %s and response: \n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMEventStreamsSchemaCreate CreateSchemaWithContext failed with error: %s and response:\n%s", err, response), "ibm_event_streams_schema", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	uniqueID := getUniqueSchemaID(instanceCRN, *schemaMetadata.ID)
 	d.SetId(uniqueID)
@@ -207,12 +212,16 @@ func resourceIBMEventStreamsSchemaCreate(context context.Context, d *schema.Reso
 func resourceIBMEventStreamsSchemaRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schemaregistryClient, err := meta.(conns.ClientSession).ESschemaRegistrySession()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMEventStreamsSchemaRead schemaregistryClient: %s", err), "ibm_event_streams_schema", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	adminURL, instanceCRN, err := getInstanceURL(d, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMEventStreamsSchemaRead getInstanceURL: %s", err), "ibm_event_streams_schema", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	schemaregistryClient.SetServiceURL(adminURL)
 
@@ -223,21 +232,27 @@ func resourceIBMEventStreamsSchemaRead(context context.Context, d *schema.Resour
 
 	avroSchema, response, err := schemaregistryClient.GetLatestSchemaWithContext(context, getSchemaOptions)
 	if err != nil || avroSchema == nil {
-		log.Printf("[DEBUG] GetSchemaWithContext failed with error: %s and response: \n%s", err, response)
 		if response != nil && response.StatusCode == 404 {
+			log.Printf("[DEBUG] GetSchemaWithContext failed with 404 Not Found error and response: \n%s", response)
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("GetSchemaWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMEventStreamsSchemaRead GetLatestSchemaWithContext failed with error: %s and response:\n%s", err, response), "ibm_event_streams_schema", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	s, err := json.Marshal(avroSchema)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error marshalling the created schema: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMEventStreamsSchemaRead marshalling the schema failed with error: %s", err), "ibm_event_streams_schema", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("schema", string(s)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting the schema: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMEventStreamsSchemaRead setting the schema failed error: %s", err), "ibm_event_streams_schema", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	d.Set("resource_instance_id", instanceCRN)
 	d.Set("schema_id", schemaID)
@@ -248,12 +263,16 @@ func resourceIBMEventStreamsSchemaRead(context context.Context, d *schema.Resour
 func resourceIBMEventStreamsSchemaUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schemaregistryClient, err := meta.(conns.ClientSession).ESschemaRegistrySession()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMEventStreamsSchemaUpdate schemaregistryClient: %s", err), "ibm_event_streams_schema", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	adminURL, _, err := getInstanceURL(d, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMEventStreamsSchemaUpdate getInstanceURL: %s", err), "ibm_event_streams_schema", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	schemaregistryClient.SetServiceURL(adminURL)
 
@@ -269,8 +288,9 @@ func resourceIBMEventStreamsSchemaUpdate(context context.Context, d *schema.Reso
 		}
 		schemaMetadata, response, err := schemaregistryClient.UpdateSchemaWithContext(context, updateSchemaOptions)
 		if err != nil || schemaMetadata == nil {
-			log.Printf("[DEBUG] UpdateSchemaWithContext failed with error: %s\n and response: %s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdateSchemaWithContext failed with error: %s and response: \n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMEventStreamsSchemaUpdate UpdateSchema failed with error: %s and response:\n%s", err, response), "ibm_event_streams_schema", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -280,12 +300,16 @@ func resourceIBMEventStreamsSchemaUpdate(context context.Context, d *schema.Reso
 func resourceIBMEventStreamsSchemaDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schemaregistryClient, err := meta.(conns.ClientSession).ESschemaRegistrySession()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMEventStreamsSchemaDelete schemaregistryClient: %s", err), "ibm_event_streams_schema", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	adminURL, _, err := getInstanceURL(d, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMEventStreamsSchemaDelete getInstanceURL: %s", err), "ibm_event_streams_schema", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	schemaregistryClient.SetServiceURL(adminURL)
 
@@ -300,13 +324,16 @@ func resourceIBMEventStreamsSchemaDelete(context context.Context, d *schema.Reso
 	// set schema state to disabled before deleting
 	response, err := schemaregistryClient.SetSchemaStateWithContext(context, setSchemaOptions)
 	if err != nil {
-		log.Printf("[DEBUG] SetSchemaStateWithContext failed %s\n%s", err, response)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMEventStreamsSchemaDelete SetSchemaState failed with error: %s and response:\n%s", err, response), "ibm_event_streams_schema", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	response, err = schemaregistryClient.DeleteSchemaWithContext(context, deleteSchemaOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeleteSchemaWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteSchemaWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIBMEventStreamsSchemaDelete DeleteSchema failed with error: %s and response:\n%s", err, response), "ibm_event_streams_schema", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")

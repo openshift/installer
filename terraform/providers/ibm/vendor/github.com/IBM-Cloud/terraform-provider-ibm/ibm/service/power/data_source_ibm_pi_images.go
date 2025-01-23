@@ -6,70 +6,72 @@ package power
 import (
 	"context"
 
-	"github.com/IBM-Cloud/power-go-client/helpers"
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	//"fmt"
-	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-/*
-Datasource to get the list of images that are available when a power instance is created
-*/
+// Datasource to list images that are available when a power instance is created
 func DataSourceIBMPIImages() *schema.Resource {
-
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPIImagesAllRead,
 		Schema: map[string]*schema.Schema{
-
-			helpers.PICloudInstanceId: {
-				Type:         schema.TypeString,
+			// Arguments
+			Arg_CloudInstanceID: {
+				Description:  "The GUID of the service instance associated with an account.",
 				Required:     true,
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
 
-			// Computed Attributes
-
-			"image_info": {
-				Type:     schema.TypeList,
-				Computed: true,
+			// Attributes
+			Attr_ImageInfo: {
+				Computed:    true,
+				Description: "List of all supported images.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"id": {
-							Type:     schema.TypeString,
-							Computed: true,
+						Attr_Href: {
+							Computed:    true,
+							Description: "The hyper link of an image.",
+							Type:        schema.TypeString,
 						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
+						Attr_ID: {
+							Computed:    true,
+							Description: "The unique identifier of an image.",
+							Type:        schema.TypeString,
 						},
-						"href": {
-							Type:     schema.TypeString,
-							Computed: true,
+						Attr_ImageType: {
+							Computed:    true,
+							Description: "The identifier of this image type.",
+							Type:        schema.TypeString,
 						},
-						"state": {
-							Type:     schema.TypeString,
-							Computed: true,
+						Attr_Name: {
+							Computed:    true,
+							Description: "The name of an image.",
+							Type:        schema.TypeString,
 						},
-						"storage_type": {
-							Type:     schema.TypeString,
-							Computed: true,
+						Attr_State: {
+							Computed:    true,
+							Description: "The state of an image.",
+							Type:        schema.TypeString,
 						},
-						"storage_pool": {
-							Type:     schema.TypeString,
-							Computed: true,
+						Attr_StoragePool: {
+							Computed:    true,
+							Description: "Storage pool where image resides.",
+							Type:        schema.TypeString,
 						},
-						"image_type": {
-							Type:     schema.TypeString,
-							Computed: true,
+						Attr_StorageType: {
+							Computed:    true,
+							Description: "The storage type of an image.",
+							Type:        schema.TypeString,
 						},
 					},
 				},
+				Type: schema.TypeList,
 			},
 		},
 	}
@@ -81,7 +83,7 @@ func dataSourceIBMPIImagesAllRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
 
 	imageC := instance.NewIBMPIImageClient(ctx, sess, cloudInstanceID)
 	imagedata, err := imageC.GetAll()
@@ -91,28 +93,24 @@ func dataSourceIBMPIImagesAllRead(ctx context.Context, d *schema.ResourceData, m
 
 	var clientgenU, _ = uuid.GenerateUUID()
 	d.SetId(clientgenU)
-	d.Set("image_info", flattenStockImages(imagedata.Images))
+	d.Set(Attr_ImageInfo, flattenStockImages(imagedata.Images))
 
 	return nil
-
 }
 
 func flattenStockImages(list []*models.ImageReference) []map[string]interface{} {
 	result := make([]map[string]interface{}, 0, len(list))
 	for _, i := range list {
-
 		l := map[string]interface{}{
-			"id":           *i.ImageID,
-			"state":        *i.State,
-			"href":         *i.Href,
-			"name":         *i.Name,
-			"storage_type": *i.StorageType,
-			"storage_pool": *i.StoragePool,
-			"image_type":   i.Specifications.ImageType,
+			Attr_Href:        *i.Href,
+			Attr_ID:          *i.ImageID,
+			Attr_ImageType:   i.Specifications.ImageType,
+			Attr_Name:        *i.Name,
+			Attr_State:       *i.State,
+			Attr_StoragePool: *i.StoragePool,
+			Attr_StorageType: *i.StorageType,
 		}
-
 		result = append(result, l)
-
 	}
 	return result
 }

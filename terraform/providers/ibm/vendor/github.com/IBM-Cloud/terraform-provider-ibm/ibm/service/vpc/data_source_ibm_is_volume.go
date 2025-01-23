@@ -178,6 +178,39 @@ func DataSourceIBMISVolume() *schema.Resource {
 					},
 				},
 			},
+			isVolumeCatalogOffering: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The catalog offering this volume was created from. If a virtual server instance is provisioned with a boot_volume_attachment specifying this volume, the virtual server instance will use this volume's catalog offering, including its pricing plan.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						isVolumeCatalogOfferingPlanCrn: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The CRN for this catalog offering version's billing plan",
+						},
+						"deleted": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, this property indicates the referenced resource has been deleted and provides some supplementary information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"more_info": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about deleted resources.",
+									},
+								},
+							},
+						},
+						isVolumeCatalogOfferingVersionCrn: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The CRN for this version of a catalog offering",
+						},
+					},
+				},
+			},
 
 			isVolumeHealthState: {
 				Type:        schema.TypeString,
@@ -404,8 +437,43 @@ func volumeGet(d *schema.ResourceData, meta interface{}, name string) error {
 		}
 		d.Set(isVolumeHealthReasons, healthReasonsList)
 	}
+	// catalog
+	if vol.CatalogOffering != nil {
+		versionCrn := ""
+		if vol.CatalogOffering.Version != nil && vol.CatalogOffering.Version.CRN != nil {
+			versionCrn = *vol.CatalogOffering.Version.CRN
+		}
+		catalogList := make([]map[string]interface{}, 0)
+		catalogMap := map[string]interface{}{}
+		if versionCrn != "" {
+			catalogMap[isVolumeCatalogOfferingVersionCrn] = versionCrn
+		}
+		if vol.CatalogOffering.Plan != nil {
+			planCrn := ""
+			if vol.CatalogOffering.Plan.CRN != nil {
+				planCrn = *vol.CatalogOffering.Plan.CRN
+			}
+			if planCrn != "" {
+				catalogMap[isVolumeCatalogOfferingPlanCrn] = *vol.CatalogOffering.Plan.CRN
+			}
+			if vol.CatalogOffering.Plan.Deleted != nil {
+				deletedMap := resourceIbmIsVolumeCatalogOfferingVersionPlanReferenceDeletedToMap(*vol.CatalogOffering.Plan.Deleted)
+				catalogMap["deleted"] = []map[string]interface{}{deletedMap}
+			}
+		}
+		catalogList = append(catalogList, catalogMap)
+		d.Set(isVolumeCatalogOffering, catalogList)
+	}
 	if vol.HealthState != nil {
 		d.Set(isVolumeHealthState, *vol.HealthState)
 	}
 	return nil
+}
+
+func resourceIbmIsVolumeCatalogOfferingVersionPlanReferenceDeletedToMap(catalogOfferingVersionPlanReferenceDeleted vpcv1.Deleted) map[string]interface{} {
+	catalogOfferingVersionPlanReferenceDeletedMap := map[string]interface{}{}
+
+	catalogOfferingVersionPlanReferenceDeletedMap["more_info"] = catalogOfferingVersionPlanReferenceDeleted.MoreInfo
+
+	return catalogOfferingVersionPlanReferenceDeletedMap
 }

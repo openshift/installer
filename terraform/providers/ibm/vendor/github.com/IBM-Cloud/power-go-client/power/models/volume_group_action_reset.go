@@ -22,7 +22,7 @@ type VolumeGroupActionReset struct {
 
 	// New status to be set for a volume group
 	// Required: true
-	// Enum: [available]
+	// Enum: ["available"]
 	Status *string `json:"status"`
 }
 

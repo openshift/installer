@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2017, 2021 All Rights Reserved.
+// Copyright IBM Corp. 2017, 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package iamidentity
@@ -75,6 +75,7 @@ func ResourceIBMIAMServiceAPIKey() *schema.Resource {
 			"store_value": {
 				Type:             schema.TypeBool,
 				Optional:         true,
+				Default:          true,
 				DiffSuppressFunc: flex.ApplyOnce,
 				Description:      "Boolean value deciding whether API key value is retrievable in the future",
 			},
@@ -171,7 +172,7 @@ func resourceIBMIAMServiceAPIkeyCreate(d *schema.ResourceData, meta interface{})
 		createAPIKeyOptions.Apikey = &apikeyString
 	}
 
-	if strvalue, ok := d.GetOk("store_value"); ok {
+	if strvalue := d.Get("store_value"); strvalue != nil {
 		value := strvalue.(bool)
 		createAPIKeyOptions.StoreValue = &value
 	}

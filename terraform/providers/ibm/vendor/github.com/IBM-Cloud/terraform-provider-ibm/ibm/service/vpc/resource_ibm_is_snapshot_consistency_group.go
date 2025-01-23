@@ -316,11 +316,11 @@ func resourceIBMIsSnapshotConsistencyGroupCreate(context context.Context, d *sch
 			ID: &rg,
 		}
 	}
-	var snapshotConsistencyGroupPrototypeSnapshotsItemArray []vpcv1.SnapshotConsistencyGroupPrototypeSnapshotsItem
+	var snapshotConsistencyGroupPrototypeSnapshotsItemArray []vpcv1.SnapshotPrototypeSnapshotConsistencyGroupContext
 	snapshotsArray := d.Get("snapshots").([]interface{})
 	for _, snapshot := range snapshotsArray {
 		snapshotVal := snapshot.(map[string]interface{})
-		snapshotConsistencyGroupPrototypeSnapshotsItem := &vpcv1.SnapshotConsistencyGroupPrototypeSnapshotsItem{}
+		snapshotConsistencyGroupPrototypeSnapshotsItem := &vpcv1.SnapshotPrototypeSnapshotConsistencyGroupContext{}
 
 		volume := snapshotVal["source_volume"].(string)
 		snapshotConsistencyGroupPrototypeSnapshotsItem.SourceVolume = &vpcv1.VolumeIdentity{
@@ -714,7 +714,7 @@ func resourceIBMIsSnapshotConsistencyGroupResourceGroupReferenceToMap(model *vpc
 	return modelMap, nil
 }
 
-func resourceIBMIsSnapshotConsistencyGroupSnapshotConsistencyGroupSnapshotsItemToMap(model *vpcv1.SnapshotConsistencyGroupSnapshotsItem) (map[string]interface{}, error) {
+func resourceIBMIsSnapshotConsistencyGroupSnapshotConsistencyGroupSnapshotsItemToMap(model *vpcv1.SnapshotReference) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["crn"] = model.CRN
 	if model.Deleted != nil {
@@ -746,7 +746,7 @@ func resourceIBMIsSnapshotConsistencyGroupSnapshotConsistencyGroupSnapshotsItemT
 	return modelMap, nil
 }
 
-func resourceIBMIsSnapshotConsistencyGroupSnapshotReferenceDeletedToMap(model *vpcv1.SnapshotReferenceDeleted) (map[string]interface{}, error) {
+func resourceIBMIsSnapshotConsistencyGroupSnapshotReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.MoreInfo != nil {
 		modelMap["more_info"] = model.MoreInfo
@@ -796,7 +796,7 @@ func resourceIBMIsSnapshotConsistencyGroupBackupPolicyPlanReferenceToMap(model *
 	return modelMap, nil
 }
 
-func resourceIBMIsSnapshotConsistencyGroupBackupPolicyPlanReferenceDeletedToMap(model *vpcv1.BackupPolicyPlanReferenceDeleted) (map[string]interface{}, error) {
+func resourceIBMIsSnapshotConsistencyGroupBackupPolicyPlanReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["more_info"] = model.MoreInfo
 	return modelMap, nil

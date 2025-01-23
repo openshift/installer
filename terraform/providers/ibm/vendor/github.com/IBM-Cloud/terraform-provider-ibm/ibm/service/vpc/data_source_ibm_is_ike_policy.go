@@ -284,7 +284,7 @@ func dataSourceIkePolicyConnectionsToMap(connectionsItem vpcv1.VPNGatewayConnect
 	return connectionsMap
 }
 
-func dataSourceIkePolicyConnectionsDeletedToMap(deletedItem vpcv1.VPNGatewayConnectionReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceIkePolicyConnectionsDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

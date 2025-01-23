@@ -224,7 +224,7 @@ func dataSourceDedicatedHostDiskInstanceDisksToMap(instanceDisksItem vpcv1.Insta
 	return instanceDisksMap
 }
 
-func dataSourceDedicatedHostDiskInstanceDisksDeletedToMap(deletedItem vpcv1.InstanceDiskReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceDedicatedHostDiskInstanceDisksDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

@@ -116,7 +116,7 @@ func resourceIbmSccProviderTypeInstanceCreate(context context.Context, d *schema
 	providerTypeInstanceItem, response, err := securityAndComplianceCenterApIsClient.CreateProviderTypeInstanceWithContext(context, createProviderTypeInstanceOptions)
 	if err != nil {
 		log.Printf("[DEBUG] CreateProviderTypeInstanceWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateProviderTypeInstanceWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("CreateProviderTypeInstanceWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s/%s", instanceID, *createProviderTypeInstanceOptions.ProviderTypeID, *providerTypeInstanceItem.ID))
@@ -148,15 +148,15 @@ func resourceIbmSccProviderTypeInstanceRead(context context.Context, d *schema.R
 			return nil
 		}
 		log.Printf("[DEBUG] GetProviderTypeInstanceWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetProviderTypeInstanceWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetProviderTypeInstanceWithContext failed %s\n%s", err, response))
 	}
 
 	if err = d.Set("instance_id", parts[0]); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting instance_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting instance_id: %s", err))
 	}
 
 	if err = d.Set("name", providerTypeInstanceItem.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting name: %s", err))
 	}
 
 	attributesMap, err := resourceIbmSccProviderTypeInstanceProviderTypeInstanceAttributesToMap(providerTypeInstanceItem.Attributes)
@@ -165,31 +165,31 @@ func resourceIbmSccProviderTypeInstanceRead(context context.Context, d *schema.R
 	}
 
 	if err = d.Set("attributes", attributesMap); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting attributes: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting attributes: %s", err))
 	}
 
 	if !core.IsNil(providerTypeInstanceItem.Type) {
 		if err = d.Set("type", providerTypeInstanceItem.Type); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting type: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting type: %s", err))
 		}
 	}
 	if !core.IsNil(providerTypeInstanceItem.CreatedAt) {
 		if err = d.Set("created_at", flex.DateTimeToString(providerTypeInstanceItem.CreatedAt)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting created_at: %s", err))
 		}
 	}
 	if !core.IsNil(providerTypeInstanceItem.UpdatedAt) {
 		if err = d.Set("updated_at", flex.DateTimeToString(providerTypeInstanceItem.UpdatedAt)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting updated_at: %s", err))
 		}
 	}
 	if !core.IsNil(providerTypeInstanceItem.ID) {
 		if err = d.Set("provider_type_instance_id", providerTypeInstanceItem.ID); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting provider_type_instance_id: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting provider_type_instance_id: %s", err))
 		}
 	}
 	if err = d.Set("provider_type_id", parts[1]); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting provider_type_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting provider_type_id: %s", err))
 	}
 
 	return nil
@@ -216,7 +216,7 @@ func resourceIbmSccProviderTypeInstanceUpdate(context context.Context, d *schema
 	hasChange := false
 
 	if d.HasChange("provider_type_id") {
-		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
+		return diag.FromErr(flex.FmtErrorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
 			" The resource must be re-created to update this property.", "provider_type_id"))
 	}
 	if d.HasChange("attributes") {
@@ -232,7 +232,7 @@ func resourceIbmSccProviderTypeInstanceUpdate(context context.Context, d *schema
 		_, response, err := securityAndComplianceCenterApIsClient.UpdateProviderTypeInstanceWithContext(context, updateProviderTypeInstanceOptions)
 		if err != nil {
 			log.Printf("[DEBUG] UpdateProviderTypeInstanceWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdateProviderTypeInstanceWithContext failed %s\n%s", err, response))
+			return diag.FromErr(flex.FmtErrorf("UpdateProviderTypeInstanceWithContext failed %s\n%s", err, response))
 		}
 	}
 
@@ -259,7 +259,7 @@ func resourceIbmSccProviderTypeInstanceDelete(context context.Context, d *schema
 	response, err := securityAndComplianceCenterApIsClient.DeleteProviderTypeInstanceWithContext(context, deleteProviderTypeInstanceOptions)
 	if err != nil {
 		log.Printf("[DEBUG] DeleteProviderTypeInstanceWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteProviderTypeInstanceWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("DeleteProviderTypeInstanceWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId("")

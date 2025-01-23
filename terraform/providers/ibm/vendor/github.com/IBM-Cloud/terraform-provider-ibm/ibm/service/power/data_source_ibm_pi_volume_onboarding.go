@@ -6,82 +6,85 @@ package power
 import (
 	"context"
 
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
+	"github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-
-	"github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/power-go-client/helpers"
-	"github.com/IBM-Cloud/power-go-client/power/models"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 )
 
 func DataSourceIBMPIVolumeOnboarding() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPIVolumeOnboardingReads,
 		Schema: map[string]*schema.Schema{
-			PIVolumeOnboardingID: {
-				Type:         schema.TypeString,
+			// Arguments
+			Arg_CloudInstanceID: {
+				Description:  "The GUID of the service instance associated with an account.",
 				Required:     true,
-				Description:  "Volume onboarding ID",
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
-			helpers.PICloudInstanceId: {
+			Arg_VolumeOnboardingID: {
 				Type:         schema.TypeString,
 				Required:     true,
+				Description:  "The ID of volume onboarding for which you want to retrieve detailed information.",
 				ValidateFunc: validation.NoZeroValues,
 			},
 
-			// Computed Attributes
-			"create_time": {
+			// Attributes
+			// TODO: Relabel this one "creation_date" to match literally every single other one
+			Attr_CreateTime: {
+				Computed:    true,
+				Description: "The create-time of volume onboarding operation.",
 				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Indicates the create time of volume onboarding operation",
 			},
-			"description": {
+			Attr_Description: {
+				Computed:    true,
+				Description: "The description of the volume onboarding operation.",
 				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Description of the volume onboarding operation",
 			},
-			"input_volumes": {
-				Type:        schema.TypeList,
+			Attr_InputVolumes: {
 				Computed:    true,
-				Description: "List of volumes requested to be onboarded",
+				Description: "List of volumes requested to be onboarded.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
 			},
-			"progress": {
+			Attr_Progress: {
+				Computed:    true,
+				Description: "The progress of volume onboarding operation.",
 				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "Indicates the progress of volume onboarding operation",
 			},
-			"results_onboarded_volumes": {
-				Type:        schema.TypeList,
+			Attr_ResultsOnboardedVolumes: {
 				Computed:    true,
-				Description: "List of volumes which are onboarded successfully",
+				Description: "List of volumes which are onboarded successfully.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
 			},
-			"results_volume_onboarding_failures": {
-				Type:     schema.TypeList,
-				Computed: true,
+			Attr_ResultsVolumeOnboardingFailures: {
+				Computed:    true,
+				Description: "The volume onboarding failure details.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"failure_message": {
+						Attr_FailureMessage: {
+							Computed:    true,
+							Description: "The failure reason for the volumes which have failed to be onboarded.",
 							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The failure reason for the volumes which have failed to be onboarded",
 						},
-						"volumes": {
-							Type:        schema.TypeList,
+						Attr_Volumes: {
 							Computed:    true,
-							Description: "List of volumes which have failed to be onboarded",
+							Description: "List of volumes which have failed to be onboarded.",
 							Elem:        &schema.Schema{Type: schema.TypeString},
+							Type:        schema.TypeList,
 						},
-					}},
+					},
+				},
+				Type: schema.TypeList,
 			},
-			"status": {
-				Type:        schema.TypeString,
+			Attr_Status: {
 				Computed:    true,
-				Description: "Indicates the status of volume onboarding operation",
+				Description: "The status of volume onboarding operation.",
+				Type:        schema.TypeString,
 			},
 		},
 	}
@@ -93,21 +96,21 @@ func dataSourceIBMPIVolumeOnboardingReads(ctx context.Context, d *schema.Resourc
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
 	volOnboardClient := instance.NewIBMPIVolumeOnboardingClient(ctx, sess, cloudInstanceID)
-	volOnboarding, err := volOnboardClient.Get(d.Get(PIVolumeOnboardingID).(string))
+	volOnboarding, err := volOnboardClient.Get(d.Get(Arg_VolumeOnboardingID).(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(*volOnboarding.ID)
-	d.Set("create_time", volOnboarding.CreationTimestamp.String())
-	d.Set("description", volOnboarding.Description)
-	d.Set("input_volumes", volOnboarding.InputVolumes)
-	d.Set("progress", volOnboarding.Progress)
-	d.Set("status", volOnboarding.Status)
-	d.Set("results_onboarded_volumes", volOnboarding.Results.OnboardedVolumes)
-	d.Set("results_volume_onboarding_failures", flattenVolumeOnboardingFailures(volOnboarding.Results.VolumeOnboardingFailures))
+	d.Set(Attr_CreateTime, volOnboarding.CreationTimestamp.String())
+	d.Set(Attr_Description, volOnboarding.Description)
+	d.Set(Attr_InputVolumes, volOnboarding.InputVolumes)
+	d.Set(Attr_Progress, volOnboarding.Progress)
+	d.Set(Attr_Status, volOnboarding.Status)
+	d.Set(Attr_ResultsOnboardedVolumes, volOnboarding.Results.OnboardedVolumes)
+	d.Set(Attr_ResultsVolumeOnboardingFailures, flattenVolumeOnboardingFailures(volOnboarding.Results.VolumeOnboardingFailures))
 
 	return nil
 }
@@ -117,8 +120,8 @@ func flattenVolumeOnboardingFailures(list []*models.VolumeOnboardingFailure) (re
 		result := make([]map[string]interface{}, len(list))
 		for i, data := range list {
 			l := map[string]interface{}{
-				"failure_message": data.FailureMessage,
-				"volumes":         data.Volumes,
+				Attr_FailureMessage: data.FailureMessage,
+				Attr_Volumes:        data.Volumes,
 			}
 			result[i] = l
 		}

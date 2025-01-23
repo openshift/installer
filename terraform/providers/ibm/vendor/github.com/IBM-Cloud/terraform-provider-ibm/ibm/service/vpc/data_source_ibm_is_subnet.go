@@ -318,7 +318,7 @@ func subnetGetByNameOrID(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func dataSourcesubnetRoutingTableDeletedToMap(deletedItem vpcv1.RoutingTableReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourcesubnetRoutingTableDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

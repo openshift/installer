@@ -52,6 +52,13 @@ func DataSourceIBMISImages() *schema.Resource {
 				Optional:    true,
 				Description: "Whether the image is publicly visible or private to the account",
 			},
+			isImageUserDataFormat: {
+				Type:        schema.TypeSet,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
+				Optional:    true,
+				Description: "Filters the collection to images with a user_data_format property matching one of the specified comma-separated values.",
+			},
 
 			isImages: {
 				Type:        schema.TypeList,
@@ -108,6 +115,11 @@ func DataSourceIBMISImages() *schema.Resource {
 							Computed: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
+									isOperatingSystemAllowUserImageCreation: {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Users may create new images with this operating system",
+									},
 									"architecture": {
 										Type:        schema.TypeString,
 										Computed:    true,
@@ -147,6 +159,11 @@ func DataSourceIBMISImages() *schema.Resource {
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The major release version of this operating system",
+									},
+									isOperatingSystemUserDataFormat: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The user data format for this image",
 									},
 								},
 							},
@@ -251,6 +268,11 @@ func DataSourceIBMISImages() *schema.Resource {
 								},
 							},
 						},
+						isImageUserDataFormat: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The user data format for this image",
+						},
 						isImageAccessTags: {
 							Type:        schema.TypeSet,
 							Computed:    true,
@@ -332,6 +354,17 @@ func imageList(d *schema.ResourceData, meta interface{}) error {
 		listImagesOptions.SetVisibility(visibility)
 	}
 
+	if userDataFormat, ok := d.GetOk(isImageUserDataFormat); ok {
+		userDataFormats := userDataFormat.(*schema.Set)
+		if userDataFormats.Len() != 0 {
+			userDataFormatsArray := make([]string, userDataFormats.Len())
+			for i, key := range userDataFormats.List() {
+				userDataFormatsArray[i] = key.(string)
+			}
+			listImagesOptions.SetUserDataFormat(userDataFormatsArray)
+		}
+	}
+
 	for {
 		if start != "" {
 			listImagesOptions.Start = &start
@@ -378,6 +411,9 @@ func imageList(d *schema.ResourceData, meta interface{}) error {
 			"visibility":   *image.Visibility,
 			"os":           *image.OperatingSystem.Name,
 			"architecture": *image.OperatingSystem.Architecture,
+		}
+		if image.UserDataFormat != nil {
+			l["user_data_format"] = *image.UserDataFormat
 		}
 		if len(image.StatusReasons) > 0 {
 			l["status_reasons"] = dataSourceIBMIsImageFlattenStatusReasons(image.StatusReasons)

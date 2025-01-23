@@ -6,7 +6,10 @@ package scc
 import (
 	"context"
 	"fmt"
+	"hash/crc32"
 	"log"
+	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -162,43 +165,11 @@ func ResourceIbmSccProfileAttachment() *schema.Resource {
 				},
 			},
 			"attachment_parameters": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "The profile parameters for the attachment.",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"assessment_type": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "The type of the implementation.",
-						},
-						"assessment_id": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "The implementation ID of the parameter.",
-						},
-						"parameter_name": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "The parameter name.",
-						},
-						"parameter_value": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "The value of the parameter.",
-						},
-						"parameter_display_name": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "The parameter display name.",
-						},
-						"parameter_type": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "The parameter type.",
-						},
-					},
-				},
+				Elem:        schemaAttachmentParameters(),
+				Set:         attachmentParametersSchemaSetFunc("assessment_id", "parameter_name", "parameter_display_name", "parameter_type", "parameter_value"),
 			},
 			"last_scan": {
 				Type:        schema.TypeList,
@@ -266,6 +237,92 @@ func ResourceIbmSccProfileAttachmentValidator() *validate.ResourceValidator {
 	return &resourceValidator
 }
 
+// hashAttachmentParameters will determine how to hash the AttachmentParameters schema.Resource
+// It uses the 'assessment_id' in order to determine the difference.
+func attachmentParametersSchemaSetFunc(keys ...string) schema.SchemaSetFunc {
+	return func(v interface{}) int {
+		var str strings.Builder
+
+		if m, ok := v.(map[string]interface{}); ok {
+			for _, key := range keys {
+				if v, ok := m[key]; ok {
+					switch v := v.(type) {
+					case bool:
+						str.WriteRune('-')
+						str.WriteString(strconv.FormatBool(v))
+					case int:
+						str.WriteRune('-')
+						str.WriteString(strconv.Itoa(v))
+					case string:
+						str.WriteRune('-')
+						str.WriteString(v)
+					case []interface{}:
+						str.WriteRune('-')
+						s := make([]string, len(v))
+						for i, v := range v {
+							s[i] = fmt.Sprint(v)
+						}
+						str.WriteString(fmt.Sprintf("[%s]", strings.Join(s, ",")))
+					}
+				}
+			}
+		}
+
+		return stringHashcode(str.String())
+	}
+}
+
+func stringHashcode(s string) int {
+	v := int(crc32.ChecksumIEEE([]byte(s)))
+	if v >= 0 {
+		return v
+	}
+	if -v >= 0 {
+		return -v
+	}
+	// v == MinInt
+	return 0
+}
+
+// schemaAttachmentParameters returns a *schema.Resource for AttachmentParameters
+func schemaAttachmentParameters() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"assessment_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The implementation ID of the parameter.",
+			},
+			"assessment_type": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "automated",
+				Description: "The type of the implementation.",
+			},
+			"parameter_name": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The parameter name.",
+			},
+			"parameter_display_name": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The parameter display name.",
+			},
+			"parameter_type": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The parameter type.",
+			},
+			"parameter_value": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The value of the parameter.",
+			},
+		},
+	}
+}
+
 func resourceIbmSccProfileAttachmentCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	securityandcompliancecenterapiClient, err := meta.(conns.ClientSession).SecurityAndComplianceCenterV3()
 	if err != nil {
@@ -276,6 +333,7 @@ func resourceIbmSccProfileAttachmentCreate(context context.Context, d *schema.Re
 	createAttachmentOptions := &securityandcompliancecenterapiv3.CreateAttachmentOptions{}
 	instance_id := d.Get("instance_id").(string)
 	bodyModelMap["instance_id"] = instance_id
+
 	if _, ok := d.GetOk("profile_id"); ok {
 		bodyModelMap["profile_id"] = d.Get("profile_id")
 	}
@@ -285,11 +343,10 @@ func resourceIbmSccProfileAttachmentCreate(context context.Context, d *schema.Re
 	if _, ok := d.GetOk("scope"); ok {
 		bodyModelMap["scope"] = d.Get("scope")
 	}
-	// manual chang
+
+	// manual change
 	if _, ok := d.GetOk("attachment_parameters"); ok {
 		bodyModelMap["attachment_parameters"] = d.Get("attachment_parameters")
-	} else {
-		bodyModelMap["attachment_parameters"] = []interface{}{}
 	}
 	if _, ok := d.GetOk("notifications"); ok {
 		bodyModelMap["notifications"] = d.Get("notifications")
@@ -313,7 +370,7 @@ func resourceIbmSccProfileAttachmentCreate(context context.Context, d *schema.Re
 	attachmentPrototype, response, err := securityandcompliancecenterapiClient.CreateAttachmentWithContext(context, createAttachmentOptions)
 	if err != nil {
 		log.Printf("[DEBUG] CreateAttachmentWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateAttachmentWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("CreateAttachmentWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s/%s", instance_id, *createAttachmentOptions.ProfileID, *attachmentPrototype.Attachments[0].ID))
@@ -345,25 +402,25 @@ func resourceIbmSccProfileAttachmentRead(context context.Context, d *schema.Reso
 			return nil
 		}
 		log.Printf("[DEBUG] GetProfileAttachmentWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetProfileAttachmentWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetProfileAttachmentWithContext failed %s\n%s", err, response))
 	}
 
 	if err = d.Set("instance_id", parts[0]); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting instance_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting instance_id: %s", err))
 	}
 	if !core.IsNil(attachmentItem.ID) {
 		if err = d.Set("profile_attachment_id", attachmentItem.ID); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting profile_id: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting profile_id: %s", err))
 		}
 	}
 	if !core.IsNil(attachmentItem.ProfileID) {
 		if err = d.Set("profile_id", attachmentItem.ProfileID); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting profile_id: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting profile_id: %s", err))
 		}
 	}
 	if !core.IsNil(attachmentItem.AccountID) {
 		if err = d.Set("account_id", attachmentItem.AccountID); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting account_id: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting account_id: %s", err))
 		}
 	}
 	if !core.IsNil(attachmentItem.Scope) {
@@ -376,37 +433,37 @@ func resourceIbmSccProfileAttachmentRead(context context.Context, d *schema.Reso
 			scope = append(scope, scopeItemMap)
 		}
 		if err = d.Set("scope", scope); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting scope: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting scope: %s", err))
 		}
 	}
 	if !core.IsNil(attachmentItem.CreatedOn) {
 		if err = d.Set("created_on", flex.DateTimeToString(attachmentItem.CreatedOn)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting created_on: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting created_on: %s", err))
 		}
 	}
 	if !core.IsNil(attachmentItem.CreatedBy) {
 		if err = d.Set("created_by", attachmentItem.CreatedBy); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting created_by: %s", err))
 		}
 	}
 	if !core.IsNil(attachmentItem.UpdatedOn) {
 		if err = d.Set("updated_on", flex.DateTimeToString(attachmentItem.UpdatedOn)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting updated_on: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting updated_on: %s", err))
 		}
 	}
 	if !core.IsNil(attachmentItem.UpdatedBy) {
 		if err = d.Set("updated_by", attachmentItem.UpdatedBy); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting updated_by: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting updated_by: %s", err))
 		}
 	}
 	if !core.IsNil(attachmentItem.Status) {
 		if err = d.Set("status", attachmentItem.Status); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting status: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting status: %s", err))
 		}
 	}
 	if !core.IsNil(attachmentItem.Schedule) {
 		if err = d.Set("schedule", attachmentItem.Schedule); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting schedule: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting schedule: %s", err))
 		}
 	}
 	if !core.IsNil(attachmentItem.Notifications) {
@@ -415,20 +472,22 @@ func resourceIbmSccProfileAttachmentRead(context context.Context, d *schema.Reso
 			return diag.FromErr(err)
 		}
 		if err = d.Set("notifications", []map[string]interface{}{notificationsMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting notifications: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting notifications: %s", err))
 		}
 	}
 	if !core.IsNil(attachmentItem.AttachmentParameters) {
-		attachmentParameters := []map[string]interface{}{}
+		attachmentParameters := &schema.Set{
+			F: attachmentParametersSchemaSetFunc("assessment_id", "parameter_name", "parameter_display_name", "parameter_type", "parameter_value"),
+		}
 		for _, attachmentParametersItem := range attachmentItem.AttachmentParameters {
 			attachmentParametersItemMap, err := resourceIbmSccProfileAttachmentAttachmentParameterPrototypeToMap(&attachmentParametersItem)
 			if err != nil {
 				return diag.FromErr(err)
 			}
-			attachmentParameters = append(attachmentParameters, attachmentParametersItemMap)
+			attachmentParameters.Add(attachmentParametersItemMap)
 		}
 		if err = d.Set("attachment_parameters", attachmentParameters); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting attachment_parameters: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting attachment_parameters: %s", err))
 		}
 	}
 	if !core.IsNil(attachmentItem.LastScan) {
@@ -437,27 +496,27 @@ func resourceIbmSccProfileAttachmentRead(context context.Context, d *schema.Reso
 			return diag.FromErr(err)
 		}
 		if err = d.Set("last_scan", []map[string]interface{}{lastScanMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting last_scan: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting last_scan: %s", err))
 		}
 	}
 	if !core.IsNil(attachmentItem.NextScanTime) {
 		if err = d.Set("next_scan_time", flex.DateTimeToString(attachmentItem.NextScanTime)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting next_scan_time: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting next_scan_time: %s", err))
 		}
 	}
 	if !core.IsNil(attachmentItem.Name) {
 		if err = d.Set("name", attachmentItem.Name); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting name: %s", err))
 		}
 	}
 	if !core.IsNil(attachmentItem.Description) {
 		if err = d.Set("description", attachmentItem.Description); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting description: %s", err))
 		}
 	}
 	if !core.IsNil(attachmentItem.ID) {
 		if err = d.Set("attachment_id", attachmentItem.ID); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting attachment_id: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting attachment_id: %s", err))
 		}
 	}
 
@@ -484,7 +543,7 @@ func resourceIbmSccProfileAttachmentUpdate(context context.Context, d *schema.Re
 	hasChange := false
 
 	if d.HasChange("profile_id") {
-		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
+		return diag.FromErr(flex.FmtErrorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
 			" The resource must be re-created to update this property.", "profile_id"))
 	}
 
@@ -503,12 +562,17 @@ func resourceIbmSccProfileAttachmentUpdate(context context.Context, d *schema.Re
 		hasChange = true
 	}
 
-	if d.HasChange("attachment_item") {
-		attachmentItem, err := resourceIbmSccProfileAttachmentMapToAttachmentItem(d.Get("attachment_item.0").(map[string]interface{}))
-		if err != nil {
-			return diag.FromErr(err)
+	if d.HasChange("attachment_parameters") {
+		attachmentItems := d.Get("attachment_parameters")
+		attachmentParameters := []securityandcompliancecenterapiv3.AttachmentParameterPrototype{}
+		for _, attachmentParametersItem := range attachmentItems.(*schema.Set).List() {
+			attachmentParametersItemModel, err := resourceIbmSccProfileAttachmentMapToAttachmentParameterPrototype(attachmentParametersItem.(map[string]interface{}))
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			attachmentParameters = append(attachmentParameters, *attachmentParametersItemModel)
 		}
-		replaceProfileAttachmentOptions.SetAttachmentID(*attachmentItem.ID)
+		replaceProfileAttachmentOptions.SetAttachmentParameters(attachmentParameters)
 		hasChange = true
 	}
 
@@ -526,8 +590,14 @@ func resourceIbmSccProfileAttachmentUpdate(context context.Context, d *schema.Re
 		if replaceProfileAttachmentOptions.Name == nil {
 			replaceProfileAttachmentOptions.SetName(d.Get("name").(string))
 		}
+		if replaceProfileAttachmentOptions.Status == nil {
+			replaceProfileAttachmentOptions.SetStatus(d.Get("status").(string))
+		}
 		if replaceProfileAttachmentOptions.Schedule == nil {
 			replaceProfileAttachmentOptions.SetSchedule(d.Get("schedule").(string))
+		}
+		if replaceProfileAttachmentOptions.Description == nil {
+			replaceProfileAttachmentOptions.SetDescription(d.Get("description").(string))
 		}
 		if replaceProfileAttachmentOptions.Notifications == nil {
 			notificationsItem := d.Get("notifications.0").(map[string]interface{})
@@ -536,6 +606,9 @@ func resourceIbmSccProfileAttachmentUpdate(context context.Context, d *schema.Re
 				return diag.FromErr(err)
 			}
 			replaceProfileAttachmentOptions.SetNotifications(updateNotifications)
+		}
+		if replaceProfileAttachmentOptions.Status == nil {
+			replaceProfileAttachmentOptions.SetSchedule(d.Get("status").(string))
 		}
 		if len(replaceProfileAttachmentOptions.Scope) == 0 {
 			scope := []securityandcompliancecenterapiv3.MultiCloudScope{}
@@ -551,7 +624,7 @@ func resourceIbmSccProfileAttachmentUpdate(context context.Context, d *schema.Re
 		_, response, err := securityandcompliancecenterapiClient.ReplaceProfileAttachmentWithContext(context, replaceProfileAttachmentOptions)
 		if err != nil {
 			log.Printf("[DEBUG] ReplaceProfileAttachmentWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("ReplaceProfileAttachmentWithContext failed %s\n%s", err, response))
+			return diag.FromErr(flex.FmtErrorf("ReplaceProfileAttachmentWithContext failed %s\n%s", err, response))
 		}
 	}
 
@@ -578,7 +651,7 @@ func resourceIbmSccProfileAttachmentDelete(context context.Context, d *schema.Re
 	_, response, err := securityandcompliancecenterapiClient.DeleteProfileAttachmentWithContext(context, deleteProfileAttachmentOptions)
 	if err != nil {
 		log.Printf("[DEBUG] DeleteProfileAttachmentWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteProfileAttachmentWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("DeleteProfileAttachmentWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId("")
@@ -614,13 +687,15 @@ func resourceIbmSccProfileAttachmentMapToAttachmentsPrototype(modelMap map[strin
 		model.Notifications = NotificationsModel
 	}
 	attachmentParameters := []securityandcompliancecenterapiv3.AttachmentParameterPrototype{}
-	for _, attachmentParametersItem := range modelMap["attachment_parameters"].([]interface{}) {
-		if attachmentParametersItem != nil {
-			attachmentParametersItemModel, err := resourceIbmSccProfileAttachmentMapToAttachmentParameterPrototype(attachmentParametersItem.(map[string]interface{}))
-			if err != nil {
-				return model, err
+	if modelMap["attachment_parameters"] != nil {
+		for _, attachmentParametersItem := range modelMap["attachment_parameters"].(*schema.Set).List() {
+			if attachmentParametersItem != nil {
+				attachmentParametersItemModel, err := resourceIbmSccProfileAttachmentMapToAttachmentParameterPrototype(attachmentParametersItem.(map[string]interface{}))
+				if err != nil {
+					return model, err
+				}
+				attachmentParameters = append(attachmentParameters, *attachmentParametersItemModel)
 			}
-			attachmentParameters = append(attachmentParameters, *attachmentParametersItemModel)
 		}
 	}
 	model.AttachmentParameters = attachmentParameters
@@ -814,6 +889,7 @@ func resourceIbmSccProfileAttachmentMapToLastScan(modelMap map[string]interface{
 
 func resourceIbmSccProfileAttachmentMapToAttachmentPrototype(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.CreateAttachmentOptions, error) {
 	model := &securityandcompliancecenterapiv3.CreateAttachmentOptions{}
+	model.SetInstanceID(modelMap["instance_id"].(string))
 	if modelMap["profile_id"] != nil && modelMap["profile_id"].(string) != "" {
 		model.ProfileID = core.StringPtr(modelMap["profile_id"].(string))
 	}
@@ -824,7 +900,6 @@ func resourceIbmSccProfileAttachmentMapToAttachmentPrototype(modelMap map[string
 	}
 	attachments = append(attachments, *attachmentsItemModel)
 	model.Attachments = attachments
-	model.SetInstanceID(modelMap["instance_id"].(string))
 	return model, nil
 }
 
@@ -879,22 +954,22 @@ func resourceIbmSccProfileAttachmentFailedControlsToMap(model *securityandcompli
 func resourceIbmSccProfileAttachmentAttachmentParameterPrototypeToMap(model *securityandcompliancecenterapiv3.AttachmentParameterPrototype) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.AssessmentType != nil {
-		modelMap["assessment_type"] = model.AssessmentType
+		modelMap["assessment_type"] = flex.StringValue(model.AssessmentType)
 	}
 	if model.AssessmentID != nil {
-		modelMap["assessment_id"] = model.AssessmentID
+		modelMap["assessment_id"] = flex.StringValue(model.AssessmentID)
 	}
 	if model.ParameterName != nil {
-		modelMap["parameter_name"] = model.ParameterName
-	}
-	if model.ParameterValue != nil {
-		modelMap["parameter_value"] = model.ParameterValue
+		modelMap["parameter_name"] = flex.StringValue(model.ParameterName)
 	}
 	if model.ParameterDisplayName != nil {
-		modelMap["parameter_display_name"] = model.ParameterDisplayName
+		modelMap["parameter_display_name"] = flex.StringValue(model.ParameterDisplayName)
 	}
 	if model.ParameterType != nil {
-		modelMap["parameter_type"] = model.ParameterType
+		modelMap["parameter_type"] = flex.StringValue(model.ParameterType)
+	}
+	if model.ParameterValue != nil {
+		modelMap["parameter_value"] = flex.StringValue(model.ParameterValue)
 	}
 	return modelMap, nil
 }
