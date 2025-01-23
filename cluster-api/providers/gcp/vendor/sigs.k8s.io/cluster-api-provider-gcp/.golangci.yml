@@ -14,7 +14,7 @@ linters:
     - errcheck
     - errchkjson
     - errname
-    - exportloopref
+    - copyloopvar
     - fatcontext
     - ginkgolinter
     - gocheckcompilerdirectives
@@ -149,6 +149,12 @@ issues:
         - gosec
       text: "G108: Profiling endpoint is automatically exposed on /debug/pprof"
     - linters:
+        - gosec
+      text: "G115: integer overflow conversion int -> int32"
+    - linters:
+        - govet
+      text: "printf: non-constant format string in call to sigs.k8s.io/cluster-api/util/conditions.MarkFalse"
+    - linters:
         - revive
       text: "exported: exported method .*\\.(Reconcile|SetupWithManager|SetupWebhookWithManager) should have comment or be unexported"
     - linters:
@@ -190,6 +196,11 @@ issues:
     - linters:
         - gocritic
       text: "appendAssign: append result not assigned to the same slice"
+    # Specific exclude rules for deprecated fields that are still part of the codebase.
+    # These should be removed as the referenced deprecated item is removed from the project.
+    - linters:
+        - staticcheck
+      text: "SA1019: (s.GCPManagedControlPlane.Status.CurrentVersion|s.scope.GCPManagedControlPlane.Status.CurrentVersion|spec.ControlPlaneVersion|s.GCPManagedControlPlane.Spec.ControlPlaneVersion|s.scope.GCPManagedControlPlane.Spec.ControlPlaneVersion) is deprecated: This field will soon be removed and you are expected to use Version instead."
 
 run:
   timeout: 10m
