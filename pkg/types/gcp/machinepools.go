@@ -9,6 +9,9 @@ type FeatureSwitch string
 // applicable when ConfidentialCompute is Enabled.
 type OnHostMaintenanceType string
 
+// ConfidentialComputePolicy indicates the setting for the ConfidentialCompute feature.
+type ConfidentialComputePolicy string
+
 const (
 	// PDSSD is the constant string representation for persistent disk ssd disk types.
 	PDSSD = "pd-ssd"
@@ -65,6 +68,15 @@ const (
 
 	// OnHostMaintenanceTerminate indicates that the OnHostMaintenance feature is set to Terminate.
 	OnHostMaintenanceTerminate OnHostMaintenanceType = "Terminate"
+
+	// ConfidentialComputePolicySEV indicates that the ConfidentialCompute feature is set to AMDEncryptedVirtualization.
+	ConfidentialComputePolicySEV ConfidentialComputePolicy = "AMDEncryptedVirtualization"
+
+	// ConfidentialComputePolicySEVSNP indicates that the ConfidentialCompute feature is set to AMDEncryptedVirtualizationNestedPaging.
+	ConfidentialComputePolicySEVSNP ConfidentialComputePolicy = "AMDEncryptedVirtualizationNestedPaging"
+
+	// ConfidentialComputePolicyTDX indicates that the ConfidentialCompute feature is set to IntelTrustedDomainExtensions.
+	ConfidentialComputePolicyTDX ConfidentialComputePolicy = "IntelTrustedDomainExtensions"
 )
 
 // MachinePool stores the configuration for a machine pool installed on GCP.
@@ -111,12 +123,28 @@ type MachinePool struct {
 	// +optional
 	OnHostMaintenance string `json:"onHostMaintenance,omitempty"`
 
-	// ConfidentialCompute Defines whether the instance should have confidential compute enabled.
-	// If enabled OnHostMaintenance is required to be set to "Terminate".
-	// If omitted, the platform chooses a default, which is subject to change over time, currently that default is false.
+	// confidentialCompute is an optional field defining whether the instance should have
+	// Confidential Computing enabled or not, and the Confidential Computing technology of choice.
+	//     With Disabled, Confidential Computing is disabled.
+	//     With Enabled, Confidential Computing is enabled with no preference on the
+	// Confidential Computing technology. The platform chooses a default i.e. AMD SEV,
+	// which is subject to change over time.
+	//     With AMDEncryptedVirtualization, Confidential Computing is enabled with
+	// AMD Secure Encrypted Virtualization (AMD SEV).
+	//     With AMDEncryptedVirtualizationNestedPaging, Confidential Computing is
+	// enabled with AMD Secure Encrypted Virtualization Secure Nested Paging
+	// (AMD SEV-SNP).
+	//     With IntelTrustedDomainExtensions, Confidential Computing is enabled with
+	// Intel Trusted Domain Extensions (Intel TDX).
+	//     If any value other than Disabled is set, a machine type and region that supports
+	// Confidential Computing must be specified. Machine series and regions supporting
+	// Confidential Computing technologies can be checked at
+	// https://cloud.google.com/confidential-computing/confidential-vm/docs/supported-configurations#machine-type-cpu-zone
+	//     If any value other than Disabled is set, onHostMaintenance is required to be set
+	// to "Terminate".
 	// +kubebuilder:default="Disabled"
 	// +default="Disabled"
-	// +kubebuilder:validation:Enum=Enabled;Disabled
+	// +kubebuilder:validation:Enum="";Enabled;Disabled;AMDEncryptedVirtualization;AMDEncryptedVirtualizationNestedPaging;IntelTrustedDomainExtensions
 	// +optional
 	ConfidentialCompute string `json:"confidentialCompute,omitempty"`
 
