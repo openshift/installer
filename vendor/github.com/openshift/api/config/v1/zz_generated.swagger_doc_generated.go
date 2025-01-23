@@ -571,53 +571,6 @@ func (ImageLabel) SwaggerDoc() map[string]string {
 	return map_ImageLabel
 }
 
-var map_ClusterMonitoring = map[string]string{
-	"":         "ClusterMonitoring is the Custom Resource object which holds the current status of Cluster Monitoring Operator. CMO is a central component of the monitoring stack.\n\nCompatibility level 4: No compatibility is provided, the API can change at any point for any reason. These capabilities should not be used by applications needing long term support. ClusterMonitoring is the Schema for the Cluster Monitoring Operators API",
-	"metadata": "metadata is the standard object metadata.",
-	"spec":     "spec holds user configuration for the Cluster Monitoring Operator",
-	"status":   "status holds observed values from the cluster. They may not be overridden.",
-}
-
-func (ClusterMonitoring) SwaggerDoc() map[string]string {
-	return map_ClusterMonitoring
-}
-
-var map_ClusterMonitoringList = map[string]string{
-	"":         "Compatibility level 4: No compatibility is provided, the API can change at any point for any reason. These capabilities should not be used by applications needing long term support.",
-	"metadata": "metadata is the standard list metadata.",
-	"items":    "items is a list of ClusterMonitoring",
-}
-
-func (ClusterMonitoringList) SwaggerDoc() map[string]string {
-	return map_ClusterMonitoringList
-}
-
-var map_ClusterMonitoringSpec = map[string]string{
-	"":            "ClusterMonitoringSpec defines the desired state of Cluster Monitoring Operator",
-	"userDefined": "userDefined set the deployment mode for user-defined monitoring in addition to the default platform monitoring.",
-}
-
-func (ClusterMonitoringSpec) SwaggerDoc() map[string]string {
-	return map_ClusterMonitoringSpec
-}
-
-var map_ClusterMonitoringStatus = map[string]string{
-	"": "MonitoringOperatorStatus defines the observed state of MonitoringOperator",
-}
-
-func (ClusterMonitoringStatus) SwaggerDoc() map[string]string {
-	return map_ClusterMonitoringStatus
-}
-
-var map_UserDefinedMonitoring = map[string]string{
-	"":     "UserDefinedMonitoring config for user-defined projects.",
-	"mode": "mode defines the different configurations of UserDefinedMonitoring Valid values are Disabled and NamespaceIsolated Disabled disables monitoring for user-defined projects. This restricts the default monitoring stack, installed in the openshift-monitoring project, to monitor only platform namespaces, which prevents any custom monitoring configurations or resources from being applied to user-defined namespaces. NamespaceIsolated enables monitoring for user-defined projects with namespace-scoped tenancy. This ensures that metrics, alerts, and monitoring data are isolated at the namespace level.",
-}
-
-func (UserDefinedMonitoring) SwaggerDoc() map[string]string {
-	return map_UserDefinedMonitoring
-}
-
 var map_ClusterOperator = map[string]string{
 	"":         "ClusterOperator is the Custom Resource object which holds the current state of an operator. This object is used by operators to convey their state to the rest of the cluster.\n\nCompatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).",
 	"metadata": "metadata is the standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",

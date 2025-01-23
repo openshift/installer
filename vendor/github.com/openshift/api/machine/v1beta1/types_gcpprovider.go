@@ -65,6 +65,15 @@ const (
 	ConfidentialComputePolicyDisabled ConfidentialComputePolicy = "Disabled"
 )
 
+type ConfidentialVMTechnology string
+
+const (
+	// ConfidentialVMTechSEV sets AMD SEV as the VM instance's confidential computing technology of choice.
+	ConfidentialVMTechSEV ConfidentialVMTechnology = "sev"
+	// ConfidentialVMTechSEVSNP sets AMD SEV-SNP as the VM instance's confidential computing technology of choice.
+	ConfidentialVMTechSEVSNP ConfidentialVMTechnology = "sev-snp"
+)
+
 // GCPMachineProviderSpec is the type that will be embedded in a Machine.Spec.ProviderSpec field
 // for an GCP virtual machine. It is used by the GCP machine actuator to create a single Machine.
 // Compatibility level 2: Stable within a major release for a minimum of 9 months or 3 minor releases (whichever is longer).
@@ -146,9 +155,16 @@ type GCPMachineProviderSpec struct {
 	// confidentialCompute Defines whether the instance should have confidential compute enabled.
 	// If enabled OnHostMaintenance is required to be set to "Terminate".
 	// If omitted, the platform chooses a default, which is subject to change over time, currently that default is false.
+	// If confidentialInstanceType is configured, even if confidentialCompute is Disabled, a confidential compute instance will be configured.
 	// +kubebuilder:validation:Enum=Enabled;Disabled
 	// +optional
 	ConfidentialCompute ConfidentialComputePolicy `json:"confidentialCompute,omitempty"`
+	// confidentialInstanceType determines the required type of confidential computing technology.
+	// confidentialInstanceType will preceed confidentialCompute. That is, if confidentialCompute is "Disabled" but a valid confidentialInstanceType is specified, a confidential instance will be configured.
+	// If confidentialInstanceType isn't set and confidentialCompute is "Enabled" the platform will set the default, which is subject to change over time. Currently the default is "sev" for "c2d", "c3d", and "n2d" machineTypes. For the other machine cases, a valid confidentialInstanceType must be specified.
+	// +kubebuilder:validation:Enum=sev;sev-snp;
+	// +optional
+	ConfidentialInstanceType ConfidentialVMTechnology `json:"confidentialInstanceType,omitempty"`
 
 	// resourceManagerTags is an optional list of tags to apply to the GCP resources created for
 	// the cluster. See https://cloud.google.com/resource-manager/docs/tags/tags-overview for
