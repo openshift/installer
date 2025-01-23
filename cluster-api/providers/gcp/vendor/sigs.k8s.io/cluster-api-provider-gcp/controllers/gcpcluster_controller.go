@@ -74,27 +74,27 @@ func (r *GCPClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 
 	clusterToInfraFn := util.ClusterToInfrastructureMapFunc(ctx, infrav1.GroupVersion.WithKind("GCPCluster"), mgr.GetClient(), &infrav1.GCPCluster{})
 	if err = c.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(func(mapCtx context.Context, o client.Object) []reconcile.Request {
-			requests := clusterToInfraFn(mapCtx, o)
-			if requests == nil {
-				return nil
-			}
+		source.Kind[client.Object](mgr.GetCache(), &clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(func(mapCtx context.Context, o client.Object) []reconcile.Request {
+				requests := clusterToInfraFn(mapCtx, o)
+				if requests == nil {
+					return nil
+				}
 
-			gcpCluster := &infrav1.GCPCluster{}
-			if err := r.Get(ctx, requests[0].NamespacedName, gcpCluster); err != nil {
-				log.V(4).Error(err, "Failed to get GCP cluster")
-				return nil
-			}
+				gcpCluster := &infrav1.GCPCluster{}
+				if err := r.Get(ctx, requests[0].NamespacedName, gcpCluster); err != nil {
+					log.V(4).Error(err, "Failed to get GCP cluster")
+					return nil
+				}
 
-			if annotations.IsExternallyManaged(gcpCluster) {
-				log.V(4).Info("GCPCluster is externally managed, skipping mapping.")
-				return nil
-			}
-			return requests
-		}),
-		predicates.ClusterUnpaused(log),
-	); err != nil {
+				if annotations.IsExternallyManaged(gcpCluster) {
+					log.V(4).Info("GCPCluster is externally managed, skipping mapping.")
+					return nil
+				}
+				return requests
+			}),
+			predicates.ClusterUnpaused(log),
+		)); err != nil {
 		return errors.Wrap(err, "failed adding a watch for ready clusters")
 	}
 
