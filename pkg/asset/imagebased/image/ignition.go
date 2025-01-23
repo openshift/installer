@@ -47,6 +47,7 @@ type ibiConfigurationFile struct {
 	ExtraPartitionNumber uint     `json:"extraPartitionNumber,omitempty"`
 	ExtraPartitionStart  string   `json:"extraPartitionStart,omitempty"`
 	InstallationDisk     string   `json:"installationDisk"`
+	ReleaseRegistry      string   `json:"releaseRegistry,omitempty"`
 	SeedImage            string   `json:"seedImage"`
 	SeedVersion          string   `json:"seedVersion"`
 	Shutdown             bool     `json:"shutdown,omitempty"`
@@ -96,6 +97,7 @@ func (i *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 		ExtraPartitionNumber: ibiConfig.ExtraPartitionNumber,
 		ExtraPartitionStart:  ibiConfig.ExtraPartitionStart,
 		InstallationDisk:     ibiConfig.InstallationDisk,
+		ReleaseRegistry:      ibiConfig.ReleaseRegistry,
 		SeedVersion:          ibiConfig.SeedVersion,
 		SeedImage:            ibiConfig.SeedImage,
 		Shutdown:             ibiConfig.Shutdown,
