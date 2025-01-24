@@ -502,13 +502,22 @@ func validateClusterNetwork(n *types.Networking, cn *types.ClusterNetworkEntry, 
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("cidr"), cn.CIDR.String(), fmt.Sprintf("cluster network must not overlap with cluster network %d", i)))
 		}
 	}
-	if cn.HostPrefix < 0 {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "hostPrefix must be positive"))
-	}
+
 	// ignore hostPrefix if the plugin does not use it and has it unset
 	if pluginsUsingHostPrefix.Has(n.NetworkType) || (cn.HostPrefix != 0) {
-		if ones, bits := cn.CIDR.Mask.Size(); cn.HostPrefix < int32(ones) {
+		if cn.HostPrefix < 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "hostPrefix must be positive"))
+		} else if ones, bits := cn.CIDR.Mask.Size(); cn.HostPrefix < int32(ones) {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "cluster network host subnetwork prefix must not be larger size than CIDR "+cn.CIDR.String()))
+		} else if bits == 32 {
+			// setting different value for clusternetwork CIDR host prefix is not allowed
+			// we only need to check IPv4 as IPv6 prefix must be 64
+			for _, acn := range n.ClusterNetwork[0:idx] {
+				if acn.CIDR.IP.To4() != nil && cn.HostPrefix != acn.HostPrefix {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "cluster network host subnetwork prefix must be the same value for IPv4 networks"))
+					break
+				}
+			}
 		} else if bits == 128 && cn.HostPrefix != 64 {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "cluster network host subnetwork prefix must be 64 for IPv6 networks"))
 		}
