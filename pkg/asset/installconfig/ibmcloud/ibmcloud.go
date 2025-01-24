@@ -1,7 +1,9 @@
 package ibmcloud
 
 import (
+	"context"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
@@ -9,8 +11,8 @@ import (
 	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/pkg/errors"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
-	"github.com/openshift/installer/pkg/types/ibmcloud/validation"
 )
 
 const (
@@ -19,9 +21,28 @@ const (
 
 // Platform collects IBM Cloud-specific configuration.
 func Platform() (*ibmcloud.Platform, error) {
-	region, err := selectRegion()
+	// Since installconfig has not be created yet, attempt to setup a new IBM Cloud Client.
+	// Default will rely on Public IBM Cloud Service Endpoints, but for Region collection, we accept an environment variable to override the IBM Cloud Global Catalog Service endpoint, as the list of endpoint overrides would be specified within the installconfig.
+	endpoints := make([]configv1.IBMCloudServiceEndpoint, 0)
+	if gcEndpoint := os.Getenv(ibmcloud.IBMCloudServiceGlobalCatalogVar); gcEndpoint != "" {
+		endpoints = append(endpoints, configv1.IBMCloudServiceEndpoint{
+			Name: configv1.IBMCloudServiceGlobalCatalog,
+			URL:  gcEndpoint,
+		})
+	}
+
+	client, err := NewClient(endpoints)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed creating ibmcloud client for region retrieval: %w", err)
+	}
+	regions, err := client.GetIBMCloudRegions(context.TODO())
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve ibmcloud regions: %w", err)
+	}
+
+	region, err := selectRegion(regions)
+	if err != nil {
+		return nil, fmt.Errorf("failed to survey desired ibmcloud region: %w", err)
 	}
 
 	return &ibmcloud.Platform{
@@ -29,10 +50,10 @@ func Platform() (*ibmcloud.Platform, error) {
 	}, nil
 }
 
-func selectRegion() (string, error) {
-	longRegions := make([]string, 0, len(validation.Regions))
-	shortRegions := make([]string, 0, len(validation.Regions))
-	for id, location := range validation.Regions {
+func selectRegion(regions map[string]string) (string, error) {
+	longRegions := make([]string, 0, len(regions))
+	shortRegions := make([]string, 0, len(regions))
+	for id, location := range regions {
 		longRegions = append(longRegions, fmt.Sprintf("%s (%s)", id, location))
 		shortRegions = append(shortRegions, id)
 	}
@@ -57,7 +78,7 @@ func selectRegion() (string, error) {
 			Prompt: &survey.Select{
 				Message: "Region",
 				Help:    "The IBM Cloud region to be used for installation.",
-				Default: fmt.Sprintf("%s (%s)", defaultRegion, validation.Regions[defaultRegion]),
+				Default: fmt.Sprintf("%s (%s)", defaultRegion, regions[defaultRegion]),
 				Options: longRegions,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
