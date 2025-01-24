@@ -20,6 +20,7 @@ import (
 	"github.com/IBM/networking-go-sdk/dnssvcsv1"
 	"github.com/IBM/networking-go-sdk/dnszonesv1"
 	"github.com/IBM/networking-go-sdk/zonesv1"
+	"github.com/IBM/platform-services-go-sdk/globalcatalogv1"
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	"github.com/IBM/platform-services-go-sdk/iampolicymanagementv1"
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
@@ -59,6 +60,7 @@ type API interface {
 	GetDNSZoneIDByName(ctx context.Context, name string, publish types.PublishingStrategy) (string, error)
 	GetDNSZones(ctx context.Context, publish types.PublishingStrategy) ([]responses.DNSZoneResponse, error)
 	GetEncryptionKey(ctx context.Context, keyCRN string) (*responses.EncryptionKeyResponse, error)
+	GetIBMCloudRegions(ctx context.Context) (map[string]string, error)
 	GetLoadBalancer(ctx context.Context, loadBalancerID string) (*vpcv1.LoadBalancer, error)
 	GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.ResourceGroup, error)
 	GetResourceGroup(ctx context.Context, nameOrID string) (*resourcemanagerv2.ResourceGroup, error)
@@ -76,6 +78,7 @@ type API interface {
 // Client makes calls to the IBM Cloud API.
 type Client struct {
 	apiKey        string
+	catalogAPI    *globalcatalogv1.GlobalCatalogV1
 	managementAPI *resourcemanagerv2.ResourceManagerV2
 	controllerAPI *resourcecontrollerv2.ResourceControllerV2
 	vpcAPI        *vpcv1.VpcV1
@@ -163,6 +166,7 @@ func NewClient(endpoints []configv1.IBMCloudServiceEndpoint) (*Client, error) {
 
 func (c *Client) loadSDKServices() error {
 	servicesToLoad := []func() error{
+		c.loadGlobalCatalogAPI,
 		c.loadResourceManagementAPI,
 		c.loadResourceControllerAPI,
 		c.loadVPCV1API,
@@ -753,6 +757,68 @@ func (c *Client) GetEncryptionKey(ctx context.Context, keyCRN string) (*response
 	return keyResponse, nil
 }
 
+// GetIBMCloudRegions gets the Regions for IBM Cloud, mapped by shortname to descriptive name.
+func (c *Client) GetIBMCloudRegions(ctx context.Context) (map[string]string, error) {
+	regions := make(map[string]string, 0)
+	// Global Catalog is used to collect the IBM Cloud Regions, via multiple commands.
+	geographyOptions := c.catalogAPI.NewListCatalogEntriesOptions()
+	geographyOptions.SetQ("kind:geography")
+
+	geographyResult, _, err := c.catalogAPI.ListCatalogEntriesWithContext(ctx, geographyOptions)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list ibmcloud georaphic regions: %w", err)
+	}
+
+	countryList, err := c.GetChildrenFromParents(ctx, geographyResult.Resources, "country")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list ibmcloud countrys: %w", err)
+	}
+	metroList, err := c.GetChildrenFromParents(ctx, countryList, "metro")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list ibmcloud metros: %w", err)
+	}
+
+	regionList, err := c.GetChildrenFromParents(ctx, metroList, "region")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list ibmcloud regions: %w", err)
+	}
+
+	for _, child := range regionList {
+		if child.ID == nil {
+			continue
+		}
+		var description string
+		// Attempt to collect the descriptive Region name, although this is based on language, so leaves room for improvement.
+		if _, ok := child.OverviewUI["en"]; ok {
+			description = *child.OverviewUI["en"].Description
+		}
+		regions[*child.ID] = description
+	}
+
+	return regions, nil
+}
+
+// GetChildrenFromParents fetches the children from the IBM Catalog using the given list of parents and the specified kind.
+func (c *Client) GetChildrenFromParents(ctx context.Context, parentList []globalcatalogv1.CatalogEntry, kind string) ([]globalcatalogv1.CatalogEntry, error) {
+	var childrenList []globalcatalogv1.CatalogEntry
+
+	for num, parent := range parentList {
+		if parent.ID == nil {
+			fmt.Printf("skipping parent num %d of type %s due to unexpected nil ID\n", num, kind)
+			continue
+		}
+
+		childrenOptions := c.catalogAPI.NewGetChildObjectsOptions(*parent.ID, kind)
+		childrenOptions.SetInclude("*")
+		childrenResult, _, err := c.catalogAPI.GetChildObjectsWithContext(ctx, childrenOptions)
+		if err != nil {
+			return childrenList, fmt.Errorf("failed to retrieve child entries of type %s for %s: %w", kind, *parent.ID, err)
+		}
+		childrenList = append(childrenList, childrenResult.Resources...)
+	}
+	return childrenList, nil
+}
+
 // GetLoadBalancer gets a VPC Load Balancer by ID.
 func (c *Client) GetLoadBalancer(ctx context.Context, loadBalancerID string) (*vpcv1.LoadBalancer, error) {
 	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
@@ -992,6 +1058,25 @@ func (c *Client) getVPCRegions(ctx context.Context) ([]vpcv1.Region, error) {
 	}
 
 	return listRegionsResponse.Regions, nil
+}
+
+func (c *Client) loadGlobalCatalogAPI() error {
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
+	if err != nil {
+		return fmt.Errorf("failed generating authenticator for global catalog api: %w", err)
+	}
+	options := &globalcatalogv1.GlobalCatalogV1Options{
+		Authenticator: authenticator,
+	}
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceGlobalCatalog, c.serviceEndpoints); overrideURL != "" {
+		options.URL = overrideURL
+	}
+	globalCatalogV1Service, err := globalcatalogv1.NewGlobalCatalogV1(options)
+	if err != nil {
+		return fmt.Errorf("failed creating global catalog api service: %w", err)
+	}
+	c.catalogAPI = globalCatalogV1Service
+	return nil
 }
 
 func (c *Client) loadResourceManagementAPI() error {
