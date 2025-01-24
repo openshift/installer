@@ -8,10 +8,9 @@ import (
 	"github.com/openshift/installer/pkg/types/nutanix"
 )
 
-const testClusterName = "test-cluster"
-
 func defaultPlatform() *nutanix.Platform {
-	return &nutanix.Platform{}
+	timeout := nutanix.DefaultPrismAPICallTimeout
+	return &nutanix.Platform{PrismAPICallTimeout: &timeout}
 }
 
 func TestSetPlatformDefaults(t *testing.T) {

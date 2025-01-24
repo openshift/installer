@@ -188,6 +188,16 @@ func TestValidatePlatform(t *testing.T) {
 			}(),
 			expectedError: `^test-path\.prismCentral\.endpoint\.address: Invalid value: "https://test-pc": must be the domain name or IP address of the Prism Central$`,
 		},
+		{
+			name: "prismAPICallTimeout must be a positive integer",
+			platform: func() *nutanix.Platform {
+				p := validPlatform()
+				timeout := -1
+				p.PrismAPICallTimeout = &timeout
+				return p
+			}(),
+			expectedError: `^test-path\.prismAPICallTimeout: Invalid value: -1: must be a positive integer value$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

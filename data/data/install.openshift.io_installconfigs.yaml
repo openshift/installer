@@ -4239,6 +4239,11 @@ spec:
                       PreloadedOSImageName uses the named preloaded RHCOS image from PC/PE,
                       instead of create and upload a new image for each cluster.
                     type: string
+                  prismAPICallTimeout:
+                    description: |-
+                      PrismAPICallTimeout sets the timeout (in minutes) for the prism-api calls.
+                      If not configured, the default value of 10 minutes will be used as the prism-api call timeout.
+                    type: integer
                   prismCentral:
                     description: |-
                       PrismCentral is the endpoint (address and port) and credentials to
