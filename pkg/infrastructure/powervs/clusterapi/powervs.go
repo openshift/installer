@@ -138,7 +138,6 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 
 	// Step 3: Add to security group rules
 	for port := range missingPorts {
-		port := port // TODO: remove when using golang 1.22+
 		rule = &vpcv1.SecurityGroupRulePrototype{
 			Direction: ptr.To("inbound"),
 			Protocol:  ptr.To("tcp"),
