@@ -108,6 +108,10 @@ type InstallationConfig struct {
 	// PullSecret is the secret to use when pulling images.
 	PullSecret string `json:"pullSecret"`
 
+	// ReleaseRegistry is the container image registry that hosts the OpenShift release-image content.
+	// +optional
+	ReleaseRegistry string `json:"releaseRegistry,omitempty"`
+
 	// SeedImage is the seed image to use for the installation. This image will be
 	// used to prepare the installation disk.
 	SeedImage string `json:"seedImage"`
