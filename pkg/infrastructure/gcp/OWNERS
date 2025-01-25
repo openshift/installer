@@ -2,6 +2,6 @@
 # This file just uses aliases defined in OWNERS_ALIASES.
 
 approvers:
-  - nutanix-approvers
+  - gcp-approvers
 reviewers:
-  - nutanix-reviewers
+  - gcp-reviewers

@@ -2,6 +2,6 @@
 # This file just uses aliases defined in OWNERS_ALIASES.
 
 approvers:
-  - nutanix-approvers
+  - powervs-approvers
 reviewers:
-  - nutanix-reviewers
+  - powervs-reviewers
