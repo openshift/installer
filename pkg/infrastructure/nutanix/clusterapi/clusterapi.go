@@ -37,6 +37,10 @@ func (p Provider) PreProvision(ctx context.Context, in infracapi.PreProvisionInp
 	// load the rhcos image to prism_central.
 
 	ic := in.InstallConfig.Config
+
+	// Set the prismAPICallTimeoutDuration
+	nutanixtypes.SetPrismAPICallTimeoutDuration(ic.Platform.Nutanix)
+
 	nutanixCl, err := nutanixtypes.CreateNutanixClientFromPlatform(ic.Platform.Nutanix)
 	if err != nil {
 		return fmt.Errorf("failed to create nutanix client: %w", err)
@@ -130,6 +134,10 @@ func (p Provider) PreProvision(ctx context.Context, in infracapi.PreProvisionInp
 // Load the ignition iso image to prism_central.
 func (p Provider) Ignition(ctx context.Context, in infracapi.IgnitionInput) ([]*corev1.Secret, error) {
 	ic := in.InstallConfig.Config
+
+	// Set the prismAPICallTimeoutDuration
+	nutanixtypes.SetPrismAPICallTimeoutDuration(ic.Platform.Nutanix)
+
 	nutanixCl, err := nutanixtypes.CreateNutanixClientFromPlatform(ic.Platform.Nutanix)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create nutanix client: %w", err)
