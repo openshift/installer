@@ -351,6 +351,21 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 			PreferGo: true,
 		}
 
+		/* We don't have a good way to determine if an install is UPI or IPI
+		   Previously we were able to just say if there are no VIPs defined its UPI.
+		   It isn't documented _but_ you can set VIPs in a UPI scenario and the assisted installer
+		   exploits this. For our customers that are using UPI though there might be scenarios
+		   where the network is unavailable (probably related to NSX-T). To work around this issue
+		   as port group name is not required we are going to skip any network gathering functions in capi
+		   manifest creation.
+		*/
+
+		// if isVipDefined is true then this is most likely IPI perform network checks
+		isVipDefined := false
+		if len(platform.APIVIPs) >= 1 || len(platform.IngressVIPs) >= 1 {
+			isVipDefined = true
+		}
+
 		for _, v := range platform.VCenters {
 			// Defense against potential issues with assisted installer
 			// If the installer is unable to resolve vCenter there is a good possibility
@@ -372,17 +387,19 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 			ctx, cancel = context.WithTimeout(ctx, 60*time.Second)
 			defer cancel()
 
-			err = installConfig.VSphere.Networks(ctx, v, platform.FailureDomains)
-			if err != nil {
-				// If we are receiving an error as a Soap Fault this is caused by
-				// incorrect credentials and in the scenario of assisted installer
-				// the credentials are never valid. Since vCenter hostname is
-				// incorrect as well we shouldn't get this far.
-				if soap.IsSoapFault(err) {
-					logrus.Warn("authentication failure to vCenter, Cluster API machine manifests not created, cluster may not install")
-					return nil
+			if isVipDefined {
+				err = installConfig.VSphere.Networks(ctx, v, platform.FailureDomains)
+				if err != nil {
+					// If we are receiving an error as a Soap Fault this is caused by
+					// incorrect credentials and in the scenario of assisted installer
+					// the credentials are never valid. Since vCenter hostname is
+					// incorrect as well we shouldn't get this far.
+					if soap.IsSoapFault(err) {
+						logrus.Warn("authentication failure to vCenter, Cluster API machine manifests not created, cluster may not install")
+						return nil
+					}
+					return err
 				}
-				return err
 			}
 		}
 
