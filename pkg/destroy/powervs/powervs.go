@@ -103,6 +103,12 @@ type ClusterUninstaller struct {
 	cosInstanceID   string
 	dnsZoneID       string
 
+	// We should be searching by tag rather than by name.
+	searchByTag bool
+
+	// The user created the Service Instance previously.
+	siPreconfigured bool
+
 	errorTracker
 	pendingItemTracker
 }
@@ -110,9 +116,10 @@ type ClusterUninstaller struct {
 // New returns an IBMCloud destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
 	var (
-		bxClient *powervs.BxClient
-		APIKey   string
-		err      error
+		bxClient        *powervs.BxClient
+		APIKey          string
+		siPreconfigured bool
+		err             error
 	)
 
 	// We need to prompt for missing variables because NewPISession requires them!
@@ -146,6 +153,9 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		metadata.ClusterPlatformMetadata.PowerVS.VPCRegion = derivedVPCRegion
 	}
 
+	siPreconfigured = metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID != ""
+	logger.Debugf("powervs.New: siPreconfigured = %v", siPreconfigured)
+
 	return &ClusterUninstaller{
 		APIKey:             APIKey,
 		BaseDomain:         metadata.ClusterPlatformMetadata.PowerVS.BaseDomain,
@@ -161,6 +171,8 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		resourceGroupID:    metadata.ClusterPlatformMetadata.PowerVS.PowerVSResourceGroup,
 		ServiceGUID:        metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID,
 		TransitGatewayName: metadata.ClusterPlatformMetadata.PowerVS.TransitGatewayName,
+		searchByTag:        false, // @TODO Enable in the future
+		siPreconfigured:    siPreconfigured,
 	}, nil
 }
 
