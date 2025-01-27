@@ -390,7 +390,7 @@ func TestStoreFetchIdempotency(t *testing.T) {
 	tempDir := t.TempDir()
 
 	for i := 0; i < 2; i++ {
-		store, err := newStore(tempDir)
+		store, err := newStore(tempDir, false)
 		if !assert.NoError(t, err, "(loop %d) unexpected error creating store", i) {
 			t.Fatal()
 		}
