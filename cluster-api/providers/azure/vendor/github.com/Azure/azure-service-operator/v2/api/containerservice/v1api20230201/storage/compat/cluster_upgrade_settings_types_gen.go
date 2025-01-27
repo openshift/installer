@@ -4,7 +4,7 @@
 package compat
 
 import (
-	v20231001s "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/pkg/errors"
 )
@@ -17,7 +17,7 @@ type ClusterUpgradeSettings struct {
 }
 
 // AssignProperties_From_ClusterUpgradeSettings populates our ClusterUpgradeSettings from the provided source ClusterUpgradeSettings
-func (settings *ClusterUpgradeSettings) AssignProperties_From_ClusterUpgradeSettings(source *v20231001s.ClusterUpgradeSettings) error {
+func (settings *ClusterUpgradeSettings) AssignProperties_From_ClusterUpgradeSettings(source *storage.ClusterUpgradeSettings) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -54,13 +54,13 @@ func (settings *ClusterUpgradeSettings) AssignProperties_From_ClusterUpgradeSett
 }
 
 // AssignProperties_To_ClusterUpgradeSettings populates the provided destination ClusterUpgradeSettings from our ClusterUpgradeSettings
-func (settings *ClusterUpgradeSettings) AssignProperties_To_ClusterUpgradeSettings(destination *v20231001s.ClusterUpgradeSettings) error {
+func (settings *ClusterUpgradeSettings) AssignProperties_To_ClusterUpgradeSettings(destination *storage.ClusterUpgradeSettings) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
 
 	// OverrideSettings
 	if settings.OverrideSettings != nil {
-		var overrideSetting v20231001s.UpgradeOverrideSettings
+		var overrideSetting storage.UpgradeOverrideSettings
 		err := settings.OverrideSettings.AssignProperties_To_UpgradeOverrideSettings(&overrideSetting)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_UpgradeOverrideSettings() to populate field OverrideSettings")
@@ -91,8 +91,8 @@ func (settings *ClusterUpgradeSettings) AssignProperties_To_ClusterUpgradeSettin
 }
 
 type augmentConversionForClusterUpgradeSettings interface {
-	AssignPropertiesFrom(src *v20231001s.ClusterUpgradeSettings) error
-	AssignPropertiesTo(dst *v20231001s.ClusterUpgradeSettings) error
+	AssignPropertiesFrom(src *storage.ClusterUpgradeSettings) error
+	AssignPropertiesTo(dst *storage.ClusterUpgradeSettings) error
 }
 
 // Storage version of v1api20230202preview.UpgradeOverrideSettings
@@ -104,7 +104,7 @@ type UpgradeOverrideSettings struct {
 }
 
 // AssignProperties_From_UpgradeOverrideSettings populates our UpgradeOverrideSettings from the provided source UpgradeOverrideSettings
-func (settings *UpgradeOverrideSettings) AssignProperties_From_UpgradeOverrideSettings(source *v20231001s.UpgradeOverrideSettings) error {
+func (settings *UpgradeOverrideSettings) AssignProperties_From_UpgradeOverrideSettings(source *storage.UpgradeOverrideSettings) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -152,7 +152,7 @@ func (settings *UpgradeOverrideSettings) AssignProperties_From_UpgradeOverrideSe
 }
 
 // AssignProperties_To_UpgradeOverrideSettings populates the provided destination UpgradeOverrideSettings from our UpgradeOverrideSettings
-func (settings *UpgradeOverrideSettings) AssignProperties_To_UpgradeOverrideSettings(destination *v20231001s.UpgradeOverrideSettings) error {
+func (settings *UpgradeOverrideSettings) AssignProperties_To_UpgradeOverrideSettings(destination *storage.UpgradeOverrideSettings) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
 
@@ -200,6 +200,6 @@ func (settings *UpgradeOverrideSettings) AssignProperties_To_UpgradeOverrideSett
 }
 
 type augmentConversionForUpgradeOverrideSettings interface {
-	AssignPropertiesFrom(src *v20231001s.UpgradeOverrideSettings) error
-	AssignPropertiesTo(dst *v20231001s.UpgradeOverrideSettings) error
+	AssignPropertiesFrom(src *storage.UpgradeOverrideSettings) error
+	AssignPropertiesTo(dst *storage.UpgradeOverrideSettings) error
 }

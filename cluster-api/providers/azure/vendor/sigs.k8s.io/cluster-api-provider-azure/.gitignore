@@ -94,3 +94,4 @@ jwks.json
 azure_identity_id
 azure_wi_back_compat
 openid-configuration.json
+aks-mgmt.config

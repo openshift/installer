@@ -26,6 +26,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
+	"github.com/Azure/go-autorest/autorest/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	"sigs.k8s.io/cluster-api-provider-azure/version"
 )
@@ -41,6 +42,8 @@ const (
 	ChinaCloudName = "AzureChinaCloud"
 	// USGovernmentCloudName is the name of the Azure US Government cloud.
 	USGovernmentCloudName = "AzureUSGovernmentCloud"
+	// StackCloudName is the name for Azure Stack Hub.
+	StackCloudName = "HybridEnvironment"
 )
 
 const (
@@ -217,6 +220,11 @@ func VMID(subscriptionID, resourceGroup, vmName string) string {
 	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s", subscriptionID, resourceGroup, vmName)
 }
 
+// VMSSID returns the azure resource ID for a given VMSS.
+func VMSSID(subscriptionID, resourceGroup, vmssName string) string {
+	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachineScaleSets/%s", subscriptionID, resourceGroup, vmssName)
+}
+
 // VNetID returns the azure resource ID for a given VNet.
 func VNetID(subscriptionID, resourceGroup, vnetName string) string {
 	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualNetworks/%s", subscriptionID, resourceGroup, vnetName)
@@ -361,6 +369,22 @@ func ARMClientOptions(azureEnvironment string, extraPolicies ...policy.Policy) (
 		opts.Cloud = cloud.AzureChina
 	case USGovernmentCloudName:
 		opts.Cloud = cloud.AzureGovernment
+	case StackCloudName:
+		armEndpoint := "https://management.mtcazs.wwtatc.com"
+		cloudEnv, err := azure.EnvironmentFromURL(armEndpoint)
+		if err != nil {
+			return nil, err
+		}
+		opts.Cloud = cloud.Configuration{
+			ActiveDirectoryAuthorityHost: cloudEnv.ActiveDirectoryEndpoint,
+			Services: map[cloud.ServiceName]cloud.ServiceConfiguration{
+				cloud.ResourceManager: {
+					//Audience: cloudEnv.TokenAudience,
+					Audience: "https://management.wwtatc.onmicrosoft.com/1d974a95-a89d-4009-9aee-8d17ddf1971d",
+					Endpoint: cloudEnv.ResourceManagerEndpoint,
+				},
+			},
+		}
 	case "":
 		// No cloud name provided, so leave at defaults.
 	default:

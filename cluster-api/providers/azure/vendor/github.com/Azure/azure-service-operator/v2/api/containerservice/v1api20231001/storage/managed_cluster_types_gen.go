@@ -61,6 +61,13 @@ func (cluster *ManagedCluster) ExportKubernetesResources(_ context.Context, _ ge
 			}
 		}
 	}
+	if cluster.Spec.OperatorSpec != nil && cluster.Spec.OperatorSpec.ConfigMaps != nil {
+		if cluster.Status.Identity != nil {
+			if cluster.Status.Identity.PrincipalId != nil {
+				collector.AddValue(cluster.Spec.OperatorSpec.ConfigMaps.PrincipalId, *cluster.Status.Identity.PrincipalId)
+			}
+		}
+	}
 	result, err := collector.Values()
 	if err != nil {
 		return nil, err
@@ -821,18 +828,17 @@ type ManagedClusterStorageProfile_STATUS struct {
 // Storage version of v1api20231001.ManagedClusterWindowsProfile
 // Profile for Windows VMs in the managed cluster.
 type ManagedClusterWindowsProfile struct {
-	AdminPassword  *string                `json:"adminPassword,omitempty"`
-	AdminUsername  *string                `json:"adminUsername,omitempty"`
-	EnableCSIProxy *bool                  `json:"enableCSIProxy,omitempty"`
-	GmsaProfile    *WindowsGmsaProfile    `json:"gmsaProfile,omitempty"`
-	LicenseType    *string                `json:"licenseType,omitempty"`
-	PropertyBag    genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+	AdminPassword  *genruntime.SecretReference `json:"adminPassword,omitempty"`
+	AdminUsername  *string                     `json:"adminUsername,omitempty"`
+	EnableCSIProxy *bool                       `json:"enableCSIProxy,omitempty"`
+	GmsaProfile    *WindowsGmsaProfile         `json:"gmsaProfile,omitempty"`
+	LicenseType    *string                     `json:"licenseType,omitempty"`
+	PropertyBag    genruntime.PropertyBag      `json:"$propertyBag,omitempty"`
 }
 
 // Storage version of v1api20231001.ManagedClusterWindowsProfile_STATUS
 // Profile for Windows VMs in the managed cluster.
 type ManagedClusterWindowsProfile_STATUS struct {
-	AdminPassword  *string                    `json:"adminPassword,omitempty"`
 	AdminUsername  *string                    `json:"adminUsername,omitempty"`
 	EnableCSIProxy *bool                      `json:"enableCSIProxy,omitempty"`
 	GmsaProfile    *WindowsGmsaProfile_STATUS `json:"gmsaProfile,omitempty"`
@@ -1089,6 +1095,7 @@ type ManagedClusterNATGatewayProfile_STATUS struct {
 // Storage version of v1api20231001.ManagedClusterOperatorConfigMaps
 type ManagedClusterOperatorConfigMaps struct {
 	OIDCIssuerProfile *genruntime.ConfigMapDestination `json:"oidcIssuerProfile,omitempty"`
+	PrincipalId       *genruntime.ConfigMapDestination `json:"principalId,omitempty"`
 	PropertyBag       genruntime.PropertyBag           `json:"$propertyBag,omitempty"`
 }
 

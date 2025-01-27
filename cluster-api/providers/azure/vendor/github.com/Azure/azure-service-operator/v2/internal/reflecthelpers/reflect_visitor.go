@@ -116,7 +116,6 @@ func IdentityVisitPtr(this *ReflectVisitor, it reflect.Value, ctx interface{}) e
 
 // IdentityVisitSlice is the identity visit function for slices. It visits each element of the slice.
 func IdentityVisitSlice(this *ReflectVisitor, it reflect.Value, ctx interface{}) error {
-
 	for i := 0; i < it.Len(); i++ {
 		err := this.visit(it.Index(i), ctx)
 		if err != nil {
@@ -129,7 +128,6 @@ func IdentityVisitSlice(this *ReflectVisitor, it reflect.Value, ctx interface{})
 
 // IdentityVisitMap is the identity visit function for maps. It visits each key and value in the map.
 func IdentityVisitMap(this *ReflectVisitor, it reflect.Value, ctx interface{}) error {
-
 	for _, key := range it.MapKeys() {
 
 		err := this.visit(key, ctx)

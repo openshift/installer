@@ -121,6 +121,12 @@ const (
 	VMSetCIDRIPV4TagKey = "kubernetesNodeCIDRMaskIPV4"
 	// VMSetCIDRIPV6TagKey specifies the node ipv6 CIDR mask of the instances on the VMSS or VMAS
 	VMSetCIDRIPV6TagKey = "kubernetesNodeCIDRMaskIPV6"
+	// VmssWindows2019ImageGalleryName is the name of Windows 2019 images from the
+	// Microsoft.Compute/galleries/AKSWindows gallery
+	VmssWindows2019ImageGalleryName = "windows-2019-containerd"
+	// Windows2019OSBuildVersion is the official build version of Windows Server 2019
+	// https://learn.microsoft.com/en-us/windows-server/get-started/windows-server-release-info
+	Windows2019OSBuildVersion = "17763"
 
 	// TagsDelimiter is the delimiter of tags
 	TagsDelimiter = ","
@@ -405,14 +411,16 @@ const (
 	ReferencedResourceNotProvisionedMessageCode = "ReferencedResourceNotProvisioned"
 	// ParentResourceNotFoundMessageCode is the error code that the parent VMSS of the VM is not found.
 	ParentResourceNotFoundMessageCode = "ParentResourceNotFound"
+	// ResourceNotFoundMessageCode is the error code that the resource is not found.
+	ResourceNotFoundMessageCode = "ResourceNotFound"
 	// ConcurrentRequestConflictMessage is the error message that the request failed due to the conflict with another concurrent operation.
 	ConcurrentRequestConflictMessage = "The request failed due to conflict with a concurrent request."
 	// CannotUpdateVMBeingDeletedMessagePrefix is the prefix of the error message that the request failed due to delete a VM that is being deleted
 	CannotUpdateVMBeingDeletedMessagePrefix = "'Put on Virtual Machine Scale Set VM Instance' is not allowed on Virtual Machine Scale Set"
 	// CannotUpdateVMBeingDeletedMessageSuffix is the suffix of the error message that the request failed due to delete a VM that is being deleted
 	CannotUpdateVMBeingDeletedMessageSuffix = "since it is marked for deletion"
-	// OperationPreemptedErrorCode is the error code returned for vm operation preempted errors
-	OperationPreemptedErrorCode = "OperationPreempted"
+	// OperationPreemptedErrorMessage is the error message returned for vm operation preempted errors
+	OperationPreemptedErrorMessage = "Operation execution has been preempted by a more recent operation"
 )
 
 // node ipam controller

@@ -183,6 +183,7 @@ func (s *VMSpec) generateStorageProfile() (*armcompute.StorageProfile, error) {
 	if !MemoryCapability {
 		return nil, azure.WithTerminalError(errors.New("VM memory should be bigger or equal to at least 2Gi"))
 	}
+
 	// enable ephemeral OS
 	if s.OSDisk.DiffDiskSettings != nil {
 		if !s.SKU.HasCapability(resourceskus.EphemeralOSDisk) {
@@ -191,6 +192,10 @@ func (s *VMSpec) generateStorageProfile() (*armcompute.StorageProfile, error) {
 
 		storageProfile.OSDisk.DiffDiskSettings = &armcompute.DiffDiskSettings{
 			Option: ptr.To(armcompute.DiffDiskOptions(s.OSDisk.DiffDiskSettings.Option)),
+		}
+
+		if s.OSDisk.DiffDiskSettings.Placement != nil {
+			storageProfile.OSDisk.DiffDiskSettings.Placement = ptr.To(armcompute.DiffDiskPlacement(*s.OSDisk.DiffDiskSettings.Placement))
 		}
 	}
 
