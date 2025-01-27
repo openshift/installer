@@ -25,7 +25,7 @@ func (c *KubeletCSRSignerCertKey) Generate(ctx context.Context, parents asset.Pa
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "kubelet-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityOneDay,
+		Validity:  ValidityFourHours,
 		IsCA:      true,
 	}
 
