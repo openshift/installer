@@ -53,6 +53,13 @@ func Constraints(ci *validation.CloudInfo, controlPlanes []machineapi.Machine, c
 	if len(ci.ControlPlanePortSubnets) == 0 {
 		constraints = append(constraints, networkConstraint(1), routerConstraint(1), subnetConstraint(1))
 	}
+	// if the cluster does not have worker nodes then reduce the server group value from 2 to 1
+	numServerGroups := int64(2)
+	if len(computes) == 0 {
+		numServerGroups--
+	}
+	constraints = append(constraints, serverGroupsConstraint(numServerGroups))
+	constraints = append(constraints, serverGroupMembersConstraint(int64(len(controlPlanes)+len(computes))))
 
 	return aggregate(constraints)
 }
@@ -139,6 +146,14 @@ func machineFlavorRAMToQuota(f *flavors.Flavor) quota.Constraint {
 
 func instanceConstraint(count int64) quota.Constraint {
 	return generateConstraint("Instances", count)
+}
+
+func serverGroupsConstraint(count int64) quota.Constraint {
+	return generateConstraint("ServerGroups", count)
+}
+
+func serverGroupMembersConstraint(count int64) quota.Constraint {
+	return generateConstraint("ServerGroupMembers", count)
 }
 
 func portConstraint(count int64) quota.Constraint {
