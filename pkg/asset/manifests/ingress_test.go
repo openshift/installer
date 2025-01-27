@@ -4,13 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
+	operatorv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/stretchr/testify/assert"
 )
 
 // installConfigFromTopologies generates an install config that would yield the
@@ -61,6 +63,7 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 		expectedIngressPlacement    configv1.DefaultPlacement
 		expectedIngressAWSLBType    configv1.AWSLBType
 		expectedIngressPlatformType configv1.PlatformType
+		expectedAllocatedEIP        []operatorv1.EIPAllocation
 	}{
 		{
 			// AWS currently uses a load balancer even on single-node, so the
@@ -106,6 +109,16 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 			expectedIngressPlacement:    configv1.DefaultPlacementWorkers,
 			expectedIngressAWSLBType:    configv1.NLB,
 			expectedIngressPlatformType: configv1.AWSPlatformType,
+		},
+		{
+			name:                        "test setting of aws lb type to NLB and allocate EIP",
+			installConfigBuildOptions:   []icOption{icBuild.withLBTypeAndEIPAllocations(configv1.NLB, []aws.EIPAllocation{"eipalloc-<redacted>,eipalloc-<redacted>,eipalloc-<redacted>,eipalloc-<redacted>,eipalloc-<redacted>"})},
+			controlPlaneTopology:        configv1.HighlyAvailableTopologyMode,
+			infrastructureTopology:      configv1.HighlyAvailableTopologyMode,
+			expectedIngressPlacement:    configv1.DefaultPlacementWorkers,
+			expectedIngressAWSLBType:    configv1.NLB,
+			expectedIngressPlatformType: configv1.AWSPlatformType,
+			expectedAllocatedEIP:        []operatorv1.EIPAllocation{"eipalloc-<redacted>,eipalloc-<redacted>,eipalloc-<redacted>,eipalloc-<redacted>,eipalloc-<redacted>"},
 		},
 		{
 			name:                        "test setting of aws lb type to Classic",
@@ -169,10 +182,22 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 			if !assert.NoError(t, err, "failed to generate asset") {
 				return
 			}
-			if !assert.Len(t, ingressAsset.FileList, 1, "expected only one file to be generated") {
-				return
-			}
+
 			assert.Equal(t, ingressAsset.FileList[0].Filename, "manifests/cluster-ingress-02-config.yml")
+			if len(tc.expectedAllocatedEIP) > 0 {
+				if !assert.Len(t, ingressAsset.FileList, 2, "expected only two files to be generated") {
+					return
+				} else {
+					assert.Equal(t, ingressAsset.FileList[0].Filename, "manifests/cluster-ingress-02-config.yml")
+					assert.Equal(t, ingressAsset.FileList[1].Filename, "manifests/cluster-ingress-default-ingresscontroller.yaml")
+				}
+
+			} else if !assert.Len(t, ingressAsset.FileList, 1, "expected only one file to be generated") {
+				return
+			} else {
+				assert.Equal(t, ingressAsset.FileList[0].Filename, "manifests/cluster-ingress-02-config.yml")
+			}
+
 			var actualIngress configv1.Ingress
 			err = yaml.Unmarshal(ingressAsset.FileList[0].Data, &actualIngress)
 			if !assert.NoError(t, err, "failed to unmarshal infra manifest") {
@@ -182,6 +207,11 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 			if len(tc.expectedIngressPlatformType) != 0 {
 				assert.Equal(t, tc.expectedIngressAWSLBType, actualIngress.Spec.LoadBalancer.Platform.AWS.Type)
 				assert.Equal(t, tc.expectedIngressPlatformType, actualIngress.Spec.LoadBalancer.Platform.Type)
+			}
+			if len(tc.expectedAllocatedEIP) != 0 {
+				var actualIngressController operatorv1.IngressController
+				err = yaml.Unmarshal(ingressAsset.FileList[1].Data, &actualIngressController)
+				assert.Equal(t, tc.expectedAllocatedEIP, actualIngressController.Spec.EndpointPublishingStrategy.LoadBalancer.ProviderParameters.AWS.NetworkLoadBalancerParameters.EIPAllocations)
 			}
 		})
 	}
