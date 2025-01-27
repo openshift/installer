@@ -7,8 +7,10 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/tools/cache"
 	"log"
+	"os"
 	"slices"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -468,6 +470,7 @@ func (o *ClusterUninstaller) deletePersistentVolumes(ctx context.Context) error 
 	if o.KubeClientset == nil {
 		return nil
 	}
+	var m sync.Mutex
 
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
 	defer cancel()
@@ -479,10 +482,6 @@ func (o *ClusterUninstaller) deletePersistentVolumes(ctx context.Context) error 
 		}
 
 	*/
-
-	if err := o.drainNodes(ctx); err != nil {
-		return err
-	}
 
 	//dynamicClient := dynamic.New(o.KubeClientset.RESTClient())
 
@@ -510,11 +509,8 @@ func (o *ClusterUninstaller) deletePersistentVolumes(ctx context.Context) error 
 		return nil
 	}
 
-	for _, a := range pvas {
-		o.Logger.Debugf("deleting volume claim %s", a.PersistentVolumeClaim.Name)
-		if err := o.KubeClientset.CoreV1().PersistentVolumeClaims(a.Namespace.Name).Delete(ctx, a.PersistentVolumeClaim.Name, metav1.DeleteOptions{}); err != nil {
-			return err
-		}
+	if err := o.drainNodes(ctx); err != nil {
+		return err
 	}
 
 	sharedInformer := informers.NewSharedInformerFactory(o.KubeClientset, time.Second*15)
@@ -525,15 +521,7 @@ func (o *ClusterUninstaller) deletePersistentVolumes(ctx context.Context) error 
 	_, err = pvcInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		DeleteFunc: func(obj interface{}) {
 			if pvc, ok := obj.(*corev1.PersistentVolumeClaim); ok {
-
 				o.Logger.Debugf("informer: deleting volume claim %s", pvc.Name)
-				/*
-					pvas = slices.DeleteFunc(pvas, func(pva PodVolumeAssociation) bool {
-						// todo: jcallen do I really want to delete this?
-						return pva.PersistentVolumeClaim.Name == pvc.Name
-					})
-
-				*/
 			}
 		},
 	})
@@ -545,6 +533,9 @@ func (o *ClusterUninstaller) deletePersistentVolumes(ctx context.Context) error 
 	_, err = pvInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		DeleteFunc: func(obj interface{}) {
 			if pv, ok := obj.(*corev1.PersistentVolume); ok {
+				o.Logger.Debugf("pv informer found %s", pv.Name)
+				m.Lock()
+				defer m.Unlock()
 				pvas = slices.DeleteFunc(pvas, func(pva PodVolumeAssociation) bool {
 					return pva.PersistentVolume.Name == pv.Name
 				})
@@ -559,6 +550,7 @@ func (o *ClusterUninstaller) deletePersistentVolumes(ctx context.Context) error 
 	sharedInformer.Start(stopCh)
 	sharedInformer.WaitForCacheSync(stopCh)
 
+	runOnce := 0
 	if err := wait.ExponentialBackoff(wait.Backoff{
 		Duration: time.Second * 5,
 		Factor:   1.5,
@@ -566,7 +558,23 @@ func (o *ClusterUninstaller) deletePersistentVolumes(ctx context.Context) error 
 		Steps:    30,
 		Cap:      time.Minute * 5, // todo: jcallen: is this right???
 	}, func() (bool, error) {
+		o.Logger.Debugf("ExponentailBackoff, Step %d", runOnce)
+
+		m.Lock()
+		defer m.Unlock()
+
+		if runOnce == 0 {
+			for _, a := range pvas {
+				o.Logger.Debugf("deleting volume claim %s", a.PersistentVolumeClaim.Name)
+				if err := o.KubeClientset.CoreV1().PersistentVolumeClaims(a.Namespace.Name).Delete(ctx, a.PersistentVolumeClaim.Name, metav1.DeleteOptions{}); err != nil {
+					return false, err
+				}
+			}
+		}
+		runOnce++
+
 		if len(pvas) == 0 {
+			o.Logger.Debugf("All volumes are deleted")
 			stopCh <- struct{}{}
 			return true, nil
 		}
@@ -593,6 +601,9 @@ func (o *ClusterUninstaller) deletePersistentVolumes(ctx context.Context) error 
 		}
 
 	*/
+
+	// todo: jcallen: remove me...
+	os.Exit(1)
 
 	return nil
 }
@@ -646,37 +657,37 @@ func (o *ClusterUninstaller) destroyCluster(ctx context.Context) (bool, error) {
 
 		*/
 		stagedFuncs = append(stagedFuncs, deleteVolumeStagedFunctions)
-	}
+	} else {
 
-	deleteVirtualMachinesFuncs := []StagedFunctions{
-		{
-			Name: "Stop virtual machines", Execute: o.stopVirtualMachines,
-		},
-		{
-			Name: "Delete Virtual Machines", Execute: o.deleteVirtualMachines,
-		},
-	}
+		deleteVirtualMachinesFuncs := []StagedFunctions{
+			{
+				Name: "Stop virtual machines", Execute: o.stopVirtualMachines,
+			},
+			{
+				Name: "Delete Virtual Machines", Execute: o.deleteVirtualMachines,
+			},
+		}
 
-	deleteVCenterObjectsFuncs := []StagedFunctions{
-		{
-			Name: "Folder", Execute: o.deleteFolder,
-		},
-		{
-			Name: "Storage Policy", Execute: o.deleteStoragePolicy,
-		},
-		{
-			Name: "Tag", Execute: o.deleteTag,
-		},
-		{
-			Name: "Tag Category", Execute: o.deleteTagCategory,
-		},
-		{
-			Name: "VM Groups and VM Host Rules", Execute: o.deleteHostZoneObjects,
-		},
+		deleteVCenterObjectsFuncs := []StagedFunctions{
+			{
+				Name: "Folder", Execute: o.deleteFolder,
+			},
+			{
+				Name: "Storage Policy", Execute: o.deleteStoragePolicy,
+			},
+			{
+				Name: "Tag", Execute: o.deleteTag,
+			},
+			{
+				Name: "Tag Category", Execute: o.deleteTagCategory,
+			},
+			{
+				Name: "VM Groups and VM Host Rules", Execute: o.deleteHostZoneObjects,
+			},
+		}
+		stagedFuncs = append(stagedFuncs, deleteVirtualMachinesFuncs)
+		stagedFuncs = append(stagedFuncs, deleteVCenterObjectsFuncs)
 	}
-
-	stagedFuncs = append(stagedFuncs, deleteVirtualMachinesFuncs)
-	stagedFuncs = append(stagedFuncs, deleteVCenterObjectsFuncs)
 
 	for _, sf := range stagedFuncs {
 		for _, f := range sf {
