@@ -36,7 +36,7 @@ func ForDualStackAddresses(role string) (*mcfgv1.MachineConfig, error) {
 		},
 		Spec: mcfgv1.MachineConfigSpec{
 			Config:          rawExt,
-			KernelArguments: []string{"ip=dhcp,dhcp6"},
+			KernelArguments: []string{"ip=enp3s0:dhcp,dhcp6"},
 		},
 	}, nil
 }
