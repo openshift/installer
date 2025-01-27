@@ -33,6 +33,8 @@ Given the above example uses a provider network, this network can be added to th
 $ openstack router set --external-gateway dualstack <router-id>
 ```
 
+**Note**: Any additional IPv6 Subnet that is used in the OpenShift cluster, should be added to a neutron router to provide router advertisements.
+
 ## Creating Dual-Stack API and Ingress VIPs Ports for the cluster
 
 You must create the API and Ingress VIPs Ports with the following commands:
