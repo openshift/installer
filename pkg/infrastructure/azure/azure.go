@@ -38,8 +38,10 @@ import (
 )
 
 const (
-	retryTime  = 10 * time.Second
-	retryCount = 6
+	retryTime        = 10 * time.Second
+	retryCount       = 6
+	confidentialVMST = "ConfidentialVMSupported"
+	trustedLaunchST  = "TrustedLaunchsupported"
 )
 
 // Provider implements Azure CAPI installation.
@@ -450,7 +452,6 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		if err != nil {
 			return err
 		}
-
 		_, err = CreateGalleryImage(ctx, &CreateGalleryImageInput{
 			ResourceGroupName:    resourceGroupName,
 			GalleryName:          galleryName,
@@ -908,6 +909,17 @@ func getMachinePoolSecurityType(in clusterapi.InfraReadyInput) (string, error) {
 			securityType = pool.Settings.SecurityType
 		}
 	}
+	if securityType == "" && in.InstallConfig.Config.Compute != nil {
+		for _, compute := range in.InstallConfig.Config.Compute {
+			if compute.Platform.Azure != nil {
+				pool := compute.Platform.Azure
+				if pool.Settings != nil {
+					securityType = pool.Settings.SecurityType
+					break
+				}
+			}
+		}
+	}
 	if securityType == "" && in.InstallConfig.Config.Platform.Azure.DefaultMachinePlatform != nil {
 		pool := in.InstallConfig.Config.Platform.Azure.DefaultMachinePlatform
 		if pool.Settings != nil {
@@ -916,9 +928,9 @@ func getMachinePoolSecurityType(in clusterapi.InfraReadyInput) (string, error) {
 	}
 	switch securityType {
 	case aztypes.SecurityTypesTrustedLaunch:
-		return "TrustedLaunch", nil
+		return trustedLaunchST, nil
 	case aztypes.SecurityTypesConfidentialVM:
-		return "ConfidentialVM", nil
+		return confidentialVMST, nil
 	}
 	return "", nil
 }
