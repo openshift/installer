@@ -3611,6 +3611,11 @@ spec:
                         - message: type is immutable once set
                           rule: oldSelf == '' || self == oldSelf
                     type: object
+                  prismAPICallTimeout:
+                    description: |-
+                      PrismAPICallTimeout sets the timeout (in minutes) for the prism-api calls.
+                      If not configured, the default value of 10 minutes will be used as the prism-api call timeout.
+                    type: integer
                   prismCentral:
                     description: PrismCentral is the endpoint (address and port) and
                       credentials to connect to the Prism Central. This serves as
