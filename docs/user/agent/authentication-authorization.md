@@ -11,11 +11,23 @@ To enable authentication and authorization, the `AuthType` setting must be confi
 AuthType = "agent-installer-local"
 ```
 
-This setting ensures that the authentication mechanism required by the agent-based installer is activated.
+This setting ensures that the authentication mechanism required by the agent-based installer is activated and is an internal configuration.
 
 ## Tokens for Agent-Based Installer
 
 When creating an Agent ISO (or PXE artifacts) for installing a new cluster, ABI generates three separate authentication tokens: `agentAuth`, `userAuth`, and `watcherAuth`. These tokens serve different purposes and have varying levels of access. The tokens are the part of the ignition that gets embeded in the CoreOS base ISO along with other ABI specific configurations for a cluster. The tokens are stored `/usr/local/share/assisted-service/assisted-service.env` in the ISO. The base64 encoded public key required to validate these tokens is also saved in the same file. Additionally, this data also gets stored in a hidden file `.openshift_state_install.json` present in the directory location mentioned when creating ISO.
+
+```mermaid
+flowchart TD
+    A[Create Agent ISO] --> B[Generate 3 tokens: agentAuth, userAuth, watcherAuth. Generate public key]
+    B --> C[Store tokens and base64 encoded public key in asset store hidden file '.openshift_state_install.json']
+    B --> D[Embed tokens and base64 encoded public key in /usr/local/share/assisted-service/assisted-service.env file in ISO]
+    D --> E[Boot hosts using ISO]
+    E --> F[Assisted service running on rendezvous host validates the token from HTTP requests]
+    F --> G{Are tokens valid?}
+    G -->|Yes| H[Allow successful cluster installation]
+    G -->|No| I[Fail cluster installation]
+```
 
 ### Types of Tokens:
 1. **agentAuth**:
@@ -66,6 +78,18 @@ The authentication token has expired. Please generate a new ISO using the "oc ad
 
 This ensures that the user is notified of expired tokens and can take appropriate action to generate a new ISO.
 
+```mermaid
+flowchart TD
+    A[Check if openshift-config/agent-auth-token exists] -->|No| B[Create secret with 3 tokens and public key]
+    A -->|Yes| C[Retrieve tokens from existing secret]
+    B --> D[Generate new tokens if secret does not exist]
+    C --> D[Check if token is older than 24 hours]
+    D -->|Yes| E[Generate new tokens, update asset store, and secret]
+    D -->|No| F[Retrieve token, update asset store, use token for ISO]
+    F --> G[Node boots and checks token expiry]
+    G -->|Expired| H[Display message: 'Authentication token expired. Generate a new ISO.']
+    G -->|Not expired| I[Proceed with installation using retrieved token]
+```
 ## Authorization
 
 To implement authorization for ABI, a new security definition is added in the `swagger.yaml` file in AS. The new security definition is as follows:
