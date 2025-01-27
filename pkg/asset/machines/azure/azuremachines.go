@@ -29,6 +29,7 @@ type MachineInput struct {
 	Role            string
 	UserDataSecret  string
 	HyperVGen       string
+	RHCOSImage      string
 	UseImageGallery bool
 	Private         bool
 	UserTags        map[string]string
@@ -91,6 +92,21 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 			imageID += genV2Suffix
 		}
 		image = &capz.Image{ID: &imageID}
+	}
+
+	// DNM: Testing/POC
+	// TODO: Integrate this fully, remove managed disk, handle hypervgen, make default except for ASH
+	urn := strings.Split(in.RHCOSImage, ":")
+	image = &capz.Image{
+		Marketplace: &capz.AzureMarketplaceImage{
+			ImagePlan: capz.ImagePlan{
+				Publisher: urn[0],
+				Offer:     urn[1],
+				SKU:       urn[2],
+			},
+			Version:         urn[3],
+			ThirdPartyImage: false,
+		},
 	}
 
 	// Set up OSDisk
