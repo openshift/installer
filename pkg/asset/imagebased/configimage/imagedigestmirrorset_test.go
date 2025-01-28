@@ -10,12 +10,13 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 
+	apicfgv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/openshift/installer/pkg/types"
 )
 
-func TestImageDigestSources_Generate(t *testing.T) {
+func TestImageDigestMirrorSet_Generate(t *testing.T) {
 	installConfigWithImageDigestSources := defaultInstallConfig()
 	installConfigWithImageDigestSources.Config.ImageDigestSources = imageDigestSources()
 
@@ -23,16 +24,16 @@ func TestImageDigestSources_Generate(t *testing.T) {
 		name           string
 		dependencies   []asset.Asset
 		expectedError  string
-		expectedConfig []types.ImageDigestSource
+		expectedConfig *apicfgv1.ImageDigestMirrorSet
 	}{
 		{
-			name: "missing install config should not generate image-digest-sources.json",
+			name: "missing install config should not generate image-digest-mirror-set.json",
 			dependencies: []asset.Asset{
 				&InstallConfig{},
 			},
 		},
 		{
-			name: "missing ImageDigestSources in install config should not generate image-digest-sources.json",
+			name: "missing ImageDigestSources in install config should not generate image-digest-mirror-set.json",
 			dependencies: []asset.Asset{
 				defaultInstallConfig(),
 			},
@@ -42,7 +43,7 @@ func TestImageDigestSources_Generate(t *testing.T) {
 			dependencies: []asset.Asset{
 				installConfigWithImageDigestSources,
 			},
-			expectedConfig: imageDigestSources(),
+			expectedConfig: imageDigestMirrorSet(),
 		},
 	}
 	for _, tc := range cases {
@@ -50,7 +51,7 @@ func TestImageDigestSources_Generate(t *testing.T) {
 			parents := asset.Parents{}
 			parents.Add(tc.dependencies...)
 
-			asset := &ImageDigestSources{}
+			asset := &ImageDigestMirrorSet{}
 			err := asset.Generate(context.TODO(), parents)
 
 			switch {
@@ -65,10 +66,10 @@ func TestImageDigestSources_Generate(t *testing.T) {
 				assert.NotEmpty(t, asset.Files())
 
 				configFile := asset.Files()[0]
-				assert.Equal(t, "cluster-configuration/manifests/image-digest-sources.json", configFile.Filename)
+				assert.Equal(t, "cluster-configuration/manifests/image-digest-mirror-set.json", configFile.Filename)
 
-				var actualConfig []types.ImageDigestSource
-				err = json.Unmarshal(configFile.Data, &actualConfig)
+				var actualConfig = new(apicfgv1.ImageDigestMirrorSet)
+				err = json.Unmarshal(configFile.Data, actualConfig)
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedConfig, actualConfig)
 			}
@@ -76,30 +77,30 @@ func TestImageDigestSources_Generate(t *testing.T) {
 	}
 }
 
-func TestImageDigestSources_LoadedFromDisk(t *testing.T) {
+func TestImageDigestMirrorSet_LoadedFromDisk(t *testing.T) {
 	cases := []struct {
 		name           string
 		data           string
 		fetchError     error
 		expectedFound  bool
 		expectedError  string
-		expectedConfig []types.ImageDigestSource
+		expectedConfig *apicfgv1.ImageDigestMirrorSet
 	}{
 		{
-			name:           "valid-image-digest-sources-file",
+			name:           "valid-image-digest-mirror-set-file",
 			data:           `[{"source":"test.registry.io","mirrors":["another.registry"]}]`,
 			expectedFound:  true,
-			expectedConfig: imageDigestSources(),
+			expectedConfig: imageDigestMirrorSet(),
 		},
 		{
 			name:          "not-json",
 			data:          `This is not a JSON file`,
-			expectedError: "failed to unmarshal cluster-configuration/manifests/image-digest-sources.json: invalid JSON syntax",
+			expectedError: "failed to unmarshal cluster-configuration/manifests/image-digest-mirror-set.json: invalid JSON syntax",
 		},
 		{
 			name:          "empty",
 			data:          "",
-			expectedError: "failed to unmarshal cluster-configuration/manifests/image-digest-sources.json: invalid JSON syntax",
+			expectedError: "failed to unmarshal cluster-configuration/manifests/image-digest-mirror-set.json: invalid JSON syntax",
 		},
 		{
 			name:       "file-not-found",
@@ -108,12 +109,12 @@ func TestImageDigestSources_LoadedFromDisk(t *testing.T) {
 		{
 			name:          "error-fetching-file",
 			fetchError:    errors.New("fetch failed"),
-			expectedError: "failed to load cluster-configuration/manifests/image-digest-sources.json file: fetch failed",
+			expectedError: "failed to load cluster-configuration/manifests/image-digest-mirror-set.json file: fetch failed",
 		},
 		{
 			name:          "unknown-field",
 			data:          `[{"wrongField":"wrongValue"}]`,
-			expectedError: "failed to unmarshal cluster-configuration/manifests/image-digest-sources.json: unknown field \"[0].wrongField\"",
+			expectedError: "failed to unmarshal cluster-configuration/manifests/image-digest-mirror-set.json: unknown field \"[0].wrongField\"",
 		},
 	}
 	for _, tc := range cases {
@@ -122,15 +123,15 @@ func TestImageDigestSources_LoadedFromDisk(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			fileFetcher := mock.NewMockFileFetcher(mockCtrl)
-			fileFetcher.EXPECT().FetchByName(imageDigestSourcesFilename).
+			fileFetcher.EXPECT().FetchByName(imageDigestMirrorSetFilename).
 				Return(
 					&asset.File{
-						Filename: imageDigestSourcesFilename,
+						Filename: imageDigestMirrorSetFilename,
 						Data:     []byte(tc.data)},
 					tc.fetchError,
 				)
 
-			asset := &ImageDigestSources{}
+			asset := &ImageDigestMirrorSet{}
 			found, err := asset.Load(fileFetcher)
 			assert.Equal(t, tc.expectedFound, found, "unexpected found value returned from Load")
 
@@ -154,4 +155,8 @@ func imageDigestSources() []types.ImageDigestSource {
 			Mirrors: []string{"another.registry"},
 		},
 	}
+}
+
+func imageDigestMirrorSet() *apicfgv1.ImageDigestMirrorSet {
+	return convertIDSToIDMS(imageDigestSources())
 }
