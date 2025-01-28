@@ -67,7 +67,7 @@ func (i *InstallConfig) loadFromFile(f asset.FileFetcher) (found bool, err error
 			return false, fmt.Errorf("%s, err: %w", asset.InstallConfigError, err)
 		}
 		err = fmt.Errorf("failed to parse first occurrence of unknown field, err: %w", err)
-		logrus.Warnf(err.Error())
+		logrus.Warn(err.Error())
 		logrus.Info("Attempting to unmarshal while ignoring unknown keys because strict unmarshaling failed")
 		if err = yaml.Unmarshal(file.Data, config); err != nil {
 			err = fmt.Errorf("failed to unmarshal %s, err: %w", InstallConfigFilename, err)
@@ -194,29 +194,29 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 	// "Proxyonly" is the default set from generic install config code
 	if installConfig.AdditionalTrustBundlePolicy != "Proxyonly" {
 		fieldPath := field.NewPath("AdditionalTrustBundlePolicy")
-		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.AdditionalTrustBundlePolicy))
+		logrus.Warnf("%s: %s is ignored", fieldPath, installConfig.AdditionalTrustBundlePolicy)
 	}
 
 	for i, compute := range installConfig.Compute {
 		if compute.Hyperthreading != "Enabled" {
 			fieldPath := field.NewPath(fmt.Sprintf("Compute[%d]", i), "Hyperthreading")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, compute.Hyperthreading))
+			logrus.Warnf("%s: %s is ignored", fieldPath, compute.Hyperthreading)
 		}
 
 		if compute.Platform != (types.MachinePoolPlatform{}) {
 			fieldPath := field.NewPath(fmt.Sprintf("Compute[%d]", i), "Platform")
-			logrus.Warnf(fmt.Sprintf("%s is ignored", fieldPath))
+			logrus.Warnf("%s is ignored", fieldPath)
 		}
 	}
 
 	if installConfig.ControlPlane.Hyperthreading != "Enabled" {
 		fieldPath := field.NewPath("ControlPlane", "Hyperthreading")
-		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.ControlPlane.Hyperthreading))
+		logrus.Warnf("%s: %s is ignored", fieldPath, installConfig.ControlPlane.Hyperthreading)
 	}
 
 	if installConfig.ControlPlane.Platform != (types.MachinePoolPlatform{}) {
 		fieldPath := field.NewPath("ControlPlane", "Platform")
-		logrus.Warnf(fmt.Sprintf("%s is ignored", fieldPath))
+		logrus.Warnf("%s is ignored", fieldPath)
 	}
 }
 

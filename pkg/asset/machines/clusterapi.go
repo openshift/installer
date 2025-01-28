@@ -526,7 +526,6 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 func (c *ClusterAPI) Files() []*asset.File {
 	files := []*asset.File{}
 	for _, f := range c.FileList {
-		f := f // TODO: remove with golang 1.22
 		files = append(files, &f.File)
 	}
 	return files

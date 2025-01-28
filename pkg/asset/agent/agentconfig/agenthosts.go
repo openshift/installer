@@ -85,7 +85,7 @@ func (a *AgentHosts) Generate(_ context.Context, dependencies asset.Parents) err
 					return errors.Wrapf(err, "invalid host definition in %s", agentAsset.InstallConfigFilename)
 				}
 			} else {
-				logrus.Warnf(fmt.Sprintf("hosts from %s are ignored", agentAsset.InstallConfigFilename))
+				logrus.Warnf("hosts from %s are ignored", agentAsset.InstallConfigFilename)
 			}
 		}
 

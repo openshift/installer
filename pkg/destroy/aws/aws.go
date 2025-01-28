@@ -385,7 +385,7 @@ func findResourcesByTag(
 //
 //	resources - the resources to be deleted.
 //
-// The first return is the ARNs of the resources that were successfully deleted
+// The first return is the ARNs of the resources that were successfully deleted.
 func DeleteResources(ctx context.Context, logger logrus.FieldLogger, awsSession *session.Session, resources []string, tracker *ErrorTracker) (sets.Set[string], error) {
 	deleted := sets.New[string]()
 	for _, arnString := range resources {
