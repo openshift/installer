@@ -516,8 +516,8 @@ func TestValidateInstallConfig(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Networking.ClusterNetwork = []types.ClusterNetworkEntry{
-					{CIDR: *ipnet.MustParseCIDR("12.0.0.0/16"), HostPrefix: 23},
-					{CIDR: *ipnet.MustParseCIDR("12.0.3.0/24"), HostPrefix: 25},
+					{CIDR: *ipnet.MustParseCIDR("12.0.0.0/16"), HostPrefix: 28},
+					{CIDR: *ipnet.MustParseCIDR("12.0.3.0/24"), HostPrefix: 28},
 				}
 				return c
 			}(),
@@ -553,6 +553,33 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: ``,
+		},
+		{
+			name: "cluster network host prefix negative",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.ClusterNetwork[0].HostPrefix = -23
+				return c
+			}(),
+			expectedError: `^networking\.clusterNetwork\[0]\.hostPrefix: Invalid value: -23: hostPrefix must be positive$`,
+		},
+		{
+			name: "multiple cluster network host prefix different",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.ClusterNetwork = append(c.Networking.ClusterNetwork,
+					types.ClusterNetworkEntry{
+						CIDR:       *ipnet.MustParseCIDR("192.168.2.0/24"),
+						HostPrefix: 30,
+					},
+					types.ClusterNetworkEntry{
+						CIDR:       *ipnet.MustParseCIDR("ffd2::/48"),
+						HostPrefix: 64,
+					},
+				)
+				return c
+			}(),
+			expectedError: `^networking\.clusterNetwork\[1]\.hostPrefix: Invalid value: 30: cluster network host subnetwork prefix must be the same value for IPv4 networks$`,
 		},
 		{
 			name: "networking clusterNetworkMTU - valid high limit ovn",
