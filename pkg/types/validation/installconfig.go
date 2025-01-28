@@ -464,17 +464,17 @@ func validateNetworkingForPlatform(n *types.Networking, platform *types.Platform
 	default:
 		warningMsgFmt := "%s: %s overlaps with default Docker Bridge subnet"
 		for idx, mn := range n.MachineNetwork {
-			if validate.DoCIDRsOverlap(&mn.CIDR.IPNet, validate.DockerBridgeCIDR) {
+			if validate.DoCIDRsOverlap(&mn.CIDR.IPNet, validate.DockerBridgeSubnet) {
 				logrus.Warnf(warningMsgFmt, fldPath.Child("machineNetwork").Index(idx), mn.CIDR.String())
 			}
 		}
 		for idx, sn := range n.ServiceNetwork {
-			if validate.DoCIDRsOverlap(&sn.IPNet, validate.DockerBridgeCIDR) {
+			if validate.DoCIDRsOverlap(&sn.IPNet, validate.DockerBridgeSubnet) {
 				logrus.Warnf(warningMsgFmt, fldPath.Child("serviceNetwork").Index(idx), sn.String())
 			}
 		}
 		for idx, cn := range n.ClusterNetwork {
-			if validate.DoCIDRsOverlap(&cn.CIDR.IPNet, validate.DockerBridgeCIDR) {
+			if validate.DoCIDRsOverlap(&cn.CIDR.IPNet, validate.DockerBridgeSubnet) {
 				logrus.Warnf(warningMsgFmt, fldPath.Child("clusterNetwork").Index(idx), cn.CIDR.String())
 			}
 		}
