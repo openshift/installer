@@ -79,6 +79,13 @@ func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path, c *types.Install
 		}
 	}
 
+	// validate prismAPICallTimeout if configured
+	if p.PrismAPICallTimeout != nil {
+		if *p.PrismAPICallTimeout <= 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("prismAPICallTimeout"), *p.PrismAPICallTimeout, "must be a positive integer value"))
+		}
+	}
+
 	// validate failureDomains if configured
 	if len(p.FailureDomains) > 0 {
 		pattern := "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
