@@ -1,6 +1,7 @@
 package ibmcloud
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -17,13 +18,18 @@ func (o *ClusterUninstaller) listSubnets() (cloudResources, error) {
 	defer cancel()
 
 	options := o.vpcSvc.NewListSubnetsOptions()
-	resources, _, err := o.vpcSvc.ListSubnetsWithContext(ctx, options)
+	subnetsPager, err := o.vpcSvc.NewSubnetsPager(options)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to list subnets")
+		return nil, fmt.Errorf("failed to create subnet pager: %w", err)
+	}
+
+	subnets, err := subnetsPager.GetAllWithContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list subnets: %w", err)
 	}
 
 	result := []cloudResource{}
-	for _, subnet := range resources.Subnets {
+	for _, subnet := range subnets {
 		if strings.Contains(*subnet.Name, o.InfraID) {
 			result = append(result, cloudResource{
 				key:      *subnet.ID,
