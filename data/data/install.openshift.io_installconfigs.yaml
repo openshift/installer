@@ -3582,6 +3582,40 @@ spec:
                     description: Region specifies the GCP region where the cluster
                       will be created.
                     type: string
+                  serviceEndpoints:
+                    description: |-
+                      ServiceEndpoints contains the url endpoints for overriding GCP APIs. An unset field indicates that the
+                      default API endpoint will be used.
+                    properties:
+                      cloudResourceManager:
+                        description: CloudResourceManagerServiceEndpoint is the custom
+                          endpoint url for the Cloud Resource Manager Service
+                        type: string
+                      compute:
+                        description: ComputeServiceEndpoint is the custom endpoint
+                          url for the Compute Service
+                        type: string
+                      dns:
+                        description: DNSServiceEndpoint is the custom endpoint url
+                          for the DNS Service
+                        type: string
+                      file:
+                        description: FileServiceEndpoint is the custom endpoint url
+                          for the File Service
+                        type: string
+                      iam:
+                        description: IAMServiceEndpoint is the custom endpoint url
+                          for the IAM Service
+                        type: string
+                      serviceUsage:
+                        description: ServiceUsageServiceEndpoint is the custom endpoint
+                          url for the Service Usage Service
+                        type: string
+                      storage:
+                        description: StorageServiceEndpoint is the custom endpoint
+                          url for the Storage Service
+                        type: string
+                    type: object
                   userLabels:
                     description: |-
                       userLabels has additional keys and values that the installer will add as
