@@ -20,6 +20,8 @@ import capiv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 const (
 	DeletionFailed = "DeletionFailed"
+
+	VolumeGroupDetachFailed = "VolumeGroupDetachFailed"
 )
 
 const (
@@ -42,9 +44,11 @@ const (
 
 const (
 	// PrismCentralClientCondition indicates the status of the client used to connect to Prism Central
-	PrismCentralClientCondition capiv1.ConditionType = "PrismClientInit"
+	PrismCentralClientCondition   capiv1.ConditionType = "PrismClientInit"
+	PrismCentralV4ClientCondition capiv1.ConditionType = "PrismClientV4Init"
 
-	PrismCentralClientInitializationFailed = "PrismClientInitFailed"
+	PrismCentralClientInitializationFailed   = "PrismClientInitFailed"
+	PrismCentralV4ClientInitializationFailed = "PrismClientV4InitFailed"
 )
 
 const (
@@ -74,5 +78,7 @@ const (
 	// CredentialRefSecretOwnerSetCondition shows the status of setting the Owner
 	CredentialRefSecretOwnerSetCondition capiv1.ConditionType = "CredentialRefSecretOwnerSet"
 
-	CredentialRefSecretOwnerSetFailed = "CredentialRefSecretOwnerSetFailed"
+	CredentialRefSecretOwnerSetFailed  = "CredentialRefSecretOwnerSetFailed"
+	TrustBundleSecretOwnerSetCondition = "TrustBundleSecretOwnerSet"
+	TrustBundleSecretOwnerSetFailed    = "TrustBundleSecretOwnerSetFailed"
 )

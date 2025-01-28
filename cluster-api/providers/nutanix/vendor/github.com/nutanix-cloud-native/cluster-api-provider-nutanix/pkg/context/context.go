@@ -21,15 +21,15 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/nutanix-cloud-native/prism-go-client/utils"
+	prismclientv3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 	capiv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/controllers/remote"
+	capierrors "sigs.k8s.io/cluster-api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	infrav1 "github.com/nutanix-cloud-native/cluster-api-provider-nutanix/api/v1beta1"
-	"github.com/nutanix-cloud-native/prism-go-client/utils"
-	nutanixClientV3 "github.com/nutanix-cloud-native/prism-go-client/v3"
-	capierrors "sigs.k8s.io/cluster-api/errors"
 )
 
 var (
@@ -40,7 +40,7 @@ var (
 // ClusterContext is a context used with a NutanixCluster reconciler
 type ClusterContext struct {
 	Context       context.Context
-	NutanixClient *nutanixClientV3.Client
+	NutanixClient *prismclientv3.Client
 
 	Cluster        *capiv1.Cluster
 	NutanixCluster *infrav1.NutanixCluster
@@ -49,7 +49,7 @@ type ClusterContext struct {
 // MachineContext is a context used with a NutanixMachine reconciler
 type MachineContext struct {
 	Context       context.Context
-	NutanixClient *nutanixClientV3.Client
+	NutanixClient *prismclientv3.Client
 
 	Cluster        *capiv1.Cluster
 	Machine        *capiv1.Machine
@@ -66,7 +66,7 @@ func IsControlPlaneMachine(nma *infrav1.NutanixMachine) bool {
 	if nma == nil {
 		return false
 	}
-	_, ok := nma.GetLabels()[capiv1.MachineControlPlaneLabelName]
+	_, ok := nma.GetLabels()[capiv1.MachineControlPlaneNameLabel]
 	return ok
 }
 
@@ -74,7 +74,7 @@ func IsControlPlaneMachine(nma *infrav1.NutanixMachine) bool {
 func (clctx *ClusterContext) GetNutanixMachinesInCluster(client ctlclient.Client) ([]*infrav1.NutanixMachine, error) {
 	clusterName := clctx.NutanixCluster.Name
 	clusterNamespace := clctx.NutanixCluster.Namespace
-	labels := map[string]string{capiv1.ClusterLabelName: clusterName}
+	labels := map[string]string{capiv1.ClusterNameLabel: clusterName}
 	machineList := &infrav1.NutanixMachineList{}
 
 	err := client.List(clctx.Context, machineList,

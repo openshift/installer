@@ -32,11 +32,11 @@ const (
 	statusSucceeded = "SUCCEEDED"
 )
 
-// WaitForTaskToSucceed will poll indefinitely every 2 seconds for the task with uuid to have status of "SUCCEEDED".
-// The polling will not stop if the ctx is cancelled, it's only used for HTTP requests in the client.
+// WaitForTaskToSucceed will poll every 2 seconds for the task with uuid to have status of "SUCCEEDED".
+// The polling will stop if the ctx is cancelled, it's used for HTTP requests in the client and to control the polling.
 // WaitForTaskToSucceed will exit immediately on an error getting the task.
 func WaitForTaskToSucceed(ctx context.Context, conn *nutanixClientV3.Client, uuid string) error {
-	return wait.PollImmediateInfinite(pollingInterval, func() (done bool, err error) {
+	return wait.PollUntilContextCancel(ctx, pollingInterval, true, func(ctx context.Context) (done bool, err error) {
 		status, getErr := GetTaskStatus(ctx, conn, uuid)
 		return status == statusSucceeded, getErr
 	})
