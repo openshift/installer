@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -86,6 +87,30 @@ type system struct {
 	logWriter *io.PipeWriter
 }
 
+// hostHasIPv4Address verifies if the host that launches the host control plane has IPv4 address.
+func hostHasIPv4Address() (bool, error) {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return false, err
+	}
+	for _, intf := range interfaces {
+		if intf.Flags&net.FlagUp == 0 || intf.Flags&net.FlagLoopback != 0 {
+			continue
+		}
+		addrs, err := intf.Addrs()
+		if err != nil {
+			return false, err
+		}
+		for _, addr := range addrs {
+			ipNet, ok := addr.(*net.IPNet)
+			if ok && ipNet.IP.To4() != nil {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
 // Run launches the cluster-api system.
 func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 	c.Lock()
@@ -97,6 +122,18 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 
 	// Create the local control plane.
 	lcp := &localControlPlane{}
+
+	ipv4, err := hostHasIPv4Address()
+	if err != nil {
+		return err
+	}
+	// If the host has no IPv4 available, the default value of service network should be modified to IPv6 CIDR.
+	if !ipv4 {
+		lcp.APIServerArgs = map[string]string{
+			"service-cluster-ip-range": "fd02::/112",
+		}
+	}
+
 	if err := lcp.Run(ctx); err != nil {
 		return fmt.Errorf("failed to run local control plane: %w", err)
 	}
