@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	kms "cloud.google.com/go/kms/apiv1"
+	"cloud.google.com/go/kms/apiv1/kmspb"
 	"github.com/pkg/errors"
 	googleoauth "golang.org/x/oauth2/google"
 	"google.golang.org/api/cloudresourcemanager/v3"
@@ -52,6 +54,7 @@ type API interface {
 	ValidateServiceAccountHasPermissions(ctx context.Context, project string, permissions []string) (bool, error)
 	GetProjectTags(ctx context.Context, projectID string) (sets.Set[string], error)
 	GetNamespacedTagValue(ctx context.Context, tagNamespacedName string) (*cloudresourcemanager.TagValue, error)
+	GetKeyRing(ctx context.Context, keyRingName string) (*kmspb.KeyRing, error)
 }
 
 // Client makes calls to the GCP API.
@@ -571,4 +574,27 @@ func (c *Client) GetNamespacedTagValue(ctx context.Context, tagNamespacedName st
 	}
 
 	return tagValue, nil
+}
+
+func (c *Client) getKeyManagementClient(ctx context.Context) (*kms.KeyManagementClient, error) {
+	kmsClient, err := kms.NewKeyManagementClient(ctx, option.WithCredentials(c.ssn.Credentials))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create kms key management client: %w", err)
+	}
+	return kmsClient, nil
+}
+
+// GetKeyRing returns the key ring associated with the key name (if found).
+func (c *Client) GetKeyRing(ctx context.Context, keyRingName string) (*kmspb.KeyRing, error) {
+	kmsClient, err := c.getKeyManagementClient(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("key ring client creation failed: %w", err)
+	}
+
+	req := &kmspb.GetKeyRingRequest{Name: keyRingName}
+	resp, err := kmsClient.GetKeyRing(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find key ring %s", keyRingName)
+	}
+	return resp, nil
 }
