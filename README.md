@@ -2,23 +2,17 @@
 
 ## Supported Platforms
 
-* [AWS](docs/user/aws/README.md)
-* [AWS (UPI)](docs/user/aws/install_upi.md)
-* [Azure](docs/user/azure/README.md)
-* [Bare Metal (UPI)](docs/user/metal/install_upi.md)
-* [Bare Metal (IPI)](docs/user/metal/install_ipi.md)
-* [GCP](docs/user/gcp/README.md)
-* [GCP (UPI)](docs/user/gcp/install_upi.md)
-* [IBM Cloud](https://docs.openshift.com/container-platform/latest/installing/installing_ibm_cloud/preparing-to-install-on-ibm-cloud.html)
-* [Nutanix](https://docs.openshift.com/container-platform/latest/installing/installing_nutanix/preparing-to-install-on-nutanix.html)
-* [OpenStack](docs/user/openstack/README.md)
-* [OpenStack (UPI)](docs/user/openstack/install_upi.md)
-* [Power](docs/user/power/install_upi.md)
-* [PowerVS](https://docs.openshift.com/container-platform/latest/installing/installing_ibm_powervs/preparing-to-install-on-ibm-power-vs.html)
-* [PowerVS (UPI)](docs/user/power/install_upi.md)
-* [vSphere](docs/user/vsphere/README.md)
-* [vSphere (UPI)](docs/user/vsphere/install_upi.md)
-* [z/VM](docs/user/zvm/install_upi.md)
+* [AWS](docs/user/aws/) ([Official Docs](https://docs.openshift.com/container-platform/latest/installing/installing_aws/preparing-to-install-on-aws.html))
+* [Azure](docs/user/azure/) ([Official Docs](https://docs.openshift.com/container-platform/latest/installing/installing_azure/preparing-to-install-on-azure.html))
+* [Bare Metal](docs/user/metal/) ([Official Docs](https://docs.openshift.com/container-platform/latest/installing/installing_bare_metal/preparing-to-install-on-bare-metal.html))
+* [GCP](docs/user/gcp/) ([Official Docs](https://docs.openshift.com/container-platform/latest/installing/installing_gcp/preparing-to-install-on-gcp.html))
+* IBM Cloud ([Official Docs](https://docs.openshift.com/container-platform/latest/installing/installing_ibm_cloud/preparing-to-install-on-ibm-cloud.html))
+* Nutanix ([Official Docs](https://docs.openshift.com/container-platform/latest/installing/installing_nutanix/preparing-to-install-on-nutanix.html))
+* [OpenStack](docs/user/openstack/) ([Official Docs](https://docs.openshift.com/container-platform/latest/installing/installing_openstack/preparing-to-install-on-openstack.html))
+* [Power](docs/user/power/) ([Official Docs](https://docs.openshift.com/container-platform/latest/installing/installing_ibm_power/preparing-to-install-on-ibm-power.html))
+* Power VS ([Official Docs](https://docs.openshift.com/container-platform/latest/installing/installing_ibm_powervs/preparing-to-install-on-ibm-power-vs.html))
+* [vSphere](docs/user/vsphere/) ([Official Docs](https://docs.openshift.com/container-platform/latest/installing/installing_vsphere/preparing-to-install-on-vsphere.html))
+* [z/VM](docs/user/zvm/) ([Official Docs](https://docs.openshift.com/container-platform/latest/installing/installing_ibm_z/preparing-to-install-on-ibm-z.html))
 
 ## Quick Start
 
