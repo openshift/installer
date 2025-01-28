@@ -36,8 +36,10 @@ var (
 	// DNS Instance test values.
 	newDNSInstanceID       = "new-dns-instance-id"
 	newDNSInstanceCRN      = "new-dns-instance-crn"
+	newDNSZoneID           = "new-dns-zone-id"
 	existingDNSInstanceID  = "existing-dns-instance-id"
 	existingDNSInstanceCRN = "existing-dns-instance-crn"
+	existingDNSZoneID      = "existing-dns-zone-id"
 	unknownDNSInstanceID   = "unknown-dns-instance-id"
 	unknownDNSInstanceCRN  = "unknown-dns-instance-crn"
 
@@ -158,6 +160,11 @@ var (
 	noVPCComputeSubnetID        = "no-vpc-compute-subnet-id"
 	noZoneComputeSubnetID       = "no-zone-compute-subnet-id"
 
+	// VPC Names, IDss, CRN's.
+	vpcID    = "vpc-id"
+	vpcIDBad = "vpc-id-bad"
+	vpcCRN   = "vpc-crn"
+
 	// VPCReferences for Client Subnet responses.
 	vpcReferenceComputeSubnet1      = vpcv1.VPCReference{Name: &newComputeSubnet1VPCName}
 	vpcReferenceComputeSubnet2      = vpcv1.VPCReference{Name: &newComputeSubnet2VPCName}
@@ -243,6 +250,92 @@ func TestAccountID(t *testing.T) {
 				assert.Regexp(t, tCase.errorMsg, err)
 			} else {
 				assert.Equal(t, tCase.expectedValue, actualValue)
+			}
+		})
+	}
+}
+
+func TestAddVPCToPermittedNetworks(t *testing.T) {
+	testCases := []struct {
+		name     string
+		edits    editMetadata
+		errorMsg string
+		vpcID    string
+	}{
+		{
+			name:     "test failed to retrieve dns services instance",
+			errorMsg: "failed to retrieve dns services instance",
+		},
+		{
+			name:     "test failed to retrieve vpc crn",
+			errorMsg: "failed to retrieve vpc",
+			vpcID:    vpcIDBad,
+		},
+		{
+			name:     "test error vpc crn not set",
+			errorMsg: "error vpc crn not set for vpc",
+			vpcID:    vpcIDBad,
+		},
+		{
+			name:     "test failed to add vpc to permitted network",
+			errorMsg: fmt.Sprintf("failed to add vpc vpc-id to permitted networks of dns services zone %s and instance %s", newDNSZoneID, newDNSInstanceID),
+			vpcID:    vpcID,
+		},
+		{
+			name: "test dns instance cached for permitted network",
+			edits: editMetadata{
+				func(m *Metadata) {
+					m.dnsInstance = &DNSInstance{
+						ID:   existingDNSInstanceID,
+						CRN:  existingDNSInstanceCRN,
+						Zone: existingDNSZoneID,
+					}
+				},
+			},
+			vpcID: vpcID,
+		},
+	}
+
+	// IBM Cloud Client Mocks.
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ibmcloudClient := mock.NewMockAPI(mockCtrl)
+
+	// Mocks: test failed to retrieve dns services instance
+	ibmcloudClient.EXPECT().GetDNSZones(gomock.Any(), types.InternalPublishingStrategy).Return(nil, fmt.Errorf("get dns zone failure"))
+
+	// Mocks: test failed to retrieve vpc crn
+	ibmcloudClient.EXPECT().GetDNSZones(gomock.Any(), types.InternalPublishingStrategy).Return([]responses.DNSZoneResponse{{Name: goodDomain, InstanceID: newDNSInstanceID, InstanceCRN: newDNSInstanceCRN}}, nil)
+	ibmcloudClient.EXPECT().GetVPC(gomock.Any(), vpcIDBad).Return(nil, fmt.Errorf("bad vpc id"))
+
+	// Mocks: test error vpc crn not set
+	ibmcloudClient.EXPECT().GetDNSZones(gomock.Any(), types.InternalPublishingStrategy).Return([]responses.DNSZoneResponse{{Name: goodDomain, InstanceID: newDNSInstanceID, InstanceCRN: newDNSInstanceCRN}}, nil)
+	ibmcloudClient.EXPECT().GetVPC(gomock.Any(), vpcIDBad).Return(&vpcv1.VPC{ID: ptr.To(vpcIDBad)}, nil)
+
+	// Mocks: test failed to add vpc to permitted network
+	ibmcloudClient.EXPECT().GetDNSZones(gomock.Any(), types.InternalPublishingStrategy).Return([]responses.DNSZoneResponse{{Name: goodDomain, InstanceID: newDNSInstanceID, InstanceCRN: newDNSInstanceCRN, ID: newDNSZoneID}}, nil)
+	ibmcloudClient.EXPECT().GetVPC(gomock.Any(), vpcID).Return(&vpcv1.VPC{CRN: ptr.To(vpcCRN), ID: ptr.To(vpcID)}, nil)
+	ibmcloudClient.EXPECT().CreateDNSServicesPermittedNetwork(gomock.Any(), newDNSInstanceID, newDNSZoneID, vpcCRN).Return(fmt.Errorf("create permitted network failure"))
+
+	// Mocks: test dns instance cached for permitted network
+	ibmcloudClient.EXPECT().GetVPC(gomock.Any(), vpcID).Return(&vpcv1.VPC{CRN: ptr.To(vpcCRN), ID: ptr.To(vpcID)}, nil)
+	ibmcloudClient.EXPECT().CreateDNSServicesPermittedNetwork(gomock.Any(), existingDNSInstanceID, existingDNSZoneID, vpcCRN).Return(nil)
+
+	for _, tCase := range testCases {
+		t.Run(tCase.name, func(t *testing.T) {
+			metadata := baseMetadata()
+			// This function is only desired for DNS Services (Internal) functionality.
+			metadata.publishStrategy = types.InternalPublishingStrategy
+			metadata.client = ibmcloudClient
+			for _, edit := range tCase.edits {
+				edit(metadata)
+			}
+
+			err := metadata.AddVPCToPermittedNetworks(context.TODO(), tCase.vpcID)
+			if err != nil {
+				assert.Regexp(t, tCase.errorMsg, err)
+			} else {
+				assert.Equal(t, tCase.errorMsg, "")
 			}
 		})
 	}
