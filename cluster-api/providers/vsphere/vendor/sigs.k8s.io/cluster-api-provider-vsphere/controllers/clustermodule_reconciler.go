@@ -178,7 +178,7 @@ func (r Reconciler) Reconcile(ctx context.Context, clusterCtx *capvcontext.Clust
 	return reconcile.Result{}, err
 }
 
-func toAffinityInput[T client.Object](c client.Client) handler.TypedMapFunc[T] {
+func toAffinityInput[T client.Object](c client.Client) handler.TypedMapFunc[T, ctrl.Request] {
 	return func(ctx context.Context, obj T) []ctrl.Request {
 		log := ctrl.LoggerFrom(ctx)
 

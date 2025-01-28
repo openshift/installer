@@ -195,12 +195,26 @@ issues:
   exclude-rules:
   # Specific exclude rules for deprecated items that are still part of the codebase. These
   # should be removed as the referenced deprecated item is removed from the project.
+  # Deprecations for AutoConfigure
   - linters:
     - staticcheck
-    text: "SA1019: .* is deprecated: This package will be removed in one of the next releases."
+    text: "SA1019: .*AutoConfigure is deprecated"
+  # Deprecations for PreferredAPIServerCIDR
   - linters:
     - staticcheck
-    text: "SA1019: .* is deprecated: This field is going to be removed in a future release."
+    text: "SA1019: .*PreferredAPIServerCIDR is deprecated"
+  # Deprecations for FailureReason
+  - linters:
+    - staticcheck
+    text: "SA1019: \"sigs.k8s.io/cluster-api/errors\" is deprecated:"
+  # Deprecations for old api groups
+  - linters:
+    - staticcheck
+    text: "SA1019: \"sigs.k8s.io/cluster-api-provider-vsphere/apis/(v1alpha3|v1alpha4)\" is deprecated: This package will be removed in one of the next releases."
+  # Deprecations for Cluster API's predicates.ClusterUnpausedAndInfrastructureReady
+  - linters:
+    - staticcheck
+    text: "SA1019: predicates.ClusterUnpausedAndInfrastructureReady is deprecated: This predicate is deprecated and will be removed in a future version, use ClusterPausedTransitionsOrInfrastructureReady instead."
   - linters:
     - revive
     text: "exported: exported method .*\\.(Reconcile|SetupWithManager|SetupWebhookWithManager) should have comment or be unexported"

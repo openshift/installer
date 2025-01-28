@@ -60,6 +60,7 @@ func AddVSphereDeploymentZoneControllerToManager(ctx context.Context, controller
 	reconciler := vsphereDeploymentZoneReconciler{
 		ControllerManagerContext: controllerManagerCtx,
 	}
+	predicateLog := ctrl.LoggerFrom(ctx).WithValues("controller", "vspheredeploymentzone")
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&infrav1.VSphereDeploymentZone{}).
@@ -77,7 +78,7 @@ func AddVSphereDeploymentZoneControllerToManager(ctx context.Context, controller
 				&handler.EnqueueRequestForObject{},
 			),
 		).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), controllerManagerCtx.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), predicateLog, controllerManagerCtx.WatchFilterValue)).
 		Complete(reconciler)
 }
 

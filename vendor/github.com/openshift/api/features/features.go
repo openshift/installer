@@ -203,6 +203,14 @@ var (
 						enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 						mustRegister()
 
+	FeatureGateVSphereMultiDisk = newFeatureGate("VSphereMultiDisk").
+					reportProblemsToJiraComponent("splat").
+					contactPerson("vr4manta").
+					productScope(ocpSpecific).
+					enhancementPR("https://github.com/openshift/enhancements/pull/1709").
+					enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+					mustRegister()
+
 	FeatureGateVSphereMultiVCenters = newFeatureGate("VSphereMultiVCenters").
 					reportProblemsToJiraComponent("splat").
 					contactPerson("vr4manta").

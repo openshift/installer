@@ -436,7 +436,10 @@ func (v *VimMachineService) generateOverrideFunc(ctx context.Context, vimMachine
 			vm.Spec.Datastore = vsphereFailureDomain.Spec.Topology.Datastore
 		}
 		if len(vsphereFailureDomain.Spec.Topology.Networks) > 0 {
-			vm.Spec.Network.Devices = overrideNetworkDeviceSpecs(vm.Spec.Network.Devices, vsphereFailureDomain.Spec.Topology.Networks)
+			vm.Spec.Network.Devices = overrideNetworkDeviceSpecs(vm.Spec.Network.Devices, vsphereFailureDomain.Spec.Topology.Networks, mergeFailureDomainNetworkName)
+		}
+		if len(vsphereFailureDomain.Spec.Topology.NetworkConfigurations) > 0 {
+			vm.Spec.Network.Devices = overrideNetworkDeviceSpecs(vm.Spec.Network.Devices, vsphereFailureDomain.Spec.Topology.NetworkConfigurations, mergeNetworkConfigurationInNetworkDeviceSpec)
 		}
 	}
 	return overrideWithFailureDomainFunc, true
@@ -446,7 +449,7 @@ func (v *VimMachineService) generateOverrideFunc(ctx context.Context, vimMachine
 // The substitution is done based on the order in which the network devices have been defined.
 //
 // In case there are more network definitions than the number of network devices specified, the definitions are appended to the list.
-func overrideNetworkDeviceSpecs(deviceSpecs []infrav1.NetworkDeviceSpec, networks []string) []infrav1.NetworkDeviceSpec {
+func overrideNetworkDeviceSpecs[T any](deviceSpecs []infrav1.NetworkDeviceSpec, networks []T, mergeFunc func(device *infrav1.NetworkDeviceSpec, network T)) []infrav1.NetworkDeviceSpec {
 	index, length := 0, len(networks)
 
 	devices := make([]infrav1.NetworkDeviceSpec, 0, max(length, len(deviceSpecs)))
@@ -455,16 +458,54 @@ func overrideNetworkDeviceSpecs(deviceSpecs []infrav1.NetworkDeviceSpec, network
 		vmNetworkDeviceSpec := deviceSpecs[i]
 		if i < length {
 			index++
-			vmNetworkDeviceSpec.NetworkName = networks[i]
+			mergeFunc(&vmNetworkDeviceSpec, networks[i])
 		}
 		devices = append(devices, vmNetworkDeviceSpec)
 	}
 	// append the remaining network definitions to the VM spec
 	for ; index < length; index++ {
-		devices = append(devices, infrav1.NetworkDeviceSpec{
-			NetworkName: networks[index],
-		})
+		device := infrav1.NetworkDeviceSpec{}
+		mergeFunc(&device, networks[index])
+		devices = append(devices, device)
 	}
 
 	return devices
+}
+
+func mergeFailureDomainNetworkName(device *infrav1.NetworkDeviceSpec, network string) {
+	device.NetworkName = network
+}
+
+func mergeNetworkConfigurationInNetworkDeviceSpec(device *infrav1.NetworkDeviceSpec, nc infrav1.NetworkConfiguration) {
+	if nc.NetworkName != "" {
+		device.NetworkName = nc.NetworkName
+	}
+	if nc.DHCP4 != nil {
+		device.DHCP4 = *nc.DHCP4
+	}
+	if nc.DHCP6 != nil {
+		device.DHCP6 = *nc.DHCP6
+	}
+	if len(nc.Nameservers) > 0 {
+		device.Nameservers = make([]string, len(nc.Nameservers))
+		copy(device.Nameservers, nc.Nameservers)
+	}
+
+	if len(nc.SearchDomains) > 0 {
+		device.SearchDomains = make([]string, len(nc.SearchDomains))
+		copy(device.SearchDomains, nc.SearchDomains)
+	}
+
+	if nc.DHCP4Overrides != nil {
+		device.DHCP4Overrides = nc.DHCP4Overrides.DeepCopy()
+	}
+
+	if nc.DHCP6Overrides != nil {
+		device.DHCP6Overrides = nc.DHCP6Overrides.DeepCopy()
+	}
+
+	if len(nc.AddressesFromPools) > 0 {
+		device.AddressesFromPools = make([]corev1.TypedLocalObjectReference, len(nc.AddressesFromPools))
+		copy(device.AddressesFromPools, nc.AddressesFromPools)
+	}
 }

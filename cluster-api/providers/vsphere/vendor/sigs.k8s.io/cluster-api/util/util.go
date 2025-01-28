@@ -219,7 +219,7 @@ func ClusterToInfrastructureMapFunc(ctx context.Context, gvk schema.GroupVersion
 		key := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.InfrastructureRef.Name}
 
 		if err := c.Get(ctx, key, providerCluster); err != nil {
-			log.V(4).Error(err, fmt.Sprintf("Failed to get %T", providerCluster))
+			log.V(4).Info(fmt.Sprintf("Failed to get %T", providerCluster), "err", err)
 			return nil
 		}
 
@@ -510,7 +510,10 @@ func ClusterToTypedObjectsMapper(c client.Client, ro client.ObjectList, scheme *
 			listOpts = append(listOpts, client.InNamespace(cluster.Namespace))
 		}
 
-		objectList = objectList.DeepCopyObject().(client.ObjectList)
+		// Note: We have to DeepCopy objectList into a new variable. Otherwise
+		// we have a race condition between DeepCopyObject and client.List if this
+		// mapper func is called concurrently.
+		objectList := objectList.DeepCopyObject().(client.ObjectList)
 		if err := c.List(ctx, objectList, listOpts...); err != nil {
 			return nil
 		}

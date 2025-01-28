@@ -22,10 +22,6 @@ import "time"
 const (
 	defaultPrefix = "capv-"
 
-	// DefaultWebhookServiceContainerPort is the default value for the eponymous
-	// manager option.
-	DefaultWebhookServiceContainerPort = 0
-
 	// DefaultSyncPeriod is the default value for the eponymous
 	// manager option.
 	DefaultSyncPeriod = time.Minute * 10

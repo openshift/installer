@@ -72,6 +72,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&ImageDigestMirrorSetList{},
 		&ImageTagMirrorSet{},
 		&ImageTagMirrorSetList{},
+		&ClusterMonitoring{},
+		&ClusterMonitoringList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil
