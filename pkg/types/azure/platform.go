@@ -2,11 +2,9 @@ package azure
 
 import (
 	"fmt"
+	"os"
 	"strings"
 )
-
-// aro is a setting to enable aro-only modifications
-var aro bool
 
 // OutboundType is a strategy for how egress from cluster is achieved.
 // +kubebuilder:validation:Enum="";Loadbalancer;NatGateway;UserDefinedRouting
@@ -195,5 +193,5 @@ func (p *Platform) NetworkSecurityGroupName(infraID string) string {
 
 // IsARO returns true if ARO-only modifications are enabled
 func (p *Platform) IsARO() bool {
-	return aro
+	return os.Getenv("OPENSHIFT_INSTALL_INVOKER") == "ARO"
 }
