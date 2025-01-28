@@ -113,7 +113,7 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 
 		// Compile the list of security groups for machine.
 		var securityGroups []capibmcloud.VPCResource
-		if providerSpec.PrimaryNetworkInterface.SecurityGroups != nil && len(providerSpec.PrimaryNetworkInterface.SecurityGroups) > 0 {
+		if len(providerSpec.PrimaryNetworkInterface.SecurityGroups) > 0 {
 			securityGroups = make([]capibmcloud.VPCResource, 0, len(providerSpec.PrimaryNetworkInterface.SecurityGroups))
 			for _, securityGroupName := range providerSpec.PrimaryNetworkInterface.SecurityGroups {
 				securityGroups = append(securityGroups, capibmcloud.VPCResource{

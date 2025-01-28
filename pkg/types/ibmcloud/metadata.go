@@ -22,7 +22,7 @@ type Metadata struct {
 // GetRegionAndEndpointsFlag will return the IBM Cloud region and any service endpoint overrides formatted as the IBM Cloud CAPI command line argument.
 func (m *Metadata) GetRegionAndEndpointsFlag() string {
 	// If there are no endpoints, return an empty string (rather than just the region).
-	if m.ServiceEndpoints == nil || len(m.ServiceEndpoints) == 0 {
+	if len(m.ServiceEndpoints) == 0 {
 		return ""
 	}
 

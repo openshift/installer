@@ -10,7 +10,7 @@ import (
 )
 
 // libvirtInterfaceValidator fetches the valid interface names from a particular libvirt instance, and returns a closure
-// to validate if an interface is found among them
+// to validate if an interface is found among them.
 func libvirtInterfaceValidator(libvirtURI string) (func(string) error, error) {
 	// Connect to libvirt and obtain a list of interface names
 	interfaces := make(map[string]struct{})

@@ -251,7 +251,7 @@ func (p *MachinePool) ValidateConfig(platform *Platform, role string) error {
 	}
 
 	if len(errList) > 0 {
-		return fmt.Errorf(errList.ToAggregate().Error())
+		return fmt.Errorf("%s", errList.ToAggregate().Error())
 	}
 	return nil
 }

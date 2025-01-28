@@ -121,7 +121,7 @@ func (p Provider) PreProvision(ctx context.Context, in infracapi.PreProvisionInp
 			logrus.Infof("created and uploaded the rhcos image data %s (uuid: %s)", imgName, imgUUID)
 		} else {
 			err = fmt.Errorf("failed to convert the task UUID %v to string", respi.Status.ExecutionContext.TaskUUID)
-			logrus.Errorf(err.Error())
+			logrus.Error(err.Error())
 			return err
 		}
 	}

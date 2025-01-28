@@ -195,7 +195,6 @@ func (c *Cluster) Generate(_ context.Context, dependencies asset.Parents) error 
 func (c *Cluster) Files() []*asset.File {
 	files := []*asset.File{}
 	for _, f := range c.FileList {
-		f := f // TODO: remove with golang 1.22
 		files = append(files, &f.File)
 	}
 	return files
