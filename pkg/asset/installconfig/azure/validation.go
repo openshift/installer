@@ -17,6 +17,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/types"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
@@ -56,6 +57,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 		allErrs = append(allErrs, validateAzureStackClusterOSImage(StorageEndpointSuffix, ic.Azure.ClusterOSImage, field.NewPath("platform").Child("azure"))...)
 	}
 	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
+	allErrs = append(allErrs, validateBootDiagnostics(client, ic)...)
 	return allErrs.ToAggregate()
 }
 
@@ -930,5 +932,49 @@ func validateAzureStackDiskType(_ API, installConfig *types.InstallConfig) field
 		}
 	}
 
+	return allErrs
+}
+
+func validateBootDiagnostics(client API, ic *types.InstallConfig) (allErrs field.ErrorList) {
+	if ic.Azure.DefaultMachinePlatform != nil && ic.Azure.DefaultMachinePlatform.BootDiagnostics != nil {
+		bootDiag := ic.Azure.DefaultMachinePlatform.BootDiagnostics
+		if bootDiag.Type == capz.UserManagedDiagnosticsStorage && bootDiag.StorageAccountURI != "" {
+			err := client.CheckStorageAccount(context.TODO(), bootDiag.StorageAccountURI)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("platform", "azure", "defaultMachinePlatform",
+					"bootDiagnostics", "storageAccountURI"), bootDiag.StorageAccountURI, err.Error()))
+			}
+		}
+	}
+
+	if ic.ControlPlane != nil && ic.ControlPlane.Platform.Azure != nil && ic.ControlPlane.Platform.Azure.BootDiagnostics != nil {
+		bootDiag := ic.ControlPlane.Platform.Azure.BootDiagnostics
+		if bootDiag.Type == capz.UserManagedDiagnosticsStorage && bootDiag.StorageAccountURI != "" {
+			err := client.CheckStorageAccount(context.TODO(), bootDiag.StorageAccountURI)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("platform", "azure", "controlPlane",
+					"bootDiagnostics", "storageAccountURI"), bootDiag.StorageAccountURI, err.Error()))
+			}
+		}
+	}
+
+	if ic.Compute != nil {
+		for inx, compute := range ic.Compute {
+			if compute.Platform.Azure == nil {
+				continue
+			}
+			bootDiag := compute.Platform.Azure.BootDiagnostics
+			if bootDiag == nil {
+				continue
+			}
+			if bootDiag.Type == capz.UserManagedDiagnosticsStorage && bootDiag.StorageAccountURI != "" {
+				err := client.CheckStorageAccount(context.TODO(), bootDiag.StorageAccountURI)
+				if err != nil {
+					allErrs = append(allErrs, field.Invalid(field.NewPath("platform", "azure", fmt.Sprintf("compute[%d]", inx),
+						"bootDiagnostics", "storageAccountURI"), bootDiag.StorageAccountURI, err.Error()))
+				}
+			}
+		}
+	}
 	return allErrs
 }

@@ -1,5 +1,7 @@
 package azure
 
+import capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+
 // SecurityTypes represents the SecurityType of the virtual machine.
 type SecurityTypes string
 
@@ -49,6 +51,12 @@ type MachinePool struct {
 	// +kubebuilder:validation:Enum="Accelerated"; "Basic"
 	// +optional
 	VMNetworkingType string `json:"vmNetworkingType,omitempty"`
+
+	// BootDiagnostics has the value for the storage account URI where the
+	// machine log information is sent to. Defaults to managed if no value
+	// is mentioned.
+	// +optional
+	BootDiagnostics *BootDiagnostics `json:"bootDiagnostics,omitempty"`
 
 	// OSImage defines the image to use for the OS.
 	// +optional
@@ -130,6 +138,20 @@ const (
 	// VMnetworkingTypeAccelerated enum attribute that enables AcceleratedNetworking on a VM NIC.
 	VMnetworkingTypeAccelerated VMNetworkingCapability = "Accelerated"
 )
+
+// BootDiagnostics defines the option to set the collection of logs from
+// the machines created.
+type BootDiagnostics struct {
+	// Type specifies the boot diagnostics type for the machines created.
+	//
+	// +kubebuilder:validation:Enum=Disabled;Managed;UserManaged
+	// +kubebuilder:default=Disabled
+	Type capz.BootDiagnosticsStorageAccountType `json:"type"`
+
+	// StorageAccountURI specifies the storage account the log information
+	// needs to be stored in.
+	StorageAccountURI string `json:"storageAccountURI"`
+}
 
 // Set sets the values from `required` to `a`.
 func (a *MachinePool) Set(required *MachinePool) {
