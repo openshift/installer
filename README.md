@@ -9,17 +9,17 @@
 * [Bare Metal (IPI)](docs/user/metal/install_ipi.md)
 * [GCP](docs/user/gcp/README.md)
 * [GCP (UPI)](docs/user/gcp/install_upi.md)
+* [IBM Cloud](https://docs.openshift.com/container-platform/latest/installing/installing_ibm_cloud/preparing-to-install-on-ibm-cloud.html)
 * [Libvirt with KVM](docs/dev/libvirt/README.md) (development only)
+* [Nutanix](https://docs.openshift.com/container-platform/latest/installing/installing_nutanix/preparing-to-install-on-nutanix.html)
 * [OpenStack](docs/user/openstack/README.md)
 * [OpenStack (UPI)](docs/user/openstack/install_upi.md)
 * [Power](docs/user/power/install_upi.md)
-* [Power Virtual Server](https://docs.openshift.com/container-platform/latest/installing/installing_ibm_powervs/preparing-to-install-on-ibm-power-vs.html)
+* [PowerVS](https://docs.openshift.com/container-platform/latest/installing/installing_ibm_powervs/preparing-to-install-on-ibm-power-vs.html)
+* [PowerVS (UPI)](docs/user/power/install_upi.md)
 * [vSphere](docs/user/vsphere/README.md)
 * [vSphere (UPI)](docs/user/vsphere/install_upi.md)
 * [z/VM](docs/user/zvm/install_upi.md)
-* [IBM Cloud](https://docs.openshift.com/container-platform/latest/installing/installing_ibm_cloud/preparing-to-install-on-ibm-cloud.html)
-* [Nutanix](https://docs.openshift.com/container-platform/latest/installing/installing_nutanix/preparing-to-install-on-nutanix.html)
-
 
 ## Quick Start
 
