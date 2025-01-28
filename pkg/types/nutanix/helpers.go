@@ -27,7 +27,8 @@ const (
 	metadataFilePath = "openstack/latest/meta_data.json"
 	userDataFilePath = "openstack/latest/user_data"
 	sleepTime        = 10 * time.Second
-	timeout          = 5 * time.Minute
+	// DefaultPrismAPICallTimeout is 10 minutes.
+	DefaultPrismAPICallTimeout = int(10)
 
 	// Category Key format: "kubernetes-io-cluster-<cluster-id>".
 	categoryKeyPrefix = "kubernetes-io-cluster-"
@@ -37,8 +38,22 @@ const (
 	CategoryValueShared = "shared"
 )
 
+var (
+	// prismAPICallTimeoutDuration is the timeout for the prism-api calls.
+	// It can be changed by calling SetPrismAPICallTimeoutDuration().
+	prismAPICallTimeoutDuration = time.Duration(DefaultPrismAPICallTimeout) * time.Minute
+)
+
 type metadataCloudInit struct {
 	UUID string `json:"uuid"`
+}
+
+// SetPrismAPICallTimeoutDuration sets and returns the timeout duration value for prism-api calls.
+func SetPrismAPICallTimeoutDuration(p *Platform) time.Duration {
+	if p.PrismAPICallTimeout != nil {
+		prismAPICallTimeoutDuration = time.Duration(*p.PrismAPICallTimeout) * time.Minute
+	}
+	return prismAPICallTimeoutDuration
 }
 
 // BootISOImageName is the image name for Bootstrap node for a given infraID.
@@ -141,7 +156,9 @@ func WaitForTasks(clientV3 nutanixclientv3.Service, taskUUIDs []string) error {
 func WaitForTask(clientV3 nutanixclientv3.Service, taskUUID string) error {
 	finished := false
 	var err error
-	for start := time.Now(); time.Since(start) < timeout; {
+	start := time.Now()
+
+	for time.Since(start) < prismAPICallTimeoutDuration {
 		finished, err = isTaskFinished(clientV3, taskUUID)
 		if err != nil {
 			return err
@@ -152,7 +169,7 @@ func WaitForTask(clientV3 nutanixclientv3.Service, taskUUID string) error {
 		time.Sleep(sleepTime)
 	}
 	if !finished {
-		return errors.Errorf("timeout while waiting for task UUID: %s", taskUUID)
+		return errors.Errorf("timeout while waiting for task UUID: %s, used_time: %s", taskUUID, time.Since(start))
 	}
 
 	return nil
