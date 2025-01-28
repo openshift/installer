@@ -247,12 +247,15 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path, isLegacyUp
 			}
 		}
 
-		if len(failureDomain.Topology.Networks) == 0 {
+		switch networkCount := len(failureDomain.Topology.Networks); {
+		case networkCount == 0:
 			if isLegacyUpi {
 				logrus.Warn("network field empty is now deprecated, in later releases this field will be required.")
 			} else {
 				allErrs = append(allErrs, field.Required(topologyFld.Child("networks"), "must specify a network"))
 			}
+		case networkCount > 10:
+			allErrs = append(allErrs, field.TooMany(topologyFld.Child("networks"), networkCount, 10))
 		}
 
 		// Folder in failuredomain is optional
