@@ -133,6 +133,9 @@ type GCPManagedControlPlaneSpec struct {
 	// EnableAutopilot indicates whether to enable autopilot for this GKE cluster.
 	// +optional
 	EnableAutopilot bool `json:"enableAutopilot"`
+	// EnableIdentityService indicates whether to enable Identity Service component for this GKE cluster.
+	// +optional
+	EnableIdentityService bool `json:"enableIdentityService"`
 	// ReleaseChannel represents the release channel of the GKE cluster.
 	// +optional
 	ReleaseChannel *ReleaseChannel `json:"releaseChannel,omitempty"`

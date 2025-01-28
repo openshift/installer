@@ -27,6 +27,7 @@ import (
 	"cloud.google.com/go/container/apiv1/containerpb"
 	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/googleapis/gax-go/v2/apierror"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
@@ -258,6 +259,9 @@ func (s *Service) createCluster(ctx context.Context, log *logr.Logger) error {
 		Autopilot: &containerpb.Autopilot{
 			Enabled: s.scope.GCPManagedControlPlane.Spec.EnableAutopilot,
 		},
+		IdentityServiceConfig: &containerpb.IdentityServiceConfig{
+			Enabled: s.scope.GCPManagedControlPlane.Spec.EnableIdentityService,
+		},
 		ReleaseChannel: &containerpb.ReleaseChannel{
 			Channel: convertToSdkReleaseChannel(s.scope.GCPManagedControlPlane.Spec.ReleaseChannel),
 		},
@@ -473,7 +477,7 @@ func compareMasterAuthorizedNetworksConfig(a, b *containerpb.MasterAuthorizedNet
 	if (a.CidrBlocks == nil && b.CidrBlocks != nil && len(b.GetCidrBlocks()) == 0) || (b.CidrBlocks == nil && a.CidrBlocks != nil && len(a.GetCidrBlocks()) == 0) {
 		return true
 	}
-	if !cmp.Equal(a.GetCidrBlocks(), b.GetCidrBlocks()) {
+	if !cmp.Equal(a.GetCidrBlocks(), b.GetCidrBlocks(), cmpopts.IgnoreUnexported(containerpb.MasterAuthorizedNetworksConfig_CidrBlock{})) {
 		return false
 	}
 	return true

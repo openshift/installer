@@ -263,6 +263,7 @@ func (s *ClusterScope) SubnetSpecs() []*compute.Subnetwork {
 			Network:               s.NetworkLink(),
 			Purpose:               ptr.Deref(subnetwork.Purpose, "PRIVATE_RFC_1918"),
 			Role:                  "ACTIVE",
+			StackType:             subnetwork.StackType,
 		})
 	}
 
