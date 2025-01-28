@@ -10,7 +10,6 @@
 * [GCP](docs/user/gcp/README.md)
 * [GCP (UPI)](docs/user/gcp/install_upi.md)
 * [IBM Cloud](https://docs.openshift.com/container-platform/latest/installing/installing_ibm_cloud/preparing-to-install-on-ibm-cloud.html)
-* [Libvirt with KVM](docs/dev/libvirt/README.md) (development only)
 * [Nutanix](https://docs.openshift.com/container-platform/latest/installing/installing_nutanix/preparing-to-install-on-nutanix.html)
 * [OpenStack](docs/user/openstack/README.md)
 * [OpenStack (UPI)](docs/user/openstack/install_upi.md)
