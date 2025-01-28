@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	gohttp "net/http"
 	"strings"
 	"time"
 
@@ -17,13 +18,70 @@ const (
 	transitGatewayConnectionTypeName = "transitGatewayConnection"
 )
 
-// listTransitGateways lists Transit Gateways in the IBM Cloud.
+// listTransitGateways lists Transit Gateways matching either name or tag in the IBM Cloud.
 func (o *ClusterUninstaller) listTransitGateways() (cloudResources, error) {
-	o.Logger.Debugf("Listing Transit Gateways (%s)", o.InfraID)
+	var (
+		tgIDs    []string
+		tgID     string
+		ctx      context.Context
+		cancel   context.CancelFunc
+		result   = make([]cloudResource, 0, 1)
+		options  *transitgatewayapisv1.GetTransitGatewayOptions
+		tg       *transitgatewayapisv1.TransitGateway
+		response *core.DetailedResponse
+		err      error
+	)
 
+	if o.searchByTag {
+		// Should we list by tag matching?
+		tgIDs, err = o.listByTag(TagTypeTransitGateway)
+	} else {
+		// Otherwise list will list by name matching.
+		tgIDs, err = o.listTransitGatewaysByName()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel = contextWithTimeout()
+	defer cancel()
+
+	for _, tgID = range tgIDs {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("listLoadBalancers: case <-ctx.Done()")
+			return nil, ctx.Err() // we're cancelled, abort
+		default:
+		}
+
+		options = o.tgClient.NewGetTransitGatewayOptions(tgID)
+
+		tg, response, err = o.tgClient.GetTransitGatewayWithContext(ctx, options)
+		if err != nil && response != nil && response.StatusCode == gohttp.StatusNotFound {
+			// The transit gateway could have been deleted just after a list was created.
+			continue
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to get transit gateway (%s): err = %w, response = %v", tgID, err, response)
+		}
+
+		result = append(result, cloudResource{
+			key:      *tg.ID,
+			name:     *tg.Name,
+			status:   "",
+			typeName: transitGatewayTypeName,
+			id:       *tg.ID,
+		})
+	}
+
+	return cloudResources{}.insert(result...), nil
+}
+
+// listTransitGatewaysByName lists Transit Gateways matching by name in the IBM Cloud.
+func (o *ClusterUninstaller) listTransitGatewaysByName() ([]string, error) {
 	var (
 		ctx                        context.Context
-		cancel                     func()
+		cancel                     context.CancelFunc
 		listTransitGatewaysOptions *transitgatewayapisv1.ListTransitGatewaysOptions
 		gatewayCollection          *transitgatewayapisv1.TransitGatewayCollection
 		gateway                    transitgatewayapisv1.TransitGateway
@@ -32,15 +90,23 @@ func (o *ClusterUninstaller) listTransitGateways() (cloudResources, error) {
 		foundOne                         = false
 		perPage                    int64 = 32
 		moreData                         = true
+		result                           = make([]string, 0, 1)
 	)
+
+	o.Logger.Debugf("Listing Transit Gateways (%s) by NAME", o.InfraID)
 
 	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("listLoadBalancersByName: case <-ctx.Done()")
+		return nil, ctx.Err() // we're cancelled, abort
+	default:
+	}
+
 	listTransitGatewaysOptions = o.tgClient.NewListTransitGatewaysOptions()
 	listTransitGatewaysOptions.Limit = &perPage
-
-	result := []cloudResource{}
 
 	for moreData {
 		// https://github.com/IBM/networking-go-sdk/blob/master/transitgatewayapisv1/transit_gateway_apis_v1.go#L184
@@ -52,42 +118,36 @@ func (o *ClusterUninstaller) listTransitGateways() (cloudResources, error) {
 		for _, gateway = range gatewayCollection.TransitGateways {
 			if strings.Contains(*gateway.Name, o.InfraID) {
 				foundOne = true
-				o.Logger.Debugf("listTransitGateways: FOUND: %s, %s", *gateway.ID, *gateway.Name)
-				result = append(result, cloudResource{
-					key:      *gateway.ID,
-					name:     *gateway.Name,
-					status:   "",
-					typeName: transitGatewayTypeName,
-					id:       *gateway.ID,
-				})
+				o.Logger.Debugf("listTransitGatewaysByName: FOUND: %s, %s", *gateway.ID, *gateway.Name)
+				result = append(result, *gateway.ID)
 			}
 		}
 
 		if gatewayCollection.First != nil {
-			o.Logger.Debugf("listTransitGateways: First = %+v", *gatewayCollection.First.Href)
+			o.Logger.Debugf("listTransitGatewaysByName: First = %+v", *gatewayCollection.First.Href)
 		} else {
-			o.Logger.Debugf("listTransitGateways: First = nil")
+			o.Logger.Debugf("listTransitGatewaysByName: First = nil")
 		}
 		if gatewayCollection.Limit != nil {
-			o.Logger.Debugf("listTransitGateways: Limit = %v", *gatewayCollection.Limit)
+			o.Logger.Debugf("listTransitGatewaysByName: Limit = %v", *gatewayCollection.Limit)
 		}
 		if gatewayCollection.Next != nil {
 			start, err := gatewayCollection.GetNextStart()
 			if err != nil {
-				o.Logger.Debugf("listTransitGateways: err = %v", err)
-				return nil, fmt.Errorf("listTransitGateways: failed to GetNextStart: %w", err)
+				o.Logger.Debugf("listTransitGatewaysByName: err = %v", err)
+				return nil, fmt.Errorf("listTransitGatewaysByName: failed to GetNextStart: %w", err)
 			}
 			if start != nil {
-				o.Logger.Debugf("listTransitGateways: start = %v", *start)
+				o.Logger.Debugf("listTransitGatewaysByName: start = %v", *start)
 				listTransitGatewaysOptions.SetStart(*start)
 			}
 		} else {
-			o.Logger.Debugf("listTransitGateways: Next = nil")
+			o.Logger.Debugf("listTransitGatewaysByName: Next = nil")
 			moreData = false
 		}
 	}
 	if !foundOne {
-		o.Logger.Debugf("listTransitGateways: NO matching transit gateway against: %s", o.InfraID)
+		o.Logger.Debugf("listTransitGatewaysByName: NO matching transit gateway against: %s", o.InfraID)
 
 		listTransitGatewaysOptions = o.tgClient.NewListTransitGatewaysOptions()
 		listTransitGatewaysOptions.Limit = &perPage
@@ -99,37 +159,37 @@ func (o *ClusterUninstaller) listTransitGateways() (cloudResources, error) {
 				return nil, fmt.Errorf("failed to list transit gateways: %w and the respose is: %s", err, response)
 			}
 			for _, gateway = range gatewayCollection.TransitGateways {
-				o.Logger.Debugf("listTransitGateways: FOUND: %s, %s", *gateway.ID, *gateway.Name)
+				o.Logger.Debugf("listTransitGatewaysByName: FOUND: %s, %s", *gateway.ID, *gateway.Name)
 			}
 			if gatewayCollection.First != nil {
-				o.Logger.Debugf("listTransitGateways: First = %+v", *gatewayCollection.First.Href)
+				o.Logger.Debugf("listTransitGatewaysByName: First = %+v", *gatewayCollection.First.Href)
 			} else {
-				o.Logger.Debugf("listTransitGateways: First = nil")
+				o.Logger.Debugf("listTransitGatewaysByName: First = nil")
 			}
 			if gatewayCollection.Limit != nil {
-				o.Logger.Debugf("listTransitGateways: Limit = %v", *gatewayCollection.Limit)
+				o.Logger.Debugf("listTransitGatewaysByName: Limit = %v", *gatewayCollection.Limit)
 			}
 			if gatewayCollection.Next != nil {
 				start, err := gatewayCollection.GetNextStart()
 				if err != nil {
-					o.Logger.Debugf("listTransitGateways: err = %v", err)
-					return nil, fmt.Errorf("listTransitGateways: failed to GetNextStart: %w", err)
+					o.Logger.Debugf("listTransitGatewaysByName: err = %v", err)
+					return nil, fmt.Errorf("listTransitGatewaysByName: failed to GetNextStart: %w", err)
 				}
 				if start != nil {
-					o.Logger.Debugf("listTransitGateways: start = %v", *start)
+					o.Logger.Debugf("listTransitGatewaysByName: start = %v", *start)
 					listTransitGatewaysOptions.SetStart(*start)
 				}
 			} else {
-				o.Logger.Debugf("listTransitGateways: Next = nil")
+				o.Logger.Debugf("listTransitGatewaysByName: Next = nil")
 				moreData = false
 			}
 		}
 	}
 
-	return cloudResources{}.insert(result...), nil
+	return result, nil
 }
 
-// Destroy a specified transit gateway.
+// destroyTransitGateway destroy a specified transit gateway.
 func (o *ClusterUninstaller) destroyTransitGateway(item cloudResource) error {
 	var (
 		deleteTransitGatewayOptions *transitgatewayapisv1.DeleteTransitGatewayOptions
@@ -137,7 +197,7 @@ func (o *ClusterUninstaller) destroyTransitGateway(item cloudResource) error {
 		err                         error
 
 		ctx    context.Context
-		cancel func()
+		cancel context.CancelFunc
 	)
 
 	ctx, cancel = contextWithTimeout()
@@ -162,7 +222,7 @@ func (o *ClusterUninstaller) destroyTransitGateway(item cloudResource) error {
 	return nil
 }
 
-// Destroy the connections for a specified transit gateway.
+// destroyTransitGatewayConnections destroy the connections for a specified transit gateway.
 func (o *ClusterUninstaller) destroyTransitGatewayConnections(item cloudResource) error {
 	var (
 		firstPassList cloudResources
@@ -172,7 +232,7 @@ func (o *ClusterUninstaller) destroyTransitGatewayConnections(item cloudResource
 		items []cloudResource
 
 		ctx    context.Context
-		cancel func()
+		cancel context.CancelFunc
 
 		backoff = wait.Backoff{Duration: 15 * time.Second,
 			Factor: 1.5,
@@ -180,7 +240,7 @@ func (o *ClusterUninstaller) destroyTransitGatewayConnections(item cloudResource
 			Steps:  math.MaxInt32}
 	)
 
-	firstPassList, err = o.listTransitConnections(item)
+	firstPassList, err = o.listTransitConnectionsByName(item)
 	if err != nil {
 		return err
 	}
@@ -215,6 +275,13 @@ func (o *ClusterUninstaller) destroyTransitGatewayConnections(item cloudResource
 		return fmt.Errorf("destroyTransitGateway: %d undeleted items pending", len(items))
 	}
 
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("destroyTransitGateway: case <-ctx.Done()")
+		return ctx.Err() // we're cancelled, abort
+	default:
+	}
+
 	backoff = wait.Backoff{Duration: 15 * time.Second,
 		Factor: 1.5,
 		Cap:    10 * time.Minute,
@@ -226,7 +293,7 @@ func (o *ClusterUninstaller) destroyTransitGatewayConnections(item cloudResource
 			err2 error
 		)
 
-		secondPassList, err2 = o.listTransitConnections(item)
+		secondPassList, err2 = o.listTransitConnectionsByName(item)
 		if err2 != nil {
 			return false, err2
 		}
@@ -246,11 +313,11 @@ func (o *ClusterUninstaller) destroyTransitGatewayConnections(item cloudResource
 	return err
 }
 
-// Destroy a specified transit gateway connection.
+// destroyTransitConnection destroy a specified transit gateway connection.
 func (o *ClusterUninstaller) destroyTransitConnection(item cloudResource) error {
 	var (
 		ctx    context.Context
-		cancel func()
+		cancel context.CancelFunc
 
 		deleteTransitGatewayConnectionOptions *transitgatewayapisv1.DeleteTransitGatewayConnectionOptions
 		response                              *core.DetailedResponse
@@ -275,13 +342,13 @@ func (o *ClusterUninstaller) destroyTransitConnection(item cloudResource) error 
 	return nil
 }
 
-// listTransitConnections lists Transit Connections for a Transit Gateway in the IBM Cloud.
-func (o *ClusterUninstaller) listTransitConnections(item cloudResource) (cloudResources, error) {
+// listTransitConnectionsByName lists Transit Connections for a Transit Gateway in the IBM Cloud.
+func (o *ClusterUninstaller) listTransitConnectionsByName(item cloudResource) (cloudResources, error) {
 	o.Logger.Debugf("Listing Transit Gateways Connections (%s)", item.name)
 
 	var (
 		ctx                          context.Context
-		cancel                       func()
+		cancel                       context.CancelFunc
 		listConnectionsOptions       *transitgatewayapisv1.ListConnectionsOptions
 		transitConnectionCollections *transitgatewayapisv1.TransitConnectionCollection
 		transitConnection            transitgatewayapisv1.TransitConnection
@@ -295,7 +362,7 @@ func (o *ClusterUninstaller) listTransitConnections(item cloudResource) (cloudRe
 	ctx, cancel = contextWithTimeout()
 	defer cancel()
 
-	o.Logger.Debugf("listTransitConnections: searching for ID %s", item.id)
+	o.Logger.Debugf("listTransitConnectionsByName: searching for ID %s", item.id)
 
 	listConnectionsOptions = o.tgClient.NewListConnectionsOptions()
 	listConnectionsOptions.SetLimit(perPage)
@@ -304,19 +371,26 @@ func (o *ClusterUninstaller) listTransitConnections(item cloudResource) (cloudRe
 	result := []cloudResource{}
 
 	for moreData {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("listTransitConnectionsByName: case <-ctx.Done()")
+			return nil, ctx.Err() // we're cancelled, abort
+		default:
+		}
+
 		transitConnectionCollections, response, err = o.tgClient.ListConnectionsWithContext(ctx, listConnectionsOptions)
 		if err != nil {
-			o.Logger.Debugf("listTransitConnections: ListConnections returns %v and the response is: %s", err, response)
+			o.Logger.Debugf("listTransitConnectionsByName: ListConnections returns %v and the response is: %s", err, response)
 			return nil, err
 		}
 		for _, transitConnection = range transitConnectionCollections.Connections {
 			if *transitConnection.TransitGateway.ID != item.id {
-				o.Logger.Debugf("listTransitConnections: SKIP: %s, %s, %s", *transitConnection.ID, *transitConnection.Name, *transitConnection.TransitGateway.Name)
+				o.Logger.Debugf("listTransitConnectionsByName: SKIP: %s, %s, %s", *transitConnection.ID, *transitConnection.Name, *transitConnection.TransitGateway.Name)
 				continue
 			}
 
 			foundOne = true
-			o.Logger.Debugf("listTransitConnections: FOUND: %s, %s, %s", *transitConnection.ID, *transitConnection.Name, *transitConnection.TransitGateway.Name)
+			o.Logger.Debugf("listTransitConnectionsByName: FOUND: %s, %s, %s", *transitConnection.ID, *transitConnection.Name, *transitConnection.TransitGateway.Name)
 			result = append(result, cloudResource{
 				key:      *transitConnection.ID,
 				name:     *transitConnection.Name,
@@ -327,30 +401,30 @@ func (o *ClusterUninstaller) listTransitConnections(item cloudResource) (cloudRe
 		}
 
 		if transitConnectionCollections.First != nil {
-			o.Logger.Debugf("listTransitConnections: First = %+v", *transitConnectionCollections.First)
+			o.Logger.Debugf("listTransitConnectionsByName: First = %+v", *transitConnectionCollections.First)
 		} else {
-			o.Logger.Debugf("listTransitConnections: First = nil")
+			o.Logger.Debugf("listTransitConnectionsByName: First = nil")
 		}
 		if transitConnectionCollections.Limit != nil {
-			o.Logger.Debugf("listTransitConnections: Limit = %v", *transitConnectionCollections.Limit)
+			o.Logger.Debugf("listTransitConnectionsByName: Limit = %v", *transitConnectionCollections.Limit)
 		}
 		if transitConnectionCollections.Next != nil {
 			start, err := transitConnectionCollections.GetNextStart()
 			if err != nil {
-				o.Logger.Debugf("listTransitConnections: err = %v", err)
-				return nil, fmt.Errorf("listTransitConnections: failed to GetNextStart: %w", err)
+				o.Logger.Debugf("listTransitConnectionsByName: err = %v", err)
+				return nil, fmt.Errorf("listTransitConnectionsByName: failed to GetNextStart: %w", err)
 			}
 			if start != nil {
-				o.Logger.Debugf("listTransitConnections: start = %v", *start)
+				o.Logger.Debugf("listTransitConnectionsByName: start = %v", *start)
 				listConnectionsOptions.SetStart(*start)
 			}
 		} else {
-			o.Logger.Debugf("listTransitConnections: Next = nil")
+			o.Logger.Debugf("listTransitConnectionsByName: Next = nil")
 			moreData = false
 		}
 	}
 	if !foundOne {
-		o.Logger.Debugf("listTransitConnections: NO matching transit connections against: %s", o.InfraID)
+		o.Logger.Debugf("listTransitConnectionsByName: NO matching transit connections against: %s", o.InfraID)
 
 		listConnectionsOptions = o.tgClient.NewListConnectionsOptions()
 		listConnectionsOptions.SetLimit(perPage)
@@ -358,34 +432,41 @@ func (o *ClusterUninstaller) listTransitConnections(item cloudResource) (cloudRe
 		moreData = true
 
 		for moreData {
+			select {
+			case <-ctx.Done():
+				o.Logger.Debugf("listTransitConnectionsByName: case <-ctx.Done()")
+				return nil, ctx.Err() // we're cancelled, abort
+			default:
+			}
+
 			transitConnectionCollections, response, err = o.tgClient.ListConnectionsWithContext(ctx, listConnectionsOptions)
 			if err != nil {
-				o.Logger.Debugf("listTransitConnections: ListConnections returns %v and the response is: %s", err, response)
+				o.Logger.Debugf("listTransitConnectionsByName: ListConnections returns %v and the response is: %s", err, response)
 				return nil, err
 			}
 			for _, transitConnection = range transitConnectionCollections.Connections {
-				o.Logger.Debugf("listTransitConnections: FOUND: %s, %s, %s", *transitConnection.ID, *transitConnection.Name, *transitConnection.TransitGateway.Name)
+				o.Logger.Debugf("listTransitConnectionsByName: FOUND: %s, %s, %s", *transitConnection.ID, *transitConnection.Name, *transitConnection.TransitGateway.Name)
 			}
 			if transitConnectionCollections.First != nil {
-				o.Logger.Debugf("listTransitConnections: First = %+v", *transitConnectionCollections.First)
+				o.Logger.Debugf("listTransitConnectionsByName: First = %+v", *transitConnectionCollections.First)
 			} else {
-				o.Logger.Debugf("listTransitConnections: First = nil")
+				o.Logger.Debugf("listTransitConnectionsByName: First = nil")
 			}
 			if transitConnectionCollections.Limit != nil {
-				o.Logger.Debugf("listTransitConnections: Limit = %v", *transitConnectionCollections.Limit)
+				o.Logger.Debugf("listTransitConnectionsByName: Limit = %v", *transitConnectionCollections.Limit)
 			}
 			if transitConnectionCollections.Next != nil {
 				start, err := transitConnectionCollections.GetNextStart()
 				if err != nil {
-					o.Logger.Debugf("listTransitConnections: err = %v", err)
-					return nil, fmt.Errorf("listTransitConnections: failed to GetNextStart: %w", err)
+					o.Logger.Debugf("listTransitConnectionsByName: err = %v", err)
+					return nil, fmt.Errorf("listTransitConnectionsByName: failed to GetNextStart: %w", err)
 				}
 				if start != nil {
-					o.Logger.Debugf("listTransitConnections: start = %v", *start)
+					o.Logger.Debugf("listTransitConnectionsByName: start = %v", *start)
 					listConnectionsOptions.SetStart(*start)
 				}
 			} else {
-				o.Logger.Debugf("listTransitConnections: Next = nil")
+				o.Logger.Debugf("listTransitConnectionsByName: Next = nil")
 				moreData = false
 			}
 		}
@@ -394,7 +475,7 @@ func (o *ClusterUninstaller) listTransitConnections(item cloudResource) (cloudRe
 	return cloudResources{}.insert(result...), nil
 }
 
-// We either deal with an existing TG or destroy TGs matching a name.
+// destroyTransitGateways we either deal with an existing TG or destroy TGs matching a name.
 func (o *ClusterUninstaller) destroyTransitGateways() error {
 	// Old style: delete all TGs matching by name
 	if o.TransitGatewayName == "" {
@@ -417,7 +498,7 @@ func (o *ClusterUninstaller) innerDestroyTransitGateways() error {
 		items []cloudResource
 
 		ctx    context.Context
-		cancel func()
+		cancel context.CancelFunc
 
 		backoff = wait.Backoff{Duration: 15 * time.Second,
 			Factor: 1.5,
@@ -438,7 +519,7 @@ func (o *ClusterUninstaller) innerDestroyTransitGateways() error {
 	for _, item := range items {
 		select {
 		case <-ctx.Done():
-			o.Logger.Debugf("destroyTransitGateways: case <-ctx.Done()")
+			o.Logger.Debugf("innerDestroyTransitGateways: case <-ctx.Done()")
 			return ctx.Err() // we're cancelled, abort
 		default:
 		}
@@ -452,12 +533,19 @@ func (o *ClusterUninstaller) innerDestroyTransitGateways() error {
 			return false, err2
 		})
 		if err != nil {
-			o.Logger.Fatalf("destroyTransitGateways: ExponentialBackoffWithContext (destroy) returns %v", err)
+			o.Logger.Fatalf("innerDestroyTransitGateways: ExponentialBackoffWithContext (destroy) returns %v", err)
 		}
 	}
 
 	if items = o.getPendingItems(transitGatewayTypeName); len(items) > 0 {
-		return fmt.Errorf("destroyTransitGateways: %d undeleted items pending", len(items))
+		return fmt.Errorf("innerDestroyTransitGateways: %d undeleted items pending", len(items))
+	}
+
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("innerDestroyTransitGateways: case <-ctx.Done()")
+		return ctx.Err() // we're cancelled, abort
+	default:
 	}
 
 	backoff = wait.Backoff{Duration: 15 * time.Second,
@@ -480,12 +568,12 @@ func (o *ClusterUninstaller) innerDestroyTransitGateways() error {
 			return true, nil
 		}
 		for _, item := range secondPassList {
-			o.Logger.Debugf("destroyTransitGateways: found %s in second pass", item.name)
+			o.Logger.Debugf("innerDestroyTransitGateways: found %s in second pass", item.name)
 		}
 		return false, nil
 	})
 	if err != nil {
-		o.Logger.Fatalf("destroyTransitGateways: ExponentialBackoffWithContext (list) returns %v", err)
+		o.Logger.Fatalf("innerDestroyTransitGateways: ExponentialBackoffWithContext (list) returns %v", err)
 	}
 
 	return nil

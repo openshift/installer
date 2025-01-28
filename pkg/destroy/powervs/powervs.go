@@ -103,6 +103,8 @@ type ClusterUninstaller struct {
 	cosInstanceID   string
 	dnsZoneID       string
 
+	searchByTag bool
+
 	errorTracker
 	pendingItemTracker
 }
@@ -161,6 +163,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		resourceGroupID:    metadata.ClusterPlatformMetadata.PowerVS.PowerVSResourceGroup,
 		ServiceGUID:        metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID,
 		TransitGatewayName: metadata.ClusterPlatformMetadata.PowerVS.TransitGatewayName,
+		searchByTag:        false, // @TODO Enable in the future
 	}, nil
 }
 
