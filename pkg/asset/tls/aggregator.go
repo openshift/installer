@@ -28,7 +28,7 @@ func (a *AggregatorCA) Generate(ctx context.Context, dependencies asset.Parents)
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "aggregator", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityOneDay,
+		Validity:  ValidityFourHours,
 		IsCA:      true,
 	}
 
@@ -66,7 +66,7 @@ func (a *APIServerProxyCertKey) Generate(ctx context.Context, dependencies asset
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver-proxy", Organization: []string{"kube-master"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-		Validity:     ValidityOneDay,
+		Validity:     ValidityFourHours,
 	}
 
 	return a.SignedCertKey.Generate(ctx, cfg, aggregatorCA, "apiserver-proxy", DoNotAppendParent)
@@ -94,7 +94,7 @@ func (c *AggregatorSignerCertKey) Generate(ctx context.Context, parents asset.Pa
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "aggregator-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityOneDay,
+		Validity:  ValidityFourHours,
 		IsCA:      true,
 	}
 
@@ -159,7 +159,7 @@ func (a *AggregatorClientCertKey) Generate(ctx context.Context, dependencies ass
 		Subject:      pkix.Name{CommonName: "system:kube-apiserver-proxy", Organization: []string{"kube-master"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-		Validity:     ValidityOneDay,
+		Validity:     ValidityFourHours,
 	}
 
 	return a.SignedCertKey.Generate(ctx, cfg, ca, "aggregator-client", DoNotAppendParent)

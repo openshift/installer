@@ -25,7 +25,7 @@ func (c *KubeControlPlaneSignerCertKey) Generate(ctx context.Context, parents as
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "kube-control-plane-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityOneYear,
+		Validity:  ValidityFourHours,
 		IsCA:      true,
 	}
 
@@ -93,7 +93,7 @@ func (a *KubeControlPlaneKubeControllerManagerClientCertKey) Generate(ctx contex
 		Subject:      pkix.Name{CommonName: "system:admin", Organization: []string{"system:masters"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-		Validity:     ValidityOneYear,
+		Validity:     ValidityFourHours,
 	}
 
 	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-control-plane-kube-controller-manager-client", DoNotAppendParent)
@@ -127,7 +127,7 @@ func (a *KubeControlPlaneKubeSchedulerClientCertKey) Generate(ctx context.Contex
 		Subject:      pkix.Name{CommonName: "system:admin", Organization: []string{"system:masters"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-		Validity:     ValidityOneYear,
+		Validity:     ValidityFourHours,
 	}
 
 	return a.SignedCertKey.Generate(ctx, cfg, ca, "kube-control-plane-kube-scheduler-client", DoNotAppendParent)
