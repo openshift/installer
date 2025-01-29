@@ -1,0 +1,35 @@
+{
+    "aarch64": {
+        "azure": {
+            "no-purchase-plan": {
+                "hyperVGen2": {
+                    "publisher": "azureopenshift",
+                    "offer": "aro4",
+                    "sku": "417-arm",
+                    "version": "417.94.20240701",
+                    "thirdParty": false
+                }
+            }
+        }
+    },
+    "x86_64": {
+        "azure": {
+            "no-purchase-plan": {
+                "hyperVGen1": {
+                    "publisher": "azureopenshift",
+                    "offer": "aro4",
+                    "sku": "aro_417",
+                    "version": "417.94.20240701",
+                    "thirdParty": false
+                },
+                "hyperVGen2": {
+                    "publisher": "azureopenshift",
+                    "offer": "aro4",
+                    "sku": "417-v2",
+                    "version": "417.94.20240701",
+                    "thirdParty": false
+                }
+            }
+        }
+    }
+}
