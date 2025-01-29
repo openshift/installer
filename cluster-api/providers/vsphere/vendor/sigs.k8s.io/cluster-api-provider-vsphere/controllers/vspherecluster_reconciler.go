@@ -359,7 +359,7 @@ func (r *clusterReconciler) reconcileDeploymentZones(ctx context.Context, cluste
 }
 
 func (r *clusterReconciler) reconcileClusterModules(ctx context.Context, clusterCtx *capvcontext.ClusterContext) (reconcile.Result, error) {
-	if feature.Gates.Enabled(feature.NodeAntiAffinity) {
+	if feature.Gates.Enabled(feature.NodeAntiAffinity) && !clusterCtx.VSphereCluster.Spec.DisableClusterModule {
 		return r.clusterModuleReconciler.Reconcile(ctx, clusterCtx)
 	}
 	return reconcile.Result{}, nil

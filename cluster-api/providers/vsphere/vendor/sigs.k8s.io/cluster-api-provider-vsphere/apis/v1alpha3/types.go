@@ -185,8 +185,8 @@ func (v APIEndpoint) String() string {
 // NetworkSpec defines the virtual machine's network configuration.
 type NetworkSpec struct {
 	// Devices is the list of network devices used by the virtual machine.
-	// TODO(akutz) Make sure at least one network matches the
-	//             ClusterSpec.CloudProviderConfiguration.Network.Name
+	//
+	// TODO(akutz) Make sure at least one network matches the ClusterSpec.CloudProviderConfiguration.Network.Name
 	Devices []NetworkDeviceSpec `json:"devices"`
 
 	// Routes is a list of optional, static routes applied to the virtual

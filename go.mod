@@ -72,8 +72,8 @@ require (
 	github.com/microsoftgraph/msgraph-sdk-go v0.59.0
 	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.3.3-0.20240416171357-98239ba02cb2
 	github.com/nutanix-cloud-native/prism-go-client v0.3.4
-	github.com/onsi/gomega v1.35.1
-	github.com/openshift/api v0.0.0-20241216151652-de9de05a8e43
+	github.com/onsi/gomega v1.36.1
+	github.com/openshift/api v0.0.0-20250108172834-78bd56dba39b
 	github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6
 	github.com/openshift/assisted-service/api v0.0.0
 	github.com/openshift/assisted-service/client v0.0.0
@@ -84,7 +84,7 @@ require (
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20230308152226-83c0473d4429
 	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20220323121149-e3f2850dd519
 	github.com/openshift/hive/apis v0.0.0-20231220215202-ad99b9e52d27
-	github.com/openshift/library-go v0.0.0-20241216140520-201d816c66f0
+	github.com/openshift/library-go v0.0.0-20250114132252-af5b21ebad2f
 	github.com/openshift/machine-api-provider-gcp v0.0.1-0.20241021180644-0eca0846914a
 	github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20231207164151-6b0b8ea7b16d
 	github.com/ovirt/go-ovirt v0.0.0-20210809163552-d4276e35d3db
@@ -98,22 +98,22 @@ require (
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/thedevsaddam/retry v0.0.0-20200324223450-9769a859cc6d
 	github.com/thoas/go-funk v0.9.3
 	github.com/ulikunitz/xz v0.5.12
 	github.com/vincent-petithory/dataurl v1.0.0
-	github.com/vmware/govmomi v0.43.0
+	github.com/vmware/govmomi v0.46.3
 	go.uber.org/mock v0.5.0
 	golang.org/x/crypto v0.31.0
-	golang.org/x/oauth2 v0.23.0
+	golang.org/x/oauth2 v0.24.0
 	golang.org/x/sync v0.10.0
 	golang.org/x/sys v0.28.0
 	golang.org/x/term v0.27.0
 	golang.org/x/text v0.21.0
 	google.golang.org/api v0.189.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240826202546-f6391c0de4c7
-	google.golang.org/grpc v1.65.0
+	google.golang.org/grpc v1.65.1
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.32.1
@@ -131,8 +131,8 @@ require (
 	sigs.k8s.io/cluster-api-provider-gcp v1.7.1-0.20240724153512-c3b8b533143c
 	sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0
 	sigs.k8s.io/cluster-api-provider-openstack v0.11.1
-	sigs.k8s.io/cluster-api-provider-vsphere v1.11.1
-	sigs.k8s.io/controller-runtime v0.19.0
+	sigs.k8s.io/cluster-api-provider-vsphere v1.12.0-rc.0.0.20241223082411-2880c92b15b6
+	sigs.k8s.io/controller-runtime v0.19.3
 	sigs.k8s.io/controller-tools v0.16.3
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3
 	sigs.k8s.io/yaml v1.4.0
@@ -176,9 +176,8 @@ require (
 	github.com/emicklei/go-restful/v3 v3.12.1 // indirect
 	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
-	github.com/fatih/color v1.17.0 // indirect
+	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
@@ -191,7 +190,7 @@ require (
 	github.com/go-openapi/spec v0.21.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/gobuffalo/flect v1.0.2 // indirect
+	github.com/gobuffalo/flect v1.0.3 // indirect
 	github.com/gofrs/uuid/v5 v5.3.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
@@ -279,10 +278,10 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
-	golang.org/x/mod v0.21.0 // indirect
+	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
-	golang.org/x/tools v0.26.0 // indirect
+	golang.org/x/tools v0.28.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20240722135656-d784300faade // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240826202546-f6391c0de4c7 // indirect
@@ -296,7 +295,7 @@ require (
 	gorm.io/gorm v1.24.5 // indirect
 	k8s.io/apiserver v0.32.1 // indirect
 	k8s.io/cli-runtime v0.31.1 // indirect
-	k8s.io/cluster-bootstrap v0.30.3 // indirect
+	k8s.io/cluster-bootstrap v0.31.4 // indirect
 	k8s.io/component-base v0.32.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f // indirect
 	k8s.io/kubectl v0.31.1 // indirect

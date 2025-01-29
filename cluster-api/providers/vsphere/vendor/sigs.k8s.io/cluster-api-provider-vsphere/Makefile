@@ -23,24 +23,24 @@ SHELL:=/usr/bin/env bash
 #
 # Go.
 #
-GO_VERSION ?= 1.22.7
+GO_VERSION ?= 1.22.10
+GO_DIRECTIVE_VERSION ?= 1.22.0
 GO_CONTAINER_IMAGE ?= docker.io/library/golang:$(GO_VERSION)
-GO_DIRECTIVE_VERSION ?=  1.22.0
 
 # Use GOPROXY environment variable if set
 GOPROXY := $(shell go env GOPROXY)
-ifeq (,$(strip $(GOPROXY)))
+ifeq ($(GOPROXY),)
 GOPROXY := https://proxy.golang.org
 endif
 export GOPROXY
 
 # Active module mode, as we use go modules to manage dependencies
-export GO111MODULE := on
+export GO111MODULE=on
 
 #
 # Kubebuilder.
 #
-export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.28.0
+export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.31.0
 export KUBEBUILDER_CONTROLPLANE_START_TIMEOUT ?= 60s
 export KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT ?= 60s
 
@@ -58,6 +58,7 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 BIN_DIR := bin
 BUILD_DIR := .build
 TEST_DIR := test
+PACKAGING_DIR := packaging
 VCSIM_DIR := test/infrastructure/vcsim
 NETOP_DIR := test/infrastructure/net-operator
 TEST_EXTENSION_DIR := test/extension
@@ -104,16 +105,12 @@ KUSTOMIZE_BIN := kustomize
 KUSTOMIZE := $(abspath $(TOOLS_BIN_DIR)/$(KUSTOMIZE_BIN)-$(KUSTOMIZE_VER))
 KUSTOMIZE_PKG := sigs.k8s.io/kustomize/kustomize/v4
 
-# This is a commit from CR main (22.05.2024).
-# Intentionally using a commit from main to use a setup-envtest version
-# that uses binaries from controller-tools, not GCS.
-# CR PR: https://github.com/kubernetes-sigs/controller-runtime/pull/2811
-SETUP_ENVTEST_VER := v0.0.0-20240522175850-2e9781e9fc60
+SETUP_ENVTEST_VER := release-0.19
 SETUP_ENVTEST_BIN := setup-envtest
 SETUP_ENVTEST := $(abspath $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)-$(SETUP_ENVTEST_VER))
 SETUP_ENVTEST_PKG := sigs.k8s.io/controller-runtime/tools/setup-envtest
 
-CONTROLLER_GEN_VER := v0.15.0
+CONTROLLER_GEN_VER := v0.16.3
 CONTROLLER_GEN_BIN := controller-gen
 CONTROLLER_GEN := $(abspath $(TOOLS_BIN_DIR)/$(CONTROLLER_GEN_BIN)-$(CONTROLLER_GEN_VER))
 CONTROLLER_GEN_PKG := sigs.k8s.io/controller-tools/cmd/controller-gen
@@ -123,7 +120,7 @@ GOTESTSUM_BIN := gotestsum
 GOTESTSUM := $(abspath $(TOOLS_BIN_DIR)/$(GOTESTSUM_BIN)-$(GOTESTSUM_VER))
 GOTESTSUM_PKG := gotest.tools/gotestsum
 
-CONVERSION_GEN_VER := v0.30.0
+CONVERSION_GEN_VER := v0.31.0
 CONVERSION_GEN_BIN := conversion-gen
 # We are intentionally using the binary without version suffix, to avoid the version
 # in generated files.
@@ -142,9 +139,9 @@ GO_APIDIFF_PKG := github.com/joelanford/go-apidiff
 
 SHELLCHECK_VER := v0.9.0
 
-TRIVY_VER := 0.47.0
+TRIVY_VER := 0.49.1
 
-KPROMO_VER := v4.0.5
+KPROMO_VER := 5ab0dbc74b0228c22a93d240596dff77464aee8f
 KPROMO_BIN := kpromo
 KPROMO :=  $(abspath $(TOOLS_BIN_DIR)/$(KPROMO_BIN)-$(KPROMO_VER))
 # KPROMO_PKG may have to be changed if KPROMO_VER increases its major version.
@@ -185,7 +182,7 @@ IMPORT_BOSS_VER := v0.28.1
 IMPORT_BOSS := $(abspath $(TOOLS_BIN_DIR)/$(IMPORT_BOSS_BIN))
 IMPORT_BOSS_PKG := k8s.io/code-generator/cmd/import-boss
 
-CAPI_HACK_TOOLS_VER := 02769254e95db17afbd6ec4036aacbd294d9424c # Note: this is the commit ID of CAPI v1.8.1
+CAPI_HACK_TOOLS_VER := b04c79ca02d3bed23c84115e5c42fa3de1a163dc # Note: this is the commit ID of CAPI v1.9.1
 
 BOSKOSCTL_BIN := boskosctl
 BOSKOSCTL := $(abspath $(TOOLS_BIN_DIR)/$(BOSKOSCTL_BIN))
@@ -263,7 +260,7 @@ ifeq ($(SELINUX_ENABLED),1)
 endif
 
 # Set build time variables including version details
-LDFLAGS ?= $(shell hack/version.sh)
+LDFLAGS := $(shell hack/version.sh)
 
 # Additional CAPV vars (everything else is ~ kept in sync with core CAPI)
 # Allow overriding manifest generation destination directory
@@ -363,13 +360,14 @@ generate-go-conversions: $(CONTROLLER_GEN) $(CONVERSION_GEN) ## Runs Go related 
 generate-modules: ## Run go mod tidy to ensure modules are up to date
 	go mod tidy
 	cd $(TEST_DIR); go mod tidy
+	cd $(PACKAGING_DIR); go mod tidy
 
 .PHONY: generate-doctoc
 generate-doctoc:
 	TRACE=$(TRACE) ./hack/generate-doctoc.sh
 
 .PHONY: generate-e2e-templates
-generate-e2e-templates: $(KUSTOMIZE) $(addprefix generate-e2e-templates-, v1.9 v1.10 main) ## Generate test templates for all branches
+generate-e2e-templates: $(KUSTOMIZE) $(addprefix generate-e2e-templates-, v1.9 v1.10 v1.11 main) ## Generate test templates for all branches
 
 .PHONY: generate-e2e-templates-main
 generate-e2e-templates-main: $(KUSTOMIZE) ## Generate test templates for the main branch
@@ -378,6 +376,7 @@ generate-e2e-templates-main: $(KUSTOMIZE) ## Generate test templates for the mai
 	cp "$(RELEASE_DIR)/main/cluster-template-ignition.yaml" "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/base/cluster-template-ignition.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/base" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/cluster-template.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/hw-upgrade" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/cluster-template-hw-upgrade.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/multi-disk" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/cluster-template-multi-disk.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/storage-policy" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/cluster-template-storage-policy.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/conformance" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/main/cluster-template-conformance.yaml"
 	# Since CAPI uses different flavor names for KCP and MD remediation using MHC
@@ -413,6 +412,15 @@ generate-e2e-templates-main: $(KUSTOMIZE) ## Generate test templates for the mai
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/conformance" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/cluster-template-conformance-supervisor.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/fast-rollout" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/cluster-template-fast-rollout-supervisor.yaml"
 	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/ownerrefs-finalizers" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/main/cluster-template-ownerrefs-finalizers-supervisor.yaml"
+
+.PHONY: generate-e2e-templates-v1.11
+generate-e2e-templates-v1.11: $(KUSTOMIZE)
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.11/clusterclass" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.11/clusterclass-quick-start.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.11/workload" > "$(E2E_GOVMOMI_TEMPLATE_DIR)/v1.11/cluster-template-workload.yaml"
+
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.11/clusterclass" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.11/clusterclass-quick-start-supervisor.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.11/workload" > "$(E2E_SUPERVISOR_TEMPLATE_DIR)/v1.11/cluster-template-workload-supervisor.yaml"
+
 
 .PHONY: generate-e2e-templates-v1.10
 generate-e2e-templates-v1.10: $(KUSTOMIZE)
@@ -455,6 +463,7 @@ generate-test-infra-prowjobs: $(PROWJOB_GEN) ## Generates the prowjob configurat
 lint: $(GOLANGCI_LINT) ## Lint the codebase
 	$(GOLANGCI_LINT) run -v $(GOLANGCI_LINT_EXTRA_ARGS)
 	cd $(TEST_DIR); $(GOLANGCI_LINT) run --path-prefix $(TEST_DIR) --config $(ROOT_DIR)/.golangci.yml -v $(GOLANGCI_LINT_EXTRA_ARGS)
+	cd $(PACKAGING_DIR); $(GOLANGCI_LINT) run --path-prefix $(PACKAGING_DIR) --config $(ROOT_DIR)/.golangci.yml -v $(GOLANGCI_LINT_EXTRA_ARGS)
 
 .PHONY: lint-fix
 lint-fix: $(GOLANGCI_LINT) ## Lint the codebase and run auto-fixers if supported by the linter
@@ -477,7 +486,7 @@ verify-go-directive:
 
 .PHONY: verify-modules
 verify-modules: generate-modules  ## Verify go modules are up to date
-	@if !(git diff --quiet HEAD -- go.sum go.mod $(TEST_DIR)/go.mod $(TEST_DIR)/go.sum); then \
+	@if !(git diff --quiet HEAD -- go.sum go.mod $(TEST_DIR)/go.mod $(TEST_DIR)/go.sum $(PACKAGING_DIR)/go.mod $(PACKAGING_DIR)/go.sum); then \
 		git diff; \
 		echo "go module files are out of date"; exit 1; \
 	fi
@@ -524,7 +533,8 @@ verify-licenses: ## Verify licenses
 verify-govulncheck: $(GOVULNCHECK) ## Verify code for vulnerabilities
 	$(GOVULNCHECK) ./... && R1=$$? || R1=$$?; \
 	$(GOVULNCHECK) -C "$(TEST_DIR)" ./... && R2=$$? || R2=$$?; \
-	if [ "$$R1" -ne "0" ] || [ "$$R2" -ne "0" ]; then \
+	$(GOVULNCHECK) -C "$(PACKAGING_DIR)" ./... && R3=$$? || R3=$$?; \
+	if [ "$$R1" -ne "0" ] || [ "$$R2" -ne "0" ] || [ "$$R3" -ne "0" ]; then \
 		exit 1; \
 	fi
 
@@ -781,7 +791,9 @@ e2e-flavors-main: $(RELEASE_DIR)
 
 .PHONY: generate-flavors
 generate-flavors: $(FLAVOR_DIR)
-	go run ./packaging/flavorgen --output-dir $(FLAVOR_DIR)
+	cd $(PACKAGING_DIR)/flavorgen; GOTOOLCHAIN=auto go build -o flavorgen ./
+	$(PACKAGING_DIR)/flavorgen/flavorgen --output-dir $(FLAVOR_DIR)
+	rm $(PACKAGING_DIR)/flavorgen/flavorgen
 
 .PHONY: release-staging
 release-staging: ## Build and push container images to the staging registry

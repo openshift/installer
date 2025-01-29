@@ -59,6 +59,12 @@ type VSphereClusterSpec struct {
 	// +optional
 	ClusterModules []ClusterModule `json:"clusterModules,omitempty"`
 
+	// DisableClusterModule is used to explicitly turn off the ClusterModule feature.
+	// This should work along side NodeAntiAffinity feature flag.
+	// If the NodeAntiAffinity feature flag is turned off, this will be disregarded.
+	// +optional
+	DisableClusterModule bool `json:"disableClusterModule,omitempty"`
+
 	// FailureDomainSelector is the label selector to use for failure domain selection
 	// for the control plane nodes of the cluster.
 	// If not set (`nil`), selecting failure domains will be disabled.

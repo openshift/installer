@@ -1,11 +1,11 @@
 /*
-Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+Copyright (c) 2017-2024 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,23 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-// Copyright 2017 VMware, Inc. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//    http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
 
 package simulator
 
 import (
+	"slices"
+
 	"github.com/vmware/govmomi/vim25/methods"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/soap"
@@ -64,15 +53,45 @@ type LicenseManager struct {
 }
 
 func (m *LicenseManager) init(r *Registry) {
-	m.Licenses = []types.LicenseManagerLicenseInfo{EvalLicense}
+	if len(m.Licenses) == 0 {
+		about := r.content().About
+		product := []types.KeyAnyValue{
+			{
+				Key:   "ProductName",
+				Value: about.LicenseProductName,
+			},
+			{
+				Key:   "ProductVersion",
+				Value: about.LicenseProductVersion,
+			},
+		}
+
+		EvalLicense.Properties = append(EvalLicense.Properties, product...)
+
+		m.Licenses = []types.LicenseManagerLicenseInfo{EvalLicense}
+	}
 
 	if r.IsVPX() {
-		am := Map.Put(&LicenseAssignmentManager{}).Reference()
-		m.LicenseAssignmentManager = &am
+		if m.LicenseAssignmentManager == nil {
+			m.LicenseAssignmentManager = &types.ManagedObjectReference{
+				Type:  "LicenseAssignmentManager",
+				Value: "LicenseAssignmentManager",
+			}
+		}
+
+		lam := new(LicenseAssignmentManager)
+		lam.Self = *m.LicenseAssignmentManager
+		lam.QueryAssignedLicensesResponse.Returnval = []types.LicenseAssignmentManagerLicenseAssignment{{
+			EntityId:          r.content().About.InstanceUuid,
+			EntityDisplayName: "vcsim",
+			AssignedLicense:   EvalLicense,
+		}}
+		r.Put(lam)
+		r.AddHandler(lam)
 	}
 }
 
-func (m *LicenseManager) AddLicense(req *types.AddLicense) soap.HasFault {
+func (m *LicenseManager) AddLicense(ctx *Context, req *types.AddLicense) soap.HasFault {
 	body := &methods.AddLicenseBody{
 		Res: &types.AddLicenseResponse{},
 	}
@@ -94,7 +113,7 @@ func (m *LicenseManager) AddLicense(req *types.AddLicense) soap.HasFault {
 	return body
 }
 
-func (m *LicenseManager) RemoveLicense(req *types.RemoveLicense) soap.HasFault {
+func (m *LicenseManager) RemoveLicense(ctx *Context, req *types.RemoveLicense) soap.HasFault {
 	body := &methods.RemoveLicenseBody{
 		Res: &types.RemoveLicenseResponse{},
 	}
@@ -108,7 +127,22 @@ func (m *LicenseManager) RemoveLicense(req *types.RemoveLicense) soap.HasFault {
 	return body
 }
 
-func (m *LicenseManager) UpdateLicenseLabel(req *types.UpdateLicenseLabel) soap.HasFault {
+func (m *LicenseManager) DecodeLicense(ctx *Context, req *types.DecodeLicense) soap.HasFault {
+	body := &methods.DecodeLicenseBody{
+		Res: &types.DecodeLicenseResponse{},
+	}
+
+	for _, license := range m.Licenses {
+		if req.LicenseKey == license.LicenseKey {
+			body.Res.Returnval = license
+			break
+		}
+	}
+
+	return body
+}
+
+func (m *LicenseManager) UpdateLicenseLabel(ctx *Context, req *types.UpdateLicenseLabel) soap.HasFault {
 	body := &methods.UpdateLicenseLabelBody{}
 
 	for i := range m.Licenses {
@@ -147,32 +181,108 @@ func (m *LicenseManager) UpdateLicenseLabel(req *types.UpdateLicenseLabel) soap.
 
 type LicenseAssignmentManager struct {
 	mo.LicenseAssignmentManager
+
+	types.QueryAssignedLicensesResponse
 }
 
-func (m *LicenseAssignmentManager) QueryAssignedLicenses(req *types.QueryAssignedLicenses) soap.HasFault {
+var licensedTypes = []string{"HostSystem", "ClusterComputeResource"}
+
+// PutObject assigns a license when a host or cluster is created.
+func (m *LicenseAssignmentManager) PutObject(obj mo.Reference) {
+	ref := obj.Reference()
+
+	if !slices.Contains(licensedTypes, ref.Type) {
+		return
+	}
+
+	if slices.ContainsFunc(m.QueryAssignedLicensesResponse.Returnval,
+		func(am types.LicenseAssignmentManagerLicenseAssignment) bool {
+			return am.EntityId == ref.Value
+		}) {
+		return // via vcsim -load
+	}
+
+	la := types.LicenseAssignmentManagerLicenseAssignment{
+		EntityId:          ref.Value,
+		Scope:             Map.content().About.InstanceUuid,
+		EntityDisplayName: obj.(mo.Entity).Entity().Name,
+		AssignedLicense:   EvalLicense,
+	}
+
+	m.QueryAssignedLicensesResponse.Returnval =
+		append(m.QueryAssignedLicensesResponse.Returnval, la)
+}
+
+// RemoveObject removes the license assignment when a host or cluster is removed.
+func (m *LicenseAssignmentManager) RemoveObject(ctx *Context, ref types.ManagedObjectReference) {
+	if !slices.Contains(licensedTypes, ref.Type) {
+		return
+	}
+
+	m.QueryAssignedLicensesResponse.Returnval =
+		slices.DeleteFunc(m.QueryAssignedLicensesResponse.Returnval,
+			func(am types.LicenseAssignmentManagerLicenseAssignment) bool {
+				return am.EntityId == ref.Value
+			})
+}
+
+func (*LicenseAssignmentManager) UpdateObject(*Context, mo.Reference, []types.PropertyChange) {}
+
+func (m *LicenseAssignmentManager) init(r *Registry) {
+	r.AddHandler(m)
+}
+
+func (m *LicenseAssignmentManager) QueryAssignedLicenses(ctx *Context, req *types.QueryAssignedLicenses) soap.HasFault {
 	body := &methods.QueryAssignedLicensesBody{
 		Res: &types.QueryAssignedLicensesResponse{},
 	}
 
-	// EntityId can be a HostSystem or the vCenter InstanceUuid
-	if req.EntityId != "" {
-		if req.EntityId != Map.content().About.InstanceUuid {
-			id := types.ManagedObjectReference{
-				Type:  "HostSystem",
-				Value: req.EntityId,
-			}
-
-			if Map.Get(id) == nil {
-				return body
+	if req.EntityId == "" {
+		body.Res = &m.QueryAssignedLicensesResponse
+	} else {
+		for _, r := range m.QueryAssignedLicensesResponse.Returnval {
+			if r.EntityId == req.EntityId {
+				body.Res.Returnval = append(body.Res.Returnval, r)
 			}
 		}
 	}
 
-	body.Res.Returnval = []types.LicenseAssignmentManagerLicenseAssignment{
-		{
-			EntityId:        req.EntityId,
-			AssignedLicense: EvalLicense,
-		},
+	return body
+}
+
+func (m *LicenseAssignmentManager) UpdateAssignedLicense(ctx *Context, req *types.UpdateAssignedLicense) soap.HasFault {
+	body := new(methods.UpdateAssignedLicenseBody)
+
+	var license *types.LicenseManagerLicenseInfo
+	lm := ctx.Map.Get(*ctx.Map.content().LicenseManager).(*LicenseManager)
+
+	for i, l := range lm.Licenses {
+		if l.LicenseKey == req.LicenseKey {
+			license = &lm.Licenses[i]
+		}
+	}
+
+	if license == nil {
+		body.Fault_ = Fault("", &types.InvalidArgument{InvalidProperty: "entityId"})
+		return body
+	}
+
+	for i, r := range m.QueryAssignedLicensesResponse.Returnval {
+		if r.EntityId == req.Entity {
+			r.AssignedLicense = *license
+
+			if req.EntityDisplayName != "" {
+				r.EntityDisplayName = req.EntityDisplayName
+			}
+
+			m.QueryAssignedLicensesResponse.Returnval[i] = r
+
+			body.Res = &types.UpdateAssignedLicenseResponse{
+				Returnval: r.AssignedLicense,
+			}
+
+			break
+		}
 	}
 
 	return body

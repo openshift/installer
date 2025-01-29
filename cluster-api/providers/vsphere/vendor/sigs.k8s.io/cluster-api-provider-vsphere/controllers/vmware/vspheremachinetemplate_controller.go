@@ -47,6 +47,7 @@ func AddVSphereMachineTemplateControllerToManager(ctx context.Context, controlle
 	r := &vSphereMachineTemplateReconciler{
 		Client: controllerManagerContext.Client,
 	}
+	predicateLog := ctrl.LoggerFrom(ctx).WithValues("controller", "vspheremachinetemplate")
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&vmwarev1.VSphereMachineTemplate{}).
@@ -55,7 +56,7 @@ func AddVSphereMachineTemplateControllerToManager(ctx context.Context, controlle
 			&vmoprv1.VirtualMachineClass{},
 			handler.EnqueueRequestsFromMapFunc(r.enqueueVirtualMachineClassToVSphereMachineTemplateRequests),
 		).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), controllerManagerContext.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), predicateLog, controllerManagerContext.WatchFilterValue)).
 		Complete(r)
 }
 
