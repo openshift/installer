@@ -38,7 +38,7 @@ func asFileWriter(a asset.WritableAsset) asset.FileWriter {
 
 // Fetchs all the writable assets from the configured assets store.
 func (f *fetcher) FetchAndPersist(ctx context.Context, assets []asset.WritableAsset) error {
-	assetStore, err := NewStore(f.storeDir)
+	assetStore, err := NewStore(f.storeDir, false)
 	if err != nil {
 		return fmt.Errorf("failed to create asset store: %w", err)
 	}

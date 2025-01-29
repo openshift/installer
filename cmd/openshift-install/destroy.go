@@ -78,7 +78,7 @@ func runDestroyCmd(directory string, reportQuota bool) error {
 		}
 	}
 
-	store, err := assetstore.NewStore(directory)
+	store, err := assetstore.NewStore(directory, false)
 	if err != nil {
 		return fmt.Errorf("failed to create asset store: %w", err)
 	}

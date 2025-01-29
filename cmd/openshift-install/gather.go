@@ -102,7 +102,7 @@ func gatherAndAnalyzeBootstrapLogs(ctx context.Context, directory string) {
 }
 
 func runGatherBootstrapCmd(ctx context.Context, directory string) (string, error) {
-	assetStore, err := assetstore.NewStore(directory)
+	assetStore, err := assetstore.NewStore(directory, false)
 	if err != nil {
 		return "", fmt.Errorf("failed to create asset store: %w", err)
 	}
