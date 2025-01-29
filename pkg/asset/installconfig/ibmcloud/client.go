@@ -769,31 +769,54 @@ func (c *Client) GetIBMCloudRegions(ctx context.Context) (map[string]string, err
 		return nil, fmt.Errorf("failed to list ibmcloud georaphic regions: %w", err)
 	}
 
-	// For each entry in the georaphic regions, use the id to collect children entries (IBM Cloud Regions).
-	for _, entry := range geographyResult.Resources {
-		if entry.ID == nil {
+	countryList, err := c.GetChildrenFromParents(ctx, geographyResult.Resources, "country")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list ibmcloud countrys: %w", err)
+	}
+	metroList, err := c.GetChildrenFromParents(ctx, countryList, "metro")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list ibmcloud metros: %w", err)
+	}
+
+	regionList, err := c.GetChildrenFromParents(ctx, metroList, "region")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list ibmcloud regions: %w", err)
+	}
+
+	for _, child := range regionList {
+		if child.ID == nil {
 			continue
 		}
-		childOptions := c.catalogAPI.NewGetChildObjectsOptions(*entry.ID, "region")
-		childResult, _, err := c.catalogAPI.GetChildObjectsWithContext(ctx, childOptions)
-		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve child entries for %s: %w", *entry.ID, err)
+		var description string
+		// Attempt to collect the descriptive Region name, although this is based on language, so leaves room for improvement.
+		if _, ok := child.OverviewUI["en"]; ok {
+			description = *child.OverviewUI["en"].Description
 		}
-
-		for _, child := range childResult.Resources {
-			if child.ID == nil {
-				continue
-			}
-			var description string
-			// Attempt to collect the descriptive Region name, although this is based on language, so leaves room for improvement.
-			if _, ok := child.OverviewUI["en"]; ok {
-				description = *child.OverviewUI["en"].Description
-			}
-			regions[*child.ID] = description
-		}
+		regions[*child.ID] = description
 	}
 
 	return regions, nil
+}
+
+// GetChildrenFromParents gets does a lookup in IBM Catalog to fetch the children from the given list of parents and of the specified kind
+func (c *Client) GetChildrenFromParents(ctx context.Context, parentList []globalcatalogv1.CatalogEntry, kind string) ([]globalcatalogv1.CatalogEntry, error) {
+	var childrenList []globalcatalogv1.CatalogEntry
+
+	for _, parent := range parentList {
+		if parent.ID == nil {
+			fmt.Println("skipping")
+			continue
+		}
+
+		childrenOptions := c.catalogAPI.NewGetChildObjectsOptions(*parent.ID, kind)
+		childrenOptions.SetInclude("*")
+		childrenResult, _, err := c.catalogAPI.GetChildObjectsWithContext(ctx, childrenOptions)
+		if err != nil {
+			return childrenList, fmt.Errorf("failed to retrieve child entries of type %s for %s: %w", kind, *parent.ID, err)
+		}
+		childrenList = append(childrenList, childrenResult.Resources...)
+	}
+	return childrenList, nil
 }
 
 // GetLoadBalancer gets a VPC Load Balancer by ID.
