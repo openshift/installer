@@ -93,8 +93,8 @@ func validateServiceEndpoints(endpoints []configv1.IBMCloudServiceEndpoint, fldP
 // schemeRE is used to check whether a string starts with a scheme (URI format).
 var schemeRE = regexp.MustCompile("^([^:]+)://")
 
-// versionPath is the regexp for a trailing API version in URL path ('/v1', '/v22/', etc.)
-var versionPath = regexp.MustCompile(`(/v\d+[/]{0,1})$`)
+// versionPath is the regexp for a trailing API version in URL path ('/v1', '/v22/', /api/v1, etc.)
+var versionPath = regexp.MustCompile(`\/(api\/)?v\d+\/{0,1}`)
 
 // validateServiceURL checks that a string meets certain URI expectations.
 func validateServiceURL(uri string) error {
