@@ -131,9 +131,14 @@ func runGatherBootstrapCmd(ctx context.Context, directory string) (string, error
 	}
 
 	if ha.Bootstrap == "" && len(ha.Masters) == 0 {
-		config := &installconfig.InstallConfig{}
-		if err := assetStore.Fetch(ctx, config); err != nil {
-			return "", fmt.Errorf("failed to fetch %s: %w", config.Name(), err)
+		configAsset, err := assetStore.Load(&installconfig.InstallConfig{})
+		if err != nil {
+			return "", fmt.Errorf("failed to fetch %s: %w",
+				(&installconfig.InstallConfig{}).Name(), err)
+		}
+		config, ok := configAsset.(*installconfig.InstallConfig)
+		if !ok {
+			panic("failed to convert InstallConfig asset")
 		}
 
 		provider, err := infra.ProviderForPlatform(config.Config.Platform.Name(), config.Config.EnabledFeatureGates())
