@@ -558,6 +558,8 @@ func getComputeLimits(ctx context.Context, ci *CloudInfo, projectID string) ([]q
 	addQuota("Cores", qs.Cores)
 	addQuota("Instances", qs.Instances)
 	addQuota("RAM", qs.RAM)
+	addQuota("ServerGroups", qs.ServerGroups)
+	addQuota("ServerGroupMembers", qs.ServerGroupMembers)
 
 	return quotas, nil
 }
