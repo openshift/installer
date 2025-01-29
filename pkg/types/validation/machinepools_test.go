@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -19,6 +20,15 @@ func validMachinePool(name string) *types.MachinePool {
 	return &types.MachinePool{
 		Name:           name,
 		Replicas:       pointer.Int64Ptr(1),
+		Hyperthreading: types.HyperthreadingDisabled,
+		Architecture:   types.ArchitectureAMD64,
+	}
+}
+
+func validControlPlaneMachinePool(name string) *types.MachinePool {
+	return &types.MachinePool{
+		Name:           name,
+		Replicas:       ptr.To(int64(3)),
 		Hyperthreading: types.HyperthreadingDisabled,
 		Architecture:   types.ArchitectureAMD64,
 	}
