@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -166,6 +168,35 @@ func ValidateCustomVPCSetup(client API, ic *types.InstallConfig) error {
 		allErrs = append(allErrs, findSubnetInVPC(client, ic.PowerVS.VPCSubnets, vpcRegion, vpcName, fldPath)...)
 	} else if len(ic.PowerVS.VPCSubnets) != 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("vpcSubnets"), nil, "invalid without vpcName"))
+	}
+
+	return allErrs.ToAggregate()
+}
+
+// ValidateServiceEndpoints will validate a series of service endpoint overrides.
+func ValidateServiceEndpoints(ic *types.InstallConfig) error {
+	allErrs := field.ErrorList{}
+	serviceEndpointsPath := field.NewPath("platform").Child("powervs").Child("serviceEndpoints")
+	// Verify services are valid for override and are not duplicated and that are in valid URI format and accessible.
+	overriddenServices := map[string]bool{}
+	for id, service := range ic.Platform.PowerVS.ServiceEndpoints {
+		// Check if we have a duplicate service (case is ignored)
+		if _, ok := overriddenServices[service.Name]; ok {
+			allErrs = append(allErrs, field.Duplicate(serviceEndpointsPath.Index(id).Child("name"), service.Name))
+			continue
+		}
+		// Add service to map to track for duplicates
+		overriddenServices[service.Name] = true
+
+		// Check that the provided service name is an expected override service
+		if !slices.Contains(powervstypes.PowerVSServiceOverrides, service.Name) {
+			allErrs = append(allErrs, field.Invalid(serviceEndpointsPath.Index(id).Child("name"), service.Name, "not a supported override service"))
+		}
+
+		_, err := url.Parse(service.URL)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(serviceEndpointsPath.Index(id).Child("url"), service.URL, err.Error()))
+		}
 	}
 
 	return allErrs.ToAggregate()
