@@ -136,105 +136,105 @@ func SecurityGroups(ctx context.Context, installConfig *installconfig.InstallCon
 		serviceVXLAN         = service{udp, 4789, 4789}
 	)
 
-	addRules := func(ctx context.Context, ch chan<- rules.CreateOpts, securityGroupID string, s service, ipVersion rules.RuleEtherType, remoteCIDRs []string) {
+	buildRules := func(groupID string, s service, ipVersion rules.RuleEtherType, remoteCIDRs []string) (r []rules.CreateOpts) {
 		for _, proto := range s.Protocols() {
 			for _, remoteCIDR := range remoteCIDRs {
-				select {
-				case ch <- rules.CreateOpts{
+				r = append(r, rules.CreateOpts{
 					Direction:      rules.DirIngress,
 					Description:    description,
 					EtherType:      ipVersion,
-					SecGroupID:     securityGroupID,
+					SecGroupID:     groupID,
 					PortRangeMax:   s.maxPort,
 					PortRangeMin:   s.minPort,
 					Protocol:       proto,
 					RemoteIPPrefix: remoteCIDR,
-				}:
-				case <-ctx.Done():
-					return
-				}
+				})
 			}
 		}
+		return r
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	var masterRules []rules.CreateOpts
+	var workerRules []rules.CreateOpts
+	addMasterRules := func(s service, ipVersion rules.RuleEtherType, remoteCIDRs []string) {
+		masterRules = append(masterRules, buildRules(masterGroup.ID, s, ipVersion, remoteCIDRs)...)
+	}
+	addWorkerRules := func(s service, ipVersion rules.RuleEtherType, remoteCIDRs []string) {
+		workerRules = append(workerRules, buildRules(workerGroup.ID, s, ipVersion, remoteCIDRs)...)
+	}
 
 	// TODO(mandre) Explicitly enable egress
 
-	r := make(chan rules.CreateOpts)
-	go func() {
-		defer close(r)
-
-		// In this loop: security groups with a catch-all remote IP
-		for ipVersion, anyIP := range map[rules.RuleEtherType][]string{
-			rules.EtherType4: func() []string {
-				switch len(machineV4CIDRs) {
-				case 0:
-					return []string{}
-				default:
-					return []string{"0.0.0.0/0"}
-				}
-			}(),
-			rules.EtherType6: func() []string {
-				switch len(machineV6CIDRs) {
-				case 0:
-					return []string{}
-				default:
-					return []string{"::/0"}
-				}
-			}(),
-		} {
-			addRules(ctx, r, masterGroup.ID, serviceAPI, ipVersion, anyIP)
-			addRules(ctx, r, masterGroup.ID, serviceICMP, ipVersion, anyIP)
-			addRules(ctx, r, workerGroup.ID, serviceHTTP, ipVersion, anyIP)
-			addRules(ctx, r, workerGroup.ID, serviceHTTPS, ipVersion, anyIP)
-			addRules(ctx, r, workerGroup.ID, serviceICMP, ipVersion, anyIP)
-			if mastersSchedulable {
-				addRules(ctx, r, masterGroup.ID, serviceHTTP, ipVersion, anyIP)
-				addRules(ctx, r, masterGroup.ID, serviceHTTPS, ipVersion, anyIP)
+	// In this loop: security groups with a catch-all remote IP
+	for ipVersion, anyIP := range map[rules.RuleEtherType][]string{
+		rules.EtherType4: func() []string {
+			switch len(machineV4CIDRs) {
+			case 0:
+				return []string{}
+			default:
+				return []string{"0.0.0.0/0"}
 			}
-		}
-
-		// In this loop: security groups with the machine CIDR as remote IPs
-		for ipVersion, CIDRs := range map[rules.RuleEtherType][]string{
-			rules.EtherType4: machineV4CIDRs,
-			rules.EtherType6: machineV6CIDRs,
-		} {
-			// In this loop: rules that equally apply to masters and workers
-			for _, groupID := range [...]string{masterGroup.ID, workerGroup.ID} {
-				addRules(ctx, r, groupID, serviceESP, ipVersion, CIDRs)
-				addRules(ctx, r, groupID, serviceGeneve, ipVersion, CIDRs)
-				addRules(ctx, r, groupID, serviceIKE, ipVersion, CIDRs)
-				addRules(ctx, r, groupID, serviceInternal, ipVersion, CIDRs)
-				addRules(ctx, r, groupID, serviceKubelet, ipVersion, CIDRs)
-				addRules(ctx, r, groupID, serviceNodeport, ipVersion, CIDRs)
-				addRules(ctx, r, groupID, serviceSSH, ipVersion, CIDRs)
-				addRules(ctx, r, groupID, serviceVRRP, ipVersion, CIDRs)
-				addRules(ctx, r, groupID, serviceVXLAN, ipVersion, CIDRs)
+		}(),
+		rules.EtherType6: func() []string {
+			switch len(machineV6CIDRs) {
+			case 0:
+				return []string{}
+			default:
+				return []string{"::/0"}
 			}
-
-			addRules(ctx, r, masterGroup.ID, serviceDNS, ipVersion, CIDRs)
-			addRules(ctx, r, masterGroup.ID, serviceETCD, ipVersion, CIDRs)
-			addRules(ctx, r, masterGroup.ID, serviceKCM, ipVersion, CIDRs)
-			addRules(ctx, r, masterGroup.ID, serviceKubeScheduler, ipVersion, CIDRs)
-			addRules(ctx, r, masterGroup.ID, serviceMCS, ipVersion, CIDRs)
-			addRules(ctx, r, masterGroup.ID, serviceOVNDB, ipVersion, CIDRs)
-			addRules(ctx, r, workerGroup.ID, serviceRouter, ipVersion, CIDRs)
-			if mastersSchedulable {
-				addRules(ctx, r, masterGroup.ID, serviceRouter, ipVersion, CIDRs)
-			}
-		}
-
-		// IPv4-only rules
-		addRules(ctx, r, masterGroup.ID, serviceIKENat, rules.EtherType4, machineV4CIDRs)
-		addRules(ctx, r, workerGroup.ID, serviceIKENat, rules.EtherType4, machineV4CIDRs)
-	}()
-
-	for ruleCreateOpts := range r {
-		if _, err := rules.Create(ctx, networkClient, ruleCreateOpts).Extract(); err != nil {
-			return fmt.Errorf("failed to create the security group rule on group %q for %s %s on ports %d-%d: %w", ruleCreateOpts.SecGroupID, ruleCreateOpts.EtherType, ruleCreateOpts.Protocol, ruleCreateOpts.PortRangeMin, ruleCreateOpts.PortRangeMax, err)
+		}(),
+	} {
+		addMasterRules(serviceAPI, ipVersion, anyIP)
+		addMasterRules(serviceICMP, ipVersion, anyIP)
+		addWorkerRules(serviceHTTP, ipVersion, anyIP)
+		addWorkerRules(serviceHTTPS, ipVersion, anyIP)
+		addWorkerRules(serviceICMP, ipVersion, anyIP)
+		if mastersSchedulable {
+			addMasterRules(serviceHTTP, ipVersion, anyIP)
+			addMasterRules(serviceHTTPS, ipVersion, anyIP)
 		}
 	}
+
+	// In this loop: security groups with the machine CIDR as remote IPs
+	for ipVersion, CIDRs := range map[rules.RuleEtherType][]string{
+		rules.EtherType4: machineV4CIDRs,
+		rules.EtherType6: machineV6CIDRs,
+	} {
+		// In this loop: rules that equally apply to masters and workers
+		for _, addRules := range [...]func(service, rules.RuleEtherType, []string){addMasterRules, addWorkerRules} {
+			addRules(serviceESP, ipVersion, CIDRs)
+			addRules(serviceGeneve, ipVersion, CIDRs)
+			addRules(serviceIKE, ipVersion, CIDRs)
+			addRules(serviceInternal, ipVersion, CIDRs)
+			addRules(serviceKubelet, ipVersion, CIDRs)
+			addRules(serviceNodeport, ipVersion, CIDRs)
+			addRules(serviceSSH, ipVersion, CIDRs)
+			addRules(serviceVRRP, ipVersion, CIDRs)
+			addRules(serviceVXLAN, ipVersion, CIDRs)
+		}
+
+		addMasterRules(serviceDNS, ipVersion, CIDRs)
+		addMasterRules(serviceETCD, ipVersion, CIDRs)
+		addMasterRules(serviceKCM, ipVersion, CIDRs)
+		addMasterRules(serviceKubeScheduler, ipVersion, CIDRs)
+		addMasterRules(serviceMCS, ipVersion, CIDRs)
+		addMasterRules(serviceOVNDB, ipVersion, CIDRs)
+		addWorkerRules(serviceRouter, ipVersion, CIDRs)
+		if mastersSchedulable {
+			addMasterRules(serviceRouter, ipVersion, CIDRs)
+		}
+	}
+
+	// IPv4-only rules
+	addMasterRules(serviceIKENat, rules.EtherType4, machineV4CIDRs)
+	addWorkerRules(serviceIKENat, rules.EtherType4, machineV4CIDRs)
+
+	if _, err := rules.CreateBulk(ctx, networkClient, masterRules).Extract(); err != nil {
+		return fmt.Errorf("failed to add the rules to the Control plane security group: %w", err)
+	}
+	if _, err := rules.CreateBulk(ctx, networkClient, workerRules).Extract(); err != nil {
+		return fmt.Errorf("failed to add the rules to the Compute security group: %w", err)
+	}
+
 	return nil
 }
