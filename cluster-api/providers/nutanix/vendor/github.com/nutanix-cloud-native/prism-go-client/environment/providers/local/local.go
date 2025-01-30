@@ -18,6 +18,7 @@ import (
 
 const (
 	endpointEnv    = "NUTANIX_ENDPOINT"
+	portEnv        = "NUTANIX_PORT"
 	userEnv        = "NUTANIX_USERNAME"
 	passwordEnv    = "NUTANIX_PASSWORD"
 	insecureEnv    = "NUTANIX_INSECURE"
@@ -35,10 +36,15 @@ func (prov *provider) GetManagementEndpoint(
 	if endpoint == "" {
 		return nil, types.ErrNotFound
 	}
-	if !strings.HasPrefix(endpoint, "https://") {
-		endpoint = fmt.Sprintf("https://%s", endpoint)
+	port := os.Getenv(portEnv)
+	if port == "" {
+		port = "9440"
 	}
-	addr, err := url.Parse(endpoint)
+	address := fmt.Sprintf("%s:%s", endpoint, port)
+	if !strings.HasPrefix(address, "https://") {
+		address = fmt.Sprintf("https://%s", address)
+	}
+	addr, err := url.Parse(address)
 	if err != nil {
 		return nil, err
 	}

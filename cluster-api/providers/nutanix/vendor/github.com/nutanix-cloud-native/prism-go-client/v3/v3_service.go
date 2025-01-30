@@ -10,6 +10,7 @@ import (
 	"github.com/nutanix-cloud-native/prism-go-client"
 	"github.com/nutanix-cloud-native/prism-go-client/internal"
 	"github.com/nutanix-cloud-native/prism-go-client/utils"
+	"github.com/nutanix-cloud-native/prism-go-client/v3/models"
 )
 
 // Operations ...
@@ -103,6 +104,7 @@ type Service interface {
 	CreateProtectionRule(ctx context.Context, request *ProtectionRuleInput) (*ProtectionRuleResponse, error)
 	UpdateProtectionRule(ctx context.Context, uuid string, body *ProtectionRuleInput) (*ProtectionRuleResponse, error)
 	DeleteProtectionRule(ctx context.Context, uuid string) (*DeleteResponse, error)
+	ProcessProtectionRule(ctx context.Context, uuid string) error
 	GetRecoveryPlan(ctx context.Context, uuid string) (*RecoveryPlanResponse, error)
 	ListRecoveryPlans(ctx context.Context, getEntitiesRequest *DSMetadata) (*RecoveryPlanListResponse, error)
 	ListAllRecoveryPlans(ctx context.Context, filter string) (*RecoveryPlanListResponse, error)
@@ -110,7 +112,6 @@ type Service interface {
 	UpdateRecoveryPlan(ctx context.Context, uuid string, body *RecoveryPlanInput) (*RecoveryPlanResponse, error)
 	DeleteRecoveryPlan(ctx context.Context, uuid string) (*DeleteResponse, error)
 	GetServiceGroup(ctx context.Context, uuid string) (*ServiceGroupResponse, error)
-	listServiceGroups(ctx context.Context, getEntitiesRequest *DSMetadata) (*ServiceGroupListResponse, error)
 	ListAllServiceGroups(ctx context.Context, filter string) (*ServiceGroupListResponse, error)
 	CreateServiceGroup(ctx context.Context, request *ServiceGroupInput) (*Reference, error)
 	UpdateServiceGroup(ctx context.Context, uuid string, body *ServiceGroupInput) error
@@ -121,6 +122,15 @@ type Service interface {
 	DeleteAddressGroup(ctx context.Context, uuid string) error
 	CreateAddressGroup(ctx context.Context, request *AddressGroupInput) (*Reference, error)
 	UpdateAddressGroup(ctx context.Context, uuid string, body *AddressGroupInput) error
+	GetRecoveryPlanJob(ctx context.Context, uuid string) (*RecoveryPlanJobIntentResponse, error)
+	GetRecoveryPlanJobStatus(ctx context.Context, uuid string, status string) (*RecoveryPlanJobExecutionStatus, error)
+	ListRecoveryPlanJobs(ctx context.Context, getEntitiesRequest *DSMetadata) (*RecoveryPlanJobListResponse, error)
+	DeleteRecoveryPlanJob(ctx context.Context, uuid string) error
+	CreateRecoveryPlanJob(ctx context.Context, request *RecoveryPlanJobIntentInput) (*RecoveryPlanJobResponse, error)
+	PerformRecoveryPlanJobAction(ctx context.Context, uuid string, action string, request *RecoveryPlanJobActionRequest) (*RecoveryPlanJobResponse, error)
+	GroupsGetEntities(ctx context.Context, request *GroupsGetEntitiesRequest) (*GroupsGetEntitiesResponse, error)
+	GetAvailabilityZone(ctx context.Context, uuid string) (*AvailabilityZoneIntentResponse, error)
+	GetPrismCentral(ctx context.Context) (*models.PrismCentral, error)
 }
 
 /*CreateVM Creates a VM
@@ -859,7 +869,6 @@ func (op Operations) ListAllVM(ctx context.Context, filter string) (*VMListInten
 				Length: utils.Int64Ptr(itemsPerPage),
 				Offset: utils.Int64Ptr(offset),
 			})
-
 			if err != nil {
 				return nil, err
 			}
@@ -901,7 +910,6 @@ func (op Operations) ListAllSubnet(ctx context.Context, filter string, clientSid
 				Length: utils.Int64Ptr(itemsPerPage),
 				Offset: utils.Int64Ptr(offset),
 			})
-
 			if err != nil {
 				return nil, err
 			}
@@ -943,7 +951,6 @@ func (op Operations) ListAllNetworkSecurityRule(ctx context.Context, filter stri
 				Length: utils.Int64Ptr(itemsPerPage),
 				Offset: utils.Int64Ptr(offset),
 			})
-
 			if err != nil {
 				return nil, err
 			}
@@ -985,7 +992,6 @@ func (op Operations) ListAllImage(ctx context.Context, filter string) (*ImageLis
 				Length: utils.Int64Ptr(itemsPerPage),
 				Offset: utils.Int64Ptr(offset),
 			})
-
 			if err != nil {
 				return nil, err
 			}
@@ -1027,7 +1033,6 @@ func (op Operations) ListAllCluster(ctx context.Context, filter string) (*Cluste
 				Length: utils.Int64Ptr(itemsPerPage),
 				Offset: utils.Int64Ptr(offset),
 			})
-
 			if err != nil {
 				return nil, err
 			}
@@ -1069,7 +1074,6 @@ func (op Operations) ListAllCategoryValues(ctx context.Context, categoryName, fi
 				Length: utils.Int64Ptr(itemsPerPage),
 				Offset: utils.Int64Ptr(offset),
 			})
-
 			if err != nil {
 				return nil, err
 			}
@@ -1149,7 +1153,6 @@ func (op Operations) ListAllHost(ctx context.Context) (*HostListResponse, error)
 				Length: utils.Int64Ptr(itemsPerPage),
 				Offset: utils.Int64Ptr(offset),
 			})
-
 			if err != nil {
 				return nil, err
 			}
@@ -1247,7 +1250,6 @@ func (op Operations) ListAllProject(ctx context.Context, filter string) (*Projec
 				Length: utils.Int64Ptr(itemsPerPage),
 				Offset: utils.Int64Ptr(offset),
 			})
-
 			if err != nil {
 				return nil, err
 			}
@@ -1381,7 +1383,6 @@ func (op Operations) ListAllAccessControlPolicy(ctx context.Context, filter stri
 				Length: utils.Int64Ptr(itemsPerPage),
 				Offset: utils.Int64Ptr(offset),
 			})
-
 			if err != nil {
 				return nil, err
 			}
@@ -1516,7 +1517,6 @@ func (op Operations) ListAllRole(ctx context.Context, filter string) (*RoleListR
 				Length: utils.Int64Ptr(itemsPerPage),
 				Offset: utils.Int64Ptr(offset),
 			})
-
 			if err != nil {
 				return nil, err
 			}
@@ -1684,7 +1684,6 @@ func (op Operations) ListAllUser(ctx context.Context, filter string) (*UserListR
 				Length: utils.Int64Ptr(itemsPerPage),
 				Offset: utils.Int64Ptr(offset),
 			})
-
 			if err != nil {
 				return nil, err
 			}
@@ -1779,7 +1778,6 @@ func (op Operations) ListAllUserGroup(ctx context.Context, filter string) (*User
 				Length: utils.Int64Ptr(itemsPerPage),
 				Offset: utils.Int64Ptr(offset),
 			})
-
 			if err != nil {
 				return nil, err
 			}
@@ -1855,7 +1853,6 @@ func (op Operations) ListAllPermission(ctx context.Context, filter string) (*Per
 				Length: utils.Int64Ptr(itemsPerPage),
 				Offset: utils.Int64Ptr(offset),
 			})
-
 			if err != nil {
 				return nil, err
 			}
@@ -1923,7 +1920,6 @@ func (op Operations) ListAllProtectionRules(ctx context.Context, filter string) 
 				Length: utils.Int64Ptr(itemsPerPage),
 				Offset: utils.Int64Ptr(offset),
 			})
-
 			if err != nil {
 				return nil, err
 			}
@@ -1979,6 +1975,22 @@ func (op Operations) DeleteProtectionRule(ctx context.Context, uuid string) (*De
 	return deleteResponse, op.client.Do(ctx, req, deleteResponse)
 }
 
+/*ProcessProtectionRule triggers the evaluation of a processing rule
+ * immediately.
+ *
+ * @param uuid is the uuid of the protection rule to process.
+ */
+func (op Operations) ProcessProtectionRule(ctx context.Context, uuid string) error {
+	path := fmt.Sprintf("/protection_rules/%s/process", uuid)
+
+	req, err := op.client.NewRequest(http.MethodPost, path, nil)
+	if err != nil {
+		return err
+	}
+
+	return op.client.Do(ctx, req, nil)
+}
+
 // GetRecoveryPlan ...
 func (op Operations) GetRecoveryPlan(ctx context.Context, uuid string) (*RecoveryPlanResponse, error) {
 	path := fmt.Sprintf("/recovery_plans/%s", uuid)
@@ -2031,7 +2043,6 @@ func (op Operations) ListAllRecoveryPlans(ctx context.Context, filter string) (*
 				Length: utils.Int64Ptr(itemsPerPage),
 				Offset: utils.Int64Ptr(offset),
 			})
-
 			if err != nil {
 				return nil, err
 			}
@@ -2145,7 +2156,6 @@ func (op Operations) ListAllServiceGroups(ctx context.Context, filter string) (*
 				Length: utils.Int64Ptr(itemsPerPage),
 				Offset: utils.Int64Ptr(offset),
 			})
-
 			if err != nil {
 				return nil, err
 			}
@@ -2221,7 +2231,6 @@ func (op Operations) ListAllAddressGroups(ctx context.Context, filter string) (*
 				Length: utils.Int64Ptr(itemsPerPage),
 				Offset: utils.Int64Ptr(offset),
 			})
-
 			if err != nil {
 				return nil, err
 			}
@@ -2281,4 +2290,159 @@ func (op Operations) UpdateAddressGroup(ctx context.Context, uuid string, body *
 	}
 
 	return op.client.Do(ctx, req, nil)
+}
+
+/*Creates a recovery plan job.
+ * This operation creates a new recovery plan job based on the inputs in the 'request'.
+ *
+ * @param request Pointer to a specification of type RecoveryPlanJobIntentInput.
+ */
+func (op Operations) CreateRecoveryPlanJob(ctx context.Context, request *RecoveryPlanJobIntentInput) (*RecoveryPlanJobResponse, error) {
+	req, err := op.client.NewRequest(http.MethodPost, "/recovery_plan_jobs", request)
+	response := new(RecoveryPlanJobResponse)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response, op.client.Do(ctx, req, response)
+}
+
+/*Deletes a recovery plan job.
+ * This operation deletes the new recovery plan job identified by 'uuid'.
+ *
+ * @param uuid UUID of the recovery plan job to be deleted.
+ */
+func (op Operations) DeleteRecoveryPlanJob(ctx context.Context, uuid string) error {
+	path := fmt.Sprintf("/recovery_plan_jobs/%s", uuid)
+
+	req, err := op.client.NewRequest(http.MethodDelete, path, nil)
+	if err != nil {
+		return err
+	}
+
+	return op.client.Do(ctx, req, nil)
+}
+
+/*Perform a recovery plan job action.
+ * This operation initiates the 'action' on the recovery plan job identified
+ * by 'uuid' and governed by the specification in 'request'.
+ *
+ * @param uuid UUID of the recovery plan job.
+ * @param action one of {'cleanup', 'rerun'}.
+ * @param request pointer to the specification of type RecoveryPlanJobActionRequest.
+ */
+func (op Operations) PerformRecoveryPlanJobAction(ctx context.Context, uuid string, action string,
+	request *RecoveryPlanJobActionRequest,
+) (*RecoveryPlanJobResponse, error) {
+	path := fmt.Sprintf("/recovery_plan_jobs/%s/%s", uuid, action)
+	response := new(RecoveryPlanJobResponse)
+
+	req, err := op.client.NewRequest(http.MethodPost, path, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, op.client.Do(ctx, req, response)
+}
+
+/*Get a recovery plan job.
+ * This operation gets the recovery plan job identified by 'uuid'.
+ *
+ * @param uuid UUID of the recovery plan job.
+ */
+func (op Operations) GetRecoveryPlanJob(ctx context.Context, uuid string) (*RecoveryPlanJobIntentResponse, error) {
+	path := fmt.Sprintf("/recovery_plan_jobs/%s", uuid)
+	response := new(RecoveryPlanJobIntentResponse)
+
+	req, err := op.client.NewRequest(http.MethodGet, path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, op.client.Do(ctx, req, response)
+}
+
+/*Get the status of a recovery plan job.
+ * This operation gets the execution status of a recovery plan job identified by 'uuid'.
+ *
+ * @param uuid UUID of the recovery plan job.
+ * @param status is one of {'execution_status', 'cleanup_status'}
+ */
+func (op Operations) GetRecoveryPlanJobStatus(ctx context.Context, uuid string, status string) (*RecoveryPlanJobExecutionStatus, error) {
+	path := fmt.Sprintf("/recovery_plan_jobs/%s/%s", uuid, status)
+	executionStatus := new(RecoveryPlanJobExecutionStatus)
+
+	req, err := op.client.NewRequest(http.MethodGet, path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return executionStatus, op.client.Do(ctx, req, executionStatus)
+}
+
+/*List recovery plan jobs.
+ * This Operations lists the recovery plan jobs matching the criteria specified in 'request'.
+ *
+ * @param request pointer to specification of type DSMetadata.
+ */
+func (op Operations) ListRecoveryPlanJobs(ctx context.Context, request *DSMetadata) (*RecoveryPlanJobListResponse, error) {
+	path := "/recovery_plan_jobs/list"
+
+	list := new(RecoveryPlanJobListResponse)
+
+	req, err := op.client.NewRequest(http.MethodPost, path, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return list, op.client.Do(ctx, req, list)
+}
+
+/*Get a projection of the attributes of entities of certain type.
+ * This operation returns the attributes of the entities that match the
+ * filter criteria specified in 'request'.
+ *
+ * @param request pointer to the specification of type GroupsGetEntitiesRequest
+ */
+func (op Operations) GroupsGetEntities(ctx context.Context, request *GroupsGetEntitiesRequest,
+) (*GroupsGetEntitiesResponse, error) {
+	req, err := op.client.NewRequest(http.MethodPost, "/groups", request)
+	response := new(GroupsGetEntitiesResponse)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response, op.client.Do(ctx, req, response)
+}
+
+/*Get information about an availability zone (AZ).
+ * This operation gets the information about an AZ identified by 'uuid'.
+ *
+ * @param uuid UUID of the AZ.
+ */
+func (op Operations) GetAvailabilityZone(ctx context.Context, uuid string) (*AvailabilityZoneIntentResponse, error) {
+	path := fmt.Sprintf("/availability_zones/%s", uuid)
+	response := new(AvailabilityZoneIntentResponse)
+
+	req, err := op.client.NewRequest(http.MethodGet, path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, op.client.Do(ctx, req, response)
+}
+
+// GetPrismCentral gets the information about the Prism Central
+func (op Operations) GetPrismCentral(ctx context.Context) (*models.PrismCentral, error) {
+	path := "/prism_central"
+	response := new(models.PrismCentral)
+
+	req, err := op.client.NewRequest(http.MethodGet, path, response)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, op.client.Do(ctx, req, response)
 }
