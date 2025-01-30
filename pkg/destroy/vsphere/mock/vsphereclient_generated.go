@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	types "github.com/vmware/govmomi/cns/types"
 	mo "github.com/vmware/govmomi/vim25/mo"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -21,6 +22,7 @@ import (
 type MockAPI struct {
 	ctrl     *gomock.Controller
 	recorder *MockAPIMockRecorder
+	isgomock struct{}
 }
 
 // MockAPIMockRecorder is the mock recorder for MockAPI.
@@ -38,6 +40,20 @@ func NewMockAPI(ctrl *gomock.Controller) *MockAPI {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 	return m.recorder
+}
+
+// DeleteCnsVolumes mocks base method.
+func (m *MockAPI) DeleteCnsVolumes(ctx context.Context, volume types.CnsVolume) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteCnsVolumes", ctx, volume)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteCnsVolumes indicates an expected call of DeleteCnsVolumes.
+func (mr *MockAPIMockRecorder) DeleteCnsVolumes(ctx, volume any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteCnsVolumes", reflect.TypeOf((*MockAPI)(nil).DeleteCnsVolumes), ctx, volume)
 }
 
 // DeleteFolder mocks base method.
@@ -122,6 +138,21 @@ func (m *MockAPI) DeleteVirtualMachine(ctx context.Context, vmMO mo.VirtualMachi
 func (mr *MockAPIMockRecorder) DeleteVirtualMachine(ctx, vmMO any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteVirtualMachine", reflect.TypeOf((*MockAPI)(nil).DeleteVirtualMachine), ctx, vmMO)
+}
+
+// GetCnsVolumes mocks base method.
+func (m *MockAPI) GetCnsVolumes(ctx context.Context, infraID string) ([]types.CnsVolume, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCnsVolumes", ctx, infraID)
+	ret0, _ := ret[0].([]types.CnsVolume)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCnsVolumes indicates an expected call of GetCnsVolumes.
+func (mr *MockAPIMockRecorder) GetCnsVolumes(ctx, infraID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCnsVolumes", reflect.TypeOf((*MockAPI)(nil).GetCnsVolumes), ctx, infraID)
 }
 
 // ListFolders mocks base method.
