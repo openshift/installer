@@ -450,6 +450,8 @@ func validateMachineNetwork(n *types.Networking, mn *types.MachineNetworkEntry, 
 		logrus.Warnf("%s: %s overlaps with default Docker Bridge subnet", fldPath, mn.CIDR.String())
 	}
 
+	allErrs = append(allErrs, validateNetworkNotOverlapDefaultOVNSubnets(n, &mn.CIDR.IPNet, fldPath)...)
+
 	for i, subNetwork := range n.MachineNetwork[0:idx] {
 		if validate.DoCIDRsOverlap(&mn.CIDR.IPNet, &subNetwork.CIDR.IPNet) {
 			allErrs = append(allErrs, field.Invalid(fldPath, mn.CIDR.String(), fmt.Sprintf("machine network must not overlap with machine network %d", i)))
@@ -470,6 +472,8 @@ func validateServiceNetwork(n *types.Networking, sn *ipnet.IPNet, idx int, fldPa
 	if validate.DoCIDRsOverlap(&sn.IPNet, validate.DockerBridgeSubnet) {
 		logrus.Warnf("%s: %s overlaps with default Docker Bridge subnet", fldPath, sn.String())
 	}
+
+	allErrs = append(allErrs, validateNetworkNotOverlapDefaultOVNSubnets(n, &sn.IPNet, fldPath)...)
 
 	for _, mn := range n.MachineNetwork {
 		if validate.DoCIDRsOverlap(&sn.IPNet, &mn.CIDR.IPNet) {
@@ -495,6 +499,8 @@ func validateClusterNetwork(n *types.Networking, cn *types.ClusterNetworkEntry, 
 	if validate.DoCIDRsOverlap(&cn.CIDR.IPNet, validate.DockerBridgeSubnet) {
 		logrus.Warnf("%s: %s overlaps with default Docker Bridge subnet", fldPath.Index(idx), cn.CIDR.String())
 	}
+
+	allErrs = append(allErrs, validateNetworkNotOverlapDefaultOVNSubnets(n, &cn.CIDR.IPNet, fldPath.Child("cidr"))...)
 
 	for _, network := range n.MachineNetwork {
 		if validate.DoCIDRsOverlap(&cn.CIDR.IPNet, &network.CIDR.IPNet) {
@@ -531,6 +537,62 @@ func validateClusterNetwork(n *types.Networking, cn *types.ClusterNetworkEntry, 
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "cluster network host subnetwork prefix must be 64 for IPv6 networks"))
 		}
 	}
+	return allErrs
+}
+
+func validateNetworkNotOverlapDefaultOVNSubnets(n *types.Networking, network *net.IPNet, fldPath *field.Path) field.ErrorList {
+	if !strings.EqualFold(n.NetworkType, string(operv1.NetworkTypeOVNKubernetes)) {
+		return nil
+	}
+
+	allErrs := field.ErrorList{}
+
+	// getOVNSubnet returns the *net.IPNet for each type of subnet that will be used by OVNKubernetes
+	// and whether it is user-defined in the install-config.
+	getOVNSubnet := func(defaultSubnet *net.IPNet) (*net.IPNet, bool) {
+		if n.OVNKubernetesConfig == nil {
+			return defaultSubnet, false
+		}
+
+		ovnConfig := n.OVNKubernetesConfig
+
+		// Since each subnet has a unique non-overlapping CIDR,
+		// we can use that to distinguish the type of subnet without having to define extra constants.
+		switch defaultSubnet.String() {
+		case validate.OVNIPv4JoinSubnet.String():
+			if ovnConfig.IPv4 != nil && ovnConfig.IPv4.InternalJoinSubnet != nil {
+				return &ovnConfig.IPv4.InternalJoinSubnet.IPNet, true
+			}
+		default:
+		}
+		return defaultSubnet, false
+	}
+
+	// We only check against OVNKubernetes default subnets.
+	// Any overrides of default subnets is validated in func validateOVNKubernetesConfig.
+	subnetsCheck := func(joinSubnet, transitSubnet, masqueradeSubnet *net.IPNet) {
+		// Join subnet
+		if ovnsubnet, configured := getOVNSubnet(joinSubnet); !configured && validate.DoCIDRsOverlap(network, ovnsubnet) {
+			allErrs = append(allErrs, field.Invalid(fldPath, network.String(), fmt.Sprintf("must not overlap with OVNKubernetes default internal subnet %s", ovnsubnet.String())))
+		}
+
+		// Transit subnet
+		if ovnsubnet, configured := getOVNSubnet(transitSubnet); !configured && validate.DoCIDRsOverlap(network, ovnsubnet) {
+			allErrs = append(allErrs, field.Invalid(fldPath, network.String(), fmt.Sprintf("must not overlap with OVNKubernetes default transit subnet %s", ovnsubnet.String())))
+		}
+
+		// Masquerade subnet
+		if ovnsubnet, configured := getOVNSubnet(masqueradeSubnet); !configured && validate.DoCIDRsOverlap(network, ovnsubnet) {
+			allErrs = append(allErrs, field.Invalid(fldPath, network.String(), fmt.Sprintf("must not overlap with OVNKubernetes default masquerade subnet %s", ovnsubnet.String())))
+		}
+	}
+
+	if network.IP.To4() != nil {
+		subnetsCheck(validate.OVNIPv4JoinSubnet, validate.OVNIPv4TransitSubnet, validate.OVNIPv4MasqueradeSubnet)
+	} else {
+		subnetsCheck(validate.OVNIPv6JoinSubnet, validate.OVNIPv6TransitSubnet, validate.OVNIPv6MasqueradeSubnet)
+	}
+
 	return allErrs
 }
 
