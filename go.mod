@@ -123,6 +123,7 @@ require (
 	k8s.io/cloud-provider-vsphere v1.31.0
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.130.1
+	k8s.io/kubectl v0.31.1
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738
 	libvirt.org/go/libvirtxml v1.10002.0
 	sigs.k8s.io/cluster-api v1.8.4
@@ -298,7 +299,6 @@ require (
 	k8s.io/cluster-bootstrap v0.31.4 // indirect
 	k8s.io/component-base v0.32.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f // indirect
-	k8s.io/kubectl v0.31.1 // indirect
 	sigs.k8s.io/kustomize/api v0.17.3 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.17.2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.2 // indirect
