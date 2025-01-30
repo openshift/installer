@@ -399,17 +399,18 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 
 func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if n.NetworkType == "" {
+
+	if len(n.NetworkType) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("networkType"), "network provider type required"))
 	}
 
 	// NOTE(dulek): We're hardcoding "Kuryr" here as the plan is to remove it from the API very soon. We can remove
 	//              this check once some more general validation of the supported NetworkTypes is in place.
-	if n.NetworkType == "Kuryr" {
+	if strings.EqualFold(n.NetworkType, "Kuryr") {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "networkType Kuryr is not supported on OpenShift later than 4.14"))
 	}
 
-	if n.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
+	if strings.EqualFold(n.NetworkType, string(operv1.NetworkTypeOpenShiftSDN)) {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "networkType OpenShiftSDN is not supported, please use OVNKubernetes"))
 	}
 
@@ -614,12 +615,13 @@ func validateNetworkingClusterNetworkMTU(c *types.InstallConfig, fldPath *field.
 
 	return allErrs
 }
-func validateOVNKubernetesConfig(n *types.Networking, fldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
 
+func validateOVNKubernetesConfig(n *types.Networking, fldPath *field.Path) field.ErrorList {
 	if n.OVNKubernetesConfig == nil {
 		return nil
 	}
+
+	allErrs := field.ErrorList{}
 
 	if !strings.EqualFold(n.NetworkType, string(operv1.NetworkTypeOVNKubernetes)) {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "ovnKubernetesConfig may only be specified with the OVNKubernetes networkType"))
