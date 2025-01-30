@@ -183,12 +183,8 @@ func SubnetCIDR(cidr *net.IPNet) error {
 
 // ServiceSubnetCIDR checks if the given IP net is a valid CIDR for the Kubernetes service network
 func ServiceSubnetCIDR(cidr *net.IPNet) error {
-	if cidr.IP.IsUnspecified() {
-		return errors.New("address must be specified")
-	}
-	nip := cidr.IP.Mask(cidr.Mask)
-	if nip.String() != cidr.IP.String() {
-		return fmt.Errorf("invalid network address. got %s, expecting %s", cidr.String(), (&net.IPNet{IP: nip, Mask: cidr.Mask}).String())
+	if err := SubnetCIDR(cidr); err != nil {
+		return err
 	}
 	maskLen, addrLen := cidr.Mask.Size()
 	if addrLen == 32 && maskLen < 12 {
