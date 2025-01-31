@@ -24,7 +24,7 @@ class GenerateMachineConfig(unittest.TestCase):
         """Assert there are machine configs configuring the kernel args for masters and workers"""
         for machine_config in self.machine_configs:
             kernel_args = machine_config["spec"]["kernelArguments"]
-            self.assertIn("ip=dhcp,dhcp6", kernel_args)
+            self.assertIn("ip=enp3s0:dhcp,dhcp6", kernel_args)
 
 
 if __name__ == '__main__':
