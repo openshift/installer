@@ -71,20 +71,8 @@ func (o *ClusterUninstaller) deleteRoute(ctx context.Context, item cloudResource
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.Routes.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
-	if err != nil && !isNoOp(err) {
-		o.resetRequestID(item.typeName, item.name)
-		return errors.Wrapf(err, "failed to delete route %s", item.name)
-	}
-	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID(item.typeName, item.name)
-		return errors.Errorf("failed to delete route %s with error: %s", item.name, operationErrorMessage(op))
-	}
-	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
-		o.resetRequestID(item.typeName, item.name)
-		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted route %s", item.name)
-	}
-	return nil
+	item.scope = global
+	return o.handleOperation(ctx, op, err, item, "route")
 }
 
 // destroyRutes removes all route resources that have a name prefixed

@@ -79,26 +79,15 @@ func (o *ClusterUninstaller) deleteBackendService(ctx context.Context, item clou
 	switch item.typeName {
 	case globalBackendServiceResource:
 		op, err = o.computeSvc.BackendServices.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
+		item.scope = global
 	case regionBackendServiceResource:
 		op, err = o.computeSvc.RegionBackendServices.Delete(o.ProjectID, o.Region, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
+		item.scope = regional
 	default:
 		return fmt.Errorf("invalid backend service type %q", item.typeName)
 	}
 
-	if err != nil && !isNoOp(err) {
-		o.resetRequestID(item.typeName, item.name)
-		return fmt.Errorf("failed to delete backend service %s: %w", item.name, err)
-	}
-	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID(item.typeName, item.name)
-		return fmt.Errorf("failed to delete backend service %s with error: %s", item.name, operationErrorMessage(op))
-	}
-	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
-		o.resetRequestID(item.typeName, item.name)
-		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted backend service %s", item.name)
-	}
-	return nil
+	return o.handleOperation(ctx, op, err, item, "backend service")
 }
 
 // destroyBackendServices removes all backend services resources that have a name prefixed
