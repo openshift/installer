@@ -217,6 +217,42 @@ func TestValidatePlatform(t *testing.T) {
 			}(),
 			valid: true,
 		},
+		{
+			name: "valid url has api and version path, no trailing '/' for service endpoint",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{{
+					Name: configv1.IBMCloudServiceIAM,
+					URL:  "https://test-iam.random.local/api/v22",
+				}}
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name: "valid url has api and version path, with trailing '/' for service endpoint",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{{
+					Name: configv1.IBMCloudServiceIAM,
+					URL:  "https://test-iam.random.local/api/v2/",
+				}}
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name: "invalid url has api and version path, with invalid char service endpoint",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{{
+					Name: configv1.IBMCloudServiceIAM,
+					URL:  "https://test-iam.random.local/api/v2e",
+				}}
+				return p
+			}(),
+			valid: false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
