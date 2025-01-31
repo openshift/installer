@@ -178,6 +178,19 @@ func TestAgentHosts_Generate(t *testing.T) {
 				agentHost().name("test-2").role("worker").interfaces(iface("enp3s1", "28:d2:44:d2:b2:1b")).networkConfig(agentNetworkConfigTwo)),
 		},
 		{
+			name: "multi-host-no-interfaces-from-agent-config",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.AddNodesConfig{},
+				getInstallConfigSingleHost(),
+				getAgentConfigMissingInterfaces(),
+			},
+			expectedConfig: agentHosts().hosts(
+				agentHost().name("control-0.example.org").role("master"),
+				agentHost().name("control-1.example.org").role("master"),
+				agentHost().name("control-2.example.org").role("master")),
+		},
+		{
 			name: "multi-host-from-install-config",
 			dependencies: []asset.Asset{
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
@@ -307,17 +320,6 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getNoHostsAgentConfig(),
 			},
 			expectedError:  "invalid Hosts configuration: Hosts[0].Host: Forbidden: Host test has role 'worker' and has the rendezvousIP assigned to it. The rendezvousIP must be assigned to a control plane host.",
-			expectedConfig: nil,
-		},
-		{
-			name: "host-missing-interface-error",
-			dependencies: []asset.Asset{
-				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
-				&joiner.AddNodesConfig{},
-				getInstallConfigSingleHost(),
-				getAgentConfigMissingInterfaces(),
-			},
-			expectedError:  "invalid Hosts configuration: [Hosts[0].Interfaces: Required value: at least one interface must be defined for each node, Hosts[1].Interfaces: Required value: at least one interface must be defined for each node, Hosts[2].Interfaces: Required value: at least one interface must be defined for each node]",
 			expectedConfig: nil,
 		},
 		{
