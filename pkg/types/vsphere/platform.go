@@ -227,6 +227,9 @@ type Topology struct {
 	// +kubebuilder:validation:MaxLength=2048
 	ComputeCluster string `json:"computeCluster"`
 	// networks is the list of networks within this failure domain
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=10
 	Networks []string `json:"networks,omitempty"`
 	// datastore is the name or inventory path of the datastore in which the
 	// virtual machine is created/located.
