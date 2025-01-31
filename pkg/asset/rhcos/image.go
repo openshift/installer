@@ -178,11 +178,6 @@ func osImage(ctx context.Context, config *types.InstallConfig, nodeArch types.Ar
 		}
 		return "", fmt.Errorf("%s: No vmware build found", st.FormatPrefix(archName))
 	case powervs.Name:
-		// Check for image URL override
-		if config.Platform.PowerVS.ClusterOSImage != "" {
-			return config.Platform.PowerVS.ClusterOSImage, nil
-		}
-
 		if streamArch.Images.PowerVS != nil {
 			var (
 				vpcRegion string

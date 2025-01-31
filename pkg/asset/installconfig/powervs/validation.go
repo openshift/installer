@@ -11,6 +11,7 @@ import (
 
 	"github.com/openshift/installer/pkg/types"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
+	"github.com/sirupsen/logrus"
 )
 
 // Validate executes platform specific validation/
@@ -306,6 +307,13 @@ func ValidateServiceInstance(client API, ic *types.InstallConfig) error {
 	}
 
 	return nil
+}
+
+// ValidateClusterOSImageNotSet validates that the platform.powervs.clusterOSImage is not set.
+func ValidateClusterOSImageNotSet(client API, ic *types.InstallConfig) {
+	if ic.Platform.PowerVS.ClusterOSImage != "" {
+		logrus.Warnf("The value of platform.powervs.clusterOSImage will be ignored.")
+	}
 }
 
 // ValidateTransitGateway validates the optional transit gateway name in our install config.
