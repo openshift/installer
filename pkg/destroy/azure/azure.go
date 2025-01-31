@@ -32,7 +32,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	"github.com/openshift/installer/cmd/openshift-install/command"
+	"github.com/openshift/installer/pkg/asset/installconfig"
 	azuresession "github.com/openshift/installer/pkg/asset/installconfig/azure"
+	assetstore "github.com/openshift/installer/pkg/asset/store"
 	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -125,6 +128,24 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	session, err := azuresession.GetSession(cloudName, metadata.Azure.ARMEndpoint)
 	if err != nil {
 		return nil, err
+	}
+
+	assetStore, err := assetstore.NewStore(command.RootOpts.Dir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create asset store: %w", err)
+	}
+
+	// Ensure that Platform Provision Check asset exists before running destroy cluster.
+	// PlatformProvisionCheck asset only exists if the create cluster command was used
+	// for creation of cluster. In the cases like UPI installs, we have no idea what's
+	// in the resource group and blind deletion of it would cause unintended issues.
+	// More details: https://issues.redhat.com/browse/CORS-3856
+	platformProvisionCheck := &installconfig.PlatformProvisionCheck{}
+	if assetState, err := assetStore.Load(platformProvisionCheck); err != nil {
+		return nil, fmt.Errorf("failed to get platform provision check asset: %w", err)
+	} else if assetState == nil {
+		// Do nothing.
+		return nil, nil
 	}
 
 	return &ClusterUninstaller{
