@@ -475,6 +475,11 @@ func (in *GCPMachineSpec) DeepCopyInto(out *GCPMachineSpec) {
 		*out = new(ServiceAccount)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.ProvisioningModel != nil {
+		in, out := &in.ProvisioningModel, &out.ProvisioningModel
+		*out = new(ProvisioningModel)
+		**out = **in
+	}
 	if in.IPForwarding != nil {
 		in, out := &in.IPForwarding, &out.IPForwarding
 		*out = new(IPForwarding)
@@ -493,6 +498,11 @@ func (in *GCPMachineSpec) DeepCopyInto(out *GCPMachineSpec) {
 	if in.ConfidentialCompute != nil {
 		in, out := &in.ConfidentialCompute, &out.ConfidentialCompute
 		*out = new(ConfidentialComputePolicy)
+		**out = **in
+	}
+	if in.ConfidentialInstanceType != nil {
+		in, out := &in.ConfidentialInstanceType, &out.ConfidentialInstanceType
+		*out = new(ConfidentialVMTechnology)
 		**out = **in
 	}
 	if in.RootDiskEncryptionKey != nil {

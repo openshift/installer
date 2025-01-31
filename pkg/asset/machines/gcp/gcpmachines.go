@@ -154,6 +154,9 @@ func createGCPMachine(name string, installConfig *installconfig.InstallConfig, i
 	if mpool.ConfidentialCompute != "" {
 		gcpMachine.Spec.ConfidentialCompute = ptr.To(capg.ConfidentialComputePolicy(mpool.ConfidentialCompute))
 	}
+	if mpool.ConfidentialInstanceType != "" {
+		gcpMachine.Spec.ConfidentialInstanceType = ptr.To(capg.ConfidentialVMTechnology(mpool.ConfidentialInstanceType))
+	}
 	if mpool.SecureBoot != "" {
 		shieldedInstanceConfig := capg.GCPShieldedInstanceConfig{}
 		shieldedInstanceConfig.SecureBoot = capg.SecureBootPolicyEnabled

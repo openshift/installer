@@ -108,15 +108,32 @@ func (m *GCPMachine) Default() {
 	clusterlog.Info("default", "name", m.Name)
 }
 
+func targetConfidentialType(tech *ConfidentialVMTechnology) (ConfidentialVMTechnology, error) {
+	if tech == nil || tech != nil && *tech == "" {
+		return ConfidentialVMTechSEV, nil
+	}
+	_, ok := confidentialComputeSupportedMachineSeries[*tech]
+	if !ok {
+		return "", fmt.Errorf("invalid ConfidentialInstanceType %s", *tech)
+	}
+	return *tech, nil
+}
+
 func validateConfidentialCompute(spec GCPMachineSpec) error {
-	if spec.ConfidentialCompute != nil && *spec.ConfidentialCompute == ConfidentialComputePolicyEnabled {
+	if spec.ConfidentialCompute != nil && *spec.ConfidentialCompute == ConfidentialComputePolicyEnabled || spec.ConfidentialInstanceType != nil && *spec.ConfidentialInstanceType != "" {
 		if spec.OnHostMaintenance == nil || *spec.OnHostMaintenance == HostMaintenancePolicyMigrate {
 			return fmt.Errorf("ConfidentialCompute require OnHostMaintenance to be set to %s, the current value is: %s", HostMaintenancePolicyTerminate, HostMaintenancePolicyMigrate)
 		}
 
+		confidentialType, err := targetConfidentialType(spec.ConfidentialInstanceType)
+		if err != nil {
+			return err
+		}
+		supportedMachines := confidentialComputeSupportedMachineSeries[confidentialType]
+
 		machineSeries := strings.Split(spec.InstanceType, "-")[0]
-		if !slices.Contains(confidentialComputeSupportedMachineSeries, machineSeries) {
-			return fmt.Errorf("ConfidentialCompute require instance type in the following series: %s", confidentialComputeSupportedMachineSeries)
+		if !slices.Contains(supportedMachines, machineSeries) {
+			return fmt.Errorf("ConfidentialInstanceType %s requires an instance type in the following series: %s", confidentialType, supportedMachines)
 		}
 	}
 	return nil

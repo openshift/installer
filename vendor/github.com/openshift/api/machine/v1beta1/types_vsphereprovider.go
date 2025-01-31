@@ -193,9 +193,9 @@ type VSphereDisk struct {
 	// +required
 	Name string `json:"name"`
 	// sizeGiB is the size of the disk in GiB.
-	// The maximum supported size is 57742 GiB.
+	// The maximum supported size 16384 GiB.
 	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=57742
+	// +kubebuilder:validation:Maximum=16384
 	// +required
 	SizeGiB int32 `json:"sizeGiB"`
 }
