@@ -140,7 +140,7 @@ then
 		--name auth-api-render \
 		--volume "$PWD:/assets:z" \
 		"${AUTH_OPERATOR_IMAGE}" \
-		/usr/bin/cluster-authentication-operator render \
+		render \
 		--asset-output-dir=/assets/auth-api-bootstrap/manifests \
 
 	cp auth-api-bootstrap/manifests/* manifests/
