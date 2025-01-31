@@ -441,6 +441,8 @@ type ClusterNetworkEntry struct {
 	// HostPrefix is the prefix size to allocate to each node from the CIDR.
 	// For example, 24 would allocate 2^8=256 adresses to each node. If this
 	// field is not used by the plugin, it can be left unset.
+	// When multiple CIDRs of the same family (i.e. IPv4/IPv6) are present,
+	// their HostPrefix value must be the same.
 	// +optional
 	HostPrefix int32 `json:"hostPrefix,omitempty"`
 
