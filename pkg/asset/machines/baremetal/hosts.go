@@ -116,9 +116,31 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 		return nil, fmt.Errorf("no baremetal platform in configuration")
 	}
 
+	arbiterEnabled := isArbiterEnabled(config)
+	numRequiredArbiters := replicaCount(config.Arbiter)
+	numArbiters := 0
+
 	numRequiredMasters := len(machines)
 	numMasters := 0
 	for _, host := range config.Platform.BareMetal.Hosts {
+
+		// We only infer arbiter hosts if we are in an arbiter deployment
+		if arbiterEnabled {
+			// If we know the host is an arbiter and the role isn't an empty value (i.e. explicitly defined by user)
+			// no further investigating is needed, skip creating resources
+			if host.IsArbiter() && host.Role != "" {
+				numArbiters++
+				continue
+			}
+
+			// Infer if host is an arbiter, if we have already satisfied the number of masters
+			// the next hosts will be used for the arbiter, so skip those and allow ArbiterHosts()
+			// to configure and create those resources.
+			if numMasters == numRequiredMasters && numArbiters < numRequiredArbiters {
+				numArbiters++
+				continue
+			}
+		}
 
 		secret, bmc := createSecret(host)
 		if secret != nil {
@@ -171,4 +193,105 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 	}
 
 	return settings, nil
+}
+
+// ArbiterHosts returns the HostSettings with details of the hardware being
+// used to construct a cluster with an arbiter node.
+func ArbiterHosts(config *types.InstallConfig, machines []machineapi.Machine, userDataSecret string) (*HostSettings, error) {
+	settings := &HostSettings{}
+
+	if config.Platform.BareMetal == nil {
+		return nil, fmt.Errorf("no baremetal platform in configuration")
+	}
+
+	// If Arbiter is not enabled, nothing happens
+	if !isArbiterEnabled(config) {
+		return nil, nil
+	}
+
+	numRequiredMasters := replicaCount(config.ControlPlane)
+	numMasters := 0
+
+	numRequiredArbiters := len(machines)
+	numArbiters := 0
+	for _, host := range config.Platform.BareMetal.Hosts {
+		// We make sure to keep an accurate count of known masters when explicitly set
+		if host.IsMaster() {
+			numMasters++
+		}
+
+		// If we know we're not an arbiter and the role isn't an empty value
+		// no further investigating is needed, skip creation.
+		if !host.IsArbiter() && host.Role != "" {
+			continue
+		}
+
+		// When it comes to hosts, the masters should have been generated first we skip those hosts
+		// and grab the hosts after to satisfy the number of required arbiters, and the host isn't
+		// explicitly set as an arbiter, this allows for mixed role types in the list.
+		if numMasters < numRequiredMasters && !host.IsArbiter() {
+			numMasters++
+			continue
+		}
+
+		if numArbiters < numRequiredArbiters {
+			secret, bmc := createSecret(host)
+			if secret != nil {
+				settings.Secrets = append(settings.Secrets, *secret)
+			}
+			newHost := createBaremetalHost(host, bmc)
+
+			if host.NetworkConfig != nil {
+				networkConfigSecret, err := createNetworkConfigSecret(host)
+				if err != nil {
+					return nil, err
+				}
+				settings.NetworkConfigSecrets = append(settings.NetworkConfigSecrets, *networkConfigSecret)
+				newHost.Spec.PreprovisioningNetworkDataName = networkConfigSecret.Name
+			}
+
+			// Setting CustomDeploy early ensures that the
+			// corresponding Ironic node gets correctly configured
+			// from the beginning.
+			newHost.Spec.CustomDeploy = &baremetalhost.CustomDeploy{
+				Method: "install_coreos",
+			}
+
+			newHost.ObjectMeta.Labels = map[string]string{
+				"installer.openshift.io/role": "control-plane",
+			}
+
+			// Link the new host to the currently available machine
+			machine := machines[numArbiters]
+			newHost.Spec.ConsumerRef = &corev1.ObjectReference{
+				APIVersion: machine.TypeMeta.APIVersion,
+				Kind:       machine.TypeMeta.Kind,
+				Namespace:  machine.ObjectMeta.Namespace,
+				Name:       machine.ObjectMeta.Name,
+			}
+			newHost.Spec.Online = true
+
+			// userDataSecret carries a reference to the arbiter ignition file
+			newHost.Spec.UserData = &corev1.SecretReference{Name: userDataSecret}
+			numArbiters++
+			settings.Hosts = append(settings.Hosts, newHost)
+		}
+	}
+
+	return settings, nil
+}
+
+// isArbiterEnabled Determine if arbiter is enabled based off of the install config.
+func isArbiterEnabled(config *types.InstallConfig) bool {
+	return config.Arbiter != nil &&
+		config.Arbiter.Replicas != nil &&
+		*config.Arbiter.Replicas > 0
+}
+
+// replicaCount Given a machine pool, safely determine the replica count.
+func replicaCount(pool *types.MachinePool) int {
+	if pool == nil || pool.Replicas == nil {
+		return 0
+	}
+	return int(*pool.Replicas)
 }
