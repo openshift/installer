@@ -8,8 +8,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/googleapis/gax-go/v2/apierror"
+	"go.uber.org/mock/gomock"
 	googleoauth "golang.org/x/oauth2/google"
 	"google.golang.org/api/cloudresourcemanager/v3"
 	"google.golang.org/api/googleapi"
