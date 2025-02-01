@@ -324,6 +324,8 @@ var permissions = map[PermissionGroup][]string{
 		"ec2:DescribePublicIpv4Pools",
 		// Needed by terraform because of bootstrap EIP created
 		"ec2:DisassociateAddress",
+		// Needed by openshift-install destroy cluster flow.
+		"ec2:ReleaseAddress",
 	},
 	PermissionDeleteIgnitionObjects: {
 		// Needed by terraform during the bootstrap destroy stage.
