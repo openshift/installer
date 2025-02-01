@@ -57,7 +57,7 @@ func CreateVSphereClients(ctx context.Context, vcenter, username, password strin
 		return nil, nil, nil, err
 	}
 	u.User = url.UserPassword(username, password)
-	c, err := govmomi.NewClient(ctx, u, false)
+	c, err := govmomi.NewClient(ctx, u, true)
 
 	if err != nil {
 		return nil, nil, nil, err
