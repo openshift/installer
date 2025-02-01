@@ -1,5 +1,6 @@
 CLUSTERCTL_LOG_LEVEL: 10
 EXP_CLUSTER_RESOURCE_SET: "true"
+CLUSTER_TOPOLOGY: "true"
 
 NUTANIX_ENDPOINT: ""    # IP or FQDN of Prism Central
 NUTANIX_USER: ""        # Prism Central user
@@ -16,6 +17,8 @@ WORKER_MACHINE_COUNT: 2                 # Number of Machines in the worker node 
 
 KUBEVIP_LB_ENABLE: "false"  # See https://kube-vip.io/docs/about/architecture/?query=lb_enable#control-plane-load-balancing
 KUBEVIP_SVC_ENABLE: "false" # See https://kube-vip.io/docs/about/architecture/?query=lb_enable#kubernetes-service-load-balancing
+
+CLUSTER_CLASS_NAME: "" # ClusterClass Name if any
 
 providers:
   # add a custom provider

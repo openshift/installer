@@ -1,0 +1,18 @@
+linters:
+  enable:
+    - errcheck
+    - gofmt
+    - gofumpt
+    - gosimple
+    - govet
+    - ineffassign
+    - nolintlint
+    - staticcheck
+    - unused
+linters-settings:
+  nolintlint:
+    require-explanation: true
+    require-specific: true
+run:
+  concurrency: 4
+  timeout: 5m

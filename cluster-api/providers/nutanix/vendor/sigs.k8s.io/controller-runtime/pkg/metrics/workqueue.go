@@ -21,8 +21,8 @@ import (
 	"k8s.io/client-go/util/workqueue"
 )
 
-// This file is copied and adapted from k8s.io/kubernetes/pkg/util/workqueue/prometheus
-// which registers metrics to the default prometheus Registry. We require very
+// This file is copied and adapted from k8s.io/component-base/metrics/prometheus/workqueue
+// which registers metrics to the k8s legacy Registry. We require very
 // similar functionality, but must register metrics to a different Registry.
 
 // Metrics subsystem and all keys used by the workqueue.
@@ -54,14 +54,14 @@ var (
 		Subsystem: WorkQueueSubsystem,
 		Name:      QueueLatencyKey,
 		Help:      "How long in seconds an item stays in workqueue before being requested",
-		Buckets:   prometheus.ExponentialBuckets(10e-9, 10, 10),
+		Buckets:   prometheus.ExponentialBuckets(10e-9, 10, 12),
 	}, []string{"name"})
 
 	workDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Subsystem: WorkQueueSubsystem,
 		Name:      WorkDurationKey,
 		Help:      "How long in seconds processing an item from workqueue takes.",
-		Buckets:   prometheus.ExponentialBuckets(10e-9, 10, 10),
+		Buckets:   prometheus.ExponentialBuckets(10e-9, 10, 12),
 	}, []string{"name"})
 
 	unfinished = prometheus.NewGaugeVec(prometheus.GaugeOpts{
