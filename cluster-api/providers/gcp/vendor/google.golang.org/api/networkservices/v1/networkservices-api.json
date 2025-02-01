@@ -581,7 +581,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. Name of the EndpointPolicy resource. It matches pattern `projects/{project}/locations/global/endpointPolicies/{endpoint_policy}`.",
+                      "description": "Identifier. Name of the EndpointPolicy resource. It matches pattern `projects/{project}/locations/global/endpointPolicies/{endpoint_policy}`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/endpointPolicies/[^/]+$",
                       "required": true,
@@ -738,7 +738,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. Name of the Gateway resource. It matches pattern `projects/*/locations/*/gateways/`.",
+                      "description": "Identifier. Name of the Gateway resource. It matches pattern `projects/*/locations/*/gateways/`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/gateways/[^/]+$",
                       "required": true,
@@ -895,7 +895,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. Name of the GrpcRoute resource. It matches pattern `projects/*/locations/global/grpcRoutes/`",
+                      "description": "Identifier. Name of the GrpcRoute resource. It matches pattern `projects/*/locations/global/grpcRoutes/`",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/grpcRoutes/[^/]+$",
                       "required": true,
@@ -1052,7 +1052,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. Name of the HttpRoute resource. It matches pattern `projects/*/locations/global/httpRoutes/http_route_name\u003e`.",
+                      "description": "Identifier. Name of the HttpRoute resource. It matches pattern `projects/*/locations/global/httpRoutes/http_route_name\u003e`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/httpRoutes/[^/]+$",
                       "required": true,
@@ -1241,7 +1241,7 @@
                       "type": "string"
                     },
                     "updateMask": {
-                      "description": "Optional. Used to specify the fields to be overwritten in the `LbRouteExtension` resource by the update. The fields specified in the update_mask are relative to the resource, not the full request. A field is overwritten if it is in the mask. If the user does not specify a mask, then all fields are overwritten.",
+                      "description": "Optional. Used to specify the fields to be overwritten in the `LbRouteExtension` resource by the update. The fields specified in the `update_mask` are relative to the resource, not the full request. A field is overwritten if it is in the mask. If the user does not specify a mask, then all fields are overwritten.",
                       "format": "google-fieldmask",
                       "location": "query",
                       "type": "string"
@@ -1423,7 +1423,7 @@
                       "type": "string"
                     },
                     "updateMask": {
-                      "description": "Optional. Used to specify the fields to be overwritten in the `LbTrafficExtension` resource by the update. The fields specified in the update_mask are relative to the resource, not the full request. A field is overwritten if it is in the mask. If the user does not specify a mask, then all fields are overwritten.",
+                      "description": "Optional. Used to specify the fields to be overwritten in the `LbTrafficExtension` resource by the update. The fields specified in the `update_mask` are relative to the resource, not the full request. A field is overwritten if it is in the mask. If the user does not specify a mask, then all fields are overwritten.",
                       "format": "google-fieldmask",
                       "location": "query",
                       "type": "string"
@@ -1573,7 +1573,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. Name of the Mesh resource. It matches pattern `projects/*/locations/global/meshes/`.",
+                      "description": "Identifier. Name of the Mesh resource. It matches pattern `projects/*/locations/global/meshes/`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/meshes/[^/]+$",
                       "required": true,
@@ -1930,37 +1930,6 @@
                     "https://www.googleapis.com/auth/cloud-platform"
                   ]
                 },
-                "getIamPolicy": {
-                  "description": "Gets the access control policy for a resource. Returns an empty policy if the resource exists and does not have a policy set.",
-                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/serviceLbPolicies/{serviceLbPoliciesId}:getIamPolicy",
-                  "httpMethod": "GET",
-                  "id": "networkservices.projects.locations.serviceLbPolicies.getIamPolicy",
-                  "parameterOrder": [
-                    "resource"
-                  ],
-                  "parameters": {
-                    "options.requestedPolicyVersion": {
-                      "description": "Optional. The maximum policy version that will be used to format the policy. Valid values are 0, 1, and 3. Requests specifying an invalid value will be rejected. Requests for policies with any conditional role bindings must specify version 3. Policies with no conditional role bindings may specify any valid value or leave the field unset. The policy in the response might use the policy version that you specified, or it might use a lower policy version. For example, if you specify version 3, but the policy has no conditional role bindings, the response uses version 1. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies).",
-                      "format": "int32",
-                      "location": "query",
-                      "type": "integer"
-                    },
-                    "resource": {
-                      "description": "REQUIRED: The resource for which the policy is being requested. See [Resource names](https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.",
-                      "location": "path",
-                      "pattern": "^projects/[^/]+/locations/[^/]+/serviceLbPolicies/[^/]+$",
-                      "required": true,
-                      "type": "string"
-                    }
-                  },
-                  "path": "v1/{+resource}:getIamPolicy",
-                  "response": {
-                    "$ref": "Policy"
-                  },
-                  "scopes": [
-                    "https://www.googleapis.com/auth/cloud-platform"
-                  ]
-                },
                 "list": {
                   "description": "Lists ServiceLbPolicies in a given project and location.",
                   "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/serviceLbPolicies",
@@ -2026,62 +1995,6 @@
                   },
                   "response": {
                     "$ref": "Operation"
-                  },
-                  "scopes": [
-                    "https://www.googleapis.com/auth/cloud-platform"
-                  ]
-                },
-                "setIamPolicy": {
-                  "description": "Sets the access control policy on the specified resource. Replaces any existing policy. Can return `NOT_FOUND`, `INVALID_ARGUMENT`, and `PERMISSION_DENIED` errors.",
-                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/serviceLbPolicies/{serviceLbPoliciesId}:setIamPolicy",
-                  "httpMethod": "POST",
-                  "id": "networkservices.projects.locations.serviceLbPolicies.setIamPolicy",
-                  "parameterOrder": [
-                    "resource"
-                  ],
-                  "parameters": {
-                    "resource": {
-                      "description": "REQUIRED: The resource for which the policy is being specified. See [Resource names](https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.",
-                      "location": "path",
-                      "pattern": "^projects/[^/]+/locations/[^/]+/serviceLbPolicies/[^/]+$",
-                      "required": true,
-                      "type": "string"
-                    }
-                  },
-                  "path": "v1/{+resource}:setIamPolicy",
-                  "request": {
-                    "$ref": "SetIamPolicyRequest"
-                  },
-                  "response": {
-                    "$ref": "Policy"
-                  },
-                  "scopes": [
-                    "https://www.googleapis.com/auth/cloud-platform"
-                  ]
-                },
-                "testIamPermissions": {
-                  "description": "Returns permissions that a caller has on the specified resource. If the resource does not exist, this will return an empty set of permissions, not a `NOT_FOUND` error. Note: This operation is designed to be used for building permission-aware UIs and command-line tools, not for authorization checking. This operation may \"fail open\" without warning.",
-                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/serviceLbPolicies/{serviceLbPoliciesId}:testIamPermissions",
-                  "httpMethod": "POST",
-                  "id": "networkservices.projects.locations.serviceLbPolicies.testIamPermissions",
-                  "parameterOrder": [
-                    "resource"
-                  ],
-                  "parameters": {
-                    "resource": {
-                      "description": "REQUIRED: The resource for which the policy detail is being requested. See [Resource names](https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.",
-                      "location": "path",
-                      "pattern": "^projects/[^/]+/locations/[^/]+/serviceLbPolicies/[^/]+$",
-                      "required": true,
-                      "type": "string"
-                    }
-                  },
-                  "path": "v1/{+resource}:testIamPermissions",
-                  "request": {
-                    "$ref": "TestIamPermissionsRequest"
-                  },
-                  "response": {
-                    "$ref": "TestIamPermissionsResponse"
                   },
                   "scopes": [
                     "https://www.googleapis.com/auth/cloud-platform"
@@ -2220,7 +2133,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Required. Name of the TcpRoute resource. It matches pattern `projects/*/locations/global/tcpRoutes/tcp_route_name\u003e`.",
+                      "description": "Identifier. Name of the TcpRoute resource. It matches pattern `projects/*/locations/global/tcpRoutes/tcp_route_name\u003e`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/tcpRoutes/[^/]+$",
                       "required": true,
@@ -2408,7 +2321,7 @@
       }
     }
   },
-  "revision": "20240707",
+  "revision": "20240919",
   "rootUrl": "https://networkservices.googleapis.com/",
   "schemas": {
     "AuditConfig": {
@@ -2581,7 +2494,7 @@
           "type": "object"
         },
         "name": {
-          "description": "Required. Name of the EndpointPolicy resource. It matches pattern `projects/{project}/locations/global/endpointPolicies/{endpoint_policy}`.",
+          "description": "Identifier. Name of the EndpointPolicy resource. It matches pattern `projects/{project}/locations/global/endpointPolicies/{endpoint_policy}`.",
           "type": "string"
         },
         "serverTlsPolicy": {
@@ -2799,7 +2712,7 @@
           "type": "object"
         },
         "name": {
-          "description": "Required. Name of the Gateway resource. It matches pattern `projects/*/locations/*/gateways/`.",
+          "description": "Identifier. Name of the Gateway resource. It matches pattern `projects/*/locations/*/gateways/`.",
           "type": "string"
         },
         "network": {
@@ -2813,6 +2726,18 @@
             "type": "integer"
           },
           "type": "array"
+        },
+        "routingMode": {
+          "description": "Optional. The routing mode of the Gateway. This field is configurable only for gateways of type SECURE_WEB_GATEWAY. This field is required for gateways of type SECURE_WEB_GATEWAY.",
+          "enum": [
+            "EXPLICIT_ROUTING_MODE",
+            "NEXT_HOP_ROUTING_MODE"
+          ],
+          "enumDescriptions": [
+            "The routing mode is explicit; clients are configured to send traffic through the gateway. This is the default routing mode.",
+            "The routing mode is next-hop. Clients are unaware of the gateway, and a route (advanced route or other route type) can be configured to direct traffic from client to gateway. The gateway then acts as a next-hop to the destination."
+          ],
+          "type": "string"
         },
         "scope": {
           "description": "Optional. Scope determines how configuration across multiple Gateway instances are merged. The configuration for multiple Gateway instances with the same scope will be merged as presented as a single coniguration to the proxy/load balancer. Max length 64 characters. Scope should start with a letter and can only have letters, numbers, hyphens.",
@@ -2897,7 +2822,7 @@
           "type": "array"
         },
         "name": {
-          "description": "Required. Name of the GrpcRoute resource. It matches pattern `projects/*/locations/global/grpcRoutes/`",
+          "description": "Identifier. Name of the GrpcRoute resource. It matches pattern `projects/*/locations/global/grpcRoutes/`",
           "type": "string"
         },
         "rules": {
@@ -3049,7 +2974,7 @@
       "type": "object"
     },
     "GrpcRouteRetryPolicy": {
-      "description": "The specifications for retries.",
+      "description": "The specifications for retries. Specifies one or more conditions for which this retry rule applies. Valid values are:",
       "id": "GrpcRouteRetryPolicy",
       "properties": {
         "numRetries": {
@@ -3194,7 +3119,7 @@
           "type": "array"
         },
         "name": {
-          "description": "Required. Name of the HttpRoute resource. It matches pattern `projects/*/locations/global/httpRoutes/http_route_name\u003e`.",
+          "description": "Identifier. Name of the HttpRoute resource. It matches pattern `projects/*/locations/global/httpRoutes/http_route_name\u003e`.",
           "type": "string"
         },
         "rules": {
@@ -3747,7 +3672,7 @@
           "type": "object"
         },
         "loadBalancingScheme": {
-          "description": "Required. All backend services and forwarding rules referenced by this extension must share the same load balancing scheme. Supported values: `INTERNAL_MANAGED`, `EXTERNAL_MANAGED`. For more information, refer to [Choosing a load balancer](https://cloud.google.com/load-balancing/docs/backend-service).",
+          "description": "Required. All backend services and forwarding rules referenced by this extension must share the same load balancing scheme. Supported values: `INTERNAL_MANAGED`, `EXTERNAL_MANAGED`. For more information, refer to [Backend services overview](https://cloud.google.com/load-balancing/docs/backend-service).",
           "enum": [
             "LOAD_BALANCING_SCHEME_UNSPECIFIED",
             "INTERNAL_MANAGED",
@@ -3817,7 +3742,7 @@
           "type": "object"
         },
         "loadBalancingScheme": {
-          "description": "Required. All backend services and forwarding rules referenced by this extension must share the same load balancing scheme. Supported values: `INTERNAL_MANAGED`, `EXTERNAL_MANAGED`. For more information, refer to [Choosing a load balancer](https://cloud.google.com/load-balancing/docs/backend-service).",
+          "description": "Required. All backend services and forwarding rules referenced by this extension must share the same load balancing scheme. Supported values: `INTERNAL_MANAGED`, `EXTERNAL_MANAGED`. For more information, refer to [Backend services overview](https://cloud.google.com/load-balancing/docs/backend-service).",
           "enum": [
             "LOAD_BALANCING_SCHEME_UNSPECIFIED",
             "INTERNAL_MANAGED",
@@ -4140,6 +4065,41 @@
       },
       "type": "object"
     },
+    "LoggingConfig": {
+      "description": "The configuration for Platform Telemetry logging for Eventarc Avdvanced resources.",
+      "id": "LoggingConfig",
+      "properties": {
+        "logSeverity": {
+          "description": "Optional. The minimum severity of logs that will be sent to Stackdriver/Platform Telemetry. Logs at severitiy ≥ this value will be sent, unless it is NONE.",
+          "enum": [
+            "LOG_SEVERITY_UNSPECIFIED",
+            "NONE",
+            "DEBUG",
+            "INFO",
+            "NOTICE",
+            "WARNING",
+            "ERROR",
+            "CRITICAL",
+            "ALERT",
+            "EMERGENCY"
+          ],
+          "enumDescriptions": [
+            "Log severity is not specified. This value is treated the same as NONE, but is used to distinguish between no update and update to NONE in update_masks.",
+            "Default value at resource creation, presence of this value must be treated as no logging/disable logging.",
+            "Debug or trace level logging.",
+            "Routine information, such as ongoing status or performance.",
+            "Normal but significant events, such as start up, shut down, or a configuration change.",
+            "Warning events might cause problems.",
+            "Error events are likely to cause problems.",
+            "Critical events cause more severe problems or outages.",
+            "A person must take action immediately.",
+            "One or more systems are unusable."
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "Mesh": {
       "description": "Mesh represents a logical configuration grouping for workload to workload communication within a service mesh. Routes that point to mesh dictate how requests are routed within this logical mesh boundary.",
       "id": "Mesh",
@@ -4181,7 +4141,7 @@
           "type": "object"
         },
         "name": {
-          "description": "Required. Name of the Mesh resource. It matches pattern `projects/*/locations/global/meshes/`.",
+          "description": "Identifier. Name of the Mesh resource. It matches pattern `projects/*/locations/global/meshes/`.",
           "type": "string"
         },
         "selfLink": {
@@ -4308,6 +4268,16 @@
       },
       "type": "object"
     },
+    "RetryFilterPerRouteConfig": {
+      "id": "RetryFilterPerRouteConfig",
+      "properties": {
+        "cryptoKeyName": {
+          "description": "The name of the crypto key to use for encrypting event data.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "ServiceBinding": {
       "description": "ServiceBinding is the resource that defines a Service Directory Service to be used in a BackendService resource.",
       "id": "ServiceBinding",
@@ -4330,7 +4300,7 @@
           "type": "object"
         },
         "name": {
-          "description": "Required. Name of the ServiceBinding resource. It matches pattern `projects/*/locations/global/serviceBindings/service_binding_name`.",
+          "description": "Identifier. Name of the ServiceBinding resource. It matches pattern `projects/*/locations/global/serviceBindings/service_binding_name`.",
           "type": "string"
         },
         "service": {
@@ -4513,7 +4483,7 @@
           "type": "array"
         },
         "name": {
-          "description": "Required. Name of the TcpRoute resource. It matches pattern `projects/*/locations/global/tcpRoutes/tcp_route_name\u003e`.",
+          "description": "Identifier. Name of the TcpRoute resource. It matches pattern `projects/*/locations/global/tcpRoutes/tcp_route_name\u003e`.",
           "type": "string"
         },
         "rules": {

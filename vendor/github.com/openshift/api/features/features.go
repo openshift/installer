@@ -498,6 +498,14 @@ var (
 				enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 				mustRegister()
 
+	FeatureGateExample2 = newFeatureGate("Example2").
+				reportProblemsToJiraComponent("cluster-config").
+				contactPerson("JoelSpeed").
+				productScope(ocpSpecific).
+				enhancementPR(legacyFeatureGateWithoutEnhancement).
+				enableIn(configv1.DevPreviewNoUpgrade).
+				mustRegister()
+
 	FeatureGatePlatformOperators = newFeatureGate("PlatformOperators").
 					reportProblemsToJiraComponent("olm").
 					contactPerson("joe").
@@ -589,7 +597,7 @@ var (
 							contactPerson("mduarted").
 							productScope(ocpSpecific).
 							enhancementPR(legacyFeatureGateWithoutEnhancement).
-							enableIn(configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
+							enableIn(configv1.Default, configv1.DevPreviewNoUpgrade, configv1.TechPreviewNoUpgrade).
 							mustRegister()
 
 	FeatureGateClusterMonitoringConfig = newFeatureGate("ClusterMonitoringConfig").
