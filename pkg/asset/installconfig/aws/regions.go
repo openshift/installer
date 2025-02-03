@@ -66,7 +66,7 @@ func allKnownRegions() []string {
 	}
 
 	output, err := ec2Config.DescribeRegions(context.Background(), &ec2.DescribeRegionsInput{
-		AllRegions: aws.Bool(true),
+		AllRegions: aws.Bool(false),
 	})
 	if err != nil {
 		logrus.Debugf("failed to describe all regions: %v", err)
