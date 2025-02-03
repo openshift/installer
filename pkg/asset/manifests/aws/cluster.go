@@ -199,6 +199,125 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 	}
 	awsCluster.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSCluster"))
 
+	networkSpec := capa.NetworkSpec{
+		AdditionalControlPlaneIngressRules: make([]capa.IngressRule, 0),
+		SecurityGroupOverrides:             ic.Config.AWS.SecurityGroupOverrides,
+	}
+
+	if len(ic.Config.AWS.SecurityGroupOverrides) == 0 {
+		networkSpec.CNI = &capa.CNISpec{
+			CNIIngressRules: capa.CNIIngressRules{
+				{
+					Description: "ICMP",
+					Protocol:    capa.SecurityGroupProtocolICMP,
+					FromPort:    -1,
+					ToPort:      -1,
+				},
+				{
+					Description: "Port 22 (TCP)",
+					Protocol:    capa.SecurityGroupProtocolTCP,
+					FromPort:    22,
+					ToPort:      22,
+				},
+				{
+					Description: "Port 4789 (UDP) for VXLAN",
+					Protocol:    capa.SecurityGroupProtocolUDP,
+					FromPort:    4789,
+					ToPort:      4789,
+				},
+				{
+					Description: "Port 6081 (UDP) for geneve",
+					Protocol:    capa.SecurityGroupProtocolUDP,
+					FromPort:    6081,
+					ToPort:      6081,
+				},
+				{
+					Description: "Port 500 (UDP) for IKE",
+					Protocol:    capa.SecurityGroupProtocolUDP,
+					FromPort:    500,
+					ToPort:      500,
+				},
+				{
+					Description: "Port 4500 (UDP) for IKE NAT",
+					Protocol:    capa.SecurityGroupProtocolUDP,
+					FromPort:    4500,
+					ToPort:      4500,
+				},
+				{
+					Description: "ESP",
+					Protocol:    capa.SecurityGroupProtocolESP,
+					FromPort:    -1,
+					ToPort:      -1,
+				},
+				{
+					Description: "Port 6441-6442 (TCP) for ovndb",
+					Protocol:    capa.SecurityGroupProtocolTCP,
+					FromPort:    6441,
+					ToPort:      6442,
+				},
+				{
+					Description: "Port 9000-9999 for node ports (TCP)",
+					Protocol:    capa.SecurityGroupProtocolTCP,
+					FromPort:    9000,
+					ToPort:      9999,
+				},
+				{
+					Description: "Port 9000-9999 for node ports (UDP)",
+					Protocol:    capa.SecurityGroupProtocolUDP,
+					FromPort:    9000,
+					ToPort:      9999,
+				},
+				{
+					Description: "Service node ports (TCP)",
+					Protocol:    capa.SecurityGroupProtocolTCP,
+					FromPort:    30000,
+					ToPort:      32767,
+				},
+				{
+					Description: "Service node ports (UDP)",
+					Protocol:    capa.SecurityGroupProtocolUDP,
+					FromPort:    30000,
+					ToPort:      32767,
+				},
+			},
+		}
+	}
+
+	if _, ok := ic.Config.AWS.SecurityGroupOverrides[capa.SecurityGroupControlPlane]; !ok {
+		networkSpec.AdditionalControlPlaneIngressRules = []capa.IngressRule{
+			{
+				Description:              "MCS traffic from cluster network",
+				Protocol:                 capa.SecurityGroupProtocolTCP,
+				FromPort:                 22623,
+				ToPort:                   22623,
+				SourceSecurityGroupRoles: []capa.SecurityGroupRole{"node", "controlplane", "apiserver-lb"},
+			},
+			{
+				Description:              "controller-manager",
+				Protocol:                 capa.SecurityGroupProtocolTCP,
+				FromPort:                 10257,
+				ToPort:                   10257,
+				SourceSecurityGroupRoles: []capa.SecurityGroupRole{"controlplane", "node"},
+			},
+			{
+				Description:              "kube-scheduler",
+				Protocol:                 capa.SecurityGroupProtocolTCP,
+				FromPort:                 10259,
+				ToPort:                   10259,
+				SourceSecurityGroupRoles: []capa.SecurityGroupRole{"controlplane", "node"},
+			},
+			{
+				Description: BootstrapSSHDescription,
+				Protocol:    capa.SecurityGroupProtocolTCP,
+				FromPort:    22,
+				ToPort:      22,
+				CidrBlocks:  sshRuleCidr,
+			},
+		}
+
+		networkSpec.NodePortIngressRuleCidrBlocks = []string{capiutils.CIDRFromInstallConfig(ic).String()}
+	}
+
 	if ic.Config.PublicAPI() {
 		awsCluster.Spec.SecondaryControlPlaneLoadBalancer = &capa.AWSLoadBalancerSpec{
 			Name:                   ptr.To(clusterID.InfraID + "-ext"),
@@ -222,7 +341,7 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 				},
 			},
 		}
-	} else {
+	} else if _, ok := ic.Config.AWS.SecurityGroupOverrides[capa.SecurityGroupAPIServerLB]; !ok {
 		awsCluster.Spec.ControlPlaneLoadBalancer.IngressRules = append(
 			awsCluster.Spec.ControlPlaneLoadBalancer.IngressRules,
 			capa.IngressRule{
