@@ -1002,19 +1002,27 @@ spec:
                   ConfidentialCompute Defines whether the instance should have confidential compute enabled.
                   If enabled OnHostMaintenance is required to be set to "Terminate".
                   If omitted, the platform chooses a default, which is subject to change over time, currently that default is false.
-                  If ConfidentialInstanceType is configured, even if ConfidentialCompute is Disabled, a confidential compute instance will be configured.
                 enum:
                 - Enabled
                 - Disabled
                 type: string
               confidentialInstanceType:
                 description: |-
-                  confidentialInstanceType determines the required type of confidential computing technology.
-                  confidentialInstanceType will precede confidentialCompute. That is, if confidentialCompute is "Disabled" but a valid confidentialInstanceType is specified, a confidential instance will be configured.
-                  If confidentialInstanceType isn't set and confidentialCompute is "Enabled" the platform will set the default, which is subject to change over time. Currently the default is "sev" for "c2d", "c3d", and "n2d" machineTypes. For the other machine cases, a valid confidentialInstanceType must be specified.
+                  ConfidentialInstanceType determines the required type of confidential computing technology.
+                  To set a ConfidentialInstanceType ConfidentialCompute must be first set to "Enabled".
+                  If ConfidentialCompute is "Enabled" and ConfidentialInstanceType isn't provided, the default ConfidentialInstanceType will be set. At this moment, the default for this case is "sev".
+                  If ConfidentialCompute is "Enabled" and ConfidentialInstanceType is provided, the provided ConfidentialInstanceType will be set.
+                  If ConfidentialCompute is "Disabled" and ConfidentialInstanceType isn't provided, confidential computing technology won't be enabled and the instance will be run normally.
+                  Setting ConfidentialCompute to "Disabled" and ConfidentialInstanceType to a valid value isn't supported. That will raise an error.
+                  Valid ConfidentialInstanceType values are "sev", "sev-snp", and "tdx".
+                  Note that supported ConfidentialInstanceType values will depend on the configured instance machine types.
+                  "sev" is supported in "n2d", "c2d" and "c3d" machines.
+                  "sev-snp" is supported in "n2d" machines.
+                  "tdx" is supported in "c3" machines.
                 enum:
                 - sev
                 - sev-snp
+                - tdx
                 type: string
               image:
                 description: |-
@@ -1554,19 +1562,27 @@ spec:
                           ConfidentialCompute Defines whether the instance should have confidential compute enabled.
                           If enabled OnHostMaintenance is required to be set to "Terminate".
                           If omitted, the platform chooses a default, which is subject to change over time, currently that default is false.
-                          If ConfidentialInstanceType is configured, even if ConfidentialCompute is Disabled, a confidential compute instance will be configured.
                         enum:
                         - Enabled
                         - Disabled
                         type: string
                       confidentialInstanceType:
                         description: |-
-                          confidentialInstanceType determines the required type of confidential computing technology.
-                          confidentialInstanceType will precede confidentialCompute. That is, if confidentialCompute is "Disabled" but a valid confidentialInstanceType is specified, a confidential instance will be configured.
-                          If confidentialInstanceType isn't set and confidentialCompute is "Enabled" the platform will set the default, which is subject to change over time. Currently the default is "sev" for "c2d", "c3d", and "n2d" machineTypes. For the other machine cases, a valid confidentialInstanceType must be specified.
+                          ConfidentialInstanceType determines the required type of confidential computing technology.
+                          To set a ConfidentialInstanceType ConfidentialCompute must be first set to "Enabled".
+                          If ConfidentialCompute is "Enabled" and ConfidentialInstanceType isn't provided, the default ConfidentialInstanceType will be set. At this moment, the default for this case is "sev".
+                          If ConfidentialCompute is "Enabled" and ConfidentialInstanceType is provided, the provided ConfidentialInstanceType will be set.
+                          If ConfidentialCompute is "Disabled" and ConfidentialInstanceType isn't provided, confidential computing technology won't be enabled and the instance will be run normally.
+                          Setting ConfidentialCompute to "Disabled" and ConfidentialInstanceType to a valid value isn't supported. That will raise an error.
+                          Valid ConfidentialInstanceType values are "sev", "sev-snp", and "tdx".
+                          Note that supported ConfidentialInstanceType values will depend on the configured instance machine types.
+                          "sev" is supported in "n2d", "c2d" and "c3d" machines.
+                          "sev-snp" is supported in "n2d" machines.
+                          "tdx" is supported in "c3" machines.
                         enum:
                         - sev
                         - sev-snp
+                        - tdx
                         type: string
                       image:
                         description: |-
