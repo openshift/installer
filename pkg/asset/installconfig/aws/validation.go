@@ -155,6 +155,7 @@ func validateAMI(ctx context.Context, config *types.InstallConfig) field.ErrorLi
 		return nil
 	}
 
+	// TODO: this needs to be removed or ammended. Testing as it is failing in another PR.
 	// accept AMI that can be copied from us-east-1 if the region is in the standard AWS partition
 	if partition, partitionFound := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), config.Platform.AWS.Region); partitionFound {
 		if partition.ID() == endpoints.AwsPartitionID {
