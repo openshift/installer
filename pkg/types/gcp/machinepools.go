@@ -125,7 +125,7 @@ type MachinePool struct {
 	// confidentialInstanceType will precede confidentialCompute. That is, if confidentialCompute is "Disabled" but a valid confidentialInstanceType is specified, a confidential instance will be configured.
 	// If confidentialInstanceType isn't set and confidentialCompute is "Enabled" the platform will set the default, which is subject to change over time. Currently the default is "sev" for "c2d", "c3d", and "n2d" machineTypes. For the other machine cases, a valid confidentialInstanceType must be specified.
 	// If confidentialCompute is "Disabled", then the default will be not configuring a confidential instance type.
-	// +kubebuilder:validation:Enum=sev;sev-snp;
+	// +kubebuilder:validation:Enum=sev;sev-snp;tdx;
 	// +optional
 	ConfidentialInstanceType string `json:"confidentialInstanceType,omitempty"`
 
