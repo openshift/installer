@@ -103,6 +103,9 @@ github.com/Azure/azure-sdk-for-go/sdk/internal/uuid
 # github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v3 v3.0.0-beta.2
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v3
+# github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute v1.0.0
+## explicit; go 1.18
+github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute
 # github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4 v4.2.1
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4
@@ -497,8 +500,8 @@ github.com/coreos/ignition/v2/config/v3_2
 github.com/coreos/ignition/v2/config/v3_2/translate
 github.com/coreos/ignition/v2/config/v3_2/types
 github.com/coreos/ignition/v2/config/validate
-# github.com/coreos/stream-metadata-go v0.1.8
-## explicit; go 1.15
+# github.com/coreos/stream-metadata-go v0.1.8 => github.com/patrickdillon/stream-metadata-go v0.0.0-20241218015503-c2c025dea87f
+## explicit; go 1.18
 github.com/coreos/stream-metadata-go/arch
 github.com/coreos/stream-metadata-go/stream
 github.com/coreos/stream-metadata-go/stream/rhcos
@@ -2612,3 +2615,4 @@ sigs.k8s.io/yaml/goyaml.v3
 # github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20241001055825-63e8b0d3ad63
 # github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
 # github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
+# github.com/coreos/stream-metadata-go => github.com/patrickdillon/stream-metadata-go v0.0.0-20241218015503-c2c025dea87f
