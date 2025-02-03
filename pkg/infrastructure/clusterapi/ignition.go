@@ -33,48 +33,69 @@ const (
 	// The data must be replaced before decoding the string, and the string must be
 	// prepended to the encoded data.
 	header = "data:text/plain;charset=utf-8;base64,"
+
+	masterRole = "master"
+	workerRole = "worker"
 )
 
 // EditIgnition attempts to edit the contents of the bootstrap ignition when the user has selected
 // a custom DNS configuration. Find the public and private load balancer addresses and fill in the
 // infrastructure file within the ignition struct.
-func EditIgnition(in IgnitionInput, platform string, publicIPAddresses, privateIPAddresses []string) ([]byte, []byte, error) {
+func EditIgnition(in IgnitionInput, platform string, publicIPAddresses, privateIPAddresses []string) (*IgnitionOutput, error) {
 	ignData := &igntypes.Config{}
 	err := json.Unmarshal(in.BootstrapIgnData, ignData)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to unmarshal bootstrap ignition: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal bootstrap ignition: %w", err)
 	}
 
 	err = addLoadBalancersToInfra(platform, ignData, publicIPAddresses, privateIPAddresses)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to add load balancers to ignition config: %w", err)
+		return nil, fmt.Errorf("failed to add load balancers to ignition config: %w", err)
 	}
+	logrus.Debugf("Successfully added API and API-Int Load Balancer IPs to infrastructure manifest")
 
 	publicIPsSingleStr := strings.Join(publicIPAddresses, ",")
 	privateIPsSingleStr := strings.Join(privateIPAddresses, ",")
 
 	lbConfig, err := lbconfig.GenerateLBConfigOverride(privateIPsSingleStr, publicIPsSingleStr)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if err := asset.NewDefaultFileWriter(lbConfig).PersistToFile(command.RootOpts.Dir); err != nil {
-		return nil, nil, fmt.Errorf("failed to save %s to state file: %w", lbConfig.Name(), err)
+		return nil, fmt.Errorf("failed to save %s to state file: %w", lbConfig.Name(), err)
 	}
+	logrus.Debugf("Successfully added API and API-Int Load Balancer IPs to lbConfig configmap")
+
 	err = updateMCSCertKey(in, platform, ignData, privateIPAddresses)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to update MCS Cert and Key in the bootstrap ignition: %w", err)
+		return nil, fmt.Errorf("failed to update MCS Cert and Key in the bootstrap ignition: %w", err)
 	}
+	logrus.Debugf("Successfully updated bootstrap machine-config-server certs")
 
 	editedIgnBytes, err := json.Marshal(ignData)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to convert ignition data to json: %w", err)
+		return nil, fmt.Errorf("failed to convert ignition data to json: %w", err)
 	}
+	logrus.Debugf("Successfully updated bootstrap ignition with updated manifests")
 
-	editedPointerIgn, err := updatePointerIgnition(in, privateIPAddresses, "master")
+	editedMasterIgn, err := updatePointerIgnition(in, privateIPAddresses, masterRole)
 	if err != nil {
-		return editedIgnBytes, in.MasterIgnData, fmt.Errorf("failed to update Pointer Ignition")
+		return nil, fmt.Errorf("failed to update %s Pointer Ignition: %w", masterRole, err)
 	}
-	return editedIgnBytes, editedPointerIgn, nil
+	logrus.Debugf("Successfully updated %s pointer ignition with API LB IP", masterRole)
+
+	editedWorkerIgn, err := updatePointerIgnition(in, privateIPAddresses, workerRole)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update %s Pointer Ignition: %w", workerRole, err)
+	}
+	logrus.Debugf("Successfully updated %s pointer ignition with API LB IP", workerRole)
+
+	ignOutput := &IgnitionOutput{
+		UpdatedBootstrapIgn: editedIgnBytes,
+		UpdatedMasterIgn:    editedMasterIgn,
+		UpdatedWorkerIgn:    editedWorkerIgn,
+	}
+	return ignOutput, nil
 }
 
 // AddLoadBalancersToInfra will load the public and private load balancer information into
@@ -141,26 +162,39 @@ func addLoadBalancersToInfra(platform string, config *igntypes.Config, publicLBs
 
 func updatePointerIgnition(in IgnitionInput, privateLBs []string, role string) ([]byte, error) {
 	ignData := &igntypes.Config{}
-	err := json.Unmarshal(in.MasterIgnData, ignData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal master ignition: %w", err)
-	}
-	if len(privateLBs) > 0 {
-		ignitionHost := net.JoinHostPort(privateLBs[0], "22623")
-		ignData.Ignition.Config.Merge[0].Source = ignutil.StrToPtr(func() *url.URL {
-			return &url.URL{
-				Scheme: "https",
-				Host:   ignitionHost,
-				Path:   fmt.Sprintf("/config/%s", role),
-			}
-		}().String())
-		editedIgnBytes, err := json.Marshal(ignData)
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert pointer ignition data to json: %w", err)
+	switch role {
+	case masterRole:
+		if len(privateLBs) == 0 {
+			return in.MasterIgnData, nil
 		}
-		return editedIgnBytes, nil
+		err := json.Unmarshal(in.MasterIgnData, ignData)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal %s ignition: %w", role, err)
+		}
+	case workerRole:
+		if len(privateLBs) == 0 {
+			return in.WorkerIgnData, nil
+		}
+		err := json.Unmarshal(in.WorkerIgnData, ignData)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal %s ignition: %w", role, err)
+		}
+	default:
+		return nil, fmt.Errorf("unrecognized role %s for updating pointer ignition", role)
 	}
-	return in.MasterIgnData, nil
+	ignitionHost := net.JoinHostPort(privateLBs[0], "22623")
+	ignData.Ignition.Config.Merge[0].Source = ignutil.StrToPtr(func() *url.URL {
+		return &url.URL{
+			Scheme: "https",
+			Host:   ignitionHost,
+			Path:   fmt.Sprintf("/config/%s", role),
+		}
+	}().String())
+	editedIgnBytes, err := json.Marshal(ignData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert %s pointer ignition data to json: %w", role, err)
+	}
+	return editedIgnBytes, nil
 }
 
 func updateMCSCertKey(in IgnitionInput, platform string, config *igntypes.Config, privateLBs []string) error {
