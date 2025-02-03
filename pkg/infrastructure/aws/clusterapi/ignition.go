@@ -16,9 +16,12 @@ import (
 	"github.com/openshift/installer/pkg/types/dns"
 )
 
-func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, []byte, error) {
+func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) (*clusterapi.IgnitionOutput, error) {
 	if in.InstallConfig.Config.AWS.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
-		return in.BootstrapIgnData, in.MasterIgnData, nil
+		return &clusterapi.IgnitionOutput{
+			UpdatedBootstrapIgn: in.BootstrapIgnData,
+			UpdatedMasterIgn:    in.MasterIgnData,
+			UpdatedWorkerIgn:    in.WorkerIgnData}, nil
 	}
 
 	awsCluster := &capa.AWSCluster{}
@@ -27,12 +30,12 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, []b
 		Namespace: capiutils.Namespace,
 	}
 	if err := in.Client.Get(ctx, key, awsCluster); err != nil {
-		return nil, nil, fmt.Errorf("failed to get AWSCluster: %w", err)
+		return nil, fmt.Errorf("failed to get AWSCluster: %w", err)
 	}
 
 	awsSession, err := in.InstallConfig.AWS.Session(ctx)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get aws session: %w", err)
+		return nil, fmt.Errorf("failed to get aws session: %w", err)
 	}
 
 	// There is no direct access to load balancer IP addresses, so the security groups
@@ -51,7 +54,7 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, []b
 	}
 	nicOutput, err := ec2.New(awsSession).DescribeNetworkInterfacesWithContext(ctx, &nicInput)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to describe network interfaces: %w", err)
+		return nil, fmt.Errorf("failed to describe network interfaces: %w", err)
 	}
 
 	// The only network interfaces existing at this stage are those from the load balancers.
@@ -68,5 +71,6 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, []b
 			privateIPAddresses = append(privateIPAddresses, *nic.PrivateIpAddress)
 		}
 	}
+	logrus.Debugf("AWS: Editing Ignition files to start in-cluster DNS when UserProvisionedDNS is enabled")
 	return clusterapi.EditIgnition(in, awstypes.Name, publicIPAddresses, privateIPAddresses)
 }
