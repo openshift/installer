@@ -646,7 +646,7 @@ func validateOVNIPv4InternalJoinSubnet(n *types.Networking, fldPath *field.Path)
 		}
 	}
 
-	if largeEnough, err := isV4NodeSubnetLargeEnough(n.ClusterNetwork, ipv4JoinNet.String()); err == nil && !largeEnough {
+	if largeEnough, err := isV4NodeSubnetLargeEnough(n.ClusterNetwork, ipv4JoinNet); err == nil && !largeEnough {
 		errMsg := `ipv4InternalJoinSubnet is not large enough for the maximum number of nodes which can be supported by ClusterNetwork`
 		allErrs = append(allErrs, field.Invalid(fldPath, ipv4JoinNet.String(), errMsg))
 	} else if err != nil {
@@ -1412,28 +1412,27 @@ func validateReleaseArchitecture(controlPlanePool *types.MachinePool, computePoo
 	return allErrs
 }
 
-// isV4NodeSubnetLargeEnough is validation performed by the cluster network operator:
-// https://github.com/openshift/cluster-network-operator/blob/6b615be1447aa79252ddc73b10675b4638ae13f7/pkg/network/ovn_kubernetes.go#L1761
+// isV4NodeSubnetLargeEnough ensures the subnet is large enough for the maximum number of nodes supported by ClusterNetwork.
+// This validation is performed by the cluster network operator: https://github.com/openshift/cluster-network-operator/blob/6b615be1447aa79252ddc73b10675b4638ae13f7/pkg/network/ovn_kubernetes.go#L1761.
 // We need to duplicate it here to catch any issues with network customization prior to install.
-func isV4NodeSubnetLargeEnough(cn []types.ClusterNetworkEntry, nodeSubnet string) (bool, error) {
+func isV4NodeSubnetLargeEnough(cn []types.ClusterNetworkEntry, nodeSubnet *ipnet.IPNet) (bool, error) {
 	var maxNodesNum int
 	addrLen := 32
-	for _, n := range cn {
+	for i, n := range cn {
 		if utilsnet.IsIPv6CIDRString(n.CIDR.String()) {
 			continue
 		}
-		mask, err := strconv.Atoi(strings.Split(n.CIDR.String(), "/")[1])
-		if err != nil {
-			return false, fmt.Errorf("error converting cluster network %s CIDR mask to int: %w", n.CIDR.String(), err)
+
+		mask, _ := n.CIDR.Mask.Size()
+		if int(n.HostPrefix) < mask {
+			return false, fmt.Errorf("cannot determine the number of nodes supported by cluster network %d due to invalid hostPrefix", i)
 		}
 		nodesNum := 1 << (int(n.HostPrefix) - mask)
 		maxNodesNum += nodesNum
 	}
 	// We need to ensure each node can be assigned an IP address from the internal subnet
-	intSubnetMask, err := strconv.Atoi(strings.Split(nodeSubnet, "/")[1])
-	if err != nil {
-		return false, fmt.Errorf("error converting node subnet %s CIDR mask to int: %w", nodeSubnet, err)
-	}
+	intSubnetMask, _ := nodeSubnet.Mask.Size()
+
 	// reserve one IP for the gw, one IP for network and one for broadcasting
 	return maxNodesNum < (1<<(addrLen-intSubnetMask) - 3), nil
 }
