@@ -501,6 +501,7 @@ spec:
                           enum:
                           - sev
                           - sev-snp
+                          - tdx
                           type: string
                         onHostMaintenance:
                           default: Migrate
@@ -1613,6 +1614,7 @@ spec:
                         enum:
                         - sev
                         - sev-snp
+                        - tdx
                         type: string
                       onHostMaintenance:
                         default: Migrate
@@ -3541,6 +3543,7 @@ spec:
                         enum:
                         - sev
                         - sev-snp
+                        - tdx
                         type: string
                       onHostMaintenance:
                         default: Migrate
