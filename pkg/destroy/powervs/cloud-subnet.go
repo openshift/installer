@@ -15,54 +15,118 @@ import (
 
 const cloudSubnetTypeName = "cloudSubnet"
 
-// listCloudSubnets lists subnets in the VPC cloud.
+// listCloudSubnets lists subnets matching either name or tag in the IBM Cloud.
 func (o *ClusterUninstaller) listCloudSubnets() (cloudResources, error) {
-	o.Logger.Debugf("Listing virtual Cloud Subnets")
+	var (
+		subnetIDs []string
+		subnetID  string
+		ctx       context.Context
+		cancel    context.CancelFunc
+		result    = make([]cloudResource, 0, 1)
+		options   *vpcv1.GetSubnetOptions
+		subnet    *vpcv1.Subnet
+		response  *core.DetailedResponse
+		err       error
+	)
 
-	ctx, cancel := contextWithTimeout()
+	if false { // @TODO o.searchByTag {
+		// Should we list by tag matching?
+		// @TODO subnetIDs, err = o.listByTag(TagTypeCloudSubnet)
+		err = fmt.Errorf("listByTag(TagTypeCloudSubnet) is not supported yet")
+	} else {
+		// Otherwise list will list by name matching.
+		subnetIDs, err = o.listCloudSubnetsByName()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel = contextWithTimeout()
 	defer cancel()
 
-	select {
-	case <-ctx.Done():
-		o.Logger.Debugf("listCloudSubnets: case <-ctx.Done()")
-		return nil, ctx.Err() // we're cancelled, abort
-	default:
-	}
-
-	options := o.vpcSvc.NewListSubnetsOptions()
-	options.SetResourceGroupID(o.resourceGroupID)
-
-	subnets, detailedResponse, err := o.vpcSvc.ListSubnets(options)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list subnets and the response is: %s: %w", detailedResponse, err)
-	}
-
-	var foundOne = false
-
-	result := []cloudResource{}
-	for _, subnet := range subnets.Subnets {
-		if strings.Contains(*subnet.Name, o.InfraID) {
-			foundOne = true
-			o.Logger.Debugf("listCloudSubnets: FOUND: %s, %s", *subnet.ID, *subnet.Name)
-			result = append(result, cloudResource{
-				key:      *subnet.ID,
-				name:     *subnet.Name,
-				status:   "",
-				typeName: cloudSubnetTypeName,
-				id:       *subnet.ID,
-			})
+	for _, subnetID = range subnetIDs {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("listCloudSubnets: case <-ctx.Done()")
+			return nil, ctx.Err() // we're cancelled, abort
+		default:
 		}
-	}
-	if !foundOne {
-		o.Logger.Debugf("listCloudSubnets: NO matching subnet against: %s", o.InfraID)
-		for _, subnet := range subnets.Subnets {
-			o.Logger.Debugf("listCloudSubnets: subnet: %s", *subnet.Name)
+
+		options = o.vpcSvc.NewGetSubnetOptions(subnetID)
+
+		subnet, response, err = o.vpcSvc.GetSubnetWithContext(ctx, options)
+		if err != nil && response != nil && response.StatusCode == gohttp.StatusNotFound {
+			// The subnet could have been deleted just after a list was created.
+			continue
 		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to get cloud subnet (%s): err = %w, response = %v", subnetID, err, response)
+		}
+
+		result = append(result, cloudResource{
+			key:      *subnet.ID,
+			name:     *subnet.Name,
+			status:   "",
+			typeName: cloudSubnetTypeName,
+			id:       *subnet.ID,
+		})
 	}
 
 	return cloudResources{}.insert(result...), nil
 }
 
+// listCloudSubnetsByName lists subnets matching either name or tag in the IBM Cloud.
+func (o *ClusterUninstaller) listCloudSubnetsByName() ([]string, error) {
+	var (
+		ctx              context.Context
+		cancel           context.CancelFunc
+		options          *vpcv1.ListSubnetsOptions
+		subnetCollection *vpcv1.SubnetCollection
+		response         *core.DetailedResponse
+		foundOne         = false
+		result           = make([]string, 0, 1)
+		subnet           vpcv1.Subnet
+		err              error
+	)
+
+	o.Logger.Debugf("Listing virtual Cloud Subnets by NAME")
+
+	ctx, cancel = contextWithTimeout()
+	defer cancel()
+
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("listCloudSubnetsByName: case <-ctx.Done()")
+		return nil, ctx.Err() // we're cancelled, abort
+	default:
+	}
+
+	options = o.vpcSvc.NewListSubnetsOptions()
+	options.SetResourceGroupID(o.resourceGroupID)
+
+	subnetCollection, response, err = o.vpcSvc.ListSubnetsWithContext(ctx, options)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list cloud subnets and the response is: %s: %w", response, err)
+	}
+
+	for _, subnet = range subnetCollection.Subnets {
+		if strings.Contains(*subnet.Name, o.InfraID) {
+			foundOne = true
+			o.Logger.Debugf("listCloudSubnetsByName: FOUND: %s, %s", *subnet.ID, *subnet.Name)
+			result = append(result, *subnet.ID)
+		}
+	}
+	if !foundOne {
+		o.Logger.Debugf("listCloudSubnetsByName: NO matching subnet against: %s", o.InfraID)
+		for _, subnet = range subnetCollection.Subnets {
+			o.Logger.Debugf("listCloudSubnetsByName: subnet: %s", *subnet.Name)
+		}
+	}
+
+	return result, nil
+}
+
+// deleteCloudSubnet deletes the cloud subnet specified.
 func (o *ClusterUninstaller) deleteCloudSubnet(item cloudResource) error {
 	var getOptions *vpcv1.GetSubnetOptions
 	var response *core.DetailedResponse
@@ -93,6 +157,7 @@ func (o *ClusterUninstaller) deleteCloudSubnet(item cloudResource) error {
 	}
 
 	deleteOptions := o.vpcSvc.NewDeleteSubnetOptions(item.id)
+
 	_, err = o.vpcSvc.DeleteSubnetWithContext(ctx, deleteOptions)
 	if err != nil {
 		return fmt.Errorf("failed to delete subnet %s: %w", item.name, err)
@@ -152,6 +217,13 @@ func (o *ClusterUninstaller) destroyCloudSubnets() error {
 			o.Logger.Debugf("destroyCloudSubnets: found %s in pending items", item.name)
 		}
 		return fmt.Errorf("destroyCloudSubnets: %d undeleted items pending", len(items))
+	}
+
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("destroyCloudSubnets: case <-ctx.Done()")
+		return ctx.Err() // we're cancelled, abort
+	default:
 	}
 
 	backoff := wait.Backoff{
