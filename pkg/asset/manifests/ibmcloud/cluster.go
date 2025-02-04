@@ -69,9 +69,11 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	// If no Control Plane subnets were provided in InstallConfig, we build a default set to cover all provided zones, or zones in the region.
 	if len(controlPlaneSubnets) == 0 {
 		var zones []string
-		// Use provided Control Plane zones, or default to all zones in the Region.
-		if len(installConfig.Config.ControlPlane.Platform.IBMCloud.Zones) != 0 {
+		// Use provided Control Plane zones, DefaultMachinePlatform zones, or default to all zones in the Region.
+		if installConfig.Config.ControlPlane.Platform.IBMCloud != nil && len(installConfig.Config.ControlPlane.Platform.IBMCloud.Zones) != 0 {
 			zones = installConfig.Config.ControlPlane.Platform.IBMCloud.Zones
+		} else if platform.DefaultMachinePlatform != nil && len(platform.DefaultMachinePlatform.Zones) != 0 {
+			zones = platform.DefaultMachinePlatform.Zones
 		} else {
 			var err error
 			zones, err = client.GetVPCZonesForRegion(context.TODO(), platform.Region)
@@ -111,10 +113,12 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	// If no Compute subnets were provided in InstallConfig, we build a default set to cover all specified zones, or zones in the region.
 	if len(computeSubnets) == 0 {
 		var zones []string
-		// Use provided Compute zones, or default to all zones in the Region.
+		// Use provided Compute zones, DefaultMachinePlatform zones, or default to all zones in the Region.
 		// NOTE(cjschaef): We only process the first Compute definition, which may result in complications if additional Compute definitions request different Zones.
-		if len(installConfig.Config.Compute[0].Platform.IBMCloud.Zones) != 0 {
+		if installConfig.Config.Compute[0].Platform.IBMCloud != nil && len(installConfig.Config.Compute[0].Platform.IBMCloud.Zones) != 0 {
 			zones = installConfig.Config.Compute[0].Platform.IBMCloud.Zones
+		} else if platform.DefaultMachinePlatform != nil && len(platform.DefaultMachinePlatform.Zones) != 0 {
+			zones = platform.DefaultMachinePlatform.Zones
 		} else {
 			var err error
 			zones, err = client.GetVPCZonesForRegion(context.TODO(), platform.Region)
