@@ -467,6 +467,21 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.ovnKubernetesConfig\.ipv4\.internalJoinSubnet: Invalid value: "100\.64\.0\.0/24": ipv4InternalJoinSubnet is not large enough for the maximum number of nodes which can be supported by ClusterNetwork$`,
 		},
 		{
+			name: "valid user-provided IPv4 InternalJoinSubnet but invalid hostPrefix",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.OVNKubernetesConfig = &types.OVNKubernetesConfig{IPv4: &types.IPv4OVNKubernetesConfig{InternalJoinSubnet: ipnet.MustParseCIDR("100.64.0.0/24")}}
+				c.Networking.ClusterNetwork = []types.ClusterNetworkEntry{
+					{
+						CIDR:       *ipnet.MustParseCIDR("10.128.0.0/24"),
+						HostPrefix: int32(23),
+					},
+				}
+				return c
+			}(),
+			expectedError: `^\[networking\.clusterNetwork\[0\]\.hostPrefix: Invalid value: 23: cluster network host subnetwork prefix must not be larger size than CIDR 10\.128\.0\.0/24, networking\.ovnKubernetesConfig\.ipv4\.internalJoinSubnet: Internal error: cannot determine the number of nodes supported by cluster network 0 due to invalid hostPrefix\]$`,
+		},
+		{
 			name: "missing machine networks",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
