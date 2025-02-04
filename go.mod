@@ -330,4 +330,4 @@ replace github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.c
 
 replace sigs.k8s.io/cluster-api-provider-gcp => github.com/bgartzi/openshift-cluster-api-provider-gcp v0.0.0-20250204082512-eb81729736cc
 
-replace github.com/openshift/api => github.com/bgartzi/api v0.0.0-20250127151915-232b41e08bd4
+replace github.com/openshift/api => github.com/bgartzi/api v0.0.0-20250203142648-e3d90e757f74

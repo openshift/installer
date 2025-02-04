@@ -72,6 +72,8 @@ const (
 	ConfidentialVMTechSEV ConfidentialVMTechnology = "sev"
 	// ConfidentialVMTechSEVSNP sets AMD SEV-SNP as the VM instance's confidential computing technology of choice.
 	ConfidentialVMTechSEVSNP ConfidentialVMTechnology = "sev-snp"
+	// ConfidentialVMTechnologyTDX sets Intel TDX as the VM instance's confidential computing technology of choice.
+	ConfidentialVMTechTDX ConfidentialVMTechnology = "tdx"
 )
 
 // GCPMachineProviderSpec is the type that will be embedded in a Machine.Spec.ProviderSpec field
@@ -159,10 +161,18 @@ type GCPMachineProviderSpec struct {
 	// +kubebuilder:validation:Enum=Enabled;Disabled
 	// +optional
 	ConfidentialCompute ConfidentialComputePolicy `json:"confidentialCompute,omitempty"`
-	// confidentialInstanceType determines the required type of confidential computing technology.
-	// confidentialInstanceType will preceed confidentialCompute. That is, if confidentialCompute is "Disabled" but a valid confidentialInstanceType is specified, a confidential instance will be configured.
-	// If confidentialInstanceType isn't set and confidentialCompute is "Enabled" the platform will set the default, which is subject to change over time. Currently the default is "sev" for "c2d", "c3d", and "n2d" machineTypes. For the other machine cases, a valid confidentialInstanceType must be specified.
-	// +kubebuilder:validation:Enum=sev;sev-snp;
+	// ConfidentialInstanceType determines the required type of confidential computing technology.
+	// To set a ConfidentialInstanceType ConfidentialCompute must be first set to "Enabled".
+	// If ConfidentialCompute is "Enabled" and ConfidentialInstanceType isn't provided, the default ConfidentialInstanceType will be set. At this moment, the default for this case is "sev".
+	// If ConfidentialCompute is "Enabled" and ConfidentialInstanceType is provided, the provided ConfidentialInstanceType will be set.
+	// If ConfidentialCompute is "Disabled" and ConfidentialInstanceType isn't provided, confidential computing technology won't be enabled and the instance will be run normally.
+	// Setting ConfidentialCompute to "Disabled" and ConfidentialInstanceType to a valid value isn't supported. That will raise an error.
+	// Valid ConfidentialInstanceType values are "sev", "sev-snp", and "tdx".
+	// Note that supported ConfidentialInstanceType values will depend on the configured instance machine types.
+	// "sev" is supported in "n2d", "c2d" and "c3d" machines.
+	// "sev-snp" is supported in "n2d" machines.
+	// "tdx" is supported in "c3" machines.
+	// +kubebuilder:validation:Enum=sev;sev-snp;tdx;
 	// +optional
 	ConfidentialInstanceType ConfidentialVMTechnology `json:"confidentialInstanceType,omitempty"`
 

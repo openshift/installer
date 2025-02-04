@@ -194,8 +194,8 @@ github.com/benbjohnson/clock v1.3.5 h1:VvXlSJBzZpA/zum6Sj74hxwYI2DIxRWuNIoXAzHZz
 github.com/benbjohnson/clock v1.3.5/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
-github.com/bgartzi/api v0.0.0-20250127151915-232b41e08bd4 h1:E5GhHpwEMytT+S6Waj0OYdfPw8HhaPOueDp7vpaV+is=
-github.com/bgartzi/api v0.0.0-20250127151915-232b41e08bd4/go.mod h1:Shkl4HanLwDiiBzakv+con/aMGnVE2MAGvoKp5oyYUo=
+github.com/bgartzi/api v0.0.0-20250203142648-e3d90e757f74 h1:YVyd21vHQx7ixTGa48YKMxCY0RFVGeu7lNOtVReDQd4=
+github.com/bgartzi/api v0.0.0-20250203142648-e3d90e757f74/go.mod h1:Shkl4HanLwDiiBzakv+con/aMGnVE2MAGvoKp5oyYUo=
 github.com/bgartzi/openshift-cluster-api-provider-gcp v0.0.0-20250204082512-eb81729736cc h1:giIPd+7j3QXStS4kZvKdN0jQY1RIwMIzySDJi4wyveE=
 github.com/bgartzi/openshift-cluster-api-provider-gcp v0.0.0-20250204082512-eb81729736cc/go.mod h1:dHC23Chv/PpH2M8pvkVpleW9auCsXuxmEQUz8UUwk7A=
 github.com/blang/semver v3.5.1+incompatible h1:cQNTCjp13qL8KC3Nbxr/y2Bqb63oX6wdnnjpJbkM4JQ=
