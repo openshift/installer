@@ -19,7 +19,7 @@ package loadbalancers
 import (
 	"context"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
+	"github.com/Azure/azure-sdk-for-go/profile/p20200901/resourcemanager/network/armnetwork"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
@@ -140,10 +140,10 @@ func (s *LBSpec) Parameters(ctx context.Context, existing interface{}) (paramete
 	}
 
 	lb := armnetwork.LoadBalancer{
-		Etag:             etag,
-		SKU:              &armnetwork.LoadBalancerSKU{Name: ptr.To(converters.SKUtoSDK(s.SKU))},
-		Location:         ptr.To(s.Location),
-		ExtendedLocation: converters.ExtendedLocationToNetworkSDK(s.ExtendedLocation),
+		Etag:     etag,
+		SKU:      &armnetwork.LoadBalancerSKU{Name: ptr.To(converters.SKUtoSDK(s.SKU))},
+		Location: ptr.To(s.Location),
+		//ExtendedLocation: converters.ExtendedLocationToNetworkSDK(s.ExtendedLocation),
 		Tags: converters.TagsToMap(infrav1.Build(infrav1.BuildParams{
 			ClusterName: s.ClusterName,
 			Lifecycle:   infrav1.ResourceLifecycleOwned,
@@ -201,7 +201,7 @@ func getOutboundRules(lbSpec LBSpec, frontendIDs []*armnetwork.SubResource) []*a
 		{
 			Name: ptr.To(outboundNAT),
 			Properties: &armnetwork.OutboundRulePropertiesFormat{
-				Protocol:                 ptr.To(armnetwork.LoadBalancerOutboundRuleProtocolAll),
+				Protocol:                 ptr.To(armnetwork.OutboundRulePropertiesFormatProtocolAll),
 				IdleTimeoutInMinutes:     lbSpec.IdleTimeoutInMinutes,
 				FrontendIPConfigurations: frontendIDs,
 				BackendAddressPool: &armnetwork.SubResource{

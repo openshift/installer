@@ -65,5 +65,5 @@ var defaultCAPZFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	AKS:               {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // Remove in 1.12
 	AKSResourceHealth: {Default: false, PreRelease: featuregate.Alpha},
 	EdgeZone:          {Default: false, PreRelease: featuregate.Alpha},
-	ASOAPI:            {Default: false, PreRelease: featuregate.Alpha},
+	ASOAPI:            {Default: true, PreRelease: featuregate.Alpha},
 }

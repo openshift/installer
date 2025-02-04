@@ -17,7 +17,7 @@ limitations under the License.
 package converters
 
 import (
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
+	"github.com/Azure/azure-sdk-for-go/profile/p20200901/resourcemanager/network/armnetwork"
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 )
@@ -45,8 +45,8 @@ func SecurityRuleToSDK(rule infrav1.SecurityRule) *armnetwork.SecurityRule {
 		secRule.Properties.Protocol = ptr.To(armnetwork.SecurityRuleProtocolTCP)
 	case infrav1.SecurityGroupProtocolUDP:
 		secRule.Properties.Protocol = ptr.To(armnetwork.SecurityRuleProtocolUDP)
-	case infrav1.SecurityGroupProtocolICMP:
-		secRule.Properties.Protocol = ptr.To(armnetwork.SecurityRuleProtocolIcmp)
+		// case infrav1.SecurityGroupProtocolICMP:
+		// 	secRule.Properties.Protocol = ptr.To(armnetwork.SecurityRuleProtocolIcmp)
 	}
 
 	switch rule.Direction {

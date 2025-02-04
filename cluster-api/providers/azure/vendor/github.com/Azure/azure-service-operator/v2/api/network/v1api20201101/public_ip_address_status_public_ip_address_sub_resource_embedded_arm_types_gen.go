@@ -145,9 +145,21 @@ const (
 	PublicIPAddressSku_Name_STATUS_Standard = PublicIPAddressSku_Name_STATUS("Standard")
 )
 
+// Mapping from string to PublicIPAddressSku_Name_STATUS
+var publicIPAddressSku_Name_STATUS_Values = map[string]PublicIPAddressSku_Name_STATUS{
+	"basic":    PublicIPAddressSku_Name_STATUS_Basic,
+	"standard": PublicIPAddressSku_Name_STATUS_Standard,
+}
+
 type PublicIPAddressSku_Tier_STATUS string
 
 const (
 	PublicIPAddressSku_Tier_STATUS_Global   = PublicIPAddressSku_Tier_STATUS("Global")
 	PublicIPAddressSku_Tier_STATUS_Regional = PublicIPAddressSku_Tier_STATUS("Regional")
 )
+
+// Mapping from string to PublicIPAddressSku_Tier_STATUS
+var publicIPAddressSku_Tier_STATUS_Values = map[string]PublicIPAddressSku_Tier_STATUS{
+	"global":   PublicIPAddressSku_Tier_STATUS_Global,
+	"regional": PublicIPAddressSku_Tier_STATUS_Regional,
+}

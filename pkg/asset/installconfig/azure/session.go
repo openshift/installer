@@ -16,11 +16,11 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/go-autorest/autorest"
 	azureenv "github.com/Azure/go-autorest/autorest/azure"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/jongio/azidext/go/azidext"
 	azurekiota "github.com/microsoft/kiota-authentication-azure-go"
-	"github.com/sirupsen/logrus"
-
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/sirupsen/logrus"
 )
 
 const azureAuthEnv = "AZURE_AUTH_LOCATION"
@@ -133,7 +133,8 @@ func GetCloudConfiguration(cloudName azure.CloudEnvironment, armEndpoint string)
 	if err != nil {
 		return nil, err
 	}
-
+	spew.Println("BUGGIN' installer cloudConfig")
+	//spew.Dump(cloudEnv)
 	var cloudConfig cloud.Configuration
 	switch cloudName {
 	case azure.StackCloud:
@@ -146,6 +147,7 @@ func GetCloudConfiguration(cloudName azure.CloudEnvironment, armEndpoint string)
 				},
 			},
 		}
+		spew.Dump(cloudConfig)
 	case azure.USGovernmentCloud:
 		cloudConfig = cloud.AzureGovernment
 	case azure.ChinaCloud:

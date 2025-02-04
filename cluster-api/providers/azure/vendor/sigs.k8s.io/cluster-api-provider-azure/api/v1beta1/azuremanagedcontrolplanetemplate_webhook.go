@@ -89,49 +89,49 @@ func (mcpw *azureManagedControlPlaneTemplateWebhook) ValidateUpdate(ctx context.
 		return nil, apierrors.NewBadRequest("expected an AzureManagedControlPlaneTemplate")
 	}
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "SubscriptionID"),
+		field.NewPath("spec", "template", "spec", "subscriptionID"),
 		old.Spec.Template.Spec.SubscriptionID,
 		mcp.Spec.Template.Spec.SubscriptionID); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "Location"),
+		field.NewPath("spec", "template", "spec", "location"),
 		old.Spec.Template.Spec.Location,
 		mcp.Spec.Template.Spec.Location); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "DNSServiceIP"),
+		field.NewPath("spec", "template", "spec", "dnsServiceIP"),
 		old.Spec.Template.Spec.DNSServiceIP,
 		mcp.Spec.Template.Spec.DNSServiceIP); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "NetworkPlugin"),
+		field.NewPath("spec", "template", "spec", "networkPlugin"),
 		old.Spec.Template.Spec.NetworkPlugin,
 		mcp.Spec.Template.Spec.NetworkPlugin); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "NetworkPolicy"),
+		field.NewPath("spec", "template", "spec", "networkPolicy"),
 		old.Spec.Template.Spec.NetworkPolicy,
 		mcp.Spec.Template.Spec.NetworkPolicy); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "NetworkDataplane"),
+		field.NewPath("spec", "template", "spec", "networkDataplane"),
 		old.Spec.Template.Spec.NetworkDataplane,
 		mcp.Spec.Template.Spec.NetworkDataplane); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "LoadBalancerSKU"),
+		field.NewPath("spec", "template", "spec", "loadBalancerSKU"),
 		old.Spec.Template.Spec.LoadBalancerSKU,
 		mcp.Spec.Template.Spec.LoadBalancerSKU); err != nil {
 		allErrs = append(allErrs, err)
@@ -141,21 +141,21 @@ func (mcpw *azureManagedControlPlaneTemplateWebhook) ValidateUpdate(ctx context.
 		if mcp.Spec.Template.Spec.AADProfile == nil {
 			allErrs = append(allErrs,
 				field.Invalid(
-					field.NewPath("Spec", "Template", "Spec", "AADProfile"),
+					field.NewPath("spec", "template", "spec", "aadProfile"),
 					mcp.Spec.Template.Spec.AADProfile,
 					"field cannot be nil, cannot disable AADProfile"))
 		} else {
 			if !mcp.Spec.Template.Spec.AADProfile.Managed && old.Spec.Template.Spec.AADProfile.Managed {
 				allErrs = append(allErrs,
 					field.Invalid(
-						field.NewPath("Spec", "Template", "Spec", "AADProfile.Managed"),
+						field.NewPath("spec", "template", "spec", "aadProfile", "managed"),
 						mcp.Spec.Template.Spec.AADProfile.Managed,
 						"cannot set AADProfile.Managed to false"))
 			}
 			if len(mcp.Spec.Template.Spec.AADProfile.AdminGroupObjectIDs) == 0 {
 				allErrs = append(allErrs,
 					field.Invalid(
-						field.NewPath("Spec", "Template", "Spec", "AADProfile.AdminGroupObjectIDs"),
+						field.NewPath("spec", "template", "spec", "aadProfile", "adminGroupObjectIDs"),
 						mcp.Spec.Template.Spec.AADProfile.AdminGroupObjectIDs,
 						"length of AADProfile.AdminGroupObjectIDs cannot be zero"))
 			}
@@ -166,7 +166,7 @@ func (mcpw *azureManagedControlPlaneTemplateWebhook) ValidateUpdate(ctx context.
 	// Updating outboundType after cluster creation (PREVIEW)
 	// https://learn.microsoft.com/en-us/azure/aks/egress-outboundtype#updating-outboundtype-after-cluster-creation-preview
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "OutboundType"),
+		field.NewPath("spec", "template", "spec", "outboundType"),
 		old.Spec.Template.Spec.OutboundType,
 		mcp.Spec.Template.Spec.OutboundType); err != nil {
 		allErrs = append(allErrs, err)
@@ -200,11 +200,11 @@ func (mcp *AzureManagedControlPlaneTemplate) validateManagedControlPlaneTemplate
 
 	allErrs = append(allErrs, validateVersion(
 		mcp.Spec.Template.Spec.Version,
-		field.NewPath("spec").Child("template").Child("spec").Child("Version"))...)
+		field.NewPath("spec").Child("template").Child("spec").Child("version"))...)
 
 	allErrs = append(allErrs, validateLoadBalancerProfile(
 		mcp.Spec.Template.Spec.LoadBalancerProfile,
-		field.NewPath("spec").Child("template").Child("spec").Child("LoadBalancerProfile"))...)
+		field.NewPath("spec").Child("template").Child("spec").Child("loadBalancerProfile"))...)
 
 	allErrs = append(allErrs, validateManagedClusterNetwork(
 		cli,
@@ -214,21 +214,21 @@ func (mcp *AzureManagedControlPlaneTemplate) validateManagedControlPlaneTemplate
 		mcp.Spec.Template.Spec.VirtualNetwork.Subnet,
 		field.NewPath("spec").Child("template").Child("spec"))...)
 
-	allErrs = append(allErrs, validateName(mcp.Name, field.NewPath("Name"))...)
+	allErrs = append(allErrs, validateName(mcp.Name, field.NewPath("name"))...)
 
-	allErrs = append(allErrs, validateAutoScalerProfile(mcp.Spec.Template.Spec.AutoScalerProfile, field.NewPath("spec").Child("template").Child("spec").Child("AutoScalerProfile"))...)
+	allErrs = append(allErrs, validateAutoScalerProfile(mcp.Spec.Template.Spec.AutoScalerProfile, field.NewPath("spec").Child("template").Child("spec").Child("autoScalerProfile"))...)
 
-	allErrs = append(allErrs, validateAKSExtensions(mcp.Spec.Template.Spec.Extensions, field.NewPath("spec").Child("Extensions"))...)
+	allErrs = append(allErrs, validateAKSExtensions(mcp.Spec.Template.Spec.Extensions, field.NewPath("spec").Child("extensions"))...)
 
 	allErrs = append(allErrs, mcp.Spec.Template.Spec.AzureManagedControlPlaneClassSpec.validateSecurityProfile()...)
 
-	allErrs = append(allErrs, validateNetworkPolicy(mcp.Spec.Template.Spec.NetworkPolicy, mcp.Spec.Template.Spec.NetworkDataplane, field.NewPath("spec").Child("template").Child("spec").Child("NetworkPolicy"))...)
+	allErrs = append(allErrs, validateNetworkPolicy(mcp.Spec.Template.Spec.NetworkPolicy, mcp.Spec.Template.Spec.NetworkDataplane, field.NewPath("spec").Child("template").Child("spec").Child("networkPolicy"))...)
 
-	allErrs = append(allErrs, validateNetworkDataplane(mcp.Spec.Template.Spec.NetworkDataplane, mcp.Spec.Template.Spec.NetworkPolicy, mcp.Spec.Template.Spec.NetworkPluginMode, field.NewPath("spec").Child("template").Child("spec").Child("NetworkDataplane"))...)
+	allErrs = append(allErrs, validateNetworkDataplane(mcp.Spec.Template.Spec.NetworkDataplane, mcp.Spec.Template.Spec.NetworkPolicy, mcp.Spec.Template.Spec.NetworkPluginMode, field.NewPath("spec").Child("template").Child("spec").Child("networkDataplane"))...)
 
-	allErrs = append(allErrs, validateAPIServerAccessProfile(mcp.Spec.Template.Spec.APIServerAccessProfile, field.NewPath("spec").Child("template").Child("spec").Child("APIServerAccessProfile"))...)
+	allErrs = append(allErrs, validateAPIServerAccessProfile(mcp.Spec.Template.Spec.APIServerAccessProfile, field.NewPath("spec").Child("template").Child("spec").Child("apiServerAccessProfile"))...)
 
-	allErrs = append(allErrs, validateAMCPVirtualNetwork(mcp.Spec.Template.Spec.VirtualNetwork, field.NewPath("spec").Child("template").Child("spec").Child("VirtualNetwork"))...)
+	allErrs = append(allErrs, validateAMCPVirtualNetwork(mcp.Spec.Template.Spec.VirtualNetwork, field.NewPath("spec").Child("template").Child("spec").Child("virtualNetwork"))...)
 
 	return allErrs.ToAggregate()
 }
@@ -242,7 +242,7 @@ func (mcpw *azureManagedControlPlaneTemplateWebhook) ValidateDelete(ctx context.
 func (mcp *AzureManagedControlPlaneTemplate) validateK8sVersionUpdate(old *AzureManagedControlPlaneTemplate) field.ErrorList {
 	var allErrs field.ErrorList
 	if hv := versions.GetHigherK8sVersion(mcp.Spec.Template.Spec.Version, old.Spec.Template.Spec.Version); hv != mcp.Spec.Template.Spec.Version {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("Spec", "Template", "Spec", "Version"),
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "template", "spec", "version"),
 			mcp.Spec.Template.Spec.Version, "field version cannot be downgraded"),
 		)
 	}
@@ -256,7 +256,7 @@ func (mcp *AzureManagedControlPlaneTemplate) validateVirtualNetworkTemplateUpdat
 	if old.Spec.Template.Spec.VirtualNetwork.CIDRBlock != mcp.Spec.Template.Spec.VirtualNetwork.CIDRBlock {
 		allErrs = append(allErrs,
 			field.Invalid(
-				field.NewPath("Spec", "Template", "Spec", "VirtualNetwork.CIDRBlock"),
+				field.NewPath("spec", "template", "spec", "virtualNetwork", "cidrBlock"),
 				mcp.Spec.Template.Spec.VirtualNetwork.CIDRBlock,
 				"Virtual Network CIDRBlock is immutable"))
 	}
@@ -264,7 +264,7 @@ func (mcp *AzureManagedControlPlaneTemplate) validateVirtualNetworkTemplateUpdat
 	if old.Spec.Template.Spec.VirtualNetwork.Subnet.Name != mcp.Spec.Template.Spec.VirtualNetwork.Subnet.Name {
 		allErrs = append(allErrs,
 			field.Invalid(
-				field.NewPath("Spec", "Template", "Spec", "VirtualNetwork.Subnet.Name"),
+				field.NewPath("spec", "template", "spec", "virtualNetwork", "subnet", "name"),
 				mcp.Spec.Template.Spec.VirtualNetwork.Subnet.Name,
 				"Subnet Name is immutable"))
 	}
@@ -276,7 +276,7 @@ func (mcp *AzureManagedControlPlaneTemplate) validateVirtualNetworkTemplateUpdat
 	if old.Spec.Template.Spec.VirtualNetwork.Subnet.CIDRBlock != mcp.Spec.Template.Spec.VirtualNetwork.Subnet.CIDRBlock {
 		allErrs = append(allErrs,
 			field.Invalid(
-				field.NewPath("Spec", "Template", "Spec", "VirtualNetwork.Subnet.CIDRBlock"),
+				field.NewPath("spec", "template", "spec", "virtualNetwork", "subnet", "cidrBlock"),
 				mcp.Spec.Template.Spec.VirtualNetwork.Subnet.CIDRBlock,
 				"Subnet CIDRBlock is immutable"))
 	}
@@ -315,7 +315,7 @@ func (mcp *AzureManagedControlPlaneTemplate) validateAPIServerAccessProfileTempl
 
 	if !reflect.DeepEqual(newAPIServerAccessProfileNormalized, oldAPIServerAccessProfileNormalized) {
 		allErrs = append(allErrs,
-			field.Invalid(field.NewPath("Spec", "Template", "Spec", "APIServerAccessProfile"),
+			field.Invalid(field.NewPath("spec", "template", "spec", "apiServerAccessProfile"),
 				mcp.Spec.Template.Spec.APIServerAccessProfile, "fields are immutable"),
 		)
 	}
