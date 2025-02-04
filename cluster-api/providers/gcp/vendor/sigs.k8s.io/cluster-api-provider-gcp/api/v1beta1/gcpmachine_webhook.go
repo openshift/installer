@@ -115,9 +115,30 @@ func validateConfidentialCompute(spec GCPMachineSpec) error {
 		}
 
 		machineSeries := strings.Split(spec.InstanceType, "-")[0]
-		if !slices.Contains(confidentialComputeSupportedMachineSeries, machineSeries) {
-			return fmt.Errorf("ConfidentialCompute require instance type in the following series: %s", confidentialComputeSupportedMachineSeries)
+		if spec.ConfidentialInstanceType == nil || *spec.ConfidentialInstanceType == "" {
+			if !slices.Contains(confidentialMachineSeriesSupportingSev, machineSeries) {
+				return fmt.Errorf("ConfidentialCompute requires any of the following machine series: %s. %s was found instead", strings.Join(confidentialMachineSeriesSupportingSev, ", "), spec.InstanceType)
+			}
+		} else {
+			switch *spec.ConfidentialInstanceType {
+			case ConfidentialVMTechnologySEV:
+				if !slices.Contains(confidentialMachineSeriesSupportingSev, machineSeries) {
+					return fmt.Errorf("ConfidentialInstanceType %s requires any of the following machine series: %s. %s was found instead", *spec.ConfidentialInstanceType, strings.Join(confidentialMachineSeriesSupportingSev, ", "), spec.InstanceType)
+				}
+			case ConfidentialVMTechnologySEVSNP:
+				if !slices.Contains(confidentialMachineSeriesSupportingSevsnp, machineSeries) {
+					return fmt.Errorf("ConfidentialInstanceType %s requires any of the following machine series: %s. %s was found instead", *spec.ConfidentialInstanceType, strings.Join(confidentialMachineSeriesSupportingSevsnp, ", "), spec.InstanceType)
+				}
+			case ConfidentialVMTechnologyTDX:
+				if !slices.Contains(confidentialMachineSeriesSupportingTdx, machineSeries) {
+					return fmt.Errorf("ConfidentialInstanceType %s requires any of the following machine series: %s. %s was found instead", *spec.ConfidentialInstanceType, strings.Join(confidentialMachineSeriesSupportingTdx, ", "), spec.InstanceType)
+				}
+			default:
+				return fmt.Errorf("invalid ConfidentialInstanceType %s", *spec.ConfidentialInstanceType)
+			}
 		}
+	} else if (spec.ConfidentialCompute == nil || *spec.ConfidentialCompute != ConfidentialComputePolicyEnabled) && spec.ConfidentialInstanceType != nil && *spec.ConfidentialInstanceType != "" {
+		return fmt.Errorf("ConfidentialCompute is Disabled but a ConfidentialInstanceType value was provided. ConfidentialCompute must be set to %s to configure a ConfidentialInstanceType", ConfidentialComputePolicyEnabled)
 	}
 	return nil
 }

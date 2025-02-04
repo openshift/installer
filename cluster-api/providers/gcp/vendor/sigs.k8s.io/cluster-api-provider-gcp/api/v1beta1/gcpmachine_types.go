@@ -47,6 +47,8 @@ type AttachedDiskSpec struct {
 	// 1. "pd-standard" - Standard (HDD) persistent disk
 	// 2. "pd-ssd" - SSD persistent disk
 	// 3. "local-ssd" - Local SSD disk (https://cloud.google.com/compute/docs/disks/local-ssd).
+	// 4. "pd-balanced" - Balanced Persistent Disk
+	// 5. "hyperdisk-balanced" - Hyperdisk Balanced
 	// Default is "pd-standard".
 	// +optional
 	DeviceType *DiskType `json:"deviceType,omitempty"`
@@ -135,9 +137,25 @@ const (
 	ConfidentialComputePolicyDisabled ConfidentialComputePolicy = "Disabled"
 )
 
-// Confidential VM supports Compute Engine machine types in the following series:
+// ConfidentialVMTechnology represents the confidential computing technology used by a GCP confidential machine.
+type ConfidentialVMTechnology string
+
+const (
+	// ConfidentialVMTechnologySEV sets AMD SEV as the VM instance's confidential computing technology of choice.
+	ConfidentialVMTechnologySEV ConfidentialVMTechnology = "sev"
+	// ConfidentialVMTechnologySEVSNP sets AMD SEV-SNP as the VM instance's confidential computing technology of choice.
+	ConfidentialVMTechnologySEVSNP ConfidentialVMTechnology = "sev-snp"
+	// ConfidentialVMTechnologyTDX sets Intel TDX as the VM instance's confidential computing technology of choice.
+	ConfidentialVMTechnologyTDX ConfidentialVMTechnology = "tdx"
+)
+
+// Confidential VM Technology support depends on the configured machine types.
 // reference: https://cloud.google.com/compute/confidential-vm/docs/os-and-machine-type#machine-type
-var confidentialComputeSupportedMachineSeries = []string{"n2d", "c2d"}
+var (
+	confidentialMachineSeriesSupportingSev    = []string{"n2d", "c2d", "c3d"}
+	confidentialMachineSeriesSupportingSevsnp = []string{"n2d"}
+	confidentialMachineSeriesSupportingTdx = []string{"c3"}
+)
 
 // HostMaintenancePolicy represents the desired behavior ase of a host maintenance event.
 type HostMaintenancePolicy string
@@ -215,6 +233,16 @@ type CustomerEncryptionKey struct {
 	SuppliedKey *SuppliedKey `json:"suppliedKey,omitempty"`
 }
 
+// ProvisioningModel is a type for Spot VM enablement.
+type ProvisioningModel string
+
+const (
+	// ProvisioningModelStandard specifies the VM type to NOT be Spot.
+	ProvisioningModelStandard ProvisioningModel = "Standard"
+	// ProvisioningModelSpot specifies the VM type to be Spot.
+	ProvisioningModelSpot ProvisioningModel = "Spot"
+)
+
 // GCPMachineSpec defines the desired state of GCPMachine.
 type GCPMachineSpec struct {
 	// InstanceType is the type of instance to create. Example: n1.standard-2
@@ -281,6 +309,8 @@ type GCPMachineSpec struct {
 	// Supported types of root volumes:
 	// 1. "pd-standard" - Standard (HDD) persistent disk
 	// 2. "pd-ssd" - SSD persistent disk
+	// 3. "pd-balanced" - Balanced Persistent Disk
+	// 4. "hyperdisk-balanced" - Hyperdisk Balanced
 	// Default is "pd-standard".
 	// +optional
 	RootDeviceType *DiskType `json:"rootDeviceType,omitempty"`
@@ -297,6 +327,13 @@ type GCPMachineSpec struct {
 	// Preemptible defines if instance is preemptible
 	// +optional
 	Preemptible bool `json:"preemptible,omitempty"`
+
+	// ProvisioningModel defines if instance is spot.
+	// If set to "Standard" while preemptible is true, then the VM will be of type "Preemptible".
+	// If "Spot", VM type is "Spot". When unspecified, defaults to "Standard".
+	// +kubebuilder:validation:Enum=Standard;Spot
+	// +optional
+	ProvisioningModel *ProvisioningModel `json:"provisioningModel,omitempty"`
 
 	// IPForwarding Allows this instance to send and receive packets with non-matching destination or source IPs.
 	// This is required if you plan to use this instance to forward routes. Defaults to enabled.
@@ -321,6 +358,21 @@ type GCPMachineSpec struct {
 	// +kubebuilder:validation:Enum=Enabled;Disabled
 	// +optional
 	ConfidentialCompute *ConfidentialComputePolicy `json:"confidentialCompute,omitempty"`
+
+	// ConfidentialInstanceType determines the required type of confidential computing technology.
+	// To set a ConfidentialInstanceType ConfidentialCompute must be first set to "Enabled".
+	// If ConfidentialCompute is "Enabled" and ConfidentialInstanceType isn't provided, the default ConfidentialInstanceType will be set. At this moment, the default for this case is "sev".
+	// If ConfidentialCompute is "Enabled" and ConfidentialInstanceType is provided, the provided ConfidentialInstanceType will be set.
+	// If ConfidentialCompute is "Disabled" and ConfidentialInstanceType isn't provided, confidential computing technology won't be enabled and the instance will be run normally.
+	// Setting ConfidentialCompute to "Disabled" and ConfidentialInstanceType to a valid value isn't supported. That will raise an error.
+	// Valid ConfidentialInstanceType values are "sev", "sev-snp", and "tdx".
+	// Note that supported ConfidentialInstanceType values will depend on the configured instance machine types.
+	// "sev" is supported in "n2d", "c2d" and "c3d" machines.
+	// "sev-snp" is supported in "n2d" machines.
+	// "tdx" is supported in "c3" machines.
+	// +kubebuilder:validation:Enum=sev;sev-snp;tdx;
+	// +optional
+	ConfidentialInstanceType *ConfidentialVMTechnology `json:"confidentialInstanceType,omitempty"`
 
 	// RootDiskEncryptionKey defines the KMS key to be used to encrypt the root disk.
 	// +optional
