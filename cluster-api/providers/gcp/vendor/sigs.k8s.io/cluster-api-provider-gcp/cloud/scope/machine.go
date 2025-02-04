@@ -456,10 +456,12 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 			instance.ConfidentialInstanceConfig = &compute.ConfidentialInstanceConfig{}
 		}
 		switch *m.GCPMachine.Spec.ConfidentialInstanceType {
-		case infrav1.ConfidentialVMTechSEV:
+		case infrav1.ConfidentialVMTechnologySEV:
 			instance.ConfidentialInstanceConfig.ConfidentialInstanceType = "SEV"
-		case infrav1.ConfidentialVMTechSEVSNP:
+		case infrav1.ConfidentialVMTechnologySEVSNP:
 			instance.ConfidentialInstanceConfig.ConfidentialInstanceType = "SEV_SNP"
+		case infrav1.ConfidentialVMTechnologyTDX:
+			instance.ConfidentialInstanceConfig.ConfidentialInstanceType = "TDX"
 		default:
 			log.Error(errors.New("Invalid value"), "Unknown ConfidentialInstanceType value", "Spec.ConfidentialInstanceType", *m.GCPMachine.Spec.ConfidentialInstanceType)
 		}

@@ -124,4 +124,4 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-replace sigs.k8s.io/cluster-api-provider-gcp => github.com/bgartzi/openshift-cluster-api-provider-gcp v0.0.0-20250130093907-ee7e6e847158
+replace sigs.k8s.io/cluster-api-provider-gcp => github.com/bgartzi/openshift-cluster-api-provider-gcp v0.0.0-20250204082512-eb81729736cc

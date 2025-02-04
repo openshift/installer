@@ -2430,7 +2430,7 @@ sigs.k8s.io/cluster-api-provider-azure/util/azure
 sigs.k8s.io/cluster-api-provider-azure/util/ssh
 sigs.k8s.io/cluster-api-provider-azure/util/versions
 sigs.k8s.io/cluster-api-provider-azure/util/webhook
-# sigs.k8s.io/cluster-api-provider-gcp v1.7.1-0.20240724153512-c3b8b533143c => github.com/bgartzi/openshift-cluster-api-provider-gcp v0.0.0-20250130093907-ee7e6e847158
+# sigs.k8s.io/cluster-api-provider-gcp v1.7.1-0.20240724153512-c3b8b533143c => github.com/bgartzi/openshift-cluster-api-provider-gcp v0.0.0-20250204082512-eb81729736cc
 ## explicit; go 1.22.0
 sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1
 # sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0 => sigs.k8s.io/cluster-api-provider-ibmcloud v0.9.0-beta.1.0.20241119124454-8460807566cf
@@ -2619,5 +2619,5 @@ sigs.k8s.io/yaml/goyaml.v3
 # github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20241001055825-63e8b0d3ad63
 # github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
 # github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
-# sigs.k8s.io/cluster-api-provider-gcp => github.com/bgartzi/openshift-cluster-api-provider-gcp v0.0.0-20250130093907-ee7e6e847158
+# sigs.k8s.io/cluster-api-provider-gcp => github.com/bgartzi/openshift-cluster-api-provider-gcp v0.0.0-20250204082512-eb81729736cc
 # github.com/openshift/api => github.com/bgartzi/api v0.0.0-20250127151915-232b41e08bd4

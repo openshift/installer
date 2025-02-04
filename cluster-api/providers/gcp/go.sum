@@ -36,8 +36,8 @@ github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a h1:idn718Q4
 github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a/go.mod h1:lB+ZfQJz7igIIfQNfa7Ml4HSf2uFQQRzpGGRXenZAgY=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
-github.com/bgartzi/openshift-cluster-api-provider-gcp v0.0.0-20250130093907-ee7e6e847158 h1:earuDPOtWd8P/eXUWHMqMf3lgVQ7BxQtoqsEZnJPJ1A=
-github.com/bgartzi/openshift-cluster-api-provider-gcp v0.0.0-20250130093907-ee7e6e847158/go.mod h1:dHC23Chv/PpH2M8pvkVpleW9auCsXuxmEQUz8UUwk7A=
+github.com/bgartzi/openshift-cluster-api-provider-gcp v0.0.0-20250204082512-eb81729736cc h1:giIPd+7j3QXStS4kZvKdN0jQY1RIwMIzySDJi4wyveE=
+github.com/bgartzi/openshift-cluster-api-provider-gcp v0.0.0-20250204082512-eb81729736cc/go.mod h1:dHC23Chv/PpH2M8pvkVpleW9auCsXuxmEQUz8UUwk7A=
 github.com/blang/semver/v4 v4.0.0 h1:1PFHFE6yCCTv8C1TeyNNarDzntLi7wMI5i/pzqYIsAM=
 github.com/blang/semver/v4 v4.0.0/go.mod h1:IbckMUScFkM3pff0VJDNKRiT6TG/YpiHIM2yvyW5YoQ=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
