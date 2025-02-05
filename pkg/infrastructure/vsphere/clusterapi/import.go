@@ -145,7 +145,8 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 		string(ovfDescriptor),
 		resourcePool.Reference(),
 		datastore.Reference(),
-		cisp)
+		&cisp)
+
 	if err != nil {
 		return fmt.Errorf("failed to create import spec: %w", err)
 	}
