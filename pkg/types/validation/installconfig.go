@@ -111,9 +111,8 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		}
 	}
 	if c.Networking != nil {
-		allErrs = append(allErrs, validateNetworking(c.Networking, c.IsSingleNodeOpenShift(), field.NewPath("networking"))...)
+		allErrs = append(allErrs, validateNetworking(c.Networking, field.NewPath("networking"))...)
 		allErrs = append(allErrs, validateNetworkingIPVersion(c.Networking, &c.Platform)...)
-		allErrs = append(allErrs, validateNetworkingForPlatform(c.Networking, &c.Platform, field.NewPath("networking"))...)
 		allErrs = append(allErrs, validateNetworkingClusterNetworkMTU(c, field.NewPath("networking", "clusterNetworkMTU"))...)
 		allErrs = append(allErrs, validateVIPsForPlatform(c.Networking, &c.Platform, field.NewPath("platform"))...)
 		allErrs = append(allErrs, validateOVNKubernetesConfig(c.Networking, field.NewPath("networking"))...)
@@ -398,85 +397,92 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 	return allErrs
 }
 
-func validateNetworking(n *types.Networking, singleNodeOpenShift bool, fldPath *field.Path) field.ErrorList {
+func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if n.NetworkType == "" {
+
+	if len(n.NetworkType) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("networkType"), "network provider type required"))
 	}
 
 	// NOTE(dulek): We're hardcoding "Kuryr" here as the plan is to remove it from the API very soon. We can remove
 	//              this check once some more general validation of the supported NetworkTypes is in place.
-	if n.NetworkType == "Kuryr" {
+	if strings.EqualFold(n.NetworkType, "Kuryr") {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "networkType Kuryr is not supported on OpenShift later than 4.14"))
 	}
 
-	if n.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
+	if strings.EqualFold(n.NetworkType, string(operv1.NetworkTypeOpenShiftSDN)) {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "networkType OpenShiftSDN is not supported, please use OVNKubernetes"))
 	}
 
-	if len(n.MachineNetwork) > 0 {
-		for i, network := range n.MachineNetwork {
-			if err := validate.SubnetCIDR(&network.CIDR.IPNet); err != nil {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("machineNetwork").Index(i), network.CIDR.String(), err.Error()))
-			}
-			for j, subNetwork := range n.MachineNetwork[0:i] {
-				if validate.DoCIDRsOverlap(&network.CIDR.IPNet, &subNetwork.CIDR.IPNet) {
-					allErrs = append(allErrs, field.Invalid(fldPath.Child("machineNetwork").Index(i), network.CIDR.String(), fmt.Sprintf("machine network must not overlap with machine network %d", j)))
-				}
-			}
-		}
-	} else {
+	if len(n.MachineNetwork) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("machineNetwork"), "at least one machine network is required"))
 	}
-
-	for i, sn := range n.ServiceNetwork {
-		if err := validate.ServiceSubnetCIDR(&sn.IPNet); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceNetwork").Index(i), sn.String(), err.Error()))
-		}
-		for _, network := range n.MachineNetwork {
-			if validate.DoCIDRsOverlap(&sn.IPNet, &network.CIDR.IPNet) {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceNetwork").Index(i), sn.String(), "service network must not overlap with any of the machine networks"))
-			}
-		}
-		for j, snn := range n.ServiceNetwork[0:i] {
-			if validate.DoCIDRsOverlap(&sn.IPNet, &snn.IPNet) {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceNetwork").Index(i), sn.String(), fmt.Sprintf("service network must not overlap with service network %d", j)))
-			}
-		}
+	for i, mn := range n.MachineNetwork {
+		allErrs = append(allErrs, validateMachineNetwork(n, &mn, i, fldPath.Child("machineNetwork").Index(i))...)
 	}
+
 	if len(n.ServiceNetwork) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("serviceNetwork"), "a service network is required"))
 	}
-
-	for i, cn := range n.ClusterNetwork {
-		allErrs = append(allErrs, validateClusterNetwork(n, &cn, i, fldPath.Child("clusterNetwork").Index(i))...)
+	for i, sn := range n.ServiceNetwork {
+		allErrs = append(allErrs, validateServiceNetwork(n, &sn, i, fldPath.Child("serviceNetwork").Index(i))...)
 	}
+
 	if len(n.ClusterNetwork) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("clusterNetwork"), "cluster network required"))
+	}
+	for i, cn := range n.ClusterNetwork {
+		allErrs = append(allErrs, validateClusterNetwork(n, &cn, i, fldPath.Child("clusterNetwork").Index(i))...)
 	}
 
 	return allErrs
 }
 
-func validateNetworkingForPlatform(n *types.Networking, platform *types.Platform, fldPath *field.Path) field.ErrorList {
+func validateMachineNetwork(n *types.Networking, mn *types.MachineNetworkEntry, idx int, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	switch {
-	default:
-		warningMsgFmt := "%s: %s overlaps with default Docker Bridge subnet"
-		for idx, mn := range n.MachineNetwork {
-			if validate.DoCIDRsOverlap(&mn.CIDR.IPNet, validate.DockerBridgeCIDR) {
-				logrus.Warnf(warningMsgFmt, fldPath.Child("machineNetwork").Index(idx), mn.CIDR.String())
-			}
+
+	if err := validate.SubnetCIDR(&mn.CIDR.IPNet); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, mn.CIDR.String(), err.Error()))
+		return allErrs // CIDR value is invalid, so no further validation.
+	}
+
+	if validate.DoCIDRsOverlap(&mn.CIDR.IPNet, validate.DockerBridgeSubnet) {
+		logrus.Warnf("%s: %s overlaps with default Docker Bridge subnet", fldPath, mn.CIDR.String())
+	}
+
+	allErrs = append(allErrs, validateNetworkNotOverlapDefaultOVNSubnets(n, &mn.CIDR.IPNet, fldPath)...)
+
+	for i, subNetwork := range n.MachineNetwork[0:idx] {
+		if validate.DoCIDRsOverlap(&mn.CIDR.IPNet, &subNetwork.CIDR.IPNet) {
+			allErrs = append(allErrs, field.Invalid(fldPath, mn.CIDR.String(), fmt.Sprintf("machine network must not overlap with machine network %d", i)))
 		}
-		for idx, sn := range n.ServiceNetwork {
-			if validate.DoCIDRsOverlap(&sn.IPNet, validate.DockerBridgeCIDR) {
-				logrus.Warnf(warningMsgFmt, fldPath.Child("serviceNetwork").Index(idx), sn.String())
-			}
+	}
+
+	return allErrs
+}
+
+func validateServiceNetwork(n *types.Networking, sn *ipnet.IPNet, idx int, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if err := validate.ServiceSubnetCIDR(&sn.IPNet); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, sn.String(), err.Error()))
+		return allErrs // CIDR value is invalid, so no further validation.
+	}
+
+	if validate.DoCIDRsOverlap(&sn.IPNet, validate.DockerBridgeSubnet) {
+		logrus.Warnf("%s: %s overlaps with default Docker Bridge subnet", fldPath, sn.String())
+	}
+
+	allErrs = append(allErrs, validateNetworkNotOverlapDefaultOVNSubnets(n, &sn.IPNet, fldPath)...)
+
+	for _, mn := range n.MachineNetwork {
+		if validate.DoCIDRsOverlap(&sn.IPNet, &mn.CIDR.IPNet) {
+			allErrs = append(allErrs, field.Invalid(fldPath, sn.String(), "service network must not overlap with any of the machine networks"))
 		}
-		for idx, cn := range n.ClusterNetwork {
-			if validate.DoCIDRsOverlap(&cn.CIDR.IPNet, validate.DockerBridgeCIDR) {
-				logrus.Warnf(warningMsgFmt, fldPath.Child("clusterNetwork").Index(idx), cn.CIDR.String())
-			}
+	}
+	for i, snn := range n.ServiceNetwork[0:idx] {
+		if validate.DoCIDRsOverlap(&sn.IPNet, &snn.IPNet) {
+			allErrs = append(allErrs, field.Invalid(fldPath, sn.String(), fmt.Sprintf("service network must not overlap with service network %d", i)))
 		}
 	}
 	return allErrs
@@ -484,9 +490,18 @@ func validateNetworkingForPlatform(n *types.Networking, platform *types.Platform
 
 func validateClusterNetwork(n *types.Networking, cn *types.ClusterNetworkEntry, idx int, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+
 	if err := validate.SubnetCIDR(&cn.CIDR.IPNet); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("cidr"), cn.CIDR.IPNet.String(), err.Error()))
+		return allErrs // CIDR value is invalid, so no further validation.
 	}
+
+	if validate.DoCIDRsOverlap(&cn.CIDR.IPNet, validate.DockerBridgeSubnet) {
+		logrus.Warnf("%s: %s overlaps with default Docker Bridge subnet", fldPath.Index(idx), cn.CIDR.String())
+	}
+
+	allErrs = append(allErrs, validateNetworkNotOverlapDefaultOVNSubnets(n, &cn.CIDR.IPNet, fldPath.Child("cidr"))...)
+
 	for _, network := range n.MachineNetwork {
 		if validate.DoCIDRsOverlap(&cn.CIDR.IPNet, &network.CIDR.IPNet) {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("cidr"), cn.CIDR.String(), "cluster network must not overlap with any of the machine networks"))
@@ -522,6 +537,62 @@ func validateClusterNetwork(n *types.Networking, cn *types.ClusterNetworkEntry, 
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "cluster network host subnetwork prefix must be 64 for IPv6 networks"))
 		}
 	}
+	return allErrs
+}
+
+func validateNetworkNotOverlapDefaultOVNSubnets(n *types.Networking, network *net.IPNet, fldPath *field.Path) field.ErrorList {
+	if !strings.EqualFold(n.NetworkType, string(operv1.NetworkTypeOVNKubernetes)) {
+		return nil
+	}
+
+	allErrs := field.ErrorList{}
+
+	// getOVNSubnet returns the *net.IPNet for each type of subnet that will be used by OVNKubernetes
+	// and whether it is user-defined in the install-config.
+	getOVNSubnet := func(defaultSubnet *net.IPNet) (*net.IPNet, bool) {
+		if n.OVNKubernetesConfig == nil {
+			return defaultSubnet, false
+		}
+
+		ovnConfig := n.OVNKubernetesConfig
+
+		// Since each subnet has a unique non-overlapping CIDR,
+		// we can use that to distinguish the type of subnet without having to define extra constants.
+		switch defaultSubnet.String() {
+		case validate.OVNIPv4JoinSubnet.String():
+			if ovnConfig.IPv4 != nil && ovnConfig.IPv4.InternalJoinSubnet != nil {
+				return &ovnConfig.IPv4.InternalJoinSubnet.IPNet, true
+			}
+		default:
+		}
+		return defaultSubnet, false
+	}
+
+	// We only check against OVNKubernetes default subnets.
+	// Any overrides of default subnets is validated in func validateOVNKubernetesConfig.
+	subnetsCheck := func(joinSubnet, transitSubnet, masqueradeSubnet *net.IPNet) {
+		// Join subnet
+		if ovnsubnet, configured := getOVNSubnet(joinSubnet); !configured && validate.DoCIDRsOverlap(network, ovnsubnet) {
+			allErrs = append(allErrs, field.Invalid(fldPath, network.String(), fmt.Sprintf("must not overlap with OVNKubernetes default internal subnet %s", ovnsubnet.String())))
+		}
+
+		// Transit subnet
+		if ovnsubnet, configured := getOVNSubnet(transitSubnet); !configured && validate.DoCIDRsOverlap(network, ovnsubnet) {
+			allErrs = append(allErrs, field.Invalid(fldPath, network.String(), fmt.Sprintf("must not overlap with OVNKubernetes default transit subnet %s", ovnsubnet.String())))
+		}
+
+		// Masquerade subnet
+		if ovnsubnet, configured := getOVNSubnet(masqueradeSubnet); !configured && validate.DoCIDRsOverlap(network, ovnsubnet) {
+			allErrs = append(allErrs, field.Invalid(fldPath, network.String(), fmt.Sprintf("must not overlap with OVNKubernetes default masquerade subnet %s", ovnsubnet.String())))
+		}
+	}
+
+	if network.IP.To4() != nil {
+		subnetsCheck(validate.OVNIPv4JoinSubnet, validate.OVNIPv4TransitSubnet, validate.OVNIPv4MasqueradeSubnet)
+	} else {
+		subnetsCheck(validate.OVNIPv6JoinSubnet, validate.OVNIPv6TransitSubnet, validate.OVNIPv6MasqueradeSubnet)
+	}
+
 	return allErrs
 }
 
@@ -606,12 +677,13 @@ func validateNetworkingClusterNetworkMTU(c *types.InstallConfig, fldPath *field.
 
 	return allErrs
 }
-func validateOVNKubernetesConfig(n *types.Networking, fldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
 
+func validateOVNKubernetesConfig(n *types.Networking, fldPath *field.Path) field.ErrorList {
 	if n.OVNKubernetesConfig == nil {
 		return nil
 	}
+
+	allErrs := field.ErrorList{}
 
 	if !strings.EqualFold(n.NetworkType, string(operv1.NetworkTypeOVNKubernetes)) {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "ovnKubernetesConfig may only be specified with the OVNKubernetes networkType"))

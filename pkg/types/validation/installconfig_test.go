@@ -340,13 +340,31 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking: Required value: networking is required$`,
 		},
 		{
-			name: "invalid network type",
+			name: "invalid empty network type",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Networking.NetworkType = ""
 				return c
 			}(),
 			expectedError: `^networking.networkType: Required value: network provider type required$`,
+		},
+		{
+			name: "invalid Kuryr network type",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.NetworkType = "Kuryr"
+				return c
+			}(),
+			expectedError: `^networking\.networkType: Invalid value: "Kuryr": networkType Kuryr is not supported on OpenShift later than 4\.14$`,
+		},
+		{
+			name: "invalid OpenShiftSDN network type",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.NetworkType = "OpenShiftSDN"
+				return c
+			}(),
+			expectedError: `^networking\.networkType: Invalid value: "OpenShiftSDN": networkType OpenShiftSDN is not supported, please use OVNKubernetes$`,
 		},
 		{
 			name: "missing service network",
@@ -367,27 +385,13 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.serviceNetwork\[0\]: Invalid value: "13\.0\.128\.0/16": invalid network address. got 13\.0\.128\.0/16, expecting 13\.0\.0\.0/16$`,
 		},
 		{
-			name: "overlapping service network and machine cidr",
+			name: "overlapping service network and machine network",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Networking.ServiceNetwork[0] = *ipnet.MustParseCIDR("10.0.2.0/24")
 				return c
 			}(),
 			expectedError: `^networking\.serviceNetwork\[0\]: Invalid value: "10\.0\.2\.0/24": service network must not overlap with any of the machine networks$`,
-		},
-		{
-			name: "overlapping machine network and machine network",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Networking.MachineNetwork = []types.MachineNetworkEntry{
-					{CIDR: *ipnet.MustParseCIDR("13.0.0.0/16")},
-					{CIDR: *ipnet.MustParseCIDR("13.0.2.0/24")},
-				}
-
-				return c
-			}(),
-			// also triggers the only-one-machine-network validation
-			expectedError: `^networking\.machineNetwork\[1\]: Invalid value: "13\.0\.2\.0/24": machine network must not overlap with machine network 0$`,
 		},
 		{
 			name: "overlapping service network and service network",
@@ -404,7 +408,49 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^\[networking\.serviceNetwork\[1\]: Invalid value: "13\.0\.2\.0/24": service network must not overlap with service network 0, networking\.serviceNetwork: Invalid value: "13\.0\.0\.0/16, 13\.0\.2\.0/24": only one service network can be specified]$`,
 		},
 		{
-			name: "overlapping service network and IPv4 InternalJoinSubnet",
+			name: "overlapping service network and default OVNKubernetes join networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.ServiceNetwork = []ipnet.IPNet{
+					*ipnet.MustParseCIDR("100.64.2.0/24"),
+					*ipnet.MustParseCIDR("fd98::/112"),
+				}
+				return c
+			}(),
+			expectedError: `^\[networking\.serviceNetwork\[0\]: Invalid value: "100\.64\.2\.0/24": must not overlap with OVNKubernetes default internal subnet 100\.64\.0\.0/16, networking\.serviceNetwork\[1\]: Invalid value: "fd98::/112": must not overlap with OVNKubernetes default internal subnet fd98::/64\]$`,
+		},
+		{
+			name: "overlapping service network and default OVNKubernetes switch networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.ServiceNetwork = []ipnet.IPNet{
+					*ipnet.MustParseCIDR("100.88.2.0/24"),
+					*ipnet.MustParseCIDR("fd97::/112"),
+				}
+				return c
+			}(),
+			expectedError: `^\[networking\.serviceNetwork\[0\]: Invalid value: "100\.88\.2\.0/24": must not overlap with OVNKubernetes default transit subnet 100\.88\.0\.0/16, networking\.serviceNetwork\[1\]: Invalid value: "fd97::/112": must not overlap with OVNKubernetes default transit subnet fd97::/64\]$`,
+		},
+		{
+			name: "overlapping service network and default OVNKubernetes masquerade networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.ServiceNetwork = []ipnet.IPNet{
+					*ipnet.MustParseCIDR("169.254.2.0/24"),
+					*ipnet.MustParseCIDR("fd69::/112"),
+				}
+				return c
+			}(),
+			expectedError: `^\[networking\.serviceNetwork\[0\]: Invalid value: "169\.254\.2\.0/24": must not overlap with OVNKubernetes default masquerade subnet 169\.254\.0\.0/17, networking\.serviceNetwork\[1\]: Invalid value: "fd69::/112": must not overlap with OVNKubernetes default masquerade subnet fd69::/112\]$`,
+		},
+		{
+			name: "overlapping service network and user-provided IPv4 InternalJoinSubnet",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Networking.ServiceNetwork[0] = *ipnet.MustParseCIDR("13.0.2.0/24")
@@ -414,7 +460,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.ovnKubernetesConfig.ipv4.internalJoinSubnet: Invalid value: "13\.0\.0\.0/16": must not overlap with serviceNetwork 13\.0\.2\.0/24$`,
 		},
 		{
-			name: "overlapping machine network and IPv4 InternalJoinSubnet",
+			name: "overlapping machine network and user-provided IPv4 InternalJoinSubnet",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Networking.OVNKubernetesConfig = &types.OVNKubernetesConfig{IPv4: &types.IPv4OVNKubernetesConfig{InternalJoinSubnet: ipnet.MustParseCIDR("10.0.2.0/24")}}
@@ -423,7 +469,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.ovnKubernetesConfig.ipv4.internalJoinSubnet: Invalid value: "10\.0\.2\.0/24": must not overlap with machineNetwork 10\.0\.0\.0/16$`,
 		},
 		{
-			name: "overlapping cluster network and IPv4 InternalJoinSubnet",
+			name: "overlapping cluster network and user-provided IPv4 InternalJoinSubnet",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Networking.OVNKubernetesConfig = &types.OVNKubernetesConfig{IPv4: &types.IPv4OVNKubernetesConfig{InternalJoinSubnet: ipnet.MustParseCIDR("192.168.0.0/16")}}
@@ -432,7 +478,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.ovnKubernetesConfig\.ipv4\.internalJoinSubnet: Invalid value: "192\.168\.0\.0/16": must not overlap with clusterNetwork 192\.168\.1\.0/24$`,
 		},
 		{
-			name: "HTTPProxy overlapping with IPv4 Internal Join Subnet",
+			name: "HTTPProxy overlapping with user-provided IPv4 Internal Join Subnet",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Proxy.HTTPProxy = "http://100.64.1.2:3030"
@@ -443,7 +489,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^proxy.httpProxy: Invalid value: "http://100.64.1.2:3030": proxy value is part of the ovn-kubernetes IPv4 InternalJoinSubnet$`,
 		},
 		{
-			name: "invalid IPv4 InternalJoinSubnet",
+			name: "invalid user-provided IPv4 InternalJoinSubnet",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Networking.OVNKubernetesConfig = &types.OVNKubernetesConfig{IPv4: &types.IPv4OVNKubernetesConfig{InternalJoinSubnet: ipnet.MustParseCIDR("192.168.2.0/16")}}
@@ -452,7 +498,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.ovnKubernetesConfig\.ipv4\.internalJoinSubnet: Invalid value: "192\.168\.2\.0/16": invalid network address. got 192\.168\.2\.0/16, expecting 192\.168\.0\.0/16$`,
 		},
 		{
-			name: "IPv4 InternalJoinSubnet too smal",
+			name: "user-provided IPv4 InternalJoinSubnet too small",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Networking.OVNKubernetesConfig = &types.OVNKubernetesConfig{IPv4: &types.IPv4OVNKubernetesConfig{InternalJoinSubnet: ipnet.MustParseCIDR("100.64.0.0/24")}}
@@ -500,6 +546,38 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.machineNetwork\[0\]: Invalid value: "11\.0\.128\.0/16": invalid network address. got 11\.0\.128\.0/16, expecting 11\.0\.0\.0/16$`,
 		},
 		{
+			name: "overlapping machine network and machine network",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+					{CIDR: *ipnet.MustParseCIDR("13.0.0.0/16")},
+					{CIDR: *ipnet.MustParseCIDR("13.0.2.0/24")},
+				}
+
+				return c
+			}(),
+			// also triggers the only-one-machine-network validation
+			expectedError: `^networking\.machineNetwork\[1\]: Invalid value: "13\.0\.2\.0/24": machine network must not overlap with machine network 0$`,
+		},
+		{
+			name: "overlapping machine network and default OVNKubernetes networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+					{CIDR: *ipnet.MustParseCIDR("100.64.2.0/24")},
+					{CIDR: *ipnet.MustParseCIDR("100.88.2.0/24")},
+					{CIDR: *ipnet.MustParseCIDR("169.254.2.0/24")},
+					{CIDR: *ipnet.MustParseCIDR("fd98::/48")},
+					{CIDR: *ipnet.MustParseCIDR("fd97::/48")},
+					{CIDR: *ipnet.MustParseCIDR("fd69::/48")},
+				}
+				return c
+			}(),
+			expectedError: `\[networking\.machineNetwork\[0\]: Invalid value: "100\.64\.2\.0/24": must not overlap with OVNKubernetes default internal subnet 100\.64\.0\.0/16, networking\.machineNetwork\[1\]: Invalid value: "100\.88\.2\.0/24": must not overlap with OVNKubernetes default transit subnet 100\.88\.0\.0/16, networking\.machineNetwork\[2\]: Invalid value: "169\.254\.2\.0/24": must not overlap with OVNKubernetes default masquerade subnet 169\.254\.0\.0/17, networking\.machineNetwork\[3\]: Invalid value: "fd98::/48": must not overlap with OVNKubernetes default internal subnet fd98::/64, networking\.machineNetwork\[4\]: Invalid value: "fd97::/48": must not overlap with OVNKubernetes default transit subnet fd97::/64, networking\.machineNetwork\[5\]: Invalid value: "fd69::/48": must not overlap with OVNKubernetes default masquerade subnet fd69::/112\]`,
+		},
+		{
 			name: "invalid cluster network",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -509,7 +587,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.clusterNetwork\[0]\.cidr: Invalid value: "12\.0\.128\.0/16": invalid network address. got 12\.0\.128\.0/16, expecting 12\.0\.0\.0/16$`,
 		},
 		{
-			name: "overlapping cluster network and machine cidr",
+			name: "overlapping cluster network and machine network",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Networking.ClusterNetwork[0].CIDR = *ipnet.MustParseCIDR("10.0.3.0/24")
@@ -537,6 +615,24 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^networking\.clusterNetwork\[1]\.cidr: Invalid value: "12\.0\.3\.0/24": cluster network must not overlap with cluster network 0$`,
+		},
+		{
+			name: "overlapping cluster network and default OVNKubernetes networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.ClusterNetwork = []types.ClusterNetworkEntry{
+					{CIDR: *ipnet.MustParseCIDR("100.64.2.0/24"), HostPrefix: 28},
+					{CIDR: *ipnet.MustParseCIDR("100.88.2.0/24"), HostPrefix: 28},
+					{CIDR: *ipnet.MustParseCIDR("169.254.2.0/24"), HostPrefix: 28},
+					{CIDR: *ipnet.MustParseCIDR("fd98::/48"), HostPrefix: 64},
+					{CIDR: *ipnet.MustParseCIDR("fd97::/48"), HostPrefix: 64},
+					{CIDR: *ipnet.MustParseCIDR("fd69::/48"), HostPrefix: 64},
+				}
+				return c
+			}(),
+			expectedError: `^\[networking\.clusterNetwork\[0\]\.cidr: Invalid value: "100\.64\.2\.0/24": must not overlap with OVNKubernetes default internal subnet 100\.64\.0\.0/16, networking\.clusterNetwork\[1\]\.cidr: Invalid value: "100\.88\.2\.0/24": must not overlap with OVNKubernetes default transit subnet 100\.88\.0\.0/16, networking\.clusterNetwork\[2\]\.cidr: Invalid value: "169\.254\.2\.0/24": must not overlap with OVNKubernetes default masquerade subnet 169\.254\.0\.0/17, networking\.clusterNetwork\[3\]\.cidr: Invalid value: "fd98::/48": must not overlap with OVNKubernetes default internal subnet fd98::/64, networking\.clusterNetwork\[4\]\.cidr: Invalid value: "fd97::/48": must not overlap with OVNKubernetes default transit subnet fd97::/64, networking\.clusterNetwork\[5\]\.cidr: Invalid value: "fd69::/48": must not overlap with OVNKubernetes default masquerade subnet fd69::/112\]$`,
 		},
 		{
 			name: "cluster network host prefix too large",
@@ -582,19 +678,18 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "multiple cluster network host prefix different",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
+				// Use dual-stack config to ensure the validation only applies to IPv4 CIDRs
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
 				c.Networking.ClusterNetwork = append(c.Networking.ClusterNetwork,
 					types.ClusterNetworkEntry{
 						CIDR:       *ipnet.MustParseCIDR("192.168.2.0/24"),
 						HostPrefix: 30,
 					},
-					types.ClusterNetworkEntry{
-						CIDR:       *ipnet.MustParseCIDR("ffd2::/48"),
-						HostPrefix: 64,
-					},
 				)
 				return c
 			}(),
-			expectedError: `^networking\.clusterNetwork\[1]\.hostPrefix: Invalid value: 30: cluster network host subnetwork prefix must be the same value for IPv4 networks$`,
+			expectedError: `^networking\.clusterNetwork\[2]\.hostPrefix: Invalid value: 30: cluster network host subnetwork prefix must be the same value for IPv4 networks$`,
 		},
 		{
 			name: "networking clusterNetworkMTU - valid high limit ovn",
