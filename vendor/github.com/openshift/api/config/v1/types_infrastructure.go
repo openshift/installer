@@ -528,18 +528,22 @@ type AWSPlatformStatus struct {
 
 // AWSResourceTag is a tag to apply to AWS resources created for the cluster.
 type AWSResourceTag struct {
-	// key is the key of the tag
+	// key sets the key of the AWS resource tag key-value pair. Key is required when defining an AWS resource tag.
+	// Key should consist of between 1 and 128 characters, and may
+	// contain only the set of alphanumeric characters, space (' '), '_', '.', '/', '=', '+', '-', ':', and '@'.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=128
-	// +kubebuilder:validation:Pattern=`^[0-9A-Za-z_.:/=+-@]+$`
+	// +kubebuilder:validation:XValidation:rule=`self.matches('^[0-9A-Za-z_.:/=+-@ ]+$')`,message="invalid AWS resource tag key. The string can contain only the set of alphanumeric characters, space (' '), '_', '.', '/', '=', '+', '-', ':', '@'"
 	// +required
 	Key string `json:"key"`
-	// value is the value of the tag.
+	// value sets the value of the AWS resource tag key-value pair. Value is required when defining an AWS resource tag.
+	// Value should consist of between 1 and 256 characters, and may
+	// contain only the set of alphanumeric characters, space (' '), '_', '.', '/', '=', '+', '-', ':', and '@'.
 	// Some AWS service do not support empty values. Since tags are added to resources in many services, the
 	// length of the tag value must meet the requirements of all services.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=256
-	// +kubebuilder:validation:Pattern=`^[0-9A-Za-z_.:/=+-@]+$`
+	// +kubebuilder:validation:XValidation:rule=`self.matches('^[0-9A-Za-z_.:/=+-@ ]+$')`,message="invalid AWS resource tag value. The string can contain only the set of alphanumeric characters, space (' '), '_', '.', '/', '=', '+', '-', ':', '@'"
 	// +required
 	Value string `json:"value"`
 }

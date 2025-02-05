@@ -24,6 +24,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/cluster-api/util/topology"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -31,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/services"
 )
 
 const machineTemplateImmutableMsg = "VSphereMachineTemplate spec.template.spec field is immutable. Please create a new resource instead."
@@ -50,7 +52,7 @@ func (webhook *VSphereMachineTemplateWebhook) SetupWebhookWithManager(mgr ctrl.M
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereMachineTemplateWebhook) ValidateCreate(_ context.Context, raw runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereMachineTemplateWebhook) ValidateCreate(ctx context.Context, raw runtime.Object) (admission.Warnings, error) {
 	obj, ok := raw.(*infrav1.VSphereMachineTemplate)
 	if !ok {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereMachineTemplate but got a %T", raw))
@@ -87,6 +89,10 @@ func (webhook *VSphereMachineTemplateWebhook) ValidateCreate(_ context.Context, 
 	pciErrs := validatePCIDevices(spec.PciDevices)
 	allErrs = append(allErrs, pciErrs...)
 
+	templateErrs := validateVSphereVMNamingTemplate(ctx, obj)
+	if len(templateErrs) > 0 {
+		allErrs = append(allErrs, templateErrs...)
+	}
 	return nil, AggregateObjErrors(obj.GroupVersionKind().GroupKind(), obj.Name, allErrs)
 }
 
@@ -111,10 +117,45 @@ func (webhook *VSphereMachineTemplateWebhook) ValidateUpdate(ctx context.Context
 		!reflect.DeepEqual(newTyped.Spec.Template.Spec, oldTyped.Spec.Template.Spec) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "template", "spec"), newTyped, machineTemplateImmutableMsg))
 	}
+
+	templateErrs := validateVSphereVMNamingTemplate(ctx, newTyped)
+	if len(templateErrs) > 0 {
+		allErrs = append(allErrs, templateErrs...)
+	}
 	return nil, AggregateObjErrors(newTyped.GroupVersionKind().GroupKind(), newTyped.Name, allErrs)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
 func (webhook *VSphereMachineTemplateWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
+}
+
+func validateVSphereVMNamingTemplate(_ context.Context, vsphereMachineTemplate *infrav1.VSphereMachineTemplate) field.ErrorList {
+	var allErrs field.ErrorList
+	namingStrategy := vsphereMachineTemplate.Spec.Template.Spec.NamingStrategy
+	if namingStrategy != nil && namingStrategy.Template != nil {
+		name, err := services.GenerateVSphereVMName("machine", namingStrategy)
+		templateFldPath := field.NewPath("spec", "template", "spec", "namingStrategy", "template")
+		if err != nil {
+			allErrs = append(allErrs,
+				field.Invalid(
+					templateFldPath,
+					*namingStrategy.Template,
+					fmt.Sprintf("invalid VSphereVM name template: %v", err),
+				),
+			)
+		} else {
+			// Note: This validates that the resulting name is a valid Kubernetes object name.
+			for _, err := range validation.IsDNS1123Subdomain(name) {
+				allErrs = append(allErrs,
+					field.Invalid(
+						templateFldPath,
+						*namingStrategy.Template,
+						fmt.Sprintf("invalid VSphereVM name template, generated name is not a valid Kubernetes object name: %v", err),
+					),
+				)
+			}
+		}
+	}
+	return allErrs
 }
