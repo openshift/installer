@@ -5,6 +5,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+
+### Changed
+## [v0.5.0] - 2024-07-29
+### Added
+- Added v4 Categories beta APIs to v4 client
+- Added v4 VolumeGroups beta APIs to v4 client
+- Added a cache for v4 clients in v4 package
+
+### Changed
+- Updated v4 API clients from v4 alpha to v4 beta  APIs
+- Handle trust bundle in v4 client cache GetOrCreate by setting VerifySSL
+
+## [0.4.0] - 2024-05-03
+### Added
+- Added support for v4 client creation.
+- Added support for getting information about an AZ given a uuid.
+- Added support for getting a projection of attributes of entities using the 'groups' API endpoint.
+- Added support for creating, deleting, listing, and getting the status of recovery plan jobs.
+- Add optional function options for the NewKarbonAPIClient constructor
+- Add ClusterRegistration interface in karbon package
+- Add ClusterRegistration SetInfo and Cluster Addon SetInfo APIs
+- Added support for specifying volume groups by category in a recovery plan create request.
+- Added support for specifying primary and recovery clusters in a recovery plan.
+- Added WithUserAgent client option for v3 client constructor.
+- Added Cache for v3 Clients in v3 package.
+
+### Changed
+- Change the MetaService interface methods to take context.Context as a parameter
+- Local environment provider now fetches port from `NUTANIX_PORT` environment variable
+- Add logic to internal.Client for auto retry once after refreshing auth cookie on a 401 response in case of session auth.
+
+### Removed
+- remove the unexported method from the v3 service interface enabling mocking
+
 ## [0.3.4] - 2022-11-24
 ### Changed
 - Bugfix: Stop explicit base64 decoding of BinaryData from ConfigMap in Kubernetes env provider

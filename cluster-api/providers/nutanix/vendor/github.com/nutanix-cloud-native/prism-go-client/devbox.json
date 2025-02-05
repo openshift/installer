@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetpack-io/devbox/0.10.1/.schema/devbox.schema.json",
+  "packages": [
+    "bash@latest",
+    "coreutils@latest",
+    "gnumake@4.4.1",
+    "go@1.22.1",
+    "ginkgo@2.17.0",
+    "go-swagger@0.31.0",
+    "kubernetes-code-generator@0.25.4",
+    "kubernetes-controller-tools@0.13.0",
+    "yamllint@1.35.1",
+    "path:./hack/flakes#golangci-lint",
+    "path:./hack/flakes#yamllint-checkstyle",
+    "path:./hack/flakes#keploy"
+  ]
+}
