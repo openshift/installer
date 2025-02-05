@@ -140,6 +140,14 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 		if installConfig.Config.Azure.ComputeSubnet != "" {
 			subnet = installConfig.Config.Azure.ComputeSubnet
 		}
+		var aro bool
+		client, err := installConfig.Azure.Client()
+		if err == nil {
+			isAro, err := client.CheckIfARO(context.TODO(), installConfig.Config.Azure.ResourceGroupName)
+			if err == nil {
+				aro = isAro
+			}
+		}
 		azureConfig, err := azure.CloudProviderConfig{
 			CloudName:                installConfig.Config.Azure.CloudName,
 			ResourceGroupName:        installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID),
@@ -152,7 +160,7 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 			VirtualNetworkName:       vnet,
 			SubnetName:               subnet,
 			ResourceManagerEndpoint:  installConfig.Config.Azure.ARMEndpoint,
-			ARO:                      installConfig.Config.Azure.IsARO(),
+			ARO:                      aro,
 		}.JSON()
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")

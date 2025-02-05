@@ -376,7 +376,11 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 			return err
 		}
 		useImageGallery := installConfig.Azure.CloudName != azuretypes.StackCloud
-		machines, controlPlaneMachineSet, err = azure.Machines(clusterID.InfraID, ic, &pool, rhcosImage.ControlPlane, "master", masterUserDataSecretName, capabilities, useImageGallery)
+		var aro bool
+		if isAro, err := client.CheckIfARO(ctx, installConfig.Config.Azure.ResourceGroupName); err == nil {
+			aro = isAro
+		}
+		machines, controlPlaneMachineSet, err = azure.Machines(clusterID.InfraID, ic, &pool, rhcosImage.ControlPlane, "master", masterUserDataSecretName, capabilities, useImageGallery, aro)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/utils/ptr"
+
 	azres "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
 	azsubs "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
 	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
@@ -38,7 +40,10 @@ type API interface {
 	GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error)
 	GetAvailabilityZones(ctx context.Context, region string, instanceType string) ([]string, error)
 	GetLocationInfo(ctx context.Context, region string, instanceType string) (*azenc.ResourceSkuLocationInfo, error)
+	CheckIfARO(ctx context.Context, groupName string) (bool, error)
 }
+
+var aro *bool
 
 // Client makes calls to the Azure API.
 type Client struct {
@@ -236,6 +241,25 @@ func (c *Client) GetGroup(ctx context.Context, groupName string) (*azres.Group, 
 		return nil, fmt.Errorf("failed to get resource group: %w", err)
 	}
 	return &res, nil
+}
+
+func (c *Client) CheckIfARO(ctx context.Context, groupName string) (bool, error) {
+	if aro != nil {
+		return *aro, nil
+	}
+	if groupName == "" {
+		return false, nil
+	}
+	group, err := c.GetGroup(ctx, groupName)
+	if err != nil {
+		return false, err
+	}
+	managedBy := group.ManagedBy
+	aro = ptr.To(false)
+	if *managedBy == "ARO" {
+		aro = ptr.To(true)
+	}
+	return *aro, nil
 }
 
 // ListResourceIDsByGroup returns a list of resource IDs for resource group groupName.
