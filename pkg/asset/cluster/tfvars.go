@@ -980,7 +980,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 		cpStanza := installConfig.Config.ControlPlane
 		if cpStanza == nil || cpStanza.Platform.PowerVS == nil || cpStanza.Platform.PowerVS.SysType == "" {
-			sysTypes, err := powervs.AvailableSysTypes(installConfig.Config.PowerVS.Region)
+			sysTypes, err := powervs.AvailableSysTypes(installConfig.Config.PowerVS.Region, installConfig.Config.PowerVS.Zone)
 			if err != nil {
 				return err
 			}
