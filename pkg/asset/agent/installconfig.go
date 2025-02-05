@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/releaseimage"
@@ -217,10 +218,8 @@ func (a *OptionalInstallConfig) validateControlPlaneConfiguration(installConfig 
 	if installConfig.ControlPlane != nil {
 		if *installConfig.ControlPlane.Replicas < 1 || *installConfig.ControlPlane.Replicas > 5 || (installConfig.Arbiter == nil && *installConfig.ControlPlane.Replicas == 2) {
 			fieldPath = field.NewPath("ControlPlane", "Replicas")
-			// Make sure users get an accurate error message while feature is in TechPreview
-			// TODO: Remove once HighlyAvailableArbiterMode moves out of TechPreviewNoUpgrade and just use `"between 1 and 5"`
 			supportedControlPlaneRange := "to 5, 4, 3, or 1"
-			if installConfig.FeatureSet == configv1.TechPreviewNoUpgrade {
+			if installConfig.EnabledFeatureGates().Enabled(features.FeatureGateHighlyAvailableArbiter) {
 				supportedControlPlaneRange = "between 1 and 5"
 			}
 			allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.ControlPlane.Replicas, fmt.Sprintf("ControlPlane.Replicas can only be set %s. Found %v", supportedControlPlaneRange, *installConfig.ControlPlane.Replicas)))

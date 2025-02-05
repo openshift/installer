@@ -2,9 +2,9 @@ package machine
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
 
@@ -48,21 +48,21 @@ func (a *ArbiterIgnitionCustomizations) Generate(_ context.Context, dependencies
 
 	savedPointerIgnitionJSON, err := ignition.Marshal(savedPointerIgnition)
 	if err != nil {
-		return errors.Wrap(err, "failed to Marshal savedPointerIgnition")
+		return fmt.Errorf("failed to Marshal savedPointerIgnition: %w", err)
 	}
 	defaultPointerIgnitionJSON, err := ignition.Marshal(defaultPointerIgnition)
 	if err != nil {
-		return errors.Wrap(err, "failed to Marshal defaultPointerIgnition")
+		return fmt.Errorf("failed to Marshal defaultPointerIgnition: %w", err)
 	}
 	if string(savedPointerIgnitionJSON) != string(defaultPointerIgnitionJSON) {
 		logrus.Infof("Arbiter pointer ignition was modified. Saving contents to a machineconfig")
 		mc, err := generatePointerMachineConfig(*savedPointerIgnition, "arbiter")
 		if err != nil {
-			return errors.Wrap(err, "failed to generate arbiter installer machineconfig")
+			return fmt.Errorf("failed to generate arbiter installer machineconfig: %w", err)
 		}
 		configData, err := yaml.Marshal(mc)
 		if err != nil {
-			return errors.Wrap(err, "failed to marshal arbiter installer machineconfig")
+			return fmt.Errorf("failed to marshal arbiter installer machineconfig: %w", err)
 		}
 		a.File = &asset.File{
 			Filename: arbiterMachineConfigFileName,

@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -140,12 +139,12 @@ func (m *Arbiter) Generate(ctx context.Context, dependencies asset.Parents) erro
 	if enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) {
 		machines, err = baremetal.Machines(clusterID.InfraID, ic, &pool, "arbiter", arbiterUserDataSecretName)
 		if err != nil {
-			return errors.Wrap(err, "failed to create arbiter machine objects")
+			return fmt.Errorf("failed to create arbiter machine objects: %w", err)
 		}
 
 		hostSettings, err := baremetal.ArbiterHosts(ic, machines, arbiterUserDataSecretName)
 		if err != nil {
-			return errors.Wrap(err, "failed to assemble host data")
+			return fmt.Errorf("failed to assemble host data: %w", err)
 		}
 
 		hosts, err := createHostAssetFiles(hostSettings.Hosts, arbiterHostFileName)
@@ -169,7 +168,7 @@ func (m *Arbiter) Generate(ctx context.Context, dependencies asset.Parents) erro
 
 	data, err := userDataSecret(arbiterUserDataSecretName, mign.File.Data)
 	if err != nil {
-		return errors.Wrap(err, "failed to create user-data secret for arbiter machines")
+		return fmt.Errorf("failed to create user-data secret for arbiter machines: %w", err)
 	}
 
 	m.UserDataFile = &asset.File{
@@ -181,21 +180,21 @@ func (m *Arbiter) Generate(ctx context.Context, dependencies asset.Parents) erro
 	if pool.Hyperthreading == types.HyperthreadingDisabled {
 		ignHT, err := machineconfig.ForHyperthreadingDisabled("arbiter")
 		if err != nil {
-			return errors.Wrap(err, "failed to create ignition for hyperthreading disabled for arbiter machines")
+			return fmt.Errorf("failed to create ignition for hyperthreading disabled for arbiter machines: %w", err)
 		}
 		machineConfigs = append(machineConfigs, ignHT)
 	}
 	if ic.SSHKey != "" {
 		ignSSH, err := machineconfig.ForAuthorizedKeys(ic.SSHKey, "arbiter")
 		if err != nil {
-			return errors.Wrap(err, "failed to create ignition for authorized SSH keys for arbiter machines")
+			return fmt.Errorf("failed to create ignition for authorized SSH keys for arbiter machines: %w", err)
 		}
 		machineConfigs = append(machineConfigs, ignSSH)
 	}
 	if ic.FIPS {
 		ignFIPS, err := machineconfig.ForFIPSEnabled("arbiter")
 		if err != nil {
-			return errors.Wrap(err, "failed to create ignition for FIPS enabled for arbiter machines")
+			return fmt.Errorf("failed to create ignition for FIPS enabled for arbiter machines: %w", err)
 		}
 		machineConfigs = append(machineConfigs, ignFIPS)
 	}
@@ -208,14 +207,14 @@ func (m *Arbiter) Generate(ctx context.Context, dependencies asset.Parents) erro
 		// Only configure kernel args for dual-stack clusters.
 		ignIPv6, err := machineconfig.ForDualStackAddresses("arbiter")
 		if err != nil {
-			return errors.Wrap(err, "failed to create ignition to configure IPv6 for arbiter machines")
+			return fmt.Errorf("failed to create ignition to configure IPv6 for arbiter machines: %w", err)
 		}
 		machineConfigs = append(machineConfigs, ignIPv6)
 	}
 
 	m.MachineConfigFiles, err = machineconfig.Manifests(machineConfigs, "arbiter", directory)
 	if err != nil {
-		return errors.Wrap(err, "failed to create MachineConfig manifests for arbiter machines")
+		return fmt.Errorf("failed to create MachineConfig manifests for arbiter machines: %w", err)
 	}
 
 	m.MachineFiles = make([]*asset.File, len(machines))
@@ -224,7 +223,7 @@ func (m *Arbiter) Generate(ctx context.Context, dependencies asset.Parents) erro
 	for i, claim := range ipClaims {
 		data, err := yaml.Marshal(claim)
 		if err != nil {
-			return errors.Wrapf(err, "unable to marshal ip claim %v", claim.Name)
+			return fmt.Errorf("unable to marshal ip claim %v: %w", claim.Name, err)
 		}
 
 		m.IPClaimFiles[i] = &asset.File{
@@ -237,7 +236,7 @@ func (m *Arbiter) Generate(ctx context.Context, dependencies asset.Parents) erro
 	for i, address := range ipAddrs {
 		data, err := yaml.Marshal(address)
 		if err != nil {
-			return errors.Wrapf(err, "unable to marshal ip claim %v", address.Name)
+			return fmt.Errorf("unable to marshal ip claim %v: %w", address.Name, err)
 		}
 
 		m.IPAddrFiles[i] = &asset.File{
@@ -250,7 +249,7 @@ func (m *Arbiter) Generate(ctx context.Context, dependencies asset.Parents) erro
 	for i, machine := range machines {
 		data, err := yaml.Marshal(machine)
 		if err != nil {
-			return errors.Wrapf(err, "marshal arbiter %d", i)
+			return fmt.Errorf("marshal arbiter %d: %w", i, err)
 		}
 
 		padded := fmt.Sprintf(padFormat, i)
@@ -379,12 +378,12 @@ func (m *Arbiter) Machines() ([]machinev1beta1.Machine, error) {
 		machine := &machinev1beta1.Machine{}
 		err := yaml.Unmarshal(file.Data, &machine)
 		if err != nil {
-			return machines, errors.Wrapf(err, "unmarshal arbiter %d", i)
+			return machines, fmt.Errorf("unmarshal arbiter %d, %w", i, err)
 		}
 
 		obj, _, err := decoder.Decode(machine.Spec.ProviderSpec.Value.Raw, nil, nil)
 		if err != nil {
-			return machines, errors.Wrapf(err, "unmarshal arbiter %d", i)
+			return machines, fmt.Errorf("unmarshal arbiter %d: %w", i, err)
 		}
 
 		machine.Spec.ProviderSpec.Value = &runtime.RawExtension{Object: obj}

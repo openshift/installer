@@ -3,10 +3,10 @@ package machine
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
-	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
@@ -44,7 +44,7 @@ func (a *Arbiter) Generate(_ context.Context, dependencies asset.Parents) error 
 
 	data, err := ignition.Marshal(a.Config)
 	if err != nil {
-		return errors.Wrap(err, "failed to marshal Ignition config")
+		return fmt.Errorf("failed to marshal Ignition config: %w", err)
 	}
 	a.File = &asset.File{
 		Filename: arbiterIgnFilename,
@@ -79,7 +79,7 @@ func (a *Arbiter) Load(f asset.FileFetcher) (found bool, err error) {
 
 	config := &igntypes.Config{}
 	if err := json.Unmarshal(file.Data, config); err != nil {
-		return false, errors.Wrapf(err, "failed to unmarshal %s", arbiterIgnFilename)
+		return false, fmt.Errorf("failed to unmarshal %s: %w", arbiterIgnFilename, err)
 	}
 
 	a.File, a.Config = file, config
