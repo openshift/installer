@@ -1,11 +1,11 @@
 /*
-Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+Copyright (c) 2017-2024 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,6 +24,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/vmware/govmomi/internal"
 	"github.com/vmware/govmomi/vim25/methods"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/soap"
@@ -38,9 +39,13 @@ func (m *VirtualDiskManager) MO() mo.VirtualDiskManager {
 	return m.VirtualDiskManager
 }
 
+func VirtualDiskBackingFileName(name string) string {
+	return strings.Replace(name, ".vmdk", "-flat.vmdk", 1)
+}
+
 func vdmNames(name string) []string {
 	return []string{
-		strings.Replace(name, ".vmdk", "-flat.vmdk", 1),
+		VirtualDiskBackingFileName(name),
 		name,
 	}
 }
@@ -218,9 +223,7 @@ func (m *VirtualDiskManager) MoveVirtualDiskTask(ctx *Context, req *types.MoveVi
 func (m *VirtualDiskManager) CopyVirtualDiskTask(ctx *Context, req *types.CopyVirtualDisk_Task) soap.HasFault {
 	task := CreateTask(m, "copyVirtualDisk", func(*Task) (types.AnyType, types.BaseMethodFault) {
 		if req.DestSpec != nil {
-			if ctx.Map.IsVPX() {
-				return nil, new(types.NotImplemented)
-			}
+			// TODO: apply to destination vmdk.Descriptor
 		}
 
 		fm := ctx.Map.FileManager()
@@ -277,7 +280,7 @@ func (m *VirtualDiskManager) QueryVirtualDiskUuid(ctx *Context, req *types.Query
 	}
 
 	body.Res = &types.QueryVirtualDiskUuidResponse{
-		Returnval: virtualDiskUUID(req.Datacenter, file),
+		Returnval: virtualDiskUUID(req.Datacenter, req.Name),
 	}
 
 	return body
@@ -288,4 +291,31 @@ func (m *VirtualDiskManager) SetVirtualDiskUuid(_ *Context, req *types.SetVirtua
 	// TODO: validate uuid format and persist
 	body.Res = new(types.SetVirtualDiskUuidResponse)
 	return body
+}
+
+func (m *VirtualDiskManager) QueryVirtualDiskInfoTask(ctx *Context, req *internal.QueryVirtualDiskInfoTaskRequest) soap.HasFault {
+	task := CreateTask(m, "queryVirtualDiskInfo", func(*Task) (types.AnyType, types.BaseMethodFault) {
+		var res []internal.VirtualDiskInfo
+
+		fm := ctx.Map.FileManager()
+
+		_, fault := fm.resolve(req.Datacenter, req.Name)
+		if fault != nil {
+			return nil, fault
+		}
+
+		res = append(res, internal.VirtualDiskInfo{Name: req.Name, DiskType: "thin"})
+
+		if req.IncludeParents {
+			// TODO
+		}
+
+		return res, nil
+	})
+
+	return &internal.QueryVirtualDiskInfoTaskBody{
+		Res: &internal.QueryVirtualDiskInfo_TaskResponse{
+			Returnval: task.Run(ctx),
+		},
+	}
 }
