@@ -12,6 +12,9 @@ import (
 	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	azmarketplace "github.com/Azure/azure-sdk-for-go/profiles/latest/marketplaceordering/mgmt/marketplaceordering"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	azstorage "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/Azure/go-autorest/autorest/to"
 )
 
@@ -38,6 +41,7 @@ type API interface {
 	GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error)
 	GetAvailabilityZones(ctx context.Context, region string, instanceType string) ([]string, error)
 	GetLocationInfo(ctx context.Context, region string, instanceType string) (*azenc.ResourceSkuLocationInfo, error)
+	CheckStorageAccount(ctx context.Context, storageAccountURI string) error
 }
 
 // Client makes calls to the Azure API.
@@ -438,4 +442,31 @@ func (c *Client) GetLocationInfo(ctx context.Context, region string, instanceTyp
 	}
 
 	return nil, fmt.Errorf("location information not found for %s in %s", instanceType, region)
+}
+
+// CheckStorageAccount checks if the storage account URI provided already exists for diagnostics
+// purposes.
+func (c *Client) CheckStorageAccount(ctx context.Context, storageAccountURI string) error {
+	accountClientOptions := arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			// NOTE: the api version must support AzureStack
+			APIVersion: "2019-04-01",
+			Cloud:      c.ssn.CloudConfig,
+		},
+	}
+	storageClient, err := azstorage.NewAccountsClient(c.ssn.Credentials.SubscriptionID, c.ssn.TokenCreds, &accountClientOptions)
+	if err != nil {
+		return err
+	}
+
+	saURI := azstorage.AccountCheckNameAvailabilityParameters{
+		Name: &storageAccountURI,
+	}
+
+	_, err = storageClient.CheckNameAvailability(ctx, saURI, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

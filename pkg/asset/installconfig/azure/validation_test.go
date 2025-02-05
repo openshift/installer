@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/azure/mock"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -363,6 +364,13 @@ var (
 		validOSImageCompute(ic)
 		ic.Compute[0].Platform.Azure.OSImage.SKU = erroringOSImageSKU
 	}
+	validStorageAccount    = "/resource/subscriptions/subscription/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/cluster"
+	validStorageAccountURI = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.BootDiagnostics = &azure.BootDiagnostics{
+			Type:              v1beta1.UserManagedDiagnosticsStorage,
+			StorageAccountURI: validStorageAccount,
+		}
+	}
 )
 
 func validInstallConfig() *types.InstallConfig {
@@ -568,6 +576,11 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 			edits:    editFunctions{validArm64InstanceTypes, invalidTrustedLaunchInstanceTypes, securityTypeTrustedLaunchDefaultMachinePlatform},
 			errorMsg: `[compute\[0\].platform.azure.settings.securityType: Invalid value: "TrustedLaunch": this security type is not supported for instance type Standard_D4ps_v5,controlPlane.platform.azure.settings.securityType: Invalid valud: "ConfidentialVM": this security type is not supported for instance type Standard_D4ps_v5]`,
 		},
+		{
+			name:     "BootDiagnostics type user managed and valid storage account URI",
+			edits:    editFunctions{validStorageAccountURI},
+			errorMsg: "",
+		},
 	}
 
 	mockCtrl := gomock.NewController(t)
@@ -617,6 +630,8 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 	azureClient.EXPECT().GetAvailabilityZones(gomock.Any(), gomock.Any(), gomock.Any()).Return([]string{"1", "2", "3"}, nil).AnyTimes()
 
 	azureClient.EXPECT().GetVirtualMachineFamily(gomock.Any(), gomock.Any(), gomock.Any()).Return("", nil).AnyTimes()
+
+	azureClient.EXPECT().CheckStorageAccount(gomock.Any(), validStorageAccount).Return(nil)
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
