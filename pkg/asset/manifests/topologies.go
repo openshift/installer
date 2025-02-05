@@ -29,6 +29,11 @@ func determineTopologies(installConfig *types.InstallConfig) (controlPlaneTopolo
 		infrastructureTopology = configv1.HighlyAvailableTopologyMode
 	}
 
+	if installConfig.Arbiter != nil {
+		controlPlaneTopology = configv1.HighlyAvailableArbiterMode
+		infrastructureTopology = configv1.HighlyAvailableTopologyMode
+	}
+
 	return controlPlaneTopology, infrastructureTopology
 }
 

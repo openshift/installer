@@ -311,18 +311,28 @@ func validateHostsCount(hosts []*baremetal.Host, installConfig *types.InstallCon
 		}
 	}
 
+	numRequiredArbiters := int64(0)
+	if installConfig.Arbiter != nil && installConfig.Arbiter.Replicas != nil {
+		numRequiredArbiters += *installConfig.Arbiter.Replicas
+	}
+
 	numMasters := int64(0)
+	numArbiters := int64(0)
 	numWorkers := int64(0)
 
 	for _, h := range hosts {
 		if h.IsMaster() {
 			numMasters++
+		} else if h.IsArbiter() {
+			numArbiters++
 		} else if h.IsWorker() {
 			numWorkers++
 		} else {
 			logrus.Warn(fmt.Sprintf("Host %s hasn't any role configured", h.Name))
 			if numMasters < numRequiredMasters {
 				numMasters++
+			} else if numArbiters < numRequiredArbiters {
+				numArbiters++
 			} else if numWorkers < numRequiredWorkers {
 				numWorkers++
 			}
@@ -331,6 +341,10 @@ func validateHostsCount(hosts []*baremetal.Host, installConfig *types.InstallCon
 
 	if numMasters < numRequiredMasters {
 		return fmt.Errorf("not enough hosts found (%v) to support all the configured ControlPlane replicas (%v)", numMasters, numRequiredMasters)
+	}
+
+	if numArbiters < numRequiredArbiters {
+		return fmt.Errorf("not enough hosts found (%v) to support all the configured Arbiter replicas (%v)", numArbiters, numRequiredArbiters)
 	}
 
 	if numWorkers < numRequiredWorkers {
