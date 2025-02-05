@@ -9,7 +9,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.3
+    controller-gen.kubebuilder.io/version: v0.17.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-vsphere
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -458,7 +458,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capv-system/capv-serving-cert
-    controller-gen.kubebuilder.io/version: v0.16.3
+    controller-gen.kubebuilder.io/version: v0.17.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-vsphere
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -1334,7 +1334,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capv-system/capv-serving-cert
-    controller-gen.kubebuilder.io/version: v0.16.3
+    controller-gen.kubebuilder.io/version: v0.17.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-vsphere
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -1625,7 +1625,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capv-system/capv-serving-cert
-    controller-gen.kubebuilder.io/version: v0.16.3
+    controller-gen.kubebuilder.io/version: v0.17.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-vsphere
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -2005,7 +2005,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capv-system/capv-serving-cert
-    controller-gen.kubebuilder.io/version: v0.16.3
+    controller-gen.kubebuilder.io/version: v0.17.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-vsphere
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -2614,7 +2614,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capv-system/capv-serving-cert
-    controller-gen.kubebuilder.io/version: v0.16.3
+    controller-gen.kubebuilder.io/version: v0.17.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-vsphere
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -3611,6 +3611,15 @@ spec:
                         Name is used to identify the disk definition. Name is required and needs to be unique so that it can be used to
                         clearly identify purpose of the disk.
                       type: string
+                    provisioningMode:
+                      description: |-
+                        ProvisioningMode specifies the provisioning type to be used by this vSphere data disk.
+                        If not set, the setting will be provided by the default storage policy.
+                      enum:
+                      - Thin
+                      - Thick
+                      - EagerlyZeroed
+                      type: string
                     sizeGiB:
                       description: SizeGiB is the size of the disk in GiB.
                       format: int32
@@ -3676,6 +3685,28 @@ spec:
                   virtual machine is cloned.
                 format: int64
                 type: integer
+              namingStrategy:
+                description: NamingStrategy allows configuring the naming strategy
+                  used when calculating the name of the VSphereVM.
+                properties:
+                  template:
+                    description: |-
+                      Template defines the template to use for generating the name of the VSphereVM object.
+                      If not defined, it will fall back to `{{ .machine.name }}`.
+                      The templating has the following data available:
+                      * `.machine.name`: The name of the Machine object.
+                      The templating also has the following funcs available:
+                      * `trimSuffix`: same as strings.TrimSuffix
+                      * `trunc`: truncates a string, e.g. `trunc 2 "hello"` or `trunc -2 "hello"`
+                      Notes:
+                      * While the template offers some flexibility, we would like the name to link to the Machine name
+                        to ensure better user experience when troubleshooting
+                      * Generated names must be valid Kubernetes names as they are used to create a VSphereVM object
+                        and usually also as the name of the Node object.
+                      * Names are automatically truncated at 63 characters. Please note that this can lead to name conflicts,
+                        so we highly recommend to use a template which leads to a name shorter than 63 characters.
+                    type: string
+                type: object
               network:
                 description: Network is the network configuration for this machine's
                   VM.
@@ -4241,7 +4272,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capv-system/capv-serving-cert
-    controller-gen.kubebuilder.io/version: v0.16.3
+    controller-gen.kubebuilder.io/version: v0.17.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-vsphere
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -5108,6 +5139,15 @@ spec:
                                 Name is used to identify the disk definition. Name is required and needs to be unique so that it can be used to
                                 clearly identify purpose of the disk.
                               type: string
+                            provisioningMode:
+                              description: |-
+                                ProvisioningMode specifies the provisioning type to be used by this vSphere data disk.
+                                If not set, the setting will be provided by the default storage policy.
+                              enum:
+                              - Thin
+                              - Thick
+                              - EagerlyZeroed
+                              type: string
                             sizeGiB:
                               description: SizeGiB is the size of the disk in GiB.
                               format: int32
@@ -5173,6 +5213,28 @@ spec:
                           virtual machine is cloned.
                         format: int64
                         type: integer
+                      namingStrategy:
+                        description: NamingStrategy allows configuring the naming
+                          strategy used when calculating the name of the VSphereVM.
+                        properties:
+                          template:
+                            description: |-
+                              Template defines the template to use for generating the name of the VSphereVM object.
+                              If not defined, it will fall back to `{{ .machine.name }}`.
+                              The templating has the following data available:
+                              * `.machine.name`: The name of the Machine object.
+                              The templating also has the following funcs available:
+                              * `trimSuffix`: same as strings.TrimSuffix
+                              * `trunc`: truncates a string, e.g. `trunc 2 "hello"` or `trunc -2 "hello"`
+                              Notes:
+                              * While the template offers some flexibility, we would like the name to link to the Machine name
+                                to ensure better user experience when troubleshooting
+                              * Generated names must be valid Kubernetes names as they are used to create a VSphereVM object
+                                and usually also as the name of the Node object.
+                              * Names are automatically truncated at 63 characters. Please note that this can lead to name conflicts,
+                                so we highly recommend to use a template which leads to a name shorter than 63 characters.
+                            type: string
+                        type: object
                       network:
                         description: Network is the network configuration for this
                           machine's VM.
@@ -5611,7 +5673,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capv-system/capv-serving-cert
-    controller-gen.kubebuilder.io/version: v0.16.3
+    controller-gen.kubebuilder.io/version: v0.17.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-vsphere
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -6698,6 +6760,15 @@ spec:
                         Name is used to identify the disk definition. Name is required and needs to be unique so that it can be used to
                         clearly identify purpose of the disk.
                       type: string
+                    provisioningMode:
+                      description: |-
+                        ProvisioningMode specifies the provisioning type to be used by this vSphere data disk.
+                        If not set, the setting will be provided by the default storage policy.
+                      enum:
+                      - Thin
+                      - Thick
+                      - EagerlyZeroed
+                      type: string
                     sizeGiB:
                       description: SizeGiB is the size of the disk in GiB.
                       format: int32
@@ -7757,7 +7828,7 @@ spec:
         - --diagnostics-address=${CAPI_DIAGNOSTICS_ADDRESS:=:8443}
         - --insecure-diagnostics=${CAPI_INSECURE_DIAGNOSTICS:=false}
         - --v=4
-        - --feature-gates=NodeAntiAffinity=${EXP_NODE_ANTI_AFFINITY:=false},NamespaceScopedZones=${EXP_NAMESPACE_SCOPED_ZONES:=false}
+        - --feature-gates=NodeAntiAffinity=${EXP_NODE_ANTI_AFFINITY:=false},NamespaceScopedZones=${EXP_NAMESPACE_SCOPED_ZONES:=false},PriorityQueue=${EXP_PRIORITY_QUEUE:=false}
         env:
         - name: POD_NAMESPACE
           valueFrom:
