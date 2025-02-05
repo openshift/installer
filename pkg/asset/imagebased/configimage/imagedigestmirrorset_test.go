@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 
 	apicfgv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"

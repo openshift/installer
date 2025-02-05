@@ -5,11 +5,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware/govmomi/session"
 	"github.com/vmware/govmomi/vim25/mo"
 	vim25types "github.com/vmware/govmomi/vim25/types"
+	"go.uber.org/mock/gomock"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
