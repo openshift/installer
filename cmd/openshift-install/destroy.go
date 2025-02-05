@@ -44,26 +44,40 @@ func newDestroyCmd() *cobra.Command {
 }
 
 func newDestroyClusterCmd() *cobra.Command {
-	return &cobra.Command{
+	destroyCmd := &cobra.Command{
 		Use:   "cluster",
 		Short: "Destroy an OpenShift cluster",
 		Args:  cobra.ExactArgs(0),
-		Run: func(_ *cobra.Command, _ []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			cleanup := command.SetupFileHook(command.RootOpts.Dir)
 			defer cleanup()
+			destroyVolumes, err := cmd.Flags().GetBool("destroy-persistent-volumes")
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			kubeConfig, err := cmd.Flags().GetString("kubeconfig")
+			if err != nil {
+				logrus.Fatal(err)
+			}
 
-			err := runDestroyCmd(command.RootOpts.Dir, os.Getenv("OPENSHIFT_INSTALL_REPORT_QUOTA_FOOTPRINT") == "true")
+			err = runDestroyCmd(command.RootOpts.Dir, os.Getenv("OPENSHIFT_INSTALL_REPORT_QUOTA_FOOTPRINT") == "true", destroyVolumes, kubeConfig)
 			if err != nil {
 				logrus.Fatal(err)
 			}
 			logrus.Infof("Uninstallation complete!")
 		},
 	}
+
+	destroyCmd.Flags().Bool("destroy-persistent-volumes", false, "cordons and drains nodes, deletes all persistent volumes.")
+	destroyCmd.Flags().String("kubeconfig", "", "path to kubeconfig to allow the installer to destroy persistent volumes.")
+
+	destroyCmd.MarkFlagsRequiredTogether("kubeconfig", "destroy-persistent-volumes")
+	return destroyCmd
 }
 
-func runDestroyCmd(directory string, reportQuota bool) error {
+func runDestroyCmd(directory string, reportQuota bool, destroyVolumes bool, kubeConfig string) error {
 	timer.StartTimer(timer.TotalTimeElapsed)
-	destroyer, err := destroy.New(logrus.StandardLogger(), directory)
+	destroyer, err := destroy.New(logrus.StandardLogger(), directory, destroyVolumes, kubeConfig)
 	if err != nil {
 		return fmt.Errorf("failed while preparing to destroy cluster: %w", err)
 	}
