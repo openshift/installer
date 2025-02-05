@@ -2790,6 +2790,8 @@ spec:
                       Subnets specifies existing subnets (by ID) where cluster
                       resources will be created.  Leave unset to have the installer
                       create subnets in a new VPC on your behalf.
+
+                      Deprecated: use platform.aws.vpc.subnets
                     items:
                       type: string
                     type: array
@@ -2809,6 +2811,67 @@ spec:
                       UserTags additional keys and values that the installer will add
                       as tags to all resources that it creates. Resources created by the
                       cluster itself may not include these tags.
+                    type: object
+                  vpc:
+                    description: VPC specifies the VPC configuration for the cluster.
+                    properties:
+                      subnets:
+                        description: |-
+                          Subnets defines the subnets in an existing VPC and can optionally specify their intended roles.
+                          If no roles are specified on any subnet, then the subnet roles are decided automatically.
+                          In this case, the VPC must not contain any subnets without the kubernetes.io/cluster/<cluster-id> tag.
+
+                          For manually specified subnet role selection, each subnet must have at least one assigned role,
+                          and the ClusterNode, IngressControllerLB, ControlPlaneExternalLB, and ControlPlaneInternalLB roles must be assigned to at least one subnet.
+                          However, if the cluster scope is internal, then ControlPlaneExternalLB is not required.
+
+                          Subnets must contain unique IDs, and can include no more than 10 subnets with the IngressController role.
+
+                          Leave this field unset to have the installer create subnets in a new VPC on your behalf.
+                        items:
+                          description: Subnet specifies a subnet in an existing VPC
+                            and can optionally specify their intended roles.
+                          properties:
+                            id:
+                              description: |-
+                                ID specifies the subnet ID of an existing subnet.
+                                The subnet ID must start with "subnet-", consist only of alphanumeric characters,
+                                and must be exactly 24 characters long.
+                              maxLength: 24
+                              minLength: 24
+                              pattern: ^subnet-[0-9A-Za-z]+$
+                              type: string
+                            roles:
+                              description: |-
+                                Roles specifies the roles (aka functions) that the subnet will provide in the cluster.
+                                If no roles are specified on any subnet, then the subnet roles are decided automatically.
+                                Each role must be unique.
+                              items:
+                                description: SubnetRole specifies the role (aka function)
+                                  that the subnet will provide in the cluster.
+                                properties:
+                                  type:
+                                    description: |-
+                                      Type specifies the type of role (aka function) that the subnet will provide in the cluster.
+                                      Role types include ClusterNode, EdgeNode, Bootstrap, IngressControllerLB, ControlPlaneExternalLB, and ControlPlaneInternalLB.
+                                    enum:
+                                    - ClusterNode
+                                    - EdgeNode
+                                    - Bootstrap
+                                    - IngressControllerLB
+                                    - ControlPlaneExternalLB
+                                    - ControlPlaneInternalLB
+                                    type: string
+                                required:
+                                - type
+                                type: object
+                              maxItems: 5
+                              type: array
+                          required:
+                          - id
+                          type: object
+                        type: array
+                        x-kubernetes-list-type: atomic
                     type: object
                 required:
                 - region

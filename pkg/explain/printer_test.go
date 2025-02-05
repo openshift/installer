@@ -285,7 +285,10 @@ provisioned by the Installer.
     userTags <object>
       UserTags additional keys and values that the installer will add
 as tags to all resources that it creates. Resources created by the
-cluster itself may not include these tags.`,
+cluster itself may not include these tags.
+
+    vpc <object>
+      VPC specifies the VPC configuration for the cluster.`,
 	}, {
 		path: []string{"platform", "azure"},
 		desc: `FIELDS:
