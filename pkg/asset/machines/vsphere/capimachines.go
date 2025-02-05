@@ -167,6 +167,8 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 				newDisk := capv.VSphereDisk{
 					Name:    disk.Name,
 					SizeGiB: disk.SizeGiB,
+					// If provisioning mode is set, set it.
+					ProvisioningMode: capv.ProvisioningMode(disk.ProvisioningMode),
 				}
 				dataDisks = append(dataDisks, newDisk)
 			}

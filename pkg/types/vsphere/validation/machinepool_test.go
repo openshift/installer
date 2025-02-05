@@ -212,6 +212,127 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 			expectedErrMsg: `^test-path.zones: Invalid value: "unknown-zone": zone not defined in failureDomains$`,
 		},
+		{
+			name:     "data disk valid config",
+			platform: validPlatform(),
+			pool: &types.MachinePool{
+				Platform: types.MachinePoolPlatform{
+					VSphere: &vsphere.MachinePool{
+						DataDisks: []vsphere.DataDisk{
+							{
+								Name:             "Disk1",
+								SizeGiB:          10,
+								ProvisioningMode: vsphere.ProvisioningModeThin,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:     "data disk name not set",
+			platform: validPlatform(),
+			pool: &types.MachinePool{
+				Platform: types.MachinePoolPlatform{
+					VSphere: &vsphere.MachinePool{
+						DataDisks: []vsphere.DataDisk{
+							{
+								SizeGiB:          10,
+								ProvisioningMode: vsphere.ProvisioningModeThin,
+							},
+						},
+					},
+				},
+			},
+			expectedErrMsg: "test-path.disks\\[0].name: Required value: data disk name must be set",
+		},
+		{
+			name:     "data disk name invalid characters",
+			platform: validPlatform(),
+			pool: &types.MachinePool{
+				Platform: types.MachinePoolPlatform{
+					VSphere: &vsphere.MachinePool{
+						DataDisks: []vsphere.DataDisk{
+							{
+								Name:             "bad disk name",
+								SizeGiB:          10,
+								ProvisioningMode: vsphere.ProvisioningModeThin,
+							},
+						},
+					},
+				},
+			},
+			expectedErrMsg: "test-path.disks\\[0].name: Invalid value: \"bad disk name\": data disk name must consist only of alphanumeric characters, hyphens and underscores, and must start and end with an alphanumeric character.",
+		},
+		{
+			name:     "data disk size too large",
+			platform: validPlatform(),
+			pool: &types.MachinePool{
+				Platform: types.MachinePoolPlatform{
+					VSphere: &vsphere.MachinePool{
+						DataDisks: []vsphere.DataDisk{
+							{
+								Name:             "Disk1",
+								SizeGiB:          20000,
+								ProvisioningMode: vsphere.ProvisioningModeThin,
+							},
+						},
+					},
+				},
+			},
+			expectedErrMsg: "test-path.disks\\[0].sizeGiB: Invalid value: 20000: data disk size \\(GiB\\) must not exceed 16384",
+		},
+		{
+			name:     "data disk size not set",
+			platform: validPlatform(),
+			pool: &types.MachinePool{
+				Platform: types.MachinePoolPlatform{
+					VSphere: &vsphere.MachinePool{
+						DataDisks: []vsphere.DataDisk{
+							{
+								Name:             "Disk1",
+								ProvisioningMode: vsphere.ProvisioningModeThin,
+							},
+						},
+					},
+				},
+			},
+			expectedErrMsg: "test-path.disks\\[0].sizeGiB: Required value: data disk size must be set",
+		},
+		{
+			name:     "data disk provisioning mode not set",
+			platform: validPlatform(),
+			pool: &types.MachinePool{
+				Platform: types.MachinePoolPlatform{
+					VSphere: &vsphere.MachinePool{
+						DataDisks: []vsphere.DataDisk{
+							{
+								Name:    "Disk1",
+								SizeGiB: 10,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:     "data disk invalid provisioning mode",
+			platform: validPlatform(),
+			pool: &types.MachinePool{
+				Platform: types.MachinePoolPlatform{
+					VSphere: &vsphere.MachinePool{
+						DataDisks: []vsphere.DataDisk{
+							{
+								Name:             "Disk1",
+								SizeGiB:          10,
+								ProvisioningMode: "Fake",
+							},
+						},
+					},
+				},
+			},
+			expectedErrMsg: "test-path.disks\\[0]: Unsupported value: \"Fake\": supported values: \"EagerlyZeroed\", \"Thick\", \"Thin\"",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
