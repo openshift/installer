@@ -121,7 +121,8 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 	}
 	allErrs = append(allErrs, validatePlatform(&c.Platform, usingAgentMethod, field.NewPath("platform"), c.Networking, c)...)
 	if c.ControlPlane != nil {
-		allErrs = append(allErrs, validateControlPlane(&c.Platform, c.ControlPlane, field.NewPath("controlPlane"))...)
+		allErrs = append(allErrs, validateControlPlane(&c.Platform, c.ControlPlane, c.IsSingleNodeOpenShift(), field.NewPath("controlPlane"))...)
+		allErrs = append(allErrs, ValidateMachinePool(&c.Platform, c.ControlPlane, field.NewPath("controlPlane"))...)
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("controlPlane"), "controlPlane is required"))
 	}
@@ -737,15 +738,21 @@ func validateOVNIPv4InternalJoinSubnet(n *types.Networking, fldPath *field.Path)
 	return allErrs
 }
 
-func validateControlPlane(platform *types.Platform, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
+func validateControlPlane(platform *types.Platform, pool *types.MachinePool, isSingleNodeOpenShift bool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if pool.Name != types.MachinePoolControlPlaneRoleName {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("name"), pool.Name, []string{types.MachinePoolControlPlaneRoleName}))
 	}
-	if pool.Replicas != nil && *pool.Replicas == 0 {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "number of control plane replicas must be positive"))
+	if pool.Replicas != nil {
+		switch {
+		case *pool.Replicas == 0:
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "number of control plane replicas must be positive"))
+		case *pool.Replicas == 1 && !supportedSingleNodePlatform(isSingleNodeOpenShift, platform):
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "Single Node OpenShift(SNO) not supported by this install method for this platform"))
+		case *pool.Replicas > 1 && *pool.Replicas != 3:
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "number of control plane replicas must equal 3"))
+		}
 	}
-	allErrs = append(allErrs, ValidateMachinePool(platform, pool, fldPath)...)
 	return allErrs
 }
 
@@ -1516,4 +1523,18 @@ func isV4NodeSubnetLargeEnough(cn []types.ClusterNetworkEntry, nodeSubnet *ipnet
 
 	// reserve one IP for the gw, one IP for network and one for broadcasting
 	return maxNodesNum < (1<<(addrLen-intSubnetMask) - 3), nil
+}
+
+// supportedSingleNodePlatform indicates if the IPI Installer can be used to install SNO on
+// a platform.
+func supportedSingleNodePlatform(bootstrapInPlace bool, p *types.Platform) bool {
+	if p.AWS != nil || p.GCP != nil || p.Azure != nil || p.PowerVS != nil {
+		// Single node OpenShift installations supported without `bootstrapInPlace`
+		return true
+	}
+	if bootstrapInPlace && (p.None != nil || p.External != nil) {
+		// Single node OpenShift installations supported with `bootstrapInPlace`
+		return true
+	}
+	return false
 }
