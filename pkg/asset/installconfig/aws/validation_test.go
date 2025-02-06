@@ -55,7 +55,7 @@ func validInstallConfig() *types.InstallConfig {
 		Platform: types.Platform{
 			AWS: &aws.Platform{
 				Region: "us-east-1",
-				Subnets: []string{
+				DeprecatedSubnets: []string{
 					"valid-private-subnet-a",
 					"valid-private-subnet-b",
 					"valid-private-subnet-c",
@@ -97,7 +97,7 @@ func validInstallConfigEdgeSubnets() *types.InstallConfig {
 	ic := validInstallConfig()
 	edgeSubnets := validEdgeSubnets()
 	for subnet := range edgeSubnets {
-		ic.Platform.AWS.Subnets = append(ic.Platform.AWS.Subnets, subnet)
+		ic.Platform.AWS.DeprecatedSubnets = append(ic.Platform.AWS.DeprecatedSubnets, subnet)
 	}
 	ic.Compute = append(ic.Compute, types.MachinePool{
 		Name: types.MachinePoolEdgeRoleName,
@@ -281,7 +281,7 @@ func TestValidate(t *testing.T) {
 		name: "valid no byo",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = nil
+			c.Platform.AWS.DeprecatedSubnets = nil
 			return c
 		}(),
 		availZones: validAvailZones(),
@@ -289,7 +289,7 @@ func TestValidate(t *testing.T) {
 		name: "valid no byo",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = []string{}
+			c.Platform.AWS.DeprecatedSubnets = []string{}
 			return c
 		}(),
 		availZones: validAvailZones(),
@@ -311,7 +311,7 @@ func TestValidate(t *testing.T) {
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
 			c.Publish = types.InternalPublishingStrategy
-			c.Platform.AWS.Subnets = []string{
+			c.Platform.AWS.DeprecatedSubnets = []string{
 				"valid-private-subnet-a",
 				"valid-private-subnet-b",
 				"valid-private-subnet-c",
@@ -427,7 +427,7 @@ func TestValidate(t *testing.T) {
 		name: "invalid no private subnets",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = []string{
+			c.Platform.AWS.DeprecatedSubnets = []string{
 				"valid-public-subnet-a",
 				"valid-public-subnet-b",
 				"valid-public-subnet-c",
@@ -441,7 +441,7 @@ func TestValidate(t *testing.T) {
 		name: "invalid no public subnets",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = []string{
+			c.Platform.AWS.DeprecatedSubnets = []string{
 				"valid-private-subnet-a",
 				"valid-private-subnet-b",
 				"valid-private-subnet-c",
@@ -455,7 +455,7 @@ func TestValidate(t *testing.T) {
 		name: "invalid cidr does not belong to machine CIDR",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = append(c.Platform.AWS.Subnets, "invalid-cidr-subnet")
+			c.Platform.AWS.DeprecatedSubnets = append(c.Platform.AWS.DeprecatedSubnets, "invalid-cidr-subnet")
 			return c
 		}(),
 		availZones: func() []string {
@@ -476,7 +476,7 @@ func TestValidate(t *testing.T) {
 		name: "invalid cidr does not belong to machine CIDR",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = append(c.Platform.AWS.Subnets, "invalid-private-cidr-subnet", "invalid-public-cidr-subnet")
+			c.Platform.AWS.DeprecatedSubnets = append(c.Platform.AWS.DeprecatedSubnets, "invalid-private-cidr-subnet", "invalid-public-cidr-subnet")
 			return c
 		}(),
 		availZones: func() []string {
@@ -504,7 +504,7 @@ func TestValidate(t *testing.T) {
 		name: "invalid missing public subnet in a zone",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = append(c.Platform.AWS.Subnets, "no-matching-public-private-zone")
+			c.Platform.AWS.DeprecatedSubnets = append(c.Platform.AWS.DeprecatedSubnets, "no-matching-public-private-zone")
 			return c
 		}(),
 		availZones: validAvailZones(),
@@ -522,7 +522,7 @@ func TestValidate(t *testing.T) {
 		name: "invalid multiple private in same zone",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = append(c.Platform.AWS.Subnets, "valid-private-zone-c-2")
+			c.Platform.AWS.DeprecatedSubnets = append(c.Platform.AWS.DeprecatedSubnets, "valid-private-zone-c-2")
 			return c
 		}(),
 		availZones: validAvailZones(),
@@ -540,7 +540,7 @@ func TestValidate(t *testing.T) {
 		name: "invalid multiple public in same zone",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = append(c.Platform.AWS.Subnets, "valid-public-zone-c-2")
+			c.Platform.AWS.DeprecatedSubnets = append(c.Platform.AWS.DeprecatedSubnets, "valid-public-zone-c-2")
 			return c
 		}(),
 		availZones:     validAvailZones(),
@@ -558,7 +558,7 @@ func TestValidate(t *testing.T) {
 		name: "invalid multiple public edge in same zone",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfigEdgeSubnets()
-			c.Platform.AWS.Subnets = append(c.Platform.AWS.Subnets, "valid-public-zone-edge-c-2")
+			c.Platform.AWS.DeprecatedSubnets = append(c.Platform.AWS.DeprecatedSubnets, "valid-public-zone-edge-c-2")
 			return c
 		}(),
 		availZones:     validAvailZonesWithEdge(),
@@ -585,7 +585,7 @@ func TestValidate(t *testing.T) {
 		name: "invalid edge pool missing zones",
 		installConfig: func() *types.InstallConfig {
 			ic := validInstallConfig()
-			ic.Platform.AWS.Subnets = []string{}
+			ic.Platform.AWS.DeprecatedSubnets = []string{}
 			ic.ControlPlane = &types.MachinePool{}
 			edgePool := types.MachinePool{
 				Name: types.MachinePoolEdgeRoleName,
@@ -601,7 +601,7 @@ func TestValidate(t *testing.T) {
 		name: "invalid edge pool empty zones",
 		installConfig: func() *types.InstallConfig {
 			ic := validInstallConfig()
-			ic.Platform.AWS.Subnets = []string{}
+			ic.Platform.AWS.DeprecatedSubnets = []string{}
 			ic.ControlPlane = &types.MachinePool{}
 			edgePool := types.MachinePool{
 				Name: types.MachinePoolEdgeRoleName,
@@ -619,7 +619,7 @@ func TestValidate(t *testing.T) {
 		name: "invalid edge pool missing platform definition",
 		installConfig: func() *types.InstallConfig {
 			ic := validInstallConfig()
-			ic.Platform.AWS.Subnets = []string{}
+			ic.Platform.AWS.DeprecatedSubnets = []string{}
 			ic.ControlPlane = &types.MachinePool{}
 			edgePool := types.MachinePool{
 				Name:     types.MachinePoolEdgeRoleName,
@@ -633,12 +633,12 @@ func TestValidate(t *testing.T) {
 		name: "invalid edge pool missing subnets on availability zones",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfigEdgeSubnets()
-			c.Platform.AWS.Subnets = []string{}
+			c.Platform.AWS.DeprecatedSubnets = []string{}
 			edgeSubnets := validEdgeSubnets()
 			for subnet := range edgeSubnets {
-				c.Platform.AWS.Subnets = append(c.Platform.AWS.Subnets, subnet)
+				c.Platform.AWS.DeprecatedSubnets = append(c.Platform.AWS.DeprecatedSubnets, subnet)
 			}
-			sort.Strings(c.Platform.AWS.Subnets)
+			sort.Strings(c.Platform.AWS.DeprecatedSubnets)
 			return c
 		}(),
 		availZones:     validAvailZonesOnlyEdge(),
@@ -850,7 +850,7 @@ func TestValidate(t *testing.T) {
 			c := validInstallConfig()
 			c.Publish = types.InternalPublishingStrategy
 			c.Platform.AWS.PublicIpv4Pool = "ipv4pool-ec2-123"
-			c.Platform.AWS.Subnets = []string{}
+			c.Platform.AWS.DeprecatedSubnets = []string{}
 			return c
 		}(),
 		availZones: validAvailZones(),
@@ -870,7 +870,7 @@ func TestValidate(t *testing.T) {
 		name: "no subnets specified for public-only subnets cluster",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = []string{}
+			c.Platform.AWS.DeprecatedSubnets = []string{}
 			return c
 		}(),
 		privateSubnets: validPrivateSubnets(),
@@ -901,7 +901,7 @@ func TestValidate(t *testing.T) {
 				publicSubnets:     test.publicSubnets,
 				edgeSubnets:       test.edgeSubnets,
 				instanceTypes:     test.instanceTypes,
-				Subnets:           test.installConfig.Platform.AWS.Subnets,
+				Subnets:           test.installConfig.Platform.AWS.DeprecatedSubnets,
 			}
 			if test.proxy != "" {
 				os.Setenv("HTTP_PROXY", test.proxy)
@@ -1039,7 +1039,7 @@ func TestValidateForProvisioning(t *testing.T) {
 				instanceTypes:     validInstanceTypes(),
 				Region:            editedInstallConfig.AWS.Region,
 				vpc:               "valid-private-subnet-a",
-				Subnets:           editedInstallConfig.Platform.AWS.Subnets,
+				Subnets:           editedInstallConfig.Platform.AWS.DeprecatedSubnets,
 			}
 
 			err := ValidateForProvisioning(route53Client, editedInstallConfig, meta)

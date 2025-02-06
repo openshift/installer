@@ -95,7 +95,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 	case awstypes.Name:
 		subnets := map[string]string{}
 		bootstrapSubnets := map[string]string{}
-		if len(ic.Platform.AWS.Subnets) > 0 {
+		if len(ic.Platform.AWS.DeprecatedSubnets) > 0 {
 			// fetch private subnets to master nodes.
 			subnetMeta, err := installConfig.AWS.PrivateSubnets(ctx)
 			if err != nil {

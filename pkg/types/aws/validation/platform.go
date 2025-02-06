@@ -35,7 +35,7 @@ func ValidatePlatform(p *aws.Platform, cm types.CredentialsMode, fldPath *field.
 	}
 
 	if p.HostedZone != "" {
-		if len(p.Subnets) == 0 {
+		if len(p.DeprecatedSubnets) == 0 {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("hostedZone"), p.HostedZone, "may not use an existing hosted zone when not using existing subnets"))
 		}
 	}

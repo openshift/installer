@@ -76,7 +76,7 @@ func network(config *types.InstallConfig, machines []*machineapi.AWSMachineProvi
 			Region: config.Platform.AWS.Region,
 			Count:  2,
 		})
-		if len(config.Platform.AWS.Subnets) == 0 {
+		if len(config.Platform.AWS.DeprecatedSubnets) == 0 {
 			ret = append(ret, []quota.Constraint{{
 				Name:   "vpc/L-F678F1CE", // 1 vpc
 				Region: config.Platform.AWS.Region,

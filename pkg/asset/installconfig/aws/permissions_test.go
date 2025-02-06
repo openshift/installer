@@ -576,7 +576,7 @@ func TestVPCPermissions(t *testing.T) {
 		t.Run("create network permissions when VPC not specified", func(t *testing.T) {
 			t.Run("for standard regions", func(t *testing.T) {
 				ic := validInstallConfig()
-				ic.AWS.Subnets = nil
+				ic.AWS.DeprecatedSubnets = nil
 				ic.AWS.HostedZone = ""
 				requiredPerms := RequiredPermissionGroups(ic)
 				assert.Contains(t, requiredPerms, PermissionCreateNetworking)
@@ -584,7 +584,7 @@ func TestVPCPermissions(t *testing.T) {
 			t.Run("for secret regions", func(t *testing.T) {
 				ic := validInstallConfig()
 				ic.AWS.Region = "us-iso-east-1"
-				ic.AWS.Subnets = nil
+				ic.AWS.DeprecatedSubnets = nil
 				ic.AWS.HostedZone = ""
 				requiredPerms := RequiredPermissionGroups(ic)
 				assert.Contains(t, requiredPerms, PermissionCreateNetworking)
@@ -592,7 +592,7 @@ func TestVPCPermissions(t *testing.T) {
 		})
 		t.Run("delete network permissions when VPC not specified for standard region", func(t *testing.T) {
 			ic := validInstallConfig()
-			ic.AWS.Subnets = nil
+			ic.AWS.DeprecatedSubnets = nil
 			ic.AWS.HostedZone = ""
 			requiredPerms := RequiredPermissionGroups(ic)
 			assert.Contains(t, requiredPerms, PermissionDeleteNetworking)
@@ -625,7 +625,7 @@ func TestVPCPermissions(t *testing.T) {
 		t.Run("delete shared network permissions", func(t *testing.T) {
 			t.Run("when VPC not specified", func(t *testing.T) {
 				ic := validInstallConfig()
-				ic.AWS.Subnets = nil
+				ic.AWS.DeprecatedSubnets = nil
 				ic.AWS.HostedZone = ""
 				requiredPerms := RequiredPermissionGroups(ic)
 				assert.NotContains(t, requiredPerms, PermissionDeleteSharedNetworking)
@@ -769,7 +769,7 @@ func TestIncludesZones(t *testing.T) {
 			ic := validInstallConfig()
 			ic.ControlPlane.Platform.AWS.Zones = []string{}
 			ic.Compute[0].Platform.AWS.Zones = []string{}
-			ic.AWS.Subnets = []string{}
+			ic.AWS.DeprecatedSubnets = []string{}
 			ic.AWS.DefaultMachinePlatform = &aws.MachinePool{
 				Zones: []string{"a", "b"},
 			}
@@ -779,14 +779,14 @@ func TestIncludesZones(t *testing.T) {
 		t.Run("zones specified in controlPlane", func(t *testing.T) {
 			ic := validInstallConfig()
 			ic.Compute[0].Platform.AWS.Zones = []string{}
-			ic.AWS.Subnets = []string{}
+			ic.AWS.DeprecatedSubnets = []string{}
 			requiredPerms := RequiredPermissionGroups(ic)
 			assert.NotContains(t, requiredPerms, PermissionDefaultZones)
 		})
 		t.Run("zones specified in compute", func(t *testing.T) {
 			ic := validInstallConfig()
 			ic.ControlPlane.Platform.AWS.Zones = []string{}
-			ic.AWS.Subnets = []string{}
+			ic.AWS.DeprecatedSubnets = []string{}
 			requiredPerms := RequiredPermissionGroups(ic)
 			assert.NotContains(t, requiredPerms, PermissionDefaultZones)
 		})
@@ -800,7 +800,7 @@ func TestIncludesZones(t *testing.T) {
 	})
 	t.Run("Should be false when neither zones nor subnets specified", func(t *testing.T) {
 		ic := validInstallConfig()
-		ic.AWS.Subnets = []string{}
+		ic.AWS.DeprecatedSubnets = []string{}
 		ic.ControlPlane.Platform.AWS.Zones = []string{}
 		ic.Compute[0].Platform.AWS.Zones = []string{}
 		requiredPerms := RequiredPermissionGroups(ic)
