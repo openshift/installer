@@ -122,12 +122,12 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		return nil, fmt.Errorf("failed to create bucket %s: %w", bucketName, err)
 	}
 
-	editedBootstrapIgn, editedMasterIgn, err := editIgnition(ctx, in)
+	ignOutput, err := editIgnition(ctx, in)
 	if err != nil {
-		return nil, fmt.Errorf("failed to edit bootstrap ignition: %w", err)
+		return nil, fmt.Errorf("failed to edit bootstrap, master or worker ignition: %w", err)
 	}
 
-	if err := gcp.FillBucket(ctx, bucketHandle, string(editedBootstrapIgn)); err != nil {
+	if err := gcp.FillBucket(ctx, bucketHandle, string(ignOutput.UpdatedBootstrapIgn)); err != nil {
 		return nil, fmt.Errorf("ignition failed to fill bucket: %w", err)
 	}
 
@@ -150,7 +150,8 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 
 	ignSecrets := []*corev1.Secret{
 		clusterapi.IgnitionSecret([]byte(ignShim), in.InfraID, "bootstrap"),
-		clusterapi.IgnitionSecret(editedMasterIgn, in.InfraID, "master"),
+		clusterapi.IgnitionSecret(ignOutput.UpdatedMasterIgn, in.InfraID, "master"),
+		clusterapi.IgnitionSecret(ignOutput.UpdatedWorkerIgn, in.InfraID, "worker"),
 	}
 
 	return ignSecrets, nil
