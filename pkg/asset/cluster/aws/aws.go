@@ -49,7 +49,7 @@ func PreTerraform(ctx context.Context, clusterID string, installConfig *installc
 }
 
 func tagSharedVPCResources(ctx context.Context, clusterID string, installConfig *installconfig.InstallConfig) error {
-	if len(installConfig.Config.Platform.AWS.Subnets) == 0 {
+	if len(installConfig.Config.Platform.AWS.DeprecatedSubnets) == 0 {
 		return nil
 	}
 

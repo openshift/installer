@@ -71,7 +71,7 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 	for idx, compute := range config.Compute {
 		fldPath := field.NewPath("compute").Index(idx)
 		if compute.Name == types.MachinePoolEdgeRoleName {
-			if len(config.Platform.AWS.Subnets) == 0 {
+			if len(config.Platform.AWS.DeprecatedSubnets) == 0 {
 				if compute.Platform.AWS == nil {
 					allErrs = append(allErrs, field.Required(fldPath.Child("platform", "aws"), "edge compute pools are only supported on the AWS platform"))
 				}
@@ -108,8 +108,8 @@ func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, 
 		return allErrs
 	}
 
-	if len(platform.Subnets) > 0 {
-		allErrs = append(allErrs, validateSubnets(ctx, meta, fldPath.Child("subnets"), platform.Subnets, networking, publish)...)
+	if len(platform.DeprecatedSubnets) > 0 {
+		allErrs = append(allErrs, validateSubnets(ctx, meta, fldPath.Child("subnets"), platform.DeprecatedSubnets, networking, publish)...)
 	} else if awstypes.IsPublicOnlySubnetsEnabled() {
 		allErrs = append(allErrs, field.Required(fldPath.Child("subnets"), "subnets must be specified for public-only subnets clusters"))
 	}
@@ -282,11 +282,11 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 	// - is valid when installing in existing VPC; or
 	// - is valid in new VPC when Local Zone name is defined
 	if poolName == types.MachinePoolEdgeRoleName {
-		if len(platform.Subnets) > 0 {
+		if len(platform.DeprecatedSubnets) > 0 {
 			edgeSubnets, err := meta.EdgeSubnets(ctx)
 			if err != nil {
 				errMsg := fmt.Sprintf("%s pool. %v", poolName, err.Error())
-				return append(allErrs, field.Invalid(field.NewPath("subnets"), platform.Subnets, errMsg))
+				return append(allErrs, field.Invalid(field.NewPath("subnets"), platform.DeprecatedSubnets, errMsg))
 			}
 			if len(edgeSubnets) == 0 {
 				return append(allErrs, field.Required(fldPath, "the provided subnets must include valid subnets for the specified edge zones"))
@@ -310,7 +310,7 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 	if pool.Zones != nil && len(pool.Zones) > 0 {
 		availableZones := sets.New[string]()
 		diffErrMsgPrefix := "One or more zones are unavailable"
-		if len(platform.Subnets) > 0 {
+		if len(platform.DeprecatedSubnets) > 0 {
 			diffErrMsgPrefix = "No subnets provided for zones"
 			var subnets Subnets
 			if poolName == types.MachinePoolEdgeRoleName {

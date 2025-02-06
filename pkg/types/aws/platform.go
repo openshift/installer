@@ -33,8 +33,10 @@ type Platform struct {
 	// resources will be created.  Leave unset to have the installer
 	// create subnets in a new VPC on your behalf.
 	//
+	// Deprecated: use platform.aws.vpc.subnets
+	//
 	// +optional
-	Subnets []string `json:"subnets,omitempty"`
+	DeprecatedSubnets []string `json:"subnets,omitempty"`
 
 	// VPC specifies the VPC configuration for the cluster.
 	//
