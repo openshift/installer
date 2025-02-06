@@ -147,7 +147,7 @@ func TestValidateMachinePool(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateMachinePool(tc.pool, field.NewPath("test-path")).ToAggregate()
+			err := ValidateMachinePool(validMinimalPlatform(), tc.pool, field.NewPath("test-path")).ToAggregate()
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {

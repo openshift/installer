@@ -40,7 +40,7 @@ func ValidatePlatform(p *powervs.Platform, fldPath *field.Path) field.ErrorList 
 
 	// validate DefaultMachinePlatform
 	if p.DefaultMachinePlatform != nil {
-		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
+		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
 
 	// validate ServiceInstanceGUID
