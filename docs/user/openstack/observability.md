@@ -303,8 +303,8 @@ once every 30 seconds.
 
 [ocp-federation-docs]: https://docs.openshift.com/container-platform/4.17/observability/monitoring/accessing-third-party-monitoring-apis.html#monitoring-querying-metrics-by-using-the-federation-endpoint-for-prometheus_accessing-monitoring-apis-by-using-the-cli
 
-In this example, we will only request two metrics: `kube_node_info` and
-`kube_persistentvolume_info` (see the `params.match[]` query below).
+In this example, we will only request three metrics: `kube_node_info`, `kube_persistentvolume_info`
+and `cluster:master_nodes` (see the `params.match[]` query below).
 
 While connected to the RHOSO cluster, apply this manifest:
 
@@ -319,7 +319,7 @@ metadata:
 spec:
   params:
     'match[]':
-    - '{__name__=~"kube_node_info|kube_persistentvolume_info"}'
+    - '{__name__=~"kube_node_info|kube_persistentvolume_info|cluster:master_nodes"}'
   metricsPath: '/federate'
   authorization:
     type: Bearer
