@@ -41,7 +41,9 @@ perform the installation.`,
 		path: []string{"platform", "aws", "subnets"},
 		desc: `Subnets specifies existing subnets (by ID) where cluster
 resources will be created.  Leave unset to have the installer
-create subnets in a new VPC on your behalf.`,
+create subnets in a new VPC on your behalf.
+
+Deprecated: use platform.aws.vpc.subnets`,
 	}, {
 		path: []string{"platform", "aws", "userTags"},
 		desc: `UserTags additional keys and values that the installer will add
