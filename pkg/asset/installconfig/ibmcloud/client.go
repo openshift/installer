@@ -798,7 +798,7 @@ func (c *Client) GetIBMCloudRegions(ctx context.Context) (map[string]string, err
 	return regions, nil
 }
 
-// GetChildrenFromParents gets does a lookup in IBM Catalog to fetch the children from the given list of parents and of the specified kind
+// GetChildrenFromParents fetches the children from the IBM Catalog using the given list of parents and the specified kind.
 func (c *Client) GetChildrenFromParents(ctx context.Context, parentList []globalcatalogv1.CatalogEntry, kind string) ([]globalcatalogv1.CatalogEntry, error) {
 	var childrenList []globalcatalogv1.CatalogEntry
 
