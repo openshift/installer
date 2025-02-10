@@ -26,14 +26,14 @@ type Metadata struct {
 	instanceTypes     map[string]InstanceType
 
 	Region   string                     `json:"region,omitempty"`
-	Subnets  []string                   `json:"subnets,omitempty"`
+	Subnets  []typesaws.Subnet          `json:"subnets,omitempty"`
 	Services []typesaws.ServiceEndpoint `json:"services,omitempty"`
 
 	mutex sync.Mutex
 }
 
 // NewMetadata initializes a new Metadata object.
-func NewMetadata(region string, subnets []string, services []typesaws.ServiceEndpoint) *Metadata {
+func NewMetadata(region string, subnets []typesaws.Subnet, services []typesaws.ServiceEndpoint) *Metadata {
 	return &Metadata{Region: region, Subnets: subnets, Services: services}
 }
 
@@ -211,7 +211,12 @@ func (m *Metadata) populateSubnets(ctx context.Context) error {
 		return err
 	}
 
-	sb, err := subnets(ctx, session, m.Region, m.Subnets)
+	subnetIDs := make([]string, len(m.Subnets))
+	for i, subnet := range m.Subnets {
+		subnetIDs[i] = string(subnet.ID)
+	}
+
+	sb, err := subnets(ctx, session, m.Region, subnetIDs)
 	m.vpc = sb.VPC
 	m.privateSubnets = sb.Private
 	m.publicSubnets = sb.Public

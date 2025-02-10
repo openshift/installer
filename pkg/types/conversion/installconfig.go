@@ -302,7 +302,7 @@ func convertAWS(config *types.InstallConfig) error {
 
 	// Subnets field is deprecated in favor of VPC.Subnets.
 	fldPath := field.NewPath("platform", "aws")
-	if config.AWS.DeprecatedSubnets != nil && config.AWS.VPC.Subnets != nil { // nolint: staticcheck
+	if config.AWS.DeprecatedSubnets != nil && config.AWS.Subnets != nil { // nolint: staticcheck
 		return field.Forbidden(fldPath.Child("subnets"), fmt.Sprintf("cannot specify %s and %s together", fldPath.Child("subnets"), fldPath.Child("vpc", "subnets")))
 	} else if config.AWS.DeprecatedSubnets != nil { // nolint: staticcheck
 		var subnets []aws.Subnet
@@ -311,7 +311,7 @@ func convertAWS(config *types.InstallConfig) error {
 				ID: aws.AWSSubnetID(subnetID),
 			})
 		}
-		config.AWS.VPC.Subnets = subnets
+		config.AWS.Subnets = subnets
 		logrus.Warnf("%s is deprecated. Converted to %s", fldPath.Child("subnets"), fldPath.Child("vpc", "subnets"))
 	}
 
