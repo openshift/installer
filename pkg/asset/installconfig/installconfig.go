@@ -122,7 +122,7 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 func (a *InstallConfig) finishAWS() error {
 	// Set the Default Edge Compute pool when the subnets in AWS Local Zones are defined,
 	// when installing a cluster in existing VPC.
-	if len(a.Config.Platform.AWS.DeprecatedSubnets) > 0 {
+	if len(a.Config.Platform.AWS.VPC.Subnets) > 0 {
 		edgeSubnets, err := a.AWS.EdgeSubnets(context.TODO())
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("unable to load edge subnets: %v", err))
@@ -140,7 +140,7 @@ func (a *InstallConfig) finishAWS() error {
 
 func (a *InstallConfig) finish(ctx context.Context, filename string) error {
 	if a.Config.AWS != nil {
-		a.AWS = aws.NewMetadata(a.Config.Platform.AWS.Region, a.Config.Platform.AWS.DeprecatedSubnets, a.Config.AWS.ServiceEndpoints)
+		a.AWS = aws.NewMetadata(a.Config.Platform.AWS.Region, a.Config.Platform.AWS.VPC.Subnets, a.Config.AWS.ServiceEndpoints)
 		if err := a.finishAWS(); err != nil {
 			return err
 		}

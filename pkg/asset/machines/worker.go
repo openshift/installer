@@ -337,7 +337,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 		case awstypes.Name:
 			subnets := icaws.Subnets{}
 			zones := icaws.Zones{}
-			if len(ic.Platform.AWS.DeprecatedSubnets) > 0 {
+			if len(ic.Platform.AWS.VPC.Subnets) > 0 {
 				var subnetsMeta icaws.Subnets
 				switch pool.Name {
 				case types.MachinePoolEdgeRoleName:

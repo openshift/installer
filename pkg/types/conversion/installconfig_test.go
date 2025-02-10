@@ -752,7 +752,7 @@ func TestConvertInstallConfig(t *testing.T) {
 				Platform: types.Platform{
 					AWS: &aws.Platform{
 						DeprecatedSubnets: []string{"subnet-01234567890abcdef", "subnet-abcdef01234567890"},
-						VPC: aws.VPCSpec{
+						VPC: aws.VPC{
 							Subnets: []aws.Subnet{
 								{ID: "subnet-01234567890abcdef"},
 								{ID: "subnet-abcdef01234567890"},
@@ -771,7 +771,7 @@ func TestConvertInstallConfig(t *testing.T) {
 				Platform: types.Platform{
 					AWS: &aws.Platform{
 						DeprecatedSubnets: []string{"subnet-01234567890abcdef", "subnet-abcdef01234567890"},
-						VPC: aws.VPCSpec{
+						VPC: aws.VPC{
 							Subnets: []aws.Subnet{
 								{ID: "subnet-01234567890abcdef"},
 								{ID: "subnet-abcdef01234567890"},

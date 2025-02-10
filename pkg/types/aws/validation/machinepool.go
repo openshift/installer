@@ -60,7 +60,7 @@ func ValidateMachinePool(platform *aws.Platform, p *aws.MachinePool, fldPath *fi
 func validateSecurityGroups(platform *aws.Platform, p *aws.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if len(p.AdditionalSecurityGroupIDs) > 0 && len(platform.DeprecatedSubnets) == 0 {
+	if len(p.AdditionalSecurityGroupIDs) > 0 && len(platform.VPC.Subnets) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("platform.subnets"), "subnets must be provided when additional security groups are present"))
 	}
 

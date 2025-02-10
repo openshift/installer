@@ -36,9 +36,13 @@ func TestValidatePlatform(t *testing.T) {
 		{
 			name: "hosted zone with subnets",
 			platform: &aws.Platform{
-				Region:            "us-east-1",
-				DeprecatedSubnets: []string{"test-subnet"},
-				HostedZone:        "test-hosted-zone",
+				Region: "us-east-1",
+				VPC: aws.VPC{
+					Subnets: []aws.Subnet{
+						{ID: "test-subnet"},
+					},
+				},
+				HostedZone: "test-hosted-zone",
 			},
 		},
 		{
@@ -209,19 +213,27 @@ func TestValidatePlatform(t *testing.T) {
 			name:     "valid hosted zone & role should not throw an error",
 			credMode: types.PassthroughCredentialsMode,
 			platform: &aws.Platform{
-				Region:            "us-east-1",
-				DeprecatedSubnets: []string{"test-subnet"},
-				HostedZone:        "test-hosted-zone",
-				HostedZoneRole:    "test-hosted-zone-role",
+				Region: "us-east-1",
+				VPC: aws.VPC{
+					Subnets: []aws.Subnet{
+						{ID: "test-subnet"},
+					},
+				},
+				HostedZone:     "test-hosted-zone",
+				HostedZoneRole: "test-hosted-zone-role",
 			},
 		},
 		{
 			name: "hosted zone role without credential mode should error",
 			platform: &aws.Platform{
-				Region:            "us-east-1",
-				DeprecatedSubnets: []string{"test-subnet"},
-				HostedZone:        "test-hosted-zone",
-				HostedZoneRole:    "test-hosted-zone-role",
+				Region: "us-east-1",
+				VPC: aws.VPC{
+					Subnets: []aws.Subnet{
+						{ID: "test-subnet"},
+					},
+				},
+				HostedZone:     "test-hosted-zone",
+				HostedZoneRole: "test-hosted-zone-role",
 			},
 			expected: `^test-path\.hostedZoneRole: Forbidden: when specifying a hostedZoneRole, either Passthrough or Manual credential mode must be specified$`,
 		},

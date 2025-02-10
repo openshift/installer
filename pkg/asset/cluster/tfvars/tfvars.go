@@ -221,7 +221,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 		var privateSubnets []string
 		var publicSubnets []string
 
-		if len(installConfig.Config.Platform.AWS.DeprecatedSubnets) > 0 {
+		if len(installConfig.Config.Platform.AWS.VPC.Subnets) > 0 {
 			subnets, err := installConfig.AWS.PrivateSubnets(ctx)
 			if err != nil {
 				return err

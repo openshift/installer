@@ -174,7 +174,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 	switch ic.Platform.Name() {
 	case awstypes.Name:
 		subnets := map[string]string{}
-		if len(ic.Platform.AWS.DeprecatedSubnets) > 0 {
+		if len(ic.Platform.AWS.VPC.Subnets) > 0 {
 			subnetMeta, err := installConfig.AWS.PrivateSubnets(ctx)
 			if err != nil {
 				return err
