@@ -280,7 +280,6 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 		ibmcloudFlags := []string{
 			"--provider-id-fmt=v2",
 			"-v=2",
-			"--metrics-bind-addr=0",
 			"--health-addr={{suggestHealthHostPort}}",
 			"--leader-elect=false",
 			"--webhook-port={{.WebhookPort}}",
