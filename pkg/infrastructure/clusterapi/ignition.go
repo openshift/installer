@@ -18,6 +18,7 @@ import (
 	"github.com/openshift/installer/cmd/openshift-install/command"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/lbconfig"
+	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/tls"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
@@ -28,6 +29,8 @@ const (
 	mcsCertKeyFilepath     = "/opt/openshift/manifests/machine-config-server-tls-secret.yaml"
 	mcsKeyFile             = "/opt/openshift/tls/machine-config-server.key"
 	mcsCertFile            = "/opt/openshift/tls/machine-config-server.crt"
+	masterUserDataFile     = "/opt/openshift/openshift/99_openshift-cluster-api_master-user-data-secret.yaml"
+	workerUserDataFile     = "/opt/openshift/openshift/99_openshift-cluster-api_worker-user-data-secret.yaml"
 
 	// header is the string that precedes the encoded data in the ignition data.
 	// The data must be replaced before decoding the string, and the string must be
@@ -72,12 +75,6 @@ func EditIgnition(in IgnitionInput, platform string, publicIPAddresses, privateI
 	}
 	logrus.Debugf("Successfully updated bootstrap machine-config-server certs")
 
-	editedIgnBytes, err := json.Marshal(ignData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert ignition data to json: %w", err)
-	}
-	logrus.Debugf("Successfully updated bootstrap ignition with updated manifests")
-
 	editedMasterIgn, err := updatePointerIgnition(in, privateIPAddresses, masterRole)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update %s Pointer Ignition: %w", masterRole, err)
@@ -89,6 +86,24 @@ func EditIgnition(in IgnitionInput, platform string, publicIPAddresses, privateI
 		return nil, fmt.Errorf("failed to update %s Pointer Ignition: %w", workerRole, err)
 	}
 	logrus.Debugf("Successfully updated %s pointer ignition with API LB IP", workerRole)
+
+	err = updateUserDataSecret(in, masterRole, ignData, editedMasterIgn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update %s user data secret: %w", masterRole, err)
+	}
+	logrus.Debugf("Successfully updated %s user data secret", masterRole)
+
+	err = updateUserDataSecret(in, workerRole, ignData, editedWorkerIgn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update %s user data secret: %w", workerRole, err)
+	}
+	logrus.Debugf("Successfully updated %s user data secret", workerRole)
+
+	editedIgnBytes, err := json.Marshal(ignData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert ignition data to json: %w", err)
+	}
+	logrus.Debugf("Successfully updated bootstrap ignition with updated manifests")
 
 	ignOutput := &IgnitionOutput{
 		UpdatedBootstrapIgn: editedIgnBytes,
@@ -239,6 +254,35 @@ func updateMCSCertKey(in IgnitionInput, platform string, config *igntypes.Config
 				config.Storage.Files[i].Contents.Source = &encoded
 				logrus.Debugf("Updated MCSCert file %s with new cert", mcsCertFile)
 			}
+		}
+	}
+	return nil
+}
+
+func updateUserDataSecret(in IgnitionInput, role string, config *igntypes.Config, updatedPointerIgnition []byte) error {
+	userDataFile := ""
+	name := ""
+	switch role {
+	case masterRole:
+		userDataFile = masterUserDataFile
+		name = "master-user-data"
+	case workerRole:
+		userDataFile = workerUserDataFile
+		name = "worker-user-data"
+	default:
+		return fmt.Errorf("user data secret cannot be updated for unrecognized role %s", role)
+	}
+
+	for i, fileData := range config.Storage.Files {
+		if fileData.Path == userDataFile {
+			userDataSecret, err := machines.UserDataSecret(name, updatedPointerIgnition)
+			if err != nil {
+				return fmt.Errorf("failed to generate updated userData Secret for %s: %w", role, err)
+			}
+			encoded := fmt.Sprintf("%s%s", header, base64.StdEncoding.EncodeToString(userDataSecret))
+			// replace the contents with the edited information
+			config.Storage.Files[i].Contents.Source = &encoded
+			return nil
 		}
 	}
 	return nil

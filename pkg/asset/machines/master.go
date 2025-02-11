@@ -512,7 +512,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 		return fmt.Errorf("invalid Platform")
 	}
 
-	data, err := userDataSecret(masterUserDataSecretName, mign.File.Data)
+	data, err := UserDataSecret(masterUserDataSecretName, mign.File.Data)
 	if err != nil {
 		return errors.Wrap(err, "failed to create user-data secret for master machines")
 	}
