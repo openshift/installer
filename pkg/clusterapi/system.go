@@ -316,9 +316,9 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 			c.getInfrastructureController(
 				&Nutanix,
 				[]string{
-					"-metrics-bind-address=0",
-					"-health-probe-bind-address={{suggestHealthHostPort}}",
-					"-leader-elect=false",
+					"--diagnostics-address=0",
+					"--health-probe-bind-address={{suggestHealthHostPort}}",
+					"--leader-elect=false",
 				},
 				map[string]string{},
 			),

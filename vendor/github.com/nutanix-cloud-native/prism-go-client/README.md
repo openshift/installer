@@ -1,5 +1,11 @@
 # prism-go-client
-Go client for Nutanix Prism.
+![codecov.io](https://codecov.io/github/nutanix-cloud-native/prism-go-client/coverage.svg?branch=main)
+
+Go client for Nutanix Prism APIs. Currently includes the following APIs:
+- Nutanix v3 APIs for Prism Central
+- Foundation
+- Foundation Central
+- Karbon
 
 ## Contributing
 See the [contributing docs](CONTRIBUTING.md).

@@ -17,9 +17,11 @@ limitations under the License.
 package v1beta1
 
 import (
+	"cmp"
 	"fmt"
 
 	credentialTypes "github.com/nutanix-cloud-native/prism-go-client/environment/credentials"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	capiv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/errors"
@@ -128,8 +130,6 @@ type NutanixFailureDomain struct {
 	// obtained from the Prism Central console or using the prism_central API.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinItems=1
-	// +listType=map
-	// +listMapKey=type
 	Subnets []NutanixResourceIdentifier `json:"subnets"`
 
 	// indicates if a failure domain is suited for control plane nodes
@@ -160,6 +160,24 @@ func (ncl *NutanixCluster) GetPrismCentralCredentialRef() (*credentialTypes.Nuta
 	}
 
 	return prismCentralInfo.CredentialRef, nil
+}
+
+// GetPrismCentralTrustBundle returns the trust bundle reference for the Nutanix Prism Central.
+func (ncl *NutanixCluster) GetPrismCentralTrustBundle() *credentialTypes.NutanixTrustBundleReference {
+	prismCentralInfo := ncl.Spec.PrismCentral
+	if prismCentralInfo == nil ||
+		prismCentralInfo.AdditionalTrustBundle == nil ||
+		prismCentralInfo.AdditionalTrustBundle.Kind == credentialTypes.NutanixTrustBundleKindString {
+		return nil
+	}
+
+	return prismCentralInfo.AdditionalTrustBundle
+}
+
+// GetNamespacedName returns the namespaced name of the NutanixCluster.
+func (ncl *NutanixCluster) GetNamespacedName() string {
+	namespace := cmp.Or(ncl.Namespace, corev1.NamespaceDefault)
+	return fmt.Sprintf("%s/%s", namespace, ncl.Name)
 }
 
 // +kubebuilder:object:root=true
