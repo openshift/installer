@@ -42,6 +42,8 @@ const (
 	RevisionAnnotation = "machinedeployment.clusters.x-k8s.io/revision"
 
 	// RevisionHistoryAnnotation maintains the history of all old revisions that a machine set has served for a machine deployment.
+	//
+	// Deprecated: This annotation is deprecated and is going to be removed in the next apiVersion. Please see https://github.com/kubernetes-sigs/cluster-api/issues/10479 for more details.
 	RevisionHistoryAnnotation = "machinedeployment.clusters.x-k8s.io/revision-history"
 
 	// DesiredReplicasAnnotation is the desired replicas for a machine deployment recorded as an annotation
@@ -54,8 +56,20 @@ const (
 	// proportions in case the deployment has surge replicas.
 	MaxReplicasAnnotation = "machinedeployment.clusters.x-k8s.io/max-replicas"
 
-	// MachineDeploymentUniqueLabel is the label applied to Machines
-	// in a MachineDeployment containing the hash of the template.
+	// MachineDeploymentUniqueLabel is used to uniquely identify the Machines of a MachineSet.
+	// The MachineDeployment controller will set this label on a MachineSet when it is created.
+	// The label is also applied to the Machines of the MachineSet and used in the MachineSet selector.
+	// Note: For the lifetime of the MachineSet the label's value has to stay the same, otherwise the
+	// MachineSet selector would no longer match its Machines.
+	// Note: In previous Cluster API versions (< v1.4.0), the label value was the hash of the full machine template.
+	// With the introduction of in-place mutation the machine template of the MachineSet can change.
+	// Because of that it is impossible that the label's value to always be the hash of the full machine template.
+	// (Because the hash changes when the machine template changes).
+	// As a result, we use the hash of the machine template while ignoring all in-place mutable fields, i.e. the
+	// machine template with only fields that could trigger a rollout for the machine-template-hash, making it
+	// independent of the changes to any in-place mutable fields.
+	// A random string is appended at the end of the label value (label value format is "<hash>-<random string>"))
+	// to distinguish duplicate MachineSets that have the exact same spec but were created as a result of rolloutAfter.
 	MachineDeploymentUniqueLabel = "machine-template-hash"
 )
 
@@ -67,11 +81,34 @@ type MachineDeploymentSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	ClusterName string `json:"clusterName"`
 
-	// Number of desired machines. Defaults to 1.
+	// Number of desired machines.
 	// This is a pointer to distinguish between explicit zero and not specified.
+	//
+	// Defaults to:
+	// * if the Kubernetes autoscaler min size and max size annotations are set:
+	//   - if it's a new MachineDeployment, use min size
+	//   - if the replicas field of the old MachineDeployment is < min size, use min size
+	//   - if the replicas field of the old MachineDeployment is > max size, use max size
+	//   - if the replicas field of the old MachineDeployment is in the (min size, max size) range, keep the value from the oldMD
+	// * otherwise use 1
+	// Note: Defaulting will be run whenever the replicas field is not set:
+	// * A new MachineDeployment is created with replicas not set.
+	// * On an existing MachineDeployment the replicas field was first set and is now unset.
+	// Those cases are especially relevant for the following Kubernetes autoscaler use cases:
+	// * A new MachineDeployment is created and replicas should be managed by the autoscaler
+	// * An existing MachineDeployment which initially wasn't controlled by the autoscaler
+	//   should be later controlled by the autoscaler
 	// +optional
-	// +kubebuilder:default=1
 	Replicas *int32 `json:"replicas,omitempty"`
+
+	// RolloutAfter is a field to indicate a rollout should be performed
+	// after the specified time even if no changes have been made to the
+	// MachineDeployment.
+	// Example: In the YAML the time can be specified in the RFC3339 format.
+	// To specify the rolloutAfter target as March 9, 2023, at 9 am UTC
+	// use "2023-03-09T09:00:00Z".
+	// +optional
+	RolloutAfter *metav1.Time `json:"rolloutAfter,omitempty"`
 
 	// Label selector for machines. Existing MachineSets whose machines are
 	// selected by this will be the ones affected by this deployment.
@@ -86,16 +123,17 @@ type MachineDeploymentSpec struct {
 	// +optional
 	Strategy *MachineDeploymentStrategy `json:"strategy,omitempty"`
 
-	// Minimum number of seconds for which a newly created machine should
-	// be ready.
-	// Defaults to 0 (machine will be considered available as soon as it
-	// is ready)
+	// MinReadySeconds is the minimum number of seconds for which a Node for a newly created machine should be ready before considering the replica available.
+	// Defaults to 0 (machine will be considered available as soon as the Node is ready)
 	// +optional
 	MinReadySeconds *int32 `json:"minReadySeconds,omitempty"`
 
 	// The number of old MachineSets to retain to allow rollback.
 	// This is a pointer to distinguish between explicit zero and not specified.
 	// Defaults to 1.
+	//
+	// Deprecated: This field is deprecated and is going to be removed in the next apiVersion. Please see https://github.com/kubernetes-sigs/cluster-api/issues/10479 for more details.
+	//
 	// +optional
 	RevisionHistoryLimit *int32 `json:"revisionHistoryLimit,omitempty"`
 
@@ -119,8 +157,8 @@ type MachineDeploymentSpec struct {
 // MachineDeploymentStrategy describes how to replace existing machines
 // with new ones.
 type MachineDeploymentStrategy struct {
-	// Type of deployment.
-	// Default is RollingUpdate.
+	// Type of deployment. Allowed values are RollingUpdate and OnDelete.
+	// The default is RollingUpdate.
 	// +kubebuilder:validation:Enum=RollingUpdate;OnDelete
 	// +optional
 	Type MachineDeploymentStrategyType `json:"type,omitempty"`
@@ -129,6 +167,11 @@ type MachineDeploymentStrategy struct {
 	// MachineDeploymentStrategyType = RollingUpdate.
 	// +optional
 	RollingUpdate *MachineRollingUpdateDeployment `json:"rollingUpdate,omitempty"`
+
+	// Remediation controls the strategy of remediating unhealthy machines
+	// and how remediating operations should occur during the lifecycle of the dependant MachineSets.
+	// +optional
+	Remediation *RemediationStrategy `json:"remediation,omitempty"`
 }
 
 // ANCHOR_END: MachineDeploymentStrategy
@@ -177,6 +220,31 @@ type MachineRollingUpdateDeployment struct {
 }
 
 // ANCHOR_END: MachineRollingUpdateDeployment
+
+// ANCHOR: RemediationStrategy
+
+// RemediationStrategy allows to define how the MachineSet can control scaling operations.
+type RemediationStrategy struct {
+	// MaxInFlight determines how many in flight remediations should happen at the same time.
+	//
+	// Remediation only happens on the MachineSet with the most current revision, while
+	// older MachineSets (usually present during rollout operations) aren't allowed to remediate.
+	//
+	// Note: In general (independent of remediations), unhealthy machines are always
+	// prioritized during scale down operations over healthy ones.
+	//
+	// MaxInFlight can be set to a fixed number or a percentage.
+	// Example: when this is set to 20%, the MachineSet controller deletes at most 20% of
+	// the desired replicas.
+	//
+	// If not set, remediation is limited to all machines (bounded by replicas)
+	// under the active MachineSet's management.
+	//
+	// +optional
+	MaxInFlight *intstr.IntOrString `json:"maxInFlight,omitempty"`
+}
+
+// ANCHOR_END: RemediationStrategy
 
 // ANCHOR: MachineDeploymentStatus
 
@@ -304,7 +372,7 @@ type MachineDeploymentList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&MachineDeployment{}, &MachineDeploymentList{})
+	objectTypes = append(objectTypes, &MachineDeployment{}, &MachineDeploymentList{})
 }
 
 // GetConditions returns the set of conditions for the machinedeployment.
