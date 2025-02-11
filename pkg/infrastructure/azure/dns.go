@@ -8,7 +8,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/dns/armdns"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns"
-	"k8s.io/utils/ptr"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -37,7 +36,7 @@ type recordPrivateList struct {
 }
 
 // Create DNS entries for azure.
-func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBFQDN string, resourceGroup string) error {
+func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBFQDN string, resourceGroup string, azureTags map[string]*string) error {
 	baseDomainResourceGroup := in.InstallConfig.Config.Azure.BaseDomainResourceGroupName
 	zone := in.InstallConfig.Config.BaseDomain
 	privatezone := in.InstallConfig.Config.ClusterDomain()
@@ -45,10 +44,6 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 
 	if in.InstallConfig.Config.Azure.ResourceGroupName != "" {
 		resourceGroup = in.InstallConfig.Config.Azure.ResourceGroupName
-	}
-	azureTags := make(map[string]*string)
-	for k, v := range in.InstallConfig.Config.Azure.UserTags {
-		azureTags[k] = ptr.To(v)
 	}
 	azureCluster := &capz.AzureCluster{}
 	key := client.ObjectKey{

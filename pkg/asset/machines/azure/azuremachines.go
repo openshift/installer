@@ -53,10 +53,6 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 		// It means no-zoned for the machine API
 		mpool.Zones = []string{""}
 	}
-	tags, err := CapzTagsFromUserTags(clusterID, in.UserTags)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create machineapi.TagSpecifications from UserTags: %w", err)
-	}
 
 	userAssignedIdentityID := fmt.Sprintf("/subscriptions/%s/resourcegroups/%s/providers/Microsoft.ManagedIdentity/userAssignedIdentities/%s-identity", subscriptionID, resourceGroup, clusterID)
 
@@ -160,7 +156,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 				FailureDomain:              ptr.To(zone),
 				Image:                      image,
 				OSDisk:                     osDisk, // required
-				AdditionalTags:             tags,
+				AdditionalTags:             in.UserTags,
 				AdditionalCapabilities:     additionalCapabilities,
 				DisableExtensionOperations: ptr.To(true),
 				AllocatePublicIP:           false,
@@ -227,7 +223,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 			Image:                      image,
 			FailureDomain:              ptr.To(mpool.Zones[0]),
 			OSDisk:                     osDisk,
-			AdditionalTags:             tags,
+			AdditionalTags:             in.UserTags,
 			DisableExtensionOperations: ptr.To(true),
 			AllocatePublicIP:           !in.Private,
 			AdditionalCapabilities:     additionalCapabilities,
