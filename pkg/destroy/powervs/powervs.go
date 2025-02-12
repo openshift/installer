@@ -243,7 +243,6 @@ func (o *ClusterUninstaller) destroyCluster() error {
 	}, {
 		{name: "DHCPs", execute: o.destroyDHCPNetworks},
 	}, {
-		{name: "Power Subnets", execute: o.destroyPowerSubnets},
 		{name: "Images", execute: o.destroyImages},
 		{name: "VPCs", execute: o.destroyVPCs},
 	}, {
@@ -255,6 +254,8 @@ func (o *ClusterUninstaller) destroyCluster() error {
 	}, {
 		{name: "DNS Records", execute: o.destroyDNSRecords},
 		{name: "DNS Resource Records", execute: o.destroyResourceRecords},
+	}, {
+		{name: "Power Subnets", execute: o.destroyPowerSubnets},
 	}, {
 		{name: "Service Instances", execute: o.destroyServiceInstances},
 	}}
