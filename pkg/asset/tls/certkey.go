@@ -5,7 +5,10 @@ import (
 	"context"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/pem"
+	"fmt"
 	"os"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -102,6 +105,61 @@ func (c *CertKey) loadCertKey(f asset.FileFetcher, filenameBase string) (bool, e
 	c.FileList = []*asset.File{key, cert}
 
 	return true, nil
+}
+
+// AssetExpirerInterface determines if a Certificate has expired.
+type AssetExpirerInterface interface {
+	CertKeyInterface
+
+	CheckExpired() error
+}
+
+type assetExpirerFile struct {
+	Filename string `json:"Filename"`
+	Data     []byte `json:"Data,omitempty"`
+}
+
+// AssetExpirer is a structure that contains a modified CertKey combination.
+// The struct is also json capable to be converted from the state file.
+type AssetExpirer struct {
+	CertRaw  []byte             `json:"CertRaw,omitempty"`
+	KeyRaw   []byte             `json:"KeyRaw,omitempty"`
+	FileList []assetExpirerFile `json:"FileList"`
+}
+
+// Cert returns the certificate.
+func (a *AssetExpirer) Cert() []byte {
+	return a.CertRaw
+}
+
+// Key returns the private key.
+func (a *AssetExpirer) Key() []byte {
+	return a.KeyRaw
+}
+
+// CheckExpired will check the current time against the time that the certificate should expire.
+// When the certificate has expired, an error is returned.
+func (a *AssetExpirer) CheckExpired() error {
+	data := a.Cert()
+	for {
+		block, rest := pem.Decode(data)
+		if block == nil {
+			break
+		}
+
+		cert, err := x509.ParseCertificate(block.Bytes)
+		if err == nil {
+			if time.Now().UTC().After(cert.NotAfter) {
+				return fmt.Errorf("certificate expired at %s", cert.NotAfter.Format(time.RFC3339))
+			}
+		} else {
+			logrus.Debugf("Unable to parse certificate: %s", err.Error())
+			break
+		}
+
+		data = rest
+	}
+	return nil
 }
 
 // AppendParentChoice dictates whether the parent's cert is to be added to the
