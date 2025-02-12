@@ -15,8 +15,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
