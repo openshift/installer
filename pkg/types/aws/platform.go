@@ -41,7 +41,7 @@ type Platform struct {
 	// VPC specifies the VPC configuration for the cluster.
 	//
 	// +optional
-	VPC `json:"vpc,omitempty"`
+	VPC VPC `json:"vpc,omitempty"`
 
 	// HostedZone is the ID of an existing hosted zone into which to add DNS
 	// records for the cluster's internal API. An existing hosted zone can
