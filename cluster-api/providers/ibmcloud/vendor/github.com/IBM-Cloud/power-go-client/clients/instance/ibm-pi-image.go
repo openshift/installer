@@ -4,14 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/IBM/go-sdk-core/v5/core"
-
 	"github.com/IBM-Cloud/power-go-client/errors"
-
 	"github.com/IBM-Cloud/power-go-client/helpers"
 	"github.com/IBM-Cloud/power-go-client/ibmpisession"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_images"
 	"github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM/go-sdk-core/v5/core"
 )
 
 // IBMPIImageClient
@@ -81,7 +79,7 @@ func (f *IBMPIImageClient) Create(body *models.CreateImage) (*models.Image, erro
 func (f *IBMPIImageClient) CreateCosImage(body *models.CreateCosImageImportJob) (imageJob *models.JobReference, err error) {
 	// Check for satellite differences in this endpoint
 	if !f.session.IsOnPrem() && body.Checksum {
-		return nil, fmt.Errorf("checksum parameter is not supported off-premise")
+		return nil, fmt.Errorf("checksum parameter is not supported in off-prem location")
 	}
 	params := p_cloud_images.NewPcloudV1CloudinstancesCosimagesPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -100,7 +98,7 @@ func (f *IBMPIImageClient) CreateCosImage(body *models.CreateCosImageImportJob) 
 func (f *IBMPIImageClient) ExportImage(id string, body *models.ExportImage) (*models.JobReference, error) {
 	// Check for satellite differences in this endpoint
 	if !f.session.IsOnPrem() && body.Checksum {
-		return nil, fmt.Errorf("checksum parameter is not supported off-premise")
+		return nil, fmt.Errorf("checksum parameter is not supported in off-prem location")
 	}
 	params := p_cloud_images.NewPcloudV2ImagesExportPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).

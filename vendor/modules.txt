@@ -222,7 +222,7 @@ github.com/BurntSushi/toml/internal
 # github.com/IBM-Cloud/bluemix-go v0.0.0-20211102075456-ffc4e11dfb16
 ## explicit; go 1.13
 github.com/IBM-Cloud/bluemix-go/crn
-# github.com/IBM-Cloud/power-go-client v1.8.3
+# github.com/IBM-Cloud/power-go-client v1.10.0
 ## explicit; go 1.22.0
 github.com/IBM-Cloud/power-go-client/clients/instance
 github.com/IBM-Cloud/power-go-client/errors
@@ -236,11 +236,22 @@ github.com/IBM-Cloud/power-go-client/power/client/datacenters
 github.com/IBM-Cloud/power-go-client/power/client/hardware_platforms
 github.com/IBM-Cloud/power-go-client/power/client/host_groups
 github.com/IBM-Cloud/power-go-client/power/client/iaas_service_broker
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_dedicated_hosts
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_images
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_network_address_groups
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_network_interfaces
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_network_security_groups
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_networks
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_pvm_instances
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_shared_processor_pools
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_snapshots
+github.com/IBM-Cloud/power-go-client/power/client/internal_operations_volumes
 github.com/IBM-Cloud/power-go-client/power/client/internal_power_v_s_instances
 github.com/IBM-Cloud/power-go-client/power/client/internal_power_v_s_locations
 github.com/IBM-Cloud/power-go-client/power/client/internal_storage_regions
 github.com/IBM-Cloud/power-go-client/power/client/internal_transit_gateway
 github.com/IBM-Cloud/power-go-client/power/client/network_address_groups
+github.com/IBM-Cloud/power-go-client/power/client/network_peers
 github.com/IBM-Cloud/power-go-client/power/client/network_security_groups
 github.com/IBM-Cloud/power-go-client/power/client/networks
 github.com/IBM-Cloud/power-go-client/power/client/open_stacks
@@ -267,6 +278,7 @@ github.com/IBM-Cloud/power-go-client/power/client/p_cloud_tenants
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_tenants_ssh_keys
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_v_p_n_connections
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_v_p_n_policies
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_virtual_serial_number
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_volume_groups
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_volume_onboarding
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_volumes
@@ -278,11 +290,11 @@ github.com/IBM-Cloud/power-go-client/power/client/storage_types
 github.com/IBM-Cloud/power-go-client/power/client/swagger_spec
 github.com/IBM-Cloud/power-go-client/power/client/workspaces
 github.com/IBM-Cloud/power-go-client/power/models
-# github.com/IBM/go-sdk-core/v5 v5.18.1
+# github.com/IBM/go-sdk-core/v5 v5.18.5
 ## explicit; go 1.21
 github.com/IBM/go-sdk-core/v5/core
-# github.com/IBM/ibm-cos-sdk-go v1.11.1
-## explicit; go 1.19
+# github.com/IBM/ibm-cos-sdk-go v1.12.1
+## explicit; go 1.21
 github.com/IBM/ibm-cos-sdk-go/aws
 github.com/IBM/ibm-cos-sdk-go/aws/arn
 github.com/IBM/ibm-cos-sdk-go/aws/awserr
@@ -335,14 +347,14 @@ github.com/IBM/networking-go-sdk/dnszonesv1
 github.com/IBM/networking-go-sdk/resourcerecordsv1
 github.com/IBM/networking-go-sdk/transitgatewayapisv1
 github.com/IBM/networking-go-sdk/zonesv1
-# github.com/IBM/platform-services-go-sdk v0.71.0
+# github.com/IBM/platform-services-go-sdk v0.75.0
 ## explicit; go 1.21
 github.com/IBM/platform-services-go-sdk/common
 github.com/IBM/platform-services-go-sdk/iamidentityv1
 github.com/IBM/platform-services-go-sdk/iampolicymanagementv1
 github.com/IBM/platform-services-go-sdk/resourcecontrollerv2
 github.com/IBM/platform-services-go-sdk/resourcemanagerv2
-# github.com/IBM/vpc-go-sdk v0.62.0
+# github.com/IBM/vpc-go-sdk v0.64.1
 ## explicit; go 1.21
 github.com/IBM/vpc-go-sdk/common
 github.com/IBM/vpc-go-sdk/vpcv1
@@ -1350,7 +1362,7 @@ github.com/sirupsen/logrus/hooks/test
 # github.com/spf13/cobra v1.8.1
 ## explicit; go 1.15
 github.com/spf13/cobra
-# github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace
+# github.com/spf13/pflag v1.0.6
 ## explicit; go 1.12
 github.com/spf13/pflag
 # github.com/stretchr/testify v1.10.0
@@ -1526,7 +1538,7 @@ go.uber.org/zap/internal/exit
 go.uber.org/zap/internal/pool
 go.uber.org/zap/internal/stacktrace
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.31.0
+# golang.org/x/crypto v0.33.0
 ## explicit; go 1.20
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -1556,7 +1568,7 @@ golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/modfile
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.33.0
+# golang.org/x/net v0.35.0
 ## explicit; go 1.18
 golang.org/x/net/html
 golang.org/x/net/html/atom
@@ -1565,6 +1577,7 @@ golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
+golang.org/x/net/internal/httpcommon
 golang.org/x/net/internal/socks
 golang.org/x/net/internal/timeseries
 golang.org/x/net/proxy
@@ -1582,21 +1595,21 @@ golang.org/x/oauth2/google/internal/stsexchange
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sync v0.10.0
+# golang.org/x/sync v0.11.0
 ## explicit; go 1.18
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.28.0
+# golang.org/x/sys v0.30.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
-# golang.org/x/term v0.27.0
+# golang.org/x/term v0.29.0
 ## explicit; go 1.18
 golang.org/x/term
-# golang.org/x/text v0.21.0
+# golang.org/x/text v0.22.0
 ## explicit; go 1.18
 golang.org/x/text/cases
 golang.org/x/text/encoding
@@ -2449,7 +2462,7 @@ sigs.k8s.io/cluster-api-provider-azure/util/webhook
 # sigs.k8s.io/cluster-api-provider-gcp v1.7.1-0.20240724153512-c3b8b533143c
 ## explicit; go 1.21
 sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1
-# sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0 => sigs.k8s.io/cluster-api-provider-ibmcloud v0.9.0-beta.1.0.20241119124454-8460807566cf
+# sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0 => sigs.k8s.io/cluster-api-provider-ibmcloud v0.11.0-alpha.0.0.20250213035622-5e7545c73e50
 ## explicit; go 1.22.0
 sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2
 sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/endpoints
@@ -2629,7 +2642,7 @@ sigs.k8s.io/yaml/goyaml.v3
 # github.com/metal3-io/baremetal-operator/apis => github.com/openshift/baremetal-operator/apis v0.0.0-20231128154154-6736c9b9c6c8
 # github.com/metal3-io/baremetal-operator/pkg/hardwareutils => github.com/openshift/baremetal-operator/pkg/hardwareutils v0.0.0-20231128154154-6736c9b9c6c8
 # k8s.io/cloud-provider-vsphere => github.com/openshift/cloud-provider-vsphere v1.19.1-0.20240626105621-6464d0bb4928
-# sigs.k8s.io/cluster-api-provider-ibmcloud => sigs.k8s.io/cluster-api-provider-ibmcloud v0.9.0-beta.1.0.20241119124454-8460807566cf
+# sigs.k8s.io/cluster-api-provider-ibmcloud => sigs.k8s.io/cluster-api-provider-ibmcloud v0.11.0-alpha.0.0.20250213035622-5e7545c73e50
 # github.com/openshift/assisted-service/api => github.com/openshift/assisted-service/api v0.0.0-20241001055825-63e8b0d3ad63
 # github.com/openshift/assisted-service/client => github.com/openshift/assisted-service/client v0.0.0-20241001055825-63e8b0d3ad63
 # github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20241001055825-63e8b0d3ad63

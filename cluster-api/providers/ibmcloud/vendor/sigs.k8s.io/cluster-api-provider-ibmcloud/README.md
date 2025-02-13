@@ -49,7 +49,7 @@ This provider's versions are compatible with the following versions of Cluster A
 |:----------------------------------------|:---------------:|:--------------:|
 | CAPIBM v1alpha4 (v0.1.x)                  | ✓               |                |
 | CAPIBM v1beta1 (v0.2.x, v0.3.x)           |                 | ✓              |
-| CAPIBM v1beta2 (v0.[4-8].x, main)         |                 | ✓              |
+| CAPIBM v1beta2 (v0.[4-9].x, main)         |                 | ✓              |
 
 
 (See [Kubernetes support matrix][cluster-api-supported-v] of Cluster API versions).

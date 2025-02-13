@@ -9,7 +9,6 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_p_vm_instances"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_snapshots"
 	"github.com/IBM-Cloud/power-go-client/power/client/snapshots"
-
 	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
