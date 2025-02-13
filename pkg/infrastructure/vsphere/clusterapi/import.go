@@ -221,10 +221,10 @@ func findAvailableHostSystems(ctx context.Context, clusterHostSystems []*object.
 		// if distributed port group the cast will fail
 		networkFound := isNetworkAvailable(networkObjectRef, hostSystemManagedObject.Network)
 		datastoreFound := isDatastoreAvailable(datastore, hostSystemManagedObject.Datastore)
-		isUsable := hostSystemManagedObject.Runtime.PowerState != types.HostSystemPowerStatePoweredOff && hostSystemManagedObject.Runtime.PowerState != types.HostSystemPowerStateStandBy
+		hasUsablePowerState := hostSystemManagedObject.Runtime.PowerState != types.HostSystemPowerStatePoweredOff && hostSystemManagedObject.Runtime.PowerState != types.HostSystemPowerStateStandBy && !hostSystemManagedObject.Runtime.InMaintenanceMode
 
 		// if the network or datastore is not found or the ESXi host is in maintenance mode, powered off or in StandBy (DPM) continue the loop
-		if !networkFound || !datastoreFound || hostSystemManagedObject.Runtime.InMaintenanceMode || !isUsable {
+		if !networkFound || !datastoreFound || !hasUsablePowerState {
 			continue
 		}
 
