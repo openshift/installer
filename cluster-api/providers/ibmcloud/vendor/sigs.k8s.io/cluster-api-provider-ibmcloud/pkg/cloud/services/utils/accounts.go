@@ -54,6 +54,14 @@ func GetAccount(auth core.Authenticator) (string, error) {
 	return token.Claims.(jwt.MapClaims)["account"].(map[string]interface{})["bss"].(string), nil
 }
 
+// GetAccountIDFunc is a variable that will hold the function reference.
+var GetAccountIDFunc = GetAccountID // Default to the original function
+
+// GetAccountIDWrapper is a function that calls GetAccountIDFunc.
+func GetAccountIDWrapper() (string, error) {
+	return GetAccountIDFunc() // Call the function that GetAccountIDFunc points to
+}
+
 // GetAccountID will parse and returns user cloud account ID.
 func GetAccountID() (string, error) {
 	auth, err := authenticator.GetAuthenticator()

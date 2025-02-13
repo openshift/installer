@@ -77,7 +77,8 @@ type PVMInstanceCreate struct {
 	ReplicantNamingScheme *string `json:"replicantNamingScheme,omitempty"`
 
 	// Number of duplicate instances to create in this request
-	Replicants float64 `json:"replicants,omitempty"`
+	// Minimum: 1
+	Replicants *float64 `json:"replicants,omitempty"`
 
 	// Indicates the replication site of the boot volume
 	ReplicationSites []string `json:"replicationSites"`
@@ -106,7 +107,7 @@ type PVMInstanceCreate struct {
 	// Storage Pool for server deployment; if provided then storageAffinity will be ignored; Only valid when you deploy one of the IBM supplied stock images. Storage pool for a custom image (an imported image or an image that is created from a PVMInstance capture) defaults to the storage pool the image was created in
 	StoragePool string `json:"storagePool,omitempty"`
 
-	// Indicates if all volumes attached to the server must reside in the same storage pool; If set to false then volumes from any storage type and pool can be attached to the PVMInstance; Impacts PVMInstance snapshot, capture, and clone, for capture and clone - only data volumes that are of the same storage type and in the same storage pool of the PVMInstance's boot volume can be included; for snapshot - all data volumes to be included in the snapshot must reside in the same storage type and pool. Once set to false, cannot be set back to true unless all volumes attached reside in the same storage type and pool.
+	// Indicates if all volumes attached to the PVMInstance must reside in the same storage pool. If set to false, volumes from any storage pool can be attached to the PVMInstance. This flag only impacts PVMInstance snapshot and capture operations. For capture, only volumes that reside in the same storage pool as the PVMInstance's boot volume can be included. For snapshots, all volumes included in the snapshot must reside in the same storage pool.
 	StoragePoolAffinity *bool `json:"storagePoolAffinity,omitempty"`
 
 	// Storage type for server deployment; if storageType is not provided the storage type will default to 'tier3'.
@@ -123,6 +124,9 @@ type PVMInstanceCreate struct {
 
 	// The pvm instance virtual CPU information
 	VirtualCores *VirtualCores `json:"virtualCores,omitempty"`
+
+	// Virtual Serial Number information
+	VirtualSerialNumber *CreateServerVirtualSerialNumber `json:"virtualSerialNumber,omitempty"`
 
 	// List of volume IDs
 	VolumeIDs []string `json:"volumeIDs"`
@@ -168,6 +172,10 @@ func (m *PVMInstanceCreate) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateReplicants(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateServerName(formats); err != nil {
 		res = append(res, err)
 	}
@@ -193,6 +201,10 @@ func (m *PVMInstanceCreate) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateVirtualCores(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateVirtualSerialNumber(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -424,6 +436,18 @@ func (m *PVMInstanceCreate) validateReplicantNamingScheme(formats strfmt.Registr
 	return nil
 }
 
+func (m *PVMInstanceCreate) validateReplicants(formats strfmt.Registry) error {
+	if swag.IsZero(m.Replicants) { // not required
+		return nil
+	}
+
+	if err := validate.Minimum("replicants", "body", *m.Replicants, 1, false); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *PVMInstanceCreate) validateServerName(formats strfmt.Registry) error {
 
 	if err := validate.Required("serverName", "body", m.ServerName); err != nil {
@@ -591,6 +615,25 @@ func (m *PVMInstanceCreate) validateVirtualCores(formats strfmt.Registry) error 
 	return nil
 }
 
+func (m *PVMInstanceCreate) validateVirtualSerialNumber(formats strfmt.Registry) error {
+	if swag.IsZero(m.VirtualSerialNumber) { // not required
+		return nil
+	}
+
+	if m.VirtualSerialNumber != nil {
+		if err := m.VirtualSerialNumber.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("virtualSerialNumber")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("virtualSerialNumber")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
 // ContextValidate validate this p VM instance create based on the context it is used
 func (m *PVMInstanceCreate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
@@ -620,6 +663,10 @@ func (m *PVMInstanceCreate) ContextValidate(ctx context.Context, formats strfmt.
 	}
 
 	if err := m.contextValidateVirtualCores(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateVirtualSerialNumber(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -762,6 +809,27 @@ func (m *PVMInstanceCreate) contextValidateVirtualCores(ctx context.Context, for
 				return ve.ValidateName("virtualCores")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
 				return ce.ValidateName("virtualCores")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceCreate) contextValidateVirtualSerialNumber(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.VirtualSerialNumber != nil {
+
+		if swag.IsZero(m.VirtualSerialNumber) { // not required
+			return nil
+		}
+
+		if err := m.VirtualSerialNumber.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("virtualSerialNumber")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("virtualSerialNumber")
 			}
 			return err
 		}

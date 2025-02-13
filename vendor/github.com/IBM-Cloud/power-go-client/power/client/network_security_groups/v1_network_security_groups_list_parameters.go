@@ -14,6 +14,7 @@ import (
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
+	"github.com/go-openapi/swag"
 )
 
 // NewV1NetworkSecurityGroupsListParams creates a new V1NetworkSecurityGroupsListParams object,
@@ -60,6 +61,10 @@ V1NetworkSecurityGroupsListParams contains all the parameters to send to the API
 	Typically these are written to a http.Request.
 */
 type V1NetworkSecurityGroupsListParams struct {
+
+	// DefaultNsg.
+	DefaultNsg *bool
+
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
@@ -113,6 +118,17 @@ func (o *V1NetworkSecurityGroupsListParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
+// WithDefaultNsg adds the defaultNsg to the v1 network security groups list params
+func (o *V1NetworkSecurityGroupsListParams) WithDefaultNsg(defaultNsg *bool) *V1NetworkSecurityGroupsListParams {
+	o.SetDefaultNsg(defaultNsg)
+	return o
+}
+
+// SetDefaultNsg adds the defaultNsg to the v1 network security groups list params
+func (o *V1NetworkSecurityGroupsListParams) SetDefaultNsg(defaultNsg *bool) {
+	o.DefaultNsg = defaultNsg
+}
+
 // WriteToRequest writes these params to a swagger request
 func (o *V1NetworkSecurityGroupsListParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
@@ -120,6 +136,23 @@ func (o *V1NetworkSecurityGroupsListParams) WriteToRequest(r runtime.ClientReque
 		return err
 	}
 	var res []error
+
+	if o.DefaultNsg != nil {
+
+		// query param default_nsg
+		var qrDefaultNsg bool
+
+		if o.DefaultNsg != nil {
+			qrDefaultNsg = *o.DefaultNsg
+		}
+		qDefaultNsg := swag.FormatBool(qrDefaultNsg)
+		if qDefaultNsg != "" {
+
+			if err := r.SetQueryParam("default_nsg", qDefaultNsg); err != nil {
+				return err
+			}
+		}
+	}
 
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
