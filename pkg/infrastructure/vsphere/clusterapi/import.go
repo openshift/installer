@@ -146,7 +146,6 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 		resourcePool.Reference(),
 		datastore.Reference(),
 		cisp)
-
 	if err != nil {
 		return fmt.Errorf("failed to create import spec: %w", err)
 	}
@@ -160,7 +159,6 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 	}
 
 	lease, err := resourcePool.ImportVApp(ctx, spec.ImportSpec, folder, hostSystem)
-
 	if err != nil {
 		return fmt.Errorf("failed to import vapp: %w", err)
 	}
@@ -228,9 +226,10 @@ func findAvailableHostSystems(ctx context.Context, clusterHostSystems []*object.
 		// if distributed port group the cast will fail
 		networkFound := isNetworkAvailable(networkObjectRef, hostSystemManagedObject.Network)
 		datastoreFound := isDatastoreAvailable(datastore, hostSystemManagedObject.Datastore)
+		hasUsablePowerState := hostSystemManagedObject.Runtime.PowerState != types.HostSystemPowerStatePoweredOff && hostSystemManagedObject.Runtime.PowerState != types.HostSystemPowerStateStandBy && !hostSystemManagedObject.Runtime.InMaintenanceMode
 
-		// if the network or datastore is not found or the ESXi host is in maintenance mode continue the loop
-		if !networkFound || !datastoreFound || hostSystemManagedObject.Runtime.InMaintenanceMode {
+		// if the network or datastore is not found or the ESXi host is in maintenance mode, powered off or in StandBy (DPM) continue the loop
+		if !networkFound || !datastoreFound || !hasUsablePowerState {
 			continue
 		}
 
