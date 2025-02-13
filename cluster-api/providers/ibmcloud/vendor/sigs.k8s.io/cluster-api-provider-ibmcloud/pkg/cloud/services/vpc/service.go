@@ -450,50 +450,6 @@ func (s *Service) GetLoadBalancerByName(loadBalancerName string) (*vpcv1.LoadBal
 	return loadBalancer, nil
 }
 
-// GetSubnetAddrPrefix returns subnets address prefix.
-func (s *Service) GetSubnetAddrPrefix(vpcID, zone string) (string, error) {
-	var addrPrefix *vpcv1.AddressPrefix
-	f := func(start string) (bool, string, error) {
-		// check for existing vpcAddressPrefixes
-		listVPCAddressPrefixesOptions := &vpcv1.ListVPCAddressPrefixesOptions{
-			VPCID: &vpcID,
-		}
-		if start != "" {
-			listVPCAddressPrefixesOptions.Start = &start
-		}
-
-		vpcAddressPrefixesList, _, err := s.ListVPCAddressPrefixes(listVPCAddressPrefixesOptions)
-		if err != nil {
-			return false, "", err
-		}
-
-		if vpcAddressPrefixesList == nil {
-			return false, "", fmt.Errorf("vpcAddressPrefix list returned is nil")
-		}
-
-		for i, addressPrefix := range vpcAddressPrefixesList.AddressPrefixes {
-			if (*addressPrefix.Zone.Name) == zone {
-				addrPrefix = &vpcAddressPrefixesList.AddressPrefixes[i]
-				return true, "", nil
-			}
-		}
-
-		if vpcAddressPrefixesList.Next != nil && *vpcAddressPrefixesList.Next.Href != "" {
-			return false, *vpcAddressPrefixesList.Next.Href, nil
-		}
-		return true, "", nil
-	}
-
-	if err := utils.PagingHelper(f); err != nil {
-		return "", err
-	}
-
-	if addrPrefix != nil {
-		return *addrPrefix.CIDR, nil
-	}
-	return "", fmt.Errorf("not found a valid CIDR for VPC %s in zone %s", vpcID, zone)
-}
-
 // CreateSecurityGroup creates a new security group.
 func (s *Service) CreateSecurityGroup(options *vpcv1.CreateSecurityGroupOptions) (*vpcv1.SecurityGroup, *core.DetailedResponse, error) {
 	return s.vpcService.CreateSecurityGroup(options)

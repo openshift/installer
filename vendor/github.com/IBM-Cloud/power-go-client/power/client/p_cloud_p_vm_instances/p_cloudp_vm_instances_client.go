@@ -306,7 +306,7 @@ func (a *Client) PcloudPvminstancesConsolePost(params *PcloudPvminstancesConsole
 }
 
 /*
-PcloudPvminstancesConsolePut updates p VM instance console laguage code
+PcloudPvminstancesConsolePut updates p VM instance console language code
 */
 func (a *Client) PcloudPvminstancesConsolePut(params *PcloudPvminstancesConsolePutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesConsolePutOK, error) {
 	// TODO: Validate the params before sending

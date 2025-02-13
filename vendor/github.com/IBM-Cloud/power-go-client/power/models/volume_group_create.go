@@ -23,6 +23,8 @@ type VolumeGroupCreate struct {
 	ConsistencyGroupName string `json:"consistencyGroupName,omitempty"`
 
 	// The name of the volume group. This field is required for creation of new volume group; name and consistencyGroupName are mutually exclusive.
+	// Max Length: 120
+	// Pattern: ^[\s]*[A-Za-z0-9:_.\-][A-Za-z0-9\s:_.\-]*$
 	Name string `json:"name,omitempty"`
 
 	// List of volume IDs,members of VolumeGroup
@@ -34,6 +36,10 @@ type VolumeGroupCreate struct {
 func (m *VolumeGroupCreate) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateName(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateVolumeIDs(formats); err != nil {
 		res = append(res, err)
 	}
@@ -41,6 +47,22 @@ func (m *VolumeGroupCreate) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *VolumeGroupCreate) validateName(formats strfmt.Registry) error {
+	if swag.IsZero(m.Name) { // not required
+		return nil
+	}
+
+	if err := validate.MaxLength("name", "body", m.Name, 120); err != nil {
+		return err
+	}
+
+	if err := validate.Pattern("name", "body", m.Name, `^[\s]*[A-Za-z0-9:_.\-][A-Za-z0-9\s:_.\-]*$`); err != nil {
+		return err
+	}
+
 	return nil
 }
 

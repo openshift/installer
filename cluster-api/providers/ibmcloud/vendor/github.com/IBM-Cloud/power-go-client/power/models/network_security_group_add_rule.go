@@ -25,7 +25,10 @@ type NetworkSecurityGroupAddRule struct {
 	// Enum: ["allow","deny"]
 	Action *string `json:"action"`
 
-	// destination ports
+	// The destination port for a network security group rule.
+	DestinationPort *NetworkSecurityGroupRulePort `json:"destinationPort,omitempty"`
+
+	// (deprecated - replaced by destinationPort) The destination port for a network security group rule.
 	DestinationPorts *NetworkSecurityGroupRulePort `json:"destinationPorts,omitempty"`
 
 	// protocol
@@ -36,7 +39,10 @@ type NetworkSecurityGroupAddRule struct {
 	// Required: true
 	Remote *NetworkSecurityGroupRuleRemote `json:"remote"`
 
-	// source ports
+	// The source port for a network security group rule.
+	SourcePort *NetworkSecurityGroupRulePort `json:"sourcePort,omitempty"`
+
+	// (deprecated - replaced by sourcePort) The source port for a network security group rule.
 	SourcePorts *NetworkSecurityGroupRulePort `json:"sourcePorts,omitempty"`
 }
 
@@ -45,6 +51,10 @@ func (m *NetworkSecurityGroupAddRule) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateAction(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateDestinationPort(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -57,6 +67,10 @@ func (m *NetworkSecurityGroupAddRule) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateRemote(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateSourcePort(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -108,6 +122,25 @@ func (m *NetworkSecurityGroupAddRule) validateAction(formats strfmt.Registry) er
 	// value enum
 	if err := m.validateActionEnum("action", "body", *m.Action); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (m *NetworkSecurityGroupAddRule) validateDestinationPort(formats strfmt.Registry) error {
+	if swag.IsZero(m.DestinationPort) { // not required
+		return nil
+	}
+
+	if m.DestinationPort != nil {
+		if err := m.DestinationPort.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("destinationPort")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("destinationPort")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -172,6 +205,25 @@ func (m *NetworkSecurityGroupAddRule) validateRemote(formats strfmt.Registry) er
 	return nil
 }
 
+func (m *NetworkSecurityGroupAddRule) validateSourcePort(formats strfmt.Registry) error {
+	if swag.IsZero(m.SourcePort) { // not required
+		return nil
+	}
+
+	if m.SourcePort != nil {
+		if err := m.SourcePort.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("sourcePort")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("sourcePort")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (m *NetworkSecurityGroupAddRule) validateSourcePorts(formats strfmt.Registry) error {
 	if swag.IsZero(m.SourcePorts) { // not required
 		return nil
@@ -195,6 +247,10 @@ func (m *NetworkSecurityGroupAddRule) validateSourcePorts(formats strfmt.Registr
 func (m *NetworkSecurityGroupAddRule) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.contextValidateDestinationPort(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateDestinationPorts(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -207,6 +263,10 @@ func (m *NetworkSecurityGroupAddRule) ContextValidate(ctx context.Context, forma
 		res = append(res, err)
 	}
 
+	if err := m.contextValidateSourcePort(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateSourcePorts(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -214,6 +274,27 @@ func (m *NetworkSecurityGroupAddRule) ContextValidate(ctx context.Context, forma
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *NetworkSecurityGroupAddRule) contextValidateDestinationPort(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.DestinationPort != nil {
+
+		if swag.IsZero(m.DestinationPort) { // not required
+			return nil
+		}
+
+		if err := m.DestinationPort.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("destinationPort")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("destinationPort")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -264,6 +345,27 @@ func (m *NetworkSecurityGroupAddRule) contextValidateRemote(ctx context.Context,
 				return ve.ValidateName("remote")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
 				return ce.ValidateName("remote")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *NetworkSecurityGroupAddRule) contextValidateSourcePort(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.SourcePort != nil {
+
+		if swag.IsZero(m.SourcePort) { // not required
+			return nil
+		}
+
+		if err := m.SourcePort.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("sourcePort")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("sourcePort")
 			}
 			return err
 		}

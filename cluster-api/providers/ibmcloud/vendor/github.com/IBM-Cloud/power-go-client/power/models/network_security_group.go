@@ -24,6 +24,9 @@ type NetworkSecurityGroup struct {
 	// Required: true
 	Crn *string `json:"crn"`
 
+	// Indicates if the Network Security Group is the default Network Security Group in the workspace
+	Default bool `json:"default,omitempty"`
+
 	// The ID of the Network Security Group
 	// Required: true
 	ID *string `json:"id"`

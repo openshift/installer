@@ -35,8 +35,17 @@ type PVMInstanceNetwork struct {
 	// ID of the network
 	NetworkID string `json:"networkID,omitempty"`
 
+	// ID of the network interface
+	NetworkInterfaceID string `json:"networkInterfaceID,omitempty"`
+
 	// The name of the network the address is on
 	NetworkName string `json:"networkName,omitempty"`
+
+	// IDs of the network necurity groups that the network interface is a member of
+	NetworkSecurityGroupIDs []string `json:"networkSecurityGroupIDs,omitempty"`
+
+	// Links to the network security groups that the network interface is a member of
+	NetworkSecurityGroupsHref []string `json:"networkSecurityGroupsHref,omitempty"`
 
 	// The address type (fixed or dynamic)
 	Type string `json:"type,omitempty"`

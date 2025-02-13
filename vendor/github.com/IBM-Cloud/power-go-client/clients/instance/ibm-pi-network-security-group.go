@@ -24,6 +24,10 @@ func NewIBMIPINetworkSecurityGroupClient(ctx context.Context, sess *ibmpisession
 
 // Get a network security group
 func (f *IBMPINetworkSecurityGroupClient) Get(id string) (*models.NetworkSecurityGroup, error) {
+	// Add check for on-prem location
+	if f.session.IsOnPrem() {
+		return nil, fmt.Errorf(helpers.NotOnPremSupported)
+	}
 	params := network_security_groups.NewV1NetworkSecurityGroupsIDGetParams().WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).WithNetworkSecurityGroupID(id)
 	resp, err := f.session.Power.NetworkSecurityGroups.V1NetworkSecurityGroupsIDGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
@@ -37,6 +41,10 @@ func (f *IBMPINetworkSecurityGroupClient) Get(id string) (*models.NetworkSecurit
 
 // Get all network security groups
 func (f *IBMPINetworkSecurityGroupClient) GetAll() (*models.NetworkSecurityGroups, error) {
+	// Add check for on-prem location
+	if f.session.IsOnPrem() {
+		return nil, fmt.Errorf(helpers.NotOnPremSupported)
+	}
 	params := network_security_groups.NewV1NetworkSecurityGroupsListParams().WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut)
 	resp, err := f.session.Power.NetworkSecurityGroups.V1NetworkSecurityGroupsList(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
@@ -50,6 +58,10 @@ func (f *IBMPINetworkSecurityGroupClient) GetAll() (*models.NetworkSecurityGroup
 
 // Create a network security group
 func (f *IBMPINetworkSecurityGroupClient) Create(body *models.NetworkSecurityGroupCreate) (*models.NetworkSecurityGroup, error) {
+	// Add check for on-prem location
+	if f.session.IsOnPrem() {
+		return nil, fmt.Errorf(helpers.NotOnPremSupported)
+	}
 	params := network_security_groups.NewV1NetworkSecurityGroupsPostParams().WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).WithBody(body)
 	postok, postcreated, err := f.session.Power.NetworkSecurityGroups.V1NetworkSecurityGroupsPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
@@ -66,6 +78,10 @@ func (f *IBMPINetworkSecurityGroupClient) Create(body *models.NetworkSecurityGro
 
 // Update a network security group
 func (f *IBMPINetworkSecurityGroupClient) Update(id string, body *models.NetworkSecurityGroupUpdate) (*models.NetworkSecurityGroup, error) {
+	// Add check for on-prem location
+	if f.session.IsOnPrem() {
+		return nil, fmt.Errorf(helpers.NotOnPremSupported)
+	}
 	params := network_security_groups.NewV1NetworkSecurityGroupsIDPutParams().WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).WithNetworkSecurityGroupID(id).WithBody(body)
 	resp, err := f.session.Power.NetworkSecurityGroups.V1NetworkSecurityGroupsIDPut(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
@@ -79,6 +95,10 @@ func (f *IBMPINetworkSecurityGroupClient) Update(id string, body *models.Network
 
 // Delete a network security group
 func (f *IBMPINetworkSecurityGroupClient) Delete(id string) error {
+	// Add check for on-prem location
+	if f.session.IsOnPrem() {
+		return fmt.Errorf(helpers.NotOnPremSupported)
+	}
 	params := network_security_groups.NewV1NetworkSecurityGroupsIDDeleteParams().WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).WithNetworkSecurityGroupID(id)
 	_, err := f.session.Power.NetworkSecurityGroups.V1NetworkSecurityGroupsIDDelete(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
@@ -89,6 +109,10 @@ func (f *IBMPINetworkSecurityGroupClient) Delete(id string) error {
 
 // Add a member to a network security group
 func (f *IBMPINetworkSecurityGroupClient) AddMember(id string, body *models.NetworkSecurityGroupAddMember) (*models.NetworkSecurityGroupMember, error) {
+	// Add check for on-prem location
+	if f.session.IsOnPrem() {
+		return nil, fmt.Errorf(helpers.NotOnPremSupported)
+	}
 	params := network_security_groups.NewV1NetworkSecurityGroupsMembersPostParams().WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).WithNetworkSecurityGroupID(id).WithBody(body)
 	resp, err := f.session.Power.NetworkSecurityGroups.V1NetworkSecurityGroupsMembersPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
@@ -102,6 +126,10 @@ func (f *IBMPINetworkSecurityGroupClient) AddMember(id string, body *models.Netw
 
 // Deleta a member from a network securti group
 func (f *IBMPINetworkSecurityGroupClient) DeleteMember(id, memberId string) error {
+	// Add check for on-prem location
+	if f.session.IsOnPrem() {
+		return fmt.Errorf(helpers.NotOnPremSupported)
+	}
 	params := network_security_groups.NewV1NetworkSecurityGroupsMembersDeleteParams().WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).WithNetworkSecurityGroupID(id).WithNetworkSecurityGroupMemberID(memberId)
 	_, err := f.session.Power.NetworkSecurityGroups.V1NetworkSecurityGroupsMembersDelete(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
@@ -112,6 +140,10 @@ func (f *IBMPINetworkSecurityGroupClient) DeleteMember(id, memberId string) erro
 
 // Add a rule to a network security group
 func (f *IBMPINetworkSecurityGroupClient) AddRule(id string, body *models.NetworkSecurityGroupAddRule) (*models.NetworkSecurityGroupRule, error) {
+	// Add check for on-prem location
+	if f.session.IsOnPrem() {
+		return nil, fmt.Errorf(helpers.NotOnPremSupported)
+	}
 	params := network_security_groups.NewV1NetworkSecurityGroupsRulesPostParams().WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).WithNetworkSecurityGroupID(id).WithBody(body)
 	resp, err := f.session.Power.NetworkSecurityGroups.V1NetworkSecurityGroupsRulesPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
@@ -125,6 +157,10 @@ func (f *IBMPINetworkSecurityGroupClient) AddRule(id string, body *models.Networ
 
 // Delete a rule from a network security group
 func (f *IBMPINetworkSecurityGroupClient) DeleteRule(id, ruleId string) error {
+	// Add check for on-prem location
+	if f.session.IsOnPrem() {
+		return fmt.Errorf(helpers.NotOnPremSupported)
+	}
 	params := network_security_groups.NewV1NetworkSecurityGroupsRulesDeleteParams().WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).WithNetworkSecurityGroupID(id).WithNetworkSecurityGroupRuleID(ruleId)
 	_, err := f.session.Power.NetworkSecurityGroups.V1NetworkSecurityGroupsRulesDelete(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
@@ -135,6 +171,10 @@ func (f *IBMPINetworkSecurityGroupClient) DeleteRule(id, ruleId string) error {
 
 // Action on a network security group
 func (f *IBMPINetworkSecurityGroupClient) Action(body *models.NetworkSecurityGroupsAction) error {
+	// Add check for on-prem location
+	if f.session.IsOnPrem() {
+		return fmt.Errorf(helpers.NotOnPremSupported)
+	}
 	params := network_security_groups.NewV1NetworkSecurityGroupsActionPostParams().WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).WithBody(body)
 	_, _, err := f.session.Power.NetworkSecurityGroups.V1NetworkSecurityGroupsActionPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
