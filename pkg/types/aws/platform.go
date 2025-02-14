@@ -3,6 +3,8 @@ package aws
 import (
 	"os"
 
+	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
+
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -127,6 +129,10 @@ type Platform struct {
 	// +default="Disabled"
 	// +kubebuilder:validation:Enum="Enabled";"Disabled"
 	UserProvisionedDNS dns.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
+
+	// SecurityGroupOverrides is an optional field that can be used to overwrite provisioned security groups
+	// +optional
+	SecurityGroupOverrides map[capa.SecurityGroupRole]string `json:"securityGroupOverrides,omitempty"`
 }
 
 // ServiceEndpoint store the configuration for services to
