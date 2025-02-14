@@ -291,6 +291,7 @@ func newTokenCredentialFromCertificates(credentials *Credentials, cloudConfig cl
 		ClientOptions: azcore.ClientOptions{
 			Cloud: cloudConfig,
 		},
+		SendCertificateChain: true,
 	}
 
 	data, err := os.ReadFile(credentials.ClientCertificatePath)
