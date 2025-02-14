@@ -676,7 +676,11 @@ func isAuthError(err error) bool {
 	// https://github.com/Azure/azure-sdk-for-go/blob/sdk/azidentity/v1.1.0/sdk/azidentity/errors.go#L36
 	var authErr *azidentity.AuthenticationFailedError
 	if errors.As(err, &authErr) {
-		if authErr.RawResponse.StatusCode >= 400 && authErr.RawResponse.StatusCode <= 403 {
+		if authErr.RawResponse == nil {
+			// Unable to get a proper response, probably due to some proxy error. Fixing this piece of code
+			// so it doesn't throw a panic.
+			return true
+		} else if authErr.RawResponse.StatusCode >= 400 && authErr.RawResponse.StatusCode <= 403 {
 			return true
 		}
 	}
