@@ -48,6 +48,7 @@
 * `standardGSFamily`
 * `standardHBrsv2Family`
 * `standardHBSFamily`
+* `standardHBv4Family`
 * `standardHCSFamily`
 * `standardHXFamily`
 * `standardLASv3Family`
@@ -55,10 +56,12 @@
 * `standardLSv2Family`
 * `standardLSv3Family`
 * `standardMDSMediumMemoryv2Family`
+* `standardMDSMediumMemoryv3Family`
 * `standardMIDSMediumMemoryv2Family`
 * `standardMISMediumMemoryv2Family`
 * `standardMSFamily`
 * `standardMSMediumMemoryv2Family`
+* `standardMSMediumMemoryv3Family`
 * `StandardNCADSA100v4Family`
 * `Standard NCASv3_T4 Family`
 * `standardNCSv3Family`
