@@ -69,7 +69,7 @@ func tagSharedVPCResources(ctx context.Context, clusterID string, installConfig 
 	}
 
 	ids := make([]*string, 0, len(privateSubnets)+len(publicSubnets)+len(edgeSubnets))
-	for id := range publicSubnets {
+	for id := range privateSubnets {
 		ids = append(ids, aws.String(id))
 	}
 	for id := range publicSubnets {
