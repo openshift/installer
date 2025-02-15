@@ -12,7 +12,12 @@ import (
 type Region struct {
 	Description string
 	VPCRegion   string
-	Zones       []string
+	Zones       map[string]Zone
+}
+
+// Zone holds the sysTypes for a zone in a IBM Power VS region.
+type Zone struct {
+	SysTypes []string
 }
 
 // Regions holds the regions for IBM Power VS, and descriptions used during the survey.
@@ -20,64 +25,95 @@ var Regions = map[string]Region{
 	"dal": {
 		Description: "Dallas, USA",
 		VPCRegion:   "us-south",
-		Zones: []string{
-			"dal10",
-			"dal12",
+		Zones: map[string]Zone{
+			"dal10": {
+				SysTypes: []string{"s922", "s1022", "e980", "e1080"},
+			},
+			"dal12": {
+				SysTypes: []string{"s922", "e980"},
+			},
 		},
 	},
 	"eu-de": {
 		Description: "Frankfurt, Germany",
 		VPCRegion:   "eu-de",
-		Zones: []string{
-			"eu-de-1",
-			"eu-de-2",
+		Zones: map[string]Zone{
+			"eu-de-1": {
+				SysTypes: []string{"s922", "s1022", "e980"},
+			},
+			"eu-de-2": {
+				SysTypes: []string{"s922", "e980"},
+			},
 		},
 	},
 	"lon": {
-		Description: "London, UK.",
+		Description: "London, UK",
 		VPCRegion:   "eu-gb",
-		Zones: []string{
-			"lon04",
-			"lon06",
+		Zones: map[string]Zone{
+			"lon04": {
+				SysTypes: []string{"s922", "e980"},
+			},
+			"lon06": {
+				SysTypes: []string{"s922", "e980"},
+			},
 		},
 	},
 	"mon": {
 		Description: "Montreal, Canada",
 		VPCRegion:   "ca-tor",
-		Zones:       []string{"mon01"},
+		Zones: map[string]Zone{
+			"mon01": {
+				SysTypes: []string{"s922", "e980"},
+			},
+		},
 	},
 	"osa": {
 		Description: "Osaka, Japan",
 		VPCRegion:   "jp-osa",
-		Zones:       []string{"osa21"},
-	},
-	"syd": {
-		Description: "Sydney, Australia",
-		VPCRegion:   "au-syd",
-		Zones: []string{
-			"syd04",
-			"syd05",
+		Zones: map[string]Zone{
+			"osa21": {
+				SysTypes: []string{"s922", "s1022", "e980"},
+			},
 		},
 	},
 	"sao": {
 		Description: "São Paulo, Brazil",
 		VPCRegion:   "br-sao",
-		Zones:       []string{"sao01"},
+		Zones: map[string]Zone{
+			"sao01": {
+				SysTypes: []string{"s922", "e980"},
+			},
+		},
+	},
+	"syd": {
+		Description: "Sydney, Australia",
+		VPCRegion:   "au-syd",
+		Zones: map[string]Zone{
+			"syd04": {
+				SysTypes: []string{"s922", "e980"},
+			},
+			"syd05": {
+				SysTypes: []string{"s922", "e980"},
+			},
+		},
 	},
 	"tor": {
 		Description: "Toronto, Canada",
 		VPCRegion:   "ca-tor",
-		Zones:       []string{"tor01"},
-	},
-	"tok": {
-		Description: "Tokyo, Japan",
-		VPCRegion:   "jp-tok",
-		Zones:       []string{"tok04"},
+		Zones: map[string]Zone{
+			"tor01": {
+				SysTypes: []string{"s922", "e980"},
+			},
+		},
 	},
 	"us-east": {
 		Description: "Washington DC, USA",
 		VPCRegion:   "us-east",
-		Zones:       []string{"us-east"},
+		Zones: map[string]Zone{
+			"us-east": {
+				SysTypes: []string{"s922", "e980"},
+			},
+		},
 	},
 }
 
@@ -117,7 +153,7 @@ func ValidateVPCRegion(region string) bool {
 func ValidateZone(zone string) bool {
 	for r := range Regions {
 		for z := range Regions[r].Zones {
-			if zone == Regions[r].Zones[z] {
+			if zone == z {
 				return true
 			}
 		}
@@ -130,7 +166,7 @@ func ZoneNames() []string {
 	zones := []string{}
 	for r := range Regions {
 		for z := range Regions[r].Zones {
-			zones = append(zones, Regions[r].Zones[z])
+			zones = append(zones, z)
 		}
 	}
 	return zones
@@ -140,7 +176,7 @@ func ZoneNames() []string {
 func RegionFromZone(zone string) string {
 	for r := range Regions {
 		for z := range Regions[r].Zones {
-			if zone == Regions[r].Zones[z] {
+			if zone == z {
 				return r
 			}
 		}
