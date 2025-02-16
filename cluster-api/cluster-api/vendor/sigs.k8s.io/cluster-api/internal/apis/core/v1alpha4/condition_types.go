@@ -53,17 +53,17 @@ type ConditionType string
 
 // Condition defines an observation of a Cluster API resource operational state.
 type Condition struct {
-	// Type of condition in CamelCase or in foo.example.com/CamelCase.
+	// type of condition in CamelCase or in foo.example.com/CamelCase.
 	// Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
 	// can be useful (see .node.status.conditions), the ability to deconflict is important.
 	// +required
 	Type ConditionType `json:"type"`
 
-	// Status of the condition, one of True, False, Unknown.
+	// status of the condition, one of True, False, Unknown.
 	// +required
 	Status corev1.ConditionStatus `json:"status"`
 
-	// Severity provides an explicit classification of Reason code, so the users or machines can immediately
+	// severity provides an explicit classification of Reason code, so the users or machines can immediately
 	// understand the current situation and act accordingly.
 	// The Severity field MUST be set only when Status=False.
 	// +optional
@@ -72,7 +72,7 @@ type Condition struct {
 	// Last time the condition transitioned from one status to another.
 	// This should be when the underlying condition changed. If that is not known, then using the time when
 	// the API field changed is acceptable.
-	// +required
+	// +optional
 	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
 
 	// The reason for the condition's last transition in CamelCase.

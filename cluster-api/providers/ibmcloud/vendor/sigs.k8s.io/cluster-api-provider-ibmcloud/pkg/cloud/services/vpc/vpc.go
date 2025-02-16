@@ -64,7 +64,6 @@ type Vpc interface {
 	GetVPCSubnetByName(subnetName string) (*vpcv1.Subnet, error)
 	GetLoadBalancerPoolByName(loadBalancerID string, poolName string) (*vpcv1.LoadBalancerPool, error)
 	GetLoadBalancerByName(loadBalancerName string) (*vpcv1.LoadBalancer, error)
-	GetSubnetAddrPrefix(vpcID, zone string) (string, error)
 	CreateSecurityGroup(options *vpcv1.CreateSecurityGroupOptions) (*vpcv1.SecurityGroup, *core.DetailedResponse, error)
 	DeleteSecurityGroup(options *vpcv1.DeleteSecurityGroupOptions) (*core.DetailedResponse, error)
 	ListSecurityGroups(options *vpcv1.ListSecurityGroupsOptions) (*vpcv1.SecurityGroupCollection, *core.DetailedResponse, error)

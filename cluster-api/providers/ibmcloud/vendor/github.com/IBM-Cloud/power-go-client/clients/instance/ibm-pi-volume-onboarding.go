@@ -25,9 +25,6 @@ func NewIBMPIVolumeOnboardingClient(ctx context.Context, sess *ibmpisession.IBMP
 
 // Get the information of volume onboarding operation
 func (f *IBMPIVolumeOnboardingClient) Get(id string) (*models.VolumeOnboarding, error) {
-	if f.session.IsOnPrem() {
-		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
-	}
 	params := p_cloud_volume_onboarding.NewPcloudVolumeOnboardingGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithVolumeOnboardingID(id)
@@ -43,9 +40,6 @@ func (f *IBMPIVolumeOnboardingClient) Get(id string) (*models.VolumeOnboarding, 
 
 // Get All volume onboardings for this cloud instance
 func (f *IBMPIVolumeOnboardingClient) GetAll() (*models.VolumeOnboardings, error) {
-	if f.session.IsOnPrem() {
-		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
-	}
 	params := p_cloud_volume_onboarding.NewPcloudVolumeOnboardingGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID)
@@ -61,9 +55,6 @@ func (f *IBMPIVolumeOnboardingClient) GetAll() (*models.VolumeOnboardings, error
 
 // Onboard auxiliary volumes to target site
 func (f *IBMPIVolumeOnboardingClient) CreateVolumeOnboarding(body *models.VolumeOnboardingCreate) (*models.VolumeOnboardingCreateResponse, error) {
-	if f.session.IsOnPrem() {
-		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
-	}
 	params := p_cloud_volume_onboarding.NewPcloudVolumeOnboardingPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)

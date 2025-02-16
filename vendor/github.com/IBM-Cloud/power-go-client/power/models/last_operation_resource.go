@@ -23,6 +23,9 @@ type LastOperationResource struct {
 	// description
 	Description string `json:"description,omitempty"`
 
+	// extensions
+	Extensions interface{} `json:"extensions,omitempty"`
+
 	// state
 	// Required: true
 	// Enum: ["in progress","succeeded","failed"]

@@ -31,6 +31,9 @@ type SharedProcessorPool struct {
 	// crn
 	Crn CRN `json:"crn,omitempty"`
 
+	// ID of the dedicated host where the Shared Processor Pool resides, if applicable
+	DedicatedHostID string `json:"dedicatedHostID,omitempty"`
+
 	// The host group the host belongs to
 	HostGroup string `json:"hostGroup,omitempty"`
 
