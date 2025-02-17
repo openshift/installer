@@ -22,7 +22,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/asset/machines"
 	osmachine "github.com/openshift/installer/pkg/asset/machines/openstack"
-	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/rhcos"
@@ -158,8 +157,14 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 			return err
 		}
 
-		// We need to replace the local cacert path with one that is used in OpenShift
+		var caCert []byte
 		if cloud.CACertFile != "" {
+			var err error
+			caCert, err = os.ReadFile(cloud.CACertFile)
+			if err != nil {
+				return err
+			}
+			// We need to replace the local cacert path with one that is used in OpenShift
 			cloud.CACertFile = "/etc/kubernetes/static-pod-resources/configmaps/cloud-config/ca-bundle.pem"
 		}
 
@@ -183,17 +188,12 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 			return err
 		}
 
-		cloudProviderConf, err := openstackmanifests.CloudProviderConfigSecret(cloud)
-		if err != nil {
-			return err
-		}
-
 		credsEncoded := base64.StdEncoding.EncodeToString(marshalled)
-		credsINIEncoded := base64.StdEncoding.EncodeToString(cloudProviderConf)
+		caCertEncoded := base64.StdEncoding.EncodeToString(caCert)
 		cloudCreds = cloudCredsSecretData{
 			OpenStack: &OpenStackCredsSecretData{
-				Base64encodeCloudCreds:    credsEncoded,
-				Base64encodeCloudCredsINI: credsINIEncoded,
+				Base64encodeCloudsYAML: credsEncoded,
+				Base64encodeCACert:     caCertEncoded,
 			},
 		}
 	case vspheretypes.Name:
