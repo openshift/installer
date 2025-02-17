@@ -95,6 +95,10 @@ apiVersion: v1
 metadata:
   name: test-cluster
 baseDomain: test-domain
+networking:
+  networkType: OpenShiftSDN
+  machineNetwork:
+  - cidr: 192.168.122.0/23
 platform:
   vsphere:
     apiVips:
@@ -102,7 +106,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set`,
+			expectedError: "invalid install-config configuration: [platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.vsphere.ingressVIPs: Required value: must specify at least one VIP for the Ingress]",
 		},
 		{
 			name: "no compute.replicas set for SNO",
