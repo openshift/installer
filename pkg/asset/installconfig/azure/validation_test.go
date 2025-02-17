@@ -696,6 +696,7 @@ func Test_validateResourceGroup(t *testing.T) {
 	azureClient.EXPECT().GetGroup(gomock.Any(), "valid-resource-group-with-resources").Return(validGroupResult, nil).AnyTimes()
 	azureClient.EXPECT().GetGroup(gomock.Any(), "valid-resource-group-tags").Return(validGroupWithTagsResult, nil).AnyTimes()
 	azureClient.EXPECT().GetGroup(gomock.Any(), "valid-resource-group-conf-tags").Return(validGroupWithConflictinsTagsResult, nil).AnyTimes()
+	azureClient.EXPECT().GetGroup(gomock.Any(), "valid-resource-group-with-resources-aro").Return(validGroupResult, nil).AnyTimes()
 	azureClient.EXPECT().ListResourceIDsByGroup(gomock.Any(), gomock.Not("valid-resource-group-with-resources")).Return(nil, nil).AnyTimes()
 	azureClient.EXPECT().ListResourceIDsByGroup(gomock.Any(), "valid-resource-group-with-resources").Return([]string{"id1", "id2", "id3"}, nil).AnyTimes()
 	azureClient.EXPECT().CheckIfARO(gomock.Any(), gomock.Not("valid-resource-group-with-resources-aro")).Return(false, nil).AnyTimes()
