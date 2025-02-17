@@ -86,26 +86,15 @@ func (o *ClusterUninstaller) deleteForwardingRule(ctx context.Context, item clou
 	switch item.typeName {
 	case globalForwardingRuleResource:
 		op, err = o.computeSvc.GlobalForwardingRules.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
+		item.scope = global
 	case regionForwardingRuleResource:
 		op, err = o.computeSvc.ForwardingRules.Delete(o.ProjectID, o.Region, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
+		item.scope = regional
 	default:
 		return fmt.Errorf("invalid forwarding rule type %q", item.typeName)
 	}
 
-	if err != nil && !isNoOp(err) {
-		o.resetRequestID(item.typeName, item.name)
-		return fmt.Errorf("failed to delete forwarding rule %s: %w", item.name, err)
-	}
-	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID(item.typeName, item.name)
-		return fmt.Errorf("failed to delete forwarding rule %s with error: %s", item.name, operationErrorMessage(op))
-	}
-	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
-		o.resetRequestID(item.typeName, item.name)
-		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted forwarding rule %s", item.name)
-	}
-	return nil
+	return o.handleOperation(ctx, op, err, item, "forwarding rule")
 }
 
 // destroyForwardingRules removes all forwarding rules with a name prefixed

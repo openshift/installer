@@ -68,20 +68,8 @@ func (o *ClusterUninstaller) deleteSubnetwork(ctx context.Context, item cloudRes
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.Subnetworks.Delete(o.ProjectID, o.Region, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
-	if err != nil && !isNoOp(err) {
-		o.resetRequestID(item.typeName, item.name)
-		return errors.Wrapf(err, "failed to delete subnetwork %s", item.name)
-	}
-	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID(item.typeName, item.name)
-		return errors.Errorf("failed to delete subnetwork %s with error: %s", item.name, operationErrorMessage(op))
-	}
-	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
-		o.resetRequestID(item.typeName, item.name)
-		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted subnetwork %s", item.name)
-	}
-	return nil
+	item.scope = regional
+	return o.handleOperation(ctx, op, err, item, "subnetwork")
 }
 
 // destroySubNetworks removes all subnetwork resources that have a name prefixed

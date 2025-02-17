@@ -84,26 +84,15 @@ func (o *ClusterUninstaller) deleteAddress(ctx context.Context, item cloudResour
 	switch item.typeName {
 	case globalAddressResource:
 		op, err = o.computeSvc.GlobalAddresses.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
+		item.scope = global
 	case regionalAddressResource:
 		op, err = o.computeSvc.Addresses.Delete(o.ProjectID, o.Region, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
+		item.scope = regional
 	default:
 		return fmt.Errorf("invalid address type %q", item.typeName)
 	}
 
-	if err != nil && !isNoOp(err) {
-		o.resetRequestID(item.typeName, item.name)
-		return fmt.Errorf("failed to delete address %s: %w", item.name, err)
-	}
-	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID(item.typeName, item.name)
-		return fmt.Errorf("failed to delete address %s with error: %s", item.name, operationErrorMessage(op))
-	}
-	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
-		o.resetRequestID(item.typeName, item.name)
-		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted address %s", item.name)
-	}
-	return nil
+	return o.handleOperation(ctx, op, err, item, "address")
 }
 
 // destroyAddresses removes all address resources that have a name prefixed

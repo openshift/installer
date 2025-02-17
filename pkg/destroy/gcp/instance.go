@@ -106,20 +106,8 @@ func (o *ClusterUninstaller) deleteInstance(ctx context.Context, item cloudResou
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.Instances.Delete(o.ProjectID, item.zone, item.name).RequestId(o.requestID(item.typeName, item.zone, item.name)).Context(ctx).Do()
-	if err != nil && !isNoOp(err) {
-		o.resetRequestID(item.typeName, item.zone, item.name)
-		return errors.Wrapf(err, "failed to delete instance %s in zone %s", item.name, item.zone)
-	}
-	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID(item.typeName, item.zone, item.name)
-		return errors.Errorf("failed to delete instance %s in zone %s with error: %s", item.name, item.zone, operationErrorMessage(op))
-	}
-	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
-		o.resetRequestID(item.typeName, item.name)
-		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted instance %s", item.name)
-	}
-	return nil
+	item.scope = zonal
+	return o.handleOperation(ctx, op, err, item, "instance")
 }
 
 // destroyInstances searches for instances across all zones that have a name that starts with
@@ -155,11 +143,11 @@ func (o *ClusterUninstaller) stopInstance(ctx context.Context, item cloudResourc
 		o.resetRequestID(stopInstanceResourceName, item.zone, item.name)
 		return errors.Wrapf(err, "failed to stop instance %s in zone %s", item.name, item.zone)
 	}
-	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
+	if op != nil && op.Status == DONE && isErrorStatus(op.HttpErrorStatusCode) {
 		o.resetRequestID(stopInstanceResourceName, item.zone, item.name)
 		return errors.Errorf("failed to stop instance %s in zone %s with error: %s", item.name, item.zone, operationErrorMessage(op))
 	}
-	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
+	if (err != nil && isNoOp(err)) || (op != nil && op.Status == DONE) {
 		o.resetRequestID(stopInstanceResourceName, item.name)
 		o.deletePendingItems(stopInstanceResourceName, []cloudResource{item})
 		o.Logger.Infof("Stopped instance %s", item.name)
