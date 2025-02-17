@@ -327,3 +327,5 @@ replace github.com/openshift/assisted-service/models => github.com/openshift/ass
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
 
 replace github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
+
+replace github.com/openshift/api => github.com/rvanderp3/api v0.0.0-20250217155916-ff9d1455081c
