@@ -212,6 +212,11 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		File:   asset.File{Filename: "02_powervs-cluster.yaml"},
 	})
 
+	if vpcRegion != cosRegion {
+		logrus.Debugf("GenerateClusterAssets: vpcRegion(%s) is different than cosRegion(%s), cosRegion. Overriding bucket name", vpcRegion, cosRegion)
+		bucket = fmt.Sprintf("rhcos-powervs-images-%s", cosRegion)
+	}
+
 	powerVSImage = &capibm.IBMPowerVSImage{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: capibm.GroupVersion.String(),
