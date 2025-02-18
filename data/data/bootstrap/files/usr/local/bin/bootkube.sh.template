@@ -454,6 +454,7 @@ then
 	copy_static_resources_for vsphere
 	copy_static_resources_for nutanix
 	copy_static_resources_for gcp
+	copy_static_resources_for aws
 
 	cp mco-bootstrap/manifests/* manifests/
 
