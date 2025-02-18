@@ -617,10 +617,8 @@ func ClusterAPIFeatureGateEnabled(platform string, fgs featuregates.FeatureGate)
 
 	// Check if CAPI install is enabled for individual platforms.
 	switch platform {
-	case aws.Name, azure.Name, gcp.Name, nutanix.Name, openstack.Name, powervs.Name, vsphere.Name:
+	case aws.Name, azure.Name, gcp.Name, nutanix.Name, openstack.Name, powervs.Name, vsphere.Name, azure.StackTerraformName, azure.StackCloud.Name():
 		return true
-	case azure.StackTerraformName, azure.StackCloud.Name():
-		return false
 	case ibmcloud.Name:
 		return fgs.Enabled(features.FeatureGateClusterAPIInstallIBMCloud)
 	default:

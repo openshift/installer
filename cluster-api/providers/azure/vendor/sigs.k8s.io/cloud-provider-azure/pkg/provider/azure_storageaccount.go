@@ -33,7 +33,6 @@ import (
 	"k8s.io/klog/v2"
 	"k8s.io/utils/pointer"
 
-	"sigs.k8s.io/cloud-provider-azure/pkg/azclient"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/accountclient"
 	"sigs.k8s.io/cloud-provider-azure/pkg/cache"
 	azcache "sigs.k8s.io/cloud-provider-azure/pkg/cache"
@@ -348,22 +347,29 @@ func (az *Cloud) EnsureStorageAccount(ctx context.Context, accountOptions *Accou
 	if pointer.BoolDeref(accountOptions.CreatePrivateEndpoint, false) {
 		clientFactory := az.NetworkClientFactory
 		if clientFactory == nil {
+			// multi-tenant support
 			clientFactory = az.ComputeClientFactory
 		}
 		if _, err := clientFactory.GetPrivateZoneClient().Get(ctx, vnetResourceGroup, privateDNSZoneName); err != nil {
-			klog.V(2).Infof("get private dns zone %s returned with %v", privateDNSZoneName, err.Error())
-			// Create DNS zone first, this could make sure driver has write permission on vnetResourceGroup
-			if err := az.createPrivateDNSZone(ctx, vnetResourceGroup, privateDNSZoneName); err != nil {
-				return "", "", fmt.Errorf("create private DNS zone(%s) in resourceGroup(%s): %w", privateDNSZoneName, vnetResourceGroup, err)
+			if strings.Contains(err.Error(), consts.ResourceNotFoundMessageCode) {
+				// Create DNS zone first, this could make sure driver has write permission on vnetResourceGroup
+				if err := az.createPrivateDNSZone(ctx, vnetResourceGroup, privateDNSZoneName); err != nil {
+					return "", "", fmt.Errorf("create private DNS zone(%s) in resourceGroup(%s): %w", privateDNSZoneName, vnetResourceGroup, err)
+				}
+			} else {
+				return "", "", fmt.Errorf("get private dns zone %s returned with %v", privateDNSZoneName, err.Error())
 			}
 		}
 
 		// Create virtual link to the private DNS zone
 		vNetLinkName := vnetName + "-vnetlink"
 		if _, err := clientFactory.GetVirtualNetworkLinkClient().Get(ctx, vnetResourceGroup, privateDNSZoneName, vNetLinkName); err != nil {
-			klog.V(2).Infof("get virtual link for vnet(%s) and DNS Zone(%s) returned with %v", vnetName, privateDNSZoneName, err.Error())
-			if err := az.createVNetLink(ctx, vNetLinkName, vnetResourceGroup, vnetName, privateDNSZoneName); err != nil {
-				return "", "", fmt.Errorf("create virtual link for vnet(%s) and DNS Zone(%s) in resourceGroup(%s): %w", vnetName, privateDNSZoneName, vnetResourceGroup, err)
+			if strings.Contains(err.Error(), consts.ResourceNotFoundMessageCode) {
+				if err := az.createVNetLink(ctx, vNetLinkName, vnetResourceGroup, vnetName, privateDNSZoneName); err != nil {
+					return "", "", fmt.Errorf("create virtual link for vnet(%s) and DNS Zone(%s) in resourceGroup(%s): %w", vnetName, privateDNSZoneName, vnetResourceGroup, err)
+				}
+			} else {
+				return "", "", fmt.Errorf("get virtual link for vnet(%s) and DNS Zone(%s) in resourceGroup(%s) returned with %w", vnetName, privateDNSZoneName, vnetResourceGroup, err)
 			}
 		}
 	}
@@ -615,10 +621,9 @@ func (az *Cloud) createPrivateDNSZone(ctx context.Context, vnetResourceGroup, pr
 	klog.V(2).Infof("Creating private dns zone(%s) in resourceGroup (%s)", privateDNSZoneName, vnetResourceGroup)
 	location := LocationGlobal
 	privateDNSZone := privatedns.PrivateZone{Location: &location}
-	var clientFactory azclient.ClientFactory
-	if az.NetworkClientFactory != nil {
-		clientFactory = az.NetworkClientFactory
-	} else {
+	clientFactory := az.NetworkClientFactory
+	if clientFactory == nil {
+		// multi-tenant support
 		clientFactory = az.ComputeClientFactory
 	}
 	privatednsclient := clientFactory.GetPrivateZoneClient()
@@ -635,10 +640,9 @@ func (az *Cloud) createPrivateDNSZone(ctx context.Context, vnetResourceGroup, pr
 
 func (az *Cloud) createVNetLink(ctx context.Context, vNetLinkName, vnetResourceGroup, vnetName, privateDNSZoneName string) error {
 	klog.V(2).Infof("Creating virtual link for vnet(%s) and DNS Zone(%s) in resourceGroup(%s)", vNetLinkName, privateDNSZoneName, vnetResourceGroup)
-	var clientFactory azclient.ClientFactory
-	if az.NetworkClientFactory != nil {
-		clientFactory = az.NetworkClientFactory
-	} else {
+	clientFactory := az.NetworkClientFactory
+	if clientFactory == nil {
+		// multi-tenant support
 		clientFactory = az.ComputeClientFactory
 	}
 	vnetLinkClient := clientFactory.GetVirtualNetworkLinkClient()
@@ -718,22 +722,20 @@ func (az *Cloud) AddStorageAccountTags(ctx context.Context, subsID, resourceGrou
 		return rerr
 	}
 
-	originalLen := len(result.Tags)
-	newTags := result.Tags
-	if newTags == nil {
-		newTags = make(map[string]*string)
-	}
-
-	// merge two tag map
+	// merge two tag map into one
+	newTags := make(map[string]*string)
 	for k, v := range tags {
 		newTags[k] = v
 	}
+	for k, v := range result.Tags {
+		newTags[k] = v
+	}
 
-	if len(newTags) > originalLen {
+	if len(newTags) > len(result.Tags) {
 		// only update when newTags is different from old tags
 		_ = az.storageAccountCache.Delete(account) // clean cache
 		updateParams := storage.AccountUpdateParameters{Tags: newTags}
-		klog.V(2).Infof("update storage account(%s) with tags(%+v)", account, newTags)
+		klog.V(2).Infof("add storage account(%s) with tags(%+v)", account, newTags)
 		return az.StorageAccountClient.Update(ctx, subsID, resourceGroup, account, updateParams)
 	}
 	return nil
@@ -760,6 +762,7 @@ func (az *Cloud) RemoveStorageAccountTag(ctx context.Context, subsID, resourceGr
 		// only update when newTags is different from old tags
 		_ = az.storageAccountCache.Delete(account) // clean cache
 		updateParams := storage.AccountUpdateParameters{Tags: result.Tags}
+		klog.V(2).Infof("remove tag(%s) from storage account(%s)", key, account)
 		return az.StorageAccountClient.Update(ctx, subsID, resourceGroup, account, updateParams)
 	}
 	return nil

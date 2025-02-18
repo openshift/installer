@@ -89,6 +89,11 @@ type PublicIPPrefixSku_Name string
 
 const PublicIPPrefixSku_Name_Standard = PublicIPPrefixSku_Name("Standard")
 
+// Mapping from string to PublicIPPrefixSku_Name
+var publicIPPrefixSku_Name_Values = map[string]PublicIPPrefixSku_Name{
+	"standard": PublicIPPrefixSku_Name_Standard,
+}
+
 // +kubebuilder:validation:Enum={"Global","Regional"}
 type PublicIPPrefixSku_Tier string
 
@@ -96,6 +101,12 @@ const (
 	PublicIPPrefixSku_Tier_Global   = PublicIPPrefixSku_Tier("Global")
 	PublicIPPrefixSku_Tier_Regional = PublicIPPrefixSku_Tier("Regional")
 )
+
+// Mapping from string to PublicIPPrefixSku_Tier
+var publicIPPrefixSku_Tier_Values = map[string]PublicIPPrefixSku_Tier{
+	"global":   PublicIPPrefixSku_Tier_Global,
+	"regional": PublicIPPrefixSku_Tier_Regional,
+}
 
 // Reference to another subresource.
 type PublicIpPrefixSubResource_ARM struct {

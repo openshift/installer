@@ -687,12 +687,45 @@ type DiskEncryptionSetParameters struct {
 	ID string `json:"id,omitempty"`
 }
 
+// DiffDiskPlacement - Specifies the ephemeral disk placement for operating system disk. This property can be used by user
+// in the request to choose the location i.e, cache disk, resource disk or nvme disk space for
+// Ephemeral OS disk provisioning. For more information on Ephemeral OS disk size requirements, please refer Ephemeral OS
+// disk size requirements for Windows VM at
+// https://docs.microsoft.com/azure/virtual-machines/windows/ephemeral-os-disks#size-requirements and Linux VM at
+// https://docs.microsoft.com/azure/virtual-machines/linux/ephemeral-os-disks#size-requirements.
+type DiffDiskPlacement string
+
+const (
+	// DiffDiskPlacementCacheDisk places the OsDisk on cache disk.
+	DiffDiskPlacementCacheDisk DiffDiskPlacement = "CacheDisk"
+
+	// DiffDiskPlacementNvmeDisk places the OsDisk on NVMe disk.
+	DiffDiskPlacementNvmeDisk DiffDiskPlacement = "NvmeDisk"
+
+	// DiffDiskPlacementResourceDisk places the OsDisk on temp disk.
+	DiffDiskPlacementResourceDisk DiffDiskPlacement = "ResourceDisk"
+)
+
+// PossibleDiffDiskPlacementValues returns the possible values for the DiffDiskPlacement const type.
+func PossibleDiffDiskPlacementValues() []DiffDiskPlacement {
+	return []DiffDiskPlacement{
+		DiffDiskPlacementCacheDisk,
+		DiffDiskPlacementNvmeDisk,
+		DiffDiskPlacementResourceDisk,
+	}
+}
+
 // DiffDiskSettings describe ephemeral disk settings for the os disk.
 type DiffDiskSettings struct {
 	// Option enables ephemeral OS when set to "Local"
 	// See https://learn.microsoft.com/azure/virtual-machines/ephemeral-os-disks for full details
 	// +kubebuilder:validation:Enum=Local
 	Option string `json:"option"`
+
+	// Placement specifies the ephemeral disk placement for operating system disk. If placement is specified, Option must be set to "Local".
+	// +kubebuilder:validation:Enum=CacheDisk;NvmeDisk;ResourceDisk
+	// +optional
+	Placement *DiffDiskPlacement `json:"placement,omitempty"`
 }
 
 // SubnetRole defines the unique role of a subnet.

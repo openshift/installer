@@ -80,6 +80,11 @@ type ExtendedLocationType string
 
 const ExtendedLocationType_EdgeZone = ExtendedLocationType("EdgeZone")
 
+// Mapping from string to ExtendedLocationType
+var extendedLocationType_Values = map[string]ExtendedLocationType{
+	"edgezone": ExtendedLocationType_EdgeZone,
+}
+
 // An IP Configuration of the private endpoint.
 type PrivateEndpointIPConfiguration_ARM struct {
 	// Name: The name of the resource that is unique within a resource group.
