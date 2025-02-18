@@ -203,7 +203,7 @@ func TestGetUserTags(t *testing.T) {
 			name:          "failed to fetch tag",
 			userTags:      testTags[40:],
 			processedTags: nil,
-			expectedError: `failed to fetch user-defined tag openshift/key52/value52(500): googleapi: Error 500: Internal error while fetching 'openshift/key52/value52'`,
+			expectedError: `failed to fetch user-defined tag openshift/key52/value52: googleapi: Error 500: Internal error while fetching 'openshift/key52/value52'`,
 		},
 	}
 
