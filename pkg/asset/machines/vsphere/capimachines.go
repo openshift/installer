@@ -150,10 +150,14 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			},
 		}
 
-		if failureDomainName, ok := data.MachineFailureDomain[machine.Name]; ok {
-			vsphereMachine.Spec.FailureDomain = &failureDomainName
-		} else {
-			return nil, fmt.Errorf("unable to find failure domain for machine %s", machine.Name)
+		// only set failureDomainName if VMGroup is defined as vm-host group
+		// is the only scenario we create vspherefailuredomainspec and vspheredeploymentzone
+		if providerSpec.Workspace.VMGroup != "" {
+			if failureDomainName, ok := data.MachineFailureDomain[machine.Name]; ok {
+				vsphereMachine.Spec.FailureDomain = &failureDomainName
+			} else {
+				return nil, fmt.Errorf("unable to find failure domain for machine %s", machine.Name)
+			}
 		}
 
 		// If we have additional disks to add to VM, lets iterate through them and add to CAPV machine
