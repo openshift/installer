@@ -199,13 +199,13 @@ func (r vmReconciler) deleteIPAddressClaims(ctx context.Context, vmCtx *capvcont
 				if apierrors.IsNotFound(err) {
 					continue
 				}
-				return errors.Wrapf(err, fmt.Sprintf("failed to get IPAddressClaim %q to remove the finalizer", ipAddrClaimName))
+				return errors.Wrapf(err, "failed to get IPAddressClaim %q to remove the finalizer", ipAddrClaimName)
 			}
 
 			if ctrlutil.RemoveFinalizer(ipAddrClaim, infrav1.IPAddressClaimFinalizer) {
 				log.Info(fmt.Sprintf("Removing finalizer %s", infrav1.IPAddressClaimFinalizer), "IPAddressClaim", klog.KObj(ipAddrClaim))
 				if err := vmCtx.Client.Update(ctx, ipAddrClaim); err != nil {
-					return errors.Wrapf(err, fmt.Sprintf("failed to update IPAddressClaim %s", klog.KObj(ipAddrClaim)))
+					return errors.Wrapf(err, "failed to update IPAddressClaim %s", klog.KObj(ipAddrClaim))
 				}
 			}
 		}

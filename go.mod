@@ -72,8 +72,8 @@ require (
 	github.com/microsoftgraph/msgraph-sdk-go v0.59.0
 	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.5.4-0.20250116153252-296a5347104c
 	github.com/nutanix-cloud-native/prism-go-client v0.5.0
-	github.com/onsi/gomega v1.36.1
-	github.com/openshift/api v0.0.0-20250108172834-78bd56dba39b
+	github.com/onsi/gomega v1.36.2
+	github.com/openshift/api v0.0.0-20250218131406-8b82294c5e3a
 	github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6
 	github.com/openshift/assisted-service/api v0.0.0
 	github.com/openshift/assisted-service/client v0.0.0
@@ -103,13 +103,13 @@ require (
 	github.com/thoas/go-funk v0.9.3
 	github.com/ulikunitz/xz v0.5.12
 	github.com/vincent-petithory/dataurl v1.0.0
-	github.com/vmware/govmomi v0.46.3
+	github.com/vmware/govmomi v0.47.1
 	go.uber.org/mock v0.5.0
-	golang.org/x/crypto v0.31.0
-	golang.org/x/oauth2 v0.24.0
+	golang.org/x/crypto v0.32.0
+	golang.org/x/oauth2 v0.25.0
 	golang.org/x/sync v0.10.0
-	golang.org/x/sys v0.28.0
-	golang.org/x/term v0.27.0
+	golang.org/x/sys v0.29.0
+	golang.org/x/term v0.28.0
 	golang.org/x/text v0.21.0
 	google.golang.org/api v0.203.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20241007155032-5fefd90f89a9
@@ -131,8 +131,8 @@ require (
 	sigs.k8s.io/cluster-api-provider-gcp v1.7.1-0.20240724153512-c3b8b533143c
 	sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0
 	sigs.k8s.io/cluster-api-provider-openstack v0.11.1
-	sigs.k8s.io/cluster-api-provider-vsphere v1.12.0-rc.0.0.20241223082411-2880c92b15b6
-	sigs.k8s.io/controller-runtime v0.19.3
+	sigs.k8s.io/cluster-api-provider-vsphere v1.12.0-rc.0.0.20250203113257-38f6b67f9b7d
+	sigs.k8s.io/controller-runtime v0.20.1
 	sigs.k8s.io/controller-tools v0.16.3
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3
 	sigs.k8s.io/yaml v1.4.0
@@ -197,7 +197,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.7.0-rc.1 // indirect
-	github.com/google/btree v1.0.1 // indirect
+	github.com/google/btree v1.1.3 // indirect
 	github.com/google/gnostic-models v0.6.9-0.20230804172637-c7be7c783f49 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.8 // indirect
@@ -281,13 +281,13 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/mod v0.22.0 // indirect
-	golang.org/x/net v0.33.0 // indirect
+	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
-	golang.org/x/tools v0.28.0 // indirect
+	golang.org/x/tools v0.29.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20241015192408-796eee8c2d53 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241015192408-796eee8c2d53 // indirect
-	google.golang.org/protobuf v1.35.1 // indirect
+	google.golang.org/protobuf v1.36.1 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
@@ -297,7 +297,7 @@ require (
 	gorm.io/gorm v1.24.5 // indirect
 	k8s.io/apiserver v0.32.1 // indirect
 	k8s.io/cli-runtime v0.31.1 // indirect
-	k8s.io/cluster-bootstrap v0.31.4 // indirect
+	k8s.io/cluster-bootstrap v0.32.1 // indirect
 	k8s.io/component-base v0.32.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f // indirect
 	k8s.io/kubectl v0.31.1 // indirect
@@ -329,3 +329,6 @@ replace github.com/openshift/assisted-service/models => github.com/openshift/ass
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
 
 replace github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
+
+// This is to force capi back for the older provider version
+replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.19.3
