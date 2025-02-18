@@ -62,7 +62,6 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
 
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
-ENV PATH /bin:/usr/local/bin
 ENV HOME /output
 ENV LC_ALL en_US.UTF-8
 WORKDIR /output
