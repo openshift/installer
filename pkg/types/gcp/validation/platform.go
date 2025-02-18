@@ -2,9 +2,11 @@ package validation
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"sort"
 
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -76,6 +78,16 @@ var (
 
 	// userLabelKeyPrefixRegex is for verifying that the label key does not contain restricted prefixes.
 	userLabelKeyPrefixRegex = regexp.MustCompile(`^(?i)(kubernetes\-io|openshift\-io)`)
+
+	supportedEndpointNames = sets.New(
+		gcp.CloudResourceManagerServiceName,
+		gcp.ComputeServiceName,
+		gcp.DNSServiceName,
+		gcp.FileServiceName,
+		gcp.IAMServiceName,
+		gcp.ServiceUsageServiceName,
+		gcp.StorageServiceName,
+	)
 )
 
 const (
@@ -118,6 +130,7 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 
 	// check if configured userLabels are valid.
 	allErrs = append(allErrs, validateUserLabels(p.UserLabels, fldPath.Child("userLabels"))...)
+	allErrs = append(allErrs, validateServiceEndpoints(p.ServiceEndpoints, fldPath.Child("serviceEndpoints"))...)
 
 	return allErrs
 }
@@ -159,5 +172,51 @@ func validateLabel(key, value string) error {
 	if userLabelKeyPrefixRegex.MatchString(key) {
 		return fmt.Errorf("label key contains restricted prefix. Label key cannot have `kubernetes-io`, `openshift-io` prefixes")
 	}
+	return nil
+}
+
+func validateServiceEndpoints(endpoints []gcp.ServiceEndpoint, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	tracker := map[string]int{}
+	for idx, e := range endpoints {
+		fldp := fldPath.Index(idx)
+		if !supportedEndpointNames.Has(e.Name) {
+			allErrs = append(allErrs, field.NotSupported(fldp.Child("name"), e.Name, sets.List(supportedEndpointNames)))
+		}
+		if _, ok := tracker[e.Name]; ok {
+			allErrs = append(allErrs, field.Duplicate(fldp.Child("name"), e.Name))
+		} else {
+			tracker[e.Name] = idx
+		}
+
+		if err := validateServiceURL(e.URL); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldp.Child("url"), e.URL, err.Error()))
+		}
+	}
+	return allErrs
+}
+
+var schemeRE = regexp.MustCompile("^([^:]+)://")
+
+func validateServiceURL(uri string) error {
+	endpoint := uri
+	if !schemeRE.MatchString(endpoint) {
+		scheme := "https"
+		endpoint = fmt.Sprintf("%s://%s", scheme, endpoint)
+	}
+
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return err
+	}
+	if u.Hostname() == "" {
+		return fmt.Errorf("host cannot be empty, empty host provided")
+	}
+	if s := u.Scheme; s != "https" {
+		return fmt.Errorf("invalid scheme %s, only https allowed", s)
+	}
+	// Unlike AWS, the format can include a path without request parameters see
+	// https://cloud.google.com/storage/docs/request-endpoints as an example.
+
 	return nil
 }

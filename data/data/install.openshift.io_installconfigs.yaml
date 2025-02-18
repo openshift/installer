@@ -3650,6 +3650,33 @@ spec:
                     description: Region specifies the GCP region where the cluster
                       will be created.
                     type: string
+                  serviceEndpoints:
+                    description: |-
+                      ServiceEndpoints list contains custom endpoints which will override default
+                      service endpoint of GCP Services.
+                      There must be only one ServiceEndpoint for a service.
+                    items:
+                      description: |-
+                        ServiceEndpoint stores the configuration for services to
+                        override existing defaults of GCP Services.
+                      properties:
+                        name:
+                          description: |-
+                            Name is the name of the GCP service.
+                            This must be provided and cannot be empty.
+                          type: string
+                        url:
+                          description: |-
+                            URL is fully qualified URI with scheme https, that overrides the default generated
+                            endpoint for a client.
+                            This must be provided and cannot be empty.
+                          pattern: ^https://
+                          type: string
+                      required:
+                      - name
+                      - url
+                      type: object
+                    type: array
                   userLabels:
                     description: |-
                       userLabels has additional keys and values that the installer will add as
