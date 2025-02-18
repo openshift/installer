@@ -413,7 +413,7 @@ func TestConfigMasters(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testCase, func(t *testing.T) {
-			data, err := Machines(clusterID, tc.installConfig, tc.machinePool, "", "", "")
+			data, err := Machines(clusterID, tc.installConfig, tc.machinePool, "", "")
 			assertOnUnexpectedErrorState(t, tc.expectedError, err)
 
 			if len(tc.workspaces) > 0 {
@@ -492,7 +492,7 @@ func TestHostsToMachines(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testCase, func(t *testing.T) {
-			data, err := Machines(clusterID, tc.installConfig, tc.machinePool, "", tc.role, "")
+			data, err := Machines(clusterID, tc.installConfig, tc.machinePool, tc.role, "")
 			assertOnUnexpectedErrorState(t, tc.expectedError, err)
 
 			// Check machine counts

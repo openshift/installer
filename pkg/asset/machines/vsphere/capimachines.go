@@ -71,8 +71,8 @@ func getNetworkInventoryPath(vcenterContext vsphere.VCenterContext, networkName 
 }
 
 // GenerateMachines returns a list of capi machines.
-func GenerateMachines(ctx context.Context, clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage string, role string, metadata *vsphere.Metadata) ([]*asset.RuntimeFile, error) {
-	data, err := Machines(clusterID, config, pool, osImage, role, "")
+func GenerateMachines(ctx context.Context, clusterID string, config *types.InstallConfig, pool *types.MachinePool, role string, metadata *vsphere.Metadata) ([]*asset.RuntimeFile, error) {
+	data, err := Machines(clusterID, config, pool, role, "")
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve machines: %w", err)
 	}
