@@ -341,6 +341,21 @@ func (mr *MockAPIMockRecorder) GetEncryptionKey(ctx, keyCRN any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEncryptionKey", reflect.TypeOf((*MockAPI)(nil).GetEncryptionKey), ctx, keyCRN)
 }
 
+// GetIBMCloudRegions mocks base method.
+func (m *MockAPI) GetIBMCloudRegions(ctx context.Context) (map[string]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetIBMCloudRegions", ctx)
+	ret0, _ := ret[0].(map[string]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetIBMCloudRegions indicates an expected call of GetIBMCloudRegions.
+func (mr *MockAPIMockRecorder) GetIBMCloudRegions(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIBMCloudRegions", reflect.TypeOf((*MockAPI)(nil).GetIBMCloudRegions), ctx)
+}
+
 // GetLoadBalancer mocks base method.
 func (m *MockAPI) GetLoadBalancer(ctx context.Context, loadBalancerID string) (*vpcv1.LoadBalancer, error) {
 	m.ctrl.T.Helper()
