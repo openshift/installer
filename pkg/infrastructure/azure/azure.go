@@ -715,6 +715,9 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 	}
 
 	resourceGroupName := fmt.Sprintf("%s-rg", in.Metadata.InfraID)
+	if in.Metadata.Azure.ResourceGroupName != "" {
+		resourceGroupName = in.Metadata.Azure.ResourceGroupName
+	}
 	securityGroupName := fmt.Sprintf("%s-nsg", in.Metadata.InfraID)
 	sshRuleName := fmt.Sprintf("%s_ssh_in", in.Metadata.InfraID)
 
