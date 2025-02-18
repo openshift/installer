@@ -36,8 +36,12 @@ func TestValidatePlatform(t *testing.T) {
 		{
 			name: "hosted zone with subnets",
 			platform: &aws.Platform{
-				Region:     "us-east-1",
-				Subnets:    []string{"test-subnet"},
+				Region: "us-east-1",
+				VPC: aws.VPC{
+					Subnets: []aws.Subnet{
+						{ID: "test-subnet"},
+					},
+				},
 				HostedZone: "test-hosted-zone",
 			},
 		},
@@ -209,8 +213,12 @@ func TestValidatePlatform(t *testing.T) {
 			name:     "valid hosted zone & role should not throw an error",
 			credMode: types.PassthroughCredentialsMode,
 			platform: &aws.Platform{
-				Region:         "us-east-1",
-				Subnets:        []string{"test-subnet"},
+				Region: "us-east-1",
+				VPC: aws.VPC{
+					Subnets: []aws.Subnet{
+						{ID: "test-subnet"},
+					},
+				},
 				HostedZone:     "test-hosted-zone",
 				HostedZoneRole: "test-hosted-zone-role",
 			},
@@ -218,8 +226,12 @@ func TestValidatePlatform(t *testing.T) {
 		{
 			name: "hosted zone role without credential mode should error",
 			platform: &aws.Platform{
-				Region:         "us-east-1",
-				Subnets:        []string{"test-subnet"},
+				Region: "us-east-1",
+				VPC: aws.VPC{
+					Subnets: []aws.Subnet{
+						{ID: "test-subnet"},
+					},
+				},
 				HostedZone:     "test-hosted-zone",
 				HostedZoneRole: "test-hosted-zone-role",
 			},

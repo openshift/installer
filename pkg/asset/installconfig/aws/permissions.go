@@ -482,7 +482,7 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string
 // RequiredPermissionGroups returns a set of required permissions for a given cluster configuration.
 func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 	permissionGroups := []PermissionGroup{PermissionCreateBase}
-	usingExistingVPC := len(ic.AWS.Subnets) != 0
+	usingExistingVPC := len(ic.AWS.VPC.Subnets) != 0
 	usingExistingPrivateZone := len(ic.AWS.HostedZone) != 0
 
 	if !usingExistingVPC {
@@ -724,7 +724,7 @@ func includesZones(installConfig *types.InstallConfig) bool {
 		mpool.Set(compute.Platform.AWS)
 	}
 
-	return len(mpool.Zones) > 0 || len(installConfig.AWS.Subnets) > 0
+	return len(mpool.Zones) > 0 || len(installConfig.AWS.VPC.Subnets) > 0
 }
 
 // includesAssumeRole checks if a custom IAM role is specified in the install-config.

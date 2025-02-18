@@ -71,7 +71,7 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 	for idx, compute := range config.Compute {
 		fldPath := field.NewPath("compute").Index(idx)
 		if compute.Name == types.MachinePoolEdgeRoleName {
-			if len(config.Platform.AWS.Subnets) == 0 {
+			if len(config.Platform.AWS.VPC.Subnets) == 0 {
 				if compute.Platform.AWS == nil {
 					allErrs = append(allErrs, field.Required(fldPath.Child("platform", "aws"), "edge compute pools are only supported on the AWS platform"))
 				}
@@ -108,8 +108,8 @@ func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, 
 		return allErrs
 	}
 
-	if len(platform.Subnets) > 0 {
-		allErrs = append(allErrs, validateSubnets(ctx, meta, fldPath.Child("subnets"), platform.Subnets, networking, publish)...)
+	if len(platform.VPC.Subnets) > 0 {
+		allErrs = append(allErrs, validateSubnets(ctx, meta, fldPath.Child("vpc").Child("subnets"), platform.VPC.Subnets, networking, publish)...)
 	} else if awstypes.IsPublicOnlySubnetsEnabled() {
 		allErrs = append(allErrs, field.Required(fldPath.Child("subnets"), "subnets must be specified for public-only subnets clusters"))
 	}
@@ -207,16 +207,16 @@ func validatePublicIpv4Pool(ctx context.Context, meta *Metadata, fldPath *field.
 	return nil
 }
 
-func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, subnets []string, networking *types.Networking, publish types.PublishingStrategy) field.ErrorList {
+func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, subnets []awstypes.Subnet, networking *types.Networking, publish types.PublishingStrategy) field.ErrorList {
 	allErrs := field.ErrorList{}
 	privateSubnets, err := meta.PrivateSubnets(ctx)
 	if err != nil {
 		return append(allErrs, field.Invalid(fldPath, subnets, err.Error()))
 	}
 	privateSubnetsIdx := map[string]int{}
-	for idx, id := range subnets {
-		if _, ok := privateSubnets[id]; ok {
-			privateSubnetsIdx[id] = idx
+	for idx, subnet := range subnets {
+		if _, ok := privateSubnets[string(subnet.ID)]; ok {
+			privateSubnetsIdx[string(subnet.ID)] = idx
 		}
 	}
 	if len(privateSubnets) == 0 {
@@ -231,9 +231,9 @@ func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, s
 		logrus.Warnf("Public subnets should not be provided when publish is set to %s", types.InternalPublishingStrategy)
 	}
 	publicSubnetsIdx := map[string]int{}
-	for idx, id := range subnets {
-		if _, ok := publicSubnets[id]; ok {
-			publicSubnetsIdx[id] = idx
+	for idx, subnet := range subnets {
+		if _, ok := publicSubnets[string(subnet.ID)]; ok {
+			publicSubnetsIdx[string(subnet.ID)] = idx
 		}
 	}
 	if len(publicSubnets) == 0 && awstypes.IsPublicOnlySubnetsEnabled() {
@@ -245,9 +245,9 @@ func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, s
 		return append(allErrs, field.Invalid(fldPath, subnets, err.Error()))
 	}
 	edgeSubnetsIdx := map[string]int{}
-	for idx, id := range subnets {
-		if _, ok := edgeSubnets[id]; ok {
-			edgeSubnetsIdx[id] = idx
+	for idx, subnet := range subnets {
+		if _, ok := edgeSubnets[string(subnet.ID)]; ok {
+			edgeSubnetsIdx[string(subnet.ID)] = idx
 		}
 	}
 
@@ -282,11 +282,11 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 	// - is valid when installing in existing VPC; or
 	// - is valid in new VPC when Local Zone name is defined
 	if poolName == types.MachinePoolEdgeRoleName {
-		if len(platform.Subnets) > 0 {
+		if len(platform.VPC.Subnets) > 0 {
 			edgeSubnets, err := meta.EdgeSubnets(ctx)
 			if err != nil {
 				errMsg := fmt.Sprintf("%s pool. %v", poolName, err.Error())
-				return append(allErrs, field.Invalid(field.NewPath("subnets"), platform.Subnets, errMsg))
+				return append(allErrs, field.Invalid(field.NewPath("platform", "aws", "vpc", "subnets"), platform.VPC.Subnets, errMsg))
 			}
 			if len(edgeSubnets) == 0 {
 				return append(allErrs, field.Required(fldPath, "the provided subnets must include valid subnets for the specified edge zones"))
@@ -310,7 +310,7 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 	if pool.Zones != nil && len(pool.Zones) > 0 {
 		availableZones := sets.New[string]()
 		diffErrMsgPrefix := "One or more zones are unavailable"
-		if len(platform.Subnets) > 0 {
+		if len(platform.VPC.Subnets) > 0 {
 			diffErrMsgPrefix = "No subnets provided for zones"
 			var subnets Subnets
 			if poolName == types.MachinePoolEdgeRoleName {

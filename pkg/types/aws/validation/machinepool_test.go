@@ -155,8 +155,13 @@ func Test_ValdidateSecurityGroups(t *testing.T) {
 		{
 			name: "valid security group config",
 			platform: &aws.Platform{
-				Region:  "us-east-1",
-				Subnets: []string{"valid-subnet-1", "valid-subnet-2"},
+				Region: "us-east-1",
+				VPC: aws.VPC{
+					Subnets: []aws.Subnet{
+						{ID: "valid-subnet-1"},
+						{ID: "valid-subnet-2"},
+					},
+				},
 			},
 			pool: &aws.MachinePool{
 				AdditionalSecurityGroupIDs: []string{
@@ -173,8 +178,13 @@ func Test_ValdidateSecurityGroups(t *testing.T) {
 		{
 			name: "invalid security group config exceeds maximum",
 			platform: &aws.Platform{
-				Region:  "us-east-1",
-				Subnets: []string{"valid-subnet-1", "valid-subnet-2"},
+				Region: "us-east-1",
+				VPC: aws.VPC{
+					Subnets: []aws.Subnet{
+						{ID: "valid-subnet-1"},
+						{ID: "valid-subnet-2"},
+					},
+				},
 			},
 			pool: &aws.MachinePool{
 				AdditionalSecurityGroupIDs: tooManySecurityGroups,
@@ -184,8 +194,13 @@ func Test_ValdidateSecurityGroups(t *testing.T) {
 		{
 			name: "valid maximum security group config",
 			platform: &aws.Platform{
-				Region:  "us-east-1",
-				Subnets: []string{"valid-subnet-1", "valid-subnet-2"},
+				Region: "us-east-1",
+				VPC: aws.VPC{
+					Subnets: []aws.Subnet{
+						{ID: "valid-subnet-1"},
+						{ID: "valid-subnet-2"},
+					},
+				},
 			},
 			pool: &aws.MachinePool{
 				AdditionalSecurityGroupIDs: tooManySecurityGroups[:maxUserSecurityGroupsCount],

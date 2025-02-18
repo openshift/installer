@@ -733,6 +733,55 @@ func TestConvertInstallConfig(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "aws deprecated subnets",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					AWS: &aws.Platform{
+						DeprecatedSubnets: []string{"subnet-01234567890abcdef", "subnet-abcdef01234567890"},
+					},
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					AWS: &aws.Platform{
+						DeprecatedSubnets: []string{"subnet-01234567890abcdef", "subnet-abcdef01234567890"},
+						VPC: aws.VPC{
+							Subnets: []aws.Subnet{
+								{ID: "subnet-01234567890abcdef"},
+								{ID: "subnet-abcdef01234567890"},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "aws deprecated subnets with vpc.subnets",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{
+					AWS: &aws.Platform{
+						DeprecatedSubnets: []string{"subnet-01234567890abcdef", "subnet-abcdef01234567890"},
+						VPC: aws.VPC{
+							Subnets: []aws.Subnet{
+								{ID: "subnet-01234567890abcdef"},
+								{ID: "subnet-abcdef01234567890"},
+							},
+						},
+					},
+				},
+			},
+			expectedError: `Forbidden: cannot specify platform\.aws.subnets and platform\.aws\.vpc.subnets together`,
+		},
 	}
 
 	for _, tc := range cases {
