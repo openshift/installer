@@ -2,7 +2,9 @@ package powervs
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -174,6 +176,9 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	if installConfig.Config.Publish == types.InternalPublishingStrategy {
 		dnsServerIP, err := installConfig.PowerVS.GetDNSServerIP(context.TODO(), installConfig.Config.PowerVS.VPCName)
 		if err != nil {
+			if strings.Compare(err.Error(), "failed to find VPC") == 0 {
+				err = errors.New("a pre-existing VPC is required when deploying with an Internal publishing strategy")
+			}
 			return nil, fmt.Errorf("unable to find a DNS server for specified VPC: %s %w", installConfig.Config.PowerVS.VPCName, err)
 		}
 
