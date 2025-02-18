@@ -235,5 +235,31 @@ func (o *ClusterUninstaller) destroyDHCPNetworks() error {
 		o.Logger.Fatal("destroyDHCPNetworks: ExponentialBackoffWithContext (list) returns ", err)
 	}
 
+	// PowerVS hack:
+	// We were asked to query for the subnet still existing as a test for the DHCP network to be
+	// finally destroyed.  Even though we can't list it anymore, it is still being destroyed. :(
+	backoff = wait.Backoff{
+		Duration: 15 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32}
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
+		secondPassList, err2 := o.listPowerSubnets()
+		if err2 != nil {
+			return false, err2
+		}
+		if len(secondPassList) == 0 {
+			// We finally don't see any remaining instances!
+			return true, nil
+		}
+		for _, item := range secondPassList {
+			o.Logger.Debugf("destroyDHCPNetworks: found %s in second pass", item.name)
+		}
+		return false, nil
+	})
+	if err != nil {
+		o.Logger.Fatal("destroyDHCPNetworks: ExponentialBackoffWithContext (list) returns ", err)
+	}
+
 	return nil
 }
