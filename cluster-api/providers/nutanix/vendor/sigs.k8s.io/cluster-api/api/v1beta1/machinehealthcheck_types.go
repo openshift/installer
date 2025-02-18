@@ -17,9 +17,19 @@ limitations under the License.
 package v1beta1
 
 import (
+	"time"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+)
+
+var (
+	// DefaultNodeStartupTimeout is the time allowed for a node to start up.
+	// Can be made longer as part of spec if required for particular provider.
+	// 10 minutes should allow the instance to start and the node to join the
+	// cluster on most providers.
+	DefaultNodeStartupTimeout = metav1.Duration{Duration: 10 * time.Minute}
 )
 
 // ANCHOR: MachineHealthCheckSpec
@@ -37,11 +47,14 @@ type MachineHealthCheckSpec struct {
 	// whether a node is considered unhealthy.  The conditions are combined in a
 	// logical OR, i.e. if any of the conditions is met, the node is unhealthy.
 	//
-	// +kubebuilder:validation:MinItems=1
-	UnhealthyConditions []UnhealthyCondition `json:"unhealthyConditions"`
+	// +optional
+	UnhealthyConditions []UnhealthyCondition `json:"unhealthyConditions,omitempty"`
 
 	// Any further remediation is only allowed if at most "MaxUnhealthy" machines selected by
 	// "selector" are not healthy.
+	//
+	// Deprecated: This field is deprecated and is going to be removed in the next apiVersion. Please see https://github.com/kubernetes-sigs/cluster-api/issues/10722 for more details.
+	//
 	// +optional
 	MaxUnhealthy *intstr.IntOrString `json:"maxUnhealthy,omitempty"`
 
@@ -50,13 +63,24 @@ type MachineHealthCheckSpec struct {
 	// Eg. "[3-5]" - This means that remediation will be allowed only when:
 	// (a) there are at least 3 unhealthy machines (and)
 	// (b) there are at most 5 unhealthy machines
+	//
+	// Deprecated: This field is deprecated and is going to be removed in the next apiVersion. Please see https://github.com/kubernetes-sigs/cluster-api/issues/10722 for more details.
+	//
 	// +optional
 	// +kubebuilder:validation:Pattern=^\[[0-9]+-[0-9]+\]$
 	UnhealthyRange *string `json:"unhealthyRange,omitempty"`
 
-	// Machines older than this duration without a node will be considered to have
-	// failed and will be remediated.
-	// If not set, this value is defaulted to 10 minutes.
+	// NodeStartupTimeout allows to set the maximum time for MachineHealthCheck
+	// to consider a Machine unhealthy if a corresponding Node isn't associated
+	// through a `Spec.ProviderID` field.
+	//
+	// The duration set in this field is compared to the greatest of:
+	// - Cluster's infrastructure ready condition timestamp (if and when available)
+	// - Control Plane's initialized condition timestamp (if and when available)
+	// - Machine's infrastructure ready condition timestamp (if and when available)
+	// - Machine's metadata creation timestamp
+	//
+	// Defaults to 10 minutes.
 	// If you wish to disable this feature, set the value explicitly to 0.
 	// +optional
 	NodeStartupTimeout *metav1.Duration `json:"nodeStartupTimeout,omitempty"`
@@ -169,5 +193,5 @@ type MachineHealthCheckList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&MachineHealthCheck{}, &MachineHealthCheckList{})
+	objectTypes = append(objectTypes, &MachineHealthCheck{}, &MachineHealthCheckList{})
 }
