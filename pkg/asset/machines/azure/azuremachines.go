@@ -144,6 +144,26 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 		}
 	}
 
+	defaultDiag := &capz.Diagnostics{
+		Boot: &capz.BootDiagnostics{
+			StorageAccountType: capz.ManagedDiagnosticsStorage,
+		},
+	}
+	if in.Platform.DefaultMachinePlatform != nil && in.Platform.DefaultMachinePlatform.BootDiagnostics != nil {
+		defaultDiag.Boot.StorageAccountType = in.Platform.DefaultMachinePlatform.BootDiagnostics.Type
+		if saURI := in.Platform.DefaultMachinePlatform.BootDiagnostics.StorageAccountURI; saURI != "" {
+			defaultDiag.Boot.UserManaged.StorageAccountURI = saURI
+		}
+	}
+
+	controlPlaneDiag := defaultDiag
+	if mpool.BootDiagnostics != nil {
+		controlPlaneDiag.Boot.StorageAccountType = mpool.BootDiagnostics.Type
+		if mpool.BootDiagnostics.StorageAccountURI != "" {
+			controlPlaneDiag.Boot.UserManaged.StorageAccountURI = mpool.BootDiagnostics.StorageAccountURI
+		}
+	}
+
 	var result []*asset.RuntimeFile
 	for idx := int64(0); idx < total; idx++ {
 		zone := mpool.Zones[int(idx)%len(mpool.Zones)]
@@ -172,7 +192,8 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 						AcceleratedNetworking: ptr.To(mpool.VMNetworkingType == string(azure.VMnetworkingTypeAccelerated) || mpool.VMNetworkingType == string(azure.AcceleratedNetworkingEnabled)),
 					},
 				},
-				Identity: capz.VMIdentityUserAssigned,
+				Identity:    capz.VMIdentityUserAssigned,
+				Diagnostics: controlPlaneDiag,
 				UserAssignedIdentities: []capz.UserAssignedIdentity{
 					{
 						ProviderID: userAssignedIdentityID,
@@ -233,6 +254,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *Machi
 			AdditionalCapabilities:     additionalCapabilities,
 			SecurityProfile:            securityProfile,
 			Identity:                   capz.VMIdentityUserAssigned,
+			Diagnostics:                controlPlaneDiag,
 			UserAssignedIdentities: []capz.UserAssignedIdentity{
 				{
 					ProviderID: userAssignedIdentityID,
