@@ -98,12 +98,23 @@ type PublicIPPrefixSku_Name_STATUS string
 
 const PublicIPPrefixSku_Name_STATUS_Standard = PublicIPPrefixSku_Name_STATUS("Standard")
 
+// Mapping from string to PublicIPPrefixSku_Name_STATUS
+var publicIPPrefixSku_Name_STATUS_Values = map[string]PublicIPPrefixSku_Name_STATUS{
+	"standard": PublicIPPrefixSku_Name_STATUS_Standard,
+}
+
 type PublicIPPrefixSku_Tier_STATUS string
 
 const (
 	PublicIPPrefixSku_Tier_STATUS_Global   = PublicIPPrefixSku_Tier_STATUS("Global")
 	PublicIPPrefixSku_Tier_STATUS_Regional = PublicIPPrefixSku_Tier_STATUS("Regional")
 )
+
+// Mapping from string to PublicIPPrefixSku_Tier_STATUS
+var publicIPPrefixSku_Tier_STATUS_Values = map[string]PublicIPPrefixSku_Tier_STATUS{
+	"global":   PublicIPPrefixSku_Tier_STATUS_Global,
+	"regional": PublicIPPrefixSku_Tier_STATUS_Regional,
+}
 
 // Reference to another subresource.
 type PublicIpPrefixSubResource_STATUS_ARM struct {

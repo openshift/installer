@@ -223,8 +223,12 @@ var reasonPriority = map[string]int{
 	ReasonReferenceNotFound.Name: -2,
 	ReasonSecretNotFound.Name:    -2,
 	ReasonConfigMapNotFound.Name: -2,
-	ReasonWaitingForOwner.Name:   -2,
-	ReasonReconciling.Name:       -1,
+	// AzureResourceNotFound only comes up when ReconcilePolicy is skip. This conditions priority being less than
+	// Reconciling allows skip -> reconcile to immediately update the condition to Reconciling rather than continuing to
+	// report AzureResourceNotFound until the resource is created.
+	ReasonAzureResourceNotFound.Name: -2,
+	ReasonWaitingForOwner.Name:       -2,
+	ReasonReconciling.Name:           -1,
 }
 
 // SetConditionReasonAware sets the provided Condition on the Conditioner. This is similar to SetCondition

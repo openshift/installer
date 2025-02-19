@@ -89,40 +89,40 @@ func (mpw *azureManagedMachinePoolTemplateWebhook) ValidateCreate(ctx context.Co
 
 	errs = append(errs, validateMaxPods(
 		mp.Spec.Template.Spec.MaxPods,
-		field.NewPath("Spec", "Template", "Spec", "MaxPods")))
+		field.NewPath("spec", "template", "spec", "maxPods")))
 
 	errs = append(errs, validateOSType(
 		mp.Spec.Template.Spec.Mode,
 		mp.Spec.Template.Spec.OSType,
-		field.NewPath("Spec", "Template", "Spec", "OSType")))
+		field.NewPath("spec", "template", "spec", "osType")))
 
 	errs = append(errs, validateMPName(
 		mp.Name,
 		mp.Spec.Template.Spec.Name,
 		mp.Spec.Template.Spec.OSType,
-		field.NewPath("Spec", "Template", "Spec", "Name")))
+		field.NewPath("spec", "template", "spec", "name")))
 
 	errs = append(errs, validateNodeLabels(
 		mp.Spec.Template.Spec.NodeLabels,
-		field.NewPath("Spec", "Template", "Spec", "NodeLabels")))
+		field.NewPath("spec", "template", "spec", "nodeLabels")))
 
 	errs = append(errs, validateNodePublicIPPrefixID(
 		mp.Spec.Template.Spec.NodePublicIPPrefixID,
-		field.NewPath("Spec", "Template", "Spec", "NodePublicIPPrefixID")))
+		field.NewPath("spec", "template", "spec", "nodePublicIPPrefixID")))
 
 	errs = append(errs, validateEnableNodePublicIP(
 		mp.Spec.Template.Spec.EnableNodePublicIP,
 		mp.Spec.Template.Spec.NodePublicIPPrefixID,
-		field.NewPath("Spec", "Template", "Spec", "EnableNodePublicIP")))
+		field.NewPath("spec", "template", "spec", "enableNodePublicIP")))
 
 	errs = append(errs, validateKubeletConfig(
 		mp.Spec.Template.Spec.KubeletConfig,
-		field.NewPath("Spec", "Template", "Spec", "KubeletConfig")))
+		field.NewPath("spec", "template", "spec", "kubeletConfig")))
 
 	errs = append(errs, validateLinuxOSConfig(
 		mp.Spec.Template.Spec.LinuxOSConfig,
 		mp.Spec.Template.Spec.KubeletConfig,
-		field.NewPath("Spec", "Template", "Spec", "LinuxOSConfig")))
+		field.NewPath("spec", "template", "spec", "linuxOSConfig")))
 
 	return nil, kerrors.NewAggregate(errs)
 }
@@ -140,50 +140,50 @@ func (mpw *azureManagedMachinePoolTemplateWebhook) ValidateUpdate(ctx context.Co
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "Name"),
+		field.NewPath("spec", "template", "spec", "name"),
 		old.Spec.Template.Spec.Name,
 		mp.Spec.Template.Spec.Name); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
-	if err := validateNodeLabels(mp.Spec.Template.Spec.NodeLabels, field.NewPath("Spec", "Template", "Spec", "NodeLabels")); err != nil {
+	if err := validateNodeLabels(mp.Spec.Template.Spec.NodeLabels, field.NewPath("spec", "template", "spec", "nodeLabels")); err != nil {
 		allErrs = append(allErrs,
 			field.Invalid(
-				field.NewPath("Spec", "Template", "Spec", "NodeLabels"),
+				field.NewPath("spec", "template", "spec", "nodeLabels"),
 				mp.Spec.Template.Spec.NodeLabels,
 				err.Error()))
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "OSType"),
+		field.NewPath("spec", "template", "spec", "osType"),
 		old.Spec.Template.Spec.OSType,
 		mp.Spec.Template.Spec.OSType); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "SKU"),
+		field.NewPath("spec", "template", "spec", "sku"),
 		old.Spec.Template.Spec.SKU,
 		mp.Spec.Template.Spec.SKU); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "OSDiskSizeGB"),
+		field.NewPath("spec", "template", "spec", "osDiskSizeGB"),
 		old.Spec.Template.Spec.OSDiskSizeGB,
 		mp.Spec.Template.Spec.OSDiskSizeGB); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "SubnetName"),
+		field.NewPath("spec", "template", "spec", "subnetName"),
 		old.Spec.Template.Spec.SubnetName,
 		mp.Spec.Template.Spec.SubnetName); err != nil && old.Spec.Template.Spec.SubnetName != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "EnableFIPS"),
+		field.NewPath("spec", "template", "spec", "enableFIPS"),
 		old.Spec.Template.Spec.EnableFIPS,
 		mp.Spec.Template.Spec.EnableFIPS); err != nil && old.Spec.Template.Spec.EnableFIPS != nil {
 		allErrs = append(allErrs, err)
@@ -192,7 +192,7 @@ func (mpw *azureManagedMachinePoolTemplateWebhook) ValidateUpdate(ctx context.Co
 	if !webhookutils.EnsureStringSlicesAreEquivalent(mp.Spec.Template.Spec.AvailabilityZones, old.Spec.Template.Spec.AvailabilityZones) {
 		allErrs = append(allErrs,
 			field.Invalid(
-				field.NewPath("Spec", "Template", "Spec", "AvailabilityZones"),
+				field.NewPath("spec", "template", "spec", "availabilityZones"),
 				mp.Spec.Template.Spec.AvailabilityZones,
 				"field is immutable"))
 	}
@@ -201,67 +201,67 @@ func (mpw *azureManagedMachinePoolTemplateWebhook) ValidateUpdate(ctx context.Co
 		// validate for last system node pool
 		if err := validateLastSystemNodePool(mpw.Client, mp.Spec.Template.Spec.NodeLabels, mp.Namespace, mp.Annotations); err != nil {
 			allErrs = append(allErrs, field.Forbidden(
-				field.NewPath("Spec", "Template", "Spec", "Mode"),
+				field.NewPath("spec", "template", "spec", "mode"),
 				"Cannot change node pool mode to User, you must have at least one System node pool in your cluster"))
 		}
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "MaxPods"),
+		field.NewPath("spec", "template", "spec", "maxPods"),
 		old.Spec.Template.Spec.MaxPods,
 		mp.Spec.Template.Spec.MaxPods); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "OsDiskType"),
+		field.NewPath("spec", "template", "spec", "osDiskType"),
 		old.Spec.Template.Spec.OsDiskType,
 		mp.Spec.Template.Spec.OsDiskType); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "ScaleSetPriority"),
+		field.NewPath("spec", "template", "spec", "scaleSetPriority"),
 		old.Spec.Template.Spec.ScaleSetPriority,
 		mp.Spec.Template.Spec.ScaleSetPriority); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "EnableUltraSSD"),
+		field.NewPath("spec", "template", "spec", "enableUltraSSD"),
 		old.Spec.Template.Spec.EnableUltraSSD,
 		mp.Spec.Template.Spec.EnableUltraSSD); err != nil {
 		allErrs = append(allErrs, err)
 	}
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "EnableNodePublicIP"),
+		field.NewPath("spec", "template", "spec", "enableNodePublicIP"),
 		old.Spec.Template.Spec.EnableNodePublicIP,
 		mp.Spec.Template.Spec.EnableNodePublicIP); err != nil {
 		allErrs = append(allErrs, err)
 	}
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "NodePublicIPPrefixID"),
+		field.NewPath("spec", "template", "spec", "nodePublicIPPrefixID"),
 		old.Spec.Template.Spec.NodePublicIPPrefixID,
 		mp.Spec.Template.Spec.NodePublicIPPrefixID); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "KubeletConfig"),
+		field.NewPath("spec", "template", "spec", "kubeletConfig"),
 		old.Spec.Template.Spec.KubeletConfig,
 		mp.Spec.Template.Spec.KubeletConfig); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "KubeletDiskType"),
+		field.NewPath("spec", "template", "spec", "kubeletDiskType"),
 		old.Spec.Template.Spec.KubeletDiskType,
 		mp.Spec.Template.Spec.KubeletDiskType); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Template", "Spec", "LinuxOSConfig"),
+		field.NewPath("spec", "template", "spec", "linuxOSConfig"),
 		old.Spec.Template.Spec.LinuxOSConfig,
 		mp.Spec.Template.Spec.LinuxOSConfig); err != nil {
 		allErrs = append(allErrs, err)

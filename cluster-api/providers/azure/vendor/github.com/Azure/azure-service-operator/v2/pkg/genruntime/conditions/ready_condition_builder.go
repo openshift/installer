@@ -23,22 +23,28 @@ type Reason struct {
 var ReasonSubscriptionMismatch = Reason{Name: "SubscriptionMismatch", RetryClassification: RetryFast}
 
 // Precondition reasons
-var ReasonSecretNotFound = Reason{Name: "SecretNotFound", RetryClassification: RetryFast}
-var ReasonConfigMapNotFound = Reason{Name: "ConfigMapNotFound", RetryClassification: RetryFast}
-var ReasonReferenceNotFound = Reason{Name: "ReferenceNotFound", RetryClassification: RetryFast}
-var ReasonWaitingForOwner = Reason{Name: "WaitingForOwner", RetryClassification: RetryFast}
+var (
+	ReasonSecretNotFound    = Reason{Name: "SecretNotFound", RetryClassification: RetryFast}
+	ReasonConfigMapNotFound = Reason{Name: "ConfigMapNotFound", RetryClassification: RetryFast}
+	ReasonReferenceNotFound = Reason{Name: "ReferenceNotFound", RetryClassification: RetryFast}
+	ReasonWaitingForOwner   = Reason{Name: "WaitingForOwner", RetryClassification: RetryFast}
+)
 
 // Post-ARM PUT reasons
-var ReasonAzureResourceNotFound = Reason{Name: "AzureResourceNotFound", RetryClassification: RetrySlow}
-var ReasonAdditionalKubernetesObjWriteFailure = Reason{Name: "FailedWritingAdditionalKubernetesObjects", RetryClassification: RetrySlow}
+var (
+	ReasonAzureResourceNotFound               = Reason{Name: "AzureResourceNotFound", RetryClassification: RetrySlow}
+	ReasonAdditionalKubernetesObjWriteFailure = Reason{Name: "FailedWritingAdditionalKubernetesObjects", RetryClassification: RetrySlow}
+)
 
 // Other reasons
-var ReasonReconciling = Reason{Name: "Reconciling", RetryClassification: RetryFast}
-var ReasonDeleting = Reason{Name: "Deleting", RetryClassification: RetryFast}
-var ReasonReconciliationFailedPermanently = Reason{Name: "ReconciliationFailedPermanently", RetryClassification: RetryNone}
-var ReasonReconcileBlocked = Reason{Name: "ReconciliationBlocked", RetryClassification: RetrySlow}
-var ReasonReconcilePostponed = Reason{Name: "ReconciliationPostponed", RetryClassification: RetrySlow}
-var ReasonPostReconcileFailure = Reason{Name: "PostReconciliationFailure", RetryClassification: RetrySlow}
+var (
+	ReasonReconciling                     = Reason{Name: "Reconciling", RetryClassification: RetryFast}
+	ReasonDeleting                        = Reason{Name: "Deleting", RetryClassification: RetryFast}
+	ReasonReconciliationFailedPermanently = Reason{Name: "ReconciliationFailedPermanently", RetryClassification: RetryNone}
+	ReasonReconcileBlocked                = Reason{Name: "ReconciliationBlocked", RetryClassification: RetrySlow}
+	ReasonReconcilePostponed              = Reason{Name: "ReconciliationPostponed", RetryClassification: RetrySlow}
+	ReasonPostReconcileFailure            = Reason{Name: "PostReconciliationFailure", RetryClassification: RetrySlow}
+)
 
 // ReasonFailed is a catch-all error code for when we don't have a more specific error classification
 var ReasonFailed = Reason{Name: "Failed", RetryClassification: RetrySlow}

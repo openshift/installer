@@ -105,6 +105,11 @@ type ExtendedLocationType string
 
 const ExtendedLocationType_EdgeZone = ExtendedLocationType("EdgeZone")
 
+// Mapping from string to ExtendedLocationType
+var extendedLocationType_Values = map[string]ExtendedLocationType{
+	"edgezone": ExtendedLocationType_EdgeZone,
+}
+
 // Frontend IP address of the load balancer.
 type FrontendIPConfiguration_LoadBalancer_SubResourceEmbedded_ARM struct {
 	// Name: The name of the resource that is unique within the set of frontend IP configurations used by the load balancer.
@@ -146,6 +151,12 @@ const (
 	LoadBalancerSku_Name_Standard = LoadBalancerSku_Name("Standard")
 )
 
+// Mapping from string to LoadBalancerSku_Name
+var loadBalancerSku_Name_Values = map[string]LoadBalancerSku_Name{
+	"basic":    LoadBalancerSku_Name_Basic,
+	"standard": LoadBalancerSku_Name_Standard,
+}
+
 // +kubebuilder:validation:Enum={"Global","Regional"}
 type LoadBalancerSku_Tier string
 
@@ -153,6 +164,12 @@ const (
 	LoadBalancerSku_Tier_Global   = LoadBalancerSku_Tier("Global")
 	LoadBalancerSku_Tier_Regional = LoadBalancerSku_Tier("Regional")
 )
+
+// Mapping from string to LoadBalancerSku_Tier
+var loadBalancerSku_Tier_Values = map[string]LoadBalancerSku_Tier{
+	"global":   LoadBalancerSku_Tier_Global,
+	"regional": LoadBalancerSku_Tier_Regional,
+}
 
 // A load balancing rule for a load balancer.
 type LoadBalancingRule_ARM struct {
