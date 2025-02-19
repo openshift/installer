@@ -59,6 +59,7 @@ import (
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
+	powervsdefaults "github.com/openshift/installer/pkg/types/powervs/defaults"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 	ibmcloudapi "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis"
 	ibmcloudprovider "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
@@ -318,6 +319,15 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 					return errors.Wrap(err, "failed to create ignition for Power SMT for worker machines")
 				}
 				machineConfigs = append(machineConfigs, ignPowerSMT)
+			}
+
+			if installConfig.Config.Publish == types.InternalPublishingStrategy &&
+				(len(installConfig.Config.ImageDigestSources) > 0 || len(installConfig.Config.DeprecatedImageContentSources) > 0) {
+				ignChrony, err := machineconfig.ForCustomNTP("worker", powervsdefaults.DefaultNTPServer)
+				if err != nil {
+					return errors.Wrap(err, "failed to create ignition for custom NTP for worker machines")
+				}
+				machineConfigs = append(machineConfigs, ignChrony)
 			}
 		}
 		// The maximum number of networks supported on ServiceNetwork is two, one IPv4 and one IPv6 network.
