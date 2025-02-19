@@ -51,6 +51,7 @@ type OpenstackProviderSpec struct {
 	KeyName string `json:"keyName,omitempty"`
 
 	// The machine ssh username
+	// Deprecated: sshUserName is silently ignored.
 	SshUserName string `json:"sshUserName,omitempty"`
 
 	// A networks object. Required parameter when there are multiple networks defined for the tenant.
@@ -108,6 +109,7 @@ type OpenstackProviderSpec struct {
 	ServerGroupName string `json:"serverGroupName,omitempty"`
 
 	// The subnet that a set of machines will get ingress/egress traffic from
+	// Deprecated: primarySubnet is silently ignored. Use subnets instead.
 	PrimarySubnet string `json:"primarySubnet,omitempty"`
 }
 
@@ -161,6 +163,7 @@ type NetworkParam struct {
 	// The UUID of the network. Required if you omit the port attribute.
 	UUID string `json:"uuid,omitempty"`
 	// A fixed IPv4 address for the NIC.
+	// Deprecated: fixedIP is silently ignored. Use subnets instead.
 	FixedIp string `json:"fixedIp,omitempty"`
 	// Filters for optional network query
 	Filter Filter `json:"filter,omitempty"`
@@ -233,6 +236,7 @@ type SubnetParam struct {
 	PortTags []string `json:"portTags,omitempty"`
 
 	// portSecurity optionally enables or disables security on ports managed by OpenStack
+	// Deprecated: portSecurity is silently ignored. Set portSecurity on the parent network instead.
 	PortSecurity *bool `json:"portSecurity,omitempty"`
 }
 
@@ -263,6 +267,7 @@ type SubnetFilter struct {
 	// ipv6RaMode filters subnets by IPv6 router adversiement mode.
 	IPv6RAMode string `json:"ipv6RaMode,omitempty"`
 	// subnetpoolId filters subnets by subnet pool ID.
+	// Deprecated: subnetpoolId is silently ignored.
 	SubnetPoolID string `json:"subnetpoolId,omitempty"`
 	// tags filters by subnets containing all specified tags.
 	// Multiple tags are comma separated.
@@ -307,11 +312,12 @@ type PortOpts struct {
 	// tenantID specifies the tenant ID of the created port. Note that this
 	// requires OpenShift to have administrative permissions, which is
 	// typically not the case. Use of this field is not recommended.
-	// Deprecated: use projectID instead. It will be ignored if projectID is set.
+	// Deprecated: tenantID is silently ignored.
 	TenantID string `json:"tenantID,omitempty"`
 	// projectID specifies the project ID of the created port. Note that this
 	// requires OpenShift to have administrative permissions, which is
 	// typically not the case. Use of this field is not recommended.
+	// Deprecated: projectID is silently ignored.
 	ProjectID string `json:"projectID,omitempty"`
 	// securityGroups specifies a set of security group UUIDs to use instead
 	// of the machine's default security groups. The default security groups
@@ -362,7 +368,7 @@ type RootVolume struct {
 	// volumeType specifies a volume type to use when creating the root
 	// volume. If not specified the default volume type will be used.
 	VolumeType string `json:"volumeType,omitempty"`
-	// diskSize specifies the size, in GB, of the created root volume.
+	// diskSize specifies the size, in GiB, of the created root volume.
 	Size int `json:"diskSize,omitempty"`
 	// availabilityZone specifies the Cinder availability where the root volume will be created.
 	Zone string `json:"availabilityZone,omitempty"`
