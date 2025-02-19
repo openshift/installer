@@ -221,7 +221,6 @@ var permissions = map[PermissionGroup][]string{
 	},
 	// Permissions required for deleting base cluster resources
 	PermissionDeleteBase: {
-		"autoscaling:DescribeAutoScalingGroups",
 		"ec2:DeleteNetworkInterface",
 		"ec2:DeletePlacementGroup",
 		"ec2:DeleteTags",
