@@ -482,13 +482,16 @@ func (s *VPCClusterScope) GetSubnetID(name string) (*string, error) {
 func (s *VPCClusterScope) GetVPCID() (*string, error) {
 	// Check if the VPC ID is available from Status first.
 	if s.NetworkStatus() != nil && s.NetworkStatus().VPC != nil {
+		s.V(3).Info("found vpc id in network status")
 		return ptr.To(s.NetworkStatus().VPC.ID), nil
 	}
 
 	if s.NetworkSpec() != nil && s.NetworkSpec().VPC != nil {
 		if s.NetworkSpec().VPC.ID != nil {
+			s.V(3).Info("found vpc id in network spec")
 			return s.NetworkSpec().VPC.ID, nil
 		} else if s.NetworkSpec().VPC.Name != nil {
+			s.V(3).Info("found vpc name in network spec")
 			vpcDetails, err := s.VPCClient.GetVPCByName(*s.NetworkSpec().VPC.Name)
 			if err != nil {
 				return nil, fmt.Errorf("failed vpc id lookup: %w", err)
@@ -496,6 +499,7 @@ func (s *VPCClusterScope) GetVPCID() (*string, error) {
 
 			// Check if the VPC was found and has an ID
 			if vpcDetails != nil && vpcDetails.ID != nil {
+				s.V(3).Info("look vpc id by name from network spec successful")
 				// Set VPC ID in Status to shortcut future lookups, prior to returning the ID.
 				s.SetResourceStatus(infrav1beta2.ResourceTypeVPC, &infrav1beta2.ResourceStatus{
 					ID:    *vpcDetails.ID,
@@ -506,6 +510,7 @@ func (s *VPCClusterScope) GetVPCID() (*string, error) {
 			}
 		}
 	}
+	s.V(3).Info("vpc id not found")
 	return nil, nil
 }
 
@@ -640,6 +645,7 @@ func (s *VPCClusterScope) TagResource(tagName string, resourceCRN string) error 
 // ReconcileVPC reconciles the cluster's VPC.
 func (s *VPCClusterScope) ReconcileVPC() (bool, error) {
 	// If VPC id is set, that indicates the VPC already exists.
+	s.V(3).Info("Attempting to reconcile VPC")
 	vpcID, err := s.GetVPCID()
 	if err != nil {
 		return false, fmt.Errorf("failed to retrieve vpc id: %w", err)

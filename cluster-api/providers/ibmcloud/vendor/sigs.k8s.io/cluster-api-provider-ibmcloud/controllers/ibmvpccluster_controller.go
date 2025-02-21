@@ -237,6 +237,7 @@ func (r *IBMVPCClusterReconciler) reconcileCluster(clusterScope *scope.VPCCluste
 
 	// Reconcile the cluster's VPC.
 	clusterScope.Info("Reconciling VPC")
+	clusterScope.Info("debug reconcile vpc")
 	if requeue, err := clusterScope.ReconcileVPC(); err != nil {
 		clusterScope.Error(err, "failed to reconcile VPC")
 		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.VPCReadyCondition, infrav1beta2.VPCReconciliationFailedReason, capiv1beta1.ConditionSeverityError, "%s", err.Error())
