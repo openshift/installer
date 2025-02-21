@@ -138,7 +138,7 @@ func setSubnets(ctx context.Context, in *zonesInput) error {
 	}
 
 	// BYO VPC ("unmanaged") deployments
-	if len(in.InstallConfig.Config.AWS.Subnets) > 0 {
+	if len(in.InstallConfig.Config.AWS.VPC.Subnets) > 0 {
 		if err := in.GatherSubnetsFromMetadata(ctx); err != nil {
 			return fmt.Errorf("failed to get subnets from metadata: %w", err)
 		}

@@ -55,13 +55,15 @@ func validInstallConfig() *types.InstallConfig {
 		Platform: types.Platform{
 			AWS: &aws.Platform{
 				Region: "us-east-1",
-				Subnets: []string{
-					"valid-private-subnet-a",
-					"valid-private-subnet-b",
-					"valid-private-subnet-c",
-					"valid-public-subnet-a",
-					"valid-public-subnet-b",
-					"valid-public-subnet-c",
+				VPC: aws.VPC{
+					Subnets: []aws.Subnet{
+						{ID: "valid-private-subnet-a"},
+						{ID: "valid-private-subnet-b"},
+						{ID: "valid-private-subnet-c"},
+						{ID: "valid-public-subnet-a"},
+						{ID: "valid-public-subnet-b"},
+						{ID: "valid-public-subnet-c"},
+					},
 				},
 				HostedZone: validHostedZoneName,
 			},
@@ -97,7 +99,7 @@ func validInstallConfigEdgeSubnets() *types.InstallConfig {
 	ic := validInstallConfig()
 	edgeSubnets := validEdgeSubnets()
 	for subnet := range edgeSubnets {
-		ic.Platform.AWS.Subnets = append(ic.Platform.AWS.Subnets, subnet)
+		ic.Platform.AWS.VPC.Subnets = append(ic.Platform.AWS.VPC.Subnets, aws.Subnet{ID: aws.AWSSubnetID(subnet)})
 	}
 	ic.Compute = append(ic.Compute, types.MachinePool{
 		Name: types.MachinePoolEdgeRoleName,
@@ -281,7 +283,7 @@ func TestValidate(t *testing.T) {
 		name: "valid no byo",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = nil
+			c.Platform.AWS.VPC.Subnets = nil
 			return c
 		}(),
 		availZones: validAvailZones(),
@@ -289,7 +291,7 @@ func TestValidate(t *testing.T) {
 		name: "valid no byo",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = []string{}
+			c.Platform.AWS.VPC.Subnets = []aws.Subnet{}
 			return c
 		}(),
 		availZones: validAvailZones(),
@@ -311,10 +313,10 @@ func TestValidate(t *testing.T) {
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
 			c.Publish = types.InternalPublishingStrategy
-			c.Platform.AWS.Subnets = []string{
-				"valid-private-subnet-a",
-				"valid-private-subnet-b",
-				"valid-private-subnet-c",
+			c.Platform.AWS.VPC.Subnets = []aws.Subnet{
+				{ID: "valid-private-subnet-a"},
+				{ID: "valid-private-subnet-b"},
+				{ID: "valid-private-subnet-c"},
 			}
 			return c
 		}(),
@@ -427,35 +429,35 @@ func TestValidate(t *testing.T) {
 		name: "invalid no private subnets",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = []string{
-				"valid-public-subnet-a",
-				"valid-public-subnet-b",
-				"valid-public-subnet-c",
+			c.Platform.AWS.VPC.Subnets = []aws.Subnet{
+				{ID: "valid-public-subnet-a"},
+				{ID: "valid-public-subnet-b"},
+				{ID: "valid-public-subnet-c"},
 			}
 			return c
 		}(),
 		availZones:    validAvailZones(),
 		publicSubnets: validPublicSubnets(),
-		expectErr:     `^\[platform\.aws\.subnets: Invalid value: \[\]string{\"valid-public-subnet-a\", \"valid-public-subnet-b\", \"valid-public-subnet-c\"}: No private subnets found, controlPlane\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\"}: No subnets provided for zones \[a b c\], compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\"}: No subnets provided for zones \[a b c\]\]$`,
+		expectErr:     `^\[platform\.aws\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"valid-public-subnet-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: No private subnets found, controlPlane\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\], compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\]\]$`,
 	}, {
 		name: "invalid no public subnets",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = []string{
-				"valid-private-subnet-a",
-				"valid-private-subnet-b",
-				"valid-private-subnet-c",
+			c.Platform.AWS.VPC.Subnets = []aws.Subnet{
+				{ID: "valid-private-subnet-a"},
+				{ID: "valid-private-subnet-b"},
+				{ID: "valid-private-subnet-c"},
 			}
 			return c
 		}(),
 		availZones:     validAvailZones(),
 		privateSubnets: validPrivateSubnets(),
-		expectErr:      `^platform\.aws\.subnets: Invalid value: \[\]string{\"valid-private-subnet-a\", \"valid-private-subnet-b\", \"valid-private-subnet-c\"}: No public subnet provided for zones \[a b c\]$`,
+		expectErr:      `^platform\.aws\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"valid-private-subnet-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-private-subnet-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-private-subnet-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: No public subnet provided for zones \[a b c\]$`,
 	}, {
 		name: "invalid cidr does not belong to machine CIDR",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = append(c.Platform.AWS.Subnets, "invalid-cidr-subnet")
+			c.Platform.AWS.VPC.Subnets = append(c.Platform.AWS.VPC.Subnets, aws.Subnet{ID: "invalid-cidr-subnet"})
 			return c
 		}(),
 		availZones: func() []string {
@@ -471,12 +473,12 @@ func TestValidate(t *testing.T) {
 			}
 			return s
 		}(),
-		expectErr: `^platform\.aws\.subnets\[6\]: Invalid value: \"invalid-cidr-subnet\": subnet's CIDR range start 192.168.126.0 is outside of the specified machine networks$`,
+		expectErr: `^platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"invalid-cidr-subnet\": subnet's CIDR range start 192\.168\.126\.0 is outside of the specified machine networks$`,
 	}, {
 		name: "invalid cidr does not belong to machine CIDR",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = append(c.Platform.AWS.Subnets, "invalid-private-cidr-subnet", "invalid-public-cidr-subnet")
+			c.Platform.AWS.VPC.Subnets = append(c.Platform.AWS.VPC.Subnets, aws.Subnet{ID: "invalid-private-cidr-subnet"}, aws.Subnet{ID: "invalid-public-cidr-subnet"})
 			return c
 		}(),
 		availZones: func() []string {
@@ -499,12 +501,12 @@ func TestValidate(t *testing.T) {
 			}
 			return s
 		}(),
-		expectErr: `^\[platform\.aws\.subnets\[6\]: Invalid value: \"invalid-private-cidr-subnet\": subnet's CIDR range start 192.168.126.0 is outside of the specified machine networks, platform\.aws\.subnets\[7\]: Invalid value: \"invalid-public-cidr-subnet\": subnet's CIDR range start 192.168.127.0 is outside of the specified machine networks\]$`,
+		expectErr: `^\[platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"invalid-private-cidr-subnet\": subnet's CIDR range start 192\.168\.126\.0 is outside of the specified machine networks, platform\.aws\.vpc\.subnets\[7\]: Invalid value: \"invalid-public-cidr-subnet\": subnet's CIDR range start 192\.168\.127\.0 is outside of the specified machine networks\]$`,
 	}, {
 		name: "invalid missing public subnet in a zone",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = append(c.Platform.AWS.Subnets, "no-matching-public-private-zone")
+			c.Platform.AWS.VPC.Subnets = append(c.Platform.AWS.VPC.Subnets, aws.Subnet{ID: "no-matching-public-private-zone"})
 			return c
 		}(),
 		availZones: validAvailZones(),
@@ -517,12 +519,12 @@ func TestValidate(t *testing.T) {
 			return s
 		}(),
 		publicSubnets: validPublicSubnets(),
-		expectErr:     `^platform\.aws\.subnets: Invalid value: \[\]string{\"valid-private-subnet-a\", \"valid-private-subnet-b\", \"valid-private-subnet-c\", \"valid-public-subnet-a\", \"valid-public-subnet-b\", \"valid-public-subnet-c\", \"no-matching-public-private-zone\"}: No public subnet provided for zones \[f\]$`,
+		expectErr:     `^platform\.aws\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"valid-private-subnet-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-private-subnet-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-private-subnet-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"no-matching-public-private-zone\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: No public subnet provided for zones \[f\]$`,
 	}, {
 		name: "invalid multiple private in same zone",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = append(c.Platform.AWS.Subnets, "valid-private-zone-c-2")
+			c.Platform.AWS.VPC.Subnets = append(c.Platform.AWS.VPC.Subnets, aws.Subnet{ID: "valid-private-zone-c-2"})
 			return c
 		}(),
 		availZones: validAvailZones(),
@@ -535,12 +537,12 @@ func TestValidate(t *testing.T) {
 			return s
 		}(),
 		publicSubnets: validPublicSubnets(),
-		expectErr:     `^platform\.aws\.subnets\[6\]: Invalid value: \"valid-private-zone-c-2\": private subnet valid-private-subnet-c is also in zone c$`,
+		expectErr:     `^platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"valid-private-zone-c-2\": private subnet valid-private-subnet-c is also in zone c$`,
 	}, {
 		name: "invalid multiple public in same zone",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = append(c.Platform.AWS.Subnets, "valid-public-zone-c-2")
+			c.Platform.AWS.VPC.Subnets = append(c.Platform.AWS.VPC.Subnets, aws.Subnet{ID: "valid-public-zone-c-2"})
 			return c
 		}(),
 		availZones:     validAvailZones(),
@@ -553,12 +555,12 @@ func TestValidate(t *testing.T) {
 			}
 			return s
 		}(),
-		expectErr: `^platform\.aws\.subnets\[6\]: Invalid value: \"valid-public-zone-c-2\": public subnet valid-public-subnet-c is also in zone c$`,
+		expectErr: `^platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"valid-public-zone-c-2\": public subnet valid-public-subnet-c is also in zone c$`,
 	}, {
 		name: "invalid multiple public edge in same zone",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfigEdgeSubnets()
-			c.Platform.AWS.Subnets = append(c.Platform.AWS.Subnets, "valid-public-zone-edge-c-2")
+			c.Platform.AWS.VPC.Subnets = append(c.Platform.AWS.VPC.Subnets, aws.Subnet{ID: "valid-public-zone-edge-c-2"})
 			return c
 		}(),
 		availZones:     validAvailZonesWithEdge(),
@@ -572,7 +574,7 @@ func TestValidate(t *testing.T) {
 			}
 			return s
 		}(),
-		expectErr: `^platform\.aws\.subnets\[9\]: Invalid value: \"valid-public-zone-edge-c-2\": edge subnet valid-public-subnet-edge-c is also in zone edge-c$`,
+		expectErr: `^platform\.aws\.vpc\.subnets\[9\]: Invalid value: \"valid-public-zone-edge-c-2\": edge subnet valid-public-subnet-edge-c is also in zone edge-c$`,
 	}, {
 		name:           "invalid edge pool missing valid subnets",
 		installConfig:  validInstallConfigEdgeSubnets(),
@@ -585,7 +587,7 @@ func TestValidate(t *testing.T) {
 		name: "invalid edge pool missing zones",
 		installConfig: func() *types.InstallConfig {
 			ic := validInstallConfig()
-			ic.Platform.AWS.Subnets = []string{}
+			ic.Platform.AWS.VPC.Subnets = []aws.Subnet{}
 			ic.ControlPlane = &types.MachinePool{}
 			edgePool := types.MachinePool{
 				Name: types.MachinePoolEdgeRoleName,
@@ -601,7 +603,7 @@ func TestValidate(t *testing.T) {
 		name: "invalid edge pool empty zones",
 		installConfig: func() *types.InstallConfig {
 			ic := validInstallConfig()
-			ic.Platform.AWS.Subnets = []string{}
+			ic.Platform.AWS.VPC.Subnets = []aws.Subnet{}
 			ic.ControlPlane = &types.MachinePool{}
 			edgePool := types.MachinePool{
 				Name: types.MachinePoolEdgeRoleName,
@@ -619,7 +621,7 @@ func TestValidate(t *testing.T) {
 		name: "invalid edge pool missing platform definition",
 		installConfig: func() *types.InstallConfig {
 			ic := validInstallConfig()
-			ic.Platform.AWS.Subnets = []string{}
+			ic.Platform.AWS.VPC.Subnets = []aws.Subnet{}
 			ic.ControlPlane = &types.MachinePool{}
 			edgePool := types.MachinePool{
 				Name:     types.MachinePoolEdgeRoleName,
@@ -633,19 +635,22 @@ func TestValidate(t *testing.T) {
 		name: "invalid edge pool missing subnets on availability zones",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfigEdgeSubnets()
-			c.Platform.AWS.Subnets = []string{}
+			c.Platform.AWS.VPC.Subnets = []aws.Subnet{}
 			edgeSubnets := validEdgeSubnets()
 			for subnet := range edgeSubnets {
-				c.Platform.AWS.Subnets = append(c.Platform.AWS.Subnets, subnet)
+				c.Platform.AWS.VPC.Subnets = append(c.Platform.AWS.VPC.Subnets, aws.Subnet{ID: aws.AWSSubnetID(subnet)})
 			}
-			sort.Strings(c.Platform.AWS.Subnets)
+			sort.Slice(c.Platform.AWS.VPC.Subnets, func(i, j int) bool {
+				subnets := c.Platform.AWS.VPC.Subnets
+				return subnets[i].ID < subnets[j].ID
+			})
 			return c
 		}(),
 		availZones:     validAvailZonesOnlyEdge(),
 		privateSubnets: Subnets{},
 		publicSubnets:  Subnets{},
 		edgeSubnets:    validEdgeSubnets(),
-		expectErr:      `^\[platform\.aws\.subnets: Invalid value: \[\]string{\"valid-public-subnet-edge-a\", \"valid-public-subnet-edge-b\", \"valid-public-subnet-edge-c\"}: No private subnets found, controlPlane\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\"}: No subnets provided for zones \[a b c\], compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\"}: No subnets provided for zones \[a b c\]]$`,
+		expectErr:      `^\[platform\.aws\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"valid-public-subnet-edge-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-edge-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-edge-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: No private subnets found, controlPlane\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\], compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string\{\"a\", \"b\", \"c\"\}: No subnets provided for zones \[a b c\]\]$`,
 	}, {
 		name: "invalid no subnet for control plane zones",
 		installConfig: func() *types.InstallConfig {
@@ -850,7 +855,7 @@ func TestValidate(t *testing.T) {
 			c := validInstallConfig()
 			c.Publish = types.InternalPublishingStrategy
 			c.Platform.AWS.PublicIpv4Pool = "ipv4pool-ec2-123"
-			c.Platform.AWS.Subnets = []string{}
+			c.Platform.AWS.VPC.Subnets = []aws.Subnet{}
 			return c
 		}(),
 		availZones: validAvailZones(),
@@ -870,7 +875,7 @@ func TestValidate(t *testing.T) {
 		name: "no subnets specified for public-only subnets cluster",
 		installConfig: func() *types.InstallConfig {
 			c := validInstallConfig()
-			c.Platform.AWS.Subnets = []string{}
+			c.Platform.AWS.VPC.Subnets = []aws.Subnet{}
 			return c
 		}(),
 		privateSubnets: validPrivateSubnets(),
@@ -883,7 +888,7 @@ func TestValidate(t *testing.T) {
 		privateSubnets: validPrivateSubnets(),
 		availZones:     validAvailZones(),
 		publicOnly:     "true",
-		expectErr:      `platform\.aws\.subnets: Required value: public subnets are required for a public-only subnets cluster`,
+		expectErr:      `^\[platform\.aws\.vpc\.subnets: Required value: public subnets are required for a public-only subnets cluster, platform\.aws\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"valid-private-subnet-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-private-subnet-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-private-subnet-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"valid-public-subnet-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: No public subnet provided for zones \[a b c\]\]$`,
 	}, {
 		name:           "valid public-only subnets install config",
 		installConfig:  validInstallConfig(),
@@ -901,7 +906,7 @@ func TestValidate(t *testing.T) {
 				publicSubnets:     test.publicSubnets,
 				edgeSubnets:       test.edgeSubnets,
 				instanceTypes:     test.instanceTypes,
-				Subnets:           test.installConfig.Platform.AWS.Subnets,
+				Subnets:           test.installConfig.Platform.AWS.VPC.Subnets,
 			}
 			if test.proxy != "" {
 				os.Setenv("HTTP_PROXY", test.proxy)
@@ -1039,7 +1044,7 @@ func TestValidateForProvisioning(t *testing.T) {
 				instanceTypes:     validInstanceTypes(),
 				Region:            editedInstallConfig.AWS.Region,
 				vpc:               "valid-private-subnet-a",
-				Subnets:           editedInstallConfig.Platform.AWS.Subnets,
+				Subnets:           editedInstallConfig.Platform.AWS.VPC.Subnets,
 			}
 
 			err := ValidateForProvisioning(route53Client, editedInstallConfig, meta)

@@ -33,8 +33,15 @@ type Platform struct {
 	// resources will be created.  Leave unset to have the installer
 	// create subnets in a new VPC on your behalf.
 	//
+	// Deprecated: use platform.aws.vpc.subnets
+	//
 	// +optional
-	Subnets []string `json:"subnets,omitempty"`
+	DeprecatedSubnets []string `json:"subnets,omitempty"`
+
+	// VPC specifies the VPC configuration for the cluster.
+	//
+	// +optional
+	VPC VPC `json:"vpc,omitempty"`
 
 	// HostedZone is the ID of an existing hosted zone into which to add DNS
 	// records for the cluster's internal API. An existing hosted zone can
@@ -143,6 +150,87 @@ type ServiceEndpoint struct {
 	// +kubebuilder:validation:Pattern=`^https://`
 	URL string `json:"url"`
 }
+
+// VPC configures the VPC for the cluster.
+type VPC struct {
+	// Subnets defines the subnets in an existing VPC and can optionally specify their intended roles.
+	// If no roles are specified on any subnet, then the subnet roles are decided automatically.
+	// In this case, the VPC must not contain any subnets without the kubernetes.io/cluster/<cluster-id> tag.
+	//
+	// For manually specified subnet role selection, each subnet must have at least one assigned role,
+	// and the ClusterNode, IngressControllerLB, ControlPlaneExternalLB, and ControlPlaneInternalLB roles must be assigned to at least one subnet.
+	// However, if the cluster scope is internal, then ControlPlaneExternalLB is not required.
+	//
+	// Subnets must contain unique IDs, and can include no more than 10 subnets with the IngressController role.
+	//
+	// Leave this field unset to have the installer create subnets in a new VPC on your behalf.
+	//
+	// +listType=atomic
+	// +optional
+	Subnets []Subnet `json:"subnets,omitempty"`
+}
+
+// Subnet specifies a subnet in an existing VPC and can optionally specify their intended roles.
+type Subnet struct {
+	// ID specifies the subnet ID of an existing subnet.
+	// The subnet ID must start with "subnet-", consist only of alphanumeric characters,
+	// and must be exactly 24 characters long.
+	//
+	// +required
+	ID AWSSubnetID `json:"id"`
+
+	// Roles specifies the roles (aka functions) that the subnet will provide in the cluster.
+	// If no roles are specified on any subnet, then the subnet roles are decided automatically.
+	// Each role must be unique.
+	//
+	// +kubebuilder:validation:MaxItems=5
+	// +optional
+	Roles []SubnetRole `json:"roles,omitempty"`
+}
+
+// SubnetRole specifies the role (aka function) that the subnet will provide in the cluster.
+type SubnetRole struct {
+	// Type specifies the type of role (aka function) that the subnet will provide in the cluster.
+	// Role types include ClusterNode, EdgeNode, Bootstrap, IngressControllerLB, ControlPlaneExternalLB, and ControlPlaneInternalLB.
+	//
+	// +required
+	Type SubnetRoleType `json:"type"`
+}
+
+// AWSSubnetID is a reference to an AWS subnet ID.
+// +kubebuilder:validation:MinLength=24
+// +kubebuilder:validation:MaxLength=24
+// +kubebuilder:validation:Pattern=`^subnet-[0-9A-Za-z]+$`
+type AWSSubnetID string // nolint:revive
+
+// SubnetRoleType defines the type of role (aka function) that the subnet will provide in the cluster.
+// +kubebuilder:validation:Enum:="ClusterNode";"EdgeNode";"Bootstrap";"IngressControllerLB";"ControlPlaneExternalLB";"ControlPlaneInternalLB"
+type SubnetRoleType string
+
+const (
+	// ClusterNodeSubnetRole specifies subnets that will be used as subnets for the
+	// control plane and compute nodes.
+	ClusterNodeSubnetRole SubnetRoleType = "ClusterNode"
+
+	// EdgeNodeSubnetRole specifies subnets that will be used as edge subnets residing
+	// in Local or Wavelength Zones for edge compute nodes.
+	EdgeNodeSubnetRole SubnetRoleType = "EdgeNode"
+
+	// BootstrapSubnetRole specifies subnets that will be used as subnets for the
+	// bootstrap node used to create the cluster.
+	BootstrapSubnetRole SubnetRoleType = "Bootstrap"
+
+	// IngressControllerLBSubnetRole specifies subnets used by the default IngressController.
+	IngressControllerLBSubnetRole SubnetRoleType = "IngressControllerLB"
+
+	// ControlPlaneExternalLBSubnetRole specifies subnets used by the external control plane
+	// load balancer that serves the Kubernetes API server.
+	ControlPlaneExternalLBSubnetRole SubnetRoleType = "ControlPlaneExternalLB"
+
+	// ControlPlaneInternalLBSubnetRole specifies subnets used by the internal control plane
+	// load balancer that serves the Kubernetes API server.
+	ControlPlaneInternalLBSubnetRole SubnetRoleType = "ControlPlaneInternalLB"
+)
 
 // IsSecretRegion returns true if the region is part of either the ISO or ISOB partitions.
 func IsSecretRegion(region string) bool {

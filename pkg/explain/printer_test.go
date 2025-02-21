@@ -276,6 +276,8 @@ override existing defaults of AWS Services.
 resources will be created.  Leave unset to have the installer
 create subnets in a new VPC on your behalf.
 
+Deprecated: use platform.aws.vpc.subnets
+
     userProvisionedDNS <string>
       Default: "Disabled"
       Valid Values: "Enabled","Disabled"
@@ -285,7 +287,10 @@ provisioned by the Installer.
     userTags <object>
       UserTags additional keys and values that the installer will add
 as tags to all resources that it creates. Resources created by the
-cluster itself may not include these tags.`,
+cluster itself may not include these tags.
+
+    vpc <object>
+      VPC specifies the VPC configuration for the cluster.`,
 	}, {
 		path: []string{"platform", "azure"},
 		desc: `FIELDS:
@@ -456,7 +461,8 @@ RESOURCE: <[]string>
   Subnets specifies existing subnets (by ID) where cluster
 resources will be created.  Leave unset to have the installer
 create subnets in a new VPC on your behalf.
-		`,
+
+Deprecated: use platform.aws.vpc.subnets`,
 	}, {
 		path: []string{"platform", "aws", "userTags"},
 		desc: `
