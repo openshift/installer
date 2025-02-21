@@ -15,43 +15,62 @@ const (
 	dhcpTypeName = "dhcp"
 )
 
-// listDHCPNetworks lists previously found DHCP networks in found instances in the vpc.
+// listDHCPNetworks lists PowerVS DHCP instances matching either name or tag in the IBM Cloud.
 func (o *ClusterUninstaller) listDHCPNetworks() (cloudResources, error) {
-	// https://github.com/IBM-Cloud/power-go-client/blob/v1.0.88/power/models/d_h_c_p_servers.go#L19
-	var dhcpServers models.DHCPServers
-	// https://github.com/IBM-Cloud/power-go-client/blob/v1.0.88/power/models/d_h_c_p_server.go#L18-L31
-	var dhcpServer *models.DHCPServer
-	var err error
+	var (
+		dhcpIDs []string
+		dhcpID  string
+		ctx     context.Context
+		cancel  context.CancelFunc
+		result  = make([]cloudResource, 0, 1)
+		// https://github.com/IBM-Cloud/power-go-client/blob/master/power/models/d_h_c_p_server_detail.go#L21
+		dhcpServer *models.DHCPServerDetail
+		// https://github.com/IBM-Cloud/power-go-client/blob/master/power/models/p_vm_instance.go#L22
+		instance *models.PVMInstance
+		err      error
+	)
 
-	o.Logger.Debugf("Listing DHCP networks")
-
-	if o.dhcpClient == nil {
-		o.Logger.Infof("Skipping deleting DHCP servers because no service instance was found")
-		result := []cloudResource{}
-		return cloudResources{}.insert(result...), nil
+	if false { // @TODO o.searchByTag {
+		// Should we list by tag matching?
+		// @TODO dhcpIDs, err = o.listByTag(TagTypeDHCP)
+		err = fmt.Errorf("listByTag(TagTypeDHCP) is not supported yet")
+	} else {
+		// Otherwise list will list by name matching.
+		dhcpIDs, err = o.listDHCPNetworksByName()
 	}
-
-	dhcpServers, err = o.dhcpClient.GetAll()
 	if err != nil {
-		o.Logger.Fatalf("Failed to list DHCP servers: %v", err)
+		return nil, err
 	}
 
-	var foundOne = false
+	ctx, cancel = contextWithTimeout()
+	defer cancel()
 
-	result := []cloudResource{}
-	for _, dhcpServer = range dhcpServers {
+	for _, dhcpID = range dhcpIDs {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("listDHCPNetworks: case <-ctx.Done()")
+			return nil, ctx.Err() // we're cancelled, abort
+		default:
+		}
+
+		o.Logger.Debugf("listDHCPNetworks: Getting DHCP %s %+v", dhcpID, dhcpServer)
+		dhcpServer, err = o.dhcpClient.Get(dhcpID)
+		if err != nil {
+			if strings.Contains(err.Error(), "could not retrieve dhcp server") {
+				continue
+			}
+			return nil, fmt.Errorf("listDHCPNetworks could not get DHCP %s: %w", dhcpID, err)
+		}
+
 		if dhcpServer.Network == nil {
 			o.Logger.Debugf("listDHCPNetworks: DHCP has empty Network: %s", *dhcpServer.ID)
 			continue
 		}
 		if dhcpServer.Network.Name == nil {
-			// https://github.com/IBM-Cloud/power-go-client/blob/master/power/models/p_vm_instance.go#L22
-			var instance *models.PVMInstance
-
 			o.Logger.Debugf("listDHCPNetworks: DHCP has empty Network.Name: %s", *dhcpServer.ID)
 
 			instance, err = o.instanceClient.Get(*dhcpServer.ID)
-			o.Logger.Debugf("listDHCPNetworks: Getting instance %s %v", *dhcpServer.ID, err)
+			o.Logger.Debugf("listDHCPNetworks: Getting DHCP VM %s %+v", *dhcpServer.ID, instance)
 			if err != nil {
 				continue
 			}
@@ -65,7 +84,6 @@ func (o *ClusterUninstaller) listDHCPNetworks() (cloudResources, error) {
 				continue
 			}
 
-			foundOne = true
 			result = append(result, cloudResource{
 				key:      *dhcpServer.ID,
 				name:     *dhcpServer.ID,
@@ -76,34 +94,102 @@ func (o *ClusterUninstaller) listDHCPNetworks() (cloudResources, error) {
 			continue
 		}
 
+		result = append(result, cloudResource{
+			key:      *dhcpServer.ID,
+			name:     *dhcpServer.Network.Name,
+			status:   "DHCP",
+			typeName: dhcpTypeName,
+			id:       *dhcpServer.ID,
+		})
+	}
+
+	return cloudResources{}.insert(result...), nil
+}
+
+// listDHCPNetworksByName lists previously found DHCP networks in found instances in the vpc.
+func (o *ClusterUninstaller) listDHCPNetworksByName() ([]string, error) {
+	var (
+		// https://github.com/IBM-Cloud/power-go-client/blob/v1.0.88/power/models/d_h_c_p_servers.go#L19
+		dhcpServers models.DHCPServers
+		// https://github.com/IBM-Cloud/power-go-client/blob/v1.8.3/power/models/d_h_c_p_server.go#L20-L33
+		dhcpServer *models.DHCPServer
+		ctx        context.Context
+		cancel     context.CancelFunc
+		result     = make([]string, 0, 1)
+		foundOne   = false
+		err        error
+	)
+
+	o.Logger.Debugf("Listing DHCP networks by NAME")
+
+	if o.dhcpClient == nil {
+		o.Logger.Infof("Skipping deleting DHCP servers because no service instance was found")
+		return result, nil
+	}
+
+	ctx, cancel = contextWithTimeout()
+	defer cancel()
+
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("listDHCPNetworksByName: case <-ctx.Done()")
+		return result, ctx.Err() // we're cancelled, abort
+	default:
+	}
+
+	dhcpServers, err = o.dhcpClient.GetAll()
+	if err != nil {
+		o.Logger.Fatalf("Failed to list DHCP servers: %v", err)
+	}
+
+	for _, dhcpServer = range dhcpServers {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("listDHCPNetworksByName: case <-ctx.Done()")
+			return result, ctx.Err() // we're cancelled, abort
+		default:
+		}
+
+		if dhcpServer.Network == nil {
+			o.Logger.Debugf("listDHCPNetworksByName: DHCP has empty Network: %s", *dhcpServer.ID)
+			continue
+		}
+
+		if dhcpServer.Network.Name == nil {
+			result = append(result, *dhcpServer.ID)
+			continue
+		}
+
 		if strings.Contains(*dhcpServer.Network.Name, o.InfraID) {
-			o.Logger.Debugf("listDHCPNetworks: FOUND: %s (%s)", *dhcpServer.Network.Name, *dhcpServer.ID)
+			o.Logger.Debugf("listDHCPNetworksByName: FOUND: %s (%s)", *dhcpServer.Network.Name, *dhcpServer.ID)
 			foundOne = true
-			result = append(result, cloudResource{
-				key:      *dhcpServer.ID,
-				name:     *dhcpServer.Network.Name,
-				status:   "DHCP",
-				typeName: dhcpTypeName,
-				id:       *dhcpServer.ID,
-			})
+			result = append(result, *dhcpServer.ID)
 		}
 	}
 	if !foundOne {
-		o.Logger.Debugf("listDHCPNetworks: NO matching DHCP network found in:")
+		o.Logger.Debugf("listDHCPNetworksByName: NO matching DHCP network found in:")
 		for _, dhcpServer = range dhcpServers {
+			select {
+			case <-ctx.Done():
+				o.Logger.Debugf("listDHCPNetworksByName: case <-ctx.Done()")
+				return result, ctx.Err() // we're cancelled, abort
+			default:
+			}
+
 			if dhcpServer.Network == nil {
 				continue
 			}
 			if dhcpServer.Network.Name == nil {
 				continue
 			}
-			o.Logger.Debugf("listDHCPNetworks: only found DHCP: %s", *dhcpServer.Network.Name)
+			o.Logger.Debugf("listDHCPNetworksByName: only found DHCP: %s", *dhcpServer.Network.Name)
 		}
 	}
 
-	return cloudResources{}.insert(result...), nil
+	return result, nil
 }
 
+// destroyDHCPNetwork deletes a PowerVS DHCP network.
 func (o *ClusterUninstaller) destroyDHCPNetwork(item cloudResource) error {
 	var err error
 
@@ -128,6 +214,7 @@ func (o *ClusterUninstaller) destroyDHCPNetwork(item cloudResource) error {
 	return nil
 }
 
+// destroyDHCPVM deletes a PowerVS backing VM for a DHCP network.
 func (o *ClusterUninstaller) destroyDHCPVM(item cloudResource) error {
 	var err error
 
@@ -210,6 +297,13 @@ func (o *ClusterUninstaller) destroyDHCPNetworks() error {
 			o.Logger.Debugf("destroyDHCPNetworks: found %s in pending items", item.name)
 		}
 		return fmt.Errorf("destroyDHCPNetworks: %d undeleted items pending", len(items))
+	}
+
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("destroyDHCPNetworks: case <-ctx.Done()")
+		return ctx.Err() // we're cancelled, abort
+	default:
 	}
 
 	backoff := wait.Backoff{

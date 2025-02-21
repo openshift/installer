@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"net/http"
+	gohttp "net/http"
 	"strings"
 	"time"
 
@@ -15,53 +15,117 @@ import (
 
 const loadBalancerTypeName = "load balancer"
 
-// listLoadBalancers lists load balancers in the vpc.
+// listLoadBalancers lists load balancers matching either name or tag in the IBM Cloud.
 func (o *ClusterUninstaller) listLoadBalancers() (cloudResources, error) {
-	o.Logger.Debugf("Listing load balancers")
+	var (
+		lbIDs    []string
+		lbID     string
+		ctx      context.Context
+		cancel   context.CancelFunc
+		result   = make([]cloudResource, 0, 3)
+		options  *vpcv1.GetLoadBalancerOptions
+		lb       *vpcv1.LoadBalancer
+		response *core.DetailedResponse
+		err      error
+	)
 
-	ctx, cancel := contextWithTimeout()
+	if o.searchByTag {
+		// Should we list by tag matching?
+		lbIDs, err = o.listByTag(TagTypeLoadBalancer)
+	} else {
+		// Otherwise list will list by name matching.
+		lbIDs, err = o.listLoadBalancersByName()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel = contextWithTimeout()
 	defer cancel()
 
-	select {
-	case <-ctx.Done():
-		o.Logger.Debugf("listLoadBalancers: case <-ctx.Done()")
-		return nil, ctx.Err() // we're cancelled, abort
-	default:
-	}
-
-	options := o.vpcSvc.NewListLoadBalancersOptions()
-
-	resources, _, err := o.vpcSvc.ListLoadBalancersWithContext(ctx, options)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list load balancers: %w", err)
-	}
-
-	var foundOne = false
-
-	result := []cloudResource{}
-	for _, loadbalancer := range resources.LoadBalancers {
-		if strings.Contains(*loadbalancer.Name, o.InfraID) {
-			foundOne = true
-			o.Logger.Debugf("listLoadBalancers: FOUND: %s, %s, %s", *loadbalancer.ID, *loadbalancer.Name, *loadbalancer.ProvisioningStatus)
-			result = append(result, cloudResource{
-				key:      *loadbalancer.ID,
-				name:     *loadbalancer.Name,
-				status:   *loadbalancer.ProvisioningStatus,
-				typeName: loadBalancerTypeName,
-				id:       *loadbalancer.ID,
-			})
+	for _, lbID = range lbIDs {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("listLoadBalancers: case <-ctx.Done()")
+			return nil, ctx.Err() // we're cancelled, abort
+		default:
 		}
-	}
-	if !foundOne {
-		o.Logger.Debugf("listLoadBalancers: NO matching loadbalancers against: %s", o.InfraID)
-		for _, loadbalancer := range resources.LoadBalancers {
-			o.Logger.Debugf("listLoadBalancers: loadbalancer: %s", *loadbalancer.Name)
+
+		options = o.vpcSvc.NewGetLoadBalancerOptions(lbID)
+
+		lb, response, err = o.vpcSvc.GetLoadBalancerWithContext(ctx, options)
+		if err != nil && response != nil && response.StatusCode == gohttp.StatusNotFound {
+			// The load balancer could have been deleted just after a list was created.
+			continue
 		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to get load balancer (%s): err = %w, response = %v", lbID, err, response)
+		}
+
+		result = append(result, cloudResource{
+			key:      *lb.ID,
+			name:     *lb.Name,
+			status:   *lb.ProvisioningStatus,
+			typeName: loadBalancerTypeName,
+			id:       *lb.ID,
+		})
 	}
 
 	return cloudResources{}.insert(result...), nil
 }
 
+// listLoadBalancersByName list the load balancers matching by name in the IBM Cloud.
+func (o *ClusterUninstaller) listLoadBalancersByName() ([]string, error) {
+	var (
+		ctx          context.Context
+		cancel       context.CancelFunc
+		options      *vpcv1.ListLoadBalancersOptions
+		lbCollection *vpcv1.LoadBalancerCollection
+		response     *core.DetailedResponse
+		foundOne     = false
+		result       = make([]string, 0, 3)
+		lb           vpcv1.LoadBalancer
+		err          error
+	)
+
+	o.Logger.Debugf("Listing load balancers by NAME")
+
+	ctx, cancel = contextWithTimeout()
+	defer cancel()
+
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("listLoadBalancersByName: case <-ctx.Done()")
+		return nil, ctx.Err() // we're cancelled, abort
+	default:
+	}
+
+	options = o.vpcSvc.NewListLoadBalancersOptions()
+	// @WHY options.SetResourceGroupID(o.resourceGroupID)
+
+	lbCollection, response, err = o.vpcSvc.ListLoadBalancersWithContext(ctx, options)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list load balancers: err = %w, response = %v", err, response)
+	}
+
+	for _, lb = range lbCollection.LoadBalancers {
+		if strings.Contains(*lb.Name, o.InfraID) {
+			foundOne = true
+			o.Logger.Debugf("listLoadBalancersByName: FOUND: %s, %s, %s", *lb.ID, *lb.Name, *lb.ProvisioningStatus)
+			result = append(result, *lb.ID)
+		}
+	}
+	if !foundOne {
+		o.Logger.Debugf("listLoadBalancersByName: NO matching loadbalancers against: %s", o.InfraID)
+		for _, loadbalancer := range lbCollection.LoadBalancers {
+			o.Logger.Debugf("listLoadBalancersByName: loadbalancer: %s", *loadbalancer.Name)
+		}
+	}
+
+	return result, nil
+}
+
+// deleteLoadBalancer deletes the load balancer specified.
 func (o *ClusterUninstaller) deleteLoadBalancer(item cloudResource) error {
 	var getOptions *vpcv1.GetLoadBalancerOptions
 	var lb *vpcv1.LoadBalancer
@@ -81,16 +145,16 @@ func (o *ClusterUninstaller) deleteLoadBalancer(item cloudResource) error {
 	getOptions = o.vpcSvc.NewGetLoadBalancerOptions(item.id)
 	lb, response, err = o.vpcSvc.GetLoadBalancer(getOptions)
 
-	if err == nil && response.StatusCode == http.StatusNoContent {
+	if err == nil && response.StatusCode == gohttp.StatusNoContent {
 		return nil
 	}
-	if err != nil && response != nil && response.StatusCode == http.StatusNotFound {
+	if err != nil && response != nil && response.StatusCode == gohttp.StatusNotFound {
 		// The resource is gone.
 		o.deletePendingItems(item.typeName, []cloudResource{item})
 		o.Logger.Infof("Deleted Load Balancer %q", item.name)
 		return nil
 	}
-	if err != nil && response != nil && response.StatusCode == http.StatusInternalServerError {
+	if err != nil && response != nil && response.StatusCode == gohttp.StatusInternalServerError {
 		o.Logger.Infof("deleteLoadBalancer: internal server error")
 		return nil
 	}
@@ -168,6 +232,13 @@ func (o *ClusterUninstaller) destroyLoadBalancers() error {
 			o.Logger.Debugf("destroyLoadBalancers: found %s in pending items", item.name)
 		}
 		return fmt.Errorf("destroyLoadBalancers: %d undeleted items pending", len(items))
+	}
+
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("destroyLoadBalancers: case <-ctx.Done()")
+		return ctx.Err() // we're cancelled, abort
+	default:
 	}
 
 	backoff := wait.Backoff{
