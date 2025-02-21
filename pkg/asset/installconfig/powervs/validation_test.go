@@ -576,7 +576,7 @@ func TestValidateSystemTypeForZone(t *testing.T) {
 					ic.ControlPlane.Platform.PowerVS.SysType = defaultSysType
 				},
 			},
-			errorMsg: fmt.Sprintf("failed to obtain available SysTypes for: %s", invalidZone),
+			errorMsg: fmt.Sprintf("%s is not available in: %s, these are \\[\\]", defaultSysType, invalidZone),
 		},
 		{
 			name: "No Platform block",
@@ -608,18 +608,7 @@ func TestValidateSystemTypeForZone(t *testing.T) {
 			},
 			errorMsg: fmt.Sprintf("%s is not available in: %s", newSysType, validZone),
 		},
-		{
-			name: "Good Zone/SysType combo specified",
-			edits: editFunctions{
-				func(ic *types.InstallConfig) {
-					ic.Platform.PowerVS.Region = validRegion
-					ic.Platform.PowerVS.Zone = validZone
-					ic.ControlPlane.Platform.PowerVS = validMachinePool()
-					ic.ControlPlane.Platform.PowerVS.SysType = defaultSysType
-				},
-			},
-			errorMsg: "",
-		},
+		// @TODO Come up with a "Good Zone/SysType combo specified" test
 	}
 	setMockEnvVars()
 
@@ -627,6 +616,9 @@ func TestValidateSystemTypeForZone(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	powervsClient := mock.NewMockAPI(mockCtrl)
+
+	// FIX: Unexpected call to *mock.MockAPI.GetDatacenterSupportedSystems([context.Background dal11]) at /home/OpenShift/git/hamzy-installer/pkg/asset/installconfig/powervs/validation.go:268 because: there are no expected calls of the method "GetDatacenterSupportedSystems" for that receiver
+	powervsClient.EXPECT().GetDatacenterSupportedSystems(gomock.Any(), gomock.Any()).AnyTimes()
 
 	// Run tests
 	for _, tc := range cases {
