@@ -269,46 +269,6 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		}
 		assetData["99_baremetal-provisioning-config.yaml"] = applyTemplateData(baremetalConfig.Files()[0].Data, bmTemplateData)
 	}
-	if platform == azuretypes.Name {
-		var aro bool
-		client, err := installConfig.Azure.Client()
-		if err == nil {
-			isAro, err := client.CheckIfARO(context.TODO(), installConfig.Config.Azure.ResourceGroupName)
-			if err == nil {
-				aro = isAro
-			}
-		}
-		if aro && installConfig.Config.CredentialsMode != types.ManualCredentialsMode {
-			// config is used to created compatible secret to trigger azure cloud
-			// controller config merge behaviour
-			// https://github.com/openshift/origin/blob/90c050f5afb4c52ace82b15e126efe98fa798d88/vendor/k8s.io/legacy-cloud-providers/azure/azure_config.go#L83
-			session, err := installConfig.Azure.Session()
-			if err != nil {
-				return err
-			}
-			config := struct {
-				AADClientID     string `json:"aadClientId" yaml:"aadClientId"`
-				AADClientSecret string `json:"aadClientSecret" yaml:"aadClientSecret"`
-			}{
-				AADClientID:     session.Credentials.ClientID,
-				AADClientSecret: session.Credentials.ClientSecret,
-			}
-
-			b, err := yaml.Marshal(config)
-			if err != nil {
-				return err
-			}
-
-			azureCloudProviderSecret := &openshift.AzureCloudProviderSecret{}
-			dependencies.Get(azureCloudProviderSecret)
-			for _, f := range azureCloudProviderSecret.Files() {
-				name := strings.TrimSuffix(filepath.Base(f.Filename), ".template")
-				assetData[name] = applyTemplateData(f.Data, map[string]string{
-					"CloudConfig": string(b),
-				})
-			}
-		}
-	}
 
 	o.FileList = []*asset.File{}
 	for name, data := range assetData {
