@@ -45,6 +45,11 @@ func DataSourceIBMEnCodeEngineDestination() *schema.Resource {
 				Computed:    true,
 				Description: "Destination type Webhook.",
 			},
+			"collect_failed_events": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether to collect the failed event in Cloud Object Storage bucket",
+			},
 			"config": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -65,6 +70,21 @@ func DataSourceIBMEnCodeEngineDestination() *schema.Resource {
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "HTTP method of webhook.",
+									},
+									"type": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The code engine destination type.",
+									},
+									"project_crn": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "CRN of the code engine project.",
+									},
+									"job_name": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Name of the code engine job.",
 									},
 									"custom_headers": {
 										Type:        schema.TypeMap,
@@ -142,6 +162,10 @@ func dataSourceIBMEnCodeEngineDestinationRead(context context.Context, d *schema
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting type: %s", err))
 	}
 
+	if err = d.Set("collect_failed_events", result.CollectFailedEvents); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting CollectFailedEvents: %s", err))
+	}
+
 	if result.Config != nil {
 		err = d.Set("config", enCodeEngineDestinationFlattenConfig(*result.Config))
 		if err != nil {
@@ -193,18 +217,37 @@ func enCodeEngineDestinationConfigParamsToMap(paramsItem en.DestinationConfigOne
 
 	params := paramsItem.(*en.DestinationConfigOneOf)
 
-	if params.URL != nil {
-		paramsMap["url"] = params.URL
-	}
-	if params.Verb != nil {
-		paramsMap["verb"] = params.Verb
-	}
-	if params.CustomHeaders != nil {
-		paramsMap["custom_headers"] = params.CustomHeaders
-	}
-	if params.SensitiveHeaders != nil {
-		paramsMap["sensitive_headers"] = params.SensitiveHeaders
+	paramsMap["type"] = params.Type
+
+	if *params.Type == "application" {
+
+		if params.URL != nil {
+			paramsMap["url"] = params.URL
+		}
+		if params.Verb != nil {
+			paramsMap["verb"] = params.Verb
+		}
+
+		if params.CustomHeaders != nil {
+			paramsMap["custom_headers"] = params.CustomHeaders
+		}
+		if params.SensitiveHeaders != nil {
+			paramsMap["sensitive_headers"] = params.SensitiveHeaders
+		}
+
+		return paramsMap
+
+	} else {
+
+		if params.ProjectCRN != nil {
+			paramsMap["project_crn"] = params.ProjectCRN
+		}
+		if params.JobName != nil {
+			paramsMap["job_name"] = params.JobName
+		}
+
+		return paramsMap
+
 	}
 
-	return paramsMap
 }

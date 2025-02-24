@@ -19,6 +19,7 @@ package common
 import (
 	"fmt"
 	"runtime"
+	"github.com/IBM/go-sdk-core/v5/core"
 )
 
 const (
@@ -79,4 +80,8 @@ var systemInfo = fmt.Sprintf("(lang=go; arch=%s; os=%s; go.version=%s)", runtime
 
 func GetSystemInfo() string {
 	return systemInfo
+}
+
+func GetComponentInfo() *core.ProblemComponent {
+	return core.NewProblemComponent("github.com/IBM/project-go-sdk", Version)
 }

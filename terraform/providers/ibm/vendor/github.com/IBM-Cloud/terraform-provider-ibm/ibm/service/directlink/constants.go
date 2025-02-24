@@ -72,6 +72,7 @@ const (
 	dlType                          = "type"
 	dlUpdatedAt                     = "updated_at"
 	dlVlan                          = "vlan"
+	dlRemoveVlan                    = "remove_vlan"
 	dlWindowSize                    = "window_size"
 	customerAccountID               = "customer_account_id"
 	dlRouteReports                  = "route_reports"

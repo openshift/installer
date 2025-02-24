@@ -63,16 +63,19 @@ func ResourceIBMPINetworkPortAttach() *schema.Resource {
 				ForceNew: true,
 				Computed: true,
 			},
+			Arg_UserTags: {
+				Description: "The user tags attached to this resource.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				ForceNew:    true,
+				Optional:    true,
+				Set:         schema.HashString,
+				Type:        schema.TypeSet,
+			},
 
 			//Computed Attributes
 			"macaddress": {
 				Type:     schema.TypeString,
 				Computed: true,
-			},
-			"port_id": {
-				Type:       schema.TypeString,
-				Computed:   true,
-				Deprecated: "port_id attribute is deprecated, use network_port_id instead.",
 			},
 			"network_port_id": {
 				Type:     schema.TypeString,
@@ -106,7 +109,9 @@ func resourceIBMPINetworkPortAttachCreate(ctx context.Context, d *schema.Resourc
 		ipaddress := v.(string)
 		nwportBody.IPAddress = ipaddress
 	}
-
+	if tags, ok := d.GetOk(Arg_UserTags); ok {
+		nwportBody.UserTags = flex.FlattenSet(tags.(*schema.Set))
+	}
 	nwportattachBody := &models.NetworkPortUpdate{
 		Description:   &description,
 		PvmInstanceID: &instanceID,
@@ -169,7 +174,6 @@ func resourceIBMPINetworkPortAttachRead(ctx context.Context, d *schema.ResourceD
 	d.Set("macaddress", networkdata.MacAddress)
 	d.Set("status", networkdata.Status)
 	d.Set("network_port_id", networkdata.PortID)
-	d.Set("port_id", networkdata.PortID)
 	d.Set("public_ip", networkdata.ExternalIP)
 
 	return nil

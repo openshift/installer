@@ -6,6 +6,7 @@ package p_cloud_v_p_n_connections
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -109,11 +110,13 @@ func (o *PcloudVpnconnectionsNetworksGetOK) Code() int {
 }
 
 func (o *PcloudVpnconnectionsNetworksGetOK) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetOK %s", 200, payload)
 }
 
 func (o *PcloudVpnconnectionsNetworksGetOK) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetOK %s", 200, payload)
 }
 
 func (o *PcloudVpnconnectionsNetworksGetOK) GetPayload() *models.NetworkIDs {
@@ -177,11 +180,13 @@ func (o *PcloudVpnconnectionsNetworksGetBadRequest) Code() int {
 }
 
 func (o *PcloudVpnconnectionsNetworksGetBadRequest) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetBadRequest %s", 400, payload)
 }
 
 func (o *PcloudVpnconnectionsNetworksGetBadRequest) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetBadRequest %s", 400, payload)
 }
 
 func (o *PcloudVpnconnectionsNetworksGetBadRequest) GetPayload() *models.Error {
@@ -245,11 +250,13 @@ func (o *PcloudVpnconnectionsNetworksGetUnauthorized) Code() int {
 }
 
 func (o *PcloudVpnconnectionsNetworksGetUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudVpnconnectionsNetworksGetUnauthorized) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudVpnconnectionsNetworksGetUnauthorized) GetPayload() *models.Error {
@@ -313,11 +320,13 @@ func (o *PcloudVpnconnectionsNetworksGetForbidden) Code() int {
 }
 
 func (o *PcloudVpnconnectionsNetworksGetForbidden) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetForbidden %s", 403, payload)
 }
 
 func (o *PcloudVpnconnectionsNetworksGetForbidden) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetForbidden %s", 403, payload)
 }
 
 func (o *PcloudVpnconnectionsNetworksGetForbidden) GetPayload() *models.Error {
@@ -381,11 +390,13 @@ func (o *PcloudVpnconnectionsNetworksGetNotFound) Code() int {
 }
 
 func (o *PcloudVpnconnectionsNetworksGetNotFound) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetNotFound %s", 404, payload)
 }
 
 func (o *PcloudVpnconnectionsNetworksGetNotFound) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetNotFound %s", 404, payload)
 }
 
 func (o *PcloudVpnconnectionsNetworksGetNotFound) GetPayload() *models.Error {
@@ -449,11 +460,13 @@ func (o *PcloudVpnconnectionsNetworksGetInternalServerError) Code() int {
 }
 
 func (o *PcloudVpnconnectionsNetworksGetInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudVpnconnectionsNetworksGetInternalServerError) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/networks][%d] pcloudVpnconnectionsNetworksGetInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudVpnconnectionsNetworksGetInternalServerError) GetPayload() *models.Error {

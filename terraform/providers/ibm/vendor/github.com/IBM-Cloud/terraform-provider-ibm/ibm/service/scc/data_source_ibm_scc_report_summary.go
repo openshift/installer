@@ -5,7 +5,6 @@ package scc
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -307,13 +306,13 @@ func dataSourceIbmSccReportSummaryRead(context context.Context, d *schema.Resour
 	reportSummary, response, err := resultsClient.GetReportSummaryWithContext(context, getReportSummaryOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetReportSummaryWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetReportSummaryWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetReportSummaryWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(dataSourceIbmSccReportSummaryID(d))
 
 	if err = d.Set("isntance_id", reportSummary.IsntanceID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting isntance_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting isntance_id: %s", err))
 	}
 
 	account := []map[string]interface{}{}
@@ -325,7 +324,7 @@ func dataSourceIbmSccReportSummaryRead(context context.Context, d *schema.Resour
 		account = append(account, modelMap)
 	}
 	if err = d.Set("account", account); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting account %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting account %s", err))
 	}
 
 	score := []map[string]interface{}{}
@@ -337,7 +336,7 @@ func dataSourceIbmSccReportSummaryRead(context context.Context, d *schema.Resour
 		score = append(score, modelMap)
 	}
 	if err = d.Set("score", score); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting score %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting score %s", err))
 	}
 
 	controls := []map[string]interface{}{}
@@ -349,7 +348,7 @@ func dataSourceIbmSccReportSummaryRead(context context.Context, d *schema.Resour
 		controls = append(controls, modelMap)
 	}
 	if err = d.Set("controls", controls); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting controls %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting controls %s", err))
 	}
 
 	evaluations := []map[string]interface{}{}
@@ -361,7 +360,7 @@ func dataSourceIbmSccReportSummaryRead(context context.Context, d *schema.Resour
 		evaluations = append(evaluations, modelMap)
 	}
 	if err = d.Set("evaluations", evaluations); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting evaluations %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting evaluations %s", err))
 	}
 
 	resources := []map[string]interface{}{}
@@ -373,7 +372,7 @@ func dataSourceIbmSccReportSummaryRead(context context.Context, d *schema.Resour
 		resources = append(resources, modelMap)
 	}
 	if err = d.Set("resources", resources); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting resources %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting resources %s", err))
 	}
 
 	return nil

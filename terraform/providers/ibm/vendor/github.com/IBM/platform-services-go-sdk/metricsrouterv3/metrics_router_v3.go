@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2023.
+ * (C) Copyright IBM Corp. 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.80.0-29334a73-20230925-151553
+ * IBM OpenAPI SDK Code Generator Version: 3.84.1-55f6d880-20240110-194020
  */
 
 // Package metricsrouterv3 : Operations and models for the MetricsRouterV3 service
@@ -114,12 +114,22 @@ func GetServiceURLForRegion(region string) (string, error) {
 	var endpoints = map[string]string{
 		"au-syd":           "https://au-syd.metrics-router.cloud.ibm.com/api/v3",           // The server for IBM Cloud Metrics Routing Service in the au-syd region.
 		"private.au-syd":   "https://private.au-syd.metrics-router.cloud.ibm.com/api/v3",   // The server for IBM Cloud Metrics Routing Service in the au-syd region.
+		"br-sao":           "https://br-sao.metrics-router.cloud.ibm.com/api/v3",           // The server for IBM Cloud Metrics Routing Service in the br-sao region.
+		"private.br-sao":   "https://private.br-sao.metrics-router.cloud.ibm.com/api/v3",   // The server for IBM Cloud Metrics Routing Service in the br-sao region.
+		"ca-tor":           "https://ca-tor.metrics-router.cloud.ibm.com/api/v3",           // The server for IBM Cloud Metrics Routing Service in the ca-tor region.
+		"private.ca-tor":   "https://private.ca-tor.metrics-router.cloud.ibm.com/api/v3",   // The server for IBM Cloud Metrics Routing Service in the ca-tor region.
 		"eu-de":            "https://eu-de.metrics-router.cloud.ibm.com/api/v3",            // The server for IBM Cloud Metrics Routing Service in the eu-de region.
 		"private.eu-de":    "https://private.eu-de.metrics-router.cloud.ibm.com/api/v3",    // The server for IBM Cloud Metrics Routing Service in the eu-de region.
 		"eu-gb":            "https://eu-gb.metrics-router.cloud.ibm.com/api/v3",            // The server for IBM Cloud Metrics Routing Service in the eu-gb region.
 		"private.eu-gb":    "https://private.eu-gb.metrics-router.cloud.ibm.com/api/v3",    // The server for IBM Cloud Metrics Routing Service in the eu-gb region.
 		"eu-es":            "https://eu-es.metrics-router.cloud.ibm.com/api/v3",            // The server for IBM Cloud Metrics Routing Service in the eu-es region.
 		"private.eu-es":    "https://private.eu-es.metrics-router.cloud.ibm.com/api/v3",    // The server for IBM Cloud Metrics Routing Service in the eu-es region.
+		"eu-fr2":           "https://eu-fr2.metrics-router.cloud.ibm.com/api/v3",           // The server for IBM Cloud Metrics Routing Service in the eu-fr2 region.
+		"private.eu-fr2":   "https://private.eu-fr2.metrics-router.cloud.ibm.com/api/v3",   // The server for IBM Cloud Metrics Routing Service in the eu-fr2 region.
+		"jp-osa":           "https://jp-osa.metrics-router.cloud.ibm.com/api/v3",           // The server for IBM Cloud Metrics Routing Service in the jp-osa region.
+		"private.jp-osa":   "https://private.jp-osa.metrics-router.cloud.ibm.com/api/v3",   // The server for IBM Cloud Metrics Routing Service in the jp-osa region.
+		"jp-tok":           "https://jp-tok.metrics-router.cloud.ibm.com/api/v3",           // The server for IBM Cloud Metrics Routing Service in the jp-tok region.
+		"private.jp-tok":   "https://private.jp-tok.metrics-router.cloud.ibm.com/api/v3",   // The server for IBM Cloud Metrics Routing Service in the jp-tok region.
 		"us-east":          "https://us-east.metrics-router.cloud.ibm.com/api/v3",          // The server for IBM Cloud Metrics Routing Service in the us-east region.
 		"private.us-east":  "https://private.us-east.metrics-router.cloud.ibm.com/api/v3",  // The server for IBM Cloud Metrics Routing Service in the us-east region.
 		"us-south":         "https://us-south.metrics-router.cloud.ibm.com/api/v3",         // The server for IBM Cloud Metrics Routing Service in the us-south region.

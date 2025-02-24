@@ -6,6 +6,7 @@ package p_cloud_placement_groups
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -121,11 +122,13 @@ func (o *PcloudPlacementgroupsPostOK) Code() int {
 }
 
 func (o *PcloudPlacementgroupsPostOK) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostOK %s", 200, payload)
 }
 
 func (o *PcloudPlacementgroupsPostOK) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostOK %s", 200, payload)
 }
 
 func (o *PcloudPlacementgroupsPostOK) GetPayload() *models.PlacementGroup {
@@ -189,11 +192,13 @@ func (o *PcloudPlacementgroupsPostBadRequest) Code() int {
 }
 
 func (o *PcloudPlacementgroupsPostBadRequest) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostBadRequest %s", 400, payload)
 }
 
 func (o *PcloudPlacementgroupsPostBadRequest) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostBadRequest %s", 400, payload)
 }
 
 func (o *PcloudPlacementgroupsPostBadRequest) GetPayload() *models.Error {
@@ -257,11 +262,13 @@ func (o *PcloudPlacementgroupsPostUnauthorized) Code() int {
 }
 
 func (o *PcloudPlacementgroupsPostUnauthorized) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudPlacementgroupsPostUnauthorized) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudPlacementgroupsPostUnauthorized) GetPayload() *models.Error {
@@ -325,11 +332,13 @@ func (o *PcloudPlacementgroupsPostForbidden) Code() int {
 }
 
 func (o *PcloudPlacementgroupsPostForbidden) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostForbidden %s", 403, payload)
 }
 
 func (o *PcloudPlacementgroupsPostForbidden) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostForbidden %s", 403, payload)
 }
 
 func (o *PcloudPlacementgroupsPostForbidden) GetPayload() *models.Error {
@@ -393,11 +402,13 @@ func (o *PcloudPlacementgroupsPostNotFound) Code() int {
 }
 
 func (o *PcloudPlacementgroupsPostNotFound) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostNotFound %s", 404, payload)
 }
 
 func (o *PcloudPlacementgroupsPostNotFound) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostNotFound %s", 404, payload)
 }
 
 func (o *PcloudPlacementgroupsPostNotFound) GetPayload() *models.Error {
@@ -461,11 +472,13 @@ func (o *PcloudPlacementgroupsPostConflict) Code() int {
 }
 
 func (o *PcloudPlacementgroupsPostConflict) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostConflict  %+v", 409, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostConflict %s", 409, payload)
 }
 
 func (o *PcloudPlacementgroupsPostConflict) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostConflict  %+v", 409, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostConflict %s", 409, payload)
 }
 
 func (o *PcloudPlacementgroupsPostConflict) GetPayload() *models.Error {
@@ -529,11 +542,13 @@ func (o *PcloudPlacementgroupsPostUnprocessableEntity) Code() int {
 }
 
 func (o *PcloudPlacementgroupsPostUnprocessableEntity) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostUnprocessableEntity  %+v", 422, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostUnprocessableEntity %s", 422, payload)
 }
 
 func (o *PcloudPlacementgroupsPostUnprocessableEntity) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostUnprocessableEntity  %+v", 422, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostUnprocessableEntity %s", 422, payload)
 }
 
 func (o *PcloudPlacementgroupsPostUnprocessableEntity) GetPayload() *models.Error {
@@ -597,11 +612,13 @@ func (o *PcloudPlacementgroupsPostInternalServerError) Code() int {
 }
 
 func (o *PcloudPlacementgroupsPostInternalServerError) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudPlacementgroupsPostInternalServerError) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudPlacementgroupsPostInternalServerError) GetPayload() *models.Error {

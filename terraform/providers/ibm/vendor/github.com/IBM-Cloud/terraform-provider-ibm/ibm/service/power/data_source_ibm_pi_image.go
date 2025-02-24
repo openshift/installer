@@ -6,65 +6,72 @@ package power
 import (
 	"context"
 
-	"github.com/IBM-Cloud/power-go-client/helpers"
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	//"fmt"
-	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func DataSourceIBMPIImage() *schema.Resource {
-
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPIImagesRead,
 		Schema: map[string]*schema.Schema{
-
-			helpers.PIImageName: {
-				Type:         schema.TypeString,
+			// Arguments
+			Arg_CloudInstanceID: {
+				Description:  "The GUID of the service instance associated with an account.",
 				Required:     true,
-				Description:  "Imagename Name to be used for pvminstances",
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
-			helpers.PICloudInstanceId: {
-				Type:         schema.TypeString,
+			Arg_ImageName: {
+				Description:  "The ID of the image.",
 				Required:     true,
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
 
-			"state": {
-				Type:     schema.TypeString,
-				Computed: true,
+			// Attributes
+			Attr_Architecture: {
+				Computed:    true,
+				Description: "The CPU architecture that the image is designed for. ",
+				Type:        schema.TypeString,
 			},
-			"size": {
-				Type:     schema.TypeInt,
-				Computed: true,
+			Attr_Hypervisor: {
+				Computed:    true,
+				Description: "Hypervision Type.",
+				Type:        schema.TypeString,
 			},
-			"architecture": {
-				Type:     schema.TypeString,
-				Computed: true,
+			Attr_ImageType: {
+				Computed:    true,
+				Description: "The identifier of this image type.",
+				Type:        schema.TypeString,
 			},
-			"operatingsystem": {
-				Type:     schema.TypeString,
-				Computed: true,
+			// TODO: Relabel this one "operating_system" to match catalog images
+			Attr_OperatingSystem: {
+				Computed:    true,
+				Description: "The operating system that is installed with the image.",
+				Type:        schema.TypeString,
 			},
-			"hypervisor": {
-				Type:     schema.TypeString,
-				Computed: true,
+			Attr_Size: {
+				Computed:    true,
+				Description: "The size of the image in megabytes.",
+				Type:        schema.TypeInt,
 			},
-			"storage_type": {
-				Type:     schema.TypeString,
-				Computed: true,
+			Attr_State: {
+				Computed:    true,
+				Description: "The state for this image. ",
+				Type:        schema.TypeString,
 			},
-			"storage_pool": {
-				Type:     schema.TypeString,
-				Computed: true,
+			Attr_StoragePool: {
+				Computed:    true,
+				Description: "Storage pool where image resides.",
+				Type:        schema.TypeString,
 			},
-			"image_type": {
-				Type:     schema.TypeString,
-				Computed: true,
+			Attr_StorageType: {
+				Computed:    true,
+				Description: "The storage type for this image.",
+				Type:        schema.TypeString,
 			},
 		},
 	}
@@ -76,24 +83,23 @@ func dataSourceIBMPIImagesRead(ctx context.Context, d *schema.ResourceData, meta
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
 
 	imageC := instance.NewIBMPIImageClient(ctx, sess, cloudInstanceID)
-	imagedata, err := imageC.Get(d.Get(helpers.PIImageName).(string))
+	imagedata, err := imageC.Get(d.Get(Arg_ImageName).(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(*imagedata.ImageID)
-	d.Set("state", imagedata.State)
-	d.Set("size", imagedata.Size)
-	d.Set("architecture", imagedata.Specifications.Architecture)
-	d.Set("hypervisor", imagedata.Specifications.HypervisorType)
-	d.Set("operatingsystem", imagedata.Specifications.OperatingSystem)
-	d.Set("storage_type", imagedata.StorageType)
-	d.Set("storage_pool", imagedata.StoragePool)
-	d.Set("image_type", imagedata.Specifications.ImageType)
+	d.Set(Attr_Architecture, imagedata.Specifications.Architecture)
+	d.Set(Attr_Hypervisor, imagedata.Specifications.HypervisorType)
+	d.Set(Attr_ImageType, imagedata.Specifications.ImageType)
+	d.Set(Attr_OperatingSystem, imagedata.Specifications.OperatingSystem)
+	d.Set(Attr_Size, imagedata.Size)
+	d.Set(Attr_State, imagedata.State)
+	d.Set(Attr_StoragePool, imagedata.StoragePool)
+	d.Set(Attr_StorageType, imagedata.StorageType)
 
 	return nil
-
 }

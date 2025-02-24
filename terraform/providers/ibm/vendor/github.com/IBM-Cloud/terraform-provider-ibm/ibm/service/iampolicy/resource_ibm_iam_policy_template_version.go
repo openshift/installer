@@ -55,7 +55,7 @@ func ResourceIBMIAMPolicyTemplateVersion() *schema.Resource {
 							Type:        schema.TypeList,
 							MinItems:    1,
 							MaxItems:    1,
-							Required:    true,
+							Optional:    true,
 							Description: "The resource attributes to which the policy grants access.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -103,6 +103,40 @@ func ResourceIBMIAMPolicyTemplateVersion() *schema.Resource {
 													Type:        schema.TypeString,
 													Required:    true,
 													Description: "The operator of an access management tag.",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						"subject": {
+							Type:        schema.TypeSet,
+							Optional:    true,
+							Computed:    true,
+							Description: "The subject attributes for authorization type templates",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"attributes": {
+										Type:        schema.TypeList,
+										Required:    true,
+										Description: "List of resource attributes to which the policy grants access.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"key": {
+													Type:        schema.TypeString,
+													Required:    true,
+													Description: "The name of a resource attribute.",
+												},
+												"operator": {
+													Type:        schema.TypeString,
+													Required:    true,
+													Description: "The operator of an attribute.",
+												},
+												"value": {
+													Type:        schema.TypeString,
+													Required:    true,
+													Description: "The value of a rule or resource attribute; can be boolean or string for resource attribute. Can be string or an array of strings (e.g., array of days to permit access) for rule attribute.",
 												},
 											},
 										},
@@ -172,7 +206,7 @@ func ResourceIBMIAMPolicyTemplateVersion() *schema.Resource {
 						},
 						"roles": {
 							Type:        schema.TypeList,
-							Required:    true,
+							Optional:    true,
 							Elem:        &schema.Schema{Type: schema.TypeString},
 							Description: "Role names of the policy definition",
 						},
@@ -235,7 +269,7 @@ func resourceIBMIAMPolicyTemplateVersionCreate(context context.Context, d *schem
 
 	createPolicyTemplateVersionOptions.SetPolicyTemplateID(d.Get("template_id").(string))
 
-	policyModel, err := generateTemplatePolicy(d.Get("policy.0").(map[string]interface{}), iamPolicyManagementClient)
+	policyModel, err := generateTemplatePolicy(d, iamPolicyManagementClient)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -372,7 +406,7 @@ func resourceIBMIAMPolicyTemplateVersionUpdate(context context.Context, d *schem
 			replacePolicyTemplateOptions.SetName(name.(string))
 		}
 
-		policy, err := generateTemplatePolicy(d.Get("policy.0").(map[string]interface{}), iamPolicyManagementClient)
+		policy, err := generateTemplatePolicy(d, iamPolicyManagementClient)
 		if err != nil {
 			return diag.FromErr(err)
 		}

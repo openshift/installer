@@ -493,7 +493,7 @@ func dataSourceVPNGatewayConnectionsToMap(connectionsItem vpcv1.VPNGatewayConnec
 	return connectionsMap
 }
 
-func dataSourceVPNGatewayConnectionsDeletedToMap(deletedItem vpcv1.VPNGatewayConnectionReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceVPNGatewayConnectionsDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {
@@ -584,7 +584,7 @@ func dataSourceVPNGatewaySubnetToMap(subnetItem vpcv1.SubnetReference) (subnetMa
 	return subnetMap
 }
 
-func dataSourceVPNGatewaySubnetDeletedToMap(deletedItem vpcv1.SubnetReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceVPNGatewaySubnetDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {
@@ -625,7 +625,7 @@ func dataSourceVPNGatewayVpcToMap(vpcItem vpcv1.VPCReference) (vpcsMap map[strin
 
 }
 
-func dataSourceVPNGatewayVpcDeletedToMap(deletedItem vpcv1.VPCReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceVPNGatewayVpcDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

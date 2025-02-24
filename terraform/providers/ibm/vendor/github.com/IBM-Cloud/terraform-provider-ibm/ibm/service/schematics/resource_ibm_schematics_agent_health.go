@@ -90,9 +90,8 @@ func resourceIbmSchematicsAgentHealthCreate(context context.Context, d *schema.R
 
 	healthCheckAgentJobOptions := &schematicsv1.HealthCheckAgentJobOptions{}
 	ff := map[string]string{
-		"X-Feature-Agents": "true",
-		"Authorization":    iamAccessToken,
-		"refresh_token":    iamRefreshToken,
+		"Authorization": iamAccessToken,
+		"refresh_token": iamRefreshToken,
 	}
 	healthCheckAgentJobOptions.Headers = ff
 
@@ -124,13 +123,8 @@ func resourceIbmSchematicsAgentHealthRead(context context.Context, d *schema.Res
 	}
 
 	getAgentDataOptions := &schematicsv1.GetAgentDataOptions{
-		// XFeatureAgents: core.BoolPtr(true),
 		Profile: core.StringPtr("detailed"),
 	}
-	ff := map[string]string{
-		"X-Feature-Agents": "true",
-	}
-	getAgentDataOptions.Headers = ff
 
 	getAgentDataOptions.SetAgentID(parts[0])
 
@@ -190,9 +184,8 @@ func resourceIbmSchematicsAgentHealthUpdate(context context.Context, d *schema.R
 
 	healthCheckAgentJobOptions := &schematicsv1.HealthCheckAgentJobOptions{}
 	ff := map[string]string{
-		"X-Feature-Agents": "true",
-		"Authorization":    iamAccessToken,
-		"refresh_token":    iamRefreshToken,
+		"Authorization": iamAccessToken,
+		"refresh_token": iamRefreshToken,
 	}
 	healthCheckAgentJobOptions.Headers = ff
 

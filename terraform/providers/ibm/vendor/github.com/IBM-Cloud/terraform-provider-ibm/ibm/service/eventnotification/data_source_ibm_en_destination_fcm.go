@@ -45,6 +45,11 @@ func DataSourceIBMEnFCMDestination() *schema.Resource {
 				Computed:    true,
 				Description: "Destination type push_android.",
 			},
+			"collect_failed_events": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether to collect the failed event in Cloud Object Storage bucket",
+			},
 			"config": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -134,6 +139,10 @@ func dataSourceIBMEnFCMDestinationRead(context context.Context, d *schema.Resour
 
 	if err = d.Set("type", result.Type); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting type: %s", err))
+	}
+
+	if err = d.Set("collect_failed_events", result.CollectFailedEvents); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting CollectFailedEvents: %s", err))
 	}
 
 	if result.Config != nil {

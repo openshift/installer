@@ -333,65 +333,65 @@ func dataSourceIbmSccProfileRead(context context.Context, d *schema.ResourceData
 	profile, response, err := securityandcompliancecenterapiClient.GetProfileWithContext(context, getProfileOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetProfileWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetProfileWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetProfileWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(fmt.Sprintf("%s", *getProfileOptions.ProfileID))
 
 	if err = d.Set("profile_name", profile.ProfileName); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting profile_name: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting profile_name: %s", err))
 	}
 
 	if err = d.Set("profile_description", profile.ProfileDescription); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting profile_description: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting profile_description: %s", err))
 	}
 
 	if err = d.Set("profile_type", profile.ProfileType); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting profile_type: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting profile_type: %s", err))
 	}
 
 	if err = d.Set("profile_version", profile.ProfileVersion); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting profile_version: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting profile_version: %s", err))
 	}
 
 	if err = d.Set("version_group_label", profile.VersionGroupLabel); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting version_group_label: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting version_group_label: %s", err))
 	}
 
 	if err = d.Set("latest", profile.Latest); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting latest: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting latest: %s", err))
 	}
 
 	if err = d.Set("hierarchy_enabled", profile.HierarchyEnabled); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting hierarchy_enabled: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting hierarchy_enabled: %s", err))
 	}
 
 	if err = d.Set("created_by", profile.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting created_by: %s", err))
 	}
 
 	if err = d.Set("created_on", flex.DateTimeToString(profile.CreatedOn)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_on: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting created_on: %s", err))
 	}
 
 	if err = d.Set("updated_by", profile.UpdatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_by: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting updated_by: %s", err))
 	}
 
 	if err = d.Set("updated_on", flex.DateTimeToString(profile.UpdatedOn)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_on: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting updated_on: %s", err))
 	}
 
 	if err = d.Set("controls_count", flex.IntValue(profile.ControlsCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting controls_count: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting controls_count: %s", err))
 	}
 
 	if err = d.Set("control_parents_count", flex.IntValue(profile.ControlParentsCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting control_parents_count: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting control_parents_count: %s", err))
 	}
 
 	if err = d.Set("attachments_count", flex.IntValue(profile.AttachmentsCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting attachments_count: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting attachments_count: %s", err))
 	}
 
 	controls := []map[string]interface{}{}
@@ -405,7 +405,7 @@ func dataSourceIbmSccProfileRead(context context.Context, d *schema.ResourceData
 		}
 	}
 	if err = d.Set("controls", controls); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting controls %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting controls %s", err))
 	}
 
 	defaultParameters := []map[string]interface{}{}
@@ -419,7 +419,7 @@ func dataSourceIbmSccProfileRead(context context.Context, d *schema.ResourceData
 		}
 	}
 	if err = d.Set("default_parameters", defaultParameters); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting default_parameters %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting default_parameters %s", err))
 	}
 
 	return nil

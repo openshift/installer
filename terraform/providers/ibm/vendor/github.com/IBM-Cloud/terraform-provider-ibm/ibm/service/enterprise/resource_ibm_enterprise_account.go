@@ -10,6 +10,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/IBM-Cloud/bluemix-go/helpers"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
@@ -46,11 +47,12 @@ func ResourceIBMEnterpriseAccount() *schema.Resource {
 				ValidateFunc: validate.ValidateAllowedEnterpriseNameValue(),
 			},
 			"owner_iam_id": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				Description: "The IAM ID of the account owner, such as `IBMid-0123ABC`. The IAM ID must already exist.",
-				ForceNew:    true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				Description:  "The IAM ID of the account owner, such as `IBMid-0123ABC`. The IAM ID must already exist.",
+				ForceNew:     true,
+				ValidateFunc: validate.ValidateRegexps("^IBMid\\-[A-Z,0-9]{10}$"),
 			},
 			"traits": {
 				Type:             schema.TypeSet,
@@ -68,6 +70,22 @@ func ResourceIBMEnterpriseAccount() *schema.Resource {
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Description: "The Enterprise IAM settings property will be turned off for a newly created child account by default. You can enable this property by passing 'true' in this boolean field. This is an optional field.",
+						},
+					},
+				},
+			},
+			"options": {
+				Type:             schema.TypeSet,
+				Description:      "By default create_iam_service_id_with_apikey_and_owner_policies is turned off for a newly created child account. You can enable this property by passing 'true' in this boolean field. IAM service id has account owner IAM policies and the API key associated with it can generate a token and setup resources in the account.",
+				Optional:         true,
+				DiffSuppressFunc: flex.ApplyOnce,
+				MaxItems:         1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"create_iam_service_id_with_apikey_and_owner_policies": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "By default this field is turned off for a newly created child account. You can enable this property by passing 'true' in this boolean field. IAM service id has account owner IAM policies and the API key associated with it can generate a token and setup resources in the account.",
 						},
 					},
 				},
@@ -145,6 +163,22 @@ func ResourceIBMEnterpriseAccount() *schema.Resource {
 				Computed:    true,
 				Description: "The IAM ID of the user or service that updated the account.",
 			},
+			"iam_service_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The IAM Service ID of the account will be used to create IAM_API_KEY with owner IAM policies.",
+			},
+			"iam_apikey_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The ID of IAM APIKEY which has owner IAM policies",
+			},
+			"iam_apikey": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Sensitive:   true,
+				Description: "The IAM API KEY of the account with owner IAM policies.",
+			},
 		},
 	}
 }
@@ -189,8 +223,16 @@ func resourceIbmEnterpriseAccountCreate(context context.Context, d *schema.Resou
 		createAccountOptions.SetParent(d.Get("parent").(string))
 		createAccountOptions.SetName(d.Get("name").(string))
 		createAccountOptions.SetOwnerIamID(d.Get("owner_iam_id").(string))
-		if _, ok := d.GetOk("Traits"); ok {
-			createAccountOptions.SetTraits(d.Get("traits").(*enterprisemanagementv1.CreateAccountRequestTraits))
+		if _, ok := d.GetOk("traits"); ok {
+			traits := d.Get("traits").(*schema.Set)
+			Traits := expandTraiits(traits.List())
+			createAccountOptions.SetTraits(Traits)
+		}
+
+		if _, ok := d.GetOk("options"); ok {
+			op := d.Get("options").(*schema.Set)
+			Options := expandOptions(op.List())
+			createAccountOptions.SetOptions(Options)
 		}
 		createAccountResponse, response, err := enterpriseManagementClient.CreateAccountWithContext(context, createAccountOptions)
 		if err != nil {
@@ -198,6 +240,15 @@ func resourceIbmEnterpriseAccountCreate(context context.Context, d *schema.Resou
 			return diag.FromErr(err)
 		}
 		d.SetId(*createAccountResponse.AccountID)
+		if (createAccountResponse.IamServiceID != nil) && (*createAccountResponse.IamServiceID != "") {
+			d.Set("iam_service_id", *createAccountResponse.IamServiceID)
+		}
+		if (createAccountResponse.IamApikeyID != nil) && (*createAccountResponse.IamApikeyID != "") {
+			d.Set("iam_apikey_id", *createAccountResponse.IamApikeyID)
+		}
+		if (createAccountResponse.IamApikey != nil) && (*createAccountResponse.IamApikey != "") {
+			d.Set("iam_apikey", *createAccountResponse.IamApikey)
+		}
 	} else {
 
 		err := errors.New("[ERROR] Required Parameters are missing." +
@@ -343,4 +394,49 @@ func resourceIbmEnterpriseAccountDelete(context context.Context, d *schema.Resou
 	}
 
 	return nil
+}
+
+func expandTraiits(e []interface{}) *enterprisemanagementv1.CreateAccountRequestTraits {
+	if len(e) == 0 {
+		return nil
+	}
+
+	result := make([]enterprisemanagementv1.CreateAccountRequestTraits, len(e))
+
+	for i, item := range e {
+		eMap := item.(map[string]interface{})
+
+		traits := enterprisemanagementv1.CreateAccountRequestTraits{}
+		if mfa, ok := eMap["mfa"]; ok {
+			traits.Mfa = helpers.String(mfa.(string))
+		}
+		if enterprise_iam_managed, ok := eMap["enterprise_iam_managed"]; ok {
+			traits.EnterpriseIamManaged = helpers.Bool(enterprise_iam_managed.(bool))
+		}
+
+		result[i] = traits
+	}
+
+	return &result[0]
+}
+
+func expandOptions(e []interface{}) *enterprisemanagementv1.CreateAccountRequestOptions {
+	if len(e) == 0 {
+		return nil
+	}
+
+	result := make([]enterprisemanagementv1.CreateAccountRequestOptions, len(e))
+
+	for i, item := range e {
+		eMap := item.(map[string]interface{})
+
+		op := enterprisemanagementv1.CreateAccountRequestOptions{}
+		if create_iam_service_id_with_apikey_and_owner_policies, ok := eMap["create_iam_service_id_with_apikey_and_owner_policies"]; ok {
+			op.CreateIamServiceIDWithApikeyAndOwnerPolicies = helpers.Bool(create_iam_service_id_with_apikey_and_owner_policies.(bool))
+		}
+
+		result[i] = op
+	}
+
+	return &result[0]
 }

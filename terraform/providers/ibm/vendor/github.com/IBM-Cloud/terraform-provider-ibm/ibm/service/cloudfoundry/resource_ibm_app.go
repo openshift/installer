@@ -126,6 +126,7 @@ func ResourceIBMApp() *schema.Resource {
 				Optional:    true,
 			},
 		},
+		DeprecationMessage: "This service is deprecated.",
 	}
 }
 

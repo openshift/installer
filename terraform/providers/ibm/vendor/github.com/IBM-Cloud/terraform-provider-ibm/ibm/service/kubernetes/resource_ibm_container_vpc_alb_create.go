@@ -130,7 +130,7 @@ func resourceIBMContainerVpcAlbCreate(d *schema.ResourceData, meta interface{}) 
 		params.EnableByDefault = v.(bool)
 	}
 
-	targetEnv, _ := getVpcClusterTargetHeader(d, meta)
+	targetEnv, _ := getVpcClusterTargetHeader(d)
 
 	//v2.AlbCreateResp
 	albResp, err := albAPI.CreateAlb(params, targetEnv)

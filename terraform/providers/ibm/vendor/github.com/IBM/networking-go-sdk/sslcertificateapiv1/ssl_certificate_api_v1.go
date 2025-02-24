@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2020.
+ * (C) Copyright IBM Corp. 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.20.0-debb9f29-20201203-202043
+ * IBM OpenAPI SDK Code Generator Version: 3.84.0-a4533f12-20240103-170852
  */
 
 // Package sslcertificateapiv1 : Operations and models for the SslCertificateApiV1 service
@@ -36,7 +36,7 @@ import (
 
 // SslCertificateApiV1 : SSL Certificate
 //
-// Version: 1.0.0
+// API Version: 1.0.0
 type SslCertificateApiV1 struct {
 	Service *core.BaseService
 
@@ -230,24 +230,29 @@ func (sslCertificateApi *SslCertificateApiV1) ListCertificatesWithContext(ctx co
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListCertificateResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListCertificateResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // OrderCertificate : Order dedicated certificate
 // Order a dedicated certificate for a given zone. The zone should be active before placing an order of a dedicated
-// certificate.
+// certificate. Deprecated, please use Advanced Certificate Pack.
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (sslCertificateApi *SslCertificateApiV1) OrderCertificate(orderCertificateOptions *OrderCertificateOptions) (result *DedicatedCertificateResp, response *core.DetailedResponse, err error) {
 	return sslCertificateApi.OrderCertificateWithContext(context.Background(), orderCertificateOptions)
 }
 
 // OrderCertificateWithContext is an alternate form of the OrderCertificate method which supports a Context parameter
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (sslCertificateApi *SslCertificateApiV1) OrderCertificateWithContext(ctx context.Context, orderCertificateOptions *OrderCertificateOptions) (result *DedicatedCertificateResp, response *core.DetailedResponse, err error) {
+	core.GetLogger().Warn("A deprecated operation has been invoked: OrderCertificate")
 	err = core.ValidateStruct(orderCertificateOptions, "orderCertificateOptions")
 	if err != nil {
 		return
@@ -302,23 +307,28 @@ func (sslCertificateApi *SslCertificateApiV1) OrderCertificateWithContext(ctx co
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDedicatedCertificateResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDedicatedCertificateResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // DeleteCertificate : Delete a certificate
-// Delete a given certificate.
+// Delete a given certificate. Deprecated, please use Advanced Certificate Pack.
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (sslCertificateApi *SslCertificateApiV1) DeleteCertificate(deleteCertificateOptions *DeleteCertificateOptions) (response *core.DetailedResponse, err error) {
 	return sslCertificateApi.DeleteCertificateWithContext(context.Background(), deleteCertificateOptions)
 }
 
 // DeleteCertificateWithContext is an alternate form of the DeleteCertificate method which supports a Context parameter
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (sslCertificateApi *SslCertificateApiV1) DeleteCertificateWithContext(ctx context.Context, deleteCertificateOptions *DeleteCertificateOptions) (response *core.DetailedResponse, err error) {
+	core.GetLogger().Warn("A deprecated operation has been invoked: DeleteCertificate")
 	err = core.ValidateNotNil(deleteCertificateOptions, "deleteCertificateOptions cannot be nil")
 	if err != nil {
 		return
@@ -410,11 +420,13 @@ func (sslCertificateApi *SslCertificateApiV1) GetSslSettingWithContext(ctx conte
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSslSettingResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSslSettingResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -475,11 +487,13 @@ func (sslCertificateApi *SslCertificateApiV1) ChangeSslSettingWithContext(ctx co
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSslSettingResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSslSettingResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -530,11 +544,13 @@ func (sslCertificateApi *SslCertificateApiV1) ListCustomCertificatesWithContext(
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListCustomCertsResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListCustomCertsResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -604,11 +620,13 @@ func (sslCertificateApi *SslCertificateApiV1) UploadCustomCertificateWithContext
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCustomCertResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCustomCertResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -664,11 +682,13 @@ func (sslCertificateApi *SslCertificateApiV1) GetCustomCertificateWithContext(ct
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCustomCertResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCustomCertResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -743,11 +763,13 @@ func (sslCertificateApi *SslCertificateApiV1) UpdateCustomCertificateWithContext
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCustomCertResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCustomCertResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -903,11 +925,13 @@ func (sslCertificateApi *SslCertificateApiV1) GetUniversalCertificateSettingWith
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalUniversalSettingResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalUniversalSettingResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1013,11 +1037,13 @@ func (sslCertificateApi *SslCertificateApiV1) GetTls12SettingWithContext(ctx con
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTls12SettingResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTls12SettingResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1078,11 +1104,13 @@ func (sslCertificateApi *SslCertificateApiV1) ChangeTls12SettingWithContext(ctx 
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTls12SettingResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTls12SettingResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1133,11 +1161,13 @@ func (sslCertificateApi *SslCertificateApiV1) GetTls13SettingWithContext(ctx con
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTls13SettingResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTls13SettingResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1198,12 +1228,622 @@ func (sslCertificateApi *SslCertificateApiV1) ChangeTls13SettingWithContext(ctx 
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTls13SettingResp)
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTls13SettingResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// OrderAdvancedCertificate : Order advanced certificate
+// Order an advanced certificate pack for a given zone. The zone should be active before ordering of an advanced
+// certificate pack.
+func (sslCertificateApi *SslCertificateApiV1) OrderAdvancedCertificate(orderAdvancedCertificateOptions *OrderAdvancedCertificateOptions) (result *AdvancedCertInitResp, response *core.DetailedResponse, err error) {
+	return sslCertificateApi.OrderAdvancedCertificateWithContext(context.Background(), orderAdvancedCertificateOptions)
+}
+
+// OrderAdvancedCertificateWithContext is an alternate form of the OrderAdvancedCertificate method which supports a Context parameter
+func (sslCertificateApi *SslCertificateApiV1) OrderAdvancedCertificateWithContext(ctx context.Context, orderAdvancedCertificateOptions *OrderAdvancedCertificateOptions) (result *AdvancedCertInitResp, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(orderAdvancedCertificateOptions, "orderAdvancedCertificateOptions")
 	if err != nil {
 		return
 	}
-	response.Result = result
 
+	pathParamsMap := map[string]string{
+		"crn":             *sslCertificateApi.Crn,
+		"zone_identifier": *sslCertificateApi.ZoneIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = sslCertificateApi.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(sslCertificateApi.Service.Options.URL, `/v2/{crn}/zones/{zone_identifier}/ssl/certificate_packs/order`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range orderAdvancedCertificateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("ssl_certificate_api", "V1", "OrderAdvancedCertificate")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if orderAdvancedCertificateOptions.XCorrelationID != nil {
+		builder.AddHeader("X-Correlation-ID", fmt.Sprint(*orderAdvancedCertificateOptions.XCorrelationID))
+	}
+
+	body := make(map[string]interface{})
+	if orderAdvancedCertificateOptions.Type != nil {
+		body["type"] = orderAdvancedCertificateOptions.Type
+	}
+	if orderAdvancedCertificateOptions.Hosts != nil {
+		body["hosts"] = orderAdvancedCertificateOptions.Hosts
+	}
+	if orderAdvancedCertificateOptions.ValidationMethod != nil {
+		body["validation_method"] = orderAdvancedCertificateOptions.ValidationMethod
+	}
+	if orderAdvancedCertificateOptions.ValidityDays != nil {
+		body["validity_days"] = orderAdvancedCertificateOptions.ValidityDays
+	}
+	if orderAdvancedCertificateOptions.CertificateAuthority != nil {
+		body["certificate_authority"] = orderAdvancedCertificateOptions.CertificateAuthority
+	}
+	if orderAdvancedCertificateOptions.CloudflareBranding != nil {
+		body["cloudflare_branding"] = orderAdvancedCertificateOptions.CloudflareBranding
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = sslCertificateApi.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAdvancedCertInitResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// PatchCertificate : Restart validation for an advanced certificate pack
+// Restart validation for an advanced certificate pack. This is only a validation operation for a Certificate Pack in a
+// validation_timed_out status.
+func (sslCertificateApi *SslCertificateApiV1) PatchCertificate(patchCertificateOptions *PatchCertificateOptions) (result *AdvancedCertInitResp, response *core.DetailedResponse, err error) {
+	return sslCertificateApi.PatchCertificateWithContext(context.Background(), patchCertificateOptions)
+}
+
+// PatchCertificateWithContext is an alternate form of the PatchCertificate method which supports a Context parameter
+func (sslCertificateApi *SslCertificateApiV1) PatchCertificateWithContext(ctx context.Context, patchCertificateOptions *PatchCertificateOptions) (result *AdvancedCertInitResp, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(patchCertificateOptions, "patchCertificateOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(patchCertificateOptions, "patchCertificateOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"crn":             *sslCertificateApi.Crn,
+		"zone_identifier": *sslCertificateApi.ZoneIdentifier,
+		"cert_identifier": *patchCertificateOptions.CertIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = sslCertificateApi.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(sslCertificateApi.Service.Options.URL, `/v2/{crn}/zones/{zone_identifier}/ssl/certificate_packs/{cert_identifier}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range patchCertificateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("ssl_certificate_api", "V1", "PatchCertificate")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	if patchCertificateOptions.XCorrelationID != nil {
+		builder.AddHeader("X-Correlation-ID", fmt.Sprint(*patchCertificateOptions.XCorrelationID))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = sslCertificateApi.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAdvancedCertInitResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteCertificateV2 : Delete a certificate
+// Delete an advanced certificate pack.
+func (sslCertificateApi *SslCertificateApiV1) DeleteCertificateV2(deleteCertificateV2Options *DeleteCertificateV2Options) (response *core.DetailedResponse, err error) {
+	return sslCertificateApi.DeleteCertificateV2WithContext(context.Background(), deleteCertificateV2Options)
+}
+
+// DeleteCertificateV2WithContext is an alternate form of the DeleteCertificateV2 method which supports a Context parameter
+func (sslCertificateApi *SslCertificateApiV1) DeleteCertificateV2WithContext(ctx context.Context, deleteCertificateV2Options *DeleteCertificateV2Options) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteCertificateV2Options, "deleteCertificateV2Options cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(deleteCertificateV2Options, "deleteCertificateV2Options")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"crn":             *sslCertificateApi.Crn,
+		"zone_identifier": *sslCertificateApi.ZoneIdentifier,
+		"cert_identifier": *deleteCertificateV2Options.CertIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = sslCertificateApi.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(sslCertificateApi.Service.Options.URL, `/v2/{crn}/zones/{zone_identifier}/ssl/certificate_packs/{cert_identifier}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range deleteCertificateV2Options.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("ssl_certificate_api", "V1", "DeleteCertificateV2")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	if deleteCertificateV2Options.XCorrelationID != nil {
+		builder.AddHeader("X-Correlation-ID", fmt.Sprint(*deleteCertificateV2Options.XCorrelationID))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	response, err = sslCertificateApi.Service.Request(request, nil)
+
+	return
+}
+
+// GetSslVerification : Get SSL Verification Info for a Zone
+// Get SSL Verification Info for a Zone.
+func (sslCertificateApi *SslCertificateApiV1) GetSslVerification(getSslVerificationOptions *GetSslVerificationOptions) (result *SslVerificationResp, response *core.DetailedResponse, err error) {
+	return sslCertificateApi.GetSslVerificationWithContext(context.Background(), getSslVerificationOptions)
+}
+
+// GetSslVerificationWithContext is an alternate form of the GetSslVerification method which supports a Context parameter
+func (sslCertificateApi *SslCertificateApiV1) GetSslVerificationWithContext(ctx context.Context, getSslVerificationOptions *GetSslVerificationOptions) (result *SslVerificationResp, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(getSslVerificationOptions, "getSslVerificationOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"crn":             *sslCertificateApi.Crn,
+		"zone_identifier": *sslCertificateApi.ZoneIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = sslCertificateApi.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(sslCertificateApi.Service.Options.URL, `/v2/{crn}/zones/{zone_identifier}/ssl/verification`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range getSslVerificationOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("ssl_certificate_api", "V1", "GetSslVerification")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	if getSslVerificationOptions.XCorrelationID != nil {
+		builder.AddHeader("X-Correlation-ID", fmt.Sprint(*getSslVerificationOptions.XCorrelationID))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = sslCertificateApi.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSslVerificationResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ListOriginCertificates : List all Origin Certificates
+// List all existing CIS-issued Certificates for a given domain.
+func (sslCertificateApi *SslCertificateApiV1) ListOriginCertificates(listOriginCertificatesOptions *ListOriginCertificatesOptions) (result *ListOriginCertificatesResp, response *core.DetailedResponse, err error) {
+	return sslCertificateApi.ListOriginCertificatesWithContext(context.Background(), listOriginCertificatesOptions)
+}
+
+// ListOriginCertificatesWithContext is an alternate form of the ListOriginCertificates method which supports a Context parameter
+func (sslCertificateApi *SslCertificateApiV1) ListOriginCertificatesWithContext(ctx context.Context, listOriginCertificatesOptions *ListOriginCertificatesOptions) (result *ListOriginCertificatesResp, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listOriginCertificatesOptions, "listOriginCertificatesOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(listOriginCertificatesOptions, "listOriginCertificatesOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"crn":             *listOriginCertificatesOptions.Crn,
+		"zone_identifier": *listOriginCertificatesOptions.ZoneIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = sslCertificateApi.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(sslCertificateApi.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/origin_certificates`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range listOriginCertificatesOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("ssl_certificate_api", "V1", "ListOriginCertificates")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	if listOriginCertificatesOptions.XCorrelationID != nil {
+		builder.AddHeader("X-Correlation-ID", fmt.Sprint(*listOriginCertificatesOptions.XCorrelationID))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = sslCertificateApi.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListOriginCertificatesResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateOriginCertificate : Create a CIS-signed certificate
+// Create a CIS-signed certificate.
+func (sslCertificateApi *SslCertificateApiV1) CreateOriginCertificate(createOriginCertificateOptions *CreateOriginCertificateOptions) (result *OriginCertificateResp, response *core.DetailedResponse, err error) {
+	return sslCertificateApi.CreateOriginCertificateWithContext(context.Background(), createOriginCertificateOptions)
+}
+
+// CreateOriginCertificateWithContext is an alternate form of the CreateOriginCertificate method which supports a Context parameter
+func (sslCertificateApi *SslCertificateApiV1) CreateOriginCertificateWithContext(ctx context.Context, createOriginCertificateOptions *CreateOriginCertificateOptions) (result *OriginCertificateResp, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createOriginCertificateOptions, "createOriginCertificateOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(createOriginCertificateOptions, "createOriginCertificateOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"crn":             *createOriginCertificateOptions.Crn,
+		"zone_identifier": *createOriginCertificateOptions.ZoneIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = sslCertificateApi.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(sslCertificateApi.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/origin_certificates`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range createOriginCertificateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("ssl_certificate_api", "V1", "CreateOriginCertificate")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if createOriginCertificateOptions.XCorrelationID != nil {
+		builder.AddHeader("X-Correlation-ID", fmt.Sprint(*createOriginCertificateOptions.XCorrelationID))
+	}
+
+	body := make(map[string]interface{})
+	if createOriginCertificateOptions.Hostnames != nil {
+		body["hostnames"] = createOriginCertificateOptions.Hostnames
+	}
+	if createOriginCertificateOptions.RequestType != nil {
+		body["request_type"] = createOriginCertificateOptions.RequestType
+	}
+	if createOriginCertificateOptions.RequestedValidity != nil {
+		body["requested_validity"] = createOriginCertificateOptions.RequestedValidity
+	}
+	if createOriginCertificateOptions.Csr != nil {
+		body["csr"] = createOriginCertificateOptions.Csr
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = sslCertificateApi.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOriginCertificateResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// RevokeOriginCertificate : Revoke a created Origin Certificate for a domain
+// Revoke a created Origin certificate.
+func (sslCertificateApi *SslCertificateApiV1) RevokeOriginCertificate(revokeOriginCertificateOptions *RevokeOriginCertificateOptions) (result *RevokeOriginCertificateResp, response *core.DetailedResponse, err error) {
+	return sslCertificateApi.RevokeOriginCertificateWithContext(context.Background(), revokeOriginCertificateOptions)
+}
+
+// RevokeOriginCertificateWithContext is an alternate form of the RevokeOriginCertificate method which supports a Context parameter
+func (sslCertificateApi *SslCertificateApiV1) RevokeOriginCertificateWithContext(ctx context.Context, revokeOriginCertificateOptions *RevokeOriginCertificateOptions) (result *RevokeOriginCertificateResp, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(revokeOriginCertificateOptions, "revokeOriginCertificateOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(revokeOriginCertificateOptions, "revokeOriginCertificateOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"crn":             *revokeOriginCertificateOptions.Crn,
+		"zone_identifier": *revokeOriginCertificateOptions.ZoneIdentifier,
+		"cert_identifier": *revokeOriginCertificateOptions.CertIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = sslCertificateApi.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(sslCertificateApi.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/origin_certificates/{cert_identifier}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range revokeOriginCertificateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("ssl_certificate_api", "V1", "RevokeOriginCertificate")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	if revokeOriginCertificateOptions.XCorrelationID != nil {
+		builder.AddHeader("X-Correlation-ID", fmt.Sprint(*revokeOriginCertificateOptions.XCorrelationID))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = sslCertificateApi.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRevokeOriginCertificateResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetOriginCertificate : Get an existing Origin certificate
+// Get an existing Origin certificate by its serial number.
+func (sslCertificateApi *SslCertificateApiV1) GetOriginCertificate(getOriginCertificateOptions *GetOriginCertificateOptions) (result *OriginCertificateResp, response *core.DetailedResponse, err error) {
+	return sslCertificateApi.GetOriginCertificateWithContext(context.Background(), getOriginCertificateOptions)
+}
+
+// GetOriginCertificateWithContext is an alternate form of the GetOriginCertificate method which supports a Context parameter
+func (sslCertificateApi *SslCertificateApiV1) GetOriginCertificateWithContext(ctx context.Context, getOriginCertificateOptions *GetOriginCertificateOptions) (result *OriginCertificateResp, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getOriginCertificateOptions, "getOriginCertificateOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(getOriginCertificateOptions, "getOriginCertificateOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"crn":             *getOriginCertificateOptions.Crn,
+		"zone_identifier": *getOriginCertificateOptions.ZoneIdentifier,
+		"cert_identifier": *getOriginCertificateOptions.CertIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = sslCertificateApi.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(sslCertificateApi.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/origin_certificates/{cert_identifier}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range getOriginCertificateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("ssl_certificate_api", "V1", "GetOriginCertificate")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	if getOriginCertificateOptions.XCorrelationID != nil {
+		builder.AddHeader("X-Correlation-ID", fmt.Sprint(*getOriginCertificateOptions.XCorrelationID))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = sslCertificateApi.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOriginCertificateResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// AdvancedCertInitRespResult : result of ordering advanced certificate pack.
+type AdvancedCertInitRespResult struct {
+	// advanced certificate pack ID.
+	ID *string `json:"id,omitempty"`
+
+	// certificate type.
+	Type *string `json:"type,omitempty"`
+
+	// host name.
+	Hosts []string `json:"hosts,omitempty"`
+
+	// validation Method selected for the order.
+	ValidationMethod *string `json:"validation_method,omitempty"`
+
+	// validity Days selected for the order.
+	ValidityDays *int64 `json:"validity_days,omitempty"`
+
+	// Certificate Authority selected for the order.
+	CertificateAuthority *string `json:"certificate_authority,omitempty"`
+
+	// whether or not to add Cloudflare Branding for the order.
+	CloudflareBranding *bool `json:"cloudflare_branding,omitempty"`
+
+	// certificate status.
+	Status *string `json:"status,omitempty"`
+}
+
+// UnmarshalAdvancedCertInitRespResult unmarshals an instance of AdvancedCertInitRespResult from the specified map of raw messages.
+func UnmarshalAdvancedCertInitRespResult(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AdvancedCertInitRespResult)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "hosts", &obj.Hosts)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "validation_method", &obj.ValidationMethod)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "validity_days", &obj.ValidityDays)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "certificate_authority", &obj.CertificateAuthority)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cloudflare_branding", &obj.CloudflareBranding)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
@@ -1217,12 +1857,12 @@ type CertPriorityReqCertificatesItem struct {
 }
 
 // NewCertPriorityReqCertificatesItem : Instantiate CertPriorityReqCertificatesItem (Generic Model Constructor)
-func (*SslCertificateApiV1) NewCertPriorityReqCertificatesItem(id string, priority int64) (model *CertPriorityReqCertificatesItem, err error) {
-	model = &CertPriorityReqCertificatesItem{
+func (*SslCertificateApiV1) NewCertPriorityReqCertificatesItem(id string, priority int64) (_model *CertPriorityReqCertificatesItem, err error) {
+	_model = &CertPriorityReqCertificatesItem{
 		ID:       core.StringPtr(id),
 		Priority: core.Int64Ptr(priority),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -1256,9 +1896,9 @@ func (*SslCertificateApiV1) NewChangeCertificatePriorityOptions() *ChangeCertifi
 }
 
 // SetCertificates : Allow user to set Certificates
-func (options *ChangeCertificatePriorityOptions) SetCertificates(certificates []CertPriorityReqCertificatesItem) *ChangeCertificatePriorityOptions {
-	options.Certificates = certificates
-	return options
+func (_options *ChangeCertificatePriorityOptions) SetCertificates(certificates []CertPriorityReqCertificatesItem) *ChangeCertificatePriorityOptions {
+	_options.Certificates = certificates
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1291,9 +1931,9 @@ func (*SslCertificateApiV1) NewChangeSslSettingOptions() *ChangeSslSettingOption
 }
 
 // SetValue : Allow user to set Value
-func (options *ChangeSslSettingOptions) SetValue(value string) *ChangeSslSettingOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *ChangeSslSettingOptions) SetValue(value string) *ChangeSslSettingOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1324,9 +1964,9 @@ func (*SslCertificateApiV1) NewChangeTls12SettingOptions() *ChangeTls12SettingOp
 }
 
 // SetValue : Allow user to set Value
-func (options *ChangeTls12SettingOptions) SetValue(value string) *ChangeTls12SettingOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *ChangeTls12SettingOptions) SetValue(value string) *ChangeTls12SettingOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1357,9 +1997,9 @@ func (*SslCertificateApiV1) NewChangeTls13SettingOptions() *ChangeTls13SettingOp
 }
 
 // SetValue : Allow user to set Value
-func (options *ChangeTls13SettingOptions) SetValue(value string) *ChangeTls13SettingOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *ChangeTls13SettingOptions) SetValue(value string) *ChangeTls13SettingOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1383,13 +2023,103 @@ func (*SslCertificateApiV1) NewChangeUniversalCertificateSettingOptions() *Chang
 }
 
 // SetEnabled : Allow user to set Enabled
-func (options *ChangeUniversalCertificateSettingOptions) SetEnabled(enabled bool) *ChangeUniversalCertificateSettingOptions {
-	options.Enabled = core.BoolPtr(enabled)
-	return options
+func (_options *ChangeUniversalCertificateSettingOptions) SetEnabled(enabled bool) *ChangeUniversalCertificateSettingOptions {
+	_options.Enabled = core.BoolPtr(enabled)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
 func (options *ChangeUniversalCertificateSettingOptions) SetHeaders(param map[string]string) *ChangeUniversalCertificateSettingOptions {
+	options.Headers = param
+	return options
+}
+
+// CreateOriginCertificateOptions : The CreateOriginCertificate options.
+type CreateOriginCertificateOptions struct {
+	// Full url-encoded cloud resource name (CRN) of resource instance.
+	Crn *string `json:"crn" validate:"required,ne="`
+
+	// zone identifier.
+	ZoneIdentifier *string `json:"zone_identifier" validate:"required,ne="`
+
+	// Array of hostnames or wildcard names (e.g., *.example.com) bound to the certificate.
+	Hostnames []string `json:"hostnames,omitempty"`
+
+	// Signature type desired on certificate.
+	RequestType *string `json:"request_type,omitempty"`
+
+	// The number of days for which the certificate should be valid.
+	RequestedValidity *int64 `json:"requested_validity,omitempty"`
+
+	// The Certificate Signing Request (CSR).
+	Csr *string `json:"csr,omitempty"`
+
+	// uuid, identify a session.
+	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the CreateOriginCertificateOptions.RequestType property.
+// Signature type desired on certificate.
+const (
+	CreateOriginCertificateOptions_RequestType_OriginEcc = "origin-ecc"
+	CreateOriginCertificateOptions_RequestType_OriginRsa = "origin-rsa"
+)
+
+// NewCreateOriginCertificateOptions : Instantiate CreateOriginCertificateOptions
+func (*SslCertificateApiV1) NewCreateOriginCertificateOptions(crn string, zoneIdentifier string) *CreateOriginCertificateOptions {
+	return &CreateOriginCertificateOptions{
+		Crn:            core.StringPtr(crn),
+		ZoneIdentifier: core.StringPtr(zoneIdentifier),
+	}
+}
+
+// SetCrn : Allow user to set Crn
+func (_options *CreateOriginCertificateOptions) SetCrn(crn string) *CreateOriginCertificateOptions {
+	_options.Crn = core.StringPtr(crn)
+	return _options
+}
+
+// SetZoneIdentifier : Allow user to set ZoneIdentifier
+func (_options *CreateOriginCertificateOptions) SetZoneIdentifier(zoneIdentifier string) *CreateOriginCertificateOptions {
+	_options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
+	return _options
+}
+
+// SetHostnames : Allow user to set Hostnames
+func (_options *CreateOriginCertificateOptions) SetHostnames(hostnames []string) *CreateOriginCertificateOptions {
+	_options.Hostnames = hostnames
+	return _options
+}
+
+// SetRequestType : Allow user to set RequestType
+func (_options *CreateOriginCertificateOptions) SetRequestType(requestType string) *CreateOriginCertificateOptions {
+	_options.RequestType = core.StringPtr(requestType)
+	return _options
+}
+
+// SetRequestedValidity : Allow user to set RequestedValidity
+func (_options *CreateOriginCertificateOptions) SetRequestedValidity(requestedValidity int64) *CreateOriginCertificateOptions {
+	_options.RequestedValidity = core.Int64Ptr(requestedValidity)
+	return _options
+}
+
+// SetCsr : Allow user to set Csr
+func (_options *CreateOriginCertificateOptions) SetCsr(csr string) *CreateOriginCertificateOptions {
+	_options.Csr = core.StringPtr(csr)
+	return _options
+}
+
+// SetXCorrelationID : Allow user to set XCorrelationID
+func (_options *CreateOriginCertificateOptions) SetXCorrelationID(xCorrelationID string) *CreateOriginCertificateOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateOriginCertificateOptions) SetHeaders(param map[string]string) *CreateOriginCertificateOptions {
 	options.Headers = param
 	return options
 }
@@ -1409,11 +2139,11 @@ const (
 )
 
 // NewCustomCertReqGeoRestrictions : Instantiate CustomCertReqGeoRestrictions (Generic Model Constructor)
-func (*SslCertificateApiV1) NewCustomCertReqGeoRestrictions(label string) (model *CustomCertReqGeoRestrictions, err error) {
-	model = &CustomCertReqGeoRestrictions{
+func (*SslCertificateApiV1) NewCustomCertReqGeoRestrictions(label string) (_model *CustomCertReqGeoRestrictions, err error) {
+	_model = &CustomCertReqGeoRestrictions{
 		Label: core.StringPtr(label),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -1448,19 +2178,56 @@ func (*SslCertificateApiV1) NewDeleteCertificateOptions(certIdentifier string) *
 }
 
 // SetCertIdentifier : Allow user to set CertIdentifier
-func (options *DeleteCertificateOptions) SetCertIdentifier(certIdentifier string) *DeleteCertificateOptions {
-	options.CertIdentifier = core.StringPtr(certIdentifier)
-	return options
+func (_options *DeleteCertificateOptions) SetCertIdentifier(certIdentifier string) *DeleteCertificateOptions {
+	_options.CertIdentifier = core.StringPtr(certIdentifier)
+	return _options
 }
 
 // SetXCorrelationID : Allow user to set XCorrelationID
-func (options *DeleteCertificateOptions) SetXCorrelationID(xCorrelationID string) *DeleteCertificateOptions {
-	options.XCorrelationID = core.StringPtr(xCorrelationID)
-	return options
+func (_options *DeleteCertificateOptions) SetXCorrelationID(xCorrelationID string) *DeleteCertificateOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
 func (options *DeleteCertificateOptions) SetHeaders(param map[string]string) *DeleteCertificateOptions {
+	options.Headers = param
+	return options
+}
+
+// DeleteCertificateV2Options : The DeleteCertificateV2 options.
+type DeleteCertificateV2Options struct {
+	// cedrtificate identifier.
+	CertIdentifier *string `json:"cert_identifier" validate:"required,ne="`
+
+	// uuid, identify a session.
+	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewDeleteCertificateV2Options : Instantiate DeleteCertificateV2Options
+func (*SslCertificateApiV1) NewDeleteCertificateV2Options(certIdentifier string) *DeleteCertificateV2Options {
+	return &DeleteCertificateV2Options{
+		CertIdentifier: core.StringPtr(certIdentifier),
+	}
+}
+
+// SetCertIdentifier : Allow user to set CertIdentifier
+func (_options *DeleteCertificateV2Options) SetCertIdentifier(certIdentifier string) *DeleteCertificateV2Options {
+	_options.CertIdentifier = core.StringPtr(certIdentifier)
+	return _options
+}
+
+// SetXCorrelationID : Allow user to set XCorrelationID
+func (_options *DeleteCertificateV2Options) SetXCorrelationID(xCorrelationID string) *DeleteCertificateV2Options {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteCertificateV2Options) SetHeaders(param map[string]string) *DeleteCertificateV2Options {
 	options.Headers = param
 	return options
 }
@@ -1482,9 +2249,9 @@ func (*SslCertificateApiV1) NewDeleteCustomCertificateOptions(customCertID strin
 }
 
 // SetCustomCertID : Allow user to set CustomCertID
-func (options *DeleteCustomCertificateOptions) SetCustomCertID(customCertID string) *DeleteCustomCertificateOptions {
-	options.CustomCertID = core.StringPtr(customCertID)
-	return options
+func (_options *DeleteCustomCertificateOptions) SetCustomCertID(customCertID string) *DeleteCustomCertificateOptions {
+	_options.CustomCertID = core.StringPtr(customCertID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1510,13 +2277,70 @@ func (*SslCertificateApiV1) NewGetCustomCertificateOptions(customCertID string) 
 }
 
 // SetCustomCertID : Allow user to set CustomCertID
-func (options *GetCustomCertificateOptions) SetCustomCertID(customCertID string) *GetCustomCertificateOptions {
-	options.CustomCertID = core.StringPtr(customCertID)
-	return options
+func (_options *GetCustomCertificateOptions) SetCustomCertID(customCertID string) *GetCustomCertificateOptions {
+	_options.CustomCertID = core.StringPtr(customCertID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
 func (options *GetCustomCertificateOptions) SetHeaders(param map[string]string) *GetCustomCertificateOptions {
+	options.Headers = param
+	return options
+}
+
+// GetOriginCertificateOptions : The GetOriginCertificate options.
+type GetOriginCertificateOptions struct {
+	// Full url-encoded cloud resource name (CRN) of resource instance.
+	Crn *string `json:"crn" validate:"required,ne="`
+
+	// zone identifier.
+	ZoneIdentifier *string `json:"zone_identifier" validate:"required,ne="`
+
+	// cedrtificate identifier.
+	CertIdentifier *string `json:"cert_identifier" validate:"required,ne="`
+
+	// uuid, identify a session.
+	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetOriginCertificateOptions : Instantiate GetOriginCertificateOptions
+func (*SslCertificateApiV1) NewGetOriginCertificateOptions(crn string, zoneIdentifier string, certIdentifier string) *GetOriginCertificateOptions {
+	return &GetOriginCertificateOptions{
+		Crn:            core.StringPtr(crn),
+		ZoneIdentifier: core.StringPtr(zoneIdentifier),
+		CertIdentifier: core.StringPtr(certIdentifier),
+	}
+}
+
+// SetCrn : Allow user to set Crn
+func (_options *GetOriginCertificateOptions) SetCrn(crn string) *GetOriginCertificateOptions {
+	_options.Crn = core.StringPtr(crn)
+	return _options
+}
+
+// SetZoneIdentifier : Allow user to set ZoneIdentifier
+func (_options *GetOriginCertificateOptions) SetZoneIdentifier(zoneIdentifier string) *GetOriginCertificateOptions {
+	_options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
+	return _options
+}
+
+// SetCertIdentifier : Allow user to set CertIdentifier
+func (_options *GetOriginCertificateOptions) SetCertIdentifier(certIdentifier string) *GetOriginCertificateOptions {
+	_options.CertIdentifier = core.StringPtr(certIdentifier)
+	return _options
+}
+
+// SetXCorrelationID : Allow user to set XCorrelationID
+func (_options *GetOriginCertificateOptions) SetXCorrelationID(xCorrelationID string) *GetOriginCertificateOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetOriginCertificateOptions) SetHeaders(param map[string]string) *GetOriginCertificateOptions {
 	options.Headers = param
 	return options
 }
@@ -1535,6 +2359,32 @@ func (*SslCertificateApiV1) NewGetSslSettingOptions() *GetSslSettingOptions {
 
 // SetHeaders : Allow user to set Headers
 func (options *GetSslSettingOptions) SetHeaders(param map[string]string) *GetSslSettingOptions {
+	options.Headers = param
+	return options
+}
+
+// GetSslVerificationOptions : The GetSslVerification options.
+type GetSslVerificationOptions struct {
+	// uuid, identify a session.
+	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetSslVerificationOptions : Instantiate GetSslVerificationOptions
+func (*SslCertificateApiV1) NewGetSslVerificationOptions() *GetSslVerificationOptions {
+	return &GetSslVerificationOptions{}
+}
+
+// SetXCorrelationID : Allow user to set XCorrelationID
+func (_options *GetSslVerificationOptions) SetXCorrelationID(xCorrelationID string) *GetSslVerificationOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetSslVerificationOptions) SetHeaders(param map[string]string) *GetSslVerificationOptions {
 	options.Headers = param
 	return options
 }
@@ -1608,9 +2458,9 @@ func (*SslCertificateApiV1) NewListCertificatesOptions() *ListCertificatesOption
 }
 
 // SetXCorrelationID : Allow user to set XCorrelationID
-func (options *ListCertificatesOptions) SetXCorrelationID(xCorrelationID string) *ListCertificatesOptions {
-	options.XCorrelationID = core.StringPtr(xCorrelationID)
-	return options
+func (_options *ListCertificatesOptions) SetXCorrelationID(xCorrelationID string) *ListCertificatesOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1633,6 +2483,199 @@ func (*SslCertificateApiV1) NewListCustomCertificatesOptions() *ListCustomCertif
 
 // SetHeaders : Allow user to set Headers
 func (options *ListCustomCertificatesOptions) SetHeaders(param map[string]string) *ListCustomCertificatesOptions {
+	options.Headers = param
+	return options
+}
+
+// ListOriginCertificatesOptions : The ListOriginCertificates options.
+type ListOriginCertificatesOptions struct {
+	// Full url-encoded cloud resource name (CRN) of resource instance.
+	Crn *string `json:"crn" validate:"required,ne="`
+
+	// zone identifier.
+	ZoneIdentifier *string `json:"zone_identifier" validate:"required,ne="`
+
+	// uuid, identify a session.
+	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewListOriginCertificatesOptions : Instantiate ListOriginCertificatesOptions
+func (*SslCertificateApiV1) NewListOriginCertificatesOptions(crn string, zoneIdentifier string) *ListOriginCertificatesOptions {
+	return &ListOriginCertificatesOptions{
+		Crn:            core.StringPtr(crn),
+		ZoneIdentifier: core.StringPtr(zoneIdentifier),
+	}
+}
+
+// SetCrn : Allow user to set Crn
+func (_options *ListOriginCertificatesOptions) SetCrn(crn string) *ListOriginCertificatesOptions {
+	_options.Crn = core.StringPtr(crn)
+	return _options
+}
+
+// SetZoneIdentifier : Allow user to set ZoneIdentifier
+func (_options *ListOriginCertificatesOptions) SetZoneIdentifier(zoneIdentifier string) *ListOriginCertificatesOptions {
+	_options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
+	return _options
+}
+
+// SetXCorrelationID : Allow user to set XCorrelationID
+func (_options *ListOriginCertificatesOptions) SetXCorrelationID(xCorrelationID string) *ListOriginCertificatesOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListOriginCertificatesOptions) SetHeaders(param map[string]string) *ListOriginCertificatesOptions {
+	options.Headers = param
+	return options
+}
+
+// ListOriginCertificatesRespResultInfo : Statistics of results.
+type ListOriginCertificatesRespResultInfo struct {
+	// Page number.
+	Page *int64 `json:"page" validate:"required"`
+
+	// Number of results per page.
+	PerPage *int64 `json:"per_page" validate:"required"`
+
+	// Number of results.
+	Count *int64 `json:"count" validate:"required"`
+
+	// Total number of results.
+	TotalCount *int64 `json:"total_count" validate:"required"`
+}
+
+// UnmarshalListOriginCertificatesRespResultInfo unmarshals an instance of ListOriginCertificatesRespResultInfo from the specified map of raw messages.
+func UnmarshalListOriginCertificatesRespResultInfo(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ListOriginCertificatesRespResultInfo)
+	err = core.UnmarshalPrimitive(m, "page", &obj.Page)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "per_page", &obj.PerPage)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// OrderAdvancedCertificateOptions : The OrderAdvancedCertificate options.
+type OrderAdvancedCertificateOptions struct {
+	// certificate type.
+	Type *string `json:"type,omitempty"`
+
+	// host name.
+	Hosts []string `json:"hosts,omitempty"`
+
+	// validation Method selected for the order.
+	ValidationMethod *string `json:"validation_method,omitempty"`
+
+	// validity Days selected for the order.
+	ValidityDays *int64 `json:"validity_days,omitempty"`
+
+	// Certificate Authority selected for the order. Selecting Let's Encrypt will reduce customization of other fields:
+	// validation_method must be 'txt', validity_days must be 90, cloudflare_branding must be omitted, and hosts must
+	// contain only 2 entries, one for the zone name and one for the subdomain wildcard of the zone name (e.g. example.com,
+	// *.example.com).
+	CertificateAuthority *string `json:"certificate_authority,omitempty"`
+
+	// Whether or not to add Cloudflare Branding for the order. This will add sni.cloudflaressl.com as the Common Name if
+	// set true.
+	CloudflareBranding *bool `json:"cloudflare_branding,omitempty"`
+
+	// uuid, identify a session.
+	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the OrderAdvancedCertificateOptions.Type property.
+// certificate type.
+const (
+	OrderAdvancedCertificateOptions_Type_Advanced = "advanced"
+)
+
+// Constants associated with the OrderAdvancedCertificateOptions.ValidationMethod property.
+// validation Method selected for the order.
+const (
+	OrderAdvancedCertificateOptions_ValidationMethod_Email = "email"
+	OrderAdvancedCertificateOptions_ValidationMethod_Http  = "http"
+	OrderAdvancedCertificateOptions_ValidationMethod_Txt   = "txt"
+)
+
+// Constants associated with the OrderAdvancedCertificateOptions.CertificateAuthority property.
+// Certificate Authority selected for the order. Selecting Let's Encrypt will reduce customization of other fields:
+// validation_method must be 'txt', validity_days must be 90, cloudflare_branding must be omitted, and hosts must
+// contain only 2 entries, one for the zone name and one for the subdomain wildcard of the zone name (e.g. example.com,
+// *.example.com).
+const (
+	OrderAdvancedCertificateOptions_CertificateAuthority_Google      = "google"
+	OrderAdvancedCertificateOptions_CertificateAuthority_LetsEncrypt = "lets_encrypt"
+)
+
+// NewOrderAdvancedCertificateOptions : Instantiate OrderAdvancedCertificateOptions
+func (*SslCertificateApiV1) NewOrderAdvancedCertificateOptions() *OrderAdvancedCertificateOptions {
+	return &OrderAdvancedCertificateOptions{}
+}
+
+// SetType : Allow user to set Type
+func (_options *OrderAdvancedCertificateOptions) SetType(typeVar string) *OrderAdvancedCertificateOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
+// SetHosts : Allow user to set Hosts
+func (_options *OrderAdvancedCertificateOptions) SetHosts(hosts []string) *OrderAdvancedCertificateOptions {
+	_options.Hosts = hosts
+	return _options
+}
+
+// SetValidationMethod : Allow user to set ValidationMethod
+func (_options *OrderAdvancedCertificateOptions) SetValidationMethod(validationMethod string) *OrderAdvancedCertificateOptions {
+	_options.ValidationMethod = core.StringPtr(validationMethod)
+	return _options
+}
+
+// SetValidityDays : Allow user to set ValidityDays
+func (_options *OrderAdvancedCertificateOptions) SetValidityDays(validityDays int64) *OrderAdvancedCertificateOptions {
+	_options.ValidityDays = core.Int64Ptr(validityDays)
+	return _options
+}
+
+// SetCertificateAuthority : Allow user to set CertificateAuthority
+func (_options *OrderAdvancedCertificateOptions) SetCertificateAuthority(certificateAuthority string) *OrderAdvancedCertificateOptions {
+	_options.CertificateAuthority = core.StringPtr(certificateAuthority)
+	return _options
+}
+
+// SetCloudflareBranding : Allow user to set CloudflareBranding
+func (_options *OrderAdvancedCertificateOptions) SetCloudflareBranding(cloudflareBranding bool) *OrderAdvancedCertificateOptions {
+	_options.CloudflareBranding = core.BoolPtr(cloudflareBranding)
+	return _options
+}
+
+// SetXCorrelationID : Allow user to set XCorrelationID
+func (_options *OrderAdvancedCertificateOptions) SetXCorrelationID(xCorrelationID string) *OrderAdvancedCertificateOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *OrderAdvancedCertificateOptions) SetHeaders(param map[string]string) *OrderAdvancedCertificateOptions {
 	options.Headers = param
 	return options
 }
@@ -1664,21 +2707,21 @@ func (*SslCertificateApiV1) NewOrderCertificateOptions() *OrderCertificateOption
 }
 
 // SetType : Allow user to set Type
-func (options *OrderCertificateOptions) SetType(typeVar string) *OrderCertificateOptions {
-	options.Type = core.StringPtr(typeVar)
-	return options
+func (_options *OrderCertificateOptions) SetType(typeVar string) *OrderCertificateOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
 }
 
 // SetHosts : Allow user to set Hosts
-func (options *OrderCertificateOptions) SetHosts(hosts []string) *OrderCertificateOptions {
-	options.Hosts = hosts
-	return options
+func (_options *OrderCertificateOptions) SetHosts(hosts []string) *OrderCertificateOptions {
+	_options.Hosts = hosts
+	return _options
 }
 
 // SetXCorrelationID : Allow user to set XCorrelationID
-func (options *OrderCertificateOptions) SetXCorrelationID(xCorrelationID string) *OrderCertificateOptions {
-	options.XCorrelationID = core.StringPtr(xCorrelationID)
-	return options
+func (_options *OrderCertificateOptions) SetXCorrelationID(xCorrelationID string) *OrderCertificateOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1687,16 +2730,134 @@ func (options *OrderCertificateOptions) SetHeaders(param map[string]string) *Ord
 	return options
 }
 
-// Tls12SettingRespMessagesItem : Tls12SettingRespMessagesItem struct
-type Tls12SettingRespMessagesItem struct {
-	// status.
-	Status *string `json:"status,omitempty"`
+// PatchCertificateOptions : The PatchCertificate options.
+type PatchCertificateOptions struct {
+	// cedrtificate identifier.
+	CertIdentifier *string `json:"cert_identifier" validate:"required,ne="`
+
+	// uuid, identify a session.
+	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
 }
 
-// UnmarshalTls12SettingRespMessagesItem unmarshals an instance of Tls12SettingRespMessagesItem from the specified map of raw messages.
-func UnmarshalTls12SettingRespMessagesItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(Tls12SettingRespMessagesItem)
-	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
+// NewPatchCertificateOptions : Instantiate PatchCertificateOptions
+func (*SslCertificateApiV1) NewPatchCertificateOptions(certIdentifier string) *PatchCertificateOptions {
+	return &PatchCertificateOptions{
+		CertIdentifier: core.StringPtr(certIdentifier),
+	}
+}
+
+// SetCertIdentifier : Allow user to set CertIdentifier
+func (_options *PatchCertificateOptions) SetCertIdentifier(certIdentifier string) *PatchCertificateOptions {
+	_options.CertIdentifier = core.StringPtr(certIdentifier)
+	return _options
+}
+
+// SetXCorrelationID : Allow user to set XCorrelationID
+func (_options *PatchCertificateOptions) SetXCorrelationID(xCorrelationID string) *PatchCertificateOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *PatchCertificateOptions) SetHeaders(param map[string]string) *PatchCertificateOptions {
+	options.Headers = param
+	return options
+}
+
+// RevokeOriginCertificateOptions : The RevokeOriginCertificate options.
+type RevokeOriginCertificateOptions struct {
+	// Full url-encoded cloud resource name (CRN) of resource instance.
+	Crn *string `json:"crn" validate:"required,ne="`
+
+	// zone identifier.
+	ZoneIdentifier *string `json:"zone_identifier" validate:"required,ne="`
+
+	// cedrtificate identifier.
+	CertIdentifier *string `json:"cert_identifier" validate:"required,ne="`
+
+	// uuid, identify a session.
+	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewRevokeOriginCertificateOptions : Instantiate RevokeOriginCertificateOptions
+func (*SslCertificateApiV1) NewRevokeOriginCertificateOptions(crn string, zoneIdentifier string, certIdentifier string) *RevokeOriginCertificateOptions {
+	return &RevokeOriginCertificateOptions{
+		Crn:            core.StringPtr(crn),
+		ZoneIdentifier: core.StringPtr(zoneIdentifier),
+		CertIdentifier: core.StringPtr(certIdentifier),
+	}
+}
+
+// SetCrn : Allow user to set Crn
+func (_options *RevokeOriginCertificateOptions) SetCrn(crn string) *RevokeOriginCertificateOptions {
+	_options.Crn = core.StringPtr(crn)
+	return _options
+}
+
+// SetZoneIdentifier : Allow user to set ZoneIdentifier
+func (_options *RevokeOriginCertificateOptions) SetZoneIdentifier(zoneIdentifier string) *RevokeOriginCertificateOptions {
+	_options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
+	return _options
+}
+
+// SetCertIdentifier : Allow user to set CertIdentifier
+func (_options *RevokeOriginCertificateOptions) SetCertIdentifier(certIdentifier string) *RevokeOriginCertificateOptions {
+	_options.CertIdentifier = core.StringPtr(certIdentifier)
+	return _options
+}
+
+// SetXCorrelationID : Allow user to set XCorrelationID
+func (_options *RevokeOriginCertificateOptions) SetXCorrelationID(xCorrelationID string) *RevokeOriginCertificateOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *RevokeOriginCertificateOptions) SetHeaders(param map[string]string) *RevokeOriginCertificateOptions {
+	options.Headers = param
+	return options
+}
+
+// RevokeOriginCertificateRespResult : Container for response information.
+type RevokeOriginCertificateRespResult struct {
+	// ID.
+	ID *string `json:"id" validate:"required"`
+}
+
+// UnmarshalRevokeOriginCertificateRespResult unmarshals an instance of RevokeOriginCertificateRespResult from the specified map of raw messages.
+func UnmarshalRevokeOriginCertificateRespResult(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RevokeOriginCertificateRespResult)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SslVerificationInfoVerificationInfo : certificate's required verification information.
+type SslVerificationInfoVerificationInfo struct {
+	// name of CNAME record.
+	RecordName *string `json:"record_name,omitempty"`
+
+	// target of CNAME record.
+	RecordTarget *string `json:"record_target,omitempty"`
+}
+
+// UnmarshalSslVerificationInfoVerificationInfo unmarshals an instance of SslVerificationInfoVerificationInfo from the specified map of raw messages.
+func UnmarshalSslVerificationInfoVerificationInfo(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SslVerificationInfoVerificationInfo)
+	err = core.UnmarshalPrimitive(m, "record_name", &obj.RecordName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "record_target", &obj.RecordTarget)
 	if err != nil {
 		return
 	}
@@ -1846,33 +3007,33 @@ func (*SslCertificateApiV1) NewUpdateCustomCertificateOptions(customCertID strin
 }
 
 // SetCustomCertID : Allow user to set CustomCertID
-func (options *UpdateCustomCertificateOptions) SetCustomCertID(customCertID string) *UpdateCustomCertificateOptions {
-	options.CustomCertID = core.StringPtr(customCertID)
-	return options
+func (_options *UpdateCustomCertificateOptions) SetCustomCertID(customCertID string) *UpdateCustomCertificateOptions {
+	_options.CustomCertID = core.StringPtr(customCertID)
+	return _options
 }
 
 // SetCertificate : Allow user to set Certificate
-func (options *UpdateCustomCertificateOptions) SetCertificate(certificate string) *UpdateCustomCertificateOptions {
-	options.Certificate = core.StringPtr(certificate)
-	return options
+func (_options *UpdateCustomCertificateOptions) SetCertificate(certificate string) *UpdateCustomCertificateOptions {
+	_options.Certificate = core.StringPtr(certificate)
+	return _options
 }
 
 // SetPrivateKey : Allow user to set PrivateKey
-func (options *UpdateCustomCertificateOptions) SetPrivateKey(privateKey string) *UpdateCustomCertificateOptions {
-	options.PrivateKey = core.StringPtr(privateKey)
-	return options
+func (_options *UpdateCustomCertificateOptions) SetPrivateKey(privateKey string) *UpdateCustomCertificateOptions {
+	_options.PrivateKey = core.StringPtr(privateKey)
+	return _options
 }
 
 // SetBundleMethod : Allow user to set BundleMethod
-func (options *UpdateCustomCertificateOptions) SetBundleMethod(bundleMethod string) *UpdateCustomCertificateOptions {
-	options.BundleMethod = core.StringPtr(bundleMethod)
-	return options
+func (_options *UpdateCustomCertificateOptions) SetBundleMethod(bundleMethod string) *UpdateCustomCertificateOptions {
+	_options.BundleMethod = core.StringPtr(bundleMethod)
+	return _options
 }
 
 // SetGeoRestrictions : Allow user to set GeoRestrictions
-func (options *UpdateCustomCertificateOptions) SetGeoRestrictions(geoRestrictions *CustomCertReqGeoRestrictions) *UpdateCustomCertificateOptions {
-	options.GeoRestrictions = geoRestrictions
-	return options
+func (_options *UpdateCustomCertificateOptions) SetGeoRestrictions(geoRestrictions *CustomCertReqGeoRestrictions) *UpdateCustomCertificateOptions {
+	_options.GeoRestrictions = geoRestrictions
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1913,27 +3074,27 @@ func (*SslCertificateApiV1) NewUploadCustomCertificateOptions() *UploadCustomCer
 }
 
 // SetCertificate : Allow user to set Certificate
-func (options *UploadCustomCertificateOptions) SetCertificate(certificate string) *UploadCustomCertificateOptions {
-	options.Certificate = core.StringPtr(certificate)
-	return options
+func (_options *UploadCustomCertificateOptions) SetCertificate(certificate string) *UploadCustomCertificateOptions {
+	_options.Certificate = core.StringPtr(certificate)
+	return _options
 }
 
 // SetPrivateKey : Allow user to set PrivateKey
-func (options *UploadCustomCertificateOptions) SetPrivateKey(privateKey string) *UploadCustomCertificateOptions {
-	options.PrivateKey = core.StringPtr(privateKey)
-	return options
+func (_options *UploadCustomCertificateOptions) SetPrivateKey(privateKey string) *UploadCustomCertificateOptions {
+	_options.PrivateKey = core.StringPtr(privateKey)
+	return _options
 }
 
 // SetBundleMethod : Allow user to set BundleMethod
-func (options *UploadCustomCertificateOptions) SetBundleMethod(bundleMethod string) *UploadCustomCertificateOptions {
-	options.BundleMethod = core.StringPtr(bundleMethod)
-	return options
+func (_options *UploadCustomCertificateOptions) SetBundleMethod(bundleMethod string) *UploadCustomCertificateOptions {
+	_options.BundleMethod = core.StringPtr(bundleMethod)
+	return _options
 }
 
 // SetGeoRestrictions : Allow user to set GeoRestrictions
-func (options *UploadCustomCertificateOptions) SetGeoRestrictions(geoRestrictions *CustomCertReqGeoRestrictions) *UploadCustomCertificateOptions {
-	options.GeoRestrictions = geoRestrictions
-	return options
+func (_options *UploadCustomCertificateOptions) SetGeoRestrictions(geoRestrictions *CustomCertReqGeoRestrictions) *UploadCustomCertificateOptions {
+	_options.GeoRestrictions = geoRestrictions
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1942,16 +3103,78 @@ func (options *UploadCustomCertificateOptions) SetHeaders(param map[string]strin
 	return options
 }
 
+// AdvancedCertInitResp : certificate response.
+type AdvancedCertInitResp struct {
+	// result of ordering advanced certificate pack.
+	Result *AdvancedCertInitRespResult `json:"result" validate:"required"`
+
+	// success.
+	Success *bool `json:"success" validate:"required"`
+
+	// errors.
+	Errors []map[string]interface{} `json:"errors" validate:"required"`
+
+	// messages.
+	Messages []map[string]interface{} `json:"messages" validate:"required"`
+}
+
+// UnmarshalAdvancedCertInitResp unmarshals an instance of AdvancedCertInitResp from the specified map of raw messages.
+func UnmarshalAdvancedCertInitResp(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AdvancedCertInitResp)
+	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalAdvancedCertInitRespResult)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // Certificate : certificate.
 type Certificate struct {
 	// identifier.
-	ID interface{} `json:"id" validate:"required"`
+	ID *string `json:"id" validate:"required"`
 
 	// host name.
 	Hosts []string `json:"hosts" validate:"required"`
 
 	// status.
 	Status *string `json:"status" validate:"required"`
+
+	// issuer.
+	Issuer *string `json:"issuer" validate:"required"`
+
+	// signature.
+	Signature *string `json:"signature" validate:"required"`
+
+	// bundle method.
+	BundleMethod *string `json:"bundle_method" validate:"required"`
+
+	// zone ID.
+	ZoneID *string `json:"zone_id" validate:"required"`
+
+	// uploaded time.
+	UploadedOn *string `json:"uploaded_on" validate:"required"`
+
+	// modified time.
+	ModifiedOn *string `json:"modified_on" validate:"required"`
+
+	// expire time.
+	ExpiresOn *string `json:"expires_on" validate:"required"`
+
+	// certificate priority.
+	Priority *int64 `json:"priority,omitempty"`
 }
 
 // UnmarshalCertificate unmarshals an instance of Certificate from the specified map of raw messages.
@@ -1966,6 +3189,38 @@ func UnmarshalCertificate(m map[string]json.RawMessage, result interface{}) (err
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "issuer", &obj.Issuer)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "signature", &obj.Signature)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bundle_method", &obj.BundleMethod)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "zone_id", &obj.ZoneID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "uploaded_on", &obj.UploadedOn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "expires_on", &obj.ExpiresOn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "priority", &obj.Priority)
 	if err != nil {
 		return
 	}
@@ -2069,10 +3324,10 @@ type CustomCertResp struct {
 	Success *bool `json:"success" validate:"required"`
 
 	// errors.
-	Errors [][]string `json:"errors" validate:"required"`
+	Errors []map[string]interface{} `json:"errors" validate:"required"`
 
 	// messages.
-	Messages []Tls12SettingRespMessagesItem `json:"messages" validate:"required"`
+	Messages []map[string]interface{} `json:"messages" validate:"required"`
 }
 
 // UnmarshalCustomCertResp unmarshals an instance of CustomCertResp from the specified map of raw messages.
@@ -2090,7 +3345,7 @@ func UnmarshalCustomCertResp(m map[string]json.RawMessage, result interface{}) (
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "messages", &obj.Messages, UnmarshalTls12SettingRespMessagesItem)
+	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
 		return
 	}
@@ -2113,7 +3368,7 @@ type DedicatedCertificatePack struct {
 	Certificates []Certificate `json:"certificates" validate:"required"`
 
 	// primary certificate.
-	PrimaryCertificate interface{} `json:"primary_certificate" validate:"required"`
+	PrimaryCertificate map[string]interface{} `json:"primary_certificate" validate:"required"`
 
 	// status.
 	Status *string `json:"status" validate:"required"`
@@ -2162,10 +3417,10 @@ type DedicatedCertificateResp struct {
 	Success *bool `json:"success" validate:"required"`
 
 	// errors.
-	Errors [][]string `json:"errors" validate:"required"`
+	Errors []map[string]interface{} `json:"errors" validate:"required"`
 
 	// messages.
-	Messages []Tls12SettingRespMessagesItem `json:"messages" validate:"required"`
+	Messages []map[string]interface{} `json:"messages" validate:"required"`
 }
 
 // UnmarshalDedicatedCertificateResp unmarshals an instance of DedicatedCertificateResp from the specified map of raw messages.
@@ -2187,7 +3442,7 @@ func UnmarshalDedicatedCertificateResp(m map[string]json.RawMessage, result inte
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "messages", &obj.Messages, UnmarshalTls12SettingRespMessagesItem)
+	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
 		return
 	}
@@ -2207,10 +3462,10 @@ type ListCertificateResp struct {
 	Success *bool `json:"success" validate:"required"`
 
 	// errors.
-	Errors [][]string `json:"errors" validate:"required"`
+	Errors []map[string]interface{} `json:"errors" validate:"required"`
 
 	// messages.
-	Messages []Tls12SettingRespMessagesItem `json:"messages" validate:"required"`
+	Messages []map[string]interface{} `json:"messages" validate:"required"`
 }
 
 // UnmarshalListCertificateResp unmarshals an instance of ListCertificateResp from the specified map of raw messages.
@@ -2232,7 +3487,7 @@ func UnmarshalListCertificateResp(m map[string]json.RawMessage, result interface
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "messages", &obj.Messages, UnmarshalTls12SettingRespMessagesItem)
+	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
 		return
 	}
@@ -2252,10 +3507,10 @@ type ListCustomCertsResp struct {
 	Success *bool `json:"success" validate:"required"`
 
 	// errors.
-	Errors [][]string `json:"errors" validate:"required"`
+	Errors []map[string]interface{} `json:"errors" validate:"required"`
 
 	// messages.
-	Messages []Tls12SettingRespMessagesItem `json:"messages" validate:"required"`
+	Messages []map[string]interface{} `json:"messages" validate:"required"`
 }
 
 // UnmarshalListCustomCertsResp unmarshals an instance of ListCustomCertsResp from the specified map of raw messages.
@@ -2277,7 +3532,163 @@ func UnmarshalListCustomCertsResp(m map[string]json.RawMessage, result interface
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "messages", &obj.Messages, UnmarshalTls12SettingRespMessagesItem)
+	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ListOriginCertificatesResp : response of list origin certificates.
+type ListOriginCertificatesResp struct {
+	// Container for response information.
+	Result []OriginCertificate `json:"result" validate:"required"`
+
+	// Statistics of results.
+	ResultInfo *ListOriginCertificatesRespResultInfo `json:"result_info" validate:"required"`
+
+	// Was operation successful.
+	Success *bool `json:"success" validate:"required"`
+
+	// Array of errors encountered.
+	Errors [][]string `json:"errors" validate:"required"`
+
+	// Array of messages returned.
+	Messages [][]string `json:"messages" validate:"required"`
+}
+
+// UnmarshalListOriginCertificatesResp unmarshals an instance of ListOriginCertificatesResp from the specified map of raw messages.
+func UnmarshalListOriginCertificatesResp(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ListOriginCertificatesResp)
+	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalOriginCertificate)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "result_info", &obj.ResultInfo, UnmarshalListOriginCertificatesRespResultInfo)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// OriginCertificate : origin certificate.
+type OriginCertificate struct {
+	// ID.
+	ID *string `json:"id" validate:"required"`
+
+	// a CIS-signed certificatece.
+	Certificate *string `json:"certificate" validate:"required"`
+
+	// Array of hostnames or wildcard names (e.g., *.example.com) bound to the certificate.
+	Hostnames []string `json:"hostnames" validate:"required"`
+
+	// The expires date for this certificate.
+	ExpiresOn *string `json:"expires_on" validate:"required"`
+
+	// Signature type desired on certificate.
+	RequestType *string `json:"request_type" validate:"required"`
+
+	// The number of days for which the certificate should be valid.
+	RequestedValidity *int64 `json:"requested_validity" validate:"required"`
+
+	// The Certificate Signing Request (CSR).
+	Csr *string `json:"csr" validate:"required"`
+
+	// The private key.
+	PrivateKey *string `json:"private_key,omitempty"`
+}
+
+// Constants associated with the OriginCertificate.RequestType property.
+// Signature type desired on certificate.
+const (
+	OriginCertificate_RequestType_OriginEcc = "origin-ecc"
+	OriginCertificate_RequestType_OriginRsa = "origin-rsa"
+)
+
+// UnmarshalOriginCertificate unmarshals an instance of OriginCertificate from the specified map of raw messages.
+func UnmarshalOriginCertificate(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(OriginCertificate)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "certificate", &obj.Certificate)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "hostnames", &obj.Hostnames)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "expires_on", &obj.ExpiresOn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "request_type", &obj.RequestType)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "requested_validity", &obj.RequestedValidity)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "csr", &obj.Csr)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "private_key", &obj.PrivateKey)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// OriginCertificateResp : response of origin certificate.
+type OriginCertificateResp struct {
+	// origin certificate.
+	Result *OriginCertificate `json:"result" validate:"required"`
+
+	// Was operation successful.
+	Success *bool `json:"success" validate:"required"`
+
+	// Array of errors encountered.
+	Errors [][]string `json:"errors" validate:"required"`
+
+	// Array of messages returned.
+	Messages [][]string `json:"messages" validate:"required"`
+}
+
+// UnmarshalOriginCertificateResp unmarshals an instance of OriginCertificateResp from the specified map of raw messages.
+func UnmarshalOriginCertificateResp(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(OriginCertificateResp)
+	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalOriginCertificate)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
 		return
 	}
@@ -2292,6 +3703,9 @@ type ResultInfo struct {
 
 	// per page count.
 	PerPage *int64 `json:"per_page" validate:"required"`
+
+	// total pages.
+	TotalPages *int64 `json:"total_pages" validate:"required"`
 
 	// count.
 	Count *int64 `json:"count" validate:"required"`
@@ -2311,11 +3725,53 @@ func UnmarshalResultInfo(m map[string]json.RawMessage, result interface{}) (err 
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "total_pages", &obj.TotalPages)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
 	if err != nil {
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RevokeOriginCertificateResp : response of revoke origin certificate.
+type RevokeOriginCertificateResp struct {
+	// Was the get successful.
+	Success *bool `json:"success" validate:"required"`
+
+	// Array of errors encountered.
+	Errors [][]string `json:"errors" validate:"required"`
+
+	// Array of messages returned.
+	Messages [][]string `json:"messages" validate:"required"`
+
+	// Container for response information.
+	Result *RevokeOriginCertificateRespResult `json:"result" validate:"required"`
+}
+
+// UnmarshalRevokeOriginCertificateResp unmarshals an instance of RevokeOriginCertificateResp from the specified map of raw messages.
+func UnmarshalRevokeOriginCertificateResp(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RevokeOriginCertificateResp)
+	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalRevokeOriginCertificateRespResult)
 	if err != nil {
 		return
 	}
@@ -2337,6 +3793,15 @@ type SslSetting struct {
 	// modified date.
 	ModifiedOn *string `json:"modified_on" validate:"required"`
 }
+
+// Constants associated with the SslSetting.Value property.
+// value.
+const (
+	SslSetting_Value_False    = "false"
+	SslSetting_Value_Flexible = "flexible"
+	SslSetting_Value_Full     = "full"
+	SslSetting_Value_Strict   = "strict"
+)
 
 // UnmarshalSslSetting unmarshals an instance of SslSetting from the specified map of raw messages.
 func UnmarshalSslSetting(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -2370,10 +3835,10 @@ type SslSettingResp struct {
 	Result *SslSetting `json:"result" validate:"required"`
 
 	// errors.
-	Errors [][]string `json:"errors" validate:"required"`
+	Errors []map[string]interface{} `json:"errors" validate:"required"`
 
 	// messages.
-	Messages []Tls12SettingRespMessagesItem `json:"messages" validate:"required"`
+	Messages []map[string]interface{} `json:"messages" validate:"required"`
 }
 
 // UnmarshalSslSettingResp unmarshals an instance of SslSettingResp from the specified map of raw messages.
@@ -2391,7 +3856,104 @@ func UnmarshalSslSettingResp(m map[string]json.RawMessage, result interface{}) (
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "messages", &obj.Messages, UnmarshalTls12SettingRespMessagesItem)
+	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SslVerificationInfo : ssl verification details.
+type SslVerificationInfo struct {
+	// current status of certificate.
+	CertificateStatus *string `json:"certificate_status,omitempty"`
+
+	// validation method in use for a certificate pack order.
+	ValidationMethod *string `json:"validation_method,omitempty"`
+
+	// method of certificate verification.
+	VerificationType *string `json:"verification_type,omitempty"`
+
+	// certificate pack identifier.
+	CertPackUUID *string `json:"cert_pack_uuid,omitempty"`
+
+	// status of the required verification information.
+	VerificationStatus *bool `json:"verification_status,omitempty"`
+
+	// certificate's required verification information.
+	VerificationInfo *SslVerificationInfoVerificationInfo `json:"verification_info,omitempty"`
+
+	// Wether or not Certificate Authority is manually reviewing the order.
+	BrandCheck *bool `json:"brand_check,omitempty"`
+}
+
+// UnmarshalSslVerificationInfo unmarshals an instance of SslVerificationInfo from the specified map of raw messages.
+func UnmarshalSslVerificationInfo(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SslVerificationInfo)
+	err = core.UnmarshalPrimitive(m, "certificate_status", &obj.CertificateStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "validation_method", &obj.ValidationMethod)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "verification_type", &obj.VerificationType)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cert_pack_uuid", &obj.CertPackUUID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "verification_status", &obj.VerificationStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "verification_info", &obj.VerificationInfo, UnmarshalSslVerificationInfoVerificationInfo)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "brand_check", &obj.BrandCheck)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SslVerificationResp : ssl verification response.
+type SslVerificationResp struct {
+	// ssl verification result.
+	Result []SslVerificationInfo `json:"result" validate:"required"`
+
+	// success.
+	Success *bool `json:"success" validate:"required"`
+
+	// errors.
+	Errors []map[string]interface{} `json:"errors" validate:"required"`
+
+	// messages.
+	Messages []map[string]interface{} `json:"messages" validate:"required"`
+}
+
+// UnmarshalSslVerificationResp unmarshals an instance of SslVerificationResp from the specified map of raw messages.
+func UnmarshalSslVerificationResp(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SslVerificationResp)
+	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalSslVerificationInfo)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
 		return
 	}
@@ -2408,10 +3970,10 @@ type Tls12SettingResp struct {
 	Success *bool `json:"success" validate:"required"`
 
 	// errors.
-	Errors [][]string `json:"errors" validate:"required"`
+	Errors []map[string]interface{} `json:"errors" validate:"required"`
 
 	// messages.
-	Messages []Tls12SettingRespMessagesItem `json:"messages" validate:"required"`
+	Messages []map[string]interface{} `json:"messages" validate:"required"`
 }
 
 // UnmarshalTls12SettingResp unmarshals an instance of Tls12SettingResp from the specified map of raw messages.
@@ -2429,7 +3991,7 @@ func UnmarshalTls12SettingResp(m map[string]json.RawMessage, result interface{})
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "messages", &obj.Messages, UnmarshalTls12SettingRespMessagesItem)
+	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
 		return
 	}
@@ -2446,10 +4008,10 @@ type Tls13SettingResp struct {
 	Success *bool `json:"success" validate:"required"`
 
 	// errors.
-	Errors [][]string `json:"errors" validate:"required"`
+	Errors []map[string]interface{} `json:"errors" validate:"required"`
 
 	// messages.
-	Messages []Tls12SettingRespMessagesItem `json:"messages" validate:"required"`
+	Messages []map[string]interface{} `json:"messages" validate:"required"`
 }
 
 // UnmarshalTls13SettingResp unmarshals an instance of Tls13SettingResp from the specified map of raw messages.
@@ -2467,7 +4029,7 @@ func UnmarshalTls13SettingResp(m map[string]json.RawMessage, result interface{})
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "messages", &obj.Messages, UnmarshalTls12SettingRespMessagesItem)
+	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
 		return
 	}
@@ -2484,10 +4046,10 @@ type UniversalSettingResp struct {
 	Success *bool `json:"success" validate:"required"`
 
 	// errors.
-	Errors [][]string `json:"errors" validate:"required"`
+	Errors []map[string]interface{} `json:"errors" validate:"required"`
 
 	// messages.
-	Messages []Tls12SettingRespMessagesItem `json:"messages" validate:"required"`
+	Messages []map[string]interface{} `json:"messages" validate:"required"`
 }
 
 // UnmarshalUniversalSettingResp unmarshals an instance of UniversalSettingResp from the specified map of raw messages.
@@ -2505,7 +4067,7 @@ func UnmarshalUniversalSettingResp(m map[string]json.RawMessage, result interfac
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "messages", &obj.Messages, UnmarshalTls12SettingRespMessagesItem)
+	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
 		return
 	}

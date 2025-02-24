@@ -6,6 +6,7 @@ package authentication
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -115,11 +116,13 @@ func (o *ServiceBrokerAuthTokenPostOK) Code() int {
 }
 
 func (o *ServiceBrokerAuthTokenPostOK) Error() string {
-	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostOK %s", 200, payload)
 }
 
 func (o *ServiceBrokerAuthTokenPostOK) String() string {
-	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostOK %s", 200, payload)
 }
 
 func (o *ServiceBrokerAuthTokenPostOK) GetPayload() *models.Token {
@@ -183,11 +186,13 @@ func (o *ServiceBrokerAuthTokenPostBadRequest) Code() int {
 }
 
 func (o *ServiceBrokerAuthTokenPostBadRequest) Error() string {
-	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBrokerAuthTokenPostBadRequest) String() string {
-	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBrokerAuthTokenPostBadRequest) GetPayload() *models.Error {
@@ -251,11 +256,13 @@ func (o *ServiceBrokerAuthTokenPostUnauthorized) Code() int {
 }
 
 func (o *ServiceBrokerAuthTokenPostUnauthorized) Error() string {
-	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceBrokerAuthTokenPostUnauthorized) String() string {
-	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceBrokerAuthTokenPostUnauthorized) GetPayload() *models.Error {
@@ -319,11 +326,13 @@ func (o *ServiceBrokerAuthTokenPostForbidden) Code() int {
 }
 
 func (o *ServiceBrokerAuthTokenPostForbidden) Error() string {
-	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostForbidden %s", 403, payload)
 }
 
 func (o *ServiceBrokerAuthTokenPostForbidden) String() string {
-	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostForbidden %s", 403, payload)
 }
 
 func (o *ServiceBrokerAuthTokenPostForbidden) GetPayload() *models.Error {
@@ -387,11 +396,13 @@ func (o *ServiceBrokerAuthTokenPostNotFound) Code() int {
 }
 
 func (o *ServiceBrokerAuthTokenPostNotFound) Error() string {
-	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostNotFound %s", 404, payload)
 }
 
 func (o *ServiceBrokerAuthTokenPostNotFound) String() string {
-	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostNotFound %s", 404, payload)
 }
 
 func (o *ServiceBrokerAuthTokenPostNotFound) GetPayload() *models.Error {
@@ -455,11 +466,13 @@ func (o *ServiceBrokerAuthTokenPostTooManyRequests) Code() int {
 }
 
 func (o *ServiceBrokerAuthTokenPostTooManyRequests) Error() string {
-	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostTooManyRequests  %+v", 429, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostTooManyRequests %s", 429, payload)
 }
 
 func (o *ServiceBrokerAuthTokenPostTooManyRequests) String() string {
-	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostTooManyRequests  %+v", 429, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostTooManyRequests %s", 429, payload)
 }
 
 func (o *ServiceBrokerAuthTokenPostTooManyRequests) GetPayload() *models.Error {
@@ -523,11 +536,13 @@ func (o *ServiceBrokerAuthTokenPostInternalServerError) Code() int {
 }
 
 func (o *ServiceBrokerAuthTokenPostInternalServerError) Error() string {
-	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostInternalServerError %s", 500, payload)
 }
 
 func (o *ServiceBrokerAuthTokenPostInternalServerError) String() string {
-	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostInternalServerError %s", 500, payload)
 }
 
 func (o *ServiceBrokerAuthTokenPostInternalServerError) GetPayload() *models.Error {

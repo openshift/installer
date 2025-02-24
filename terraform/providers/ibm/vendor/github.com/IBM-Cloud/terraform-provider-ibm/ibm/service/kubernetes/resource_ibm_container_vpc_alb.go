@@ -126,7 +126,7 @@ func resourceIBMContainerVpcALBEnable(d *schema.ResourceData, meta interface{}) 
 	}
 
 	albAPI := albClient.Albs()
-	targetEnv, _ := getVpcClusterTargetHeader(d, meta)
+	targetEnv, _ := getVpcClusterTargetHeader(d)
 	if err != nil {
 		return err
 	}
@@ -161,7 +161,7 @@ func resourceIBMContainerVpcALBRead(d *schema.ResourceData, meta interface{}) er
 	albID := d.Id()
 
 	albAPI := albClient.Albs()
-	targetEnv, _ := getVpcClusterTargetHeader(d, meta)
+	targetEnv, _ := getVpcClusterTargetHeader(d)
 
 	albConfig, err := albAPI.GetAlb(albID, targetEnv)
 	if err != nil {
@@ -205,7 +205,7 @@ func resourceIBMContainerVpcALBUpdate(d *schema.ResourceData, meta interface{}) 
 			Enable: enable,
 		}
 
-		targetEnv, _ := getVpcClusterTargetHeader(d, meta)
+		targetEnv, _ := getVpcClusterTargetHeader(d)
 
 		if enable {
 			err = albAPI.EnableAlb(params, targetEnv)
@@ -237,7 +237,7 @@ func waitForVpcContainerALB(d *schema.ResourceData, meta interface{}, albID, tim
 		Pending: []string{"pending"},
 		Target:  []string{"active"},
 		Refresh: func() (interface{}, string, error) {
-			targetEnv, _ := getVpcClusterTargetHeader(d, meta)
+			targetEnv, _ := getVpcClusterTargetHeader(d)
 			alb, err := albClient.Albs().GetAlb(albID, targetEnv)
 			if err != nil {
 				if apiErr, ok := err.(bmxerror.RequestFailure); ok && apiErr.StatusCode() == 404 {
@@ -279,7 +279,7 @@ func waitForVpcClusterAvailable(d *schema.ResourceData, meta interface{}, albID,
 		Pending: []string{deployRequested, deployInProgress},
 		Target:  []string{ready},
 		Refresh: func() (interface{}, string, error) {
-			targetEnv, _ := getVpcClusterTargetHeader(d, meta)
+			targetEnv, _ := getVpcClusterTargetHeader(d)
 			albInfo, err := albClient.Albs().GetAlb(albID, targetEnv)
 			if err == nil {
 				cluster := albInfo.Cluster

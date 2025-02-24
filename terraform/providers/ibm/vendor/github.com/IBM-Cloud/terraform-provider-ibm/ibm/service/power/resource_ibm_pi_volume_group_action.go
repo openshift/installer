@@ -176,7 +176,7 @@ func resourceIBMPIVolumeGroupActionRead(ctx context.Context, d *schema.ResourceD
 }
 
 func resourceIBMPIVolumeGroupActionDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// There is no delete or unset concept for instance action
+	// There is no delete or unset concept for volume group action
 	d.SetId("")
 	return nil
 }

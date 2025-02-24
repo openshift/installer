@@ -6,6 +6,7 @@ package p_cloud_v_p_n_connections
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -127,11 +128,13 @@ func (o *PcloudVpnconnectionsPostAccepted) Code() int {
 }
 
 func (o *PcloudVpnconnectionsPostAccepted) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostAccepted  %+v", 202, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostAccepted %s", 202, payload)
 }
 
 func (o *PcloudVpnconnectionsPostAccepted) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostAccepted  %+v", 202, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostAccepted %s", 202, payload)
 }
 
 func (o *PcloudVpnconnectionsPostAccepted) GetPayload() *models.VPNConnectionCreateResponse {
@@ -195,11 +198,13 @@ func (o *PcloudVpnconnectionsPostBadRequest) Code() int {
 }
 
 func (o *PcloudVpnconnectionsPostBadRequest) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostBadRequest %s", 400, payload)
 }
 
 func (o *PcloudVpnconnectionsPostBadRequest) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostBadRequest %s", 400, payload)
 }
 
 func (o *PcloudVpnconnectionsPostBadRequest) GetPayload() *models.Error {
@@ -263,11 +268,13 @@ func (o *PcloudVpnconnectionsPostUnauthorized) Code() int {
 }
 
 func (o *PcloudVpnconnectionsPostUnauthorized) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudVpnconnectionsPostUnauthorized) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudVpnconnectionsPostUnauthorized) GetPayload() *models.Error {
@@ -331,11 +338,13 @@ func (o *PcloudVpnconnectionsPostForbidden) Code() int {
 }
 
 func (o *PcloudVpnconnectionsPostForbidden) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostForbidden %s", 403, payload)
 }
 
 func (o *PcloudVpnconnectionsPostForbidden) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostForbidden %s", 403, payload)
 }
 
 func (o *PcloudVpnconnectionsPostForbidden) GetPayload() *models.Error {
@@ -399,11 +408,13 @@ func (o *PcloudVpnconnectionsPostNotFound) Code() int {
 }
 
 func (o *PcloudVpnconnectionsPostNotFound) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostNotFound %s", 404, payload)
 }
 
 func (o *PcloudVpnconnectionsPostNotFound) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostNotFound %s", 404, payload)
 }
 
 func (o *PcloudVpnconnectionsPostNotFound) GetPayload() *models.Error {
@@ -467,11 +478,13 @@ func (o *PcloudVpnconnectionsPostMethodNotAllowed) Code() int {
 }
 
 func (o *PcloudVpnconnectionsPostMethodNotAllowed) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostMethodNotAllowed  %+v", 405, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostMethodNotAllowed %s", 405, payload)
 }
 
 func (o *PcloudVpnconnectionsPostMethodNotAllowed) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostMethodNotAllowed  %+v", 405, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostMethodNotAllowed %s", 405, payload)
 }
 
 func (o *PcloudVpnconnectionsPostMethodNotAllowed) GetPayload() *models.Error {
@@ -535,11 +548,13 @@ func (o *PcloudVpnconnectionsPostConflict) Code() int {
 }
 
 func (o *PcloudVpnconnectionsPostConflict) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostConflict  %+v", 409, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostConflict %s", 409, payload)
 }
 
 func (o *PcloudVpnconnectionsPostConflict) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostConflict  %+v", 409, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostConflict %s", 409, payload)
 }
 
 func (o *PcloudVpnconnectionsPostConflict) GetPayload() *models.Error {
@@ -603,11 +618,13 @@ func (o *PcloudVpnconnectionsPostUnprocessableEntity) Code() int {
 }
 
 func (o *PcloudVpnconnectionsPostUnprocessableEntity) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostUnprocessableEntity  %+v", 422, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostUnprocessableEntity %s", 422, payload)
 }
 
 func (o *PcloudVpnconnectionsPostUnprocessableEntity) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostUnprocessableEntity  %+v", 422, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostUnprocessableEntity %s", 422, payload)
 }
 
 func (o *PcloudVpnconnectionsPostUnprocessableEntity) GetPayload() *models.Error {
@@ -671,11 +688,13 @@ func (o *PcloudVpnconnectionsPostInternalServerError) Code() int {
 }
 
 func (o *PcloudVpnconnectionsPostInternalServerError) Error() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudVpnconnectionsPostInternalServerError) String() string {
-	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsPostInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudVpnconnectionsPostInternalServerError) GetPayload() *models.Error {

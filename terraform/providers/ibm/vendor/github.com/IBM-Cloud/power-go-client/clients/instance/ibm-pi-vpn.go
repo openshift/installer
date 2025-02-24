@@ -44,20 +44,7 @@ func (f *IBMPIVpnConnectionClient) Get(id string) (*models.VPNConnection, error)
 
 // Create a VPN Connection
 func (f *IBMPIVpnConnectionClient) Create(body *models.VPNConnectionCreate) (*models.VPNConnectionCreateResponse, error) {
-	if f.session.IsOnPrem() {
-		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
-	}
-	params := p_cloud_v_p_n_connections.NewPcloudVpnconnectionsPostParams().
-		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
-		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
-	postaccepted, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsPost(params, f.session.AuthInfo(f.cloudInstanceID))
-	if err != nil {
-		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.CreateVPNConnectionOperationFailed, f.cloudInstanceID, err))
-	}
-	if postaccepted != nil && postaccepted.Payload != nil {
-		return postaccepted.Payload, nil
-	}
-	return nil, fmt.Errorf("failed to Create VPN Connection")
+	return nil, fmt.Errorf("Create VPN Connection is no longer supported")
 }
 
 // Update a VPN Connection

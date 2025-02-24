@@ -5,7 +5,6 @@ package scc
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -206,7 +205,7 @@ func dataSourceIbmSccReportResourcesRead(context context.Context, d *schema.Reso
 	allItems, err := pager.GetAll()
 	if err != nil {
 		log.Printf("[DEBUG] ReportResourcesPager.GetAll() failed %s", err)
-		return diag.FromErr(fmt.Errorf("ReportResourcesPager.GetAll() failed %s", err))
+		return diag.FromErr(flex.FmtErrorf("ReportResourcesPager.GetAll() failed %s", err))
 	}
 
 	d.SetId(dataSourceIbmSccReportResourcesID(d))
@@ -221,7 +220,7 @@ func dataSourceIbmSccReportResourcesRead(context context.Context, d *schema.Reso
 	}
 
 	if err = d.Set("resources", mapSlice); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting resources %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting resources %s", err))
 	}
 
 	return nil

@@ -6,6 +6,7 @@ package open_stacks
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -97,11 +98,13 @@ func (o *ServiceBrokerOpenstacksHostsGetOK) Code() int {
 }
 
 func (o *ServiceBrokerOpenstacksHostsGetOK) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/hosts/{hostname}][%d] serviceBrokerOpenstacksHostsGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/hosts/{hostname}][%d] serviceBrokerOpenstacksHostsGetOK %s", 200, payload)
 }
 
 func (o *ServiceBrokerOpenstacksHostsGetOK) String() string {
-	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/hosts/{hostname}][%d] serviceBrokerOpenstacksHostsGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/hosts/{hostname}][%d] serviceBrokerOpenstacksHostsGetOK %s", 200, payload)
 }
 
 func (o *ServiceBrokerOpenstacksHostsGetOK) GetPayload() *models.HostInfo {
@@ -165,11 +168,13 @@ func (o *ServiceBrokerOpenstacksHostsGetBadRequest) Code() int {
 }
 
 func (o *ServiceBrokerOpenstacksHostsGetBadRequest) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/hosts/{hostname}][%d] serviceBrokerOpenstacksHostsGetBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/hosts/{hostname}][%d] serviceBrokerOpenstacksHostsGetBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBrokerOpenstacksHostsGetBadRequest) String() string {
-	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/hosts/{hostname}][%d] serviceBrokerOpenstacksHostsGetBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/hosts/{hostname}][%d] serviceBrokerOpenstacksHostsGetBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBrokerOpenstacksHostsGetBadRequest) GetPayload() *models.Error {
@@ -233,11 +238,13 @@ func (o *ServiceBrokerOpenstacksHostsGetNotFound) Code() int {
 }
 
 func (o *ServiceBrokerOpenstacksHostsGetNotFound) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/hosts/{hostname}][%d] serviceBrokerOpenstacksHostsGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/hosts/{hostname}][%d] serviceBrokerOpenstacksHostsGetNotFound %s", 404, payload)
 }
 
 func (o *ServiceBrokerOpenstacksHostsGetNotFound) String() string {
-	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/hosts/{hostname}][%d] serviceBrokerOpenstacksHostsGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/hosts/{hostname}][%d] serviceBrokerOpenstacksHostsGetNotFound %s", 404, payload)
 }
 
 func (o *ServiceBrokerOpenstacksHostsGetNotFound) GetPayload() *models.Error {
@@ -301,11 +308,13 @@ func (o *ServiceBrokerOpenstacksHostsGetInternalServerError) Code() int {
 }
 
 func (o *ServiceBrokerOpenstacksHostsGetInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/hosts/{hostname}][%d] serviceBrokerOpenstacksHostsGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/hosts/{hostname}][%d] serviceBrokerOpenstacksHostsGetInternalServerError %s", 500, payload)
 }
 
 func (o *ServiceBrokerOpenstacksHostsGetInternalServerError) String() string {
-	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/hosts/{hostname}][%d] serviceBrokerOpenstacksHostsGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/hosts/{hostname}][%d] serviceBrokerOpenstacksHostsGetInternalServerError %s", 500, payload)
 }
 
 func (o *ServiceBrokerOpenstacksHostsGetInternalServerError) GetPayload() *models.Error {

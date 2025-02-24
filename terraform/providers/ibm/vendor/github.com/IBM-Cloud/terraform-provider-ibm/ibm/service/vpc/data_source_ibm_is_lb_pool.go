@@ -377,7 +377,7 @@ func dataSourceLoadBalancerPoolInstanceGroupToMap(instanceGroupItem vpcv1.Instan
 	return instanceGroupMap
 }
 
-func dataSourceLoadBalancerPoolInstanceGroupDeletedToMap(deletedItem vpcv1.InstanceGroupReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceLoadBalancerPoolInstanceGroupDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {
@@ -414,7 +414,7 @@ func dataSourceLoadBalancerPoolMembersToMap(membersItem vpcv1.LoadBalancerPoolMe
 	return membersMap
 }
 
-func dataSourceLoadBalancerPoolMembersDeletedToMap(deletedItem vpcv1.LoadBalancerPoolMemberReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceLoadBalancerPoolMembersDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

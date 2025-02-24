@@ -6,6 +6,7 @@ package p_cloud_system_pools
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -109,11 +110,13 @@ func (o *PcloudSystempoolsGetOK) Code() int {
 }
 
 func (o *PcloudSystempoolsGetOK) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetOK %s", 200, payload)
 }
 
 func (o *PcloudSystempoolsGetOK) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetOK %s", 200, payload)
 }
 
 func (o *PcloudSystempoolsGetOK) GetPayload() models.SystemPools {
@@ -175,11 +178,13 @@ func (o *PcloudSystempoolsGetBadRequest) Code() int {
 }
 
 func (o *PcloudSystempoolsGetBadRequest) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetBadRequest %s", 400, payload)
 }
 
 func (o *PcloudSystempoolsGetBadRequest) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetBadRequest %s", 400, payload)
 }
 
 func (o *PcloudSystempoolsGetBadRequest) GetPayload() *models.Error {
@@ -243,11 +248,13 @@ func (o *PcloudSystempoolsGetUnauthorized) Code() int {
 }
 
 func (o *PcloudSystempoolsGetUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudSystempoolsGetUnauthorized) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudSystempoolsGetUnauthorized) GetPayload() *models.Error {
@@ -311,11 +318,13 @@ func (o *PcloudSystempoolsGetForbidden) Code() int {
 }
 
 func (o *PcloudSystempoolsGetForbidden) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetForbidden %s", 403, payload)
 }
 
 func (o *PcloudSystempoolsGetForbidden) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetForbidden %s", 403, payload)
 }
 
 func (o *PcloudSystempoolsGetForbidden) GetPayload() *models.Error {
@@ -379,11 +388,13 @@ func (o *PcloudSystempoolsGetNotFound) Code() int {
 }
 
 func (o *PcloudSystempoolsGetNotFound) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetNotFound %s", 404, payload)
 }
 
 func (o *PcloudSystempoolsGetNotFound) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetNotFound %s", 404, payload)
 }
 
 func (o *PcloudSystempoolsGetNotFound) GetPayload() *models.Error {
@@ -447,11 +458,13 @@ func (o *PcloudSystempoolsGetInternalServerError) Code() int {
 }
 
 func (o *PcloudSystempoolsGetInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudSystempoolsGetInternalServerError) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/system-pools][%d] pcloudSystempoolsGetInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudSystempoolsGetInternalServerError) GetPayload() *models.Error {

@@ -29,6 +29,7 @@ func DataSourceIBMOrg() *schema.Resource {
 				ExactlyOneOf: []string{"org", "name"},
 			},
 		},
+		DeprecationMessage: "This service is deprecated.",
 	}
 }
 

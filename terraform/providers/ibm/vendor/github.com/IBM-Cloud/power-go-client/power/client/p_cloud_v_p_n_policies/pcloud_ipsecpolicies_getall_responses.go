@@ -6,6 +6,7 @@ package p_cloud_v_p_n_policies
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -109,11 +110,13 @@ func (o *PcloudIpsecpoliciesGetallOK) Code() int {
 }
 
 func (o *PcloudIpsecpoliciesGetallOK) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallOK %s", 200, payload)
 }
 
 func (o *PcloudIpsecpoliciesGetallOK) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallOK %s", 200, payload)
 }
 
 func (o *PcloudIpsecpoliciesGetallOK) GetPayload() *models.IPSecPolicies {
@@ -177,11 +180,13 @@ func (o *PcloudIpsecpoliciesGetallBadRequest) Code() int {
 }
 
 func (o *PcloudIpsecpoliciesGetallBadRequest) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallBadRequest %s", 400, payload)
 }
 
 func (o *PcloudIpsecpoliciesGetallBadRequest) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallBadRequest %s", 400, payload)
 }
 
 func (o *PcloudIpsecpoliciesGetallBadRequest) GetPayload() *models.Error {
@@ -245,11 +250,13 @@ func (o *PcloudIpsecpoliciesGetallUnauthorized) Code() int {
 }
 
 func (o *PcloudIpsecpoliciesGetallUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudIpsecpoliciesGetallUnauthorized) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudIpsecpoliciesGetallUnauthorized) GetPayload() *models.Error {
@@ -313,11 +320,13 @@ func (o *PcloudIpsecpoliciesGetallForbidden) Code() int {
 }
 
 func (o *PcloudIpsecpoliciesGetallForbidden) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallForbidden %s", 403, payload)
 }
 
 func (o *PcloudIpsecpoliciesGetallForbidden) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallForbidden %s", 403, payload)
 }
 
 func (o *PcloudIpsecpoliciesGetallForbidden) GetPayload() *models.Error {
@@ -381,11 +390,13 @@ func (o *PcloudIpsecpoliciesGetallNotFound) Code() int {
 }
 
 func (o *PcloudIpsecpoliciesGetallNotFound) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallNotFound %s", 404, payload)
 }
 
 func (o *PcloudIpsecpoliciesGetallNotFound) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallNotFound %s", 404, payload)
 }
 
 func (o *PcloudIpsecpoliciesGetallNotFound) GetPayload() *models.Error {
@@ -449,11 +460,13 @@ func (o *PcloudIpsecpoliciesGetallInternalServerError) Code() int {
 }
 
 func (o *PcloudIpsecpoliciesGetallInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudIpsecpoliciesGetallInternalServerError) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesGetallInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudIpsecpoliciesGetallInternalServerError) GetPayload() *models.Error {

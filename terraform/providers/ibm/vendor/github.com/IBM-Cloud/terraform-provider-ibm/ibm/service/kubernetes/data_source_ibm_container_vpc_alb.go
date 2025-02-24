@@ -74,7 +74,7 @@ func dataSourceIBMContainerVpcALBRead(d *schema.ResourceData, meta interface{}) 
 
 	albID := d.Get("alb_id").(string)
 	albAPI := albClient.Albs()
-	targetEnv, _ := getVpcClusterTargetHeader(d, meta)
+	targetEnv, _ := getVpcClusterTargetHeader(d)
 	albConfig, err := albAPI.GetAlb(albID, targetEnv)
 	if err != nil {
 		return err
