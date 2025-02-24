@@ -53,6 +53,21 @@ func (mr *MockAPIMockRecorder) AreMarketplaceImageTermsAccepted(ctx, publisher, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AreMarketplaceImageTermsAccepted", reflect.TypeOf((*MockAPI)(nil).AreMarketplaceImageTermsAccepted), ctx, publisher, offer, sku)
 }
 
+// CheckIfARO mocks base method.
+func (m *MockAPI) CheckIfARO(ctx context.Context, groupName string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckIfARO", ctx, groupName)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckIfARO indicates an expected call of CheckIfARO.
+func (mr *MockAPIMockRecorder) CheckIfARO(ctx, groupName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckIfARO", reflect.TypeOf((*MockAPI)(nil).CheckIfARO), ctx, groupName)
+}
+
 // GetAvailabilityZones mocks base method.
 func (m *MockAPI) GetAvailabilityZones(ctx context.Context, region, instanceType string) ([]string, error) {
 	m.ctrl.T.Helper()

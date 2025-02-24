@@ -148,7 +148,6 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			VirtualNetworkName:       vnet,
 			SubnetName:               subnet,
 			ResourceManagerEndpoint:  installConfig.Config.Azure.ARMEndpoint,
-			ARO:                      installConfig.Config.Azure.IsARO(),
 		}.JSON()
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
