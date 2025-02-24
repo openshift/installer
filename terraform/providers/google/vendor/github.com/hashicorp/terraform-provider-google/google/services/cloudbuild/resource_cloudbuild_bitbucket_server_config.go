@@ -20,10 +20,12 @@ package cloudbuild
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -46,6 +48,10 @@ func ResourceCloudBuildBitbucketServerConfig() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"api_key": {
@@ -238,6 +244,7 @@ func resourceCloudBuildBitbucketServerConfigCreate(d *schema.ResourceData, meta 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -246,6 +253,7 @@ func resourceCloudBuildBitbucketServerConfigCreate(d *schema.ResourceData, meta 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating BitbucketServerConfig: %s", err)
@@ -363,12 +371,14 @@ func resourceCloudBuildBitbucketServerConfigRead(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("CloudBuildBitbucketServerConfig %q", d.Id()))
@@ -473,6 +483,7 @@ func resourceCloudBuildBitbucketServerConfigUpdate(d *schema.ResourceData, meta 
 	}
 
 	log.Printf("[DEBUG] Updating BitbucketServerConfig %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("host_uri") {
@@ -526,28 +537,32 @@ func resourceCloudBuildBitbucketServerConfigUpdate(d *schema.ResourceData, meta 
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating BitbucketServerConfig %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating BitbucketServerConfig %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating BitbucketServerConfig %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating BitbucketServerConfig %q: %#v", d.Id(), res)
+		}
 
-	err = CloudBuildOperationWaitTime(
-		config, res, project, "Updating BitbucketServerConfig", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = CloudBuildOperationWaitTime(
+			config, res, project, "Updating BitbucketServerConfig", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	if d.HasChange("connected_repositories") {
@@ -573,7 +588,7 @@ func resourceCloudBuildBitbucketServerConfigUpdate(d *schema.ResourceData, meta 
 		for _, repo := range removeRepos {
 			obj := make(map[string]interface{})
 			obj["connectedRepository"] = repo
-			res, err = transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			_, err = transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 				Config:    config,
 				Method:    "POST",
 				Project:   billingProject,
@@ -613,7 +628,7 @@ func resourceCloudBuildBitbucketServerConfigUpdate(d *schema.ResourceData, meta 
 				return err
 			}
 
-			res, err = transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 				Config:    config,
 				Method:    "POST",
 				Project:   billingProject,
@@ -660,13 +675,15 @@ func resourceCloudBuildBitbucketServerConfigDelete(d *schema.ResourceData, meta 
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting BitbucketServerConfig %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting BitbucketServerConfig %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -675,6 +692,7 @@ func resourceCloudBuildBitbucketServerConfigDelete(d *schema.ResourceData, meta 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "BitbucketServerConfig")
@@ -695,9 +713,9 @@ func resourceCloudBuildBitbucketServerConfigDelete(d *schema.ResourceData, meta 
 func resourceCloudBuildBitbucketServerConfigImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/bitbucketServerConfigs/(?P<config_id>[^/]+)",
-		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<config_id>[^/]+)",
-		"(?P<location>[^/]+)/(?P<config_id>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/bitbucketServerConfigs/(?P<config_id>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<config_id>[^/]+)$",
+		"^(?P<location>[^/]+)/(?P<config_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

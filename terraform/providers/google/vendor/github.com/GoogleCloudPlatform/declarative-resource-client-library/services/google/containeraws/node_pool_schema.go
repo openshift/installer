@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@ func DCLNodePoolSchema() *dcl.Schema {
 			StructName:  "NodePool",
 			Reference: &dcl.Link{
 				Text: "API reference",
-				URL:  "https://cloud.google.com/anthos/clusters/docs/multi-cloud/reference/rest/v1/projects.locations.awsClusters.awsNodePools",
+				URL:  "https://cloud.google.com/kubernetes-engine/multi-cloud/docs/reference/rest/v1/projects.locations.awsClusters.awsNodePools",
 			},
 			Guides: []*dcl.Link{
 				&dcl.Link{
 					Text: "Multicloud overview",
-					URL:  "https://cloud.google.com/anthos/clusters/docs/multi-cloud",
+					URL:  "https://cloud.google.com/kubernetes-engine/multi-cloud/docs",
 				},
 			},
 		},
@@ -183,6 +183,7 @@ func DCLNodePoolSchema() *dcl.Schema {
 										Parent:   true,
 									},
 								},
+								Parameter: true,
 							},
 							"config": &dcl.Property{
 								Type:        "object",
@@ -246,7 +247,6 @@ func DCLNodePoolSchema() *dcl.Schema {
 										Type:          "string",
 										GoName:        "InstanceType",
 										Description:   "Optional. The AWS instance type. When unspecified, it defaults to `m5.large`.",
-										Immutable:     true,
 										ServerDefault: true,
 									},
 									"labels": &dcl.Property{
@@ -256,7 +256,6 @@ func DCLNodePoolSchema() *dcl.Schema {
 										},
 										GoName:      "Labels",
 										Description: "Optional. The initial labels assigned to nodes of this node pool. An object containing a list of \"key\": value pairs. Example: { \"name\": \"wrench\", \"mass\": \"1.3kg\", \"count\": \"3\" }.",
-										Immutable:   true,
 									},
 									"proxyConfig": &dcl.Property{
 										Type:        "object",
@@ -310,7 +309,7 @@ func DCLNodePoolSchema() *dcl.Schema {
 												Type:          "integer",
 												Format:        "int64",
 												GoName:        "Throughput",
-												Description:   "Optional. The throughput to provision for the volume, in MiB/s. Only valid if the volume type is GP3.",
+												Description:   "Optional. The throughput to provision for the volume, in MiB/s. Only valid if the volume type is GP3. If volume type is gp3 and throughput is not specified, the throughput will defaults to 125.",
 												ServerDefault: true,
 											},
 											"volumeType": &dcl.Property{
@@ -428,6 +427,20 @@ func DCLNodePoolSchema() *dcl.Schema {
 								GoName:      "Location",
 								Description: "The location for the resource",
 								Immutable:   true,
+								Parameter:   true,
+							},
+							"management": &dcl.Property{
+								Type:        "object",
+								GoName:      "Management",
+								GoType:      "NodePoolManagement",
+								Description: "The Management configuration for this node pool.",
+								Properties: map[string]*dcl.Property{
+									"autoRepair": &dcl.Property{
+										Type:        "boolean",
+										GoName:      "AutoRepair",
+										Description: "Optional. Whether or not the nodes will be automatically repaired.",
+									},
+								},
 							},
 							"maxPodsConstraint": &dcl.Property{
 								Type:        "object",
@@ -453,6 +466,7 @@ func DCLNodePoolSchema() *dcl.Schema {
 								GoName:      "Name",
 								Description: "The name of this resource.",
 								Immutable:   true,
+								HasLongForm: true,
 							},
 							"project": &dcl.Property{
 								Type:        "string",
@@ -466,6 +480,7 @@ func DCLNodePoolSchema() *dcl.Schema {
 										Parent:   true,
 									},
 								},
+								Parameter: true,
 							},
 							"reconciling": &dcl.Property{
 								Type:        "boolean",
@@ -503,6 +518,38 @@ func DCLNodePoolSchema() *dcl.Schema {
 								ReadOnly:    true,
 								Description: "Output only. A globally unique identifier for the node pool.",
 								Immutable:   true,
+							},
+							"updateSettings": &dcl.Property{
+								Type:          "object",
+								GoName:        "UpdateSettings",
+								GoType:        "NodePoolUpdateSettings",
+								Description:   "Optional. Update settings control the speed and disruption of the node pool update.",
+								ServerDefault: true,
+								Properties: map[string]*dcl.Property{
+									"surgeSettings": &dcl.Property{
+										Type:          "object",
+										GoName:        "SurgeSettings",
+										GoType:        "NodePoolUpdateSettingsSurgeSettings",
+										Description:   "Optional. Settings for surge update.",
+										ServerDefault: true,
+										Properties: map[string]*dcl.Property{
+											"maxSurge": &dcl.Property{
+												Type:          "integer",
+												Format:        "int64",
+												GoName:        "MaxSurge",
+												Description:   "Optional. The maximum number of nodes that can be created beyond the current size of the node pool during the update process.",
+												ServerDefault: true,
+											},
+											"maxUnavailable": &dcl.Property{
+												Type:          "integer",
+												Format:        "int64",
+												GoName:        "MaxUnavailable",
+												Description:   "Optional. The maximum number of nodes that can be simultaneously unavailable during the update process. A node is considered unavailable if its status is not Ready.",
+												ServerDefault: true,
+											},
+										},
+									},
+								},
 							},
 							"updateTime": &dcl.Property{
 								Type:        "string",

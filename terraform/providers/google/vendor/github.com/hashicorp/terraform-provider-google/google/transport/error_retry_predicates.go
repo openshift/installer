@@ -322,6 +322,30 @@ func DatastoreIndex409Contention(err error) (bool, string) {
 	return false, ""
 }
 
+// relevant for firestore in datastore mode
+func FirestoreField409RetryUnderlyingDataChanged(err error) (bool, string) {
+	if gerr, ok := err.(*googleapi.Error); ok {
+		if gerr.Code == 409 && strings.Contains(gerr.Body, "Please retry, underlying data changed") {
+			return true, "underlying data changed - retrying"
+		}
+	}
+	return false, ""
+}
+
+// relevant for firestore in datastore mode
+func FirestoreIndex409Retry(err error) (bool, string) {
+	if gerr, ok := err.(*googleapi.Error); ok && gerr.Code == 409 {
+		if strings.Contains(gerr.Body, "Aborted due to cross-transaction contention") {
+			return true, "aborted due to cross-transaction contention - retrying"
+		}
+
+		if strings.Contains(gerr.Body, "Please retry, underlying data changed") {
+			return true, "underlying data changed - retrying"
+		}
+	}
+	return false, ""
+}
+
 func IapClient409Operation(err error) (bool, string) {
 	if gerr, ok := err.(*googleapi.Error); ok {
 		if gerr.Code == 409 && strings.Contains(strings.ToLower(gerr.Body), "operation was aborted") {
@@ -431,6 +455,31 @@ func Is429QuotaError(err error) (bool, string) {
 	return false, ""
 }
 
+// Do retry if operation returns a 429 and the reason is RATE_LIMIT_EXCEEDED
+func Is429RetryableQuotaError(err error) (bool, string) {
+	if gerr, ok := err.(*googleapi.Error); ok {
+		if gerr.Code == 429 {
+			// Quota error isn't necessarily retryable if it's a resource instance limit; check details
+			isRateLimitExceeded := false
+			for _, d := range gerr.Details {
+				data := d.(map[string]interface{})
+				dType, ok := data["@type"]
+				// Find google.rpc.ErrorInfo in Details
+				if ok && strings.Contains(dType.(string), "ErrorInfo") {
+					if v, ok := data["reason"]; ok {
+						if v.(string) == "RATE_LIMIT_EXCEEDED" {
+							isRateLimitExceeded = true
+							break
+						}
+					}
+				}
+			}
+			return isRateLimitExceeded, "429s are retryable for this resource, but only if the reason is RATE_LIMIT_EXCEEDED"
+		}
+	}
+	return false, ""
+}
+
 // Retry if App Engine operation returns a 409 with a specific message for
 // concurrent operations, or a 404 indicating p4sa has not yet propagated.
 func IsAppEngineRetryableError(err error) (bool, string) {
@@ -440,6 +489,21 @@ func IsAppEngineRetryableError(err error) (bool, string) {
 		}
 		if gerr.Code == 404 && strings.Contains(strings.ToLower(gerr.Body), "unable to retrieve p4sa") {
 			return true, "Waiting for P4SA propagation to GAIA"
+		}
+	}
+	return false, ""
+}
+
+// Retry if Orgpolicy operation returns a 403 with a specific message
+// indicating the parent resource does not exist.
+func IsOrgpolicyRetryableError(err error) (bool, string) {
+	if gerr, ok := err.(*googleapi.Error); ok {
+		if gerr.Code != 403 {
+			return false, ""
+		}
+		pattern := regexp.MustCompile("Permission 'orgpolicy\\.policy\\.[a-z]*' denied on resource '//[a-z]*\\.googleapis\\.com/(projects|folders)/[a-z0-9-]*/policies/[a-zA-Z.]*' \\(or it may not exist\\)\\.")
+		if pattern.MatchString(gerr.Body) {
+			return true, "Waiting for parent resource to be ready"
 		}
 	}
 	return false, ""
@@ -482,5 +546,31 @@ func IsSwgAutogenRouterRetryable(err error) (bool, string) {
 		}
 	}
 
+	return false, ""
+}
+
+// Retry if getting a resource/operation returns a 403 for specific IAM Admin API Service Account operations.
+// opType should describe the operation for which it can be retryable.
+// IAM API is eventually consistent and returns 403 Forbidden (instead of 404 Not found) for some operations
+// when a newly created resource is attempted to be read right after the creation and not found.
+func IsForbiddenIamServiceAccountRetryableError(opType string) RetryErrorPredicateFunc {
+	return func(err error) (bool, string) {
+		if gerr, ok := err.(*googleapi.Error); ok {
+			if gerr.Code == 403 && strings.Contains(gerr.Body, "Permission 'iam.serviceAccounts.get' denied on resource (or it may not exist)") {
+				return true, fmt.Sprintf("Retry 403s for %s", opType)
+			}
+		}
+		return false, ""
+	}
+}
+
+// Retry the creation of `google_vmwareengine_external_address` resource if the network policy's
+// External IP field is not active yet.
+func ExternalIpServiceNotActive(err error) (bool, string) {
+	if gerr, ok := err.(*googleapi.Error); ok {
+		if gerr.Code == 400 && strings.Contains(gerr.Body, "External IP address network service is not active in the provided network policy") {
+			return true, "Waiting for external ip service to be enabled"
+		}
+	}
 	return false, ""
 }

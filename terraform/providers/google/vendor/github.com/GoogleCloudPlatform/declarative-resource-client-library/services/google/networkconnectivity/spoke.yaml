@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -114,6 +114,7 @@ components:
           x-dcl-conflicts:
           - linkedVpnTunnels
           - linkedRouterApplianceInstances
+          - linkedVPCNetwork
           required:
           - uris
           - siteToSiteDataTransfer
@@ -147,6 +148,7 @@ components:
           x-dcl-conflicts:
           - linkedVpnTunnels
           - linkedInterconnectAttachments
+          - linkedVPCNetwork
           required:
           - instances
           - siteToSiteDataTransfer
@@ -182,6 +184,38 @@ components:
                 is enabled for these resources. Note that data transfer is available
                 only in supported locations.
               x-kubernetes-immutable: true
+        linkedVPCNetwork:
+          type: object
+          x-dcl-go-name: LinkedVPCNetwork
+          x-dcl-go-type: SpokeLinkedVPCNetwork
+          description: VPC network that is associated with the spoke.
+          x-kubernetes-immutable: true
+          x-dcl-conflicts:
+          - linkedVpnTunnels
+          - linkedInterconnectAttachments
+          - linkedRouterApplianceInstances
+          required:
+          - uri
+          properties:
+            excludeExportRanges:
+              type: array
+              x-dcl-go-name: ExcludeExportRanges
+              description: IP ranges encompassing the subnets to be excluded from
+                peering.
+              x-kubernetes-immutable: true
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: string
+                x-dcl-go-type: string
+            uri:
+              type: string
+              x-dcl-go-name: Uri
+              description: The URI of the VPC network resource.
+              x-kubernetes-immutable: true
+              x-dcl-references:
+              - resource: Compute/Network
+                field: selfLink
         linkedVpnTunnels:
           type: object
           x-dcl-go-name: LinkedVpnTunnels
@@ -191,6 +225,7 @@ components:
           x-dcl-conflicts:
           - linkedInterconnectAttachments
           - linkedRouterApplianceInstances
+          - linkedVPCNetwork
           required:
           - uris
           - siteToSiteDataTransfer
@@ -220,11 +255,13 @@ components:
           x-dcl-go-name: Location
           description: The location for the resource
           x-kubernetes-immutable: true
+          x-dcl-parameter: true
         name:
           type: string
           x-dcl-go-name: Name
           description: Immutable. The name of the spoke. Spoke names must be unique.
           x-kubernetes-immutable: true
+          x-dcl-has-long-form: true
         project:
           type: string
           x-dcl-go-name: Project
@@ -234,6 +271,7 @@ components:
           - resource: Cloudresourcemanager/Project
             field: name
             parent: true
+          x-dcl-parameter: true
         state:
           type: string
           x-dcl-go-name: State

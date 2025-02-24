@@ -45,12 +45,6 @@ var CloudBuildWorkerPoolEndpointEntry = &schema.Schema{
 	Optional: true,
 }
 
-var ClouddeployEndpointEntryKey = "clouddeploy_custom_endpoint"
-var ClouddeployEndpointEntry = &schema.Schema{
-	Type:     schema.TypeString,
-	Optional: true,
-}
-
 var CloudResourceManagerEndpointEntryKey = "cloud_resource_manager_custom_endpoint"
 var CloudResourceManagerEndpointEntry = &schema.Schema{
 	Type:     schema.TypeString,
@@ -69,14 +63,8 @@ var FirebaserulesEndpointEntry = &schema.Schema{
 	Optional: true,
 }
 
-var NetworkConnectivityEndpointEntryKey = "network_connectivity_custom_endpoint"
-var NetworkConnectivityEndpointEntry = &schema.Schema{
-	Type:     schema.TypeString,
-	Optional: true,
-}
-
-var OrgPolicyEndpointEntryKey = "org_policy_custom_endpoint"
-var OrgPolicyEndpointEntry = &schema.Schema{
+var GKEHubFeatureEndpointEntryKey = "gkehub_feature_custom_endpoint"
+var GKEHubFeatureEndpointEntry = &schema.Schema{
 	Type:     schema.TypeString,
 	Optional: true,
 }
@@ -91,12 +79,10 @@ type DCLConfig struct {
 	ApikeysBasePath              string
 	AssuredWorkloadsBasePath     string
 	CloudBuildWorkerPoolBasePath string
-	ClouddeployBasePath          string
 	CloudResourceManagerBasePath string
 	EventarcBasePath             string
 	FirebaserulesBasePath        string
-	NetworkConnectivityBasePath  string
-	OrgPolicyBasePath            string
+	GKEHubFeatureBasePath        string
 	RecaptchaEnterpriseBasePath  string
 }
 
@@ -104,12 +90,10 @@ func ConfigureDCLProvider(provider *schema.Provider) {
 	provider.Schema[ApikeysEndpointEntryKey] = ApikeysEndpointEntry
 	provider.Schema[AssuredWorkloadsEndpointEntryKey] = AssuredWorkloadsEndpointEntry
 	provider.Schema[CloudBuildWorkerPoolEndpointEntryKey] = CloudBuildWorkerPoolEndpointEntry
-	provider.Schema[ClouddeployEndpointEntryKey] = ClouddeployEndpointEntry
 	provider.Schema[CloudResourceManagerEndpointEntryKey] = CloudResourceManagerEndpointEntry
 	provider.Schema[EventarcEndpointEntryKey] = EventarcEndpointEntry
 	provider.Schema[FirebaserulesEndpointEntryKey] = FirebaserulesEndpointEntry
-	provider.Schema[NetworkConnectivityEndpointEntryKey] = NetworkConnectivityEndpointEntry
-	provider.Schema[OrgPolicyEndpointEntryKey] = OrgPolicyEndpointEntry
+	provider.Schema[GKEHubFeatureEndpointEntryKey] = GKEHubFeatureEndpointEntry
 	provider.Schema[RecaptchaEnterpriseEndpointEntryKey] = RecaptchaEnterpriseEndpointEntry
 }
 
@@ -129,11 +113,6 @@ func HandleDCLCustomEndpointDefaults(d *schema.ResourceData) {
 			"GOOGLE_CLOUD_BUILD_WORKER_POOL_CUSTOM_ENDPOINT",
 		}, ""))
 	}
-	if d.Get(ClouddeployEndpointEntryKey) == "" {
-		d.Set(ClouddeployEndpointEntryKey, MultiEnvDefault([]string{
-			"GOOGLE_CLOUDDEPLOY_CUSTOM_ENDPOINT",
-		}, ""))
-	}
 	if d.Get(CloudResourceManagerEndpointEntryKey) == "" {
 		d.Set(CloudResourceManagerEndpointEntryKey, MultiEnvDefault([]string{
 			"GOOGLE_CLOUD_RESOURCE_MANAGER_CUSTOM_ENDPOINT",
@@ -149,14 +128,9 @@ func HandleDCLCustomEndpointDefaults(d *schema.ResourceData) {
 			"GOOGLE_FIREBASERULES_CUSTOM_ENDPOINT",
 		}, ""))
 	}
-	if d.Get(NetworkConnectivityEndpointEntryKey) == "" {
-		d.Set(NetworkConnectivityEndpointEntryKey, MultiEnvDefault([]string{
-			"GOOGLE_NETWORK_CONNECTIVITY_CUSTOM_ENDPOINT",
-		}, ""))
-	}
-	if d.Get(OrgPolicyEndpointEntryKey) == "" {
-		d.Set(OrgPolicyEndpointEntryKey, MultiEnvDefault([]string{
-			"GOOGLE_ORG_POLICY_CUSTOM_ENDPOINT",
+	if d.Get(GKEHubFeatureEndpointEntryKey) == "" {
+		d.Set(GKEHubFeatureEndpointEntryKey, MultiEnvDefault([]string{
+			"GOOGLE_GKEHUB_FEATURE_CUSTOM_ENDPOINT",
 		}, ""))
 	}
 	if d.Get(RecaptchaEnterpriseEndpointEntryKey) == "" {
@@ -186,12 +160,6 @@ func ConfigureDCLCustomEndpointAttributesFramework(frameworkSchema *framework_sc
 			CustomEndpointValidator(),
 		},
 	}
-	frameworkSchema.Attributes["clouddeploy_custom_endpoint"] = framework_schema.StringAttribute{
-		Optional: true,
-		Validators: []validator.String{
-			CustomEndpointValidator(),
-		},
-	}
 	frameworkSchema.Attributes["cloud_resource_manager_custom_endpoint"] = framework_schema.StringAttribute{
 		Optional: true,
 		Validators: []validator.String{
@@ -210,13 +178,7 @@ func ConfigureDCLCustomEndpointAttributesFramework(frameworkSchema *framework_sc
 			CustomEndpointValidator(),
 		},
 	}
-	frameworkSchema.Attributes["network_connectivity_custom_endpoint"] = framework_schema.StringAttribute{
-		Optional: true,
-		Validators: []validator.String{
-			CustomEndpointValidator(),
-		},
-	}
-	frameworkSchema.Attributes["org_policy_custom_endpoint"] = framework_schema.StringAttribute{
+	frameworkSchema.Attributes["gkehub_feature_custom_endpoint"] = framework_schema.StringAttribute{
 		Optional: true,
 		Validators: []validator.String{
 			CustomEndpointValidator(),
@@ -231,16 +193,15 @@ func ConfigureDCLCustomEndpointAttributesFramework(frameworkSchema *framework_sc
 }
 
 func ProviderDCLConfigure(d *schema.ResourceData, config *Config) interface{} {
-	config.ApikeysBasePath = d.Get(ApikeysEndpointEntryKey).(string)
+	// networkConnectivity uses mmv1 basePath, assuredworkloads has a location variable in the basepath, can't be defined here.
+	config.ApikeysBasePath = "https://apikeys.googleapis.com/v2/"
 	config.AssuredWorkloadsBasePath = d.Get(AssuredWorkloadsEndpointEntryKey).(string)
-	config.CloudBuildWorkerPoolBasePath = d.Get(CloudBuildWorkerPoolEndpointEntryKey).(string)
-	config.ClouddeployBasePath = d.Get(ClouddeployEndpointEntryKey).(string)
-	config.CloudResourceManagerBasePath = d.Get(CloudResourceManagerEndpointEntryKey).(string)
-	config.EventarcBasePath = d.Get(EventarcEndpointEntryKey).(string)
-	config.FirebaserulesBasePath = d.Get(FirebaserulesEndpointEntryKey).(string)
-	config.NetworkConnectivityBasePath = d.Get(NetworkConnectivityEndpointEntryKey).(string)
-	config.OrgPolicyBasePath = d.Get(OrgPolicyEndpointEntryKey).(string)
-	config.RecaptchaEnterpriseBasePath = d.Get(RecaptchaEnterpriseEndpointEntryKey).(string)
-	config.CloudBuildWorkerPoolBasePath = d.Get(CloudBuildWorkerPoolEndpointEntryKey).(string)
+	config.CloudBuildWorkerPoolBasePath = "https://cloudbuild.googleapis.com/v1/"
+	config.CloudResourceManagerBasePath = "https://cloudresourcemanager.googleapis.com/"
+	config.EventarcBasePath = "https://eventarc.googleapis.com/v1/"
+	config.FirebaserulesBasePath = "https://firebaserules.googleapis.com/v1/"
+	config.GKEHubFeatureBasePath = "https://gkehub.googleapis.com/v1beta1/"
+	config.RecaptchaEnterpriseBasePath = "https://recaptchaenterprise.googleapis.com/v1/"
+
 	return config
 }

@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -163,6 +163,7 @@ func DCLTriggerSchema() *dcl.Schema {
 												Field:    "name",
 											},
 										},
+										HasLongForm: true,
 									},
 									"cloudRunService": &dcl.Property{
 										Type:        "object",
@@ -252,6 +253,44 @@ func DCLTriggerSchema() *dcl.Schema {
 											},
 										},
 									},
+									"httpEndpoint": &dcl.Property{
+										Type:        "object",
+										GoName:      "HttpEndpoint",
+										GoType:      "TriggerDestinationHttpEndpoint",
+										Description: "An HTTP endpoint destination described by an URI.",
+										Required: []string{
+											"uri",
+										},
+										Properties: map[string]*dcl.Property{
+											"uri": &dcl.Property{
+												Type:        "string",
+												GoName:      "Uri",
+												Description: "Required. The URI of the HTTP enpdoint. The value must be a RFC2396 URI string. Examples: `http://10.10.10.8:80/route`, `http://svc.us-central1.p.local:8080/`. Only HTTP and HTTPS protocols are supported. The host can be either a static IP addressable from the VPC specified by the network config, or an internal DNS hostname of the service resolvable via Cloud DNS.",
+											},
+										},
+									},
+									"networkConfig": &dcl.Property{
+										Type:        "object",
+										GoName:      "NetworkConfig",
+										GoType:      "TriggerDestinationNetworkConfig",
+										Description: "Optional. Network config is used to configure how Eventarc resolves and connect to a destination. This should only be used with HttpEndpoint destination type.",
+										Required: []string{
+											"networkAttachment",
+										},
+										Properties: map[string]*dcl.Property{
+											"networkAttachment": &dcl.Property{
+												Type:        "string",
+												GoName:      "NetworkAttachment",
+												Description: "Required. Name of the NetworkAttachment that allows access to the destination VPC. Format: `projects/{PROJECT_ID}/regions/{REGION}/networkAttachments/{NETWORK_ATTACHMENT_NAME}`",
+												ResourceReferences: []*dcl.PropertyResourceReference{
+													&dcl.PropertyResourceReference{
+														Resource: "Compute/NetworkAttachment",
+														Field:    "selfLink",
+													},
+												},
+											},
+										},
+									},
 									"workflow": &dcl.Property{
 										Type:        "string",
 										GoName:      "Workflow",
@@ -267,6 +306,7 @@ func DCLTriggerSchema() *dcl.Schema {
 												Field:    "name",
 											},
 										},
+										HasLongForm: true,
 									},
 								},
 							},
@@ -278,9 +318,10 @@ func DCLTriggerSchema() *dcl.Schema {
 								Immutable:   true,
 							},
 							"eventDataContentType": &dcl.Property{
-								Type:        "string",
-								GoName:      "EventDataContentType",
-								Description: "Optional. EventDataContentType specifies the type of payload in MIME format that is expected from the CloudEvent data field. This is set to `application/json` if the value is not defined.",
+								Type:          "string",
+								GoName:        "EventDataContentType",
+								Description:   "Optional. EventDataContentType specifies the type of payload in MIME format that is expected from the CloudEvent data field. This is set to `application/json` if the value is not defined.",
+								ServerDefault: true,
 							},
 							"labels": &dcl.Property{
 								Type: "object",
@@ -295,6 +336,7 @@ func DCLTriggerSchema() *dcl.Schema {
 								GoName:      "Location",
 								Description: "The location for the resource",
 								Immutable:   true,
+								Parameter:   true,
 							},
 							"matchingCriteria": &dcl.Property{
 								Type:        "array",
@@ -333,6 +375,7 @@ func DCLTriggerSchema() *dcl.Schema {
 								GoName:      "Name",
 								Description: "Required. The resource name of the trigger. Must be unique within the location on the project.",
 								Immutable:   true,
+								HasLongForm: true,
 							},
 							"project": &dcl.Property{
 								Type:        "string",
@@ -346,6 +389,7 @@ func DCLTriggerSchema() *dcl.Schema {
 										Parent:   true,
 									},
 								},
+								Parameter: true,
 							},
 							"serviceAccount": &dcl.Property{
 								Type:        "string",
@@ -385,6 +429,7 @@ func DCLTriggerSchema() *dcl.Schema {
 														Field:    "name",
 													},
 												},
+												HasLongForm: true,
 											},
 											"topic": &dcl.Property{
 												Type:        "string",
@@ -397,6 +442,7 @@ func DCLTriggerSchema() *dcl.Schema {
 														Field:    "name",
 													},
 												},
+												HasLongForm: true,
 											},
 										},
 									},

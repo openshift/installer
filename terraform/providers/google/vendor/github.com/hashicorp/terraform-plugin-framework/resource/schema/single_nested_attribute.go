@@ -1,6 +1,10 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package schema
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -8,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema/fwxschema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -16,9 +21,11 @@ import (
 
 // Ensure the implementation satisifies the desired interfaces.
 var (
-	_ NestedAttribute                            = SingleNestedAttribute{}
-	_ fwxschema.AttributeWithObjectPlanModifiers = SingleNestedAttribute{}
-	_ fwxschema.AttributeWithObjectValidators    = SingleNestedAttribute{}
+	_ NestedAttribute                              = SingleNestedAttribute{}
+	_ fwschema.AttributeWithValidateImplementation = SingleNestedAttribute{}
+	_ fwschema.AttributeWithObjectDefaultValue     = SingleNestedAttribute{}
+	_ fwxschema.AttributeWithObjectPlanModifiers   = SingleNestedAttribute{}
+	_ fwxschema.AttributeWithObjectValidators      = SingleNestedAttribute{}
 )
 
 // SingleNestedAttribute represents an attribute that is a single object where
@@ -152,6 +159,14 @@ type SingleNestedAttribute struct {
 	//
 	// Any errors will prevent further execution of this sequence or modifiers.
 	PlanModifiers []planmodifier.Object
+
+	// Default defines a proposed new state (plan) value for the attribute
+	// if the configuration value is null. Default prevents the framework
+	// from automatically marking the value as unknown during planning when
+	// other proposed new state changes are detected. If the attribute is
+	// computed and the value could be altered by other changes then a default
+	// should be avoided and a plan modifier should be used instead.
+	Default defaults.Object
 }
 
 // ApplyTerraform5AttributePathStep returns the Attributes field value if step
@@ -175,11 +190,13 @@ func (a SingleNestedAttribute) ApplyTerraform5AttributePathStep(step tftypes.Att
 // Equal returns true if the given Attribute is a SingleNestedAttribute
 // and all fields are equal.
 func (a SingleNestedAttribute) Equal(o fwschema.Attribute) bool {
-	if _, ok := o.(SingleNestedAttribute); !ok {
+	other, ok := o.(SingleNestedAttribute)
+
+	if !ok {
 		return false
 	}
 
-	return fwschema.AttributesEqual(a, o)
+	return fwschema.NestedAttributesEqual(a, other)
 }
 
 // GetAttributes returns the Attributes field value.
@@ -254,6 +271,11 @@ func (a SingleNestedAttribute) IsSensitive() bool {
 	return a.Sensitive
 }
 
+// ObjectDefaultValue returns the Default field value.
+func (a SingleNestedAttribute) ObjectDefaultValue() defaults.Object {
+	return a.Default
+}
+
 // ObjectPlanModifiers returns the PlanModifiers field value.
 func (a SingleNestedAttribute) ObjectPlanModifiers() []planmodifier.Object {
 	return a.PlanModifiers
@@ -262,4 +284,41 @@ func (a SingleNestedAttribute) ObjectPlanModifiers() []planmodifier.Object {
 // ObjectValidators returns the Validators field value.
 func (a SingleNestedAttribute) ObjectValidators() []validator.Object {
 	return a.Validators
+}
+
+// ValidateImplementation contains logic for validating the
+// provider-defined implementation of the attribute to prevent unexpected
+// errors or panics. This logic runs during the GetProviderSchema RPC and
+// should never include false positives.
+func (a SingleNestedAttribute) ValidateImplementation(ctx context.Context, req fwschema.ValidateImplementationRequest, resp *fwschema.ValidateImplementationResponse) {
+	if !a.IsComputed() && a.ObjectDefaultValue() != nil {
+		resp.Diagnostics.Append(nonComputedAttributeWithDefaultDiag(req.Path))
+	}
+
+	if a.ObjectDefaultValue() != nil {
+		if !a.IsComputed() {
+			resp.Diagnostics.Append(nonComputedAttributeWithDefaultDiag(req.Path))
+		}
+
+		// Validate Default implementation. This is safe unless the framework
+		// ever allows more dynamic Default implementations at which the
+		// implementation would be required to be validated at runtime.
+		// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/930
+		defaultReq := defaults.ObjectRequest{
+			Path: req.Path,
+		}
+		defaultResp := &defaults.ObjectResponse{}
+
+		a.ObjectDefaultValue().DefaultObject(ctx, defaultReq, defaultResp)
+
+		resp.Diagnostics.Append(defaultResp.Diagnostics...)
+
+		if defaultResp.Diagnostics.HasError() {
+			return
+		}
+
+		if a.CustomType == nil && !a.GetType().Equal(defaultResp.PlanValue.Type(ctx)) {
+			resp.Diagnostics.Append(fwschema.AttributeDefaultTypeMismatchDiag(req.Path, a.GetType(), defaultResp.PlanValue.Type(ctx)))
+		}
+	}
 }

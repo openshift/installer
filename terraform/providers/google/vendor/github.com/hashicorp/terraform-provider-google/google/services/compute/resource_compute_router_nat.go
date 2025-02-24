@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -134,6 +135,8 @@ func computeRouterNatRulesHash(v interface{}) int {
 
 	sourceNatActiveIpHash := 0
 	sourceNatDrainIpHash := 0
+	routerNatRulesHash := 0
+
 	if obj["action"] != nil {
 		actions := obj["action"].([]interface{})
 		if len(actions) != 0 && actions[0] != nil {
@@ -156,10 +159,12 @@ func computeRouterNatRulesHash(v interface{}) int {
 					sourceNatDrainIpHash += schema.HashString(sourceNatDrainIpStr)
 				}
 			}
+
 		}
 	}
 
-	return ruleNumber + descriptionHash + schema.HashString(match) + sourceNatActiveIpHash + sourceNatDrainIpHash
+	routerNatRulesHash = ruleNumber + descriptionHash + schema.HashString(match) + sourceNatActiveIpHash + sourceNatDrainIpHash
+	return routerNatRulesHash
 }
 
 func ResourceComputeRouterNat() *schema.Resource {
@@ -181,6 +186,7 @@ func ResourceComputeRouterNat() *schema.Resource {
 
 		CustomizeDiff: customdiff.All(
 			resourceComputeRouterNatDrainNatIpsCustomDiff,
+			tpgresource.DefaultProviderProject,
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -191,14 +197,6 @@ func ResourceComputeRouterNat() *schema.Resource {
 				ValidateFunc: verify.ValidateRFC1035Name(2, 63),
 				Description: `Name of the NAT service. The name must be 1-63 characters long and
 comply with RFC1035.`,
-			},
-			"nat_ip_allocate_option": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: verify.ValidateEnum([]string{"MANUAL_ONLY", "AUTO_ONLY"}),
-				Description: `How external IPs should be allocated for this NAT. Valid values are
-'AUTO_ONLY' for only allowing NAT IPs allocated by Google Cloud
-Platform, or 'MANUAL_ONLY' for only user-allocated NAT IP addresses. Possible values: ["MANUAL_ONLY", "AUTO_ONLY"]`,
 			},
 			"router": {
 				Type:             schema.TypeString,
@@ -221,6 +219,15 @@ ranges in every Subnetwork are allowed to Nat.
 contains ALL_SUBNETWORKS_ALL_IP_RANGES or
 ALL_SUBNETWORKS_ALL_PRIMARY_IP_RANGES, then there should not be any
 other RouterNat section in any Router for this network in this region. Possible values: ["ALL_SUBNETWORKS_ALL_IP_RANGES", "ALL_SUBNETWORKS_ALL_PRIMARY_IP_RANGES", "LIST_OF_SUBNETWORKS"]`,
+			},
+			"auto_network_tier": {
+				Type:         schema.TypeString,
+				Computed:     true,
+				Optional:     true,
+				ValidateFunc: verify.ValidateEnum([]string{"PREMIUM", "STANDARD", ""}),
+				Description: `The network tier to use when automatically reserving NAT IP addresses.
+Must be one of: PREMIUM, STANDARD. If not specified, then the current
+project-level default tier is used. Possible values: ["PREMIUM", "STANDARD"]`,
 			},
 			"drain_nat_ips": {
 				Type:     schema.TypeSet,
@@ -247,10 +254,24 @@ Mutually exclusive with enableEndpointIndependentMapping.`,
 			},
 			"enable_endpoint_independent_mapping": {
 				Type:     schema.TypeBool,
+				Computed: true,
 				Optional: true,
-				Description: `Specifies if endpoint independent mapping is enabled. This is enabled by default. For more information
-see the [official documentation](https://cloud.google.com/nat/docs/overview#specs-rfcs).`,
-				Default: true,
+				Description: `Enable endpoint independent mapping.
+For more information see the [official documentation](https://cloud.google.com/nat/docs/overview#specs-rfcs).`,
+			},
+			"endpoint_types": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Optional: true,
+				ForceNew: true,
+				Description: `Specifies the endpoint Types supported by the NAT Gateway.
+Supported values include:
+      'ENDPOINT_TYPE_VM', 'ENDPOINT_TYPE_SWG',
+      'ENDPOINT_TYPE_MANAGED_PROXY_LB'.`,
+				MinItems: 1,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"icmp_idle_timeout_sec": {
 				Type:        schema.TypeInt,
@@ -287,8 +308,17 @@ This field can only be set when enableDynamicPortAllocation is enabled.`,
 			},
 			"min_ports_per_vm": {
 				Type:        schema.TypeInt,
+				Computed:    true,
 				Optional:    true,
-				Description: `Minimum number of ports allocated to a VM from this NAT.`,
+				Description: `Minimum number of ports allocated to a VM from this NAT. Defaults to 64 for static port allocation and 32 dynamic port allocation if not set.`,
+			},
+			"nat_ip_allocate_option": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: verify.ValidateEnum([]string{"MANUAL_ONLY", "AUTO_ONLY", ""}),
+				Description: `How external IPs should be allocated for this NAT. Valid values are
+'AUTO_ONLY' for only allowing NAT IPs allocated by Google Cloud
+Platform, or 'MANUAL_ONLY' for only user-allocated NAT IP addresses. Possible values: ["MANUAL_ONLY", "AUTO_ONLY"]`,
 			},
 			"nat_ips": {
 				Type:     schema.TypeSet,
@@ -569,6 +599,12 @@ func resourceComputeRouterNatCreate(d *schema.ResourceData, meta interface{}) er
 	} else if v, ok := d.GetOkExists("log_config"); ok || !reflect.DeepEqual(v, logConfigProp) {
 		obj["logConfig"] = logConfigProp
 	}
+	endpointTypesProp, err := expandNestedComputeRouterNatEndpointTypes(d.Get("endpoint_types"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("endpoint_types"); !tpgresource.IsEmptyValue(reflect.ValueOf(endpointTypesProp)) && (ok || !reflect.DeepEqual(v, endpointTypesProp)) {
+		obj["endpointTypes"] = endpointTypesProp
+	}
 	rulesProp, err := expandNestedComputeRouterNatRules(d.Get("rules"), d, config)
 	if err != nil {
 		return err
@@ -580,6 +616,12 @@ func resourceComputeRouterNatCreate(d *schema.ResourceData, meta interface{}) er
 		return err
 	} else if v, ok := d.GetOkExists("enable_endpoint_independent_mapping"); ok || !reflect.DeepEqual(v, enableEndpointIndependentMappingProp) {
 		obj["enableEndpointIndependentMapping"] = enableEndpointIndependentMappingProp
+	}
+	autoNetworkTierProp, err := expandNestedComputeRouterNatAutoNetworkTier(d.Get("auto_network_tier"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("auto_network_tier"); !tpgresource.IsEmptyValue(reflect.ValueOf(autoNetworkTierProp)) && (ok || !reflect.DeepEqual(v, autoNetworkTierProp)) {
+		obj["autoNetworkTier"] = autoNetworkTierProp
 	}
 
 	lockName, err := tpgresource.ReplaceVars(d, config, "router/{{region}}/{{router}}")
@@ -613,6 +655,7 @@ func resourceComputeRouterNatCreate(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "PATCH",
@@ -621,6 +664,7 @@ func resourceComputeRouterNatCreate(d *schema.ResourceData, meta interface{}) er
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating RouterNat: %s", err)
@@ -673,12 +717,14 @@ func resourceComputeRouterNatRead(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeRouterNat %q", d.Id()))
@@ -745,10 +791,16 @@ func resourceComputeRouterNatRead(d *schema.ResourceData, meta interface{}) erro
 	if err := d.Set("log_config", flattenNestedComputeRouterNatLogConfig(res["logConfig"], d, config)); err != nil {
 		return fmt.Errorf("Error reading RouterNat: %s", err)
 	}
+	if err := d.Set("endpoint_types", flattenNestedComputeRouterNatEndpointTypes(res["endpointTypes"], d, config)); err != nil {
+		return fmt.Errorf("Error reading RouterNat: %s", err)
+	}
 	if err := d.Set("rules", flattenNestedComputeRouterNatRules(res["rules"], d, config)); err != nil {
 		return fmt.Errorf("Error reading RouterNat: %s", err)
 	}
 	if err := d.Set("enable_endpoint_independent_mapping", flattenNestedComputeRouterNatEnableEndpointIndependentMapping(res["enableEndpointIndependentMapping"], d, config)); err != nil {
+		return fmt.Errorf("Error reading RouterNat: %s", err)
+	}
+	if err := d.Set("auto_network_tier", flattenNestedComputeRouterNatAutoNetworkTier(res["autoNetworkTier"], d, config)); err != nil {
 		return fmt.Errorf("Error reading RouterNat: %s", err)
 	}
 
@@ -867,6 +919,12 @@ func resourceComputeRouterNatUpdate(d *schema.ResourceData, meta interface{}) er
 	} else if v, ok := d.GetOkExists("enable_endpoint_independent_mapping"); ok || !reflect.DeepEqual(v, enableEndpointIndependentMappingProp) {
 		obj["enableEndpointIndependentMapping"] = enableEndpointIndependentMappingProp
 	}
+	autoNetworkTierProp, err := expandNestedComputeRouterNatAutoNetworkTier(d.Get("auto_network_tier"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("auto_network_tier"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, autoNetworkTierProp)) {
+		obj["autoNetworkTier"] = autoNetworkTierProp
+	}
 
 	lockName, err := tpgresource.ReplaceVars(d, config, "router/{{region}}/{{router}}")
 	if err != nil {
@@ -881,6 +939,7 @@ func resourceComputeRouterNatUpdate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	log.Printf("[DEBUG] Updating RouterNat %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	obj, err = resourceComputeRouterNatPatchUpdateEncoder(d, meta, obj)
 	if err != nil {
@@ -900,6 +959,7 @@ func resourceComputeRouterNatUpdate(d *schema.ResourceData, meta interface{}) er
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -952,13 +1012,15 @@ func resourceComputeRouterNatDelete(d *schema.ResourceData, meta interface{}) er
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "RouterNat")
 	}
-	log.Printf("[DEBUG] Deleting RouterNat %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting RouterNat %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "PATCH",
@@ -967,6 +1029,7 @@ func resourceComputeRouterNatDelete(d *schema.ResourceData, meta interface{}) er
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "RouterNat")
@@ -987,10 +1050,10 @@ func resourceComputeRouterNatDelete(d *schema.ResourceData, meta interface{}) er
 func resourceComputeRouterNatImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/routers/(?P<router>[^/]+)/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<router>[^/]+)/(?P<name>[^/]+)",
-		"(?P<region>[^/]+)/(?P<router>[^/]+)/(?P<name>[^/]+)",
-		"(?P<router>[^/]+)/(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/routers/(?P<router>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<router>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<region>[^/]+)/(?P<router>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<router>[^/]+)/(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -1203,6 +1266,10 @@ func flattenNestedComputeRouterNatLogConfigFilter(v interface{}, d *schema.Resou
 	return v
 }
 
+func flattenNestedComputeRouterNatEndpointTypes(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenNestedComputeRouterNatRules(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return v
@@ -1279,6 +1346,10 @@ func flattenNestedComputeRouterNatRulesActionSourceNatDrainIps(v interface{}, d 
 }
 
 func flattenNestedComputeRouterNatEnableEndpointIndependentMapping(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenNestedComputeRouterNatAutoNetworkTier(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1449,6 +1520,10 @@ func expandNestedComputeRouterNatLogConfigFilter(v interface{}, d tpgresource.Te
 	return v, nil
 }
 
+func expandNestedComputeRouterNatEndpointTypes(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandNestedComputeRouterNatRules(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	v = v.(*schema.Set).List()
 	l := v.([]interface{})
@@ -1566,6 +1641,10 @@ func expandNestedComputeRouterNatRulesActionSourceNatDrainIps(v interface{}, d t
 }
 
 func expandNestedComputeRouterNatEnableEndpointIndependentMapping(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNestedComputeRouterNatAutoNetworkTier(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

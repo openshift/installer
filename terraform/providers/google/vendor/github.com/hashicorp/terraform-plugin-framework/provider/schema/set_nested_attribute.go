@@ -1,6 +1,10 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package schema
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -8,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema/fwxschema"
+	"github.com/hashicorp/terraform-plugin-framework/internal/fwtype"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -15,8 +20,9 @@ import (
 
 // Ensure the implementation satisifies the desired interfaces.
 var (
-	_ NestedAttribute                      = SetNestedAttribute{}
-	_ fwxschema.AttributeWithSetValidators = SetNestedAttribute{}
+	_ NestedAttribute                              = SetNestedAttribute{}
+	_ fwschema.AttributeWithValidateImplementation = SetNestedAttribute{}
+	_ fwxschema.AttributeWithSetValidators         = SetNestedAttribute{}
 )
 
 // SetNestedAttribute represents an attribute that is a set of objects where
@@ -44,6 +50,10 @@ var (
 type SetNestedAttribute struct {
 	// NestedObject is the underlying object that contains nested attributes.
 	// This field must be set.
+	//
+	// Nested attributes that contain a dynamic type (i.e. DynamicAttribute) are not supported.
+	// If underlying dynamic values are required, replace this attribute definition with
+	// DynamicAttribute instead.
 	NestedObject NestedAttributeObject
 
 	// CustomType enables the use of a custom attribute type in place of the
@@ -144,11 +154,13 @@ func (a SetNestedAttribute) ApplyTerraform5AttributePathStep(step tftypes.Attrib
 // Equal returns true if the given Attribute is a SetNestedAttribute
 // and all fields are equal.
 func (a SetNestedAttribute) Equal(o fwschema.Attribute) bool {
-	if _, ok := o.(SetNestedAttribute); !ok {
+	other, ok := o.(SetNestedAttribute)
+
+	if !ok {
 		return false
 	}
 
-	return fwschema.AttributesEqual(a, o)
+	return fwschema.NestedAttributesEqual(a, other)
 }
 
 // GetDeprecationMessage returns the DeprecationMessage field value.
@@ -210,4 +222,14 @@ func (a SetNestedAttribute) IsSensitive() bool {
 // SetValidators returns the Validators field value.
 func (a SetNestedAttribute) SetValidators() []validator.Set {
 	return a.Validators
+}
+
+// ValidateImplementation contains logic for validating the
+// provider-defined implementation of the attribute to prevent unexpected
+// errors or panics. This logic runs during the GetProviderSchema RPC and
+// should never include false positives.
+func (a SetNestedAttribute) ValidateImplementation(ctx context.Context, req fwschema.ValidateImplementationRequest, resp *fwschema.ValidateImplementationResponse) {
+	if a.CustomType == nil && fwtype.ContainsCollectionWithDynamic(a.GetType()) {
+		resp.Diagnostics.Append(fwtype.AttributeCollectionWithDynamicTypeDiag(req.Path))
+	}
 }

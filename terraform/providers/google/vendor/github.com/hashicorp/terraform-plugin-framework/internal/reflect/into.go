@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package reflect
 
 import (
@@ -145,6 +148,20 @@ func BuildValue(ctx context.Context, typ attr.Type, val tftypes.Value, target re
 
 		return target, diags
 	}
+
+	// Dynamic reflection is currently only supported using an `attr.Value`, which should have happened in logic above.
+	if typ.TerraformType(ctx).Is(tftypes.DynamicPseudoType) {
+		diags.AddAttributeError(
+			path,
+			"Value Conversion Error",
+			"An unexpected error was encountered trying to build a value. This is always an error in the provider. Please report the following to the provider developer:\n\n"+
+				"Reflection for dynamic types is currently not supported. Use the corresponding `types` package type or a custom type that handles dynamic values.\n\n"+
+				fmt.Sprintf("Path: %s\nTarget Type: %s\nSuggested `types` Type: %s", path.String(), target.Type(), reflect.TypeOf(typ.ValueType(ctx))),
+		)
+
+		return target, diags
+	}
+
 	// *big.Float and *big.Int are technically pointers, but we want them
 	// handled as numbers
 	if target.Type() == reflect.TypeOf(big.NewFloat(0)) || target.Type() == reflect.TypeOf(big.NewInt(0)) {

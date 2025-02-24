@@ -1,4 +1,4 @@
-TEST?=$$(go list ./... | grep -v github.com/hashicorp/terraform-provider-google/scripts)
+TEST?=$$(go list -e ./... | grep -v github.com/hashicorp/terraform-provider-google/scripts)
 WEBSITE_REPO=github.com/hashicorp/terraform-website
 PKG_NAME=google
 DIR_NAME=google
@@ -8,7 +8,10 @@ default: build
 build: lint
 	go install
 
-test: lint
+test: lint testnolint
+
+# Used in CI to prevent lint failures from being interpreted as test failures
+testnolint:
 	go test $(TESTARGS) -timeout=30s $(TEST)
 
 testacc:
@@ -45,4 +48,4 @@ endif
 docscheck:
 	@sh -c "'$(CURDIR)/scripts/docscheck.sh'"
 
-.PHONY: build test testacc fmt fmtcheck vet lint test-compile website website-test docscheck
+.PHONY: build test testnolint testacc fmt fmtcheck vet lint test-compile website website-test docscheck
