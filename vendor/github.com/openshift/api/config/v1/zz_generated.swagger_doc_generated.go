@@ -571,53 +571,6 @@ func (ImageLabel) SwaggerDoc() map[string]string {
 	return map_ImageLabel
 }
 
-var map_ClusterMonitoring = map[string]string{
-	"":         "ClusterMonitoring is the Custom Resource object which holds the current status of Cluster Monitoring Operator. CMO is a central component of the monitoring stack.\n\nCompatibility level 4: No compatibility is provided, the API can change at any point for any reason. These capabilities should not be used by applications needing long term support. ClusterMonitoring is the Schema for the Cluster Monitoring Operators API",
-	"metadata": "metadata is the standard object metadata.",
-	"spec":     "spec holds user configuration for the Cluster Monitoring Operator",
-	"status":   "status holds observed values from the cluster. They may not be overridden.",
-}
-
-func (ClusterMonitoring) SwaggerDoc() map[string]string {
-	return map_ClusterMonitoring
-}
-
-var map_ClusterMonitoringList = map[string]string{
-	"":         "Compatibility level 4: No compatibility is provided, the API can change at any point for any reason. These capabilities should not be used by applications needing long term support.",
-	"metadata": "metadata is the standard list metadata.",
-	"items":    "items is a list of ClusterMonitoring",
-}
-
-func (ClusterMonitoringList) SwaggerDoc() map[string]string {
-	return map_ClusterMonitoringList
-}
-
-var map_ClusterMonitoringSpec = map[string]string{
-	"":            "ClusterMonitoringSpec defines the desired state of Cluster Monitoring Operator",
-	"userDefined": "userDefined set the deployment mode for user-defined monitoring in addition to the default platform monitoring.",
-}
-
-func (ClusterMonitoringSpec) SwaggerDoc() map[string]string {
-	return map_ClusterMonitoringSpec
-}
-
-var map_ClusterMonitoringStatus = map[string]string{
-	"": "MonitoringOperatorStatus defines the observed state of MonitoringOperator",
-}
-
-func (ClusterMonitoringStatus) SwaggerDoc() map[string]string {
-	return map_ClusterMonitoringStatus
-}
-
-var map_UserDefinedMonitoring = map[string]string{
-	"":     "UserDefinedMonitoring config for user-defined projects.",
-	"mode": "mode defines the different configurations of UserDefinedMonitoring Valid values are Disabled and NamespaceIsolated Disabled disables monitoring for user-defined projects. This restricts the default monitoring stack, installed in the openshift-monitoring project, to monitor only platform namespaces, which prevents any custom monitoring configurations or resources from being applied to user-defined namespaces. NamespaceIsolated enables monitoring for user-defined projects with namespace-scoped tenancy. This ensures that metrics, alerts, and monitoring data are isolated at the namespace level.",
-}
-
-func (UserDefinedMonitoring) SwaggerDoc() map[string]string {
-	return map_UserDefinedMonitoring
-}
-
 var map_ClusterOperator = map[string]string{
 	"":         "ClusterOperator is the Custom Resource object which holds the current state of an operator. This object is used by operators to convey their state to the rest of the cluster.\n\nCompatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).",
 	"metadata": "metadata is the standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
@@ -1245,8 +1198,8 @@ func (AWSPlatformStatus) SwaggerDoc() map[string]string {
 
 var map_AWSResourceTag = map[string]string{
 	"":      "AWSResourceTag is a tag to apply to AWS resources created for the cluster.",
-	"key":   "key is the key of the tag",
-	"value": "value is the value of the tag. Some AWS service do not support empty values. Since tags are added to resources in many services, the length of the tag value must meet the requirements of all services.",
+	"key":   "key sets the key of the AWS resource tag key-value pair. Key is required when defining an AWS resource tag. Key should consist of between 1 and 128 characters, and may contain only the set of alphanumeric characters, space (' '), '_', '.', '/', '=', '+', '-', ':', and '@'.",
+	"value": "value sets the value of the AWS resource tag key-value pair. Value is required when defining an AWS resource tag. Value should consist of between 1 and 256 characters, and may contain only the set of alphanumeric characters, space (' '), '_', '.', '/', '=', '+', '-', ':', and '@'. Some AWS service do not support empty values. Since tags are added to resources in many services, the length of the tag value must meet the requirements of all services.",
 }
 
 func (AWSResourceTag) SwaggerDoc() map[string]string {
@@ -1439,6 +1392,7 @@ var map_GCPPlatformStatus = map[string]string{
 	"resourceLabels":          "resourceLabels is a list of additional labels to apply to GCP resources created for the cluster. See https://cloud.google.com/compute/docs/labeling-resources for information on labeling GCP resources. GCP supports a maximum of 64 labels per resource. OpenShift reserves 32 labels for internal use, allowing 32 labels for user configuration.",
 	"resourceTags":            "resourceTags is a list of additional tags to apply to GCP resources created for the cluster. See https://cloud.google.com/resource-manager/docs/tags/tags-overview for information on tagging GCP resources. GCP supports a maximum of 50 tags per resource.",
 	"cloudLoadBalancerConfig": "cloudLoadBalancerConfig holds configuration related to DNS and cloud load balancers. It allows configuration of in-cluster DNS as an alternative to the platform default DNS implementation. When using the ClusterHosted DNS type, Load Balancer IP addresses must be provided for the API and internal API load balancers as well as the ingress load balancer.",
+	"serviceEndpoints":        "serviceEndpoints specifies endpoints that override the default endpoints used when creating clients to interact with GCP services. When not specified, the default endpoint for the GCP region will be used. Only 1 endpoint override is permitted for each GCP service. The maximum number of endpoint overrides allowed is 9.",
 }
 
 func (GCPPlatformStatus) SwaggerDoc() map[string]string {
@@ -1464,6 +1418,16 @@ var map_GCPResourceTag = map[string]string{
 
 func (GCPResourceTag) SwaggerDoc() map[string]string {
 	return map_GCPResourceTag
+}
+
+var map_GCPServiceEndpoint = map[string]string{
+	"":     "GCPServiceEndpoint store the configuration of a custom url to override existing defaults of GCP Services.",
+	"name": "name is the name of the GCP service whose endpoint is being overridden. This must be provided and cannot be empty.\n\nAllowed values are Compute, Container, CloudResourceManager, DNS, File, IAM, ServiceUsage, Storage, and TagManager.\n\nAs an example, when setting the name to Compute all requests made by the caller to the GCP Compute Service will be directed to the endpoint specified in the url field.",
+	"url":  "url is a fully qualified URI that overrides the default endpoint for a client using the GCP service specified in the name field. url is required, must use the scheme https, must not be more than 253 characters in length, and must be a valid URL according to Go's net/url package (https://pkg.go.dev/net/url#URL)\n\nAn example of a valid endpoint that overrides the Compute Service: \"https://compute-myendpoint1.p.googleapis.com\"",
+}
+
+func (GCPServiceEndpoint) SwaggerDoc() map[string]string {
+	return map_GCPServiceEndpoint
 }
 
 var map_IBMCloudPlatformSpec = map[string]string{

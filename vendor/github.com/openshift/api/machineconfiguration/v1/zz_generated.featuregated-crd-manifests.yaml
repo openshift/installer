@@ -31,6 +31,7 @@ controllerconfigs.machineconfiguration.openshift.io:
   - AWSClusterHostedDNS
   - BareMetalLoadBalancer
   - GCPClusterHostedDNS
+  - GCPCustomAPIEndpoints
   - GCPLabelsTags
   - HighlyAvailableArbiter
   - NutanixMultiSubnets

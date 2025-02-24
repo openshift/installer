@@ -19,5 +19,10 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 			Condition:       g.UserProvisionedDNS == dns.UserProvisionedDNSEnabled,
 			Field:           field.NewPath("platform", "gcp", "userProvisionedDNS"),
 		},
+		{
+			FeatureGateName: features.FeatureGateGCPCustomAPIEndpoints,
+			Condition:       len(g.ServiceEndpoints) > 0,
+			Field:           field.NewPath("platform", "gcp", "serviceEndpoints"),
+		},
 	}
 }
