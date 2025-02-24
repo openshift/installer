@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -124,6 +124,7 @@ func DCLHubSchema() *dcl.Schema {
 								GoName:      "Name",
 								Description: "Immutable. The name of the hub. Hub names must be unique. They use the following form: `projects/{project_number}/locations/global/hubs/{hub_id}`",
 								Immutable:   true,
+								HasLongForm: true,
 							},
 							"project": &dcl.Property{
 								Type:        "string",
@@ -137,6 +138,7 @@ func DCLHubSchema() *dcl.Schema {
 										Parent:   true,
 									},
 								},
+								Parameter: true,
 							},
 							"routingVpcs": &dcl.Property{
 								Type:        "array",

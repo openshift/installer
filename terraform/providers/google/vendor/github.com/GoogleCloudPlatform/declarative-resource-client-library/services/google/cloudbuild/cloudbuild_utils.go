@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import (
 func betaToGaPrivatePool(r *WorkerPool, c *WorkerPoolPrivatePoolV1Config) *WorkerPoolPrivatePoolV1Config {
 	cfgWorkerConfig := &WorkerPoolPrivatePoolV1ConfigWorkerConfig{}
 	cfgNetworkConfig := &WorkerPoolPrivatePoolV1ConfigNetworkConfig{}
+	cfgPrivateServiceConnect := &WorkerPoolPrivatePoolV1ConfigPrivateServiceConnect{}
 	if r.WorkerConfig != nil {
 		cfgWorkerConfig.DiskSizeGb = r.WorkerConfig.DiskSizeGb
 		cfgWorkerConfig.MachineType = r.WorkerConfig.MachineType
@@ -32,13 +33,23 @@ func betaToGaPrivatePool(r *WorkerPool, c *WorkerPoolPrivatePoolV1Config) *Worke
 		cfgNetworkConfig.PeeredNetwork = r.NetworkConfig.PeeredNetwork
 		cfgNetworkConfig.PeeredNetworkIPRange = r.NetworkConfig.PeeredNetworkIPRange
 	}
+	if r.PrivateServiceConnect != nil {
+		cfgPrivateServiceConnect.NetworkAttachment = r.PrivateServiceConnect.NetworkAttachment
+		cfgPrivateServiceConnect.PublicIPAddressDisabled = r.WorkerConfig.NoExternalIP
+		cfgPrivateServiceConnect.RouteAllTraffic = r.PrivateServiceConnect.RouteAllTraffic
+	}
 
 	cfg := &WorkerPoolPrivatePoolV1Config{}
 	cfg.WorkerConfig = cfgWorkerConfig
 	cfg.NetworkConfig = cfgNetworkConfig
+	if cfg.PrivateServiceConnect != nil {
+		cfg.NetworkConfig = nil
+		cfg.PrivateServiceConnect = cfgPrivateServiceConnect
+	}
 
 	r.WorkerConfig = nil
 	r.NetworkConfig = nil
+	r.PrivateServiceConnect = nil
 	return cfg
 }
 
@@ -51,16 +62,26 @@ func gaToBetaPrivatePool(r *WorkerPool, c *WorkerPoolPrivatePoolV1Config) *Worke
 
 	if c.WorkerConfig != nil && r.WorkerConfig == nil {
 		r.WorkerConfig = &WorkerPoolWorkerConfig{
-			DiskSizeGb:   c.WorkerConfig.DiskSizeGb,
-			MachineType:  c.WorkerConfig.MachineType,
-			NoExternalIP: noExternalIPBoolean(c.NetworkConfig),
+			DiskSizeGb:  c.WorkerConfig.DiskSizeGb,
+			MachineType: c.WorkerConfig.MachineType,
 		}
-
+		if c.NetworkConfig != nil {
+			r.WorkerConfig.NoExternalIP = noExternalIPBoolean(c.NetworkConfig)
+		}
+		if c.PrivateServiceConnect != nil {
+			r.WorkerConfig.NoExternalIP = c.PrivateServiceConnect.PublicIPAddressDisabled
+		}
 	}
 	if c.NetworkConfig != nil && c.NetworkConfig.PeeredNetwork != nil && r.NetworkConfig == nil {
 		r.NetworkConfig = &WorkerPoolNetworkConfig{
 			PeeredNetwork:        c.NetworkConfig.PeeredNetwork,
 			PeeredNetworkIPRange: c.NetworkConfig.PeeredNetworkIPRange,
+		}
+	}
+	if c.PrivateServiceConnect != nil && r.PrivateServiceConnect != nil {
+		r.PrivateServiceConnect = &WorkerPoolPrivateServiceConnect{
+			NetworkAttachment: c.PrivateServiceConnect.NetworkAttachment,
+			RouteAllTraffic:   c.PrivateServiceConnect.RouteAllTraffic,
 		}
 	}
 

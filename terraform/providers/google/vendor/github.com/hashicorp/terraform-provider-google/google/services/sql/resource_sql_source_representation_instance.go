@@ -20,11 +20,13 @@ package sql
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -50,6 +52,10 @@ func ResourceSQLSourceRepresentationInstance() *schema.Resource {
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
+
 		Schema: map[string]*schema.Schema{
 			"database_version": {
 				Type:         schema.TypeString,
@@ -65,11 +71,10 @@ func ResourceSQLSourceRepresentationInstance() *schema.Resource {
 				Description: `The name of the source representation instance. Use any valid Cloud SQL instance name.`,
 			},
 			"host": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: verify.ValidateIpAddress,
-				Description:  `The externally accessible IPv4 address for the source database server.`,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: `The IPv4 address and port for the external server, or the the DNS address for the external server. If the external server is hosted on Cloud SQL, the port is 5432.`,
 			},
 			"ca_certificate": {
 				Type:        schema.TypeString,
@@ -194,6 +199,7 @@ func resourceSQLSourceRepresentationInstanceCreate(d *schema.ResourceData, meta 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -202,6 +208,7 @@ func resourceSQLSourceRepresentationInstanceCreate(d *schema.ResourceData, meta 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating SourceRepresentationInstance: %s", err)
@@ -254,12 +261,14 @@ func resourceSQLSourceRepresentationInstanceRead(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("SQLSourceRepresentationInstance %q", d.Id()))
@@ -330,13 +339,15 @@ func resourceSQLSourceRepresentationInstanceDelete(d *schema.ResourceData, meta 
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting SourceRepresentationInstance %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting SourceRepresentationInstance %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -345,6 +356,7 @@ func resourceSQLSourceRepresentationInstanceDelete(d *schema.ResourceData, meta 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "SourceRepresentationInstance")
@@ -365,9 +377,9 @@ func resourceSQLSourceRepresentationInstanceDelete(d *schema.ResourceData, meta 
 func resourceSQLSourceRepresentationInstanceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/instances/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/instances/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

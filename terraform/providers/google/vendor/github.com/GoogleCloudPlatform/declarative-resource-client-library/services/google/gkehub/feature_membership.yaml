@@ -1,0 +1,640 @@
+# Copyright 2024 Google LLC. All Rights Reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+info:
+  title: GkeHub/FeatureMembership
+  description: The GkeHub FeatureMembership resource
+  x-dcl-struct-name: FeatureMembership
+  x-dcl-has-iam: false
+  x-dcl-mutex: '{{project}}/{{location}}/{{feature}}'
+paths:
+  get:
+    description: The function used to get information about a FeatureMembership
+    parameters:
+    - name: featureMembership
+      required: true
+      description: A full instance of a FeatureMembership
+  apply:
+    description: The function used to apply information about a FeatureMembership
+    parameters:
+    - name: featureMembership
+      required: true
+      description: A full instance of a FeatureMembership
+  delete:
+    description: The function used to delete a FeatureMembership
+    parameters:
+    - name: featureMembership
+      required: true
+      description: A full instance of a FeatureMembership
+  deleteAll:
+    description: The function used to delete all FeatureMembership
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+    - name: feature
+      required: true
+      schema:
+        type: string
+  list:
+    description: The function used to list information about many FeatureMembership
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+    - name: feature
+      required: true
+      schema:
+        type: string
+components:
+  schemas:
+    FeatureMembership:
+      title: FeatureMembership
+      x-dcl-id: projects/{{project}}/locations/{{location}}/features/{{feature}}/memberships/{{membership}}
+      x-dcl-parent-container: project
+      x-dcl-has-create: true
+      x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
+      type: object
+      required:
+      - project
+      - location
+      - feature
+      - membership
+      properties:
+        configmanagement:
+          type: object
+          x-dcl-go-name: Configmanagement
+          x-dcl-go-type: FeatureMembershipConfigmanagement
+          description: Config Management-specific spec.
+          properties:
+            binauthz:
+              type: object
+              x-dcl-go-name: Binauthz
+              x-dcl-go-type: FeatureMembershipConfigmanagementBinauthz
+              description: '**DEPRECATED** Binauthz configuration for the cluster.
+                This field will be ignored and should not be set.'
+              x-dcl-server-default: true
+              properties:
+                enabled:
+                  type: boolean
+                  x-dcl-go-name: Enabled
+                  description: Whether binauthz is enabled in this cluster.
+              x-dcl-parameter: true
+            configSync:
+              type: object
+              x-dcl-go-name: ConfigSync
+              x-dcl-go-type: FeatureMembershipConfigmanagementConfigSync
+              description: Config Sync configuration for the cluster.
+              x-dcl-send-empty: true
+              properties:
+                git:
+                  type: object
+                  x-dcl-go-name: Git
+                  x-dcl-go-type: FeatureMembershipConfigmanagementConfigSyncGit
+                  properties:
+                    gcpServiceAccountEmail:
+                      type: string
+                      x-dcl-go-name: GcpServiceAccountEmail
+                      description: The GCP Service Account Email used for auth when
+                        secretType is gcpServiceAccount.
+                      x-dcl-references:
+                      - resource: Iam/ServiceAccount
+                        field: email
+                    httpsProxy:
+                      type: string
+                      x-dcl-go-name: HttpsProxy
+                      description: URL for the HTTPS proxy to be used when communicating
+                        with the Git repo.
+                    policyDir:
+                      type: string
+                      x-dcl-go-name: PolicyDir
+                      description: 'The path within the Git repository that represents
+                        the top level of the repo to sync. Default: the root directory
+                        of the repository.'
+                    secretType:
+                      type: string
+                      x-dcl-go-name: SecretType
+                      description: Type of secret configured for access to the Git
+                        repo. Must be one of ssh, cookiefile, gcenode, token, gcpserviceaccount
+                        or none. The validation of this is case-sensitive.
+                    syncBranch:
+                      type: string
+                      x-dcl-go-name: SyncBranch
+                      description: 'The branch of the repository to sync from. Default:
+                        master.'
+                    syncRepo:
+                      type: string
+                      x-dcl-go-name: SyncRepo
+                      description: The URL of the Git repository to use as the source
+                        of truth.
+                    syncRev:
+                      type: string
+                      x-dcl-go-name: SyncRev
+                      description: Git revision (tag or hash) to check out. Default
+                        HEAD.
+                    syncWaitSecs:
+                      type: string
+                      x-dcl-go-name: SyncWaitSecs
+                      description: 'Period in seconds between consecutive syncs. Default:
+                        15.'
+                metricsGcpServiceAccountEmail:
+                  type: string
+                  x-dcl-go-name: MetricsGcpServiceAccountEmail
+                  description: The Email of the Google Cloud Service Account (GSA)
+                    used for exporting Config Sync metrics to Cloud Monitoring. The
+                    GSA should have the Monitoring Metric Writer(roles/monitoring.metricWriter)
+                    IAM role. The Kubernetes ServiceAccount `default` in the namespace
+                    `config-management-monitoring` should be bound to the GSA.
+                  x-dcl-references:
+                  - resource: Iam/ServiceAccount
+                    field: email
+                oci:
+                  type: object
+                  x-dcl-go-name: Oci
+                  x-dcl-go-type: FeatureMembershipConfigmanagementConfigSyncOci
+                  properties:
+                    gcpServiceAccountEmail:
+                      type: string
+                      x-dcl-go-name: GcpServiceAccountEmail
+                      description: 'The GCP Service Account Email used for auth when
+                        secret_type is gcpserviceaccount. '
+                      x-dcl-references:
+                      - resource: Iam/ServiceAccount
+                        field: email
+                    policyDir:
+                      type: string
+                      x-dcl-go-name: PolicyDir
+                      description: 'The absolute path of the directory that contains
+                        the local resources. Default: the root directory of the image.'
+                    secretType:
+                      type: string
+                      x-dcl-go-name: SecretType
+                      description: Type of secret configured for access to the OCI
+                        Image. Must be one of gcenode, gcpserviceaccount or none.
+                        The validation of this is case-sensitive.
+                    syncRepo:
+                      type: string
+                      x-dcl-go-name: SyncRepo
+                      description: The OCI image repository URL for the package to
+                        sync from. e.g. LOCATION-docker.pkg.dev/PROJECT_ID/REPOSITORY_NAME/PACKAGE_NAME.
+                    syncWaitSecs:
+                      type: string
+                      x-dcl-go-name: SyncWaitSecs
+                      description: 'Period in seconds(int64 format) between consecutive
+                        syncs. Default: 15.'
+                preventDrift:
+                  type: boolean
+                  x-dcl-go-name: PreventDrift
+                  description: Set to true to enable the Config Sync admission webhook
+                    to prevent drifts. If set to `false`, disables the Config Sync
+                    admission webhook and does not prevent drifts.
+                  x-dcl-server-default: true
+                sourceFormat:
+                  type: string
+                  x-dcl-go-name: SourceFormat
+                  description: Specifies whether the Config Sync Repo is in "hierarchical"
+                    or "unstructured" mode.
+            hierarchyController:
+              type: object
+              x-dcl-go-name: HierarchyController
+              x-dcl-go-type: FeatureMembershipConfigmanagementHierarchyController
+              description: Hierarchy Controller configuration for the cluster.
+              x-dcl-send-empty: true
+              properties:
+                enableHierarchicalResourceQuota:
+                  type: boolean
+                  x-dcl-go-name: EnableHierarchicalResourceQuota
+                  description: Whether hierarchical resource quota is enabled in this
+                    cluster.
+                  x-dcl-send-empty: true
+                enablePodTreeLabels:
+                  type: boolean
+                  x-dcl-go-name: EnablePodTreeLabels
+                  description: Whether pod tree labels are enabled in this cluster.
+                  x-dcl-send-empty: true
+                enabled:
+                  type: boolean
+                  x-dcl-go-name: Enabled
+                  description: Whether Hierarchy Controller is enabled in this cluster.
+                  x-dcl-send-empty: true
+            policyController:
+              type: object
+              x-dcl-go-name: PolicyController
+              x-dcl-go-type: FeatureMembershipConfigmanagementPolicyController
+              description: Policy Controller configuration for the cluster.
+              properties:
+                auditIntervalSeconds:
+                  type: string
+                  x-dcl-go-name: AuditIntervalSeconds
+                  description: Sets the interval for Policy Controller Audit Scans
+                    (in seconds). When set to 0, this disables audit functionality
+                    altogether.
+                enabled:
+                  type: boolean
+                  x-dcl-go-name: Enabled
+                  description: Enables the installation of Policy Controller. If false,
+                    the rest of PolicyController fields take no effect.
+                exemptableNamespaces:
+                  type: array
+                  x-dcl-go-name: ExemptableNamespaces
+                  description: The set of namespaces that are excluded from Policy
+                    Controller checks. Namespaces do not need to currently exist on
+                    the cluster.
+                  x-dcl-send-empty: true
+                  x-dcl-list-type: list
+                  items:
+                    type: string
+                    x-dcl-go-type: string
+                logDeniesEnabled:
+                  type: boolean
+                  x-dcl-go-name: LogDeniesEnabled
+                  description: Logs all denies and dry run failures.
+                monitoring:
+                  type: object
+                  x-dcl-go-name: Monitoring
+                  x-dcl-go-type: FeatureMembershipConfigmanagementPolicyControllerMonitoring
+                  description: 'Specifies the backends Policy Controller should export
+                    metrics to. For example, to specify metrics should be exported
+                    to Cloud Monitoring and Prometheus, specify backends: ["cloudmonitoring",
+                    "prometheus"]. Default: ["cloudmonitoring", "prometheus"]'
+                  x-dcl-server-default: true
+                  properties:
+                    backends:
+                      type: array
+                      x-dcl-go-name: Backends
+                      description: ' Specifies the list of backends Policy Controller
+                        will export to. Specifying an empty value `[]` disables metrics
+                        export.'
+                      x-dcl-server-default: true
+                      x-dcl-send-empty: true
+                      x-dcl-list-type: list
+                      items:
+                        type: string
+                        x-dcl-go-type: FeatureMembershipConfigmanagementPolicyControllerMonitoringBackendsEnum
+                        enum:
+                        - MONITORING_BACKEND_UNSPECIFIED
+                        - PROMETHEUS
+                        - CLOUD_MONITORING
+                mutationEnabled:
+                  type: boolean
+                  x-dcl-go-name: MutationEnabled
+                  description: Enable or disable mutation in policy controller. If
+                    true, mutation CRDs, webhook and controller deployment will be
+                    deployed to the cluster.
+                referentialRulesEnabled:
+                  type: boolean
+                  x-dcl-go-name: ReferentialRulesEnabled
+                  description: Enables the ability to use Constraint Templates that
+                    reference to objects other than the object currently being evaluated.
+                templateLibraryInstalled:
+                  type: boolean
+                  x-dcl-go-name: TemplateLibraryInstalled
+                  description: Installs the default template library along with Policy
+                    Controller.
+            version:
+              type: string
+              x-dcl-go-name: Version
+              description: Optional. Version of ACM to install. Defaults to the latest
+                version.
+              x-dcl-server-default: true
+        feature:
+          type: string
+          x-dcl-go-name: Feature
+          description: The name of the feature
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Gkehub/Feature
+            field: name
+            parent: true
+          x-dcl-parameter: true
+        location:
+          type: string
+          x-dcl-go-name: Location
+          description: The location of the feature
+          x-kubernetes-immutable: true
+          x-dcl-parameter: true
+        membership:
+          type: string
+          x-dcl-go-name: Membership
+          description: The name of the membership
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Gkehub/Membership
+            field: name
+          x-dcl-parameter: true
+        membershipLocation:
+          type: string
+          x-dcl-go-name: MembershipLocation
+          description: The location of the membership
+          x-kubernetes-immutable: true
+          x-dcl-parameter: true
+        mesh:
+          type: object
+          x-dcl-go-name: Mesh
+          x-dcl-go-type: FeatureMembershipMesh
+          description: Manage Mesh Features
+          properties:
+            controlPlane:
+              type: string
+              x-dcl-go-name: ControlPlane
+              x-dcl-go-type: FeatureMembershipMeshControlPlaneEnum
+              description: '**DEPRECATED** Whether to automatically manage Service
+                Mesh control planes. Possible values: CONTROL_PLANE_MANAGEMENT_UNSPECIFIED,
+                AUTOMATIC, MANUAL'
+              enum:
+              - CONTROL_PLANE_MANAGEMENT_UNSPECIFIED
+              - AUTOMATIC
+              - MANUAL
+            management:
+              type: string
+              x-dcl-go-name: Management
+              x-dcl-go-type: FeatureMembershipMeshManagementEnum
+              description: 'Whether to automatically manage Service Mesh. Possible
+                values: MANAGEMENT_UNSPECIFIED, MANAGEMENT_AUTOMATIC, MANAGEMENT_MANUAL'
+              enum:
+              - MANAGEMENT_UNSPECIFIED
+              - MANAGEMENT_AUTOMATIC
+              - MANAGEMENT_MANUAL
+        policycontroller:
+          type: object
+          x-dcl-go-name: Policycontroller
+          x-dcl-go-type: FeatureMembershipPolicycontroller
+          description: Policy Controller-specific spec.
+          required:
+          - policyControllerHubConfig
+          properties:
+            policyControllerHubConfig:
+              type: object
+              x-dcl-go-name: PolicyControllerHubConfig
+              x-dcl-go-type: FeatureMembershipPolicycontrollerPolicyControllerHubConfig
+              description: Policy Controller configuration for the cluster.
+              properties:
+                auditIntervalSeconds:
+                  type: integer
+                  format: int64
+                  x-dcl-go-name: AuditIntervalSeconds
+                  description: Sets the interval for Policy Controller Audit Scans
+                    (in seconds). When set to 0, this disables audit functionality
+                    altogether.
+                constraintViolationLimit:
+                  type: integer
+                  format: int64
+                  x-dcl-go-name: ConstraintViolationLimit
+                  description: The maximum number of audit violations to be stored
+                    in a constraint. If not set, the internal default of 20 will be
+                    used.
+                deploymentConfigs:
+                  type: object
+                  additionalProperties:
+                    type: object
+                    x-dcl-go-type: FeatureMembershipPolicycontrollerPolicyControllerHubConfigDeploymentConfigs
+                    properties:
+                      containerResources:
+                        type: object
+                        x-dcl-go-name: ContainerResources
+                        x-dcl-go-type: FeatureMembershipPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResources
+                        description: Container resource requirements.
+                        x-dcl-conflicts:
+                        - replicaCount
+                        - podAffinity
+                        - podTolerations
+                        properties:
+                          limits:
+                            type: object
+                            x-dcl-go-name: Limits
+                            x-dcl-go-type: FeatureMembershipPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesLimits
+                            description: Limits describes the maximum amount of compute
+                              resources allowed for use by the running container.
+                            properties:
+                              cpu:
+                                type: string
+                                x-dcl-go-name: Cpu
+                                description: CPU requirement expressed in Kubernetes
+                                  resource units.
+                              memory:
+                                type: string
+                                x-dcl-go-name: Memory
+                                description: Memory requirement expressed in Kubernetes
+                                  resource units.
+                          requests:
+                            type: object
+                            x-dcl-go-name: Requests
+                            x-dcl-go-type: FeatureMembershipPolicycontrollerPolicyControllerHubConfigDeploymentConfigsContainerResourcesRequests
+                            description: Requests describes the amount of compute
+                              resources reserved for the container by the kube-scheduler.
+                            properties:
+                              cpu:
+                                type: string
+                                x-dcl-go-name: Cpu
+                                description: CPU requirement expressed in Kubernetes
+                                  resource units.
+                              memory:
+                                type: string
+                                x-dcl-go-name: Memory
+                                description: Memory requirement expressed in Kubernetes
+                                  resource units.
+                      podAffinity:
+                        type: string
+                        x-dcl-go-name: PodAffinity
+                        x-dcl-go-type: FeatureMembershipPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodAffinityEnum
+                        description: 'Pod affinity configuration. Possible values:
+                          AFFINITY_UNSPECIFIED, NO_AFFINITY, ANTI_AFFINITY'
+                        x-dcl-conflicts:
+                        - replicaCount
+                        - containerResources
+                        - podTolerations
+                        enum:
+                        - AFFINITY_UNSPECIFIED
+                        - NO_AFFINITY
+                        - ANTI_AFFINITY
+                      podTolerations:
+                        type: array
+                        x-dcl-go-name: PodTolerations
+                        description: Pod tolerations of node taints.
+                        x-dcl-conflicts:
+                        - replicaCount
+                        - containerResources
+                        - podAffinity
+                        x-dcl-send-empty: true
+                        x-dcl-list-type: list
+                        items:
+                          type: object
+                          x-dcl-go-type: FeatureMembershipPolicycontrollerPolicyControllerHubConfigDeploymentConfigsPodTolerations
+                          properties:
+                            effect:
+                              type: string
+                              x-dcl-go-name: Effect
+                              description: Matches a taint effect.
+                            key:
+                              type: string
+                              x-dcl-go-name: Key
+                              description: Matches a taint key (not necessarily unique).
+                            operator:
+                              type: string
+                              x-dcl-go-name: Operator
+                              description: Matches a taint operator.
+                            value:
+                              type: string
+                              x-dcl-go-name: Value
+                              description: Matches a taint value.
+                      replicaCount:
+                        type: integer
+                        format: int64
+                        x-dcl-go-name: ReplicaCount
+                        description: Pod replica count.
+                        x-dcl-conflicts:
+                        - containerResources
+                        - podAffinity
+                        - podTolerations
+                  x-dcl-go-name: DeploymentConfigs
+                  description: Map of deployment configs to deployments ("admission",
+                    "audit", "mutation").
+                  x-dcl-server-default: true
+                exemptableNamespaces:
+                  type: array
+                  x-dcl-go-name: ExemptableNamespaces
+                  description: The set of namespaces that are excluded from Policy
+                    Controller checks. Namespaces do not need to currently exist on
+                    the cluster.
+                  x-dcl-send-empty: true
+                  x-dcl-list-type: list
+                  items:
+                    type: string
+                    x-dcl-go-type: string
+                installSpec:
+                  type: string
+                  x-dcl-go-name: InstallSpec
+                  x-dcl-go-type: FeatureMembershipPolicycontrollerPolicyControllerHubConfigInstallSpecEnum
+                  description: 'Configures the mode of the Policy Controller installation.
+                    Possible values: INSTALL_SPEC_UNSPECIFIED, INSTALL_SPEC_NOT_INSTALLED,
+                    INSTALL_SPEC_ENABLED, INSTALL_SPEC_SUSPENDED, INSTALL_SPEC_DETACHED'
+                  enum:
+                  - INSTALL_SPEC_UNSPECIFIED
+                  - INSTALL_SPEC_NOT_INSTALLED
+                  - INSTALL_SPEC_ENABLED
+                  - INSTALL_SPEC_SUSPENDED
+                  - INSTALL_SPEC_DETACHED
+                logDeniesEnabled:
+                  type: boolean
+                  x-dcl-go-name: LogDeniesEnabled
+                  description: Logs all denies and dry run failures.
+                monitoring:
+                  type: object
+                  x-dcl-go-name: Monitoring
+                  x-dcl-go-type: FeatureMembershipPolicycontrollerPolicyControllerHubConfigMonitoring
+                  description: 'Specifies the backends Policy Controller should export
+                    metrics to. For example, to specify metrics should be exported
+                    to Cloud Monitoring and Prometheus, specify backends: ["cloudmonitoring",
+                    "prometheus"]. Default: ["cloudmonitoring", "prometheus"]'
+                  x-dcl-server-default: true
+                  properties:
+                    backends:
+                      type: array
+                      x-dcl-go-name: Backends
+                      description: ' Specifies the list of backends Policy Controller
+                        will export to. Specifying an empty value `[]` disables metrics
+                        export.'
+                      x-dcl-server-default: true
+                      x-dcl-send-empty: true
+                      x-dcl-list-type: list
+                      items:
+                        type: string
+                        x-dcl-go-type: FeatureMembershipPolicycontrollerPolicyControllerHubConfigMonitoringBackendsEnum
+                        enum:
+                        - MONITORING_BACKEND_UNSPECIFIED
+                        - PROMETHEUS
+                        - CLOUD_MONITORING
+                mutationEnabled:
+                  type: boolean
+                  x-dcl-go-name: MutationEnabled
+                  description: Enables the ability to mutate resources using Policy
+                    Controller.
+                policyContent:
+                  type: object
+                  x-dcl-go-name: PolicyContent
+                  x-dcl-go-type: FeatureMembershipPolicycontrollerPolicyControllerHubConfigPolicyContent
+                  description: Specifies the desired policy content on the cluster.
+                  x-dcl-server-default: true
+                  properties:
+                    bundles:
+                      type: object
+                      additionalProperties:
+                        type: object
+                        x-dcl-go-type: FeatureMembershipPolicycontrollerPolicyControllerHubConfigPolicyContentBundles
+                        properties:
+                          exemptedNamespaces:
+                            type: array
+                            x-dcl-go-name: ExemptedNamespaces
+                            description: The set of namespaces to be exempted from
+                              the bundle.
+                            x-dcl-send-empty: true
+                            x-dcl-list-type: list
+                            items:
+                              type: string
+                              x-dcl-go-type: string
+                      x-dcl-go-name: Bundles
+                      description: map of bundle name to BundleInstallSpec. The bundle
+                        name maps to the `bundleName` key in the `policycontroller.gke.io/constraintData`
+                        annotation on a constraint.
+                    templateLibrary:
+                      type: object
+                      x-dcl-go-name: TemplateLibrary
+                      x-dcl-go-type: FeatureMembershipPolicycontrollerPolicyControllerHubConfigPolicyContentTemplateLibrary
+                      description: Configures the installation of the Template Library.
+                      x-dcl-server-default: true
+                      properties:
+                        installation:
+                          type: string
+                          x-dcl-go-name: Installation
+                          x-dcl-go-type: FeatureMembershipPolicycontrollerPolicyControllerHubConfigPolicyContentTemplateLibraryInstallationEnum
+                          description: 'Configures the manner in which the template
+                            library is installed on the cluster. Possible values:
+                            INSTALLATION_UNSPECIFIED, NOT_INSTALLED, ALL'
+                          enum:
+                          - INSTALLATION_UNSPECIFIED
+                          - NOT_INSTALLED
+                          - ALL
+                referentialRulesEnabled:
+                  type: boolean
+                  x-dcl-go-name: ReferentialRulesEnabled
+                  description: Enables the ability to use Constraint Templates that
+                    reference to objects other than the object currently being evaluated.
+            version:
+              type: string
+              x-dcl-go-name: Version
+              description: Optional. Version of Policy Controller to install. Defaults
+                to the latest version.
+              x-dcl-server-default: true
+        project:
+          type: string
+          x-dcl-go-name: Project
+          description: The project of the feature
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Cloudresourcemanager/Project
+            field: name
+            parent: true
+          x-dcl-parameter: true

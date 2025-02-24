@@ -20,9 +20,11 @@ package compute
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -48,6 +50,10 @@ func ResourceComputeNetwork() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -136,6 +142,11 @@ subnetworks of this network, across regions. Possible values: ["REGIONAL", "GLOB
 				Description: `The gateway address for default routing out of the network. This value
 is selected by GCP.`,
 			},
+			"numeric_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `The unique identifier for the resource. This identifier is defined by the server.`,
+			},
 			"delete_default_routes_on_create": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -215,6 +226,11 @@ func resourceComputeNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 		obj["networkFirewallPolicyEnforcementOrder"] = networkFirewallPolicyEnforcementOrderProp
 	}
 
+	obj, err = resourceComputeNetworkEncoder(d, meta, obj)
+	if err != nil {
+		return err
+	}
+
 	url, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/networks")
 	if err != nil {
 		return err
@@ -234,6 +250,7 @@ func resourceComputeNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -242,6 +259,7 @@ func resourceComputeNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Network: %s", err)
@@ -326,15 +344,29 @@ func resourceComputeNetworkRead(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeNetwork %q", d.Id()))
+	}
+
+	res, err = resourceComputeNetworkDecoder(d, meta, res)
+	if err != nil {
+		return err
+	}
+
+	if res == nil {
+		// Decoding the object has resulted in it being gone. It may be marked deleted
+		log.Printf("[DEBUG] Removing ComputeNetwork because it no longer exists.")
+		d.SetId("")
+		return nil
 	}
 
 	// Explicitly set virtual fields to default values if unset
@@ -354,6 +386,9 @@ func resourceComputeNetworkRead(d *schema.ResourceData, meta interface{}) error 
 		return fmt.Errorf("Error reading Network: %s", err)
 	}
 	if err := d.Set("name", flattenComputeNetworkName(res["name"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Network: %s", err)
+	}
+	if err := d.Set("numeric_id", flattenComputeNetworkNumericId(res["numericId"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Network: %s", err)
 	}
 	if err := d.Set("auto_create_subnetworks", flattenComputeNetworkAutoCreateSubnetworks(res["autoCreateSubnetworks"], d, config)); err != nil {
@@ -426,10 +461,17 @@ func resourceComputeNetworkUpdate(d *schema.ResourceData, meta interface{}) erro
 			obj["networkFirewallPolicyEnforcementOrder"] = networkFirewallPolicyEnforcementOrderProp
 		}
 
+		obj, err = resourceComputeNetworkUpdateEncoder(d, meta, obj)
+		if err != nil {
+			return err
+		}
+
 		url, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/networks/{{name}}")
 		if err != nil {
 			return err
 		}
+
+		headers := make(http.Header)
 
 		// err == nil indicates that the billing_project value was found
 		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -444,6 +486,7 @@ func resourceComputeNetworkUpdate(d *schema.ResourceData, meta interface{}) erro
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating Network %q: %s", d.Id(), err)
@@ -485,13 +528,15 @@ func resourceComputeNetworkDelete(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Network %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Network %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -500,6 +545,7 @@ func resourceComputeNetworkDelete(d *schema.ResourceData, meta interface{}) erro
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Network")
@@ -520,9 +566,9 @@ func resourceComputeNetworkDelete(d *schema.ResourceData, meta interface{}) erro
 func resourceComputeNetworkImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/global/networks/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/global/networks/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -551,6 +597,10 @@ func flattenComputeNetworkGatewayIpv4(v interface{}, d *schema.ResourceData, con
 }
 
 func flattenComputeNetworkName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenComputeNetworkNumericId(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -646,4 +696,19 @@ func expandComputeNetworkInternalIpv6Range(v interface{}, d tpgresource.Terrafor
 
 func expandComputeNetworkNetworkFirewallPolicyEnforcementOrder(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func resourceComputeNetworkEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
+	delete(obj, "numeric_id") // Field doesn't exist in the API
+	return obj, nil
+}
+
+func resourceComputeNetworkUpdateEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
+	delete(obj, "numeric_id") // Field doesn't exist in the API
+	return obj, nil
+}
+
+func resourceComputeNetworkDecoder(d *schema.ResourceData, meta interface{}, res map[string]interface{}) (map[string]interface{}, error) {
+	res["numericId"] = res["id"] // stores unique id into numericId attribute before it's changed to path format
+	return res, nil
 }

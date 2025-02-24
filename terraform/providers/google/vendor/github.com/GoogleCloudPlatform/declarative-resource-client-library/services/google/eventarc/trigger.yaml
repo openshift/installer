@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -121,6 +121,7 @@ components:
               x-dcl-references:
               - resource: Cloudfunctions/Function
                 field: name
+              x-dcl-has-long-form: true
             cloudRunService:
               type: object
               x-dcl-go-name: CloudRunService
@@ -205,6 +206,41 @@ components:
                   type: string
                   x-dcl-go-name: Service
                   description: Required. Name of the GKE service.
+            httpEndpoint:
+              type: object
+              x-dcl-go-name: HttpEndpoint
+              x-dcl-go-type: TriggerDestinationHttpEndpoint
+              description: An HTTP endpoint destination described by an URI.
+              required:
+              - uri
+              properties:
+                uri:
+                  type: string
+                  x-dcl-go-name: Uri
+                  description: 'Required. The URI of the HTTP enpdoint. The value
+                    must be a RFC2396 URI string. Examples: `http://10.10.10.8:80/route`,
+                    `http://svc.us-central1.p.local:8080/`. Only HTTP and HTTPS protocols
+                    are supported. The host can be either a static IP addressable
+                    from the VPC specified by the network config, or an internal DNS
+                    hostname of the service resolvable via Cloud DNS.'
+            networkConfig:
+              type: object
+              x-dcl-go-name: NetworkConfig
+              x-dcl-go-type: TriggerDestinationNetworkConfig
+              description: Optional. Network config is used to configure how Eventarc
+                resolves and connect to a destination. This should only be used with
+                HttpEndpoint destination type.
+              required:
+              - networkAttachment
+              properties:
+                networkAttachment:
+                  type: string
+                  x-dcl-go-name: NetworkAttachment
+                  description: 'Required. Name of the NetworkAttachment that allows
+                    access to the destination VPC. Format: `projects/{PROJECT_ID}/regions/{REGION}/networkAttachments/{NETWORK_ATTACHMENT_NAME}`'
+                  x-dcl-references:
+                  - resource: Compute/NetworkAttachment
+                    field: selfLink
             workflow:
               type: string
               x-dcl-go-name: Workflow
@@ -218,6 +254,7 @@ components:
               x-dcl-references:
               - resource: Workflows/Workflow
                 field: name
+              x-dcl-has-long-form: true
         etag:
           type: string
           x-dcl-go-name: Etag
@@ -232,6 +269,7 @@ components:
           description: Optional. EventDataContentType specifies the type of payload
             in MIME format that is expected from the CloudEvent data field. This is
             set to `application/json` if the value is not defined.
+          x-dcl-server-default: true
         labels:
           type: object
           additionalProperties:
@@ -244,6 +282,7 @@ components:
           x-dcl-go-name: Location
           description: The location for the resource
           x-kubernetes-immutable: true
+          x-dcl-parameter: true
         matchingCriteria:
           type: array
           x-dcl-go-name: MatchingCriteria
@@ -282,6 +321,7 @@ components:
           description: Required. The resource name of the trigger. Must be unique
             within the location on the project.
           x-kubernetes-immutable: true
+          x-dcl-has-long-form: true
         project:
           type: string
           x-dcl-go-name: Project
@@ -291,6 +331,7 @@ components:
           - resource: Cloudresourcemanager/Project
             field: name
             parent: true
+          x-dcl-parameter: true
         serviceAccount:
           type: string
           x-dcl-go-name: ServiceAccount
@@ -336,6 +377,7 @@ components:
                   x-dcl-references:
                   - resource: Pubsub/Subscription
                     field: name
+                  x-dcl-has-long-form: true
                 topic:
                   type: string
                   x-dcl-go-name: Topic
@@ -349,6 +391,7 @@ components:
                   x-dcl-references:
                   - resource: Pubsub/Topic
                     field: name
+                  x-dcl-has-long-form: true
         uid:
           type: string
           x-dcl-go-name: Uid

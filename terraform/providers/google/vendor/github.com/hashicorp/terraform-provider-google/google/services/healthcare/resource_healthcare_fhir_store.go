@@ -20,10 +20,12 @@ package healthcare
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -47,6 +49,10 @@ func ResourceHealthcareFhirStore() *schema.Resource {
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"dataset": {
@@ -78,6 +84,13 @@ func ResourceHealthcareFhirStore() *schema.Resource {
 				Optional:     true,
 				ValidateFunc: verify.ValidateEnum([]string{"COMPLEX_DATA_TYPE_REFERENCE_PARSING_UNSPECIFIED", "DISABLED", "ENABLED", ""}),
 				Description:  `Enable parsing of references within complex FHIR data types such as Extensions. If this value is set to ENABLED, then features like referential integrity and Bundle reference rewriting apply to all references. If this flag has not been specified the behavior of the FHIR store will not change, references in complex data types will not be parsed. New stores will have this value set to ENABLED by default after a notification period. Warning: turning on this flag causes processing existing resources to fail if they contain references to non-existent resources. Possible values: ["COMPLEX_DATA_TYPE_REFERENCE_PARSING_UNSPECIFIED", "DISABLED", "ENABLED"]`,
+			},
+			"default_search_handling_strict": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Description: `If true, overrides the default search behavior for this FHIR store to handling=strict which returns an error for unrecognized search parameters.
+If false, uses the FHIR specification default handling=lenient which ignores unrecognized search parameters.
+The handling can always be changed from the default on an individual API call by setting the HTTP header Prefer: handling=strict or Prefer: handling=lenient.`,
 			},
 			"disable_referential_integrity": {
 				Type:     schema.TypeBool,
@@ -140,12 +153,17 @@ bytes, and must conform to the following PCRE regular expression: [\p{Ll}\p{Lo}\
 No more than 64 labels can be associated with a given store.
 
 An object containing a list of "key": value pairs.
-Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.`,
+Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.
+
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
 				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"notification_config": {
 				Type:        schema.TypeList,
 				Optional:    true,
+				Deprecated:  "`notification_config` is deprecated and will be removed in a future major release. Use `notification_configs` instead.",
 				Description: `A nested object resource`,
 				MaxItems:    1,
 				Elem: &schema.Resource{
@@ -159,6 +177,43 @@ It is guaranteed to be unique within the topic. PubsubMessage.PublishTime is the
 was published. Notifications are only sent if the topic is non-empty. Topic names must be scoped to a
 project. service-PROJECT_NUMBER@gcp-sa-healthcare.iam.gserviceaccount.com must have publisher permissions on the given
 Cloud Pub/Sub topic. Not having adequate permissions will cause the calls that send notifications to fail.`,
+						},
+					},
+				},
+			},
+			"notification_configs": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `A list of notifcation configs that configure the notification for every resource mutation in this FHIR store.`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"pubsub_topic": {
+							Type:     schema.TypeString,
+							Required: true,
+							Description: `The Cloud Pub/Sub topic that notifications of changes are published on. Supplied by the client.
+PubsubMessage.Data will contain the resource name. PubsubMessage.MessageId is the ID of this message.
+It is guaranteed to be unique within the topic. PubsubMessage.PublishTime is the time at which the message
+was published. Notifications are only sent if the topic is non-empty. Topic names must be scoped to a
+project. service-PROJECT_NUMBER@gcp-sa-healthcare.iam.gserviceaccount.com must have publisher permissions on the given
+Cloud Pub/Sub topic. Not having adequate permissions will cause the calls that send notifications to fail.`,
+						},
+						"send_full_resource": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Description: `Whether to send full FHIR resource to this Pub/Sub topic for Create and Update operation.
+Note that setting this to true does not guarantee that all resources will be sent in the format of
+full FHIR resource. When a resource change is too large or during heavy traffic, only the resource name will be
+sent. Clients should always check the "payloadType" label from a Pub/Sub message to determine whether
+it needs to fetch the full resource as a separate operation.`,
+						},
+						"send_previous_resource_on_delete": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Description: `Whether to send full FHIR resource to this Pub/Sub topic for deleting FHIR resource. Note that setting this to
+true does not guarantee that all previous resources will be sent in the format of full FHIR resource. When a
+resource change is too large or during heavy traffic, only the resource name will be sent. Clients should always
+check the "payloadType" label from a Pub/Sub message to determine whether it needs to fetch the full previous
+resource as a separate operation.`,
 						},
 					},
 				},
@@ -205,6 +260,27 @@ resource is a recursive structure; when the depth is 2, the CodeSystem table wil
 concept.concept but not concept.concept.concept. If not specified or set to 0, the server will use the default
 value 2. The maximum depth allowed is 5.`,
 												},
+												"last_updated_partition_config": {
+													Type:        schema.TypeList,
+													Optional:    true,
+													Description: `The configuration for exported BigQuery tables to be partitioned by FHIR resource's last updated time column.`,
+													MaxItems:    1,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"type": {
+																Type:         schema.TypeString,
+																Required:     true,
+																ValidateFunc: verify.ValidateEnum([]string{"PARTITION_TYPE_UNSPECIFIED", "HOUR", "DAY", "MONTH", "YEAR"}),
+																Description:  `Type of partitioning. Possible values: ["PARTITION_TYPE_UNSPECIFIED", "HOUR", "DAY", "MONTH", "YEAR"]`,
+															},
+															"expiration_ms": {
+																Type:        schema.TypeString,
+																Optional:    true,
+																Description: `Number of milliseconds for which to keep the storage for a partition.`,
+															},
+														},
+													},
+												},
 												"schema_type": {
 													Type:         schema.TypeString,
 													Optional:     true,
@@ -235,10 +311,23 @@ an empty list as an intent to stream all the supported resource types in this FH
 					},
 				},
 			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"self_link": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `The fully qualified name of this dataset`,
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 		},
 		UseJSONNumber: true,
@@ -295,12 +384,6 @@ func resourceHealthcareFhirStoreCreate(d *schema.ResourceData, meta interface{})
 	} else if v, ok := d.GetOkExists("enable_history_import"); !tpgresource.IsEmptyValue(reflect.ValueOf(enableHistoryImportProp)) && (ok || !reflect.DeepEqual(v, enableHistoryImportProp)) {
 		obj["enableHistoryImport"] = enableHistoryImportProp
 	}
-	labelsProp, err := expandHealthcareFhirStoreLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	notificationConfigProp, err := expandHealthcareFhirStoreNotificationConfig(d.Get("notification_config"), d, config)
 	if err != nil {
 		return err
@@ -312,6 +395,24 @@ func resourceHealthcareFhirStoreCreate(d *schema.ResourceData, meta interface{})
 		return err
 	} else if v, ok := d.GetOkExists("stream_configs"); !tpgresource.IsEmptyValue(reflect.ValueOf(streamConfigsProp)) && (ok || !reflect.DeepEqual(v, streamConfigsProp)) {
 		obj["streamConfigs"] = streamConfigsProp
+	}
+	defaultSearchHandlingStrictProp, err := expandHealthcareFhirStoreDefaultSearchHandlingStrict(d.Get("default_search_handling_strict"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("default_search_handling_strict"); !tpgresource.IsEmptyValue(reflect.ValueOf(defaultSearchHandlingStrictProp)) && (ok || !reflect.DeepEqual(v, defaultSearchHandlingStrictProp)) {
+		obj["defaultSearchHandlingStrict"] = defaultSearchHandlingStrictProp
+	}
+	notificationConfigsProp, err := expandHealthcareFhirStoreNotificationConfigs(d.Get("notification_configs"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("notification_configs"); !tpgresource.IsEmptyValue(reflect.ValueOf(notificationConfigsProp)) && (ok || !reflect.DeepEqual(v, notificationConfigsProp)) {
+		obj["notificationConfigs"] = notificationConfigsProp
+	}
+	labelsProp, err := expandHealthcareFhirStoreEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{HealthcareBasePath}}{{dataset}}/fhirStores?fhirStoreId={{name}}")
@@ -327,6 +428,7 @@ func resourceHealthcareFhirStoreCreate(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -335,6 +437,7 @@ func resourceHealthcareFhirStoreCreate(d *schema.ResourceData, meta interface{})
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating FhirStore: %s", err)
@@ -371,12 +474,14 @@ func resourceHealthcareFhirStoreRead(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("HealthcareFhirStore %q", d.Id()))
@@ -424,6 +529,18 @@ func resourceHealthcareFhirStoreRead(d *schema.ResourceData, meta interface{}) e
 	if err := d.Set("stream_configs", flattenHealthcareFhirStoreStreamConfigs(res["streamConfigs"], d, config)); err != nil {
 		return fmt.Errorf("Error reading FhirStore: %s", err)
 	}
+	if err := d.Set("default_search_handling_strict", flattenHealthcareFhirStoreDefaultSearchHandlingStrict(res["defaultSearchHandlingStrict"], d, config)); err != nil {
+		return fmt.Errorf("Error reading FhirStore: %s", err)
+	}
+	if err := d.Set("notification_configs", flattenHealthcareFhirStoreNotificationConfigs(res["notificationConfigs"], d, config)); err != nil {
+		return fmt.Errorf("Error reading FhirStore: %s", err)
+	}
+	if err := d.Set("terraform_labels", flattenHealthcareFhirStoreTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading FhirStore: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenHealthcareFhirStoreEffectiveLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading FhirStore: %s", err)
+	}
 
 	return nil
 }
@@ -450,12 +567,6 @@ func resourceHealthcareFhirStoreUpdate(d *schema.ResourceData, meta interface{})
 	} else if v, ok := d.GetOkExists("enable_update_create"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, enableUpdateCreateProp)) {
 		obj["enableUpdateCreate"] = enableUpdateCreateProp
 	}
-	labelsProp, err := expandHealthcareFhirStoreLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	notificationConfigProp, err := expandHealthcareFhirStoreNotificationConfig(d.Get("notification_config"), d, config)
 	if err != nil {
 		return err
@@ -468,6 +579,24 @@ func resourceHealthcareFhirStoreUpdate(d *schema.ResourceData, meta interface{})
 	} else if v, ok := d.GetOkExists("stream_configs"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, streamConfigsProp)) {
 		obj["streamConfigs"] = streamConfigsProp
 	}
+	defaultSearchHandlingStrictProp, err := expandHealthcareFhirStoreDefaultSearchHandlingStrict(d.Get("default_search_handling_strict"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("default_search_handling_strict"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, defaultSearchHandlingStrictProp)) {
+		obj["defaultSearchHandlingStrict"] = defaultSearchHandlingStrictProp
+	}
+	notificationConfigsProp, err := expandHealthcareFhirStoreNotificationConfigs(d.Get("notification_configs"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("notification_configs"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, notificationConfigsProp)) {
+		obj["notificationConfigs"] = notificationConfigsProp
+	}
+	labelsProp, err := expandHealthcareFhirStoreEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{HealthcareBasePath}}{{dataset}}/fhirStores/{{name}}")
 	if err != nil {
@@ -475,6 +604,7 @@ func resourceHealthcareFhirStoreUpdate(d *schema.ResourceData, meta interface{})
 	}
 
 	log.Printf("[DEBUG] Updating FhirStore %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("complex_data_type_reference_parsing") {
@@ -485,16 +615,24 @@ func resourceHealthcareFhirStoreUpdate(d *schema.ResourceData, meta interface{})
 		updateMask = append(updateMask, "enableUpdateCreate")
 	}
 
-	if d.HasChange("labels") {
-		updateMask = append(updateMask, "labels")
-	}
-
 	if d.HasChange("notification_config") {
 		updateMask = append(updateMask, "notificationConfig")
 	}
 
 	if d.HasChange("stream_configs") {
 		updateMask = append(updateMask, "streamConfigs")
+	}
+
+	if d.HasChange("default_search_handling_strict") {
+		updateMask = append(updateMask, "defaultSearchHandlingStrict")
+	}
+
+	if d.HasChange("notification_configs") {
+		updateMask = append(updateMask, "notificationConfigs")
+	}
+
+	if d.HasChange("effective_labels") {
+		updateMask = append(updateMask, "labels")
 	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
@@ -508,20 +646,25 @@ func resourceHealthcareFhirStoreUpdate(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating FhirStore %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating FhirStore %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating FhirStore %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating FhirStore %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceHealthcareFhirStoreRead(d, meta)
@@ -542,13 +685,15 @@ func resourceHealthcareFhirStoreDelete(d *schema.ResourceData, meta interface{})
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting FhirStore %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting FhirStore %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -557,6 +702,7 @@ func resourceHealthcareFhirStoreDelete(d *schema.ResourceData, meta interface{})
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "FhirStore")
@@ -614,7 +760,18 @@ func flattenHealthcareFhirStoreEnableHistoryImport(v interface{}, d *schema.Reso
 }
 
 func flattenHealthcareFhirStoreLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenHealthcareFhirStoreNotificationConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -689,6 +846,8 @@ func flattenHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfig(v in
 		flattenHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigSchemaType(original["schemaType"], d, config)
 	transformed["recursive_structure_depth"] =
 		flattenHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigRecursiveStructureDepth(original["recursiveStructureDepth"], d, config)
+	transformed["last_updated_partition_config"] =
+		flattenHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigLastUpdatedPartitionConfig(original["lastUpdatedPartitionConfig"], d, config)
 	return []interface{}{transformed}
 }
 func flattenHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigSchemaType(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -710,6 +869,84 @@ func flattenHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigRecur
 	}
 
 	return v // let terraform core handle it otherwise
+}
+
+func flattenHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigLastUpdatedPartitionConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["type"] =
+		flattenHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigLastUpdatedPartitionConfigType(original["type"], d, config)
+	transformed["expiration_ms"] =
+		flattenHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigLastUpdatedPartitionConfigExpirationMs(original["expirationMs"], d, config)
+	return []interface{}{transformed}
+}
+func flattenHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigLastUpdatedPartitionConfigType(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigLastUpdatedPartitionConfigExpirationMs(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenHealthcareFhirStoreDefaultSearchHandlingStrict(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenHealthcareFhirStoreNotificationConfigs(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"pubsub_topic":                     flattenHealthcareFhirStoreNotificationConfigsPubsubTopic(original["pubsubTopic"], d, config),
+			"send_full_resource":               flattenHealthcareFhirStoreNotificationConfigsSendFullResource(original["sendFullResource"], d, config),
+			"send_previous_resource_on_delete": flattenHealthcareFhirStoreNotificationConfigsSendPreviousResourceOnDelete(original["sendPreviousResourceOnDelete"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenHealthcareFhirStoreNotificationConfigsPubsubTopic(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenHealthcareFhirStoreNotificationConfigsSendFullResource(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenHealthcareFhirStoreNotificationConfigsSendPreviousResourceOnDelete(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenHealthcareFhirStoreTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenHealthcareFhirStoreEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
 }
 
 func expandHealthcareFhirStoreName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -738,17 +975,6 @@ func expandHealthcareFhirStoreDisableResourceVersioning(v interface{}, d tpgreso
 
 func expandHealthcareFhirStoreEnableHistoryImport(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
-}
-
-func expandHealthcareFhirStoreLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
-	if v == nil {
-		return map[string]string{}, nil
-	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
-	}
-	return m, nil
 }
 
 func expandHealthcareFhirStoreNotificationConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -860,6 +1086,13 @@ func expandHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfig(v int
 		transformed["recursiveStructureDepth"] = transformedRecursiveStructureDepth
 	}
 
+	transformedLastUpdatedPartitionConfig, err := expandHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigLastUpdatedPartitionConfig(original["last_updated_partition_config"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedLastUpdatedPartitionConfig); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["lastUpdatedPartitionConfig"] = transformedLastUpdatedPartitionConfig
+	}
+
 	return transformed, nil
 }
 
@@ -869,6 +1102,103 @@ func expandHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigSchema
 
 func expandHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigRecursiveStructureDepth(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigLastUpdatedPartitionConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedType, err := expandHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigLastUpdatedPartitionConfigType(original["type"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedType); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["type"] = transformedType
+	}
+
+	transformedExpirationMs, err := expandHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigLastUpdatedPartitionConfigExpirationMs(original["expiration_ms"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedExpirationMs); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["expirationMs"] = transformedExpirationMs
+	}
+
+	return transformed, nil
+}
+
+func expandHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigLastUpdatedPartitionConfigType(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigLastUpdatedPartitionConfigExpirationMs(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandHealthcareFhirStoreDefaultSearchHandlingStrict(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandHealthcareFhirStoreNotificationConfigs(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedPubsubTopic, err := expandHealthcareFhirStoreNotificationConfigsPubsubTopic(original["pubsub_topic"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedPubsubTopic); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["pubsubTopic"] = transformedPubsubTopic
+		}
+
+		transformedSendFullResource, err := expandHealthcareFhirStoreNotificationConfigsSendFullResource(original["send_full_resource"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedSendFullResource); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["sendFullResource"] = transformedSendFullResource
+		}
+
+		transformedSendPreviousResourceOnDelete, err := expandHealthcareFhirStoreNotificationConfigsSendPreviousResourceOnDelete(original["send_previous_resource_on_delete"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedSendPreviousResourceOnDelete); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["sendPreviousResourceOnDelete"] = transformedSendPreviousResourceOnDelete
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandHealthcareFhirStoreNotificationConfigsPubsubTopic(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandHealthcareFhirStoreNotificationConfigsSendFullResource(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandHealthcareFhirStoreNotificationConfigsSendPreviousResourceOnDelete(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandHealthcareFhirStoreEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }
 
 func resourceHealthcareFhirStoreDecoder(d *schema.ResourceData, meta interface{}, res map[string]interface{}) (map[string]interface{}, error) {

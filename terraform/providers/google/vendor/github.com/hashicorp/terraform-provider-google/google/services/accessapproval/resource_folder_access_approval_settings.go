@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -221,6 +222,7 @@ func resourceAccessApprovalFolderSettingsCreate(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("notification_emails") {
@@ -248,6 +250,7 @@ func resourceAccessApprovalFolderSettingsCreate(d *schema.ResourceData, meta int
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating FolderSettings: %s", err)
@@ -287,12 +290,14 @@ func resourceAccessApprovalFolderSettingsRead(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("AccessApprovalFolderSettings %q", d.Id()))
@@ -358,6 +363,7 @@ func resourceAccessApprovalFolderSettingsUpdate(d *schema.ResourceData, meta int
 	}
 
 	log.Printf("[DEBUG] Updating FolderSettings %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("notification_emails") {
@@ -383,20 +389,25 @@ func resourceAccessApprovalFolderSettingsUpdate(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating FolderSettings %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating FolderSettings %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating FolderSettings %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating FolderSettings %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceAccessApprovalFolderSettingsRead(d, meta)
@@ -454,8 +465,8 @@ func resourceAccessApprovalFolderSettingsDelete(d *schema.ResourceData, meta int
 func resourceAccessApprovalFolderSettingsImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"folders/(?P<folder_id>[^/]+)/accessApprovalSettings",
-		"(?P<folder_id>[^/]+)",
+		"^folders/(?P<folder_id>[^/]+)/accessApprovalSettings$",
+		"^(?P<folder_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

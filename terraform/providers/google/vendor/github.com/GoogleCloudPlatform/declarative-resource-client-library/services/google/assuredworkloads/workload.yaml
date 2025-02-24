@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC. All Rights Reserved.
+# Copyright 2024 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -74,19 +74,18 @@ components:
       required:
       - displayName
       - complianceRegime
-      - billingAccount
       - organization
       - location
       properties:
         billingAccount:
           type: string
           x-dcl-go-name: BillingAccount
-          description: Required. Input only. The billing account used for the resources
+          description: Optional. Input only. The billing account used for the resources
             which are direct children of workload. This billing account is initially
             associated with the resources created as part of Workload creation. After
             the initial creation of these resources, the customer can change the assigned
             billing account. The resource name has the form `billingAccounts/{billing_account_id}`.
-            For example, 'billingAccounts/012345-567890-ABCDEF`.
+            For example, `billingAccounts/012345-567890-ABCDEF`.
           x-kubernetes-immutable: true
           x-dcl-references:
           - resource: Cloudresourcemanager/BillingAccount
@@ -98,8 +97,9 @@ components:
           x-dcl-go-type: WorkloadComplianceRegimeEnum
           description: 'Required. Immutable. Compliance Regime associated with this
             workload. Possible values: COMPLIANCE_REGIME_UNSPECIFIED, IL4, CJIS, FEDRAMP_HIGH,
-            FEDRAMP_MODERATE, US_REGIONAL_ACCESS, HIPAA, EU_REGIONS_AND_SUPPORT, CA_REGIONS_AND_SUPPORT,
-            ITAR, AU_REGIONS_AND_US_SUPPORT, ASSURED_WORKLOADS_FOR_PARTNERS'
+            FEDRAMP_MODERATE, US_REGIONAL_ACCESS, HIPAA, HITRUST, EU_REGIONS_AND_SUPPORT,
+            CA_REGIONS_AND_SUPPORT, ITAR, AU_REGIONS_AND_US_SUPPORT, ASSURED_WORKLOADS_FOR_PARTNERS,
+            ISR_REGIONS, ISR_REGIONS_AND_SUPPORT, CA_PROTECTED_B, IL5, IL2, JP_REGIONS_AND_SUPPORT'
           x-kubernetes-immutable: true
           enum:
           - COMPLIANCE_REGIME_UNSPECIFIED
@@ -109,11 +109,61 @@ components:
           - FEDRAMP_MODERATE
           - US_REGIONAL_ACCESS
           - HIPAA
+          - HITRUST
           - EU_REGIONS_AND_SUPPORT
           - CA_REGIONS_AND_SUPPORT
           - ITAR
           - AU_REGIONS_AND_US_SUPPORT
           - ASSURED_WORKLOADS_FOR_PARTNERS
+          - ISR_REGIONS
+          - ISR_REGIONS_AND_SUPPORT
+          - CA_PROTECTED_B
+          - IL5
+          - IL2
+          - JP_REGIONS_AND_SUPPORT
+        complianceStatus:
+          type: object
+          x-dcl-go-name: ComplianceStatus
+          x-dcl-go-type: WorkloadComplianceStatus
+          readOnly: true
+          description: Output only. Count of active Violations in the Workload.
+          x-kubernetes-immutable: true
+          properties:
+            acknowledgedViolationCount:
+              type: array
+              x-dcl-go-name: AcknowledgedViolationCount
+              description: Number of current orgPolicy violations which are acknowledged.
+              x-kubernetes-immutable: true
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: integer
+                format: int64
+                x-dcl-go-type: int64
+            activeViolationCount:
+              type: array
+              x-dcl-go-name: ActiveViolationCount
+              description: Number of current orgPolicy violations which are not acknowledged.
+              x-kubernetes-immutable: true
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: integer
+                format: int64
+                x-dcl-go-type: int64
+        compliantButDisallowedServices:
+          type: array
+          x-dcl-go-name: CompliantButDisallowedServices
+          readOnly: true
+          description: Output only. Urls for services which are compliant for this
+            Assured Workload, but which are currently disallowed by the ResourceUsageRestriction
+            org policy. Invoke workloads.restrictAllowedResources endpoint to allow
+            your project developers to use these services in their environment.
+          x-kubernetes-immutable: true
+          x-dcl-list-type: list
+          items:
+            type: string
+            x-dcl-go-type: string
         createTime:
           type: string
           format: date-time
@@ -128,13 +178,84 @@ components:
             When present it must be between 4 to 30 characters. Allowed characters
             are: lowercase and uppercase letters, numbers, hyphen, and spaces. Example:
             My Workload'
+        ekmProvisioningResponse:
+          type: object
+          x-dcl-go-name: EkmProvisioningResponse
+          x-dcl-go-type: WorkloadEkmProvisioningResponse
+          readOnly: true
+          description: Optional. Represents the Ekm Provisioning State of the given
+            workload.
+          x-kubernetes-immutable: true
+          properties:
+            ekmProvisioningErrorDomain:
+              type: string
+              x-dcl-go-name: EkmProvisioningErrorDomain
+              x-dcl-go-type: WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum
+              description: 'Indicates Ekm provisioning error if any. Possible values:
+                EKM_PROVISIONING_ERROR_DOMAIN_UNSPECIFIED, UNSPECIFIED_ERROR, GOOGLE_SERVER_ERROR,
+                EXTERNAL_USER_ERROR, EXTERNAL_PARTNER_ERROR, TIMEOUT_ERROR'
+              x-kubernetes-immutable: true
+              enum:
+              - EKM_PROVISIONING_ERROR_DOMAIN_UNSPECIFIED
+              - UNSPECIFIED_ERROR
+              - GOOGLE_SERVER_ERROR
+              - EXTERNAL_USER_ERROR
+              - EXTERNAL_PARTNER_ERROR
+              - TIMEOUT_ERROR
+            ekmProvisioningErrorMapping:
+              type: string
+              x-dcl-go-name: EkmProvisioningErrorMapping
+              x-dcl-go-type: WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum
+              description: 'Detailed error message if Ekm provisioning fails Possible
+                values: EKM_PROVISIONING_ERROR_MAPPING_UNSPECIFIED, INVALID_SERVICE_ACCOUNT,
+                MISSING_METRICS_SCOPE_ADMIN_PERMISSION, MISSING_EKM_CONNECTION_ADMIN_PERMISSION'
+              x-kubernetes-immutable: true
+              enum:
+              - EKM_PROVISIONING_ERROR_MAPPING_UNSPECIFIED
+              - INVALID_SERVICE_ACCOUNT
+              - MISSING_METRICS_SCOPE_ADMIN_PERMISSION
+              - MISSING_EKM_CONNECTION_ADMIN_PERMISSION
+            ekmProvisioningState:
+              type: string
+              x-dcl-go-name: EkmProvisioningState
+              x-dcl-go-type: WorkloadEkmProvisioningResponseEkmProvisioningStateEnum
+              description: 'Indicates Ekm enrollment Provisioning of a given workload.
+                Possible values: EKM_PROVISIONING_STATE_UNSPECIFIED, EKM_PROVISIONING_STATE_PENDING,
+                EKM_PROVISIONING_STATE_FAILED, EKM_PROVISIONING_STATE_COMPLETED'
+              x-kubernetes-immutable: true
+              enum:
+              - EKM_PROVISIONING_STATE_UNSPECIFIED
+              - EKM_PROVISIONING_STATE_PENDING
+              - EKM_PROVISIONING_STATE_FAILED
+              - EKM_PROVISIONING_STATE_COMPLETED
+        enableSovereignControls:
+          type: boolean
+          x-dcl-go-name: EnableSovereignControls
+          description: Optional. Indicates the sovereignty status of the given workload.
+            Currently meant to be used by Europe/Canada customers.
+          x-kubernetes-immutable: true
+        kajEnrollmentState:
+          type: string
+          x-dcl-go-name: KajEnrollmentState
+          x-dcl-go-type: WorkloadKajEnrollmentStateEnum
+          readOnly: true
+          description: 'Output only. Represents the KAJ enrollment state of the given
+            workload. Possible values: KAJ_ENROLLMENT_STATE_UNSPECIFIED, KAJ_ENROLLMENT_STATE_PENDING,
+            KAJ_ENROLLMENT_STATE_COMPLETE'
+          x-kubernetes-immutable: true
+          enum:
+          - KAJ_ENROLLMENT_STATE_UNSPECIFIED
+          - KAJ_ENROLLMENT_STATE_PENDING
+          - KAJ_ENROLLMENT_STATE_COMPLETE
         kmsSettings:
           type: object
           x-dcl-go-name: KmsSettings
           x-dcl-go-type: WorkloadKmsSettings
-          description: Input only. Settings used to create a CMEK crypto key. When
-            set a project with a KMS CMEK key is provisioned. This field is mandatory
-            for a subset of Compliance Regimes.
+          description: '**DEPRECATED** Input only. Settings used to create a CMEK
+            crypto key. When set, a project with a KMS CMEK key is provisioned. This
+            field is deprecated as of Feb 28, 2022. In order to create a Keyring,
+            callers should specify, ENCRYPTION_KEYS_PROJECT or KEYRING in ResourceSettings.resource_type
+            field.'
           x-kubernetes-immutable: true
           x-dcl-mutable-unreadable: true
           required:
@@ -167,12 +288,14 @@ components:
           x-dcl-go-name: Location
           description: The location for the resource
           x-kubernetes-immutable: true
+          x-dcl-parameter: true
         name:
           type: string
           x-dcl-go-name: Name
           description: Output only. The resource name of the workload.
           x-kubernetes-immutable: true
           x-dcl-server-generated-parameter: true
+          x-dcl-has-long-form: true
         organization:
           type: string
           x-dcl-go-name: Organization
@@ -182,13 +305,52 @@ components:
           - resource: Cloudresourcemanager/Organization
             field: name
             parent: true
+          x-dcl-parameter: true
+        partner:
+          type: string
+          x-dcl-go-name: Partner
+          x-dcl-go-type: WorkloadPartnerEnum
+          description: 'Optional. Partner regime associated with this workload. Possible
+            values: PARTNER_UNSPECIFIED, LOCAL_CONTROLS_BY_S3NS, SOVEREIGN_CONTROLS_BY_T_SYSTEMS,
+            SOVEREIGN_CONTROLS_BY_SIA_MINSAIT, SOVEREIGN_CONTROLS_BY_PSN'
+          x-kubernetes-immutable: true
+          enum:
+          - PARTNER_UNSPECIFIED
+          - LOCAL_CONTROLS_BY_S3NS
+          - SOVEREIGN_CONTROLS_BY_T_SYSTEMS
+          - SOVEREIGN_CONTROLS_BY_SIA_MINSAIT
+          - SOVEREIGN_CONTROLS_BY_PSN
+        partnerPermissions:
+          type: object
+          x-dcl-go-name: PartnerPermissions
+          x-dcl-go-type: WorkloadPartnerPermissions
+          description: Optional. Permissions granted to the AW Partner SA account
+            for the customer workload
+          x-kubernetes-immutable: true
+          properties:
+            assuredWorkloadsMonitoring:
+              type: boolean
+              x-dcl-go-name: AssuredWorkloadsMonitoring
+              description: Optional. Allow partner to view violation alerts.
+              x-kubernetes-immutable: true
+            dataLogsViewer:
+              type: boolean
+              x-dcl-go-name: DataLogsViewer
+              description: Allow the partner to view inspectability logs and monitoring
+                violations.
+              x-kubernetes-immutable: true
+            serviceAccessApprover:
+              type: boolean
+              x-dcl-go-name: ServiceAccessApprover
+              description: Optional. Allow partner to view access approval logs.
+              x-kubernetes-immutable: true
         provisionedResourcesParent:
           type: string
           x-dcl-go-name: ProvisionedResourcesParent
           description: 'Input only. The parent resource for the resources managed
-            by this Assured Workload. May be either an organization or a folder. Must
-            be the same or a child of the Workload parent. If not specified all resources
-            are created under the Workload parent. Formats: folders/{folder_id}, organizations/{organization_id}'
+            by this Assured Workload. May be either empty or a folder resource which
+            is a child of the Workload parent. If not specified all resources are
+            created under the parent organization. Format: folders/{folder_id}'
           x-kubernetes-immutable: true
           x-dcl-mutable-unreadable: true
         resourceSettings:
@@ -204,11 +366,19 @@ components:
             type: object
             x-dcl-go-type: WorkloadResourceSettings
             properties:
+              displayName:
+                type: string
+                x-dcl-go-name: DisplayName
+                description: User-assigned resource display name. If not empty it
+                  will be used to create a resource with the specified name.
+                x-kubernetes-immutable: true
               resourceId:
                 type: string
                 x-dcl-go-name: ResourceId
-                description: Resource identifier. For a project this represents project_number.
+                description: Resource identifier. For a project this represents projectId.
                   If the project is already taken, the workload creation will fail.
+                  For KeyRing, this represents the keyring_id. For a folder, don't
+                  set this value as folder_id is assigned by Google.
                 x-kubernetes-immutable: true
               resourceType:
                 type: string
@@ -258,3 +428,51 @@ components:
                 - ENCRYPTION_KEYS_PROJECT
                 - KEYRING
                 - CONSUMER_FOLDER
+        saaEnrollmentResponse:
+          type: object
+          x-dcl-go-name: SaaEnrollmentResponse
+          x-dcl-go-type: WorkloadSaaEnrollmentResponse
+          readOnly: true
+          description: Output only. Represents the SAA enrollment response of the
+            given workload. SAA enrollment response is queried during workloads.get
+            call. In failure cases, user friendly error message is shown in SAA details
+            page.
+          x-kubernetes-immutable: true
+          properties:
+            setupErrors:
+              type: array
+              x-dcl-go-name: SetupErrors
+              description: Indicates SAA enrollment setup error if any.
+              x-kubernetes-immutable: true
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: string
+                x-dcl-go-type: WorkloadSaaEnrollmentResponseSetupErrorsEnum
+                enum:
+                - SETUP_ERROR_UNSPECIFIED
+                - ERROR_INVALID_BASE_SETUP
+                - ERROR_MISSING_EXTERNAL_SIGNING_KEY
+                - ERROR_NOT_ALL_SERVICES_ENROLLED
+                - ERROR_SETUP_CHECK_FAILED
+            setupStatus:
+              type: string
+              x-dcl-go-name: SetupStatus
+              x-dcl-go-type: WorkloadSaaEnrollmentResponseSetupStatusEnum
+              description: 'Indicates SAA enrollment status of a given workload. Possible
+                values: SETUP_STATE_UNSPECIFIED, STATUS_PENDING, STATUS_COMPLETE'
+              x-kubernetes-immutable: true
+              enum:
+              - SETUP_STATE_UNSPECIFIED
+              - STATUS_PENDING
+              - STATUS_COMPLETE
+        violationNotificationsEnabled:
+          type: boolean
+          x-dcl-go-name: ViolationNotificationsEnabled
+          description: Optional. Indicates whether the e-mail notification for a violation
+            is enabled for a workload. This value will be by default True, and if
+            not present will be considered as true. This should only be updated via
+            updateWorkload call. Any Changes to this field during the createWorkload
+            call will not be honored. This will always be true while creating the
+            workload.
+          x-kubernetes-immutable: true

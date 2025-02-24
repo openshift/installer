@@ -20,6 +20,7 @@ package accesscontextmanager
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -114,6 +115,7 @@ func resourceAccessContextManagerGcpUserAccessBindingCreate(d *schema.ResourceDa
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -122,6 +124,7 @@ func resourceAccessContextManagerGcpUserAccessBindingCreate(d *schema.ResourceDa
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating GcpUserAccessBinding: %s", err)
@@ -182,12 +185,14 @@ func resourceAccessContextManagerGcpUserAccessBindingRead(d *schema.ResourceData
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("AccessContextManagerGcpUserAccessBinding %q", d.Id()))
@@ -229,6 +234,7 @@ func resourceAccessContextManagerGcpUserAccessBindingUpdate(d *schema.ResourceDa
 	}
 
 	log.Printf("[DEBUG] Updating GcpUserAccessBinding %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("access_levels") {
@@ -246,28 +252,32 @@ func resourceAccessContextManagerGcpUserAccessBindingUpdate(d *schema.ResourceDa
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating GcpUserAccessBinding %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating GcpUserAccessBinding %q: %#v", d.Id(), res)
-	}
+		if err != nil {
+			return fmt.Errorf("Error updating GcpUserAccessBinding %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating GcpUserAccessBinding %q: %#v", d.Id(), res)
+		}
 
-	err = AccessContextManagerOperationWaitTime(
-		config, res, "Updating GcpUserAccessBinding", userAgent,
-		d.Timeout(schema.TimeoutUpdate))
+		err = AccessContextManagerOperationWaitTime(
+			config, res, "Updating GcpUserAccessBinding", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceAccessContextManagerGcpUserAccessBindingRead(d, meta)
@@ -288,13 +298,15 @@ func resourceAccessContextManagerGcpUserAccessBindingDelete(d *schema.ResourceDa
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting GcpUserAccessBinding %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting GcpUserAccessBinding %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -303,6 +315,7 @@ func resourceAccessContextManagerGcpUserAccessBindingDelete(d *schema.ResourceDa
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "GcpUserAccessBinding")

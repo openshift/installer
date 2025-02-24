@@ -20,6 +20,7 @@ package securitycenter
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -118,6 +119,7 @@ func resourceSecurityCenterSourceCreate(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -126,6 +128,7 @@ func resourceSecurityCenterSourceCreate(d *schema.ResourceData, meta interface{}
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Source: %s", err)
@@ -183,12 +186,14 @@ func resourceSecurityCenterSourceRead(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("SecurityCenterSource %q", d.Id()))
@@ -236,6 +241,7 @@ func resourceSecurityCenterSourceUpdate(d *schema.ResourceData, meta interface{}
 	}
 
 	log.Printf("[DEBUG] Updating Source %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("description") {
@@ -257,20 +263,25 @@ func resourceSecurityCenterSourceUpdate(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "PATCH",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	// if updateMask is empty we are not updating anything so skip the post
+	if len(updateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
 
-	if err != nil {
-		return fmt.Errorf("Error updating Source %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Source %q: %#v", d.Id(), res)
+		if err != nil {
+			return fmt.Errorf("Error updating Source %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Source %q: %#v", d.Id(), res)
+		}
+
 	}
 
 	return resourceSecurityCenterSourceRead(d, meta)

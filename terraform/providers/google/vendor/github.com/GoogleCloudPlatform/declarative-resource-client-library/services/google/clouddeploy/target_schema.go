@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -129,6 +129,8 @@ func DCLTargetSchema() *dcl.Schema {
 								Conflicts: []string{
 									"gke",
 									"run",
+									"multiTarget",
+									"customTarget",
 								},
 								Properties: map[string]*dcl.Property{
 									"membership": &dcl.Property{
@@ -151,6 +153,34 @@ func DCLTargetSchema() *dcl.Schema {
 								ReadOnly:    true,
 								Description: "Output only. Time at which the `Target` was created.",
 								Immutable:   true,
+							},
+							"customTarget": &dcl.Property{
+								Type:        "object",
+								GoName:      "CustomTarget",
+								GoType:      "TargetCustomTarget",
+								Description: "Optional. Information specifying a Custom Target.",
+								Conflicts: []string{
+									"gke",
+									"anthosCluster",
+									"run",
+									"multiTarget",
+								},
+								Required: []string{
+									"customTargetType",
+								},
+								Properties: map[string]*dcl.Property{
+									"customTargetType": &dcl.Property{
+										Type:        "string",
+										GoName:      "CustomTargetType",
+										Description: "Required. The name of the CustomTargetType. Format must be `projects/{project}/locations/{location}/customTargetTypes/{custom_target_type}`.",
+										ResourceReferences: []*dcl.PropertyResourceReference{
+											&dcl.PropertyResourceReference{
+												Resource: "Clouddeploy/CustomTargetType",
+												Field:    "selfLink",
+											},
+										},
+									},
+								},
 							},
 							"deployParameters": &dcl.Property{
 								Type: "object",
@@ -220,6 +250,11 @@ func DCLTargetSchema() *dcl.Schema {
 												},
 											},
 										},
+										"verbose": &dcl.Property{
+											Type:        "boolean",
+											GoName:      "Verbose",
+											Description: "Optional. If true, additional logging will be enabled when running builds in this execution environment.",
+										},
 										"workerPool": &dcl.Property{
 											Type:        "string",
 											GoName:      "WorkerPool",
@@ -242,6 +277,8 @@ func DCLTargetSchema() *dcl.Schema {
 								Conflicts: []string{
 									"anthosCluster",
 									"run",
+									"multiTarget",
+									"customTarget",
 								},
 								Properties: map[string]*dcl.Property{
 									"cluster": &dcl.Property{
@@ -275,12 +312,43 @@ func DCLTargetSchema() *dcl.Schema {
 								GoName:      "Location",
 								Description: "The location for the resource",
 								Immutable:   true,
+								Parameter:   true,
+							},
+							"multiTarget": &dcl.Property{
+								Type:        "object",
+								GoName:      "MultiTarget",
+								GoType:      "TargetMultiTarget",
+								Description: "Information specifying a multiTarget.",
+								Conflicts: []string{
+									"gke",
+									"anthosCluster",
+									"run",
+									"customTarget",
+								},
+								Required: []string{
+									"targetIds",
+								},
+								Properties: map[string]*dcl.Property{
+									"targetIds": &dcl.Property{
+										Type:        "array",
+										GoName:      "TargetIds",
+										Description: "Required. The target_ids of this multiTarget.",
+										SendEmpty:   true,
+										ListType:    "list",
+										Items: &dcl.Property{
+											Type:   "string",
+											GoType: "string",
+										},
+									},
+								},
 							},
 							"name": &dcl.Property{
 								Type:        "string",
 								GoName:      "Name",
-								Description: "Name of the `Target`. Format is [a-z][a-z0-9\\-]{0,62}.",
+								Description: "Name of the `Target`. Format is `[a-z]([a-z0-9-]{0,61}[a-z0-9])?`.",
 								Immutable:   true,
+								Parameter:   true,
+								HasLongForm: true,
 							},
 							"project": &dcl.Property{
 								Type:        "string",
@@ -294,6 +362,7 @@ func DCLTargetSchema() *dcl.Schema {
 										Parent:   true,
 									},
 								},
+								Parameter: true,
 							},
 							"requireApproval": &dcl.Property{
 								Type:        "boolean",
@@ -308,6 +377,8 @@ func DCLTargetSchema() *dcl.Schema {
 								Conflicts: []string{
 									"gke",
 									"anthosCluster",
+									"multiTarget",
+									"customTarget",
 								},
 								Required: []string{
 									"location",

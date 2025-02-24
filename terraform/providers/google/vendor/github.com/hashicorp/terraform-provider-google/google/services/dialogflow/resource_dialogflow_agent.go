@@ -20,9 +20,11 @@ package dialogflow
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -47,6 +49,10 @@ func ResourceDialogflowAgent() *schema.Resource {
 			Update: schema.DefaultTimeout(40 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"default_language_code": {
@@ -247,6 +253,7 @@ func resourceDialogflowAgentCreate(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -255,6 +262,7 @@ func resourceDialogflowAgentCreate(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Agent: %s", err)
@@ -297,12 +305,14 @@ func resourceDialogflowAgentRead(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DialogflowAgent %q", d.Id()))
@@ -435,6 +445,7 @@ func resourceDialogflowAgentUpdate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	log.Printf("[DEBUG] Updating Agent %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -449,6 +460,7 @@ func resourceDialogflowAgentUpdate(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -481,13 +493,15 @@ func resourceDialogflowAgentDelete(d *schema.ResourceData, meta interface{}) err
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Agent %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Agent %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -496,6 +510,7 @@ func resourceDialogflowAgentDelete(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Agent")
@@ -508,7 +523,7 @@ func resourceDialogflowAgentDelete(d *schema.ResourceData, meta interface{}) err
 func resourceDialogflowAgentImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"(?P<project>[^/]+)",
+		"^(?P<project>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}

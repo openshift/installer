@@ -21,7 +21,7 @@ import (
 	"fmt"
 
 	"google.golang.org/grpc/internal/pretty"
-	"google.golang.org/grpc/xds/internal/xdsclient/bootstrap"
+	"google.golang.org/grpc/internal/xds/bootstrap"
 	"google.golang.org/grpc/xds/internal/xdsclient/xdsresource/version"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -61,7 +61,7 @@ func securityConfigValidator(bc *bootstrap.Config, sc *SecurityConfig) error {
 	}
 	if sc.IdentityInstanceName != "" {
 		if _, ok := bc.CertProviderConfigs[sc.IdentityInstanceName]; !ok {
-			return fmt.Errorf("identitiy certificate provider instance name %q missing in bootstrap configuration", sc.IdentityInstanceName)
+			return fmt.Errorf("identity certificate provider instance name %q missing in bootstrap configuration", sc.IdentityInstanceName)
 		}
 	}
 	if sc.RootInstanceName != "" {

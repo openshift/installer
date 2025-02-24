@@ -18,13 +18,16 @@
 package datastream
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -43,22 +46,22 @@ func extractError(d *schema.ResourceData) error {
 // waitForPrivateConnectionReady waits for a private connection state to become
 // CREATED, if the state is FAILED propegate the error to the user.
 func waitForPrivateConnectionReady(d *schema.ResourceData, config *transport_tpg.Config, timeout time.Duration) error {
-	return resource.Retry(timeout, func() *resource.RetryError {
+	return retry.Retry(timeout, func() *retry.RetryError {
 		if err := resourceDatastreamPrivateConnectionRead(d, config); err != nil {
-			return resource.NonRetryableError(err)
+			return retry.NonRetryableError(err)
 		}
 
 		name := d.Get("name").(string)
 		state := d.Get("state").(string)
 		if state == "CREATING" {
-			return resource.RetryableError(fmt.Errorf("PrivateConnection %q has state %q.", name, state))
+			return retry.RetryableError(fmt.Errorf("PrivateConnection %q has state %q.", name, state))
 		} else if state == "CREATED" {
 			log.Printf("[DEBUG] PrivateConnection %q has state %q.", name, state)
 			return nil
 		} else if state == "FAILED" {
-			return resource.NonRetryableError(extractError(d))
+			return retry.NonRetryableError(extractError(d))
 		} else {
-			return resource.NonRetryableError(fmt.Errorf("PrivateConnection %q has state %q.", name, state))
+			return retry.NonRetryableError(fmt.Errorf("PrivateConnection %q has state %q.", name, state))
 		}
 	})
 }
@@ -67,6 +70,7 @@ func ResourceDatastreamPrivateConnection() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceDatastreamPrivateConnectionCreate,
 		Read:   resourceDatastreamPrivateConnectionRead,
+		Update: resourceDatastreamPrivateConnectionUpdate,
 		Delete: resourceDatastreamPrivateConnectionDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -75,8 +79,23 @@ func ResourceDatastreamPrivateConnection() *schema.Resource {
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		SchemaVersion: 1,
+
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceDatastreamPrivateConnectionResourceV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: ResourceDatastreamPrivateConnectionUpgradeV0,
+				Version: 0,
+			},
+		},
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"display_name": {
@@ -122,11 +141,27 @@ Format: projects/{project}/global/{networks}/{name}`,
 					},
 				},
 			},
-			"labels": {
-				Type:        schema.TypeMap,
+			"create_without_validation": {
+				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    true,
-				Description: `Labels.`,
+				Description: `If set to true, will skip validations.`,
+				Default:     false,
+			},
+			"labels": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `Labels.
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				ForceNew:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"error": {
@@ -159,6 +194,13 @@ Format: projects/{project}/global/{networks}/{name}`,
 				Computed:    true,
 				Description: `State of the PrivateConnection.`,
 			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
 			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -178,12 +220,6 @@ func resourceDatastreamPrivateConnectionCreate(d *schema.ResourceData, meta inte
 	}
 
 	obj := make(map[string]interface{})
-	labelsProp, err := expandDatastreamPrivateConnectionLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	displayNameProp, err := expandDatastreamPrivateConnectionDisplayName(d.Get("display_name"), d, config)
 	if err != nil {
 		return err
@@ -196,8 +232,14 @@ func resourceDatastreamPrivateConnectionCreate(d *schema.ResourceData, meta inte
 	} else if v, ok := d.GetOkExists("vpc_peering_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(vpcPeeringConfigProp)) && (ok || !reflect.DeepEqual(v, vpcPeeringConfigProp)) {
 		obj["vpcPeeringConfig"] = vpcPeeringConfigProp
 	}
+	labelsProp, err := expandDatastreamPrivateConnectionEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
-	url, err := tpgresource.ReplaceVars(d, config, "{{DatastreamBasePath}}projects/{{project}}/locations/{{location}}/privateConnections?privateConnectionId={{private_connection_id}}")
+	url, err := tpgresource.ReplaceVars(d, config, "{{DatastreamBasePath}}projects/{{project}}/locations/{{location}}/privateConnections?privateConnectionId={{private_connection_id}}&force={{create_without_validation}}")
 	if err != nil {
 		return err
 	}
@@ -216,6 +258,7 @@ func resourceDatastreamPrivateConnectionCreate(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -224,6 +267,7 @@ func resourceDatastreamPrivateConnectionCreate(d *schema.ResourceData, meta inte
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating PrivateConnection: %s", err)
@@ -294,12 +338,14 @@ func resourceDatastreamPrivateConnectionRead(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DatastreamPrivateConnection %q", d.Id()))
@@ -327,8 +373,19 @@ func resourceDatastreamPrivateConnectionRead(d *schema.ResourceData, meta interf
 	if err := d.Set("vpc_peering_config", flattenDatastreamPrivateConnectionVpcPeeringConfig(res["vpcPeeringConfig"], d, config)); err != nil {
 		return fmt.Errorf("Error reading PrivateConnection: %s", err)
 	}
+	if err := d.Set("terraform_labels", flattenDatastreamPrivateConnectionTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading PrivateConnection: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenDatastreamPrivateConnectionEffectiveLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading PrivateConnection: %s", err)
+	}
 
 	return nil
+}
+
+func resourceDatastreamPrivateConnectionUpdate(d *schema.ResourceData, meta interface{}) error {
+	// Only the root field "labels" and "terraform_labels" are mutable
+	return resourceDatastreamPrivateConnectionRead(d, meta)
 }
 
 func resourceDatastreamPrivateConnectionDelete(d *schema.ResourceData, meta interface{}) error {
@@ -352,13 +409,15 @@ func resourceDatastreamPrivateConnectionDelete(d *schema.ResourceData, meta inte
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting PrivateConnection %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting PrivateConnection %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -367,6 +426,7 @@ func resourceDatastreamPrivateConnectionDelete(d *schema.ResourceData, meta inte
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "PrivateConnection")
@@ -387,9 +447,9 @@ func resourceDatastreamPrivateConnectionDelete(d *schema.ResourceData, meta inte
 func resourceDatastreamPrivateConnectionImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/privateConnections/(?P<private_connection_id>[^/]+)",
-		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<private_connection_id>[^/]+)",
-		"(?P<location>[^/]+)/(?P<private_connection_id>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/privateConnections/(?P<private_connection_id>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<private_connection_id>[^/]+)$",
+		"^(?P<location>[^/]+)/(?P<private_connection_id>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -413,7 +473,18 @@ func flattenDatastreamPrivateConnectionName(v interface{}, d *schema.ResourceDat
 }
 
 func flattenDatastreamPrivateConnectionLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenDatastreamPrivateConnectionDisplayName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -470,15 +541,23 @@ func flattenDatastreamPrivateConnectionVpcPeeringConfigSubnet(v interface{}, d *
 	return v
 }
 
-func expandDatastreamPrivateConnectionLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+func flattenDatastreamPrivateConnectionTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
-		return map[string]string{}, nil
+		return v
 	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
 	}
-	return m, nil
+
+	return transformed
+}
+
+func flattenDatastreamPrivateConnectionEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
 }
 
 func expandDatastreamPrivateConnectionDisplayName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -517,4 +596,131 @@ func expandDatastreamPrivateConnectionVpcPeeringConfigVpc(v interface{}, d tpgre
 
 func expandDatastreamPrivateConnectionVpcPeeringConfigSubnet(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandDatastreamPrivateConnectionEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
+}
+
+func resourceDatastreamPrivateConnectionResourceV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"display_name": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: `Display name.`,
+			},
+			"location": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: `The name of the location this private connection is located in.`,
+			},
+			"private_connection_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: `The private connectivity identifier.`,
+			},
+			"vpc_peering_config": {
+				Type:     schema.TypeList,
+				Required: true,
+				ForceNew: true,
+				Description: `The VPC Peering configuration is used to create VPC peering
+between Datastream and the consumer's VPC.`,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"subnet": {
+							Type:        schema.TypeString,
+							Required:    true,
+							ForceNew:    true,
+							Description: `A free subnet for peering. (CIDR of /29)`,
+						},
+						"vpc": {
+							Type:     schema.TypeString,
+							Required: true,
+							ForceNew: true,
+							Description: `Fully qualified name of the VPC that Datastream will peer to.
+Format: projects/{project}/global/{networks}/{name}`,
+						},
+					},
+				},
+			},
+			"labels": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				ForceNew: true,
+				Description: `Labels.
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				ForceNew:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"error": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: `The PrivateConnection error in case of failure.`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"details": {
+							Type:        schema.TypeMap,
+							Optional:    true,
+							Description: `A list of messages that carry the error details.`,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+						},
+						"message": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: `A message containing more information about the error that occurred.`,
+						},
+					},
+				},
+			},
+			"name": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `The resource's name.`,
+			},
+			"state": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `State of the PrivateConnection.`,
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				ForceNew: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
+			"project": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+			},
+		},
+		UseJSONNumber: true,
+	}
+}
+
+func ResourceDatastreamPrivateConnectionUpgradeV0(_ context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+	return tpgresource.TerraformLabelsStateUpgrade(rawState)
 }

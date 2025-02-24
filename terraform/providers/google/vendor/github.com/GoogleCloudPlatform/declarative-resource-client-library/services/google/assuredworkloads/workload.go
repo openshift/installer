@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,18 +25,27 @@ import (
 )
 
 type Workload struct {
-	Name                       *string                       `json:"name"`
-	DisplayName                *string                       `json:"displayName"`
-	Resources                  []WorkloadResources           `json:"resources"`
-	ComplianceRegime           *WorkloadComplianceRegimeEnum `json:"complianceRegime"`
-	CreateTime                 *string                       `json:"createTime"`
-	BillingAccount             *string                       `json:"billingAccount"`
-	Labels                     map[string]string             `json:"labels"`
-	ProvisionedResourcesParent *string                       `json:"provisionedResourcesParent"`
-	KmsSettings                *WorkloadKmsSettings          `json:"kmsSettings"`
-	ResourceSettings           []WorkloadResourceSettings    `json:"resourceSettings"`
-	Organization               *string                       `json:"organization"`
-	Location                   *string                       `json:"location"`
+	Name                           *string                          `json:"name"`
+	DisplayName                    *string                          `json:"displayName"`
+	Resources                      []WorkloadResources              `json:"resources"`
+	ComplianceRegime               *WorkloadComplianceRegimeEnum    `json:"complianceRegime"`
+	CreateTime                     *string                          `json:"createTime"`
+	BillingAccount                 *string                          `json:"billingAccount"`
+	Labels                         map[string]string                `json:"labels"`
+	ProvisionedResourcesParent     *string                          `json:"provisionedResourcesParent"`
+	KmsSettings                    *WorkloadKmsSettings             `json:"kmsSettings"`
+	ResourceSettings               []WorkloadResourceSettings       `json:"resourceSettings"`
+	KajEnrollmentState             *WorkloadKajEnrollmentStateEnum  `json:"kajEnrollmentState"`
+	EnableSovereignControls        *bool                            `json:"enableSovereignControls"`
+	SaaEnrollmentResponse          *WorkloadSaaEnrollmentResponse   `json:"saaEnrollmentResponse"`
+	ComplianceStatus               *WorkloadComplianceStatus        `json:"complianceStatus"`
+	CompliantButDisallowedServices []string                         `json:"compliantButDisallowedServices"`
+	Partner                        *WorkloadPartnerEnum             `json:"partner"`
+	PartnerPermissions             *WorkloadPartnerPermissions      `json:"partnerPermissions"`
+	EkmProvisioningResponse        *WorkloadEkmProvisioningResponse `json:"ekmProvisioningResponse"`
+	ViolationNotificationsEnabled  *bool                            `json:"violationNotificationsEnabled"`
+	Organization                   *string                          `json:"organization"`
+	Location                       *string                          `json:"location"`
 }
 
 func (r *Workload) String() string {
@@ -85,7 +94,7 @@ func (v WorkloadComplianceRegimeEnum) Validate() error {
 		// Empty enum is okay.
 		return nil
 	}
-	for _, s := range []string{"COMPLIANCE_REGIME_UNSPECIFIED", "IL4", "CJIS", "FEDRAMP_HIGH", "FEDRAMP_MODERATE", "US_REGIONAL_ACCESS", "HIPAA", "EU_REGIONS_AND_SUPPORT", "CA_REGIONS_AND_SUPPORT", "ITAR", "AU_REGIONS_AND_US_SUPPORT", "ASSURED_WORKLOADS_FOR_PARTNERS"} {
+	for _, s := range []string{"COMPLIANCE_REGIME_UNSPECIFIED", "IL4", "CJIS", "FEDRAMP_HIGH", "FEDRAMP_MODERATE", "US_REGIONAL_ACCESS", "HIPAA", "HITRUST", "EU_REGIONS_AND_SUPPORT", "CA_REGIONS_AND_SUPPORT", "ITAR", "AU_REGIONS_AND_US_SUPPORT", "ASSURED_WORKLOADS_FOR_PARTNERS", "ISR_REGIONS", "ISR_REGIONS_AND_SUPPORT", "CA_PROTECTED_B", "IL5", "IL2", "JP_REGIONS_AND_SUPPORT"} {
 		if string(v) == s {
 			return nil
 		}
@@ -119,6 +128,195 @@ func (v WorkloadResourceSettingsResourceTypeEnum) Validate() error {
 	}
 	return &dcl.EnumInvalidError{
 		Enum:  "WorkloadResourceSettingsResourceTypeEnum",
+		Value: string(v),
+		Valid: []string{},
+	}
+}
+
+// The enum WorkloadKajEnrollmentStateEnum.
+type WorkloadKajEnrollmentStateEnum string
+
+// WorkloadKajEnrollmentStateEnumRef returns a *WorkloadKajEnrollmentStateEnum with the value of string s
+// If the empty string is provided, nil is returned.
+func WorkloadKajEnrollmentStateEnumRef(s string) *WorkloadKajEnrollmentStateEnum {
+	v := WorkloadKajEnrollmentStateEnum(s)
+	return &v
+}
+
+func (v WorkloadKajEnrollmentStateEnum) Validate() error {
+	if string(v) == "" {
+		// Empty enum is okay.
+		return nil
+	}
+	for _, s := range []string{"KAJ_ENROLLMENT_STATE_UNSPECIFIED", "KAJ_ENROLLMENT_STATE_PENDING", "KAJ_ENROLLMENT_STATE_COMPLETE"} {
+		if string(v) == s {
+			return nil
+		}
+	}
+	return &dcl.EnumInvalidError{
+		Enum:  "WorkloadKajEnrollmentStateEnum",
+		Value: string(v),
+		Valid: []string{},
+	}
+}
+
+// The enum WorkloadSaaEnrollmentResponseSetupErrorsEnum.
+type WorkloadSaaEnrollmentResponseSetupErrorsEnum string
+
+// WorkloadSaaEnrollmentResponseSetupErrorsEnumRef returns a *WorkloadSaaEnrollmentResponseSetupErrorsEnum with the value of string s
+// If the empty string is provided, nil is returned.
+func WorkloadSaaEnrollmentResponseSetupErrorsEnumRef(s string) *WorkloadSaaEnrollmentResponseSetupErrorsEnum {
+	v := WorkloadSaaEnrollmentResponseSetupErrorsEnum(s)
+	return &v
+}
+
+func (v WorkloadSaaEnrollmentResponseSetupErrorsEnum) Validate() error {
+	if string(v) == "" {
+		// Empty enum is okay.
+		return nil
+	}
+	for _, s := range []string{"SETUP_ERROR_UNSPECIFIED", "ERROR_INVALID_BASE_SETUP", "ERROR_MISSING_EXTERNAL_SIGNING_KEY", "ERROR_NOT_ALL_SERVICES_ENROLLED", "ERROR_SETUP_CHECK_FAILED"} {
+		if string(v) == s {
+			return nil
+		}
+	}
+	return &dcl.EnumInvalidError{
+		Enum:  "WorkloadSaaEnrollmentResponseSetupErrorsEnum",
+		Value: string(v),
+		Valid: []string{},
+	}
+}
+
+// The enum WorkloadSaaEnrollmentResponseSetupStatusEnum.
+type WorkloadSaaEnrollmentResponseSetupStatusEnum string
+
+// WorkloadSaaEnrollmentResponseSetupStatusEnumRef returns a *WorkloadSaaEnrollmentResponseSetupStatusEnum with the value of string s
+// If the empty string is provided, nil is returned.
+func WorkloadSaaEnrollmentResponseSetupStatusEnumRef(s string) *WorkloadSaaEnrollmentResponseSetupStatusEnum {
+	v := WorkloadSaaEnrollmentResponseSetupStatusEnum(s)
+	return &v
+}
+
+func (v WorkloadSaaEnrollmentResponseSetupStatusEnum) Validate() error {
+	if string(v) == "" {
+		// Empty enum is okay.
+		return nil
+	}
+	for _, s := range []string{"SETUP_STATE_UNSPECIFIED", "STATUS_PENDING", "STATUS_COMPLETE"} {
+		if string(v) == s {
+			return nil
+		}
+	}
+	return &dcl.EnumInvalidError{
+		Enum:  "WorkloadSaaEnrollmentResponseSetupStatusEnum",
+		Value: string(v),
+		Valid: []string{},
+	}
+}
+
+// The enum WorkloadPartnerEnum.
+type WorkloadPartnerEnum string
+
+// WorkloadPartnerEnumRef returns a *WorkloadPartnerEnum with the value of string s
+// If the empty string is provided, nil is returned.
+func WorkloadPartnerEnumRef(s string) *WorkloadPartnerEnum {
+	v := WorkloadPartnerEnum(s)
+	return &v
+}
+
+func (v WorkloadPartnerEnum) Validate() error {
+	if string(v) == "" {
+		// Empty enum is okay.
+		return nil
+	}
+	for _, s := range []string{"PARTNER_UNSPECIFIED", "LOCAL_CONTROLS_BY_S3NS", "SOVEREIGN_CONTROLS_BY_T_SYSTEMS", "SOVEREIGN_CONTROLS_BY_SIA_MINSAIT", "SOVEREIGN_CONTROLS_BY_PSN"} {
+		if string(v) == s {
+			return nil
+		}
+	}
+	return &dcl.EnumInvalidError{
+		Enum:  "WorkloadPartnerEnum",
+		Value: string(v),
+		Valid: []string{},
+	}
+}
+
+// The enum WorkloadEkmProvisioningResponseEkmProvisioningStateEnum.
+type WorkloadEkmProvisioningResponseEkmProvisioningStateEnum string
+
+// WorkloadEkmProvisioningResponseEkmProvisioningStateEnumRef returns a *WorkloadEkmProvisioningResponseEkmProvisioningStateEnum with the value of string s
+// If the empty string is provided, nil is returned.
+func WorkloadEkmProvisioningResponseEkmProvisioningStateEnumRef(s string) *WorkloadEkmProvisioningResponseEkmProvisioningStateEnum {
+	v := WorkloadEkmProvisioningResponseEkmProvisioningStateEnum(s)
+	return &v
+}
+
+func (v WorkloadEkmProvisioningResponseEkmProvisioningStateEnum) Validate() error {
+	if string(v) == "" {
+		// Empty enum is okay.
+		return nil
+	}
+	for _, s := range []string{"EKM_PROVISIONING_STATE_UNSPECIFIED", "EKM_PROVISIONING_STATE_PENDING", "EKM_PROVISIONING_STATE_FAILED", "EKM_PROVISIONING_STATE_COMPLETED"} {
+		if string(v) == s {
+			return nil
+		}
+	}
+	return &dcl.EnumInvalidError{
+		Enum:  "WorkloadEkmProvisioningResponseEkmProvisioningStateEnum",
+		Value: string(v),
+		Valid: []string{},
+	}
+}
+
+// The enum WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum.
+type WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum string
+
+// WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnumRef returns a *WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum with the value of string s
+// If the empty string is provided, nil is returned.
+func WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnumRef(s string) *WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum {
+	v := WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum(s)
+	return &v
+}
+
+func (v WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum) Validate() error {
+	if string(v) == "" {
+		// Empty enum is okay.
+		return nil
+	}
+	for _, s := range []string{"EKM_PROVISIONING_ERROR_DOMAIN_UNSPECIFIED", "UNSPECIFIED_ERROR", "GOOGLE_SERVER_ERROR", "EXTERNAL_USER_ERROR", "EXTERNAL_PARTNER_ERROR", "TIMEOUT_ERROR"} {
+		if string(v) == s {
+			return nil
+		}
+	}
+	return &dcl.EnumInvalidError{
+		Enum:  "WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum",
+		Value: string(v),
+		Valid: []string{},
+	}
+}
+
+// The enum WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum.
+type WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum string
+
+// WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnumRef returns a *WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum with the value of string s
+// If the empty string is provided, nil is returned.
+func WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnumRef(s string) *WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum {
+	v := WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum(s)
+	return &v
+}
+
+func (v WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum) Validate() error {
+	if string(v) == "" {
+		// Empty enum is okay.
+		return nil
+	}
+	for _, s := range []string{"EKM_PROVISIONING_ERROR_MAPPING_UNSPECIFIED", "INVALID_SERVICE_ACCOUNT", "MISSING_METRICS_SCOPE_ADMIN_PERMISSION", "MISSING_EKM_CONNECTION_ADMIN_PERMISSION"} {
+		if string(v) == s {
+			return nil
+		}
+	}
+	return &dcl.EnumInvalidError{
+		Enum:  "WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum",
 		Value: string(v),
 		Valid: []string{},
 	}
@@ -169,7 +367,7 @@ func (r *WorkloadResources) String() string {
 func (r *WorkloadResources) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -218,7 +416,7 @@ func (r *WorkloadKmsSettings) String() string {
 func (r *WorkloadKmsSettings) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -226,6 +424,7 @@ type WorkloadResourceSettings struct {
 	empty        bool                                      `json:"-"`
 	ResourceId   *string                                   `json:"resourceId"`
 	ResourceType *WorkloadResourceSettingsResourceTypeEnum `json:"resourceType"`
+	DisplayName  *string                                   `json:"displayName"`
 }
 
 type jsonWorkloadResourceSettings WorkloadResourceSettings
@@ -247,6 +446,8 @@ func (r *WorkloadResourceSettings) UnmarshalJSON(data []byte) error {
 
 		r.ResourceType = res.ResourceType
 
+		r.DisplayName = res.DisplayName
+
 	}
 	return nil
 }
@@ -267,7 +468,209 @@ func (r *WorkloadResourceSettings) String() string {
 func (r *WorkloadResourceSettings) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
-	hash := sha256.New().Sum([]byte(r.String()))
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkloadSaaEnrollmentResponse struct {
+	empty       bool                                           `json:"-"`
+	SetupErrors []WorkloadSaaEnrollmentResponseSetupErrorsEnum `json:"setupErrors"`
+	SetupStatus *WorkloadSaaEnrollmentResponseSetupStatusEnum  `json:"setupStatus"`
+}
+
+type jsonWorkloadSaaEnrollmentResponse WorkloadSaaEnrollmentResponse
+
+func (r *WorkloadSaaEnrollmentResponse) UnmarshalJSON(data []byte) error {
+	var res jsonWorkloadSaaEnrollmentResponse
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkloadSaaEnrollmentResponse
+	} else {
+
+		r.SetupErrors = res.SetupErrors
+
+		r.SetupStatus = res.SetupStatus
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkloadSaaEnrollmentResponse is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkloadSaaEnrollmentResponse *WorkloadSaaEnrollmentResponse = &WorkloadSaaEnrollmentResponse{empty: true}
+
+func (r *WorkloadSaaEnrollmentResponse) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkloadSaaEnrollmentResponse) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkloadSaaEnrollmentResponse) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkloadComplianceStatus struct {
+	empty                      bool    `json:"-"`
+	ActiveViolationCount       []int64 `json:"activeViolationCount"`
+	AcknowledgedViolationCount []int64 `json:"acknowledgedViolationCount"`
+}
+
+type jsonWorkloadComplianceStatus WorkloadComplianceStatus
+
+func (r *WorkloadComplianceStatus) UnmarshalJSON(data []byte) error {
+	var res jsonWorkloadComplianceStatus
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkloadComplianceStatus
+	} else {
+
+		r.ActiveViolationCount = res.ActiveViolationCount
+
+		r.AcknowledgedViolationCount = res.AcknowledgedViolationCount
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkloadComplianceStatus is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkloadComplianceStatus *WorkloadComplianceStatus = &WorkloadComplianceStatus{empty: true}
+
+func (r *WorkloadComplianceStatus) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkloadComplianceStatus) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkloadComplianceStatus) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkloadPartnerPermissions struct {
+	empty                      bool  `json:"-"`
+	DataLogsViewer             *bool `json:"dataLogsViewer"`
+	ServiceAccessApprover      *bool `json:"serviceAccessApprover"`
+	AssuredWorkloadsMonitoring *bool `json:"assuredWorkloadsMonitoring"`
+}
+
+type jsonWorkloadPartnerPermissions WorkloadPartnerPermissions
+
+func (r *WorkloadPartnerPermissions) UnmarshalJSON(data []byte) error {
+	var res jsonWorkloadPartnerPermissions
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkloadPartnerPermissions
+	} else {
+
+		r.DataLogsViewer = res.DataLogsViewer
+
+		r.ServiceAccessApprover = res.ServiceAccessApprover
+
+		r.AssuredWorkloadsMonitoring = res.AssuredWorkloadsMonitoring
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkloadPartnerPermissions is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkloadPartnerPermissions *WorkloadPartnerPermissions = &WorkloadPartnerPermissions{empty: true}
+
+func (r *WorkloadPartnerPermissions) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkloadPartnerPermissions) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkloadPartnerPermissions) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkloadEkmProvisioningResponse struct {
+	empty                       bool                                                            `json:"-"`
+	EkmProvisioningState        *WorkloadEkmProvisioningResponseEkmProvisioningStateEnum        `json:"ekmProvisioningState"`
+	EkmProvisioningErrorDomain  *WorkloadEkmProvisioningResponseEkmProvisioningErrorDomainEnum  `json:"ekmProvisioningErrorDomain"`
+	EkmProvisioningErrorMapping *WorkloadEkmProvisioningResponseEkmProvisioningErrorMappingEnum `json:"ekmProvisioningErrorMapping"`
+}
+
+type jsonWorkloadEkmProvisioningResponse WorkloadEkmProvisioningResponse
+
+func (r *WorkloadEkmProvisioningResponse) UnmarshalJSON(data []byte) error {
+	var res jsonWorkloadEkmProvisioningResponse
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkloadEkmProvisioningResponse
+	} else {
+
+		r.EkmProvisioningState = res.EkmProvisioningState
+
+		r.EkmProvisioningErrorDomain = res.EkmProvisioningErrorDomain
+
+		r.EkmProvisioningErrorMapping = res.EkmProvisioningErrorMapping
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkloadEkmProvisioningResponse is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkloadEkmProvisioningResponse *WorkloadEkmProvisioningResponse = &WorkloadEkmProvisioningResponse{empty: true}
+
+func (r *WorkloadEkmProvisioningResponse) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkloadEkmProvisioningResponse) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkloadEkmProvisioningResponse) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
 	return fmt.Sprintf("%x", hash)
 }
 
@@ -287,18 +690,27 @@ func (r *Workload) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"name":                         dcl.ValueOrEmptyString(nr.Name),
-		"display_name":                 dcl.ValueOrEmptyString(nr.DisplayName),
-		"resources":                    dcl.ValueOrEmptyString(nr.Resources),
-		"compliance_regime":            dcl.ValueOrEmptyString(nr.ComplianceRegime),
-		"create_time":                  dcl.ValueOrEmptyString(nr.CreateTime),
-		"billing_account":              dcl.ValueOrEmptyString(nr.BillingAccount),
-		"labels":                       dcl.ValueOrEmptyString(nr.Labels),
-		"provisioned_resources_parent": dcl.ValueOrEmptyString(nr.ProvisionedResourcesParent),
-		"kms_settings":                 dcl.ValueOrEmptyString(nr.KmsSettings),
-		"resource_settings":            dcl.ValueOrEmptyString(nr.ResourceSettings),
-		"organization":                 dcl.ValueOrEmptyString(nr.Organization),
-		"location":                     dcl.ValueOrEmptyString(nr.Location),
+		"name":                              dcl.ValueOrEmptyString(nr.Name),
+		"display_name":                      dcl.ValueOrEmptyString(nr.DisplayName),
+		"resources":                         dcl.ValueOrEmptyString(nr.Resources),
+		"compliance_regime":                 dcl.ValueOrEmptyString(nr.ComplianceRegime),
+		"create_time":                       dcl.ValueOrEmptyString(nr.CreateTime),
+		"billing_account":                   dcl.ValueOrEmptyString(nr.BillingAccount),
+		"labels":                            dcl.ValueOrEmptyString(nr.Labels),
+		"provisioned_resources_parent":      dcl.ValueOrEmptyString(nr.ProvisionedResourcesParent),
+		"kms_settings":                      dcl.ValueOrEmptyString(nr.KmsSettings),
+		"resource_settings":                 dcl.ValueOrEmptyString(nr.ResourceSettings),
+		"kaj_enrollment_state":              dcl.ValueOrEmptyString(nr.KajEnrollmentState),
+		"enable_sovereign_controls":         dcl.ValueOrEmptyString(nr.EnableSovereignControls),
+		"saa_enrollment_response":           dcl.ValueOrEmptyString(nr.SaaEnrollmentResponse),
+		"compliance_status":                 dcl.ValueOrEmptyString(nr.ComplianceStatus),
+		"compliant_but_disallowed_services": dcl.ValueOrEmptyString(nr.CompliantButDisallowedServices),
+		"partner":                           dcl.ValueOrEmptyString(nr.Partner),
+		"partner_permissions":               dcl.ValueOrEmptyString(nr.PartnerPermissions),
+		"ekm_provisioning_response":         dcl.ValueOrEmptyString(nr.EkmProvisioningResponse),
+		"violation_notifications_enabled":   dcl.ValueOrEmptyString(nr.ViolationNotificationsEnabled),
+		"organization":                      dcl.ValueOrEmptyString(nr.Organization),
+		"location":                          dcl.ValueOrEmptyString(nr.Location),
 	}
 	return dcl.Nprintf("organizations/{{organization}}/locations/{{location}}/workloads/{{name}}", params), nil
 }
@@ -337,6 +749,13 @@ func (l *WorkloadList) Next(ctx context.Context, c *Client) error {
 
 func (c *Client) ListWorkload(ctx context.Context, organization, location string) (*WorkloadList, error) {
 	ctx = dcl.ContextWithRequestID(ctx)
+	c = NewClient(c.Config.Clone(dcl.WithCodeRetryability(map[int]dcl.Retryability{
+		400: dcl.Retryability{
+			Retryable: true,
+			Pattern:   "contains projects or other resources that are not deleted",
+			Timeout:   300000000000,
+		},
+	})))
 	ctx, cancel := context.WithTimeout(ctx, c.Config.TimeoutOr(0*time.Second))
 	defer cancel()
 
@@ -367,6 +786,13 @@ func (c *Client) ListWorkloadWithMaxResults(ctx context.Context, organization, l
 
 func (c *Client) GetWorkload(ctx context.Context, r *Workload) (*Workload, error) {
 	ctx = dcl.ContextWithRequestID(ctx)
+	c = NewClient(c.Config.Clone(dcl.WithCodeRetryability(map[int]dcl.Retryability{
+		400: dcl.Retryability{
+			Retryable: true,
+			Pattern:   "contains projects or other resources that are not deleted",
+			Timeout:   300000000000,
+		},
+	})))
 	ctx, cancel := context.WithTimeout(ctx, c.Config.TimeoutOr(0*time.Second))
 	defer cancel()
 
@@ -409,6 +835,13 @@ func (c *Client) GetWorkload(ctx context.Context, r *Workload) (*Workload, error
 
 func (c *Client) DeleteWorkload(ctx context.Context, r *Workload) error {
 	ctx = dcl.ContextWithRequestID(ctx)
+	c = NewClient(c.Config.Clone(dcl.WithCodeRetryability(map[int]dcl.Retryability{
+		400: dcl.Retryability{
+			Retryable: true,
+			Pattern:   "contains projects or other resources that are not deleted",
+			Timeout:   300000000000,
+		},
+	})))
 	ctx, cancel := context.WithTimeout(ctx, c.Config.TimeoutOr(0*time.Second))
 	defer cancel()
 
@@ -449,6 +882,13 @@ func (c *Client) ApplyWorkload(ctx context.Context, rawDesired *Workload, opts .
 	defer cancel()
 
 	ctx = dcl.ContextWithRequestID(ctx)
+	c = NewClient(c.Config.Clone(dcl.WithCodeRetryability(map[int]dcl.Retryability{
+		400: dcl.Retryability{
+			Retryable: true,
+			Pattern:   "contains projects or other resources that are not deleted",
+			Timeout:   300000000000,
+		},
+	})))
 	var resultNewState *Workload
 	err := dcl.Do(ctx, func(ctx context.Context) (*dcl.RetryDetails, error) {
 		newState, err := applyWorkloadHelper(c, ctx, rawDesired, opts...)

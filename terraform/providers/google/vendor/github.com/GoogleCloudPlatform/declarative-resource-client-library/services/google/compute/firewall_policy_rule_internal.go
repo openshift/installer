@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2024 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -126,6 +126,14 @@ func newUpdateFirewallPolicyRulePatchRuleRequest(ctx context.Context, f *Firewal
 	}
 	if v := f.Action; !dcl.IsEmptyValueIndirect(v) {
 		req["action"] = v
+	}
+	if v := f.SecurityProfileGroup; !dcl.IsEmptyValueIndirect(v) {
+		req["securityProfileGroup"] = v
+	}
+	if v, err := expandFirewallPolicyRuleTLSInspect(c, f.TlsInspect, res); err != nil {
+		return nil, fmt.Errorf("error expanding TlsInspect into tlsInspect: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		req["tlsInspect"] = v
 	}
 	if v := f.Direction; !dcl.IsEmptyValueIndirect(v) {
 		req["direction"] = v
@@ -489,6 +497,16 @@ func canonicalizeFirewallPolicyRuleDesiredState(rawDesired, rawInitial *Firewall
 	} else {
 		canonicalDesired.Action = rawDesired.Action
 	}
+	if dcl.StringCanonicalize(rawDesired.SecurityProfileGroup, rawInitial.SecurityProfileGroup) {
+		canonicalDesired.SecurityProfileGroup = rawInitial.SecurityProfileGroup
+	} else {
+		canonicalDesired.SecurityProfileGroup = rawDesired.SecurityProfileGroup
+	}
+	if dcl.BoolCanonicalize(rawDesired.TlsInspect, rawInitial.TlsInspect) {
+		canonicalDesired.TlsInspect = rawInitial.TlsInspect
+	} else {
+		canonicalDesired.TlsInspect = rawDesired.TlsInspect
+	}
 	if dcl.IsZeroValue(rawDesired.Direction) || (dcl.IsEmptyValueIndirect(rawDesired.Direction) && dcl.IsEmptyValueIndirect(rawInitial.Direction)) {
 		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Direction = rawInitial.Direction
@@ -549,6 +567,22 @@ func canonicalizeFirewallPolicyRuleNewState(c *Client, rawNew, rawDesired *Firew
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Action, rawNew.Action) {
 			rawNew.Action = rawDesired.Action
+		}
+	}
+
+	if dcl.IsEmptyValueIndirect(rawNew.SecurityProfileGroup) && dcl.IsEmptyValueIndirect(rawDesired.SecurityProfileGroup) {
+		rawNew.SecurityProfileGroup = rawDesired.SecurityProfileGroup
+	} else {
+		if dcl.StringCanonicalize(rawDesired.SecurityProfileGroup, rawNew.SecurityProfileGroup) {
+			rawNew.SecurityProfileGroup = rawDesired.SecurityProfileGroup
+		}
+	}
+
+	if dcl.IsEmptyValueIndirect(rawNew.TlsInspect) && dcl.IsEmptyValueIndirect(rawDesired.TlsInspect) {
+		rawNew.TlsInspect = rawDesired.TlsInspect
+	} else {
+		if dcl.BoolCanonicalize(rawDesired.TlsInspect, rawNew.TlsInspect) {
+			rawNew.TlsInspect = rawDesired.TlsInspect
 		}
 	}
 
@@ -977,6 +1011,20 @@ func diffFirewallPolicyRule(c *Client, desired, actual *FirewallPolicyRule, opts
 		newDiffs = append(newDiffs, ds...)
 	}
 
+	if ds, err := dcl.Diff(desired.SecurityProfileGroup, actual.SecurityProfileGroup, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateFirewallPolicyRulePatchRuleOperation")}, fn.AddNest("SecurityProfileGroup")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.TlsInspect, actual.TlsInspect, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateFirewallPolicyRulePatchRuleOperation")}, fn.AddNest("TlsInspect")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
 	if ds, err := dcl.Diff(desired.Direction, actual.Direction, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateFirewallPolicyRulePatchRuleOperation")}, fn.AddNest("Direction")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
@@ -1180,6 +1228,7 @@ func (r *FirewallPolicyRule) urlNormalized() *FirewallPolicyRule {
 	normalized := dcl.Copy(*r).(FirewallPolicyRule)
 	normalized.Description = dcl.SelfLinkToName(r.Description)
 	normalized.Action = dcl.SelfLinkToName(r.Action)
+	normalized.SecurityProfileGroup = dcl.SelfLinkToName(r.SecurityProfileGroup)
 	normalized.Kind = dcl.SelfLinkToName(r.Kind)
 	normalized.FirewallPolicy = dcl.SelfLinkToName(r.FirewallPolicy)
 	return &normalized
@@ -1248,6 +1297,14 @@ func expandFirewallPolicyRule(c *Client, f *FirewallPolicyRule) (map[string]inte
 	if v := f.Action; dcl.ValueShouldBeSent(v) {
 		m["action"] = v
 	}
+	if v := f.SecurityProfileGroup; dcl.ValueShouldBeSent(v) {
+		m["securityProfileGroup"] = v
+	}
+	if v, err := expandFirewallPolicyRuleTLSInspect(c, f.TlsInspect, res); err != nil {
+		return nil, fmt.Errorf("error expanding TlsInspect into tlsInspect: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["tlsInspect"] = v
+	}
 	if v := f.Direction; dcl.ValueShouldBeSent(v) {
 		m["direction"] = v
 	}
@@ -1288,6 +1345,8 @@ func flattenFirewallPolicyRule(c *Client, i interface{}, res *FirewallPolicyRule
 	resultRes.Priority = dcl.FlattenInteger(m["priority"])
 	resultRes.Match = flattenFirewallPolicyRuleMatch(c, m["match"], res)
 	resultRes.Action = dcl.FlattenString(m["action"])
+	resultRes.SecurityProfileGroup = dcl.FlattenString(m["securityProfileGroup"])
+	resultRes.TlsInspect = dcl.FlattenBool(m["tlsInspect"])
 	resultRes.Direction = flattenFirewallPolicyRuleDirectionEnum(m["direction"])
 	resultRes.TargetResources = dcl.FlattenStringSlice(m["targetResources"])
 	resultRes.EnableLogging = dcl.FlattenBool(m["enableLogging"])

@@ -20,10 +20,12 @@ package datafusion
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -69,6 +71,12 @@ func ResourceDataFusionInstance() *schema.Resource {
 			Update: schema.DefaultTimeout(25 * time.Minute),
 			Delete: schema.DefaultTimeout(50 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.SetLabelsDiff,
+			tpgresource.DefaultProviderProject,
+			tpgresource.DefaultProviderRegion,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -192,7 +200,11 @@ Users will need to either manually update their state file to include these diff
 				Type:     schema.TypeMap,
 				Optional: true,
 				Description: `The resource labels for instance to use to annotate any related underlying resources,
-such as Compute Engine VMs.`,
+such as Compute Engine VMs.
+
+
+**Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
+Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
 				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"network_config": {
@@ -203,20 +215,64 @@ such as Compute Engine VMs.`,
 				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"connection_type": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ForceNew:     true,
+							ValidateFunc: verify.ValidateEnum([]string{"VPC_PEERING", "PRIVATE_SERVICE_CONNECT_INTERFACES", ""}),
+							Description: `Optional. Type of connection for establishing private IP connectivity between the Data Fusion customer project VPC and
+the corresponding tenant project from a predefined list of available connection modes.
+If this field is unspecified for a private instance, VPC peering is used. Possible values: ["VPC_PEERING", "PRIVATE_SERVICE_CONNECT_INTERFACES"]`,
+						},
 						"ip_allocation": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 							ForceNew: true,
 							Description: `The IP range in CIDR notation to use for the managed Data Fusion instance
 nodes. This range must not overlap with any other ranges used in the Data Fusion instance network.`,
 						},
 						"network": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 							ForceNew: true,
 							Description: `Name of the network in the project with which the tenant project
 will be peered for executing pipelines. In case of shared VPC where the network resides in another host
 project the network should specified in the form of projects/{host-project-id}/global/networks/{network}`,
+						},
+						"private_service_connect_config": {
+							Type:     schema.TypeList,
+							Optional: true,
+							ForceNew: true,
+							Description: `Optional. Configuration for Private Service Connect.
+This is required only when using connection type PRIVATE_SERVICE_CONNECT_INTERFACES.`,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"network_attachment": {
+										Type:     schema.TypeString,
+										Optional: true,
+										ForceNew: true,
+										Description: `Optional. The reference to the network attachment used to establish private connectivity.
+It will be of the form projects/{project-id}/regions/{region}/networkAttachments/{network-attachment-id}.
+This is required only when using connection type PRIVATE_SERVICE_CONNECT_INTERFACES.`,
+									},
+									"unreachable_cidr_block": {
+										Type:     schema.TypeString,
+										Optional: true,
+										ForceNew: true,
+										Description: `Optional. Input only. The CIDR block to which the CDF instance can't route traffic to in the consumer project VPC.
+The size of this block should be at least /25. This range should not overlap with the primary address range of any subnetwork used by the network attachment.
+This range can be used for other purposes in the consumer VPC as long as there is no requirement for CDF to reach destinations using these addresses.
+If this value is not provided, the server chooses a non RFC 1918 address range. The format of this field is governed by RFC 4632.`,
+									},
+									"effective_unreachable_cidr_block": {
+										Type:     schema.TypeString,
+										Computed: true,
+										Description: `Output only. The CIDR block to which the CDF instance can't route traffic to in the consumer project VPC.
+The size of this block is /25. The format of this field is governed by RFC 4632.`,
+									},
+								},
+							},
 						},
 					},
 				},
@@ -268,6 +324,12 @@ able to access the public internet.`,
 				Computed:    true,
 				Description: `The time the instance was created in RFC3339 UTC "Zulu" format, accurate to nanoseconds.`,
 			},
+			"effective_labels": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"gcs_bucket": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -303,6 +365,13 @@ able to access the public internet.`,
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `The name of the tenant project.`,
+			},
+			"terraform_labels": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				Description: `The combination of labels configured directly on the resource
+ and default labels configured on the provider.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"update_time": {
 				Type:        schema.TypeString,
@@ -364,12 +433,6 @@ func resourceDataFusionInstanceCreate(d *schema.ResourceData, meta interface{}) 
 	} else if v, ok := d.GetOkExists("enable_rbac"); !tpgresource.IsEmptyValue(reflect.ValueOf(enableRbacProp)) && (ok || !reflect.DeepEqual(v, enableRbacProp)) {
 		obj["enableRbac"] = enableRbacProp
 	}
-	labelsProp, err := expandDataFusionInstanceLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	optionsProp, err := expandDataFusionInstanceOptions(d.Get("options"), d, config)
 	if err != nil {
 		return err
@@ -430,6 +493,12 @@ func resourceDataFusionInstanceCreate(d *schema.ResourceData, meta interface{}) 
 	} else if v, ok := d.GetOkExists("accelerators"); !tpgresource.IsEmptyValue(reflect.ValueOf(acceleratorsProp)) && (ok || !reflect.DeepEqual(v, acceleratorsProp)) {
 		obj["accelerators"] = acceleratorsProp
 	}
+	labelsProp, err := expandDataFusionInstanceEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{DataFusionBasePath}}projects/{{project}}/locations/{{region}}/instances?instanceId={{name}}")
 	if err != nil {
@@ -450,6 +519,7 @@ func resourceDataFusionInstanceCreate(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -458,6 +528,7 @@ func resourceDataFusionInstanceCreate(d *schema.ResourceData, meta interface{}) 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Instance: %s", err)
@@ -524,12 +595,14 @@ func resourceDataFusionInstanceRead(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DataFusionInstance %q", d.Id()))
@@ -625,6 +698,12 @@ func resourceDataFusionInstanceRead(d *schema.ResourceData, meta interface{}) er
 	if err := d.Set("accelerators", flattenDataFusionInstanceAccelerators(res["accelerators"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
+	if err := d.Set("terraform_labels", flattenDataFusionInstanceTerraformLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("effective_labels", flattenDataFusionInstanceEffectiveLabels(res["labels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
 
 	return nil
 }
@@ -663,12 +742,6 @@ func resourceDataFusionInstanceUpdate(d *schema.ResourceData, meta interface{}) 
 	} else if v, ok := d.GetOkExists("enable_rbac"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, enableRbacProp)) {
 		obj["enableRbac"] = enableRbacProp
 	}
-	labelsProp, err := expandDataFusionInstanceLabels(d.Get("labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 	versionProp, err := expandDataFusionInstanceVersion(d.Get("version"), d, config)
 	if err != nil {
 		return err
@@ -687,6 +760,12 @@ func resourceDataFusionInstanceUpdate(d *schema.ResourceData, meta interface{}) 
 	} else if v, ok := d.GetOkExists("accelerators"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, acceleratorsProp)) {
 		obj["accelerators"] = acceleratorsProp
 	}
+	labelsProp, err := expandDataFusionInstanceEffectiveLabels(d.Get("effective_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{DataFusionBasePath}}projects/{{project}}/locations/{{region}}/instances/{{name}}")
 	if err != nil {
@@ -694,6 +773,7 @@ func resourceDataFusionInstanceUpdate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	log.Printf("[DEBUG] Updating Instance %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("enable_stackdriver_logging") {
@@ -729,6 +809,7 @@ func resourceDataFusionInstanceUpdate(d *schema.ResourceData, meta interface{}) 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
 	})
 
 	if err != nil {
@@ -769,13 +850,15 @@ func resourceDataFusionInstanceDelete(d *schema.ResourceData, meta interface{}) 
 	}
 
 	var obj map[string]interface{}
-	log.Printf("[DEBUG] Deleting Instance %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
+	headers := make(http.Header)
+
+	log.Printf("[DEBUG] Deleting Instance %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "DELETE",
@@ -784,6 +867,7 @@ func resourceDataFusionInstanceDelete(d *schema.ResourceData, meta interface{}) 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
+		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Instance")
@@ -804,10 +888,10 @@ func resourceDataFusionInstanceDelete(d *schema.ResourceData, meta interface{}) 
 func resourceDataFusionInstanceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{
-		"projects/(?P<project>[^/]+)/locations/(?P<region>[^/]+)/instances/(?P<name>[^/]+)",
-		"(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<region>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)",
+		"^projects/(?P<project>[^/]+)/locations/(?P<region>[^/]+)/instances/(?P<name>[^/]+)$",
+		"^(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<region>[^/]+)/(?P<name>[^/]+)$",
+		"^(?P<name>[^/]+)$",
 	}, d, config); err != nil {
 		return nil, err
 	}
@@ -850,7 +934,18 @@ func flattenDataFusionInstanceEnableRbac(v interface{}, d *schema.ResourceData, 
 }
 
 func flattenDataFusionInstanceLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
 }
 
 func flattenDataFusionInstanceOptions(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -910,6 +1005,10 @@ func flattenDataFusionInstanceNetworkConfig(v interface{}, d *schema.ResourceDat
 		flattenDataFusionInstanceNetworkConfigIpAllocation(original["ipAllocation"], d, config)
 	transformed["network"] =
 		flattenDataFusionInstanceNetworkConfigNetwork(original["network"], d, config)
+	transformed["connection_type"] =
+		flattenDataFusionInstanceNetworkConfigConnectionType(original["connectionType"], d, config)
+	transformed["private_service_connect_config"] =
+		flattenDataFusionInstanceNetworkConfigPrivateServiceConnectConfig(original["privateServiceConnectConfig"], d, config)
 	return []interface{}{transformed}
 }
 func flattenDataFusionInstanceNetworkConfigIpAllocation(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -917,6 +1016,39 @@ func flattenDataFusionInstanceNetworkConfigIpAllocation(v interface{}, d *schema
 }
 
 func flattenDataFusionInstanceNetworkConfigNetwork(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDataFusionInstanceNetworkConfigConnectionType(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDataFusionInstanceNetworkConfigPrivateServiceConnectConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["network_attachment"] =
+		flattenDataFusionInstanceNetworkConfigPrivateServiceConnectConfigNetworkAttachment(original["networkAttachment"], d, config)
+	transformed["unreachable_cidr_block"] =
+		flattenDataFusionInstanceNetworkConfigPrivateServiceConnectConfigUnreachableCidrBlock(original["unreachableCidrBlock"], d, config)
+	transformed["effective_unreachable_cidr_block"] =
+		flattenDataFusionInstanceNetworkConfigPrivateServiceConnectConfigEffectiveUnreachableCidrBlock(original["effectiveUnreachableCidrBlock"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDataFusionInstanceNetworkConfigPrivateServiceConnectConfigNetworkAttachment(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDataFusionInstanceNetworkConfigPrivateServiceConnectConfigUnreachableCidrBlock(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return d.Get("network_config.0.private_service_connect_config.0.unreachable_cidr_block")
+}
+
+func flattenDataFusionInstanceNetworkConfigPrivateServiceConnectConfigEffectiveUnreachableCidrBlock(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1003,6 +1135,25 @@ func flattenDataFusionInstanceAcceleratorsState(v interface{}, d *schema.Resourc
 	return v
 }
 
+func flattenDataFusionInstanceTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+
+	transformed := make(map[string]interface{})
+	if l, ok := d.GetOkExists("terraform_labels"); ok {
+		for k := range l.(map[string]interface{}) {
+			transformed[k] = v.(map[string]interface{})[k]
+		}
+	}
+
+	return transformed
+}
+
+func flattenDataFusionInstanceEffectiveLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func expandDataFusionInstanceName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return tpgresource.ReplaceVars(d, config, "projects/{{project}}/locations/{{region}}/instances/{{name}}")
 }
@@ -1025,17 +1176,6 @@ func expandDataFusionInstanceEnableStackdriverMonitoring(v interface{}, d tpgres
 
 func expandDataFusionInstanceEnableRbac(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
-}
-
-func expandDataFusionInstanceLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
-	if v == nil {
-		return map[string]string{}, nil
-	}
-	m := make(map[string]string)
-	for k, val := range v.(map[string]interface{}) {
-		m[k] = val.(string)
-	}
-	return m, nil
 }
 
 func expandDataFusionInstanceOptions(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
@@ -1084,6 +1224,20 @@ func expandDataFusionInstanceNetworkConfig(v interface{}, d tpgresource.Terrafor
 		transformed["network"] = transformedNetwork
 	}
 
+	transformedConnectionType, err := expandDataFusionInstanceNetworkConfigConnectionType(original["connection_type"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedConnectionType); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["connectionType"] = transformedConnectionType
+	}
+
+	transformedPrivateServiceConnectConfig, err := expandDataFusionInstanceNetworkConfigPrivateServiceConnectConfig(original["private_service_connect_config"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPrivateServiceConnectConfig); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["privateServiceConnectConfig"] = transformedPrivateServiceConnectConfig
+	}
+
 	return transformed, nil
 }
 
@@ -1092,6 +1246,55 @@ func expandDataFusionInstanceNetworkConfigIpAllocation(v interface{}, d tpgresou
 }
 
 func expandDataFusionInstanceNetworkConfigNetwork(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDataFusionInstanceNetworkConfigConnectionType(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDataFusionInstanceNetworkConfigPrivateServiceConnectConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedNetworkAttachment, err := expandDataFusionInstanceNetworkConfigPrivateServiceConnectConfigNetworkAttachment(original["network_attachment"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedNetworkAttachment); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["networkAttachment"] = transformedNetworkAttachment
+	}
+
+	transformedUnreachableCidrBlock, err := expandDataFusionInstanceNetworkConfigPrivateServiceConnectConfigUnreachableCidrBlock(original["unreachable_cidr_block"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedUnreachableCidrBlock); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["unreachableCidrBlock"] = transformedUnreachableCidrBlock
+	}
+
+	transformedEffectiveUnreachableCidrBlock, err := expandDataFusionInstanceNetworkConfigPrivateServiceConnectConfigEffectiveUnreachableCidrBlock(original["effective_unreachable_cidr_block"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedEffectiveUnreachableCidrBlock); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["effectiveUnreachableCidrBlock"] = transformedEffectiveUnreachableCidrBlock
+	}
+
+	return transformed, nil
+}
+
+func expandDataFusionInstanceNetworkConfigPrivateServiceConnectConfigNetworkAttachment(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDataFusionInstanceNetworkConfigPrivateServiceConnectConfigUnreachableCidrBlock(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDataFusionInstanceNetworkConfigPrivateServiceConnectConfigEffectiveUnreachableCidrBlock(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -1195,4 +1398,15 @@ func expandDataFusionInstanceAcceleratorsAcceleratorType(v interface{}, d tpgres
 
 func expandDataFusionInstanceAcceleratorsState(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandDataFusionInstanceEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }
