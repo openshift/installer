@@ -165,14 +165,14 @@ func (r *clusterReconciler) reconcileDelete(ctx context.Context, clusterCtx *cap
 		if ctrlutil.RemoveFinalizer(secret, infrav1.SecretIdentitySetFinalizer) {
 			log.Info(fmt.Sprintf("Removing finalizer %s", infrav1.SecretIdentitySetFinalizer), "Secret", klog.KObj(secret))
 			if err := r.Client.Update(ctx, secret); err != nil {
-				return reconcile.Result{}, pkgerrors.Wrapf(err, fmt.Sprintf("failed to update Secret %s", klog.KObj(secret)))
+				return reconcile.Result{}, pkgerrors.Wrapf(err, "failed to update Secret %s", klog.KObj(secret))
 			}
 		}
 
 		if secret.DeletionTimestamp.IsZero() {
 			log.Info("Deleting Secret", "Secret", klog.KObj(secret))
 			if err := r.Client.Delete(ctx, secret); err != nil {
-				return reconcile.Result{}, pkgerrors.Wrapf(err, fmt.Sprintf("failed to delete Secret %s", klog.KObj(secret)))
+				return reconcile.Result{}, pkgerrors.Wrapf(err, "failed to delete Secret %s", klog.KObj(secret))
 			}
 		}
 	}
