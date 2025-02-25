@@ -6,7 +6,6 @@ import (
 
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
-	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/openshift/installer/pkg/types/gcp"
 )
@@ -17,41 +16,48 @@ const (
 )
 
 func (o *ClusterUninstaller) listBackendServices(ctx context.Context, typeName string) ([]cloudResource, error) {
-	return o.listBackendServicesWithFilter(ctx, typeName, "items(name),nextPageToken", o.clusterIDFilter(), nil)
-}
-
-func backendServiceBelongsToInstanceGroup(item *compute.BackendService, igURLs sets.Set[string]) bool {
-	if igURLs == nil {
-		return true
-	}
-
-	if len(item.Backends) == 0 {
-		return false
-	}
-	for _, backend := range item.Backends {
-		if !igURLs.Has(backend.Group) {
-			return false
-		}
-	}
-	return true
+	return o.listBackendServicesWithFilter(ctx, typeName, "items(name),nextPageToken",
+		func(item *compute.BackendService) bool {
+			return o.isClusterResource(item.Name)
+		})
 }
 
 // listBackendServicesWithFilter lists backend services in the project that satisfy the filter criteria.
-// The fields parameter specifies which fields should be returned in the result, the filter string contains
-// a filter string passed to the API to filter results.
-func (o *ClusterUninstaller) listBackendServicesWithFilter(ctx context.Context, typeName, fields, filter string, urls sets.Set[string]) ([]cloudResource, error) {
+// The fields parameter specifies which fields should be returned in the result.
+func (o *ClusterUninstaller) listBackendServicesWithFilter(ctx context.Context, typeName, fields string, filterFunc func(item *compute.BackendService) bool) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing backend services")
+	result := []cloudResource{}
 
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
+	pagesFunc := func(list *compute.BackendServiceList) error {
+		for _, item := range list.Items {
+			o.Logger.Debugf("Found backend service: %s", item.Name)
+			if filterFunc(item) {
+				result = append(result, cloudResource{
+					key:      item.Name,
+					name:     item.Name,
+					typeName: typeName,
+					quota: []gcp.QuotaUsage{{
+						Metric: &gcp.Metric{
+							Service: gcp.ServiceComputeEngineAPI,
+							Limit:   "backend_services",
+						},
+						Amount: 1,
+					}},
+				})
+			}
+		}
+		return nil
+	}
+
 	var err error
-	var list *compute.BackendServiceList
 	switch typeName {
 	case globalBackendServiceResource:
-		list, err = o.computeSvc.BackendServices.List(o.ProjectID).Filter(filter).Fields(googleapi.Field(fields)).Context(ctx).Do()
+		err = o.computeSvc.BackendServices.List(o.ProjectID).Fields(googleapi.Field(fields)).Pages(ctx, pagesFunc)
 	case regionBackendServiceResource:
-		list, err = o.computeSvc.RegionBackendServices.List(o.ProjectID, o.Region).Filter(filter).Fields(googleapi.Field(fields)).Context(ctx).Do()
+		err = o.computeSvc.RegionBackendServices.List(o.ProjectID, o.Region).Fields(googleapi.Field(fields)).Pages(ctx, pagesFunc)
 	default:
 		return nil, fmt.Errorf("invalid backend service type %q", typeName)
 	}
@@ -60,26 +66,6 @@ func (o *ClusterUninstaller) listBackendServicesWithFilter(ctx context.Context, 
 		return nil, fmt.Errorf("failed to list backend services: %w", err)
 	}
 
-	result := []cloudResource{}
-	for _, item := range list.Items {
-		o.Logger.Debugf("Found backend service: %s", item.Name)
-		if !backendServiceBelongsToInstanceGroup(item, urls) {
-			o.Logger.Debug("No matching instance group for backend service: %s", item.Name)
-			continue
-		}
-		result = append(result, cloudResource{
-			key:      item.Name,
-			name:     item.Name,
-			typeName: typeName,
-			quota: []gcp.QuotaUsage{{
-				Metric: &gcp.Metric{
-					Service: gcp.ServiceComputeEngineAPI,
-					Limit:   "backend_services",
-				},
-				Amount: 1,
-			}},
-		})
-	}
 	return result, nil
 }
 
