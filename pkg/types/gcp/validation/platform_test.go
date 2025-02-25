@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/gcp"
 )
@@ -157,7 +158,7 @@ func TestValidatePlatform(t *testing.T) {
 			name: "invalid gcp endpoint blank name",
 			platform: &gcp.Platform{
 				Region: "us-east1",
-				ServiceEndpoints: []gcp.ServiceEndpoint{
+				ServiceEndpoints: []configv1.GCPServiceEndpoint{
 					{
 						Name: "",
 						URL:  "https://my-custom-endpoint.example.com/copmute/v1/",
@@ -170,7 +171,7 @@ func TestValidatePlatform(t *testing.T) {
 			name: "invalid gcp endpoint invalid name",
 			platform: &gcp.Platform{
 				Region: "us-east1",
-				ServiceEndpoints: []gcp.ServiceEndpoint{
+				ServiceEndpoints: []configv1.GCPServiceEndpoint{
 					{
 						Name: "badname",
 						URL:  "https://my-custom-endpoint.example.com/copmute/v1/",
@@ -183,13 +184,13 @@ func TestValidatePlatform(t *testing.T) {
 			name: "invalid gcp endpoint duplicate name",
 			platform: &gcp.Platform{
 				Region: "us-east1",
-				ServiceEndpoints: []gcp.ServiceEndpoint{
+				ServiceEndpoints: []configv1.GCPServiceEndpoint{
 					{
-						Name: "compute",
+						Name: configv1.GCPServiceEndpointNameCompute,
 						URL:  "https://my-custom-endpoint.example.com/compute/v1/",
 					},
 					{
-						Name: "compute",
+						Name: configv1.GCPServiceEndpointNameCompute,
 						URL:  "https://my-custom-endpoint.example.com/compute/v2/",
 					},
 				},
@@ -200,9 +201,9 @@ func TestValidatePlatform(t *testing.T) {
 			name: "invalid gcp endpoint url blank",
 			platform: &gcp.Platform{
 				Region: "us-east1",
-				ServiceEndpoints: []gcp.ServiceEndpoint{
+				ServiceEndpoints: []configv1.GCPServiceEndpoint{
 					{
-						Name: "compute",
+						Name: configv1.GCPServiceEndpointNameCompute,
 						URL:  "",
 					},
 				},
@@ -213,9 +214,9 @@ func TestValidatePlatform(t *testing.T) {
 			name: "invalid scheme gcp endpoint url",
 			platform: &gcp.Platform{
 				Region: "us-east1",
-				ServiceEndpoints: []gcp.ServiceEndpoint{
+				ServiceEndpoints: []configv1.GCPServiceEndpoint{
 					{
-						Name: "compute",
+						Name: configv1.GCPServiceEndpointNameCompute,
 						URL:  "http://my-custom-endpoint.example.com/compute/v1/",
 					},
 				},
@@ -226,9 +227,9 @@ func TestValidatePlatform(t *testing.T) {
 			name: "valid gcp endpoint",
 			platform: &gcp.Platform{
 				Region: "us-east1",
-				ServiceEndpoints: []gcp.ServiceEndpoint{
+				ServiceEndpoints: []configv1.GCPServiceEndpoint{
 					{
-						Name: "compute",
+						Name: configv1.GCPServiceEndpointNameCompute,
 						URL:  "https://my-custom-endpoint.example.com/compute/v1/",
 					},
 				},
@@ -239,9 +240,9 @@ func TestValidatePlatform(t *testing.T) {
 			name: "invalid gcp endpoint relative path",
 			platform: &gcp.Platform{
 				Region: "us-east1",
-				ServiceEndpoints: []gcp.ServiceEndpoint{
+				ServiceEndpoints: []configv1.GCPServiceEndpoint{
 					{
-						Name: "compute",
+						Name: configv1.GCPServiceEndpointNameCompute,
 						URL:  "/compute/v1/",
 					},
 				},
@@ -252,9 +253,9 @@ func TestValidatePlatform(t *testing.T) {
 			name: "valid gcp endpoint url no scheme",
 			platform: &gcp.Platform{
 				Region: "us-east1",
-				ServiceEndpoints: []gcp.ServiceEndpoint{
+				ServiceEndpoints: []configv1.GCPServiceEndpoint{
 					{
-						Name: "compute",
+						Name: configv1.GCPServiceEndpointNameCompute,
 						URL:  "my-custom-endpoint.example.com/compute/v1/",
 					},
 				},

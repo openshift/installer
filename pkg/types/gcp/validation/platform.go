@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/gcp"
 )
@@ -80,13 +81,15 @@ var (
 	userLabelKeyPrefixRegex = regexp.MustCompile(`^(?i)(kubernetes\-io|openshift\-io)`)
 
 	supportedEndpointNames = sets.New(
-		gcp.CloudResourceManagerServiceName,
-		gcp.ComputeServiceName,
-		gcp.DNSServiceName,
-		gcp.FileServiceName,
-		gcp.IAMServiceName,
-		gcp.ServiceUsageServiceName,
-		gcp.StorageServiceName,
+		configv1.GCPServiceEndpointNameCompute,
+		configv1.GCPServiceEndpointNameContainer,
+		configv1.GCPServiceEndpointNameCloudResource,
+		configv1.GCPServiceEndpointNameDNS,
+		configv1.GCPServiceEndpointNameFile,
+		configv1.GCPServiceEndpointNameIAM,
+		configv1.GCPServiceEndpointNameServiceUsage,
+		configv1.GCPServiceEndpointNameStorage,
+		configv1.GCPServiceEndpointNameTagManager,
 	)
 )
 
@@ -175,9 +178,9 @@ func validateLabel(key, value string) error {
 	return nil
 }
 
-func validateServiceEndpoints(endpoints []gcp.ServiceEndpoint, fldPath *field.Path) field.ErrorList {
+func validateServiceEndpoints(endpoints []configv1.GCPServiceEndpoint, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	tracker := map[string]int{}
+	tracker := map[configv1.GCPServiceEndpointName]int{}
 	for idx, e := range endpoints {
 		fldp := fldPath.Index(idx)
 		if !supportedEndpointNames.Has(e.Name) {
