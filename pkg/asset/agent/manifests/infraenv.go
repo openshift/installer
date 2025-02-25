@@ -17,6 +17,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/interactive"
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/types"
@@ -47,6 +48,7 @@ func (*InfraEnv) Dependencies() []asset.Asset {
 		&joiner.ClusterInfo{},
 		&agent.OptionalInstallConfig{},
 		&agentconfig.AgentConfig{},
+		&interactive.InstallConfig{},
 	}
 }
 
@@ -56,7 +58,8 @@ func (i *InfraEnv) Generate(_ context.Context, dependencies asset.Parents) error
 	clusterInfo := &joiner.ClusterInfo{}
 	installConfig := &agent.OptionalInstallConfig{}
 	agentConfig := &agentconfig.AgentConfig{}
-	dependencies.Get(installConfig, agentConfig, agentWorkflow, clusterInfo)
+	interactiveInstallConfig := &interactive.InstallConfig{}
+	dependencies.Get(installConfig, agentConfig, agentWorkflow, clusterInfo, interactiveInstallConfig)
 
 	rendezvousIP := ""
 	if agentConfig.Config != nil {
@@ -84,6 +87,14 @@ func (i *InfraEnv) Generate(_ context.Context, dependencies asset.Parents) error
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		err := i.generateManifest(clusterInfo.ClusterName, clusterInfo.Namespace, clusterInfo.SSHKey, clusterInfo.UserCaBundle, clusterInfo.Proxy, clusterInfo.Architecture, nil, rendezvousIP)
+		if err != nil {
+			return err
+		}
+
+	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
+		err := i.generateManifest(
+			interactiveInstallConfig.ClusterName(), interactiveInstallConfig.ClusterNamespace(), interactiveInstallConfig.SSHKey(),
+			"", nil, "", nil, "")
 		if err != nil {
 			return err
 		}
