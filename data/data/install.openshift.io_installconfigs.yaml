@@ -5323,6 +5323,8 @@ spec:
                                 this failure domain
                               items:
                                 type: string
+                              maxItems: 10
+                              minItems: 1
                               type: array
                             resourcePool:
                               description: |-
@@ -5352,6 +5354,7 @@ spec:
                           - computeCluster
                           - datacenter
                           - datastore
+                          - networks
                           type: object
                         zone:
                           description: |-
