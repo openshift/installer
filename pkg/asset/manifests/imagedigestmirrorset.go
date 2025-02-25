@@ -11,6 +11,7 @@ import (
 	apicfgv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/types"
 )
 
 var imageDigestMirrorSetFilename = "image-digest-mirror-set.yaml"
@@ -41,25 +42,7 @@ func (p *ImageDigestMirrorSet) Generate(_ context.Context, dependencies asset.Pa
 	dependencies.Get(installconfig)
 
 	if len(installconfig.Config.ImageDigestSources) > 0 {
-		policy := apicfgv1.ImageDigestMirrorSet{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: apicfgv1.SchemeGroupVersion.String(),
-				Kind:       "ImageDigestMirrorSet",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "image-digest-mirror",
-				// not namespaced
-			},
-		}
-
-		policy.Spec.ImageDigestMirrors = make([]apicfgv1.ImageDigestMirrors, len(installconfig.Config.ImageDigestSources))
-		for gidx, group := range installconfig.Config.ImageDigestSources {
-			mirrors := []apicfgv1.ImageMirror{}
-			for _, m := range group.Mirrors {
-				mirrors = append(mirrors, apicfgv1.ImageMirror(m))
-			}
-			policy.Spec.ImageDigestMirrors[gidx] = apicfgv1.ImageDigestMirrors{Source: group.Source, Mirrors: mirrors}
-		}
+		policy := ConvertImageDigestMirrorSet(installconfig.Config.ImageDigestSources)
 
 		policyData, err := yaml.Marshal(policy)
 		if err != nil {
@@ -84,4 +67,32 @@ func (p *ImageDigestMirrorSet) Files() []*asset.File {
 // Load loads the already-rendered files back from disk.
 func (p *ImageDigestMirrorSet) Load(f asset.FileFetcher) (bool, error) {
 	return false, nil
+}
+
+// ConvertImageDigestMirrorSet returns an ImageDigestMirrorSet object from the
+// installconfig's ImageDigestSources field.
+func ConvertImageDigestMirrorSet(imageDigestSources []types.ImageDigestSource) *apicfgv1.ImageDigestMirrorSet {
+	imageDigestMirrorSet := &apicfgv1.ImageDigestMirrorSet{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: apicfgv1.SchemeGroupVersion.String(),
+			Kind:       "ImageDigestMirrorSet",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "image-digest-mirror",
+			// not namespaced
+		},
+	}
+
+	imageDigestMirrorSet.Spec.ImageDigestMirrors = make([]apicfgv1.ImageDigestMirrors, len(imageDigestSources))
+
+	for idsi, imageDigestSource := range imageDigestSources {
+		mirrors := make([]apicfgv1.ImageMirror, len(imageDigestSource.Mirrors))
+		for mi, mirror := range imageDigestSource.Mirrors {
+			mirrors[mi] = apicfgv1.ImageMirror(mirror)
+		}
+
+		imageDigestMirrorSet.Spec.ImageDigestMirrors[idsi] = apicfgv1.ImageDigestMirrors{Source: imageDigestSource.Source, Mirrors: mirrors}
+	}
+
+	return imageDigestMirrorSet
 }
