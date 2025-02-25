@@ -101,7 +101,7 @@ func newConsoleEncoder(opts ...EncoderConfigOption) zapcore.Encoder {
 	return zapcore.NewConsoleEncoder(encoderConfig)
 }
 
-// Level sets Options.Level, which configures the the minimum enabled logging level e.g Debug, Info.
+// Level sets Options.Level, which configures the minimum enabled logging level e.g Debug, Info.
 // A zap log level should be multiplied by -1 to get the logr verbosity.
 // For example, to get logr verbosity of 3, pass zapcore.Level(-3) to this Opts.
 // See https://pkg.go.dev/github.com/go-logr/zapr for how zap level relates to logr verbosity.
@@ -148,11 +148,6 @@ type Options struct {
 	// DestWriter controls the destination of the log output.  Defaults to
 	// os.Stderr.
 	DestWriter io.Writer
-	// DestWritter controls the destination of the log output.  Defaults to
-	// os.Stderr.
-	//
-	// Deprecated: Use DestWriter instead
-	DestWritter io.Writer
 	// Level configures the verbosity of the logging.
 	// Defaults to Debug when Development is true and Info otherwise.
 	// A zap log level should be multiplied by -1 to get the logr verbosity.
@@ -168,17 +163,14 @@ type Options struct {
 	// underlying Zap logger.
 	ZapOpts []zap.Option
 	// TimeEncoder specifies the encoder for the timestamps in log messages.
-	// Defaults to EpochTimeEncoder as this is the default in Zap currently.
+	// Defaults to RFC3339TimeEncoder.
 	TimeEncoder zapcore.TimeEncoder
 }
 
 // addDefaults adds defaults to the Options.
 func (o *Options) addDefaults() {
-	if o.DestWriter == nil && o.DestWritter == nil {
+	if o.DestWriter == nil {
 		o.DestWriter = os.Stderr
-	} else if o.DestWriter == nil && o.DestWritter != nil {
-		// while misspelled DestWritter is deprecated but still not removed
-		o.DestWriter = o.DestWritter
 	}
 
 	if o.Development {
@@ -217,7 +209,7 @@ func (o *Options) addDefaults() {
 	}
 
 	if o.TimeEncoder == nil {
-		o.TimeEncoder = zapcore.EpochTimeEncoder
+		o.TimeEncoder = zapcore.RFC3339TimeEncoder
 	}
 	f := func(ecfg *zapcore.EncoderConfig) {
 		ecfg.EncodeTime = o.TimeEncoder

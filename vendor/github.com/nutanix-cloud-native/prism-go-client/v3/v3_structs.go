@@ -1625,10 +1625,9 @@ type Metadata struct {
 	// Applied on Prism Central only. Indicate whether force to translate the spec of the fanout request to fit the target cluster API schema.
 	ShouldForceTranslate *bool `json:"should_force_translate,omitempty" mapstructure:"should_force_translate,omitempty"`
 
-	// TODO: add if necessary
-	// CategoriesMapping    map[string][]string `json:"categories_mapping,omitempty" mapstructure:"categories_mapping,omitempty"`
-	// EntityVersion        *string             `json:"entity_version,omitempty" mapstructure:"entity_version,omitempty"`
-	// UseCategoriesMapping *bool               `json:"use_categories_mapping,omitempty" mapstructure:"use_categories_mapping,omitempty"`
+	CategoriesMapping    map[string][]string `json:"categories_mapping,omitempty" mapstructure:"categories_mapping,omitempty"`
+	EntityVersion        *string             `json:"entity_version,omitempty" mapstructure:"entity_version,omitempty"`
+	UseCategoriesMapping *bool               `json:"use_categories_mapping,omitempty" mapstructure:"use_categories_mapping,omitempty"`
 }
 
 // NetworkSecurityRuleIntentInput An intentful representation of a network_security_rule
@@ -2356,14 +2355,30 @@ type ProtectionRuleInput struct {
 
 // RecoveryPlanResources represents the resources of recovery plan
 type RecoveryPlanResources struct {
-	StageList  []*StageList `json:"stage_list,omitempty"`
-	Parameters *Parameters  `json:"parameters,omitempty"`
+	VolumeGroupRecoveryInfoList []*VolumeGroupRecoveryInfoList `json:"volume_group_recovery_info_list,omitempty"`
+	StageList                   []*StageList                   `json:"stage_list,omitempty"`
+	Parameters                  *Parameters                    `json:"parameters,omitempty"`
+}
+
+// VolumeGroupRecoveryInfoList encapsulates the specification of volume
+// group instances to be included in the recovery plan.
+type VolumeGroupRecoveryInfoList struct {
+	CategoryFilter *CategoryFilter `json:"category_filter,omitempty"`
 }
 
 // Parameters represents a object for resource of recovery plan
 type Parameters struct {
 	FloatingIPAssignmentList []*FloatingIPAssignmentList `json:"floating_ip_assignment_list,omitempty"`
 	NetworkMappingList       []*NetworkMappingList       `json:"network_mapping_list,omitempty"`
+	AvailabilityZoneList     []*AvailabilityZoneList     `json:"availability_zone_list,omitempty"`
+	PrimaryLocationIndex     *int64                      `json:"primary_location_index,omitempty"`
+}
+
+// AvailabilityZoneList represents objects that encapsulate the list of AOS
+// clusters in an AZ.
+type AvailabilityZoneList struct {
+	ClusterReferenceList []*Reference `json:"cluster_reference_list,omitempty" mapstructure:"cluster_reference_list,omitempty"`
+	AvailabilityZoneURL  *string      `json:"availability_zone_url"`
 }
 
 // FloatingIPAssignmentList represents a object for resource of recovery plan
@@ -2555,4 +2570,195 @@ type AddressGroupListEntry struct {
 type AddressGroupListResponse struct {
 	Metadata *ListMetadataOutput      `json:"metadata,omitempty"`
 	Entities []*AddressGroupListEntry `json:"entities,omitempty"`
+}
+
+type RecoveryPlanJobIntentInput struct {
+	APIVersion *string          `json:"api_version,omitempty"`
+	Metadata   *Metadata        `json:"metadata"`
+	Spec       *RecoveryPlanJob `json:"spec"`
+}
+
+type RecoveryPlanJob struct {
+	Name      *string                   `json:"name"`
+	Resources *RecoveryPlanJobResources `json:"resources"`
+}
+
+type RecoveryPlanJobResources struct {
+	ExecutionParameters   *RecoveryPlanJobResourcesExecutionParameters `json:"execution_parameters"`
+	RecoveryPlanReference *Reference                                   `json:"recovery_plan_reference"`
+}
+
+type RecoveryPlanJobResourcesExecutionParameters struct {
+	ActionType                        *string                 `json:"action_type"`
+	FailedAvailabilityZoneList        []*AvailabilityZoneList `json:"failed_availability_zone_list"`
+	RecoveryAvailabilityZoneList      []*AvailabilityZoneList `json:"recovery_availability_zone_list"`
+	RecoveryReferenceTime             *time.Time              `json:"recovery_reference_time,omitempty"`
+	ShouldContinueOnValidationFailure *bool                   `json:"should_continue_on_validation_failure,omitempty"`
+}
+
+type RecoveryPlanJobIntentResponse struct {
+	APIVersion *string                   `json:"api_version"`
+	Metadata   *Metadata                 `json:"metadata"`
+	Spec       *RecoveryPlanJob          `json:"spec,omitempty"`
+	Status     *RecoveryPlanJobDefStatus `json:"status,omitempty"`
+}
+
+type RecoveryPlanJobDefStatus struct {
+	CleanupStatus                  *RecoveryPlanJobExecutionPhasesStatus `json:"cleanup_status,omitempty"`
+	EndTime                        *time.Time                            `json:"end_time,omitempty"`
+	ExecutionStatus                *RecoveryPlanJobExecutionPhasesStatus `json:"execution_status,omitempty"`
+	Name                           *string                               `json:"name"`
+	ParentRecoveryPlanJobReference *Reference                            `json:"parent_recovery_plan_job_reference,omitempty"`
+	RecoveryPlanSpecification      *RecoveryPlanSpec                     `json:"recovery_plan_specification,omitempty"`
+	Resources                      *RecoveryPlanJobResources             `json:"resources"`
+	RootRecoveryPlanJobReference   *Reference                            `json:"root_recovery_plan_job_reference,omitempty"`
+	StartTime                      *time.Time                            `json:"start_time,omitempty"`
+	ValidationInformation          *RecoveryPlanJobValidationInformation `json:"validation_information,omitempty"`
+	WitnessAddress                 string                                `json:"witness_address,omitempty"`
+}
+
+type RecoveryPlanJobExecutionPhasesStatus struct {
+	OperationStatus      *RecoveryPlanJobStepStatus `json:"operation_status,omitempty"`
+	PercentageComplete   *int32                     `json:"percentage_complete"`
+	PostprocessingStatus *RecoveryPlanJobStepStatus `json:"postprocessing_status,omitempty"`
+	PreprocessingStatus  *RecoveryPlanJobStepStatus `json:"preprocessing_status,omitempty"`
+	Status               *string                    `json:"status"`
+}
+
+type RecoveryPlanJobStepStatus struct {
+	PercentageComplete *int32  `json:"percentage_complete"`
+	Status             *string `json:"status"`
+}
+
+type RecoveryPlanJobValidationInformation struct {
+	ErrorsList   []*RecoveryPlanValidationMessage `json:"errors_list"`
+	WarningsList []*RecoveryPlanValidationMessage `json:"warnings_list"`
+}
+
+type RecoveryPlanValidationMessage struct {
+	AffectedAnyReferenceList      []*Reference                 `json:"affected_any_reference_list"`
+	CauseAndResolutionMessageList []*CauseAndResolutionMessage `json:"cause_and_resolution_message_list"`
+	ImpactMessageList             []string                     `json:"impact_message_list"`
+	Message                       *string                      `json:"message"`
+	ValidationType                *string                      `json:"validation_type"`
+}
+
+type CauseAndResolutionMessage struct {
+	Cause          *string  `json:"cause"`
+	ResolutionList []string `json:"resolution_list"`
+}
+
+type RecoveryPlanJobResponse struct {
+	TaskUUID string `json:"task_uuid,omitempty"`
+}
+
+type RecoveryPlanJobExecutionStatus struct {
+	OperationStatus      *RecoveryPlanJobPhaseExecutionStatus `json:"operation_status,omitempty"`
+	PostprocessingStatus *RecoveryPlanJobPhaseExecutionStatus `json:"postprocessing_status,omitempty"`
+	PreprocessingStatus  *RecoveryPlanJobPhaseExecutionStatus `json:"preprocessing_status,omitempty"`
+}
+
+type RecoveryPlanJobPhaseExecutionStatus struct {
+	PercentageComplete      int32                                 `json:"percentage_complete,omitempty"`
+	Status                  string                                `json:"status,omitempty"`
+	StepExecutionStatusList []*RecoveryPlanJobStepExecutionStatus `json:"step_execution_status_list"`
+}
+
+type RecoveryPlanJobStepExecutionStatus struct {
+	AnyEntityReferenceList  []*Reference                  `json:"any_entity_reference_list"`
+	EndTime                 *time.Time                    `json:"end_time,omitempty"`
+	ErrorCode               string                        `json:"error_code,omitempty"`
+	ErrorDetail             string                        `json:"error_detail,omitempty"`
+	Message                 string                        `json:"message,omitempty"`
+	OperationType           *string                       `json:"operation_type"`
+	ParentStepUUID          string                        `json:"parent_step_uuid,omitempty"`
+	PercentageComplete      int32                         `json:"percentage_complete,omitempty"`
+	RecoveredEntityInfoList []*RecoveredEntityInformation `json:"recovered_entity_info_list"`
+	StartTime               *time.Time                    `json:"start_time,omitempty"`
+	Status                  *string                       `json:"status"`
+	StepSequenceNumber      int64                         `json:"step_sequence_number,omitempty"`
+	StepUUID                *string                       `json:"step_uuid"`
+}
+
+type RecoveredEntityInformation struct {
+	ErrorDetail           string           `json:"error_detail,omitempty"`
+	RecoveredEntityInfo   *RecoveredEntity `json:"recovered_entity_info,omitempty"`
+	SourceEntityReference *Reference       `json:"source_entity_reference,omitempty"`
+}
+
+type RecoveredEntity struct {
+	EntityName string `json:"entity_name,omitempty"`
+	EntityUUID string `json:"entity_uuid,omitempty"`
+}
+
+type RecoveryPlanJobListResponse struct {
+	APIVersion *string                          `json:"api_version"`
+	Entities   []*RecoveryPlanJobIntentResponse `json:"entities"`
+	Metadata   *ListMetadataOutput              `json:"metadata"`
+}
+
+type RecoveryPlanJobActionRequest struct {
+	RerunRecoveryPlanJobUUID               string `json:"rerun_recovery_plan_job_uuid,omitempty"`
+	ShouldContinueRerunOnValidationFailure *bool  `json:"should_continue_rerun_on_validation_failure,omitempty"`
+}
+
+type GroupsRequestedAttribute struct {
+	Attribute *string `json:"attribute"`
+}
+
+type GroupsGetEntitiesRequest struct {
+	EntityType            *string                     `json:"entity_type"`
+	FilterCriteria        string                      `json:"filter_criteria,omitempty"`
+	GroupMemberAttributes []*GroupsRequestedAttribute `json:"group_member_attributes"`
+}
+
+type GroupsGetEntitiesResponse struct {
+	FilteredGroupCount int64                `json:"filtered_group_count,omitempty"`
+	GroupResults       []*GroupsGroupResult `json:"group_results"`
+}
+
+type GroupsGroupResult struct {
+	EntityResults []*GroupsEntity `json:"entity_results"`
+}
+
+type GroupsEntity struct {
+	Data     []*GroupsFieldData `json:"data"`
+	EntityID string             `json:"entity_id,omitempty"`
+}
+
+type GroupsFieldData struct {
+	Name   string                 `json:"name,omitempty"`
+	Values []*GroupsTimevaluePair `json:"values"`
+}
+
+type GroupsTimevaluePair struct {
+	Time   int64    `json:"time,omitempty"`
+	Values []string `json:"values"`
+}
+
+type AvailabilityZoneIntentResponse struct {
+	APIVersion *string                 `json:"api_version"`
+	Metadata   *Metadata               `json:"metadata"`
+	Spec       *AvailabilityZoneSpec   `json:"spec,omitempty"`
+	Status     *AvailabilityZoneStatus `json:"status,omitempty"`
+}
+
+// AvailabilityZone Input Definition.
+type AvailabilityZoneSpec struct {
+	Name      *string                    `json:"name,omitempty"`      // The name of the AZ
+	Resources *AvailabilityZoneResources `json:"resources,omitempty"` // AvailabilityZone Resource Definition
+}
+
+// AvailabilityZone Resource Definition
+type AvailabilityZoneResources struct {
+	ManagementUrl       *string `json:"management_url,omitempty"` // The URL of the management server
+	ManagementPlaneType *string `json:"management_plane_type"`    // The type of the management plane
+}
+
+// AvailabilityZone status definition.
+type AvailabilityZoneStatus struct {
+	Name        *string                    `json:"name,omitempty"`      // The name of the AZ
+	Resources   *AvailabilityZoneResources `json:"resources,omitempty"` // AvailabilityZone Resource Definition
+	MessageList []MessageResource          `json:"message_list,omitempty"`
+	State       *string                    `json:"state,omitempty"` // The state of the entity
 }

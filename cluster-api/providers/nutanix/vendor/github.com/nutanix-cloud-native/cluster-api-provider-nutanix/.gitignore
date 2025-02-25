@@ -7,12 +7,14 @@
 *.dylib
 bin
 testbin/*
+*.tmp
 
 # Test binary, build with `go test -c`
 *.test
 
 # auto-generated e2e cluster-template yaml files
 test/e2e/data/infrastructure-nutanix/*/cluster-template*.yaml
+test/e2e/data/infrastructure-nutanix/*/clusterclass-*.yaml
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
@@ -117,6 +119,7 @@ coverage.xml
 clusterctl.yaml
 cluster.yaml
 *.workload.kubeconfig
-
-junit-report.xml
-
+/.local/
+/.devbox/
+mycluster-without-topology.yaml
+yamllint-checkstyle.xml
