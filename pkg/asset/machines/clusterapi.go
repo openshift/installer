@@ -289,6 +289,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 				Role:            "master",
 				UserDataSecret:  "master-user-data",
 				HyperVGen:       hyperVGen,
+				RHCOSImage:      rhcosImage.ControlPlane,
 				UseImageGallery: false,
 				Private:         installConfig.Config.Publish == types.InternalPublishingStrategy,
 				UserTags:        installConfig.Config.Platform.Azure.UserTags,

@@ -139,11 +139,24 @@ func osImage(ctx context.Context, config *types.InstallConfig, nodeArch types.Ar
 		if ext == nil {
 			return "", fmt.Errorf("%s: No azure build found", st.FormatPrefix(archName))
 		}
-		azd := ext.AzureDisk
-		if azd == nil {
-			return "", fmt.Errorf("%s: No azure build found", st.FormatPrefix(archName))
+		azm := ext.Marketplace
+		if azm == nil {
+			return "", fmt.Errorf("%s: No marketplace found", st.FormatPrefix(archName))
 		}
-		return azd.URL, nil
+		maz := azm.Azure
+		if maz == nil {
+			return "", fmt.Errorf("%s: No azure marketplace found", st.FormatPrefix(archName))
+		}
+		azp := maz.NoPurchasePlan
+		if azp == nil {
+			return "", fmt.Errorf("%s: No azure marketplace plan found", st.FormatPrefix(archName))
+		}
+		azi := azp.Gen2
+		if azi == nil {
+			return "", fmt.Errorf("%s: No azure gen2 marketplace image found", st.FormatPrefix(archName))
+		}
+		//TODO: move all this nil checking to a function
+		return azi.URN(), nil
 	case baremetal.Name:
 		// Check for image URL override
 		if oi := config.Platform.BareMetal.ClusterOSImage; oi != "" {
