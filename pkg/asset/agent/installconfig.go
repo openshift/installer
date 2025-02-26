@@ -19,6 +19,7 @@ import (
 	baremetalvalidation "github.com/openshift/installer/pkg/types/baremetal/validation"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/none"
+	nonevalidation "github.com/openshift/installer/pkg/types/none/validation"
 	"github.com/openshift/installer/pkg/types/validation"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -145,7 +146,7 @@ func (a *OptionalInstallConfig) validatePlatformsByName(installConfig *types.Ins
 		allErrs = append(allErrs, a.validateVSpherePlatform(installConfig)...)
 	}
 
-	if installConfig.Platform.Name() == baremetal.Name {
+	if installConfig.Platform.Name() == baremetal.Name || installConfig.Platform.Name() == none.Name {
 		allErrs = append(allErrs, a.validateBMCConfig(installConfig)...)
 	}
 
@@ -340,20 +341,43 @@ func (a *OptionalInstallConfig) GetBaremetalHosts() []*baremetal.Host {
 func (a *OptionalInstallConfig) validateBMCConfig(installConfig *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
 
-	bmcConfigured := false
-	for _, host := range installConfig.Platform.BareMetal.Hosts {
-		if host.BMC.Address == "" {
-			continue
+	if a.isBmcConfigured(installConfig) {
+		switch installConfig.Platform.Name() {
+		case baremetal.Name:
+			{
+				fieldPath := field.NewPath("Platform", "BareMetal")
+				allErrs = append(allErrs, baremetalvalidation.ValidateProvisioningNetworking(installConfig.Platform.BareMetal, installConfig.Networking, fieldPath)...)
+			}
+		case none.Name:
+			{
+				fieldPath := field.NewPath("Platform", "None")
+				allErrs = append(allErrs, nonevalidation.ValidateFencingCredentials(installConfig.Platform.None.FencingCredentials, fieldPath)...)
+			}
 		}
-		bmcConfigured = true
-	}
-
-	if bmcConfigured {
-		fieldPath := field.NewPath("Platform", "BareMetal")
-		allErrs = append(allErrs, baremetalvalidation.ValidateProvisioningNetworking(installConfig.Platform.BareMetal, installConfig.Networking, fieldPath)...)
 	}
 
 	return allErrs
+}
+
+func (a *OptionalInstallConfig) isBmcConfigured(installConfig *types.InstallConfig) bool {
+	bmcConfigured := false
+	switch installConfig.Platform.Name() {
+	case baremetal.Name:
+		for _, host := range installConfig.Platform.BareMetal.Hosts {
+			if host.BMC.Address == "" {
+				continue
+			}
+			bmcConfigured = true
+		}
+	case none.Name:
+		for _, fc := range installConfig.Platform.None.FencingCredentials {
+			if fc.BMC.Address == "" {
+				continue
+			}
+			bmcConfigured = true
+		}
+	}
+	return bmcConfigured
 }
 
 func warnUnusedConfig(installConfig *types.InstallConfig) {
