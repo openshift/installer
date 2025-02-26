@@ -5,6 +5,7 @@ import (
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/common"
 )
 
 // AgentConfigVersion is the version supported by this package.
@@ -40,5 +41,5 @@ type Host struct {
 	// list of interfaces and mac addresses
 	Interfaces    []*aiv1beta1.Interface `json:"interfaces,omitempty"`
 	NetworkConfig aiv1beta1.NetConfig    `json:"networkConfig,omitempty"`
-	BMC           baremetal.BMC
+	BMC           common.BMC
 }

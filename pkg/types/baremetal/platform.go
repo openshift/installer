@@ -5,15 +5,8 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/types/common"
 )
-
-// BMC stores the information about a baremetal host's management controller.
-type BMC struct {
-	Username                       string `json:"username" validate:"required"`
-	Password                       string `json:"password" validate:"required"`
-	Address                        string `json:"address" validate:"required,uniqueField"`
-	DisableCertificateVerification bool   `json:"disableCertificateVerification"`
-}
 
 // BootMode puts the server in legacy (BIOS), UEFI secure boot or UEFI mode for
 // booting. Secure boot is only enabled during the final instance boot.
@@ -36,7 +29,7 @@ const (
 // Host stores all the configuration data for a baremetal host.
 type Host struct {
 	Name            string           `json:"name,omitempty" validate:"required,uniqueField"`
-	BMC             BMC              `json:"bmc"`
+	BMC             common.BMC       `json:"bmc"`
 	Role            string           `json:"role"`
 	BootMACAddress  string           `json:"bootMACAddress" validate:"required,uniqueField"`
 	HardwareProfile string           `json:"hardwareProfile"`
