@@ -172,7 +172,12 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	// Use a custom resolver if using an Internal publishing strategy
 	if installConfig.Config.Publish == types.InternalPublishingStrategy {
-		dnsServerIP, err := installConfig.PowerVS.GetDNSServerIP(context.TODO(), installConfig.Config.PowerVS.VPCName)
+		var dnsServerIP string
+		err := installConfig.PowerVS.EnsureVPCNameIsSpecifiedForInternal(installConfig.Config.PowerVS.VPCName)
+		if err != nil {
+			return nil, err
+		}
+		dnsServerIP, err = installConfig.PowerVS.GetDNSServerIP(context.TODO(), installConfig.Config.PowerVS.VPCName)
 		if err != nil {
 			return nil, fmt.Errorf("unable to find a DNS server for specified VPC: %s %w", installConfig.Config.PowerVS.VPCName, err)
 		}
