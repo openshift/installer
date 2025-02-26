@@ -40,7 +40,7 @@ func validInstallConfig() *types.InstallConfig {
 		},
 		BaseDomain:   "test-domain",
 		Networking:   validIPv4NetworkingConfig(),
-		ControlPlane: validMachinePool("master"),
+		ControlPlane: validControlPlaneMachinePool("master"),
 		Compute:      []types.MachinePool{*validMachinePool("worker")},
 		Platform: types.Platform{
 			AWS: validAWSPlatform(),
@@ -53,6 +53,11 @@ func validInstallConfig() *types.InstallConfig {
 			NoProxy:    "valid-proxy.com,172.30.0.0/16",
 		},
 	}
+}
+func validSNOInstallConfig() *types.InstallConfig {
+	installConfig := validInstallConfig()
+	installConfig.ControlPlane = validMachinePool("master")
+	return installConfig
 }
 
 func validAWSPlatform() *aws.Platform {
@@ -161,8 +166,28 @@ func validBareMetalPlatform() *baremetal.Platform {
 			},
 			{
 				Name:           "host2",
-				Role:           "worker",
+				Role:           "master",
 				BootMACAddress: "CA:FE:CA:FE:00:01",
+				BMC: baremetal.BMC{
+					Username: "root",
+					Password: "password",
+					Address:  "ipmi://192.168.111.1",
+				},
+			},
+			{
+				Name:           "host3",
+				Role:           "master",
+				BootMACAddress: "CA:FE:CA:FE:00:02",
+				BMC: baremetal.BMC{
+					Username: "root",
+					Password: "password",
+					Address:  "ipmi://192.168.111.1",
+				},
+			},
+			{
+				Name:           "host4",
+				Role:           "worker",
+				BootMACAddress: "CA:FE:CA:FE:00:04",
 				BMC: baremetal.BMC{
 					Username: "root",
 					Password: "password",
@@ -819,7 +844,7 @@ func TestValidateInstallConfig(t *testing.T) {
 		{
 			name: "no compute replicas",
 			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
+				c := validSNOInstallConfig()
 				c.Compute = []types.MachinePool{
 					func() types.MachinePool {
 						p := *validMachinePool("worker")
@@ -2580,7 +2605,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 		},
 		{
-			name: "invalid disabled CloudController configuration platform External 2",
+			name: "invalid disabled CloudController configuration platform External 3",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Platform.AWS = nil
