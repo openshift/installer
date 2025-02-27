@@ -203,6 +203,13 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 			}
 			config.Status.PlatformStatus.GCP.ResourceTags = resourceTags
 		}
+
+		config.Status.PlatformStatus.GCP.ServiceEndpoints = installConfig.Config.Platform.GCP.ServiceEndpoints
+		sort.Slice(config.Status.PlatformStatus.GCP.ServiceEndpoints, func(i, j int) bool {
+			return config.Status.PlatformStatus.GCP.ServiceEndpoints[i].Name <
+				config.Status.PlatformStatus.GCP.ServiceEndpoints[j].Name
+		})
+
 		// If the user has requested the use of a DNS provisioned by them, then OpenShift needs to
 		// start an in-cluster DNS for the installation to succeed. The user can then configure their
 		// DNS post-install.

@@ -8,7 +8,6 @@ import (
 	v1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/dns"
-	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -33,9 +32,9 @@ func TestFeatureGates(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.GCP = validGCPPlatform()
-				c.GCP.ServiceEndpoints = []gcp.ServiceEndpoint{
+				c.GCP.ServiceEndpoints = []v1.GCPServiceEndpoint{
 					{
-						Name: gcp.ComputeServiceName,
+						Name: v1.GCPServiceEndpointNameCompute,
 						URL:  "https://compute.googleapis.com",
 					},
 				}
