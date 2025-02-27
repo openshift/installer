@@ -853,6 +853,10 @@ github.com/hexops/gotextdiff/span
 # github.com/inconshreveable/mousetrap v1.1.0
 ## explicit; go 1.18
 github.com/inconshreveable/mousetrap
+# github.com/jarcoal/httpmock v1.3.1
+## explicit; go 1.18
+github.com/jarcoal/httpmock
+github.com/jarcoal/httpmock/internal
 # github.com/jinzhu/inflection v1.0.0
 ## explicit
 github.com/jinzhu/inflection
