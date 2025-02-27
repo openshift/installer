@@ -703,7 +703,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 		}
 	}
 
-	data, err := userDataSecret(workerUserDataSecretName, wign.File.Data)
+	data, err := UserDataSecret(workerUserDataSecretName, wign.File.Data)
 	if err != nil {
 		return errors.Wrap(err, "failed to create user-data secret for worker machines")
 	}
