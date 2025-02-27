@@ -3,7 +3,6 @@ package ibmcloud
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 
 	"github.com/IBM/go-sdk-core/v5/core"
@@ -17,8 +16,8 @@ import (
 )
 
 const (
-	privateHostPrefix = "api-int."
-	publicHostPrefix  = "api."
+	PrivateHostPrefix = "api-int."
+	PublicHostPrefix  = "api."
 )
 
 // Metadata holds additional metadata for InstallConfig resources that
@@ -85,15 +84,7 @@ func (m *Metadata) AccountID(ctx context.Context) (string, error) {
 }
 
 // CreateDNSRecord creates a CNAME DNS Record in the IBM Cloud Internet Services zone or DNS Services zone for a Load Balancer hostname, based on the PublishStrategy.
-func (m *Metadata) CreateDNSRecord(ctx context.Context, clusterDomain string, loadBalancer *vpcv1.LoadBalancer) error {
-	var recordName string
-	// Based on the name of the Load Balancer (either for kubernetes API public or private traffic), build the record name.
-	if strings.HasSuffix(*loadBalancer.Name, KubernetesAPIPublicSuffix) {
-		recordName = fmt.Sprintf("%s%s", publicHostPrefix, clusterDomain)
-	} else if strings.HasSuffix(*loadBalancer.Name, KubernetesAPIPrivateSuffix) {
-		recordName = fmt.Sprintf("%s%s", privateHostPrefix, clusterDomain)
-	}
-
+func (m *Metadata) CreateDNSRecord(ctx context.Context, recordName string, loadBalancer *vpcv1.LoadBalancer) error {
 	client, err := m.Client()
 	if err != nil {
 		return fmt.Errorf("failed to create ibmcloud client: %w", err)

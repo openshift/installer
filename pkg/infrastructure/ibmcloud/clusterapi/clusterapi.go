@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -215,6 +216,11 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		return fmt.Errorf("load balancers missing from ibmcloudCluster.Status in InfraReady")
 	}
 
+	domain := in.InstallConfig.Config.ClusterDomain()
+
+	// For now, we expect one of two LB configurations,
+	// 1. One Public LB for Public APIServer traffic and one Private LB for Private APIServer traffic (Public/External clusters).
+	// 2. One Private LB for Private APIServer traffic and "Public" traffic only accessible within VPC (Private/Internal clusters).
 	for lbID, lb := range ibmcloudCluster.Status.Network.LoadBalancers {
 		// Verify that the Load Balancer is ready (active).
 		if lb.State != capibmcloud.VPCLoadBalancerStateActive {
@@ -227,7 +233,34 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		} else if lbDetails == nil {
 			return fmt.Errorf("failed to find load balancer for dns record creation by id: %s", lbID)
 		}
-		err = metadata.CreateDNSRecord(ctx, in.InstallConfig.Config.ClusterDomain(), lbDetails)
+		switch in.InstallConfig.Config.Publish {
+		case types.ExternalPublishingStrategy:
+			var recordName string
+			// Build the record name based on the LB name/type, ignore LB's not named and configured for Kube API Server traffic.
+			if strings.HasSuffix(*lbDetails.Name, ibmcloudic.KubernetesAPIPublicSuffix) {
+				recordName = fmt.Sprintf("%s%s", ibmcloudic.PublicHostPrefix, domain)
+			} else if strings.HasSuffix(*lbDetails.Name, ibmcloudic.KubernetesAPIPrivateSuffix) {
+				recordName = fmt.Sprintf("%s%s", ibmcloudic.PrivateHostPrefix, domain)
+			} else {
+				logrus.Debug("ignoring unexpected load balancer for external cluster", "lbName", *lbDetails.Name)
+				continue
+			}
+			err = metadata.CreateDNSRecord(ctx, recordName, lbDetails)
+		case types.InternalPublishingStrategy:
+			// Create both DNS Records for the expected single Private LB, ignore the LB if not named and configured for Kube API Server traffic.
+			if !strings.HasSuffix(*lbDetails.Name, ibmcloudic.KubernetesAPIPrivateSuffix) {
+				logrus.Debug("ignoring unexpected load balancer for internal cluster", "lbName", *lbDetails.Name)
+				continue
+			}
+			err = metadata.CreateDNSRecord(ctx, fmt.Sprintf("%s%s", ibmcloudic.PublicHostPrefix, domain), lbDetails)
+			if err != nil {
+				return fmt.Errorf("failed to create public dns record for private load balancer: %w", err)
+			}
+			logrus.Debug("public dns record created for private load balancer", "hostName", *lbDetails.Hostname)
+			err = metadata.CreateDNSRecord(ctx, fmt.Sprintf("%s%s", ibmcloudic.PrivateHostPrefix, domain), lbDetails)
+		default:
+			return fmt.Errorf("failed to create dns record, invalid publish strategy: %s", in.InstallConfig.Config.Publish)
+		}
 		if err != nil {
 			return fmt.Errorf("failed to create dns record for load balancer: %w", err)
 		}
