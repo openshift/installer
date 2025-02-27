@@ -27,13 +27,13 @@ require (
 	github.com/Azure/go-autorest/autorest v0.11.29
 	github.com/Azure/go-autorest/autorest/to v0.4.0
 	github.com/IBM-Cloud/bluemix-go v0.0.0-20211102075456-ffc4e11dfb16
-	github.com/IBM-Cloud/power-go-client v1.8.3
-	github.com/IBM/go-sdk-core/v5 v5.18.1
-	github.com/IBM/ibm-cos-sdk-go v1.11.1
+	github.com/IBM-Cloud/power-go-client v1.9.0
+	github.com/IBM/go-sdk-core/v5 v5.18.5
+	github.com/IBM/ibm-cos-sdk-go v1.12.1
 	github.com/IBM/keyprotect-go-client v0.12.2
 	github.com/IBM/networking-go-sdk v0.45.0
-	github.com/IBM/platform-services-go-sdk v0.71.0
-	github.com/IBM/vpc-go-sdk v0.62.0
+	github.com/IBM/platform-services-go-sdk v0.75.0
+	github.com/IBM/vpc-go-sdk v0.64.0
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
 	github.com/aws/aws-sdk-go v1.55.5
@@ -129,7 +129,7 @@ require (
 	sigs.k8s.io/cluster-api-provider-aws/v2 v2.6.1-0.20241026111253-5b4f7c1acb52
 	sigs.k8s.io/cluster-api-provider-azure v1.15.1-0.20240617212811-a52056dfb88c
 	sigs.k8s.io/cluster-api-provider-gcp v1.7.1-0.20240724153512-c3b8b533143c
-	sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0
+	sigs.k8s.io/cluster-api-provider-ibmcloud v0.10.0
 	sigs.k8s.io/cluster-api-provider-openstack v0.11.1
 	sigs.k8s.io/cluster-api-provider-vsphere v1.12.0-rc.0.0.20241223082411-2880c92b15b6
 	sigs.k8s.io/controller-runtime v0.19.4
@@ -263,7 +263,7 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
-	github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace // indirect
+	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
@@ -281,7 +281,7 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/mod v0.22.0 // indirect
-	golang.org/x/net v0.33.0 // indirect
+	golang.org/x/net v0.35.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
 	golang.org/x/tools v0.28.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
@@ -315,8 +315,6 @@ replace (
 // sigs.k8s.io/cluster-api => sigs.k8s.io/cluster-api v0.4.5
 // sigs.k8s.io/cluster-api-provider-aws => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20200929152424-eab2e087f366 // Indirect dependency through MAO from cluster API providers
 )
-
-replace sigs.k8s.io/cluster-api-provider-ibmcloud => sigs.k8s.io/cluster-api-provider-ibmcloud v0.9.0-beta.1.0.20241119124454-8460807566cf
 
 replace github.com/openshift/assisted-service/api => github.com/openshift/assisted-service/api v0.0.0-20241001055825-63e8b0d3ad63
 
