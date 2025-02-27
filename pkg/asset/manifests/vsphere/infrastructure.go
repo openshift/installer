@@ -2,6 +2,7 @@ package vsphere
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -75,6 +76,8 @@ func GetInfraPlatformSpec(ic *installconfig.InstallConfig, clusterID string) *co
 	platformSpec.APIServerInternalIPs = types.StringsToIPs(icPlatformSpec.APIVIPs)
 	platformSpec.IngressIPs = types.StringsToIPs(icPlatformSpec.IngressVIPs)
 	platformSpec.MachineNetworks = types.MachineNetworksToCIDRs(ic.Config.MachineNetwork)
+	platformSpec.MachineNetworks = append(platformSpec.MachineNetworks, vipsToCIDRs(ic.Config.VSphere.APIVIPs)...)
+	platformSpec.MachineNetworks = append(platformSpec.MachineNetworks, vipsToCIDRs(ic.Config.VSphere.IngressVIPs)...)
 
 	if ic.Config.EnabledFeatureGates().Enabled(features.FeatureGateVSphereMultiNetworks) {
 		logrus.Debug("Multi-networks feature gate enabled")
@@ -97,4 +100,17 @@ func GetInfraPlatformSpec(ic *installconfig.InstallConfig, clusterID string) *co
 		}
 	}
 	return &platformSpec
+}
+
+// vipsToCIDRs takes a single ip address and converts it to CIDR notation.
+func vipsToCIDRs(vips []string) []configv1.CIDR {
+	cidrs := make([]configv1.CIDR, len(vips))
+	for i, vip := range vips {
+		mask := "/32"
+		if strings.Count(vip, ":") >= 2 {
+			mask = "/128"
+		}
+		cidrs[i] = configv1.CIDR(vip + mask)
+	}
+	return cidrs
 }

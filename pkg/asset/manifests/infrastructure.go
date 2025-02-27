@@ -279,11 +279,12 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 		}
 
 		config.Spec.PlatformSpec.VSphere = vsphereinfra.GetInfraPlatformSpec(installConfig, clusterID.InfraID)
-		if _, exists := cloudproviderconfig.ConfigMap.Data["vsphere.conf"]; exists {
-			cloudProviderConfigMapKey = "vsphere.conf"
+		if cloudproviderconfig.ConfigMap != nil {
+			if _, exists := cloudproviderconfig.ConfigMap.Data["vsphere.conf"]; exists {
+				cloudProviderConfigMapKey = "vsphere.conf"
+			}
 		}
-
-		config.Status.PlatformStatus.VSphere.MachineNetworks = types.MachineNetworksToCIDRs(installConfig.Config.MachineNetwork)
+		config.Status.PlatformStatus.VSphere.MachineNetworks = config.Spec.PlatformSpec.VSphere.MachineNetworks
 	case ovirt.Name:
 		config.Spec.PlatformSpec.Type = configv1.OvirtPlatformType
 		config.Status.PlatformStatus.Ovirt = &configv1.OvirtPlatformStatus{
