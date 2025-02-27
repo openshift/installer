@@ -283,7 +283,7 @@ func getNextAvailableIP(ctx context.Context, installConfig *installconfig.Instal
 		}
 	}
 	if ipAvail.AvailableIPAddresses == nil || len(*ipAvail.AvailableIPAddresses) == 0 {
-		return "", fmt.Errorf("failed to get an available IP in given virtual network for LB: %w", err)
+		return "", fmt.Errorf("failed to get an available IP in given virtual network for LB: this error may be caused by lack of necessary permissions")
 	}
 	for _, ip := range *ipAvail.AvailableIPAddresses {
 		for _, cidrRange := range machineCidr {
@@ -296,5 +296,5 @@ func getNextAvailableIP(ctx context.Context, installConfig *installconfig.Instal
 			}
 		}
 	}
-	return "", fmt.Errorf("failed to get available IP in given machine network: %w", err)
+	return "", fmt.Errorf("failed to get an IP that's available and in the given machine network: this error may be caused by lack of necessary permissions")
 }
