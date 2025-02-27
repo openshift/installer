@@ -27,11 +27,12 @@ echo "Target node image is $COREOS_IMAGE"
 ostree_repo=/ostree/repo
 ostree_checkout="${ostree_repo}/tmp/node-image"
 hardlink='-H'
-if grep -q coreos.liveiso= /proc/cmdline; then
+# this is the CoreOS API for "are we in a live environment", i.e. PXE or ISO
+if test -f /run/ostree-live; then
     ostree_repo=/var/ostree-container/repo
     ostree_checkout=/var/ostree-container/checkout
     mkdir -p "${ostree_repo}"
-    echo "In live ISO; creating temporary repo to pull node image"
+    echo "In live environment; creating temporary repo to pull node image"
     ostree init --mode=bare --repo="${ostree_repo}"
     # if there are layers, import all the content in the system repo for
     # layer-level deduping
@@ -42,6 +43,7 @@ if grep -q coreos.liveiso= /proc/cmdline; then
     # but we won't be able to force hardlinks cross-device
     hardlink=''
 else
+    echo "Not in live environment"
     # (remember, we're MountFlags=slave)
     mount -o rw,remount /sysroot
 fi
@@ -66,10 +68,11 @@ if [ $(echo "$ref" | wc -l) != 1 ]; then
 fi
 ostree refs --repo "${ostree_repo}" "$ref" --create coreos/node-image
 
-# massive hack to make ostree admin config-diff work in live ISO where /etc
-# is actually on a separate mount and not the deployment root proper... should
-# enhance libostree for this (remember, we're MountFlags=slave)
-if grep -q coreos.liveiso= /proc/cmdline; then
+# massive hack to make ostree admin config-diff work in live environments where
+# /etc is actually on a separate mount and not the deployment root proper...
+# should enhance libostree for this
+if test -f /run/ostree-live; then
+    # (remember, we're MountFlags=slave)
     mount -o bind,ro /etc /ostree/deploy/*/deploy/*/etc
 fi
 
