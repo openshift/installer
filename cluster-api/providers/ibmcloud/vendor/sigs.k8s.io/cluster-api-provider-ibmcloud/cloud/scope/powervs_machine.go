@@ -53,7 +53,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	capiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	capierrors "sigs.k8s.io/cluster-api/errors"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/patch"
 
@@ -728,7 +727,7 @@ func (m *PowerVSMachineScope) SetNotReady() {
 }
 
 // SetFailureReason will set status FailureReason for the machine.
-func (m *PowerVSMachineScope) SetFailureReason(reason capierrors.MachineStatusError) {
+func (m *PowerVSMachineScope) SetFailureReason(reason string) {
 	m.IBMPowerVSMachine.Status.FailureReason = &reason
 }
 
@@ -955,9 +954,8 @@ func (m *PowerVSMachineScope) GetServiceInstanceID() (string, error) {
 // SetProviderID will set the provider id for the machine.
 func (m *PowerVSMachineScope) SetProviderID(instanceID string) error {
 	// Based on the ProviderIDFormat version the providerID format will be decided.
-	if options.ProviderIDFormatType(options.ProviderIDFormat) == options.ProviderIDFormatV1 {
-		m.IBMPowerVSMachine.Spec.ProviderID = ptr.To(fmt.Sprintf("ibmpowervs://%s/%s", m.Machine.Spec.ClusterName, m.IBMPowerVSMachine.Name))
-		return nil
+	if options.ProviderIDFormatType(options.ProviderIDFormat) != options.ProviderIDFormatV2 {
+		return fmt.Errorf("invalid value for ProviderIDFormat")
 	}
 	m.V(3).Info("setting provider id in v2 format")
 

@@ -49,6 +49,9 @@ type NetworkReference struct {
 	// Required: true
 	NetworkID *string `json:"networkID"`
 
+	// Network Peer ID
+	PeerID string `json:"peerID,omitempty"`
+
 	// Type of Network - 'vlan' (private network) 'pub-vlan' (public network) 'dhcp-vlan' (for satellite locations only)
 	// Required: true
 	// Enum: ["vlan","pub-vlan","dhcp-vlan"]

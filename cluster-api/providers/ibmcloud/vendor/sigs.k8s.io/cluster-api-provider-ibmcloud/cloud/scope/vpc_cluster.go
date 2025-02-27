@@ -496,12 +496,13 @@ func (s *VPCClusterScope) GetVPCID() (*string, error) {
 
 			// Check if the VPC was found and has an ID
 			if vpcDetails != nil && vpcDetails.ID != nil {
-				// Set VPC ID in Status to shortcut future lookups
+				// Set VPC ID in Status to shortcut future lookups, prior to returning the ID.
 				s.SetResourceStatus(infrav1beta2.ResourceTypeVPC, &infrav1beta2.ResourceStatus{
 					ID:    *vpcDetails.ID,
 					Name:  s.NetworkSpec().VPC.Name,
 					Ready: true,
 				})
+				return vpcDetails.ID, nil
 			}
 		}
 	}

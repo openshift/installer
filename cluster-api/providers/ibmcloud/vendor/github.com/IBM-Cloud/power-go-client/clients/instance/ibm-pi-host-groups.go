@@ -112,7 +112,9 @@ func (f *IBMPIHostGroupsClient) GetHosts() (models.HostList, error) {
 	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
+	hostReference := true
 	params := host_groups.NewV1HostsGetParams().WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut)
+	params.HostReference = &hostReference
 	resp, err := f.session.Power.HostGroups.V1HostsGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to get hosts for %s: %w", f.cloudInstanceID, err))
@@ -146,7 +148,9 @@ func (f *IBMPIHostGroupsClient) GetHost(id string) (*models.Host, error) {
 	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
+	hostReference := true
 	params := host_groups.NewV1HostsIDGetParams().WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).WithHostID(id)
+	params.HostReference = &hostReference
 	resp, err := f.session.Power.HostGroups.V1HostsIDGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to get host %s for %s: %w", id, f.cloudInstanceID, err))

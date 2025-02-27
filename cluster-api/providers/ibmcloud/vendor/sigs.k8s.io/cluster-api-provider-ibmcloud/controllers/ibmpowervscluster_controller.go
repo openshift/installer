@@ -128,15 +128,10 @@ type reconcileResult struct {
 	error
 }
 
-func (update *powerVSCluster) updateCondition(condition bool, conditionArgs ...interface{}) {
+func (update *powerVSCluster) updateCondition(condition capiv1beta1.Condition) {
 	update.mu.Lock()
 	defer update.mu.Unlock()
-	if condition {
-		conditions.MarkTrue(update.cluster, conditionArgs[0].(capiv1beta1.ConditionType))
-		return
-	}
-
-	conditions.MarkFalse(update.cluster, conditionArgs[0].(capiv1beta1.ConditionType), conditionArgs[1].(string), conditionArgs[2].(capiv1beta1.ConditionSeverity), conditionArgs[3].(string), conditionArgs[4:]...)
+	conditions.Set(update.cluster, &condition)
 }
 
 func (r *IBMPowerVSClusterReconciler) reconcilePowerVSResources(clusterScope *scope.PowerVSClusterScope, powerVSCluster *powerVSCluster, ch chan reconcileResult, wg *sync.WaitGroup) {
@@ -146,7 +141,13 @@ func (r *IBMPowerVSClusterReconciler) reconcilePowerVSResources(clusterScope *sc
 	powerVSLog.Info("Reconciling PowerVS service instance")
 	if requeue, err := clusterScope.ReconcilePowerVSServiceInstance(); err != nil {
 		powerVSLog.Error(err, "failed to reconcile PowerVS service instance")
-		powerVSCluster.updateCondition(false, infrav1beta2.ServiceInstanceReadyCondition, infrav1beta2.ServiceInstanceReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
+		powerVSCluster.updateCondition(capiv1beta1.Condition{
+			Status:   corev1.ConditionFalse,
+			Type:     infrav1beta2.ServiceInstanceReadyCondition,
+			Reason:   infrav1beta2.ServiceInstanceReconciliationFailedReason,
+			Severity: capiv1beta1.ConditionSeverityError,
+			Message:  err.Error(),
+		})
 		ch <- reconcileResult{reconcile.Result{}, err}
 		return
 	} else if requeue {
@@ -154,19 +155,31 @@ func (r *IBMPowerVSClusterReconciler) reconcilePowerVSResources(clusterScope *sc
 		ch <- reconcileResult{reconcile.Result{Requeue: true}, nil}
 		return
 	}
-	powerVSCluster.updateCondition(true, infrav1beta2.ServiceInstanceReadyCondition)
+	powerVSCluster.updateCondition(capiv1beta1.Condition{
+		Status: corev1.ConditionTrue,
+		Type:   infrav1beta2.ServiceInstanceReadyCondition,
+	})
 
 	clusterScope.IBMPowerVSClient.WithClients(powervs.ServiceOptions{CloudInstanceID: clusterScope.GetServiceInstanceID()})
 
 	// reconcile network
 	powerVSLog.Info("Reconciling network")
-	if dhcpServerActive, err := clusterScope.ReconcileNetwork(); err != nil {
+	if networkActive, err := clusterScope.ReconcileNetwork(); err != nil {
 		powerVSLog.Error(err, "failed to reconcile PowerVS network")
-		powerVSCluster.updateCondition(false, infrav1beta2.NetworkReadyCondition, infrav1beta2.NetworkReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
+		powerVSCluster.updateCondition(capiv1beta1.Condition{
+			Status:   corev1.ConditionFalse,
+			Type:     infrav1beta2.NetworkReadyCondition,
+			Reason:   infrav1beta2.NetworkReconciliationFailedReason,
+			Severity: capiv1beta1.ConditionSeverityError,
+			Message:  err.Error(),
+		})
 		ch <- reconcileResult{reconcile.Result{}, err}
 		return
-	} else if dhcpServerActive {
-		powerVSCluster.updateCondition(true, infrav1beta2.NetworkReadyCondition)
+	} else if networkActive {
+		powerVSCluster.updateCondition(capiv1beta1.Condition{
+			Status: corev1.ConditionTrue,
+			Type:   infrav1beta2.NetworkReadyCondition,
+		})
 		return
 	}
 	// Do not want to block the reconciliation of other resources like setting up TG and COS, so skipping the requeue and only logging the info.
@@ -179,7 +192,13 @@ func (r *IBMPowerVSClusterReconciler) reconcileVPCResources(clusterScope *scope.
 	vpcLog.Info("Reconciling VPC")
 	if requeue, err := clusterScope.ReconcileVPC(); err != nil {
 		clusterScope.Error(err, "failed to reconcile VPC")
-		powerVSCluster.updateCondition(false, infrav1beta2.VPCReadyCondition, infrav1beta2.VPCReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
+		powerVSCluster.updateCondition(capiv1beta1.Condition{
+			Status:   corev1.ConditionFalse,
+			Type:     infrav1beta2.VPCReadyCondition,
+			Reason:   infrav1beta2.VPCReconciliationFailedReason,
+			Severity: capiv1beta1.ConditionSeverityError,
+			Message:  err.Error(),
+		})
 		ch <- reconcileResult{reconcile.Result{}, err}
 		return
 	} else if requeue {
@@ -187,13 +206,22 @@ func (r *IBMPowerVSClusterReconciler) reconcileVPCResources(clusterScope *scope.
 		ch <- reconcileResult{reconcile.Result{Requeue: true}, nil}
 		return
 	}
-	powerVSCluster.updateCondition(true, infrav1beta2.VPCReadyCondition)
+	powerVSCluster.updateCondition(capiv1beta1.Condition{
+		Status: corev1.ConditionTrue,
+		Type:   infrav1beta2.VPCReadyCondition,
+	})
 
 	// reconcile VPC Subnet
 	vpcLog.Info("Reconciling VPC subnets")
 	if requeue, err := clusterScope.ReconcileVPCSubnets(); err != nil {
 		vpcLog.Error(err, "failed to reconcile VPC subnets")
-		powerVSCluster.updateCondition(false, infrav1beta2.VPCSubnetReadyCondition, infrav1beta2.VPCSubnetReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
+		powerVSCluster.updateCondition(capiv1beta1.Condition{
+			Status:   corev1.ConditionFalse,
+			Type:     infrav1beta2.VPCSubnetReadyCondition,
+			Reason:   infrav1beta2.VPCSubnetReconciliationFailedReason,
+			Severity: capiv1beta1.ConditionSeverityError,
+			Message:  err.Error(),
+		})
 		ch <- reconcileResult{reconcile.Result{}, err}
 		return
 	} else if requeue {
@@ -201,27 +229,48 @@ func (r *IBMPowerVSClusterReconciler) reconcileVPCResources(clusterScope *scope.
 		ch <- reconcileResult{reconcile.Result{Requeue: true}, nil}
 		return
 	}
-	powerVSCluster.updateCondition(true, infrav1beta2.VPCSubnetReadyCondition)
+	powerVSCluster.updateCondition(capiv1beta1.Condition{
+		Status: corev1.ConditionTrue,
+		Type:   infrav1beta2.VPCSubnetReadyCondition,
+	})
 
 	// reconcile VPC security group
 	vpcLog.Info("Reconciling VPC security group")
 	if err := clusterScope.ReconcileVPCSecurityGroups(); err != nil {
 		vpcLog.Error(err, "failed to reconcile VPC security groups")
-		powerVSCluster.updateCondition(false, infrav1beta2.VPCSecurityGroupReadyCondition, infrav1beta2.VPCSecurityGroupReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
+		powerVSCluster.updateCondition(capiv1beta1.Condition{
+			Status:   corev1.ConditionFalse,
+			Type:     infrav1beta2.VPCSecurityGroupReadyCondition,
+			Reason:   infrav1beta2.VPCSecurityGroupReconciliationFailedReason,
+			Severity: capiv1beta1.ConditionSeverityError,
+			Message:  err.Error(),
+		})
 		ch <- reconcileResult{reconcile.Result{}, err}
 		return
 	}
-	powerVSCluster.updateCondition(true, infrav1beta2.VPCSecurityGroupReadyCondition)
+	powerVSCluster.updateCondition(capiv1beta1.Condition{
+		Status: corev1.ConditionTrue,
+		Type:   infrav1beta2.VPCSecurityGroupReadyCondition,
+	})
 
 	// reconcile LoadBalancer
 	vpcLog.Info("Reconciling VPC load balancers")
 	if loadBalancerReady, err := clusterScope.ReconcileLoadBalancers(); err != nil {
 		vpcLog.Error(err, "failed to reconcile VPC load balancers")
-		powerVSCluster.updateCondition(false, infrav1beta2.LoadBalancerReadyCondition, infrav1beta2.LoadBalancerReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
+		powerVSCluster.updateCondition(capiv1beta1.Condition{
+			Status:   corev1.ConditionFalse,
+			Type:     infrav1beta2.LoadBalancerReadyCondition,
+			Reason:   infrav1beta2.LoadBalancerReconciliationFailedReason,
+			Severity: capiv1beta1.ConditionSeverityError,
+			Message:  err.Error(),
+		})
 		ch <- reconcileResult{reconcile.Result{}, err}
 		return
 	} else if loadBalancerReady {
-		powerVSCluster.updateCondition(true, infrav1beta2.LoadBalancerReadyCondition)
+		powerVSCluster.updateCondition(capiv1beta1.Condition{
+			Status: corev1.ConditionTrue,
+			Type:   infrav1beta2.LoadBalancerReadyCondition,
+		})
 		return
 	}
 	// Do not want to block the reconciliation of other resources like setting up TG and COS, so skipping the requeue and only logging the info.
@@ -566,8 +615,8 @@ func (c clusterDescendants) filterOwnedDescendants(cluster *infrav1beta2.IBMPowe
 func (r *IBMPowerVSClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
 	controller, err := ctrl.NewControllerManagedBy(mgr).
 		For(&infrav1beta2.IBMPowerVSCluster{}).
-		WithEventFilter(predicates.ResourceIsNotExternallyManaged(ctrl.LoggerFrom(ctx))).
-		WithEventFilter(predicates.ResourceNotPaused(ctrl.LoggerFrom(ctx))).
+		WithEventFilter(predicates.ResourceIsNotExternallyManaged(r.Scheme, ctrl.LoggerFrom(ctx))).
+		WithEventFilter(predicates.ResourceNotPaused(r.Scheme, ctrl.LoggerFrom(ctx))).
 		Build(r)
 	if err != nil {
 		return errors.Wrap(err, "error creating controller")
@@ -576,7 +625,7 @@ func (r *IBMPowerVSClusterReconciler) SetupWithManager(ctx context.Context, mgr 
 	if err = controller.Watch(
 		source.Kind[client.Object](mgr.GetCache(), &capiv1beta1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1beta2.GroupVersion.WithKind("IBMPowerVSCluster"), mgr.GetClient(), &infrav1beta2.IBMPowerVSCluster{})),
-			predicates.ClusterUnpaused(ctrl.LoggerFrom(ctx)),
+			predicates.ClusterUnpaused(r.Scheme, ctrl.LoggerFrom(ctx)),
 		)); err != nil {
 		return errors.Wrap(err, "failed adding a watch for ready clusters")
 	}
