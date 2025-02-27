@@ -3,24 +3,8 @@ package gcp
 import (
 	"fmt"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types/dns"
-)
-
-const (
-	// CloudResourceManagerServiceName is the name and internal key for the cloud resource manager API endpoint.
-	CloudResourceManagerServiceName = "cloudresourcemanager"
-	// ComputeServiceName is the name and internal key for the compute API endpoint.
-	ComputeServiceName = "compute"
-	// DNSServiceName is the name and internal key for the DNS API endpoint.
-	DNSServiceName = "dns"
-	// FileServiceName is the name and internal key for the file API endpoint.
-	FileServiceName = "file"
-	// IAMServiceName is the name and internal key for the IAM API endpoint.
-	IAMServiceName = "iam"
-	// ServiceUsageServiceName is the name and internal key for the service usage API endpoint.
-	ServiceUsageServiceName = "serviceusage"
-	// StorageServiceName is the name and internal key for the storage API endpoint.
-	StorageServiceName = "storage"
 )
 
 // Platform stores all the global configuration that all machinesets
@@ -80,22 +64,7 @@ type Platform struct {
 	// service endpoint of GCP Services.
 	// There must be only one ServiceEndpoint for a service.
 	// +optional
-	ServiceEndpoints []ServiceEndpoint `json:"serviceEndpoints,omitempty"`
-}
-
-// ServiceEndpoint stores the configuration for services to
-// override existing defaults of GCP Services.
-type ServiceEndpoint struct {
-	// Name is the name of the GCP service.
-	// This must be provided and cannot be empty.
-	Name string `json:"name"`
-
-	// URL is fully qualified URI with scheme https, that overrides the default generated
-	// endpoint for a client.
-	// This must be provided and cannot be empty.
-	//
-	// +kubebuilder:validation:Pattern=`^https://`
-	URL string `json:"url"`
+	ServiceEndpoints []configv1.GCPServiceEndpoint `json:"serviceEndpoints,omitempty"`
 }
 
 // UserLabel is a label to apply to GCP resources created for the cluster.
