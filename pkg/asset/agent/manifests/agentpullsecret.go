@@ -15,6 +15,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/interactive"
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/validate"
@@ -47,6 +48,7 @@ func (*AgentPullSecret) Dependencies() []asset.Asset {
 		&workflow.AgentWorkflow{},
 		&joiner.ClusterInfo{},
 		&agent.OptionalInstallConfig{},
+		&interactive.InstallConfig{},
 	}
 }
 
@@ -55,6 +57,7 @@ func (a *AgentPullSecret) Generate(_ context.Context, dependencies asset.Parents
 	agentWorkflow := &workflow.AgentWorkflow{}
 	installConfig := &agent.OptionalInstallConfig{}
 	clusterInfo := &joiner.ClusterInfo{}
+	interactiveInstallConfig := &interactive.InstallConfig{}
 	dependencies.Get(agentWorkflow, installConfig, clusterInfo)
 
 	switch agentWorkflow.Workflow {
@@ -65,6 +68,9 @@ func (a *AgentPullSecret) Generate(_ context.Context, dependencies asset.Parents
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		a.generateSecret(clusterInfo.ClusterName, clusterInfo.Namespace, clusterInfo.PullSecret)
+
+	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
+		a.generateSecret(interactiveInstallConfig.ClusterName(), interactiveInstallConfig.ClusterNamespace(), interactiveInstallConfig.PullSecret())
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
