@@ -31,6 +31,10 @@ func TestTemplatingIPv4(t *testing.T) {
 				BootMACAddress: "c0:ff:ee:ca:fe:02",
 			},
 			{
+				Role:           "arbiter",
+				BootMACAddress: "c0:ff:ee:ca:fe:04",
+			},
+			{
 				Role:           "worker",
 				BootMACAddress: "c0:ff:ee:ca:fe:03",
 			},
@@ -48,7 +52,7 @@ func TestTemplatingIPv4(t *testing.T) {
 	assert.Equal(t, result.ProvisioningCIDR, 24)
 	assert.Equal(t, result.ProvisioningIPv6, false)
 	assert.Equal(t, result.ProvisioningIP, "172.22.0.2")
-	assert.Equal(t, result.ProvisioningDHCPAllowList, "c0:ff:ee:ca:fe:00 c0:ff:ee:ca:fe:01 c0:ff:ee:ca:fe:02")
+	assert.Equal(t, result.ProvisioningDHCPAllowList, "c0:ff:ee:ca:fe:00 c0:ff:ee:ca:fe:01 c0:ff:ee:ca:fe:02 c0:ff:ee:ca:fe:04")
 	assert.Equal(t, result.IronicUsername, "bootstrap-ironic-user")
 	assert.Equal(t, result.IronicPassword, "passw0rd")
 }
