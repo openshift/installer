@@ -9,6 +9,11 @@ import (
 	"github.com/openshift/installer/pkg/types/powervs"
 )
 
+const (
+	// DefaultNTPServer is the FQDN of IBM Cloud NTP server.
+	DefaultNTPServer = "time.adn.networklayer.com"
+)
+
 var (
 	// DefaultMachineCIDR is the PowerVS default IP address space from
 	// which to assign machine IPs.
