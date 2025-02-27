@@ -256,6 +256,8 @@ var permissions = map[PermissionGroup][]string{
 		"ec2:CreateVpcEndpoint",
 		"ec2:ModifySubnetAttribute",
 		"ec2:ModifyVpcAttribute",
+		// Needed by CAPA to update outdated routes
+		"ec2:ReplaceRoute",
 	},
 	// Permissions required for deleting network resources
 	PermissionDeleteNetworking: {
