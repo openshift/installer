@@ -55,8 +55,8 @@ func (f *IBMPIInstanceClient) GetAll() (*models.PVMInstances, error) {
 // Create an Instance
 func (f *IBMPIInstanceClient) Create(body *models.PVMInstanceCreate) (*models.PVMInstanceList, error) {
 	// Check for satellite differences in this endpoint
-	if f.session.IsOnPrem() && body.DeploymentTarget != nil {
-		return nil, fmt.Errorf("deployment target parameter is not supported in satellite location, check documentation")
+	if f.session.IsOnPrem() && (body.DeploymentTarget != nil || body.DeploymentType != "") {
+		return nil, fmt.Errorf("deployment target and deployment type parameters are not supported in satellite location, check documentation")
 	}
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -82,6 +82,18 @@ func (f *IBMPIInstanceClient) Delete(id string) error {
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithPvmInstanceID(id)
+	_, err := f.session.Power.PCloudpVMInstances.PcloudPvminstancesDelete(params, f.session.AuthInfo(f.cloudInstanceID))
+	if err != nil {
+		return fmt.Errorf("failed to Delete PVM Instance %s :%w", id, err)
+	}
+	return nil
+}
+
+// Delete an Instance with body
+func (f *IBMPIInstanceClient) DeleteWithBody(id string, body *models.PVMInstanceDelete) error {
+	params := p_cloud_p_vm_instances.NewPcloudPvminstancesDeleteParams().
+		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
+		WithCloudInstanceID(f.cloudInstanceID).WithPvmInstanceID(id).WithBody(body)
 	_, err := f.session.Power.PCloudpVMInstances.PcloudPvminstancesDelete(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
 		return fmt.Errorf("failed to Delete PVM Instance %s :%w", id, err)

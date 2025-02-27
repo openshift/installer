@@ -14,6 +14,7 @@ import (
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
+	"github.com/go-openapi/swag"
 )
 
 // NewV1HostsIDGetParams creates a new V1HostsIDGetParams object,
@@ -66,6 +67,9 @@ type V1HostsIDGetParams struct {
 	   Host ID
 	*/
 	HostID string
+
+	// HostReference.
+	HostReference *bool
 
 	timeout    time.Duration
 	Context    context.Context
@@ -131,6 +135,17 @@ func (o *V1HostsIDGetParams) SetHostID(hostID string) {
 	o.HostID = hostID
 }
 
+// WithHostReference adds the hostReference to the v1 hosts id get params
+func (o *V1HostsIDGetParams) WithHostReference(hostReference *bool) *V1HostsIDGetParams {
+	o.SetHostReference(hostReference)
+	return o
+}
+
+// SetHostReference adds the hostReference to the v1 hosts id get params
+func (o *V1HostsIDGetParams) SetHostReference(hostReference *bool) {
+	o.HostReference = hostReference
+}
+
 // WriteToRequest writes these params to a swagger request
 func (o *V1HostsIDGetParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
@@ -142,6 +157,23 @@ func (o *V1HostsIDGetParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.
 	// path param host_id
 	if err := r.SetPathParam("host_id", o.HostID); err != nil {
 		return err
+	}
+
+	if o.HostReference != nil {
+
+		// query param host_reference
+		var qrHostReference bool
+
+		if o.HostReference != nil {
+			qrHostReference = *o.HostReference
+		}
+		qHostReference := swag.FormatBool(qrHostReference)
+		if qHostReference != "" {
+
+			if err := r.SetQueryParam("host_reference", qHostReference); err != nil {
+				return err
+			}
+		}
 	}
 
 	if len(res) > 0 {
