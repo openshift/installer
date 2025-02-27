@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/pointer"
+	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -616,6 +617,37 @@ func TestValidateMachinePool(t *testing.T) {
 				},
 			},
 			expected: `^test-path.defaultMachinePlatform.settings.securityType: Invalid value: "": securityType should be set to TrustedLaunch when uefiSettings are enabled.$`,
+		},
+		{
+			name:          "BootDiagnostics not set to UserManaged and storage account set",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						BootDiagnostics: &azure.BootDiagnostics{
+							Type:              v1beta1.ManagedDiagnosticsStorage,
+							StorageAccountURI: "valid",
+						},
+					},
+				},
+			},
+			expected: `^test-path.bootDiagnostics.StorageAccountURI: Invalid value: "valid": storageAccountURI can only be specified if type is set to UserManaged.$`,
+		},
+		{
+			name:          "BootDiagnostics set to UserManaged and storage account not set",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						BootDiagnostics: &azure.BootDiagnostics{
+							Type: v1beta1.UserManagedDiagnosticsStorage,
+						},
+					},
+				},
+			},
+			expected: `^test-path.bootDiagnostics.StorageAccountURI: Invalid value: "": storageAccountURI must be specified if type is set to UserManaged.$`,
 		},
 	}
 	for _, tc := range cases {
