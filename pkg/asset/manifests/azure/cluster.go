@@ -142,6 +142,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Location:         installConfig.Config.Azure.Region,
 				AdditionalTags:   installConfig.Config.Platform.Azure.UserTags,
 				AzureEnvironment: string(installConfig.Azure.CloudName),
+				ARMEndpoint:      session.Environment.ResourceManagerEndpoint,
 				IdentityRef: &corev1.ObjectReference{
 					APIVersion: capz.GroupVersion.String(),
 					Kind:       "AzureClusterIdentity",
