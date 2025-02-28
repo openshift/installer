@@ -45,6 +45,9 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 	case azuretypes.Name:
 		return clusterapi.InitializeProvider(&azureinfra.Provider{}), nil
 	case azuretypes.StackTerraformName:
+		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
+			return clusterapi.InitializeProvider(&azureinfra.Provider{}), nil
+		}
 		return terraform.InitializeProvider(azure.StackPlatformStages), nil
 	case baremetaltypes.Name:
 		return baremetalinfra.InitializeProvider(), nil
