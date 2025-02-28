@@ -85,7 +85,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		nodeSubnetID = "UNKNOWN"
 	}
 
-	apiServerLB := capz.LoadBalancerSpec{
+	apiServerLB := &capz.LoadBalancerSpec{
 		Name: fmt.Sprintf("%s-internal", clusterID.InfraID),
 		BackendPool: capz.BackendPool{
 			Name: fmt.Sprintf("%s-internal", clusterID.InfraID),
