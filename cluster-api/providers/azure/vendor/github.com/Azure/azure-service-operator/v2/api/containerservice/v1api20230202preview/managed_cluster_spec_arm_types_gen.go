@@ -279,6 +279,11 @@ type ExtendedLocationType string
 
 const ExtendedLocationType_EdgeZone = ExtendedLocationType("EdgeZone")
 
+// Mapping from string to ExtendedLocationType
+var extendedLocationType_Values = map[string]ExtendedLocationType{
+	"edgezone": ExtendedLocationType_EdgeZone,
+}
+
 // The Guardrails profile.
 type GuardrailsProfile_ARM struct {
 	// ExcludedNamespaces: List of namespaces excluded from guardrails checks
@@ -552,6 +557,13 @@ const (
 	ManagedClusterIdentity_Type_UserAssigned   = ManagedClusterIdentity_Type("UserAssigned")
 )
 
+// Mapping from string to ManagedClusterIdentity_Type
+var managedClusterIdentity_Type_Values = map[string]ManagedClusterIdentity_Type{
+	"none":           ManagedClusterIdentity_Type_None,
+	"systemassigned": ManagedClusterIdentity_Type_SystemAssigned,
+	"userassigned":   ManagedClusterIdentity_Type_UserAssigned,
+}
+
 // Ingress profile for the container service cluster.
 type ManagedClusterIngressProfile_ARM struct {
 	// WebAppRouting: Web App Routing settings for the ingress profile.
@@ -693,6 +705,11 @@ type ManagedClusterSKU_Name string
 
 const ManagedClusterSKU_Name_Base = ManagedClusterSKU_Name("Base")
 
+// Mapping from string to ManagedClusterSKU_Name
+var managedClusterSKU_Name_Values = map[string]ManagedClusterSKU_Name{
+	"base": ManagedClusterSKU_Name_Base,
+}
+
 // +kubebuilder:validation:Enum={"Free","Standard"}
 type ManagedClusterSKU_Tier string
 
@@ -700,6 +717,12 @@ const (
 	ManagedClusterSKU_Tier_Free     = ManagedClusterSKU_Tier("Free")
 	ManagedClusterSKU_Tier_Standard = ManagedClusterSKU_Tier("Standard")
 )
+
+// Mapping from string to ManagedClusterSKU_Tier
+var managedClusterSKU_Tier_Values = map[string]ManagedClusterSKU_Tier{
+	"free":     ManagedClusterSKU_Tier_Free,
+	"standard": ManagedClusterSKU_Tier_Standard,
+}
 
 // Storage profile for the container service cluster.
 type ManagedClusterStorageProfile_ARM struct {

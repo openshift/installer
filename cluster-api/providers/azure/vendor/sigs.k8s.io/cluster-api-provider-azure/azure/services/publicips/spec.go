@@ -20,7 +20,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
+	"github.com/Azure/azure-sdk-for-go/profile/p20200901/resourcemanager/network/armnetwork"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
@@ -87,10 +87,10 @@ func (s *PublicIPSpec) Parameters(ctx context.Context, existing interface{}) (pa
 			Name:        ptr.To(s.Name),
 			Additional:  s.AdditionalTags,
 		})),
-		SKU:              &armnetwork.PublicIPAddressSKU{Name: ptr.To(armnetwork.PublicIPAddressSKUNameStandard)},
-		Name:             ptr.To(s.Name),
-		Location:         ptr.To(s.Location),
-		ExtendedLocation: converters.ExtendedLocationToNetworkSDK(s.ExtendedLocation),
+		SKU:      &armnetwork.PublicIPAddressSKU{Name: ptr.To(armnetwork.PublicIPAddressSKUNameStandard)},
+		Name:     ptr.To(s.Name),
+		Location: ptr.To(s.Location),
+		//ExtendedLocation: converters.ExtendedLocationToNetworkSDK(s.ExtendedLocation),
 		Properties: &armnetwork.PublicIPAddressPropertiesFormat{
 			PublicIPAddressVersion:   &addressVersion,
 			PublicIPAllocationMethod: ptr.To(armnetwork.IPAllocationMethodStatic),

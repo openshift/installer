@@ -270,6 +270,11 @@ type ExtendedLocationType string
 
 const ExtendedLocationType_EdgeZone = ExtendedLocationType("EdgeZone")
 
+// Mapping from string to ExtendedLocationType
+var extendedLocationType_Values = map[string]ExtendedLocationType{
+	"edgezone": ExtendedLocationType_EdgeZone,
+}
+
 // For more details see [managed AAD on AKS](https://docs.microsoft.com/azure/aks/managed-aad).
 type ManagedClusterAADProfile_ARM struct {
 	// AdminGroupObjectIDs: The list of AAD group object IDs that will have admin role of the cluster.
@@ -510,6 +515,13 @@ const (
 	ManagedClusterIdentity_Type_UserAssigned   = ManagedClusterIdentity_Type("UserAssigned")
 )
 
+// Mapping from string to ManagedClusterIdentity_Type
+var managedClusterIdentity_Type_Values = map[string]ManagedClusterIdentity_Type{
+	"none":           ManagedClusterIdentity_Type_None,
+	"systemassigned": ManagedClusterIdentity_Type_SystemAssigned,
+	"userassigned":   ManagedClusterIdentity_Type_UserAssigned,
+}
+
 // The OIDC issuer profile of the Managed Cluster.
 type ManagedClusterOIDCIssuerProfile_ARM struct {
 	// Enabled: Whether the OIDC issuer is enabled.
@@ -629,6 +641,11 @@ type ManagedClusterSKU_Name string
 
 const ManagedClusterSKU_Name_Base = ManagedClusterSKU_Name("Base")
 
+// Mapping from string to ManagedClusterSKU_Name
+var managedClusterSKU_Name_Values = map[string]ManagedClusterSKU_Name{
+	"base": ManagedClusterSKU_Name_Base,
+}
+
 // +kubebuilder:validation:Enum={"Free","Premium","Standard"}
 type ManagedClusterSKU_Tier string
 
@@ -637,6 +654,13 @@ const (
 	ManagedClusterSKU_Tier_Premium  = ManagedClusterSKU_Tier("Premium")
 	ManagedClusterSKU_Tier_Standard = ManagedClusterSKU_Tier("Standard")
 )
+
+// Mapping from string to ManagedClusterSKU_Tier
+var managedClusterSKU_Tier_Values = map[string]ManagedClusterSKU_Tier{
+	"free":     ManagedClusterSKU_Tier_Free,
+	"premium":  ManagedClusterSKU_Tier_Premium,
+	"standard": ManagedClusterSKU_Tier_Standard,
+}
 
 // Storage profile for the container service cluster.
 type ManagedClusterStorageProfile_ARM struct {
