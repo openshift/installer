@@ -21,9 +21,8 @@ type ClusterUninstaller struct {
 	ClusterID         string
 	InfraID           string
 	terraformPlatform string
-
-	Logger  logrus.FieldLogger
-	clients []API
+	Logger            logrus.FieldLogger
+	clients           []API
 }
 
 // New returns an VSphere destroyer from ClusterMetadata.
@@ -51,14 +50,16 @@ func New(logger logrus.FieldLogger, metadata *installertypes.ClusterMetadata) (p
 }
 
 func newWithClient(logger logrus.FieldLogger, metadata *installertypes.ClusterMetadata, clients []API) *ClusterUninstaller {
-	return &ClusterUninstaller{
+	clusterUninstaller := &ClusterUninstaller{
 		ClusterID:         metadata.ClusterID,
 		InfraID:           metadata.InfraID,
 		terraformPlatform: metadata.VSphere.TerraformPlatform,
 
-		Logger:  logger,
 		clients: clients,
+		Logger:  logger,
 	}
+
+	return clusterUninstaller
 }
 
 func (o *ClusterUninstaller) deleteFolder(ctx context.Context) error {
@@ -244,22 +245,59 @@ func (o *ClusterUninstaller) deleteHostZoneObjects(ctx context.Context) error {
 	return utilerrors.NewAggregate(errs)
 }
 
+func (o *ClusterUninstaller) deleteCnsVolumes(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
+	defer cancel()
+	o.Logger.Debug("Delete CNS Volumes")
+
+	for _, client := range o.clients {
+		cnsVolumes, err := client.GetCnsVolumes(ctx, o.InfraID)
+		if err != nil {
+			return err
+		}
+
+		for _, cv := range cnsVolumes {
+			cnsVolumeLogger := o.Logger.WithField("CNS Volume", cv.VolumeId.Id)
+			err := client.DeleteCnsVolumes(ctx, cv)
+			if err != nil {
+				return err
+			}
+			cnsVolumeLogger.Info("Destroyed")
+		}
+	}
+
+	return nil
+}
+
 func (o *ClusterUninstaller) destroyCluster(ctx context.Context) (bool, error) {
 	stagedFuncs := [][]struct {
 		name    string
 		execute func(context.Context) error
 	}{{
-		{name: "Stop virtual machines", execute: o.stopVirtualMachines},
-	}, {
-		{name: "Virtual Machines", execute: o.deleteVirtualMachines},
-	}, {
-		{name: "Folder", execute: o.deleteFolder},
-	}, {
-		{name: "Storage Policy", execute: o.deleteStoragePolicy},
-		{name: "Tag", execute: o.deleteTag},
-		{name: "Tag Category", execute: o.deleteTagCategory},
-	}, {
-		{name: "VM Groups and VM Host Rules", execute: o.deleteHostZoneObjects},
+		{
+			name: "Stop virtual machines", execute: o.stopVirtualMachines,
+		},
+		{
+			name: "Delete Virtual Machines", execute: o.deleteVirtualMachines,
+		},
+		{
+			name: "Delete CNS Volumes", execute: o.deleteCnsVolumes,
+		},
+		{
+			name: "Folder", execute: o.deleteFolder,
+		},
+		{
+			name: "Storage Policy", execute: o.deleteStoragePolicy,
+		},
+		{
+			name: "Tag", execute: o.deleteTag,
+		},
+		{
+			name: "Tag Category", execute: o.deleteTagCategory,
+		},
+		{
+			name: "VM Groups and VM Host Rules", execute: o.deleteHostZoneObjects,
+		},
 	}}
 
 	stageFailed := false
