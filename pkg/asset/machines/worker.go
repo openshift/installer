@@ -64,6 +64,7 @@ import (
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 	ibmcloudapi "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis"
 	ibmcloudprovider "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 )
 
 const (
@@ -119,6 +120,7 @@ func defaultAzureMachinePoolPlatform() azuretypes.MachinePool {
 			DiskSizeGB: powerOfTwoRootVolumeSize,
 			DiskType:   azuretypes.DefaultDiskType,
 		},
+		Identity: &azuretypes.VMIdentity{Type: capz.VMIdentityNone},
 	}
 }
 
