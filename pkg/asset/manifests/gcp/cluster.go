@@ -16,6 +16,7 @@ import (
 	capg "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	gcpic "github.com/openshift/installer/pkg/asset/installconfig/gcp"
@@ -156,6 +157,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				LoadBalancerType:                  ptr.To(capgLoadBalancerType),
 			},
 			ResourceManagerTags: GetTagsFromInstallConfig(installConfig),
+			ServiceEndpoints:    getServiceEndpointsFromInstallConfig(installConfig),
 		},
 	}
 	gcpCluster.SetGroupVersionKind(capg.GroupVersion.WithKind("GCPCluster"))
@@ -263,4 +265,23 @@ func GetTagsFromInstallConfig(installConfig *installconfig.InstallConfig) []capg
 	}
 
 	return tags
+}
+
+// getServiceEndpointsFromInstallConfig gets the service endpoints for CAPG use.
+func getServiceEndpointsFromInstallConfig(installConfig *installconfig.InstallConfig) *capg.ServiceEndpoints {
+	capgServiceEndpoints := &capg.ServiceEndpoints{}
+
+	for _, endpoint := range installConfig.Config.GCP.ServiceEndpoints {
+		switch endpoint.Name {
+		case configv1.GCPServiceEndpointNameCompute:
+			capgServiceEndpoints.ComputeServiceEndpoint = endpoint.URL
+		case configv1.GCPServiceEndpointNameContainer:
+			capgServiceEndpoints.ContainerServiceEndpoint = endpoint.URL
+		case configv1.GCPServiceEndpointNameIAM:
+			capgServiceEndpoints.IAMServiceEndpoint = endpoint.URL
+		case configv1.GCPServiceEndpointNameCloudResource:
+			capgServiceEndpoints.ResourceManagerServiceEndpoint = endpoint.URL
+		}
+	}
+	return capgServiceEndpoints
 }
