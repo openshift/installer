@@ -508,9 +508,6 @@ func (b infraBuildNamespace) withVSphereAPIVIP(vip string) infraOption {
 		b.withVSpherePlatformStatus()(infra)
 		infra.Spec.PlatformSpec.VSphere.APIServerInternalIPs = append(infra.Spec.PlatformSpec.VSphere.APIServerInternalIPs, configv1.IP(vip))
 		infra.Status.PlatformStatus.VSphere.APIServerInternalIPs = append(infra.Status.PlatformStatus.VSphere.APIServerInternalIPs, vip)
-		if infra.Status.PlatformStatus.VSphere.APIServerInternalIP == "" {
-			infra.Status.PlatformStatus.VSphere.APIServerInternalIP = vip
-		}
 	}
 }
 
@@ -520,8 +517,5 @@ func (b infraBuildNamespace) withVSphereIngressVIP(vip string) infraOption {
 		b.withVSpherePlatformStatus()(infra)
 		infra.Spec.PlatformSpec.VSphere.IngressIPs = append(infra.Spec.PlatformSpec.VSphere.IngressIPs, configv1.IP(vip))
 		infra.Status.PlatformStatus.VSphere.IngressIPs = append(infra.Status.PlatformStatus.VSphere.IngressIPs, vip)
-		if infra.Status.PlatformStatus.VSphere.IngressIP == "" {
-			infra.Status.PlatformStatus.VSphere.IngressIP = vip
-		}
 	}
 }
