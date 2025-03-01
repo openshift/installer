@@ -441,7 +441,7 @@ type OVNKubernetesConfig struct {
 	// any other subnet being used by OpenShift or by the node network. The size of the
 	// subnet must be larger than the number of nodes. The value cannot be changed
 	// after installation.
-	// Default is fd98::/48
+	// Default is fd98::/64
 	// +optional
 	V6InternalSubnet string `json:"v6InternalSubnet,omitempty"`
 	// egressIPConfig holds the configuration for EgressIP options.
@@ -530,7 +530,7 @@ type IPv6OVNKubernetesConfig struct {
 	// subnet must be larger than the number of nodes. The value cannot be changed
 	// after installation.
 	// The subnet must be large enough to accomadate one IP per node in your cluster
-	// The current default value is fd98::/48
+	// The current default value is fd98::/64
 	// The value must be in proper IPV6 CIDR format
 	// Note that IPV6 dual addresses are not permitted
 	// +kubebuilder:validation:MaxLength=48
