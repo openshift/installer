@@ -20,14 +20,22 @@ import (
 const (
 	streamRHCOSJSON = "data/data/coreos/rhcos.json"
 	streamFCOSJSON  = "data/data/coreos/fcos.json"
+	streamSCOSJSON  = "data/data/coreos/scos.json"
 	fcosTAG         = "okd"
+	scosTAG         = "scos"
 	dest            = "bin/manifests/coreos-bootimages.yaml"
 )
 
 func run() error {
-	streamJSON := streamRHCOSJSON
-	if tags, _ := os.LookupEnv("TAGS"); strings.Contains(tags, fcosTAG) {
+	var streamJSON string
+	tags, _ := os.LookupEnv("TAGS")
+	switch {
+	case strings.Contains(tags, fcosTAG):
 		streamJSON = streamFCOSJSON
+	case strings.Contains(tags, scosTAG):
+		streamJSON = streamSCOSJSON
+	default:
+		streamJSON = streamRHCOSJSON
 	}
 	bootimages, err := os.ReadFile(streamJSON)
 	if err != nil {
