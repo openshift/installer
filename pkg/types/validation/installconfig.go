@@ -1066,7 +1066,7 @@ func validatePlatform(platform *types.Platform, usingAgentMethod bool, fldPath *
 	}
 	if platform.AWS != nil {
 		validate(aws.Name, platform.AWS, func(f *field.Path) field.ErrorList {
-			return awsvalidation.ValidatePlatform(platform.AWS, c.CredentialsMode, f)
+			return awsvalidation.ValidatePlatform(platform.AWS, c.Publish, c.CredentialsMode, f)
 		})
 	}
 	if platform.Azure != nil {
